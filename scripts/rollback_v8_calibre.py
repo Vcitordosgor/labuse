@@ -30,7 +30,16 @@ def main():
             if c.execute(text("SELECT to_regclass(:t)"), {"t": tbl}).scalar():
                 n = c.execute(text(f"DELETE FROM {tbl} WHERE {col} = :t"), {"t": TARGET}).rowcount
                 print(f"  purge {tbl:28s} : {n} lignes")
-        # snapshot lié au run (via label m5-<date>) : purge des snapshots de la cible
+        # snapshot lié au run : le lien snapshot_parcelles→snapshot est par snapshot_id (PAS
+        # run_label) — purger via score_snapshots.run_label=TARGET, sinon 431 663 lignes orphelines
+        # survivent (bug rollback 29/07, corrigé). Idempotent.
+        snap_ids = [r[0] for r in c.execute(text(
+            "SELECT id FROM score_snapshots WHERE run_label = :t"), {"t": TARGET}).fetchall()]
+        if snap_ids:
+            c.execute(text("DELETE FROM score_snapshot_parcelles WHERE snapshot_id = ANY(:ids)"),
+                      {"ids": snap_ids})
+            c.execute(text("DELETE FROM score_snapshots WHERE run_label = :t"), {"t": TARGET})
+            print(f"  purge snapshots {snap_ids} + leurs parcelles")
         c.execute(text("DELETE FROM p_score_v2_runs WHERE run_id = :t"), {"t": TARGET})
         # 2) restauration des features pré-bascule
         for src, bak in [("parcel_residuel", "parcel_residuel_pre_v8"),
