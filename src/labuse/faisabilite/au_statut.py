@@ -31,11 +31,14 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .plu_rules import resolve_zone
+from .constructibilite import DECLASSE_AU_FERMEE
 
 #: catégorie 'générique' → tier `declasse_au_statut_inconnu`
 CLASSE_GENERIQUE = "générique"
 #: catégorie 'dimensions_seules' → reste servie, mention de fiche seule
 CLASSE_DIMENSIONS_SEULES = "dimensions_seules"
+#: catégorie fermée-au-règlement → tier `declasse_au_fermee` (même taxonomie que le modèle affiné).
+CLASSE_AU_FERMEE = DECLASSE_AU_FERMEE
 
 # Péremption (arbitrage Vic 30/07, option B) — un déclassement TEMPORAIRE qui vieillit devient une
 # DETTE : le temps écoulé mesure NOTRE oubli (règlement non lu), jamais la parcelle. Deux seuils :
@@ -62,6 +65,13 @@ _OUVERTURE_KW = re.compile(
     r"caract[èe]re|ouvert|urbanisation|OAP|op[ée]rations? d.ensemble|modification"
     r"|1AU|2AU|AU ?1|AU ?2|subordonn|transition|gel", re.I)
 
+#: Motif fermée-au-règlement (arbitrage Vic pt2.1) — une zone AU que le règlement FERME et que le
+#: produit sert quand même. Le préfixe de phasage (1AU/2AU/3AU) échappe au test U/AU de la cascade →
+#: la parcelle est servie en tête sans avertissement. On DÉCLASSE avec un motif sourcé, jamais None.
+MOTIF_AU_FERMEE_REGLEMENT = (
+    "Zone AU fermée à l'urbanisation au règlement (secteur de transition / réserve, ex. AU*st ou "
+    "phasage 2AU/3AU). Son ouverture exige une procédure de modification ou de révision du PLU — "
+    "non constructible en l'état.")
 #: Motif de fiche — 313 génériques DÉCLASSÉES (étiquette « Absent », jamais « Estimé »).
 MOTIF_GENERIQUE = (
     "Zone à urbaniser — ouverture à l'urbanisation NON VÉRIFIÉE, statut inconnu. Le règlement de "
@@ -87,7 +97,15 @@ def classify_au_statut(zone_lib: str | None, commune: str | None) -> tuple[str |
     if r is None:
         return None, ""                       # hors YAML strict (non-AU géré en amont par le filtre)
     if not r.constructible_neuf:
-        return None, ""                       # zone FERMÉE au règlement → déjà A (declasse_zone_fermee)
+        # Zone FERMÉE au règlement. On NE suppose PLUS « déjà A (declasse_zone_fermee) » : la mesure
+        # du pt2 a montré 454 parcelles AU fermées SERVIES en tête sans avertissement (le préfixe de
+        # phasage 1AU/2AU/3AU échappe au test U/AU de la cascade). Le filtre amont ne passe ici que des
+        # zones AU → on DÉCLASSE avec un motif sourcé. Défensif : une non-AU (A/N) resterait None.
+        if re.match(r"^\s*\d*\s*AU", zone_lib.strip(), re.I):
+            note = next((n for n in (r.notes or []) if n), "")
+            motif = MOTIF_AU_FERMEE_REGLEMENT + (f" (règlement : {note})" if note else "")
+            return CLASSE_AU_FERMEE, motif
+        return None, ""
     # zone calibrée portant une note d'ouverture explicite → DOCUMENTÉE, non marquée.
     blob = json.dumps(getattr(r, "raw", {}) or {}, ensure_ascii=False) + " " + " ".join(r.notes or [])
     if r.calibree and _OUVERTURE_KW.search(blob):
