@@ -48,5 +48,22 @@ communes:
       "2AUc": {ouverture: conditionnelle_etat_tiers}
     defaut: {ouverture: conditionnelle_operation}
 
+  # --- Saint-Benoît (97410) : AUa/AUb OUVERTES (1AU) — sourcé fiches annexes 2020 (arbitrage Vic) ---
+  # Le chiffre des libellés AUa5/AUb19 = n° de FICHE ANNEXE du règlement (pas un sous-secteur). Règle
+  # d'ouverture verbatim (fiches n°05 Le Conardel / n°19 chemin Baptiste) : « constructions acceptées
+  # dans le cadre d'une opération d'ensemble OU après réalisation des équipements internes » = 1AU
+  # ouverte, aucune modification du PLU requise. Servie + mention. Planchers NON portables (hauteurs par
+  # secteur graphique → zones:{} vide dans plu_saint_benoit, délibéré) — pas de au_sous_plancher.
+  # RÉSERVE FRAÎCHEUR (gravée) : Sourcé sur version 20200206 (= notre donnée GPU). Modifs simplifiées
+  # n°2 (approuvée 04/07/2023) et n°3 (04/09/2024) touchant U/AU NON intégrées → a_verifier en vigueur.
+  "97410":
+    nom: "Saint-Benoît"
+    statut_version: "Sourcé v.20200206 (notre donnée) ; a_verifier v. en vigueur — modifs n°2/n°3 U+AU non intégrées"
+    zones:
+      AUe: {ouverture: fermee}   # habitat interdit par le texte (Art. AU 2) — pas une opportunité logement
+      AUp: {ouverture: fermee}
+    defaut: {ouverture: conditionnelle_operation}   # AUa/AUb ouvertes (1AU), opération d'ensemble
+    note: "AUb19 (chemin Baptiste, SEMAC Amaryllis II) : partie en PPR R1 inondation non constructible — flag fiche."
+
 # Saint-Louis (97414) : NON inclus — source du règlement indisponible → a_verifier, pas « pas de seuil »
 # (arbitrage Vic). À reprendre quand la source revient.

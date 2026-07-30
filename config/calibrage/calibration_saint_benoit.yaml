@@ -19,8 +19,9 @@ meta:
 zones_au:
   familles: [AUa, AUb, AUe, AUp]
   particularite: "« zone AU n°1 » = zone d'activités économiques de Beauvallon (AU 1, champ p.19)"
-  ouverture: a_verifier
-  ouverture_note: "le format à deux colonnes empêche l'extraction fiable de l'article d'ouverture au scan ; NE PAS déduire par convention. À lire à l'œil (ou OCR colonne) : Article AU-1/AU-2 « caractère de la zone »."
+  ouverture: conditionnelle_operation   # AUa/AUb OUVERTES (1AU) — LU à l'œil le 30/07/2026 (fitz)
+  ouverture_statut: "Sourcé v.20200206 ; a_verifier v. en vigueur (modifs simplifiées n°2 04/07/2023 + n°3 04/09/2024 U+AU non intégrées au GPU)"
+  ouverture_note: "Verbatim fiches ANNEXES n°05 (AUa Le Conardel) et n°19 (AUb chemin Baptiste) : « constructions acceptées dans le cadre d'une opération d'ensemble OU après réalisation des équipements internes » = 1AU ouverte, aucune modification du PLU requise. Le chiffre du libellé (AUa5/AUb19) = n° de fiche annexe, pas un sous-secteur. AUe/AUp = habitat interdit (fermées). AUb19 : partie en PPR R1. Résolu par calibration/au_ouverture_planchers.yaml 97410."
   planchers:
     statut: a_verifier
     note: "aucun plancher densité log/ha capté ; les « X logements » du texte sont des seuils d'équipement/stationnement (aire de jeux ≥20 lgts, stationnement ≤5 lgts), pas des planchers de densité. À confirmer à l'œil."
