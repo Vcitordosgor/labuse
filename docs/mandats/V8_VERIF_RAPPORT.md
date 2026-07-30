@@ -512,3 +512,50 @@ laisser les 107 dimensions-seules servies-avec-mention. À toi de trancher a / b
 + `ouverture_src`), priorité aux 4 communes à brûlantes, garde-fou `a_verifier` si illisible.
 
 *Rien exposé, rien basculé, rien déclassé. q_v7_defisc servi intact.*
+
+---
+# AU-OUVERTURE — arbitrage HYBRIDE (mesures avant application, RIEN appliqué)
+
+## Mesure 1 — split des 12 brûlantes non documentées : CONFIRMÉ
+- **11 génériques → à DÉCLASSER** : Saint-Benoît AUb19 (×6 : CD0905/0907/0939/0943/0897/0934/0893
+  — en fait 7), AUa5 (AS1425) ; La Possession AUAv (BN3751), AUBm (AP1496) ; Bras-Panon AU (AD1052).
+- **1 dimensions-seules → SERVIE + mention** : Saint-Denis AUm, `97411000KA0296`.
+(Les 20 autres brûlantes en AU sont en zones DOCUMENTÉES — hors périmètre ; dont la 2AUd golden,
+gérée par le tête-de-liste en q_v8.)
+
+## Mesure 2 — la brûlante AUm Saint-Denis
+`97411000KA0296`, **rang 7 / percentile 100** (7ᵉ parcelle servie de l'île). AUm = « dimensions
+seules » : YAML a extrait Art. AUm.9 (emprise 50 %, p.98), AUm.10 (hauteur he 7/hf 10, p.98),
+AUm.6/7 (reculs), AUm.13 (pleine terre) — **tous dimensionnels, aucun Art. AUm.1/2** (ouverture).
+Vérifiable à la main : une brûlante de rang 7 sur une AU au statut non lu, servie AVEC mention.
+
+## Mesure 3 — PROPOSITION de libellé (NON appliqué, attend ton feu vert)
+Nouveau tier/label **`declasse_au_statut_inconnu`** (26 car., varchar 32 OK), DISTINCT de
+`declasse_zone_fermee` (règlement ferme) et `declasse_non_constructible` (physique) : ici le statut
+est INCONNU, la zone n'est pas fermée.
+- **Motif fiche (déclassées, 313 génériques)** : « Zone à urbaniser — ouverture à l'urbanisation
+  NON VÉRIFIÉE, statut inconnu. Le règlement de cette zone n'a pas été lu. Déclassement TEMPORAIRE
+  jusqu'à vérification de l'article d'ouverture. » (Absent.)
+- **Mention fiche (servies, 107 dimensions-seules)** — texte imposé Vic : « Zone à urbaniser —
+  ouverture non vérifiée. Le règlement fixe des règles de construction pour cette zone, mais son
+  ouverture à l'urbanisation n'a pas été confirmée. Vérifiez auprès de la commune avant tout
+  engagement. » (Absent, jamais Estimé.)
+
+### Plan d'intégration (esquisse, non exécutée)
+1. Table `parcel_au_statut(idu, classe 'générique'|'dimensions_seules', zone_lib, computed_at)` —
+   bâtie comme `parcel_constructibilite` (le classifieur = resolve_zone + zone AU + ouverture non
+   documentée). Lit le run servi Q_A_RUN_LABEL, suit toute bascule.
+2. `constructibilite.py` : constante `DECLASSE_AU_STATUT_INCONNU`.
+3. `statuts.py::assign_tiers` : classe='générique' → tier `declasse_au_statut_inconnu` (prime sur
+   tiers normaux, sous `ecartee`) ; classe='dimensions_seules' → RESTE servi (mention seule).
+4. `flash/data.py::_constructibilite` : les DEUX textes ci-dessus selon la classe, étiquette Absent.
+Effet mesuré (option hybride) : **313 déclassées** (11 brûlantes, 126 chaudes, 176 réserve) ;
+**107 servies + mention** (1 brûlante AUm, 46 chaudes, 60 réserve). Temporaire par construction :
+dès l'article lu, la parcelle remonte ou tombe définitivement.
+
+## Ordre de lecture des règlements (Vic ce matin)
+1. **Saint-Benoît** (AUb19 = 7 brûlantes / 12). 2. **Saint-Denis** (AUm brûlante + AUh carte 15 —
+un seul règlement résout les deux). 3. **La Possession** (AUAv, AUBm). 4. **Bras-Panon** (AU).
+
+*Rien appliqué, rien exposé, rien basculé, table servie intouchée. q_v7_defisc sert toujours.
+Attend : feu vert sur le libellé `declasse_au_statut_inconnu` + verbatims des règlements.*
