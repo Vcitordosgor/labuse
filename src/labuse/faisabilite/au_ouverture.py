@@ -74,20 +74,22 @@ def zone_regime(insee: str | None, zone_lib: str | None) -> dict | None:
     """Régime d'ouverture + plancher d'une zone : {ouverture, min_log?, densite_log_ha?}.
     Match par PRÉFIXE de `zone_lib` (le plus long d'abord). None = commune/zone non calibrée.
 
-    Le match est INSENSIBLE À LA CASSE : la convention de casse du suffixe varie d'un SIG communal
-    à l'autre — Saint-Leu stocke ses zones en MAJUSCULES (AUA/AUB/AUC/AUS) là où le règlement (et
-    donc la calibration) écrit AUa/AUb/AUc/AUs. Sans cette normalisation, les 124 parcelles AUS
-    (fermée) de Saint-Leu retombaient sur le défaut « conditionnelle » et étaient servies à tort."""
+    Le match passe par `zone_norm.normalize_key` (POINT DE CALCUL UNIQUE, pt2.2) : insensible à la
+    casse / aux accents / aux séparateurs, mais le RANG DE PHASAGE est conservé (1AUb ≠ 2AUb). La
+    convention de casse du suffixe varie d'un SIG à l'autre — Saint-Leu stocke AUA/AUB/AUC/AUS là où
+    la calibration écrit AUa/AUb/AUc/AUs ; sans normalisation, ses 124 AUS (fermée) retombaient sur le
+    défaut « conditionnelle » et étaient servies à tort."""
     if not insee or not zone_lib:
         return None
     com = _config().get(str(insee))
     if not com:
         return None
-    zl = zone_lib.strip().lower()
+    from .zone_norm import normalize_key
+    zk = normalize_key(zone_lib)
     zones = com.get("zones", {}) or {}
-    # préfixe le plus spécifique (plus long) d'abord — « 1AUa » avant « AUa »
-    for pref in sorted(zones, key=len, reverse=True):
-        if zl.startswith(pref.lower()):
+    # préfixe le plus spécifique (plus long, normalisé) d'abord — « 1AUa » avant « AUa »
+    for pref in sorted(zones, key=lambda p: len(normalize_key(p)), reverse=True):
+        if zk.startswith(normalize_key(pref)):
             return zones[pref]
     return com.get("defaut")
 

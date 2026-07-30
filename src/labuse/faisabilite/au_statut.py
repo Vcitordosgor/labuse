@@ -59,11 +59,21 @@ def statut_peremption(jours_plus_ancien: int) -> str:
         return STATUT_WARN
     return STATUT_OK
 
-#: Un signal d'OUVERTURE dans les notes/brut de la zone calibrée = zone DOCUMENTÉE (non marquée).
-#: Mots-clés du caractère de zone AU (Art. 1/2) et de la subordination à ouverture / modification.
+#: Preuve d'OUVERTURE dans les notes/brut d'une zone calibrée = zone DOCUMENTÉE (non marquée).
+#: RESSERRÉ (pt2.3, Vic) : on exige une PHRASE d'ouverture, pas un mot-clé incident. L'ancienne version
+#: (« urbanisation | caractère | 1AU | modification | gel »…) déclenchait sur des occurrences fortuites —
+#: ex. « Urbanisation » trouvé dans une note de HAUTEUR (« se reporter au règlement des zones URBAINES »)
+#: à Saint-Louis : un mot n'est pas une lecture. On requiert désormais l'énoncé d'un RÉGIME d'ouverture :
+#: « ouverte à l'urbanisation », subordination à une procédure, opération d'ensemble, modification/révision
+#: du PLU. Ce qui ne matche plus repasse en NON documentée → marquée (dimensions_seules / fermée).
 _OUVERTURE_KW = re.compile(
-    r"caract[èe]re|ouvert|urbanisation|OAP|op[ée]rations? d.ensemble|modification"
-    r"|1AU|2AU|AU ?1|AU ?2|subordonn|transition|gel", re.I)
+    r"ouvert\w*\s+à\s+l['’\s]*urbanisation"                     # « ouverte à l'urbanisation »
+    r"|ouverture\s+(à\s+l['’\s]*urbanisation|de\s+la\s+zone)"    # « ouverture à l'urbanisation / de la zone »
+    r"|subordonn\w+\s+(à|au|aux)\b"                              # « subordonnée à une modification »
+    r"|op[ée]rations?\s+d['’\s]*(am[ée]nagement\s+d['’\s]*)?ensemble"  # opération (d'aménagement) d'ensemble
+    r"|(modification|r[ée]vision)\s+\w*\s*du\s+PLU"             # « modification du PLU »
+    r"|phasage\b",
+    re.I)
 
 #: Motif fermée-au-règlement (arbitrage Vic pt2.1) — une zone AU que le règlement FERME et que le
 #: produit sert quand même. Le préfixe de phasage (1AU/2AU/3AU) échappe au test U/AU de la cascade →

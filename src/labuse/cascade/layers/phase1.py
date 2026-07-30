@@ -240,11 +240,15 @@ class ZonagePluGpuLayer(Layer):
         pos_p = tuple(params.get("positive_prefixes", []))
         an_p = tuple(params.get("hard_exclude_prefixes", []))
 
+        # POINT DE CALCUL UNIQUE (pt2.2) : famille via zone_norm (casse/accents/phasage — « 2AUc » se
+        # classe AU, jamais « autre »). No-op sur les données actuelles (subtype = famille sans chiffre),
+        # mais aligné sur resolve_zone/zone_regime et à l'épreuve d'un typezone phasé un jour.
+        from ...faisabilite.zone_norm import est_famille
+
         def classe(libelle: str) -> str:
-            up = libelle.upper()
-            if any(up.startswith(p) for p in pos_p):
+            if est_famille(libelle, pos_p):
                 return "uau"
-            if any(up.startswith(p) for p in an_p):
+            if est_famille(libelle, an_p):
                 return "an"
             return "autre"
 
