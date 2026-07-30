@@ -84,6 +84,35 @@ def seuil_surface_m2(regime: dict) -> float | None:
     return float(ml) / float(d) * 10000.0
 
 
+#: Longueur MINIMALE de frontière commune pour qu'un voisin compte comme assemblable (Vic 30/07) :
+#: une contiguïté PONCTUELLE (contact par un coin) n'est pas une contiguïté utile. En mètres (SRID 2975).
+CONTIGUITE_MIN_M = 3.0
+
+
+def voisins_assemblables(session, idu: str, zone_lib: str, seuil_m2: float) -> int:
+    """Nombre de voisins CONTIGUS de MÊME zone (frontière commune ≥ CONTIGUITE_MIN_M, pas un contact
+    ponctuel) qui, assemblés à la parcelle, permettraient d'atteindre `seuil_m2`. Lecture seule.
+
+    Renvoie 0 si l'assemblage des voisins linéairement contigus n'atteint pas le seuil. La mesure est
+    GÉOMÉTRIQUE — elle ne dit rien de l'ACQUÉRABILITÉ (propriété) : cf. dette #11."""
+    from sqlalchemy import text
+    row = session.execute(text("""
+        WITH cible AS (SELECT geom_2975 g, ST_Area(geom_2975) surf FROM parcels WHERE idu=:idu)
+        SELECT c.surf,
+               COALESCE(SUM(ST_Area(v.geom_2975)), 0) AS voisins_surf,
+               count(v.idu) AS n
+        FROM cible c
+        LEFT JOIN parcel_zone_plu vz ON vz.zone_lib=:zl
+        LEFT JOIN parcels v ON v.idu=vz.idu AND v.idu<>:idu
+             AND ST_Length(ST_CollectionExtract(ST_Intersection(v.geom_2975, c.g), 2)) >= :minm
+        GROUP BY c.surf
+    """), {"idu": idu, "zl": zone_lib, "minm": CONTIGUITE_MIN_M}).first()
+    if not row:
+        return 0
+    surf, voisins_surf, n = row
+    return int(n) if (surf + voisins_surf) >= seuil_m2 else 0
+
+
 def classify(insee: str | None, zone_lib: str | None, surface_m2: float | None,
              voisins_assemblables: int | None = None) -> tuple[str | None, str] | None:
     """Classe une parcelle AU en (statut, mention). None = zone non calibrée (pas de marquage).
