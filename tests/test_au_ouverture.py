@@ -33,13 +33,23 @@ def test_seuil_surface():
 
 def test_sous_plancher_servie_jamais_declassee():
     # trop petite → au_sous_plancher (SERVIE, pas dans DECLASSE_LABELS)
-    statut, mention = classify("97423", "1AUc", 1000, voisins_assemblables=2)
+    vois = {"libres": 2, "reserve": 0, "demolition": 0,
+            "atteint_sans_demo": True, "atteint_avec_demo": True}
+    statut, mention = classify("97423", "1AUc", 1000, voisins=vois)
     assert statut == AU_SOUS_PLANCHER
     assert AU_SOUS_PLANCHER not in DECLASSE_LABELS          # servie
     assert "assemblage" in mention and "1500 m²" in mention  # 2500-1000 manquants
-    assert "2 parcelle(s) voisine(s)" in mention             # la SOLUTION est servie
+    assert "2 parcelle(s) voisine(s) libre(s)" in mention    # la SOLUTION est servie
     # assez grande → servie conditionnelle (pas sous-plancher)
     assert classify("97423", "1AUc", 3000)[0] == "conditionnelle_operation"
+
+
+def test_mention_distingue_demolition():
+    # voisines nécessitant démolition → mention le DIT (dette #4 : le bâti nuance, pas de silence)
+    vois = {"libres": 0, "reserve": 0, "demolition": 3,
+            "atteint_sans_demo": False, "atteint_avec_demo": True}
+    _, mention = classify("97413", "AUc", 2000, voisins=vois)
+    assert "démolition" in mention
 
 
 def test_densite_seule_pas_de_seuil():

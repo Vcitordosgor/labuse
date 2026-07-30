@@ -40,16 +40,28 @@ MOTIF_ETAT_TIERS = (
 
 
 def _mention_sous_plancher(min_log: int, densite: float, min_surf_m2: float,
-                           surface_m2: float, voisins: int | None) -> str:
-    """Mention `au_sous_plancher` — SERVIE, avec le problème ET sa solution (exigence Vic)."""
+                           surface_m2: float, voisins: dict | None) -> str:
+    """Mention `au_sous_plancher` — SERVIE, avec le problème ET sa solution (exigence Vic). La solution
+    distingue voisines LIBRES et voisines nécessitant une DÉMOLITION (dette #4 : le bâti nuance, ne
+    disqualifie pas)."""
     manquant = max(0, round(min_surf_m2 - surface_m2))
     txt = (f"Cette parcelle ({round(surface_m2)} m²) est trop petite pour l'opération d'ensemble "
            f"minimale imposée par le règlement ({min_log} logements à {densite:g} log/ha, soit "
-           f"{round(min_surf_m2)} m² minimum). Elle n'est pas constructible SEULE — il manque "
-           f"{manquant} m² — mais peut l'être en assemblage avec une ou plusieurs parcelles voisines.")
-    if voisins:                                    # servir la SOLUTION, pas seulement le problème
-        txt += (f" {voisins} parcelle(s) voisine(s) de la même zone permettrai(en)t d'atteindre le "
-                f"seuil.")
+           f"{round(min_surf_m2)} m² minimum). Il manque {manquant} m². Elle n'est pas constructible "
+           f"SEULE, mais peut l'être en assemblage avec une ou plusieurs parcelles voisines.")
+    if voisins:                                    # servir la SOLUTION nuancée, pas seulement le problème
+        libre = voisins["libres"] + voisins["reserve"]
+        demo = voisins["demolition"]
+        if libre and voisins.get("atteint_sans_demo"):
+            txt += (f" {libre} parcelle(s) voisine(s) libre(s) ou peu bâtie(s) de la même zone "
+                    f"permettrai(en)t d'atteindre le seuil.")
+        elif libre or demo:
+            bits = []
+            if libre:
+                bits.append(f"{libre} voisine(s) libre(s)")
+            if demo:
+                bits.append(f"{demo} voisine(s) nécessitant une démolition")
+            txt += " L'atteinte du seuil suppose : " + " et ".join(bits) + "."
     return txt
 
 
@@ -84,37 +96,62 @@ def seuil_surface_m2(regime: dict) -> float | None:
     return float(ml) / float(d) * 10000.0
 
 
-#: Longueur MINIMALE de frontière commune pour qu'un voisin compte comme assemblable (Vic 30/07) :
-#: une contiguïté PONCTUELLE (contact par un coin) n'est pas une contiguïté utile. En mètres (SRID 2975).
+#: Longueur MINIMALE de frontière commune (contact PONCTUEL par un coin ≠ contiguïté utile). m, SRID 2975.
 CONTIGUITE_MIN_M = 3.0
+#: Filtre 2 — un DÉLAISSÉ (parcelle résiduelle minuscule) ne compte pas comme voisin assemblable. m².
+DELAISSE_MAX_M2 = 50.0
+#: Filtre 3 (Option A, mesurée) — la frontière commune doit représenter au moins cette PART du
+#: périmètre du VOISIN : un contact de 3,9 m sur un géant de 25 000 m² (ratio ~0,3 %) est marginal ;
+#: le même sur 400 m² (~5 %) est une vraie limite mitoyenne. Exclut chirurgicalement les géants-sliver.
+FRONTIERE_PART_PERIMETRE_MIN = 0.02
+#: Filtre 1 — le bâti ne disqualifie PAS par principe (dette #4), il NUANCE : trois régimes.
+BATI_LIBRE_MAX = 0.20        # < 20 % emprise → voisin LIBRE (retenu franchement)
+BATI_RESERVE_MAX = 0.50      # 20-50 % → retenu AVEC RÉSERVE ; > 50 % → démolition nécessaire
 
 
-def voisins_assemblables(session, idu: str, zone_lib: str, seuil_m2: float) -> int:
-    """Nombre de voisins CONTIGUS de MÊME zone (frontière commune ≥ CONTIGUITE_MIN_M, pas un contact
-    ponctuel) qui, assemblés à la parcelle, permettraient d'atteindre `seuil_m2`. Lecture seule.
+def voisins_assemblables(session, idu: str, zone_lib: str, seuil_m2: float) -> dict:
+    """Répartit les voisins CONTIGUS de même zone en trois régimes de bâti et calcule si l'assemblage
+    atteint `seuil_m2`. Filtres : frontière ≥ CONTIGUITE_MIN_M ET ≥ FRONTIERE_PART_PERIMETRE_MIN du
+    périmètre du voisin (exclut le géant-sliver) ; délaissés < DELAISSE_MAX_M2 ignorés.
 
-    Renvoie 0 si l'assemblage des voisins linéairement contigus n'atteint pas le seuil. La mesure est
-    GÉOMÉTRIQUE — elle ne dit rien de l'ACQUÉRABILITÉ (propriété) : cf. dette #11."""
+    Renvoie {libres, reserve, demolition, atteint_sans_demo, atteint_avec_demo}. Le bâti ne disqualifie
+    pas (dette #4) : > 50 % = « démolition nécessaire », pas un silence. Mesure GÉOMÉTRIQUE — ne dit
+    rien de l'ACQUÉRABILITÉ (propriété) : cf. dette #11. Lecture seule."""
     from sqlalchemy import text
-    row = session.execute(text("""
+    rows = session.execute(text("""
         WITH cible AS (SELECT geom_2975 g, ST_Area(geom_2975) surf FROM parcels WHERE idu=:idu)
-        SELECT c.surf,
-               COALESCE(SUM(ST_Area(v.geom_2975)), 0) AS voisins_surf,
-               count(v.idu) AS n
+        SELECT ST_Area(v.geom_2975) AS vsurf,
+               COALESCE((SELECT SUM(ST_Area(ST_Intersection(b.geom_2975, v.geom_2975)))
+                         FROM spatial_layers b WHERE b.kind='batiment'
+                           AND ST_Intersects(b.geom_2975, v.geom_2975)), 0) AS bati
         FROM cible c
-        LEFT JOIN parcel_zone_plu vz ON vz.zone_lib=:zl
-        LEFT JOIN parcels v ON v.idu=vz.idu AND v.idu<>:idu
-             AND ST_Length(ST_CollectionExtract(ST_Intersection(v.geom_2975, c.g), 2)) >= :minm
-        GROUP BY c.surf
-    """), {"idu": idu, "zl": zone_lib, "minm": CONTIGUITE_MIN_M}).first()
-    if not row:
-        return 0
-    surf, voisins_surf, n = row
-    return int(n) if (surf + voisins_surf) >= seuil_m2 else 0
+        JOIN parcel_zone_plu vz ON vz.zone_lib=:zl
+        JOIN parcels v ON v.idu=vz.idu AND v.idu<>:idu
+           AND ST_Length(ST_CollectionExtract(ST_Intersection(v.geom_2975, c.g), 2)) >= :minm
+           AND ST_Length(ST_CollectionExtract(ST_Intersection(v.geom_2975, c.g), 2))
+               >= :part * ST_Perimeter(v.geom_2975)
+           AND ST_Area(v.geom_2975) >= :delaisse
+    """), {"idu": idu, "zl": zone_lib, "minm": CONTIGUITE_MIN_M,
+           "part": FRONTIERE_PART_PERIMETRE_MIN, "delaisse": DELAISSE_MAX_M2}).all()
+    surf = session.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu=:i"),
+                           {"i": idu}).scalar() or 0.0
+    libres = reserve = demo = 0
+    surf_hors_demo = float(surf); surf_avec_demo = float(surf)
+    for vsurf, bati in rows:
+        ratio = (bati / vsurf) if vsurf else 0.0
+        if ratio < BATI_LIBRE_MAX:
+            libres += 1; surf_hors_demo += vsurf; surf_avec_demo += vsurf
+        elif ratio <= BATI_RESERVE_MAX:
+            reserve += 1; surf_hors_demo += vsurf; surf_avec_demo += vsurf
+        else:
+            demo += 1; surf_avec_demo += vsurf          # à démolir : compte seulement « avec démo »
+    return {"libres": libres, "reserve": reserve, "demolition": demo,
+            "atteint_sans_demo": surf_hors_demo >= seuil_m2,
+            "atteint_avec_demo": surf_avec_demo >= seuil_m2}
 
 
 def classify(insee: str | None, zone_lib: str | None, surface_m2: float | None,
-             voisins_assemblables: int | None = None) -> tuple[str | None, str] | None:
+             voisins: dict | None = None) -> tuple[str | None, str] | None:
     """Classe une parcelle AU en (statut, mention). None = zone non calibrée (pas de marquage).
 
     - fermée                 → (DECLASSE_AU_FERMEE, motif)
@@ -134,6 +171,6 @@ def classify(insee: str | None, zone_lib: str | None, surface_m2: float | None,
         seuil = seuil_surface_m2(regime)
         if seuil is not None and surface_m2 is not None and surface_m2 < seuil:
             return AU_SOUS_PLANCHER, _mention_sous_plancher(
-                regime["min_log"], regime["densite_log_ha"], seuil, surface_m2, voisins_assemblables)
+                regime["min_log"], regime["densite_log_ha"], seuil, surface_m2, voisins)
         return OUVERTURE_CONDITIONNELLE, MENTION_CONDITIONNELLE      # servie + mention, taille OK
     return None
