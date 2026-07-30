@@ -72,17 +72,22 @@ def _config() -> dict:
 
 def zone_regime(insee: str | None, zone_lib: str | None) -> dict | None:
     """Régime d'ouverture + plancher d'une zone : {ouverture, min_log?, densite_log_ha?}.
-    Match par PRÉFIXE de `zone_lib` (le plus long d'abord). None = commune/zone non calibrée."""
+    Match par PRÉFIXE de `zone_lib` (le plus long d'abord). None = commune/zone non calibrée.
+
+    Le match est INSENSIBLE À LA CASSE : la convention de casse du suffixe varie d'un SIG communal
+    à l'autre — Saint-Leu stocke ses zones en MAJUSCULES (AUA/AUB/AUC/AUS) là où le règlement (et
+    donc la calibration) écrit AUa/AUb/AUc/AUs. Sans cette normalisation, les 124 parcelles AUS
+    (fermée) de Saint-Leu retombaient sur le défaut « conditionnelle » et étaient servies à tort."""
     if not insee or not zone_lib:
         return None
     com = _config().get(str(insee))
     if not com:
         return None
-    zl = zone_lib.strip()
+    zl = zone_lib.strip().lower()
     zones = com.get("zones", {}) or {}
     # préfixe le plus spécifique (plus long) d'abord — « 1AUa » avant « AUa »
     for pref in sorted(zones, key=len, reverse=True):
-        if zl.startswith(pref):
+        if zl.startswith(pref.lower()):
             return zones[pref]
     return com.get("defaut")
 
@@ -173,3 +178,43 @@ def classify(insee: str | None, zone_lib: str | None, surface_m2: float | None,
                 regime["min_log"], regime["densite_log_ha"], seuil, surface_m2, voisins)
         return OUVERTURE_CONDITIONNELLE, MENTION_CONDITIONNELLE      # servie + mention, taille OK
     return None
+
+
+def build_au_ouverture(session, insee_list: list[str]) -> dict:
+    """Peuple `parcel_au_statut` (classe=statut, motif=mention) pour les parcelles AU des communes
+    calibrées. Les voisins assemblables ne sont calculés QUE pour les `au_sous_plancher` (coûteux).
+    Renvoie le décompte par statut. Lecture/écriture parcel_au_statut UNIQUEMENT (jamais la table
+    servie). Point d'arrêt : peupler ≠ basculer."""
+    from sqlalchemy import text
+    from .constructibilite import AU_SOUS_PLANCHER
+    rows = session.execute(text("""
+        SELECT p.id, p.idu, substring(p.idu from 1 for 5) AS insee, z.zone_lib,
+               ST_Area(p.geom_2975) AS surf
+        FROM parcels p JOIN parcel_zone_plu z ON z.idu=p.idu
+        WHERE substring(p.idu from 1 for 5) = ANY(:ins)
+          AND (z.zone_fam='AU' OR z.zone_lib ~ '^[0-9]?AU')
+    """), {"ins": insee_list}).all()
+    from collections import Counter
+    compte = Counter()
+    for pid, idu, insee, zl, surf in rows:
+        regime = zone_regime(insee, zl)
+        if regime is None:
+            continue
+        # pré-classement pour savoir s'il faut calculer les voisins (uniquement sous-plancher)
+        pre = classify(insee, zl, float(surf) if surf is not None else None)
+        vois = None
+        if pre and pre[0] == AU_SOUS_PLANCHER:
+            seuil = seuil_surface_m2(regime)
+            vois = voisins_assemblables(session, idu, zl, seuil)
+        res = classify(insee, zl, float(surf) if surf is not None else None, voisins=vois)
+        if res is None:
+            continue
+        statut, motif = res
+        compte[statut] += 1
+        session.execute(text("""
+            INSERT INTO parcel_au_statut (parcel_id, idu, classe, zone_lib, motif)
+            VALUES (:pid, :idu, :c, :zl, :m)
+            ON CONFLICT (parcel_id) DO UPDATE SET classe=EXCLUDED.classe,
+              zone_lib=EXCLUDED.zone_lib, motif=EXCLUDED.motif
+        """), {"pid": pid, "idu": idu, "c": statut, "zl": zl, "m": motif})
+    return dict(compte)
