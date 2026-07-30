@@ -483,3 +483,32 @@ applique free_m2≥500/rad≥9). **La compacité est un CONTINUUM lisse** :
 aucune coupure naturelle → un seuil de compacité serait une coupe ARBITRAIRE dans un continuum, pas
 un séparateur. NE PAS graver 0,55. Si un plancher de compacité est voulu, il doit se justifier sur
 le critère de forme acceptable (revue visuelle), pas sur un « gap ».
+
+---
+# MANDAT AU-OUVERTURE (dette #7 devenue bloquante) — lecture seule
+
+## Étape 1 — cadrage : combien de règlements
+- **51 zones AU non documentées portent les 420 têtes de liste, sur 18 communes.**
+- **12 brûlantes → 6 zones / 4 communes seulement** : Saint-Benoît AUb19 (**7**), AUa5 (1) ;
+  La Possession AUBm (1), AUAv (1) ; Saint-Denis AUm (1) ; Bras-Panon AU (1). **→ 4 règlements**
+  résolvent les brûlantes.
+- Table complète (zone × commune × tier × classe) : mesure ci-dessous, triée brûlantes d'abord.
+
+## Étape 2 — deux positions d'attente (mesurées, non tranchées)
+Les 420 se scindent : **107 « dimensions seules »** (règles de construction extraites → vraisembl.
+OUVERTES) + **313 génériques** (statut PUR inconnu = cœur du risque).
+
+| | Option a — laisser servi + mention « ouverture non vérifiée » (Absent) | Option b — déclasser temporairement |
+|---|---|---|
+| parcelles changeant de tier | **0** | **420** (12 brûl, 172 ch, 236 rés) |
+| risque résiduel faux POSITIF | **420 servies non vérifiées** (12 brûlantes = risque max) | **0** |
+| coût | risque concentré sur 313 génériques | jusqu'à **420 faux NÉGATIFS** (107 dimensions-seules probabl. ouvertes, gelées à tort) |
+
+Observation (non-décision) : un HYBRIDE existe — déclasser les 313 génériques (inconnu pur),
+laisser les 107 dimensions-seules servies-avec-mention. À toi de trancher a / b / hybride.
+
+## Étape 3 — addendum calibration RÉDIGÉ (non exécuté)
+`docs/mandats/ADDENDUM_CALIBRATION_AU_OUVERTURE.md` : extraire Art. 1/2 des AU (champ `ouverture`
++ `ouverture_src`), priorité aux 4 communes à brûlantes, garde-fou `a_verifier` si illisible.
+
+*Rien exposé, rien basculé, rien déclassé. q_v7_defisc servi intact.*
