@@ -1,0 +1,40 @@
+{
+  "contexte": {
+    "idu": "97403000AR1423",
+    "commune": "Entre-Deux",
+    "zone_lib": "U",
+    "zone_fam": "U",
+    "surface_m2": 297.5
+  },
+  "marque": null,
+  "avant": {
+    "row": {
+      "tier": "chaude",
+      "rang": "27",
+      "contrib_d": "1.7468",
+      "event_date": "None",
+      "mult_base": "13.07"
+    },
+    "params": {
+      "n_entree": 2922,
+      "n_sortie": 4091,
+      "brulante_seuil_d": 1.4128,
+      "brulante_top_decile_d": 1.7517
+    }
+  },
+  "apres": {
+    "row": {
+      "tier": "brulante",
+      "rang": "27",
+      "contrib_d": "1.7468",
+      "event_date": "None",
+      "mult_base": "13.07"
+    },
+    "params": {
+      "n_entree": 3364,
+      "n_sortie": 4710,
+      "brulante_seuil_d": 1.2991,
+      "brulante_top_decile_d": 1.7464
+    }
+  }
+}

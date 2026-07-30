@@ -645,3 +645,59 @@ Selon la discipline golden : 7 ancres bougent (>2) → si tu valides l'effet, la
 champion + arène + arbitrage sur q_v8, puis MAJ de la référence golden en commit DÉDIÉ. Reste gelé
 derrière ta lecture des règlements (Saint-Denis d'abord). Aucune règle d'ouverture n'a été extraite
 ici : le déclassement est une POSITION D'ATTENTE, il tombe dès l'article lu (péremption).
+
+---
+# AU-OUVERTURE — suites d'arbitrage (30/07) : AR1423 enquêtée, golden GELÉ, péremption proposée
+
+## Enquête AR1423 — la seule montée hors mandat (mesurée à blanc, jetables purgés)
+`97403000AR1423` · **Entre-Deux** · zone **U** (constructible, PAS une AU) · 297,5 m² ·
+**NON marquée** `parcel_au_statut` (ce n'est pas elle qui est en cause, c'est un backfill).
+
+| | tier | rang île | contrib_d | événement | mult | seuil brûlante top-décile |
+|---|---|---|---|---|---|---|
+| AVANT (déclas. OFF) | chaude | **27** | 1,7468 | aucun | ×13,07 | **1,7517** |
+| APRÈS (déclas. ON) | brûlante | **27** | 1,7468 | aucun | ×13,07 | **1,7464** |
+
+**Motif exact de la montée : aucun changement de la parcelle.** Son signal est IDENTIQUE dans les
+deux états (rang 27, D 1,7468, sans événement, ×13). Seul le **seuil top-décile brûlante a baissé**
+de 1,7517 à 1,7464 — parce que des génériques à fort D ont quitté le pool des chaudes, abaissant le
+90ᵉ percentile. Le D d'AR1423 était coincé dans ce sliver : `1,7468 < 1,7517` (sous le seuil AVANT →
+pas brûlante, et sans événement pour bypasser) puis `1,7468 ≥ 1,7464` (au-dessus APRÈS → brûlante).
+Elle bascule d'un **Δ de 0,005**.
+
+**Pourquoi pas brûlante avant :** elle était DÉJÀ chaude rang 27 — une parcelle forte, jamais
+absente de la tête. Elle n'était pas brûlante uniquement parce qu'elle campait JUSTE sous la barre
+du top-décile. Ce n'est pas une opportunité nouvelle révélée par erreur ; c'est une **brûlante-limite
+par construction** (un seuil de percentile a une frontière, une parcelle s'y trouve). Défendable
+brûlante comme chaude. Comme rien n'est basculé, **aucune exposition n'a lieu** : à re-vérifier sur
+le pool FINAL lors du vrai re-run post-calibration. Artefact : `qa/au_ouverture/enquete_ar1423*.{py,json,log}`.
+
+## Golden — NON regravé (ton arbitrage)
+Aucun re-run champion, aucune MAJ de référence. La position d'attente reste EN BASE, NON SERVIE,
+jusqu'à la refonte de calibration (lecture intégrale des 24 règlements → vrais statuts → un seul
+re-run + arène + golden sur l'état final). Regraver sur un état transitoire = le faire deux fois.
+
+## Compteur de péremption — PROPOSITION de surfaçage (non implémenté)
+Constat juste : `labuse au-statut-compteur` est une commande → personne ne l'appelle → un
+déclassement oublié reste invisible. Il faut que le nombre remonte **de lui-même**, là où on regarde
+déjà, et qu'il **change de couleur avec l'âge** (un déclassement vieux n'est plus une info, c'est une
+dette). Trois surfaces, par ordre de priorité :
+
+1. **`/readyz` + `labuse doctor` (surface pollée en continu, la mieux adaptée).** Ajouter à
+   `state.readiness()` un champ NON bloquant `au_statut_en_attente : {n, jours_plus_ancien}`. Sous un
+   seuil d'âge (proposé **90 j**) c'est un simple compteur ; au-delà, la ligne passe en **WARN** avec
+   l'action « lire les règlements des zones AU restantes / re-calibrer ». Jamais un 503 (la position
+   d'attente est saine tant qu'elle est jeune) mais VISIBLE à chaque sonde — c'est la surface qui
+   « dit la vérité » sur l'état dégradé, exactement sa vocation.
+2. **Sortie de `score-v2` (chaque re-run).** Le run imprime déjà `tiers : …` ; ajouter une ligne
+   `⏳ N déclassées AU en attente de vérification, plus ancienne X j`. Quiconque relance un scoring
+   le voit — impossible de servir un run sans relire ce chiffre.
+3. **Garde-fou de péremption (5ᵉ garde, optionnel).** Dans l'esprit des « quatre gardes » : un run
+   qui s'apprête à servir des déclassées plus vieilles qu'un seuil DUR (p. ex. 180 j) émet un
+   avertissement bruyant au journal — le « temporaire » ne peut pas franchir 6 mois en silence.
+
+Recommandation : (1) comme socle (visible sans action humaine), (2) comme rappel à chaque run.
+Rien codé — j'attends ton choix.
+
+*Rien basculé, run servi q_v7_defisc intact, golden intact. En attente : archives GPU des 24
+communes pour la refonte de calibration.*
