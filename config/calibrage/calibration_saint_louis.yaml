@@ -1,0 +1,34 @@
+# CALIBRATION SAINT-LOUIS (97414) — version fournie 20250926 ; écart de version à confirmer
+# =============================================================================
+# ⚠ Vic a fourni 97414_PLU_20250926 (sept 2025). L'EN_VIGUEUR GPU est 97414_PLU_20251218 (déc 2025,
+# publié 22/07/2026) — 3 MOIS PLUS RÉCENT. Écart petit (probable modification), mais NON confirmé
+# identique. Le 20251218 n'est pas disponible (archive vide). Calibré sur le 20250926 fourni, avec
+# ce garde-fou : à re-vérifier contre le 20251218 (modif mineure ?) avant de servir.
+meta:
+  commune: "Saint-Louis"
+  insee: "97414"
+  statut: "Sourcé (version 20250926) — écart de version à confirmer"
+  source_type: "PDF fourni par Vic (~/Downloads/97414_PLU_20250926/)"
+  date_document: "2025-09-26 (version fournie)"
+  gpu_en_vigueur: "97414_PLU_20251218 (déc 2025) — 3 mois plus récent, à comparer (indisponible : archive vide)"
+  dates_base: "Prescrit 2009-03-31 / Arrêté 2013-06-10 / Approuvé ~2015"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [1AUa, 1AUe, 1AUst, 2AUst, AU, AUst]
+  ouverture: conditionnelle_etat_tiers
+  ouverture_src: "règlement p.8"
+  ouverture_verbatim: "[l'ouverture] ne pourra intervenir qu'une fois l'aménagement des zones 1AU indicée et 1AUst identifiées par pôle"
+  dependance: "phasage 2AU/AU → 1AU et 1AUst (par pôle)"
+  AUst_2AUst: "réserves strictes à l'urbanisation future"
+  planchers:
+    localisation: "OAP (densité) ; règlement 139 p : aucun plancher"
+    densite_min_log_ha: [30, 50]
+    densite_note: "30 et 50 log/ha selon les sites"
+    social: "non chiffré dans l'OAP"
+    src: "OAP 2025 (31 p, texte)"
+    prevalence: "OAP prévaut"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers (phasage 1AU/1AUst) + densité OAP 30/50 log/ha — absents du YAML"
+  a_verifier: "écart 20250926 vs 20251218 en vigueur ; densité par site ; dimensions U"
