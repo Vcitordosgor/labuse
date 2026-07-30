@@ -1,0 +1,28 @@
+# CALIBRATION SAINTE-SUZANNE (97420) — depuis les PDF fournis par Vic (~/Desktop/STE SUZANNE*.pdf)
+meta:
+  commune: "Sainte-Suzanne"
+  insee: "97420"
+  statut: "Sourcé (règlement) — OAP non fournie"
+  source_type: "PDF fournis par Vic (~/Desktop/) : « STE SUZANNE 2.pdf » = RÈGLEMENT ; « STE SUZANNE.pdf » = révision allégée n°4"
+  reglement: "STE SUZANNE 2.pdf (48 p) — Prescrit 2018-02-28 / Arrêté 2024-09-24 / Approuvé 2025 (= GPU EN_VIGUEUR 97420_PLU_20250929)"
+  revision_allegee: "STE SUZANNE.pdf (24 p) — Révision allégée n°4, secteur Grande Ravine / ravine Bertin (2AUc/AU) : modification SECTORIELLE partielle, à superposer au règlement"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [1AU, 1AUe, 2AU, 2AUe, AUa, AUb, AUc]
+  ouverture: conditionnelle_etat_tiers
+  ouverture_src: "règlement p.6"
+  ouverture_verbatim: "[l'ouverture] ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU indicée entrepris de la zone"
+  dependance: "phasage 2AU → 1AU (par zone)"
+  planchers:
+    statut: a_verifier
+    note: "aucun plancher densité au règlement (48 p, scan négatif) ; l'OAP (où vivent souvent les planchers) N'A PAS ÉTÉ FOURNIE"
+  oap:
+    contenu_extrait: non
+    presence: "NON FOURNIE — les 2 PDF sont règlement + révision allégée, pas l'OAP. L'OAP existe (chemin GPU 5_OAP/97420_OAP_20250929.pdf) mais n'a pas été transmise/accessible"
+    statut: "non_extrait (OAP manquante), PAS sans_objet"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  # rappel O12-REVUE : UB emprise « Sans objet » (config/plu_sainte_suzanne.yaml existant) — à recroiser
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers (phasage 1AU) + existence d'une révision allégée n°4 (Grande Ravine) — absents du YAML"
+  a_verifier: "OAP (densité/social — à fournir) ; contenu de la révision allégée n°4 (secteur Grande Ravine) ; dimensions U"
