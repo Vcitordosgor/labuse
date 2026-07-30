@@ -1,0 +1,74 @@
+# EXTRACTION GPU-PILOTE — PAQUET B (mission-critique). Communes à jour (sha concordant) :
+# 97415 Saint-Paul · 97416 Saint-Pierre · 97419 Sainte-Rose · 97423 Les Trois-Bassins.
+# Rien écrit en base, aucun YAML existant modifié. Pages = imprimées.
+
+saint_paul:
+  insee: "97415"
+  document: "97415_PLU_20251217 (en vigueur, sha concordant)"
+  reglement_taille: "413 p. (le plus volumineux)"
+  zones_au: "très granulaire, AU indicées AU1b..AU6st (secteurs × indices) — ~24 codes"
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU » (p.59)"
+  planchers: sans_objet
+  oap_densite_social: {statut: a_verifier, note: "densité/social non extraits en texte (OAP volumineuse)"}
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU + granularité AU indicée (AU1..AU6) que le YAML n'individualise pas"
+  a_verifier: "OAP (413 p, extraction à approfondir) ; ~24 sous-secteurs AU"
+
+saint_pierre:
+  insee: "97416"
+  document: "97416_PLU_20240625 (en vigueur, sha concordant)"
+  zonage_particulier: "AU à name=description (pas de code ^AU en base) — identité par subtype"
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« une modification ou révision du PLU sera nécessaire pour son ouverture à l'urbanisation » [si réseaux insuffisants] (p.8)"
+  planchers:
+    note: "planchers portés par l'OAP, pas le règlement"
+  oap_densite_social:
+    densites_log_ha: [50, 60, 80]
+    social_pct: [20, 25, 30, 40]
+    src: "OAP (2 fascicules) — densités et % social PAR SITE, comme L'Étang-Salé mais plus riches"
+    prevalence: "oap prévaut (à confirmer par le renvoi règlement→OAP par site)"
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "planchers de densité par site via OAP (50/60/80 log/ha) + % social (20-40%) — ABSENTS du YAML ; motif de prévalence OAP comme L'Étang-Salé"
+  a_verifier: "appariement zone↔site OAP (densité par polygone) ; ouverture par sous-secteur"
+
+sainte_rose:
+  insee: "97419"
+  document: "97419_PLU_20190504 (en vigueur, sha concordant ; PLU ancien 2019)"
+  ouverture_au: conditionnelle_etat_tiers
+  ouverture_src: "« leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU indicée entrepris, hors zone 1AUc » (p.7)"
+  dependance: "phasage : ouverture subordonnée à l'aménagement des zones 1AU indicée (sauf 1AUc)"
+  planchers: sans_objet
+  oap_densite_social: sans_objet
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "dépendance de phasage (1AU) + exception nommée (hors 1AUc) — le YAML ne porte pas de dépendance inter-zones"
+  a_verifier: "liste des zones 1AU indicée conditionnantes ; statut de 1AUc (l'exception)"
+
+les_trois_bassins:
+  insee: "97423"
+  document: "97423_PLU_20220602 (en vigueur, sha concordant)"
+  zones_au: [1AUa, 1AUb, 1AUc, 1AUe, 1AUt, 2AUa, 2AUb, 2AUc, AUs, AUse]
+  ouverture_au:
+    1AU: conditionnelle_operation
+    2AU: conditionnelle_etat_tiers
+    src: "« Pour les zones 2AU indicée, leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU » (p.65)"
+    dependance: "2AU s'ouvre après aménagement des 1AU (cas-type 2AU→1AU, comme Saint-Joseph)"
+  planchers:
+    densite_min_log_ha: {AUa: 35, AUb: 30, AUc: 20}
+    src: "« 35 logements par hectare en zone AUa ; 30 en AUb ; 20 en AUc » (p.66)"
+  oap_densite_social: {densite: "voir règlement", social_pct: [25, 40], src: "OAP"}
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "plancher de densité 35/30/20 log/ha (comme L'Étang-Salé, valeurs propres) + phasage 2AU→1AU — ABSENTS du YAML"
+  a_verifier: "appariement AUa/AUb/AUc ↔ 1AU/2AU ; AUse (sous-secteur)"
+
+# =============================================================================
+# SYNTHÈSE PAQUET B
+#  - Variété confirmée : conditionnelle_operation (Saint-Paul, Saint-Pierre), conditionnelle_etat_tiers
+#    (Sainte-Rose, Les Trois-Bassins 2AU). Planchers de densité PRÉSENTS ici : Les Trois-Bassins
+#    (35/30/20 log/ha au règlement), Saint-Pierre (50/60/80 via OAP). Saint-Paul : aucun plancher.
+#  - Le schéma décrit tout (ouverture 3 valeurs, dependance, planchers règlement OU OAP, prévalence).
+#    AUCUN cas non descriptible → pas d'arrêt.
+#  - name=description : Saint-Pierre (comme Bras-Panon/Entre-Deux) — lire l'ouverture dans la
+#    description, jamais le préfixe (garde-fou 21077).
+#  - sha : 4/4 concordant.
+# =============================================================================

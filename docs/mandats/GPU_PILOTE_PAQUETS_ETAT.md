@@ -66,14 +66,24 @@ copie locale de 2019 est périmée.)
 | 97410 | Saint-Benoît | 2020-02-06 |
 | 97418 | Sainte-Marie | 2025-11-26 |
 
-**D — AUCUN document GPU (`[]`) — probablement RNU, à confirmer par toi** — 3 :
-| INSEE | commune | note |
-|---|---|---|
-| 97409 | Saint-André | aucun PLU sur GPU (mais mémoire interne évoquait « PLU 2019 en vigueur » → à vérifier) |
-| 97413 | Saint-Leu | aucun PLU sur GPU |
-| 97417 | **Saint-Philippe** | aucun PLU sur GPU → **RNU cohérent** |
+**D — ABSENT du GPU (`[]`) → statut `a_verifier`, JAMAIS « RNU » par défaut** — 3 :
+Le GPU n'est PAS exhaustif (arbitrage Vic) : une commune peut avoir un PLU OPPOSABLE non publié
+(cas Saint-André : règlement 2019 dépublié, opposabilité inconnue, appel mairie en cours). Donc pour
+ces 3 : **motif « absent du GPU, opposabilité à confirmer auprès de la commune ».**
 
-→ **11 téléchargeables** (A+B+C) ; **3 sans doc GPU** (D) à trancher (RNU ou PLU publié ailleurs).
+| INSEE | commune | statut | parcelles servies (q_v7) | en tête | brûlantes |
+|---|---|---|---|---|---|
+| 97409 | Saint-André | **a_verifier** (PLU 2019 dépublié, opposabilité ?) | 22 600 | **413** | 7 |
+| 97413 | Saint-Leu | **a_verifier** (absent GPU, opposabilité ?) | 22 959 | **348** | 9 |
+| 97417 | Saint-Philippe | **RNU** (établi par la calibration Vic, PAS déduit du GPU vide) | 4 162 | 0 | 0 |
+
+**BLOQUANT mesuré** : Saint-André + Saint-Leu = **761 parcelles servies en tête (16 brûlantes)** sur
+des PLU absents du GPU et à l'opposabilité non confirmée. Significatif → à traiter comme bloquant
+(on sert de la tête de liste sur du zonage non vérifié). Saint-Philippe (RNU, 0 en tête) n'est pas un
+bloquant. Total servi île de référence : 77 718.
+
+→ **11 téléchargeables** (A+B+C, tu t'en occupes) ; **2 bloquants opposabilité** (Saint-André,
+Saint-Leu) ; **1 RNU** (Saint-Philippe).
 
 ## Les 9 déjà à jour — j'avance dessus (paquets de 4, ton feu vert)
 97401 Les Avirons · 97402 Bras-Panon · 97403 Entre-Deux · 97406 La Plaine-des-Palmistes ·
