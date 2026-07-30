@@ -26,7 +26,7 @@ zones_au:
   oap:
     contenu_extrait: non
     presence: "dossier `5_OAP` PRÉSENT mais VIDE dans le pack 2026 (0 fichier / 44 pdf au total)"
-    statut: "à_confirmer — dossier vide ≠ preuve d'absence (peut être pack réduit) ; NE PAS conclure sans_objet"
+    statut: "absente du document 2026 — DEUX PREUVES : (1) dossier 5_OAP vide dans le pack ; (2) la liste de pièces 2026 fournie par Vic ne contient QUE prescriptions + règlement, aucune orientation. sans_objet PROBABLE, mais INHABITUEL pour une grande commune → à confirmer (OAP publiée séparément ?)"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
   faits_nouveaux_vs_yaml: "statut d'ouverture AU (AUx fermée subordonnée révision/modification) ; version 2026 vs 2024 servie ; AUm/AUh ouverture par-secteur non explicite"
   a_verifier: "ouverture par secteur (AUm, AUh surtout) ; OAP (dossier vide) ; planchers ; dimensions U"
