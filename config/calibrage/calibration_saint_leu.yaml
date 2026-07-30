@@ -1,0 +1,52 @@
+# CALIBRATION SAINT-LEU (97413) — document OPPOSABLE, source MAIRIE (pas GPU)
+# =============================================================================
+# Tranché par la mairie (Vic) : le PLU 2007, dans sa VERSION CONSOLIDÉE, reste opposable. La révision
+# (arrêtée le 11/12/2025) N'EST PAS opposable (approbation reportée après enquête publique post-
+# élections). Calibré depuis le règlement en vigueur UNIQUEMENT.
+#
+# ⚠ GARDE-FOU DE FRAÎCHEUR : ce document sera REMPLACÉ au 2e semestre 2026 (révision en cours). À la
+# prochaine session, re-vérifier l'opposabilité (mairie) AVANT de servir ; ne pas laisser cette
+# calibration devenir périmée par oubli. Statut à re-confirmer : S2-2026.
+
+meta:
+  commune: "Saint-Leu"
+  insee: "97413"
+  statut: "Sourcé"
+  source_type: "site mairie (hors GPU — le GPU a perdu la trace du document)"
+  document: "Règlement écrit ACTUALISÉ, Août 2013 (consolidation du PLU approuvé le 26/02/2007)"
+  url_source: "https://www.saintleu.re/pdf/reglement-du-plu.pdf"
+  telechargement: "HTTP 200, application/pdf, 14 382 221 o, le 2026-07-30"
+  sha256_reglement: "5eefd2d2aba90ccd6ba3b9e498335c284613fe9dd605ac35fd7a194da729a1af"
+  pages: 134
+  zonage_opposable: "AGORAH idurba 97413_20070226 (368 zones) — zonage valide (confirmé mairie)"
+  remplacement_attendu: "2026-S2 (révision arrêtée 11/12/2025, NON opposable ; approbation reportée)"
+  NE_PAS_CONFONDRE_AVEC: "https://www.saintleu.re/pdf/plu/revision/3-reglements/3.2-reglement-ecrit/3.2-reglement-ecrit.pdf (projet de révision, non opposable)"
+  note_regles: "trame quasi identique à L'Étang-Salé (communes voisines, même structure de règlement)"
+
+# --- Zones à urbaniser (le cœur mission-1) ---
+zones_au:
+  # secteurs OUVRABLES (opération d'ensemble)
+  ouverture: conditionnelle_operation
+  ouverture_src: "« son ouverture à l'urbanisation peut être subordonnée à une modification ou une révision du PLU » (p.8)"
+  secteurs_ouvrables: [AUa, "AUa-rc", AUb, "AUb-rc", AUc, AUe, AUd, AUt]
+  operation_ensemble_requise: true
+  planchers:
+    logements_min: 10
+    densite_min_log_ha: {AUa: 30, "AUa-rc": 30, AUb: 30, "AUb-rc": 30, AUc: 15}
+    src: "« opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation avec une densité minimale de 30 log/ha (secteurs AUa, AUa-rc, AUb, AUb-rc) et 15 log/ha [secteur AUc], sauf dispositions particulières définies dans les Orientations d'Aménagement » (p.82)"
+    prevalence: "oap prévaut (renvoi explicite « sauf OAP »)"
+  vrd_charge_operateur: interne_et_externe
+  vrd_src: "« qu'ils soient internes ou externes à celle-ci, sont à la charge exclusive de l'opérateur » (p.82)"
+  # secteur FERMÉ (long terme)
+  AUs:
+    ouverture: fermee
+    ouverture_src: "p.81"
+    ouverture_verbatim: "Le secteur AUs couvre des espaces naturels réservés à l'urbanisation future. Ces espaces non équipés sont inconstructibles. Ils ne pourront être ouverts à l'urbanisation qu'à l'occasion d'une procédure de modification ou de révision"
+
+# --- Réserve gravée ---
+# Les 348 têtes / 9 brûlantes servies en Saint-Leu reposaient sur le REPLI GÉNÉRIQUE (calibree=False).
+# Cette calibration fournit les PLANCHERS + l'OUVERTURE + le VRD ; les hauteurs/emprises par zone U
+# restent à extraire (chapitres UA-UP, non lus ici) pour une calibration dimensionnelle complète
+# (phase 2bis) → tant que non fait, les dimensions restent génériques, mais l'ouverture et les
+# planchers sortent enfin du « deviné ».
+couverture: "AU (ouverture, planchers, VRD) extraits ; dimensions U (hauteurs/emprise) à extraire (phase 2bis)"
