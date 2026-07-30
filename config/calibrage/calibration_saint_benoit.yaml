@@ -1,0 +1,36 @@
+# CALIBRATION SAINT-BENOÎT (97410) — version OPPOSABLE 2020 confirmée (PROVISOIRE levé)
+# =============================================================================
+# Pièces fournies par Vic (~/Desktop/*STBENOIT_2020.pdf) = le PLU 2020, cohérent avec l'EN_VIGUEUR
+# GPU 97410_PLU_20200206. Doute de version LEVÉ : le règlement est COMPLET (sommaire U/AU/A/N, 49 p.)
+# et interne-cohérent (la date « 31/12/2021 » qu'il cite est une date-HORIZON du texte, pas la date
+# d'approbation ; la case cover « APPROUVE LE » vide est le gabarit habituel).
+meta:
+  commune: "Saint-Benoît"
+  insee: "97410"
+  statut: "Sourcé"
+  source_type: "PDF fournis par Vic (~/Desktop/01_REGLEMENT_ECRIT_STBENOIT_2020.pdf + 01_OAP + 02_ANNEXES)"
+  date_document: "2020 (PLU Saint-Benoît, = GPU EN_VIGUEUR 97410_PLU_20200206)"
+  sha256_reglement: "0dcce8876e0c17d5…"
+  sha256_oap: "12061c85358a37bc…"
+  pages_reglement: 49
+  redacteur: "Philippe BAFFERT (consultant, page 1) — FAMILLE BAFFERT (distincte de DUTEILH-PERRAU)"
+  format_reglement: "DEUX COLONNES (« Règles » opposables | « Explication » non opposable) — 4e angle mort du scan texte : les colonnes s'entrelacent, l'extraction par regex résiste."
+
+zones_au:
+  familles: [AUa, AUb, AUe, AUp]
+  particularite: "« zone AU n°1 » = zone d'activités économiques de Beauvallon (AU 1, champ p.19)"
+  ouverture: a_verifier
+  ouverture_note: "le format à deux colonnes empêche l'extraction fiable de l'article d'ouverture au scan ; NE PAS déduire par convention. À lire à l'œil (ou OCR colonne) : Article AU-1/AU-2 « caractère de la zone »."
+  planchers:
+    statut: a_verifier
+    note: "aucun plancher densité log/ha capté ; les « X logements » du texte sont des seuils d'équipement/stationnement (aire de jeux ≥20 lgts, stationnement ≤5 lgts), pas des planchers de densité. À confirmer à l'œil."
+  oap:
+    contenu_extrait: partiel
+    presence: "OAP fournie (6 p., texte) — ni densité ni % social chiffrés au scan (qualitative/minimale)"
+  vrd_charge_operateur: "a_verifier (non capté ; format deux colonnes)"
+  faits_nouveaux_vs_yaml: "version opposable 2020 confirmée + familles AU (AUa/AUb/AUe/AUp) + cabinet BAFFERT. Ouverture/planchers À LIRE À L'ŒIL (format deux colonnes)."
+  a_verifier: "ouverture AU + planchers + VRD (format deux colonnes, résiste au scan) — Saint-Benoît porte 7 brûlantes, lecture soignée nécessaire ; dimensions U"
+
+# NOTE : Saint-Benoît porte 7 des 12 brûlantes de la dette AU-OUVERTURE (zones AUb, label AGORAH
+# « AUb19 »). La version est maintenant confirmée (opposable 2020) ; il reste à LIRE l'ouverture au
+# format deux colonnes (mission-critique) — bloqué par le même type de limite que les OAP graphiques.
