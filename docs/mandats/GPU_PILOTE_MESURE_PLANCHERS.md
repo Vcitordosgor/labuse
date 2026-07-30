@@ -59,8 +59,39 @@ une éventuelle unité foncière assemblée.
 Point clé : `conditionnelle_etat_tiers` ne devient PAS « servie avec mention » — l'ouverture y dépend
 d'un ÉTAT EXTÉRIEUR (aménagement des 1AU) non lisible dans le règlement. Elle reste un vrai inconnu.
 
+---
+# ADDENDUM — arbitrage Vic : libellé 3 corrigé + 2 mesures
+
+## Libellé 3 CORRIGÉ (ne pas déclasser)
+Une parcelle sous plancher est une **candidate à l'assemblage** (LABUSE porte `/assemblages`,
+`/assemblage/study`). La déclasser ferait l'erreur symétrique : transformer « pas seule » en « pas du
+tout ». → **statut `au_sous_plancher`, SERVIE, mention en tête de fiche** :
+> « Cette parcelle est trop petite pour l'opération d'ensemble minimale imposée par le règlement
+> (X logements à Y log/ha, soit Z m² minimum). Elle n'est pas constructible SEULE, mais peut l'être
+> en assemblage avec une ou plusieurs parcelles voisines. » + **surface manquante affichée** (Z − surface).
+Les 3 traitements : `declasse_au_fermee` (fermée) · `au_sous_plancher` servie+mention (sous plancher) ·
+`declasse_au_statut_inconnu` (phasage, vrai inconnu).
+
+## Mesure A — assemblage (« segment, pas dette »)
+Combien des sous-seuil ont un voisin CONTIGU de même zone qui atteindrait le seuil (own + voisins
+`ST_DWithin` 0,5 m, même `zone_lib`) :
+| | sous seuil | **assemblables** |
+|---|---|---|
+| total | 708 | **399 (56 %)** |
+| en tête | 72 | **48 (66 %)** |
+| brûlantes | 8 | **7 / 8** |
+→ **Significatif : c'est un SEGMENT** (candidates à l'assemblage), pas une dette. Réserve : mesure
+GÉOMÉTRIQUE (contiguïté + surface) ; ne teste pas la propriété (voisin acquérable ?) — couche suivante.
+
+## Mesure B — « opération d'ensemble » dans les 9 communes densité-seule (verbatim, sans conclure)
+Les 9 imposent «  opération d'aménagement d'ensemble » MAIS **en option** :
+> « soit par opération d'aménagement d'ensemble, **soit au fur et à mesure de la réalisation des
+> équipements** » (La Possession, Le Port, Les Avirons, Bras-Panon, Sainte-Rose, Sainte-Marie,
+> Sainte-Suzanne, Le Tampon — verbatim quasi identique ; Saint-Louis : source indisponible).
+→ L'opération d'ensemble n'est PAS obligatoire (« soit… soit ») → **pas de taille minimale implicite**.
+La conclusion « les 9 densité-seule n'ont pas de seuil-taille » TIENT. (À reconfirmer sur Saint-Louis.)
+
 ## Point d'arrêt
-Mesure rendue. **Le re-run ne démarre pas.** Priorité d'exécution (ton ordre) : Saint-Paul, La
-Possession, Saint-Leu (44 % des têtes) ; Saint-Paul + Les Trois-Bassins (2/3 des brûlantes). NB :
-Saint-Paul (PLH) et La Possession (densité seule) n'ont pas de seuil-taille calculable — leur enjeu
-est l'OUVERTURE, pas le plancher. Les 8 brûlantes sous-seuil sont à **Les Trois-Bassins**.
+Deux mesures rendues. **Le re-run ne démarre pas.** Ordre validé : Saint-Paul, La Possession,
+Saint-Leu (ouverture) ; Les Trois-Bassins (8 brûlantes sous plancher, dont 7 assemblables). NB :
+Saint-Paul (PLH) + La Possession (densité seule) → enjeu OUVERTURE, pas plancher.
