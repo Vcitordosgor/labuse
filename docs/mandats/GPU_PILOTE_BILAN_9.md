@@ -50,6 +50,21 @@ Bras-Panon/Entre-Deux/Saint-Pierre). **Aucun cas non descriptible sur les 9.** L
 - **14 archives** à (re)télécharger — cf. `GPU_PILOTE_PAQUETS_ETAT.md`.
 - **VRD des 9** : à extraire (chapitre réseaux) si tu veux le poste de coût, avant le diff final.
 
+## Familles de trame (cabinet rédacteur) — nouveau champ de vérification
+Ajout au schéma (arbitrage Vic) : `cabinet_redacteur`. Si les 24 se regroupent en quelques familles,
+une anomalie dans l'une se cherche dans les autres. Détection = signature texte du règlement.
+
+| famille | communes | preuve |
+|---|---|---|
+| **DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT** | **L'Étang-Salé (97404) · Saint-Leu (97413)** | signature texte + **verbatim AUs identique** + trame partagée : planchers 10 log + densité log/ha, VRD internes/externes, prévalence OAP |
+| non détecté au texte | 97401, 97402, 97403, 97406, 97415, 97416, 97419, 97423, 97424 | cabinet en logo/page de garde (image) — pas extractible du texte ; à confirmer visuellement |
+
+**Implication** : la famille DUTEILH-PERRAU partage une STRUCTURE (numérotation d'articles, planchers,
+VRD). Vérifier une valeur sur L'Étang-Salé, c'est aussi la vérifier sur Saint-Leu — et un défaut de
+calibration sur l'une doit être cherché sur l'autre. À mesure que les 14 arrivent, je note le cabinet
+de chacune ; les faux positifs de sous-chaîne (« ITEC », « OTE » apparaissent dans tous les docs) sont
+écartés — seule la signature « X URBANISME ET ENVIRONNEMENT » ou un nom de cabinet explicite compte.
+
 ## Suite
 Prêt à reprendre en paquets de 4 dès que les 14 archives sont là. Le **diff final consolidé**
-(YAML vs extraction vs parcelles touchées) se fera sur les 24, pas avant.
+(YAML vs extraction vs parcelles touchées) se fera sur les 24, pas avant. Ping **par paquet de 4**.
