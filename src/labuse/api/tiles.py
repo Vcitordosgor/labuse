@@ -57,6 +57,9 @@ def build_parcel_zone_plu(db: Session) -> int:
                    -- → « 1AUa », « Nto 1 » → « Nto »). MÊME source que la faisabilité (faisabilite/db.py
                    -- _CTX : COALESCE(attrs->>'libelle',…)) → parcel_zone_plu cesse de diverger d'elle.
                    rtrim(split_part(btrim(attrs->>'libelle'), ' ', 1), ':') AS lib_tok,
+                   -- libellé COMPLET conservé (pt3 Vic) : le suffixe OAP (« 1AUa oap3 ») n'est PAS du
+                   -- bruit — l'OAP prévaut sur le règlement ; on garde l'info pour le branchement OAP.
+                   NULLIF(btrim(attrs->>'libelle'), '') AS lib_full,
                    CASE WHEN subtype ILIKE 'AU%' THEN 'AU'
                         WHEN subtype ILIKE 'U%'  THEN 'U'
                         WHEN subtype = 'A'       THEN 'A'
@@ -64,7 +67,7 @@ def build_parcel_zone_plu(db: Session) -> int:
                         ELSE 'autre' END AS fam
             FROM spatial_layers WHERE kind = 'plu_gpu_zone'
         ), z AS (
-            SELECT g, CAST(fam AS varchar) AS fam,
+            SELECT g, CAST(fam AS varchar) AS fam, lib_full,
                    -- libelle (1er token) PRIORITAIRE ; repli sur l'ancienne heuristique name/tok/fam
                    -- (inchangée) quand libelle est absent → aucune régression là où name suffisait.
                    CAST(COALESCE(NULLIF(lib_tok, ''),
@@ -78,7 +81,7 @@ def build_parcel_zone_plu(db: Session) -> int:
             FROM z0
         )
         SELECT DISTINCT ON (p.idu)
-               p.idu, z.lib AS zone_lib, z.fam AS zone_fam
+               p.idu, z.lib AS zone_lib, z.fam AS zone_fam, z.lib_full AS zone_libelle
         FROM parcels p
         JOIN z ON p.geom_2975 && z.g AND ST_Intersects(p.geom_2975, z.g)
         ORDER BY p.idu, ST_Area(ST_Intersection(p.geom_2975, z.g)) DESC
