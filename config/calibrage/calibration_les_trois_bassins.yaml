@@ -1,0 +1,33 @@
+# CALIBRATION LES TROIS-BASSINS (97423) — complétée depuis les pièces fournies par Vic
+# (règlement + OAP + prescription_surf du zip 97423_PLU_20220602, déjà à jour, sha concordant).
+meta:
+  commune: "Les Trois-Bassins"
+  insee: "97423"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97423_PLU_20220602 (archive locale, à jour — pointées par Vic)"
+  date_plu_base: "2017-02-21"                 # OAP « Approuvé le 21 février 2017 » (PLU d'origine)
+  date_archive_gpu: "2022-06-02"              # dépôt/consolidation GPU (millésime d'archive)
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU — aucune clause VRD internes/externes ; structure distincte"
+
+zones_au:
+  familles: [1AUa, 1AUb, 1AUc, 1AUe, 1AUt, 2AUa, 2AUb, 2AUc, AUs, AUse]
+  # ouverture à DEUX régimes
+  ouverture_1AU: conditionnelle_operation
+  ouverture_2AU: conditionnelle_etat_tiers
+  ouverture_2AU_src: "« Pour les zones 2AU indicée, leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU » (p.65)"
+  dependance: "2AU s'ouvre après aménagement des 1AU (cas-type 2AU→1AU)"
+  AUs_AUse:
+    ouverture: fermee
+    src: "« La zone AUs couvre des espaces réservés à l'urbanisation future. Il existe un secteur AUse réservé… » (p.6)"
+  planchers:
+    densite_min_log_ha: {AUa: 35, AUb: 30, AUc: 20}
+    src: "« 35 logements par hectare en zone AUa ; 30 en AUb ; 20 en AUc » (p.66, RÈGLEMENT)"
+  oap:
+    contenu_extrait: oui
+    social_par_site_rhi: [25, 40]
+    src: "OAP p.5-6 (« la RHI est mixte comprenant environ 25% / 40% de logements locatifs sociaux »)"
+    note: "l'OAP porte le % SOCIAL par site RHI ; la DENSITÉ est au règlement (pas dans l'OAP) → a_verifier OAP-densité du paquet B LEVÉ."
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié ; distinct de la famille DUTEILH-PERRAU)"
+  faits_nouveaux_vs_yaml: "planchers 35/30/20 log/ha + phasage 2AU→1AU + AUs/AUse fermées + social OAP 25/40% par RHI — absents du YAML"
+  a_verifier: "appariement AUa/b/c ↔ 1AU/2AU (indices) ; dimensions U non extraites"
