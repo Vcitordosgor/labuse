@@ -1,0 +1,35 @@
+# CALIBRATION SAINT-DENIS (97411) — sur la version EN VIGUEUR 2026 (PAS le 2024 pointé par Vic)
+# =============================================================================
+# ⚠ Vic a pointé les pièces `97411_PLU_20240220` (2024) — PÉRIMÉES. L'EN_VIGUEUR est
+# `97411_PLU_20260423` (2026, publié 18/06/2026, reconfirmé au grid). J'ai calibré depuis le pack
+# 2026 que j'avais téléchargé (sha c7e1dfce…, zip OK), PAS depuis le 2024. Garde-fou respecté.
+meta:
+  commune: "Saint-Denis"
+  insee: "97411"
+  statut: "Sourcé"
+  source_type: "pack GPU EN_VIGUEUR 97411_PLU_20260423 (téléchargé le 30/07, sha c7e1dfce…)"
+  version_ecartee: "97411_PLU_20240220 (2024) pointée par Vic = PÉRIMÉE — non utilisée"
+  date_en_vigueur_gpu: "2026-04-23"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [AUa, AUh, AUicm, AUj, AUm, AUx]
+  ouverture_AUx: fermee
+  ouverture_AUx_src: "p.11 (« une zone AUx dont l'ouverture à l'urbanisation est subordonnée à une révision ou modification du PLU »)"
+  ouverture_autres: "a_verifier — l'ouverture PAR SECTEUR (AUa/AUh/AUicm/AUj/AUm) n'est pas explicite au texte ; règle générale AU applicable"
+  zones_sensibles:
+    AUm: "porte la brûlante rang 7 (97411000KA0296) de la dette AU-OUVERTURE ; règles dimensionnelles présentes (Art AUm.9/10 au mandat précédent), Art 1/2 d'ouverture NON explicite"
+    AUh: "zone de la carte 15 O12 (indéterminé sans règlement) — à relire avec le 2026"
+  planchers: sans_objet
+  planchers_note: "aucun minimum de logements ni densité log/ha au règlement 2026 (scan négatif)"
+  oap:
+    contenu_extrait: non
+    presence: "dossier `5_OAP` PRÉSENT mais VIDE dans le pack 2026 (0 fichier / 44 pdf au total)"
+    statut: "à_confirmer — dossier vide ≠ preuve d'absence (peut être pack réduit) ; NE PAS conclure sans_objet"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU (AUx fermée subordonnée révision/modification) ; version 2026 vs 2024 servie ; AUm/AUh ouverture par-secteur non explicite"
+  a_verifier: "ouverture par secteur (AUm, AUh surtout) ; OAP (dossier vide) ; planchers ; dimensions U"
+
+# LEÇON POUR LE CONTRÔLE : le nom du dossier OAP VARIE (`5_OAP` ici vs `5_Orientations_amenagement`
+# ailleurs) — toute vérification de présence d'OAP doit tester LES DEUX noms.

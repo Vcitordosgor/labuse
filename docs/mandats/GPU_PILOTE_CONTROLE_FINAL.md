@@ -18,7 +18,7 @@
 | 97408 | La Possession | non_extrait | non_extrait | archive GPU téléchargée (sha e7313e5d), pas encore extraite |
 | 97409 | Saint-André | non_extrait | non_extrait | **BLOQUÉ** — PLU 2019 dépublié, opposabilité mairie en cours ; zonage AGORAH seul |
 | 97410 | Saint-Benoît | **extrait (PROVISOIRE)** | **non_extrait** | règlement PDF fourni (version à confirmer, cross-check GPU) ; OAP non fournie |
-| 97411 | Saint-Denis | non_extrait | non_extrait | archive GPU 2026 téléchargée (sha c7e1dfce), pas encore extraite |
+| 97411 | Saint-Denis | **extrait** (2026, opposable) | **à_confirmer** (dossier `5_OAP` VIDE) | calibré sur 97411_PLU_20260423 (PAS le 2024 périmé pointé par Vic) ; AUx fermée ; AUm/AUh à relire. OAP : dossier présent mais vide → ni extrait ni sans_objet prouvé |
 | 97412 | Saint-Joseph | non_extrait | non_extrait | archive GPU **CORROMPUE** (sha c46b3884, zip invalide) — à re-télécharger ou fournir |
 | 97413 | Saint-Leu | **extrait** | **non_extrait** | règlement mairie extrait ; **OAP non fournie** (existence à confirmer sur le doc 2007/2013) |
 | 97414 | Saint-Louis | non_extrait | non_extrait | archive vide (0 o) — à fournir |
@@ -46,3 +46,9 @@
   contiennent tous un fichier `5_Orientations_amenagement` (preuve `unzip -l`).
 - **`non_extrait`** partout ailleurs où le document existe mais n'est pas encore lu — jamais confondu
   avec « la commune n'en a pas ».
+
+## Leçon : le nom du dossier OAP VARIE
+Saint-Denis (2026) range son OAP sous **`5_OAP`** (et le dossier est VIDE dans le pack), là où les 10
+autres utilisent **`5_Orientations_amenagement`**. Toute vérification de présence d'OAP doit tester
+LES DEUX noms. Un dossier PRÉSENT mais VIDE = `à_confirmer` (pack réduit ?), jamais `sans_objet`
+prouvé — seul Saint-Philippe (RNU, GPU `[]`) est un `sans_objet` prouvé.
