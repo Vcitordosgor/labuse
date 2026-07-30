@@ -103,6 +103,28 @@ def test_declassement_A_B_retire_des_tiers_de_tete():
     assert tiers([base_row(rang=1)])[0] == TIER_CHAUDE
 
 
+def test_au_statut_inconnu_declasse_generique_pas_dimensions_seules():
+    from labuse.faisabilite.constructibilite import (
+        DECLASSE_AU_STATUT_INCONNU, DECLASSE_ZONE_FERMEE)
+    # AU 'générique' (ouverture jamais lue) : rang 7 (serait brûlante) → DÉCLASSÉE, tier dédié D
+    rg = tiers([base_row(rang=7, contrib_d=0.9, event_age_mois=1, zone_plu="AU",
+                         au_statut="générique")])
+    assert rg[0] == DECLASSE_AU_STATUT_INCONNU
+    # AU 'dimensions_seules' (règles extraites, ouverture non lue) : RESTE servie (mention seule)
+    rd = tiers([base_row(rang=7, contrib_d=0.9, event_age_mois=1, zone_plu="AU",
+                         au_statut="dimensions_seules")])
+    assert rd[0] == TIER_BRULANTE
+    # D ne réécrit jamais un A déjà posé (zone fermée est un FAIT, pas une inconnue)
+    ra = tiers([base_row(rang=7, zone_plu="AU", au_statut="générique",
+                         declasse_cause=DECLASSE_ZONE_FERMEE)])
+    assert ra[0] == DECLASSE_ZONE_FERMEE
+    # l'étage 0 dur prime même sur D
+    re = tiers([base_row(rang=7, zone_plu="AU", au_statut="générique", ecartee_etage0=True)])
+    assert re[0] == TIER_ECARTEE
+    # colonne absente = aucun effet (rétro-compatibilité) : rang 7 sans contrib_d → chaude servie
+    assert tiers([base_row(rang=7, zone_plu="AU")])[0] == TIER_CHAUDE
+
+
 def test_brulante_exige_contribution_non_zone():
     # chaude + événement récent MAIS contribution D sous le seuil → PAS brûlante
     # (doctrine : un contexte seul ne franchit jamais un seuil)

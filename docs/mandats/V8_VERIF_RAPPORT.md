@@ -559,3 +559,89 @@ un seul règlement résout les deux). 3. **La Possession** (AUAv, AUBm). 4. **Br
 
 *Rien appliqué, rien exposé, rien basculé, table servie intouchée. q_v7_defisc sert toujours.
 Attend : feu vert sur le libellé `declasse_au_statut_inconnu` + verbatims des règlements.*
+
+---
+# AU-OUVERTURE — FEU VERT IMPLÉMENTÉ (point d'arrêt : mesuré, PAS basculé)
+
+Libellé + plan validés par Vic (30/07). Code écrit, table peuplée, effet MESURÉ à blanc. **Le run
+servi n'est PAS basculé ; la référence golden n'est PAS mise à jour** (discipline : la référence se
+met à jour en commit dédié, APRÈS arbitrage — on ne corrige pas la mesure pour valider le correctif).
+
+## Ce qui est en place (code)
+- `constructibilite.py` : constante `DECLASSE_AU_STATUT_INCONNU` (+ dans `DECLASSE_LABELS`).
+- `faisabilite/au_statut.py` (NOUVEAU) : classifieur (`resolve_zone` + KW ouverture, JAMAIS le
+  préfixe brut — garde-fou 21 077) + `build_au_statut_batch` (upsert idempotent, auto-purge) +
+  `au_statut_peremption` (compteur). Reproduit la mesure du 30/07 **au parcelle près**.
+- Table `parcel_au_statut(parcel_id, idu, classe, zone_lib, motif, computed_at)` — clé parcel_id,
+  INDÉPENDANTE du run → **le motif survit à la bascule** (comme `parcel_constructibilite`).
+- `statuts.py::assign_tiers` : `au_statut='générique'` → tier `declasse_au_statut_inconnu` (prime
+  sur les tiers de tête, ne réécrit jamais un A/B déjà posé, l'étage 0 dur prime) ;
+  `'dimensions_seules'` → RESTE servie. Colonne absente = rétro-compatible. Test unitaire ajouté.
+- `pipeline.py` : merge `parcel_au_statut` (sur IDU) + exclusion des génériques du calibrage N_e
+  (comme A/B). Garde `LABUSE_DISABLE_AU_STATUT` (mesure baseline).
+- `flash/data.py` + `rapport.html.j2` : **la mention est VUE** — placée EN TÊTE, dans le bloc
+  Verdict (jamais en bas de fiche) ; bloc `au_statut` autonome pour le cas sans verdict v2. « Absent ».
+- CLI : `compute-au-statut` (peuplement) + `au-statut-compteur` (péremption).
+
+## Exigence 1 — le déclassement se périme (compteur)
+`parcel_au_statut.computed_at` = horodatage de pose. `labuse au-statut-compteur` →
+**6 636 parcelles en attente de vérification d'ouverture** (3 829 génériques + 2 807
+dimensions-seules), âge (plus ancienne / médiane) mesuré depuis la pose. Un déclassement sans date
+devient permanent par oubli → le compteur le rend visible et daté.
+
+## Exigence 2 — la mention est vue (capture)
+Fiche de la **brûlante rang 7** `97411000KA0296` (AUm Saint-Denis, dimensions-seules) — bloc Verdict
+rendu, dans l'ordre : `Verdict Brûlante v2 · Rang île 7 · ×22.0 · ⚠ Ouverture à l'urbanisation non
+vérifiée — [mention] (Absent)`. La mention suit immédiatement les cartouches Verdict, avant tout le
+reste. Artefacts : `qa/au_ouverture/fiche_97411000KA0296_dimensions_seules_rang7.{html,pdf}` (+ la
+générique Bras-Panon `97402000AD1052.{html,pdf}`, motif de déclassement en tête).
+
+## Exigence 3 — le motif survit à la bascule
+Lu sur clé parcel_id (pas run_id) → consultable AVANT la bascule (run q_v7 servi, tier encore
+brûlante/chaude) ET après (tier `declasse_au_statut_inconnu`). Les 3 829 génériques gardent leur
+motif dédié — **on NE reproduit PAS le cas des 427** (qui perdaient leur tier au profit d'`ecartee`) :
+ici la marque est portée par une table à elle, indépendante du tier servi.
+
+## MESURE tiers AVANT / APRÈS (effet du SEUL déclassement, cascade q_v8_calibre)
+Protocole : deux runs à blanc, même cascade + même run précédent (hystérésis identique), différant
+seulement par `parcel_au_statut` (baseline `LABUSE_DISABLE_AU_STATUT=1`). Runs jetables PURGÉS.
+
+| tier | avant | après | Δ |
+|---|---|---|---|
+| brûlante | 120 | **120** | +0 |
+| chaude | 1 043 | 1 035 | −8 |
+| réserve foncière | 3 209 | 3 047 | −162 |
+| a_creuser | 63 964 | 62 919 | −1 045 |
+| **declasse_au_statut_inconnu** | 0 | **1 215** | +1 215 |
+| ecartee | 354 355 | 354 355 | +0 |
+
+- **1 215 génériques déclassées** ; les **2 614 génériques restantes sont déjà `ecartee`** en q_v8
+  (étage 0 dur hard-exclut, il prime sur D — cohérent avec le mécanisme des 427 de B-PRIME).
+- **302 génériques quittent la tête** (12 brûlantes + 128 chaudes + 162 réserve) → déclassées.
+- **139 mouvements de backfill ATTENDUS** : exclure les génériques du calibrage N_e (comme A/B)
+  rappelle ~1 150 VRAIS candidats en tête → 127 a_creuser→chaude, 5 a_creuser→brûlante, 7
+  chaude→brûlante. Arithmétique fermée : brûlante 120−12+12=120 ✓ ; chaude 1043−128−7+127=1035 ✓.
+  Ce n'est pas du bruit : c'est la conséquence mécanique voulue (la tête reste à effectif réel).
+
+## MESURE golden — 7 ancres bougent (aucune référence touchée)
+| IDU | avant → après | nature |
+|---|---|---|
+| 97410000AS1425 | brûlante → declasse_au_statut_inconnu | **générique — ATTENDU** (AUa5 Saint-Benoît, brûlante mesure 1) |
+| 97410000CD0905 | brûlante → declasse_au_statut_inconnu | **générique — ATTENDU** (AUb19 Saint-Benoît, brûlante mesure 1) |
+| 97408000AP1610 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97408000AP1647 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97410000AS1450 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97410000CD0926 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97403000AR1423 | chaude → brûlante | **backfill** (non-marquée, remonte par recalibrage) |
+
+**6 sur 7 sont le CŒUR du mandat** (les golden AU génériques que le déclassement retire de la tête,
+dont les deux brûlantes AUa5/AUb19). 1 est un backfill (AR1423). Les 8 autres golden marqués
+génériques ne bougent pas (déjà `ecartee` avant/après). Golden **base B inchangée** (les 9 FAIL
+db.residuel de B ne sont pas touchés par ce mandat).
+
+## Point d'arrêt
+Mesuré, rapporté. **Rien basculé, référence golden intacte, run servi q_v7_defisc intouché.**
+Selon la discipline golden : 7 ancres bougent (>2) → si tu valides l'effet, la suite = re-run
+champion + arène + arbitrage sur q_v8, puis MAJ de la référence golden en commit DÉDIÉ. Reste gelé
+derrière ta lecture des règlements (Saint-Denis d'abord). Aucune règle d'ouverture n'a été extraite
+ici : le déclassement est une POSITION D'ATTENTE, il tombe dès l'article lu (péremption).

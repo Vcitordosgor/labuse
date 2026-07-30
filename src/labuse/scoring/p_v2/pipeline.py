@@ -265,13 +265,31 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             df["declasse_cause"] = df["declasse_label"]
             df = df.drop(columns=["declasse_label"])
 
+    # AU-OUVERTURE (Vic 30/07) — statut d'ouverture des zones AU depuis le cache `parcel_au_statut`
+    # (clé parcel_id, INDÉPENDANTE du run → survit à la bascule, comme parcel_constructibilite).
+    # classe='générique' → déclassée (tier dédié) ; 'dimensions_seules' → reste servie (mention de
+    # fiche seule). Table absente → colonne None partout = comportement d'avant.
+    df["au_statut"] = None
+    if (os.environ.get("LABUSE_DISABLE_AU_STATUT") != "1"
+            and session.execute(text("SELECT to_regclass('parcel_au_statut') IS NOT NULL")).scalar()):
+        au = pd.read_sql(text("SELECT ap.idu, a.classe AS au_classe FROM parcel_au_statut a "
+                              "JOIN parcels ap ON ap.id = a.parcel_id"), session.connection())
+        if len(au):
+            df = df.merge(au, on="idu", how="left")
+            df["au_statut"] = df["au_classe"]
+            df = df.drop(columns=["au_classe"])
+
     # tiers : calibrage N_e (effectif chaude ~1 150) puis hystérésis vs run précédent
     work = df.assign(rang=rang, p=p, contrib_d=contrib["contrib_D"].to_numpy())
     from .statuts import plancher_c
     base_params = TierParams(n_entree=1, n_sortie=1)
     _declasse_ab = work["declasse_cause"].isin(
         [DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
-    eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab
+    # les génériques AU vont être déclassées (statut d'ouverture inconnu) → hors du pool de
+    # calibrage N_e, au même titre que A/B (sinon l'effectif chaude cible ~1 150 est gonflé par
+    # des parcelles qui sortiront de la tête). Les dimensions-seules RESTENT éligibles (servies).
+    _declasse_au = work["au_statut"] == "générique"
+    eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab & ~_declasse_au
                      & plancher_c(work, base_params)]
     n_e = calibre_n_entree(eligibles["rang"], cible=1150)
     params = TierParams(n_entree=n_e, n_sortie=int(round(1.4 * n_e)))

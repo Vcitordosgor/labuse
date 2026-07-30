@@ -1050,6 +1050,56 @@ def compute_constructibilite_cmd(
     typer.echo(f"✓ Constructibilité cachée : {total} parcelles déclassées/non vérifiables ({commune}).")
 
 
+@app.command("compute-au-statut")
+def compute_au_statut_cmd(
+    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+) -> None:
+    """Calcule et cache le STATUT D'OUVERTURE des zones AU (mandat AU-OUVERTURE). Alimente
+    `parcel_au_statut` : 'générique' (AU non calibrée → déclassée `declasse_au_statut_inconnu`) ou
+    'dimensions_seules' (règles extraites, ouverture non lue → servie + mention). Lu par le scoring
+    et la fiche. Horodaté (péremption)."""
+    from .faisabilite.au_statut import build_au_statut_batch
+
+    commune = _resolve_commune(commune)
+    models.ensure_au_statut_cache(engine())
+    with session_scope() as session:
+        ids = _parcel_ids(session, commune)
+        idus = [i for (i,) in session.execute(
+            text("SELECT idu FROM parcels WHERE id = ANY(:ids)"), {"ids": ids}).all()]
+    if not idus:
+        typer.echo("Aucune parcelle ingérée.")
+        raise typer.Exit(1)
+    total = 0
+    for k in range(0, len(idus), chunk):
+        with session_scope() as s:
+            total += build_au_statut_batch(s, idus[k:k + chunk])
+        typer.echo(f"    {min(k + chunk, len(idus))}/{len(idus)} parcelles…")
+    with session_scope() as s:
+        from .faisabilite.au_statut import au_statut_peremption
+        per = au_statut_peremption(s)
+    typer.echo(f"✓ Statut AU caché : {total} parcelles marquées ({per['declassees']} déclassées, "
+               f"{per['servies_avec_mention']} servies+mention) — {commune}.")
+
+
+@app.command("au-statut-compteur")
+def au_statut_compteur_cmd() -> None:
+    """Compteur de PÉREMPTION du déclassement AU (exigence Vic : « un déclassement temporaire sans
+    date devient permanent par oubli »). Combien de parcelles en attente de vérification d'ouverture,
+    et depuis combien de jours. Lecture seule."""
+    from .faisabilite.au_statut import au_statut_peremption
+    with session_scope() as s:
+        per = au_statut_peremption(s)
+    if not per["total_en_attente"]:
+        typer.echo("Aucune parcelle en attente de vérification d'ouverture AU.")
+        return
+    typer.echo(f"⏳ {per['total_en_attente']} parcelles AU en attente de vérification d'ouverture :")
+    for classe, d in sorted(per["par_classe"].items()):
+        typer.echo(f"   {classe:18s} {d['n']:5d} parcelles — plus ancienne : {d['jours_plus_ancien']} j, "
+                   f"médiane : {d['jours_median']} j")
+    typer.echo(f"   → {per['declassees']} déclassées, {per['servies_avec_mention']} servies avec mention.")
+
+
 def _print_healthcheck(commune: str) -> bool:
     from . import demo
 

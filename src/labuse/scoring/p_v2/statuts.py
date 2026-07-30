@@ -36,7 +36,7 @@ TIER_ECARTEE = "ecartee"
 # de `ecartee` (qui, elle, sort du produit). Le label C « non vérifiable » n'est PAS un tier :
 # c'est un SIGNAL de fiche (pas de verdict → on ne déclasse pas), traité hors assign_tiers.
 from ...faisabilite.constructibilite import (   # noqa: E402  (constantes pures, sans DB)
-    DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE,
+    DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, DECLASSE_AU_STATUT_INCONNU,
 )
 
 
@@ -85,7 +85,13 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # déclassement A/B (colonne optionnelle → rétro-compatible : absente = aucun déclassement).
     dc = (df["declasse_cause"] if "declasse_cause" in df.columns
           else pd.Series(pd.NA, index=df.index))
-    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
+    # AU-OUVERTURE (Vic 30/07) : `au_statut` optionnel — 'générique' (AU non calibrée, ouverture non
+    # lue) → DÉCLASSÉE `declasse_au_statut_inconnu` ; 'dimensions_seules' → RESTE servie (mention de
+    # fiche seule, pas de changement de tier). Rétro-compatible : colonne absente = aucun effet.
+    au = (df["au_statut"] if "au_statut" in df.columns
+          else pd.Series(pd.NA, index=df.index))
+    declasse_au = au == "générique"
+    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au
     was_hot = (prev_tier.isin([TIER_CHAUDE, TIER_BRULANTE])
                if prev_tier is not None else pd.Series(False, index=df.index))
     event_recent = event_age <= params.event_bypass_mois
@@ -117,6 +123,10 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # masques ci-dessus, et écrasent a_creuser), MAIS l'étage 0 dur prime sur le déclassement.
     tier[dc == DECLASSE_ZONE_FERMEE] = DECLASSE_ZONE_FERMEE
     tier[dc == DECLASSE_NON_CONSTRUCTIBLE] = DECLASSE_NON_CONSTRUCTIBLE
+    # D (AU statut inconnu) : ne s'applique QUE là où A/B n'ont pas déjà tranché (une AU fermée au
+    # règlement est un fait A, pas une inconnue) → on n'écrase pas un déclassement déjà posé.
+    tier[declasse_au & ~dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])] = \
+        DECLASSE_AU_STATUT_INCONNU
     tier[df["ecartee_etage0"]] = TIER_ECARTEE
     return tier
 

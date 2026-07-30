@@ -884,6 +884,7 @@ def create_all(engine) -> None:
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
+    ensure_au_statut_cache(engine)          # AU-OUVERTURE : statut d'ouverture des zones AU non lu
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
@@ -1397,6 +1398,26 @@ def ensure_constructibilite_cache(engine) -> None:
         c.execute(_t("ALTER TABLE score_snapshot_parcelles ALTER COLUMN statut TYPE varchar(32)"))
 
 
+def ensure_au_statut_cache(engine) -> None:
+    """Cache du statut d'OUVERTURE des zones AU (mandat AU-OUVERTURE, Vic 30/07). Marque les
+    parcelles en zone AU dont l'article d'ouverture (Art. 1/2) n'a JAMAIS été lu.
+
+    `classe` : 'générique' (AU non calibrée → DÉCLASSÉE declasse_au_statut_inconnu) ou
+    'dimensions_seules' (règles de construction extraites mais ouverture non lue → RESTE servie,
+    mention de fiche seule). `zone_lib` : libellé de zone servi (ex. '2AUd', 'AUm'). `computed_at` :
+    HORODATAGE DE POSE — un déclassement temporaire sans date devient permanent par oubli ; le
+    compteur de péremption (`labuse au-statut-compteur`) lit cette colonne. Idempotent.
+    Peuplé par `labuse compute-au-statut`."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_au_statut ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " idu varchar(20), classe varchar(20) NOT NULL, zone_lib varchar(64),"
+            " motif text, computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_schema(engine) -> None:
     """Réconciliation LÉGÈRE et idempotente du schéma (boot / doctor / prepare-pilot).
 
@@ -1415,6 +1436,7 @@ def ensure_schema(engine) -> None:
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
+    ensure_au_statut_cache(engine)          # AU-OUVERTURE : statut d'ouverture des zones AU non lu
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
