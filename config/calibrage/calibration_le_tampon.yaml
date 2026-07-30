@@ -1,0 +1,35 @@
+# CALIBRATION LE TAMPON (97422) — depuis les pièces fournies par Vic (pack 97422_PLU_20230811, à jour).
+# ⭐ Commune de la GOLDEN 2AUd brûlante (97422000AD1237) — cas fondateur du mandat REPLI-NON-OPTIMISTE.
+meta:
+  commune: "Le Tampon"
+  insee: "97422"
+  statut: "Sourcé"
+  source_type: "PDF fournis par Vic (~/Downloads/97422_PLU_20230811/)"
+  date_archive_gpu: "2023-08-11"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [1AUa, 1AUb, 1AUc, 1AUd, 2AUa, 2AUb, 2AUc, 2AUd, AU, AUto]
+  ouverture_1AU: conditionnelle_operation
+  ouverture_1AU_src: "règlement p.85 (« réservés à l'urbanisation future ; les constructions y sont autorisées soit lors de la réalisation d'une opération d'ensemble… »)"
+  ouverture_2AU: conditionnelle_etat_tiers
+  ouverture_2AU_src: "règlement p.7 (« les zones 2AU indicée […] espaces d'extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR. Leur ouverture à [l'urbanisation…] »)"
+  ouverture_2AU_note: "2AU = réserve d'extension urbaine, ancrée au SAR ; ouverture différée (subordonnée)"
+  planchers:
+    localisation: "RÈGLEMENT (densité minimale par secteur, p.87) + OAP"
+    densite_min_log_ha:
+      "2AUc/1AUc": 20
+      "2AUd/1AUd": 10
+      "2AUa/2AUb": "> (valeurs a/b non captées — probablement supérieures)"
+    src: "règlement p.87 (« en zone 1AUc ou 2AUc, 20 logements/ha minimum ; en zone 1AUd ou 2AUd, 10 logements/ha minimum »)"
+    oap_densite: 50
+    oap_src: "OAP 2023 (35 p, texte) : 50 log/ha"
+    prevalence: "règlement (par secteur) ; OAP (50) à réconcilier par site"
+  AUto: "zone touristique — renvoie à un règlement dédié (p.87)"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  golden:
+    idu: "97422000AD1237"
+    note: "GOLDEN 2AUd — DOCUMENTÉE À LA SOURCE : 2AUd = zone 2AU (réserve d'extension urbaine, ouverture différée/SAR), plancher 10 log/ha. Confirme le cas fondateur du mandat REPLI-NON-OPTIMISTE : cette golden brûlante servie repose sur une 2AU dont l'ouverture est subordonnée (foncier non immédiatement constructible)."
+  faits_nouveaux_vs_yaml: "1AU/2AU par secteur (a/b/c/d) + planchers densité 20 (c) / 10 (d) log/ha au règlement + 2AU réserve ancrée SAR + OAP 50 — absents du YAML. Documente la golden 2AUd."
+  a_verifier: "valeurs densité 2AUa/2AUb (non captées) ; réconciliation règlement (par secteur) vs OAP (50) ; AUto (règlement dédié) ; dimensions U"
