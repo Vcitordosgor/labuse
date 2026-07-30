@@ -1,0 +1,30 @@
+# CALIBRATION PETITE-ÎLE (97405) — depuis les pièces fournies par Vic (pack 97405_PLU_20230609,
+# téléchargé le 30/07 sha da9ee5a8, à jour = EN_VIGUEUR).
+# ⚠ DEUX règlements dans le pack : 97405_reglement_20170901 (146 p, ORIGINAL) et _20230609 (169 p,
+# CONSOLIDÉ/modifié). Calibré sur le 2023 consolidé (opposable) ; le 2017 est superseded (garde-fou).
+meta:
+  commune: "Petite-Île"
+  insee: "97405"
+  statut: "Sourcé"
+  source_type: "pack GPU 97405_PLU_20230609 (archive locale à jour — pointée par Vic)"
+  date_plu_base: "2017-02-23"                  # « PLU approuvé par Délibération du 23 février 2017 »
+  date_document: "2023-06-09"                  # version consolidée/modifiée (opposable)
+  reglement_utilise: "97405_reglement_20230609.pdf (169 p, consolidé)"
+  reglement_superseded: "97405_reglement_20170901.pdf (146 p, original) — présent au pack mais non utilisé"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [1AU, 1AUa, 1AUe, 2AU, 2AUe, AUa]
+  ouverture: a_verifier
+  ouverture_note: "1AU et 2AU présents (phasage probable 2AU→1AU) MAIS le wording d'ouverture n'a pas été capté au scan — NE PAS déduire par convention ; à confirmer à la lecture ciblée du chapitre AU"
+  planchers:
+    localisation: "OAP (social) ; règlement 169 p : aucun plancher densité"
+    social_pct: [40, 50]
+    social_note: "par site : « au moins 50% de logements sociaux/aidés », « 60% privés / 40% aidés », « au moins 40% de logements aidés »"
+    densite: "qualitative — « un minimum de densité… », AUCUN chiffre log/ha dans l'OAP"
+    src: "OAP 2023 (33 p, texte)"
+    prevalence: "OAP prévaut (social par site)"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "planchers OAP en % social (40-50%) par site + 1AU/2AU + deux millésimes (base 2017 / consolidé 2023) — absents du YAML"
+  a_verifier: "ouverture 1AU/2AU (chapitre AU) ; densité (qualitative, pas chiffrée) ; dimensions U"
