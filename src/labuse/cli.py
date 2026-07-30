@@ -1050,6 +1050,56 @@ def compute_constructibilite_cmd(
     typer.echo(f"✓ Constructibilité cachée : {total} parcelles déclassées/non vérifiables ({commune}).")
 
 
+@app.command("compute-au-statut")
+def compute_au_statut_cmd(
+    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+) -> None:
+    """Calcule et cache le STATUT D'OUVERTURE des zones AU (mandat AU-OUVERTURE). Alimente
+    `parcel_au_statut` : 'générique' (AU non calibrée → déclassée `declasse_au_statut_inconnu`) ou
+    'dimensions_seules' (règles extraites, ouverture non lue → servie + mention). Lu par le scoring
+    et la fiche. Horodaté (péremption)."""
+    from .faisabilite.au_statut import build_au_statut_batch
+
+    commune = _resolve_commune(commune)
+    models.ensure_au_statut_cache(engine())
+    with session_scope() as session:
+        ids = _parcel_ids(session, commune)
+        idus = [i for (i,) in session.execute(
+            text("SELECT idu FROM parcels WHERE id = ANY(:ids)"), {"ids": ids}).all()]
+    if not idus:
+        typer.echo("Aucune parcelle ingérée.")
+        raise typer.Exit(1)
+    total = 0
+    for k in range(0, len(idus), chunk):
+        with session_scope() as s:
+            total += build_au_statut_batch(s, idus[k:k + chunk])
+        typer.echo(f"    {min(k + chunk, len(idus))}/{len(idus)} parcelles…")
+    with session_scope() as s:
+        from .faisabilite.au_statut import au_statut_peremption
+        per = au_statut_peremption(s)
+    typer.echo(f"✓ Statut AU caché : {total} parcelles marquées ({per['declassees']} déclassées, "
+               f"{per['servies_avec_mention']} servies+mention) — {commune}.")
+
+
+@app.command("au-statut-compteur")
+def au_statut_compteur_cmd() -> None:
+    """Compteur de PÉREMPTION du déclassement AU (exigence Vic : « un déclassement temporaire sans
+    date devient permanent par oubli »). Combien de parcelles en attente de vérification d'ouverture,
+    et depuis combien de jours. Lecture seule."""
+    from .faisabilite.au_statut import au_statut_peremption
+    with session_scope() as s:
+        per = au_statut_peremption(s)
+    if not per["total_en_attente"]:
+        typer.echo("Aucune parcelle en attente de vérification d'ouverture AU.")
+        return
+    typer.echo(f"⏳ {per['total_en_attente']} parcelles AU en attente de vérification d'ouverture :")
+    for classe, d in sorted(per["par_classe"].items()):
+        typer.echo(f"   {classe:18s} {d['n']:5d} parcelles — plus ancienne : {d['jours_plus_ancien']} j, "
+                   f"médiane : {d['jours_median']} j")
+    typer.echo(f"   → {per['declassees']} déclassées, {per['servies_avec_mention']} servies avec mention.")
+
+
 def _print_healthcheck(commune: str) -> bool:
     from . import demo
 
@@ -1233,9 +1283,11 @@ def doctor_cmd(
         sch = state.schema_status(s)
         data = state.data_status(s, commune)
         st = state.demo_status(s, commune)
+        peremption = state._au_statut_readiness(s)
 
     if as_json:
-        typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data, **st},
+        typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data,
+                                "au_statut_en_attente": peremption, **st},
                                ensure_ascii=False))
         if not st["ready_for_demo"]:
             raise typer.Exit(1)
@@ -1250,6 +1302,10 @@ def doctor_cmd(
     typer.echo(f"{'✓' if st['demo']['all_conform'] else '✗'} Parcelles de démo conformes")
     w = st["warm"]
     typer.echo(f"{'✓' if w['done'] else '•'} Cache fiches démo : {w['warmed']}/{w['total']} pré-chauffées")
+    if peremption and peremption["n"]:
+        glyph = {"ok": "•", "warn": "⚠", "blocage": "⛔"}.get(peremption["statut"], "•")
+        typer.echo(f"{glyph} Déclassements AU en attente : {peremption['n']} "
+                   f"(plus ancienne {peremption['jours_plus_ancien']} j, statut {peremption['statut']})")
 
     if st["ready_for_demo"]:
         typer.echo("\n✅ PRÊT POUR LA DÉMO")
@@ -1497,6 +1553,15 @@ def score_v2_cmd(
     typer.echo(f"  tiers : {res['tiers']}")
     typer.echo(f"  N_entrée={res['params'].n_entree} N_sortie={res['params'].n_sortie} "
                f"seuil_D_brûlante={res['params'].brulante_seuil_d:.3f}")
+    # Rappel de péremption à CHAQUE run (arbitrage Vic 30/07) — impossible de servir un run sans
+    # relire ce chiffre : un déclassement « temporaire » oublié ne peut pas se faire discret.
+    with session_scope() as s:
+        from .faisabilite.au_statut import au_statut_peremption
+        per = au_statut_peremption(s)
+    if per["declassees"]:
+        glyph = {"ok": "⏳", "warn": "⚠", "blocage": "⛔"}.get(per["statut"], "⏳")
+        typer.echo(f"  {glyph} {per['declassees']} déclassées AU en attente de vérification "
+                   f"d'ouverture (plus ancienne {per['jours_plus_ancien']} j, statut {per['statut']})")
     if res["snapshot"]:
         typer.echo(f"  snapshot gelé : {res['snapshot']}")
 

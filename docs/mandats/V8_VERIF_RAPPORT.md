@@ -184,3 +184,583 @@ v8 ne sont acquis que quand ces correctifs sont sur main.)
 ---
 *A' et A'' résolus (VERDICT IDENTIQUE). B reste FERMÉ jusqu'à ton arbitrage. Aucun merge, aucune
 relance, aucune purge. q_v7_defisc servi intact.*
+
+---
+# POINT B — gardes de complétude (exécuté sur origin/main 7b067f7)
+
+## B.1 — tiers servis q_v8_calibre vs cibles (écart par ligne, brut)
+| Tier | Cible | Réel | Écart |
+|---|---:|---:|---:|
+| Brûlantes | 120 | 120 | **0** |
+| Chaudes | 1 042 | 1 043 | **+1** |
+| Réserve foncière | 3 208 | 3 209 | **+1** |
+| À creuser | 63 949 | 63 964 | **+15** |
+| Écartées | 353 945 | 354 355 | **+410** |
+| Déclassée « zone fermée » | 3 221 | 2 804 | **−417** |
+| Déclassée « inconstructible » | 6 178 | 6 168 | **−10** |
+| **TOTAL** | **431 663** | **431 663** | **0** |
+Total exact. Écarts sur 6 lignes/7 — le plus grand : `declasse_zone_fermee` −417, `ecartee` +410.
+Rapporté brut, non corrigé, non expliqué.
+
+## B.2 — golden : **107/116 PASS, 9 FAIL, 0 incohérence runtime**
+Les 9 FAIL sont TOUS sur `db.residuel` (capacité), AUCUN sur un tier (`tier_v2` passent — le revert
+`ad872ce` a restauré les attentes de tier à l'état q_v7). Ancres en échec (brut, non ajusté) :
+- 97402000AK1725 (taux_emprise_pct 49→61)
+- 97408000AC1870 (sdp 3553→1870)
+- 97416000CR1351 (residuel : golden présent → DB **absent**)
+- 97418000AT2379 (sdp 108→146)
+- 97420000AO0654 (sdp 176→117)
+- 97422000AD1237 (residuel : golden présent → DB **absent** ; = golden brûlante 2AUd)
+- 97423000AB1341 (sdp 199→133)
+- 97423000AB1908 (sdp 183→122)
+- 97424000AI0355 (taux 27→28 ; sdp 395→209)
+Constat brut : `parcel_residuel` en base = version CALIBRÉE v8 (migrée par la bascule, non
+rollbackée) ; le snapshot golden porte les valeurs d'AVANT calibration → 9 écarts de capacité.
+Rien ajusté.
+
+## B.3 — Saint-Benoît (21 671 parcelles)
+- **Capacité renseignée** (ligne `parcel_residuel`) : **12 000**
+- **Muettes** (aucune ligne `parcel_residuel`) : **9 671**
+(interprétation : capacité renseignée = présence d'un résiduel calculé ; muette = absence.)
+
+## B.4 — O12 : 35 candidats
+- **35 présents** après bascule (0 sorti, 0 entré vs capture pré-bascule `/tmp/o12_avant.txt`).
+- **`computed_at` = 28/07** pour les 35 → la table `division_or_candidates` **n'a PAS été recomputée
+  par la bascule** ; les 35 sont inchangés.
+- **EXPOSE = True** — c'est une CONSTANTE de code (`division_or.py:55`, validée Vic 28/07), globale
+  (pas une colonne par ligne) → les 35 sont exposés.
+- 35 idus : 97403000AR1521, 97409000AR2367, 97410000AV0207/BK0219/BM1144, 97411000CH0320/CH0631,
+  97412000AH0413/AM0461/AM0946/BE0229/BW0123/CS0625, 97413000CM0268/CQ0412/CR0068/CR0093/CX0585,
+  97414000ES0629, 97415000AX1059/BV0182/CH1198/CP0511/DS0617/HO0423, 97416000DM0665/HX0339/ID0021,
+  97418000AO1527/AV2092, 97420000BH1036, 97422000CL0575/CY0118, 97423000AH1514, 97424000AE0089.
+
+---
+*B exécuté sur origin/main 7b067f7. Rapporté brut, rien corrigé, rien mergé. q_v7_defisc servi intact.*
+
+---
+# B-PRIME — qualification des écarts (lecture seule, sur origin/main 7b067f7)
+
+## B'.1 — les 427 (mécanisme prouvé par le code)
+- Les 427 étiquetées A/B dans `parcel_constructibilite` mais tier q_v8 ≠ déclassé sont **TOUTES
+  passées en `ecartee`** (417 A « zone fermée » + 10 B « inconstructible »). **ZÉRO en
+  chaude/réserve/à-creuser.**
+- **Mécanisme (code)** : `assign_tiers` (statuts.py:118-120) affecte le tier déclassé PUIS
+  `tier[ecartee_etage0] = TIER_ECARTEE` en **dernier** → écartée écrase déclassé. Et la bascule
+  fixe `LABUSE_ETAGE0_RUN=q_v8_calibre` (bascule:189 → pipeline:236) : l'étage 0 est lu sur la
+  cascade CALIBRÉE de q_v8, où **M6 2b hard-exclut les zones interdit-avec-hauteur** (UE/Uem/US/
+  UCtom + AU* transition). Vérifié : **427/427 sont hard-exclues (status exclue/faux_positif) à
+  l'étage 0 de q_v8.** La cible (jetable) lisait l'étage 0 de q_v7 (pré-calibration, sans ces
+  exclusions) → d'où l'écart. C'est cohérent : une parcelle hard-exclue par la cascade calibrée
+  est écartée (exclusion forte), pas seulement déclassée.
+- **B'.1.1 (les +17 en tiers normaux)** : ce ne sont PAS des déclassées perdues (0 déclassée en
+  tier normal, prouvé). Ce sont des parcelles constructibles re-classées vs la cible. **Je ne peux
+  PAS les nommer par IDU** : la cible était un run jetable (supprimé), non persisté par IDU, et ses
+  comptes diffèrent même légèrement des cibles du mandat (chaude 1042 vs 1043 mesuré). Je le dis
+  plutôt que d'inventer une liste.
+- **B'.1.2** : les 417 (A) sont en zones économiques habitat-interdit (UE 105, UCtom 37, US 33,
+  Uem 33, Ue 31, UCto 20…) + AU* transition ; les 10 (B) inconstructibles. Liste complète des 427
+  par IDU : `docs/mandats/V8_BPRIME_427_ecartees.tsv`.
+- **B'.1.3** : les 427 en `ecartee` sont **hors de toute liste servie** (écartée). **Leur motif
+  reste consultable** sur la fiche : `flash/data.py::_constructibilite` lit `parcel_constructibilite`
+  et pose `out["constructibilite"]={label,motif}` **sans condition de tier** → motif affiché même
+  écartée.
+
+## B'.2 — les 3 ancres + les 6 autres FAIL
+- **97422000AD1237** (Le Tampon 2AUd, `calibree=True`) : golden résiduel 453 → DB **absent**.
+  **Justifié OUI** : Art. 2.2.3 p.84 ferme 2AUd → non constructible → résiduel supprimé. **Tier q_v8
+  = `declasse_zone_fermee` → n'est PLUS servie brûlante.** (correction visée du défaut d'origine.)
+- **97418000AT2379** (Sainte-Marie U, `calibree=False`) : 108 → 146. Aucune règle PLU changée (zone
+  générique 9 m) → recompute résiduel. **Justifié : indéterminé.** Toujours brûlante, constructible.
+- **97424000AI0355** (Cilaos « 86 » → AUst, `calibree=False`) : 395 → 209. Zone AUst (Art. AUst
+  p.53-56) mais non calibrée. **Justifié : indéterminé.**
+- 6 autres FAIL, cohérence avec le calibrage (une ligne) : AK1725 (Bras-Panon U) sdp 0→0, taux
+  49→61 ✓ ; AC1870 (La Possession UBc **calibré**) 3553→1870 ✓ ; CR1351 (Saint-Pierre AU)
+  3903→absent (devenu non constructible) ✓ ; AO0654 (Sainte-Suzanne UC **calibré**) 176→117 ✓ ;
+  AB1341/AB1908 (Trois-Bassins 1AUb **calibré**) 199→133 / 183→122 ✓.
+
+## B'.3 — le « plafond » à 12 000 : PAS une troncature
+- Par commune (23, **Saint-Philippe absente = 0 résiduel, RNU**) : comptes variés (Saint-Paul 31957,
+  Saint-Pierre 27489…) ; **Saint-Benoît = 12 000 exact, seule ronde.**
+- **Débunké** : parcel_residuel_rerun Saint-Benoît = 12 238 total, **12 000 disponibles** (238
+  devenues non-constructibles au recompute) ; l'ancienne parcel_residuel (29/06) = 12 238. Donc
+  **12 000 = 12 238 − 238, rond par COÏNCIDENCE.** Aucun `12000`/`LIMIT`/cap dans le code
+  (migration + résiduel ; seul `chunk=2000` de commit, sans effet sur le total).
+- **Verdict B'.3.4** : les 9 671 muettes = **6 928 en A/N** (absence RÉELLE, non-constructible
+  légitime) + **2 743 en U/AU** (dette « muettes en capacité » — zones urbaines sans résiduel, à
+  investiguer). **Ni cap, ni troncature.**
+
+## B'.4 — O12 contre v8 : les 35 seraient INCHANGÉS
+- La détection division_or (division_or.py:181-282) lit **géométrie** (surface 1000-6000, bâti,
+  résiduel free_m2, cercle inscrit, compacité, façade, solidité) + `_emprise_max_sql` = seuil
+  `emprise_sol_pct` du **YAML calibré** (`load_rules`, l.670-684). Elle NE lit NI `parcel_residuel`,
+  NI le run/tier, NI la constructibilité résolue. Géométrie statique + YAML inchangé depuis le
+  27-28/07 (avant le calcul du 28/07) → **un recompute contre q_v8 rend les mêmes 35** (la bascule
+  n'a touché aucun input de la détection). (Non relancé : interdit « recomputer une table servie »,
+  pas de mécanisme de label isolé dans division_or ; conclusion étayée par le code.)
+- **B'.4.3 — à revoir visuellement par Vic** : 3 candidats dont la parcelle est désormais
+  NON CONSTRUCTIBLE en v8 (candidat géométrique O12, mais foncier fermé/inconstructible) :
+  **97410000BK0219** (declasse_non_constructible), **97414000ES0629** (declasse_non_constructible),
+  **97416000HX0339** (declasse_zone_fermee). Secondairement, 11 des 35 sont désormais `ecartee`
+  (hard-exclues cascade : risque/foncier public/interdit) — à regarder aussi.
+
+---
+*B-PRIME lecture seule, rien corrigé, rien mergé, rien recomputé sur table servie. q_v7_defisc servi
+intact. Artefact : V8_BPRIME_427_ecartees.tsv.*
+
+---
+# MANDAT O12-GARDE — garde de constructibilité (code posé, table servie INTOUCHÉE)
+
+## Garde ajoutée (code) — division_or.py
+Filtre AMONT dans `_DETECT` : un candidat dont la parcelle SUPPORT est (a) hard-exclue à l'étage 0
+du RUN SERVI (`:served` = `Q_A_RUN_LABEL` → **suit automatiquement toute bascule future**), OU
+(b) marquée non constructible (`parcel_constructibilite` declasse_*), n'est PAS candidat.
+Robuste : la garde (b) retombe sur `true` si `parcel_constructibilite` absente. Code posé sur la
+branche ; la table servie `division_or_candidates` **n'est PAS recomputée** (point d'arrêt).
+
+## Recompte à blanc (mesure, sans écriture sur la table servie)
+Sur les 35 candidats : **14 tombent, 21 survivent** (mêmes 14 sous q_v7 servi actuel et sous q_v8) :
+| verdict | n | idus |
+|---|---|---|
+| DROP — non constructible (declasse_*) | 3 | 97410000BK0219, 97414000ES0629, 97416000HX0339 |
+| DROP — écartement définitif (PPR rouge / foncier public) | 8 | CH0320, AM0461, CM0268, CR0068, CH1198, CP0511, DS0617, CL0575 |
+| **ARBITRAGE — « déjà bâti » (faux_positif_probable)** | 3 | 97415000BV0182, 97418000AV2092, 97420000BH1036 |
+
+## Motifs des 11 écartés (point 4)
+- **5 PPR zone rouge inconstructible** (CH0320, CM0268, CR0068, DS0617, CL0575) → drop clair.
+- **4 propriété publique non-acquérable** (AM0461, CM0268 aussi, CH1198, CP0511) → drop clair.
+- **3 « déjà bâtie probable » 31-40 %** (BV0182, AV2092, BH1036) → `faux_positif_probable`.
+  **DÉFENDABLES** : O12 vise précisément le bâti-dans-un-coin avec résiduel détachable ; le
+  hard-exclude « déjà bâti » de la cascade entre en TENSION avec la raison d'être d'O12. **Ta
+  décision** : la garde (status IN exclue/faux_positif) les drop ; faut-il la restreindre à
+  `status='exclue'` (définitif) pour GARDER ces 3, motif servi ? Non tranché par moi.
+
+## Revue visuelle (point 5)
+Manifeste des 14 candidats dont l'état a changé depuis la revue du 28/07 :
+`docs/mandats/O12_GARDE_REVUE_MANIFEST.txt` (idu, commune, motif, verdict garde). À revoir
+visuellement avant exposition.
+
+## Point d'arrêt
+Garde CODÉE, table servie `division_or_candidates` INTOUCHÉE, aucune bascule. En attente :
+arbitrage sur les 3 « déjà bâti » + revue visuelle → puis recompute O12 + bascule q_v8.
+
+---
+# O12-GARDE — ARBITRÉE (Vic 30/07) : garde à `status='exclue'` seul
+
+Garde restreinte : `faux_positif_probable` RETIRÉ du critère de drop (probabilité ≠ fait ; le
+bâti-avec-résiduel EST la prémisse O12 — cohérent avec l'arbitrage bâti du 29/07). Code : `_DETECT`
+→ `de.status = 'exclue'` (+ `parcel_constructibilite` declasse_*).
+
+**Recompte à blanc CONFIRMÉ : 24 candidats survivent, 11 tombent (définitifs).**
+- **GARDÉS (arbitrage, +3)** : 97415000BV0182 (Saint-Paul, résiduel 520, bâti 40 %),
+  97418000AV2092 (Sainte-Marie, 535, 32 %), 97420000BH1036 (Sainte-Suzanne, 883, 30 %) — « déjà
+  bâti » (faux_positif_probable), désormais GARDÉS.
+- **11 DROPS définitifs confirmés** : 3 non-constructibles (BK0219, ES0629, HX0339) + 8 PPR rouge /
+  foncier public (CH0320, AM0461, CM0268, CR0068, CH1198, CP0511, DS0617, CL0575).
+
+**Revue visuelle** : `O12_GARDE_REVUE_MANIFEST.txt` — les 3 « déjà bâti » EN TÊTE (rang 1), à
+trancher en premier par Vic, ortho à l'appui. Table servie `division_or_candidates` **INTOUCHÉE**,
+aucune exposition, aucune bascule.
+
+---
+# REVUE VISUELLE O12 — dossier des 24 cartes (garde appliquée à blanc)
+
+**Correction de chemin (constat)** : `qa/division_or/gen_revue.py` n'existe NI en working tree, NI
+dans git (toutes branches / historique), NI sur le disque. Le générateur réel est la commande
+**`labuse division-or-review`** → `src/labuse/api/division_review.py::build_review_dossier`
+(fond IGN ortho WMTS, PDF). C'est lui qui a produit les cartes de revue du 28/07.
+
+**Généré** sur les **24 candidats retenus après garde** (35 − 11 drops), **BV0182 / AV2092 / BH1036
+forcés en cartes 01 / 02 / 03**. Chaque carte : ortho IGN + contour parcelle + emprise bâti + lot
+résiduel proposé + voirie (accès). Table servie `division_or_candidates` **INTOUCHÉE** (les 24 sont
+sélectionnés à blanc, pas réécrits).
+
+**Sorties** (`qa/division_or/revue_v8/`, JPEG q85 @140 dpi pour l'hygiène git ; PDF = les 24 d'un bloc) :
+- **carte 01 — `qa/division_or/revue_v8/carte_01.jpg`** — 97415000BV0182 (Saint-Paul, résiduel 520 m², bâti 40 %, façade voirie du lot 22,3 m)
+- **carte 02 — `qa/division_or/revue_v8/carte_02.jpg`** — 97418000AV2092 (Sainte-Marie, 535 m², 32 %)
+- **carte 03 — `qa/division_or/revue_v8/carte_03.jpg`** — 97420000BH1036 (Sainte-Suzanne, 883 m², 30 %)
+- dossier complet : `qa/division_or/revue_v8/dossier_revue_v8.pdf` (24 cartes)
+
+Observation (non-verdict) : la carte 01 porte une façade voirie du lot de 22,3 m (> 0) → accès a
+priori propre, pas enclavé ; **ta revue visuelle tranche.** Rien exposé, rien basculé.
+
+---
+# O12-REVUE-VIC — retours (lecture seule, table servie INTOUCHÉE)
+
+## BLOQUANT carte 15 — AUh Saint-Denis (97411000CH0631) : NON RÉSOLU par les données
+Le YAML calibre AUh avec ses articles DIMENSIONNELS : hauteur (Art. AUh.10, p.103), emprise 30 %
+(Art. AUh.9, p.103), reculs (AUh.6/7), pleine terre (AUh.13, p.105). **Mais la calibration n'a PAS
+extrait l'Article AUh.1/AUh.2** (occupations autorisées / caractère de zone) — là où se lit
+l'ouverture ou la subordination à une modification/OAP. **Je n'ai pas le règlement source**
+(« Modification simplifiée n°8, févr. 2024 », 154 p.) pour citer le verbatim exigé.
+- **Signal (inférence réglementaire, PAS verbatim)** : AUh possède des articles de CONSTRUCTION
+  complets (9/10/13) et ses propres chapitres (`zones_au_renvoi: {}`) ; `zones_au_st: []` (aucune
+  zone de transition à Saint-Denis) ; les calibrateurs ont noté « conditionnelles à l'ouverture
+  future » pour **AUx** mais RIEN pour AUh. Par convention PLU, une AU dotée de règles de
+  construction complètes est ouverte (une 2AU fermée n'aurait pas d'Art. 9/10 chiffrés). **Cela
+  suggère AUh ouverte — sans le prouver.**
+- **Verdict : INDÉTERMINÉ sans le règlement.** Il faut Art. AUh.1/AUh.2 (ou « caractère de la
+  zone AU ») du PLU Saint-Denis. **O12 reste non exposé** jusqu'à ce verdict (consigne respectée).
+- **Balayage des 24** : **un SEUL candidat est en zone AU — carte 15 (AUh)**. Les 23 autres sont
+  en U. Donc si AUh est fermée, seule la carte 15 sort. La garde « AU fermée = 2AU » est PRÊTE à
+  poser, mais **butte sur une dette** : les YAML calibrent les DIMENSIONS des AU, pas leur STATUT
+  d'ouverture → la garde ne peut pas distinguer AU ouverte/fermée sans que ce statut soit gravé.
+
+## FAUX POSITIF carte 1 — 97415000BV0182 : SORT
+Confirmé par les données : compacité 0,472 (la PLUS BASSE du pool), emprise lot restant 48 %,
+144 m² de démolition. Sortira au recompute (avec la garde). Noté.
+
+## Seuil de compacité — mesuré sur les 35
+Les 3 « déjà bâti » sont les 3 compacités les plus basses : **0,472 (BV0182), 0,485 (BH1036),
+0,505 (AV2092)** ; valeur suivante **0,563** (AM0946). **Gap net : ZÉRO candidat dans la zone grise
+0,55-0,5629.** Un seuil de compacité minimale à **0,55 sépare proprement** les 3 du reste. Meaningful
+uniquement sur la famille `libre`/`demolition` (terrain réel) — la famille `decoupe` est ≥ 0,608
+(compacité auto-validée, cf. dette #6). **Mesuré, cohérent, mais 35 = petit échantillon → à
+confirmer sur un pool plus large avant de graver** (comme demandé).
+
+## Emprise du lot restant — par le code + par candidat
+`_emprise_max_sql` (division_or.py:670) lit le `emprise_sol_pct` **CALIBRÉ** du YAML par zone (CASE),
+sinon **repli générique 0,60** (`EMPRISE_RESTANTE_MAX`). Donc calibré pour les zones au YAML, repli
+sinon. Cartes signalées (emprise restante vs emprise max appliquée) :
+- **Carte 2** — AV2092 (UB Sainte-Marie) : 56 % vs **70 % CALIBRÉ** (Art. calibré) → conforme réel ✓
+- **Carte 3** — BH1036 (UB Sainte-Suzanne) : 56 % vs **60 % GÉNÉRIQUE** (UB Sainte-Suzanne NON
+  calibrée) → vérifié contre le repli, **PAS contre le réel** → **recontrôle requis** (défaut repli
+  générique) : besoin de l'emprise max réelle de UB Sainte-Suzanne (article).
+- **Carte 1** — BV0182 (U6c) : 48 % vs 60 % générique — mais faux positif, sort.
+- **Carte 23** — ID0021 (Ug Saint-Pierre) : 43 % vs **50 % CALIBRÉ** → conforme réel ✓
+(Les 24 sont tous ≤ leur max appliqué ; le risque est confiné aux zones en repli générique — 12/24,
+dont BH1036 est la seule proche du seuil.)
+
+## Douteux — aucun hard-exclu par la cascade (à contrôler visuellement/manuellement)
+- **Carte 7 (97416000DM0665, Saint-Pierre)** : `owner_type='pm'` (personne morale), **PAS flaggé
+  foncier public** (hors groupes DGFiP publics) ; contexte piste d'athlétisme à l'ortho → contrôle
+  MANUEL de la dénomination du propriétaire requis (dénomination non disponible en base).
+- **Carte 16 (97412000CS0625, Saint-Joseph)** : cascade = « Aléa mvt terrain FAIBLE » seul, **aucune
+  exclusion PPR ni ravine** → la ravine SE vue à l'ortho n'est pas captée (soit hors buffer, soit
+  data ravine incomplète) → contrôle distance lot↔axe ravine.
+- **Carte 8 (97424000AE0089, Cilaos)** : « Aléa mvt terrain FAIBLE » seul, pas de PPR → à confirmer
+  (Cilaos = cirque, risque mvt terrain sous-estimé possible).
+
+## Dettes consignées (V8_DETTES_CONSIGNEES.md #5, #6)
+5 · Aucun critère de PENTE (6/24 sur versant raide) → mesurer sur MNT IGN.
+6 · Indicateurs auto-validés sur la famille `decoupe` (compacité→π/4, solidité→1) → ne présenter
+compacité/solidité comme qualité que sur `libre`/`demolition`.
+
+## État
+18 recevables (dont 6 avec réserve de pente) — NON exposés avant : (1) verdict AUh carte 15,
+(2) recontrôle emprise carte 3 (BH1036). Table servie INTOUCHÉE, rien basculé.
+
+---
+# O12-REVUE-VIC suites (arbitrages 30/07)
+
+## DETTE #7 (prioritaire) — ouverture des AU non gravée : MESURÉE (run servi q_v7_defisc)
+- 187 zones AU distinctes servies : **106 ouverture documentée, 81 NON**.
+- **6 636 parcelles servies en AU à ouverture NON documentée** (3 829 génériques + 2 807 calibrées
+  dimensions seules), dont **420 en tête de liste : 12 brûlantes, 172 chaudes, 236 réserve**.
+- Même classe de risque que la 2AUd brûlante du 29/07, à l'échelle. Consigné dette #7 → à intégrer
+  au mandat calibration (extraire Art. 1/2 des AU). Chiffres bruts, aucune correction.
+
+## Carte 3 (Sainte-Suzanne UB) — TRANCHÉ : repli légitime, étiqueter Estimé
+UB EXISTE au YAML Sainte-Suzanne, `emprise_sol_pct: null`, `emprise_src: "Art. U7, p.14 : « Sans
+objet »"`. **L'article existe et ne plafonne PAS l'emprise** (« Sans objet ») → le repli générique
+60 % est LÉGITIME → BH1036 conforme (56 % < 60 %), **carte 3 passe, à étiqueter « Estimé »**. Ce
+n'est PAS une lacune de calibration (le YAML a correctement gravé « Sans objet » = null + source).
+
+## Seuil compacité #4 — NON gravé ; mesure au pool large à faire
+COMPACITE_MIN actuel = 0,25. Le gap 0,505 → 0,563 est observé sur les 35 seulement. Principe 4 :
+un seuil dérivé d'une distribution se périme → à mesurer sur le pool large des **5 916 résiduels
+bruts** (funnel 5916→294→…→35), pas sur 35. Mesure en cours (recompute géométrique à blanc, sans
+écriture sur la table servie).
+
+## Dette #8 — l'ortho voit ce que la cascade rate (cartes 16, 8) : consignée.
+
+## #4 compacité — le gap 0,55 est un ARTEFACT de petit échantillon (mesuré au pool large)
+Pool de **1 422 résiduels viables** (recompute géométrique à blanc, 24 communes, sans plancher
+compacité ; 40× les 35 — le « 5 916 » du funnel est le brut AVANT filtres de viabilité, mon pool
+applique free_m2≥500/rad≥9). **La compacité est un CONTINUUM lisse** :
+`[0,45-0,50)=81 · [0,50-0,55)=98 · [0,55-0,60)=86 · [0,60-0,65)=87` — aucune rupture.
+**105 candidats tombent dans l'ancien « gap » [0,505 ; 0,563)** (contre 0 sur les 35).
+**Verdict : le gap 0,55 était une illusion de petit échantillon (Principe 4).** À l'échelle,
+aucune coupure naturelle → un seuil de compacité serait une coupe ARBITRAIRE dans un continuum, pas
+un séparateur. NE PAS graver 0,55. Si un plancher de compacité est voulu, il doit se justifier sur
+le critère de forme acceptable (revue visuelle), pas sur un « gap ».
+
+---
+# MANDAT AU-OUVERTURE (dette #7 devenue bloquante) — lecture seule
+
+## Étape 1 — cadrage : combien de règlements
+- **51 zones AU non documentées portent les 420 têtes de liste, sur 18 communes.**
+- **12 brûlantes → 6 zones / 4 communes seulement** : Saint-Benoît AUb19 (**7**), AUa5 (1) ;
+  La Possession AUBm (1), AUAv (1) ; Saint-Denis AUm (1) ; Bras-Panon AU (1). **→ 4 règlements**
+  résolvent les brûlantes.
+- Table complète (zone × commune × tier × classe) : mesure ci-dessous, triée brûlantes d'abord.
+
+## Étape 2 — deux positions d'attente (mesurées, non tranchées)
+Les 420 se scindent : **107 « dimensions seules »** (règles de construction extraites → vraisembl.
+OUVERTES) + **313 génériques** (statut PUR inconnu = cœur du risque).
+
+| | Option a — laisser servi + mention « ouverture non vérifiée » (Absent) | Option b — déclasser temporairement |
+|---|---|---|
+| parcelles changeant de tier | **0** | **420** (12 brûl, 172 ch, 236 rés) |
+| risque résiduel faux POSITIF | **420 servies non vérifiées** (12 brûlantes = risque max) | **0** |
+| coût | risque concentré sur 313 génériques | jusqu'à **420 faux NÉGATIFS** (107 dimensions-seules probabl. ouvertes, gelées à tort) |
+
+Observation (non-décision) : un HYBRIDE existe — déclasser les 313 génériques (inconnu pur),
+laisser les 107 dimensions-seules servies-avec-mention. À toi de trancher a / b / hybride.
+
+## Étape 3 — addendum calibration RÉDIGÉ (non exécuté)
+`docs/mandats/ADDENDUM_CALIBRATION_AU_OUVERTURE.md` : extraire Art. 1/2 des AU (champ `ouverture`
++ `ouverture_src`), priorité aux 4 communes à brûlantes, garde-fou `a_verifier` si illisible.
+
+*Rien exposé, rien basculé, rien déclassé. q_v7_defisc servi intact.*
+
+---
+# AU-OUVERTURE — arbitrage HYBRIDE (mesures avant application, RIEN appliqué)
+
+## Mesure 1 — split des 12 brûlantes non documentées : CONFIRMÉ
+- **11 génériques → à DÉCLASSER** : Saint-Benoît AUb19 (×6 : CD0905/0907/0939/0943/0897/0934/0893
+  — en fait 7), AUa5 (AS1425) ; La Possession AUAv (BN3751), AUBm (AP1496) ; Bras-Panon AU (AD1052).
+- **1 dimensions-seules → SERVIE + mention** : Saint-Denis AUm, `97411000KA0296`.
+(Les 20 autres brûlantes en AU sont en zones DOCUMENTÉES — hors périmètre ; dont la 2AUd golden,
+gérée par le tête-de-liste en q_v8.)
+
+## Mesure 2 — la brûlante AUm Saint-Denis
+`97411000KA0296`, **rang 7 / percentile 100** (7ᵉ parcelle servie de l'île). AUm = « dimensions
+seules » : YAML a extrait Art. AUm.9 (emprise 50 %, p.98), AUm.10 (hauteur he 7/hf 10, p.98),
+AUm.6/7 (reculs), AUm.13 (pleine terre) — **tous dimensionnels, aucun Art. AUm.1/2** (ouverture).
+Vérifiable à la main : une brûlante de rang 7 sur une AU au statut non lu, servie AVEC mention.
+
+## Mesure 3 — PROPOSITION de libellé (NON appliqué, attend ton feu vert)
+Nouveau tier/label **`declasse_au_statut_inconnu`** (26 car., varchar 32 OK), DISTINCT de
+`declasse_zone_fermee` (règlement ferme) et `declasse_non_constructible` (physique) : ici le statut
+est INCONNU, la zone n'est pas fermée.
+- **Motif fiche (déclassées, 313 génériques)** : « Zone à urbaniser — ouverture à l'urbanisation
+  NON VÉRIFIÉE, statut inconnu. Le règlement de cette zone n'a pas été lu. Déclassement TEMPORAIRE
+  jusqu'à vérification de l'article d'ouverture. » (Absent.)
+- **Mention fiche (servies, 107 dimensions-seules)** — texte imposé Vic : « Zone à urbaniser —
+  ouverture non vérifiée. Le règlement fixe des règles de construction pour cette zone, mais son
+  ouverture à l'urbanisation n'a pas été confirmée. Vérifiez auprès de la commune avant tout
+  engagement. » (Absent, jamais Estimé.)
+
+### Plan d'intégration (esquisse, non exécutée)
+1. Table `parcel_au_statut(idu, classe 'générique'|'dimensions_seules', zone_lib, computed_at)` —
+   bâtie comme `parcel_constructibilite` (le classifieur = resolve_zone + zone AU + ouverture non
+   documentée). Lit le run servi Q_A_RUN_LABEL, suit toute bascule.
+2. `constructibilite.py` : constante `DECLASSE_AU_STATUT_INCONNU`.
+3. `statuts.py::assign_tiers` : classe='générique' → tier `declasse_au_statut_inconnu` (prime sur
+   tiers normaux, sous `ecartee`) ; classe='dimensions_seules' → RESTE servi (mention seule).
+4. `flash/data.py::_constructibilite` : les DEUX textes ci-dessus selon la classe, étiquette Absent.
+Effet mesuré (option hybride) : **313 déclassées** (11 brûlantes, 126 chaudes, 176 réserve) ;
+**107 servies + mention** (1 brûlante AUm, 46 chaudes, 60 réserve). Temporaire par construction :
+dès l'article lu, la parcelle remonte ou tombe définitivement.
+
+## Ordre de lecture des règlements (Vic ce matin)
+1. **Saint-Benoît** (AUb19 = 7 brûlantes / 12). 2. **Saint-Denis** (AUm brûlante + AUh carte 15 —
+un seul règlement résout les deux). 3. **La Possession** (AUAv, AUBm). 4. **Bras-Panon** (AU).
+
+*Rien appliqué, rien exposé, rien basculé, table servie intouchée. q_v7_defisc sert toujours.
+Attend : feu vert sur le libellé `declasse_au_statut_inconnu` + verbatims des règlements.*
+
+---
+# AU-OUVERTURE — FEU VERT IMPLÉMENTÉ (point d'arrêt : mesuré, PAS basculé)
+
+Libellé + plan validés par Vic (30/07). Code écrit, table peuplée, effet MESURÉ à blanc. **Le run
+servi n'est PAS basculé ; la référence golden n'est PAS mise à jour** (discipline : la référence se
+met à jour en commit dédié, APRÈS arbitrage — on ne corrige pas la mesure pour valider le correctif).
+
+## Ce qui est en place (code)
+- `constructibilite.py` : constante `DECLASSE_AU_STATUT_INCONNU` (+ dans `DECLASSE_LABELS`).
+- `faisabilite/au_statut.py` (NOUVEAU) : classifieur (`resolve_zone` + KW ouverture, JAMAIS le
+  préfixe brut — garde-fou 21 077) + `build_au_statut_batch` (upsert idempotent, auto-purge) +
+  `au_statut_peremption` (compteur). Reproduit la mesure du 30/07 **au parcelle près**.
+- Table `parcel_au_statut(parcel_id, idu, classe, zone_lib, motif, computed_at)` — clé parcel_id,
+  INDÉPENDANTE du run → **le motif survit à la bascule** (comme `parcel_constructibilite`).
+- `statuts.py::assign_tiers` : `au_statut='générique'` → tier `declasse_au_statut_inconnu` (prime
+  sur les tiers de tête, ne réécrit jamais un A/B déjà posé, l'étage 0 dur prime) ;
+  `'dimensions_seules'` → RESTE servie. Colonne absente = rétro-compatible. Test unitaire ajouté.
+- `pipeline.py` : merge `parcel_au_statut` (sur IDU) + exclusion des génériques du calibrage N_e
+  (comme A/B). Garde `LABUSE_DISABLE_AU_STATUT` (mesure baseline).
+- `flash/data.py` + `rapport.html.j2` : **la mention est VUE** — placée EN TÊTE, dans le bloc
+  Verdict (jamais en bas de fiche) ; bloc `au_statut` autonome pour le cas sans verdict v2. « Absent ».
+- CLI : `compute-au-statut` (peuplement) + `au-statut-compteur` (péremption).
+
+## Exigence 1 — le déclassement se périme (compteur)
+`parcel_au_statut.computed_at` = horodatage de pose. `labuse au-statut-compteur` →
+**6 636 parcelles en attente de vérification d'ouverture** (3 829 génériques + 2 807
+dimensions-seules), âge (plus ancienne / médiane) mesuré depuis la pose. Un déclassement sans date
+devient permanent par oubli → le compteur le rend visible et daté.
+
+## Exigence 2 — la mention est vue (capture)
+Fiche de la **brûlante rang 7** `97411000KA0296` (AUm Saint-Denis, dimensions-seules) — bloc Verdict
+rendu, dans l'ordre : `Verdict Brûlante v2 · Rang île 7 · ×22.0 · ⚠ Ouverture à l'urbanisation non
+vérifiée — [mention] (Absent)`. La mention suit immédiatement les cartouches Verdict, avant tout le
+reste. Artefacts : `qa/au_ouverture/fiche_97411000KA0296_dimensions_seules_rang7.{html,pdf}` (+ la
+générique Bras-Panon `97402000AD1052.{html,pdf}`, motif de déclassement en tête).
+
+## Exigence 3 — le motif survit à la bascule
+Lu sur clé parcel_id (pas run_id) → consultable AVANT la bascule (run q_v7 servi, tier encore
+brûlante/chaude) ET après (tier `declasse_au_statut_inconnu`). Les 3 829 génériques gardent leur
+motif dédié — **on NE reproduit PAS le cas des 427** (qui perdaient leur tier au profit d'`ecartee`) :
+ici la marque est portée par une table à elle, indépendante du tier servi.
+
+## MESURE tiers AVANT / APRÈS (effet du SEUL déclassement, cascade q_v8_calibre)
+Protocole : deux runs à blanc, même cascade + même run précédent (hystérésis identique), différant
+seulement par `parcel_au_statut` (baseline `LABUSE_DISABLE_AU_STATUT=1`). Runs jetables PURGÉS.
+
+| tier | avant | après | Δ |
+|---|---|---|---|
+| brûlante | 120 | **120** | +0 |
+| chaude | 1 043 | 1 035 | −8 |
+| réserve foncière | 3 209 | 3 047 | −162 |
+| a_creuser | 63 964 | 62 919 | −1 045 |
+| **declasse_au_statut_inconnu** | 0 | **1 215** | +1 215 |
+| ecartee | 354 355 | 354 355 | +0 |
+
+- **1 215 génériques déclassées** ; les **2 614 génériques restantes sont déjà `ecartee`** en q_v8
+  (étage 0 dur hard-exclut, il prime sur D — cohérent avec le mécanisme des 427 de B-PRIME).
+- **302 génériques quittent la tête** (12 brûlantes + 128 chaudes + 162 réserve) → déclassées.
+- **139 mouvements de backfill ATTENDUS** : exclure les génériques du calibrage N_e (comme A/B)
+  rappelle ~1 150 VRAIS candidats en tête → 127 a_creuser→chaude, 5 a_creuser→brûlante, 7
+  chaude→brûlante. Arithmétique fermée : brûlante 120−12+12=120 ✓ ; chaude 1043−128−7+127=1035 ✓.
+  Ce n'est pas du bruit : c'est la conséquence mécanique voulue (la tête reste à effectif réel).
+
+## MESURE golden — 7 ancres bougent (aucune référence touchée)
+| IDU | avant → après | nature |
+|---|---|---|
+| 97410000AS1425 | brûlante → declasse_au_statut_inconnu | **générique — ATTENDU** (AUa5 Saint-Benoît, brûlante mesure 1) |
+| 97410000CD0905 | brûlante → declasse_au_statut_inconnu | **générique — ATTENDU** (AUb19 Saint-Benoît, brûlante mesure 1) |
+| 97408000AP1610 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97408000AP1647 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97410000AS1450 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97410000CD0926 | chaude → declasse_au_statut_inconnu | générique — ATTENDU |
+| 97403000AR1423 | chaude → brûlante | **backfill** (non-marquée, remonte par recalibrage) |
+
+**6 sur 7 sont le CŒUR du mandat** (les golden AU génériques que le déclassement retire de la tête,
+dont les deux brûlantes AUa5/AUb19). 1 est un backfill (AR1423). Les 8 autres golden marqués
+génériques ne bougent pas (déjà `ecartee` avant/après). Golden **base B inchangée** (les 9 FAIL
+db.residuel de B ne sont pas touchés par ce mandat).
+
+## Point d'arrêt
+Mesuré, rapporté. **Rien basculé, référence golden intacte, run servi q_v7_defisc intouché.**
+Selon la discipline golden : 7 ancres bougent (>2) → si tu valides l'effet, la suite = re-run
+champion + arène + arbitrage sur q_v8, puis MAJ de la référence golden en commit DÉDIÉ. Reste gelé
+derrière ta lecture des règlements (Saint-Denis d'abord). Aucune règle d'ouverture n'a été extraite
+ici : le déclassement est une POSITION D'ATTENTE, il tombe dès l'article lu (péremption).
+
+---
+# AU-OUVERTURE — suites d'arbitrage (30/07) : AR1423 enquêtée, golden GELÉ, péremption proposée
+
+## Enquête AR1423 — la seule montée hors mandat (mesurée à blanc, jetables purgés)
+`97403000AR1423` · **Entre-Deux** · zone **U** (constructible, PAS une AU) · 297,5 m² ·
+**NON marquée** `parcel_au_statut` (ce n'est pas elle qui est en cause, c'est un backfill).
+
+| | tier | rang île | contrib_d | événement | mult | seuil brûlante top-décile |
+|---|---|---|---|---|---|---|
+| AVANT (déclas. OFF) | chaude | **27** | 1,7468 | aucun | ×13,07 | **1,7517** |
+| APRÈS (déclas. ON) | brûlante | **27** | 1,7468 | aucun | ×13,07 | **1,7464** |
+
+**Motif exact de la montée : aucun changement de la parcelle.** Son signal est IDENTIQUE dans les
+deux états (rang 27, D 1,7468, sans événement, ×13). Seul le **seuil top-décile brûlante a baissé**
+de 1,7517 à 1,7464 — parce que des génériques à fort D ont quitté le pool des chaudes, abaissant le
+90ᵉ percentile. Le D d'AR1423 était coincé dans ce sliver : `1,7468 < 1,7517` (sous le seuil AVANT →
+pas brûlante, et sans événement pour bypasser) puis `1,7468 ≥ 1,7464` (au-dessus APRÈS → brûlante).
+Elle bascule d'un **Δ de 0,005**.
+
+**Pourquoi pas brûlante avant :** elle était DÉJÀ chaude rang 27 — une parcelle forte, jamais
+absente de la tête. Elle n'était pas brûlante uniquement parce qu'elle campait JUSTE sous la barre
+du top-décile. Ce n'est pas une opportunité nouvelle révélée par erreur ; c'est une **brûlante-limite
+par construction** (un seuil de percentile a une frontière, une parcelle s'y trouve). Défendable
+brûlante comme chaude. Comme rien n'est basculé, **aucune exposition n'a lieu** : à re-vérifier sur
+le pool FINAL lors du vrai re-run post-calibration. Artefact : `qa/au_ouverture/enquete_ar1423*.{py,json,log}`.
+
+## Golden — NON regravé (ton arbitrage)
+Aucun re-run champion, aucune MAJ de référence. La position d'attente reste EN BASE, NON SERVIE,
+jusqu'à la refonte de calibration (lecture intégrale des 24 règlements → vrais statuts → un seul
+re-run + arène + golden sur l'état final). Regraver sur un état transitoire = le faire deux fois.
+
+## Compteur de péremption — PROPOSITION de surfaçage (non implémenté)
+Constat juste : `labuse au-statut-compteur` est une commande → personne ne l'appelle → un
+déclassement oublié reste invisible. Il faut que le nombre remonte **de lui-même**, là où on regarde
+déjà, et qu'il **change de couleur avec l'âge** (un déclassement vieux n'est plus une info, c'est une
+dette). Trois surfaces, par ordre de priorité :
+
+1. **`/readyz` + `labuse doctor` (surface pollée en continu, la mieux adaptée).** Ajouter à
+   `state.readiness()` un champ NON bloquant `au_statut_en_attente : {n, jours_plus_ancien}`. Sous un
+   seuil d'âge (proposé **90 j**) c'est un simple compteur ; au-delà, la ligne passe en **WARN** avec
+   l'action « lire les règlements des zones AU restantes / re-calibrer ». Jamais un 503 (la position
+   d'attente est saine tant qu'elle est jeune) mais VISIBLE à chaque sonde — c'est la surface qui
+   « dit la vérité » sur l'état dégradé, exactement sa vocation.
+2. **Sortie de `score-v2` (chaque re-run).** Le run imprime déjà `tiers : …` ; ajouter une ligne
+   `⏳ N déclassées AU en attente de vérification, plus ancienne X j`. Quiconque relance un scoring
+   le voit — impossible de servir un run sans relire ce chiffre.
+3. **Garde-fou de péremption (5ᵉ garde, optionnel).** Dans l'esprit des « quatre gardes » : un run
+   qui s'apprête à servir des déclassées plus vieilles qu'un seuil DUR (p. ex. 180 j) émet un
+   avertissement bruyant au journal — le « temporaire » ne peut pas franchir 6 mois en silence.
+
+Recommandation : (1) comme socle (visible sans action humaine), (2) comme rappel à chaque run.
+Rien codé — j'attends ton choix.
+
+---
+# AU-OUVERTURE — arbitrage compteur (30/07) : (1)+(2)+(3) retenus, « blocage 180 j » à définir
+
+Compteur validé sur les TROIS surfaces. Garde-fou 180 j **non optionnel** (précédents : dix
+paramètres provisoires devenus permanents par oubli ; `fix/m23-finitions` 4 j hors main avec une
+fuite propriétaire — un garde qui ne se déclenche jamais ne coûte rien). Seuils : **WARN 90 j,
+blocage 180 j**. Avant de coder, je dois définir ce que « blocage » FAIT concrètement. Deux options,
+comme tu les as posées :
+
+## Option A — refus de SERVIR les parcelles concernées
+À 180 j, les déclassées AU dont la marque dépasse le seuil sont ACTIVEMENT retirées du produit
+(escaladées de `declasse_au_statut_inconnu` — visibles avec motif — vers `ecartee` — hors produit).
+La sévérité du déclassement monte d'un cran avec l'âge.
+- **Contre (doctrinal, fort)** : le déclassement est un « on NE SAIT PAS », pas un « c'est fermé ».
+  Escalader vers `ecartee` transforme une INCERTITUDE de mesure en VERDICT d'exclusion — exactement
+  ce que le mandat évite. Le temps qui passe est NOTRE défaut (règlement non lu), pas une preuve
+  nouvelle sur la parcelle. Punir la parcelle pour notre oubli inverse la charge.
+- **Pour** : plus aucune parcelle non vérifiée n'est servie au-delà de 180 j (risque faux positif → 0).
+
+## Option B — alerte IMPOSSIBLE à ignorer (cible = le processus humain, pas la parcelle)
+À 180 j, les parcelles ne bougent PAS ; c'est l'ACTE de servir/basculer qui se bloque :
+- **garde de bascule** (5ᵉ garde, comme complétude/disque/journal/code-sur-main) : `bascule_v8*`
+  REFUSE de mettre un run en service s'il porte des déclassées AU > 180 j, sauf override humain
+  explicite (`--peremption-ack "motif"`, tracé) ;
+- **`/readyz` passe en dégradé** (pas 503 : la lecture reste servie ; un état `degraded` visible qui
+  ne peut pas être confondu avec « sain ») + `doctor` sort en non-zéro sur ce point.
+- **Contre** : la parcelle reste servie déclassée (le faux négatif persiste) tant que l'humain
+  n'agit pas — mais elle reste dans son état HONNÊTE (« on ne sait pas »), pas durci.
+- **Pour** : le garde vise notre OUBLI (lire les règlements), pas la parcelle. Cohérent avec la
+  doctrine « le déclassement est une position d'attente, jamais un verdict ».
+
+## Recommandation
+**Option B (garde de bascule + /readyz dégradé).** Le 180 j doit forcer l'ORGANISATION à lire les
+règlements, pas l'algorithme à durcir une incertitude en exclusion. Une parcelle qu'on n'a pas
+vérifiée ne mérite pas d'être PLUS exclue parce que le temps a passé — le temps n'apporte aucune
+information sur la parcelle, seulement sur notre dette. Le garde de bascule est impossible à ignorer
+(il empêche la mise en service) sans jamais fabriquer un faux verdict.
+**Ne pas coder avant ton arbitrage A / B.** Dette du distinguo mérite/héritage consignée (#9).
+
+*Rien basculé, run servi q_v7_defisc intact, golden intact. En attente : archives GPU des 24
+communes pour la refonte de calibration.*
+
+---
+# AU-OUVERTURE — péremption IMPLÉMENTÉE (option B, arbitrage Vic 30/07)
+
+Option B retenue : le temps écoulé mesure NOTRE oubli, pas la parcelle ; une incertitude ne durcit
+pas en exclusion parce que le calendrier avance. Seuils `SEUIL_WARN_JOURS=90`, `SEUIL_BLOCAGE_JOURS=180`
+(`faisabilite/au_statut.py`). Les trois surfaces + la garde sont posées.
+
+- **(1) `/readyz` + `doctor`** — `state.readiness()` porte `au_statut_en_attente {n, jours_plus_ancien,
+  statut}`. **Précision 2 honorée** : ce champ N'ENTRE PAS dans `ready` (= schema ∧ data) → `/readyz`
+  reste **200** même en `blocage` (un déclassement oublié est une dette, pas une panne ; jamais l'app
+  sortie du service — ce serait l'option A par accident). `doctor` affiche une ligne •/⚠/⛔ selon l'âge.
+- **(2) `score-v2`** — chaque run imprime, après les tiers : `⏳/⚠/⛔ N déclassées AU en attente, plus
+  ancienne X j, statut …`. Impossible de servir un run sans relire ce chiffre.
+- **(3) Garde de bascule (5ᵉ garde)** — `scripts/bascule_v8_calibre.py::check_peremption` refuse de
+  basculer si des déclassées AU > 180 j, sauf `--peremption-ack "motif"`. **Précision 1 honorée** :
+  l'ack est BAVARD — `journalise_peremption_ack` trace QUI (`getpass.getuser`), QUAND (`now()`),
+  COMBIEN (n parcelles), + motif, dans `au_statut_ack_journal` (consultable après coup). Un
+  contournement tracé reste un contournement. **Ne DURCIT jamais la parcelle** (pas d'escalade vers
+  ecartee) : la garde vise l'acte de servir, pas la parcelle.
+
+Tests : `tests/test_au_statut_peremption.py` (seuils, frontières 89/90/179/180). Chemin blocage +
+journal vérifié en transaction annulée (5 marques vieillies de 200 j → garde compte 5, ack tracé,
+rollback → marques réelles intactes). **Rien basculé, aucune marque réelle vieillie.**

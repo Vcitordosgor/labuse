@@ -204,7 +204,8 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                         "ecartee": "Écartée",
                         # déclassement tête-de-liste (étage 0) — visibles avec motif
                         "declasse_zone_fermee": "Zone fermée à l'urbanisation",
-                        "declasse_non_constructible": "Parcelle non constructible"}
+                        "declasse_non_constructible": "Parcelle non constructible",
+                        "declasse_au_statut_inconnu": "Zone AU — ouverture non vérifiée"}
             tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
             if tier_eff:
                 out["verdict_v2"] = {
@@ -255,6 +256,23 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             {"idu": idu}).mappings().first()
         if cst:
             out["constructibilite"] = {"label": cst["label"], "motif": cst["motif"]}
+    # AU-OUVERTURE (Vic 30/07) — statut d'ouverture de la zone AU, LU INDÉPENDAMMENT du tier servi
+    # (comme la constructibilité) → le motif SURVIT à la bascule et reste consultable AVANT elle.
+    # Deux traitements selon la classe :
+    #   · dimensions-seules (servie) : la mention se place EN TÊTE, dans le bloc VERDICT (exigence
+    #     Vic « la mention doit être vue ») — jamais reléguée en bas de fiche.
+    #   · générique (déclassée) : motif dédié, toujours consultable (bloc `au_statut`) ; après
+    #     bascule le tier devient `declasse_au_statut_inconnu` et le libellé le porte aussi en tête.
+    if db.execute(text("SELECT to_regclass('parcel_au_statut') IS NOT NULL")).scalar():
+        au = db.execute(text(
+            "SELECT a.classe, a.motif FROM parcel_au_statut a "
+            "JOIN parcels p ON p.id = a.parcel_id WHERE p.idu = :idu"),
+            {"idu": idu}).mappings().first()
+        if au:
+            out["au_statut"] = {"classe": au["classe"], "motif": au["motif"], "source": "Absent"}
+            if isinstance(out.get("verdict_v2"), dict):
+                # mention/motif remonté EN TÊTE (bloc VERDICT), vu avant tout le reste de la fiche.
+                out["verdict_v2"]["mention_ouverture"] = au["motif"]
     return out or None
 
 

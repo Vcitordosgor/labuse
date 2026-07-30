@@ -178,10 +178,22 @@
       <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
     {% endif %}
   </div>
+  {# AU-OUVERTURE (Vic 30/07) : la mention d'ouverture non vérifiée est VUE — en tête, dans le
+     bloc Verdict, jamais reléguée en bas de fiche. Étiquette « Absent » (ni un fait, ni Estimé). #}
+  {% if c.verdict_v2.mention_ouverture %}
+  <p class="note"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> —
+     {{ c.verdict_v2.mention_ouverture }} <em>(Absent)</em></p>
+  {% endif %}
   {% if c.verdict_v2.etage0 %}
   <p class="note">Parcelle écartée par une exclusion dure (risques, zonage, foncier public…) —
      le détail figure dans les sections risques et règles de ce rapport.</p>
   {% endif %}
+  {% endif %}
+
+  {# Motif d'ouverture AU TOUJOURS consultable, même sans verdict v2 (motif survit à la bascule). #}
+  {% if c.au_statut and not c.verdict_v2 %}
+  <p class="note"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> —
+     {{ c.au_statut.motif }} <em>(Absent)</em></p>
   {% endif %}
 
   {# M-RENOUV (B3) : une ligne conditionnelle — segment + rang + 2 composantes dominantes #}

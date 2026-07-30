@@ -1,0 +1,18 @@
+                rang                |      idu       |    commune     | residuel_m2 | bati_ratio |           motif            
+------------------------------------+----------------+----------------+-------------+------------+----------------------------
+ 1-ARBITRAGE VIC (déjà bâti, GARDÉ) | 97415000BV0182 | Saint-Paul     |         520 |      0.401 | déjà bâti
+ 1-ARBITRAGE VIC (déjà bâti, GARDÉ) | 97418000AV2092 | Sainte-Marie   |         535 |      0.315 | déjà bâti
+ 1-ARBITRAGE VIC (déjà bâti, GARDÉ) | 97420000BH1036 | Sainte-Suzanne |         883 |      0.305 | déjà bâti
+ 2-DROP non-constructible           | 97410000BK0219 | Saint-Benoît   |         681 |      0.118 | declasse_non_constructible
+ 2-DROP non-constructible           | 97414000ES0629 | Saint-Louis    |         606 |      0.152 | declasse_non_constructible
+ 2-DROP non-constructible           | 97416000HX0339 | Saint-Pierre   |         608 |      0.101 | declasse_zone_fermee
+ 3-DROP définitif                   | 97411000CH0320 | Saint-Denis    |         638 |      0.087 | PPR rouge
+ 3-DROP définitif                   | 97412000AM0461 | Saint-Joseph   |         614 |      0.208 | foncier public
+ 3-DROP définitif                   | 97413000CM0268 | Saint-Leu      |         645 |      0.113 | PPR rouge; foncier public
+ 3-DROP définitif                   | 97413000CR0068 | Saint-Leu      |         579 |      0.193 | PPR rouge
+ 3-DROP définitif                   | 97415000CH1198 | Saint-Paul     |         625 |      0.103 | foncier public
+ 3-DROP définitif                   | 97415000CP0511 | Saint-Paul     |         625 |      0.105 | foncier public
+ 3-DROP définitif                   | 97415000DS0617 | Saint-Paul     |         625 |      0.096 | PPR rouge
+ 3-DROP définitif                   | 97422000CL0575 | Le Tampon      |         635 |      0.124 | PPR rouge
+(14 lignes)
+

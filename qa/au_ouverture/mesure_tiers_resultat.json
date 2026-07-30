@@ -1,0 +1,68 @@
+{
+  "tiers_avant": {
+    "a_creuser": 63964,
+    "brulante": 120,
+    "chaude": 1043,
+    "declasse_non_constructible": 6168,
+    "declasse_zone_fermee": 2804,
+    "ecartee": 354355,
+    "reserve_fonciere": 3209
+  },
+  "tiers_apres": {
+    "a_creuser": 62919,
+    "brulante": 120,
+    "chaude": 1035,
+    "declasse_au_statut_inconnu": 1215,
+    "declasse_non_constructible": 6168,
+    "declasse_zone_fermee": 2804,
+    "ecartee": 354355,
+    "reserve_fonciere": 3047
+  },
+  "mouvements_total": 1354,
+  "attendus": 1215,
+  "inattendus": 139,
+  "golden_change": [
+    [
+      "97403000AR1423",
+      "chaude",
+      "brulante",
+      null
+    ],
+    [
+      "97408000AP1610",
+      "chaude",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ],
+    [
+      "97408000AP1647",
+      "chaude",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ],
+    [
+      "97410000AS1425",
+      "brulante",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ],
+    [
+      "97410000AS1450",
+      "chaude",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ],
+    [
+      "97410000CD0905",
+      "brulante",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ],
+    [
+      "97410000CD0926",
+      "chaude",
+      "declasse_au_statut_inconnu",
+      "générique"
+    ]
+  ]
+}

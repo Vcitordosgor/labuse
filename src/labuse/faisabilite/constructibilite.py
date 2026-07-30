@@ -29,9 +29,16 @@ _CAUSE_B = frozenset({"terrain_exigu", "redhibitoire", "hauteur_indispo"})  # pa
 DECLASSE_ZONE_FERMEE = "declasse_zone_fermee"        # A
 DECLASSE_NON_CONSTRUCTIBLE = "declasse_non_constructible"  # B
 NON_VERIFIABLE = "non_verifiable"                    # C
+# D (mandat AU-OUVERTURE, Vic 30/07) : zone AU dont l'OUVERTURE à l'urbanisation n'a JAMAIS été lue
+# (Art. 1/2 non extrait). DISTINCT de zone_fermee : la zone n'est PAS fermée, son statut est INCONNU.
+# TEMPORAIRE par construction (parcel_au_statut.computed_at) : dès l'article lu, la parcelle remonte
+# ou tombe définitivement. Ne s'applique qu'aux AU « génériques » (non calibrées) ; les AU « dimensions
+# seules » (règles de construction extraites) restent SERVIES avec une mention de fiche, pas déclassées.
+DECLASSE_AU_STATUT_INCONNU = "declasse_au_statut_inconnu"
 
 #: labels de déclassement (retirés du ranking des tiers de tête, mais VISIBLES avec motif)
-DECLASSE_LABELS = frozenset({DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, NON_VERIFIABLE})
+DECLASSE_LABELS = frozenset({DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, NON_VERIFIABLE,
+                             DECLASSE_AU_STATUT_INCONNU})
 
 
 def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, str]:

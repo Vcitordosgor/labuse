@@ -239,10 +239,12 @@ on ne vend pas « on corrige une surestimation », on vend « on lit le règleme
 
 ## 7 · Dette de calibrage prioritaire : Saint-Benoît
 
-**Commune de 21 671 parcelles (3 676 servies), calibrée en zonage mais MUETTE en
-capacité** : depuis la refonte hauteurs-par-secteurs-graphiques (`f55416a`), aucune
-zone habitat-admis n'y a de hauteur exploitable — les deux passes de la mesure y
-servent le même générique (écart 0 structurel, §3.3). Son déblocage ne passe pas par
+**Commune de 21 671 parcelles. Dette « muette en capacité » REQUALIFIÉE (arbitrage Vic
+30/07, mandat V8-VERIF B'.3) : la dette réelle vaut 2 743 parcelles — les zones U/AU sans
+capacité résiduelle. Les 6 928 autres muettes sont en A/N (agricole/naturel) = absence
+RÉELLE et légitime, pas une dette. Ne plus écrire « 21 671 muettes ».** Historique : depuis
+la refonte hauteurs-par-secteurs-graphiques (`f55416a`), les zones habitat-admis manquaient
+de hauteur exploitable. Son déblocage ne passe pas par
 une re-extraction mais par le **schéma v2 (hauteur par calque graphique)** — mandat
 « règlement graphique » à ouvrir. À traiter comme dette de calibrage n°1 des
 21 communes gravées.

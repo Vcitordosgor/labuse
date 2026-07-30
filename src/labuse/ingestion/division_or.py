@@ -249,6 +249,18 @@ SELECT DISTINCT ON (idu)
 FROM zon
 WHERE facade_free >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
+  -- O12-GARDE (Vic 30/07) : garde de CONSTRUCTIBILITÉ EN AMONT. Un candidat dont la parcelle
+  -- SUPPORT est écartée DÉFINITIVEMENT à l'étage 0 du RUN SERVI (`:served` = Q_A_RUN_LABEL → la
+  -- garde SUIT automatiquement toute bascule future), OU marquée non constructible
+  -- (`parcel_constructibilite` declasse_*), n'est PAS candidat.
+  -- Restreint à `status = 'exclue'` (fait DÉFINITIF : PPR rouge, foncier public…), PAS
+  -- `faux_positif_probable` (arbitrage Vic 30/07 : c'est une probabilité, pas un fait — écarter
+  -- dessus serait écarter au soupçon ; et le bâti-avec-résiduel-détachable EST la prémisse d'O12,
+  -- cohérent avec l'arbitrage produit du 29/07 : le bâti n'est pas disqualifiant par principe).
+  AND NOT EXISTS (SELECT 1 FROM dryrun_parcel_evaluations de
+                  WHERE de.parcel_id = zon.id AND de.run_label = :served
+                    AND de.status = 'exclue')
+  AND ({constr_guard})
   AND (variante = 'libre' OR bati_lot_m2 * 3 <= bat_m2)
   -- O12-PARTIEL-2 §4 : zonages d'activité exclus AUSSI du pool résiduel — par CODE (config)
   -- et par LIBELLÉ descriptif (un code générique peut cacher une zone d'activités : BP0363)
@@ -693,6 +705,12 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     # dans la PAU ; sinon (base sans branche RNU) un lot sans zone est simplement exclu.
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
+    # O12-GARDE : run servi (Q_A_RUN_LABEL, suit toute bascule) + garde non-constructibilité.
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    has_constr = session.execute(text("SELECT to_regclass('parcel_constructibilite')")).scalar() is not None
+    constr_guard = ("NOT EXISTS (SELECT 1 FROM parcel_constructibilite pc WHERE pc.parcel_id = zon.id "
+                    "AND pc.label IN ('declasse_zone_fermee','declasse_non_constructible'))"
+                    if has_constr else "true")
     total = 0
     for commune in communes:
         # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
@@ -703,13 +721,14 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                                 activite_pred=_activite_pred_sql(commune),
                                 descr_re=ACTIVITE_DESCR_RE,
                                 descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
+                                constr_guard=constr_guard,
                                 revue_pred=_revue_pred_sql(decoupe=False)).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT.format(detect=detect)
         else:   # pas de Score É → gain NULL, sans jointure
             insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
                 "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-        session.execute(text(insert_sql), {"commune": commune})
+        session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
         n = session.execute(text("SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
                             {"c": commune}).scalar()
         total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
