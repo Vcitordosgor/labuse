@@ -1,0 +1,52 @@
+# AU — OUVERTURE + PLANCHERS par zone (source du classifieur declasse_au_fermee / au_sous_plancher /
+# declasse_au_statut_inconnu). Dérivé des calibrations GPU-PILOTE (config/calibrage/calibration_*.yaml).
+# Ordre d'exécution (Vic) : Saint-Paul, La Possession, Saint-Leu, Les Trois-Bassins. Les autres
+# communes viendront ensuite. `ouverture` ∈ {fermee, conditionnelle_operation, conditionnelle_etat_tiers}.
+# `min_log` + `densite_log_ha` : plancher SOURCÉ (surface min = min_log/densite*10000). Absents = pas
+# de seuil-taille (densité seule ou délégation) → pas de au_sous_plancher possible.
+#
+# Le zonage se lit par PRÉFIXE de zone_lib (ex. « 1AUa » match préfixe « 1AUa » puis « AUa »).
+# `defaut` s'applique aux zones AU de la commune non listées explicitement.
+
+communes:
+  # --- Saint-Paul (97415) : ouverture conditionnelle ; planchers DÉLÉGUÉS au PLH (non chiffrés) ---
+  "97415":
+    nom: "Saint-Paul"
+    defaut: {ouverture: conditionnelle_operation}   # AU1..AU6 indicées, toutes conditionnelles à modification
+    note: "planchers délégués au PLH TCO (non chiffrés) → pas de au_sous_plancher calculable"
+
+  # --- La Possession (97408) : AUST fermée ; autres conditionnelles ; densité 50 SANS min_log ---
+  "97408":
+    nom: "La Possession"
+    zones:
+      AUST: {ouverture: fermee}
+      AUst: {ouverture: fermee}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité 50 log/ha SANS min-logements → pas de seuil-taille (pas de au_sous_plancher)"
+
+  # --- Saint-Leu (97413) : AUs fermée ; AUa/b/c conditionnelles + PLANCHER (min 10 log) ---
+  "97413":
+    nom: "Saint-Leu"
+    zones:
+      AUs:  {ouverture: fermee}
+      AUa:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
+      AUb:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
+      AUc:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 15}
+    defaut: {ouverture: conditionnelle_operation}
+
+  # --- Les Trois-Bassins (97423) : 1AU condit.+plancher (min 5) ; 2AU phasage ; AUs/AUse fermées ---
+  "97423":
+    nom: "Les Trois-Bassins"
+    zones:
+      AUs:  {ouverture: fermee}
+      AUse: {ouverture: fermee}
+      "1AUa": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 35}
+      "1AUb": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 30}
+      "1AUc": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 20}
+      "2AUa": {ouverture: conditionnelle_etat_tiers}   # 2AU s'ouvre après aménagement des 1AU
+      "2AUb": {ouverture: conditionnelle_etat_tiers}
+      "2AUc": {ouverture: conditionnelle_etat_tiers}
+    defaut: {ouverture: conditionnelle_operation}
+
+# Saint-Louis (97414) : NON inclus — source du règlement indisponible → a_verifier, pas « pas de seuil »
+# (arbitrage Vic). À reprendre quand la source revient.

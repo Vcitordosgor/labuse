@@ -35,10 +35,21 @@ NON_VERIFIABLE = "non_verifiable"                    # C
 # ou tombe définitivement. Ne s'applique qu'aux AU « génériques » (non calibrées) ; les AU « dimensions
 # seules » (règles de construction extraites) restent SERVIES avec une mention de fiche, pas déclassées.
 DECLASSE_AU_STATUT_INCONNU = "declasse_au_statut_inconnu"
+# Modèle AU AFFINÉ (GPU-PILOTE, Vic 30/07) — l'ouverture des AU est désormais LUE au règlement, donc
+# trois traitements DISTINCTS remplacent l'« au statut inconnu » indifférencié :
+#  · DECLASSE_AU_FERMEE  : AU FERMÉE au règlement (AUs/AUst réserve) → déclassement FERME, motif sourcé.
+#  · AU_SOUS_PLANCHER    : AU conditionnelle_operation dont la parcelle est TROP PETITE pour
+#    l'opération minimale imposée → reste SERVIE (jamais déclassée : c'est une candidate à
+#    l'assemblage), avec mention + surface manquante + voisins assemblables. PAS un tier de déclassement.
+#  · DECLASSE_AU_STATUT_INCONNU (ci-dessus) : réservé au phasage `conditionnelle_etat_tiers` (2AU→1AU)
+#    = vrai inconnu (l'ouverture dépend de l'aménagement d'AUTRES zones, non déductible du règlement).
+DECLASSE_AU_FERMEE = "declasse_au_fermee"
+AU_SOUS_PLANCHER = "au_sous_plancher"          # SERVI — marqueur de fiche, JAMAIS un tier
 
-#: labels de déclassement (retirés du ranking des tiers de tête, mais VISIBLES avec motif)
+#: labels de déclassement (retirés du ranking des tiers de tête, mais VISIBLES avec motif).
+#: `AU_SOUS_PLANCHER` n'y figure PAS exprès : la parcelle reste SERVIE (candidate à l'assemblage).
 DECLASSE_LABELS = frozenset({DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, NON_VERIFIABLE,
-                             DECLASSE_AU_STATUT_INCONNU})
+                             DECLASSE_AU_STATUT_INCONNU, DECLASSE_AU_FERMEE})
 
 
 def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, str]:

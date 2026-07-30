@@ -99,3 +99,16 @@ cascade, ni signal de fiche. Mesuré à L'Étang-Salé : **EBC** (`typepsc 01`, 
   d'aide à la décision, pas un verdict. La donnée existe (géométrie + `typepsc/txt/libelle`) ; il
   manque le croisement par parcelle et l'affichage. **NON implémenté** (arbitrage Vic : consigner,
   pas coder). Cf. `docs/mandats/GPU_PILOTE_PHASE2_EXTRACTION.md`.
+
+## 11 · Assemblage : la contiguïté géométrique ne dit rien de l'ACQUÉRABILITÉ
+Consigné sur arbitrage Vic (GPU-PILOTE, 30/07). Le statut `au_sous_plancher` sert une parcelle « trop
+petite seule » comme candidate à l'assemblage, avec le nombre de voisines CONTIGUËS de même zone qui
+atteindraient le seuil (mesuré : 399/708 sous-seuil assemblables, 66 % des têtes). **Mais la
+contiguïté est GÉOMÉTRIQUE — elle ne dit rien de l'acquérabilité.**
+- **Prochaine couche** : croiser les voisines avec la PROPRIÉTÉ (DGFiP / personnes morales).
+- **Distinguer** : « MÊME propriétaire » (division simple, sans négociation) vs « propriétaires
+  DISTINCTS » (assemblage à négocier). **Le premier cas vaut beaucoup plus cher** (constructible
+  immédiatement par simple division du foncier détenu).
+- **Mesurer PLUS TARD** (Vic), pas maintenant. Tant que non fait, `au_sous_plancher` ne distingue pas
+  les deux : la mention dit « assemblage possible » sans dire s'il est gratuit (même proprio) ou à
+  négocier. Cf. `docs/mandats/GPU_PILOTE_MESURE_PLANCHERS.md`.
