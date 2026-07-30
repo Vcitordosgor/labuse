@@ -13,12 +13,15 @@ zones_au:
   familles: [AUa, AUc, AUd, AUec, AUes, AUt]
   ouverture: conditionnelle_operation
   ouverture_src: "p.5, p.42 (« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU »)"
+  # ⚠ CORRIGÉ au contrôle qualité (30/07) : j'avais conclu à tort « aucun plancher ». Le plancher EST
+  # au règlement p.26, écrit « logements par hectare » (5e angle mort du scan) — raté au 1er passage.
   planchers:
-    statut: sans_objet
-    preuve: "AUCUN plancher — règlement 59 p. : 0 densité/logement min ; OAP 27 p. : QUALITATIVE (0 « log/ha », 0 « logements aidés », 0 PLH) ; pas de renvoi PLH. 4e cas de la taxonomie : plancher NULLE PART."
+    localisation: "RÈGLEMENT (p.26)"
+    densite_min_log_ha: {AUa: 30, AUc: 30, AUd: 20}
+    src: "règlement p.26 (« respecter les densités suivantes : en zones AUa et AUc, 30 logements par hectare ; en zone AUd, 20 logements par hectare »)"
   oap:
     contenu_extrait: oui
-    nature: "qualitative — décrit la vocation/phasage des zones AU (« 43% des zones AU, 21,9 ha, sont déterminés pour… »), sans densité ni % social chiffrés"
+    nature: "qualitative — décrit la vocation/phasage des zones AU, sans densité ni % social (les planchers sont au RÈGLEMENT, pas à l'OAP)"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "statut d'ouverture AU (conditionnée à modification) — non porté par le YAML. Confirmation : commune SANS plancher de densité (ni règlement, ni OAP, ni PLH)."
-  a_verifier: "vocations des sous-secteurs AUec/AUes/AUt ; dimensions U non extraites"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle + planchers densité 30 (AUa/AUc) / 20 (AUd) log/ha au règlement — absents du YAML"
+  a_verifier: "densité AUec/AUes/AUt (non listées p.26) ; dimensions U"

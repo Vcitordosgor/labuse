@@ -17,10 +17,16 @@ zones_au:
   dependance: "2AU/AU s'ouvrent après aménagement des 1AU indicée"
   dependance_exceptions: ["1AUc (territoire rural habité de Bois Blanc)", "1AUe"]
   zones_particulieres: ["1AUto (à vérifier — vocation touristique ?)"]
-  planchers: sans_objet
-  planchers_note: "aucun minimum de logements ni densité log/ha (scan négatif sur 87 p.)"
+  # ⚠ CORRIGÉ au contrôle qualité (30/07) : j'avais conclu à tort « aucun plancher ». Le plancher EST
+  # au règlement p.55-56, écrit « logements par hectare » (5e angle mort) — raté au 1er passage.
+  planchers:
+    localisation: "RÈGLEMENT (p.55-56)"
+    densite_min_log_ha: 20
+    densite_bois_blanc: 10
+    densite_note: "20 log/ha minimum en général ; 10 log/ha dans le territoire rural de Bois Blanc (modulation par le caractère rural — cf. Bras-Panon TCSP, densité conditionnelle)"
+    src: "règlement p.55 (« Respecter la densité de 20 logements par hectare minimum ») ; p.56 (« territoire rural de Bois Blanc, respecter la densité de 10 logements par hectare minimum »)"
   oap_densite_social: sans_objet
-  oap_note: "OAP minimale (5 p.), ni densité ni % social chiffrés"
+  oap_note: "OAP minimale (5 p.), ni densité ni % social (les planchers sont au RÈGLEMENT)"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers avec EXCEPTIONS NOMMÉES (hors 1AUc Bois Blanc, 1AUe) — dépendance fine absente du YAML"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers (exceptions 1AUc/1AUe) + planchers densité 20 log/ha (10 en rural Bois Blanc) au règlement — absents du YAML"
   a_verifier: "vocation de 1AUto ; dimensions U non extraites"
