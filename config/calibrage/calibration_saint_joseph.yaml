@@ -1,0 +1,31 @@
+# CALIBRATION SAINT-JOSEPH (97412) — version OPPOSABLE 2025 (le stopgap 2019 périmé est remplacé)
+# =============================================================================
+# Pack GPU EN_VIGUEUR 97412_PLU_20251210 re-téléchargé le 30/07 (data.geopf.fr, id ce1a1274…,
+# sha 1034993e…, zip VALIDE — le 1er téléchargement était tronqué/corrompu). Le stopgap 2019 périmé
+# (calibration_saint_joseph_PERIME.yaml) est SUPPRIMÉ, remplacé par ceci.
+meta:
+  commune: "Saint-Joseph"
+  insee: "97412"
+  statut: "Sourcé"
+  source_type: "pack GPU EN_VIGUEUR 97412_PLU_20251210 (data.geopf.fr, sha 1034993e…)"
+  date_en_vigueur_gpu: "2025-12-10"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [AU, AUst, AUto, AUtok, 1AUto]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement 2025 p.7 (« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU. — la zone AU indicée couvre des espaces réservés… »)"
+  AUst: "réserve stricte à l'urbanisation future"
+  AUto_AUtok: "vocation touristique"
+  planchers:
+    statut: sans_objet
+    preuve: "aucun plancher densité au règlement (185 p., scan 5 formulations négatif) ni à l'OAP (texte, ni densité ni social)"
+  oap:
+    contenu_extrait: oui
+    nature: "texte (non graphique), sans densité ni % social chiffrés"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  # DIFFÉRENCE 2019 -> 2025 (justifie le garde-fou de version) :
+  changement_de_version: "ouverture DIFFÉRENTE entre le 2019 (périmé) et le 2025 (opposable) : 2019 = « qu'une fois l'aménagement des 1AU du pôle » (conditionnelle_etat_tiers / phasage) ; 2025 = « conditionnée à une modification du PLU » (conditionnelle_operation). Servir le 2019 aurait donné la MAUVAISE sémantique d'ouverture — le garde-fou de version a évité l'erreur."
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle (modification) sur l'opposable 2025 ; AUst réserve, AUto/AUtok touristiques"
+  a_verifier: "dimensions U (non extraites) ; appariement 1AUto"
