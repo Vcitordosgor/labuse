@@ -1,0 +1,27 @@
+# CALIBRATION LE PORT (97407) — depuis les pièces fournies par Vic (pack 97407_PLU_20241209,
+# téléchargé le 30/07 sha 2f47f34b, à jour = EN_VIGUEUR).
+meta:
+  commune: "Le Port"
+  insee: "97407"
+  statut: "Sourcé"
+  source_type: "pack GPU 97407_PLU_20241209 (archive locale à jour — pointée par Vic)"
+  date_archive_gpu: "2024-12-09"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  contexte: "commune urbaine dense — nombreuses zones de RENOUVELLEMENT (suffixe 'mut' = mutation)"
+
+zones_au:
+  familles: [1AU, 1AUa, 1AUe, 1AUm, 1AUmut, 1AUs, 2AU, 2AUem, 2AUmut, 2AUp, AU]
+  ouverture_1AU: conditionnelle_operation
+  ouverture_2AU: fermee
+  ouverture_2AU_src: "règlement p.7 (« 2AU couvre des espaces réservés à l'urbanisation future. Les différents réseaux […] »[insuffisants])"
+  dependance: "2AU = réserve fermée (réseaux insuffisants) ; 1AU ouvrable par opération"
+  planchers:
+    localisation: "OAP (densité) ; règlement 319 p : aucun plancher"
+    densite_moyenne_log_ha: 50
+    src: "OAP 2024 (58 p, texte) : « Densité moyenne 50 logts/ha »"
+    social: "non chiffré dans l'OAP (scan négatif)"
+    prevalence: "OAP prévaut"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "1AU ouvrable / 2AU fermée réserve + densité OAP 50 logts/ha + zones de renouvellement (mut) — absents du YAML"
+  a_verifier: "densité par site (moyenne 50 donnée globalement) ; zones mut (renouvellement) ; dimensions U"

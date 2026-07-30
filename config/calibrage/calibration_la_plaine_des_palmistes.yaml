@@ -1,0 +1,34 @@
+# CALIBRATION LA PLAINE-DES-PALMISTES (97406) — complétée depuis les pièces fournies par Vic
+# (règlement 217 p. + 2 fascicules OAP du pack 97406_PLU_20230527, à jour = EN_VIGUEUR, sha concordant).
+meta:
+  commune: "La Plaine-des-Palmistes"
+  insee: "97406"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97406_PLU_20230527 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2023-05-27"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+
+zones_au:
+  familles: [AUb, AUc, AUe, AUr, AUs1, AUs2]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement p.7, p.71 (« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU »)"
+  AUs1_AUs2: "réserves à l'urbanisation future (secteurs AUs indicés)"
+  planchers:
+    localisation: "RÈGLEMENT (pas l'OAP, qui est graphique)"
+    type: "nombre minimum de logements SOCIAUX en opération d'ensemble"
+    logements_sociaux_min: 10
+    src: "règlement p.54 (« dans le cas d'opérations d'ensemble comprenant au moins 10 logements locatifs sociaux financés avec un prêt aidé par l'État »)"
+    note: "plancher exprimé en LLS (logements locatifs sociaux), pas en densité log/ha — 7e forme de plancher de la campagne"
+  oap:
+    contenu_extrait: non
+    presence: "2 fascicules PRÉSENTS mais GRAPHIQUES (1 page image chacun, 0 caractère texte extractible)"
+    blocage: "rendu image indisponible — poppler (pdftoppm) non installé -> lecture visuelle/OCR impossible dans l'environnement actuel"
+    statut: "non_extrait (graphique), PAS sans_objet — l'OAP existe, son contenu est en images"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle + plancher 10 LLS en opération d'ensemble (au règlement) + AUs1/AUs2 réserves — absents du YAML"
+  a_verifier: "contenu de l'OAP graphique (densité/social par site éventuels) — nécessite poppler/OCR ; dimensions U"
+
+# SIGNALEMENT OUTIL (te revient) : installer poppler (`brew install poppler`) débloquerait la lecture
+# des OAP GRAPHIQUES (La Plaine ici, possiblement d'autres). Sans lui, une OAP tout-image reste
+# `non_extrait`. Je ne l'installe pas sans ton feu vert (dépendance système).

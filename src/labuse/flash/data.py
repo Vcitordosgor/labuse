@@ -205,7 +205,8 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                         # déclassement tête-de-liste (étage 0) — visibles avec motif
                         "declasse_zone_fermee": "Zone fermée à l'urbanisation",
                         "declasse_non_constructible": "Parcelle non constructible",
-                        "declasse_au_statut_inconnu": "Zone AU — ouverture non vérifiée"}
+                        "declasse_au_statut_inconnu": "Zone AU — ouverture non vérifiée",
+                        "declasse_au_fermee": "Zone AU fermée à l'urbanisation (réserve)"}
             tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
             if tier_eff:
                 out["verdict_v2"] = {

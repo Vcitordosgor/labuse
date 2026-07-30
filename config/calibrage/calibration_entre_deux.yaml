@@ -1,0 +1,33 @@
+# CALIBRATION ENTRE-DEUX (97403) — complétée depuis les pièces fournies par Vic
+# (règlement 62 p. + OAP 50 p. du pack 97403_PLU_20240924, à jour = EN_VIGUEUR, sha concordant).
+# ⚠ CORRIGE le paquet A : « pas d'OAP densité » était FAUX — l'OAP a un TABLEAU par site (planchers)
+# que le scan par adjacence (regex « log/ha ») ratait. Leçon gravée en bas.
+meta:
+  commune: "Entre-Deux"
+  insee: "97403"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97403_PLU_20240924 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2024-09-24"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  zonage_particulier: "AU à name=DESCRIPTION (« Zone d'urbanisation future mixte/économique ») — identité par subtype"
+
+zones_au:
+  familles: [AUb, AUe]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement p.6 (« son ouverture à l'urbanisation est subordonnée à une modification ou à une révision du PLU »)"
+  planchers:
+    localisation: "OAP — TABLEAU PAR SITE (« Densité minimale exigée » + « Nombre minimum de logements » par zone numérotée)"
+    densite_min_log_ha: 20
+    densite_note: "20 lgts/ha pour les sites AUb (résidentiel) ; AUe (économique) = 0 logement (vocation économique)"
+    logements_min_par_site: "COMPTE ABSOLU par site (ex. site 1 AUb=7, site 2=5, site 11=3, site 12=20…) — granularité par polygone, pas seulement une densité"
+    src: "OAP p.37-48 (tableaux « Quartier du Serré », « Centre-ville », etc. : colonnes Densité minimale exigée / Nombre minimum de logements / Typologie / Échéancier)"
+    prevalence: "OAP prévaut (planchers fixés site par site)"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "planchers OAP EN TABLEAU par site : densité 20 lgts/ha (AUb) + nombre MINIMUM de logements par site + typologie (libre/intermédiaire/mixte) + échéancier — absents du YAML. Granularité par site la plus fine de la campagne."
+  a_verifier: "extraction complète du tableau (site→densité→min logements→typologie→échéancier, ~19 sites) ; dimensions U"
+
+# LEÇON MÉTHODE (gravée) : les planchers OAP peuvent vivre dans un TABLEAU (colonnes), que le scan
+# par adjacence de mots-clés (« X log/ha ») RATE — la valeur est dans une cellule, pas à côté du mot.
+# Toute vérification « pas de plancher » doit inspecter les TABLEAUX de l'OAP, pas seulement le texte
+# courant. (Cf. la variation de nom de dossier 5_OAP vs 5_Orientations : deux angles morts du scan.)

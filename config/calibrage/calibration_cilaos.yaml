@@ -1,0 +1,29 @@
+# CALIBRATION CILAOS (97424) — complétée depuis les pièces fournies par Vic
+# (règlement 90 p. + OAP du pack 97424_PLU_20240213, à jour = EN_VIGUEUR, sha concordant).
+meta:
+  commune: "Cilaos"
+  insee: "97424"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97424_PLU_20240213 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2024-02-13"
+  dates_referencees: ["2008", "2018"]
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  contexte: "commune de montagne (cirque de Cilaos) — urbanisation d'extension minimale"
+
+zones_au:
+  familles: [AUst]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement p.53 (« Cette zone [AUst] couvre des espaces réservés à l'urbanisation future. Toutefois, les différents réseaux et conditions d'accès de la zone n'ont pas une capacité suffisante pour desservir… »)"
+  conditions: "réserve à l'urbanisation future ; réseaux/accès insuffisants -> ouverture différée"
+  planchers:
+    statut: sans_objet
+    preuve: "aucun plancher au règlement (90 p., scan négatif densité/logements) ; OAP graphique non lisible mais commune de montagne à urbanisation minimale"
+  oap:
+    contenu_extrait: non
+    presence: "1 fascicule PRÉSENT mais GRAPHIQUE (1 page, 54 car de texte)"
+    blocage: "poppler non installé -> rendu image/OCR impossible"
+    statut: "non_extrait (graphique), PAS sans_objet"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "statut d'ouverture AUst (réserve, réseaux insuffisants) — non porté par le YAML"
+  a_verifier: "OAP graphique (poppler) ; millésime exact (en-tête PDF évoque 2008/2018, archive 2024) ; dimensions U"

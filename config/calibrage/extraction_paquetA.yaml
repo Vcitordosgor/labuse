@@ -1,0 +1,71 @@
+# EXTRACTION GPU-PILOTE — PAQUET A (mission-critique : ouverture AU, planchers, OAP, VRD)
+# Communes à jour (garde-fou sha concordant) : 97401 · 97402 · 97403 · 97406.
+# Portée : les faits qui décident de la constructibilité (ouverture AU, planchers, prévalence OAP)
+# + les faits NOUVEAUX que le YAML actuel ne portait pas. Le détail A-J complet par zone viendra à
+# la consolidation finale. Offset page = imprimée. Rien écrit en base, aucun YAML existant modifié.
+
+les_avirons:
+  insee: "97401"
+  document: "97401_PLU_20241206 (en vigueur, sha concordant)"
+  zones_au: [AUa, AUc, AUd, AUec, AUes, AUt]
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU » (p.5, p.42)"
+  planchers: sans_objet
+  planchers_note: "aucun minimum de logements ni densité log/ha (scan négatif)"
+  oap_densite_social: sans_objet
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU (conditionnée à modification) — non porté par le YAML"
+  a_verifier: "détail par sous-secteur AUec/AUes/AUt (vocations spécifiques) ; VRD (chapitre 3 non lu)"
+
+bras_panon:
+  insee: "97402"
+  document: "97402_PLU_20260428 (en vigueur, sha concordant)"
+  zonage_particulier: "name = DESCRIPTION (pas un code) — identité par subtype ; garde-fou 21077 s'applique"
+  ouverture_au: conditionnelle_etat_tiers
+  ouverture_src: "« Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois les zones 1AU indicée aménagées » (name de zone AU, GPU)"
+  dependance: "phasage : ces AU ne s'ouvrent qu'APRÈS aménagement des zones 1AU indicée (cas conditionnelle_etat_tiers du schéma — comme Saint-Joseph 2AU→1AU)"
+  planchers: sans_objet
+  oap_densite_social: {densite: sans_objet, social_pct: 50, social_src: "OAP (scan : 50%)"}
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "DÉPENDANCE de phasage (ouverture subordonnée à l'aménagement des 1AU) — le YAML ne porte aucune dépendance inter-zones ; + OAP 50% social"
+  a_verifier: "chaîne exacte de phasage (quelles 1AU indicée) ; densité OAP (non chiffrée dans le scan)"
+
+entre_deux:
+  insee: "97403"
+  document: "97403_PLU_20240924 (en vigueur, sha concordant)"
+  zones_au: ["Zone d'urbanisation future (mixte)", "Zone d'urbanisation future à vocation économique"]
+  zonage_particulier: "name = description ; codes AU réels via subtype"
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« son ouverture à l'urbanisation est subordonnée à une modification ou à une révision du plan local d'urbanisme » (p.6) ; « l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU » (p.29)"
+  planchers: sans_objet
+  oap_densite_social: sans_objet
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU (subordonnée à modification/révision) — non porté par le YAML"
+  a_verifier: "distinction AU mixte vs AU éco (règles propres)"
+
+la_plaine_des_palmistes:
+  insee: "97406"
+  document: "97406_PLU_20230527 (en vigueur, sha concordant)"
+  zones_au: [AUb, AUc, AUe, AUr, AUs1, AUs2]
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU » (p.7, p.71) ; AUs1/AUs2 = réserves"
+  planchers:
+    operation_ensemble: true
+    logements_min: 10
+    precision: "10 logements LOCATIFS SOCIAUX (prêt aidé État), pas 10 logements simples"
+    planchers_src: "« dans le cas d'opérations d'ensemble comprenant au moins 10 logements locatifs sociaux financés avec un prêt aidé par l'Etat » (p.54)"
+  oap_densite_social: {note: "OAP à forte composante graphique — densité/social non extraits en texte", statut: a_verifier}
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU + plancher '10 LLS en opération d'ensemble' (variante du plancher L'Étang-Salé, en LLS et non en densité) — non porté par le YAML"
+  a_verifier: "OAP (densité/social, PDF graphique) ; secteurs AUr, AUs1, AUs2 (réserves) ; sous-secteurs"
+
+# =============================================================================
+# SYNTHÈSE PAQUET A
+#  - Le schéma DÉCRIT tout : conditionnelle_operation (×3), conditionnelle_etat_tiers (Bras-Panon,
+#    via `dependance`), planchers en LLS (La Plaine, variante). AUCUN cas non descriptible.
+#  - Fait structurant : les planchers de DENSITÉ (log/ha) de L'Étang-Salé NE sont PAS universels —
+#    ici 0 densité log/ha ; La Plaine a un plancher en LLS ; les autres n'ont pas de plancher.
+#  - name=description (Bras-Panon, Entre-Deux) : lire l'ouverture dans la description, jamais
+#    déduire du préfixe (garde-fou 21077).
+#  - sha : 4/4 concordant (nom d'archive = version en vigueur GPU).
+# =============================================================================

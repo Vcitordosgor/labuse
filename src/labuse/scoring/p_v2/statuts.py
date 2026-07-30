@@ -37,6 +37,7 @@ TIER_ECARTEE = "ecartee"
 # c'est un SIGNAL de fiche (pas de verdict → on ne déclasse pas), traité hors assign_tiers.
 from ...faisabilite.constructibilite import (   # noqa: E402  (constantes pures, sans DB)
     DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, DECLASSE_AU_STATUT_INCONNU,
+    DECLASSE_AU_FERMEE,
 )
 
 
@@ -85,12 +86,14 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # déclassement A/B (colonne optionnelle → rétro-compatible : absente = aucun déclassement).
     dc = (df["declasse_cause"] if "declasse_cause" in df.columns
           else pd.Series(pd.NA, index=df.index))
-    # AU-OUVERTURE (Vic 30/07) : `au_statut` optionnel — 'générique' (AU non calibrée, ouverture non
-    # lue) → DÉCLASSÉE `declasse_au_statut_inconnu` ; 'dimensions_seules' → RESTE servie (mention de
-    # fiche seule, pas de changement de tier). Rétro-compatible : colonne absente = aucun effet.
+    # AU-OUVERTURE (Vic 30/07, modèle AFFINÉ GPU-PILOTE) : `au_statut` porte le STATUT lu au règlement.
+    # Deux valeurs DÉCLASSENT (retirées de la tête, tier dédié) : `declasse_au_fermee` (AU fermée) et
+    # `declasse_au_statut_inconnu` (phasage 2AU→1AU = vrai inconnu). Les autres — `au_sous_plancher`
+    # (trop petite mais candidate à l'assemblage) et `conditionnelle_operation` — restent SERVIES
+    # (mention de fiche seule). Legacy : 'générique' → statut inconnu. Colonne absente = aucun effet.
     au = (df["au_statut"] if "au_statut" in df.columns
           else pd.Series(pd.NA, index=df.index))
-    declasse_au = au == "générique"
+    declasse_au = au.isin([DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
     declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au
     was_hot = (prev_tier.isin([TIER_CHAUDE, TIER_BRULANTE])
                if prev_tier is not None else pd.Series(False, index=df.index))
@@ -123,10 +126,12 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # masques ci-dessus, et écrasent a_creuser), MAIS l'étage 0 dur prime sur le déclassement.
     tier[dc == DECLASSE_ZONE_FERMEE] = DECLASSE_ZONE_FERMEE
     tier[dc == DECLASSE_NON_CONSTRUCTIBLE] = DECLASSE_NON_CONSTRUCTIBLE
-    # D (AU statut inconnu) : ne s'applique QUE là où A/B n'ont pas déjà tranché (une AU fermée au
-    # règlement est un fait A, pas une inconnue) → on n'écrase pas un déclassement déjà posé.
-    tier[declasse_au & ~dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])] = \
-        DECLASSE_AU_STATUT_INCONNU
+    # D (AU) : ne s'applique QUE là où A/B n'ont pas déjà tranché (on n'écrase pas un déclassement
+    # déjà posé). Deux tiers dédiés selon le statut lu : `declasse_au_fermee` (AU fermée) et
+    # `declasse_au_statut_inconnu` (phasage / legacy générique). `au_sous_plancher` reste SERVI.
+    _ab = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
+    tier[(au == DECLASSE_AU_FERMEE) & ~_ab] = DECLASSE_AU_FERMEE
+    tier[au.isin([DECLASSE_AU_STATUT_INCONNU, "générique"]) & ~_ab] = DECLASSE_AU_STATUT_INCONNU
     tier[df["ecartee_etage0"]] = TIER_ECARTEE
     return tier
 

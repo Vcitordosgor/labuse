@@ -285,10 +285,14 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     base_params = TierParams(n_entree=1, n_sortie=1)
     _declasse_ab = work["declasse_cause"].isin(
         [DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
-    # les génériques AU vont être déclassées (statut d'ouverture inconnu) → hors du pool de
-    # calibrage N_e, au même titre que A/B (sinon l'effectif chaude cible ~1 150 est gonflé par
-    # des parcelles qui sortiront de la tête). Les dimensions-seules RESTENT éligibles (servies).
-    _declasse_au = work["au_statut"] == "générique"
+    # les AU déclassées (statut d'ouverture) sortiront de la tête → hors du pool de calibrage N_e,
+    # au même titre que A/B (sinon l'effectif chaude cible ~1 150 est gonflé par des parcelles qui
+    # sortiront de la tête). AFFINÉ GPU-PILOTE : deux statuts déclassent — `declasse_au_fermee` (AU
+    # fermée) et `declasse_au_statut_inconnu` (phasage 2AU→1AU / legacy 'générique'). `au_sous_plancher`
+    # et `conditionnelle_operation` RESTENT servies → éligibles (miroir exact de statuts.assign_tiers).
+    from ...faisabilite.constructibilite import DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU
+    _declasse_au = work["au_statut"].isin(
+        [DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
     eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab & ~_declasse_au
                      & plancher_c(work, base_params)]
     n_e = calibre_n_entree(eligibles["rang"], cible=1150)

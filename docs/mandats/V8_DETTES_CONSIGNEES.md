@@ -86,3 +86,29 @@ backfills** de la mesure AU-OUVERTURE, une part est de ce type.
   pas du log**. « Un pro qui voit une brûlante mérite de savoir si elle est montée parce qu'elle
   s'est améliorée ou parce qu'une place s'est libérée. C'est une information sur la PARCELLE, pas
   sur le run. » Décision finale au re-run.
+
+## 10 · EBC / emplacements réservés : géo-joints mais ni cascade ni drapeau de fiche
+Consigné sur arbitrage Vic (mandat GPU-PILOTE, 30/07). Les prescriptions bloquantes du PLU sont EN
+BASE avec leur géométrie (`plu_gpu_prescription`) mais ne servent à rien côté produit : ni maillon de
+cascade, ni signal de fiche. Mesuré à L'Étang-Salé : **EBC** (`typepsc 01`, 30 objets), **ER**
+(`typepsc 05`, 15 objets). 3 958 parcelles intersectent un bloquant, dont 16 servies en tête.
+- **Nuance retenue (Vic)** : intersecter ≠ être inconstructible. Un EBC/ER PARTIEL laisse du
+  constructible. Donc **pas d'exclusion cascade automatique** sur la seule intersection.
+- **Dette** : ces objets doivent apparaître comme **DRAPEAUX de fiche** — « parcelle partiellement
+  en EBC », « emplacement réservé n°X » — pour que le professionnel le SACHE et vérifie. Information
+  d'aide à la décision, pas un verdict. La donnée existe (géométrie + `typepsc/txt/libelle`) ; il
+  manque le croisement par parcelle et l'affichage. **NON implémenté** (arbitrage Vic : consigner,
+  pas coder). Cf. `docs/mandats/GPU_PILOTE_PHASE2_EXTRACTION.md`.
+
+## 11 · Assemblage : la contiguïté géométrique ne dit rien de l'ACQUÉRABILITÉ
+Consigné sur arbitrage Vic (GPU-PILOTE, 30/07). Le statut `au_sous_plancher` sert une parcelle « trop
+petite seule » comme candidate à l'assemblage, avec le nombre de voisines CONTIGUËS de même zone qui
+atteindraient le seuil (mesuré : 399/708 sous-seuil assemblables, 66 % des têtes). **Mais la
+contiguïté est GÉOMÉTRIQUE — elle ne dit rien de l'acquérabilité.**
+- **Prochaine couche** : croiser les voisines avec la PROPRIÉTÉ (DGFiP / personnes morales).
+- **Distinguer** : « MÊME propriétaire » (division simple, sans négociation) vs « propriétaires
+  DISTINCTS » (assemblage à négocier). **Le premier cas vaut beaucoup plus cher** (constructible
+  immédiatement par simple division du foncier détenu).
+- **Mesurer PLUS TARD** (Vic), pas maintenant. Tant que non fait, `au_sous_plancher` ne distingue pas
+  les deux : la mention dit « assemblage possible » sans dire s'il est gratuit (même proprio) ou à
+  négocier. Cf. `docs/mandats/GPU_PILOTE_MESURE_PLANCHERS.md`.

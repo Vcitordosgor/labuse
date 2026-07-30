@@ -142,26 +142,31 @@ def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
         strict = (doc.get("mode") == "strict")      # défaut absent = progressif
         rules = {c: _to_rules(c, v) for c, v in doc.get("zones", {}).items()}
 
-        # 1) correspondance directe (U…, Usdu, AU5e…)
-        if code in rules:
-            r = rules[code]
+        # 1) correspondance directe, NORMALISÉE (pt2.2 : casse/accents/séparateurs, phasage conservé —
+        #    1AUb ≠ 2AUb). POINT DE CALCUL UNIQUE via zone_norm.normalize_key.
+        from .zone_norm import normalize_key, est_famille
+        norm_rules = {normalize_key(c): c for c in rules}
+        hit = norm_rules.get(normalize_key(code))
+        if hit is not None:
+            r = rules[hit]
             # PROGRESSIF : zone calibrée mais SANS hauteur exploitable (prospect/AVAP →
             # he_m et hf_m non chiffrés) → estimation générique plutôt que non constructible.
             if strict or _has_usable_height(r):
                 return r
             return _zone_generique(code)
 
-        # 2) zones AU*st (secteurs de transition) — pas de construction neuve
+        # 2) zones AU*st (secteurs de transition) — pas de construction neuve. Match normalisé.
         st = doc.get("zones_au_st", {})
-        if code in st.get("liste", []) or re.fullmatch(r"AU\w*st", code):
+        st_norm = {normalize_key(x) for x in st.get("liste", [])}
+        if normalize_key(code) in st_norm or re.fullmatch(r"AU\w*st", code, re.I):
             return ZoneRules(
                 code=code, constructible_neuf=False, hf_m=float(st.get("hauteur_max_m", 4)),
                 notes=[st.get("portee", "Travaux mineurs uniquement")],
                 sources={"hauteur": st.get("source", "Art. 10 AU*st")},
             )
 
-        # 3) renvoi AU<n><indice> → U<n><indice>
-        m = re.fullmatch(r"AU(\d[a-zA-Z0-9]*)", code)
+        # 3) renvoi AU<n><indice> → U<n><indice> (insensible à la casse)
+        m = re.fullmatch(r"AU(\d[a-zA-Z0-9]*)", code, re.I)
         if m:
             u_code = "U" + m.group(1)
             if u_code in rules:
@@ -200,8 +205,8 @@ def _zone_generique(code: str) -> ZoneRules:
     """Règles ESTIMÉES pour une zone hors PLU outillé (calibree=False) : préfixe U/AU →
     constructible, emprise bornée par les reculs (défauts Hypotheses) + hé générique prudent ;
     N/A → non constructible. À calibrer en ajoutant un config/plu_<commune>.yaml."""
-    noyau = re.sub(r"^\d+", "", code).strip().upper()          # « 1AUc » → « AUC »
-    constructible = any(noyau.startswith(p.upper()) for p in _positive_prefixes())
+    from .zone_norm import est_famille                         # « 1AUc » → famille AU (phasage retiré)
+    constructible = est_famille(code, _positive_prefixes())
     note = ("Capacité ESTIMÉE — PLU de la commune non outillé (aucun config/plu_<commune>.yaml). "
             "Valeurs génériques prudentes ; calibrage = ajout du YAML PLU communal.")
     if not constructible:

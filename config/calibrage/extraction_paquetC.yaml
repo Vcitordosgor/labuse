@@ -1,0 +1,15 @@
+# EXTRACTION GPU-PILOTE — PAQUET C (partiel : seule Cilaos est à jour ; le reste attend les
+# retéléchargements). 97424 Cilaos. Rien écrit en base, aucun YAML existant modifié.
+cilaos:
+  insee: "97424"
+  document: "97424_PLU_20240213 (en vigueur, sha concordant)"
+  zones_au: [AUst]
+  zones_au_note: "commune de montagne (cirque) — urbanisation d'extension minimale, une seule famille AU (AUst)"
+  ouverture_au: conditionnelle_operation
+  ouverture_src: "« Cette zone [AUst] couvre des espaces réservés à l'urbanisation future. Toutefois, les différents réseaux et conditions d'accès de la zone n'ont pas une capacité suffisante pour desservir… » (p.53)"
+  conditions: "réserve à l'urbanisation future ; réseaux/accès insuffisants -> ouverture différée"
+  planchers: sans_objet
+  oap_densite_social: sans_objet
+  vrd_charge_operateur: non_extrait
+  faits_nouveaux_vs_yaml: "statut d'ouverture AUst (réserve, réseaux insuffisants) — non porté par le YAML"
+  a_verifier: "modalité exacte d'ouverture (modification/révision ?) ; document daté 2018 dans l'en-tête PDF vs archive 2024-02-13 (millésime à confirmer)"

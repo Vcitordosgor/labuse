@@ -1402,9 +1402,10 @@ def ensure_au_statut_cache(engine) -> None:
     """Cache du statut d'OUVERTURE des zones AU (mandat AU-OUVERTURE, Vic 30/07). Marque les
     parcelles en zone AU dont l'article d'ouverture (Art. 1/2) n'a JAMAIS été lu.
 
-    `classe` : 'générique' (AU non calibrée → DÉCLASSÉE declasse_au_statut_inconnu) ou
-    'dimensions_seules' (règles de construction extraites mais ouverture non lue → RESTE servie,
-    mention de fiche seule). `zone_lib` : libellé de zone servi (ex. '2AUd', 'AUm'). `computed_at` :
+    `classe` (modèle AFFINÉ GPU-PILOTE, Vic 30/07) : `declasse_au_fermee` (AU fermée → déclassée),
+    `declasse_au_statut_inconnu` (phasage 2AU→1AU / legacy 'générique' → déclassée),
+    `conditionnelle_operation` (servie, mention seule) ou `au_sous_plancher` (servie, candidate à
+    l'assemblage). `zone_lib` : libellé de zone servi (ex. '2AUd', 'AUm'). `computed_at` :
     HORODATAGE DE POSE — un déclassement temporaire sans date devient permanent par oubli ; le
     compteur de péremption (`labuse au-statut-compteur`) lit cette colonne. Idempotent.
     Peuplé par `labuse compute-au-statut`."""
@@ -1414,8 +1415,11 @@ def ensure_au_statut_cache(engine) -> None:
         c.execute(_t(
             "CREATE TABLE IF NOT EXISTS parcel_au_statut ("
             " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
-            " idu varchar(20), classe varchar(20) NOT NULL, zone_lib varchar(64),"
+            " idu varchar(20), classe varchar(40) NOT NULL, zone_lib varchar(64),"
             " motif text, computed_at timestamptz NOT NULL DEFAULT now())"))
+        # AFFINÉ GPU-PILOTE : les libellés de statut se sont allongés (declasse_au_statut_inconnu = 26,
+        # conditionnelle_operation = 24) — élargir une table déjà créée en varchar(20). Idempotent.
+        c.execute(_t("ALTER TABLE parcel_au_statut ALTER COLUMN classe TYPE varchar(40)"))
 
 
 def ensure_schema(engine) -> None:

@@ -32,10 +32,12 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
 def build_parcel_zone_plu(db: Session) -> int:
     """M6.1 item 1 — table dérivée `parcel_zone_plu` (idu PK, zone_lib, zone_fam) : la zone
     PLU DOMINANTE par surface d'intersection (spatial_layers kind='plu_gpu_zone', dédoublonné
-    M6-2b). `zone_lib` = CODE COURT de zone (« U1e », « 1AUc ») : le name GPU est hétérogène
-    selon les communes (code nu, « Ud : libellé long », phrase entière sans code) — on garde le
-    1er token quand il ressemble à un code de la famille, sinon la famille seule (honnête :
-    jamais une phrase en étiquette carte). `zone_fam` = famille dérivée du typezone (AU* → AU,
+    M6-2b). `zone_lib` = CODE COURT de zone (« U1e », « 1AUc ») dérivé du 1er token de
+    `attrs.libelle` (source FIABLE du code fin, alignée sur la faisabilité) ; repli sur l'ancienne
+    heuristique `name` quand libelle est absent. Correctif ingestion (arbitrage RE-RUN pt2.4) : le
+    `name` GPU est hétérogène (parfois libelong « Zone urbaine… », parfois ID numérique Cilaos) →
+    8 communes avaient leur zone_lib réduit à la FAMILLE (U/AU) ou à un ID, rendant la calibration
+    au_statut/affichage inerte. `zone_fam` = famille dérivée du typezone (AU* → AU,
     U* → U, A, N, sinon autre). Build one-shot ~20-40 min sous charge — appelée par
     build_mvt_table SI la table est absente, jointe ensuite en LEFT JOIN (une parcelle hors
     zonage GPU n'apparaît pas ici → colonnes NULL côté tuiles/geojson)."""
@@ -48,6 +50,16 @@ def build_parcel_zone_plu(db: Session) -> int:
         WITH z0 AS (
             SELECT name, subtype, ST_MakeValid(geom_2975) AS g,
                    rtrim(split_part(btrim(name), ' ', 1), ':') AS tok,
+                   -- SOURCE FIABLE du code fin (arbitrage RE-RUN pt2.4/ingestion) : le GPU met le
+                   -- code court dans attrs.libelle (Ud, 1AUb, Uf…), alors que `name` est hétérogène
+                   -- (parfois le libelong « Zone urbaine mixte… », parfois un ID numérique Cilaos).
+                   -- On prend le 1er token du libelle (strip des suffixes OAP/secteur « 1AUa oap3 »
+                   -- → « 1AUa », « Nto 1 » → « Nto »). MÊME source que la faisabilité (faisabilite/db.py
+                   -- _CTX : COALESCE(attrs->>'libelle',…)) → parcel_zone_plu cesse de diverger d'elle.
+                   rtrim(split_part(btrim(attrs->>'libelle'), ' ', 1), ':') AS lib_tok,
+                   -- libellé COMPLET conservé (pt3 Vic) : le suffixe OAP (« 1AUa oap3 ») n'est PAS du
+                   -- bruit — l'OAP prévaut sur le règlement ; on garde l'info pour le branchement OAP.
+                   NULLIF(btrim(attrs->>'libelle'), '') AS lib_full,
                    CASE WHEN subtype ILIKE 'AU%' THEN 'AU'
                         WHEN subtype ILIKE 'U%'  THEN 'U'
                         WHEN subtype = 'A'       THEN 'A'
@@ -55,18 +67,21 @@ def build_parcel_zone_plu(db: Session) -> int:
                         ELSE 'autre' END AS fam
             FROM spatial_layers WHERE kind = 'plu_gpu_zone'
         ), z AS (
-            SELECT g, CAST(fam AS varchar) AS fam,
-                   CAST(CASE WHEN name NOT LIKE '% %' THEN name
+            SELECT g, CAST(fam AS varchar) AS fam, lib_full,
+                   -- libelle (1er token) PRIORITAIRE ; repli sur l'ancienne heuristique name/tok/fam
+                   -- (inchangée) quand libelle est absent → aucune régression là où name suffisait.
+                   CAST(COALESCE(NULLIF(lib_tok, ''),
+                        CASE WHEN name NOT LIKE '% %' THEN name
                              WHEN length(tok) BETWEEN 1 AND 10 AND (
                                   (fam = 'AU' AND tok ~* '^[0-9]{0,2}AU')
                                OR (fam = 'U'  AND tok ~* '^[0-9]{0,2}U')
                                OR (fam = 'A'  AND tok ~* '^A')
                                OR (fam = 'N'  AND tok ~* '^N'))
-                             THEN tok ELSE fam END AS varchar) AS lib
+                             THEN tok ELSE fam END) AS varchar) AS lib
             FROM z0
         )
         SELECT DISTINCT ON (p.idu)
-               p.idu, z.lib AS zone_lib, z.fam AS zone_fam
+               p.idu, z.lib AS zone_lib, z.fam AS zone_fam, z.lib_full AS zone_libelle
         FROM parcels p
         JOIN z ON p.geom_2975 && z.g AND ST_Intersects(p.geom_2975, z.g)
         ORDER BY p.idu, ST_Area(ST_Intersection(p.geom_2975, z.g)) DESC
