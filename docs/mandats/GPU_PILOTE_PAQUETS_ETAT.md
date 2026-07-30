@@ -73,17 +73,33 @@ ces 3 : **motif « absent du GPU, opposabilité à confirmer auprès de la commu
 
 | INSEE | commune | statut | parcelles servies (q_v7) | en tête | brûlantes |
 |---|---|---|---|---|---|
-| 97409 | Saint-André | **a_verifier** (PLU 2019 dépublié, opposabilité ?) | 22 600 | **413** | 7 |
-| 97413 | Saint-Leu | **a_verifier** (absent GPU, opposabilité ?) | 22 959 | **348** | 9 |
-| 97417 | Saint-Philippe | **RNU** (établi par la calibration Vic, PAS déduit du GPU vide) | 4 162 | 0 | 0 |
+| 97409 | Saint-André | **a_verifier** (PLU 2019 dépublié, opposabilité — appel mairie en cours) | 22 600 | **413** | 7 |
+| 97413 | Saint-Leu | **Sourcé** (voir gravure ci-dessous) | 22 959 | 348 | 9 |
+| 97417 | Saint-Philippe | **Sourcé — RNU calibrée** (voir gravure ci-dessous) | 4 162 | 0 | 0 |
 
-**BLOQUANT mesuré** : Saint-André + Saint-Leu = **761 parcelles servies en tête (16 brûlantes)** sur
-des PLU absents du GPU et à l'opposabilité non confirmée. Significatif → à traiter comme bloquant
-(on sert de la tête de liste sur du zonage non vérifié). Saint-Philippe (RNU, 0 en tête) n'est pas un
-bloquant. Total servi île de référence : 77 718.
+### GRAVURE — Saint-Leu (tranché mairie)
+**Document en vigueur = PLU 2007 (26/02/2007). Source = mairie. Statut = Sourcé.** La révision
+repart en enquête publique après les élections (délai long) → le 2007 reste opposable. **Le
+`a_verifier` tombe.** Les 348 têtes / 9 brûlantes reposent donc sur un **zonage VALIDE** (AGORAH,
+idurba `97413_20070226`). **Réserve gravée** : les **règles chiffrées restent NON calibrées**
+(`calibree=False` à 100% sur les têtes) — hauteurs/emprises = estimation générique, à calibrer depuis
+le règlement 2007 si on veut sortir du repli. Zonage sûr, règles devinées.
 
-→ **11 téléchargeables** (A+B+C, tu t'en occupes) ; **2 bloquants opposabilité** (Saint-André,
-Saint-Leu) ; **1 RNU** (Saint-Philippe).
+### GRAVURE — Saint-Philippe (RNU calibrée)
+**Statut = Sourcé, RNU.** `config/rnu_communes.yaml` l'établit avec preuves (GPU DU_97417=0,
+CC_97417=0 ; AGORAH 0 enregistrement, live 26/07/2026). **Traitée par la branche PAU/RNU, pas par le
+repli aveugle** : 0 `plu_gpu_zone` parasite ; `parcel_pau` = **2 373 / 4 162 parcelles dans la PAU**,
+consommées par `plancher_c` (seules les parcelles en PAU peuvent être chaudes ; hors-PAU exclues) →
+0 en tête, comportement RNU conservateur attendu. Les règles dimensionnelles = défaut national (RNU,
+aucun zonage communal à calibrer) — correct. **Le `a_verifier` tombe.**
+
+**BLOQUANT résiduel** : seul **Saint-André** reste ouvert — 413 têtes / 7 brûlantes sur PLU 2019
+dépublié, opposabilité en attente de ta mairie. Saint-Leu résolu (zonage valide, règles à calibrer) ;
+Saint-Philippe résolu (RNU). Total servi île de référence : 77 718.
+
+→ **11 téléchargeables** (A+B+C, tu t'en occupes). Sur les 3 « aucun doc GPU » : **Saint-Leu = Sourcé**
+(PLU 2007 opposable, mairie ; règles à calibrer), **Saint-Philippe = Sourcé RNU** (branche PAU),
+**Saint-André = seul bloquant restant** (opposabilité mairie en cours).
 
 ## Les 9 déjà à jour — j'avance dessus (paquets de 4, ton feu vert)
 97401 Les Avirons · 97402 Bras-Panon · 97403 Entre-Deux · 97406 La Plaine-des-Palmistes ·
