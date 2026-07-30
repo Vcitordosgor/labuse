@@ -1,0 +1,31 @@
+# CALIBRATION LA POSSESSION (97408) — depuis les pièces fournies par Vic (pack 97408_PLU_20251217,
+# téléchargé le 30/07 sha e7313e5d, à jour = EN_VIGUEUR).
+meta:
+  commune: "La Possession"
+  insee: "97408"
+  statut: "Sourcé"
+  source_type: "pack GPU 97408_PLU_20251217 (archive locale à jour — pointée par Vic)"
+  date_archive_gpu: "2025-12-17"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  contexte: "TCO — densité ancrée au SCOT du TCO (orientation 14) et au SAR (prescription 9)"
+
+zones_au:
+  familles: [AUA, AUAv, AUB, AUBM, AUBb, AUBm, AUEm, AUST, AUT, AUX]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement p.81 (« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU »)"
+  AUST: "réserve à l'urbanisation future (secteur strict)"
+  zones_sensibles:
+    AUAv: "portait une brûlante générique de la dette AU-OUVERTURE — ouverture désormais gravée (conditionnelle)"
+    AUBm: "portait une brûlante générique de la dette AU-OUVERTURE — ouverture désormais gravée (conditionnelle)"
+  planchers:
+    localisation: "RÈGLEMENT (clause densité p.67) ET OAP (répété) — cohérents"
+    densite_min_log_ha: 50
+    densite_src: "règlement p.67 (« la clause de densité minimale suivante s'applique… ») ; OAP fasc.1 p.7 (« densité minimale des opérations de développement urbain est de 50 logements/ha, en compatibilité avec l'orientation 14 du SCOT du TCO et à la prescription 9 du SAR »)"
+    ancrage_superieur: "densité ancrée au SCOT du TCO + SAR (docs supra-communaux) mais CHIFFRÉE dans le PLU (≠ Saint-Paul qui délègue au PLH sans chiffrer)"
+    social_pct: [40, 60]
+    social_src: "OAP fasc.2 (per site : 40% / 60%)"
+    prevalence: "règlement et OAP concordants (50 log/ha)"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "ouverture AU (conditionnelle) des zones AUAv/AUBm ex-brûlantes + plancher densité 50 log/ha (règlement+OAP, ancré SCOT/SAR) + social 40/60% — absents du YAML"
+  a_verifier: "valeur exacte de la clause densité règlement p.67 (texte tronqué au scan) ; social par site ; dimensions U"
