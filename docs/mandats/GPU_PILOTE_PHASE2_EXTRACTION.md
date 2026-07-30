@@ -87,7 +87,55 @@ pas une exclusion. Non implémenté ici.
 - **A / N** : identité + constructibilité habitat seulement (hors cible produit) ; chapitres non relus.
 - **Procédure** (0_Procedure) : non lue. **Servitudes** (liste_sup) : géométrie en base, texte non extrait.
 
-## Point d'arrêt
-Extraction rendue sur **L'Étang-Salé uniquement**. Rien écrit en base, YAML existant intact, aucune
-autre commune. Les 3 faits de contrôle sont retrouvés. En attente de ton retour avant toute suite
-(brancher les planchers/VRD/OAP dans la faisabilité, ou étendre à d'autres communes).
+## Point d'arrêt (v1)
+Extraction rendue sur **L'Étang-Salé uniquement**. Rien écrit en base, YAML existant intact.
+
+---
+# PHASE 2 v2 — deux corrections d'arbitrage (30/07)
+
+## Correction 1 — l'unité d'extraction devient (zone × site OAP)
+Refonte appliquée : `config/calibrage/extraction_l_etang_sale.yaml` passe d'un enregistrement par
+zone à un enregistrement par **(zone, site_OAP)**, plus un **(zone, aucun)** pour le reste.
+
+**Décompte — AVANT 6 → APRÈS 15 enregistrements AU** (× 2,5) :
+
+| zone | records | sites |
+|---|---|---|
+| AUa | 2 | Le Stade · aucun |
+| AUb | 4 | Amont ZAC Collège · RHI aval · RHI amont · aucun |
+| AUc | 3 | Ravine Sheunon · Le Lambert · aucun |
+| AUe | 1 | Les Sables |
+| AUt | 2 | Le Golf · Étang-Salé-les-Bains |
+| AUs | 3 | Étang-Salé-les-Bains · Les Sables · aucun |
+
+Chaque valeur en conflit règlement/OAP porte désormais **les deux valeurs + `prevalente` +
+`prevalence_src`** :
+- `densite_min_log_ha: {reglement: 15, oap: 30, prevalente: oap, prevalence_src: "AU 1.2 p.75 « sauf OAP » ; OAP p.13", en_conflit: true}` (AUc Ravine Sheunon — ta découverte).
+- `logement_aide_pct` : 5 records en conflit (OAP 25-50% > règlement 20%).
+Nouveaux champs : `site_oap`, `geometrie_site` (référence `plu_gpu_prescription typepsc=18`),
+`regle_prevalente`/`prevalence_src` par valeur, `en_conflit`. Le cas « Le Lambert » (OAP muette
+sur la densité) reste `a_verifier`, jamais supposé sans effet.
+
+## Correction 2 — version en vigueur VÉRIFIÉE (même document)
+Le résolveur dit « en vigueur 08/12/2025 », l'archive est datée 20250917. **Comparaison par hash :**
+
+| | sha256 |
+|---|---|
+| Règlement archive locale | `0b05392e…5487c7ca` |
+| Règlement pack EN_VIGUEUR (téléchargé) | `0b05392e…5487c7ca` — **IDENTIQUE** |
+| ZIP archive locale (301 185 287 o) | `994281ea…9fac1d448d` |
+| ZIP pack EN_VIGUEUR | `994281ea…9fac1d448d` — **IDENTIQUE octet pour octet** |
+
+→ **Même document, pas une version postérieure.** Le « 08/12/2025 » est la date de PUBLICATION GPU
+du même document 20250917 (effectiveStatus EN_VIGUEUR), pas un contenu nouveau. Rien à
+retélécharger pour L'Étang-Salé.
+
+Schéma : ajout de **`date_en_vigueur_gpu`** (2025-12-08) distinct de **`date_archive_locale`**
+(2025-09-17), + `version_en_vigueur_verifiee` (méthode : sha du règlement) + `extraction_perimee_si`
+(un nouveau doc EN_VIGUEUR au sha de règlement différent → extraction à refaire). **Pour les 23
+autres communes** : la même comparaison de hash détectera un décalage archive/en-vigueur avant toute
+extraction — c'est le garde-fou d'obsolescence, généralisable.
+
+## Point d'arrêt (v2)
+Ré-extraction rendue à la nouvelle granularité (15 records), version vérifiée (identique). **On ne
+lance PAS les 23 autres communes avant ton retour.** Rien écrit en base, YAML existant intact.

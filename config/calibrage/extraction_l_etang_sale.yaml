@@ -1,17 +1,15 @@
-# EXTRACTION EXHAUSTIVE — PLU de L'Étang-Salé (97404) — MANDAT GPU-PILOTE Phase 2
+# EXTRACTION EXHAUSTIVE — PLU de L'Étang-Salé (97404) — MANDAT GPU-PILOTE Phase 2 (v2)
 # =============================================================================
-# Fichier NEUF, produit À CÔTÉ du calibrage existant (config/plu_l_etang_sale.yaml). Ne le remplace
-# PAS : il le DÉPASSE (planchers de densité, VRD, OAP, destinations, servitudes — absents du YAML).
+# v2 (arbitrage Vic) : l'unité d'extraction devient (ZONE × SITE_OAP). Une zone n'a pas UNE règle
+# mais autant que de sites OAP qui la recouvrent (AUc Ravine Sheunon impose 30 log/ha là où le
+# règlement dit 15). Toute valeur divergente règlement/OAP montre LES DEUX + laquelle prévaut + la
+# source de la prévalence.
 #
-# Règles du mandat, tenues :
-#  - Chaque champ porte sa SOURCE (article + page IMPRIMÉE) ou « sans objet » AVEC sa source.
-#  - JAMAIS de null muet : `non_extrait` (on n'a pas lu) ≠ `sans_objet` (le règlement ne dit rien).
-#  - `verbatim` = phrase EXACTE du règlement, non reformulée.
-#  - Ouverture des AU JAMAIS déduite par convention : lue à l'article, sinon a_verifier.
-#
-# Offset pages : page_pdf = page_imprimée − 1 (vérifié sur les en-têtes). Les `_p` citent l'IMPRIMÉE.
-# Source : règlement écrit 97404_reglement_20250917.pdf (106 p.) + OAP 97404_orientations_
-#   amenagement_20250917.pdf (25 p.), archive GPU 97404_PLU_20250917 (EN VIGUEUR, publié 08/12/2025).
+# Fichier NEUF, à côté du calibrage existant (config/plu_l_etang_sale.yaml) — non modifié.
+# Règles tenues : source (article + page IMPRIMÉE) sur chaque champ ; jamais de null muet
+# (non_extrait ≠ sans_objet) ; verbatim exact ; ouverture AU lue, jamais déduite.
+# Offset : page_pdf = page_imprimée − 1. Sources : règlement 97404_reglement_20250917.pdf (106 p.)
+# + OAP 97404_orientations_amenagement_20250917.pdf (25 p.).
 
 meta:
   commune: "L'Étang-Salé"
@@ -19,400 +17,285 @@ meta:
   document_gpu: "97404_PLU_20250917"
   reglement_fichier: "97404_reglement_20250917.pdf"
   oap_fichier: "97404_orientations_amenagement_20250917.pdf"
-  date_document_en_vigueur: "2025-09-17"       # millésime d'archive
-  date_publication_gpu: "2025-12-08"           # effectiveStatus EN_VIGUEUR
-  reglement_modifie_le: "2024-12-04"           # cf. version originalName 97404_PLU_20241204
-  procedure: "non_extrait — dossier 0_Procedure (97404_procedure_20250917.pdf) non lu en phase 2"
+  # DEUX dates distinctes (arbitrage Vic) — une extraction sur doc périmé doit être DÉTECTABLE :
+  date_archive_locale: "2025-09-17"            # millésime du nom d'archive (fichier lu)
+  date_en_vigueur_gpu: "2025-12-08"            # effectiveStatus=EN_VIGUEUR, publicationDate GPU
+  reglement_modifie_le: "2024-12-04"           # cf. version antérieure originalName 97404_PLU_20241204
+  version_en_vigueur_verifiee: "OUI — règlement du pack EN_VIGUEUR identique à l'archive locale (sha256 comparé, cf. rapport Phase 2)"
+  extraction_perimee_si: "un nouveau document GPU (effectiveStatus EN_VIGUEUR) porte un originalName ou un sha de règlement différent de celui extrait ici"
   offset_pdf_vs_imprimee: -1
-  prevalence_documents: "PPR (26/01/2016) et PPRL (03/2017) PRÉVALENT (rappel art. AU 1.1.1, p.75)"
+  procedure: "non_extrait (0_Procedure non lu)"
+  prevalence_documents: "PPR (26/01/2016) et PPRL (03/2017) PRÉVALENT (AU 1.1.1, p.75)"
 
-# ANNUAIRE (Mission 2, ajout 2) — lien TESTÉ le 30/07, HTTP 200. URLFIC est VIDE à la source ;
-# le lien se CONSTRUIT et se RÉSOUT dynamiquement (l'id change à chaque republication → jamais figé).
 annuaire_lien:
   resolveur: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404"
   filtre: "effectiveStatus == 'EN_VIGUEUR'  → champ id"
   telechargement_verifie: "https://www.geoportail-urbanisme.gouv.fr/api/document/7058f72863540b49692dd4e3c37085f8/download"
-  resultat_test: "HTTP 200, application/zip 11,4 Mo, redirige vers data.geopf.fr/.../97404_PLU_20250917.zip"
-  granularite: "document DU entier (pas le PDF règlement seul à la page) — l'article+page est une donnée affichée à côté du lien"
-  avertissement: "id NON stable — résoudre via le résolveur à chaque requête, ne jamais coder l'id en dur (sinon lien mort à la prochaine révision)"
+  resultat_test: "HTTP 200, redirige vers data.geopf.fr/.../97404_PLU_20250917.zip (document EN VIGUEUR)"
+  granularite: "document DU entier (pas le PDF règlement à la page) — l'article+page s'affiche à côté du lien"
+  avertissement: "id NON stable — résoudre via grid=97404 à chaque requête, jamais coder l'id en dur"
 
 # =============================================================================
-# ZONES À URBANISER — cœur du mandat (planchers, VRD, OAP, ouverture). Chapitre AU unique (p.75-88).
+# RÈGLES DE ZONE (source RÈGLEMENT) — invariantes par zone, aucune OAP ne les modifie.
+# Les enregistrements (zone × site) ci-dessous s'y réfèrent par `dimensions_ref` pour ne pas
+# dupliquer ; seules les valeurs EN CONFLIT avec une OAP (densité, % social) sont portées par record.
 # =============================================================================
 
-zones_au:
+reglement_zone:
+  AUa: {emprise_sol_pct: 70, emprise_src: "AU 2.4, p.79", hauteur_he: 12, hauteur_hf: 15, hauteur_acrotere: 13, hauteur_src: "AU 2.5.2, p.80", recul_voirie_m: 4, recul_voirie_src: "AU 2.1.2, p.77", recul_limites_m: 3, recul_limites_src: "AU 2.2, p.78", distance_batiments_m: 3, distance_batiments_src: "AU 2.3.1, p.79", espace_vert_pct: 20, permeabilite_pct: 30, pleine_terre_src: "AU 2.6, p.82", largeur_min_voie_m: 5, largeur_min_voie_src: "AU 3.1.2, p.84 (opérations >= 7 log/lots)", vrd_charge_operateur: interne_et_externe, vrd_src: "AU 1.2, p.75 (internes ou externes, a la charge exclusive de l'operateur)", sdp_max_ratio: sans_objet, sdp_max_ratio_src: "aucun COS/ratio SDP dans le chapitre AU", niveaux_max: non_extrait}
+  AUb: {emprise_sol_pct: 65, emprise_src: "AU 2.4, p.79", hauteur_he: 9, hauteur_hf: 12, hauteur_acrotere: 10, hauteur_src: "AU 2.5.2, p.80", recul_voirie_m: 4, recul_voirie_src: "AU 2.1.2, p.77", recul_limites_m: 3, recul_limites_src: "AU 2.2, p.78", distance_batiments_m: 3, distance_batiments_src: "AU 2.3.1, p.79", espace_vert_pct: 25, permeabilite_pct: 35, pleine_terre_src: "AU 2.6, p.82", largeur_min_voie_m: 5, largeur_min_voie_src: "AU 3.1.2, p.84", vrd_charge_operateur: interne_et_externe, vrd_src: "AU 1.2, p.75", sdp_max_ratio: sans_objet, niveaux_max: non_extrait}
+  AUc: {emprise_sol_pct: 60, emprise_src: "AU 2.4, p.79", hauteur_he: 6, hauteur_hf: 9, hauteur_acrotere: 7, hauteur_src: "AU 2.5.2, p.80", recul_voirie_m: 4, recul_voirie_src: "AU 2.1.2, p.77", recul_limites_m: 3, recul_limites_src: "AU 2.2, p.78 (joint si longueur en limite <= 10 m)", distance_batiments_m: 3, distance_batiments_src: "AU 2.3.1, p.79", espace_vert_pct: 30, permeabilite_pct: 40, pleine_terre_src: "AU 2.6, p.82", largeur_min_voie_m: 5, largeur_min_voie_src: "AU 3.1.2, p.84", vrd_charge_operateur: interne_et_externe, vrd_src: "AU 1.2, p.75", sdp_max_ratio: sans_objet, niveaux_max: non_extrait}
+  AUe: {emprise_sol_pct: 75, emprise_src: "AU 2.4, p.79", hauteur_he: 15, hauteur_hf: 18, hauteur_acrotere: sans_objet, hauteur_src: "AU 2.5.2, p.80 (exceptions industrielles AU 2.5.5)", recul_voirie_m: 4, recul_voirie_src: "AU 2.1.2, p.77", recul_limites_m: 4, recul_limites_src: "AU 2.2, p.78 (marge minimale 4,00 m)", distance_batiments_m: 3, distance_batiments_src: "AU 2.3.1, p.79", espace_vert_pct: 15, permeabilite_pct: 25, pleine_terre_src: "AU 2.6, p.82 (stationnement permeable 50% sauf impossibilite en AUe)", largeur_min_voie_m: 9, largeur_min_voie_src: "AU 3.1.2, p.84 (emprise minimale de 9 metres en AUe)", vrd_charge_operateur: interne_et_externe, vrd_src: "AU 1.2 §3, p.76", surfaces_commerces_max_pct: 5, surfaces_commerces_src: "AU 1.2 §3, p.76", sdp_max_ratio: sans_objet, niveaux_max: non_extrait}
+  AUt: {emprise_sol_pct: 65, emprise_src: "AU 2.4, p.79", hauteur_he: sans_objet, hauteur_hf: 12, hauteur_cabanes: 5, hauteur_src: "AU 2.5.2, p.80 (seul le faitage fixe)", recul_voirie_m: 4, recul_voirie_src: "AU 2.1.2, p.77", recul_limites_m: 3, recul_limites_src: "AU 2.2, p.78 (recul minimum de 3,00m)", distance_batiments_m: 3, distance_batiments_src: "AU 2.3.1, p.79", espace_vert_pct: 25, permeabilite_pct: 35, pleine_terre_src: "AU 2.6, p.82", vrd_charge_operateur: interne_et_externe, vrd_src: "AU 1.2, p.75", sdp_max_ratio: sans_objet, niveaux_max: non_extrait}
+  AUs: {emprise_sol_pct: sans_objet, emprise_src: "AU 2.4, p.79 (AUs absent = inconstructible)", hauteur_hf: sans_objet, hauteur_src: "AU 2.5.2, p.80 (AUs liste sans valeur)", recul_voirie_m: sans_objet, recul_voirie_src: "AU 2.1.2, p.77 (Sans objet en Zone AUs)", recul_limites_m: sans_objet, recul_limites_src: "AU 2.2, p.78 (Zone AUs : Sans objet)", vrd_charge_operateur: sans_objet, sdp_max_ratio: sans_objet, niveaux_max: sans_objet}
 
-  # --- SECTEURS OUVERTS (constructibles sous conditions d'opération d'ensemble) -----------------
-  AUa:
-    # A · IDENTITÉ
-    libelle: AUa
-    libelle_long: "secteur AUa — constitution d'un tissu urbain dense"
-    libelle_long_src: "AU, caractère de zone, p.75"
-    type: AU
-    # B · OUVERTURE
+# =============================================================================
+# ENREGISTREMENTS (ZONE × SITE_OAP) — l'unité d'extraction (arbitrage Vic).
+# `prevalente`: reglement | oap, avec `prevalence_src`. `en_conflit`: true si les deux diffèrent.
+# =============================================================================
+
+enregistrements:
+
+  # ---- AUa ----------------------------------------------------------------------------------
+  - cle: {zone: AUa, site_oap: "Le Stade"}
+    dimensions_ref: AUa
+    geometrie_site: "plu_gpu_prescription typepsc=18 « OAP Aua Le stade » (géométrie en base)"
     ouverture: conditionnelle_operation
     ouverture_src: "AU 1.2 §1, p.75"
-    ouverture_verbatim: "les constructions à usage d'habitation, à condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation avec une densité minimale de 50 log/ha (secteur AUa), 30 log/ha (secteur AUb) et 15 log/ha (secteur AUc), sauf dispositions particulières définies dans les Orientations d'Aménagement"
-    conditions: "opération d'ensemble obligatoire ; hors opération d'ensemble = inconstructible"
-    dependance: sans_objet
-    date_butoir: sans_objet
-    # C · SEUILS PLANCHERS  ← ABSENTS du YAML actuel (cœur Mission 1)
+    ouverture_verbatim: "les constructions à usage d'habitation, à condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements […] avec une densité minimale de 50 log/ha (secteur AUa) […] sauf dispositions particulières définies dans les Orientations d'Aménagement"
     operation_ensemble_requise: true
     logements_min: 10
-    densite_min_log_ha: 50
-    surface_min_operation: "non_extrait (aucun seuil de surface d'opération dans AU 1.2)"
-    planchers_src: "AU 1.2 §1, p.75 ; densité modulée par OAP (voir §H)"
-    # D · PLAFONDS
-    emprise_sol_pct: 70
-    emprise_src: "AU 2.4, p.79 (« 70% en zone AUa »)"
-    hauteur_he: 12
-    hauteur_hf: 15
-    hauteur_acrotere: 13
-    hauteur_src: "AU 2.5.2, p.80 (« 12,00m à l'égout, 15,00m au faîtage, 13,00m à l'acrotère en toiture-terrasse »)"
-    niveaux_max: non_extrait
-    sdp_max_ratio: sans_objet
-    sdp_max_ratio_src: "aucun COS ni ratio SDP/terrain dans le chapitre AU (vérifié)"
-    pleine_terre_pct: "sans_objet (le règlement raisonne en espace vert + perméable, pas en pleine terre stricte)"
-    espace_vert_pct: 20
-    permeabilite_pct: 30
-    pleine_terre_src: "AU 2.6, p.82 (« Au moins 20% (AUa) […] traité en espace vert » ; « Au moins 30% (AUa) […] doit être perméable »)"
-    # E · IMPLANTATION
-    recul_voirie_m: 4
-    recul_voirie_src: "AU 2.1.2, p.77 (« recul minimum de 4,00 m par rapport à l'alignement » ; piscines 1,00 m)"
-    recul_limites_m: 3
-    recul_limites_src: "AU 2.2, p.78 (marge d'isolement min 3,00 m ; joint possible si profondeur ≤ 15 m habitations / 20 m commerces RDC)"
-    distance_batiments_m: 3
-    distance_batiments_src: "AU 2.3.1, p.79 (« minimum de 3,00m »)"
-    prospect: non_extrait
-    largeur_min_acces: non_extrait
-    largeur_min_voie_m: 5
-    largeur_min_voie_src: "AU 3.1.2, p.84 (« Pour les opérations comportant au minimum 7 logements ou 7 lots, les voiries doivent avoir une emprise minimale de 5 mètres »)"
-    # F · CHARGES OPPOSABLES  ← ABSENT du YAML actuel (cœur Mission 1)
-    vrd_charge_operateur: interne_et_externe
-    vrd_src: "AU 1.2, p.75 (« Les équipements d'infrastructures indispensables à la réalisation de l'opération, qu'ils soient internes ou externes à celle-ci, sont à la charge exclusive de l'opérateur »)"
-    logement_aide_pct: 20
-    logement_aide_seuil: ">1000 m² SDP habitation"
-    logement_aide_src: "AU 1.3 §1, p.76 (« doit prévoir d'affecter au logement aidé au moins 20% de la surface de plancher d'habitation ») — NE s'applique PAS si OAP (voir §H)"
-    stationnement_ratios: "Logement individuel 2 pl./logement ; collectif : tableau normes-plancher AU 2.7.3, p.83 (partiellement extractible ; LLS ≤ 1 pl./logement)"
-    stationnement_src: "AU 2.7.3, p.83-84"
-    # G · DESTINATIONS
-    destinations_autorisees: "habitation (via opération d'ensemble) ; commerces, services, bureaux, activités, équipements publics compatibles"
-    destinations_conditionnelles: "ICPE non aggravantes pour le voisinage (AU 1.2 §5)"
-    destinations_interdites: "tout ce qui n'est pas prévu à AU 1.2 (AU 1.1.2, p.75)"
-    destinations_src: "AU 1.1 / AU 1.2, p.75-76"
-    destinations_shapefile: "DESTOUI/DESTCDT/DESTNON VIDES à la source (0/78) — aucune donnée à croiser ; pas de divergence à signaler faute de second terme"
-    # H · RENVOIS ET BLOQUANTS  ← OAP extraite (ajout 1)
-    oap_applicable: true
-    oap_reference: "OAP « AUa Le Stade » (5_Orientations, p.7) ; l'AUa RHI/ZAC relève d'autres fiches OAP AUb"
+    logements_min_src: "AU 1.2 §1, p.75"
+    densite_min_log_ha: {reglement: 50, oap: 50, prevalente: oap, prevalence_src: "AU 1.2 p.75 « sauf dispositions […] dans les OAP » ; OAP Le Stade p.7", en_conflit: false}
+    logement_aide_pct: {reglement: 20, oap: 50, prevalente: oap, prevalence_src: "AU 1.3 p.76 « ne s'applique pas dans les zones AU faisant l'objet d'une OAP » ; OAP Le Stade p.7", en_conflit: true}
     oap_contenu_extrait: oui
-    oap_prescriptions: "densité minimale de l'ordre de 50 log/ha + minimum 50% de logements sociaux (OAP Le Stade, p.7) — la densité CONFIRME le règlement (50), le taux social (50%) PRÉVAUT sur les 20% de AU 1.3"
     oap_verbatim: "une densité minimale de l'ordre de 50 log/ha ; un minimum de 50% de logements sociaux"
-    ppr_prevaut: "oui — PPR 26/01/2016 + PPRL 03/2017 (AU 1.1.1, p.75)"
-    servitudes: "voir couche sup (pm1/PPR) ; liste_sup non extraite en texte"
-    prescriptions_graphiques: "EBC (typepsc 01) et ER (typepsc 05) à croiser par parcelle — voir dette EBC/ER"
-    # I · QUALITÉ
-    a_verifier: "niveaux_max, prospect, largeur_min_acces, stationnement collectif (tableau) non extraits en texte"
-    contradiction_interne: sans_objet
-    couverture_pct: 85
-    articles_non_extraits: ["AU 2.7.3 tableau stationnement complet", "AU 3.2 réseaux détaillés", "niveaux max"]
+    couverture_pct: 90
+    a_verifier: "niveaux_max, stationnement collectif (tableau AU 2.7.3)"
 
-  AUb:
-    libelle: AUb
-    libelle_long: "secteur AUb — tissu urbain mixte, moyennement dense"
-    libelle_long_src: "AU, caractère de zone, p.75"
-    type: AU
+  - cle: {zone: AUa, site_oap: aucun}
+    dimensions_ref: AUa
+    geometrie_site: "parties de AUa hors périmètre OAP (le cas échéant)"
     ouverture: conditionnelle_operation
     ouverture_src: "AU 1.2 §1, p.75"
-    ouverture_verbatim: "(voir AUa) […] densité minimale de […] 30 log/ha (secteur AUb) […] sauf dispositions particulières définies dans les Orientations d'Aménagement"
-    conditions: "opération d'ensemble obligatoire"
-    dependance: sans_objet
-    date_butoir: sans_objet
     operation_ensemble_requise: true
     logements_min: 10
-    densite_min_log_ha: 30
-    surface_min_operation: "non_extrait"
-    planchers_src: "AU 1.2 §1, p.75"
-    emprise_sol_pct: 65
-    emprise_src: "AU 2.4, p.79 (« 65% en zone AUb »)"
-    hauteur_he: 9
-    hauteur_hf: 12
-    hauteur_acrotere: 10
-    hauteur_src: "AU 2.5.2, p.80"
-    niveaux_max: non_extrait
-    sdp_max_ratio: sans_objet
-    sdp_max_ratio_src: "aucun ratio SDP/terrain dans le chapitre AU"
-    espace_vert_pct: 25
-    permeabilite_pct: 35
-    pleine_terre_src: "AU 2.6, p.82"
-    recul_voirie_m: 4
-    recul_voirie_src: "AU 2.1.2, p.77"
-    recul_limites_m: 3
-    recul_limites_src: "AU 2.2, p.78 (idem AUa)"
-    distance_batiments_m: 3
-    distance_batiments_src: "AU 2.3.1, p.79"
-    largeur_min_voie_m: 5
-    largeur_min_voie_src: "AU 3.1.2, p.84"
-    vrd_charge_operateur: interne_et_externe
-    vrd_src: "AU 1.2, p.75"
-    logement_aide_pct: 20
-    logement_aide_seuil: ">1000 m² SDP habitation"
-    logement_aide_src: "AU 1.3 §1, p.76 (ne s'applique pas si OAP)"
-    destinations_autorisees: "habitation (opération d'ensemble) ; commerces, services, bureaux, équipements publics compatibles"
-    destinations_interdites: "non prévu à AU 1.2"
-    destinations_src: "AU 1.1/1.2, p.75-76"
-    destinations_shapefile: "VIDE à la source"
-    oap_applicable: true
-    oap_reference: "5 fiches OAP portent sur AUb : « Amont ZAC Collège » p.5, « RHI Butte Citronnelle aval » p.9, « RHI amont » p.11"
+    densite_min_log_ha: {reglement: 50, oap: null, prevalente: reglement, prevalence_src: "AU 1.2 §1, p.75 (blanket, pas d'OAP sur cette emprise)", en_conflit: false}
+    logement_aide_pct: {reglement: 20, oap: null, prevalente: reglement, prevalence_src: "AU 1.3 §1, p.76", en_conflit: false}
+    oap_contenu_extrait: sans_objet
+    couverture_pct: 85
+    a_verifier: "existence réelle d'emprise AUa hors OAP à confirmer par géo-jointure zone × OAP"
+
+  # ---- AUb (3 sites OAP) --------------------------------------------------------------------
+  - cle: {zone: AUb, site_oap: "Amont ZAC du Collège"}
+    dimensions_ref: AUb
+    geometrie_site: "OAP p.5 (2,00 ha)"
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 30, oap: 30, prevalente: oap, prevalence_src: "AU 1.2 p.75 ; OAP p.5", en_conflit: false}
+    logement_aide_pct: {reglement: 20, oap: 25, prevalente: oap, prevalence_src: "AU 1.3 p.76 ; OAP p.5", en_conflit: true}
     oap_contenu_extrait: oui
-    oap_prescriptions: "Amont ZAC Collège : 30 log/ha + 25% social (p.5) ; RHI aval : 50 log/ha + 50% social (p.9) ; RHI amont : 30 log/ha + 50% social (p.11). La densité VARIE PAR SITE (30 ou 50) et le taux social (25-50%) PRÉVAUT sur les 20% règlement."
-    oap_verbatim: "une densité minimale de l'ordre de 30 log/ha ; un minimum de 25% de logements sociaux (Amont ZAC Collège) — une densité minimale de l'ordre de 50 log/ha ; un minimum de 50% de logements sociaux (RHI aval)"
-    ppr_prevaut: "oui (AU 1.1.1, p.75)"
-    prescriptions_graphiques: "EBC/ER à croiser (dette)"
-    a_verifier: "niveaux_max, prospect, stationnement collectif"
-    contradiction_interne: "APPARENTE mais résolue : règlement AUb densité 30 (blanket) vs OAP RHI aval 50 — l'OAP prévaut explicitement (AU 1.2 « sauf OAP »). Non une contradiction : une hiérarchie."
-    couverture_pct: 85
-    articles_non_extraits: ["tableau stationnement", "niveaux max"]
+    oap_verbatim: "une densité minimale de l'ordre de 30 log/ha ; un minimum de 25% de logements sociaux"
+    couverture_pct: 90
+    a_verifier: "niveaux_max"
 
-  AUc:
-    libelle: AUc
-    libelle_long: "secteur AUc — extensions urbaines à dominante pavillonnaire"
-    libelle_long_src: "AU, caractère de zone, p.75"
-    type: AU
+  - cle: {zone: AUb, site_oap: "RHI Butte Citronnelle — partie aval"}
+    dimensions_ref: AUb
+    geometrie_site: "OAP p.9 (2,0 ha)"
     ouverture: conditionnelle_operation
     ouverture_src: "AU 1.2 §1, p.75"
-    ouverture_verbatim: "(voir AUa) […] 15 log/ha (secteur AUc) […] sauf dispositions particulières définies dans les Orientations d'Aménagement"
-    conditions: "opération d'ensemble obligatoire"
-    dependance: sans_objet
-    date_butoir: sans_objet
     operation_ensemble_requise: true
     logements_min: 10
-    densite_min_log_ha: 15
-    surface_min_operation: "non_extrait"
-    planchers_src: "AU 1.2 §1, p.75"
-    emprise_sol_pct: 60
-    emprise_src: "AU 2.4, p.79 (« 60% en zone AUc »)"
-    hauteur_he: 6
-    hauteur_hf: 9
-    hauteur_acrotere: 7
-    hauteur_src: "AU 2.5.2, p.80"
-    niveaux_max: non_extrait
-    sdp_max_ratio: sans_objet
-    espace_vert_pct: 30
-    permeabilite_pct: 40
-    pleine_terre_src: "AU 2.6, p.82"
-    recul_voirie_m: 4
-    recul_voirie_src: "AU 2.1.2, p.77"
-    recul_limites_m: 3
-    recul_limites_src: "AU 2.2, p.78 (AUc : joint si longueur en limite ≤ 10 m ; marge 3 m)"
-    distance_batiments_m: 3
-    distance_batiments_src: "AU 2.3.1, p.79"
-    largeur_min_voie_m: 5
-    largeur_min_voie_src: "AU 3.1.2, p.84"
-    vrd_charge_operateur: interne_et_externe
-    vrd_src: "AU 1.2, p.75"
-    logement_aide_pct: "sans_objet (AU 1.3 vise AUa/AUb uniquement)"
-    logement_aide_src: "AU 1.3 §1, p.76 (« Dans les zones AUa et AUb »)"
-    destinations_autorisees: "habitation (opération d'ensemble) ; équipements compatibles"
-    destinations_interdites: "non prévu à AU 1.2"
-    destinations_src: "AU 1.1/1.2, p.75-76"
-    destinations_shapefile: "VIDE à la source"
-    oap_applicable: true
-    oap_reference: "OAP « AUc Ravine Sheunon » (2 zones, p.13) et « AUc Le Lambert » (p.15)"
-    oap_contenu_extrait: partiel
-    oap_prescriptions: "Ravine Sheunon : 30 log/ha + 25% social (p.13) — SUPÉRIEUR au blanket règlement (15 log/ha) → l'OAP RELÈVE le plancher. Le Lambert (p.15) : AUCUNE densité/social chiffrée dans le texte extrait → a_verifier."
-    oap_verbatim: "une densité minimale de l'ordre de 30 log/ha ; un minimum de 25% de logement[s sociaux] (Ravine Sheunon)"
-    ppr_prevaut: "oui (AU 1.1.1, p.75)"
-    prescriptions_graphiques: "EBC/ER à croiser (dette)"
-    a_verifier: "OAP Le Lambert (densité/social non chiffrés dans le texte) ; niveaux_max ; stationnement"
-    contradiction_interne: "règlement AUc 15 log/ha vs OAP Sheunon 30 log/ha — l'OAP prévaut et RELÈVE le plancher (non une contradiction : hiérarchie AU 1.2 « sauf OAP »)"
-    couverture_pct: 80
-    articles_non_extraits: ["OAP Le Lambert chiffres", "tableau stationnement", "niveaux max"]
+    densite_min_log_ha: {reglement: 30, oap: 50, prevalente: oap, prevalence_src: "AU 1.2 p.75 « sauf OAP » ; OAP p.9", en_conflit: true}
+    logement_aide_pct: {reglement: 20, oap: 50, prevalente: oap, prevalence_src: "AU 1.3 p.76 ; OAP p.9", en_conflit: true}
+    oap_contenu_extrait: oui
+    oap_verbatim: "une densité minimale de l'ordre de 50 log/ha ; un minimum de 50% de logements sociaux"
+    couverture_pct: 90
+    note: "CAS-CLÉ : l'OAP RELÈVE la densité de 30 (blanket AUb) à 50 log/ha."
 
-  AUe:
-    libelle: AUe
-    libelle_long: "secteur AUe — activités économiques (extension ZAE des Sables)"
-    libelle_long_src: "AU, caractère de zone, p.75 ; OAP p.23"
-    type: AU
+  - cle: {zone: AUb, site_oap: "RHI Butte Citronnelle — partie amont"}
+    dimensions_ref: AUb
+    geometrie_site: "OAP p.11 (2,50 ha)"
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 30, oap: 30, prevalente: oap, prevalence_src: "AU 1.2 p.75 ; OAP p.11", en_conflit: false}
+    logement_aide_pct: {reglement: 20, oap: 50, prevalente: oap, prevalence_src: "AU 1.3 p.76 ; OAP p.11", en_conflit: true}
+    oap_contenu_extrait: oui
+    oap_verbatim: "une densité minimale de l'ordre de 30 log/ha ; un minimum de 50% de logements sociaux"
+    couverture_pct: 90
+
+  - cle: {zone: AUb, site_oap: aucun}
+    dimensions_ref: AUb
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 30, oap: null, prevalente: reglement, prevalence_src: "AU 1.2 §1, p.75", en_conflit: false}
+    logement_aide_pct: {reglement: 20, oap: null, prevalente: reglement, prevalence_src: "AU 1.3 §1, p.76", en_conflit: false}
+    oap_contenu_extrait: sans_objet
+    couverture_pct: 85
+    a_verifier: "emprise AUb hors OAP à confirmer par géo-jointure"
+
+  # ---- AUc (2 sites OAP) --------------------------------------------------------------------
+  - cle: {zone: AUc, site_oap: "Ravine Sheunon"}
+    dimensions_ref: AUc
+    geometrie_site: "OAP p.13 (deux zones AUc)"
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 15, oap: 30, prevalente: oap, prevalence_src: "AU 1.2 p.75 « sauf OAP » ; OAP p.13", en_conflit: true}
+    logement_aide_pct: {reglement: sans_objet, oap: 25, prevalente: oap, prevalence_src: "AU 1.3 vise AUa/AUb seulement (p.76) ; l'OAP p.13 impose 25% en AUc", en_conflit: true}
+    oap_contenu_extrait: oui
+    oap_verbatim: "une densité minimale de l'ordre de 30 log/ha ; un minimum de 25% de logement[s sociaux]"
+    couverture_pct: 90
+    note: "CAS-CLÉ (ta découverte) : l'OAP impose 30 log/ha là où le règlement dit 15."
+
+  - cle: {zone: AUc, site_oap: "Le Lambert"}
+    dimensions_ref: AUc
+    geometrie_site: "OAP p.15 (< 1,4 ha)"
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 15, oap: a_verifier, prevalente: a_verifier, prevalence_src: "OAP Le Lambert (p.15) NE CHIFFRE PAS la densité dans le texte extrait", en_conflit: a_verifier}
+    logement_aide_pct: {reglement: sans_objet, oap: a_verifier, prevalente: a_verifier, prevalence_src: "OAP p.15 muette", en_conflit: a_verifier}
+    oap_contenu_extrait: partiel
+    oap_verbatim: "Cette zone de moins de 1,4ha est créée en lien avec la mise en place d'un réseau EU […] marquer la limite urbaine du quartier du Lambert (aucune densité/social chiffrée)"
+    couverture_pct: 70
+    a_verifier: "densité et % social de l'OAP Le Lambert — jamais supposés sans effet"
+
+  - cle: {zone: AUc, site_oap: aucun}
+    dimensions_ref: AUc
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §1, p.75"
+    operation_ensemble_requise: true
+    logements_min: 10
+    densite_min_log_ha: {reglement: 15, oap: null, prevalente: reglement, prevalence_src: "AU 1.2 §1, p.75", en_conflit: false}
+    logement_aide_pct: {reglement: sans_objet, oap: null, prevalente: reglement, prevalence_src: "AU 1.3 vise AUa/AUb (p.76)", en_conflit: false}
+    oap_contenu_extrait: sans_objet
+    couverture_pct: 85
+
+  # ---- AUe (1 site OAP, zone économique) ----------------------------------------------------
+  - cle: {zone: AUe, site_oap: "Les Sables"}
+    dimensions_ref: AUe
+    geometrie_site: "OAP p.23 (5,6 ha, extension ZAE)"
     ouverture: conditionnelle_operation
     ouverture_src: "AU 1.2 §3, p.76"
-    ouverture_verbatim: "En secteur AUe, les établissements industriels, techniques, les activités artisanales, tertiaires, ainsi que les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage ou à la surveillance des établissements (maximum 50m² de surface de plancher)"
-    conditions: "vocation économique ; habitat limité au gardiennage (≤50 m² SDP)"
-    dependance: sans_objet
-    date_butoir: sans_objet
-    operation_ensemble_requise: "implicite (zone d'aménagement économique) — pas de seuil de logements (zone non résidentielle)"
-    logements_min: "sans_objet (zone économique)"
-    densite_min_log_ha: "sans_objet (zone économique)"
-    planchers_src: "AU 1.2 §3, p.76"
-    emprise_sol_pct: 75
-    emprise_src: "AU 2.4, p.79 (« 75% en zone AUe »)"
-    hauteur_he: 15
-    hauteur_hf: 18
-    hauteur_acrotere: "sans_objet (non listé pour AUe)"
-    hauteur_src: "AU 2.5.2, p.80 (« 15,00m à l'égout, 18,00m au faîtage » ; exceptions industrielles AU 2.5.5)"
-    espace_vert_pct: 15
-    permeabilite_pct: 25
-    pleine_terre_src: "AU 2.6, p.82 (perméabilité 25% ; stationnement perméable 50% « sauf impossibilité technique avérée pour la zone AUe »)"
-    recul_voirie_m: 4
-    recul_voirie_src: "AU 2.1.2, p.77"
-    recul_limites_m: 4
-    recul_limites_src: "AU 2.2, p.78 (« Zone AUe […] marge d'isolement minimale égale à un minimum de 4,00 mètres »)"
-    distance_batiments_m: 3
-    distance_batiments_src: "AU 2.3.1, p.79"
-    largeur_min_voie_m: 9
-    largeur_min_voie_src: "AU 3.1.2, p.84 (« Dans la zone AUe, les voiries doivent avoir une emprise minimale de 9 mètres »)"
-    vrd_charge_operateur: interne_et_externe
-    vrd_src: "AU 1.2 §3, p.76 (« qu'ils soient internes ou externes à celle-ci, seront pris en charge par l'opérateur »)"
-    surfaces_commerces_max: "5% d'emprise au sol par rapport à la surface des terrains de la zone"
-    surfaces_commerces_src: "AU 1.2 §3, p.76"
-    logement_aide_pct: "sans_objet (zone économique)"
-    destinations_autorisees: "industriel, technique, artisanal, tertiaire ; habitation de gardiennage ≤50 m² ; ICPE (déclaration/autorisation admises en AUe)"
-    destinations_src: "AU 1.2 §3 et §5, p.76"
-    destinations_shapefile: "VIDE à la source"
-    oap_applicable: true
-    oap_reference: "OAP « AUe Les Sables » (p.23)"
+    ouverture_verbatim: "En secteur AUe, les établissements industriels, techniques, les activités artisanales, tertiaires, ainsi que les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage […] (maximum 50m² de surface de plancher)"
+    operation_ensemble_requise: "implicite (aménagement économique)"
+    logements_min: sans_objet
+    densite_min_log_ha: {reglement: sans_objet, oap: sans_objet, prevalente: sans_objet, prevalence_src: "zone économique — pas de densité de logement", en_conflit: false}
+    logement_aide_pct: {reglement: sans_objet, oap: sans_objet, prevalente: sans_objet, en_conflit: false}
     oap_contenu_extrait: oui
-    oap_prescriptions: "extension ZAE des Sables ; desserte depuis av. Michel Debré / rue du Casier, AUCUN accès sur la route des Sables (RN2001) ; marge agricole maintenue ; gestion pluviale par rétention aval. Pas de densité de logements (zone économique)."
     oap_verbatim: "Aucun accès n'est envisagé sur la route des Sables"
-    ppr_prevaut: "oui (AU 1.1.1, p.75)"
-    prescriptions_graphiques: "EBC/ER à croiser (dette)"
-    a_verifier: "niveaux_max ; stationnement activités (tableau)"
-    contradiction_interne: sans_objet
+    oap_prescriptions: "desserte depuis av. Michel Debré / rue du Casier ; marge agricole maintenue ; rétention pluviale aval"
     couverture_pct: 85
-    articles_non_extraits: ["tableau stationnement activités", "AU 2.5.5 exceptions hauteur"]
+    a_verifier: "stationnement activités"
 
-  AUt:
-    libelle: AUt
-    libelle_long: "secteur AUt — activités touristiques et de loisirs"
-    libelle_long_src: "AU, caractère de zone, p.75 ; OAP « Le Golf » p.20, « Etang-Salé-les-Bains » p.18"
-    type: AU
+  # ---- AUt (2 sites OAP, tourisme) ----------------------------------------------------------
+  - cle: {zone: AUt, site_oap: "Le Golf"}
+    dimensions_ref: AUt
+    geometrie_site: "OAP p.20-21 (~5 ha) ; plu_gpu_prescription « OAP AUt Le golf »"
     ouverture: conditionnelle_operation
     ouverture_src: "AU 1.2 §2, p.76"
-    ouverture_verbatim: "Dans le secteur AUt : les constructions et installations à usage TOURISTIQUE et de loisirs (aucune clause logement)"
-    conditions: "vocation touristique/loisirs uniquement"
-    dependance: sans_objet
-    date_butoir: sans_objet
-    operation_ensemble_requise: "implicite (projet d'aménagement touristique)"
-    logements_min: "sans_objet (zone touristique, pas de logement ordinaire)"
-    densite_min_log_ha: "sans_objet"
-    planchers_src: "AU 1.2 §2, p.76"
-    emprise_sol_pct: 65
-    emprise_src: "AU 2.4, p.79 (« 65% en zone AUt »)"
-    hauteur_he: "sans_objet (seul le faîtage est fixé)"
-    hauteur_hf: 12
-    hauteur_cabanes: 5
-    hauteur_src: "AU 2.5.2, p.80 (« 12,00m au faîtage ; 5,00m au faîtage pour les constructions de type cabanes arboricoles »)"
-    espace_vert_pct: 25
-    permeabilite_pct: 35
-    pleine_terre_src: "AU 2.6, p.82"
-    recul_voirie_m: 4
-    recul_voirie_src: "AU 2.1.2, p.77"
-    recul_limites_m: 3
-    recul_limites_src: "AU 2.2, p.78 (« Zone AUt : les constructions doivent s'implanter avec un recul minimum de 3,00m »)"
-    distance_batiments_m: 3
-    distance_batiments_src: "AU 2.3.1, p.79"
-    vrd_charge_operateur: interne_et_externe
-    vrd_src: "AU 1.2, p.75 (clause générale ; applicable à l'opération)"
-    logement_aide_pct: "sans_objet"
-    destinations_autorisees: "constructions et installations à usage touristique et de loisirs"
-    destinations_src: "AU 1.2 §2, p.76"
-    destinations_shapefile: "VIDE à la source"
-    oap_applicable: true
-    oap_reference: "OAP « AUt Le Golf » (p.20-21) et « AUt Etang-Salé-les-Bains » (p.18-19)"
-    oap_contenu_extrait: oui
-    oap_prescriptions: "Le Golf (~5 ha) : hébergement à l'arrière d'un secteur « vitrine » commerces/équipements golf ; accès pointe sud-est ; stationnements souterrains préconisés. Etang-Salé-les-Bains : structure touristique face au front de mer, accès depuis le front de mer. Pas de densité de logements."
-    oap_verbatim: "ce secteur est voué à accueillir un projet d'aménagement tourné vers le tourisme et les loisirs (Le Golf, p.21)"
-    ppr_prevaut: "oui (AU 1.1.1, p.75)"
-    prescriptions_graphiques: "EBC/ER à croiser (dette)"
-    a_verifier: "hauteur égout AUt (non fixée) ; stationnement"
-    contradiction_interne: sans_objet
-    couverture_pct: 80
-    articles_non_extraits: ["AU 2.5.6 exceptions AUt", "stationnement"]
-
-  # --- SECTEUR FERMÉ (le fait de contrôle n°1) --------------------------------------------------
-  AUs:
-    libelle: AUs
-    libelle_long: "secteur AUs — réserve foncière à long terme, inconstructible"
-    libelle_long_src: "AU, caractère de zone, p.75"
-    type: AU
-    # B · OUVERTURE — le contrôle : FERMÉE, verbatim
-    ouverture: fermee
-    ouverture_src: "AU, caractère de zone, p.75 + AU 1.2 §11, p.76"
-    ouverture_verbatim: "Le secteur AUs couvre des espaces naturels réservés à l'urbanisation future. Ces espaces non équipés sont inconstructibles. Ils ne pourront être ouverts à l'urbanisation qu'à l'occasion d'une procédure de modification ou de révision du PLU."
-    conditions: "seuls admis (AU 1.2 §11) : ouvrages liés à la prévention des risques naturels et aux réseaux/voirie/énergie ; aucune construction d'habitation"
-    dependance: "aucune dépendance à une autre zone AU — l'ouverture passe par une procédure de MODIFICATION ou RÉVISION du PLU (pas par l'aménagement d'une 1AU)"
-    date_butoir: sans_objet
-    operation_ensemble_requise: sans_objet
+    ouverture_verbatim: "Dans le secteur AUt : les constructions et installations à usage TOURISTIQUE et de loisirs"
     logements_min: sans_objet
-    densite_min_log_ha: sans_objet
-    emprise_sol_pct: "sans_objet (AUs non listé à AU 2.4 — inconstructible)"
-    emprise_src: "AU 2.4, p.79 (AUs absent de la liste des emprises)"
-    hauteur_hf: "sans_objet (AUs listé sans valeur à AU 2.5.2 — aucune hauteur définie)"
-    hauteur_src: "AU 2.5.2, p.80 (« en zone AUs » suivi d'aucune valeur)"
-    recul_voirie_m: "sans_objet"
-    recul_voirie_src: "AU 2.1.2, p.77 (« Sans objet en Zone AUs »)"
-    recul_limites_m: "sans_objet"
-    recul_limites_src: "AU 2.2, p.78 (« Zone AUs : Sans objet »)"
-    vrd_charge_operateur: sans_objet
-    destinations_autorisees: "ouvrages de prévention des risques + réseaux/voirie/énergie uniquement (AU 1.2 §11)"
-    destinations_interdites: "toute construction d'habitation ou d'activité (inconstructible)"
-    destinations_src: "AU 1.2 §11, p.76"
-    oap_applicable: true
-    oap_reference: "OAP « AUs Etang-Salé-les-Bains » (p.16-17) et « AUs Les Sables » (p.24-25)"
+    densite_min_log_ha: {reglement: sans_objet, oap: sans_objet, prevalente: sans_objet, en_conflit: false}
     oap_contenu_extrait: oui
-    oap_prescriptions: "AUs Etang-Salé-les-Bains (11,83 ha) : « réserve foncière à long terme dont l'ouverture à l'urbanisation est cont[rainte] » (p.17) — CONFIRME la fermeture. AUs Les Sables : « Un aléa fort d'inondation devra être pris en compte contraignant fortement l'aménagement » (p.25)."
+    oap_verbatim: "ce secteur est voué à accueillir un projet d'aménagement tourné vers le tourisme et les loisirs"
+    oap_prescriptions: "hébergement à l'arrière d'un secteur « vitrine » ; accès pointe sud-est ; stationnements souterrains préconisés"
+    couverture_pct: 80
+
+  - cle: {zone: AUt, site_oap: "Étang-Salé-les-Bains"}
+    dimensions_ref: AUt
+    geometrie_site: "OAP p.18-19"
+    ouverture: conditionnelle_operation
+    ouverture_src: "AU 1.2 §2, p.76"
+    logements_min: sans_objet
+    densite_min_log_ha: {reglement: sans_objet, oap: sans_objet, prevalente: sans_objet, en_conflit: false}
+    oap_contenu_extrait: oui
+    oap_verbatim: "structure touristique face au front de mer […] accès depuis le front de mer"
+    couverture_pct: 80
+
+  # ---- AUs (2 sites OAP, FERMÉ — fait de contrôle n°1) --------------------------------------
+  - cle: {zone: AUs, site_oap: "Étang-Salé-les-Bains"}
+    dimensions_ref: AUs
+    geometrie_site: "OAP p.16-17 (11,83 ha)"
+    ouverture: fermee
+    ouverture_src: "AU caractère de zone p.75 + AU 1.2 §11 p.76"
+    ouverture_verbatim: "Ces espaces non équipés sont inconstructibles. Ils ne pourront être ouverts à l'urbanisation qu'à l'occasion d'une procédure de modification ou de révision du PLU."
+    dependance: "aucune — ouverture par MODIFICATION/RÉVISION du PLU (pas par l'aménagement d'une autre AU)"
+    logements_min: sans_objet
+    densite_min_log_ha: {reglement: sans_objet, oap: sans_objet, prevalente: sans_objet, en_conflit: false}
+    oap_contenu_extrait: oui
     oap_verbatim: "Ce secteur AUs […] constitue une réserve foncière à long terme dont l'ouverture à l'urbanisation est cont[rainte]"
-    ppr_prevaut: "oui — et aléa fort inondation sur AUs Les Sables (OAP p.25)"
-    a_verifier: sans_objet
-    contradiction_interne: sans_objet
     couverture_pct: 95
-    articles_non_extraits: []
-    note_calibrage: "le YAML actuel gèle DÉJÀ AUs (zones_au_st) — cohérent ; ici on ajoute le verbatim et la voie d'ouverture (modification/révision)."
+
+  - cle: {zone: AUs, site_oap: "Les Sables"}
+    dimensions_ref: AUs
+    geometrie_site: "OAP p.24-25"
+    ouverture: fermee
+    ouverture_src: "AU caractère de zone p.75 + AU 1.2 §11 p.76"
+    dependance: "ouverture par modification/révision"
+    logements_min: sans_objet
+    oap_contenu_extrait: oui
+    oap_verbatim: "Un aléa fort d'inondation devra être pris en compte contraignant fortement l'aménagement de cette zone"
+    ppr_prevaut: "oui + aléa fort inondation (OAP p.25)"
+    couverture_pct: 90
+
+  - cle: {zone: AUs, site_oap: aucun}
+    dimensions_ref: AUs
+    ouverture: fermee
+    ouverture_src: "AU caractère de zone p.75 + AU 1.2 §11 p.76"
+    logements_min: sans_objet
+    oap_contenu_extrait: sans_objet
+    couverture_pct: 95
+    note_calibrage: "le YAML actuel gèle DÉJÀ AUs (zones_au_st) — cohérent."
 
 # =============================================================================
-# ZONES URBAINES (U) — le calibrage existant (config/plu_l_etang_sale.yaml) a DÉJÀ extrait les
-# dimensions avec sources de page. On les REPORTE ici pour l'annuaire, en marquant honnêtement ce
-# qui reste non extrait (destinations, verbatims intégraux) — à compléter en phase 2bis.
+# ZONES URBAINES (U) — pas d'OAP → 1 enregistrement (zone, aucun) chacune. Dimensions reportées du
+# calibrage existant (mêmes pages) ; destinations/verbatims intégraux non extraits (phase 2bis).
 # =============================================================================
-
 zones_u:
-  UA: {libelle: UA, type: U, ouverture: sans_objet_zone_urbaine,
-       emprise_sol_pct: 70, emprise_src: "UA 2.4, p.19", he_m: 12, hf_m: 15, hauteur_src: "UA 2.5.2, p.19-20 (13 m acrotère)",
-       recul_voirie_m: 4, recul_voirie_src: "UA 2.1, p.18", recul_limites_m: 3, recul_limites_src: "UA 2.2, p.18-19",
-       pleine_terre_pct: 30, pleine_terre_src: "UA 2.6, p.20-22",
-       destinations: "non_extrait (UA 1.x non relu en phase 2)", stationnement: "a_verifier (tableau UA 2.7.3 non extractible)",
-       vrd_charge_operateur: "non_extrait (chapitre U 3 non relu)", couverture_pct: 60,
-       source_report: "valeurs issues du calibrage existant plu_l_etang_sale.yaml (mêmes pages PDF)"}
-  UB: {libelle: UB, type: U, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UB 2.5.2, p.30-31 (10 m acrotère)",
-       stationnement: "a_verifier (UB 2.7.3)", destinations: "non_extrait", vrd_charge_operateur: "non_extrait", couverture_pct: 45}
-  UBv: {libelle: UBv, type: U, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UB 2.5.2, p.30-31 (UBv : hauteur mesurée par rapport au TN avant travaux)", couverture_pct: 40}
-  UC: {libelle: UC, type: U, ouverture: sans_objet_zone_urbaine, he_m: 6, hf_m: 9, hauteur_src: "UC 2.5.2, p.40 (7 m acrotère)", couverture_pct: 40}
-  UD: {libelle: UD, type: U, ouverture: sans_objet_zone_urbaine, he_m: 4, hf_m: 7, hauteur_src: "UD 2.5.2, p.48-49 (5 m acrotère)", couverture_pct: 40}
-  UE: {libelle: UE, type: U, ouverture: sans_objet_zone_urbaine, he_m: 15, hf_m: 18, hauteur_src: "UE 2.5.2, p.58-59",
-       habitat: "limité au gardiennage 50 m² (UE 1.2, p.56-57)", couverture_pct: 45}
-  UT: {libelle: UT, type: U, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UT 2.5.2, p.66-67 (10 m acrotère)",
-       habitat: "interdit sauf gardiennage (UT 1.1.2, p.64)", couverture_pct: 45}
+  UA: {libelle: UA, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, emprise_sol_pct: 70, emprise_src: "UA 2.4, p.19", he_m: 12, hf_m: 15, hauteur_src: "UA 2.5.2, p.19-20 (13 m acrotère)", recul_voirie_m: 4, recul_voirie_src: "UA 2.1, p.18", recul_limites_m: 3, recul_limites_src: "UA 2.2, p.18-19", pleine_terre_pct: 30, pleine_terre_src: "UA 2.6, p.20-22", destinations: "non_extrait", stationnement: "a_verifier (UA 2.7.3 tableau)", vrd_charge_operateur: "non_extrait (U 3 non relu)", couverture_pct: 60}
+  UB: {libelle: UB, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UB 2.5.2, p.30-31 (10 m acrotère)", destinations: "non_extrait", vrd_charge_operateur: "non_extrait", couverture_pct: 45}
+  UBv: {libelle: UBv, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UB 2.5.2, p.30-31 (UBv : hauteur / TN avant travaux)", couverture_pct: 40}
+  UC: {libelle: UC, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 6, hf_m: 9, hauteur_src: "UC 2.5.2, p.40 (7 m acrotère)", couverture_pct: 40}
+  UD: {libelle: UD, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 4, hf_m: 7, hauteur_src: "UD 2.5.2, p.48-49 (5 m acrotère)", couverture_pct: 40}
+  UE: {libelle: UE, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 15, hf_m: 18, hauteur_src: "UE 2.5.2, p.58-59", habitat: "gardiennage 50 m² (UE 1.2, p.56-57)", couverture_pct: 45}
+  UT: {libelle: UT, type: U, site_oap: aucun, ouverture: sans_objet_zone_urbaine, he_m: 9, hf_m: 12, hauteur_src: "UT 2.5.2, p.66-67 (10 m acrotère)", habitat: "interdit sauf gardiennage (UT 1.1.2, p.64)", couverture_pct: 45}
 
-# =============================================================================
-# ZONES AGRICOLES (A) ET NATURELLES (N) — non constructibles pour le produit (habitat).
-# Identité + constructibilité ; chapitres A (p.91-98) et N (p.101+) NON relus en détail (hors cible).
-# =============================================================================
-
+# ZONES AGRICOLES / NATURELLES — hors cible produit (habitat). Chapitres A (p.91) / N (p.101) non relus.
 zones_a_n:
-  A:   {libelle: A, type: A, constructible_habitat: false, note: "zone agricole — chapitre A p.91, non relu en phase 2", couverture_pct: 10}
-  Acu: {libelle: Acu, type: A, constructible_habitat: "a_verifier", note: "sous-secteur agricole ; chapitre A non relu", couverture_pct: 5}
-  N:   {libelle: N, type: N, constructible_habitat: false, note: "zone naturelle — chapitre N p.101, non relu", couverture_pct: 10}
-  Na: {libelle: Na, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Nce: {libelle: Nce, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Ne: {libelle: Ne, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Nep: {libelle: Nep, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Nerl: {libelle: Nerl, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Nparc: {libelle: Nparc, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
-  Nt: {libelle: Nt, type: N, constructible_habitat: "a_verifier (touristique)", couverture_pct: 5}
-  Nt1: {libelle: Nt1, type: N, constructible_habitat: "a_verifier", couverture_pct: 5}
+  A: {type: A, site_oap: aucun, constructible_habitat: false, couverture_pct: 10}
+  Acu: {type: A, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  N: {type: N, site_oap: aucun, constructible_habitat: false, couverture_pct: 10}
+  Na: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nce: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Ne: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nep: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nerl: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nparc: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nt: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
+  Nt1: {type: N, site_oap: aucun, constructible_habitat: a_verifier, couverture_pct: 5}
 
 # =============================================================================
-# CONTRÔLE DE VALIDITÉ (les 3 faits imposés) — RETROUVÉS sans qu'on les souffle :
-#  1. AUs FERMÉE        → zones_au.AUs.ouverture=fermee, verbatim p.75 + AU 1.2 §11 p.76.        ✅
-#  2. 10 log min + 50/30/15 log/ha → zones_au.AU{a,b,c}.logements_min/densite, verbatim p.75.    ✅
-#  3. VRD internes ET externes opérateur → zones_au.AU*.vrd_charge_operateur, verbatim p.75.     ✅
+# DÉCOMPTE (arbitrage Vic : combien d'enregistrements avant vs après granularité)
+#   AVANT (v1, 1 record/zone AU)         : 6 enregistrements AU.
+#   APRÈS (v2, 1 record/(zone,site_OAP)) : 15 enregistrements AU (× 2,5).
+#     Détail : AUa 2 (Le Stade + aucun) · AUb 4 (Amont ZAC, RHI aval, RHI amont, aucun) ·
+#     AUc 3 (Ravine Sheunon, Le Lambert, aucun) · AUe 1 (Les Sables) · AUt 2 (Le Golf,
+#     Étang-Salé-les-Bains) · AUs 3 (Étang-Salé-les-Bains, Les Sables, aucun) = 15.
+#     (AUe/AUt n'ont pas de record « aucun » : toute leur emprise est sous OAP dans cette commune.)
+#   + 7 zones U + 11 zones A/N (sans OAP, 1 record chacune).
+#
+# CONTRÔLE 3/3 (inchangé, granularité n'y touche pas) :
+#   1. AUs fermée (tous records AUs, ouverture=fermee, verbatim p.75/p.76).
+#   2. 10 log min + 50/30/15 (records AUa/AUb/AUc, logements_min + densite_min_log_ha.reglement).
+#   3. VRD internes+externes (reglement_zone.AU*.vrd_charge_operateur, verbatim p.75).
 # =============================================================================
