@@ -1,0 +1,27 @@
+# CALIBRATION SAINT-PAUL (97415) — complétée depuis les pièces fournies par Vic
+# (règlement 413 p. + OAP 48 p. + prescription du pack 97415_PLU_20251217, à jour, sha concordant).
+meta:
+  commune: "Saint-Paul"
+  insee: "97415"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97415_PLU_20251217 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2025-12-17"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  reglement_taille: "413 p. (le plus volumineux de la campagne)"
+
+zones_au:
+  familles: "AU très granulaire, indicées AU1b..AU6st (secteurs × indices) — ~24 codes"
+  ouverture: conditionnelle_operation
+  ouverture_src: "p.59 (« l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU »)"
+  planchers:
+    localisation: "PLH (Programme Local de l'Habitat du TCO) — NI au règlement NI à l'OAP"
+    preuve: "OAP (48 p.) : « la part de logements aidés telle que déterminée dans le PLH » ; « densité »/« hectare » qualitatifs, AUCUN « log/ha » chiffré (0 occurrence) ; règlement 413 p. : aucun plancher densité"
+    valeurs: "a_verifier — non chiffrées dans le PLU ; config/plh_tco.yaml couvre le TCO (dont Saint-Paul) mais en RÉSUMÉ de bilan, pas en planchers par zone"
+    note: "3e localisation possible des planchers de la campagne : règlement (L'Étang-Salé/Trois-Bassins/Saint-Leu), OAP (Saint-Pierre), PLH externe (Saint-Paul)."
+  oap:
+    contenu_extrait: oui
+    nature: "qualitative — mixité des typologies, densité optimisée selon le PLH ; renvoie au PLH pour les valeurs de logement aidé"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "statut d'ouverture AU + DÉLÉGATION des planchers densité/social au PLH (le PLU ne les chiffre pas) — cas distinct, absent du YAML. Granularité AU indicée (AU1..AU6)."
+  a_verifier: "valeurs de densité/social depuis le PLH TCO (document séparé) ; appariement AU indicée ; dimensions U"
