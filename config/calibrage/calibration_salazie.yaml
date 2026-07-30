@@ -1,0 +1,29 @@
+# CALIBRATION SALAZIE (97421) — depuis les pièces fournies par Vic (pack 97421_PLU_20220524, à jour).
+# NOTE : le dossier déplié dans ~/Downloads/ est devenu indisponible en cours de lecture (transitoire) ;
+# faits captés aux 2 premiers scans, la LISTE des densités par zone (règlement p.29) n'a pas pu être
+# relue -> a_verifier.
+meta:
+  commune: "Salazie"
+  insee: "97421"
+  statut: "Sourcé"
+  source_type: "PDF fournis par Vic (~/Downloads/97421_PLU_20220524/)"
+  date_archive_gpu: "2022-05-24"
+  dates_base: "Prescrit 2012-08-23 / Arrêté 2013-10-27"
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  contexte: "commune de montagne (cirque de Salazie)"
+
+zones_au:
+  familles: [AU, AUa, AUb, AUc, AUe]
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement p.29 (« [espaces] réservés à l'urbanisation future. Les constructions y sont autorisées soit lors d[']opérations d'ensemble… »)"
+  planchers:
+    localisation: "RÈGLEMENT (clause densité minimale p.29, par zone) + OAP (social)"
+    densite_min_log_ha: a_verifier
+    densite_note: "clause « densité minimale suivante, s'appliquant pour toutes les constructions et toutes les opérations… » (p.29) suivie d'une LISTE par zone — valeurs non captées (fichier devenu indisponible)"
+    social_pct: 50
+    social_src: "OAP 2022 (14 p, texte) : 50%"
+    prevalence: "règlement (densité) + OAP (social)"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle + plancher densité au règlement (par zone, valeurs a_verifier) + social OAP 50% — absents du YAML"
+  a_verifier: "VALEURS de densité minimale par zone (p.29, à relire) ; densité vs social par site ; dimensions U"
