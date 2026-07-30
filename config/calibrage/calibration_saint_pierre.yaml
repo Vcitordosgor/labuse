@@ -1,0 +1,31 @@
+# CALIBRATION SAINT-PIERRE (97416) — complétée depuis les pièces fournies par Vic
+# (règlement 227 p. + 2 fascicules OAP + prescription du pack 97416_PLU_20240625, à jour, sha concordant).
+meta:
+  commune: "Saint-Pierre"
+  insee: "97416"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97416_PLU_20240625 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2024-06-25"
+  dates_referencees: ["2016", "2023"]
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  zonage_particulier: "AU à name=DESCRIPTION (garde-fou 21077 : identité par subtype, jamais le préfixe)"
+
+zones_au:
+  familles: [1AU, AUa, AUd, AUe, AUf, AUg, AUo, AUt]
+  ouverture: conditionnelle_operation
+  ouverture_src: "p.8 (« une modification ou révision du PLU sera nécessaire pour son ouverture à l'urbanisation » — si voies/réseaux insuffisants)"
+  planchers:
+    porte_par: "OAP (pas le règlement)"
+  oap:
+    contenu_extrait: oui
+    fascicules: 2
+    densite_min_log_ha_par_site: [50, 60, 80]
+    densite_src: "OAP fasc.1 : « 60 logements/ha minimum » (p.11), « 50 logements/ha » (p.52,55), « 60 logements/ha » (p.84), « 80 logements/ha » (p.90)"
+    social_pct_par_site: [20, 25, 30, 40]
+    social_src: "OAP fasc.1 : 25% (p.11,49,84), 40% (p.55,61,67), 30% (p.98,100), 20% (p.78)"
+    prevalence: "OAP prévaut — densité et social sont fixés PAR SITE dans l'OAP, plus riche que L'Étang-Salé"
+    note: "OAP volumineuse (fasc.1 = 101 p., nombreux sites) ; l'appariement fin site↔polygone reste a_verifier"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "planchers de densité PAR SITE via OAP (50/60/80 log/ha) + social 20-40% par site — absents du YAML ; a_verifier OAP du paquet B LEVÉ (contenu lu)"
+  a_verifier: "appariement fin site OAP ↔ polygone de zone (densité par parcelle) ; dimensions U non extraites"
