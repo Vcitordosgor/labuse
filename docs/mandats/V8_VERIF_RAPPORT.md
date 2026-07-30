@@ -699,5 +699,44 @@ dette). Trois surfaces, par ordre de priorité :
 Recommandation : (1) comme socle (visible sans action humaine), (2) comme rappel à chaque run.
 Rien codé — j'attends ton choix.
 
+---
+# AU-OUVERTURE — arbitrage compteur (30/07) : (1)+(2)+(3) retenus, « blocage 180 j » à définir
+
+Compteur validé sur les TROIS surfaces. Garde-fou 180 j **non optionnel** (précédents : dix
+paramètres provisoires devenus permanents par oubli ; `fix/m23-finitions` 4 j hors main avec une
+fuite propriétaire — un garde qui ne se déclenche jamais ne coûte rien). Seuils : **WARN 90 j,
+blocage 180 j**. Avant de coder, je dois définir ce que « blocage » FAIT concrètement. Deux options,
+comme tu les as posées :
+
+## Option A — refus de SERVIR les parcelles concernées
+À 180 j, les déclassées AU dont la marque dépasse le seuil sont ACTIVEMENT retirées du produit
+(escaladées de `declasse_au_statut_inconnu` — visibles avec motif — vers `ecartee` — hors produit).
+La sévérité du déclassement monte d'un cran avec l'âge.
+- **Contre (doctrinal, fort)** : le déclassement est un « on NE SAIT PAS », pas un « c'est fermé ».
+  Escalader vers `ecartee` transforme une INCERTITUDE de mesure en VERDICT d'exclusion — exactement
+  ce que le mandat évite. Le temps qui passe est NOTRE défaut (règlement non lu), pas une preuve
+  nouvelle sur la parcelle. Punir la parcelle pour notre oubli inverse la charge.
+- **Pour** : plus aucune parcelle non vérifiée n'est servie au-delà de 180 j (risque faux positif → 0).
+
+## Option B — alerte IMPOSSIBLE à ignorer (cible = le processus humain, pas la parcelle)
+À 180 j, les parcelles ne bougent PAS ; c'est l'ACTE de servir/basculer qui se bloque :
+- **garde de bascule** (5ᵉ garde, comme complétude/disque/journal/code-sur-main) : `bascule_v8*`
+  REFUSE de mettre un run en service s'il porte des déclassées AU > 180 j, sauf override humain
+  explicite (`--peremption-ack "motif"`, tracé) ;
+- **`/readyz` passe en dégradé** (pas 503 : la lecture reste servie ; un état `degraded` visible qui
+  ne peut pas être confondu avec « sain ») + `doctor` sort en non-zéro sur ce point.
+- **Contre** : la parcelle reste servie déclassée (le faux négatif persiste) tant que l'humain
+  n'agit pas — mais elle reste dans son état HONNÊTE (« on ne sait pas »), pas durci.
+- **Pour** : le garde vise notre OUBLI (lire les règlements), pas la parcelle. Cohérent avec la
+  doctrine « le déclassement est une position d'attente, jamais un verdict ».
+
+## Recommandation
+**Option B (garde de bascule + /readyz dégradé).** Le 180 j doit forcer l'ORGANISATION à lire les
+règlements, pas l'algorithme à durcir une incertitude en exclusion. Une parcelle qu'on n'a pas
+vérifiée ne mérite pas d'être PLUS exclue parce que le temps a passé — le temps n'apporte aucune
+information sur la parcelle, seulement sur notre dette. Le garde de bascule est impossible à ignorer
+(il empêche la mise en service) sans jamais fabriquer un faux verdict.
+**Ne pas coder avant ton arbitrage A / B.** Dette du distinguo mérite/héritage consignée (#9).
+
 *Rien basculé, run servi q_v7_defisc intact, golden intact. En attente : archives GPU des 24
 communes pour la refonte de calibration.*

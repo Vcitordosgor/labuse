@@ -66,3 +66,21 @@ de Cilaos (carte 8, 97424000AE0089) sont VISIBLES à l'ortho mais **absents des 
 (seul « aléa mvt terrain FAIBLE » soft, aucune exclusion PPR/ravine). La détection géométrique et la
 cascade ne captent pas tout ce que l'œil voit sur l'ortho. **Dette** : croiser systématiquement les
 candidats servis avec une revue ortho (ou enrichir les couches ravine/aléa) avant exposition.
+
+## 9 · Le tier est un percentile → un déclassement de masse promeut des brûlantes « par héritage de place »
+Consigné sur arbitrage Vic (30/07). **La brûlante est un top-décile, donc un quota FIXE.** Retirer
+en masse des parcelles de la tête (ici : déclassement des génériques AU) libère des places que des
+parcelles-LIMITES remontent occuper — sans avoir rien gagné en signal propre. Cas mesuré :
+**AR1423** (Entre-Deux, U) passe chaude→brûlante alors que son contrib_d (1,7468), son rang (27) et
+son absence d'événement sont IDENTIQUES avant/après ; seul le seuil top-décile a glissé de 0,005 et
+son D est tombé dedans (cf. V8_VERIF_RAPPORT). Mécanisme général, pas un cas isolé : sur les **139
+backfills** de la mesure AU-OUVERTURE, une part est de ce type.
+- **À mesurer au VRAI re-run post-calibration** : combien des backfills sont des montées « par
+  héritage de place » (signal propre inchangé, seul le seuil bouge) vs « par mérite » (signal qui
+  progresse). Instrument possible : comparer, pour chaque parcelle qui gagne un tier, son contrib_d
+  et son rang AVANT/APRÈS — inchangés ⇒ héritage, en hausse ⇒ mérite.
+- **Exigence de conception** : le distinguo « brûlante par mérite / par héritage de place » doit
+  EXISTER quelque part (colonne, log de run, ou champ de fiche). Une brûlante qui n'a hérité que
+  d'une place vacante n'est pas de même nature qu'une brûlante dont le signal a monté — les servir
+  à l'identique, sans trace, masque un effet de bord du quota. Non tranché où loger le distinguo :
+  à décider au re-run.
