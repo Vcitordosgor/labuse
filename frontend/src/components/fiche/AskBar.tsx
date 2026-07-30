@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
+import { AvisIA } from '../AvisIA'
 
 // Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
 // (filet de sécurité : répare aussi les réponses DÉJÀ EN CACHE — cf. incident zonage 15/07 où un
@@ -139,6 +140,9 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
           </button>
         ))}
       </div>
+
+      {/* EXPRESS-01 · avis IA — en tête du panneau, avant toute réponse générée */}
+      <AvisIA className="mt-3 border-violet/25 bg-violet/[0.05] text-txt-mut" />
 
       {/* état de chargement HONNÊTE (pas de silent-fail) */}
       {ask.isPending && <Loading accent="violet" className="mt-3 text-[11px]" label="L'IA lit la fiche…" />}

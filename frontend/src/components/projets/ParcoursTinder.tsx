@@ -4,7 +4,7 @@ import {
   getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
-import { fmtInt, fmtM2 } from '../../lib/format'
+import { fmtInt, fmtM2, iduComplet } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -160,7 +160,7 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
   return (
     <div data-decision-card className="floating p-4 shadow-elev-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[11px] text-txt-dim">{item.idu.slice(8, 10)} {item.idu.slice(10)}</span>
+        <span className="font-mono text-[11px] text-txt-dim">{iduComplet(item.idu)}</span>
         <TierBadge tier={item.tier} etage0={null} statut={null} />
       </div>
       <p className="mt-1 font-display text-sm font-bold text-txt-hi">{d?.adresse ?? item.commune}</p>
@@ -226,7 +226,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
   const Row = ({ p, actions }: { p: ParcoursItem; actions: React.ReactNode }) => (
     <div className="flex items-center gap-2 rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[11px] text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}
+        <div className="font-mono text-[11px] text-txt-hi">{iduComplet(p.idu)}
           <span className="ml-1.5 font-sans text-[10px] text-txt-dim">{p.commune}</span></div>
         <div className="tnum text-[10px] text-txt-mut">qualité {fmtInt(p.q_score)}/100 · {p.tier ?? '—'}</div>
       </div>

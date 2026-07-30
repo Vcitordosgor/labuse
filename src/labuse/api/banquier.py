@@ -107,6 +107,7 @@ def _facts_synthese(out: dict, core_mod):
 def _synthese_html(db: Session, out: dict) -> str:
     """Synthèse exécutive narrée par le socle (sonnet, strict_numbers). Repli déterministe si pas de clé."""
     from ..ai import core
+    from ..ai.avis import AVIS_IA
     facts = _facts_synthese(out, core)
     txt = None
     try:
@@ -118,10 +119,14 @@ def _synthese_html(db: Session, out: dict) -> str:
             txt = res.text
     except Exception as exc:  # noqa: BLE001
         log.warning("synthèse IA : %s", exc)
+    ai_used = txt is not None
     if not txt:
         # repli déterministe : concatène les faits (aucun chiffre inventé)
         txt = " · ".join(f.value for f in facts.values())
-    return f"<div class='exec'>{_esc(txt) if txt else '—'}</div>"
+    # EXPRESS-01 · Volet B : l'avis IA n'apparaît QUE si la synthèse a été générée par le
+    # LLM (jamais sur le repli déterministe — critère : uniquement là où l'IA s'exprime).
+    avis = f"<div class='avis-ia'>{_esc(AVIS_IA)}</div>" if ai_used else ""
+    return f"{avis}<div class='exec'>{_esc(txt) if txt else '—'}</div>"
 
 
 # ───────────────────────── endpoints ─────────────────────────

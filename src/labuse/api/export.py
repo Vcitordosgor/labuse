@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import html
 
+from ..ai.avis import AVIS_IA  # EXPRESS-01 · Volet B — avis IA (source unique)
+
 _RESULT_LABEL = {
     "HARD_EXCLUDE": "EXCLUSION", "SOFT_FLAG": "contrainte", "POSITIVE": "signal +",
     "PASS": "ok", "UNKNOWN": "donnée manquante",
@@ -125,6 +127,7 @@ def fiche_markdown(fiche: dict) -> str:
     ai = fiche.get("ai")
     if ai:
         lines += ["## Analyse LABUSE (IA)", "",
+                  f"> {AVIS_IA}", "",
                   f"_{ai.get('executive_summary', '')}_", "",
                   f"- **Statut recommandé :** {ai.get('recommended_status')}  ·  "
                   f"**Confiance :** {ai.get('confidence_level')}", ""]
@@ -246,7 +249,7 @@ def fiche_html(fiche: dict) -> str:
 {comp_html}
 {vz_html}
 {prosp_html}
-{"<h2>Analyse LABUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
+{"<h2>Analyse LABUSE (IA)</h2><p class='disc avis-ia'>" + html.escape(AVIS_IA) + "</p><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
 </html>"""
 
 

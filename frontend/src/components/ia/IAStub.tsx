@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { iaSearch, iaStatus } from '../../lib/api'
+import { AvisIA } from '../AvisIA'
 import { fmtInt } from '../../lib/format'
 import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
@@ -184,6 +185,7 @@ export function IAStub() {
             validé par le socle (couche 2). Étiquette « Sourcé » : jamais un compte inventé. */}
         {search.data?.aggregate && !search.data.rejected && (
           <div data-ia-aggregate className="mt-4 rounded-lg border border-mint/40 bg-mint/[0.06] px-4 py-3">
+            <AvisIA className="mb-2.5 border-mint/25 bg-mint/[0.04] text-txt-mut" />
             <p className="text-sm leading-relaxed text-txt">{search.data.texte}</p>
             {!!search.data.data?.classement?.length && (
               <ol data-ia-classement className="mt-2.5 space-y-1 border-t border-line pt-2">
