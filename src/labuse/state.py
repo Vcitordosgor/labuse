@@ -87,9 +87,28 @@ def readiness(session: Session, commune: str) -> dict:
         actions.append(f"{CMD_DOCTOR}  (répare le schéma en secondes)")
     if not data["ok"]:
         actions.append(f"{CMD_REBUILD}  (reconstruit couches + évaluation, ~5 min)")
+    # Péremption des déclassements AU (arbitrage Vic 30/07, option B) : champ CONSULTATIF, remonté
+    # de lui-même sur la surface pollée en continu. Il n'entre JAMAIS dans `ready` (un déclassement
+    # oublié est une DETTE, pas une panne : /readyz reste 200 pour ne pas sortir l'app du service —
+    # ce serait l'option A par accident). WARN à 90 j, `blocage` à 180 j = signal, pas un 503.
+    au = _au_statut_readiness(session)
+    if au and au["statut"] != "ok":
+        actions.append(f"lire les règlements des zones AU en attente "
+                       f"({au['n']} déclassées, plus ancienne {au['jours_plus_ancien']} j)")
     return {"ready": schema["ok"] and data["ok"], "commune": commune,
             "schema": schema, "data": data, "actions": actions,
+            "au_statut_en_attente": au,
             "checked_at": datetime.now(timezone.utc).isoformat()}
+
+
+def _au_statut_readiness(session: Session) -> dict | None:
+    """Compteur de péremption pour /readyz (consultatif). None si la table n'existe pas encore."""
+    if not session.execute(text("SELECT to_regclass('parcel_au_statut') IS NOT NULL")).scalar():
+        return None
+    from .faisabilite.au_statut import au_statut_peremption
+    per = au_statut_peremption(session)
+    return {"n": per["declassees"], "jours_plus_ancien": per["jours_plus_ancien"],
+            "statut": per["statut"]}
 
 
 def demo_status(session: Session, commune: str) -> dict:

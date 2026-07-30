@@ -46,6 +46,38 @@ class DisqueInsuffisantError(RuntimeError):
     """Espace disque insuffisant pour finir la re-passe — refus de démarrer (échec bruyant)."""
 
 
+class PeremptionError(RuntimeError):
+    """5ᵉ garde (arbitrage Vic 30/07, option B) : des déclassements AU dépassent le seuil de
+    blocage (180 j) — refus de SERVIR un run qui les exposerait encore, sauf --peremption-ack
+    humain et tracé. Ne DURCIT jamais la parcelle (pas d'escalade vers ecartee = option A) : le
+    garde vise NOTRE oubli (règlement non lu), pas la parcelle."""
+
+
+def check_peremption(ack_motif: str | None = None) -> dict:
+    """Refuse de basculer si des déclassées AU dépassent 180 j, sauf contournement tracé.
+    L'ack est BAVARD (exigence Vic) : journalise QUI, QUAND, COMBIEN — consultable après coup."""
+    import getpass
+    from labuse.faisabilite.au_statut import (
+        declassees_perimees, journalise_peremption_ack, SEUIL_BLOCAGE_JOURS)
+    with session_scope() as s:
+        n = declassees_perimees(s, SEUIL_BLOCAGE_JOURS)
+    if n == 0:
+        return {"perimees": 0, "acked": False}
+    if not ack_motif:
+        raise PeremptionError(
+            f"BLOCAGE PÉREMPTION — {n} déclassées AU dépassent {SEUIL_BLOCAGE_JOURS} j sans "
+            f"vérification d'ouverture.\n    Le déclassement était TEMPORAIRE : lis les règlements "
+            f"(labuse compute-au-statut après calibration) OU contourne, tracé :\n"
+            f"    --peremption-ack \"motif du passage en force\"")
+    who = getpass.getuser()
+    with session_scope() as s:
+        journalise_peremption_ack(s, acked_by=who, n_parcels=n,
+                                  seuil_jours=SEUIL_BLOCAGE_JOURS, motif=ack_motif)
+    print(f"{_ts()} ⚠ PÉREMPTION CONTOURNÉE par {who} : {n} déclassées AU > {SEUIL_BLOCAGE_JOURS} j "
+          f"servies quand même. Motif : « {ack_motif} ». Tracé dans au_statut_ack_journal.", flush=True)
+    return {"perimees": n, "acked": True, "acked_by": who, "motif": ack_motif}
+
+
 def _ts() -> str:
     """Horodatage HH:MM:SS pour la journalisation (Date.now() indisponible dans les workflows,
     mais ici on est en script Python standard)."""
@@ -236,6 +268,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--resume", action="store_true", help="reprend la cascade interrompue (ne recommence pas).")
     ap.add_argument("--skip-disk-check", action="store_true", help="passe la garde disque (réutilisation d'espace mort certaine).")
+    ap.add_argument("--peremption-ack", metavar="MOTIF", default=None,
+                    help="contourne la garde de péremption AU (>180 j) — motif OBLIGATOIRE, tracé (QUI/QUAND/COMBIEN).")
     args = ap.parse_args()
 
     with engine().connect() as c:
@@ -248,6 +282,7 @@ def main():
     print(f"{_ts()} BASCULE → {TARGET} : {n_parcels} parcelles, {len(communes)} communes. q_v7_defisc conservé.", flush=True)
     if not args.skip_disk_check:            # garde DISQUE : refuse de démarrer si la marge manque
         check_disque(TARGET)
+    check_peremption(args.peremption_ack)   # garde PÉREMPTION : refuse de servir des déclassées AU > 180 j
     ensure_backups()
     migrate_residuel()
     rebuild_static()

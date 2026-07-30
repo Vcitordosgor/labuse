@@ -80,7 +80,9 @@ backfills** de la mesure AU-OUVERTURE, une part est de ce type.
   progresse). Instrument possible : comparer, pour chaque parcelle qui gagne un tier, son contrib_d
   et son rang AVANT/APRÈS — inchangés ⇒ héritage, en hausse ⇒ mérite.
 - **Exigence de conception** : le distinguo « brûlante par mérite / par héritage de place » doit
-  EXISTER quelque part (colonne, log de run, ou champ de fiche). Une brûlante qui n'a hérité que
-  d'une place vacante n'est pas de même nature qu'une brûlante dont le signal a monté — les servir
-  à l'identique, sans trace, masque un effet de bord du quota. Non tranché où loger le distinguo :
-  à décider au re-run.
+  EXISTER quelque part. Une brûlante qui n'a hérité que d'une place vacante n'est pas de même nature
+  qu'une brûlante dont le signal a monté — les servir à l'identique, sans trace, masque un effet de
+  bord du quota. **Préférence Vic (30/07), non tranchée définitivement** : ça relève de la **FICHE,
+  pas du log**. « Un pro qui voit une brûlante mérite de savoir si elle est montée parce qu'elle
+  s'est améliorée ou parce qu'une place s'est libérée. C'est une information sur la PARCELLE, pas
+  sur le run. » Décision finale au re-run.

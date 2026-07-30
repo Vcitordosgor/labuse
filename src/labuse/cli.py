@@ -1283,9 +1283,11 @@ def doctor_cmd(
         sch = state.schema_status(s)
         data = state.data_status(s, commune)
         st = state.demo_status(s, commune)
+        peremption = state._au_statut_readiness(s)
 
     if as_json:
-        typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data, **st},
+        typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data,
+                                "au_statut_en_attente": peremption, **st},
                                ensure_ascii=False))
         if not st["ready_for_demo"]:
             raise typer.Exit(1)
@@ -1300,6 +1302,10 @@ def doctor_cmd(
     typer.echo(f"{'✓' if st['demo']['all_conform'] else '✗'} Parcelles de démo conformes")
     w = st["warm"]
     typer.echo(f"{'✓' if w['done'] else '•'} Cache fiches démo : {w['warmed']}/{w['total']} pré-chauffées")
+    if peremption and peremption["n"]:
+        glyph = {"ok": "•", "warn": "⚠", "blocage": "⛔"}.get(peremption["statut"], "•")
+        typer.echo(f"{glyph} Déclassements AU en attente : {peremption['n']} "
+                   f"(plus ancienne {peremption['jours_plus_ancien']} j, statut {peremption['statut']})")
 
     if st["ready_for_demo"]:
         typer.echo("\n✅ PRÊT POUR LA DÉMO")
@@ -1547,6 +1553,15 @@ def score_v2_cmd(
     typer.echo(f"  tiers : {res['tiers']}")
     typer.echo(f"  N_entrée={res['params'].n_entree} N_sortie={res['params'].n_sortie} "
                f"seuil_D_brûlante={res['params'].brulante_seuil_d:.3f}")
+    # Rappel de péremption à CHAQUE run (arbitrage Vic 30/07) — impossible de servir un run sans
+    # relire ce chiffre : un déclassement « temporaire » oublié ne peut pas se faire discret.
+    with session_scope() as s:
+        from .faisabilite.au_statut import au_statut_peremption
+        per = au_statut_peremption(s)
+    if per["declassees"]:
+        glyph = {"ok": "⏳", "warn": "⚠", "blocage": "⛔"}.get(per["statut"], "⏳")
+        typer.echo(f"  {glyph} {per['declassees']} déclassées AU en attente de vérification "
+                   f"d'ouverture (plus ancienne {per['jours_plus_ancien']} j, statut {per['statut']})")
     if res["snapshot"]:
         typer.echo(f"  snapshot gelé : {res['snapshot']}")
 

@@ -740,3 +740,27 @@ information sur la parcelle, seulement sur notre dette. Le garde de bascule est 
 
 *Rien basculé, run servi q_v7_defisc intact, golden intact. En attente : archives GPU des 24
 communes pour la refonte de calibration.*
+
+---
+# AU-OUVERTURE — péremption IMPLÉMENTÉE (option B, arbitrage Vic 30/07)
+
+Option B retenue : le temps écoulé mesure NOTRE oubli, pas la parcelle ; une incertitude ne durcit
+pas en exclusion parce que le calendrier avance. Seuils `SEUIL_WARN_JOURS=90`, `SEUIL_BLOCAGE_JOURS=180`
+(`faisabilite/au_statut.py`). Les trois surfaces + la garde sont posées.
+
+- **(1) `/readyz` + `doctor`** — `state.readiness()` porte `au_statut_en_attente {n, jours_plus_ancien,
+  statut}`. **Précision 2 honorée** : ce champ N'ENTRE PAS dans `ready` (= schema ∧ data) → `/readyz`
+  reste **200** même en `blocage` (un déclassement oublié est une dette, pas une panne ; jamais l'app
+  sortie du service — ce serait l'option A par accident). `doctor` affiche une ligne •/⚠/⛔ selon l'âge.
+- **(2) `score-v2`** — chaque run imprime, après les tiers : `⏳/⚠/⛔ N déclassées AU en attente, plus
+  ancienne X j, statut …`. Impossible de servir un run sans relire ce chiffre.
+- **(3) Garde de bascule (5ᵉ garde)** — `scripts/bascule_v8_calibre.py::check_peremption` refuse de
+  basculer si des déclassées AU > 180 j, sauf `--peremption-ack "motif"`. **Précision 1 honorée** :
+  l'ack est BAVARD — `journalise_peremption_ack` trace QUI (`getpass.getuser`), QUAND (`now()`),
+  COMBIEN (n parcelles), + motif, dans `au_statut_ack_journal` (consultable après coup). Un
+  contournement tracé reste un contournement. **Ne DURCIT jamais la parcelle** (pas d'escalade vers
+  ecartee) : la garde vise l'acte de servir, pas la parcelle.
+
+Tests : `tests/test_au_statut_peremption.py` (seuils, frontières 89/90/179/180). Chemin blocage +
+journal vérifié en transaction annulée (5 marques vieillies de 200 j → garde compte 5, ack tracé,
+rollback → marques réelles intactes). **Rien basculé, aucune marque réelle vieillie.**

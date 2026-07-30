@@ -37,6 +37,25 @@ CLASSE_GENERIQUE = "générique"
 #: catégorie 'dimensions_seules' → reste servie, mention de fiche seule
 CLASSE_DIMENSIONS_SEULES = "dimensions_seules"
 
+# Péremption (arbitrage Vic 30/07, option B) — un déclassement TEMPORAIRE qui vieillit devient une
+# DETTE : le temps écoulé mesure NOTRE oubli (règlement non lu), jamais la parcelle. Deux seuils :
+#: en-dessous : simple compteur. Au-delà : WARN visible (surface qui « dit la vérité »).
+SEUIL_WARN_JOURS = 90
+#: au-delà : BLOCAGE — la bascule refuse de servir sans `--peremption-ack` humain et tracé. Ne
+#: DURCIT jamais la parcelle (pas d'escalade vers ecartee : ce serait l'option A) : cible l'oubli.
+SEUIL_BLOCAGE_JOURS = 180
+
+STATUT_OK, STATUT_WARN, STATUT_BLOCAGE = "ok", "warn", "blocage"
+
+
+def statut_peremption(jours_plus_ancien: int) -> str:
+    """Classe l'âge du plus ancien déclassement : ok < 90 j ≤ warn < 180 j ≤ blocage."""
+    if jours_plus_ancien >= SEUIL_BLOCAGE_JOURS:
+        return STATUT_BLOCAGE
+    if jours_plus_ancien >= SEUIL_WARN_JOURS:
+        return STATUT_WARN
+    return STATUT_OK
+
 #: Un signal d'OUVERTURE dans les notes/brut de la zone calibrée = zone DOCUMENTÉE (non marquée).
 #: Mots-clés du caractère de zone AU (Art. 1/2) et de la subordination à ouverture / modification.
 _OUVERTURE_KW = re.compile(
@@ -139,7 +158,34 @@ def au_statut_peremption(session: Session) -> dict:
     par_classe = {r["classe"]: {"n": int(r["n"]),
                                 "jours_plus_ancien": int(r["jours_max"] or 0),
                                 "jours_median": int(r["jours_median"] or 0)} for r in row}
+    jours_plus_ancien = max((v["jours_plus_ancien"] for v in par_classe.values()), default=0)
     return {"par_classe": par_classe,
             "total_en_attente": sum(v["n"] for v in par_classe.values()),
             "declassees": par_classe.get(CLASSE_GENERIQUE, {}).get("n", 0),
-            "servies_avec_mention": par_classe.get(CLASSE_DIMENSIONS_SEULES, {}).get("n", 0)}
+            "servies_avec_mention": par_classe.get(CLASSE_DIMENSIONS_SEULES, {}).get("n", 0),
+            "jours_plus_ancien": jours_plus_ancien,
+            "statut": statut_peremption(jours_plus_ancien)}
+
+
+def declassees_perimees(session: Session, seuil_jours: int = SEUIL_BLOCAGE_JOURS) -> int:
+    """Nombre de parcelles DÉCLASSÉES (génériques) dont la marque dépasse `seuil_jours`. C'est le
+    compte que la garde de bascule bloque (les dimensions-seules servies ne bloquent pas : elles
+    ne sont pas retirées du produit, seulement mentionnées). Lecture seule."""
+    return int(session.execute(text("""
+        SELECT count(*) FROM parcel_au_statut
+        WHERE classe = :g AND now() - computed_at >= make_interval(days => :j)
+    """), {"g": CLASSE_GENERIQUE, "j": seuil_jours}).scalar() or 0)
+
+
+def journalise_peremption_ack(session: Session, *, acked_by: str, n_parcels: int,
+                              seuil_jours: int, motif: str) -> None:
+    """Trace un contournement `--peremption-ack` (exigence Vic : bavard, pas silencieux — QUI,
+    QUAND, COMBIEN, consultable après coup). Un contournement tracé reste un contournement."""
+    session.execute(text(
+        "CREATE TABLE IF NOT EXISTS au_statut_ack_journal ("
+        " id serial PRIMARY KEY, acked_by text NOT NULL, acked_at timestamptz NOT NULL DEFAULT now(),"
+        " n_parcels integer NOT NULL, seuil_jours integer NOT NULL, motif text NOT NULL)"))
+    session.execute(text(
+        "INSERT INTO au_statut_ack_journal (acked_by, n_parcels, seuil_jours, motif) "
+        "VALUES (:by, :n, :j, :m)"),
+        {"by": acked_by, "n": n_parcels, "j": seuil_jours, "m": motif})
