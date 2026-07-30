@@ -1,0 +1,28 @@
+# CALIBRATION BRAS-PANON (97402) — complétée depuis les pièces fournies par Vic
+# (règlement 110 p. + OAP 28 p. du pack 97402_PLU_20260428, à jour = EN_VIGUEUR, sha concordant).
+meta:
+  commune: "Bras-Panon"
+  insee: "97402"
+  statut: "Sourcé"
+  source_type: "pièces du pack GPU 97402_PLU_20260428 (archive locale à jour — pointées par Vic)"
+  date_archive_gpu: "2026-04-28"
+  dates_referencees: ["2011", "2014", "2019"]
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  zonage_particulier: "AU à name=DESCRIPTION (garde-fou 21077 : identité par subtype, jamais le préfixe)"
+
+zones_au:
+  ouverture: conditionnelle_etat_tiers
+  ouverture_src: "p.8 (« son ouverture ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU indicée entrepris »)"
+  dependance: "phasage : les AU s'ouvrent après aménagement des 1AU indicée ; il existe des zones 2AUec dédiées"
+  planchers:
+    localisation: "OAP (pas le règlement — règlement 110 p. : aucun plancher)"
+    densite_min_log_ha: 30
+    densite_bonus_tcsp: 50
+    densite_modulation: "MODULATION PAR TRANSPORT : « densité minimale de 30 log/ha » ZAC Carreau Jardin, « portée à 50 log/hectare » à proximité d'un TCSP (transport en commun en site propre)"
+    social_pct: 50
+    src: "OAP p. (« densité minimale de 30 logements par hectare » ; « cette densité minimale est portée à 50 logements/hectare » [près TCSP] ; « prévoir 50% de logements aidés »)"
+    prevalence: "OAP prévaut"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
+  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers (phasage 1AU) + planchers OAP densité 30→50 log/ha (MODULÉE par proximité TCSP) + 50% social — absents du YAML. Modulation transport = nuance nouvelle."
+  a_verifier: "périmètre exact du bonus TCSP ; appariement sites OAP ↔ zones ; dimensions U"
