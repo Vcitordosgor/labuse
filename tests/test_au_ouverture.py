@@ -39,7 +39,7 @@ def test_sous_plancher_servie_jamais_declassee():
     assert statut == AU_SOUS_PLANCHER
     assert AU_SOUS_PLANCHER not in DECLASSE_LABELS          # servie
     assert "assemblage" in mention and "1500 m²" in mention  # 2500-1000 manquants
-    assert "2 parcelle(s) voisine(s) libre(s)" in mention    # la SOLUTION est servie
+    assert "2 voisine(s) libre(s)" in mention                # la SOLUTION est servie
     # assez grande → servie conditionnelle (pas sous-plancher)
     assert classify("97423", "1AUc", 3000)[0] == "conditionnelle_operation"
 
@@ -49,7 +49,8 @@ def test_mention_distingue_demolition():
     vois = {"libres": 0, "reserve": 0, "demolition": 3,
             "atteint_sans_demo": False, "atteint_avec_demo": True}
     _, mention = classify("97413", "AUc", 2000, voisins=vois)
-    assert "démolition" in mention
+    assert "à démolir" in mention                            # jamais silencé (dette #4)
+    assert "libre" not in mention                            # ne dit JAMAIS « libre » d'une bâtie
 
 
 def test_densite_seule_pas_de_seuil():

@@ -50,18 +50,17 @@ def _mention_sous_plancher(min_log: int, densite: float, min_surf_m2: float,
            f"{round(min_surf_m2)} m² minimum). Il manque {manquant} m². Elle n'est pas constructible "
            f"SEULE, mais peut l'être en assemblage avec une ou plusieurs parcelles voisines.")
     if voisins:                                    # servir la SOLUTION nuancée, pas seulement le problème
-        libre = voisins["libres"] + voisins["reserve"]
-        demo = voisins["demolition"]
-        if libre and voisins.get("atteint_sans_demo"):
-            txt += (f" {libre} parcelle(s) voisine(s) libre(s) ou peu bâtie(s) de la même zone "
-                    f"permettrai(en)t d'atteindre le seuil.")
-        elif libre or demo:
-            bits = []
-            if libre:
-                bits.append(f"{libre} voisine(s) libre(s)")
-            if demo:
-                bits.append(f"{demo} voisine(s) nécessitant une démolition")
-            txt += " L'atteinte du seuil suppose : " + " et ".join(bits) + "."
+        # trois régimes DISTINCTS (Vic) : libre (constructible directement), peu bâtie (retenue avec
+        # réserve, 20-50 %), à démolir (> 50 %). On ne dit JAMAIS « libre » d'une parcelle bâtie.
+        seg = [(voisins["libres"], "voisine(s) libre(s)"),
+               (voisins["reserve"], "voisine(s) peu bâtie(s)"),
+               (voisins["demolition"], "voisine(s) à démolir")]
+        sans_demo = [f"{n} {lab}" for n, lab in seg[:2] if n]      # libres + peu bâties
+        tous = [f"{n} {lab}" for n, lab in seg if n]
+        if sans_demo and voisins.get("atteint_sans_demo"):
+            txt += " " + " et ".join(sans_demo) + " de la même zone permettrai(en)t d'atteindre le seuil."
+        elif tous:
+            txt += " L'atteinte du seuil suppose : " + " et ".join(tous) + "."
     return txt
 
 
