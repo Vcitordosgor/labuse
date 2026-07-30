@@ -1,0 +1,30 @@
+# CALIBRATION SAINTE-MARIE (97418) — document fourni par Vic, version EN VIGUEUR CONFIRMÉE
+meta:
+  commune: "Sainte-Marie"
+  insee: "97418"
+  statut: "Sourcé"
+  source_type: "PDF fourni par Vic (~/Downloads/GPU:PLU/Sainte marie .pdf) — règlement écrit du PLU"
+  source_orale: "PLU Sainte-Marie (Vic)"
+  date_document: "2025-11-26"                 # « Approuvé le 26 novembre 2025 » (page 1)
+  date_prescrit: "2021-06-03"
+  date_arrete: "2025-03-05"
+  version_en_vigueur_verifiee: "OUI par la DATE — approbation 2025-11-26 == GPU EN_VIGUEUR 97418_PLU_20251126 ; cross-check sha du règlement contre le pack GPU À FAIRE quand l'archive est téléchargée"
+  sha256_pdf: "f8b1174ef44df402…"
+  pages: 66
+  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  fraicheur: "récent (2025) — pas de garde-fou d'obsolescence immédiat"
+
+zones_au:
+  familles: [1AU, 2AU, AUa, AUb, AUc]
+  ouverture_1AU: conditionnelle_operation
+  ouverture_1AU_src: "p.5 (« destinés à être ouverts à l'urbanisation… sigle AU »)"
+  # CAS date_butoir (schéma) — ouverture TEMPORELLE
+  ouverture_2AU: conditionnelle_date
+  date_butoir: "2031"
+  ouverture_2AU_src: "p.41 (« Les zones 2AU ouvertes à l'urbanisation à partir de 2031, lorsque les voies et réseaux suffisent »)"
+  planchers:
+    densite_min_log_ha: {AUa: 50, AUb: 25, AUc: 25}
+    src: "p.42 (« en zone AUa, 50 logements par hectare ; AUb, 25 ; AUc, 25 »)"
+    prevalence: "OAP prévaut — « tout en respectant le nombre de logements indiqués dans les OAP » (AUb, AUc)"
+  faits_nouveaux_vs_yaml: "ouverture (1AU conditionnelle + 2AU DATE BUTOIR 2031) + planchers 50/25/25 log/ha — absents du YAML. Premier cas date_butoir de la campagne."
+  a_verifier: "cabinet (logo) ; dimensions U (non extraites)"

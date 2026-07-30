@@ -1,0 +1,30 @@
+# CALIBRATION SAINT-BENOÎT (97410) — PROVISOIRE : version d'opposabilité NON confirmée
+# =============================================================================
+# ⚠ NE PAS SERVIR EN L'ÉTAT. Le PDF fourni (~/Downloads/GPU:PLU/saint benoit.pdf) présente un doute
+# de version — à trancher AVANT toute calibration servie :
+#  - page 1 : « APPROUVE LE : ……… » (case VIDE) + « Philippe BAFFERT consultant ».
+#  - corps : référence le PLU « approuvé le 02/10/2017 » + « révision allégée n°087-10-2015 » + PLU 2006.
+#  - GPU EN_VIGUEUR : 97410_PLU_20200206 (dépôt 2020-02-06).
+#  Hypothèse plausible : ce document EST le PLU 2017, déposé au GPU le 2020-02-06 — mais la case
+#  d'approbation vide empêche de le CONFIRMER. GARDE-FOU : croiser le sha du règlement de ce PDF
+#  contre le règlement du pack GPU 97410_PLU_20200206 (en cours de téléchargement). Si identique →
+#  version confirmée, je calibre. Sinon → doc de travail/périmé, je te le signale.
+meta:
+  commune: "Saint-Benoît"
+  insee: "97410"
+  statut: "PROVISOIRE — version à confirmer (cross-check GPU en attente)"
+  source_type: "PDF fourni par Vic (~/Downloads/GPU:PLU/saint benoit.pdf)"
+  sha256_pdf: "9bb929c6669754f0…"
+  pages: 162
+  redacteur: "Philippe BAFFERT (consultant) — NOUVELLE famille (ni DUTEILH-PERRAU, ni les autres)"
+  dates_dans_le_document: ["PLU approuvé 02/10/2017", "révision allégée 08/10/2015", "PLU de 2006"]
+  gpu_en_vigueur: "97410_PLU_20200206 (dépôt 2020-02-06)"
+  case_approbation_page1: "VIDE — signe d'un possible doc de travail ; à lever par cross-check sha"
+
+zones_au_reperees:
+  codes: [AU, AUa, AUb, AUe, AUp, AUt]
+  note: "familles AU repérées ; l'ancienne mesure AU-OUVERTURE citait « AUb19 » = label de zonage AGORAH (instance), pas un code règlement (AUb = famille). Cohérent, deux niveaux."
+  ouverture: "non extraite (trame BAFFERT — chapitre AU à lire une fois la version confirmée)"
+
+# Saint-Benoît porte 7 des 12 brûlantes de la dette AU-OUVERTURE → haute valeur, mais la valeur ne
+# justifie pas de calibrer sur une version non confirmée. Extraction détaillée = APRÈS cross-check.
