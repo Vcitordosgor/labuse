@@ -26,6 +26,10 @@ meta:
   offset_pdf_vs_imprimee: -1
   procedure: "non_extrait (0_Procedure non lu)"
   prevalence_documents: "PPR (26/01/2016) et PPRL (03/2017) PRÉVALENT (AU 1.1.1, p.75)"
+  sha256_reglement: "0b05392e5e88009026bbfc112a9d189a51094c59e4099a97d5006f135487c7ca"
+  cabinet_redacteur: "DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT (détecté au texte)"
+  famille_trame: "DUTEILH-PERRAU — MÊME trame que Saint-Leu (97413) : verbatim AUs identique, planchers 10 log + densité, VRD internes/externes, prévalence OAP. Une anomalie ici se cherche là-bas, et réciproquement."
+  planchers_localisation: "RÈGLEMENT (AU 1.2, densité 50/30/15) — cf. taxonomie : règlement / OAP (Saint-Pierre) / PLH externe (Saint-Paul)"
 
 annuaire_lien:
   resolveur: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404"
