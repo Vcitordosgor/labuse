@@ -112,3 +112,45 @@ contiguïté est GÉOMÉTRIQUE — elle ne dit rien de l'acquérabilité.**
 - **Mesurer PLUS TARD** (Vic), pas maintenant. Tant que non fait, `au_sous_plancher` ne distingue pas
   les deux : la mention dit « assemblage possible » sans dire s'il est gratuit (même proprio) ou à
   négocier. Cf. `docs/mandats/GPU_PILOTE_MESURE_PLANCHERS.md`.
+
+---
+
+# MàJ RE-RUN (Vic, 04/08) — revue des 19 têtes entrantes
+
+## 9 (suite) · Mérite / héritage — MESURÉ et TRANCHÉ
+Re-run 04/08 (candidat `q_v9_apres` vs servi `q_v7_defisc`). Sur les 11 nouvelles brûlantes :
+**2 par MÉRITE** (`p_raw` en hausse : 97424 AM0894 Cilaos 0,0534→0,0696 ; 97408 AM0989 0,0534→0,0677),
+**9 par SEUIL** (`p_raw` STRICTEMENT inchangé — promues par l'abaissement du seuil brûlante 1,544→1,412).
+Côté correctif AU isolé, les 153 backfills Saint-Benoît sont TOUS par héritage (rang inchangé).
+Mécanisme confirmé et DOMINANT. **Décision Vic (04/08)** : le distinguo mérite/héritage doit figurer
+sur la **FICHE** — acté comme **exigence de la PROCHAINE itération**, PAS du re-run 04/08 ; ne bloque
+pas la bascule.
+
+## 4 (suite) · Angle mort `batiment` — cas mesuré CH1893 (dette #4 en direct)
+Q2 du re-run (04/08). Le modèle n'a **aucune feature d'emprise bâtie AU NIVEAU PARCELLE** : le bâti
+n'entre que via `sdp_residuelle_m2` / `nu_constructible` (résiduel = plafond zone − bâti détecté) et
+la densité de SECTEUR. **Dépendance unique à la complétude de la couche `batiment`, sans garde-fou.**
+Cas mesuré : **97414 CH1893** (Saint-Louis, servie brûlante rang 1034) — OCS `Bâti 100 %`, un toit
+NETTEMENT visible à l'ortho DANS la parcelle, mais la couche `batiment` ne capte que 2,4 % → `sdp_
+residuelle` faussement à 135 m² → servie à l'aveugle. **À retirer/flaguer** avant exposition.
+- **Piste de garde** : croiser `sdp_residuelle` avec l'OCS `Bâti`. MAIS l'OCS n'est PAS fiable seule —
+  contre-exemple mesuré **97415 AY1608** : OCS `Bâti 100 %` alors que l'ortho montre de la VÉGÉTATION
+  (couche `batiment` correcte à 0 %). L'OCS sur-classe. → croisement à valider À L'ŒIL, pas automatique.
+
+## 12 · Le score ignore l'ampleur du manque de surface d'un `au_sous_plancher` (NOUVEAU)
+Q1 du re-run (04/08). Un `au_sous_plancher` reçoit son rang de modèle PLEIN ; le ratio
+`surface_manquante / seuil_opération` n'a **aucun effet** sur le score. Mesure (candidat `q_v9_apres`) :
+**388 `au_sous_plancher` servis en tiers de tête**, dont au SOMMET de l'île —
+**97423 AB1908 (313 m², manque 81 %) = brûlante RANG 1**, AB1910 (85 %) rang 4, AB1911 (89 %) rang 6 ;
+97413 CX2555 (195 m², manque **94 %**) brûlante rang 1034. Une parcelle constructible seulement en
+acquérant 16× sa surface n'est pas la 1034ᵉ opportunité de l'île — **la mention dit vrai mais le rang
+ment**.
+- **Proposition (Vic : proposer, ne pas coder)** : pondérer le statut par un facteur de complétude
+  `c = surface_parcelle / seuil_opération ∈ ]0,1]`. Un manque de 10 % (`c≈0,9`) ne pénalise presque
+  pas ; un manque de 94 % (`c≈0,06`) rétrograde fortement. Trois designs possibles :
+  (a) **multiplicatif** `p_eff = p_raw × c^k` (k à calibrer) avant l'assignation de tier ;
+  (b) **plafond de tier** : `c < 0,5` ⇒ tier plafonné à `a_creuser`, `c < 0,25` ⇒ `reserve_fonciere` ;
+  (c) **exclusion de la brûlante** si `c < seuil` (le plus simple, le plus brutal).
+  Recommandation : (b) — lisible, réversible, borne le pire sans effacer le signal. `c` déjà calculable
+  (`seuil_surface_m2` existe dans `au_ouverture.py`). **À arbitrer, non codé.**
+- **En attendant (arbitrage Vic 04/08)** : **CX2555 retenue en `chaude`**, pas exposée en brûlante.
