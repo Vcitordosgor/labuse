@@ -161,3 +161,57 @@ DIFFUSE** — un ciblage strict par secteur ne la règle pas ; rechargement **pa
 - CX2555 : levée actée, s'exécutera à la bascule.
 - Purge q_v9_pond_* + q_v9_avant : après bascule.
 - Toujours AUCUNE bascule : q_v8_calibre intact.
+
+---
+# RAPPORT POST-BASCULE (GO Vic 04/08 — exécutée)
+
+## Procédure servie
+Le run v2 servi est ÉPINGLÉ AU LABEL (`Q_A_RUN_LABEL`, fix pré-lancement app.py) et la cascade
+q_v8_calibre est INCHANGÉE par la pondération → bascule = REMPLACEMENT DU SCORING SOUS LABEL :
+archive par RENOMMAGE (`q_v8_calibre_pre_pond` — scores, header, snapshot, journal : rien
+détruit), re-score pondération ON (rebuild=False : features inchangées, le servi DOIT être la
+mesure validée), 5 gardes du module `bascule_gardes` passées (disque, péremption, sauvegardes,
+anti-écrasement post-rename, complétude). 248 s.
+**Rollback : `python scripts/rollback_ponderation.py`** (+ re-build-mvt).
+
+## Conformité
+Tiers servis ≡ mesure validée `q_v9_pond_apres`, **écart unique = CH1893** (l'exception voulue).
+Vérification bloquante dans le script (échec bruyant sinon).
+
+## Tiers finaux servis
+| tier | n | | tier | n |
+|---|---:|---|---|---:|
+| brûlante | **119** | | declasse_zone_fermee | 2 804 |
+| chaude | **1 038** | | declasse_non_constructible | 6 169 |
+| a_creuser | 63 433 | | declasse_au_statut_inconnu | 560 |
+| reserve_fonciere | 3 127 | | declasse_au_fermee | 58 |
+| ecartee | 354 355 | | | |
+
+## Exceptions (journal `served_run_exceptions`)
+- **q_v8_calibre (servi)** : UNE exception — CH1893 `brulante → declasse_non_constructible`,
+  motif dicté Vic (« couche bâtiment lacunaire, vérifié ortho 04/08, à lever au rechargement
+  de la couche », lié train 5).
+- **CX2555 : LEVÉE** — servie au naturel `a_creuser` rang 427 206, aucune ligne au journal du
+  run servi. L'histoire (exception du 04/08 matin) suit l'archive `q_v8_calibre_pre_pond`.
+
+## Golden : 116/116 PASS, 0 incohérence base↔API
+Découverte : la référence golden était restée sur **q_v7_defisc** (jamais régénérée à la
+bascule v8 — dette de process). Les 46 FAIL initiaux étaient TOUS hérités v7→v8 ; effet propre
+de la pondération sur les golden : **1 seul tier** (AR1423 chaude→brûlante, rang 27→22, une des
+8 entrées mécaniques mesurées). Référence régénérée par la procédure documentée (--dump),
+**116 parcelles, 84 ancres J3 préservées au format plat** (piège : --dump seul retombe sur les
+32 GOLDEN_IDUS internes et perd les ancres — récupéré ; 13 triplets d'ancres avaient bougé
+depuis J3, héritage v8 sauf AR1423). Diff versionné pour revue Vic.
+
+## Surfaces
+MVT rebuildées (431 663 parcelles + 6 012 overlays, tier_v2 embarqué). Fiches/listes lisent le
+run servi en direct. NB opérateur : `LABUSE_SERVED_RUN=q_v8_calibre` inchangé (aucune action env).
+
+## Purge (arbitrage 6)
+q_v9_pond_avant/apres + orphelin q_v9_avant : **1 294 989 lignes purgées**. L'archive
+`q_v8_calibre_pre_pond` est CONSERVÉE (c'est le rollback) — à purger sur décision Vic quand la
+pondération sera déclarée stable.
+
+## Dette constatée en passant
+`parcel_renouvellement` est resté sur q_v7_defisc (jamais rebuildé pour q_v8_calibre) : le
+segment Renouvellement ne sert plus rien depuis la bascule v8. Consigné au BACKLOG.

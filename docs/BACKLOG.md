@@ -4,9 +4,9 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-04 — train 1 (CC, branche org/train1-ponderation) : pondération
-option B implémentée + mesurée à blanc (NON basculée, point d'arrêt), dette #4 mesurée (46
-suspectes), recos CX2555/CH1893 en attente d'arbitrage Vic.
+Dernière mise à jour : 2026-08-04 — train 1 (CC) : **pondération option B SERVIE** (GO Vic),
+CX2555 levée, CH1893 pérennisée, golden 116/116 (référence régénérée), jetables purgés.
+Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation p=1,0 (rangs 1-5).
 
 ## Régimes de supervision
 
@@ -27,11 +27,12 @@ suspectes), recos CX2555/CH1893 en attente d'arbitrage Vic.
 ## TRAIN 1 — PONDERATION [S] Fable — PRIORITAIRE
 - [x] Option B : pondération au_sous_plancher ×(1−manque/seuil) — implémentée (facteur_ponderation + _pondere_au_sous_plancher, même point de calcul que la mention, kill-switch LABUSE_DISABLE_AU_POND), tests verts. **NON basculée** (point d'arrêt).
 - [x] Mesure d'effet : population réelle 1 069 (les 708 + calibrations depuis). 117 mouvements : 38 sorties de tête sous-plancher, 0 entrée indue, 44 entrées mécaniques (rangs libérés), effectifs stables (brûlantes 120). Contrôle ≡ servi à 2 exceptions près (les manuelles). Cartes ortho IGN des 82 mouvements en tête. Rapport : docs/mandats/TRAIN1_PONDERATION_RAPPORT.md.
-- [~] Bascule pondération : **GO Vic conditionné à la revue AB1908/AB1910** — cartes servies (qa/ponderation/cartes_ab1908_ab1910.html). Lecture CC : elles TIENNENT au sens dette #4 (nues, couche vraie, zéro détection — la « suspicion piscine » du 1er rapport était une erreur de recoupement, corrigée). Leur rang vient d'une SATURATION modèle (p=1,0 exact, rangs 1-5 du servi, 2 lotissements récents → audit train 5). GO final sur cartes = Vic.
-- [~] Lever CX2555 : **validé Vic 04/08** — s'exécute à la bascule pondération (le naturel la met en a_creuser rang 427 206).
+- [x] **Bascule pondération SERVIE (GO Vic 04/08, AB1908/AB1910 tiennent)** — remplacement sous label (scoring v2 épinglé Q_A_RUN_LABEL), archive par RENOMMAGE q_v8_calibre_pre_pond (rien détruit, rollback: scripts/rollback_ponderation.py), 5 gardes passées, conformité STRICTE à la mesure validée (écart unique = CH1893). Tiers servis : 119 brûlantes, 1 038 chaudes. MVT rebuildées. Golden 116/116 PASS (référence régénérée — elle était restée sur q_v7, dette v8 réparée ; 84 ancres préservées, diff versionné).
+- [x] CX2555 **levée** (servie au naturel : a_creuser rang 427 206, plus d'exception au journal du run servi).
 - [x] Dette #4 : 46 suspectes mesurées (13 brûlantes, 19 chaudes) — revue Vic APRÈS AB1908/AB1910, rien de déclassé d'ici là. Profil sectoriel mesuré (arbitrage 4) : 1 061 parcelles-trou (piscine × couche <20 m²), 456 secteurs, 24 communes — 39 secteurs = 25 % du volume, 111 = 50 % : points chauds réels (Saint-Paul 188) mais dette DIFFUSE → rechargement par commune plutôt que par secteur.
 - [x] CH1893 : **pérennisée (validé Vic 04/08)** — motif mis à jour dans served_run_exceptions : « couche bâtiment lacunaire, vérifié ortho 04/08, à lever au rechargement de la couche », lié à la dette racine train 5.
-- [ ] Purge q_v9_pond_* + orphelin q_v9_avant : **après la bascule pondération, pas avant** (arbitrage 6).
+- [x] Purge post-bascule faite : q_v9_pond_avant/apres + orphelin q_v9_avant (1,29 M lignes). L'archive q_v8_calibre_pre_pond est CONSERVÉE (c'est le rollback) — à purger quand Vic déclarera la pondération stable.
+- [ ] Dette constatée en passant : parcel_renouvellement est resté sur q_v7_defisc (jamais rebuildé pour q_v8_calibre) — le segment Renouvellement ne sert plus rien depuis la bascule v8. À rebrancher (train 2 ou 5).
 
 ## TRAIN 2 — TECH [M] Opus — en parallèle de tout
 - [x] Rebase + push EXPRESS-01 : EXPRESS-01 (485f7a9) déjà mergé dans main → fast-forward. 3 poses IDU (Fiche/Tinder/Kanban) déjà servies ; 4e pose (gen_tops) livrée avec les tops ci-dessous.
@@ -64,7 +65,7 @@ suspectes), recos CX2555/CH1893 en attente d'arbitrage Vic.
 - [ ] Audit complet P et C
 - [ ] Dette #4 : filtre client bâti + hiérarchie par année (DPE/BDNB)
 - [ ] **Dette #4 RACINE (accepté Vic 04/08) : rechargement de la couche batiment** — 1 061 parcelles piscine-sur-couche-vide (456 secteurs, 24 communes ; Saint-Paul 188 en tête), dette diffuse → recharger par commune. Conditionne : la levée de l'exception CH1893 (motif en base l'y lie), l'arbitrage des 46 suspectes, et le filtre client bâti ci-dessus.
-- [ ] Saturation modèle : 5 parcelles à p_raw = 1,0 EXACT occupent les rangs 1-5 du servi (2 lotissements récents, feature permis<2a dominante, log-hazard saturé) — auditer le binning permis_bin et le plafonnement de la proba (cf. TRAIN1_PONDERATION_RAPPORT, revue AB1908/AB1910)
+- [ ] **PRIORITAIRE (Vic 04/08) — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). À mesurer AVANT tout autre chantier scoring : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) proposer un départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière) plutôt qu'un tri implicite.
 - [ ] Dette #9 : mérite/héritage servi sur la fiche
 - [ ] Dette #11 : assemblage × propriété DGFiP
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
