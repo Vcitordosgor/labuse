@@ -35,7 +35,7 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 - [ ] Merge fix/m13-e (Vic merge), puis rebase EXPRESS-01 dessus — action Vic, non faite par CC.
 - [x] Régénérer les tops : IDU complet + run servi (Q_A_RUN_LABEL au lieu de q_v2 gelé/absent). 25 HTML (24 communes + top50) régénérés sur q_v8_calibre, générateur + HTML commités ensemble.
 - [x] Gardes de bascule → briques importables (module src/labuse/bascule_gardes.py) : 5 gardes extraites VERBATIM, bascule les importe, aucune logique recopiée. Tests verts.
-- [x] Requête A1.3 : 0 IDU manquant. Sans adresse BAN — verdict Vic (accepté) : **61 %** (pire commune rurale, bruit) / **5,3 %** (têtes servies) / **0 %** (en tête) → **non-sujet en tête**. Affichage « Adresse : Absente (BAN) » pour les ~53 têtes, jamais un champ vide → micro-tâche train 4. Détail : docs/mandats/A1_3_IDU_ADRESSES_MANQUANTS.md.
+- [x] Requête A1.3 : 0 IDU manquant. Sans adresse BAN, mesuré sur le CHAMP adresse de la fiche (déf. Vic, API servie) : **brûlantes 39,3 % (46/117)**, **top-1000 rangs 41,0 %**, île 40,4 %. **PAS un non-sujet en tête** : 46 brûlantes affichent « Adresse non disponible ». Les 5,3 %/0 % provisoires ne se reproduisent pas. → train 4 (change d'ampleur). Détail : docs/mandats/A1_3_IDU_ADRESSES_MANQUANTS.md.
 - [x] Purge des jetables q_v8_au_* : déjà absents des 11 tables run-scopées (vérifié par balayage) — rien à purger, scripts QA conservés.
 - [x] Drapeaux EBC/ER sur fiche (dette #10) : badge « partiellement en EBC (~N%) » / « emplacement réservé n°X », information seule (jamais exclusion), dérivé du frontend. Captures avant/après : reports/train-tech/ebc_er/.
 
@@ -52,7 +52,8 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 - [ ] Théâtre de l'analyse : compteur en direct
 - [ ] Tout montrer : l'écarté consultable avec son motif
 - [ ] Filtrabilité par motif de déclassement (dette des 427)
-- [ ] Fiche (surface) : afficher « Adresse : Absente (BAN) » quand aucune adresse BAN — jamais un champ vide (~53 têtes servies concernées, cf. A1.3)
+- [ ] Fiche (surface) : adresse absente — (a) afficher « Adresse : Absente (BAN) », jamais un champ vide ; (b) ampleur RÉELLE (mesurée) : 46/117 brûlantes et 41 % du top-1000 sans adresse → enrichissement adresse sur les têtes, pas qu'un habillage (cf. A1.3)
+- [ ] Fiche (surface) : sous une surface plancher (à définir), dire « délaissé » au lieu de dérouler un bilan — anomalie AI1886 : bilan R+6 servi sur une parcelle de 9 m²
 - [ ] Passe de clarté générale
 
 ## TRAIN 5 — SCORING [S] Fable
@@ -62,6 +63,7 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 - [ ] Dette #9 : mérite/héritage servi sur la fiche
 - [ ] Dette #11 : assemblage × propriété DGFiP
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
+- [ ] Anomalie AT1740 : « constructible N » + SDP 2 689 m² en zone N + 19-22 logts, ET deux SDP différentes sur la même fiche (2 689 vs 2 827). Mesurer : combien de zones N servent une SDP > 0 ? Localiser la violation du point de calcul unique.
 - [ ] Revue de code intégrale (propositions, rien d'appliqué)
 
 ## TRAIN 6 — CALIBRATION-14 + ANNUAIRE [S] Fable — fil continu

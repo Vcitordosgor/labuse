@@ -63,14 +63,26 @@ parcelles réellement servies en tête ? Rang = `parcel_p_score_v2.rang` sur le 
 Saint-Pierre 63 %, Saint-Louis 67 %, Saint-Joseph 63 %, Saint-Leu 58 %, Le Tampon 44 %,
 Saint-Paul 35 %, Sainte-Marie 38 %, **Saint-Denis 22 %**, La Possession 21 %.
 
-**Verdict Vic (accepté) : non-sujet en tête.** Chiffres retenus : **61 %** (pire commune
-rurale, bruit) · **5,3 %** (têtes servies) · **0 %** (en tête). Action : la fiche doit
-afficher « Adresse : Absente (BAN) » pour les ~**53** têtes concernées — jamais un champ
-vide. Micro-tâche **train 4** (surface fiche), pas maintenant.
+## Réconciliation (définitions Vic, 2026-08-04) — chiffre unique
 
-> Note CC (transparence) : mon comptage BAN-*link* (présence dans `adresse_parcelles`) donne
-> ~40 % sur CHAQUE coupe de tête testée — brûlantes 39,3 %, top-120 39,2 %, `matrice_statut`
-> chaude 44,3 %, top-1000 40,0 % — et le tableau ci-dessus le reflète. L'écart avec 5,3 %/0 %
-> est une différence de définition (lien BAN mesuré vs adresse affichée en produit / impact
-> décision). Le **compte de têtes concernées (~53) concorde** avec le « 53 » de Vic ; c'est ce
-> nombre, pas le %, qui pilote la micro-tâche train 4.
+- « têtes servies » = les **1 000 premiers rangs** du run servi q_v8_calibre.
+- « adresse présente » = **ce que la FICHE rend réellement au champ adresse** — pas la table de
+  lien, pas un géocodage. En code : `_ban_adresse` (app.py) = `adresse_parcelles` JOIN
+  `adresses`, `null` si aucun lien ou voie vide → le client voit « Adresse non disponible ».
+
+Mesuré sur l'API servie (`source=q_v8_calibre`), 0 erreur :
+
+| Segment | n | fiche : champ adresse VIDE | % |
+|---|---:|---:|---:|
+| **Brûlantes (tier)** | 117 | **46** | **39,3** |
+| 1000 premiers rangs | 1000 | 410 | 41,0 |
+
+**Verdict corrigé : ce n'est PAS un non-sujet en tête.** 46 des 117 brûlantes affichent
+« Adresse non disponible » au client (≈ 2 têtes sur 5). Les chiffres provisoires 5,3 % / 0 %
+**ne se reproduisent sous aucune définition** : la fiche lit exactement `adresse_parcelles`,
+donc le champ-vide-en-fiche = le déficit de lien BAN (mêmes ~40 %). Le « 53 » de Vic est du
+bon ordre (46 brûlantes / 47 sur le top-120).
+
+**Conséquence (train 4)** : la tâche change d'ampleur. Le libellé « Adresse : Absente (BAN) »
+(jamais un champ vide) reste nécessaire, mais 46 brûlantes / 410 des 1 000 rangs sans adresse
+appellent un **enrichissement adresse sur les têtes**, pas seulement un habillage.
