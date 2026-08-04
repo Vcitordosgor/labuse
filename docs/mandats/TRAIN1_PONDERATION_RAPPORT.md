@@ -110,3 +110,54 @@ piscine/PV/DVF détecte les suspectes ÉQUIPÉES, pas les maisons nues.
 - Analyse SQL : `qa/ponderation/analyse_mouvements.sql` (rejouable).
 - Mesure : `qa/ponderation/mesure_ablanc.py` · Cartes : `qa/ponderation/cartes_mouvements.py`.
 - Suspectes : `qa/dette4/gen_revue_suspectes.py` + `revue_suspectes.html`.
+
+---
+# ADDENDUM — arbitrages Vic 04/08 + revue AB1908/AB1910
+
+Arbitrages : **1)** pondération GO conditionné à AB1908/AB1910 · **2)** CX2555 levée validée
+(à la bascule) · **3)** CH1893 pérennisée, motif dicté posé en base · **4)** revue des 46 après
+AB1908/AB1910, mesure sectorielle demandée · **5)** rechargement couche = dette racine train 5 ·
+**6)** purge après bascule.
+
+## Revue AB1908 / AB1910 (cartes : qa/ponderation/cartes_ab1908_ab1910.html)
+
+**CORRECTION D'ABORD** : mon rapport initial les disait « aussi dans la liste dette #4
+(piscine sur couche vide) ». C'était FAUX — erreur de recoupement avec la série DK/AB1911.
+Vérifié par IDU ET par géométrie : **zéro détection** sur ces deux parcelles, et elles ne sont
+pas dans les 46. L'ortho le confirme : parcelles **nues**, la couche dit vrai.
+
+| | AB1908 | AB1910 |
+|---|---|---|
+| Surface / seuil | 313 m² / 1 667 m² | 250 m² / 1 667 m² |
+| Manque / facteur | 1 354 m² (81 %) / 0,188 | 1 416 m² (85 %) / 0,150 |
+| Rang naturel → pondéré | **1** → 139 (brûlante) | **4** → 141 (brûlante) |
+| Ortho | nue, rangée en chantier (Impasse des Pétrels, même îlot qu'AB1911 ex-rang 6) : terrassements frais, constructions mitoyennes, voirie neuve | idem, parcelle terrassée nue dans la même rangée |
+| Couche batiment | 0 m² — VRAIE | 0 m² — VRAIE |
+
+**Pourquoi le p brut est si élevé : SATURATION.** p_raw = **1,0 exact** pour les deux.
+Top 5 du modèle : permis < 2 ans (+1,30 — dominant, le lotissement se construit autour),
+zone AU (+0,39), canopée ≤ 0,4 (+0,24), croisement tenure×permis (+0,22), rotation foncier
+nu (+0,21). L'île compte **5 parcelles à p=1,0 : les rangs 1-2-3-4-5 du servi** (AB1908/AB1910
+Trois-Bassins + AP1647/AP1610/AP1609 La Possession — 2 lotissements récents). Les 3 AP ne sont
+PAS pondérables (La Possession = densité seule, pas de plancher). → Audit train 5 (permis_bin,
+plafonnement proba) consigné au BACKLOG.
+
+**Lecture CC pour le GO** : elles TIENNENT au sens dette #4 (aucun bâti caché — le contraire
+de CH1893). Leur maintien en brûlante post-pondération est un artefact de la saturation, pas
+de la pondération : même à facteur 0,15, p pondéré 0,15 bat l'écrasante majorité de l'île.
+Le GO final sur cartes appartient à Vic.
+
+## Mesure sectorielle (arbitrage 4) — le trou est-il localisé ?
+
+Profil « piscine détectée × couche < 20 m² », île entière : **1 061 parcelles · 456 secteurs ·
+24 communes**. Concentration : 39 secteurs = 25 % du volume, 111 = 50 %, 224 = 75 %.
+Communes de tête : Saint-Paul 188, Le Tampon 112, Saint-Pierre 107, Saint-Denis 71, Saint-Leu 68.
+**Verdict : points chauds réels (EW/DK/CP Saint-Paul, CX Saint-Leu, EN Saint-Louis…) mais dette
+DIFFUSE** — un ciblage strict par secteur ne la règle pas ; rechargement **par commune**
+(Saint-Paul d'abord) ou complet.
+
+## État post-arbitrages
+- CH1893 : motif mis à jour dans `served_run_exceptions` (dicté Vic, tracé, lié train 5).
+- CX2555 : levée actée, s'exécutera à la bascule.
+- Purge q_v9_pond_* + q_v9_avant : après bascule.
+- Toujours AUCUNE bascule : q_v8_calibre intact.
