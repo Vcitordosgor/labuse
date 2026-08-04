@@ -115,10 +115,14 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   BD TOPO-vs-cadastre triennal, ortho de revue) : « La fraîcheur d'une donnée est celle de sa
   source amont, jamais celle de son ingestion ni celle du moment où on la regarde. »
   EXIGENCE TRANSVERSE : toute couche servie porte la date de sa source amont, AFFICHÉE.**
-  Audit 04/08 (détail au PILOTE_COSIA_RAPPORT) : data_sources ne trace que last_sync_at
-  (ingestion), aucune colonne millésime amont → à ajouter. Par couche : **DVF = pire cas
-  (horizon source 31/12/2025 = 7 mois d'angle mort non affiché, sync même pas tracée)** ;
-  Sitadel : anomalie permis daté 17/08/2026 (FUTUR, parse à corriger) ; DPE/BODACC sains.
+  Audit 04/08 + mesures DVF (DVF_FRAICHEUR_MESURES.md) : **DVF est À JOUR au dernier millésime
+  publié** (7 184 = 7 184 mutations 2025, vérifié au fichier ; le « retard » est le cycle
+  semestriel de la source, ~3 273 mutations S1-2026 en attente d'octobre) MAIS **la tuile
+  Marché sert la médiane SANS étiquette de fraîcheur** (le bandeau « ventes jusqu'à… » n'est
+  que dans le tiroir Bilan) — et un cycle déplace les médianes de ±10-20 % dans plusieurs
+  communes. Sitadel : parse corrigé (validation date, future→NULL tracée+compteur bruyant,
+  ligne fautive neutralisée, 0 date future en base). DPE/BODACC sains. **SPEC millésime amont
+  RÉDIGÉE (SPEC_MILLESIME_AMONT.md) — attend lecture Vic, rien d'implémenté.**
   Corollaire outillé : dates BD TOPO conservées à l'ingestion (fait) ; date de prise de vue
   affichée sur toute carte de revue (fait — helper qa/dette4/ortho_dates.py).
 - **« Une détection d'indice ne prouve pas l'absence d'indice. »** (Vic 04/08 — le filet
