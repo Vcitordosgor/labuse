@@ -406,6 +406,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "brulante_seuil_d": params.brulante_seuil_d,
                          "brulante_top_decile_d": params.brulante_top_decile_d,
                          "annee_features": annee, "recale_intercept_sur": last_labeled,
+                         "seed_ties": SEED,   # 3.3 (train 5) : la graine du départage, tant qu'elle existe
                          "taux_base": taux_base, "prev_run": prev_run}),
         "n": len(rows), "d": int(time.time() - t0), "l": snapshot_label})
 

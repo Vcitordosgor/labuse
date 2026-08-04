@@ -111,6 +111,9 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
 ## Doctrine (leçons gravées)
+- **Frontière modèle/règles (Vic 04/08, prouvée par la mesure piscine)** : « Le modèle prédit
+  la mutation, il ne juge pas l'état de la parcelle. Tout ce qui relève de l'état (bâti,
+  zone, statut) est une règle explicite, jamais un poids. »
 - **RÈGLE DE CONCEPTION (Vic 04/08, 3 occurrences en une semaine — PLU GPU-vs-mairie, bâti
   BD TOPO-vs-cadastre triennal, ortho de revue) : « La fraîcheur d'une donnée est celle de sa
   source amont, jamais celle de son ingestion ni celle du moment où on la regarde. »

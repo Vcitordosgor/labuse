@@ -9,7 +9,7 @@ Test : pour chaque famille de statut, le motif exact se reconstruit-il par requ�
 | declasse AU (D) | parcel_au_statut (classe, **motif** sourcé règlement) | ✓ |
 | declasse bâtie révélée (E) | parcel_bati_revele (**motif** daté sourcé, emprises) | ✓ |
 | exceptions | served_run_exceptions (origine, servi, **motif**, date) | ✓ (1 active : CY0104) |
-| chaude vs a_creuser | rang vs n_entrée + plancher C + hystérésie | ✓ mais **DÉRIVABLE seulement** : n_entrée/n_sortie/seuil-D du run ne sont PAS persistés avec le run (recalculés) — TROU n°1 |
+| chaude vs a_creuser | rang vs n_entrée + plancher C + hystérésie | ✓ — CORRECTION post-audit : n_entrée/n_sortie/seuil-D/taux_base SONT persistés (p_score_v2_runs.params) ; seul le SEED manquait (ajouté, 3.3). Trou n°1 RETIRÉ |
 | copro (3 424, jamais classées) | flag copro_rnic/copro_dvf | ✓ booléen, mais **sans détail de source par parcelle** en table servie — TROU n°2 (mineur) |
 | intra-palier (audit 1) | tirage seedé | ✗ **TROU n°3 : « pourquoi 208ᵉ et pas 250ᵉ » n'a pas de réponse — ex aequo arbitraire** |
 

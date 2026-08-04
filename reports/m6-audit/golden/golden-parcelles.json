@@ -1,7 +1,7 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-04T21:28:38",
+  "genere_le": "2026-08-04T23:36:10",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
   "run_cascade": "q_v8_calibre",
@@ -2318,8 +2318,8 @@
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "renouvellement": {
-      "rang_segment": 18222,
-      "renouv_score": 53
+      "rang_segment": 13327,
+      "renouv_score": 56
      },
      "score_v": {
       "owner_type": "pp",
