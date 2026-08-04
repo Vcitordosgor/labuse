@@ -43,7 +43,16 @@ BRULANTE_GUARDRAIL = (30, 120)
 # le rang p_raw (+0,01 plafonné) sur 131 parcelles mono non-écartées → 0 bascule de tier (golden 116/116,
 # gate boussole 0/64). q_v6_m8 conservé en HYSTÉRÉSIS (rollback : docs/mandats/A1_BASCULE_ROLLBACK.md).
 # Le label servi est désormais CONFIGURABLE (fin de la dette du hard-code) : override LABUSE_SERVED_RUN.
-Q_A_RUN_LABEL = os.environ.get("LABUSE_SERVED_RUN", "q_v7_defisc")
+# q_v7_defisc → q_v8_calibre (BASCULE GPU-PILOTE, 04/08/2026 — arbitrage Vic). Le label servi doit
+# exister DANS LES DEUX tables (cascade dryrun_parcel_evaluations + scoring parcel_p_score_v2) ; le
+# scoring v2 corrigé du rebuild unique (jetable q_v9_apres) a été RE-LABELLISÉ sous q_v8_calibre, qui
+# porte déjà la cascade (étage0 du re-run). Contenu : 4 correctifs (ingestion zone_lib, 2.2 normalize,
+# 2.3 KW resserré, ouverture Saint-Benoît — 8 brûlantes AUa5/AUb19 restaurées). Score-neutre (arène
+# churn=0, RR@k et p_raw identiques). Deux exceptions tracées (served_run_exceptions) : CX2555 → chaude
+# (au_sous_plancher manque 94%, dette #12), CH1893 → declasse_non_constructible (bâti non capté, dette #4).
+# q_v7_defisc conservé INTACT en HYSTÉRÉSIS (rollback : docs/mandats/GPU_PILOTE_BASCULE_ROLLBACK.md).
+# Golden 116/116, 5 gardes OK. Baseline AU-off pré-bascule reproductible via q_v9_avant (jetable conservé).
+Q_A_RUN_LABEL = os.environ.get("LABUSE_SERVED_RUN", "q_v8_calibre")
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

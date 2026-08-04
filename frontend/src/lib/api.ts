@@ -12,7 +12,7 @@ import { vSignalCodes } from './filters'
 // (BASCULE cycle 1 : composante V « fenêtre de sortie de défisc » ; modèle P m8 inchangé, V module le
 // seul rang). Override au build : VITE_RUN_LABEL (rollback → 'q_v6_m8', cf. A1_BASCULE_ROLLBACK.md).
 // Doit rester aligné sur le backend Q_A_RUN_LABEL (test_run_serving_coherence). JAMAIS parcel_evaluations.
-export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v7_defisc'
+export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v8_calibre'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
