@@ -62,7 +62,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [ ] Passe de clarté générale
 
 ## TRAIN 5 — SCORING [S] Fable
-- [~] **N°1 — COUCHE BATIMENT : PILOTE CoSIA RENDU — attend contre-revue + arbitrage Vic.** Rappel brut 79 % / **ajusté 100 %** (les 8 « ratées » sont des erreurs de vérité terrain — branches/bords, cartes de contre-revue : qa/dette4/pilote_cosia_discordances.pdf). Fausses détections brutes 15 % / **nettes ~0-5 %** (2 abris au seuil 20 m² → seuil produit ~50 m² ; 3 « fausses » = MILLÉSIME : maisons réelles que l'ortho de revue ne montre pas encore). Durée pipeline île : ~15 min (chargement 7 s). Effet Saint-Paul : 73/169 têtes sans indice vues bâties (43 %), dont 8 brûlantes. **DÉCOUVERTE : le WMTS ortho des revues est antérieur à 2025 → le vrai taux d'erreur BD TOPO est PIRE que 38 %.** Reco : GO à seuil 50 m² re-mesuré, table dédiée p_model_bati_cosia (pas d'écrasement), ortho de revue à passer au millésime explicite. Rapport : docs/mandats/PILOTE_COSIA_RAPPORT.md. RIEN branché.
+- [~] **N°1 — COUCHE BATIMENT : pilote CoSIA rendu, cartes DATÉES servies — attend contre-revue Vic des 14 + arbitrage GO.** Rappel brut 79 % / ajusté 100 % (les 8 « ratées » = erreurs de vérité terrain, contre-revue : pilote_cosia_discordances.pdf, cartes datées). **Correction 2ᵉ passe : l'ortho de revue N'ÉTAIT PAS périmée** (graphe de mosaïquage : les 14 zones = PVA 2025, vols 21/07-02/08/2025) — les divergences sont des différences de LECTURE (chantier/dalle vs Bâtiment ; produit-parlant CoSIA a raison), le 38 % reste LE taux. **Seuil 50 RÉFUTÉ par la mesure** (rappel 63 %, perd 6 vraies maisons à 23-45 m²) → seuil 20 conservé, cas limites à l'adjudication. Architecture validée : p_model_bati_cosia datée, max des deux emprises. AB1908 : à re-trancher par Vic (structure visible carte datée, CoSIA 160 m²) ; AB1910 confirmée nue (CoSIA 0). Effet Saint-Paul : 73/169 (43 %). Inventaire rétroactif : 0 revue à refaire pour cause d'ortho. RIEN branché.
 - [~] Les 90 têtes vues bâties par le cadastre (2026-06) : revue-exceptions SANS déclassement automatique — cartes O12 en génération pour revue Vic (le cadastre ne voit que 3 % de l'angle mort et peut se tromper dans l'autre sens).
 - [ ] Entretien (validé Vic, APRÈS le pilote) : BD TOPO trimestrielle avec dates conservées (code fait : ingest_batiments garde date_creation/date_modification/date_d_apparition/date_de_confirmation) + RNB pour l'ID pivot.
 - [ ] **N°2 — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). Mesures : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière).
@@ -111,12 +111,16 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
 ## Doctrine (leçons gravées)
-- **« La fraîcheur d'une couche n'est pas sa date d'ingestion mais celle de sa source
-  amont. »** (Vic 04/08 — couche batiment ingérée en juin 2026 mais aveugle sur le neuf :
-  toutes les sources vectorielles héritent du report triennal du cadastre. Même motif que
-  fraîcheur GPU-vs-mairie sur les PLU : deux fois le même piège en une semaine.) Corollaire
-  outillé : conserver les DATES de la source à l'ingestion (date_apparition/date_maj BD TOPO)
-  pour MESURER le retard au lieu de le découvrir.
+- **RÈGLE DE CONCEPTION (Vic 04/08, 3 occurrences en une semaine — PLU GPU-vs-mairie, bâti
+  BD TOPO-vs-cadastre triennal, ortho de revue) : « La fraîcheur d'une donnée est celle de sa
+  source amont, jamais celle de son ingestion ni celle du moment où on la regarde. »
+  EXIGENCE TRANSVERSE : toute couche servie porte la date de sa source amont, AFFICHÉE.**
+  Audit 04/08 (détail au PILOTE_COSIA_RAPPORT) : data_sources ne trace que last_sync_at
+  (ingestion), aucune colonne millésime amont → à ajouter. Par couche : **DVF = pire cas
+  (horizon source 31/12/2025 = 7 mois d'angle mort non affiché, sync même pas tracée)** ;
+  Sitadel : anomalie permis daté 17/08/2026 (FUTUR, parse à corriger) ; DPE/BODACC sains.
+  Corollaire outillé : dates BD TOPO conservées à l'ingestion (fait) ; date de prise de vue
+  affichée sur toute carte de revue (fait — helper qa/dette4/ortho_dates.py).
 - **« Une détection d'indice ne prouve pas l'absence d'indice. »** (Vic 04/08 — le filet
   piscine/PV/DVF a ses propres trous, cas #079.) Ne jamais conclure « pas d'indice donc
   pas de bâti ».

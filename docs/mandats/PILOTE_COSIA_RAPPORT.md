@@ -60,6 +60,62 @@ mosaïque servie est ANTÉRIEURE au millésime 2025. Conséquences :
 169 têtes servies (brûlantes+chaudes) à couche < 20 m² sans indice → **CoSIA voit du bâti sur
 73 (43 %), dont 8 brûlantes.** Extrapolation cohérente avec l'échantillon île (38 %+).
 
+---
+# ADDENDUM — arbitrages Vic (2ᵉ passe) : ortho datée, seuil 50, inventaire, audit
+
+## CORRECTION (la 2ᵉ) — l'ortho de revue N'ÉTAIT PAS périmée
+Le graphe de mosaïquage (WFS `ORTHOIMAGERY.ORTHOPHOTOS.GRAPHE-MOSAIQUAGE`) date les 14 zones de
+discordance : **toutes PVA 2025, vols du 21/07 au 02/08/2025, 20 cm** — et `DEFAUT` ≡ `HR`
+(tuiles byte-identiques). Ma « découverte » d'un WMTS périmé est RETIRÉE : CoSIA 2025 dérive
+des MÊMES vols que l'ortho de revue. Les divergences sont des différences de LECTURE (l'œil dit
+« chantier/dalle = nue », CoSIA dit « Bâtiment » — produit-parlant, CoSIA a raison : un chantier
+n'est pas une opportunité) + mes erreurs de vérité terrain. **Le 38 % reste le taux de
+référence, ni pire ni meilleur.** L'exigence d'afficher la date reste — elle aurait évité les
+deux allers-retours.
+
+## Cartes datées (exigence appliquée)
+Helper `qa/dette4/ortho_dates.py` (date_vol au centroïde via le graphe). Régénérés AVEC date de
+prise de vue sur chaque carte : les **14 discordances** (`pilote_cosia_discordances.pdf`), les
+**90 cadastre**, les **32 restantes**. La carte AB1908 datée (vol 2025-07-22) montre une
+structure à toit clair sous le polygone CoSIA — ta contre-revue tranchera. AB1910 : CoSIA
+**0 m²**, vraiment nue, son verdict tient. AB1911 : CoSIA 100 m² (déjà sortie par pondération).
+
+## Seuil 50 m² — RÉFUTÉ par la mesure
+| seuil | rappel brut /38 | fausses brutes /41 |
+|---|---|---|
+| 20 m² | 30 (79 %) | 6 (15 %) |
+| 50 m² | **24 (63 %)** | 4 (10 %) |
+
+Le seuil 50 perd **6 vraies maisons** que CoSIA ne voit qu'à 23-45 m² (débords de toit,
+segmentation partielle sous végétation) et ne retire que les 2 abris — les 4 « fausses »
+restantes sont de vraies structures de toute façon. **Reco : seuil 20 m² conservé, cas limites
+à l'adjudication, pas au seuil.** Ta consigne « mesure d'abord » a évité un mauvais réglage.
+
+## Inventaire rétroactif des revues visuelles depuis le 29/07
+| revue | cartes | ortho | verdicts photo-dépendants | à refaire ? |
+|---|---:|---|---|---|
+| Division en or v8 (29/07-04/08) | 24 + PDF | WMTS = PVA 2025 | géométrie/assemblage | non |
+| Cartes assemblage AU (30/07) | 5+3 | idem | voisinage | non |
+| Revue 46 → 14 retirées (04/08) | 47 | idem | « bâtie » (tient a fortiori) | **non — verdicts bâties robustes** |
+| AB1908/AB1910 « tiennent » (04/08) | 2 | idem | « nue » | **AB1908 : à re-trancher** (structure visible carte datée + CoSIA 160 m²) ; AB1910 confirmée nue |
+| Échantillon 100 (04/08) | 25 grilles | idem | bâti/nu | non (biais = lecture, pas millésime ; 8 erreurs identifiées et documentées) |
+| 82 mouvements pondération | 82 | idem | aucun (informatif) | non |
+| EBC/ER (train 2) | 4 captures app | — | aucun | non |
+
+**Bilan : 0 revue à refaire pour cause d'ortho périmée** (l'ortho était 2025). Une seule
+re-décision : **AB1908** (la tienne, sur carte datée). Toute carte porte désormais la date.
+
+## Audit des dates — DVF / Sitadel / BODACC / DPE (question 6)
+| couche | horizon SOURCE (donnée la plus récente) | sync (ingestion) | verdict |
+|---|---|---|---|
+| **DVF** | **2025-12-31** | **absente de data_sources** | **le pire cas : 7 mois d'angle mort, non affiché, sync non tracée** |
+| DPE | 2026-07-03 | 2026-07-12 | sain |
+| Sitadel | **2026-08-17 (FUTUR !)** | 2026-07-10 | anomalie de parse à corriger (un permis daté après aujourd'hui) |
+| BODACC | 2026-07-02 | 2026-07-05 | sain, resync à cadencer |
+
+Structurel : `data_sources` ne porte QUE `last_sync_at` (ingestion). **Aucune colonne
+« millésime amont »** — la règle de conception de Vic exige de l'ajouter et de l'afficher.
+
 ## Recommandation (ton arbitrage — rien n'est branché)
 1. **GO déploiement CoSIA comme couche « bâti frais »**, avec un seuil produit à ~50 m²
    (re-mesure du couple rappel/fausses détections à ce seuil avant branchement).

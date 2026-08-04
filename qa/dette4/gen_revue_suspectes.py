@@ -14,6 +14,8 @@ import httpx
 from pathlib import Path
 from sqlalchemy import text
 from labuse.db import session_scope
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from ortho_dates import date_vol
 from labuse.api.division_review import (_rings, _lonlat_to_px, _fetch_tile, VIEW_W, VIEW_H,
                                         TILE_PX, ZOOM_MIN, ZOOM_MAX, IGN_ORTHO_URL, USER_AGENT)
 
@@ -34,7 +36,8 @@ SELECT pop.idu, p.commune, ST_Area(p.geom_2975) surf,
        COALESCE(b.emprise_bati_m2,0) emprise,
        s.tier, s.rang,
        d.pisc, d.conf, d.pv, v.srb, v.dm,
-       ST_AsGeoJSON(ST_Transform(p.geom_2975,4326)) g
+       ST_AsGeoJSON(ST_Transform(p.geom_2975,4326)) g,
+       ST_X(ST_Transform(ST_Centroid(p.geom_2975),4326)) lon, ST_Y(ST_Transform(ST_Centroid(p.geom_2975),4326)) lat
 FROM pop JOIN parcels p ON p.idu=pop.idu
 LEFT JOIN p_model_bati b ON b.idu=pop.idu
 JOIN parcel_p_score_v2 s ON s.parcelle_id=pop.idu AND s.run_id='q_v8_calibre'
@@ -144,6 +147,7 @@ def main():
             cards.append(
                 f"<div class='card'><p class='idu'>{r['idu']} "
                 f"<span class='muted'>· {r['commune']}</span></p>"
+                f"<p class='kv' style='color:#0c4d33;font-weight:600'>{date_vol(cl, r['lon'], r['lat'], key=r['idu'])}</p>"
                 f"<p class='kv'><b>Tier servi</b> <span class='t-{r['tier']}'>{r['tier']}</span>"
                 f" · <b>rang</b> {r['rang']} · <b>surface</b> {r['surf']:.0f} m²"
                 f" · <b>emprise couche bâtiment</b> {r['emprise']:.0f} m² ({pct:.1f} %)<br>"
