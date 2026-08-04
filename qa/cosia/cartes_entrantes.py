@@ -30,7 +30,8 @@ JOIN parcel_p_score_v2 b ON b.parcelle_id=a.parcelle_id AND b.run_id='q_v11_regl
 JOIN parcels p ON p.idu=a.parcelle_id
 WHERE a.run_id='q_v8_calibre' AND a.tier IS DISTINCT FROM b.tier
   AND a.tier NOT IN ('brulante','chaude') AND b.tier IN ('brulante','chaude')
-ORDER BY LEAST(COALESCE(a.rang,999999), COALESCE(b.rang,999999))
+ORDER BY CASE b.tier WHEN 'brulante' THEN 0 ELSE 1 END,
+         COALESCE(b.rang,999999)
 """
 
 
@@ -67,7 +68,7 @@ def carte(cl, g):
 
 
 CSS = ("body{font:14px -apple-system,sans-serif;background:#0b0f0d;color:#dce8e1;margin:24px}"
-       "h1{font-size:18px;color:#5CE6A1}.card{margin:18px 0;padding:14px;background:#111814;"
+       "@page{size:A4;margin:10mm}h1{font-size:18px;color:#5CE6A1;page-break-after:always}.card{page-break-after:always;margin:18px 0;padding:14px;background:#111814;"
        "border:1px solid #1f2a24;border-radius:12px;max-width:760px}"
        ".idu{font-family:monospace;font-size:15px;color:#ECF5EF}"
        ".mv{font-weight:600}.mv .av{color:#E8695A}.mv .ap{color:#8FA69A}"
