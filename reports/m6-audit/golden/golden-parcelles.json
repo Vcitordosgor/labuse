@@ -1,18 +1,18 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-04T16:26:08",
+  "genere_le": "2026-08-04T16:59:11",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
   "run_cascade": "q_v8_calibre",
   "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
    "a_creuser": 63433,
-   "brulante": 119,
+   "brulante": 105,
    "chaude": 1038,
    "declasse_au_fermee": 58,
    "declasse_au_statut_inconnu": 560,
-   "declasse_non_constructible": 6169,
+   "declasse_non_constructible": 6183,
    "declasse_zone_fermee": 2804,
    "ecartee": 354355,
    "reserve_fonciere": 3127
@@ -3079,7 +3079,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "brulante",
+   "tier_v2": "declasse_non_constructible",
    "validation": "coherence"
   },
   "97417000AC0003": {

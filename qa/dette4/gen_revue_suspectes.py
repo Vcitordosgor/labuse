@@ -39,7 +39,9 @@ FROM pop JOIN parcels p ON p.idu=pop.idu
 LEFT JOIN p_model_bati b ON b.idu=pop.idu
 JOIN parcel_p_score_v2 s ON s.parcelle_id=pop.idu AND s.run_id='q_v8_calibre'
 LEFT JOIN det d ON d.idu=pop.idu LEFT JOIN dvfb v ON v.idu=pop.idu
-WHERE d.idu IS NOT NULL OR v.idu IS NOT NULL
+WHERE (d.idu IS NOT NULL OR v.idu IS NOT NULL)
+  -- déjà arbitrées (retrait des 14 + CH1893) : exceptions journalisées → hors revue
+  AND pop.idu NOT IN (SELECT idu FROM served_run_exceptions WHERE run_id='q_v8_calibre')
 ORDER BY CASE s.tier WHEN 'brulante' THEN 0 WHEN 'chaude' THEN 1 ELSE 2 END,
          COALESCE(s.rang, 999999999)
 """
@@ -152,12 +154,14 @@ def main():
                 f"<span style='background:#25c8e0'></span>piscine détectée"
                 f"<span style='background:#7de85f'></span>PV détecté — "
                 f"une maison visible SANS emprise orange = couche lacunaire (type CH1893)</p></div>")
-    cover = (f"<div class='cover'><h1>Dette #4 — revue des {len(rows)} têtes suspectes</h1>"
+    cover = (f"<div class='cover'><h1>Dette #4 — revue des {len(rows)} suspectes restantes</h1>"
              f"<p>Couche bâtiment &lt; 20 m² MAIS preuve indépendante d'habitation (piscine/PV ortho, "
-             f"vente DVF bâtie), sur le top 1 000 rangs de la mesure pré-bascule.</p>"
-             f"<p><b>Ordre : {n_b} brûlantes servies, puis {n_c} chaudes, puis {len(rows)-n_b-n_c} autres</b> "
+             f"vente DVF bâtie), sur le top 1 000 rangs de la mesure pré-bascule. <b>Les 14 brûlantes "
+             f"bâties sont RETIRÉES (verdict Vic 04/08 : declasse_non_constructible, exceptions "
+             f"journalisées) — hors de ce document.</b></p>"
+             f"<p><b>Ordre : {n_b} brûlante(s), puis {n_c} chaudes, puis {len(rows)-n_b-n_c} autres</b> "
              f"(écartées/déclassées/a_creuser) — rang croissant. Tiers et rangs = SERVIS (q_v8_calibre "
-             f"pondéré) : la pondération du 04/08 a déplacé quelques suspectes depuis la mesure.</p>"
+             f"pondéré, post-retrait).</p>"
              f"<p>Standard cartes O12 : ortho IGN, contour parcelle (vert), emprise couche bâtiment "
              f"(orange), indice (cyan piscine / vert PV). Une maison visible sans orange = couche "
              f"lacunaire. Rien n'est déclassé par ce document — arbitrage Vic parcelle par parcelle.</p></div>")
