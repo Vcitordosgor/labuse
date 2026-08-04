@@ -27,7 +27,7 @@ from sqlalchemy import text
 from labuse.db import engine, session_scope
 from labuse.bascule_gardes import (
     check_run_absent, check_disque, check_peremption, ensure_backups, verify_completude,
-    RunDejaExistantError, _ts)
+    check_golden_regenere, GoldenPerimeError, RunDejaExistantError, _ts)
 
 LABEL = "q_v8_calibre"
 ARCHIVE = "q_v8_calibre_pre_pond"
@@ -115,6 +115,14 @@ def main():
     print(f"\n✓ BASCULE PONDÉRATION COMPLÈTE en {time.time()-t0:.0f}s. Tiers servis :")
     for tier, n in dist:
         print(f"  {tier:28s} {n:>8}")
+    # 8 — 6ᵉ garde (Vic 04/08) : le golden doit citer le run servi DANS LE MÊME GESTE.
+    # Bruyante mais non bloquante pour les tiers déjà écrits : elle dit ce qui MANQUE encore.
+    try:
+        rep = check_golden_regenere(LABEL)
+        print(f"  [8] golden à jour : {rep['n_parcelles']} parcelles sur {rep['run_v2_servi']}")
+    except GoldenPerimeError as e:
+        print(f"  [8] ⚠ GARDE GOLDEN : {e}\n      → build-mvt, API up, régénérer, re-vérifier "
+              f"AVANT de déclarer la bascule à Vic.")
     print(f"\n  SUITE : build-mvt --label {LABEL} (tuiles) ; golden_check ; purge jetables.")
     print(f"  ROLLBACK : python scripts/rollback_ponderation.py")
 

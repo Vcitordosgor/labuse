@@ -215,3 +215,23 @@ pondération sera déclarée stable.
 ## Dette constatée en passant
 `parcel_renouvellement` est resté sur q_v7_defisc (jamais rebuildé pour q_v8_calibre) : le
 segment Renouvellement ne sert plus rien depuis la bascule v8. Consigné au BACKLOG.
+
+---
+# CLÔTURE TRAIN 1 (consignes Vic 04/08)
+
+## Garde #6 — golden dans le même geste
+`check_golden_regenere` ajoutée au module `bascule_gardes` (6 gardes désormais) : refus BRUYANT
+(`GoldenPerimeError`) si la référence golden cite un autre run que le servi. Branchée en fin de
+`bascule_ponderation.py` et `bascule_v8_calibre.py`. 3 tests unitaires. Vérifiée verte sur la
+référence réelle (q_v8_calibre, 116 parcelles) et refusante sur un label divergent.
+
+## Inventaire des tables run-scopées mortes en silence (le motif)
+| table | runs présents | état |
+|---|---|---|
+| **parcel_renouvellement** | q_v7_defisc (68 445) | **MORT depuis la bascule v8** — actif unique du positionnement → rebuild en tête du train 5 (priorité haute Vic, mesure avant/après, point d'arrêt) |
+| **entonnoir_motifs** | q_v2, q_v6_m8 (317) | **MORT depuis DEUX bascules** — personne ne l'a remarqué |
+| ia_cache | q_v6_m8, q_v7_defisc | cache froid — se régénère à la demande, sévérité faible |
+| dryrun_*, parcel_p_score_v2, score_snapshots, served_run_exceptions | q_v8_calibre présents | dans le geste de bascule ✓ |
+
+Doctrine à graver (train 5) : **toute table run-scopée entre dans le geste de bascule OU est
+déclarée cache** — un segment qui meurt en silence à chaque bascule est un motif, pas un oubli.

@@ -1,24 +1,60 @@
-"""Gardes de bascule — 5 briques IMPORTABLES, extraites de scripts/bascule_v8_calibre.py.
+"""Gardes de bascule — 6 briques IMPORTABLES (5 extraites de scripts/bascule_v8_calibre.py).
 
-Un run servi ne doit JAMAIS être matérialisé ni servi sans que ces 5 gardes soient passées.
-Elles sont ici pour être RÉUTILISÉES (bascule v8, futures bascules, rebuild post-calibration
-du train 6) sans recopier une seule ligne de logique. Ordre historique (n° = date d'ajout) :
+Un run servi ne doit JAMAIS être matérialisé ni servi sans que ces gardes soient passées.
+Elles sont ici pour être RÉUTILISÉES (bascule v8, bascule pondération, futures bascules,
+rebuild post-calibration du train 6) sans recopier une seule ligne de logique. Ordre
+historique (n° = date d'ajout) :
 
-  1. check_run_absent  — ANTI-ÉCRASEMENT : refuse de reconstruire un run déjà matérialisé.
-  2. check_disque      — DISQUE : refuse de démarrer si la marge d'espace manque.
-  3. ensure_backups    — SAUVEGARDE : fige les features pré-bascule (rollback possible).
-  4. verify_completude — COMPLÉTUDE : un run incomplet est plus dangereux qu'un run qui échoue.
-  5. check_peremption  — PÉREMPTION : refuse de servir des déclassées AU périmées (> seuil).
+  1. check_run_absent      — ANTI-ÉCRASEMENT : refuse de reconstruire un run déjà matérialisé.
+  2. check_disque          — DISQUE : refuse de démarrer si la marge d'espace manque.
+  3. ensure_backups        — SAUVEGARDE : fige les features pré-bascule (rollback possible).
+  4. verify_completude     — COMPLÉTUDE : un run incomplet est plus dangereux qu'un run qui échoue.
+  5. check_peremption      — PÉREMPTION : refuse de servir des déclassées AU périmées (> seuil).
+  6. check_golden_regenere — GOLDEN (Vic 04/08) : toute bascule régénère le golden DANS LE MÊME
+     GESTE. La référence restée sur q_v7 pendant la bascule v8 était une dette de PROCESS, pas
+     un incident : 46 FAIL permanents masquaient toute vraie régression. La bascule n'est pas
+     complète tant que le golden ne cite pas le run servi.
 
 Lecture seule / idempotentes sauf ensure_backups (écrit une fois, jamais écrasé).
 """
 from __future__ import annotations
+
+import json
+from pathlib import Path
 
 from sqlalchemy import text
 
 from labuse.db import engine, session_scope
 
 TARGET = "q_v8_calibre"
+
+#: Référence golden versionnée (qa/golden_check.py la compare champ par champ).
+GOLDEN_PATH = Path(__file__).resolve().parents[2] / "reports" / "m6-audit" / "golden" / "golden-parcelles.json"
+
+
+class GoldenPerimeError(RuntimeError):
+    """6ᵉ garde : la référence golden cite un AUTRE run que le run servi — elle a raté une
+    bascule. Régénérer (qa/golden_check.py --dump, ancres préservées) puis re-vérifier."""
+
+
+def check_golden_regenere(run_servi: str, golden_path: Path | str = GOLDEN_PATH) -> dict:
+    """6ᵉ garde (arbitrage Vic 04/08) — refuse de déclarer une bascule complète si la référence
+    golden ne cite pas le run servi (meta.run_v2_servi). Ne régénère PAS elle-même (le dump
+    exige l'API) : elle IMPOSE que la régénération ait eu lieu dans le même geste. Lecture seule."""
+    p = Path(golden_path)
+    if not p.exists():
+        raise GoldenPerimeError(f"GOLDEN ABSENT : {p} — générer la référence "
+                                f"(qa/golden_check.py --dump) avant de déclarer la bascule.")
+    meta = (json.loads(p.read_text(encoding="utf-8")).get("meta") or {})
+    ref_run = meta.get("run_v2_servi")
+    if ref_run != run_servi:
+        raise GoldenPerimeError(
+            f"GOLDEN PÉRIMÉ : la référence cite run_v2_servi={ref_run!r} mais le run servi est "
+            f"{run_servi!r} — la bascule v8 a déjà fait cette erreur (46 FAIL permanents). "
+            f"Régénérer dans le même geste : qa/golden_check.py --dump --idu <les IDs de la "
+            f"référence> (le --dump nu retombe sur GOLDEN_IDUS et PERD les ancres J3).")
+    return {"golden": str(p), "run_v2_servi": ref_run,
+            "n_parcelles": meta.get("n_parcelles"), "ok": True}
 
 
 class RunDejaExistantError(RuntimeError):
