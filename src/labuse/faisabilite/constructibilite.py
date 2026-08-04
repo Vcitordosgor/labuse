@@ -45,11 +45,17 @@ DECLASSE_AU_STATUT_INCONNU = "declasse_au_statut_inconnu"
 #    = vrai inconnu (l'ouverture dépend de l'aménagement d'AUTRES zones, non déductible du règlement).
 DECLASSE_AU_FERMEE = "declasse_au_fermee"
 AU_SOUS_PLANCHER = "au_sous_plancher"          # SERVI — marqueur de fiche, JAMAIS un tier
+# RÈGLE « BÂTIE RÉVÉLÉE » (arbitrage Vic 04/08, dette #4) : couche BD TOPO < 20 m² MAIS
+# max(BD TOPO, CoSIA) ≥ 40 m² → une parcelle servie comme nue porte un bâti que l'image voit.
+# Déclassement dédié, motif servi daté/sourcé (« bâti détecté CoSIA (PVA 2025), N m² »).
+# La bande 20-40 m² n'est JAMAIS auto-déclassée (adjudication humaine sur cartes datées).
+# Généralise et REMPLACE les 17 exceptions manuelles du 04/08 (toutes couvertes, CH1893 incluse).
+DECLASSE_BATI_REVELE = "declasse_bati_revele"
 
 #: labels de déclassement (retirés du ranking des tiers de tête, mais VISIBLES avec motif).
 #: `AU_SOUS_PLANCHER` n'y figure PAS exprès : la parcelle reste SERVIE (candidate à l'assemblage).
 DECLASSE_LABELS = frozenset({DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, NON_VERIFIABLE,
-                             DECLASSE_AU_STATUT_INCONNU, DECLASSE_AU_FERMEE})
+                             DECLASSE_AU_STATUT_INCONNU, DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE})
 
 
 def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, str]:

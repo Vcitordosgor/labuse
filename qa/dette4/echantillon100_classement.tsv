@@ -1,0 +1,101 @@
+n	idu	commune	tier	rang	surf_m2	classement
+1	97403000AO0729	Entre-Deux	chaude	408	570	bati
+2	97410000CD0907	Saint-Benoît	brulante	509	307	bati
+3	97415000CT1231	Saint-Paul	chaude	2782	110	nu
+4	97415000CR1267	Saint-Paul	chaude	626	486	bati
+5	97412000AM2101	Saint-Joseph	chaude	161	398	nu
+6	97418000AT2379	Sainte-Marie	brulante	6	253	douteux
+7	97413000CX2179	Saint-Leu	chaude	1462	949	douteux
+8	97415000CW1052	Saint-Paul	chaude	920	2770	nu
+9	97418000AR2582	Sainte-Marie	chaude	2213	229	bati
+10	97409000AL0942	Saint-André	chaude	1884	620	bati
+11	97409000BM1405	Saint-André	chaude	401	415	nu
+12	97405000AN0449	Petite-Île	chaude	403	342	nu
+13	97414000ES1029	Saint-Louis	chaude	1640	256	nu
+14	97402000AH1350	Bras-Panon	brulante	812	404	bati
+15	97406000AL0413	La Plaine-des-Palmistes	brulante	164	374	bati
+16	97412000AO0138	Saint-Joseph	chaude	426	752	douteux
+17	97415000HR0152	Saint-Paul	chaude	538	693	nu
+18	97410000BX1960	Saint-Benoît	chaude	2160	287	nu
+19	97415000ER1172	Saint-Paul	chaude	889	335	nu
+20	97416000EX1601	Saint-Pierre	chaude	1143	1511	douteux
+21	97408000AP1612	La Possession	chaude	1159	400	nu
+22	97422000EC0500	Le Tampon	chaude	366	286	bati
+23	97415000CW1051	Saint-Paul	chaude	605	3606	nu
+24	97413000CY0677	Saint-Leu	chaude	722	266	bati
+25	97415000DK0864	Saint-Paul	chaude	1480	154	douteux
+26	97408000AP1644	La Possession	chaude	642	352	nu
+27	97410000AV0657	Saint-Benoît	chaude	284	370	douteux
+28	97422000BV3186	Le Tampon	chaude	1603	160	bati
+29	97422000AX1064	Le Tampon	chaude	1935	975	douteux
+30	97412000BD0351	Saint-Joseph	chaude	195	357	bati
+31	97416000IE0139	Saint-Pierre	chaude	2990	511	bati
+32	97410000CD0937	Saint-Benoît	chaude	1073	125	nu
+33	97403000AM0816	Entre-Deux	chaude	530	591	nu
+34	97415000EV0768	Saint-Paul	chaude	2262	264	nu
+35	97416000ET2108	Saint-Pierre	brulante	80	367	bati
+36	97411000HE0548	Saint-Denis	chaude	329	512	nu
+37	97401000AM1850	Les Avirons	chaude	799	169	bati
+38	97408000AP1560	La Possession	chaude	1714	1832	bati
+39	97408000AP1640	La Possession	chaude	533	4231	nu
+40	97415000AH1372	Saint-Paul	chaude	1314	306	nu
+41	97416000HN0849	Saint-Pierre	chaude	1569	766	nu
+42	97416000ID0907	Saint-Pierre	chaude	2781	426	douteux
+43	97424000AO0369	Cilaos	chaude	3866	2045	bati
+44	97415000AZ0648	Saint-Paul	chaude	665	453	nu
+45	97401000AI0810	Les Avirons	chaude	2190	883	nu
+46	97411000AE0836	Saint-Denis	chaude	170	220	bati
+47	97409000BN0554	Saint-André	chaude	1092	488	bati
+48	97408000AC2409	La Possession	chaude	2672	1176	nu
+49	97415000DE1325	Saint-Paul	brulante	61	346	nu
+50	97424000AE2288	Cilaos	chaude	674	606	nu
+51	97410000CD0940	Saint-Benoît	chaude	1749	444	bati
+52	97416000CV2367	Saint-Pierre	chaude	2847	634	nu
+53	97421000AV0815	Salazie	chaude	306	378	nu
+54	97424000AM0897	Cilaos	chaude	2975	560	bati
+55	97415000DK1121	Saint-Paul	brulante	2143	354	bati
+56	97423000AB1908	Les Trois-Bassins	brulante	139	313	nu
+57	97407000AH1122	Le Port	chaude	1449	299	nu
+58	97415000BV1608	Saint-Paul	chaude	1339	674	douteux
+59	97406000AL0022	La Plaine-des-Palmistes	chaude	2193	593	douteux
+60	97422000BD3665	Le Tampon	chaude	294	306	bati
+61	97415000DE1235	Saint-Paul	chaude	2420	183	nu
+62	97422000BO1820	Le Tampon	chaude	1738	434	bati
+63	97408000AC2972	La Possession	chaude	1236	4292	bati
+64	97414000HA0440	Saint-Louis	chaude	1140	1497	bati
+65	97415000CS1199	Saint-Paul	chaude	2260	447	nu
+66	97412000BR0541	Saint-Joseph	chaude	1417	343	bati
+67	97415000DK1149	Saint-Paul	brulante	868	428	bati
+68	97404000AT0558	L'Étang-Salé	chaude	1039	421	douteux
+69	97424000AE2424	Cilaos	chaude	583	155	nu
+70	97416000ER0704	Saint-Pierre	chaude	1514	221	douteux
+71	97420000AB1570	Sainte-Suzanne	chaude	1319	1378	bati
+72	97416000HN1803	Saint-Pierre	chaude	1928	471	nu
+73	97412000CV0402	Saint-Joseph	chaude	2286	882	douteux
+74	97415000DK1015	Saint-Paul	chaude	2394	163	douteux
+75	97414000DH1530	Saint-Louis	chaude	2165	866	nu
+76	97411000AM0006	Saint-Denis	chaude	351	429	bati
+77	97412000BW0802	Saint-Joseph	chaude	2429	355	nu
+78	97415000DK1017	Saint-Paul	chaude	1396	142	douteux
+79	97412000BR0643	Saint-Joseph	chaude	2806	746	bati
+80	97407000AO1129	Le Port	chaude	1793	125	nu
+81	97416000CW1433	Saint-Pierre	chaude	1671	277	bati
+82	97408000AS0457	La Possession	chaude	46	416	nu
+83	97416000HP0800	Saint-Pierre	chaude	482	224	douteux
+84	97416000CW2399	Saint-Pierre	chaude	893	466	bati
+85	97410000CD0902	Saint-Benoît	chaude	2947	320	bati
+86	97416000DW0420	Saint-Pierre	chaude	230	413	douteux
+87	97416000EM0654	Saint-Pierre	chaude	1023	307	nu
+88	97422000EC0435	Le Tampon	chaude	273	425	douteux
+89	97415000CY1060	Saint-Paul	chaude	1497	607	nu
+90	97413000CH0587	Saint-Leu	chaude	158	356	bati
+91	97416000ET2242	Saint-Pierre	brulante	120	333	nu
+92	97415000ET1722	Saint-Paul	chaude	2327	358	bati
+93	97416000HN1318	Saint-Pierre	chaude	2364	122	douteux
+94	97403000AR1085	Entre-Deux	chaude	585	491	bati
+95	97408000AP1623	La Possession	chaude	1610	398	nu
+96	97414000DT0766	Saint-Louis	chaude	344	386	bati
+97	97412000AO0912	Saint-Joseph	chaude	303	670	bati
+98	97407000AH1363	Le Port	chaude	3006	963	nu
+99	97415000DK1071	Saint-Paul	chaude	1689	110	douteux
+100	97412000AV0729	Saint-Joseph	chaude	950	603	douteux

@@ -579,6 +579,14 @@ def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000
                            # Hauteur/étages BD TOPO (Lot B — SDP existante du potentiel résiduel).
                            "hauteur": p.get("hauteur"),
                            "nombre_d_etages": p.get("nombre_d_etages"),
+                           # Dates BD TOPO (consigne Vic 04/08, dette #4) : SANS elles, le retard
+                           # de la source amont sur le neuf se DÉCOUVRE au lieu de se MESURER
+                           # (la fraîcheur d'une couche n'est pas sa date d'ingestion mais celle
+                           # de sa source — même piège que GPU-vs-mairie).
+                           "date_creation": p.get("date_creation"),
+                           "date_modification": p.get("date_modification"),
+                           "date_d_apparition": p.get("date_d_apparition"),
+                           "date_de_confirmation": p.get("date_de_confirmation"),
                            "source": "BD TOPO IGN (Géoplateforme WFS)"})
             n += 1
         if len(feats) < page_size:

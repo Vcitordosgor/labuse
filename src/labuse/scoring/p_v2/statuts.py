@@ -37,7 +37,7 @@ TIER_ECARTEE = "ecartee"
 # c'est un SIGNAL de fiche (pas de verdict → on ne déclasse pas), traité hors assign_tiers.
 from ...faisabilite.constructibilite import (   # noqa: E402  (constantes pures, sans DB)
     DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, DECLASSE_AU_STATUT_INCONNU,
-    DECLASSE_AU_FERMEE,
+    DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE,
 )
 
 
@@ -94,7 +94,12 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     au = (df["au_statut"] if "au_statut" in df.columns
           else pd.Series(pd.NA, index=df.index))
     declasse_au = au.isin([DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
-    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au
+    # RÈGLE BÂTIE RÉVÉLÉE (Vic 04/08) : colonne booléenne injectée par le pipeline depuis
+    # parcel_bati_revele (bande 'regle' seule — la bande 20-40 reste servie, adjudication).
+    # Colonne absente = aucun effet (rétro-compatible).
+    br = (df["bati_revele"].fillna(False).astype(bool) if "bati_revele" in df.columns
+          else pd.Series(False, index=df.index))
+    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au | br
     was_hot = (prev_tier.isin([TIER_CHAUDE, TIER_BRULANTE])
                if prev_tier is not None else pd.Series(False, index=df.index))
     event_recent = event_age <= params.event_bypass_mois
@@ -132,6 +137,10 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     _ab = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
     tier[(au == DECLASSE_AU_FERMEE) & ~_ab] = DECLASSE_AU_FERMEE
     tier[au.isin([DECLASSE_AU_STATUT_INCONNU, "générique"]) & ~_ab] = DECLASSE_AU_STATUT_INCONNU
+    # E (bâtie révélée) : ne s'applique que là où A/B/D n'ont pas déjà tranché — le motif le
+    # plus SPÉCIFIQUE (zone fermée, inconstructible, AU) prime sur le constat de bâti.
+    _abd = _ab | au.isin([DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
+    tier[br & ~_abd] = DECLASSE_BATI_REVELE
     tier[df["ecartee_etage0"]] = TIER_ECARTEE
     return tier
 

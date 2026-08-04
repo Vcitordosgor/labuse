@@ -235,3 +235,40 @@ référence réelle (q_v8_calibre, 116 parcelles) et refusante sur un label dive
 
 Doctrine à graver (train 5) : **toute table run-scopée entre dans le geste de bascule OU est
 déclarée cache** — un segment qui meurt en silence à chaque bascule est un motif, pas un oubli.
+
+---
+# MESURE DU TAUX D'ERREUR RÉEL DE LA COUCHE BATIMENT (mandat Vic 04/08)
+
+## (a) L'angle mort est la RÈGLE, pas l'exception
+| coupe servie | n | emprise ≈ 0 | dont SANS aucun indice |
+|---|---:|---:|---:|
+| brûlantes + chaudes | 1 143 | 848 | **768 (67 %)** |
+| top 1 000 rangs | 1 000 | 622 | 577 |
+
+768 têtes servies n'étaient PAS suspectables par le filet piscine/PV/DVF.
+
+## (b) Échantillon aléatoire reproductible de 100 (tirage md5(idu‖'974'), coupe brûlantes+chaudes)
+Classement visuel ortho IGN (grilles 2×2, contour + emprise couche superposés ; 2 tuiles
+manquantes re-rendues individuellement). Annexe parcelle par parcelle :
+`qa/dette4/echantillon100_classement.tsv`.
+
+| classement | n | définition |
+|---|---:|---|
+| **bâti franc** | **38** | construction en dur manifestement DANS le contour (maisons entières, hangars, chantiers avec dalle/murs) |
+| nu | 41 | terrain réellement nu (friche, terrassement sans structure, délaissé, lanière) |
+| douteux | 21 | bord de toit mordant le contour, abri léger/véhicule, cour urbaine dense |
+
+## LE TAUX : **38 % de bâties franches** (IC 95 % ≈ 29-48). Borne haute avec douteuses : 59 %.
+
+Extrapolation sur les 768 sans indice : **≈ 290 têtes servies bâties invisibles** (IC ≈ 220-370)
+— EN PLUS des 15 déjà arbitrées (14 + CH1893) et des 32 en revue. Environ **une tête servie
+sur quatre** (290/1 143) serait une parcelle déjà construite présentée comme opportunité.
+
+Motif aggravant : les lotissements récents sont surreprésentés ET aveugles — DK Saint-Paul
+5 tirages sur 100 (2 bâtis, 3 douteux), CD Saint-Benoît 4 tirages (3 bâtis). La couche est la
+plus fausse exactement là où le scoring (permis < 2 ans) met ses têtes.
+
+## Verdict (critère fixé par Vic AVANT la mesure)
+« Si ce taux est élevé, le rechargement n'est plus une dette : c'est un bloquant produit. »
+**38 % (jusqu'à 59 %) : c'est un BLOQUANT PRODUIT.** Rien n'a été corrigé (consigne) —
+le rechargement de la couche batiment est N°1 du train 5.

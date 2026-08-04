@@ -139,13 +139,41 @@ def build_permits(session: Session) -> None:
 
 
 def build_bati(session: Session) -> None:
-    """Emprise bâtie BD TOPO par parcelle : intersection exacte bâtiments × parcelle
-    (EPSG:2975). Source du caractère nu/bâti et de la densité bâtie de secteur.
-    Couche statique (millésime BD TOPO de l'ingestion) — consigné au dictionnaire."""
+    """Emprise bâtie par parcelle. BRANCHEMENT CoSIA (GO Vic 04/08) : emprise servie =
+    MAX(BD TOPO, CoSIA) — la BD TOPO (spatial_layers, intersection exacte) reste la base ;
+    `p_model_bati_cosia` (datée, PVA 2025) COMPLÈTE sans jamais remplacer (les deux couches
+    sources restent intactes et leur divergence mesurable). Kill-switch mesures à blanc :
+    LABUSE_DISABLE_BATI_COSIA=1 → BD TOPO seule (comportement d'avant). Table cosia absente →
+    idem (rétro-compatible)."""
+    import os as _os
     if not _has_table(session, "spatial_layers"):
         _exec(session, """
             DROP TABLE IF EXISTS p_model_bati;
             CREATE TABLE p_model_bati (idu varchar PRIMARY KEY, emprise_bati_m2 float);
+        """)
+        return
+    use_cosia = (_os.environ.get("LABUSE_DISABLE_BATI_COSIA") != "1"
+                 and _has_table(session, "p_model_bati_cosia"))
+    if use_cosia:
+        _exec(session, """
+            DROP TABLE IF EXISTS p_model_bati;
+            CREATE TABLE p_model_bati AS
+            WITH bd AS (
+              SELECT f.idu,
+                     sum(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise
+              FROM p_model_frame f
+              JOIN parcels p ON p.id = f.parcel_id
+              JOIN spatial_layers b
+                ON b.kind = 'batiment' AND b.geom_2975 && p.geom_2975
+               AND ST_Intersects(b.geom_2975, p.geom_2975)
+              GROUP BY f.idu)
+            SELECT f.idu,
+                   GREATEST(COALESCE(bd.emprise, 0), COALESCE(c.emprise_cosia_m2, 0)) AS emprise_bati_m2
+            FROM p_model_frame f
+            LEFT JOIN bd ON bd.idu = f.idu
+            LEFT JOIN p_model_bati_cosia c ON c.idu = f.idu
+            WHERE COALESCE(bd.emprise, 0) > 0 OR COALESCE(c.emprise_cosia_m2, 0) > 0;
+            ALTER TABLE p_model_bati ADD PRIMARY KEY (idu);
         """)
         return
     _exec(session, """

@@ -62,12 +62,14 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [ ] Passe de clarté générale
 
 ## TRAIN 5 — SCORING [S] Fable
-- [ ] **PRIORITÉ HAUTE (Vic 04/08) — Rebuild parcel_renouvellement sur q_v8_calibre** : actif unique du positionnement (68 445 parcelles, 0 concurrent), mort en silence depuis la bascule v8 (resté sur q_v7_defisc). Mesure avant/après, POINT D'ARRÊT. Même motif constaté sur : entonnoir_motifs (mort depuis q_v2/q_v6 — DEUX bascules ratées) ; ia_cache (q_v6/q_v7 — cache froid, se régénère seul, sévérité faible). Doctrine : toute table run-scopée entre dans le geste de bascule OU est déclarée cache.
+- [~] **N°1 — COUCHE BATIMENT : pilote CoSIA rendu, cartes DATÉES servies — attend contre-revue Vic des 14 + arbitrage GO.** Rappel brut 79 % / ajusté 100 % (les 8 « ratées » = erreurs de vérité terrain, contre-revue : pilote_cosia_discordances.pdf, cartes datées). **Correction 2ᵉ passe : l'ortho de revue N'ÉTAIT PAS périmée** (graphe de mosaïquage : les 14 zones = PVA 2025, vols 21/07-02/08/2025) — les divergences sont des différences de LECTURE (chantier/dalle vs Bâtiment ; produit-parlant CoSIA a raison), le 38 % reste LE taux. **Seuil 50 RÉFUTÉ par la mesure** (rappel 63 %, perd 6 vraies maisons à 23-45 m²) → seuil 20 conservé, cas limites à l'adjudication. Architecture validée : p_model_bati_cosia datée, max des deux emprises. AB1908 : à re-trancher par Vic (structure visible carte datée, CoSIA 160 m²) ; AB1910 confirmée nue (CoSIA 0). Effet Saint-Paul : 73/169 (43 %). Inventaire rétroactif : 0 revue à refaire pour cause d'ortho. RIEN branché.
+- [~] Les 90 têtes vues bâties par le cadastre (2026-06) : revue-exceptions SANS déclassement automatique — cartes O12 en génération pour revue Vic (le cadastre ne voit que 3 % de l'angle mort et peut se tromper dans l'autre sens).
+- [ ] Entretien (validé Vic, APRÈS le pilote) : BD TOPO trimestrielle avec dates conservées (code fait : ingest_batiments garde date_creation/date_modification/date_d_apparition/date_de_confirmation) + RNB pour l'ID pivot.
+- [ ] **N°2 — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). Mesures : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière).
+- [ ] **N°3 — Rebuild parcel_renouvellement sur q_v8_calibre** : actif unique du positionnement (68 445 parcelles, 0 concurrent), mort en silence depuis la bascule v8. Mesure avant/après, POINT D'ARRÊT. Même motif : entonnoir_motifs (mort depuis q_v2/q_v6), ia_cache (cache). Doctrine : toute table run-scopée entre dans le geste de bascule OU est déclarée cache.
 - [ ] Étapes exactes de l'algo, écrites (parcelle brute → tier servi)
 - [ ] Audit complet P et C
 - [ ] Dette #4 : filtre client bâti + hiérarchie par année (DPE/BDNB)
-- [ ] **Dette #4 RACINE (accepté Vic 04/08) : rechargement de la couche batiment** — 1 061 parcelles piscine-sur-couche-vide (456 secteurs, 24 communes ; Saint-Paul 188 en tête), dette diffuse → recharger par commune. Conditionne : la levée de l'exception CH1893 (motif en base l'y lie), l'arbitrage des 46 suspectes, et le filtre client bâti ci-dessus.
-- [ ] **PRIORITAIRE (Vic 04/08) — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). À mesurer AVANT tout autre chantier scoring : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) proposer un départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière) plutôt qu'un tri implicite.
 - [ ] Dette #9 : mérite/héritage servi sur la fiche
 - [ ] Dette #11 : assemblage × propriété DGFiP
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
@@ -105,4 +107,24 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 ## Dettes (index)
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire ·
-exceptions actives : CX2555 (chaude), CH1893 (retirée)
+exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
+(CX2555 levée le 04/08 à la bascule pondération)
+
+## Doctrine (leçons gravées)
+- **RÈGLE DE CONCEPTION (Vic 04/08, 3 occurrences en une semaine — PLU GPU-vs-mairie, bâti
+  BD TOPO-vs-cadastre triennal, ortho de revue) : « La fraîcheur d'une donnée est celle de sa
+  source amont, jamais celle de son ingestion ni celle du moment où on la regarde. »
+  EXIGENCE TRANSVERSE : toute couche servie porte la date de sa source amont, AFFICHÉE.**
+  Audit 04/08 + mesures DVF (DVF_FRAICHEUR_MESURES.md) : **DVF est À JOUR au dernier millésime
+  publié** (7 184 = 7 184 mutations 2025, vérifié au fichier ; le « retard » est le cycle
+  semestriel de la source, ~3 273 mutations S1-2026 en attente d'octobre) MAIS **la tuile
+  Marché sert la médiane SANS étiquette de fraîcheur** (le bandeau « ventes jusqu'à… » n'est
+  que dans le tiroir Bilan) — et un cycle déplace les médianes de ±10-20 % dans plusieurs
+  communes. Sitadel : parse corrigé (validation date, future→NULL tracée+compteur bruyant,
+  ligne fautive neutralisée, 0 date future en base). DPE/BODACC sains. **SPEC millésime amont
+  RÉDIGÉE (SPEC_MILLESIME_AMONT.md) — attend lecture Vic, rien d'implémenté.**
+  Corollaire outillé : dates BD TOPO conservées à l'ingestion (fait) ; date de prise de vue
+  affichée sur toute carte de revue (fait — helper qa/dette4/ortho_dates.py).
+- **« Une détection d'indice ne prouve pas l'absence d'indice. »** (Vic 04/08 — le filet
+  piscine/PV/DVF a ses propres trous, cas #079.) Ne jamais conclure « pas d'indice donc
+  pas de bâti ».

@@ -318,6 +318,19 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             df["au_statut"] = df["au_classe"]
             df = df.drop(columns=["au_classe"])
 
+    # RÈGLE BÂTIE RÉVÉLÉE (Vic 04/08, dette #4) — cache parcel_bati_revele (clé parcel-id,
+    # indépendant du run), bande 'regle' SEULE (la bande 20-40 reste servie, adjudication
+    # humaine). Kill-switch LABUSE_DISABLE_BATI_REVELE=1 ; table absente = aucun effet.
+    df["bati_revele"] = False
+    if (os.environ.get("LABUSE_DISABLE_BATI_REVELE") != "1"
+            and session.execute(text("SELECT to_regclass('parcel_bati_revele') IS NOT NULL")).scalar()):
+        brv = pd.read_sql(text("SELECT idu, true AS brv FROM parcel_bati_revele WHERE bande='regle'"),
+                          session.connection())
+        if len(brv):
+            df = df.merge(brv, on="idu", how="left")
+            df["bati_revele"] = df["brv"].fillna(False).astype(bool)
+            df = df.drop(columns=["brv"])
+
     # tiers : calibrage N_e (effectif chaude ~1 150) puis hystérésis vs run précédent
     work = df.assign(rang=rang, p=p, contrib_d=contrib["contrib_D"].to_numpy())
     from .statuts import plancher_c
@@ -333,7 +346,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     _declasse_au = work["au_statut"].isin(
         [DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
     eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab & ~_declasse_au
-                     & plancher_c(work, base_params)]
+                     & ~work["bati_revele"] & plancher_c(work, base_params)]
     n_e = calibre_n_entree(eligibles["rang"], cible=1150)
     params = TierParams(n_entree=n_e, n_sortie=int(round(1.4 * n_e)))
     prev_run, prev_tiers = previous_run(session)
@@ -372,7 +385,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
 
     snapshot_label = None
     if snapshot:
-        snapshot_label = f"m5-{date.today().isoformat()}"
+        # M1 : un label ne s'écrase JAMAIS — en cas de 2e run le même jour (ex. deux bascules
+        # le 04/08), on SUFFIXE vers un label libre au lieu d'échouer (bascule bâtie révélée).
+        base_label = f"m5-{date.today().isoformat()}"
+        snapshot_label = base_label
+        k = 2
+        while session.execute(text("SELECT 1 FROM score_snapshots WHERE label = :l"),
+                              {"l": snapshot_label}).scalar():
+            snapshot_label = f"{base_label}-{k}"
+            k += 1
         _snapshot_v2(session, snapshot_label, run_id, rows)
 
     session.execute(text("""

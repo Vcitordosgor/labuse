@@ -131,10 +131,32 @@ def ensure_indexes(session: Session, log=print) -> None:
     session.flush()
 
 
+def _date_autorisation(rec: dict, raw: dict, stats: dict) -> str | None:
+    """DATE_REELLE_AUTORISATION VALIDÉE (correctif Vic 04/08 : un permis daté au FUTUR est
+    passé en base sans que personne ne lise le champ — symptôme d'un parse aveugle).
+    Invalide ou future → None, valeur brute tracée dans raw, compteur BRUYANT au rapport
+    d'ingestion. On n'invente jamais une date ; on refuse d'en servir une fausse."""
+    val = (rec.get("DATE_REELLE_AUTORISATION") or "").strip() or None
+    if val is None:
+        return None
+    try:
+        d = datetime.fromisoformat(val[:10]).date()
+    except ValueError:
+        stats["dates_invalides"] += 1
+        raw["date_autorisation_brute"] = val
+        return None
+    if d > datetime.now(timezone.utc).date():
+        stats["dates_futures"] += 1
+        raw["date_autorisation_brute"] = val
+        return None
+    return val
+
+
 def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
     """Ingestion (backfill si since=None, delta sinon) des 4 datafiles — idempotente (upsert)."""
     communes = _commune_map(session)
-    stats = {"lignes": 0, "upserts": 0, "sans_cadastre": 0, "petitioner": 0, "pv_col": None}
+    stats = {"lignes": 0, "upserts": 0, "sans_cadastre": 0, "petitioner": 0, "pv_col": None,
+             "dates_futures": 0, "dates_invalides": 0}
     for key, df in DATAFILES.items():
         raw_csv = _fetch_csv(df["rid"], since=since)
         reader = csv.DictReader(io.StringIO(raw_csv), delimiter=";")
@@ -177,7 +199,7 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                     raw["pv"] = rec[col]
             session.execute(_UPSERT, {
                 "pid": pid, "typ": (rec.get(df.get("type_col")) or df.get("type_fixe") or "").strip() or None,
-                "dt": rec.get("DATE_REELLE_AUTORISATION") or None,
+                "dt": _date_autorisation(rec, raw, stats),
                 "idus": json.dumps(idus), "idu_arr": idus,
                 "c": communes.get(insee, insee),
                 "raw": json.dumps(raw, ensure_ascii=False)})
