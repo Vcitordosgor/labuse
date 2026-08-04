@@ -741,6 +741,30 @@ function EquipementsBadges({ idu }: { idu: string }) {
   )
 }
 
+// EBC / ER (dette #10) — drapeaux d'INFORMATION dérivés des prescriptions PLU DÉJÀ calculées
+// par la cascade (layer 'prescription_plu', libellés servis). Lecture seule : ne filtre, n'exclut
+// ni ne pondère JAMAIS — le verdict et les scores restent ceux du run servi.
+function prescriptionsInfo(lines: FicheLine[]): { ebc: { coverage: number | null } | null; ers: { num: string | null }[] } {
+  let ebc: { coverage: number | null } | null = null
+  const ers: { num: string | null }[] = []
+  const vus = new Set<string>()
+  for (const l of lines || []) {
+    if (l.layer !== 'prescription_plu') continue
+    const d = l.detail || ''
+    if (d.startsWith('Espace boisé classé (EBC)')) {
+      const m = d.match(/~\s*(\d+)\s*%/)
+      const cov = m ? Number(m[1]) : null
+      if (!ebc || (cov != null && (ebc.coverage == null || cov > ebc.coverage))) ebc = { coverage: cov }
+    } else if (d.startsWith('Emplacement réservé')) {
+      const m = d.match(/ER\s*n?°?\s*(\d+)/i) || d.match(/réservé\s*n?°?\s*(\d+)/i)
+      const num = m ? m[1] : null
+      const key = num ?? d.slice(0, 40)
+      if (!vus.has(key)) { vus.add(key); ers.push({ num }) }
+    }
+  }
+  return { ebc, ers }
+}
+
 function StepProv({ prov }: { prov?: string }) {
   const map: Record<string, [string, string]> = {
     sourcee: ['Sourcé', 'border-mint/40 bg-mint/10 text-mint'],
@@ -1051,6 +1075,8 @@ export function Fiche({ idu }: { idu: string }) {
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
   const pctConsomme = f?.potentiel_transformation?.pct_consomme
   const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
+  // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
+  const presc = f ? prescriptionsInfo(f.lines) : null
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1195,6 +1221,27 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ color: '#c9b98e' }}> {f.rnu.avertissement_pau}</span>
               </p>
             )}
+          </div>
+        )}
+
+        {/* Dette #10 — drapeaux EBC / ER : INFORMATION seule, jamais une exclusion. Dérivés des
+            prescriptions PLU déjà servies par la cascade ; aucun impact sur le verdict ni le score. */}
+        {presc && (presc.ebc || presc.ers.length > 0) && (
+          <div data-prescriptions-badges style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {presc.ebc && (
+              <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
+                <span data-badge-ebc className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#5CE6A122', color: '#5CE6A1' }}>
+                  partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
+                </span>
+              </Tip>
+            )}
+            {presc.ers.map((er, i) => (
+              <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
+                <span data-badge-er className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#e8b84d22', color: '#e8b84d' }}>
+                  emplacement réservé{er.num ? ` n°${er.num}` : ''}
+                </span>
+              </Tip>
+            ))}
           </div>
         )}
       </div>
