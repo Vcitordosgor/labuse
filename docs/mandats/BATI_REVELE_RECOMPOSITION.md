@@ -78,3 +78,38 @@ Bloquer la bascule ne protège de rien : les 285 révélées resteraient en têt
 2. Étendre la règle aux bâties connues avant bascule = implémenter le filtre client bâti
    maintenant (périmètre à définir : seuil relatif, divisible…) — retarde la fermeture.
 3. NO-GO, tout au train 5.
+
+---
+# POST-BASCULE (GO Vic option 1 — exécutée)
+
+Bascule en 234 s (reprise après collision de label snapshot — correctif M1 : suffixe libre,
+jamais d'écrasement ; snapshot `m5-2026-08-04-2`). **Conformité stricte q_v11 : 0 écart.**
+Archive : `q_v8_calibre_pre_regle` (rollback par renommage). 6 gardes passées.
+
+## Tiers servis
+**117 brûlantes · 1 043 chaudes · 4 010 declasse_bati_revele** (motif daté sourcé + phrase SDP)
+· a_creuser 59 495 · le reste inchangé. MVT rebuildées, **golden 116/116** (2 ancres bougées,
+attendues : AH0971 chaude→declasse_bati_revele, AV0815 chaude→brûlante — recomposition).
+Purge : q_v10/q_v11 (863 326 lignes). Journal : les 17 suivent l'archive (remplacées par la
+règle) ; le run servi porte 1 exception — **CY0104** (motif corrigé arbitré).
+
+## MESURE DUE — brûlantes bâties-connues servies (calibrage du futur filtre, cas réels)
+| idu | commune | BD TOPO m² | parcelle m² | ratio |
+|---|---|---:|---:|---:|
+| 97403000AR1511 | Entre-Deux | 130 | 527 | **24,6 %** |
+| 97422000CY0197 | Le Tampon | 194 | 868 | 22,4 % |
+| 97416000EP0908 | Saint-Pierre | 103 | 482 | 21,3 % |
+| (+5 entre 7,6 et 18,6 % — liste complète ci-dessus au terminal, 8 au total post-recomposition) |
+
+**Aucune saturée** (max 24,6 % — AR1511, 527 m², division envisageable mais serrée : LE cas
+limite pour calibrer la hiérarchie ratio/divisibilité du filtre client bâti, train 5, avec
+l'ampleur consignée : 295 en tête pré-bascule + flux ~33 %).
+
+## Doctrine actée (lisible partout)
+- **Bâtie RÉVÉLÉE** (BD TOPO aveugle, CoSIA voit) → fermée par CETTE bascule (règle, motif daté).
+- **Bâtie CONNUE** (les deux couches) → filtre client bâti, train 5 — critère PRODUIT (O12 :
+  une maison sur 10 000 m² divisibles n'est pas disqualifiante).
+
+**LA DETTE #4 « BÂTIES INVISIBLES » EST REFERMÉE** : plus aucune tête servie ne porte de bâti
+que les couches ne voient pas sans le dire — 4 010 parcelles le disent désormais avec source
+et date.

@@ -385,7 +385,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
 
     snapshot_label = None
     if snapshot:
-        snapshot_label = f"m5-{date.today().isoformat()}"
+        # M1 : un label ne s'écrase JAMAIS — en cas de 2e run le même jour (ex. deux bascules
+        # le 04/08), on SUFFIXE vers un label libre au lieu d'échouer (bascule bâtie révélée).
+        base_label = f"m5-{date.today().isoformat()}"
+        snapshot_label = base_label
+        k = 2
+        while session.execute(text("SELECT 1 FROM score_snapshots WHERE label = :l"),
+                              {"l": snapshot_label}).scalar():
+            snapshot_label = f"{base_label}-{k}"
+            k += 1
         _snapshot_v2(session, snapshot_label, run_id, rows)
 
     session.execute(text("""

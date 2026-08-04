@@ -1,21 +1,22 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-04T19:59:07",
+  "genere_le": "2026-08-04T21:28:38",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
   "run_cascade": "q_v8_calibre",
   "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
-   "a_creuser": 63433,
-   "brulante": 104,
-   "chaude": 1037,
+   "a_creuser": 59495,
+   "brulante": 117,
+   "chaude": 1043,
    "declasse_au_fermee": 58,
    "declasse_au_statut_inconnu": 560,
-   "declasse_non_constructible": 6185,
+   "declasse_bati_revele": 4010,
+   "declasse_non_constructible": 6169,
    "declasse_zone_fermee": 2804,
    "ecartee": 354355,
-   "reserve_fonciere": 3127
+   "reserve_fonciere": 3052
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -127,7 +128,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
   },
   "97401000AM0193": {
@@ -233,8 +234,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.32,
-      "percentile": 87.1,
-      "rang": 55257,
+      "percentile": 87.06,
+      "rang": 55407,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -245,8 +246,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.32,
-     "percentile": 87.1,
-     "rang": 55257,
+     "percentile": 87.06,
+     "rang": 55407,
      "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
@@ -302,7 +303,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.32,
      "percentile": 87.1,
-     "rang": 55257,
+     "rang": 55407,
      "tier": "a_creuser"
     },
     "section": "AK",
@@ -371,9 +372,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.13,
-      "percentile": 100.0,
-      "rang": 22,
+      "mult_base": 7.12,
+      "percentile": 99.97,
+      "rang": 124,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -383,9 +384,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
-     "percentile": 100.0,
-     "rang": 22,
+     "mult_base": 7.12,
+     "percentile": 99.97,
+     "rang": 124,
      "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
@@ -435,9 +436,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 7.12,
      "percentile": 100.0,
-     "rang": 22,
+     "rang": 124,
      "tier": "brulante"
     },
     "section": "AR",
@@ -533,8 +534,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.7,
-      "percentile": 25.38,
-      "rang": 319532,
+      "percentile": 25.37,
+      "rang": 319592,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -545,8 +546,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
-     "percentile": 25.38,
-     "rang": 319532,
+     "percentile": 25.37,
+     "rang": 319592,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -599,7 +600,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
      "percentile": 25.4,
-     "rang": 319532,
+     "rang": 319592,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -724,9 +725,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 5.87,
-      "percentile": 99.83,
-      "rang": 716,
+      "mult_base": 5.88,
+      "percentile": 99.85,
+      "rang": 655,
       "tier": "declasse_non_constructible"
      },
      "statut": "a_creuser",
@@ -736,9 +737,9 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 5.87,
-     "percentile": 99.83,
-     "rang": 716,
+     "mult_base": 5.88,
+     "percentile": 99.85,
+     "rang": 655,
      "run_id": "q_v8_calibre",
      "tier": "declasse_non_constructible"
     }
@@ -787,9 +788,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 5.87,
-     "percentile": 99.8,
-     "rang": 716,
+     "mult_base": 5.88,
+     "percentile": 99.9,
+     "rang": 655,
      "tier": "declasse_non_constructible"
     },
     "section": "BI",
@@ -857,9 +858,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.91,
-      "percentile": 46.4,
-      "rang": 229523,
+      "mult_base": 0.92,
+      "percentile": 46.01,
+      "rang": 231224,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -869,9 +870,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.4,
-     "rang": 229523,
+     "mult_base": 0.92,
+     "percentile": 46.01,
+     "rang": 231224,
      "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
@@ -918,9 +919,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.4,
-     "rang": 229523,
+     "mult_base": 0.92,
+     "percentile": 46.0,
+     "rang": 231224,
      "tier": "reserve_fonciere"
     },
     "section": "AC",
@@ -954,7 +955,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "brulante",
    "validation": "coherence"
   },
   "97408000AP1647": {
@@ -979,10 +980,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 64.25,
+      "mult_base": 64.31,
       "percentile": 100.0,
       "rang": 1,
-      "tier": "chaude"
+      "tier": "brulante"
      },
      "statut": "a_creuser",
      "surface_m2": 382,
@@ -991,11 +992,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 64.25,
+     "mult_base": 64.31,
      "percentile": 100.0,
      "rang": 1,
      "run_id": "q_v8_calibre",
-     "tier": "chaude"
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -1047,10 +1048,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 64.25,
+     "mult_base": 64.31,
      "percentile": 100.0,
      "rang": 1,
-     "tier": "chaude"
+     "tier": "brulante"
     },
     "section": "AP",
     "solaire": {
@@ -1124,9 +1125,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.91,
-      "percentile": 46.54,
-      "rang": 228933,
+      "mult_base": 0.85,
+      "percentile": 44.88,
+      "rang": 236029,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -1136,9 +1137,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.54,
-     "rang": 228933,
+     "mult_base": 0.85,
+     "percentile": 44.88,
+     "rang": 236029,
      "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
@@ -1194,9 +1195,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.5,
-     "rang": 228933,
+     "mult_base": 0.85,
+     "percentile": 44.9,
+     "rang": 236029,
      "tier": "reserve_fonciere"
     },
     "section": "AX",
@@ -1265,7 +1266,7 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 22.09,
+      "mult_base": 22.11,
       "percentile": 100.0,
       "rang": 13,
       "tier": "brulante"
@@ -1277,7 +1278,7 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 13,
      "run_id": "q_v8_calibre",
@@ -1336,7 +1337,7 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 13,
      "tier": "brulante"
@@ -1390,9 +1391,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.13,
+      "mult_base": 13.14,
       "percentile": 99.99,
-      "rang": 31,
+      "rang": 29,
       "tier": "chaude"
      },
      "statut": "ecartee",
@@ -1402,9 +1403,9 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 99.99,
-     "rang": 31,
+     "rang": 29,
      "run_id": "q_v8_calibre",
      "tier": "chaude"
     }
@@ -1461,9 +1462,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 100.0,
-     "rang": 31,
+     "rang": 29,
      "tier": "chaude"
     },
     "section": "AS",
@@ -1515,7 +1516,7 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 22.09,
+      "mult_base": 22.11,
       "percentile": 100.0,
       "rang": 5,
       "tier": "brulante"
@@ -1527,7 +1528,7 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 5,
      "run_id": "q_v8_calibre",
@@ -1583,7 +1584,7 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 5,
      "tier": "brulante"
@@ -1660,7 +1661,7 @@
      },
      "score_v2": {
       "copro": true,
-      "mult_base": 1.83,
+      "mult_base": 1.66,
       "percentile": null,
       "rang": null,
       "tier": "a_creuser"
@@ -1672,7 +1673,7 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.83,
+     "mult_base": 1.66,
      "percentile": null,
      "rang": null,
      "run_id": "q_v8_calibre",
@@ -1727,7 +1728,7 @@
      "copro": true,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.83,
+     "mult_base": 1.66,
      "percentile": null,
      "rang": null,
      "tier": "a_creuser"
@@ -1778,9 +1779,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.99,
-      "percentile": 60.91,
-      "rang": 167395,
+      "mult_base": 0.85,
+      "percentile": 38.63,
+      "rang": 262827,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -1790,9 +1791,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.99,
-     "percentile": 60.91,
-     "rang": 167395,
+     "mult_base": 0.85,
+     "percentile": 38.63,
+     "rang": 262827,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -1845,9 +1846,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.99,
-     "percentile": 60.9,
-     "rang": 167395,
+     "mult_base": 0.85,
+     "percentile": 38.6,
+     "rang": 262827,
      "tier": "ecartee"
     },
     "section": "AO",
@@ -1906,7 +1907,7 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 22.09,
+      "mult_base": 22.11,
       "percentile": 100.0,
       "rang": 4,
       "tier": "brulante"
@@ -1918,7 +1919,7 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 4,
      "run_id": "q_v8_calibre",
@@ -1974,7 +1975,7 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 4,
      "tier": "brulante"
@@ -2072,8 +2073,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 7.12,
-      "percentile": 99.95,
-      "rang": 196,
+      "percentile": 99.96,
+      "rang": 166,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2084,8 +2085,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 7.12,
-     "percentile": 99.95,
-     "rang": 196,
+     "percentile": 99.96,
+     "rang": 166,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -2142,7 +2143,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 7.12,
      "percentile": 100.0,
-     "rang": 196,
+     "rang": 166,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -2201,9 +2202,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 2.64,
-      "percentile": 98.46,
-      "rang": 6590,
+      "mult_base": 2.65,
+      "percentile": 98.52,
+      "rang": 6347,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -2213,9 +2214,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.64,
-     "percentile": 98.46,
-     "rang": 6590,
+     "mult_base": 2.65,
+     "percentile": 98.52,
+     "rang": 6347,
      "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
@@ -2273,9 +2274,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.64,
+     "mult_base": 2.65,
      "percentile": 98.5,
-     "rang": 6590,
+     "rang": 6347,
      "tier": "a_creuser"
     },
     "section": "CS",
@@ -2328,8 +2329,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.32,
-      "percentile": 88.91,
-      "rang": 47508,
+      "percentile": 88.93,
+      "rang": 47419,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2340,8 +2341,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.32,
-     "percentile": 88.91,
-     "rang": 47508,
+     "percentile": 88.93,
+     "rang": 47419,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -2400,7 +2401,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.32,
      "percentile": 88.9,
-     "rang": 47508,
+     "rang": 47419,
      "tier": "ecartee"
     },
     "section": "DM",
@@ -2454,7 +2455,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
   },
   "97415000AH0410": {
@@ -2509,9 +2510,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.13,
-      "percentile": 99.99,
-      "rang": 27,
+      "mult_base": 15.53,
+      "percentile": 100.0,
+      "rang": 18,
       "tier": "declasse_non_constructible"
      },
      "statut": "ecartee",
@@ -2521,9 +2522,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
-     "percentile": 99.99,
-     "rang": 27,
+     "mult_base": 15.53,
+     "percentile": 100.0,
+     "rang": 18,
      "run_id": "q_v8_calibre",
      "tier": "declasse_non_constructible"
     }
@@ -2569,9 +2570,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 15.53,
      "percentile": 100.0,
-     "rang": 27,
+     "rang": 18,
      "tier": "declasse_non_constructible"
     },
     "section": "CW",
@@ -2620,10 +2621,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 17.39,
-      "percentile": 100.0,
-      "rang": 17,
-      "tier": "chaude"
+      "mult_base": 13.14,
+      "percentile": 99.98,
+      "rang": 100,
+      "tier": "brulante"
      },
      "statut": "a_creuser",
      "surface_m2": 608,
@@ -2632,11 +2633,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 17.39,
-     "percentile": 100.0,
-     "rang": 17,
+     "mult_base": 13.14,
+     "percentile": 99.98,
+     "rang": 100,
      "run_id": "q_v8_calibre",
-     "tier": "chaude"
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -2688,10 +2689,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 17.39,
+     "mult_base": 13.14,
      "percentile": 100.0,
-     "rang": 17,
-     "tier": "chaude"
+     "rang": 100,
+     "tier": "brulante"
     },
     "section": "CX",
     "solaire": {
@@ -2735,9 +2736,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.91,
-      "percentile": 46.17,
-      "rang": 230542,
+      "mult_base": 0.92,
+      "percentile": 45.79,
+      "rang": 232154,
       "tier": "reserve_fonciere"
      },
      "statut": "chaude",
@@ -2747,9 +2748,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.17,
-     "rang": 230542,
+     "mult_base": 0.92,
+     "percentile": 45.79,
+     "rang": 232154,
      "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
@@ -2803,9 +2804,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.2,
-     "rang": 230542,
+     "mult_base": 0.92,
+     "percentile": 45.8,
+     "rang": 232154,
      "tier": "reserve_fonciere"
     },
     "section": "EY",
@@ -2875,8 +2876,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.16,
-      "percentile": 72.14,
-      "rang": 119323,
+      "percentile": 71.84,
+      "rang": 120591,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2887,8 +2888,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 72.14,
-     "rang": 119323,
+     "percentile": 71.84,
+     "rang": 120591,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -2935,8 +2936,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 72.1,
-     "rang": 119323,
+     "percentile": 71.8,
+     "rang": 120591,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -2981,9 +2982,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.93,
-      "percentile": 58.06,
-      "rang": 179625,
+      "mult_base": 0.81,
+      "percentile": 34.6,
+      "rang": 280055,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2993,9 +2994,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.93,
-     "percentile": 58.06,
-     "rang": 179625,
+     "mult_base": 0.81,
+     "percentile": 34.6,
+     "rang": 280055,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -3043,9 +3044,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.93,
-     "percentile": 58.1,
-     "rang": 179625,
+     "mult_base": 0.81,
+     "percentile": 34.6,
+     "rang": 280055,
      "tier": "ecartee"
     },
     "section": "CR",
@@ -3079,7 +3080,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "declasse_non_constructible",
+   "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
   },
   "97417000AC0003": {
@@ -3154,7 +3155,7 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 22.09,
+      "mult_base": 22.11,
       "percentile": 100.0,
       "rang": 6,
       "tier": "brulante"
@@ -3166,7 +3167,7 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 6,
      "run_id": "q_v8_calibre",
@@ -3225,7 +3226,7 @@
      "copro": false,
      "event_date": "2025-08-28",
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 6,
      "tier": "brulante"
@@ -3257,7 +3258,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "brulante",
    "validation": "coherence"
   },
   "97419000AC0076": {
@@ -3293,8 +3294,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.81,
-      "percentile": 32.37,
-      "rang": 289615,
+      "percentile": 32.21,
+      "rang": 290285,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3305,8 +3306,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
-     "percentile": 32.37,
-     "rang": 289615,
+     "percentile": 32.21,
+     "rang": 290285,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -3353,8 +3354,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
-     "percentile": 32.4,
-     "rang": 289615,
+     "percentile": 32.2,
+     "rang": 290285,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -3443,10 +3444,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.13,
+      "mult_base": 13.14,
       "percentile": 99.99,
-      "rang": 29,
-      "tier": "chaude"
+      "rang": 27,
+      "tier": "brulante"
      },
      "statut": "ecartee",
      "surface_m2": 366,
@@ -3455,11 +3456,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 99.99,
-     "rang": 29,
+     "rang": 27,
      "run_id": "q_v8_calibre",
-     "tier": "chaude"
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -3514,10 +3515,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 100.0,
-     "rang": 29,
-     "tier": "chaude"
+     "rang": 27,
+     "tier": "brulante"
     },
     "section": "AO",
     "solaire": {
@@ -3595,9 +3596,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.51,
-      "percentile": 5.29,
-      "rang": 405573,
+      "mult_base": 0.52,
+      "percentile": 8.86,
+      "rang": 390295,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3607,9 +3608,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.51,
-     "percentile": 5.29,
-     "rang": 405573,
+     "mult_base": 0.52,
+     "percentile": 8.86,
+     "rang": 390295,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -3664,9 +3665,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.51,
-     "percentile": 5.3,
-     "rang": 405573,
+     "mult_base": 0.52,
+     "percentile": 8.9,
+     "rang": 390295,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -3696,7 +3697,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "brulante",
    "validation": "coherence"
   },
   "97422000AB0001": {
@@ -3741,7 +3742,7 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 22.09,
+      "mult_base": 22.11,
       "percentile": 100.0,
       "rang": 14,
       "tier": "declasse_zone_fermee"
@@ -3753,7 +3754,7 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 14,
      "run_id": "q_v8_calibre",
@@ -3805,7 +3806,7 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 22.09,
+     "mult_base": 22.11,
      "percentile": 100.0,
      "rang": 14,
      "tier": "declasse_zone_fermee"
@@ -3862,9 +3863,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.13,
+      "mult_base": 13.14,
       "percentile": 99.99,
-      "rang": 50,
+      "rang": 45,
       "tier": "declasse_zone_fermee"
      },
      "statut": "ecartee",
@@ -3874,9 +3875,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 99.99,
-     "rang": 50,
+     "rang": 45,
      "run_id": "q_v8_calibre",
      "tier": "declasse_zone_fermee"
     }
@@ -3926,9 +3927,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.13,
+     "mult_base": 13.14,
      "percentile": 100.0,
-     "rang": 50,
+     "rang": 45,
      "tier": "declasse_zone_fermee"
     },
     "section": "AX",
@@ -3974,8 +3975,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 2.12,
-      "percentile": 97.78,
-      "rang": 9520,
+      "percentile": 97.84,
+      "rang": 9230,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3986,8 +3987,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 2.12,
-     "percentile": 97.78,
-     "rang": 9520,
+     "percentile": 97.84,
+     "rang": 9230,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -4044,7 +4045,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 2.12,
      "percentile": 97.8,
-     "rang": 9520,
+     "rang": 9230,
      "tier": "ecartee"
     },
     "section": "BY",
@@ -4109,9 +4110,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 4.7,
-      "percentile": 99.61,
-      "rang": 1692,
+      "mult_base": 2.8,
+      "percentile": 99.03,
+      "rang": 4149,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -4121,9 +4122,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 4.7,
-     "percentile": 99.61,
-     "rang": 1692,
+     "mult_base": 2.8,
+     "percentile": 99.03,
+     "rang": 4149,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -4187,9 +4188,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 4.7,
-     "percentile": 99.6,
-     "rang": 1692,
+     "mult_base": 2.8,
+     "percentile": 99.0,
+     "rang": 4149,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -4238,10 +4239,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 12.07,
-      "percentile": 99.97,
-      "rang": 139,
-      "tier": "declasse_non_constructible"
+      "mult_base": 4.15,
+      "percentile": 99.51,
+      "rang": 2088,
+      "tier": "declasse_bati_revele"
      },
      "statut": "ecartee",
      "surface_m2": 313,
@@ -4250,11 +4251,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 12.07,
-     "percentile": 99.97,
-     "rang": 139,
+     "mult_base": 4.15,
+     "percentile": 99.51,
+     "rang": 2088,
      "run_id": "q_v8_calibre",
-     "tier": "declasse_non_constructible"
+     "tier": "declasse_bati_revele"
     }
    },
    "coherence_db_api": [],
@@ -4307,10 +4308,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 12.07,
-     "percentile": 100.0,
-     "rang": 139,
-     "tier": "declasse_non_constructible"
+     "mult_base": 4.15,
+     "percentile": 99.5,
+     "rang": 2088,
+     "tier": "declasse_bati_revele"
     },
     "section": "AB",
     "solaire": {
@@ -4389,8 +4390,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.16,
-      "percentile": 74.64,
-      "rang": 108587,
+      "percentile": 74.39,
+      "rang": 109683,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -4401,8 +4402,8 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 74.64,
-     "rang": 108587,
+     "percentile": 74.39,
+     "rang": 109683,
      "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
@@ -4452,8 +4453,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 74.6,
-     "rang": 108587,
+     "percentile": 74.4,
+     "rang": 109683,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -4483,7 +4484,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
   },
   "97424000AI0355": {
@@ -4508,9 +4509,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 1.16,
-      "percentile": 77.12,
-      "rang": 98000,
+      "mult_base": 1.05,
+      "percentile": 69.43,
+      "rang": 130904,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -4520,9 +4521,9 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.16,
-     "percentile": 77.12,
-     "rang": 98000,
+     "mult_base": 1.05,
+     "percentile": 69.43,
+     "rang": 130904,
      "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
@@ -4573,9 +4574,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.16,
-     "percentile": 77.1,
-     "rang": 98000,
+     "mult_base": 1.05,
+     "percentile": 69.4,
+     "rang": 130904,
      "tier": "a_creuser"
     },
     "section": "AI",
