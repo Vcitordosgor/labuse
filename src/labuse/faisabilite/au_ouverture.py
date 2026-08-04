@@ -102,6 +102,25 @@ def seuil_surface_m2(regime: dict) -> float | None:
     return float(ml) / float(d) * 10000.0
 
 
+def facteur_ponderation(insee: str | None, zone_lib: str | None,
+                        surface_m2: float | None) -> float | None:
+    """PONDÉRATION option B (arbitrage Vic 04/08) — facteur ×(1 − manque/seuil) appliqué au
+    SIGNAL de scoring des parcelles `au_sous_plancher`, jamais à leur statut (elles restent
+    SERVIES, candidates à l'assemblage). Un manque de 94 % pèse 94 % (facteur 0,06) ; un manque
+    de 10 % pèse 10 % (facteur 0,90). Identité : 1 − manque/seuil = surface/seuil.
+
+    MÊME POINT DE CALCUL que la mention de fiche (zone_regime + seuil_surface_m2, pt2.2) —
+    jamais un seuil recopié. None = pas de pondération (zone non calibrée, pas de plancher,
+    surface au-dessus du seuil, ou régime non conditionnel) : signal INCHANGÉ."""
+    regime = zone_regime(insee, zone_lib)
+    if regime is None or regime.get("ouverture") != OUVERTURE_CONDITIONNELLE:
+        return None
+    seuil = seuil_surface_m2(regime)
+    if seuil is None or surface_m2 is None or surface_m2 <= 0 or surface_m2 >= seuil:
+        return None
+    return max(0.0, min(1.0, float(surface_m2) / seuil))
+
+
 #: Longueur MINIMALE de frontière commune (contact PONCTUEL par un coin ≠ contiguïté utile). m, SRID 2975.
 CONTIGUITE_MIN_M = 3.0
 #: Filtre 2 — un DÉLAISSÉ (parcelle résiduelle minuscule) ne compte pas comme voisin assemblable. m².

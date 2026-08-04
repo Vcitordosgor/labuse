@@ -5,7 +5,9 @@ si trop petite, JAMAIS déclassée) ; conditionnelle_etat_tiers → statut incon
 """
 from __future__ import annotations
 
-from labuse.faisabilite.au_ouverture import classify, seuil_surface_m2, zone_regime
+from labuse.faisabilite.au_ouverture import (
+    classify, facteur_ponderation, seuil_surface_m2, zone_regime,
+)
 from labuse.faisabilite.constructibilite import (
     DECLASSE_AU_FERMEE, AU_SOUS_PLANCHER, DECLASSE_AU_STATUT_INCONNU, DECLASSE_LABELS,
 )
@@ -68,3 +70,22 @@ def test_zone_non_calibree_aucun_marquage():
     # commune hors config → None (comportement d'avant, rétro-compatible)
     assert classify("97404", "AUa", 3000) is None
     assert classify("99999", "AUa", 3000) is None
+
+
+def test_facteur_ponderation_option_b():
+    """Option B (Vic 04/08) : facteur = 1 − manque/seuil = surface/seuil, sur le MÊME seuil
+    que la mention. Un manque de 94 % pèse 94 % ; un manque de 10 % pèse 10 %."""
+    seuil = seuil_surface_m2(zone_regime("97413", "AUc"))          # Saint-Leu AUc : 6667 m²
+    f = facteur_ponderation("97413", "AUc", seuil * 0.06)          # manque 94 %
+    assert abs(f - 0.06) < 1e-9
+    f = facteur_ponderation("97413", "AUc", seuil * 0.90)          # manque 10 %
+    assert abs(f - 0.90) < 1e-9
+    # au-dessus du seuil → pas de pondération (None = signal inchangé)
+    assert facteur_ponderation("97413", "AUc", seuil + 1) is None
+    # zone sans plancher (densité seule) / non calibrée / fermée → None
+    assert facteur_ponderation("97408", "AUAv", 300) is None       # densité seule
+    assert facteur_ponderation("99999", "AUa", 300) is None        # non calibrée
+    assert facteur_ponderation("97423", "AUs", 300) is None        # fermée ≠ conditionnelle
+    # surfaces dégénérées → None (jamais un facteur négatif ou > 1)
+    assert facteur_ponderation("97413", "AUc", 0) is None
+    assert facteur_ponderation("97413", "AUc", None) is None
