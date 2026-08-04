@@ -1,0 +1,75 @@
+  parcel_zone_plu rebâtie : 427419 lignes en 909s
+
+  === NON-RÉGRESSION zone_lib (backup vs rebuild) ===
+  parcelles dont zone_lib change : 115976
+    97416: 35845
+    97409: 20579
+    97410: 14884
+    97418: 13351
+    97405: 7693
+    97424: 6559
+    97402: 5168
+    97419: 4396
+    97403: 4072
+    97421: 3409
+    97404: 14
+    97401: 5
+    97417: 1
+  échantillon des transitions (avant → après) :
+    97416          U → Ug         : 13979
+    97416          U → Uf         : 10963
+    97409          U → UC         : 10081
+    97409          U → UB         : 7390
+    97410       Ub10 → Ub         : 5461
+    97416          U → Ud         : 4333
+    97405          U → UC         : 4036
+    97410        Ub7 → Ub         : 3568
+    97418          U → UD         : 3505
+    97418          U → UB         : 2629
+    97418          U → UA         : 2247
+    97403          U → Ub         : 2219
+    97418          U → UC         : 2208
+    97402          U → Ub         : 2183
+    97410       Ua13 → Ua         : 1920
+    97424         95 → Ub         : 1917
+    97419          U → Uc         : 1565
+    97421          U → UB         : 1558
+    97410       Ua10 → Ua         : 1482
+    97416          U → Up         : 1461
+    97409          U → UD         : 1202
+    97405          U → UD         : 1073
+    97405          U → UB         : 1059
+    97419          U → Ua         : 975
+    97402          U → Uc         : 942
+
+  === RE-CLASSIF au_statut (5 communes calibrées) ===
+  AVANT (backup) par commune/classe :
+    97408 conditionnelle_operation     697
+    97408 declasse_au_fermee           89
+    97410 declasse_au_fermee           12
+    97410 générique                    237
+    97413 au_sous_plancher             662
+    97413 conditionnelle_operation     208
+    97413 declasse_au_fermee           124
+    97415 conditionnelle_operation     1869
+    97423 au_sous_plancher             407
+    97423 conditionnelle_operation     80
+    97423 declasse_au_fermee           13
+    97423 declasse_au_statut_inconnu   101
+  4499 lignes supprimées (5 communes) ; reconstruction…
+  build_au_ouverture → {'conditionnelle_operation': 3091, 'declasse_au_fermee': 238, 'au_sous_plancher': 1069, 'declasse_au_statut_inconnu': 101}
+  APRÈS par commune/classe :
+    97408 conditionnelle_operation     697
+    97408 declasse_au_fermee           89
+    97410 conditionnelle_operation     237
+    97410 declasse_au_fermee           12
+    97413 au_sous_plancher             662
+    97413 conditionnelle_operation     208
+    97413 declasse_au_fermee           124
+    97415 conditionnelle_operation     1869
+    97423 au_sous_plancher             407
+    97423 conditionnelle_operation     80
+    97423 declasse_au_fermee           13
+    97423 declasse_au_statut_inconnu   101
+  total parcel_au_statut : 9362
+ÉTAPE B FINIE
