@@ -32,125 +32,12 @@ import argparse, os, sys, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from sqlalchemy import text
 from labuse.db import engine, session_scope
-
-TARGET = "q_v8_calibre"
-
-
-class RunIncompletError(RuntimeError):
-    """Levée par verify_completude quand une table attendue manque — échec BRUYANT."""
-
-
-# ─────────────────────────────── gardes de démarrage ───────────────────────────────
-
-class DisqueInsuffisantError(RuntimeError):
-    """Espace disque insuffisant pour finir la re-passe — refus de démarrer (échec bruyant)."""
-
-
-class PeremptionError(RuntimeError):
-    """5ᵉ garde (arbitrage Vic 30/07, option B) : des déclassements AU dépassent le seuil de
-    blocage (180 j) — refus de SERVIR un run qui les exposerait encore, sauf --peremption-ack
-    humain et tracé. Ne DURCIT jamais la parcelle (pas d'escalade vers ecartee = option A) : le
-    garde vise NOTRE oubli (règlement non lu), pas la parcelle."""
-
-
-def check_peremption(ack_motif: str | None = None) -> dict:
-    """Refuse de basculer si des déclassées AU dépassent 180 j, sauf contournement tracé.
-    L'ack est BAVARD (exigence Vic) : journalise QUI, QUAND, COMBIEN — consultable après coup."""
-    import getpass
-    from labuse.faisabilite.au_statut import (
-        declassees_perimees, journalise_peremption_ack, SEUIL_BLOCAGE_JOURS)
-    with session_scope() as s:
-        n = declassees_perimees(s, SEUIL_BLOCAGE_JOURS)
-    if n == 0:
-        return {"perimees": 0, "acked": False}
-    if not ack_motif:
-        raise PeremptionError(
-            f"BLOCAGE PÉREMPTION — {n} déclassées AU dépassent {SEUIL_BLOCAGE_JOURS} j sans "
-            f"vérification d'ouverture.\n    Le déclassement était TEMPORAIRE : lis les règlements "
-            f"(labuse compute-au-statut après calibration) OU contourne, tracé :\n"
-            f"    --peremption-ack \"motif du passage en force\"")
-    who = getpass.getuser()
-    with session_scope() as s:
-        journalise_peremption_ack(s, acked_by=who, n_parcels=n,
-                                  seuil_jours=SEUIL_BLOCAGE_JOURS, motif=ack_motif)
-    print(f"{_ts()} ⚠ PÉREMPTION CONTOURNÉE par {who} : {n} déclassées AU > {SEUIL_BLOCAGE_JOURS} j "
-          f"servies quand même. Motif : « {ack_motif} ». Tracé dans au_statut_ack_journal.", flush=True)
-    return {"perimees": n, "acked": True, "acked_by": who, "motif": ack_motif}
-
-
-def _ts() -> str:
-    """Horodatage HH:MM:SS pour la journalisation (Date.now() indisponible dans les workflows,
-    mais ici on est en script Python standard)."""
-    import datetime
-    return datetime.datetime.now().strftime("%H:%M:%S")
-
-
-def check_disque(target: str = TARGET, marge: float = 1.25) -> dict:
-    """Garde DISQUE (garde manquante qui a tué le job à 20 %, Vic 30/07). Estime l'espace que la
-    re-passe q_v8 va CONSOMMER (cascade + evaluations + scores + snapshot, dimensionné sur la
-    référence complète q_v7_defisc), le compare à l'espace DISPONIBLE = libre OS + espace mort
-    RÉUTILISABLE dans les tables cibles (le job réutilise les lignes supprimées sans grossir le
-    fichier). Refuse de démarrer si disponible < besoin × marge. Idempotent, lecture seule."""
-    import shutil
-    with engine().connect() as c:
-        # besoin = taille des tranches q_v7 (référence complète) MOINS ce que q_v8 a déjà écrit
-        need = c.execute(text("""
-            SELECT
-              (SELECT pg_total_relation_size('dryrun_cascade_results')::float
-                      * (SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc')
-                      / NULLIF((SELECT count(*) FROM dryrun_cascade_results),0)) +
-              (SELECT pg_total_relation_size('parcel_p_score_v2')::float / NULLIF((SELECT count(DISTINCT run_id) FROM parcel_p_score_v2),0)) +
-              (SELECT pg_total_relation_size('dryrun_parcel_evaluations')::float
-                      * (SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label='q_v7_defisc')
-                      / NULLIF((SELECT count(*) FROM dryrun_parcel_evaluations),0))
-        """)).scalar() or 0.0
-        already = c.execute(text("""
-            SELECT (SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:t)::float
-                   / NULLIF((SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc'),0)"""),
-            {"t": target}).scalar() or 0.0
-        need_rest = need * max(0.0, 1.0 - already)
-        # espace RÉUTILISABLE dans les tables cibles (lignes supprimées non rendues à l'OS, mais
-        # réutilisées par les INSERT). Mesure EXACTE via pg_freespacemap (FSM) si l'extension est
-        # présente — post-VACUUM `n_dead_tup` retombe à 0 et sous-compterait ; repli n_dead_tup sinon.
-        _tables = ('dryrun_cascade_results', 'parcel_p_score_v2', 'dryrun_parcel_evaluations', 'score_snapshot_parcelles')
-        _has_fsm = c.execute(text("SELECT 1 FROM pg_extension WHERE extname='pg_freespacemap'")).scalar()
-        if _has_fsm:
-            dead = 0.0
-            for t in _tables:
-                if c.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar():
-                    dead += float(c.execute(text(f"SELECT COALESCE(sum(avail),0) FROM pg_freespace('{t}')")).scalar() or 0)
-        else:
-            dead = c.execute(text("""
-                SELECT COALESCE(sum(n_dead_tup::float / NULLIF(n_live_tup,0) * pg_relation_size(relid)),0)
-                FROM pg_stat_user_tables WHERE relname = ANY(:t)"""), {"t": list(_tables)}).scalar() or 0.0
-    free = shutil.disk_usage(".").free
-    # Le FSM ABSORBE les écritures (réutilisation sans grossir le fichier) ; seul le DÉBORDEMENT
-    # (besoin − FSM) tombe sur le disque OS. On garde donc sur le besoin OS RÉEL, pas le brut.
-    besoin_os = max(0.0, need_rest - dead)
-    rep = {"besoin_reste_go": round(need_rest/1e9, 2), "fsm_reutilisable_go": round(dead/1e9, 2),
-           "besoin_os_go": round(besoin_os/1e9, 2), "libre_os_go": round(free/1e9, 2),
-           "marge": marge, "ok": free >= besoin_os * marge}
-    print(f"  [garde disque] besoin≈{rep['besoin_reste_go']} Go, dont FSM réutilisable "
-          f"{rep['fsm_reutilisable_go']} Go → débordement OS ≈{rep['besoin_os_go']} Go vs libre OS "
-          f"{rep['libre_os_go']} Go (marge ×{marge})", flush=True)
-    if not rep["ok"]:
-        raise DisqueInsuffisantError(
-            f"DISQUE INSUFFISANT : débordement OS ≈{rep['besoin_os_go']} Go × {marge} > libre "
-            f"{rep['libre_os_go']} Go. Libérer des runs obsolètes (purge q_v6_m8 + anciens runs) "
-            f"puis VACUUM, ou --skip-disk-check si réutilisation certaine.")
-    return rep
+from labuse.bascule_gardes import (   # 5 gardes + helper _ts : briques importables, AUCUNE logique recopiée
+    TARGET, RunDejaExistantError, RunIncompletError, DisqueInsuffisantError, PeremptionError,
+    check_run_absent, check_disque, check_peremption, ensure_backups, verify_completude, _ts)
 
 
 # ─────────────────────────────── étapes (idempotentes) ───────────────────────────────
-
-def ensure_backups() -> None:
-    """Sauvegardes features pré-bascule (créées une seule fois ; jamais écrasées)."""
-    with engine().begin() as c:
-        for src, bak in [("parcel_residuel", "parcel_residuel_pre_v8"),
-                         ("p_model_static", "p_model_static_pre_v8")]:
-            if not c.execute(text("SELECT to_regclass(:b)"), {"b": bak}).scalar():
-                c.execute(text(f"CREATE TABLE {bak} AS SELECT * FROM {src}"))
-                print(f"  backup créé : {bak}", flush=True)
 
 
 def migrate_residuel() -> int:
@@ -225,37 +112,6 @@ def score(target: str = TARGET) -> dict:
     return res
 
 
-def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: int) -> dict:
-    """5) AUTO-VÉRIFICATION. Compte chaque table clé-run vs attendu. Lève RunIncompletError (échec
-    BRUYANT) au premier manque — le run n'est PAS déclaré servable tant que les 4 tables ne sont pas
-    complètes : scores P, cascade (evaluations + résultats), snapshot."""
-    with engine().connect() as c:
-        counts = {
-            "parcel_p_score_v2":         c.execute(text("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r"), {"r": target}).scalar(),
-            "dryrun_parcel_evaluations": c.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r"), {"r": target}).scalar(),
-            "dryrun_cascade_results":    c.execute(text("SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:r"), {"r": target}).scalar(),
-            "matrice_statut_non_null":   c.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r AND matrice_statut IS NOT NULL"), {"r": target}).scalar(),
-            "p_score_v2_runs":           c.execute(text("SELECT count(*) FROM p_score_v2_runs WHERE run_id=:r"), {"r": target}).scalar(),
-            "snapshot_parcelles":        c.execute(text("SELECT count(*) FROM score_snapshot_parcelles sp JOIN score_snapshots ss ON ss.id=sp.snapshot_id WHERE ss.run_label=:r"), {"r": target}).scalar(),
-        }
-    problems = []
-    if counts["parcel_p_score_v2"] != n_expected_scores:
-        problems.append(f"scores P {counts['parcel_p_score_v2']} ≠ {n_expected_scores}")
-    if counts["dryrun_parcel_evaluations"] != n_expected_cascade:
-        problems.append(f"cascade evaluations {counts['dryrun_parcel_evaluations']} ≠ {n_expected_cascade}")
-    if counts["matrice_statut_non_null"] != n_expected_cascade:
-        problems.append(f"matrice_statut renseigné {counts['matrice_statut_non_null']} ≠ {n_expected_cascade}")
-    if counts["dryrun_cascade_results"] <= 0:
-        problems.append("dryrun_cascade_results VIDE (cascade non produite)")
-    if counts["p_score_v2_runs"] != 1:
-        problems.append(f"header p_score_v2_runs {counts['p_score_v2_runs']} ≠ 1")
-    if counts["snapshot_parcelles"] != n_expected_scores:
-        problems.append(f"snapshot {counts['snapshot_parcelles']} ≠ {n_expected_scores}")
-    if problems:
-        raise RunIncompletError(f"RUN {target} INCOMPLET — NE PAS SERVIR :\n    - " + "\n    - ".join(problems)
-                                + f"\n  détail: {counts}")
-    return counts
-
 
 # ─────────────────────────────────── orchestration ───────────────────────────────────
 
@@ -272,10 +128,10 @@ def main():
                     help="contourne la garde de péremption AU (>180 j) — motif OBLIGATOIRE, tracé (QUI/QUAND/COMBIEN).")
     args = ap.parse_args()
 
-    with engine().connect() as c:
-        if c.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id=:t"), {"t": TARGET}).scalar():
-            raise SystemExit(f"{TARGET} existe déjà — rollback d'abord (python scripts/rollback_v8_calibre.py).")
-        n_parcels = c.execute(text("SELECT count(*) FROM parcels")).scalar()
+    try:                                    # garde ANTI-ÉCRASEMENT (1ʳᵉ garde, brique importable)
+        n_parcels = check_run_absent(TARGET)
+    except RunDejaExistantError as e:
+        raise SystemExit(str(e))
 
     t0 = time.time()
     communes = all_communes()

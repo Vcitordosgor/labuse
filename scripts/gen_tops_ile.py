@@ -15,6 +15,11 @@ from pathlib import Path
 
 import psycopg
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run SERVI, source unique
+# (ANO-1/M8a) : « q_v2 » n'était plus qu'un run gelé, absent de la base servie — les tops
+# doivent lire le MÊME run que la carte et les fiches (Q_A_RUN_LABEL), jamais un run figé.
+
 DB = os.environ.get("LABUSE_DB", "postgresql://openclaw@127.0.0.1:5432/labuse")
 OUT = Path(__file__).resolve().parents[1] / "docs" / "tops_ile"
 APP = "http://127.0.0.1:8010/socle/"
@@ -78,7 +83,7 @@ def esc(s: object) -> str:
 def rows_html(cur, rows) -> str:
     out = []
     for r in rows:
-        cur.execute(SQL_WHY, {"run": "q_v2", "idu": r["idu"]})
+        cur.execute(SQL_WHY, {"run": RUN, "idu": r["idu"]})
         why = " · ".join(f"<b>{esc(w['layer_name'])}</b> {int(w['weight_applied']):+d}" for w in cur.fetchall())
         import re as _re
         zm = _re.search(r"« ([^»]+) »", r["zone_detail"] or "")
@@ -86,7 +91,7 @@ def rows_html(cur, rows) -> str:
         gmaps = f"https://www.google.com/maps/@{r['lat']},{r['lon']},120m/data=!3m1!1e3"
         app = f"{APP}#f=1&c={r['commune'].replace(' ', '%20')}"
         out.append(f"""<tr>
-<td class="idu">{esc(r['idu'][8:10])} {esc(r['idu'][10:])}<div class="muted">{esc(r['commune'])}</div></td>
+<td class="idu">{esc(r['idu'])}<div class="muted">{esc(r['commune'])}</div></td>
 <td><span class="st-{r['st']}">{esc(r['st'])}</span>{' <span class="ev">● ÉVÉNEMENT</span>' if r['evenement'] else ''}</td>
 <td class="num">Q {r['q_score']} · A {r['a_score']}<div class="muted">compl. {r['completeness_score']} %</div></td>
 <td class="num">{int(r['surface'] or 0):,} m²<div class="muted">SDP {int(r['sdp_residuelle_m2'] or 0):,} m²</div></td>
@@ -102,7 +107,7 @@ def page(title: str, sub: str, body: str) -> str:
 <style>{CSS}</style><body><h1>{title} <small>{sub}</small></h1>
 <table><tr><th>PARCELLE</th><th>STATUT</th><th>SCORES</th><th>SURFACE</th><th>ZONE PLU</th><th>POURQUOI (poids dominants) · PROPRIO</th><th>CONTRÔLE</th></tr>
 {body}</table>
-<p class="muted">Généré depuis dryrun_parcel_evaluations run q_v2 — tri : événement, puis statut, puis Q+A.
+<p class="muted">Généré depuis dryrun_parcel_evaluations run {RUN} — tri : événement, puis statut, puis Q+A.
 Contrôle d'absurdité : ouvrir « satellite » (rue/parking/terrain de sport = faux positif à signaler).</p></body></html>"""
 
 
@@ -112,11 +117,11 @@ def main() -> None:
         cur.execute("SELECT DISTINCT commune FROM parcels ORDER BY 1")
         communes = [r["commune"] for r in cur.fetchall()]
         for c in communes:
-            cur.execute(SQL_TOP, {"run": "q_v2", "commune": c, "statuts": ["chaude"], "n": 10})
+            cur.execute(SQL_TOP, {"run": RUN, "commune": c, "statuts": ["chaude"], "n": 10})
             rows = cur.fetchall()
             note = f"top {len(rows)} chaudes"
             if len(rows) < 10:   # commune sans 10 chaudes : compléter « à surveiller » (annoncé)
-                cur.execute(SQL_TOP, {"run": "q_v2", "commune": c,
+                cur.execute(SQL_TOP, {"run": RUN, "commune": c,
                                       "statuts": ["a_surveiller"], "n": 10 - len(rows)})
                 extra = cur.fetchall()
                 rows += extra
@@ -125,7 +130,7 @@ def main() -> None:
             (OUT / f"top10_{slug}.html").write_text(
                 page(f"TOP — {c}", note, rows_html(cur, rows)), encoding="utf-8")
             print(f"  {c}: {note}")
-        cur.execute(SQL_TOP, {"run": "q_v2", "commune": None, "statuts": ["chaude"], "n": 50})
+        cur.execute(SQL_TOP, {"run": RUN, "commune": None, "statuts": ["chaude"], "n": 50})
         rows = cur.fetchall()
         (OUT / "top50_ile.html").write_text(
             page("TOP 50 ÎLE — chaudes", f"{len(rows)} chaudes (24 communes)", rows_html(cur, rows)),
