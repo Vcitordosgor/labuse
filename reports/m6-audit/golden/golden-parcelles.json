@@ -1,24 +1,21 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-07-15T11:28:12",
-  "j3_ancres": {
-   "ajoutees": 84,
-   "coherence": 31,
-   "factuelle": 53,
-   "format": "couple (cascade_status, matrice_statut, tier_v2) + validation"
-  },
-  "m_renouv": "lot C 2026-07-26 : +3 cas — (1) 97413000DM0210 porte le bloc renouvellement (rang gelé), (2) les 31 autres riches le gèlent à null, (3) meta.tiers_effectifs stricts. Patch chirurgical (jamais --dump : il perdrait les 84 ancres J3).",
+  "genere_le": "2026-08-04T16:26:08",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
-  "run_cascade": "q_v7_defisc",
-  "run_v2_servi": "q_v7_defisc",
+  "run_cascade": "q_v8_calibre",
+  "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
-   "a_creuser": 72980,
-   "brulante": 120,
-   "chaude": 1031,
-   "ecartee": 353945,
-   "reserve_fonciere": 3587
+   "a_creuser": 63433,
+   "brulante": 119,
+   "chaude": 1038,
+   "declasse_au_fermee": 58,
+   "declasse_au_statut_inconnu": 560,
+   "declasse_non_constructible": 6169,
+   "declasse_zone_fermee": 2804,
+   "ecartee": 354355,
+   "reserve_fonciere": 3127
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -60,7 +57,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_zone_fermee",
    "validation": "coherence"
   },
   "97401000AD0095": {
@@ -130,7 +127,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "a_creuser",
    "validation": "coherence"
   },
   "97401000AM0193": {
@@ -208,9 +205,9 @@
    "cascade_status": "a_creuser",
    "commune": "Bras-Panon",
    "etage0": false,
-   "matrice_statut": "chaude",
+   "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "a_creuser",
    "validation": "coherence"
   },
   "97402000AK1725": {
@@ -235,9 +232,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 1.31,
-      "percentile": 86.86,
-      "rang": 56293,
+      "mult_base": 1.32,
+      "percentile": 87.1,
+      "rang": 55257,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -247,10 +244,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.31,
-     "percentile": 86.86,
-     "rang": 56293,
-     "run_id": "q_v7_defisc",
+     "mult_base": 1.32,
+     "percentile": 87.1,
+     "rang": 55257,
+     "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
    },
@@ -289,7 +286,7 @@
     "residuel": {
      "sdp_residuelle_m2": 0,
      "sous_densite": false,
-     "taux_emprise_pct": 49
+     "taux_emprise_pct": 61
     },
     "risques": [
      "Aléa mouvement_terrain — niveau faible."
@@ -303,9 +300,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.31,
-     "percentile": 86.9,
-     "rang": 56293,
+     "mult_base": 1.32,
+     "percentile": 87.1,
+     "rang": 55257,
      "tier": "a_creuser"
     },
     "section": "AK",
@@ -356,7 +353,7 @@
    "api": {
     "fiche": {
      "a_completude": 67,
-     "a_score": 62,
+     "a_score": 61,
      "commune": "Entre-Deux",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
@@ -374,9 +371,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.07,
-      "percentile": 99.99,
-      "rang": 28,
+      "mult_base": 13.13,
+      "percentile": 100.0,
+      "rang": 22,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -386,17 +383,17 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
-     "percentile": 99.99,
-     "rang": 28,
-     "run_id": "q_v7_defisc",
+     "mult_base": 13.13,
+     "percentile": 100.0,
+     "rang": 22,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
     "a_completude": 67,
-    "a_score": 62,
+    "a_score": 61,
     "adresse_ban": null,
     "cascade_status": "a_creuser",
     "commune": "Entre-Deux",
@@ -438,9 +435,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 100.0,
-     "rang": 28,
+     "rang": 22,
      "tier": "brulante"
     },
     "section": "AR",
@@ -470,7 +467,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_non_constructible",
    "validation": "coherence"
   },
   "97404000AC0011": {
@@ -485,12 +482,12 @@
   },
   "97404000AC1225": {
    "anchor": true,
-   "cascade_status": "opportunite",
+   "cascade_status": "a_creuser",
    "commune": "L'Étang-Salé",
    "etage0": false,
-   "matrice_statut": "a_creuser",
+   "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "a_creuser",
    "validation": "coherence"
   },
   "97404000AD0194": {
@@ -536,8 +533,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.7,
-      "percentile": 25.32,
-      "rang": 319830,
+      "percentile": 25.38,
+      "rang": 319532,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -548,9 +545,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
-     "percentile": 25.32,
-     "rang": 319830,
-     "run_id": "q_v7_defisc",
+     "percentile": 25.38,
+     "rang": 319532,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -601,8 +598,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
-     "percentile": 25.3,
-     "rang": 319830,
+     "percentile": 25.4,
+     "rang": 319532,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -672,7 +669,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_non_constructible",
    "validation": "coherence"
   },
   "97407000AB0009": {
@@ -700,9 +697,9 @@
    "cascade_status": "a_creuser",
    "commune": "Le Port",
    "etage0": false,
-   "matrice_statut": "a_creuser",
+   "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "declasse_zone_fermee",
    "validation": "coherence"
   },
   "97407000BI0350": {
@@ -727,10 +724,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 5.85,
-      "percentile": 99.84,
-      "rang": 706,
-      "tier": "chaude"
+      "mult_base": 5.87,
+      "percentile": 99.83,
+      "rang": 716,
+      "tier": "declasse_non_constructible"
      },
      "statut": "a_creuser",
      "surface_m2": 683,
@@ -739,11 +736,11 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 5.85,
-     "percentile": 99.84,
-     "rang": 706,
-     "run_id": "q_v7_defisc",
-     "tier": "chaude"
+     "mult_base": 5.87,
+     "percentile": 99.83,
+     "rang": 716,
+     "run_id": "q_v8_calibre",
+     "tier": "declasse_non_constructible"
     }
    },
    "coherence_db_api": [],
@@ -790,10 +787,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 5.85,
+     "mult_base": 5.87,
      "percentile": 99.8,
-     "rang": 706,
-     "tier": "chaude"
+     "rang": 716,
+     "tier": "declasse_non_constructible"
     },
     "section": "BI",
     "solaire": {
@@ -851,7 +848,7 @@
      "n_coproprietes": 0,
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
-     "q_score": 87,
+     "q_score": 77,
      "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
@@ -861,8 +858,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.91,
-      "percentile": 46.27,
-      "rang": 230108,
+      "percentile": 46.4,
+      "rang": 229523,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -873,9 +870,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.27,
-     "rang": 230108,
-     "run_id": "q_v7_defisc",
+     "percentile": 46.4,
+     "rang": 229523,
+     "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
    },
@@ -903,9 +900,9 @@
      "validees": 0
     },
     "proprietaire_moral": null,
-    "q_score": 87,
+    "q_score": 77,
     "residuel": {
-     "sdp_residuelle_m2": 3553,
+     "sdp_residuelle_m2": 1870,
      "sous_densite": true,
      "taux_emprise_pct": 0
     },
@@ -922,8 +919,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.3,
-     "rang": 230108,
+     "percentile": 46.4,
+     "rang": 229523,
      "tier": "reserve_fonciere"
     },
     "section": "AC",
@@ -982,9 +979,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 63.97,
+      "mult_base": 64.25,
       "percentile": 100.0,
-      "rang": 2,
+      "rang": 1,
       "tier": "chaude"
      },
      "statut": "a_creuser",
@@ -994,10 +991,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 63.97,
+     "mult_base": 64.25,
      "percentile": 100.0,
-     "rang": 2,
-     "run_id": "q_v7_defisc",
+     "rang": 1,
+     "run_id": "q_v8_calibre",
      "tier": "chaude"
     }
    },
@@ -1050,9 +1047,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 63.97,
+     "mult_base": 64.25,
      "percentile": 100.0,
-     "rang": 2,
+     "rang": 1,
      "tier": "chaude"
     },
     "section": "AP",
@@ -1128,8 +1125,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.91,
-      "percentile": 46.4,
-      "rang": 229536,
+      "percentile": 46.54,
+      "rang": 228933,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -1140,9 +1137,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.4,
-     "rang": 229536,
-     "run_id": "q_v7_defisc",
+     "percentile": 46.54,
+     "rang": 228933,
+     "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
    },
@@ -1198,8 +1195,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.4,
-     "rang": 229536,
+     "percentile": 46.5,
+     "rang": 228933,
      "tier": "reserve_fonciere"
     },
     "section": "AX",
@@ -1268,9 +1265,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
+      "mult_base": 22.09,
       "percentile": 100.0,
-      "rang": 16,
+      "rang": 13,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -1280,10 +1277,10 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 16,
-     "run_id": "q_v7_defisc",
+     "rang": 13,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
@@ -1339,9 +1336,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 16,
+     "rang": 13,
      "tier": "brulante"
     },
     "section": "AS",
@@ -1393,9 +1390,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.07,
+      "mult_base": 13.13,
       "percentile": 99.99,
-      "rang": 37,
+      "rang": 31,
       "tier": "chaude"
      },
      "statut": "ecartee",
@@ -1405,10 +1402,10 @@
     "score_v2": {
      "badge_veille_succession": true,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 99.99,
-     "rang": 37,
-     "run_id": "q_v7_defisc",
+     "rang": 31,
+     "run_id": "q_v8_calibre",
      "tier": "chaude"
     }
    },
@@ -1464,9 +1461,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 100.0,
-     "rang": 37,
+     "rang": 31,
      "tier": "chaude"
     },
     "section": "AS",
@@ -1518,9 +1515,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
+      "mult_base": 22.09,
       "percentile": 100.0,
-      "rang": 8,
+      "rang": 5,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -1530,10 +1527,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 8,
-     "run_id": "q_v7_defisc",
+     "rang": 5,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
@@ -1586,9 +1583,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 8,
+     "rang": 5,
      "tier": "brulante"
     },
     "section": "CD",
@@ -1618,7 +1615,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "chaude",
    "validation": "coherence"
   },
   "97411000AB0006": {
@@ -1663,7 +1660,7 @@
      },
      "score_v2": {
       "copro": true,
-      "mult_base": 1.82,
+      "mult_base": 1.83,
       "percentile": null,
       "rang": null,
       "tier": "a_creuser"
@@ -1675,10 +1672,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.82,
+     "mult_base": 1.83,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v7_defisc",
+     "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
    },
@@ -1730,7 +1727,7 @@
      "copro": true,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.82,
+     "mult_base": 1.83,
      "percentile": null,
      "rang": null,
      "tier": "a_creuser"
@@ -1781,9 +1778,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.92,
-      "percentile": 48.95,
-      "rang": 218635,
+      "mult_base": 0.99,
+      "percentile": 60.91,
+      "rang": 167395,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -1793,10 +1790,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.92,
-     "percentile": 48.95,
-     "rang": 218635,
-     "run_id": "q_v7_defisc",
+     "mult_base": 0.99,
+     "percentile": 60.91,
+     "rang": 167395,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -1848,9 +1845,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.92,
-     "percentile": 49.0,
-     "rang": 218635,
+     "mult_base": 0.99,
+     "percentile": 60.9,
+     "rang": 167395,
      "tier": "ecartee"
     },
     "section": "AO",
@@ -1909,9 +1906,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
+      "mult_base": 22.09,
       "percentile": 100.0,
-      "rang": 7,
+      "rang": 4,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -1921,10 +1918,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 7,
-     "run_id": "q_v7_defisc",
+     "rang": 4,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
@@ -1977,9 +1974,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 7,
+     "rang": 4,
      "tier": "brulante"
     },
     "section": "KA",
@@ -2074,9 +2071,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 7.09,
+      "mult_base": 7.12,
       "percentile": 99.95,
-      "rang": 194,
+      "rang": 196,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2086,10 +2083,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 7.09,
+     "mult_base": 7.12,
      "percentile": 99.95,
-     "rang": 194,
-     "run_id": "q_v7_defisc",
+     "rang": 196,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -2143,9 +2140,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 7.09,
+     "mult_base": 7.12,
      "percentile": 100.0,
-     "rang": 194,
+     "rang": 196,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -2179,7 +2176,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_non_constructible",
    "validation": "coherence"
   },
   "97413000CS0160": {
@@ -2204,9 +2201,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 2.63,
-      "percentile": 98.41,
-      "rang": 6820,
+      "mult_base": 2.64,
+      "percentile": 98.46,
+      "rang": 6590,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -2216,10 +2213,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.63,
-     "percentile": 98.41,
-     "rang": 6820,
-     "run_id": "q_v7_defisc",
+     "mult_base": 2.64,
+     "percentile": 98.46,
+     "rang": 6590,
+     "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
    },
@@ -2276,9 +2273,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.63,
-     "percentile": 98.4,
-     "rang": 6820,
+     "mult_base": 2.64,
+     "percentile": 98.5,
+     "rang": 6590,
      "tier": "a_creuser"
     },
     "section": "CS",
@@ -2330,9 +2327,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 1.31,
-      "percentile": 88.69,
-      "rang": 48451,
+      "mult_base": 1.32,
+      "percentile": 88.91,
+      "rang": 47508,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2342,10 +2339,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.31,
-     "percentile": 88.69,
-     "rang": 48451,
-     "run_id": "q_v7_defisc",
+     "mult_base": 1.32,
+     "percentile": 88.91,
+     "rang": 47508,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -2401,9 +2398,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 1.31,
-     "percentile": 88.7,
-     "rang": 48451,
+     "mult_base": 1.32,
+     "percentile": 88.9,
+     "rang": 47508,
      "tier": "ecartee"
     },
     "section": "DM",
@@ -2512,10 +2509,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.07,
+      "mult_base": 13.13,
       "percentile": 99.99,
-      "rang": 33,
-      "tier": "a_creuser"
+      "rang": 27,
+      "tier": "declasse_non_constructible"
      },
      "statut": "ecartee",
      "surface_m2": 130,
@@ -2524,11 +2521,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 99.99,
-     "rang": 33,
-     "run_id": "q_v7_defisc",
-     "tier": "a_creuser"
+     "rang": 27,
+     "run_id": "q_v8_calibre",
+     "tier": "declasse_non_constructible"
     }
    },
    "coherence_db_api": [],
@@ -2572,10 +2569,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 100.0,
-     "rang": 33,
-     "tier": "a_creuser"
+     "rang": 27,
+     "tier": "declasse_non_constructible"
     },
     "section": "CW",
     "solaire": {
@@ -2623,9 +2620,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 18.02,
+      "mult_base": 17.39,
       "percentile": 100.0,
-      "rang": 22,
+      "rang": 17,
       "tier": "chaude"
      },
      "statut": "a_creuser",
@@ -2635,10 +2632,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 18.02,
+     "mult_base": 17.39,
      "percentile": 100.0,
-     "rang": 22,
-     "run_id": "q_v7_defisc",
+     "rang": 17,
+     "run_id": "q_v8_calibre",
      "tier": "chaude"
     }
    },
@@ -2691,9 +2688,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 18.02,
+     "mult_base": 17.39,
      "percentile": 100.0,
-     "rang": 22,
+     "rang": 17,
      "tier": "chaude"
     },
     "section": "CX",
@@ -2739,8 +2736,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.91,
-      "percentile": 46.03,
-      "rang": 231134,
+      "percentile": 46.17,
+      "rang": 230542,
       "tier": "reserve_fonciere"
      },
      "statut": "chaude",
@@ -2751,9 +2748,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.03,
-     "rang": 231134,
-     "run_id": "q_v7_defisc",
+     "percentile": 46.17,
+     "rang": 230542,
+     "run_id": "q_v8_calibre",
      "tier": "reserve_fonciere"
     }
    },
@@ -2807,8 +2804,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
-     "percentile": 46.0,
-     "rang": 231134,
+     "percentile": 46.2,
+     "rang": 230542,
      "tier": "reserve_fonciere"
     },
     "section": "EY",
@@ -2878,8 +2875,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.16,
-      "percentile": 71.87,
-      "rang": 120454,
+      "percentile": 72.14,
+      "rang": 119323,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2890,9 +2887,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 71.87,
-     "rang": 120454,
-     "run_id": "q_v7_defisc",
+     "percentile": 72.14,
+     "rang": 119323,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -2938,8 +2935,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 71.9,
-     "rang": 120454,
+     "percentile": 72.1,
+     "rang": 119323,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -2984,9 +2981,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.91,
-      "percentile": 46.37,
-      "rang": 229671,
+      "mult_base": 0.93,
+      "percentile": 58.06,
+      "rang": 179625,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2996,10 +2993,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.37,
-     "rang": 229671,
-     "run_id": "q_v7_defisc",
+     "mult_base": 0.93,
+     "percentile": 58.06,
+     "rang": 179625,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -3033,11 +3030,7 @@
      "siren": "249740077"
     },
     "q_score": 50,
-    "residuel": {
-     "sdp_residuelle_m2": 3903,
-     "sous_densite": true,
-     "taux_emprise_pct": 0
-    },
+    "residuel": null,
     "risques": [
      "Aléa mouvement_terrain — niveau faible."
     ],
@@ -3050,9 +3043,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.91,
-     "percentile": 46.4,
-     "rang": 229671,
+     "mult_base": 0.93,
+     "percentile": 58.1,
+     "rang": 179625,
      "tier": "ecartee"
     },
     "section": "CR",
@@ -3161,9 +3154,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
+      "mult_base": 22.09,
       "percentile": 100.0,
-      "rang": 9,
+      "rang": 6,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -3173,10 +3166,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 9,
-     "run_id": "q_v7_defisc",
+     "rang": 6,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
@@ -3216,7 +3209,7 @@
     },
     "q_score": 41,
     "residuel": {
-     "sdp_residuelle_m2": 108,
+     "sdp_residuelle_m2": 146,
      "sous_densite": true,
      "taux_emprise_pct": 7
     },
@@ -3232,9 +3225,9 @@
      "copro": false,
      "event_date": "2025-08-28",
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 9,
+     "rang": 6,
      "tier": "brulante"
     },
     "section": "AT",
@@ -3300,8 +3293,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.81,
-      "percentile": 32.29,
-      "rang": 289961,
+      "percentile": 32.37,
+      "rang": 289615,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3312,9 +3305,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
-     "percentile": 32.29,
-     "rang": 289961,
-     "run_id": "q_v7_defisc",
+     "percentile": 32.37,
+     "rang": 289615,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -3360,8 +3353,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
-     "percentile": 32.3,
-     "rang": 289961,
+     "percentile": 32.4,
+     "rang": 289615,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -3403,9 +3396,9 @@
    "cascade_status": "a_creuser",
    "commune": "Sainte-Rose",
    "etage0": false,
-   "matrice_statut": "a_creuser",
+   "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "a_creuser",
    "validation": "coherence"
   },
   "97420000AB0291": {
@@ -3450,9 +3443,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.07,
+      "mult_base": 13.13,
       "percentile": 99.99,
-      "rang": 35,
+      "rang": 29,
       "tier": "chaude"
      },
      "statut": "ecartee",
@@ -3462,10 +3455,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 99.99,
-     "rang": 35,
-     "run_id": "q_v7_defisc",
+     "rang": 29,
+     "run_id": "q_v8_calibre",
      "tier": "chaude"
     }
    },
@@ -3505,7 +3498,7 @@
     },
     "q_score": 44,
     "residuel": {
-     "sdp_residuelle_m2": 176,
+     "sdp_residuelle_m2": 117,
      "sous_densite": true,
      "taux_emprise_pct": 0
     },
@@ -3521,9 +3514,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 100.0,
-     "rang": 35,
+     "rang": 29,
      "tier": "chaude"
     },
     "section": "AO",
@@ -3603,8 +3596,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.51,
-      "percentile": 5.05,
-      "rang": 406606,
+      "percentile": 5.29,
+      "rang": 405573,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3615,9 +3608,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.51,
-     "percentile": 5.05,
-     "rang": 406606,
-     "run_id": "q_v7_defisc",
+     "percentile": 5.29,
+     "rang": 405573,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -3672,8 +3665,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.51,
-     "percentile": 5.1,
-     "rang": 406606,
+     "percentile": 5.3,
+     "rang": 405573,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -3703,7 +3696,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "brulante",
+   "tier_v2": "chaude",
    "validation": "coherence"
   },
   "97422000AB0001": {
@@ -3739,7 +3732,7 @@
      "n_coproprietes": 0,
      "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
-     "q_score": 63,
+     "q_score": 58,
      "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
@@ -3748,10 +3741,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
+      "mult_base": 22.09,
       "percentile": 100.0,
-      "rang": 17,
-      "tier": "brulante"
+      "rang": 14,
+      "tier": "declasse_zone_fermee"
      },
      "statut": "a_creuser",
      "surface_m2": 599,
@@ -3760,11 +3753,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 17,
-     "run_id": "q_v7_defisc",
-     "tier": "brulante"
+     "rang": 14,
+     "run_id": "q_v8_calibre",
+     "tier": "declasse_zone_fermee"
     }
    },
    "coherence_db_api": [],
@@ -3798,12 +3791,8 @@
      "validees": 0
     },
     "proprietaire_moral": null,
-    "q_score": 63,
-    "residuel": {
-     "sdp_residuelle_m2": 453,
-     "sous_densite": true,
-     "taux_emprise_pct": 0
-    },
+    "q_score": 58,
+    "residuel": null,
     "risques": [
      "Aléa mouvement_terrain — niveau faible."
     ],
@@ -3816,10 +3805,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
+     "mult_base": 22.09,
      "percentile": 100.0,
-     "rang": 17,
-     "tier": "brulante"
+     "rang": 14,
+     "tier": "declasse_zone_fermee"
     },
     "section": "AD",
     "solaire": {
@@ -3848,7 +3837,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "a_creuser",
+   "tier_v2": "declasse_non_constructible",
    "validation": "coherence"
   },
   "97422000AX1253": {
@@ -3873,10 +3862,10 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 13.07,
+      "mult_base": 13.13,
       "percentile": 99.99,
-      "rang": 56,
-      "tier": "chaude"
+      "rang": 50,
+      "tier": "declasse_zone_fermee"
      },
      "statut": "ecartee",
      "surface_m2": 27084,
@@ -3885,11 +3874,11 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 99.99,
-     "rang": 56,
-     "run_id": "q_v7_defisc",
-     "tier": "chaude"
+     "rang": 50,
+     "run_id": "q_v8_calibre",
+     "tier": "declasse_zone_fermee"
     }
    },
    "coherence_db_api": [],
@@ -3937,10 +3926,10 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 13.07,
+     "mult_base": 13.13,
      "percentile": 100.0,
-     "rang": 56,
-     "tier": "chaude"
+     "rang": 50,
+     "tier": "declasse_zone_fermee"
     },
     "section": "AX",
     "solaire": {
@@ -3984,9 +3973,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 2.11,
-      "percentile": 97.7,
-      "rang": 9849,
+      "mult_base": 2.12,
+      "percentile": 97.78,
+      "rang": 9520,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3996,10 +3985,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.11,
-     "percentile": 97.7,
-     "rang": 9849,
-     "run_id": "q_v7_defisc",
+     "mult_base": 2.12,
+     "percentile": 97.78,
+     "rang": 9520,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -4053,9 +4042,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 2.11,
-     "percentile": 97.7,
-     "rang": 9849,
+     "mult_base": 2.12,
+     "percentile": 97.8,
+     "rang": 9520,
      "tier": "ecartee"
     },
     "section": "BY",
@@ -4120,9 +4109,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 21.99,
-      "percentile": 100.0,
-      "rang": 19,
+      "mult_base": 4.7,
+      "percentile": 99.61,
+      "rang": 1692,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -4132,10 +4121,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
-     "percentile": 100.0,
-     "rang": 19,
-     "run_id": "q_v7_defisc",
+     "mult_base": 4.7,
+     "percentile": 99.61,
+     "rang": 1692,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -4177,7 +4166,7 @@
     },
     "q_score": 50,
     "residuel": {
-     "sdp_residuelle_m2": 199,
+     "sdp_residuelle_m2": 133,
      "sous_densite": true,
      "taux_emprise_pct": 0
     },
@@ -4198,9 +4187,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 21.99,
-     "percentile": 100.0,
-     "rang": 19,
+     "mult_base": 4.7,
+     "percentile": 99.6,
+     "rang": 1692,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -4249,9 +4238,9 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 63.97,
-      "percentile": 100.0,
-      "rang": 1,
+      "mult_base": 12.07,
+      "percentile": 99.97,
+      "rang": 139,
       "tier": "brulante"
      },
      "statut": "ecartee",
@@ -4261,10 +4250,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 63.97,
-     "percentile": 100.0,
-     "rang": 1,
-     "run_id": "q_v7_defisc",
+     "mult_base": 12.07,
+     "percentile": 99.97,
+     "rang": 139,
+     "run_id": "q_v8_calibre",
      "tier": "brulante"
     }
    },
@@ -4301,7 +4290,7 @@
     "proprietaire_moral": null,
     "q_score": 44,
     "residuel": {
-     "sdp_residuelle_m2": 183,
+     "sdp_residuelle_m2": 122,
      "sous_densite": true,
      "taux_emprise_pct": 0
     },
@@ -4318,9 +4307,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 63.97,
+     "mult_base": 12.07,
      "percentile": 100.0,
-     "rang": 1,
+     "rang": 139,
      "tier": "brulante"
     },
     "section": "AB",
@@ -4354,7 +4343,7 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "reserve_fonciere",
+   "tier_v2": "a_creuser",
    "validation": "coherence"
   },
   "97424000AC0060": {
@@ -4400,8 +4389,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.16,
-      "percentile": 74.39,
-      "rang": 109674,
+      "percentile": 74.64,
+      "rang": 108587,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -4412,9 +4401,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 74.39,
-     "rang": 109674,
-     "run_id": "q_v7_defisc",
+     "percentile": 74.64,
+     "rang": 108587,
+     "run_id": "q_v8_calibre",
      "tier": "ecartee"
     }
    },
@@ -4463,8 +4452,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
-     "percentile": 74.4,
-     "rang": 109674,
+     "percentile": 74.6,
+     "rang": 108587,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -4510,7 +4499,7 @@
      "n_coproprietes": 0,
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
-     "q_score": 58,
+     "q_score": 43,
      "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
@@ -4519,22 +4508,22 @@
      },
      "score_v2": {
       "copro": false,
-      "mult_base": 0.99,
-      "percentile": 64.79,
-      "rang": 150799,
+      "mult_base": 1.16,
+      "percentile": 77.12,
+      "rang": 98000,
       "tier": "a_creuser"
      },
-     "statut": "a_creuser",
+     "statut": "ecartee",
      "surface_m2": 679,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.99,
-     "percentile": 64.79,
-     "rang": 150799,
-     "run_id": "q_v7_defisc",
+     "mult_base": 1.16,
+     "percentile": 77.12,
+     "rang": 98000,
+     "run_id": "q_v8_calibre",
      "tier": "a_creuser"
     }
    },
@@ -4547,7 +4536,7 @@
      "numero": "19",
      "voie": "Ruelle des Lianes"
     },
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Cilaos",
     "completeness_score": 92,
     "copro_rnic": {
@@ -4558,7 +4547,7 @@
     "dvf": null,
     "etage0": false,
     "etage0_motifs": [],
-    "matrice_statut": "a_creuser",
+    "matrice_statut": "ecartee",
     "numero": "355",
     "permis_sitadel": null,
     "piscine": {
@@ -4566,11 +4555,11 @@
      "validees": 0
     },
     "proprietaire_moral": null,
-    "q_score": 58,
+    "q_score": 43,
     "residuel": {
-     "sdp_residuelle_m2": 395,
+     "sdp_residuelle_m2": 209,
      "sous_densite": true,
-     "taux_emprise_pct": 27
+     "taux_emprise_pct": 28
     },
     "risques": [
      "Aléa mouvement_terrain — niveau faible."
@@ -4584,9 +4573,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "m36-l2f-2026",
-     "mult_base": 0.99,
-     "percentile": 64.8,
-     "rang": 150799,
+     "mult_base": 1.16,
+     "percentile": 77.1,
+     "rang": 98000,
      "tier": "a_creuser"
     },
     "section": "AI",
