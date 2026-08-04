@@ -40,3 +40,41 @@ toute population révélée** (aucune discordance bâti CoSIA-vs-couche) ; **1 c
    mécanismes existants des déclassés ; vérification visuelle au geste de bascule.
 
 **Rien ne bascule sans ton arbitrage sur ces chiffres + le deck des 311.**
+
+---
+# CONTRE-VÉRIFICATION CY0104 + ÉCHANTILLON DES 30 — le critère échoue, mais pas où attendu
+
+## CY0104 : ni trou de la règle, ni cas CH1893
+CoSIA **185 m²** ET BD TOPO **164 m²** (17 % de 943 m²) — les DEUX couches connaissent la
+maison. Hors périmètre de la règle (qui couvre les bâties RÉVÉLÉES, BD TOPO < 20) : c'est une
+bâtie CONNUE qui monte faute de règle « bâtie connue → hors tête » (= le filtre client bâti,
+train 5). Le motif prescrit (« non capté CoSIA ») serait faux → motif proposé : « bâti vérifié
+ortho Vic 04/08 — connu BD TOPO (164 m²) et CoSIA (185 m²), en attente du filtre client bâti
+(train 5) ». Exception appliquée à la bascule : elle ne monte pas.
+
+## Échantillon des 30 chaudes entrantes (md5(idu‖'974'), croisement 3 sources)
+**10/30 (33 %) sont des bâties CONNUES** (BD TOPO 37-344 m², CoSIA concorde : 49-662 m²) —
+liste au commit. 20/30 : les deux couches < 20 m² (0-19), présumées nues (revue ortho sur
+demande, sans enjeu décisionnel : le critère est déjà tranché par les données).
+**Critère « ≤ 1 bâtie » : ÉCHOUE (10).**
+
+## MAIS : la tête servie ACTUELLE a déjà ce défaut
+| tête actuelle (q_v8_calibre) | bâties connues BD TOPO ≥ 20 |
+|---|---|
+| 104 brûlantes | 3 (3 %) |
+| 1 037 chaudes | **292 (28 %)** |
+
+Les entrantes (33 %) ≈ le stock (28 %). **Le flux n'est pas plus sale que le stock** — le
+critère mesurait la propreté des entrantes contre un stock supposé propre, qui ne l'est pas.
+Bloquer la bascule ne protège de rien : les 285 révélées resteraient en tête pendant que les
+292 bâties connues y sont déjà.
+
+## Options (ton arbitrage)
+1. **GO point 4 quand même** *(reco)* : la bascule ferme la dette #4-révélées (−285, motifs
+   servis) sans dégrader le flux ; les bâties CONNUES (stock 295 + flux) relèvent du filtre
+   client bâti (train 5, N°1 après la couche — c'est un critère PRODUIT : une maison sur
+   10 000 m² divisibles n'est pas disqualifiante, il faut la hiérarchie emprise/surface).
+   CY0104 en exception au geste.
+2. Étendre la règle aux bâties connues avant bascule = implémenter le filtre client bâti
+   maintenant (périmètre à définir : seuil relatif, divisible…) — retarde la fermeture.
+3. NO-GO, tout au train 5.
