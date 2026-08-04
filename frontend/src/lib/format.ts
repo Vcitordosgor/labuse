@@ -45,6 +45,22 @@ export const fmtDateNum = (d: string | Date | null | undefined): string => {
   return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR')
 }
 
+/** IDU cadastral = code INSEE(5) + préfixe de section(3) + section(2) + numéro(4) = 14 car.
+ *  LE SEUL formateur d'IDU de l'app (LOI-3 : un dessin, un seul endroit). Deux formes :
+ *  - `iduComplet` : la chaîne BRUTE 14 car., sans espace ni séparateur. C'est elle qu'on
+ *    affiche en position primaire et qu'on copie — collable telle quelle dans GPU/DVF/SIG.
+ *  - `iduCourt`   : section + numéro (« IL 0061 »). AFFICHAGE SECONDAIRE uniquement, jamais
+ *    à la place de la forme complète.
+ *  Boussole : ne JAMAIS reconstruire un IDU absent — chaîne vide → chaîne vide (l'appelant
+ *  affiche « Absent »). */
+export const iduComplet = (idu: string | null | undefined): string =>
+  (idu ?? '').trim().replace(/\s+/g, '')
+
+export const iduCourt = (idu: string | null | undefined): string => {
+  const s = iduComplet(idu)
+  return s.length >= 14 ? `${s.slice(8, 10)} ${s.slice(10)}` : s
+}
+
 /** B4 (BLOC B) — libellés BRUTS de source (PPR/Géorisques) : « INONDATION_MOUVEMENT_DE_TERRAIN »
  *  → « Inondation mouvement de terrain ». AFFICHAGE SEULEMENT, données intactes. Ne touche que
  *  les chaînes qui crient (tout-majuscules avec au moins un mot ≥ 4 lettres) ; les acronymes

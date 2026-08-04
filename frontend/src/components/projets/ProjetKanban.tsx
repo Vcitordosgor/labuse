@@ -4,7 +4,7 @@ import {
   getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
   type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
 } from '../../lib/api'
-import { fmtDate, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -294,7 +294,7 @@ function ProposeeRow({ it, onDragStart, onAction, onFiche }: {
       className={`group flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors duration-quick hover:border-mint/30 ${analyse ? 'border-st-creuser/50 bg-st-creuser/5' : 'border-line-2 bg-surface-2'}`}
       title="Ouvrir la fiche · glisser pour décider">
       {analyse && <span className="text-[10px] text-st-creuser" title="à analyser (remonté en tête)">◑</span>}
-      <span className="w-[86px] shrink-0 truncate font-mono text-[10.5px] text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
+      <span title={iduComplet(it.idu)} className="w-[86px] shrink-0 truncate font-mono text-[10.5px] text-txt-hi">{iduCourt(it.idu)}</span>
       <span className="min-w-0 flex-1 truncate text-[10.5px] text-txt-mut">{it.commune}<Badges it={it} /></span>
       <TierBadge tier={it.tier} etage0={null} statut={null} />
       {it.surface_m2 != null && <span className="tnum hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmtM2(it.surface_m2)}</span>}
@@ -323,7 +323,7 @@ function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
         <Vignette center={it.center} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-mono text-[11px] font-medium text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
+            <span title={iduComplet(it.idu)} className="truncate font-mono text-[11px] font-medium text-txt-hi">{iduComplet(it.idu)}</span>
             <TierBadge tier={it.tier} etage0={null} statut={null} />
           </div>
           <div className="tnum mt-0.5 truncate text-[10.5px] text-txt-mut"

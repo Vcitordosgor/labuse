@@ -1,0 +1,96 @@
+# BACKLOG LABUSE — source de vérité
+
+> Règles : CC met à jour ce fichier à la fin de chaque train (statuts + date).
+> Vic arbitre, CC exécute, ce fichier fait foi.
+> Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
+
+Dernière mise à jour : 2026-08-04 — bascule q_v8_calibre servie, LOT 0 clos.
+
+## Régimes de supervision
+
+- [S] Sensible — touche un chiffre servi. Points d'arrêt à chaque étape, arbitrage Vic.
+- [A] Standard — features / refontes. UN point d'arrêt final, avec captures.
+- [M] Autonome — mécanique. Zéro point d'arrêt, rapport de fin, Vic lit.
+
+## Règles de décision par défaut (valables dans tout mandat)
+
+1. Choix d'implémentation → option réversible, notée au rapport.
+2. Chiffre servi touché → s'arrêter, rapporter, attendre Vic.
+3. Cosmétique / interne → décider seul, noter au rapport.
+4. Ressource ou appel réseau non désigné par le mandat → le dire avant.
+5. Livrable annoncé = livrable vérifié (ls -la avant d'annoncer un chemin).
+6. Jamais de merge. Commit + push sur branche dédiée. Vic merge en --no-ff.
+7. Revue visuelle obligatoire avant toute exposition d'une surface servie.
+
+## TRAIN 1 — PONDERATION [S] Fable — PRIORITAIRE
+- [ ] Option B : pondération au_sous_plancher ×(1−manque/seuil)
+- [ ] Mesure d'effet sur les 708, re-revue des mouvements en tête
+- [ ] Lever l'exception CX2555 une fois la pondération servie
+- [ ] Dette #4 : mesure à blanc des 41 têtes suspectes (batiment≈0 vs ortho)
+- [ ] Lever l'exception CH1893 selon résultat
+
+## TRAIN 2 — TECH [M] Opus — en parallèle de tout
+- [ ] Rebase + push EXPRESS-01 (vérifier les 4 poses IDU après rebase)
+- [ ] Merge fix/m13-e (Vic merge), puis rebase EXPRESS-01 dessus
+- [ ] Régénérer les tops : générateur + 23 HTML, commit ensemble
+- [ ] Gardes de bascule → briques importables (module bascule_gardes)
+- [ ] Requête A1.3 : adresses/IDU manquants par commune
+- [ ] Purge des jetables q_v8_au_*
+- [ ] Drapeaux EBC/ER sur fiche (dette #10)
+
+## TRAIN 3 — PROD-CHECKS [M] Opus
+- [ ] Check sécurité : /docs, LABUSE_SECRET_KEY, en-têtes, endpoints
+- [ ] Check vitesse (endpoints clés, top 5 lent)
+- [ ] Test architecture mail : tous les mails, envoi + rendu
+- [ ] Inventaire des API déconnectées + plan de réparation
+
+## TRAIN 4 — FILTRES / RECHERCHE [A] Opus
+- [ ] Inventaire filtres : lesquels existent, marchent, mentent
+- [ ] Architecture 2 voies : filtrer soi-même OU analyse LABUSE
+- [ ] Filtrer sur tout (toute variable exposée)
+- [ ] Théâtre de l'analyse : compteur en direct
+- [ ] Tout montrer : l'écarté consultable avec son motif
+- [ ] Filtrabilité par motif de déclassement (dette des 427)
+- [ ] Passe de clarté générale
+
+## TRAIN 5 — SCORING [S] Fable
+- [ ] Étapes exactes de l'algo, écrites (parcelle brute → tier servi)
+- [ ] Audit complet P et C
+- [ ] Dette #4 : filtre client bâti + hiérarchie par année (DPE/BDNB)
+- [ ] Dette #9 : mérite/héritage servi sur la fiche
+- [ ] Dette #11 : assemblage × propriété DGFiP
+- [ ] Cartographie retenue/écartée : motif traçable par parcelle
+- [ ] Revue de code intégrale (propositions, rien d'appliqué)
+
+## TRAIN 6 — CALIBRATION-14 + ANNUAIRE [S] Fable — fil continu
+- [ ] Re-télécharger les archives manquantes (parallèle, sha vérifié)
+- [ ] Extraction exhaustive des 14 communes restantes
+- [ ] Saint-Benoît : 19 fiches annexes une à une
+- [ ] Saint-Paul → fermee + scan formulations (20 communes)
+- [ ] Saint-Leu : calibrer depuis le règlement 2013
+- [ ] OAP : extraire et brancher (prévalence)
+- [ ] Annuaire PLU interrogeable (verbatim + article + page + lien)
+- [ ] Garde-fou fraîcheur GPU-vs-mairie
+- [ ] Rebuild + re-score final post-calibration (bascule, 5 gardes)
+
+## TRAIN 7 — MODE B [A] Opus
+- [ ] Bilan réhabilitation 24/24 (mandat + maquette prêts)
+
+## TRAIN 8 — VPS / PRODUCTION [A] Opus — dernier avant client
+- [ ] Déploiement VPS + Caddy + certificats + SECRET_KEY
+- [ ] Licence nominative, session concurrente unique
+- [ ] Stripe live + page tarifs réelle
+- [ ] Site vitrine labuse.immo à jour
+- [ ] Discours commercial
+
+## Vic seul (hors trains)
+- [~] Réponse mairie Saint-André (relancer si silence)
+- [ ] Mairie Saint-Benoît : modifs n°2 et n°3
+- [ ] Avocat CGU/CGV
+- [ ] Appel promoteur : coût construction → Sourcé
+- [ ] Décision exposition O12 · mode D · C5 · EnR
+
+## Dettes (index)
+#4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
+geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire ·
+exceptions actives : CX2555 (chaude), CH1893 (retirée)

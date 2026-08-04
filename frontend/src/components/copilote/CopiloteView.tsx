@@ -15,6 +15,7 @@ import { Resultats, type EtiquettesMoteurs } from './Resultats'
 import { PillStatut, SecHead } from './ui'
 import { runEpingle, useCopiloteRun } from './useCopiloteRun'
 import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
+import { AvisIA } from '../AvisIA'
 
 const S = CLIENT.copilote
 
@@ -169,6 +170,8 @@ export function CopiloteView() {
         <p className="mb-6 mt-3 max-w-[600px] text-[13.5px] text-cp-muted">
           {S.lede}<b className="font-medium text-cp-txt">{S.ledeFort}</b>
         </p>
+
+        <AvisIA className="mb-5 border-cp-faint/40 bg-white/[0.02] text-cp-muted" />
 
         <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-cp-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(99,242,184,.06)] ${
           run.quota != null ? 'border-cp-red/30 opacity-50'

@@ -3,12 +3,13 @@ import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { completudeColor, SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
-import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
+import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
+import { AvisIA } from '../AvisIA'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
@@ -384,6 +385,28 @@ function WatchButton({ idu }: { idu: string }) {
       style={{ width: 31, height: 31, background: on ? '#101d16' : 'none', border: `1px solid ${on ? '#2f7a54' : '#232e29'}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? '#7de3ab' : '#7d9488', cursor: 'pointer', flexShrink: 0 }}
       title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+    </button>
+  )
+}
+
+// EXPRESS-01 · bouton « copier l'IDU » — copie la chaîne BRUTE 14 car. (sans espace),
+// celle qu'on colle dans GPU/DVF/SIG. Style référence (bouton 31×31, retour visuel vert).
+function CopyIdu({ value }: { value: string }) {
+  const [ok, setOk] = useState(false)
+  const copier = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setOk(true)
+      setTimeout(() => setOk(false), 1400)
+    } catch { /* presse-papier indisponible : on ne fait rien de destructeur */ }
+  }
+  return (
+    <button onClick={copier} data-fiche-copy-idu aria-label="Copier l’IDU"
+      style={{ width: 26, height: 26, border: `1px solid ${ok ? '#2f7a54' : '#232e29'}`, borderRadius: 8, background: ok ? '#101d16' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? '#7de3ab' : '#7d9488', cursor: 'pointer', flexShrink: 0 }}
+      title={ok ? 'IDU copié' : 'Copier l’IDU (14 caractères, sans espace)'}>
+      {ok
+        ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-11" /></svg>
+        : <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h9" /></svg>}
     </button>
   )
 }
@@ -809,6 +832,7 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
           {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
           {ex && ex.disponible && !ex.rejected && (
             <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2.5">
+              <AvisIA className="mb-2 border-violet/25 bg-violet/[0.05] text-txt-mut" />
               <p className="mb-1 font-mono text-[10px] tracking-widest text-violet">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
               <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-txt">{renderRich(ex.texte ?? '')}</p>
               <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">L'IA narre les étapes ci-dessus (elle ne recalcule rien) ; chaque chiffre est ancré sur une étape. Estimation indicative, ne vaut pas conseil.</p>
@@ -1061,7 +1085,15 @@ export function Fiche({ idu }: { idu: string }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: '#4a5d53' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
-            <p style={{ margin: '5px 0 0', fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: '#f5fbf8', letterSpacing: .4 }}>{idu.length >= 14 ? `${idu.slice(8, 10)} ${idu.slice(10)}` : idu}</p>
+            {/* EXPRESS-01 · IDU COMPLET 14 car. en position primaire (mono) + bouton copier.
+                La forme courte (section+numéro) devient un rappel secondaire, jamais l'inverse. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '5px 0 0' }}>
+              <p data-fiche-idu style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: '#f5fbf8', letterSpacing: .4 }}>{iduComplet(idu) || 'Absent'}</p>
+              {iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}
+            </div>
+            {iduComplet(idu) && iduCourt(idu) !== iduComplet(idu) && (
+              <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: '#5f7568' }}>{iduCourt(idu)}</p>
+            )}
             {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
             <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</p>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#5f7568' }}>
@@ -1529,6 +1561,7 @@ function TraducteurBloc({ idu }: { idu: string }) {
       </button>
       {open && (
         <div className="mt-2">
+          <AvisIA className="mb-2 border-violet/25 bg-violet/[0.05] text-txt-mut" />
           {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
           {q.isError && (
             <p className="text-[11px] text-st-ecartee">

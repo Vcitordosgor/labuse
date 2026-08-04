@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { createProjet, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
+import { AvisIA } from '../AvisIA'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -148,6 +149,8 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
             <div key={s.key} className={`h-1 flex-1 rounded-full transition-colors duration-soft ${i < remplis ? 'bg-mint' : 'bg-line-2'}`} />
           ))}
         </div>
+
+        <AvisIA className="mt-4 border-line-2 bg-surface-2 text-txt-mut" />
 
         {/* reformulation */}
         {reformulation && (

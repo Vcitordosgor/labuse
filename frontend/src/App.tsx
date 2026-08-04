@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { createProjet, projetPdfUrl } from './lib/api'
+import { AvisIA } from './components/AvisIA'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
@@ -73,6 +74,7 @@ function IaRestitution() {
     <div data-ia-restitution
       className={`absolute bottom-6 z-40 rounded-xl border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3 shadow-2xl ${wide ? 'w-[520px]' : 'w-[440px]'} ${
         selectedIdu ? 'left-6' : 'left-1/2 -translate-x-1/2'}`}>
+      <AvisIA className="mb-2 border-[#2E6B4F]/70 bg-[#0c1611] text-txt-mut" />
       <div className="flex items-start justify-between">
         <p className="text-sm text-txt">
           <span data-ia-count className="font-display text-xl font-bold text-mint">{count.toLocaleString('fr-FR')}</span>{' '}
