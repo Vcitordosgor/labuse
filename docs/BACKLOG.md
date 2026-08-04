@@ -62,8 +62,9 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [ ] Passe de clarté générale
 
 ## TRAIN 5 — SCORING [S] Fable
-- [~] **N°1 — COUCHE BATIMENT : BLOQUANT PRODUIT ACTÉ (Vic 04/08), enquête sources RENDUE — attend arbitrage du correctif.** Taux mesuré : 38 % de têtes bâties invisibles (annexe qa/dette4/echantillon100_classement.tsv), ≈290 extrapolées (estimation, PAS une liste — on corrige la source, pas les symptômes). Enquête (docs/mandats/DETTE4_COUCHE_BATIMENT_SOURCES.md) : couche actuelle = BD TOPO WFS ingérée 28-29/06 (= millésime courant → re-télécharger ≈ inutile) ; cause TRANCHÉE empiriquement = retard de TOUTES les sources vectorielles sur le neuf (cadastre Etalab 2026-06 testé à blanc : voit 1/36 des bâties invisibles), pas un défaut DOM ; BDNB absente des DOM ; OSM/MS écartés (ODbL). **Correctif candidat : CoSIA 2025 (ortho IA 20 cm, LO 2.0) × parcelles — pilote Saint-Paul validé sur les 38.** Aucune ouverture commerciale avant correction.
-- [ ] Doctrine (Vic 04/08) : le filet piscine/PV/DVF a lui-même des trous (#079 : bassin non détecté dans le contour). Une détection d'indice ne prouve pas l'absence d'indice — ne JAMAIS conclure « pas d'indice donc pas de bâti ».
+- [~] **N°1 — COUCHE BATIMENT : CoSIA 2025 ARBITRÉ (Vic 04/08), pilote Saint-Paul EN COURS.** Bloquant produit (38 % de têtes bâties invisibles, aucune ouverture commerciale avant correction). Contrôle non négociable : rappel ≥ 90 % sur les 38 bâties classées à la main, ET taux de fausse détection sur les 41 nues (un faux positif détection = un faux négatif produit). Rapporter : les deux taux, durée de calcul, effet estimé sur les têtes servies de Saint-Paul. POINT D'ARRÊT — rien branché au scoring sans arbitrage. Enquête sources : docs/mandats/DETTE4_COUCHE_BATIMENT_SOURCES.md.
+- [~] Les 90 têtes vues bâties par le cadastre (2026-06) : revue-exceptions SANS déclassement automatique — cartes O12 en génération pour revue Vic (le cadastre ne voit que 3 % de l'angle mort et peut se tromper dans l'autre sens).
+- [ ] Entretien (validé Vic, APRÈS le pilote) : BD TOPO trimestrielle avec dates conservées (code fait : ingest_batiments garde date_creation/date_modification/date_d_apparition/date_de_confirmation) + RNB pour l'ID pivot.
 - [ ] **N°2 — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). Mesures : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière).
 - [ ] **N°3 — Rebuild parcel_renouvellement sur q_v8_calibre** : actif unique du positionnement (68 445 parcelles, 0 concurrent), mort en silence depuis la bascule v8. Mesure avant/après, POINT D'ARRÊT. Même motif : entonnoir_motifs (mort depuis q_v2/q_v6), ia_cache (cache). Doctrine : toute table run-scopée entre dans le geste de bascule OU est déclarée cache.
 - [ ] Étapes exactes de l'algo, écrites (parcelle brute → tier servi)
@@ -106,4 +107,16 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 ## Dettes (index)
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire ·
-exceptions actives : CX2555 (chaude), CH1893 (retirée)
+exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
+(CX2555 levée le 04/08 à la bascule pondération)
+
+## Doctrine (leçons gravées)
+- **« La fraîcheur d'une couche n'est pas sa date d'ingestion mais celle de sa source
+  amont. »** (Vic 04/08 — couche batiment ingérée en juin 2026 mais aveugle sur le neuf :
+  toutes les sources vectorielles héritent du report triennal du cadastre. Même motif que
+  fraîcheur GPU-vs-mairie sur les PLU : deux fois le même piège en une semaine.) Corollaire
+  outillé : conserver les DATES de la source à l'ingestion (date_apparition/date_maj BD TOPO)
+  pour MESURER le retard au lieu de le découvrir.
+- **« Une détection d'indice ne prouve pas l'absence d'indice. »** (Vic 04/08 — le filet
+  piscine/PV/DVF a ses propres trous, cas #079.) Ne jamais conclure « pas d'indice donc
+  pas de bâti ».
