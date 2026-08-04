@@ -4,8 +4,9 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) : tops régénérés
-(run servi), gardes de bascule en module, A1.3 mesurée, purge q_v8_au_* vérifiée, drapeaux EBC/ER servis.
+Dernière mise à jour : 2026-08-04 — train 1 (CC, branche org/train1-ponderation) : pondération
+option B implémentée + mesurée à blanc (NON basculée, point d'arrêt), dette #4 mesurée (46
+suspectes), recos CX2555/CH1893 en attente d'arbitrage Vic.
 
 ## Régimes de supervision
 
@@ -24,11 +25,11 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 7. Revue visuelle obligatoire avant toute exposition d'une surface servie.
 
 ## TRAIN 1 — PONDERATION [S] Fable — PRIORITAIRE
-- [ ] Option B : pondération au_sous_plancher ×(1−manque/seuil)
-- [ ] Mesure d'effet sur les 708, re-revue des mouvements en tête
-- [ ] Lever l'exception CX2555 une fois la pondération servie
-- [ ] Dette #4 : mesure à blanc des 41 têtes suspectes (batiment≈0 vs ortho)
-- [ ] Lever l'exception CH1893 selon résultat
+- [x] Option B : pondération au_sous_plancher ×(1−manque/seuil) — implémentée (facteur_ponderation + _pondere_au_sous_plancher, même point de calcul que la mention, kill-switch LABUSE_DISABLE_AU_POND), tests verts. **NON basculée** (point d'arrêt).
+- [x] Mesure d'effet : population réelle 1 069 (les 708 + calibrations depuis). 117 mouvements : 38 sorties de tête sous-plancher, 0 entrée indue, 44 entrées mécaniques (rangs libérés), effectifs stables (brûlantes 120). Contrôle ≡ servi à 2 exceptions près (les manuelles). Cartes ortho IGN des 82 mouvements en tête. Rapport : docs/mandats/TRAIN1_PONDERATION_RAPPORT.md.
+- [~] Lever CX2555 : la pondération la classe seule en a_creuser rang 427 206 (facteur 0,0585) — reco LEVER à la bascule. **Attend arbitrage Vic.**
+- [x] Dette #4 : mesuré top-1000, couche <20 m² × preuves (piscine/PV/DVF) → **46 suspectes** (13 brûlantes, 19 chaudes), trou systémique secteur DK Saint-Paul. Revue : qa/dette4/revue_suspectes.html. Rien de déclassé.
+- [~] CH1893 : invisible de TOUTES les sources (ni piscine/PV/DPE/DVF) — reco PÉRENNISER l'exception jusqu'au rechargement couche batiment. **Attend arbitrage Vic.**
 
 ## TRAIN 2 — TECH [M] Opus — en parallèle de tout
 - [x] Rebase + push EXPRESS-01 : EXPRESS-01 (485f7a9) déjà mergé dans main → fast-forward. 3 poses IDU (Fiche/Tinder/Kanban) déjà servies ; 4e pose (gen_tops) livrée avec les tops ci-dessous.
