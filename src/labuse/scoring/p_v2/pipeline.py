@@ -162,6 +162,36 @@ def previous_run(session: Session) -> tuple[str | None, pd.Series | None]:
     return run, prev.set_index("parcelle_id")["tier"]
 
 
+def _pondere_au_sous_plancher(session: Session, df: pd.DataFrame,
+                              p: np.ndarray) -> np.ndarray:
+    """Applique la PONDÉRATION option B (Vic 04/08) au vecteur p : ×(1 − manque/seuil) pour les
+    parcelles `au_sous_plancher` du cache `parcel_au_statut`. Le facteur vient du MÊME point de
+    calcul que la mention de fiche (au_ouverture.facteur_ponderation — zone_regime + seuil), sur
+    la MÊME surface (ST_Area geom_2975). Ne touche ni statut ni mention : la parcelle reste
+    servie, seul son rang reflète le manque. Table absente / flags OFF → p inchangé."""
+    if (os.environ.get("LABUSE_DISABLE_AU_POND") == "1"
+            or os.environ.get("LABUSE_DISABLE_AU_STATUT") == "1"
+            or not session.execute(
+                text("SELECT to_regclass('parcel_au_statut') IS NOT NULL")).scalar()):
+        return p
+    from ...faisabilite.au_ouverture import facteur_ponderation
+    from ...faisabilite.constructibilite import AU_SOUS_PLANCHER
+    rows = session.execute(text(
+        "SELECT a.idu, a.zone_lib, ST_Area(ap.geom_2975) AS surf "
+        "FROM parcel_au_statut a JOIN parcels ap ON ap.id = a.parcel_id "
+        "WHERE a.classe = :c"), {"c": AU_SOUS_PLANCHER}).all()
+    fact = {}
+    for idu, zl, surf in rows:
+        f = facteur_ponderation(idu[:5] if idu else None, zl,
+                                float(surf) if surf is not None else None)
+        if f is not None:
+            fact[idu] = f
+    if not fact:
+        return p
+    mult = df["idu"].map(fact).fillna(1.0).to_numpy(dtype=float)
+    return p * mult
+
+
 def run_score_v2(session: Session, *, run_id: str | None = None,
                  rebuild: bool = True, annee: int | None = None,
                  snapshot: bool = True) -> dict:
@@ -213,6 +243,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             df = df.merge(pau, on="idu", how="left")
             df["dans_pau"] = df["dans_pau_t"].fillna(False).astype(bool)
             df = df.drop(columns=["dans_pau_t"])
+
+    # PONDÉRATION AU_SOUS_PLANCHER (option B, arbitrage Vic 04/08) — le signal p d'une parcelle
+    # `au_sous_plancher` est multiplié par (1 − manque/seuil) AVANT rangs/percentiles : un manque
+    # de 94 % pèse 94 % (facteur 0,06), un manque de 10 % pèse 10 %. La parcelle reste SERVIE
+    # (mention + assemblage) — seule sa PLACE dans le classement reflète désormais le manque.
+    # Même point de calcul que la mention (au_ouverture.facteur_ponderation). Kill-switch :
+    # LABUSE_DISABLE_AU_POND=1 (mesures à blanc) ; LABUSE_DISABLE_AU_STATUT le coupe aussi
+    # (la pondération dérive du même cache parcel_au_statut).
+    p = _pondere_au_sous_plancher(session, df, p)
 
     # rangs et percentiles HORS copro, ties départagés seedés 974
     rng = np.random.RandomState(SEED)

@@ -32,9 +32,10 @@ import argparse, os, sys, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from sqlalchemy import text
 from labuse.db import engine, session_scope
-from labuse.bascule_gardes import (   # 5 gardes + helper _ts : briques importables, AUCUNE logique recopiée
+from labuse.bascule_gardes import (   # 6 gardes + helper _ts : briques importables, AUCUNE logique recopiée
     TARGET, RunDejaExistantError, RunIncompletError, DisqueInsuffisantError, PeremptionError,
-    check_run_absent, check_disque, check_peremption, ensure_backups, verify_completude, _ts)
+    GoldenPerimeError, check_run_absent, check_disque, check_peremption, ensure_backups,
+    verify_completude, check_golden_regenere, _ts)
 
 
 # ─────────────────────────────── étapes (idempotentes) ───────────────────────────────
@@ -158,6 +159,13 @@ def main():
         print(f"  {tier:28s} {n:>8}")
     print(f"\n  SURFACES : export LABUSE_SERVED_RUN={TARGET} ; (front) VITE_RUN_LABEL={TARGET} npm run build ; labuse build-mvt --label {TARGET}")
     print(f"  GOLDEN   : LABUSE_DEV_MODE=1 sur l'API, puis LABUSE_GOLDEN_RUN_LABEL={TARGET} python qa/golden_check.py")
+    # 6ᵉ garde (Vic 04/08) : la bascule N'EST PAS complète tant que le golden ne cite pas le
+    # run servi — RÉGÉNÉRER dans le même geste (--dump --idu <IDs de la référence>, jamais nu).
+    try:
+        rep = check_golden_regenere(TARGET)
+        print(f"  GOLDEN OK : référence sur {rep['run_v2_servi']} ({rep['n_parcelles']} parcelles)")
+    except GoldenPerimeError as e:
+        print(f"  ⚠ GARDE GOLDEN : {e}")
     print(f"  ROLLBACK : python scripts/rollback_v8_calibre.py")
 
 
