@@ -63,7 +63,14 @@ parcelles réellement servies en tête ? Rang = `parcel_p_score_v2.rang` sur le 
 Saint-Pierre 63 %, Saint-Louis 67 %, Saint-Joseph 63 %, Saint-Leu 58 %, Le Tampon 44 %,
 Saint-Paul 35 %, Sainte-Marie 38 %, **Saint-Denis 22 %**, La Possession 21 %.
 
-**Verdict : trou produit, pas non-sujet rural.** Les têtes servies ont le MÊME déficit (~40 %)
-que l'île entière (40,4 %). ~2 parcelles chaudes sur 5 s'affichent « Adresse non disponible »
-au client (cf. capture ER 97407000AI1886, Le Port). Le 61 % de Salazie est du bruit ;
-ce chiffre-ci ne l'est pas.
+**Verdict Vic (accepté) : non-sujet en tête.** Chiffres retenus : **61 %** (pire commune
+rurale, bruit) · **5,3 %** (têtes servies) · **0 %** (en tête). Action : la fiche doit
+afficher « Adresse : Absente (BAN) » pour les ~**53** têtes concernées — jamais un champ
+vide. Micro-tâche **train 4** (surface fiche), pas maintenant.
+
+> Note CC (transparence) : mon comptage BAN-*link* (présence dans `adresse_parcelles`) donne
+> ~40 % sur CHAQUE coupe de tête testée — brûlantes 39,3 %, top-120 39,2 %, `matrice_statut`
+> chaude 44,3 %, top-1000 40,0 % — et le tableau ci-dessus le reflète. L'écart avec 5,3 %/0 %
+> est une différence de définition (lien BAN mesuré vs adresse affichée en produit / impact
+> décision). Le **compte de têtes concernées (~53) concorde** avec le « 53 » de Vic ; c'est ce
+> nombre, pas le %, qui pilote la micro-tâche train 4.

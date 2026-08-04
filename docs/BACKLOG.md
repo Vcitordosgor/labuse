@@ -35,7 +35,7 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 - [ ] Merge fix/m13-e (Vic merge), puis rebase EXPRESS-01 dessus — action Vic, non faite par CC.
 - [x] Régénérer les tops : IDU complet + run servi (Q_A_RUN_LABEL au lieu de q_v2 gelé/absent). 25 HTML (24 communes + top50) régénérés sur q_v8_calibre, générateur + HTML commités ensemble.
 - [x] Gardes de bascule → briques importables (module src/labuse/bascule_gardes.py) : 5 gardes extraites VERBATIM, bascule les importe, aucune logique recopiée. Tests verts.
-- [x] Requête A1.3 : 0 IDU manquant ; 174 518/431 663 (40,4 %) sans adresse BAN. Tableau : docs/mandats/A1_3_IDU_ADRESSES_MANQUANTS.md.
+- [x] Requête A1.3 : 0 IDU manquant. Sans adresse BAN — verdict Vic (accepté) : **61 %** (pire commune rurale, bruit) / **5,3 %** (têtes servies) / **0 %** (en tête) → **non-sujet en tête**. Affichage « Adresse : Absente (BAN) » pour les ~53 têtes, jamais un champ vide → micro-tâche train 4. Détail : docs/mandats/A1_3_IDU_ADRESSES_MANQUANTS.md.
 - [x] Purge des jetables q_v8_au_* : déjà absents des 11 tables run-scopées (vérifié par balayage) — rien à purger, scripts QA conservés.
 - [x] Drapeaux EBC/ER sur fiche (dette #10) : badge « partiellement en EBC (~N%) » / « emplacement réservé n°X », information seule (jamais exclusion), dérivé du frontend. Captures avant/après : reports/train-tech/ebc_er/.
 
@@ -52,6 +52,7 @@ Dernière mise à jour : 2026-08-04 — train-tech (CC, branche org/train-tech) 
 - [ ] Théâtre de l'analyse : compteur en direct
 - [ ] Tout montrer : l'écarté consultable avec son motif
 - [ ] Filtrabilité par motif de déclassement (dette des 427)
+- [ ] Fiche (surface) : afficher « Adresse : Absente (BAN) » quand aucune adresse BAN — jamais un champ vide (~53 têtes servies concernées, cf. A1.3)
 - [ ] Passe de clarté générale
 
 ## TRAIN 5 — SCORING [S] Fable
