@@ -46,3 +46,24 @@
   Petite-Île 55 %), plus faible en zones denses (Le Port 24 %, Saint-André 27 %).
 - Requête (verbatim) : `LEFT JOIN (SELECT DISTINCT idu FROM parcel_adresse WHERE ban_voie
   IS NOT NULL)` sur `parcels`, `GROUP BY commune`.
+
+## Complément (demande Vic) — adresse BAN sur les TÊTES servies (q_v8_calibre)
+
+La question qui tranche « bruit rural » vs « trou produit » : le déficit touche-t-il les
+parcelles réellement servies en tête ? Rang = `parcel_p_score_v2.rang` sur le run servi.
+
+| Segment servi | n | sans adresse BAN | % |
+|---|---:|---:|---:|
+| Top 120 têtes (rang ≤ 120) | 120 | 55 | 45,8 |
+| Brûlantes (tier, 117) | 117 | 46 | 39,3 |
+| Brûlantes + chaudes (1159) | 1159 | 456 | 39,3 |
+| Top 1000 têtes (rang ≤ 1000) | 1000 | 410 | 41,0 |
+
+**Réparti sur toutes les communes, y compris urbaines** (têtes brûlantes+chaudes sans BAN) :
+Saint-Pierre 63 %, Saint-Louis 67 %, Saint-Joseph 63 %, Saint-Leu 58 %, Le Tampon 44 %,
+Saint-Paul 35 %, Sainte-Marie 38 %, **Saint-Denis 22 %**, La Possession 21 %.
+
+**Verdict : trou produit, pas non-sujet rural.** Les têtes servies ont le MÊME déficit (~40 %)
+que l'île entière (40,4 %). ~2 parcelles chaudes sur 5 s'affichent « Adresse non disponible »
+au client (cf. capture ER 97407000AI1886, Le Port). Le 61 % de Salazie est du bruit ;
+ce chiffre-ci ne l'est pas.
