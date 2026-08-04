@@ -1,18 +1,18 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-04T16:59:11",
+  "genere_le": "2026-08-04T19:59:07",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
   "run_cascade": "q_v8_calibre",
   "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
    "a_creuser": 63433,
-   "brulante": 105,
-   "chaude": 1038,
+   "brulante": 104,
+   "chaude": 1037,
    "declasse_au_fermee": 58,
    "declasse_au_statut_inconnu": 560,
-   "declasse_non_constructible": 6183,
+   "declasse_non_constructible": 6185,
    "declasse_zone_fermee": 2804,
    "ecartee": 354355,
    "reserve_fonciere": 3127
@@ -4241,7 +4241,7 @@
       "mult_base": 12.07,
       "percentile": 99.97,
       "rang": 139,
-      "tier": "brulante"
+      "tier": "declasse_non_constructible"
      },
      "statut": "ecartee",
      "surface_m2": 313,
@@ -4254,7 +4254,7 @@
      "percentile": 99.97,
      "rang": 139,
      "run_id": "q_v8_calibre",
-     "tier": "brulante"
+     "tier": "declasse_non_constructible"
     }
    },
    "coherence_db_api": [],
@@ -4310,7 +4310,7 @@
      "mult_base": 12.07,
      "percentile": 100.0,
      "rang": 139,
-     "tier": "brulante"
+     "tier": "declasse_non_constructible"
     },
     "section": "AB",
     "solaire": {

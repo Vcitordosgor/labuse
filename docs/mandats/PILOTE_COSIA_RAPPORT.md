@@ -125,3 +125,37 @@ Structurel : `data_sources` ne porte QUE `last_sync_at` (ingestion). **Aucune co
    côté de la BD TOPO (le max des deux emprises), datée, régénérable à chaque millésime.
 4. Remplacer l'ortho des revues par le flux du millésime 2025 explicite (ou CoSIA en fond)
    pour ne plus juger sur une photo en retard.
+
+---
+# BRANCHEMENT (GO Vic post-contre-revue) — table construite, effet mesuré, ARRÊT
+
+## Contre-revue Vic des 14 — verdicts appliqués
+Cartes 1-2, 4-8 : vérité terrain fausse, confirmé · carte 3 (CY0677) : requalifiée douteuse ·
+cartes 9-12 : parcelles BÂTIES (vérité fausse) · 13-14 : abris ≤ 28 m², non disqualifiants.
+- **AB1908 retirée** (brûlante 139 → declasse_non_constructible, journal : « bâti confirmé
+  CoSIA + contre-revue Vic 04/08 (PVA 22/07/2025, 160 m²) »).
+- **AB1910 : CoSIA 0 m² — nue confirmée, reste servie.**
+- **CD0937 : chaude rang 1073, CoSIA 87 m² sur 125 (70 %) → règle AB1910 appliquée, retirée**
+  et journalisée. Journal du run servi : **17 exceptions**. Brûlantes 104, chaudes 1 037.
+- Même geste : MVT rebuildées, golden régénéré — **116/116 PASS, 0 ancre bougée**.
+
+## p_model_bati_cosia — CONSTRUITE (datée, additive, rien d'écrasé)
+`(idu PK, emprise_cosia_m2, source_millesime='CoSIA 2025 (PVA juil.-août 2025, 20 cm)',
+computed_at)` — **321 314 parcelles** avec emprise, calcul île entière en **51 s**.
+La couche BD TOPO est INTACTE ; la divergence entre les deux reste mesurable en SQL.
+
+## MESURE D'EFFET sur les têtes servies (max des deux emprises)
+| tier | têtes | couche BD TOPO < 20 | révélées bâties (> 20 m²) | franches (> 40 m²) | zone adjudication (20-40) |
+|---|---:|---:|---:|---:|---:|
+| brûlante | 104 | 101 | **39 (38 %)** | 33 | 6 |
+| chaude | 1 037 | 745 | **307 (30 %)** | 252 | 55 |
+| **total** | 1 141 | 846 | **346** | 285 | 61 |
+
+Par commune : Saint-Paul 99, La Possession 35, Saint-Benoît 25, Saint-Pierre 24… L'extrapolation
+échantillon (~290) est **validée par l'exhaustif** (346, douteuses comprises).
+
+## POINT D'ARRÊT
+La table existe, RIEN ne la consomme (ni scoring, ni fiche, ni carte). La bascule qui ferait
+sortir ~285-346 têtes est L'ARBITRAGE SUIVANT de Vic : modalité à trancher (retrait par
+exceptions journalisées en masse ? re-score avec la feature max-emprise ? tier dédié
+« bâtie révélée » ?) + traitement des 61 en zone 20-40 (adjudication sur cartes datées).
