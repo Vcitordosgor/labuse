@@ -1,0 +1,36 @@
+idu,commune,zone,tier_avant,rang_avant,tier_apres,rang_apres,cause,surface_m2
+97418000AT2542,Sainte-Marie,UB,chaude,15,brulante,14,recalibr./départage,314.0
+97422000CY0197,Le Tampon,Uc,chaude,164,brulante,163,recalibr./départage,868.0
+97422000AK1442,Le Tampon,Uc,a_creuser,4150,brulante,4132,recalibr./départage,516.0
+97403000AM0768,Entre-Deux,AUb,declasse_au_statut_inconnu,325,chaude,323,AU conditionnelle_operation,316.0
+97403000AT0449,Entre-Deux,AUb,declasse_au_statut_inconnu,412,chaude,409,AU conditionnelle_operation,481.0
+97414000EN3944,Saint-Louis,1AUb2,declasse_au_statut_inconnu,543,chaude,540,AU conditionnelle_operation,453.0
+97414000EN3947,Saint-Louis,1AUb2,declasse_au_statut_inconnu,566,chaude,563,AU conditionnelle_operation,201.0
+97403000AR0807,Entre-Deux,AUb,declasse_au_statut_inconnu,743,chaude,740,AU conditionnelle_operation,465.0
+97419000AI1063,Sainte-Rose,1AUa,declasse_au_statut_inconnu,843,chaude,840,AU conditionnelle_operation,995.0
+97403000AT0457,Entre-Deux,AUb,declasse_au_statut_inconnu,1097,chaude,1092,AU conditionnelle_operation,531.0
+97414000ET0384,Saint-Louis,1AUb2,declasse_au_statut_inconnu,1285,chaude,1280,AU conditionnelle_operation,498.0
+97418000AS1400,Sainte-Marie,1AUb,declasse_au_statut_inconnu,1553,chaude,1548,AU conditionnelle_operation,322.0
+97403000AT0454,Entre-Deux,AUb,declasse_au_statut_inconnu,1626,chaude,1621,AU conditionnelle_operation,514.0
+97414000EN3939,Saint-Louis,1AUb2,declasse_au_statut_inconnu,1746,chaude,1740,AU conditionnelle_operation,132.0
+97402000AI1207,Bras-Panon,1AUb,declasse_au_statut_inconnu,2078,chaude,2070,AU conditionnelle_operation,8088.0
+97403000AR0421,Entre-Deux,AUb,declasse_au_statut_inconnu,2656,chaude,2648,AU conditionnelle_operation,414.0
+97419000AL1154,Sainte-Rose,1AUa,declasse_au_statut_inconnu,2669,chaude,2661,AU conditionnelle_operation,1702.0
+97403000AM0766,Entre-Deux,AUb,declasse_au_statut_inconnu,2735,chaude,2727,AU conditionnelle_operation,893.0
+97405000AL1523,Petite-Île,1AUa,declasse_au_statut_inconnu,2945,chaude,2937,AU conditionnelle_operation,1295.0
+97402000AI1136,Bras-Panon,1AUb,declasse_au_statut_inconnu,2955,chaude,2947,AU conditionnelle_operation,1025.0
+97416000ET2162,Saint-Pierre,UfCA,brulante,3153,chaude,3143,recalibr./départage,283.0
+97402000AD1041,Bras-Panon,1AUc,declasse_au_statut_inconnu,3941,chaude,3921,AU conditionnelle_operation,550.0
+97402000AI1131,Bras-Panon,1AUb,declasse_au_statut_inconnu,5382,chaude,5361,AU conditionnelle_operation,354.0
+97402000AI1129,Bras-Panon,1AUb,declasse_au_statut_inconnu,5407,chaude,5386,AU conditionnelle_operation,347.0
+97404000AL1773,L'Étang-Salé,AUb,brulante,4155,a_creuser,426948,AU au_sous_plancher,470.0
+97404000AT0273,L'Étang-Salé,AUb,chaude,5498,a_creuser,79237,AU au_sous_plancher,1581.0
+97404000AS0367,L'Étang-Salé,AUc,chaude,330,a_creuser,426929,AU au_sous_plancher,371.0
+97404000AS0365,L'Étang-Salé,AUc,chaude,992,a_creuser,427059,AU au_sous_plancher,370.0
+97404000AS0359,L'Étang-Salé,AUc,chaude,1002,a_creuser,427088,AU au_sous_plancher,341.0
+97404000AL1664,L'Étang-Salé,AUc,chaude,318,a_creuser,427133,AU au_sous_plancher,220.0
+97404000AS0366,L'Étang-Salé,AUc,chaude,1641,a_creuser,427204,AU au_sous_plancher,309.0
+97404000AS0363,L'Étang-Salé,AUc,chaude,3172,a_creuser,427303,AU au_sous_plancher,344.0
+97404000AS0362,L'Étang-Salé,AUc,chaude,3173,a_creuser,427308,AU au_sous_plancher,339.0
+97404000AS0370,L'Étang-Salé,AUc,chaude,3213,a_creuser,427358,AU au_sous_plancher,312.0
+97404000AS0369,L'Étang-Salé,AUc,chaude,3767,a_creuser,427374,AU au_sous_plancher,318.0
