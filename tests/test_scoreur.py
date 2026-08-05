@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy import text
 
 from labuse.api import scoreur
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL  # M31 : seed sous le run SERVI, pas un littéral
 
 
 # ───────────────────────── logique prix (pur) ─────────────────────────
@@ -46,8 +47,8 @@ def _seed(s, idu, tier="a_creuser", marge=250000):
     s.execute(text(
         "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
         "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
-        "VALUES ('q_v7_defisc', :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
-        {"i": idu, "t": tier})
+        "VALUES (:run, :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
+        {"i": idu, "t": tier, "run": Q_A_RUN_LABEL})
     s.execute(text("CREATE TABLE IF NOT EXISTS score_e (idu varchar(14) PRIMARY KEY, estimable boolean, "
                    "marge_estimee int, charge_supportable int, prix_probable int, niveau_prix text, "
                    "libelle_court text, detail text)"))

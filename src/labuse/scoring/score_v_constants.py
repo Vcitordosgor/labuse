@@ -11,7 +11,9 @@ DVF_TENURE_OBS5 (8 pts) : « aucune mutation sur la fenêtre observable 2021-202
 """
 from __future__ import annotations
 
+import logging
 import os
+from pathlib import Path
 
 # ── Tier combiné « Brûlante » 🔥 (décisions D2/D3) ─────────────────────────────────────────
 # Brûlante = chaude Q×A ∧ v_score ≥ seuil. Garde-fou : si le nombre de Brûlantes sort de
@@ -42,8 +44,30 @@ BRULANTE_GUARDRAIL = (30, 120)
 # — voir docs/mandats/A1_ETAPE2_DEFISC.md). Modèle P M3.6/m8 INCHANGÉ (sha256 gelé) ; V module UNIQUEMENT
 # le rang p_raw (+0,01 plafonné) sur 131 parcelles mono non-écartées → 0 bascule de tier (golden 116/116,
 # gate boussole 0/64). q_v6_m8 conservé en HYSTÉRÉSIS (rollback : docs/mandats/A1_BASCULE_ROLLBACK.md).
-# Le label servi est désormais CONFIGURABLE (fin de la dette du hard-code) : override LABUSE_SERVED_RUN.
-Q_A_RUN_LABEL = os.environ.get("LABUSE_SERVED_RUN", "q_v7_defisc")
+# q_v7_defisc → q_v8_calibre (BASCULE M28 : filtre bâti + départage). La dette révélée en M31 :
+# les tuiles servaient q_v8_calibre mais la CONSTANTE de code était restée sur q_v7_defisc, et le
+# run servi ne tenait que par une variable d'ENV — trois surfaces qui divergeaient en silence.
+# M31 (arbitrage Vic) : POINT DE VÉRITÉ UNIQUE VERSIONNÉ = config/served_run.txt. Le backend, le
+# bundle front (vite) et build-mvt le lisent tous. LABUSE_SERVED_RUN n'est plus qu'un override de
+# DEV, explicitement loggé en WARNING au démarrage — JAMAIS nécessaire en prod pour servir le bon run.
+def _served_run_versionne() -> str:
+    """Lit config/served_run.txt (1ʳᵉ ligne non commentée) — le seul point de vérité du run servi."""
+    f = Path(__file__).resolve().parents[3] / "config" / "served_run.txt"
+    for line in f.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            return s
+    raise RuntimeError(f"config/served_run.txt ne contient aucune valeur (uniquement des commentaires) : {f}")
+
+
+_SERVED_RUN = _served_run_versionne()
+_override = os.environ.get("LABUSE_SERVED_RUN")
+if _override and _override != _SERVED_RUN:
+    logging.getLogger("labuse").warning(
+        "LABUSE_SERVED_RUN=%r surcharge le run servi VERSIONNÉ (%r, config/served_run.txt) — "
+        "override de DÉVELOPPEMENT uniquement, jamais requis en prod pour servir le bon run.",
+        _override, _SERVED_RUN)
+Q_A_RUN_LABEL = _override or _SERVED_RUN
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

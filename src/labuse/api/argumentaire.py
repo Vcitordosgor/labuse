@@ -150,8 +150,11 @@ def _svg_cascade(calc: dict) -> str:
 
 # ───────────────────────── sections ─────────────────────────
 
-def _synthese(out: dict) -> str:
-    """Page 1 — LES chiffres de la négociation, ton factuel (montrable au vendeur)."""
+def _synthese(out: dict, marque: dict | None = None) -> str:
+    """Page 1 — LES chiffres de la négociation, ton factuel (montrable au vendeur).
+
+    M31 PC1 : `marque` était référencé ligne garde_entete sans être reçu (régression
+    M23-A 98363d7 — la marque avait été câblée dans _build_pdf/route mais pas jusqu'ici)."""
     p = out["parcelle"]
     calc = out["calc"]
     fais = out.get("faisabilite")
@@ -342,7 +345,7 @@ def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
     strip = _svg_bande_points(out.get("prix_dvf") or {})
     if strip:
         marche += f"<h3>Les ventes retenues, une à une</h3>{strip}"
-    sections = [_synthese(out), marche, permet, _reductions(out),
+    sections = [_synthese(out, marque), marche, permet, _reductions(out),
                 _bilan_rebours(out), _vigilance(out), _sources(out)]
     # C7 : bandeau de contexte sur chaque page
     pdf = bq.render_pdf(sections, LIBELLE, produit="Argumentaire de négociation",

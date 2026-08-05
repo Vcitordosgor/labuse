@@ -1,0 +1,9 @@
+# M31 PC3 — vitesse endpoints (dev mode, run q_v8_calibre)
+endpoint | froid_s | chaud_med_s | HTTP
+fiche | 0.208231 | 0.112245 | 200
+tuiles-MVT-z11 | 0.373038 | 0.003641 | 200
+recherche | 0.439198 | 0.441400 | 200
+liste-ile | 0.011596 | 0.004902 | 200
+verdict-stats | 0.623773 | 0.003590 | 200
+
+N+1 fiche : 28 requetes SQL total, max 3 sur une meme table (parcel_renouvellement) — pas de N+1

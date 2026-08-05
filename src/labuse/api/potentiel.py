@@ -80,7 +80,7 @@ def _n_attention(out: dict) -> int:
 
 # ───────────────────────── sections ─────────────────────────
 
-def _synthese(out: dict) -> str:
+def _synthese(out: dict, marque: dict | None = None) -> str:
     """1 — TROIS VERDICTS LISIBLES. Langage accessible (lecteur possiblement vendeur)."""
     p = out["parcelle"]
     r = out.get("residuel") or {}
@@ -208,7 +208,7 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     out = _collect(db, idu)
     marche = bq.comparables(out).replace("<h2>Marché de comparaison</h2>",
                                          "<h2>5 · Contexte marché (pour situer)</h2>")
-    sections = [_synthese(out), _extension(out), _divisibilite(),
+    sections = [_synthese(out, marque), _extension(out), _divisibilite(),
                 _avant_compromis(out), marche, _limites(out)]
     # C7 : bandeau de contexte sur chaque page
     pdf = bq.render_pdf(sections, LIBELLE, produit="Rapport de potentiel",

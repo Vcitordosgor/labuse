@@ -45,10 +45,13 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [x] Drapeaux EBC/ER sur fiche (dette #10) : badge « partiellement en EBC (~N%) » / « emplacement réservé n°X », information seule (jamais exclusion), dérivé du frontend. Captures avant/après : reports/train-tech/ebc_er/.
 
 ## TRAIN 3 — PROD-CHECKS [M] Opus
-- [ ] Check sécurité : /docs, LABUSE_SECRET_KEY, en-têtes, endpoints
-- [ ] Check vitesse (endpoints clés, top 5 lent)
-- [ ] Test architecture mail : tous les mails, envoi + rendu
-- [ ] Inventaire des API déconnectées + plan de réparation
+- [x] Check sécurité : /docs, LABUSE_SECRET_KEY, en-têtes, endpoints — M31 : posture saine (docs local-only, secret fail-closed, admin middleware-gated, CORS restreint prod, .env jamais commité) ; garde test admin ajoutée. Voir qa/m31/M31_RAPPORT.md §PC2.
+- [x] Check vitesse (endpoints clés, top 5 lent) — M31 : 5 endpoints servis < 1 s ; pas de N+1 fiche. Reste `/map/parcels.geojson` commune = 2,2 s sur Saint-Denis (candidat MVT commune). §PC3.
+- [~] Test architecture mail : M31 — SPF ✓ ; **DMARC ABSENT** (à créer, `p=none` d'abord) ; **DKIM non aligné** (envoi Gmail perso `d=gmail.com` ≠ From `labuse.immo`). DNS/ops, hors code. Preuve qa/m31/preuve_dns_mail.txt. §PC4.
+- [~] Inventaire des API déconnectées — M31 : cross-réf textuelle NON fiable (faux positifs massifs, ma propre erreur sur /map/parcels.geojson) → PAS de liste publiée. Exige une passe de **traçage par helper** api.ts. Seul candidat avéré : `/api/v1/*` (API partenaire externe, caller-less par conception — ne pas retirer sans savoir si un partenaire consomme). §PC4.
+- [x] **[S] Vic — bascule run servi (révélé + CORRIGÉ M31)** : point de vérité UNIQUE versionné `config/served_run.txt = q_v8_calibre`, lu par backend + bundle (vite) + build-mvt. `LABUSE_SERVED_RUN` = override dev loggé WARNING. Suite verte sans env, golden 117/117, run servi identique (plomberie). §ANNEXE CORRECTION RUN SERVI.
+- [ ] **[A] Passe helper-tracing des routes mortes** (déférée de M31) : résoudre chaque fn api.ts → chemin, tracer les appels, + fetch directs + cron/webhook/PDF, avant tout retrait.
+- [ ] **Cohérence run des builders de signaux dérivés** (relevé M31) : `score_e.py:158` et `pc_caducs` ont un défaut d'argument `run="q_v7_defisc"` en dur — ils bâtissent les SIGNAUX dérivés (score_e, pc_caducs) sur l'ancien run, pas sur le run servi (`Q_A_RUN_LABEL` = `config/served_run.txt`). Distinct du chemin de service (déjà unifié M31). À aligner : lire le point de vérité, ou passer le run explicitement à la construction. Vérifier d'abord sur quel run ces signaux ont réellement été bâtis.
 
 ## TRAIN 4 — FILTRES / RECHERCHE [A] Opus
 - [ ] Inventaire filtres : lesquels existent, marchent, mentent

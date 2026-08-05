@@ -22,6 +22,18 @@ from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_served_run_fichier_est_la_source_unique():
+    """M31 (arbitrage Vic) : config/served_run.txt est le POINT DE VÉRITÉ UNIQUE versionné du run
+    servi. Le backend (Q_A_RUN_LABEL) DOIT le lire — pas un littéral codé, pas une var d'env. Ce
+    test lie la racine : si le fichier et Q_A_RUN_LABEL divergent, la plomberie est cassée."""
+    f = ROOT / "config" / "served_run.txt"
+    valeur = next(l.strip() for l in f.read_text(encoding="utf-8").splitlines()
+                  if l.strip() and not l.strip().startswith("#"))
+    assert valeur == Q_A_RUN_LABEL, (
+        f"config/served_run.txt={valeur!r} ≠ Q_A_RUN_LABEL={Q_A_RUN_LABEL!r} — le backend ne lit "
+        "pas le point de vérité versionné (ou un override LABUSE_SERVED_RUN traîne dans l'env de test)")
+
+
 def test_front_source_aligne_sur_le_run_servi():
     """frontend/src/lib/api.ts : SOURCE doit être IDENTIQUE à Q_A_RUN_LABEL."""
     api_ts = (ROOT / "frontend" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
@@ -32,7 +44,8 @@ def test_front_source_aligne_sur_le_run_servi():
     assert m, "constante SOURCE (ou son défaut de repli) introuvable dans frontend/src/lib/api.ts"
     assert m.group(1) == Q_A_RUN_LABEL, (
         f"front SOURCE défaut={m.group(1)!r} ≠ backend Q_A_RUN_LABEL={Q_A_RUN_LABEL!r} — "
-        "bascule de run incomplète (aligner le défaut api.ts + le défaut LABUSE_SERVED_RUN + npm run build)")
+        "bascule incomplète : mettre à jour config/served_run.txt PUIS le littéral de repli api.ts "
+        "(le bundle, lui, lit le fichier via vite.config.ts) PUIS npm run build.")
 
 
 def test_bundle_front_construit_sur_le_run_servi():
