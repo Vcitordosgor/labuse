@@ -907,10 +907,13 @@ function BilanTab({ idu }: { idu: string }) {
           médiane bâti <b className="tnum text-mint">{fmtInt(Number(b.marche.median))} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
-          {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
-          {b.marche.dvf_couverture?.libelle && (
+          {/* P14 / M32 §2 : fraîcheur DVF — l'HORIZON (de quand datent les prix) + le millésime amont,
+              servis structurés dans `marche.fraicheur` (point de vérité data_sources). Repli sur le
+              libellé P14 `dvf_couverture` si l'objet structuré n'est pas encore servi. */}
+          {(b.marche.fraicheur?.horizon_libelle || b.marche.dvf_couverture?.libelle) && (
             <div className="mt-1 text-[11px] text-txt-dim">
-              DVF — {b.marche.dvf_couverture.libelle} (dernière transaction en base · millésime en vigueur)
+              DVF — {b.marche.fraicheur?.horizon_libelle ?? b.marche.dvf_couverture?.libelle}
+              {b.marche.fraicheur?.millesime ? ` · ${b.marche.fraicheur.millesime}` : ' (dernière transaction en base · millésime en vigueur)'}
             </div>
           )}
         </Sec>
@@ -1385,7 +1388,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* 4 · MARCHÉ — micro : sparkline + volume */}
             <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
               value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + (faisa.data?.marche?.dvf_couverture?.libelle ? ` · DVF — ${faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
+              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
