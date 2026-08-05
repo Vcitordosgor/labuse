@@ -101,7 +101,10 @@ def _traduire(idu: str, row, run: str) -> dict:
     badge_lib = None
     if badge:
         ratio = row["fb_ratio"]
-        badge_lib = (f"{BADGE_DIVISION} (bâtie à ~{round(ratio)} %)"
+        # M35 Lot C : chaque pourcentage dit CE qu'il mesure — ici bâti au sol / surface de
+        # LA PARCELLE (source max BD TOPO/CoSIA), à ne pas confondre avec le taux d'emprise
+        # constructible du résiduel.
+        badge_lib = (f"{BADGE_DIVISION} (bâti au sol ~{round(ratio)} % de la parcelle)"
                      if ratio is not None else BADGE_DIVISION)
     # Motif : registre d'abord (exception motivée — motif CLIENT uniquement, repli neutre si
     # absent, jamais le motif interne), sinon motif du filtre bâti pour les déclassées bâti
