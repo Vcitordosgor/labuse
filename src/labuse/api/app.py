@@ -1013,23 +1013,27 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 @app.get("/communes")
 def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
     """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage carte).
-    Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min."""
+    Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min.
+
+    M35 Lot D : les compteurs viennent du RUN SERVI (tiers `parcel_p_score_v2` — « chaudes »
+    = brûlantes + chaudes, même convention que /stats), plus jamais de la matrice historique
+    (dryrun.matrice_statut). `evaluees` = parcelles présentes au run servi."""
     def _compute() -> list[dict]:
         rows = db.execute(text(
             """
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
-                   count(*) FILTER (WHERE d.matrice_statut = 'chaude')      AS chaudes,
-                   count(DISTINCT pm.siren) FILTER (WHERE d.matrice_statut = 'chaude'
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS chaudes,
+                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude')
                          AND pm.siren IS NOT NULL)                          AS dossiers,
-                   count(*) FILTER (WHERE d.matrice_statut = 'chaude'
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')
                          AND pm.siren IS NULL)                              AS chaudes_sans_identite,
-                   count(d.parcel_id)                                       AS evaluees,
+                   count(s.parcelle_id)                                     AS evaluees,
                    ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1,
                    ST_XMax(ST_Extent(p.geom)) AS x2, ST_YMax(ST_Extent(p.geom)) AS y2
             FROM parcels p
-            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
             LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
