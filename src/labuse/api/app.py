@@ -1926,6 +1926,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
+        "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
@@ -2024,6 +2025,38 @@ def _icd_block(s2) -> dict | None:
         "cloisonnement": "Complétude des données de la parcelle — n'entre PAS dans le "
                          "score d'opportunité (score P gelé, calculé indépendamment).",
     }
+
+
+_PLU_FRAICHEUR_CACHE: dict = {}
+
+
+def _plu_fraicheur(idu: str) -> dict | None:
+    """M32 Phase B §2 — étiquette de FRAÎCHEUR du zonage PLU (spec millésime, GPU-vs-mairie).
+    L'HORIZON du zonage = date d'approbation MAIRIE (point de vérité config/plu_millesimes.yaml,
+    ancré par l'annuaire + la campagne de ré-extraction). Le STATUT expose l'écart GPU↔mairie :
+    `a_jour` (GPU = mairie) · `annule_partiel` (annulation de portée hors zonage servi) ·
+    `opposabilite_en_attente` (mairie opposable mais AUCUN document GPU — révision en cours) · `rnu`.
+    L'API sert l'objet structuré ; le front formate. INSEE = 5 premiers car. de l'IDU."""
+    insee = (idu or "")[:5]
+    if "cfg" not in _PLU_FRAICHEUR_CACHE:
+        try:
+            _PLU_FRAICHEUR_CACHE["cfg"] = (config.load_yaml_config("plu_millesimes") or {}).get("communes", {})
+        except Exception:  # noqa: BLE001 — config absente = pas d'étiquette, jamais un 500
+            _PLU_FRAICHEUR_CACHE["cfg"] = {}
+    c = _PLU_FRAICHEUR_CACHE["cfg"].get(insee)
+    if not c:
+        return None
+    statut = c.get("statut")
+    horizon = c.get("date_mairie")
+    libelles = {
+        "a_jour": f"zonage PLU {horizon} (à jour du GPU)" if horizon else "zonage PLU (à jour)",
+        "annule_partiel": f"zonage PLU {horizon} — annulation partielle (hors zonage servi)",
+        "opposabilite_en_attente": f"zonage PLU {horizon} opposable — révision en cours, non publiée au GPU (sous réserve)",
+        "rnu": "RNU — aucun PLU (règlement national d'urbanisme)",
+    }
+    return {"idurba": c.get("idurba"), "horizon": horizon, "statut": statut,
+            "libelle": libelles.get(statut, "zonage PLU"), "note": c.get("note"),
+            "cadence": "révisions (périodique)"}
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:

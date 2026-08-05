@@ -125,3 +125,16 @@ def test_compteur_reveil_dpe_vide(db_session):
     s.execute(text("CREATE TABLE IF NOT EXISTS dpe_records (parcelle_idu varchar(14), etiquette_dpe varchar(2), date_etablissement date)"))
     r = f.compteur_reveil_dpe(s)
     assert r["n"] == 0 and r["franchi"] is False and r["seuil"] == 200
+
+
+def test_plu_fraicheur_statuts():
+    """M32 Phase B §2 : l'étiquette de fraîcheur du zonage (GPU-vs-mairie) expose le bon statut par
+    commune, jamais silencieuse — à jour, opposabilité en attente (Saint-André), annulation partielle
+    (Le Port), RNU (Saint-Philippe). Horizon = date d'approbation mairie. Lecture config, sans DB."""
+    from labuse.api.app import _plu_fraicheur
+    assert _plu_fraicheur("97411000AA0001")["statut"] == "a_jour"                  # Saint-Denis
+    sa = _plu_fraicheur("97409000AA0001")                                          # Saint-André
+    assert sa["statut"] == "opposabilite_en_attente" and sa["horizon"] == "2019-02-28"
+    assert _plu_fraicheur("97407000AA0001")["statut"] == "annule_partiel"          # Le Port
+    assert _plu_fraicheur("97417000AA0001")["statut"] == "rnu"                     # Saint-Philippe
+    assert all(_plu_fraicheur(f"9740{c}000AA0001")["libelle"] for c in "1234")     # jamais vide

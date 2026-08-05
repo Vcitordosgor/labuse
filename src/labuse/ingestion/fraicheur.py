@@ -61,6 +61,11 @@ SOURCES = {
     "gpu_plu": {"label": "GPU / PLU (zonage, prescriptions)", "cadence": "périodique (révisions)",
                 "date_sql": "SELECT max(created_at)::date FROM spatial_layers WHERE kind LIKE 'plu_gpu%'",
                 "ds_name": "Urbanisme PLU/GPU%", "auto": False,
+                # M32 §2 : millésime amont du zonage. `cadence_norme` VOLONTAIREMENT absente (révisions
+                # irrégulières, pas de fréquence → check_fraicheur ne l'évalue pas). Fraîcheur FINE =
+                # par commune (config/plu_millesimes.yaml, servie en fiche via _plu_fraicheur).
+                "millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+                "prochain": None,
                 "detection": "DÉTECTION SEULE : le zonage nourrit la CASCADE GELÉE — une mise à jour "
                              "détectée = signalement healthz, la réingestion passe par la grande passe Mac"},
     "georisques": {"label": "Géorisques (aléas, cavités, MVT, SSP)", "cadence": "périodique",
