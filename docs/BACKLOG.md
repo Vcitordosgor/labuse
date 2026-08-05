@@ -60,6 +60,14 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [ ] Fiche (surface) : adresse absente — (a) afficher « Adresse : Absente (BAN) », jamais un champ vide ; (b) ampleur RÉELLE (mesurée) : 46/117 brûlantes et 41 % du top-1000 sans adresse → enrichissement adresse sur les têtes, pas qu'un habillage (cf. A1.3)
 - [ ] Fiche (surface) : sous une surface plancher (à définir), dire « délaissé » au lieu de dérouler un bilan — anomalie AI1886 : bilan R+6 servi sur une parcelle de 9 m²
 - [ ] Passe de clarté générale
+- [ ] Vocabulaire produit (revue M30, 05/08/2026) — 5 libellés consignés, arbitrage Vic requis
+      avant tout geste (3 autres corrigés au geste M30-revue : fermée à l'urbanisation,
+      inconstructible (géométrie), AU statut suffixé) :
+      · « Réserve foncière » (PRIORITAIRE : collision avec l'emplacement réservé PLU — c'est un tier)
+      · « À creuser » (générique — garder si assumé)
+      · « Viabilisation confirmée par les faits » (« confirmée » = faisceau ≥70 pts, pas certitude)
+      · « Brûlante » (métaphore assumée produit)
+      · « Potentiel ≥ /100 » (potentiel de QUOI = Score Q ; tip E1 M12 déjà présent)
 
 ## TRAIN 5 — SCORING [S] Fable
 - [~] **N°1 — COUCHE BATIMENT : pilote CoSIA rendu, cartes DATÉES servies — attend contre-revue Vic des 14 + arbitrage GO.** Rappel brut 79 % / ajusté 100 % (les 8 « ratées » = erreurs de vérité terrain, contre-revue : pilote_cosia_discordances.pdf, cartes datées). **Correction 2ᵉ passe : l'ortho de revue N'ÉTAIT PAS périmée** (graphe de mosaïquage : les 14 zones = PVA 2025, vols 21/07-02/08/2025) — les divergences sont des différences de LECTURE (chantier/dalle vs Bâtiment ; produit-parlant CoSIA a raison), le 38 % reste LE taux. **Seuil 50 RÉFUTÉ par la mesure** (rappel 63 %, perd 6 vraies maisons à 23-45 m²) → seuil 20 conservé, cas limites à l'adjudication. Architecture validée : p_model_bati_cosia datée, max des deux emprises. AB1908 : à re-trancher par Vic (structure visible carte datée, CoSIA 160 m²) ; AB1910 confirmée nue (CoSIA 0). Effet Saint-Paul : 73/169 (43 %). Inventaire rétroactif : 0 revue à refaire pour cause d'ortho. RIEN branché.

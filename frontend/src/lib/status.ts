@@ -40,10 +40,12 @@ export type TierDeclasse =
 export type FilterTier = TierV2 | TierDeclasse
 const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique, jamais « chaude »
 export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; color: string }> = {
+  // M30-revue (arbitrage Vic) : « fermée à l'urbanisation » (fermée ≠ clôture) et
+  // « inconstructible (géométrie) » (physique ≠ réglementaire) — motifs sans ambiguïté.
   declasse_bati_sature: { label: 'Déclassée — bâti saturé', color: DECLASSE_COLOR },
-  declasse_non_constructible: { label: 'Déclassée — non constructible', color: DECLASSE_COLOR },
+  declasse_non_constructible: { label: 'Déclassée — inconstructible (géométrie)', color: DECLASSE_COLOR },
   declasse_bati_revele: { label: 'Déclassée — bâti révélé', color: DECLASSE_COLOR },
-  declasse_zone_fermee: { label: 'Déclassée — zone fermée', color: DECLASSE_COLOR },
+  declasse_zone_fermee: { label: 'Déclassée — fermée à l\'urbanisation', color: DECLASSE_COLOR },
   declasse_au_statut_inconnu: { label: 'Déclassée — AU à statut inconnu', color: DECLASSE_COLOR },
   declasse_au_fermee: { label: 'Déclassée — AU fermée', color: DECLASSE_COLOR },
 }
@@ -129,7 +131,10 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
 export type ZoneFam = 'U' | 'AU' | 'A' | 'N' | 'autre'
 export const ZONE_FAM_META: Record<ZoneFam, { label: string; color: string }> = {
   U: { label: 'U — urbaine', color: '#E5417F' },      // magenta franc
-  AU: { label: 'AU — à urbaniser', color: '#4C7DF0' }, // bleu roi (décollé du magenta)
+  // M30-revue (arbitrage Vic) : « à urbaniser » seul promettait l'ouverture — le statut est
+  // suffixé avec le vocabulaire des motifs existants (fermée / à statut inconnu). Libellé de
+  // FAMILLE (légende) : le statut PAR PARCELLE vit dans les motifs de déclassement/fiche.
+  AU: { label: 'AU — à urbaniser (statut : ouverte / fermée / inconnue)', color: '#4C7DF0' }, // bleu roi
   A: { label: 'A — agricole', color: '#E8B23A' },      // or / ambre chaud
   N: { label: 'N — naturelle', color: '#3FB56A' },     // vert franc
   autre: { label: 'Autre zonage', color: '#8A94A6' },

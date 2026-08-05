@@ -178,3 +178,70 @@ couverte en SQL, fraîcheur amont, jamais la date d'ingestion).
 
 Méthode : mêmes URL/gestes, code « avant » = stash du geste M30 (API relancée sur le code avant),
 « après » = geste appliqué. Scripts : `frontend/scripts/shot_m30*.mjs`.
+
+---
+
+# ANNEXE — REVUE VIC (M30-revue, 05/08/2026)
+
+## A1 · « ×13,1 » sur les cartes saturées : chiffre parcelle RÉEL (coïncidence prouvée)
+
+Le multiplicateur affiché est `s2.mult_base` de LA parcelle (aucune constante de tier).
+Preuve en base (requête servie sur le run q_v8_calibre) :
+
+```sql
+SELECT parcelle_id, p_raw, mult_base, percentile, rang FROM parcel_p_score_v2
+WHERE run_id='q_v8_calibre' AND parcelle_id IN
+('97409000AR1260','97411000EL0201','97415000CX1395','97415000CX0939','97408000AB0275')
+ORDER BY rang;
+--  97409000AR1260 | 0.20438 | 13.14 | 100.0  |  20
+--  97411000EL0201 | 0.20438 | 13.14 |  99.99 |  54
+--  97415000CX1395 | 0.20438 | 13.14 |  99.99 |  58
+--  97415000CX0939 | 0.20438 | 13.14 |  99.98 |  79
+--  97408000AB0275 | 0.20438 | 13.14 |  99.98 |  84
+```
+
+Les 5 partagent `p_raw = 0,20438` : le modèle (m36-l2f-2026) sature sur le même plateau de
+probabilité pour ces profils — mult = p/taux_base (pipeline.py:390, arrondi 2 déc.) donne
+donc 13,14 pour chacune. Contexte : 99 parcelles du run partagent exactement ce plateau ;
+6 saturées sont à 13,14 ; 80 valeurs distinctes de mult parmi les saturées ; max global
+64,31 (13,14 n'est PAS un plafond). Aucun changement de code — le chiffre servi est bien
+celui de la parcelle (boussole respectée).
+
+## A2 · AI1886 : le guard couvre la tuile ENTIÈRE
+
+La sous-ligne servait encore « R+6 · SDP 18 m² · calcul tracé ». Fix (Fiche.tsx) : quand
+`delaisse` est servi, la micro-ligne devient « surface 9 m² · seuil délaissé 50 m² · bilan
+non servi ». Témoin > 50 m² inchangé (AR2714 : « R+2 · SDP 822 m² · calcul tracé »).
+
+## A3 · Titre de tuile tronqué : wrap propre
+
+L'ellipse remplaçait un écrasement — le titre restait coupé. Fix (RefDrawer) : le NOM passe
+à la ligne (lineHeight 1.25, plus d'ellipse/nowrap sur le titre), la VALEUR garde son
+ellipse. « Viabilisation et réseaux » se lit en entier sur les 2 fiches témoins.
+
+## Libellés arbitrés Vic (3 corrigés dans ce geste — frontend uniquement)
+
+1. « Déclassée — zone fermée » → **« Déclassée — fermée à l'urbanisation »** (status.ts).
+2. « Déclassée — non constructible » → **« Déclassée — inconstructible (géométrie) »**.
+3. « AU — à urbaniser » (légende famille) → **« AU — à urbaniser (statut : ouverte /
+   fermée / inconnue) »**. Note d'interprétation : c'est un libellé de FAMILLE (légende
+   carte) — le statut PAR PARCELLE vit déjà dans les motifs (« AU fermée » / « AU à statut
+   inconnu ») ; un suffixe par parcelle dans la fiche exigerait un changement du
+   `zonage_detail` servi (golden) — hors périmètre, à mandater si voulu.
+
+Les 5 autres libellés : consignés au BACKLOG (TRAIN 4, « Vocabulaire produit »), dont
+« Réserve foncière » marqué PRIORITAIRE (collision emplacement réservé PLU). Aucun geste.
+
+## Non-régression
+
+Golden **117/117 PASS, 0 incohérence** après le geste. tsc 0 erreur. Diff = Fiche.tsx,
+status.ts, BACKLOG.md, scripts de capture — aucun fichier scoring/API.
+
+## Captures (qa/m30/captures_revue/)
+
+| Point | Fichiers |
+|---|---|
+| A2 + A3 (fiche AI1886) | `fiche_ai1886_{avant,apres}.png` |
+| A3 (fiche AR2714) | `fiche_ar2714_{avant,apres}.png` |
+| Libellés 1-2 (popover) | `popover_libelles_{avant,apres}.png` |
+| Libellé 3 (légende zonage) | `legende_zonage_au_{avant,apres}.png` |

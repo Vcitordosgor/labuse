@@ -75,7 +75,9 @@ function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children,
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
         style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
         <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
-        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+        {/* M30-revue A3 : le NOM passe à la ligne au lieu de s'écraser en « V » ou « … » —
+            la valeur garde son ellipse, le titre reste toujours lisible en entier. */}
+        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 90, lineHeight: 1.25 }}>{name}</span>
         {value != null && <span style={{ fontSize: 15, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : REF.mint), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
         {children && <RefChevron open={open} accent={accent} />}
       </button>
@@ -1391,7 +1393,11 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* 5 · FAISABILITÉ ET BILAN — micro : 3 données sur une ligne */}
             <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
-              micro={<MicroTriple items={[fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+              micro={<MicroTriple items={delaisse
+                /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
+                   promet plus un gabarit/SDP sur une parcelle sous le seuil. */
+                ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
+                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
               <div className="flex flex-col gap-3">
                 {delaisse && (
                   /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
