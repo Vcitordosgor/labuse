@@ -51,11 +51,16 @@ AU_SOUS_PLANCHER = "au_sous_plancher"          # SERVI — marqueur de fiche, JA
 # La bande 20-40 m² n'est JAMAIS auto-déclassée (adjudication humaine sur cartes datées).
 # Généralise et REMPLACE les 17 exceptions manuelles du 04/08 (toutes couvertes, CH1893 incluse).
 DECLASSE_BATI_REVELE = "declasse_bati_revele"
+# FILTRE CLIENT BÂTI (M28, A4) : bâtie SATURÉE (ratio > 40 %, ou 15-40 % récente/année absente
+# non divisible, ou SDP saturée par le bâti existant) → tier dédié, badge, motif servi.
+# Sort de brûlantes/chaudes, reste trouvable et motivée. Cache : parcel_filtre_bati.
+DECLASSE_BATI_SATURE = "declasse_bati_sature"
 
 #: labels de déclassement (retirés du ranking des tiers de tête, mais VISIBLES avec motif).
 #: `AU_SOUS_PLANCHER` n'y figure PAS exprès : la parcelle reste SERVIE (candidate à l'assemblage).
 DECLASSE_LABELS = frozenset({DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, NON_VERIFIABLE,
-                             DECLASSE_AU_STATUT_INCONNU, DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE})
+                             DECLASSE_AU_STATUT_INCONNU, DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE,
+                             DECLASSE_BATI_SATURE})
 
 
 def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, str]:
