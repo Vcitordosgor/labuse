@@ -104,6 +104,45 @@ def check_peremption(ack_motif: str | None = None) -> dict:
     return {"perimees": n, "acked": True, "acked_by": who, "motif": ack_motif}
 
 
+# M32 Phase B §2 : cadence normée → jours attendus entre deux millésimes amont. Seuil d'alerte = ×2.
+_CADENCE_JOURS = {"hebdo": 7, "hebdomadaire": 7, "mensuel": 30, "trimestriel": 91,
+                  "semestriel": 182, "annuel": 365}
+
+
+def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
+    """Garde d'exploitation (spec millésime §5, arbitrage Vic : INCLUSE d'office au rebuild).
+    Pour chaque couche à horizon connu, si `now − source_horizon_at` dépasse la cadence attendue
+    ×`seuil_facteur`, AVERTISSEMENT BRUYANT — **jamais bloquant** (le retard de la source n'est pas
+    une faute de la bascule, mais il doit se VOIR). Les couches « continu » ou à horizon inconnu
+    sont ignorées (pas de cadence de référence). `session` optionnelle (tests) ; sinon session_scope.
+    Retourne la liste des retards constatés."""
+    import datetime
+    retards = []
+    _sql = ("SELECT name, source_horizon_at, source_cadence FROM data_sources "
+            "WHERE source_horizon_at IS NOT NULL AND source_cadence IS NOT NULL")
+    if session is not None:
+        rows = session.execute(text(_sql)).all()
+    else:
+        with session_scope() as s:
+            rows = s.execute(text(_sql)).all()
+    today = datetime.date.today()
+    for name, horizon, cadence in rows:
+        jours_attendus = _CADENCE_JOURS.get((cadence or "").lower())
+        if not jours_attendus:
+            continue  # cadence non bornable (continu) → pas de seuil de retard
+        age = (today - horizon).days
+        if age > jours_attendus * seuil_facteur:
+            retards.append({"source": name, "horizon": str(horizon), "age_jours": age,
+                            "cadence": cadence, "seuil_jours": int(jours_attendus * seuil_facteur)})
+    for r in retards:
+        print(f"{_ts()} ⚠ FRAÎCHEUR — « {r['source']} » : horizon {r['horizon']} "
+              f"({r['age_jours']} j, cadence {r['cadence']} → seuil {r['seuil_jours']} j). "
+              f"Source en retard — NON bloquant, mais à voir.", flush=True)
+    if not retards:
+        print(f"{_ts()} ✓ fraîcheur : toutes les couches datées dans leur cadence.", flush=True)
+    return {"retards": retards, "n_retards": len(retards)}
+
+
 def _ts() -> str:
     """Horodatage HH:MM:SS pour la journalisation (Date.now() indisponible dans les workflows,
     mais ici on est en script Python standard)."""

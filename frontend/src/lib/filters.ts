@@ -1,6 +1,6 @@
 import type { Filters } from '../store/useApp'
 import { pointInPolygon, type LngLat } from './geo'
-import { effectiveTier, TIER_V2_META, type TierV2 } from './status'
+import { ALL_TIER_META, effectiveTier, filterableTier, type FilterTier } from './status'
 import type { Statut } from './types'
 
 export interface ParcelProps {
@@ -57,8 +57,7 @@ export const V_SIGNAL_DEFS: { key: string; label: string; codes: string[] }[] = 
   { key: 'hors_ile', label: 'Propriétaire hors île', codes: ['GEO_HORS_ILE'] },
   { key: 'dpe_fg', label: 'DPE F-G', codes: ['DPE_G_MULTI', 'DPE_G', 'DPE_F'] },
   { key: 'tenure', label: 'Détention longue', codes: ['DVF_TENURE_OBS5'] },
-  { key: 'dirigeant', label: 'Dirigeant 65+',
-    codes: ['RNE_DIRIGEANT_75', 'RNE_DIRIGEANT_70', 'RNE_DIRIGEANT_65'] },
+  // M30 théâtre : option 'dirigeant' supprimée (masquée depuis l'audit A5 — codes absents de la base).
 ]
 export const vSignalCodes = (keys: string[]): string[] =>
   V_SIGNAL_DEFS.filter((d) => keys.includes(d.key)).flatMap((d) => d.codes)
@@ -84,10 +83,11 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   return true
 }
 
-// filtre COMPLET : scope + tiers (vide = périmètre par défaut ; « ecartee » = étage 0 dur)
+// filtre COMPLET : scope + tiers (vide = périmètre par défaut ; « ecartee » = étage 0 dur).
+// M30 item 3 : filterableTier — les declasse_* sont sélectionnables ; vide inchangé.
 export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) => {
   if (!matchScope(p, f, zone)) return false
-  const t = effectiveTier(p.tier_v2, p.etage0)
+  const t = filterableTier(p.tier_v2, p.etage0)
   if (f.tiers.length === 0) return t !== 'ecartee'
   return t != null && f.tiers.includes(t)
 }
@@ -102,7 +102,7 @@ export interface Chip { token: string; label: string }
 
 export function activeChips(f: Filters): Chip[] {
   const out: Chip[] = []
-  for (const t of f.tiers) out.push({ token: `tier:${t}`, label: TIER_V2_META[t].label })
+  for (const t of f.tiers) out.push({ token: `tier:${t}`, label: ALL_TIER_META[t].label })
   if (f.scoreMin != null) out.push({ token: 'scoreMin', label: `Q ≥ ${f.scoreMin}` })
   if (f.surfaceMin != null) out.push({ token: 'surfaceMin', label: `≥ ${f.surfaceMin.toLocaleString('fr-FR')} m²` })
   if (f.surfaceMax != null) out.push({ token: 'surfaceMax', label: `≤ ${f.surfaceMax.toLocaleString('fr-FR')} m²` })
@@ -151,7 +151,7 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   return s ? `#f=1&${s}` : ''
 }
 
-const TIER_KEYS = Object.keys(TIER_V2_META)
+const TIER_KEYS = Object.keys(ALL_TIER_META)   // M30 : liens partagés avec declasse_* valides
 
 export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone: LngLat[] | null } | null {
   if (!hash.includes('f=1')) return null
@@ -161,7 +161,7 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
     ? (p.get('z')!.split('~').map((s) => s.split('_').map(Number) as LngLat)) : null
   return {
     filters: {
-      tiers: (p.get('tv')?.split(',').filter((t) => TIER_KEYS.includes(t)) ?? []) as TierV2[],
+      tiers: (p.get('tv')?.split(',').filter((t) => TIER_KEYS.includes(t)) ?? []) as FilterTier[],
       scoreMin: num('q'),
       surfaceMin: num('smin'),
       surfaceMax: num('smax'),

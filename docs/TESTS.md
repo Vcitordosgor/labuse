@@ -6,14 +6,26 @@ Assainissement : mandat DETTE-REPO (cf. `docs/mandats/DETTE_TESTS_RAPPORT.md`).
 ## Commande
 
 ```bash
-export LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@localhost:5432/labuse
 LABUSE_DEV_MODE=1 PYTHONPATH=src .venv/bin/python -m pytest -q
 ```
 
 - Base **dédiée** `labuse_test` auto-créée (jamais la base applicative — cf. `tests/conftest.py`).
-  `conftest` lit `LABUSE_DATABASE_URL` **avant** le `.env` → l'exporter dans la commande.
-- Attendu (poste correctement configuré) : **suite verte** — `1259 passed, 19 skipped`, 0 xfail.
-  Aucun `failed`, aucun `error`.
+- **M31 PC1** : `conftest` **charge le `.env`** (via `python-dotenv`) avant de dériver l'URL de test
+  → plus besoin d'exporter `LABUSE_DATABASE_URL` à la main. Avant ce correctif, sans l'export, les
+  tests qui ouvrent `session_scope()` directement (facturation, audit_stripe, comptes, fiche_ask,
+  alertes) **erroraient** (`role "labuse" does not exist`) au lieu de tourner, car le repli codé
+  `labuse:labuse@localhost` ne matche pas un poste à auth peer (`openclaw`). Un `.env` valide (celui
+  qui fait déjà tourner l'app) suffit désormais. Un `LABUSE_DATABASE_URL` exporté reste prioritaire (CI).
+- Attendu (poste correctement configuré) : **suite verte — 1312 passed, 22 skipped, 0 failed, 0 error**,
+  SANS aucune var d'env. Voir aussi `qa/m31/M31_RAPPORT.md`.
+
+### Run servi — POINT DE VÉRITÉ UNIQUE (M31, arbitrage Vic)
+
+Le run servi vit dans **`config/served_run.txt`** (fichier versionné, 1ʳᵉ ligne non commentée). Les
+trois surfaces le lisent : backend (`Q_A_RUN_LABEL`), bundle front (`vite.config.ts` → `VITE_RUN_LABEL`),
+tuiles (`build-mvt` → `mvt_meta.run_label`). `test_run_serving_coherence.py` vérifie qu'elles == le
+fichier. **Pour basculer** : changer la ligne du fichier, puis `npm run build` + `labuse build-mvt`.
+`LABUSE_SERVED_RUN` reste un **override de DEV** (loggé WARNING au démarrage) — jamais requis en prod.
 
 ## Extras Python requis
 

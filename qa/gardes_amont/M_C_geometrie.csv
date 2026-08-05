@@ -1,0 +1,1001 @@
+idu,commune,tier,rang,largeur_inscriptible_m,polsby_popper,sous_8m
+97418000AT2324,Sainte-Marie,chaude,2735,6.5,0.360,t
+97409000AV0858,Saint-André,chaude,440,6.6,0.535,t
+97415000CO0559,Saint-Paul,chaude,3259,6.7,0.381,t
+97415000CI0716,Saint-Paul,chaude,3364,6.7,0.308,t
+97415000AY1587,Saint-Paul,brulante,31,6.8,0.638,t
+97415000CY1051,Saint-Paul,chaude,550,7.0,0.069,t
+97415000DM0976,Saint-Paul,chaude,3312,7.2,0.600,t
+97413000DE2193,Saint-Leu,chaude,3041,7.3,0.172,t
+97416000HN1318,Saint-Pierre,chaude,2213,7.4,0.677,t
+97414000EM1039,Saint-Louis,chaude,2964,7.4,0.268,t
+97415000BV0606,Saint-Paul,brulante,1497,7.6,0.676,t
+97408000AO1777,La Possession,chaude,1561,7.6,0.583,t
+97413000CY1554,Saint-Leu,chaude,605,7.6,0.687,t
+97415000AY1548,Saint-Paul,chaude,908,7.7,0.228,t
+97422000EN0064,Le Tampon,chaude,2738,7.7,0.093,t
+97410000AN0366,Saint-Benoît,chaude,232,7.8,0.342,t
+97416000HN1317,Saint-Pierre,chaude,1555,8.0,0.087,t
+97415000DK1162,Saint-Paul,chaude,1427,8.1,0.742,f
+97418000AT2300,Sainte-Marie,chaude,1812,8.1,0.250,f
+97416000HN1778,Saint-Pierre,chaude,1749,8.2,0.626,f
+97414000EM1037,Saint-Louis,brulante,152,8.3,0.624,f
+97422000BV3186,Le Tampon,chaude,1492,8.3,0.270,f
+97415000AZ1844,Saint-Paul,brulante,342,8.3,0.500,f
+97415000CY1060,Saint-Paul,chaude,1373,8.3,0.082,f
+97414000HH0382,Saint-Louis,chaude,3223,8.4,0.158,f
+97408000AP1404,La Possession,chaude,3368,8.4,0.189,f
+97416000EH1233,Saint-Pierre,chaude,2042,8.4,0.544,f
+97416000HO0303,Saint-Pierre,chaude,3381,8.5,0.373,f
+97411000DS0670,Saint-Denis,brulante,153,8.5,0.675,f
+97406000AC0630,La Plaine-des-Palmistes,chaude,3295,8.6,0.653,f
+97422000EH0197,Le Tampon,chaude,1745,8.7,0.310,f
+97413000CR0842,Saint-Leu,chaude,1432,8.7,0.225,f
+97407000BC0582,Le Port,chaude,3346,8.8,0.628,f
+97422000BV2609,Le Tampon,chaude,2114,8.8,0.267,f
+97401000AS1393,Les Avirons,chaude,1857,8.8,0.708,f
+97415000BV1608,Saint-Paul,chaude,2595,8.8,0.105,f
+97408000AP1407,La Possession,chaude,1643,8.9,0.432,f
+97415000EV0768,Saint-Paul,chaude,1868,8.9,0.352,f
+97422000CY0173,Le Tampon,chaude,3512,8.9,0.579,f
+97414000ES1029,Saint-Louis,chaude,1540,8.9,0.549,f
+97411000DS0838,Saint-Denis,brulante,183,8.9,0.696,f
+97415000CX0650,Saint-Paul,chaude,631,8.9,0.561,f
+97422000BO1704,Le Tampon,chaude,2866,9.0,0.278,f
+97420000AD0341,Sainte-Suzanne,chaude,1805,9.0,0.308,f
+97411000DS0839,Saint-Denis,chaude,325,9.0,0.698,f
+97414000DH1210,Saint-Louis,chaude,3342,9.0,0.656,f
+97418000BV0489,Sainte-Marie,chaude,3447,9.1,0.101,f
+97416000IL0741,Saint-Pierre,chaude,1865,9.1,0.721,f
+97411000DS0837,Saint-Denis,brulante,262,9.1,0.728,f
+97409000AK0814,Saint-André,chaude,1548,9.1,0.441,f
+97413000CX2179,Saint-Leu,chaude,1335,9.1,0.071,f
+97401000AR1289,Les Avirons,chaude,2326,9.2,0.662,f
+97415000ET1305,Saint-Paul,chaude,2990,9.2,0.464,f
+97408000AB0331,La Possession,chaude,2641,9.2,0.704,f
+97418000AO2181,Sainte-Marie,chaude,2291,9.3,0.565,f
+97422000BT1255,Le Tampon,chaude,2556,9.4,0.132,f
+97415000CI0790,Saint-Paul,chaude,1851,9.4,0.456,f
+97416000ET1152,Saint-Pierre,chaude,513,9.4,0.240,f
+97413000DE2325,Saint-Leu,chaude,279,9.5,0.239,f
+97424000AL1280,Cilaos,chaude,2809,9.5,0.770,f
+97407000AS1057,Le Port,chaude,185,9.5,0.729,f
+97415000CT1231,Saint-Paul,chaude,2630,9.5,0.702,f
+97415000CT2101,Saint-Paul,chaude,2433,9.5,0.743,f
+97422000CX1241,Le Tampon,chaude,2647,9.5,0.653,f
+97411000HV0235,Saint-Denis,chaude,1165,9.6,0.652,f
+97416000EP1062,Saint-Pierre,chaude,33,9.6,0.744,f
+97422000BX1123,Le Tampon,brulante,39,9.7,0.609,f
+97414000DT0997,Saint-Louis,chaude,2387,9.7,0.630,f
+97422000DE0018,Le Tampon,chaude,3153,9.7,0.654,f
+97410000BX0720,Saint-Benoît,chaude,2985,9.7,0.650,f
+97405000BE1329,Petite-Île,chaude,2359,9.8,0.760,f
+97414000EL2067,Saint-Louis,brulante,436,9.8,0.530,f
+97418000AV2015,Sainte-Marie,chaude,400,9.8,0.192,f
+97414000CS0951,Saint-Louis,brulante,268,9.8,0.694,f
+97415000DE1192,Saint-Paul,chaude,2507,9.9,0.162,f
+97415000CH2373,Saint-Paul,chaude,3015,9.9,0.618,f
+97413000CX2544,Saint-Leu,chaude,2416,9.9,0.186,f
+97415000DK0864,Saint-Paul,chaude,2773,9.9,0.531,f
+97415000DK0863,Saint-Paul,chaude,1824,10.0,0.162,f
+97415000CY0402,Saint-Paul,brulante,3161,10.0,0.129,f
+97422000DE0867,Le Tampon,chaude,2397,10.0,0.605,f
+97407000AO1129,Le Port,chaude,1114,10.0,0.771,f
+97409000BM1486,Saint-André,chaude,3503,10.0,0.742,f
+97407000AH1188,Le Port,brulante,559,10.0,0.651,f
+97415000BV1571,Saint-Paul,chaude,2147,10.0,0.726,f
+97410000CD0927,Saint-Benoît,chaude,2143,10.0,0.560,f
+97407000AS1075,Le Port,brulante,258,10.0,0.656,f
+97422000BK0039,Le Tampon,chaude,727,10.0,0.455,f
+97404000AI1989,L'Étang-Salé,chaude,2029,10.0,0.520,f
+97422000EN0147,Le Tampon,chaude,2687,10.0,0.106,f
+97416000HZ1030,Saint-Pierre,chaude,1705,10.1,0.784,f
+97409000AV0861,Saint-André,brulante,367,10.1,0.663,f
+97411000BK0234,Saint-Denis,chaude,1765,10.2,0.193,f
+97409000AI1606,Saint-André,chaude,3136,10.2,0.497,f
+97413000BH0759,Saint-Leu,chaude,135,10.2,0.452,f
+97415000DE0775,Saint-Paul,chaude,2350,10.3,0.600,f
+97415000EO1102,Saint-Paul,chaude,558,10.3,0.584,f
+97407000AE0394,Le Port,chaude,2120,10.3,0.785,f
+97404000AW0710,L'Étang-Salé,chaude,2526,10.3,0.670,f
+97414000EN4079,Saint-Louis,chaude,1116,10.3,0.370,f
+97407000AS1160,Le Port,brulante,299,10.3,0.737,f
+97410000CD0951,Saint-Benoît,chaude,1176,10.4,0.753,f
+97415000AZ1955,Saint-Paul,chaude,447,10.4,0.389,f
+97422000AS0913,Le Tampon,chaude,186,10.4,0.547,f
+97405000AM0664,Petite-Île,chaude,3376,10.4,0.717,f
+97408000AO1766,La Possession,chaude,1535,10.4,0.579,f
+97406000AI0706,La Plaine-des-Palmistes,brulante,102,10.5,0.745,f
+97416000CV2367,Saint-Pierre,chaude,2682,10.5,0.255,f
+97415000AZ0455,Saint-Paul,chaude,394,10.6,0.564,f
+97415000AS1918,Saint-Paul,chaude,411,10.6,0.645,f
+97403000AR1483,Entre-Deux,chaude,717,10.7,0.680,f
+97415000AX1081,Saint-Paul,chaude,887,10.7,0.721,f
+97416000EK0023,Saint-Pierre,chaude,779,10.7,0.753,f
+97415000DK1119,Saint-Paul,brulante,1800,10.7,0.744,f
+97416000ID0738,Saint-Pierre,chaude,2872,10.7,0.619,f
+97418000AO0914,Sainte-Marie,chaude,2669,10.7,0.322,f
+97422000AK0772,Le Tampon,chaude,2774,10.8,0.068,f
+97410000BV0202,Saint-Benoît,chaude,2097,10.8,0.523,f
+97416000IB0676,Saint-Pierre,chaude,2261,10.8,0.499,f
+97415000AT0708,Saint-Paul,chaude,936,10.8,0.328,f
+97422000BD3665,Le Tampon,brulante,251,10.9,0.402,f
+97401000AR1345,Les Avirons,brulante,2615,10.9,0.570,f
+97418000AV1575,Sainte-Marie,chaude,2002,10.9,0.124,f
+97418000AT2379,Sainte-Marie,brulante,6,11.0,0.681,f
+97413000AV2297,Saint-Leu,brulante,75,11.0,0.763,f
+97418000AT2317,Sainte-Marie,brulante,8,11.0,0.649,f
+97404000AL1664,L'Étang-Salé,chaude,323,11.0,0.719,f
+97407000AS1031,Le Port,chaude,401,11.1,0.720,f
+97403000AS1616,Entre-Deux,chaude,1265,11.1,0.575,f
+97406000AK0161,La Plaine-des-Palmistes,chaude,2955,11.1,0.673,f
+97418000AR2574,Sainte-Marie,chaude,1384,11.1,0.734,f
+97416000EM0654,Saint-Pierre,chaude,949,11.1,0.637,f
+97411000HM0289,Saint-Denis,chaude,373,11.1,0.706,f
+97409000AS1435,Saint-André,chaude,2905,11.1,0.676,f
+97414000HA0440,Saint-Louis,chaude,1053,11.1,0.059,f
+97415000AW2210,Saint-Paul,chaude,1128,11.2,0.669,f
+97411000AR0083,Saint-Denis,chaude,839,11.2,0.794,f
+97415000CT2821,Saint-Paul,chaude,344,11.2,0.529,f
+97424000AM0642,Cilaos,chaude,2869,11.3,0.727,f
+97418000AO1499,Sainte-Marie,chaude,2706,11.3,0.749,f
+97415000CZ1369,Saint-Paul,chaude,1443,11.3,0.368,f
+97412000AO0939,Saint-Joseph,chaude,345,11.5,0.566,f
+97416000IE1900,Saint-Pierre,chaude,1864,11.5,0.738,f
+97415000CX0664,Saint-Paul,chaude,907,11.5,0.514,f
+97422000AY0511,Le Tampon,chaude,1113,11.5,0.569,f
+97416000EX1204,Saint-Pierre,chaude,2417,11.5,0.267,f
+97415000AW1954,Saint-Paul,brulante,303,11.5,0.587,f
+97416000EP0960,Saint-Pierre,chaude,122,11.6,0.650,f
+97403000AR1423,Entre-Deux,brulante,124,11.6,0.653,f
+97414000EM0486,Saint-Louis,chaude,2111,11.6,0.574,f
+97408000AC3507,La Possession,chaude,384,11.7,0.230,f
+97413000DA0491,Saint-Leu,chaude,869,11.7,0.372,f
+97414000EN2984,Saint-Louis,chaude,2937,11.7,0.139,f
+97411000HC0389,Saint-Denis,chaude,556,11.7,0.681,f
+97424000AE2424,Cilaos,chaude,520,11.7,0.718,f
+97414000EN1730,Saint-Louis,chaude,305,11.7,0.365,f
+97403000AS2102,Entre-Deux,chaude,498,11.8,0.551,f
+97416000EM0220,Saint-Pierre,chaude,1242,11.8,0.686,f
+97415000DK1120,Saint-Paul,brulante,983,11.8,0.757,f
+97415000DK0858,Saint-Paul,chaude,3067,11.8,0.538,f
+97408000AT2039,La Possession,chaude,126,11.9,0.075,f
+97408000BN3751,La Possession,brulante,110,11.9,0.764,f
+97415000AZ1880,Saint-Paul,chaude,3384,11.9,0.742,f
+97415000EP1168,Saint-Paul,chaude,2953,11.9,0.706,f
+97410000CD0952,Saint-Benoît,chaude,1405,11.9,0.761,f
+97408000AC3764,La Possession,chaude,1418,11.9,0.090,f
+97410000BM1402,Saint-Benoît,chaude,2033,11.9,0.374,f
+97415000EW0992,Saint-Paul,chaude,848,12.0,0.643,f
+97410000CD0935,Saint-Benoît,chaude,3135,12.0,0.722,f
+97408000AP1649,La Possession,chaude,1229,12.0,0.639,f
+97408000AO1908,La Possession,chaude,767,12.0,0.710,f
+97422000CI1202,Le Tampon,chaude,2421,12.1,0.594,f
+97409000AW1461,Saint-André,chaude,2728,12.1,0.643,f
+97416000CT1031,Saint-Pierre,chaude,1732,12.1,0.329,f
+97416000EP1007,Saint-Pierre,chaude,2789,12.1,0.387,f
+97411000AH0294,Saint-Denis,chaude,1275,12.1,0.300,f
+97410000CD0905,Saint-Benoît,brulante,5,12.1,0.654,f
+97415000DK0818,Saint-Paul,chaude,3137,12.1,0.679,f
+97416000IE2022,Saint-Pierre,chaude,1198,12.1,0.716,f
+97423000AK1348,Les Trois-Bassins,chaude,1688,12.1,0.106,f
+97411000CH0799,Saint-Denis,chaude,43,12.1,0.672,f
+97411000AL0496,Saint-Denis,chaude,336,12.2,0.383,f
+97406000AL0413,La Plaine-des-Palmistes,chaude,417,12.2,0.537,f
+97411000HX0239,Saint-Denis,chaude,1436,12.2,0.305,f
+97415000DR1384,Saint-Paul,chaude,1244,12.3,0.329,f
+97414000EL0117,Saint-Louis,brulante,524,12.3,0.587,f
+97408000AP1650,La Possession,chaude,886,12.4,0.660,f
+97401000AN0888,Les Avirons,chaude,514,12.4,0.640,f
+97416000EX1203,Saint-Pierre,chaude,1726,12.5,0.242,f
+97403000AS2031,Entre-Deux,chaude,570,12.5,0.737,f
+97422000CN0065,Le Tampon,chaude,2979,12.5,0.659,f
+97407000AO1339,Le Port,chaude,3076,12.6,0.765,f
+97407000AL0695,Le Port,chaude,2053,12.6,0.720,f
+97401000AT0645,Les Avirons,chaude,2799,12.6,0.622,f
+97415000DK1164,Saint-Paul,chaude,3322,12.6,0.492,f
+97408000AC3640,La Possession,chaude,50,12.6,0.679,f
+97413000BM0715,Saint-Leu,chaude,1760,12.7,0.121,f
+97416000ET2164,Saint-Pierre,brulante,78,12.7,0.753,f
+97416000CW1433,Saint-Pierre,chaude,867,12.7,0.708,f
+97412000AM1053,Saint-Joseph,chaude,200,12.7,0.685,f
+97413000CL0918,Saint-Leu,chaude,1759,12.7,0.655,f
+97408000AP1651,La Possession,chaude,233,12.7,0.679,f
+97415000EW2011,Saint-Paul,chaude,618,12.7,0.588,f
+97416000ET1363,Saint-Pierre,chaude,1756,12.7,0.734,f
+97412000AZ0939,Saint-Joseph,chaude,2426,12.7,0.749,f
+97415000EL0495,Saint-Paul,chaude,1239,12.8,0.671,f
+97411000HE0011,Saint-Denis,chaude,468,12.8,0.627,f
+97408000AC2940,La Possession,chaude,850,12.8,0.107,f
+97416000EL0114,Saint-Pierre,chaude,1514,12.8,0.715,f
+97411000AD0035,Saint-Denis,chaude,3232,12.8,0.651,f
+97418000AT2325,Sainte-Marie,chaude,3132,12.8,0.709,f
+97407000BI0362,Le Port,chaude,1592,12.9,0.556,f
+97413000AV2267,Saint-Leu,brulante,42,12.9,0.771,f
+97413000CU1062,Saint-Leu,chaude,1060,12.9,0.503,f
+97418000AT1786,Sainte-Marie,chaude,2095,12.9,0.603,f
+97411000EI0245,Saint-Denis,chaude,904,13.0,0.069,f
+97412000CE2722,Saint-Joseph,chaude,139,13.0,0.703,f
+97415000AV0362,Saint-Paul,chaude,758,13.0,0.110,f
+97418000AS1103,Sainte-Marie,chaude,3426,13.0,0.739,f
+97409000AV1241,Saint-André,chaude,1241,13.1,0.707,f
+97418000AP4101,Sainte-Marie,chaude,844,13.1,0.641,f
+97415000CT0059,Saint-Paul,chaude,502,13.1,0.610,f
+97414000DH1530,Saint-Louis,chaude,1803,13.2,0.345,f
+97408000AO0327,La Possession,chaude,2382,13.2,0.056,f
+97423000AB1910,Les Trois-Bassins,brulante,114,13.2,0.722,f
+97404000AS0365,L'Étang-Salé,chaude,1578,13.2,0.527,f
+97416000HI1114,Saint-Pierre,chaude,933,13.3,0.469,f
+97415000AZ0648,Saint-Paul,chaude,603,13.3,0.625,f
+97415000EY0942,Saint-Paul,chaude,981,13.3,0.717,f
+97408000AM0419,La Possession,chaude,2812,13.3,0.095,f
+97411000CD0599,Saint-Denis,chaude,1139,13.3,0.622,f
+97415000AX0527,Saint-Paul,chaude,1750,13.4,0.723,f
+97404000AL1659,L'Étang-Salé,chaude,241,13.4,0.384,f
+97407000AH1200,Le Port,chaude,1403,13.4,0.709,f
+97415000BN0542,Saint-Paul,chaude,3422,13.5,0.552,f
+97412000CE2824,Saint-Joseph,chaude,155,13.5,0.746,f
+97413000CS1062,Saint-Leu,chaude,563,13.5,0.347,f
+97423000AH1823,Les Trois-Bassins,chaude,1715,13.5,0.502,f
+97416000CW1434,Saint-Pierre,chaude,705,13.6,0.731,f
+97416000ER0704,Saint-Pierre,chaude,1394,13.6,0.807,f
+97414000HB0596,Saint-Louis,brulante,218,13.6,0.810,f
+97416000EH1403,Saint-Pierre,chaude,1939,13.6,0.513,f
+97422000BN2989,Le Tampon,chaude,301,13.6,0.775,f
+97411000KE0436,Saint-Denis,chaude,338,13.7,0.604,f
+97414000HB0595,Saint-Louis,chaude,2974,13.7,0.813,f
+97414000EM0927,Saint-Louis,chaude,940,13.7,0.680,f
+97404000AW0609,L'Étang-Salé,chaude,2745,13.7,0.709,f
+97415000AX1100,Saint-Paul,brulante,36,13.7,0.779,f
+97416000CW1553,Saint-Pierre,chaude,1712,13.7,0.166,f
+97415000DK1109,Saint-Paul,chaude,1357,13.7,0.794,f
+97415000AW2359,Saint-Paul,chaude,2786,13.7,0.507,f
+97408000AP1652,La Possession,chaude,315,13.7,0.699,f
+97412000CK0699,Saint-Joseph,brulante,536,13.7,0.694,f
+97411000HW0435,Saint-Denis,chaude,1054,13.8,0.752,f
+97407000AO1709,Le Port,chaude,943,13.8,0.816,f
+97414000DE1341,Saint-Louis,chaude,1501,13.8,0.681,f
+97416000CW1354,Saint-Pierre,chaude,870,13.8,0.718,f
+97409000AX1085,Saint-André,brulante,107,13.8,0.743,f
+97418000BK0104,Sainte-Marie,chaude,214,13.8,0.755,f
+97413000DC0480,Saint-Leu,chaude,1206,13.9,0.714,f
+97410000AV0657,Saint-Benoît,chaude,658,13.9,0.678,f
+97413000CX2897,Saint-Leu,chaude,890,13.9,0.089,f
+97413000CU1056,Saint-Leu,chaude,3054,13.9,0.654,f
+97416000EX1601,Saint-Pierre,chaude,1056,13.9,0.092,f
+97416000HX1570,Saint-Pierre,chaude,801,13.9,0.746,f
+97415000AH1372,Saint-Paul,chaude,1197,13.9,0.663,f
+97413000CY0677,Saint-Leu,chaude,1255,13.9,0.679,f
+97409000AZ0916,Saint-André,chaude,1747,14.0,0.792,f
+97415000AX0990,Saint-Paul,chaude,626,14.0,0.142,f
+97416000ET2167,Saint-Pierre,brulante,73,14.0,0.765,f
+97416000ET2166,Saint-Pierre,brulante,97,14.0,0.766,f
+97415000DK0859,Saint-Paul,chaude,1908,14.0,0.568,f
+97416000ET2162,Saint-Pierre,chaude,3249,14.0,0.747,f
+97409000AY1501,Saint-André,chaude,1408,14.0,0.740,f
+97410000CD0915,Saint-Benoît,chaude,1291,14.1,0.698,f
+97407000AS1192,Le Port,chaude,2522,14.1,0.718,f
+97415000CZ1405,Saint-Paul,chaude,393,14.1,0.781,f
+97408000AS0442,La Possession,chaude,3282,14.1,0.663,f
+97405000AW1680,Petite-Île,chaude,691,14.2,0.578,f
+97415000DK0826,Saint-Paul,chaude,3526,14.2,0.683,f
+97415000DK1047,Saint-Paul,chaude,3464,14.2,0.610,f
+97408000AT1631,La Possession,chaude,2907,14.2,0.041,f
+97413000CX2858,Saint-Leu,chaude,677,14.2,0.749,f
+97414000CV0998,Saint-Louis,chaude,428,14.3,0.622,f
+97408000AM1326,La Possession,chaude,1088,14.3,0.687,f
+97411000KA0296,Saint-Denis,brulante,4,14.3,0.753,f
+97410000CD0939,Saint-Benoît,brulante,676,14.3,0.600,f
+97416000EP0908,Saint-Pierre,brulante,2697,14.3,0.646,f
+97416000CW2465,Saint-Pierre,chaude,824,14.3,0.735,f
+97414000EM0928,Saint-Louis,chaude,1766,14.4,0.650,f
+97405000AN0684,Petite-Île,chaude,899,14.4,0.762,f
+97413000DD1348,Saint-Leu,chaude,2632,14.4,0.701,f
+97422000BY0176,Le Tampon,chaude,3024,14.4,0.192,f
+97416000HV0227,Saint-Pierre,chaude,2557,14.4,0.594,f
+97411000CE1139,Saint-Denis,chaude,128,14.4,0.740,f
+97405000AL1672,Petite-Île,chaude,3462,14.5,0.725,f
+97415000AZ1993,Saint-Paul,chaude,383,14.5,0.395,f
+97410000CD0946,Saint-Benoît,chaude,3491,14.5,0.672,f
+97411000AW1042,Saint-Denis,brulante,287,14.5,0.811,f
+97410000BX1960,Saint-Benoît,chaude,2908,14.5,0.730,f
+97418000AS0292,Sainte-Marie,chaude,371,14.5,0.715,f
+97404000AI1991,L'Étang-Salé,chaude,3036,14.5,0.633,f
+97404000AS0367,L'Étang-Salé,chaude,178,14.6,0.740,f
+97415000AH0692,Saint-Paul,chaude,1303,14.6,0.603,f
+97410000AV0659,Saint-Benoît,chaude,1515,14.6,0.687,f
+97404000AS0363,L'Étang-Salé,chaude,3466,14.6,0.731,f
+97423000AE0927,Les Trois-Bassins,chaude,551,14.7,0.105,f
+97412000CY1095,Saint-Joseph,chaude,499,14.7,0.704,f
+97407000AH1120,Le Port,chaude,1786,14.7,0.705,f
+97413000DD1505,Saint-Leu,chaude,2989,14.7,0.656,f
+97415000DK1108,Saint-Paul,chaude,3159,14.8,0.782,f
+97407000AH1221,Le Port,chaude,1387,14.8,0.781,f
+97419000AK1109,Sainte-Rose,chaude,2835,14.8,0.708,f
+97421000AV0815,Salazie,brulante,264,14.8,0.574,f
+97407000AH1122,Le Port,chaude,1320,14.8,0.765,f
+97407000AY0575,Le Port,brulante,2410,14.8,0.766,f
+97411000CE1132,Saint-Denis,brulante,28,14.8,0.749,f
+97410000AS1446,Saint-Benoît,chaude,293,14.8,0.694,f
+97404000AS0362,L'Étang-Salé,chaude,3219,14.9,0.736,f
+97411000KA0221,Saint-Denis,chaude,426,14.9,0.784,f
+97413000DC0561,Saint-Leu,chaude,1406,14.9,0.064,f
+97406000AW1247,La Plaine-des-Palmistes,chaude,158,14.9,0.734,f
+97404000AS0366,L'Étang-Salé,chaude,1618,14.9,0.718,f
+97415000AY1592,Saint-Paul,brulante,19,14.9,0.781,f
+97415000BW1481,Saint-Paul,chaude,222,14.9,0.762,f
+97410000AV0653,Saint-Benoît,chaude,312,15.0,0.711,f
+97422000BV3183,Le Tampon,chaude,713,15.0,0.759,f
+97409000AY0204,Saint-André,chaude,1519,15.0,0.351,f
+97415000AV0361,Saint-Paul,chaude,1737,15.0,0.085,f
+97415000AY1625,Saint-Paul,brulante,51,15.0,0.771,f
+97423000AE1018,Les Trois-Bassins,brulante,2889,15.0,0.625,f
+97413000DG1116,Saint-Leu,chaude,988,15.0,0.607,f
+97408000AP0197,La Possession,chaude,3091,15.0,0.643,f
+97408000AP1644,La Possession,chaude,207,15.1,0.748,f
+97403000AP0171,Entre-Deux,chaude,1100,15.1,0.652,f
+97415000BW1480,Saint-Paul,brulante,238,15.1,0.781,f
+97410000CD0893,Saint-Benoît,brulante,2036,15.1,0.640,f
+97410000AV0652,Saint-Benoît,chaude,876,15.1,0.712,f
+97416000ET2141,Saint-Pierre,brulante,55,15.1,0.766,f
+97415000DE1325,Saint-Paul,brulante,53,15.1,0.770,f
+97415000BW1487,Saint-Paul,brulante,365,15.1,0.790,f
+97415000BN1343,Saint-Paul,chaude,771,15.2,0.777,f
+97416000EI1561,Saint-Pierre,chaude,1108,15.2,0.535,f
+97413000CO0665,Saint-Leu,brulante,450,15.2,0.724,f
+97408000AP1619,La Possession,chaude,606,15.2,0.696,f
+97408000AP1631,La Possession,chaude,58,15.2,0.047,f
+97408000AO1772,La Possession,chaude,2987,15.2,0.680,f
+97412000CE2776,Saint-Joseph,brulante,89,15.2,0.412,f
+97412000AM0599,Saint-Joseph,chaude,978,15.2,0.512,f
+97411000HH0480,Saint-Denis,chaude,1777,15.3,0.695,f
+97416000DW0368,Saint-Pierre,brulante,3052,15.3,0.789,f
+97412000AZ0940,Saint-Joseph,chaude,2396,15.3,0.764,f
+97412000CW1199,Saint-Joseph,chaude,2589,15.3,0.341,f
+97415000BW2113,Saint-Paul,chaude,3072,15.3,0.354,f
+97416000HP0858,Saint-Pierre,chaude,690,15.3,0.781,f
+97410000BW0849,Saint-Benoît,chaude,2844,15.4,0.529,f
+97408000AP1627,La Possession,chaude,420,15.4,0.764,f
+97405000AO0694,Petite-Île,chaude,578,15.4,0.282,f
+97422000BD3733,Le Tampon,chaude,695,15.4,0.491,f
+97415000EP1179,Saint-Paul,chaude,811,15.4,0.735,f
+97411000HO0605,Saint-Denis,chaude,2971,15.4,0.758,f
+97415000EY0833,Saint-Paul,chaude,1048,15.4,0.694,f
+97414000HC0386,Saint-Louis,brulante,189,15.4,0.780,f
+97418000BV0483,Sainte-Marie,chaude,2864,15.4,0.062,f
+97415000BW1485,Saint-Paul,brulante,171,15.4,0.748,f
+97410000CD0897,Saint-Benoît,brulante,1132,15.4,0.727,f
+97412000AP0747,Saint-Joseph,chaude,1185,15.4,0.279,f
+97415000BO0595,Saint-Paul,chaude,3407,15.4,0.632,f
+97422000AS0935,Le Tampon,brulante,221,15.5,0.778,f
+97401000AO1089,Les Avirons,chaude,1203,15.5,0.081,f
+97416000ET2116,Saint-Pierre,brulante,229,15.5,0.682,f
+97416000ET2243,Saint-Pierre,brulante,99,15.5,0.732,f
+97408000AP1626,La Possession,chaude,663,15.5,0.768,f
+97415000CM0955,Saint-Paul,chaude,1063,15.5,0.703,f
+97404000AS0370,L'Étang-Salé,chaude,3428,15.6,0.706,f
+97406000AO0495,La Plaine-des-Palmistes,brulante,38,15.6,0.355,f
+97415000BW1486,Saint-Paul,brulante,352,15.6,0.787,f
+97406000AT0753,La Plaine-des-Palmistes,chaude,1068,15.6,0.483,f
+97416000DI0351,Saint-Pierre,chaude,1667,15.7,0.775,f
+97404000AS0359,L'Étang-Salé,chaude,1279,15.7,0.618,f
+97420000AO0654,Sainte-Suzanne,brulante,27,15.7,0.372,f
+97412000CK0879,Saint-Joseph,chaude,413,15.7,0.566,f
+97420000AI0906,Sainte-Suzanne,chaude,1698,15.7,0.471,f
+97415000AY1535,Saint-Paul,brulante,96,15.7,0.693,f
+97414000CH1973,Saint-Louis,brulante,296,15.7,0.536,f
+97413000CJ1169,Saint-Leu,chaude,2834,15.7,0.782,f
+97409000AK1243,Saint-André,chaude,982,15.7,0.538,f
+97409000BO0631,Saint-André,chaude,1678,15.8,0.756,f
+97409000AR1997,Saint-André,chaude,257,15.8,0.601,f
+97409000AL1467,Saint-André,chaude,3004,15.8,0.661,f
+97416000DX0082,Saint-Pierre,chaude,1200,15.8,0.310,f
+97412000BW2444,Saint-Joseph,chaude,1289,15.9,0.765,f
+97405000AK1816,Petite-Île,chaude,330,15.9,0.753,f
+97401000AS1377,Les Avirons,chaude,1572,15.9,0.633,f
+97412000BW0802,Saint-Joseph,chaude,1899,15.9,0.753,f
+97411000CE1133,Saint-Denis,brulante,54,15.9,0.814,f
+97415000AY1406,Saint-Paul,chaude,2530,15.9,0.598,f
+97411000AW1031,Saint-Denis,chaude,266,15.9,0.754,f
+97416000HN1803,Saint-Pierre,chaude,1806,15.9,0.712,f
+97411000AC0024,Saint-Denis,chaude,2683,15.9,0.713,f
+97415000AY1400,Saint-Paul,chaude,2870,15.9,0.728,f
+97415000HO1028,Saint-Paul,chaude,2851,16.0,0.740,f
+97406000AV1027,La Plaine-des-Palmistes,chaude,3073,16.0,0.211,f
+97409000AY0068,Saint-André,chaude,2759,16.0,0.629,f
+97408000AP1629,La Possession,chaude,687,16.0,0.690,f
+97415000AY1541,Saint-Paul,brulante,37,16.0,0.745,f
+97412000BW0625,Saint-Joseph,chaude,260,16.0,0.733,f
+97408000AP1605,La Possession,brulante,15,16.0,0.722,f
+97411000KA0237,Saint-Denis,chaude,3279,16.0,0.705,f
+97410000AS1439,Saint-Benoît,brulante,86,16.0,0.767,f
+97414000ES0721,Saint-Louis,chaude,1121,16.1,0.190,f
+97416000IE0142,Saint-Pierre,chaude,3318,16.1,0.660,f
+97415000DK0849,Saint-Paul,chaude,2861,16.1,0.048,f
+97415000DE0350,Saint-Paul,chaude,1195,16.1,0.720,f
+97415000BO0142,Saint-Paul,chaude,756,16.1,0.749,f
+97415000HP0370,Saint-Paul,chaude,1401,16.1,0.371,f
+97415000CX0802,Saint-Paul,chaude,1388,16.1,0.091,f
+97414000DH1201,Saint-Louis,chaude,2307,16.1,0.732,f
+97401000AR1559,Les Avirons,chaude,701,16.1,0.765,f
+97416000IE1990,Saint-Pierre,chaude,2552,16.1,0.352,f
+97407000AH1220,Le Port,chaude,1797,16.1,0.777,f
+97414000ES1043,Saint-Louis,chaude,2062,16.2,0.250,f
+97404000AL1680,L'Étang-Salé,chaude,2014,16.2,0.739,f
+97416000IE1899,Saint-Pierre,chaude,445,16.2,0.782,f
+97412000CE1462,Saint-Joseph,chaude,2340,16.3,0.458,f
+97416000IM0026,Saint-Pierre,chaude,3095,16.3,0.764,f
+97415000DT0355,Saint-Paul,chaude,1316,16.3,0.664,f
+97412000BW2420,Saint-Joseph,chaude,1115,16.3,0.772,f
+97416000ES2007,Saint-Pierre,chaude,1900,16.3,0.642,f
+97412000AM2084,Saint-Joseph,chaude,864,16.3,0.759,f
+97422000CX1251,Le Tampon,chaude,2967,16.4,0.686,f
+97411000AS0126,Saint-Denis,chaude,3070,16.4,0.730,f
+97412000AM2101,Saint-Joseph,chaude,133,16.4,0.754,f
+97414000EN4068,Saint-Louis,chaude,1304,16.4,0.636,f
+97412000AO0973,Saint-Joseph,chaude,820,16.4,0.685,f
+97414000EK0627,Saint-Louis,chaude,1193,16.5,0.645,f
+97413000DC0418,Saint-Leu,chaude,964,16.5,0.688,f
+97412000AZ0947,Saint-Joseph,chaude,2222,16.5,0.691,f
+97415000EV0714,Saint-Paul,chaude,3291,16.5,0.696,f
+97411000HB0371,Saint-Denis,chaude,1676,16.5,0.099,f
+97411000HH0477,Saint-Denis,chaude,3057,16.5,0.613,f
+97408000AP1620,La Possession,chaude,385,16.6,0.777,f
+97408000AT2026,La Possession,brulante,1689,16.6,0.773,f
+97404000AT0558,L'Étang-Salé,chaude,962,16.6,0.728,f
+97416000CW2399,Saint-Pierre,chaude,804,16.6,0.513,f
+97408000AP1656,La Possession,chaude,3119,16.6,0.716,f
+97416000EW1135,Saint-Pierre,chaude,190,16.6,0.724,f
+97412000BW0801,Saint-Joseph,chaude,2475,16.7,0.750,f
+97422000BN0989,Le Tampon,chaude,390,16.7,0.746,f
+97416000DE0715,Saint-Pierre,chaude,1635,16.7,0.644,f
+97418000AT2541,Sainte-Marie,chaude,17,16.7,0.772,f
+97408000AP1599,La Possession,chaude,1840,16.7,0.718,f
+97422000BO1419,Le Tampon,chaude,1231,16.7,0.771,f
+97413000BM0899,Saint-Leu,brulante,374,16.7,0.731,f
+97408000AB0275,La Possession,chaude,34,16.8,0.723,f
+97414000CH1940,Saint-Louis,chaude,874,16.8,0.727,f
+97401000AD1175,Les Avirons,chaude,227,16.8,0.630,f
+97419000AR0813,Sainte-Rose,chaude,2490,16.8,0.756,f
+97424000AI1863,Cilaos,chaude,213,16.8,0.649,f
+97410000AS1425,Saint-Benoît,brulante,13,16.8,0.784,f
+97408000AP1663,La Possession,brulante,9,16.8,0.754,f
+97415000CT1213,Saint-Paul,chaude,423,16.9,0.118,f
+97405000AR1779,Petite-Île,chaude,65,16.9,0.775,f
+97406000AI1016,La Plaine-des-Palmistes,brulante,431,16.9,0.740,f
+97419000AE0500,Sainte-Rose,chaude,995,16.9,0.721,f
+97418000AT2542,Sainte-Marie,brulante,10,16.9,0.784,f
+97415000AY1622,Saint-Paul,brulante,20,17.0,0.784,f
+97403000AR1511,Entre-Deux,brulante,276,17.0,0.510,f
+97420000AY0545,Sainte-Suzanne,chaude,2015,17.0,0.801,f
+97420000BH2086,Sainte-Suzanne,chaude,2875,17.0,0.170,f
+97415000EO0571,Saint-Paul,chaude,734,17.0,0.747,f
+97418000AO0603,Sainte-Marie,chaude,1929,17.0,0.660,f
+97401000AP1294,Les Avirons,chaude,2198,17.0,0.661,f
+97408000AT2031,La Possession,chaude,2993,17.1,0.798,f
+97422000BI0381,Le Tampon,chaude,1589,17.1,0.074,f
+97408000AP1630,La Possession,chaude,1105,17.1,0.714,f
+97415000AD0422,Saint-Paul,chaude,2272,17.1,0.798,f
+97415000DK1152,Saint-Paul,brulante,1333,17.1,0.705,f
+97410000AV0647,Saint-Benoît,chaude,790,17.2,0.755,f
+97410000AS1441,Saint-Benoît,brulante,40,17.2,0.784,f
+97408000AP1653,La Possession,chaude,2151,17.2,0.683,f
+97422000BN2081,Le Tampon,chaude,991,17.2,0.734,f
+97408000AS0457,La Possession,chaude,41,17.2,0.773,f
+97415000AZ0627,Saint-Paul,chaude,1700,17.3,0.772,f
+97408000AM1328,La Possession,chaude,952,17.3,0.314,f
+97422000AP0245,Le Tampon,chaude,752,17.3,0.679,f
+97413000CX2263,Saint-Leu,chaude,1268,17.3,0.625,f
+97408000AP1628,La Possession,chaude,1254,17.3,0.812,f
+97406000AV1199,La Plaine-des-Palmistes,chaude,619,17.3,0.777,f
+97408000AO1685,La Possession,chaude,3370,17.3,0.760,f
+97415000EV0701,Saint-Paul,chaude,3048,17.3,0.704,f
+97408000AP1622,La Possession,chaude,1509,17.3,0.780,f
+97408000AP1624,La Possession,chaude,642,17.3,0.719,f
+97416000ET2242,Saint-Pierre,brulante,98,17.3,0.746,f
+97410000AS1450,Saint-Benoît,chaude,29,17.3,0.606,f
+97422000BR1798,Le Tampon,chaude,1767,17.4,0.719,f
+97424000AI1015,Cilaos,chaude,2720,17.4,0.642,f
+97415000ET1707,Saint-Paul,chaude,49,17.4,0.733,f
+97412000AZ0943,Saint-Joseph,chaude,3292,17.4,0.688,f
+97415000EV0715,Saint-Paul,chaude,3092,17.4,0.738,f
+97418000AT1839,Sainte-Marie,chaude,2217,17.4,0.724,f
+97416000HP0347,Saint-Pierre,chaude,1149,17.4,0.094,f
+97418000AY0476,Sainte-Marie,chaude,1246,17.4,0.784,f
+97412000AM2014,Saint-Joseph,chaude,984,17.5,0.667,f
+97408000AC2972,La Possession,chaude,1130,17.5,0.034,f
+97408000AP1617,La Possession,chaude,821,17.5,0.767,f
+97416000DE1457,Saint-Pierre,chaude,2684,17.5,0.784,f
+97410000BE1176,Saint-Benoît,chaude,783,17.5,0.375,f
+97407000AS1166,Le Port,chaude,764,17.5,0.742,f
+97415000AW2281,Saint-Paul,chaude,744,17.5,0.768,f
+97415000HM0075,Saint-Paul,chaude,510,17.5,0.758,f
+97424000AM0894,Cilaos,brulante,1793,17.5,0.740,f
+97408000AO1681,La Possession,chaude,1935,17.5,0.702,f
+97408000AP1657,La Possession,chaude,1896,17.5,0.709,f
+97412000CV0886,Saint-Joseph,chaude,3163,17.6,0.771,f
+97416000HP0860,Saint-Pierre,brulante,252,17.6,0.753,f
+97415000CT1359,Saint-Paul,chaude,427,17.6,0.771,f
+97414000ET2223,Saint-Louis,chaude,1326,17.6,0.775,f
+97414000CO1450,Saint-Louis,chaude,1796,17.6,0.638,f
+97422000EI0344,Le Tampon,chaude,3192,17.6,0.424,f
+97410000AK0662,Saint-Benoît,chaude,2334,17.6,0.583,f
+97412000AZ0945,Saint-Joseph,chaude,3405,17.6,0.733,f
+97410000CD0933,Saint-Benoît,chaude,2348,17.7,0.830,f
+97416000IC0602,Saint-Pierre,chaude,3297,17.7,0.732,f
+97408000AP1604,La Possession,chaude,84,17.7,0.801,f
+97408000AP1655,La Possession,chaude,2960,17.7,0.706,f
+97408000AP1606,La Possession,chaude,1832,17.7,0.782,f
+97422000BV1292,Le Tampon,chaude,2973,17.8,0.276,f
+97415000ER1536,Saint-Paul,chaude,2946,17.8,0.727,f
+97416000CO0725,Saint-Pierre,chaude,1512,17.8,0.714,f
+97416000IK0502,Saint-Pierre,chaude,656,17.8,0.804,f
+97415000DK1006,Saint-Paul,chaude,1463,17.8,0.781,f
+97412000AZ0938,Saint-Joseph,chaude,2467,17.8,0.784,f
+97415000DN0347,Saint-Paul,chaude,3269,17.8,0.769,f
+97412000BY1430,Saint-Joseph,chaude,1122,17.8,0.707,f
+97413000BM0837,Saint-Leu,chaude,782,17.8,0.753,f
+97415000BW1978,Saint-Paul,chaude,187,17.8,0.510,f
+97416000CO0724,Saint-Pierre,chaude,1784,17.8,0.714,f
+97412000CP0463,Saint-Joseph,brulante,90,17.9,0.778,f
+97415000CS0765,Saint-Paul,chaude,1013,17.9,0.772,f
+97413000CY1464,Saint-Leu,brulante,174,17.9,0.776,f
+97416000IE0209,Saint-Pierre,chaude,1450,17.9,0.715,f
+97408000AP1647,La Possession,brulante,1,17.9,0.695,f
+97408000AN2089,La Possession,chaude,857,17.9,0.705,f
+97411000IZ0421,Saint-Denis,chaude,3310,17.9,0.302,f
+97415000BW1482,Saint-Paul,brulante,68,17.9,0.795,f
+97416000CV1957,Saint-Pierre,chaude,1236,18.0,0.762,f
+97415000DE1272,Saint-Paul,chaude,3325,18.0,0.074,f
+97405000AK1779,Petite-Île,chaude,201,18.0,0.767,f
+97411000KB0213,Saint-Denis,brulante,3071,18.0,0.581,f
+97422000BD3747,Le Tampon,chaude,87,18.0,0.793,f
+97415000DR1049,Saint-Paul,chaude,1080,18.0,0.742,f
+97415000DK1104,Saint-Paul,chaude,2550,18.1,0.746,f
+97411000AL0497,Saint-Denis,chaude,300,18.1,0.825,f
+97411000EL0656,Saint-Denis,brulante,106,18.1,0.765,f
+97412000CE1505,Saint-Joseph,chaude,1120,18.1,0.749,f
+97416000EN0675,Saint-Pierre,chaude,2506,18.1,0.762,f
+97416000ES0905,Saint-Pierre,chaude,1790,18.1,0.637,f
+97412000BD0351,Saint-Joseph,chaude,460,18.1,0.801,f
+97405000AZ1026,Petite-Île,chaude,1354,18.1,0.731,f
+97409000BE1631,Saint-André,chaude,3278,18.2,0.607,f
+97410000BD0879,Saint-Benoît,chaude,142,18.2,0.712,f
+97415000CR0614,Saint-Paul,chaude,1869,18.2,0.806,f
+97412000AX1060,Saint-Joseph,chaude,531,18.2,0.723,f
+97415000CT2287,Saint-Paul,chaude,2726,18.2,0.826,f
+97405000AN0449,Petite-Île,brulante,353,18.2,0.783,f
+97415000CY1041,Saint-Paul,chaude,74,18.2,0.050,f
+97411000AV0217,Saint-Denis,chaude,1595,18.2,0.406,f
+97422000AY1495,Le Tampon,chaude,2459,18.2,0.718,f
+97409000BP0365,Saint-André,chaude,697,18.2,0.305,f
+97413000DC1321,Saint-Leu,brulante,505,18.2,0.751,f
+97415000CZ1176,Saint-Paul,chaude,2777,18.2,0.699,f
+97415000AY1593,Saint-Paul,chaude,3355,18.3,0.806,f
+97415000CP0973,Saint-Paul,chaude,1996,18.3,0.106,f
+97408000AP1603,La Possession,brulante,16,18.3,0.787,f
+97422000BO1418,Le Tampon,chaude,1367,18.4,0.779,f
+97408000AP1614,La Possession,chaude,1483,18.4,0.779,f
+97414000EV0500,Saint-Louis,chaude,2580,18.4,0.046,f
+97420000BD0643,Sainte-Suzanne,chaude,239,18.4,0.760,f
+97408000AP1615,La Possession,chaude,1751,18.4,0.786,f
+97408000AP1659,La Possession,chaude,2268,18.4,0.752,f
+97413000CN1175,Saint-Leu,chaude,1098,18.4,0.781,f
+97413000CX2665,Saint-Leu,chaude,2090,18.4,0.136,f
+97408000AP1670,La Possession,chaude,2848,18.4,0.678,f
+97412000CP0462,Saint-Joseph,brulante,32,18.5,0.786,f
+97410000CD0926,Saint-Benoît,chaude,3347,18.5,0.752,f
+97408000AP1625,La Possession,chaude,834,18.5,0.761,f
+97422000CX1242,Le Tampon,chaude,2833,18.5,0.825,f
+97415000CP0464,Saint-Paul,chaude,2879,18.5,0.740,f
+97401000AI1209,Les Avirons,chaude,159,18.5,0.794,f
+97411000IL0498,Saint-Denis,chaude,1023,18.5,0.819,f
+97411000EL0665,Saint-Denis,brulante,60,18.5,0.795,f
+97412000BK1987,Saint-Joseph,chaude,1371,18.6,0.772,f
+97412000CE2854,Saint-Joseph,chaude,992,18.6,0.565,f
+97415000ET1048,Saint-Paul,chaude,662,18.6,0.669,f
+97403000AM0816,Entre-Deux,chaude,1015,18.6,0.683,f
+97409000AS1144,Saint-André,chaude,1691,18.6,0.056,f
+97415000HN0318,Saint-Paul,chaude,1207,18.6,0.741,f
+97416000HX1473,Saint-Pierre,chaude,3062,18.6,0.699,f
+97413000CI0580,Saint-Leu,chaude,580,18.6,0.781,f
+97416000EX0803,Saint-Pierre,chaude,269,18.7,0.772,f
+97408000AC1950,La Possession,chaude,2746,18.7,0.742,f
+97412000AM2083,Saint-Joseph,chaude,1190,18.7,0.776,f
+97404000AW0200,L'Étang-Salé,chaude,1484,18.7,0.669,f
+97408000AP1623,La Possession,chaude,800,18.7,0.781,f
+97410000AW1088,Saint-Benoît,chaude,442,18.7,0.767,f
+97415000DK1044,Saint-Paul,chaude,7,18.7,0.749,f
+97422000CN1779,Le Tampon,chaude,501,18.7,0.757,f
+97408000AP1678,La Possession,chaude,3013,18.7,0.745,f
+97415000EO0572,Saint-Paul,chaude,1402,18.8,0.745,f
+97409000AR1260,Saint-André,brulante,82,18.8,0.774,f
+97406000AW1232,La Plaine-des-Palmistes,chaude,2178,18.8,0.335,f
+97406000AM1000,La Plaine-des-Palmistes,chaude,3425,18.8,0.713,f
+97422000BH0644,Le Tampon,chaude,2865,18.8,0.356,f
+97416000EV1703,Saint-Pierre,chaude,2100,18.8,0.407,f
+97408000AP1654,La Possession,chaude,2003,18.9,0.774,f
+97408000AP1609,La Possession,brulante,3,18.9,0.773,f
+97412000AO0912,Saint-Joseph,chaude,261,18.9,0.637,f
+97405000AV0204,Petite-Île,chaude,530,18.9,0.664,f
+97412000CR0626,Saint-Joseph,chaude,1232,18.9,0.780,f
+97408000AP1664,La Possession,chaude,2070,18.9,0.781,f
+97422000CL1456,Le Tampon,chaude,2685,18.9,0.420,f
+97408000AP1618,La Possession,chaude,2928,18.9,0.798,f
+97405000AL1677,Petite-Île,chaude,2991,18.9,0.746,f
+97409000BN0470,Saint-André,chaude,885,19.0,0.818,f
+97415000CP0010,Saint-Paul,chaude,3446,19.0,0.527,f
+97409000AR2339,Saint-André,chaude,2476,19.0,0.303,f
+97408000AP1661,La Possession,chaude,2798,19.0,0.774,f
+97416000ES0922,Saint-Pierre,chaude,2264,19.0,0.701,f
+97415000CT1663,Saint-Paul,chaude,1485,19.0,0.730,f
+97413000AV1210,Saint-Leu,chaude,3151,19.0,0.566,f
+97415000CS1199,Saint-Paul,chaude,2115,19.0,0.773,f
+97415000AY1608,Saint-Paul,brulante,81,19.1,0.761,f
+97411000IZ0414,Saint-Denis,chaude,3075,19.1,0.391,f
+97409000BM1405,Saint-André,chaude,351,19.1,0.752,f
+97422000CX1023,Le Tampon,chaude,913,19.2,0.703,f
+97408000AC2732,La Possession,chaude,3109,19.2,0.739,f
+97410000BI0559,Saint-Benoît,chaude,595,19.2,0.688,f
+97415000EV0881,Saint-Paul,chaude,1461,19.2,0.071,f
+97416000HY1552,Saint-Pierre,chaude,2469,19.2,0.780,f
+97409000BE2215,Saint-André,chaude,2046,19.2,0.783,f
+97415000CT2722,Saint-Paul,chaude,215,19.2,0.736,f
+97408000AR0862,La Possession,chaude,275,19.2,0.027,f
+97416000DR0354,Saint-Pierre,chaude,924,19.2,0.805,f
+97403000AR1151,Entre-Deux,chaude,1377,19.3,0.778,f
+97404000AL1675,L'Étang-Salé,chaude,2877,19.3,0.523,f
+97412000CV0648,Saint-Joseph,brulante,683,19.3,0.786,f
+97408000AP1610,La Possession,brulante,2,19.3,0.744,f
+97415000CR0393,Saint-Paul,chaude,3404,19.4,0.523,f
+97415000EP1170,Saint-Paul,brulante,1997,19.4,0.634,f
+97404000AX0464,L'Étang-Salé,chaude,2781,19.4,0.658,f
+97415000CM1908,Saint-Paul,chaude,878,19.5,0.742,f
+97422000CO0684,Le Tampon,chaude,1529,19.5,0.769,f
+97408000AR0759,La Possession,chaude,3421,19.5,0.755,f
+97412000CX0982,Saint-Joseph,chaude,118,19.5,0.726,f
+97422000BI0502,Le Tampon,chaude,1995,19.5,0.140,f
+97415000EZ0060,Saint-Paul,chaude,2242,19.5,0.670,f
+97408000AP1612,La Possession,chaude,1069,19.5,0.802,f
+97402000AK1630,Bras-Panon,chaude,3214,19.5,0.722,f
+97413000DE2326,Saint-Leu,chaude,865,19.5,0.778,f
+97413000CR0792,Saint-Leu,chaude,2374,19.6,0.660,f
+97418000AO2161,Sainte-Marie,chaude,3480,19.6,0.588,f
+97411000HE0570,Saint-Denis,chaude,508,19.6,0.775,f
+97415000CK1043,Saint-Paul,chaude,720,19.6,0.719,f
+97404000AX0095,L'Étang-Salé,chaude,2698,19.6,0.686,f
+97404000AT0870,L'Étang-Salé,brulante,11,19.6,0.651,f
+97403000AP1301,Entre-Deux,chaude,2947,19.7,0.759,f
+97423000AI0524,Les Trois-Bassins,chaude,675,19.7,0.753,f
+97403000AO0729,Entre-Deux,chaude,863,19.7,0.757,f
+97422000AY1105,Le Tampon,chaude,1673,19.7,0.767,f
+97413000CX2538,Saint-Leu,chaude,112,19.7,0.104,f
+97415000AT0725,Saint-Paul,chaude,1670,19.7,0.496,f
+97411000IH0537,Saint-Denis,chaude,1138,19.7,0.763,f
+97405000BE1648,Petite-Île,chaude,311,19.7,0.748,f
+97422000EC0435,Le Tampon,brulante,234,19.8,0.736,f
+97422000BK1735,Le Tampon,chaude,1143,19.8,0.591,f
+97411000CE1130,Saint-Denis,chaude,295,19.8,0.727,f
+97422000BT1013,Le Tampon,chaude,197,19.8,0.769,f
+97414000HL0400,Saint-Louis,chaude,684,19.8,0.580,f
+97410000BX1259,Saint-Benoît,chaude,2409,19.8,0.755,f
+97420000AY0549,Sainte-Suzanne,chaude,2909,19.9,0.411,f
+97422000CX0551,Le Tampon,chaude,382,19.9,0.771,f
+97410000BI0556,Saint-Benoît,chaude,1290,19.9,0.699,f
+97415000DK1057,Saint-Paul,chaude,2926,19.9,0.784,f
+97408000AP1634,La Possession,chaude,1155,19.9,0.461,f
+97408000AC0857,La Possession,chaude,3305,19.9,0.711,f
+97411000ER0095,Saint-Denis,chaude,230,19.9,0.767,f
+97422000CX1273,Le Tampon,chaude,3413,19.9,0.702,f
+97416000EP0835,Saint-Pierre,chaude,2329,20.0,0.783,f
+97415000CY0978,Saint-Paul,chaude,2352,20.0,0.823,f
+97416000HZ0451,Saint-Pierre,chaude,3454,20.0,0.745,f
+97416000EV1496,Saint-Pierre,chaude,2988,20.0,0.371,f
+97415000CY1071,Saint-Paul,chaude,1624,20.0,0.685,f
+97416000IA1390,Saint-Pierre,chaude,377,20.1,0.775,f
+97411000DY0099,Saint-Denis,chaude,2748,20.1,0.457,f
+97422000AP1093,Le Tampon,chaude,523,20.1,0.547,f
+97422000AL1344,Le Tampon,chaude,119,20.1,0.760,f
+97418000AR1786,Sainte-Marie,chaude,1820,20.1,0.791,f
+97408000AO1648,La Possession,chaude,1769,20.1,0.817,f
+97411000AM0421,Saint-Denis,chaude,1482,20.2,0.761,f
+97411000DE0339,Saint-Denis,chaude,2395,20.2,0.777,f
+97415000CT2295,Saint-Paul,chaude,667,20.2,0.681,f
+97415000BN0187,Saint-Paul,chaude,2164,20.2,0.779,f
+97406000AW1248,La Plaine-des-Palmistes,chaude,188,20.3,0.771,f
+97415000EY1040,Saint-Paul,chaude,360,20.3,0.783,f
+97411000KA0312,Saint-Denis,chaude,314,20.4,0.697,f
+97422000AP0084,Le Tampon,chaude,1804,20.4,0.652,f
+97404000AY0331,L'Étang-Salé,chaude,1753,20.4,0.616,f
+97408000AO1758,La Possession,chaude,2525,20.4,0.849,f
+97422000CN0343,Le Tampon,chaude,1321,20.4,0.796,f
+97408000AR0880,La Possession,chaude,1216,20.4,0.469,f
+97416000HY1705,Saint-Pierre,chaude,1131,20.4,0.779,f
+97424000AM1006,Cilaos,brulante,2981,20.4,0.671,f
+97411000BZ1705,Saint-Denis,chaude,3020,20.4,0.363,f
+97408000AO1810,La Possession,chaude,699,20.4,0.775,f
+97411000DZ0196,Saint-Denis,chaude,3172,20.5,0.366,f
+97415000DE0747,Saint-Paul,chaude,2237,20.5,0.739,f
+97403000AR1220,Entre-Deux,chaude,704,20.5,0.728,f
+97413000CS1036,Saint-Leu,chaude,1664,20.5,0.658,f
+97413000CP0242,Saint-Leu,chaude,2379,20.5,0.578,f
+97412000CK0809,Saint-Joseph,chaude,1684,20.5,0.737,f
+97415000CZ1194,Saint-Paul,chaude,2196,20.5,0.714,f
+97411000HE0548,Saint-Denis,brulante,289,20.5,0.777,f
+97415000DE0816,Saint-Paul,chaude,707,20.6,0.776,f
+97411000EL0640,Saint-Denis,chaude,92,20.6,0.821,f
+97415000EV0310,Saint-Paul,chaude,2135,20.6,0.810,f
+97405000AK1242,Petite-Île,chaude,3005,20.6,0.526,f
+97415000ET1725,Saint-Paul,chaude,3221,20.7,0.684,f
+97412000BC0823,Saint-Joseph,chaude,1627,20.7,0.751,f
+97421000AV0926,Salazie,chaude,2339,20.7,0.674,f
+97409000AR2714,Saint-André,chaude,1808,20.7,0.659,f
+97405000BI1064,Petite-Île,chaude,648,20.7,0.719,f
+97408000AR0758,La Possession,chaude,584,20.7,0.765,f
+97415000CX0939,Saint-Paul,chaude,93,20.7,0.737,f
+97415000CM1861,Saint-Paul,chaude,2429,20.8,0.396,f
+97406000AW0962,La Plaine-des-Palmistes,chaude,1411,20.8,0.679,f
+97416000HI1116,Saint-Pierre,brulante,347,20.8,0.755,f
+97408000AC2923,La Possession,chaude,334,20.8,0.763,f
+97405000BE0610,Petite-Île,chaude,993,20.8,0.723,f
+97411000CR0324,Saint-Denis,chaude,2984,20.8,0.772,f
+97404000AT0223,L'Étang-Salé,chaude,1811,20.8,0.710,f
+97416000HN0849,Saint-Pierre,chaude,1458,21.0,0.725,f
+97406000AV1024,La Plaine-des-Palmistes,chaude,101,21.0,0.680,f
+97411000BZ1697,Saint-Denis,chaude,2328,21.0,0.709,f
+97412000BX1339,Saint-Joseph,chaude,2180,21.0,0.739,f
+97408000AP1584,La Possession,chaude,2903,21.1,0.774,f
+97410000AO0447,Saint-Benoît,chaude,986,21.1,0.619,f
+97408000AN0618,La Possession,chaude,2885,21.1,0.741,f
+97416000CX0623,Saint-Pierre,chaude,1738,21.1,0.775,f
+97416000CW0526,Saint-Pierre,chaude,2665,21.2,0.686,f
+97401000AM0737,Les Avirons,chaude,2025,21.2,0.196,f
+97410000CD0879,Saint-Benoît,chaude,1262,21.2,0.842,f
+97413000BH1151,Saint-Leu,chaude,1487,21.2,0.658,f
+97404000BA0253,L'Étang-Salé,chaude,2128,21.2,0.765,f
+97415000ET1726,Saint-Paul,chaude,1462,21.3,0.575,f
+97412000BL1156,Saint-Joseph,chaude,3519,21.3,0.745,f
+97408000AH0334,La Possession,chaude,3288,21.3,0.777,f
+97414000EK0687,Saint-Louis,chaude,636,21.4,0.616,f
+97415000CW0930,Saint-Paul,chaude,1577,21.4,0.773,f
+97415000AY0144,Saint-Paul,chaude,2157,21.4,0.019,f
+97411000EL0201,Saint-Denis,brulante,48,21.4,0.694,f
+97411000CP0477,Saint-Denis,chaude,2631,21.4,0.287,f
+97415000CY1028,Saint-Paul,chaude,3436,21.5,0.771,f
+97406000AM0978,La Plaine-des-Palmistes,chaude,3053,21.5,0.789,f
+97409000AX1070,Saint-André,chaude,2413,21.5,0.664,f
+97411000ES0021,Saint-Denis,chaude,891,21.6,0.773,f
+97415000CY1027,Saint-Paul,chaude,2425,21.6,0.700,f
+97411000DX0079,Saint-Denis,chaude,341,21.6,0.669,f
+97418000AS0078,Sainte-Marie,chaude,1204,21.7,0.781,f
+97415000BW2167,Saint-Paul,chaude,1609,21.7,0.784,f
+97413000CX2351,Saint-Leu,chaude,587,21.7,0.770,f
+97415000DE0603,Saint-Paul,chaude,3434,21.7,0.841,f
+97414000HE0226,Saint-Louis,chaude,1644,21.7,0.626,f
+97408000BM0115,La Possession,chaude,2273,21.7,0.691,f
+97410000AE1336,Saint-Benoît,chaude,2842,21.8,0.663,f
+97422000BK2130,Le Tampon,chaude,1202,21.8,0.742,f
+97407000AH1363,Le Port,chaude,3478,21.8,0.647,f
+97408000AH0317,La Possession,chaude,2061,21.8,0.773,f
+97415000CS0434,Saint-Paul,chaude,2018,21.9,0.745,f
+97413000DM0209,Saint-Leu,chaude,1926,21.9,0.759,f
+97416000CS0538,Saint-Pierre,chaude,2427,22.1,0.562,f
+97413000CC0189,Saint-Leu,chaude,1827,22.1,0.592,f
+97415000EP0704,Saint-Paul,chaude,1725,22.1,0.773,f
+97402000AK2196,Bras-Panon,chaude,3474,22.1,0.661,f
+97418000AR1853,Sainte-Marie,chaude,1209,22.2,0.813,f
+97415000CX1395,Saint-Paul,brulante,100,22.2,0.780,f
+97404000AT0428,L'Étang-Salé,chaude,1764,22.2,0.796,f
+97416000EP0726,Saint-Pierre,chaude,1050,22.3,0.647,f
+97408000AR0757,La Possession,chaude,2710,22.3,0.735,f
+97420000AO0487,Sainte-Suzanne,chaude,1370,22.3,0.782,f
+97415000CT1210,Saint-Paul,chaude,946,22.4,0.729,f
+97413000CY0682,Saint-Leu,chaude,2098,22.5,0.797,f
+97406000AI0951,La Plaine-des-Palmistes,chaude,1891,22.5,0.702,f
+97422000CX0682,Le Tampon,chaude,1300,22.5,0.318,f
+97408000BM0117,La Possession,chaude,2450,22.5,0.693,f
+97415000AY0852,Saint-Paul,chaude,686,22.5,0.805,f
+97415000CY0845,Saint-Paul,chaude,176,22.6,0.696,f
+97415000AT0726,Saint-Paul,chaude,2195,22.6,0.415,f
+97412000CX0456,Saint-Joseph,chaude,3463,22.6,0.613,f
+97404000AE1574,L'Étang-Salé,chaude,1554,22.7,0.755,f
+97415000CS0437,Saint-Paul,chaude,2141,22.7,0.769,f
+97412000CT0375,Saint-Joseph,chaude,2038,22.7,0.768,f
+97411000DY0164,Saint-Denis,chaude,672,22.8,0.791,f
+97401000AL0548,Les Avirons,chaude,2581,22.8,0.481,f
+97406000AI1032,La Plaine-des-Palmistes,chaude,2571,22.8,0.806,f
+97413000DE0990,Saint-Leu,chaude,2558,22.8,0.721,f
+97408000AM0556,La Possession,chaude,612,22.8,0.796,f
+97408000AP1327,La Possession,chaude,1834,22.8,0.500,f
+97422000BK2446,Le Tampon,chaude,3029,22.8,0.718,f
+97411000EO0148,Saint-Denis,chaude,3386,22.9,0.477,f
+97422000AP0878,Le Tampon,chaude,3157,22.9,0.760,f
+97408000AC2787,La Possession,chaude,2355,23.0,0.709,f
+97422000DM0023,Le Tampon,chaude,877,23.0,0.726,f
+97412000BW2412,Saint-Joseph,chaude,1699,23.1,0.632,f
+97422000DK0376,Le Tampon,chaude,3443,23.1,0.687,f
+97415000BV1289,Saint-Paul,chaude,1330,23.2,0.714,f
+97422000DH0982,Le Tampon,chaude,2827,23.2,0.785,f
+97415000DK0042,Saint-Paul,chaude,985,23.2,0.550,f
+97411000EH0189,Saint-Denis,chaude,62,23.2,0.734,f
+97412000AW0695,Saint-Joseph,chaude,2158,23.2,0.607,f
+97403000AR0697,Entre-Deux,chaude,1451,23.2,0.723,f
+97422000BN0344,Le Tampon,chaude,2501,23.3,0.504,f
+97408000AH0326,La Possession,chaude,3069,23.3,0.743,f
+97415000CY1050,Saint-Paul,chaude,3401,23.3,0.698,f
+97408000AC2448,La Possession,chaude,3096,23.3,0.774,f
+97415000DE0586,Saint-Paul,chaude,2734,23.4,0.802,f
+97415000BW0448,Saint-Paul,chaude,3088,23.4,0.707,f
+97411000EM0273,Saint-Denis,chaude,1337,23.5,0.278,f
+97412000AM1794,Saint-Joseph,chaude,3327,23.5,0.754,f
+97415000EY1329,Saint-Paul,chaude,2795,23.5,0.766,f
+97409000BI0276,Saint-André,chaude,3293,23.5,0.781,f
+97415000CY1271,Saint-Paul,chaude,3235,23.7,0.622,f
+97422000AS0736,Le Tampon,chaude,947,23.7,0.726,f
+97409000AC0716,Saint-André,chaude,1342,23.7,0.767,f
+97416000HI0881,Saint-Pierre,chaude,2754,23.8,0.778,f
+97415000HR0152,Saint-Paul,chaude,476,23.9,0.740,f
+97415000CX0654,Saint-Paul,chaude,3184,23.9,0.774,f
+97424000AE2288,Cilaos,chaude,616,24.0,0.769,f
+97411000EL0428,Saint-Denis,chaude,3201,24.0,0.764,f
+97408000AC2450,La Possession,chaude,2155,24.1,0.814,f
+97422000BS1957,Le Tampon,chaude,1846,24.1,0.412,f
+97414000HH0111,Saint-Louis,chaude,2729,24.2,0.615,f
+97410000BM1383,Saint-Benoît,chaude,2911,24.2,0.815,f
+97422000DK0311,Le Tampon,chaude,597,24.3,0.657,f
+97412000CE2568,Saint-Joseph,chaude,1556,24.3,0.745,f
+97415000CM2083,Saint-Paul,chaude,2317,24.4,0.784,f
+97409000AR2763,Saint-André,chaude,3344,24.4,0.488,f
+97408000BI0254,La Possession,chaude,3500,24.4,0.767,f
+97416000CY0759,Saint-Pierre,chaude,974,24.5,0.733,f
+97415000EV0167,Saint-Paul,chaude,1442,24.5,0.736,f
+97413000CX2611,Saint-Leu,chaude,1686,24.6,0.796,f
+97416000EV0940,Saint-Pierre,chaude,2906,24.6,0.767,f
+97406000AP0104,La Plaine-des-Palmistes,brulante,274,24.6,0.785,f
+97422000CY0197,Le Tampon,brulante,368,24.6,0.271,f
+97408000AC1895,La Possession,chaude,492,24.6,0.514,f
+97404000AC0446,L'Étang-Salé,chaude,1208,24.6,0.777,f
+97405000AL1678,Petite-Île,chaude,2138,24.6,0.767,f
+97411000EV0197,Saint-Denis,chaude,2702,24.7,0.734,f
+97414000HL0590,Saint-Louis,chaude,415,24.7,0.775,f
+97422000CX0540,Le Tampon,chaude,1218,24.7,0.369,f
+97408000AM0904,La Possession,chaude,2022,24.8,0.786,f
+97409000BH0521,Saint-André,chaude,2510,24.9,0.739,f
+97412000BC0773,Saint-Joseph,chaude,2311,25.0,0.736,f
+97406000AH0227,La Plaine-des-Palmistes,chaude,1757,25.0,0.744,f
+97415000CY0173,Saint-Paul,chaude,2283,25.1,0.743,f
+97413000CS0908,Saint-Leu,chaude,3449,25.1,0.723,f
+97413000BH0672,Saint-Leu,chaude,3185,25.1,0.726,f
+97415000CX0660,Saint-Paul,chaude,1940,25.2,0.809,f
+97415000CY0149,Saint-Paul,chaude,1189,25.2,0.784,f
+97411000DW0280,Saint-Denis,chaude,3144,25.3,0.353,f
+97413000DI0381,Saint-Leu,chaude,2094,25.3,0.230,f
+97411000EK0005,Saint-Denis,chaude,1180,25.4,0.774,f
+97415000EY1415,Saint-Paul,chaude,1447,25.5,0.769,f
+97404000AZ0108,L'Étang-Salé,chaude,3055,25.5,0.767,f
+97409000BD0689,Saint-André,chaude,2181,25.6,0.670,f
+97411000EZ0061,Saint-Denis,chaude,2673,25.6,0.394,f
+97415000CX0656,Saint-Paul,chaude,2496,25.6,0.837,f
+97424000AI1869,Cilaos,chaude,607,25.6,0.763,f
+97413000CQ0246,Saint-Leu,chaude,2129,25.7,0.753,f
+97416000HX1007,Saint-Pierre,chaude,3089,25.7,0.779,f
+97411000BZ0245,Saint-Denis,chaude,1823,25.7,0.777,f
+97422000EH0126,Le Tampon,chaude,975,25.8,0.330,f
+97408000AC1375,La Possession,chaude,2940,26.0,0.715,f
+97422000CI0591,Le Tampon,chaude,2388,26.0,0.774,f
+97421000AL0369,Salazie,chaude,2210,26.2,0.767,f
+97413000CY0420,Saint-Leu,chaude,2315,26.4,0.785,f
+97415000CT2294,Saint-Paul,chaude,2722,26.4,0.706,f
+97416000EW0470,Saint-Pierre,chaude,2377,26.5,0.758,f
+97406000AM0110,La Plaine-des-Palmistes,chaude,1813,26.6,0.791,f
+97414000CO1043,Saint-Louis,chaude,1897,26.6,0.671,f
+97410000AL0474,Saint-Benoît,chaude,1842,26.6,0.290,f
+97412000AM0938,Saint-Joseph,brulante,380,26.7,0.733,f
+97422000BL1704,Le Tampon,chaude,2411,26.7,0.778,f
+97412000BW0837,Saint-Joseph,chaude,2173,26.8,0.770,f
+97422000CX1239,Le Tampon,chaude,466,26.9,0.767,f
+97409000BM1488,Saint-André,chaude,1538,27.2,0.512,f
+97414000DM0054,Saint-Louis,chaude,1938,27.4,0.779,f
+97416000ES1230,Saint-Pierre,chaude,2168,27.5,0.699,f
+97422000CX0716,Le Tampon,chaude,2197,27.6,0.641,f
+97413000CU0526,Saint-Leu,chaude,1495,27.6,0.732,f
+97404000BA0172,L'Étang-Salé,chaude,1325,27.6,0.773,f
+97415000CW0228,Saint-Paul,chaude,1087,27.7,0.793,f
+97415000EW0006,Saint-Paul,chaude,1043,27.7,0.487,f
+97404000AT0276,L'Étang-Salé,chaude,3300,27.8,0.431,f
+97411000EH0074,Saint-Denis,chaude,2470,27.9,0.755,f
+97407000AX0143,Le Port,chaude,1521,28.0,0.745,f
+97412000CX0341,Saint-Joseph,chaude,2712,28.0,0.762,f
+97422000AP0415,Le Tampon,chaude,2873,28.0,0.693,f
+97411000BZ0999,Saint-Denis,chaude,2700,28.2,0.700,f
+97411000EK0007,Saint-Denis,chaude,1849,28.3,0.794,f
+97411000EK0006,Saint-Denis,chaude,2292,28.3,0.759,f
+97407000AX0142,Le Port,chaude,1249,28.4,0.398,f
+97422000AK1410,Le Tampon,chaude,2553,28.4,0.252,f
+97413000AH0383,Saint-Leu,chaude,2797,28.5,0.314,f
+97418000AC1585,Sainte-Marie,chaude,2449,28.5,0.753,f
+97411000EK0108,Saint-Denis,chaude,1111,28.6,0.633,f
+97415000CV1487,Saint-Paul,chaude,2293,28.6,0.617,f
+97415000AC0253,Saint-Paul,chaude,1324,28.6,0.621,f
+97415000CZ0242,Saint-Paul,chaude,3220,28.7,0.431,f
+97403000AO0788,Entre-Deux,chaude,3084,28.7,0.258,f
+97411000AE0058,Saint-Denis,chaude,1072,28.7,0.491,f
+97405000AN0504,Petite-Île,chaude,958,29.0,0.809,f
+97413000CS0128,Saint-Leu,chaude,825,29.1,0.741,f
+97411000EH0070,Saint-Denis,chaude,3014,29.1,0.805,f
+97411000EH0144,Saint-Denis,chaude,1247,29.2,0.732,f
+97422000DH0230,Le Tampon,chaude,1094,29.4,0.759,f
+97408000AP1682,La Possession,chaude,1431,29.4,0.036,f
+97401000AI0810,Les Avirons,chaude,1831,29.5,0.783,f
+97422000AX1182,Le Tampon,chaude,1920,29.5,0.645,f
+97411000EK0119,Saint-Denis,chaude,2176,29.7,0.801,f
+97415000CX0639,Saint-Paul,chaude,113,29.9,0.659,f
+97422000AX0898,Le Tampon,chaude,2438,30.0,0.769,f
+97415000CW0194,Saint-Paul,chaude,180,30.1,0.737,f
+97411000HA0147,Saint-Denis,chaude,2608,30.2,0.505,f
+97415000BV0938,Saint-Paul,chaude,1733,30.2,0.779,f
+97424000AI2184,Cilaos,chaude,3083,30.4,0.617,f
+97414000CO1449,Saint-Louis,chaude,2611,30.6,0.708,f
+97411000BX0171,Saint-Denis,chaude,1898,30.8,0.710,f
+97413000DE0915,Saint-Leu,chaude,630,30.9,0.737,f
+97422000AP1183,Le Tampon,chaude,3226,30.9,0.406,f
+97410000BE1190,Saint-Benoît,chaude,1151,31.0,0.755,f
+97411000CX1761,Saint-Denis,chaude,2439,31.0,0.644,f
+97422000AS0890,Le Tampon,chaude,2050,31.1,0.765,f
+97415000CY0477,Saint-Paul,chaude,1875,31.3,0.714,f
+97415000AW0529,Saint-Paul,chaude,2923,31.3,0.743,f
+97411000AY0562,Saint-Denis,chaude,3277,31.3,0.327,f
+97411000DW0005,Saint-Denis,chaude,2257,31.8,0.538,f
+97422000CX0107,Le Tampon,chaude,2894,32.0,0.684,f
+97416000HY1458,Saint-Pierre,chaude,1355,32.0,0.774,f
+97422000CM1086,Le Tampon,chaude,1524,32.1,0.482,f
+97406000AI0542,La Plaine-des-Palmistes,chaude,2473,32.2,0.785,f
+97416000EX1895,Saint-Pierre,chaude,2186,32.3,0.775,f
+97408000AC2253,La Possession,chaude,2057,32.6,0.761,f
+97422000CX0175,Le Tampon,chaude,2654,32.7,0.706,f
+97401000AD1336,Les Avirons,chaude,1191,32.9,0.728,f
+97417000AT1361,Saint-Philippe,chaude,1552,33.3,0.786,f
+97408000AN1286,La Possession,chaude,1508,33.3,0.632,f
+97416000EZ0553,Saint-Pierre,chaude,1301,33.3,0.621,f
+97412000AM1545,Saint-Joseph,chaude,2073,33.4,0.749,f
+97415000CR1265,Saint-Paul,chaude,2024,33.4,0.240,f
+97422000BK2082,Le Tampon,chaude,1924,34.1,0.795,f
+97422000AX1622,Le Tampon,chaude,1828,34.4,0.780,f
+97422000BI0896,Le Tampon,chaude,3200,34.8,0.211,f
+97411000CD1188,Saint-Denis,chaude,813,34.8,0.750,f
+97415000EL0387,Saint-Paul,chaude,1158,34.9,0.575,f
+97411000EH0012,Saint-Denis,chaude,1622,35.0,0.796,f
+97415000EY2102,Saint-Paul,chaude,998,36.0,0.822,f
+97418000AS1397,Sainte-Marie,chaude,518,36.3,0.572,f
+97415000CW0264,Saint-Paul,chaude,2575,36.4,0.714,f
+97411000DY0137,Saint-Denis,chaude,2537,37.4,0.671,f
+97415000EO0463,Saint-Paul,chaude,968,37.5,0.781,f
+97415000BW2058,Saint-Paul,chaude,3229,37.6,0.684,f
+97415000CW1054,Saint-Paul,chaude,1356,37.8,0.831,f
+97422000AK0587,Le Tampon,chaude,3199,38.1,0.773,f
+97423000AB0321,Les Trois-Bassins,chaude,487,38.6,0.609,f
+97415000CT2281,Saint-Paul,chaude,2916,39.4,0.650,f
+97417000AO0261,Saint-Philippe,chaude,2610,39.6,0.740,f
+97406000AV1338,La Plaine-des-Palmistes,chaude,1913,39.8,0.460,f
+97418000AS1316,Sainte-Marie,chaude,1580,39.9,0.593,f
+97415000CW1051,Saint-Paul,chaude,545,40.7,0.635,f
+97404000AS0081,L'Étang-Salé,chaude,1837,40.9,0.590,f
+97411000BL0032,Saint-Denis,chaude,649,41.0,0.779,f
+97415000CW1053,Saint-Paul,chaude,387,41.4,0.732,f
+97411000CE0875,Saint-Denis,chaude,1782,42.3,0.799,f
+97419000AR0524,Sainte-Rose,chaude,2939,42.8,0.788,f
+97406000AW0821,La Plaine-des-Palmistes,chaude,2371,43.2,0.683,f
+97420000BD0327,Sainte-Suzanne,chaude,3283,43.5,0.373,f
+97409000BE1937,Saint-André,chaude,3306,44.3,0.112,f
+97411000DX0017,Saint-Denis,chaude,203,45.0,0.705,f
+97408000AP1149,La Possession,chaude,88,46.5,0.628,f
+97413000CA0198,Saint-Leu,chaude,1743,50.0,0.161,f
+97415000CW1052,Saint-Paul,chaude,833,51.2,0.747,f
+97414000DH1439,Saint-Louis,chaude,2617,52.1,0.616,f
+97415000CY0018,Saint-Paul,chaude,659,53.2,0.347,f
+97408000AP1640,La Possession,chaude,471,53.2,0.550,f
+97416000IE2047,Saint-Pierre,chaude,1308,55.1,0.613,f
+97422000DH0155,Le Tampon,chaude,1704,58.0,0.758,f
+97416000HR0307,Saint-Pierre,chaude,2932,58.6,0.769,f
+97408000AP1367,La Possession,chaude,30,67.8,0.764,f
+97408000AP1242,La Possession,chaude,358,68.0,0.684,f

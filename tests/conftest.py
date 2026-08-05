@@ -20,6 +20,17 @@ os.environ.setdefault("LABUSE_CONFIG_DIR", "config")
 # Fiche « promoteur » : pas d'appels externes (RGE ALTI / GPU) en test → déterministe.
 os.environ.setdefault("LABUSE_ENRICH_LIVE", "0")
 
+# M31 PC1 (famille B) : charger le .env AVANT de dériver l'URL de test (ligne ~90). conftest
+# s'importe avant labuse.config (qui fait ce load_dotenv), donc sans ceci `LABUSE_DATABASE_URL`
+# n'est pas en os.environ ici → repli sur le défaut codé (rôle `labuse` inexistant sur un poste
+# à auth peer `openclaw`) → les tests qui ouvrent session_scope() directement ERRORent au lieu
+# de skipper. override=False : un LABUSE_DATABASE_URL déjà exporté (CI) reste prioritaire.
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"), override=False)
+except Exception:  # pragma: no cover - python-dotenv absent : on garde le comportement d'avant
+    pass
+
 
 def _ensure_proj_data() -> None:
     """Garantit que pyproj trouve son répertoire de données PROJ (`proj.db`) AVANT tout

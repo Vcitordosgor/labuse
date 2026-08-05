@@ -49,14 +49,44 @@ def test_source_test_sans_connecteur(client):
 
 
 def test_fiche_double_score_et_cascade(client):
+    # M34 (dette #14) : le verdict est la TRADUCTION du tier servi. La parcelle de démo n'a
+    # pas de ligne au run servi → « non évaluée au run servi », JAMAIS un repli legacy muet
+    # (l'ancien verrou attendait le statut cascade « opportunite »).
     f = client.get("/parcels/97415000AB0001").json()
-    assert f["verdict"]["status"] == "opportunite"
-    # Règle d'or : les DEUX scores présents
+    assert f["verdict"]["status"] == "non_evaluee"
+    assert f["verdict"]["label"] == "Non évaluée au run servi"
+    # Règle d'or : les DEUX scores (legacy, informatifs) restent présents
     assert f["verdict"]["opportunity_score"] is not None
     assert f["verdict"]["completeness_score"] is not None
     assert len(f["cascade"]) > 10
     assert f["sources_responded"] and f["ai"]["recommended_status"] == "opportunite"
     assert "jamais garanties" in f["disclaimer"]
+
+
+def test_fiche_verdict_traduit_le_tier_servi(client):
+    # Avec une ligne v2 au run servi, le verdict de fiche EST le tier (traduction unique).
+    from sqlalchemy import text as sqla_text
+
+    from labuse.db import session_scope
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    with session_scope() as s:
+        s.execute(sqla_text(
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, "
+            "rang, contrib_z, contrib_d, copro, tier, model_version) "
+            "VALUES (:r, '97415000AB0001', 0.9, 2.0, 99, 7, 0, 0, false, 'brulante', 'm34-test') "
+            "ON CONFLICT (run_id, parcelle_id) DO UPDATE SET tier = 'brulante', rang = 7"),
+            {"r": Q_A_RUN_LABEL})
+    try:
+        f = client.get("/parcels/97415000AB0001").json()
+        assert f["verdict"]["status"] == "brulante"
+        assert f["verdict"]["label"] == "Brûlante" and f["verdict"]["rang"] == 7
+        assert f["resume"]["statut"] == "brulante"
+        assert f["resume"]["synthese"].startswith("Classée Brûlante")
+    finally:
+        with session_scope() as s:
+            s.execute(sqla_text(
+                "DELETE FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = '97415000AB0001'"),
+                {"r": Q_A_RUN_LABEL})
 
 
 def test_fiche_404(client):
@@ -123,15 +153,10 @@ def test_export_markdown_et_html(client):
     assert htmlr.status_code == 200 and "<table" in htmlr.text and "Résumé opportunité" in htmlr.text
 
 
-def test_discover_classe_les_survivantes(client):
-    disc = client.get("/discover").json()
-    idus = [d["idu"] for d in disc]
-    assert "97415000AB0001" in idus  # opportunité présente
-    # aucune exclue/faux positif dans la découverte
-    assert all(d["status"] in ("opportunite", "a_creuser") for d in disc)
-    # classées par opportunité décroissante
-    scores = [d["opportunity_score"] for d in disc]
-    assert scores == sorted(scores, reverse=True)
+# M31 PC1 : test_discover_classe_les_survivantes RETIRÉ — la route /discover a été supprimée
+# au M30 (orphelin, aucun appelant front, remplacée par /parcels + /stats). Le test dormait
+# rouge, masqué par les erreurs DB de la famille B (il n'a jamais tourné depuis M30). La
+# couverture « classement des opportunités » vit désormais dans les tests /parcels (tri rang P).
 
 
 def test_feedback(client):
@@ -231,7 +256,7 @@ def test_limit_negatif_rejete_en_422(client):
     # M3 : un limit négatif doit renvoyer un 422 propre (pas un 500 Postgres).
     assert client.get("/map/parcels.geojson", params={"limit": -5}).status_code == 422
     assert client.get("/signals", params={"limit": -5}).status_code == 422
-    assert client.get("/discover", params={"limit": -5}).status_code == 422
+    # M31 PC1 : ligne /discover retirée — route supprimée au M30 (renverrait 404, pas 422).
 
 
 def test_feedback_terrain_decote_le_score(client):

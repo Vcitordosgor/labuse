@@ -760,6 +760,30 @@ def _dvf_couverture(db: Session) -> dict:
     return _DVF_COUVERTURE_CACHE["v"]
 
 
+_MOIS_FR = {"01": "janv.", "02": "févr.", "03": "mars", "04": "avr.", "05": "mai", "06": "juin",
+            "07": "juil.", "08": "août", "09": "sept.", "10": "oct.", "11": "nov.", "12": "déc."}
+
+
+def _fraicheur_couche(db: Session, source_name: str) -> dict:
+    """M32 Phase B §2 — objet `fraicheur` STRUCTURÉ d'une couche, lu depuis le POINT DE CALCUL
+    UNIQUE `data_sources` (renseigné par l'ingester via persist_millesime). L'API ne fabrique PAS
+    de phrase : elle sert {horizon, horizon_libelle court, millesime, cadence, prochain} et le front
+    formate. `horizon` NULL → « horizon inconnu » (spec §6 : jamais inventé)."""
+    r = db.execute(text(
+        "SELECT source_millesime, source_horizon_at, source_cadence, prochain_millesime_at "
+        "FROM data_sources WHERE name ILIKE :n ORDER BY id LIMIT 1"), {"n": source_name}).mappings().first()
+    if not r:
+        return {"horizon": None, "horizon_libelle": "horizon inconnu", "millesime": None,
+                "cadence": None, "prochain": None}
+    h = r["source_horizon_at"]
+    lib = "horizon inconnu"
+    if h is not None:
+        lib = f"jusqu'à {_MOIS_FR.get(f'{h.month:02d}', str(h.month))} {h.year}"
+    return {"horizon": h.isoformat() if h else None, "horizon_libelle": lib,
+            "millesime": r["source_millesime"], "cadence": r["source_cadence"],
+            "prochain": r["prochain_millesime_at"].isoformat() if r["prochain_millesime_at"] else None}
+
+
 def _faisa_step_prov(source: str, prov: str) -> str:
     """Provenance d'AFFICHAGE d'un step (transparence — n'altère AUCUN calcul). Si le moteur l'a
     posée (bilan), on la garde ; sinon (steps capacité, prov='') on la DÉRIVE du libellé de source :
@@ -779,6 +803,7 @@ def _faisa_step_prov(source: str, prov: str) -> str:
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
+    from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
     from ..faisabilite.bilan import sector_price, compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
@@ -787,6 +812,15 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
     out: dict = {"idu": idu}
+    # M30 item 5 (anomalie AI1886, 9 m² servie avec un bilan R+6) : sous DELAISSE_MAX_M2
+    # (50 m² — seuil UNIQUE, celui des délaissés de voisinage d'au_ouverture), un bilan
+    # promoteur est un chiffre qui ment → il n'est PAS servi. LECTURE seulement : le moteur
+    # de faisabilité et le scoring ne bougent pas ; la capacité reste servie (steps tracés).
+    delaisse = row["s"] is not None and float(row["s"]) < DELAISSE_MAX_M2
+    out["delaisse"] = ({"surface_m2": int(row["s"]), "seuil_m2": int(DELAISSE_MAX_M2),
+                        "libelle": f"délaissé ({int(row['s'])} m²) — bilan non servi "
+                                   f"sous {int(DELAISSE_MAX_M2)} m²"}
+                       if delaisse else None)
     fz = parcel_faisabilite(db, row["id"])
     if fz:
         _ctx, f = fz
@@ -810,9 +844,13 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
     # sache de QUAND datent les prix (« fiabilité fragile » reste, c'est le n de ventes).
     out["marche"]["dvf_couverture"] = _dvf_couverture(db)
+    # M32 Phase B §2 : objet `fraicheur` STRUCTURÉ (horizon/millesime/cadence) lu du point de vérité
+    # data_sources — vocabulaire unique de la spec millésime, généralisable aux autres modules.
+    out["marche"]["fraicheur"] = _fraicheur_couche(db, "DVF / valeurs foncières")
     # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — LE MÊME bilan que la fiche
     # (compute_bilan_servi : charge cohérente à l'euro, prix de sortie neuf, non calculable servi).
-    b, ps = compute_bilan_servi(db, row["id"], fz) if fz else (None, None)
+    # M30 item 5 : pas de bilan sur un délaissé (le libellé `delaisse` dit pourquoi)
+    b, ps = compute_bilan_servi(db, row["id"], fz) if (fz and not delaisse) else (None, None)
     if b is None:
         out["bilan"] = None
     else:

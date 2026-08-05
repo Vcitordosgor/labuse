@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import text
 
 from labuse.api import anti_fiche as af
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL  # M31 : seed sous le run SERVI, pas un littéral
 
 
 _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
@@ -22,8 +23,8 @@ def _seed(s, idu, tier, cascade):
     s.execute(text(
         "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
         "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
-        "VALUES ('q_v7_defisc', :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
-        {"i": idu, "t": tier})
+        "VALUES (:run, :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
+        {"i": idu, "t": tier, "run": Q_A_RUN_LABEL})
     for layer, result, detail in cascade:
         s.execute(text(
             "INSERT INTO cascade_results (parcel_id, layer_name, result, detail) VALUES (:p,:l,:r,:d)"),

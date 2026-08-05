@@ -40,6 +40,11 @@ SOURCES = {
     "dvf": {"label": "DVF (mutations, Etalab geo-dvf)", "cadence": "semestrielle (avril / octobre)",
             "date_sql": "SELECT max(date_mutation)::date FROM dvf_mutations_parcelle",
             "ds_name": "DVF / valeurs foncières", "auto": True,
+            # M32 Phase B §2 : millésime amont (vague 1 = DVF). `cadence_norme` = token servi ;
+            # `prochain` = prochaine livraison géo-DVF (S1-2026 en octobre) ; `millesime` = édition
+            # fournisseur (texte normé). L'horizon (max date_mutation) est CALCULÉ, pas figé ici.
+            "cadence_norme": "semestriel", "prochain": "2026-10-01",
+            "millesime": "géo-DVF Etalab (millésimes 2021–2025)",
             "detection": "Last-Modified HTTP des CSV annuels — reload du millésime modifié uniquement"},
     "dpe": {"label": "DPE ADEME (logements existants)", "cadence": "hebdomadaire (flux continu)",
             "date_sql": "SELECT max(date_etablissement)::date FROM dpe_records",
@@ -56,6 +61,11 @@ SOURCES = {
     "gpu_plu": {"label": "GPU / PLU (zonage, prescriptions)", "cadence": "périodique (révisions)",
                 "date_sql": "SELECT max(created_at)::date FROM spatial_layers WHERE kind LIKE 'plu_gpu%'",
                 "ds_name": "Urbanisme PLU/GPU%", "auto": False,
+                # M32 §2 : millésime amont du zonage. `cadence_norme` VOLONTAIREMENT absente (révisions
+                # irrégulières, pas de fréquence → check_fraicheur ne l'évalue pas). Fraîcheur FINE =
+                # par commune (config/plu_millesimes.yaml, servie en fiche via _plu_fraicheur).
+                "millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+                "prochain": None,
                 "detection": "DÉTECTION SEULE : le zonage nourrit la CASCADE GELÉE — une mise à jour "
                              "détectée = signalement healthz, la réingestion passe par la grande passe Mac"},
     "georisques": {"label": "Géorisques (aléas, cavités, MVT, SSP)", "cadence": "périodique",
@@ -115,6 +125,38 @@ def etat_sources(session: Session) -> list[dict]:
                     "derniere_ingestion": str(derniere_ingestion) if derniere_ingestion else None,
                     "delta_donnee_jours": delta, "auto": s["auto"], "detection": s["detection"]})
     return out
+
+
+# ─────────────────────── M32 Phase B §2 · millésime amont persisté (spec Vic) ───────────────────────
+
+def persist_millesime(session: Session, only: str | None = None, *, commit: bool = True) -> list[dict]:
+    """Écrit dans `data_sources` (colonnes M32) le millésime AMONT de chaque couche : l'HORIZON
+    (fait le plus récent DANS la donnée, CALCULÉ via `date_sql`), la cadence normée, l'édition
+    fournisseur et la prochaine livraison attendue. `only='dvf'` = découpable par couche (ordre Vic :
+    DVF d'abord). Une couche sans horizon calculable aujourd'hui → `source_horizon_at` NULL =
+    « horizon inconnu » servi tel quel (jamais inventé). À appeler par l'ingester de chaque couche."""
+    rendu = []
+    for key, s in SOURCES.items():
+        if only and key != only:
+            continue
+        try:
+            with session.begin_nested():
+                horizon = session.execute(text(s["date_sql"])).scalar()
+        except Exception:  # noqa: BLE001 — table absente = horizon inconnu, pas une erreur
+            horizon = None
+        horizon = horizon if isinstance(horizon, date) else None      # normalise (jamais un datetime)
+        session.execute(text(
+            "UPDATE data_sources SET source_horizon_at = :h, source_cadence = :c, "
+            "source_millesime = :m, prochain_millesime_at = :p, updated_at = now() "
+            "WHERE name ILIKE :n"),
+            {"h": horizon, "c": s.get("cadence_norme"), "m": s.get("millesime"),
+             "p": s.get("prochain"), "n": s["ds_name"]})
+        rendu.append({"source": key, "ds_name": s["ds_name"], "horizon": str(horizon) if horizon else None,
+                      "cadence": s.get("cadence_norme"), "millesime": s.get("millesime"),
+                      "prochain": s.get("prochain")})
+    if commit:
+        session.commit()
+    return rendu
 
 
 # ─────────────────────────── J2 · détection + refresh incrémentaux ───────────────────────────

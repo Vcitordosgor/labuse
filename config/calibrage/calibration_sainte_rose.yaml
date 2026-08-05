@@ -9,6 +9,10 @@ meta:
   dates_referencees: ["2007", "2014-06-06", "2017"]
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  # M32 ré-extraction #7 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED).
+  idurba: "97419_PLU_20190504"
+  date_approbation: "2019-05-04"
+  reextraction_m32: "règlement relu : densité 20 log/ha minimum ; 10 log/ha pour 1AUc rural Bois Blanc ; phasage 2AUindicée→1AUindicée CONFIRMÉS (verbatim)"
 
 zones_au:
   ouverture: conditionnelle_etat_tiers

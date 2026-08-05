@@ -111,10 +111,14 @@ def test_is_configured_reflet_de_lenv(monkeypatch):
 # ── Synthèse règles : 5 blocs, prudente, cohérente sur 7 cas Saint-Paul ────────
 def _facts(status, *, surface=1000.0, zone="U2c", constructible=True, sdp=300, logts=(4, 6),
            cf=120000, fiable=True, bati=("vacant", "Aucun bâti significatif", 2), micro=False,
-           downgrade=None, contraintes=None, completude=85, silent=None):
+           downgrade=None, contraintes=None, completude=85, silent=None,
+           label=None, motif=None, rang=None, badge=None):
+    # M34 (dette #14) : le verdict de fiche est la traduction du tier servi — statuts = tiers.
     fiche = {
         "parcel": {"idu": "97415000ZZ0001", "commune": "Saint-Paul", "surface_m2": surface},
-        "verdict": {"status": status, "opportunity_score": 67, "completeness_score": completude,
+        "verdict": {"status": status, "label": label, "rang": rang, "motif": motif,
+                    "badge_division_libelle": badge,
+                    "opportunity_score": 67, "completeness_score": completude,
                     "micro_opportunite": micro, "downgrade_reason": downgrade},
         "faisabilite": ({"zone": zone, "constructible": constructible, "verdict": "synthèse",
                          "fourchette": {"surface_plancher_m2": sdp, "logements_au_sol": list(logts)},
@@ -130,20 +134,21 @@ def _facts(status, *, surface=1000.0, zone="U2c", constructible=True, sdp=300, l
 
 
 def test_rules_summary_cinq_blocs_obligatoires():
-    md = rules_summary(_facts("opportunite"))
+    md = rules_summary(_facts("brulante"))
     for titre in ("**Potentiel**", "**Contraintes**", "**Bâti / libre**",
                   "**Économie indicative**", "**Recommandation**", "**Fiabilité**", "**Données manquantes**"):
         assert titre in md
 
 
 def test_rules_summary_vraie_opportunite():
-    md = rules_summary(_facts("opportunite", cf=250000, fiable=True))
-    assert "Opportunité" in md and "INDICATIVE" in md          # économie toujours indicative
+    md = rules_summary(_facts("brulante", cf=250000, fiable=True, rang=42))
+    assert "Brûlante" in md and "rang 42" in md
+    assert "INDICATIVE" in md                                  # économie toujours indicative
     assert "capacité ESTIMÉE" in md                            # jamais « constructible » certain
 
 
 def test_rules_summary_micro_opportunite_pousse_assemblage():
-    md = rules_summary(_facts("opportunite", surface=320, micro=True))
+    md = rules_summary(_facts("brulante", surface=320, micro=True))
     assert "micro-opportunité" in md and "assemblage" in md.lower()
 
 
@@ -155,17 +160,20 @@ def test_rules_summary_a_creuser_reste_prudent():
 
 
 def test_rules_summary_ecartee():
-    md = rules_summary(_facts("exclue", contraintes=[
+    md = rules_summary(_facts("ecartee", contraintes=[
         {"layer_name": "risques", "result": "HARD_EXCLUDE", "detail": "PPR zone rouge"}]))
     assert "Écartée" in md and "PPR zone rouge" in md
     assert "Ne pas prospecter" in md
 
 
-def test_rules_summary_faux_positif_bati():
-    md = rules_summary(_facts("faux_positif_probable", downgrade="parcelle déjà bâtie 72 %",
+def test_rules_summary_declassee_bati():
+    # M34 : le déclassement est celui du RUN SERVI (tier declasse_*), motivé — plus jamais
+    # un « faux positif probable » du rail cascade.
+    md = rules_summary(_facts("declasse_bati_sature", label="Déclassée — bâti saturé",
+                              motif="bâtie saturée — ratio 72 %",
                               bati=("deja_bati", "Parcelle déjà bâtie", 72)))
-    assert "Faux positif probable" in md
-    assert "déjà bâtie" in md                                  # occupation réelle citée
+    assert "Déclassée — bâti saturé" in md
+    assert "déjà bâtie" in md.lower() or "saturée" in md       # occupation réelle citée
     assert "72 %" in md
 
 

@@ -1,0 +1,16 @@
+# M31 PC4 — preuve DNS mail (labuse.immo), 2026-08-05
+
+## SPF
+"v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all"
+
+## DMARC (_dmarc.labuse.immo)
+[0 enregistrement(s) — 0 = ABSENT]
+
+## DKIM cf2024-1 (Cloudflare Email Routing, entrant)
+"v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiweykoi+o48IOGuP7GR3X0MOExCUDY/BCRHoWBnh3rChl7W...
+## DKIM google._domainkey (envoi Gmail sortant)
+
+## MX
+22 route3.mx.cloudflare.net.
+78 route2.mx.cloudflare.net.
+2 route1.mx.cloudflare.net.

@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from collections.abc import Iterator
@@ -711,6 +712,50 @@ def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | Non
     return f"{voie}, {tail}" if tail else voie
 
 
+def _m28_badges(db: Session, idu: str) -> dict:
+    """Badges M28 : `filtre_bati` (ratio, décision, motif, année étiquetée, source amont datée)
+    + `geometrie` (largeur inscriptible, Polsby-Popper, contrainte <8 m ou PP<0,1 — Sourcé,
+    cadastre Etalab 2026-06). Lecture seule des caches ; absents → clés absentes."""
+    out: dict = {}
+    fb = db.execute(text(
+        "SELECT ratio_pct, etage, annee_construction, annee_etiquette, passoire, divisible, "
+        "decision, motif FROM parcel_filtre_bati WHERE idu = :i"), {"i": idu}).mappings().first()
+    if fb:
+        out["filtre_bati"] = {**dict(fb), "ratio_pct": round(fb["ratio_pct"], 1),
+                              "source": "max(BD TOPO éd. 2026-06-15, CoSIA PVA juil.-août 2025)"}
+    # M29 (b)/(b) : signaux mérite/héritage (#9) + acquérabilité assemblage (#11) — fiche
+    # seulement, AUCUN effet de classement. Libellés factuels arbitrés Vic 05/08.
+    et = db.execute(text(
+        "SELECT entree_le, geste, nature FROM parcel_entree_tete WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if et:
+        out["entree_tete"] = {
+            "entree_le": et["entree_le"].isoformat(), "geste": et["geste"],
+            "nature": et["nature"],
+            "libelle": f"entrée dans la sélection à la bascule du {et['entree_le'].strftime('%d/%m/%Y')} — "
+                       + ("signal inchangé" if et["nature"] == "signal_inchange"
+                          else "signal en progression"),
+            "etiquette": "Sourcé", "source": "archives de bascule (contrib_d/rang par run)"}
+    aq = db.execute(text(
+        "SELECT classe, n_meme_siren, n_siren_distincts, n_indetermine, source, "
+        "source_millesime, etiquette FROM parcel_acquerabilite WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if aq:
+        lib = {"meme_proprietaire_pm": "même propriétaire (PM) — source DGFiP/Cerema"
+                                       + (f", {aq['source_millesime']}" if aq["source_millesime"]
+                                          else " (millésime amont non tracé — Estimé)"),
+               "proprietaires_distincts_pm": "propriétaires distincts (PM)",
+               "propriete_non_determinable": "propriété non déterminable"}[aq["classe"]]
+        out["acquerabilite"] = {**dict(aq), "libelle": lib}
+    g = db.execute(text(
+        "SELECT largeur_inscriptible_m, polsby_popper FROM parcel_geometrie WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if g and (float(g["largeur_inscriptible_m"]) < 8 or float(g["polsby_popper"]) < 0.1):
+        out["geometrie"] = {**dict(g), "contrainte": True, "etiquette": "Sourcé",
+                            "source": "cadastre Etalab 2026-06 (méthodes M-C)"}
+    return out
+
+
 def _ban_adresse(db: Session, idu: str) -> str | None:
     """Adresse BAN de LA parcelle (fiche, pipeline) — 1 lookup indexé, None si aucune."""
     if not _ban_ready(db):
@@ -726,7 +771,7 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, flags: str | None,
                 communes: str | None = None, flags_exclus: str | None = None,
-                v_bands: str | None = None, v_signal: str | None = None,
+                v_signal: str | None = None,
                 brulantes: bool = False, tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
@@ -790,10 +835,8 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                      " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
         params["f_flags_x"] = [f.strip() for f in flags_exclus.split(",") if f.strip()]
     # ── Score V (Vendabilité, Stage 3) : bandes, signal individuel, tier Brûlante ──
-    if v_bands:
-        conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs0 WHERE vs0.parcelle_id = p.idu"
-                     " AND vs0.v_band = ANY(:f_vbands))")
-        params["f_vbands"] = [b.strip() for b in v_bands.split(",") if b.strip()]
+    # M30 théâtre : `v_bands` SUPPRIMÉ — filtrait sur le Score V retiré du produit (M11
+    # Phase 0, RR=0,51) : un filtre qui ment. (Historique au rapport M30.)
     if v_signal:
         # signaux retenus (JSONB §5.4) : au moins UN des codes demandés présent
         conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs1 WHERE vs1.parcelle_id = p.idu"
@@ -837,7 +880,7 @@ def list_parcels(commune: str | None = None,
                  sdp_min: int | None = None, evenement: bool = False,
                  flags: str | None = None, communes: str | None = None,
                  flags_exclus: str | None = None,
-                 v_bands: str | None = None, v_signal: str | None = None,
+                 v_signal: str | None = None,
                  brulantes: bool = False, tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
@@ -859,27 +902,31 @@ def list_parcels(commune: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage, defisc_active, pc_caduc, marge_min)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
+    # M34 (dette #14) : le repli sans `source` raconte AUSSI le run servi — `status` = tier
+    # traduit (jamais le statut cascade legacy) ; les scores legacy restent informatifs.
     rows = db.execute(text(
         """
         SELECT p.idu, p.commune, p.surface_m2,
-               e.status, e.opportunity_score, e.completeness_score
+               s.tier AS status, s.rang,
+               e.opportunity_score, e.completeness_score
         FROM parcels p
+        LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
         LEFT JOIN LATERAL (
-            SELECT status, opportunity_score, completeness_score
+            SELECT opportunity_score, completeness_score
             FROM parcel_evaluations e WHERE e.parcel_id = p.id
             ORDER BY evaluated_at DESC LIMIT 1
         ) e ON true
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
         ORDER BY p.idu
         LIMIT :lim OFFSET :off
-        """), {"c": commune, "lim": limit, "off": offset}).mappings().all()
+        """), {"c": commune, "lim": limit, "off": offset, "run": Q_A_RUN_LABEL}).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
-        "status": r["status"], "opportunity_score": r["opportunity_score"],
+        "status": r["status"], "rang": r["rang"], "opportunity_score": r["opportunity_score"],
         "completeness_score": r["completeness_score"],
     } for r in rows]
 
@@ -891,7 +938,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        sdp_min: int | None = None, evenement: bool = False,
                        flags: str | None = None, communes: str | None = None,
                        flags_exclus: str | None = None,
-                       v_bands: str | None = None, v_signal: str | None = None,
+                       v_signal: str | None = None,
                        brulantes: bool = False, tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
                        personne_morale: bool = False, zonage: str | None = None,
@@ -913,7 +960,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
-                                      v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                      v_signal, brulantes, tiers, hors_copro, veille,
                                       personne_morale, zonage, defisc_active, pc_caduc, marge_min)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
@@ -1171,7 +1218,7 @@ def stats(commune: str | None = None, source: str | None = None,
           sdp_min: int | None = None, evenement: bool = False,
           flags: str | None = None, communes: str | None = None,
           flags_exclus: str | None = None,
-          v_bands: str | None = None, v_signal: str | None = None,
+          v_signal: str | None = None,
           brulantes: bool = False, tiers: str | None = None,
           hors_copro: bool = False, veille: bool = False, legacy: bool = False,
           personne_morale: bool = False, zonage: str | None = None,
@@ -1183,35 +1230,39 @@ def stats(commune: str | None = None, source: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
                sdp_min, evenement, flags, communes, flags_exclus,
-               v_bands, v_signal, brulantes, tiers, hors_copro, veille, legacy,
+               v_signal, brulantes, tiers, hors_copro, veille, legacy,
                personne_morale, zonage)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
             legacy=legacy))
 
     def _compute() -> dict:
+        # M34 (dette #14) : compteurs du repli = TIERS SERVIS (convention front : opportunité
+        # = brûlantes + chaudes). Plus jamais les statuts cascade legacy ; les agrégats de
+        # scores legacy restent informatifs.
         row = db.execute(
             text(
                 """
                 SELECT count(*) AS total,
-                       count(*) FILTER (WHERE e.status = 'opportunite') AS opportunite,
-                       count(*) FILTER (WHERE e.status = 'a_creuser')   AS a_creuser,
-                       count(*) FILTER (WHERE e.status = 'exclue')      AS exclue,
+                       count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS opportunite,
+                       count(*) FILTER (WHERE s.tier = 'a_creuser')             AS a_creuser,
+                       count(*) FILTER (WHERE s.tier = 'ecartee')               AS exclue,
                        round(avg(e.completeness_score)) AS completeness_avg,
                        max(e.opportunity_score)         AS opportunity_max
                 FROM parcels p
+                LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
                 LEFT JOIN LATERAL (
-                    SELECT status, opportunity_score, completeness_score
+                    SELECT opportunity_score, completeness_score
                     FROM parcel_evaluations e WHERE e.parcel_id = p.id
                     ORDER BY evaluated_at DESC LIMIT 1
                 ) e ON true
                 WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
                 """
-            ), {"c": commune}
+            ), {"c": commune, "run": Q_A_RUN_LABEL}
         ).mappings().one()
         out = {k: (int(v) if v is not None else None) for k, v in row.items()}
         out["active_signals"] = int(db.execute(
@@ -1486,6 +1537,11 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     base = "" if ("f_tiers" in xp or "f_statuts" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # M31 PC4 (arbitrage M30) : ALIGNER la LISTE sur la CARTE — les slivers cadastraux < 2 m²
+    # (MIN_DISPLAY_SURFACE_M2), masqués de la carte/geojson depuis toujours, l'étaient PAS de la
+    # liste (asymétrie relevée à l'inventaire M30). Même plancher d'AFFICHAGE ici : les slivers
+    # restent en base et dans les compteurs de volumétrie (comme la carte), simplement pas listés.
+    _sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
     # Adresse BAN (M6 2a) : jointure APRÈS pagination (page de :lim lignes seulement) —
     # 1 lookup indexé par ligne servie, mesuré +0,03 s sur la liste île (contrainte 1,5 s OK).
     ban_ok = _ban_ready(db)
@@ -1524,6 +1580,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE s2.run_id = :v2run
               AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {_sliver}
               {base}
               {extra_where}"""
         page_sql = f"""
@@ -1551,6 +1608,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {_sliver}
               {base}
               {extra_where}
             ORDER BY {order}
@@ -1588,7 +1646,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN cl ON cl.siren = own.siren
         ORDER BY {_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
-               "need": limit + offset,
+               "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
                "v2run": v2run, **xp}
     ).mappings().all()
     return [{
@@ -1865,6 +1923,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
+        # M28 (gaté LABUSE_M28_BADGES=1, servi à la bascule phase B) : badges filtre bâti +
+        # géométrie contrainte — signaux de fiche, étiquetés, jamais un déclassement ici.
+        **(_m28_badges(db, idu) if os.environ.get("LABUSE_M28_BADGES") == "1" else {}),
         "proprietaire_moral": dict(pm) if pm else None,
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
@@ -1873,6 +1934,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
+        "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
@@ -1971,6 +2033,38 @@ def _icd_block(s2) -> dict | None:
         "cloisonnement": "Complétude des données de la parcelle — n'entre PAS dans le "
                          "score d'opportunité (score P gelé, calculé indépendamment).",
     }
+
+
+_PLU_FRAICHEUR_CACHE: dict = {}
+
+
+def _plu_fraicheur(idu: str) -> dict | None:
+    """M32 Phase B §2 — étiquette de FRAÎCHEUR du zonage PLU (spec millésime, GPU-vs-mairie).
+    L'HORIZON du zonage = date d'approbation MAIRIE (point de vérité config/plu_millesimes.yaml,
+    ancré par l'annuaire + la campagne de ré-extraction). Le STATUT expose l'écart GPU↔mairie :
+    `a_jour` (GPU = mairie) · `annule_partiel` (annulation de portée hors zonage servi) ·
+    `opposabilite_en_attente` (mairie opposable mais AUCUN document GPU — révision en cours) · `rnu`.
+    L'API sert l'objet structuré ; le front formate. INSEE = 5 premiers car. de l'IDU."""
+    insee = (idu or "")[:5]
+    if "cfg" not in _PLU_FRAICHEUR_CACHE:
+        try:
+            _PLU_FRAICHEUR_CACHE["cfg"] = (config.load_yaml_config("plu_millesimes") or {}).get("communes", {})
+        except Exception:  # noqa: BLE001 — config absente = pas d'étiquette, jamais un 500
+            _PLU_FRAICHEUR_CACHE["cfg"] = {}
+    c = _PLU_FRAICHEUR_CACHE["cfg"].get(insee)
+    if not c:
+        return None
+    statut = c.get("statut")
+    horizon = c.get("date_mairie")
+    libelles = {
+        "a_jour": f"zonage PLU {horizon} (à jour du GPU)" if horizon else "zonage PLU (à jour)",
+        "annule_partiel": f"zonage PLU {horizon} — annulation partielle (hors zonage servi)",
+        "opposabilite_en_attente": f"zonage PLU {horizon} opposable — révision en cours, non publiée au GPU (sous réserve)",
+        "rnu": "RNU — aucun PLU (règlement national d'urbanisme)",
+    }
+    return {"idurba": c.get("idurba"), "horizon": horizon, "statut": statut,
+            "libelle": libelles.get(statut, "zonage PLU"), "note": c.get("note"),
+            "cadence": "révisions (périodique)"}
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -2228,19 +2322,26 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
     haut du panier (enrichi via la fiche existante). Aucune donnée inventée : tout provient
     d'évaluations déjà calculées ; ce qui manque reste explicitement nul côté UI."""
     from .. import shortlist as sl
+    from ..verdict_servi import TIERS_SERVABLES
     commune = commune or config.get_settings().pilot_commune_name
-    # Candidats = verdicts actionnables (opportunité / à creuser), mêmes champs que la carte.
+    # M34 (dette #14) : candidats = parcelles SERVIES dans un tier actif du run servi —
+    # plus jamais le statut cascade legacy. `status` = tier servi (traduction unique) ;
+    # les scores legacy restent des entrées de priorisation informatives, le motif de
+    # déclassement non-franc reste un malus de risque (vigilance), pas un verdict.
     rows = db.execute(
         text(
             """
             SELECT p.idu, p.commune, p.surface_m2,
-                   e.status, e.opportunity_score, e.completeness_score,
+                   s.tier AS status, s.rang,
+                   e.opportunity_score, e.completeness_score,
                    d.detail AS downgrade_reason,
                    r.sous_densite, r.sdp_residuelle_m2,
                    own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
             FROM parcels p
-            JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score
+            JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
+                 AND s.tier = ANY(:servables)
+            LEFT JOIN LATERAL (
+                SELECT opportunity_score, completeness_score
                 FROM parcel_evaluations e WHERE e.parcel_id = p.id
                 ORDER BY evaluated_at DESC LIMIT 1
             ) e ON true
@@ -2250,12 +2351,12 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
             ) d ON true
             LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
             LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
-            WHERE p.commune = :c AND e.status IN ('opportunite', 'a_creuser')
+            WHERE p.commune = :c
             """
-        ), {"c": commune}
+        ), {"c": commune, "run": Q_A_RUN_LABEL, "servables": list(TIERS_SERVABLES)}
     ).mappings().all()
     candidates = [
-        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status",
+        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status", "rang",
                               "opportunity_score", "completeness_score", "downgrade_reason",
                               "sous_densite", "sdp_residuelle_m2")},
          "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"])}
@@ -2505,20 +2606,31 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     }
 
     # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
+    # M34 (dette #14, option a) : le statut est la TRADUCTION du tier servi (verdict_servi,
+    # point de calcul unique) — le rail cascade legacy ne pilote plus AUCUN verdict. Ses
+    # signaux non-francs (accès/pente/surface/bâti partiel) restent des VIGILANCES (resume),
+    # ses scores restent informatifs. Constat : qa/m34/M34_P0_CONSTAT.md.
+    from ..verdict_servi import verdict_servi
     from .resume import is_micro_opportunite
-    _status_val = ev.status.value if ev else None
+    vs = verdict_servi(db, idu)
     verdict_block = {
-        "status": _status_val,
+        "status": vs["statut"], "label": vs["label"],
+        "tier": vs["tier"], "rang": vs["rang"], "servable": vs["servable"],
+        # Badge « bâtie + division possible » (étage 3 du filtre bâti, M28) — nuance, pas
+        # un déclassement.
+        "badge_division": vs["badge_division"],
+        "badge_division_libelle": vs["badge_division_libelle"],
+        "motif": vs["motif"], "exception_registre": vs["exception_registre"],
+        "source_run": vs["run"],
         "opportunity_score": ev.opportunity_score if ev else None,
         "completeness_score": ev.completeness_score if ev else None,
         "reasons": reasons,
-        # Motif de déclassement (garde-fou faux positifs), si la parcelle a été corrigée.
+        # Signal non-franc de la cascade legacy — VIGILANCE informative (jamais un verdict).
         "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
         "evaluated_at": ev.evaluated_at if ev else None,
         "rules_version": ev.rules_version if ev else None,
-        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur, n'affecte NI le
-        # verdict NI les scores (cf. resume.is_micro_opportunite). Le statut ci-dessus est intact.
-        "micro_opportunite": is_micro_opportunite(_status_val, p.surface_m2),
+        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur (tiers hauts).
+        "micro_opportunite": is_micro_opportunite(vs["statut"], p.surface_m2),
     }
     # Occupation bâtie (correctif R1) — ratio/nb/plus grand bâtiment + label prudent.
     from .. import bati as bati_mod
@@ -3009,46 +3121,8 @@ def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────────── Découverte (offre B) ─────────────────────────────
 
-@app.get("/discover")
-def discover(
-    commune: str | None = None,
-    min_opportunity: int = Query(0, ge=0, le=100),
-    statuses: str = "opportunite,a_creuser",
-    limit: int = Query(50, ge=1, le=2000),
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Survivantes de la cascade, classées (radar). S'appuie sur la dernière évaluation.
-
-    Dernière évaluation via LATERAL depuis `parcels` (comme la carte) plutôt que
-    DISTINCT ON sur TOUT l'historique d'évaluations : mêmes résultats, mais le coût ne
-    grossit plus avec l'historique (audit J1 : ~1,9 s → quelques dizaines de ms)."""
-    wanted = {s.strip() for s in statuses.split(",") if s.strip()}
-    rows = db.execute(
-        text(
-            """
-            SELECT p.idu, p.commune, p.surface_m2,
-                   e.status, e.opportunity_score, e.completeness_score, e.evaluated_at
-            FROM parcels p
-            JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score, evaluated_at
-                FROM parcel_evaluations e WHERE e.parcel_id = p.id
-                ORDER BY evaluated_at DESC LIMIT 1
-            ) e ON true
-            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-            """
-        ), {"c": commune, "minsurf": MIN_DISPLAY_SURFACE_M2}
-    ).mappings().all()
-    survivors = [
-        dict(r) for r in rows
-        if r["status"] in wanted and (r["opportunity_score"] or 0) >= min_opportunity
-    ]
-    survivors.sort(key=lambda r: (r["opportunity_score"] or 0, r["completeness_score"] or 0), reverse=True)
-    return survivors[:limit]
-
-
-# ───────────────────────────── Veille / signaux (offre C) ─────────────────────────────
-
+# M30 théâtre : /discover SUPPRIMÉ — endpoint orphelin (remplacé par /parcels + /stats
+# depuis M5.1, plus aucun appelant front ni QA).
 @app.get("/signals")
 def list_signals(commune: str | None = None, signal_type: str | None = None,
                  limit: int = Query(200, ge=0, le=10000), db: Session = Depends(get_db)) -> list[dict]:
@@ -3168,6 +3242,10 @@ def _prio_keys() -> list[str]:
 def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
     p = e.parcel
     ev = _latest_eval(db, e.parcel_id)
+    # M34 (dette #14) : le verdict des cartes CRM = traduction du tier servi (le front
+    # affiche déjà `premium` via verdictMeta — ce bloc API raconte désormais le même run).
+    from ..verdict_servi import verdict_servi
+    vs = verdict_servi(db, p.idu)
     return {
         "id": e.id,
         "idu": p.idu,
@@ -3183,7 +3261,7 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": _ban_adresse(db, p.idu)},
         "verdict": {
-            "status": ev.status.value if ev else None,
+            "status": vs["statut"], "label": vs["label"], "rang": vs["rang"],
             "opportunity_score": ev.opportunity_score if ev else None,
         },
         # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban

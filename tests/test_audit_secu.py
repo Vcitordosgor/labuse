@@ -520,3 +520,19 @@ def test_entrees_pipeline_idu_jamais_500(app_client):
             assert c.post("/pipeline", json={"idu": idu}).status_code < 500
     finally:
         _purge(email)
+
+
+def test_protection_admin_exige_une_session(app_client):
+    """M31 PC2 — les endpoints d'ADMINISTRATION (tableau de bord protection, gel/dégel d'un
+    sujet) ne sont JAMAIS publics : sans session, la garde middleware répond 401 (jamais 200,
+    jamais l'action). Adversarial : un audit avait signalé « aucun Depends() » sur ces routes —
+    la protection vient de la garde globale (_auth_guard), pas d'une dépendance de route. Ce
+    test verrouille l'invariant (freeze/unfreeze d'un client = action sensible)."""
+    c = TestClient(app_client.app, base_url="https://testserver")   # aucune session posée
+    assert c.get("/protection/admin").status_code == 401
+    assert c.post("/protection/admin/gel/1.2.3.4").status_code == 401
+    assert c.post("/protection/admin/degel/1.2.3.4").status_code == 401
+    # invariant de liste blanche : ces chemins ne sont jamais dans le périmètre public
+    from labuse.api import auth
+    for p in ("/protection/admin", "/protection/admin/gel/x", "/protection/admin/degel/x"):
+        assert not auth.is_public(p)

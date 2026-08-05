@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
-import { TIER_V2_META, type TierV2 } from '../../lib/status'
+import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { Loading } from '../Loading'
@@ -126,7 +126,7 @@ function AddFilter() {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open])
-  const toggleTier = (t: TierV2) =>
+  const toggleTier = (t: FilterTier) =>
     setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
   const toggleFlag = (k: string) =>
     setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
@@ -150,6 +150,20 @@ function AddFilter() {
                     filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
                   <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_V2_META[t].color }} />
                   {TIER_V2_META[t].label}
+                </button>
+              ))}
+            </div>
+            {/* M30 item 3 (« tout montrer ») : les tiers de DÉCLASSEMENT sont atteignables —
+                groupe séparé, rien de coché par défaut (la vue par défaut ne change pas).
+                Chaque libellé porte son MOTIF (jamais un tier caché ni muet). */}
+            <label className="label-caps block">Déclassées · motif (multi)</label>
+            <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
+              {DECLASSE_ORDER.map((t) => (
+                <button key={t} data-tier-declasse={t} onClick={() => toggleTier(t)}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                    filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_DECLASSE_META[t].color }} />
+                  {TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
                 </button>
               ))}
             </div>

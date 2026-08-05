@@ -26,6 +26,19 @@ def test_fmt_regle_a_verifier_et_non_reglemente():
     assert v == "3 m"
 
 
+def test_identification_rend_sans_nameerror_avec_et_sans_marque():
+    """M31 PC1 (régression M23-A) : _identification référençait `marque` et `_marque_bloc`
+    hors portée → NameError sur TOUT PDF Lettre de zonage, non couvert par un test. Ce garde
+    rend la couverture avec et sans marque (le chemin abonné et le chemin Flash/sans session)."""
+    p = {"idu": "97411000AB0001", "section": "AB", "numero": "1", "commune": "Saint-Paul",
+         "surface_m2": 812.0, "geojson": '{"type":"Point","coordinates":[55.3,-21.0]}'}
+    rap = {"adresse": "12 rue des Cocotiers"}
+    for marque in (None, {"nom": "SCI Témoin", "logo_data_uri": None}):
+        html = lz._identification(p, rap, "REF-TEST-001", marque)
+        assert "97411000AB0001" in html and "1 · Identification" in html
+        assert "Lettre de vérification de zonage" in html
+
+
 def test_limites_texte_exact_et_jamais_opposable():
     html = lz._limites({"sources": []})
     assert "art. L.410-1" in html and "seul opposable" in html

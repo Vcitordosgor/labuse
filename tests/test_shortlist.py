@@ -5,7 +5,7 @@ from labuse import shortlist as sl
 
 
 def _row(**kw):
-    base = {"idu": "97415000AA0001", "status": "opportunite", "opportunity_score": 70,
+    base = {"idu": "97415000AA0001", "status": "brulante", "opportunity_score": 70,
             "completeness_score": 80, "surface_m2": 2000, "sous_densite": False,
             "sdp_residuelle_m2": 0, "downgrade_reason": None, "owner_famille": "inconnu"}
     base.update(kw)
@@ -14,7 +14,7 @@ def _row(**kw):
 
 def test_priority_components_sum():
     score, comp = sl.priority_score(_row(sous_densite=True, owner_famille="public", surface_m2=5000))
-    assert comp["verdict"] == 120                      # opportunité
+    assert comp["verdict"] == 120                      # tier haut (brûlante)
     assert comp["opportunite"] == 70
     assert comp["fiabilite"] == 32.0                   # 80 * 0.4
     assert comp["densification"] == 25
@@ -24,10 +24,12 @@ def test_priority_components_sum():
     assert score == round(sum(comp.values()), 1)
 
 
-def test_opportunite_outranks_a_creuser_at_equal_score():
-    opp, _ = sl.priority_score(_row(status="opportunite"))
+def test_tier_haut_outranks_a_creuser_at_equal_score():
+    # M34 : statuts = tiers servis — brûlante/chaude priment réserve/à creuser (120 vs 50)
+    opp, _ = sl.priority_score(_row(status="brulante"))
     cre, _ = sl.priority_score(_row(status="a_creuser"))
-    assert opp > cre
+    res, _ = sl.priority_score(_row(status="reserve_fonciere"))
+    assert opp > cre and opp > res
 
 
 def test_risque_penalises():
@@ -109,7 +111,7 @@ def test_assemble_sujet_extracts_and_flags_priority():
                surface_m2=9723, downgrade_reason=None, owner_famille="prive", _priority=300)
     fiche = {
         "parcel": {"commune": "Saint-Paul"},
-        "verdict": {"status": "opportunite"},
+        "verdict": {"status": "brulante"},
         "faisabilite": {"constructible": True, "fourchette": {"niveaux": "R+2"},
                         "bilan": {"ca": {"bas": 1e6, "central": 1e6, "haut": 1e6},
                                   "charge_fonciere": {"central": 5e5, "par_m2_terrain": 250},

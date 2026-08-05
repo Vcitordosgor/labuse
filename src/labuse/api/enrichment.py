@@ -550,20 +550,25 @@ def enrichment_cached(db: Session, parcel, lon: float, lat: float, *, refresh: b
 
 
 def warm_commune(db: Session, commune: str,
-                 statuses: tuple[str, ...] = ("opportunite", "a_creuser"),
+                 statuses: tuple[str, ...] | None = None,
                  limit: int | None = None) -> int:
     """Pré-chauffe le cache pour les parcelles cliquables d'une commune (au moment de
-    l'évaluation / en batch, pas au clic)."""
+    l'évaluation / en batch, pas au clic).
+
+    M34 (dette #14) : « cliquable » = SERVIE dans un tier actif du run servi
+    (`statuses` = tiers, défaut TIERS_SERVABLES) — plus jamais le statut cascade legacy."""
     from ..models import Parcel
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    from ..verdict_servi import TIERS_SERVABLES
     _ensure_cache_table(db)
     sql = ("SELECT p.id, ST_X(p.centroid), ST_Y(p.centroid) FROM parcels p "
-           "JOIN LATERAL (SELECT status FROM parcel_evaluations e WHERE e.parcel_id=p.id "
-           "ORDER BY evaluated_at DESC LIMIT 1) ev ON true "
-           "WHERE p.commune = :c AND ev.status = ANY(:st) "
+           "JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run "
+           "WHERE p.commune = :c AND s.tier = ANY(:st) "
            "AND NOT EXISTS (SELECT 1 FROM parcel_enrichment pe WHERE pe.parcel_id = p.id)")
     if limit:
         sql += f" LIMIT {int(limit)}"
-    rows = db.execute(text(sql), {"c": commune, "st": list(statuses)}).all()
+    rows = db.execute(text(sql), {"c": commune, "run": Q_A_RUN_LABEL,
+                                  "st": list(statuses or TIERS_SERVABLES)}).all()
     n = 0
     for pid, lon, lat in rows:
         enrichment_cached(db, db.get(Parcel, pid), float(lon), float(lat), refresh=True)

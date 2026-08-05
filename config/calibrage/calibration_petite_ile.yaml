@@ -13,18 +13,24 @@ meta:
   reglement_superseded: "97405_reglement_20170901.pdf (146 p, original) — présent au pack mais non utilisé"
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  # M32 ré-extraction #3 (05/08) : version OPPOSABLE 97405_PLU_20230609 re-téléchargée du GPU
+  # (APPROVED, id 0b91a0d6). L'ouverture a_verifier est LEVÉE — verbatim capté au chapitre AU.
+  idurba: "97405_PLU_20230609"
+  date_approbation: "2023-06-09"
 
 zones_au:
   familles: [1AU, 1AUa, 1AUe, 2AU, 2AUe, AUa]
-  ouverture: a_verifier
-  ouverture_note: "1AU et 2AU présents (phasage probable 2AU→1AU) MAIS le wording d'ouverture n'a pas été capté au scan — NE PAS déduire par convention ; à confirmer à la lecture ciblée du chapitre AU"
+  ouverture: conditionnelle_operation
+  ouverture_src: "règlement 20230609 (169 p) — chapitres 1AU (p.88) / 2AU (p.117), verbatim M32"
+  ouverture_verbatim: "1AU : « un sous-secteur 1AUa qui devra s'urbaniser sous forme d'opérations d'ensemble » ; 2AU : « ces zones seront ouvertes à l'urbanisation seulement lorsque l'ensemble des zones 1AU auront été [aménagées] »"
+  dependance: "phasage 2AU → 1AU (INTER-ZONES : 2AU n'ouvre qu'une fois TOUTES les 1AU urbanisées) — dépendance inter-zones NON portable par le schéma v1 (limite consignée)"
   planchers:
-    localisation: "OAP (social) ; règlement 169 p : aucun plancher densité"
+    localisation: "OAP (social) ; règlement 169 p : aucun plancher densité chiffré"
     social_pct: [40, 50]
     social_note: "par site : « au moins 50% de logements sociaux/aidés », « 60% privés / 40% aidés », « au moins 40% de logements aidés »"
-    densite: "qualitative — « un minimum de densité… », AUCUN chiffre log/ha dans l'OAP"
-    src: "OAP 2023 (33 p, texte)"
+    densite: "qualitative — le règlement dit « la densité devra tendre vers les objectifs du SAR » (objectif, PAS un minimum dur) ; AUCUN chiffre log/ha → sans_objet pour un plancher densité"
+    src: "OAP 2023 (33 p, texte) + règlement chapitres AU"
     prevalence: "OAP prévaut (social par site)"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "planchers OAP en % social (40-50%) par site + 1AU/2AU + deux millésimes (base 2017 / consolidé 2023) — absents du YAML"
-  a_verifier: "ouverture 1AU/2AU (chapitre AU) ; densité (qualitative, pas chiffrée) ; dimensions U"
+  faits_confirmes_20230609: "ouverture conditionnelle_operation (1AU opération d'ensemble) + phasage inter-zones 2AU→toutes-1AU + social OAP 40-50% par site + densité non chiffrée (objectif SAR) — a_verifier LEVÉ"
+  a_verifier: "densité PAR SITE (calque graphique OAP, non portable v1) ; dépendance inter-zones 2AU (limite schéma v1) ; dimensions U hors périmètre AU"

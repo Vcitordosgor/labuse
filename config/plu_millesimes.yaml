@@ -1,0 +1,40 @@
+# FRAÎCHEUR DU ZONAGE PLU par commune (M32 Phase B §2, spec millésime).
+# Point de vérité versionné : l'HORIZON du zonage = date d'approbation MAIRIE quand elle existe,
+# sinon date GPU. L'ÉCART GPU↔mairie (GPU en retard / document absent) est ce que la fiche expose.
+# Source : reports/m51-unification/PLU-A-RECALIBRER.md (relevé 13/07, API GPU officielle) + les
+# idurba/dates d'approbation ancrés par la campagne de ré-extraction M32 (05/08). Cadence = révisions.
+# `statut` : a_jour (GPU=mairie) | annule_partiel (portée hors AU) | opposabilite_en_attente
+#   (mairie opposable mais AUCUN document GPU — révision en cours) | rnu.
+meta:
+  source: "PLU-A-RECALIBRER.md (13/07) + ré-extractions M32 (05/08)"
+  cadence: "révisions (périodique, pas de fréquence fixe)"
+communes:
+  "97401": {commune: "Les Avirons", idurba: "97401_PLU_20241206", date_mairie: "2024-12-06", statut: a_jour}
+  "97402": {commune: "Bras-Panon", idurba: "97402_PLU_20260428", date_mairie: "2026-04-28", statut: a_jour}
+  "97403": {commune: "Entre-Deux", idurba: "97403_plu_20240924", date_mairie: "2024-09-24", statut: a_jour}
+  "97404": {commune: "L'Étang-Salé", idurba: "97404_PLU_20250917", date_mairie: "2025-09-17", statut: a_jour}
+  "97405": {commune: "Petite-Île", idurba: "97405_PLU_20230609", date_mairie: "2023-06-09", statut: a_jour}
+  "97406": {commune: "La Plaine-des-Palmistes", idurba: "97406_PLU_20230527", date_mairie: "2023-05-27", statut: a_jour}
+  "97407": {commune: "Le Port", idurba: "97407_PLU_20241209", date_mairie: "2024-12-09", statut: annule_partiel,
+            note: "annulation limitée au secteur Uppp/Up2 (concession portuaire) — TA 1900330 + CAA 22BX01470 ; zones AU/N/U résidentielles intactes"}
+  "97408": {commune: "La Possession", idurba: "97408_PLU_20251217", date_mairie: "2025-12-17", statut: a_jour}
+  "97409": {commune: "Saint-André", idurba: "97409_20190228", date_mairie: "2019-02-28", statut: opposabilite_en_attente,
+            note: "révision en cours NON approuvée ; PLU 2019 reste opposable mais AUCUN document GPU en ligne — zonage servi sous réserve"}
+  "97410": {commune: "Saint-Benoît", idurba: "97410_PLU_20200206", date_mairie: "2020-02-06", statut: a_jour}
+  "97411": {commune: "Saint-Denis", idurba: "97411_PLU_20260423", date_mairie: "2026-04-23", statut: a_jour}
+  "97412": {commune: "Saint-Joseph", idurba: "97412_PLU_20251210", date_mairie: "2025-12-10", statut: a_jour}
+  "97413": {commune: "Saint-Leu", idurba: "97413_20070226", date_mairie: "2007-02-26", statut: opposabilite_en_attente,
+            note: "révision en cours (approbation visée S2 2026) ; PLU 2007 reste opposable mais AUCUN document GPU en ligne — zonage servi sous réserve"}
+  "97414": {commune: "Saint-Louis", idurba: "97414_PLU_20251218", date_mairie: "2025-12-18", statut: a_jour,
+            note: "republication faite — EN_VIGUEUR confirmé M32 (05/08)"}
+  "97415": {commune: "Saint-Paul", idurba: "97415_PLU_20251217", date_mairie: "2025-12-17", statut: a_jour}
+  "97416": {commune: "Saint-Pierre", idurba: "97416_PLU_20240625", date_mairie: "2024-06-25", statut: a_jour}
+  "97417": {commune: "Saint-Philippe", idurba: null, date_mairie: null, statut: rnu,
+            note: "RNU (règlement national d'urbanisme) — aucun PLU, zéro zonage au bourg"}
+  "97418": {commune: "Sainte-Marie", idurba: "97418_plu_20251126", date_mairie: "2025-11-26", statut: a_jour}
+  "97419": {commune: "Sainte-Rose", idurba: "97419_PLU_20190504", date_mairie: "2019-05-04", statut: a_jour}
+  "97420": {commune: "Sainte-Suzanne", idurba: "97420_plu_20250929", date_mairie: "2025-09-29", statut: a_jour}
+  "97421": {commune: "Salazie", idurba: "97421_PLU_20220524", date_mairie: "2022-05-24", statut: a_jour}
+  "97422": {commune: "Le Tampon", idurba: "97422_PLU_20230811", date_mairie: "2023-08-11", statut: a_jour}
+  "97423": {commune: "Les Trois-Bassins", idurba: "97423_PLU_20220602", date_mairie: "2022-06-02", statut: a_jour}
+  "97424": {commune: "Cilaos", idurba: "97424_plu_20240213", date_mairie: "2024-02-13", statut: a_jour}

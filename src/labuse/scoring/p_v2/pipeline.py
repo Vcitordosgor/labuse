@@ -258,7 +258,17 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     tie = rng.random(len(df))
     hors = ~df["copro"].to_numpy()
     rang = np.full(len(df), np.nan)
-    order = np.lexsort((tie[hors], -p[hors]))
+    # DÉPARTAGE EXPLICITE (M28, arbitrage Vic : D desc → SDP desc → surface desc → IDU).
+    # Le seed persisté (3.3) reste le fallback ULTIME documenté — inatteignable en pratique,
+    # l'IDU étant unique. Kill-switch mesures : LABUSE_DISABLE_DEPARTAGE=1 (tirage seedé).
+    if os.environ.get("LABUSE_DISABLE_DEPARTAGE") == "1":
+        order = np.lexsort((tie[hors], -p[hors]))
+    else:
+        _d = contrib["contrib_D"].to_numpy(dtype=float)
+        _sdp = pd.to_numeric(df["sdp_residuelle_m2"], errors="coerce").fillna(0).to_numpy(dtype=float)
+        _surf = pd.to_numeric(df["surface_m2"], errors="coerce").fillna(0).to_numpy(dtype=float)
+        _idu = np.argsort(np.argsort(df["idu"].to_numpy()))  # rang alphabétique = clé stable
+        order = np.lexsort((tie[hors], _idu[hors], -_surf[hors], -_sdp[hors], -_d[hors], -p[hors]))
     rang_h = np.empty(hors.sum())
     rang_h[order] = np.arange(1, hors.sum() + 1)
     rang[hors] = rang_h
@@ -331,6 +341,19 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             df["bati_revele"] = df["brv"].fillna(False).astype(bool)
             df = df.drop(columns=["brv"])
 
+    # FILTRE CLIENT BÂTI (M28, A1-A4, ordre A7 : AVANT le départage — l'état d'abord).
+    # Cache parcel_filtre_bati, décision 'saturee' seule (les 'servie'/'divisible' restent
+    # classées, badges de fiche). Kill-switch LABUSE_DISABLE_FILTRE_BATI=1 ; table absente = rien.
+    df["bati_sature"] = False
+    if (os.environ.get("LABUSE_DISABLE_FILTRE_BATI") != "1"
+            and session.execute(text("SELECT to_regclass('parcel_filtre_bati') IS NOT NULL")).scalar()):
+        fb = pd.read_sql(text("SELECT idu, true AS fbs FROM parcel_filtre_bati WHERE decision='saturee'"),
+                         session.connection())
+        if len(fb):
+            df = df.merge(fb, on="idu", how="left")
+            df["bati_sature"] = df["fbs"].fillna(False).astype(bool)
+            df = df.drop(columns=["fbs"])
+
     # tiers : calibrage N_e (effectif chaude ~1 150) puis hystérésis vs run précédent
     work = df.assign(rang=rang, p=p, contrib_d=contrib["contrib_D"].to_numpy())
     from .statuts import plancher_c
@@ -346,7 +369,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     _declasse_au = work["au_statut"].isin(
         [DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
     eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab & ~_declasse_au
-                     & ~work["bati_revele"] & plancher_c(work, base_params)]
+                     & ~work["bati_revele"] & ~work["bati_sature"] & plancher_c(work, base_params)]
     n_e = calibre_n_entree(eligibles["rang"], cible=1150)
     params = TierParams(n_entree=n_e, n_sortie=int(round(1.4 * n_e)))
     prev_run, prev_tiers = previous_run(session)
@@ -406,6 +429,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "brulante_seuil_d": params.brulante_seuil_d,
                          "brulante_top_decile_d": params.brulante_top_decile_d,
                          "annee_features": annee, "recale_intercept_sur": last_labeled,
+                         "seed_ties": SEED,   # 3.3 (train 5) : la graine du départage, tant qu'elle existe
                          "taux_base": taux_base, "prev_run": prev_run}),
         "n": len(rows), "d": int(time.time() - t0), "l": snapshot_label})
 

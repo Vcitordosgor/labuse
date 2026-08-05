@@ -132,9 +132,14 @@ def _ref_attestation(db: Session, idu: str) -> str:
 
 # ───────────────────────── sections HTML (layout attestation) ─────────────────────────
 
-def _identification(p: dict, rap: dict, ref: str) -> str:
+def _identification(p: dict, rap: dict, ref: str, marque: dict | None = None) -> str:
     """Couverture d'ATTESTATION (C8) : marque, titre, RÉFÉRENCE et DATE D'ÉDITION en tête,
-    identification, plan cadastral clair (C2)."""
+    identification, plan cadastral clair (C2).
+
+    M31 PC1 : `marque` ET `_marque_bloc` étaient référencés sans être en portée (régression
+    M23-A 98363d7). Aucun test ne couvrait _identification/_build_pdf → NameError latent en
+    prod (tout PDF Lettre de zonage plantait). marque threadée + import local ici."""
+    from ..marque import bloc_html as _marque_bloc
     edition = date.today().strftime("%d/%m/%Y")
     rows = [("Références cadastrales", f"{p['idu']} · section {p['section']} n° {p['numero']}"),
             ("Commune", p["commune"]),
@@ -273,7 +278,8 @@ def _cloture(ref: str) -> str:
 # ───────────────────────── endpoint ─────────────────────────
 
 def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
-    from ..marque import bloc_html as _marque_bloc
+    # M31 PC1 : import _marque_bloc retiré d'ici (mort — utilisé dans _identification qui
+    # l'importe désormais localement, avec `marque` reçue en paramètre).
     from ..flash.data import collect_report_data
     from sqlalchemy import text as _t
     row = db.execute(_t(
@@ -287,7 +293,7 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     zones = (rap.get("identite") or {}).get("zones", [])
     ref = _ref_attestation(db, idu)                      # C8 : référence unique, tracée
     sections = [
-        _identification(p, rap, ref),
+        _identification(p, rap, ref, marque),
         _zonage(zones, p.get("commune")),
         _regles(zones, p.get("commune")),
         _servitudes(rap),

@@ -1,34 +1,36 @@
-# CALIBRATION SAINT-LOUIS (97414) — version fournie 20250926 ; écart de version à confirmer
+# CALIBRATION SAINT-LOUIS (97414) — RÉ-EXTRAITE sur la version OPPOSABLE (M32, ré-extraction #1)
 # =============================================================================
-# ⚠ Vic a fourni 97414_PLU_20250926 (sept 2025). L'EN_VIGUEUR GPU est 97414_PLU_20251218 (déc 2025,
-# publié 22/07/2026) — 3 MOIS PLUS RÉCENT. Écart petit (probable modification), mais NON confirmé
-# identique. Le 20251218 n'est pas disponible (archive vide). Calibré sur le 20250926 fourni, avec
-# ce garde-fou : à re-vérifier contre le 20251218 (modif mineure ?) avant de servir.
+# M32 (arbitrage Vic a) : ré-extraction sur la VERSION OPPOSABLE GPU uniquement. L'écart de version
+# signalé (extrait 20250926 vs en vigueur 20251218) est RÉSOLU : archive opposable 20251218
+# téléchargée du GPU (EN_VIGUEUR, id 74e23183063d, effective 22/07/2026), règlement + OAP lus.
+# → Les valeurs AU sont IDENTIQUES à l'extraction 20250926 : la modification déc. 2025 n'a pas
+#   touché la calibration AU (ouverture, densité, phasage inchangés). Écart de version LEVÉ.
 meta:
   commune: "Saint-Louis"
   insee: "97414"
-  statut: "Sourcé (version 20250926) — écart de version à confirmer"
-  source_type: "PDF fourni par Vic (~/Downloads/97414_PLU_20250926/)"
-  date_document: "2025-09-26 (version fournie)"
-  gpu_en_vigueur: "97414_PLU_20251218 (déc 2025) — 3 mois plus récent, à comparer (indisponible : archive vide)"
-  dates_base: "Prescrit 2009-03-31 / Arrêté 2013-06-10 / Approuvé ~2015"
-  cabinet_redacteur: "non détecté au texte (logo page de garde)"
-  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  statut: "Sourcé (version OPPOSABLE)"
+  idurba: "97414_PLU_20251218"
+  date_approbation: "2025-12-18"
+  gpu_effectif_le: "2026-07-22 (EN_VIGUEUR, document.production)"
+  source_type: "pack GPU EN_VIGUEUR 97414_PLU_20251218 (téléchargé le 05/08, PACK_DU_97414_74e23183063d)"
+  version_reconciliee: "20250926 (extraction M-A) → 20251218 (opposable) : valeurs AU identiques, écart LEVÉ"
+  cabinet_redacteur: "non détecté au texte"
+  famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur — vérifié règlement 139 p)"
 
 zones_au:
   familles: [1AUa, 1AUe, 1AUst, 2AUst, AU, AUst]
   ouverture: conditionnelle_etat_tiers
-  ouverture_src: "règlement p.8"
-  ouverture_verbatim: "[l'ouverture] ne pourra intervenir qu'une fois l'aménagement des zones 1AU indicée et 1AUst identifiées par pôle"
-  dependance: "phasage 2AU/AU → 1AU et 1AUst (par pôle)"
-  AUst_2AUst: "réserves strictes à l'urbanisation future"
+  ouverture_src: "règlement 20251218, chapitre AU (ext. p.~8) — verbatim confirmé"
+  ouverture_verbatim: "Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement des zones 1AUindicée et 1AUst identifiées par polarité ; l'ouverture est conditionnée à une modification du PLU"
+  dependance: "phasage 2AU/AU → 1AU et 1AUst (par polarité) ; 2AUindicée : même condition (règlement §3)"
+  AUst_2AUst: "réserves strictes à l'urbanisation future (SAR)"
   planchers:
-    localisation: "OAP (densité) ; règlement 139 p : aucun plancher"
+    localisation: "OAP (densité) ; règlement 139 p : AUCUN plancher (scan confirmé — seuils parking seulement)"
     densite_min_log_ha: [30, 50]
-    densite_note: "30 et 50 log/ha selon les sites"
-    social: "non chiffré dans l'OAP"
-    src: "OAP 2025 (31 p, texte)"
-    prevalence: "OAP prévaut"
-  vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "ouverture conditionnelle_etat_tiers (phasage 1AU/1AUst) + densité OAP 30/50 log/ha — absents du YAML"
-  a_verifier: "écart 20250926 vs 20251218 en vigueur ; densité par site ; dimensions U"
+    densite_note: "OAP 20251218 : 50 log/ha (espaces ROUGES) / 30 log/ha (espaces ORANGE) ; minimum SAR 30 log/ha (ville relais)"
+    densite_src: "OAP 20251218 (31 p, texte) — « 50 log/ha pour les espaces en rouge, 30 log/ha pour les espaces en orange »"
+    social: "non chiffré (aucun % de logements sociaux / servitude de mixité à l'OAP ni au règlement — vérifié)"
+    prevalence: "OAP prévaut (densité) ; le règlement ne fixe pas de plancher"
+  vrd_charge_operateur: "sans_objet (aucune clause VRD à charge opérateur — vérifié règlement)"
+  faits_confirmes_20251218: "ouverture conditionnelle_etat_tiers (phasage 1AU/2AU → modif PLU) ; densité OAP 30/50 log/ha ; social non chiffré ; VRD sans_objet — TOUS identiques au 20250926"
+  a_verifier: "densité PAR SITE (rouge/orange) = calque graphique OAP, non portable v1 → non_extrait au site près (limite v1) ; dimensions U hors périmètre AU"
