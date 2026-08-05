@@ -1224,6 +1224,19 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         )}
 
+        {/* M29 (b)/(b) — signaux mérite/héritage (#9) et acquérabilité (#11) : information
+            seule, libellés factuels arbitrés, AUCUN effet de classement. Champs absents = rien. */}
+        {(f as any)?.entree_tete?.libelle && (
+          <p data-entree-tete style={{ margin: '8px 0 0', fontSize: 11, color: '#8FA69A' }}>
+            {(f as any).entree_tete.libelle} <span style={{ color: '#5a6b62' }}>({(f as any).entree_tete.etiquette})</span>
+          </p>
+        )}
+        {(f as any)?.acquerabilite?.libelle && (
+          <p data-acquerabilite style={{ margin: '4px 0 0', fontSize: 11, color: '#8FA69A' }}>
+            assemblage : {(f as any).acquerabilite.libelle}
+          </p>
+        )}
+
         {/* Dette #10 — drapeaux EBC / ER : INFORMATION seule, jamais une exclusion. Dérivés des
             prescriptions PLU déjà servies par la cascade ; aucun impact sur le verdict ni le score. */}
         {presc && (presc.ebc || presc.ers.length > 0) && (
