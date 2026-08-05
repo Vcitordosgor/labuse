@@ -64,23 +64,20 @@ shippé sans mettre à jour ses tests.
 vocabulaire pré-M5.1) ; ligne `/discover` retirée de `test_limit_negatif_rejete_en_422` (les 2 autres
 assertions /map + /signals conservées). Commentaires traçant le pourquoi.
 
-### Rouge CONSIGNÉ (non corrigé — décision de service, régime [S], Vic)
+### Rouge CONSIGNÉ → CORRIGÉ (arbitrage Vic rendu — décision [S] tranchée)
 
-`test_run_serving_coherence.py::test_tuiles_mvt_materialisees_sur_le_run_servi` reste rouge en défaut.
-**C'est le garde-fou qui fait son travail** : les **tuiles** `mvt_meta.run_label` sont sur
-`q_v8_calibre` (rebuild M28) mais la constante de code `Q_A_RUN_LABEL` (+ le défaut front `api.ts`
-SOURCE + le bundle `dist`) restent sur **`q_v7_defisc`**. La bascule M28 a avancé les tuiles + l'env +
-les scores, mais **pas les constantes du dépôt**. Preuve que ce n'est pas un réglage d'env : forcer
-`LABUSE_SERVED_RUN=q_v8_calibre` fait au contraire tomber 7 tests (gardes front/bundle + tests couplés
-aux données anti_fiche/carnet/scoreur) — **aucune valeur d'env n'aligne les trois surfaces**.
+**Diagnostic initial** : `test_run_serving_coherence.py::test_tuiles_mvt_materialisees_sur_le_run_servi`
+rouge en défaut — les **tuiles** `mvt_meta.run_label` sur `q_v8_calibre` (rebuild M28) mais la
+constante `Q_A_RUN_LABEL` + le défaut front `api.ts` + le bundle `dist` restés sur **`q_v7_defisc`**.
+La bascule M28 avait avancé tuiles/env/scores mais **pas les constantes du dépôt** ; le run servi ne
+tenait que par une variable d'env. Aucune valeur d'env n'alignait les trois surfaces.
 
-C'est une **bascule de run servi non terminée au niveau du dépôt**. La terminer = avancer
-`Q_A_RUN_LABEL` + `api.ts` SOURCE sur `q_v8_calibre`, `npm run build`, `labuse build-mvt`, en un seul
-geste coordonné. **C'est une décision sur CE QUI EST SERVI** → régime [S], Vic. Un prod-check [A] ne
-la tranche pas. Consigné aussi dans `docs/TESTS.md`.
-
-> ⚠ Implication déploiement à vérifier : si la prod ne pose PAS `LABUSE_SERVED_RUN`, elle sert le run
-> `q_v7_defisc` (pré-M28) avec des tuiles `q_v8_calibre` → incohérence silencieuse. À trancher.
+**Correction (arbitrage Vic — voir « ANNEXE — CORRECTION RUN SERVI » ci-dessous)** : UN SEUL point de
+vérité versionné, `config/served_run.txt = q_v8_calibre`. Backend, bundle (vite) et build-mvt le lisent
+tous. `LABUSE_SERVED_RUN` réduit à un override de DEV loggé WARNING au démarrage. Le test passe au vert.
+**Suite : 1312 passed, 0 failed, 0 error** (sans aucune var d'env). **Golden 117/117** en s'appuyant
+sur le seul fichier. Le run servi est **identique** avant/après (q_v8_calibre — avant via env, après via
+fichier) : plomberie pure, zéro changement de données servies.
 
 ---
 
@@ -217,11 +214,64 @@ non fiable publiée.** Recommandation : une passe dédiée par traçage de helpe
   `test_audit_secu.py` (+test). Docs : `docs/TESTS.md`, `docs/BACKLOG.md`. Preuves : `qa/m31/`
   (rapport, `preuve_dns_mail.txt`, `preuve_vitesse.txt`). **Aucun fichier de scoring / de règles.**
 
-## Ce qui reste OUVERT (noté, non fait — hors périmètre [A])
+---
 
-1. **[S] Vic** — terminer la bascule du run servi sur `q_v8_calibre` (constantes + bundle + build-mvt).
-   C'est une décision sur ce qui est servi. Le rouge de test consigné disparaîtra alors seul.
-2. **Ops/DNS** — créer le DMARC `labuse.immo` (`p=none` d'abord) et aligner l'envoi (DKIM `labuse.immo`,
-   pas Gmail perso). Sinon un DMARC `p=reject` rejetterait les mails applicatifs.
-3. **[A]** — passe de traçage par helper pour un inventaire fiable des routes mortes (avant tout retrait).
-4. Perf : envisager des tuiles MVT en mode commune pour les plus grosses communes (Saint-Denis 2,2 s).
+# ANNEXE — CORRECTION DU RUN SERVI (arbitrage [S] Vic, même geste M31)
+
+## 1. Les trois valeurs AVANT (collées)
+
+| Surface | Avant |
+|---|---|
+| Tuiles (`mvt_meta.run_label`) | `q_v8_calibre` |
+| Backend (`Q_A_RUN_LABEL`) | `q_v7_defisc` (défaut codé, override env) |
+| Front `api.ts` SOURCE + bundle `dist` | `q_v7_defisc` |
+
+Divergence : les tuiles servaient `q_v8_calibre`, tout le reste défaultait sur `q_v7_defisc`.
+
+## 2. Point de vérité UNIQUE versionné (pas une var d'env)
+
+`config/served_run.txt` (1ʳᵉ ligne non commentée = la valeur) = **`q_v8_calibre`**. Lu par les trois :
+- **Backend** — `score_v_constants.py::_served_run_versionne()` → `Q_A_RUN_LABEL` (plus de littéral codé).
+- **Bundle** — `vite.config.ts` lit le fichier au build, injecte `VITE_RUN_LABEL` → `api.ts` SOURCE.
+  Bundle reconstruit : `dist` contient désormais `q_v8_calibre`, plus `q_v7_defisc` (vérifié).
+- **Tuiles** — `build-mvt` matérialise `mvt_meta.run_label` depuis `Q_A_RUN_LABEL` (= le fichier).
+
+Garde-fou : `test_run_serving_coherence.py` — nouveau `test_served_run_fichier_est_la_source_unique`
+(fichier == `Q_A_RUN_LABEL`) + les gardes existantes (front, bundle, tuiles). Pour BASCULER : changer
+la ligne du fichier, `npm run build`, `labuse build-mvt`.
+
+## 3. `LABUSE_SERVED_RUN` = override de DEV, loggé WARNING au démarrage
+
+Conservé pour le dev (tester un autre run) mais **plus jamais nécessaire en prod**. Au boot, s'il
+diffère du fichier : `WARNING labuse: LABUSE_SERVED_RUN='…' surcharge le run servi VERSIONNÉ (…) —
+override de DÉVELOPPEMENT uniquement`. (Vérifié au démarrage.)
+
+## 4. Fixtures de test alignées (effet de bord du bon run)
+
+3 tests seedaient sous le littéral `'q_v7_defisc'` puis interrogeaient `Q_A_RUN_LABEL` — ils cassaient
+dès que le défaut changeait. Corrigés pour seeder sous `Q_A_RUN_LABEL` (le run servi) :
+`test_carnet`, `test_anti_fiche`, `test_scoreur`. (`test_score_e`/`test_pc_caducs`/`test_bascule_gardes`
+utilisent `q_v7_defisc` en argument explicite auto-cohérent — non touchés.)
+
+## 5. Preuve d'alignement (avant/après)
+
+- **Suite** : `1312 passed, 22 skipped, 0 failed, 0 error` **sans aucune var d'env** (le fichier fait foi).
+- **Golden** : **117/117 PASS, 0 incohérence**, API démarrée SANS `LABUSE_SERVED_RUN` (fichier seul).
+- **Run servi identique** : `GET /map/tiles/meta` → `run_label = q_v8_calibre` ; les 3 surfaces == fichier.
+  Ce qui est servi ne change pas (q_v8_calibre avant via env, après via fichier) — **fix de plomberie**.
+
+## 6. Noté, NON corrigé (hors périmètre du geste run-servi)
+
+`src/labuse/ingestion/score_e.py:158` (et voisins pc_caducs) : défauts d'argument `run="q_v7_defisc"`
+dans des builders de SIGNAUX dérivés (pas le chemin de service). Question de cohérence distincte (sur
+quel run bâtir score_e / pc_caducs), à trancher séparément — NOTÉ, pas touché ici.
+
+---
+
+## Ce qui reste OUVERT (noté, non fait — consignes Vic)
+
+1. **Ops/DNS (Vic)** — créer le DMARC `labuse.immo` (`p=none` d'abord) et aligner l'envoi (DKIM
+   `labuse.immo`, SMTP domaine propre) avant le train 8. Sinon `p=reject` rejetterait les mails app.
+2. **[A]** — passe de traçage par helper pour un inventaire fiable des routes mortes (avant tout retrait).
+3. **Perf** — tuiles MVT en mode commune pour les plus grosses communes (Saint-Denis 2,2 s).
+4. Défauts d'ingestion `run="q_v7_defisc"` (score_e/pc_caducs) — cohérence des signaux dérivés, à part.

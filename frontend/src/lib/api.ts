@@ -8,11 +8,12 @@ export interface ParcelFeatureCollection {
 import { useApp, type Filters } from '../store/useApp'
 import { vSignalCodes } from './filters'
 
-// SOURCE DE VÉRITÉ : run servi, CONFIGURABLE (fin du hard-code, clôture A-1). Défaut = q_v7_defisc
-// (BASCULE cycle 1 : composante V « fenêtre de sortie de défisc » ; modèle P m8 inchangé, V module le
-// seul rang). Override au build : VITE_RUN_LABEL (rollback → 'q_v6_m8', cf. A1_BASCULE_ROLLBACK.md).
-// Doit rester aligné sur le backend Q_A_RUN_LABEL (test_run_serving_coherence). JAMAIS parcel_evaluations.
-export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v7_defisc'
+// M31 (arbitrage Vic) : run servi = point de vérité UNIQUE versionné config/served_run.txt (=
+// q_v8_calibre depuis la bascule M28). `vite.config.ts` lit ce fichier au build et injecte
+// VITE_RUN_LABEL → SOURCE. Le littéral de repli DOIT rester égal à cette valeur (garde-fou :
+// tests/test_run_serving_coherence.py le compare au backend Q_A_RUN_LABEL, lui-même lu du fichier).
+// Pour BASCULER : changer config/served_run.txt puis `npm run build`. JAMAIS parcel_evaluations.
+export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v8_calibre'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune

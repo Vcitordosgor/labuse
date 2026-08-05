@@ -1,5 +1,12 @@
+import { readFileSync } from 'node:fs'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+
+// M31 (arbitrage Vic) : le run servi a UN SEUL point de vérité versionné, config/served_run.txt.
+// Le bundle le LIT ici au build (1ʳᵉ ligne non commentée) et l'injecte en VITE_RUN_LABEL → api.ts
+// SOURCE. Plus de littéral de run divergent dans le front ni de dépendance à une var d'env de build.
+const SERVED_RUN = readFileSync(new URL('../config/served_run.txt', import.meta.url), 'utf-8')
+  .split('\n').map((l) => l.trim()).find((l) => l && !l.startsWith('#')) ?? ''
 
 // API FastAPI (labuse api) proxifiée en dev. En prod, FastAPI sert dist/ à la même origine.
 const API = 'http://127.0.0.1:8000'
@@ -15,6 +22,8 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
 export default defineConfig({
   base: '/socle/', // servi par FastAPI sous /socle (cf. app.py). Dev vite = racine.
   plugins: [react()],
+  // M31 : injecte le run servi versionné dans le bundle (api.ts lit import.meta.env.VITE_RUN_LABEL).
+  define: { 'import.meta.env.VITE_RUN_LABEL': JSON.stringify(SERVED_RUN) },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

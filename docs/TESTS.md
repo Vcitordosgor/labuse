@@ -16,19 +16,16 @@ LABUSE_DEV_MODE=1 PYTHONPATH=src .venv/bin/python -m pytest -q
   alertes) **erroraient** (`role "labuse" does not exist`) au lieu de tourner, car le repli codé
   `labuse:labuse@localhost` ne matche pas un poste à auth peer (`openclaw`). Un `.env` valide (celui
   qui fait déjà tourner l'app) suffit désormais. Un `LABUSE_DATABASE_URL` exporté reste prioritaire (CI).
-- Attendu (poste correctement configuré) : **1309 passed, 22 skipped**, à **un** rouge près consigné
-  ci-dessous (cohérence du run servi) — voir aussi `qa/m31/M31_RAPPORT.md`.
+- Attendu (poste correctement configuré) : **suite verte — 1312 passed, 22 skipped, 0 failed, 0 error**,
+  SANS aucune var d'env. Voir aussi `qa/m31/M31_RAPPORT.md`.
 
-### ⚠ Rouge CONSIGNÉ — cohérence du run servi (bascule M28 incomplète au niveau des constantes)
+### Run servi — POINT DE VÉRITÉ UNIQUE (M31, arbitrage Vic)
 
-`test_run_serving_coherence.py::test_tuiles_mvt_materialisees_sur_le_run_servi` échoue en défaut :
-les **tuiles** `mvt_meta.run_label` sont sur `q_v8_calibre` (rebuild M28) mais la constante de code
-`Q_A_RUN_LABEL` (et le défaut front `api.ts` SOURCE, et le bundle `dist`) restent sur **`q_v7_defisc`**.
-Aucune valeur de `LABUSE_SERVED_RUN` n'aligne les trois : forcer `q_v8_calibre` fait au contraire
-tomber les gardes front/bundle + des tests couplés aux données (anti_fiche, carnet, scoreur). C'est
-une **bascule de run servi non terminée au niveau du dépôt** — décision de service (régime [S], Vic) :
-avancer les deux défauts (`Q_A_RUN_LABEL` + `api.ts`) sur `q_v8_calibre` **et** `npm run build` +
-`labuse build-mvt`, en un seul geste. **Non corrigé en M31** (un prod-check [A] ne tranche pas ce qui est servi).
+Le run servi vit dans **`config/served_run.txt`** (fichier versionné, 1ʳᵉ ligne non commentée). Les
+trois surfaces le lisent : backend (`Q_A_RUN_LABEL`), bundle front (`vite.config.ts` → `VITE_RUN_LABEL`),
+tuiles (`build-mvt` → `mvt_meta.run_label`). `test_run_serving_coherence.py` vérifie qu'elles == le
+fichier. **Pour basculer** : changer la ligne du fichier, puis `npm run build` + `labuse build-mvt`.
+`LABUSE_SERVED_RUN` reste un **override de DEV** (loggé WARNING au démarrage) — jamais requis en prod.
 
 ## Extras Python requis
 

@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import text
 
 from labuse.api import carnet as k
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL  # M31 : seed sous le run SERVI, pas un littéral
 
 
 _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
@@ -40,7 +41,7 @@ def test_carnet_secteur_stock_et_robustesse(db_session):
     s.execute(text(
         "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
         "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
-        "VALUES ('q_v7_defisc', :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, 'chaude', 'test')"), {"i": idu})
+        "VALUES (:run, :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, 'chaude', 'test')"), {"i": idu, "run": Q_A_RUN_LABEL})
 
     out = k.carnet("97499000ZK", s)
     assert out["secteur"] == "97499000ZK" and out["section"] == "ZK" and out["insee"] == "97499"
@@ -61,8 +62,8 @@ def test_liste_secteurs_triee(db_session):
         s.execute(text(
             "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
             "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
-            "VALUES ('q_v7_defisc', :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
-            {"i": idu, "t": tier})
+            "VALUES (:run, :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
+            {"i": idu, "t": tier, "run": Q_A_RUN_LABEL})
     out = k.liste_secteurs(s, commune="Ville-Test", limit=30)
     sect = next(r for r in out["secteurs"] if r["secteur"] == "97499000ZL")
     assert sect["opportunites"] == 2 and sect["brulantes"] == 1
