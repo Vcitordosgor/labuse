@@ -35,9 +35,28 @@ saturées (honnêteté étendue) · recomposition : 277 a_creuser→chaude + 12 
 recalibrages 7+3. Top 100 : chaque mouvement avec cause dans `top100_mouvements.csv`
 (filtre / recomposition / recalibrage / départage — jamais « les deux »).
 
-## Populations demandées (`populations_filtre.csv`)
-- **8 brûlantes connues** : 4 servies (étage 1 marginal) · 1 divisible · 3+1 saturées.
-- **AR1511** : étage 3, **saturée** (24,6 %, année Absente→durcit, 397 m² libres < 600).
+## Populations demandées (`populations_filtre.csv` — 497 lignes, 497 idu distincts, zéro doublon)
+- **Brûlantes au filtre : 10** (critère A1 emprise_max ≥ 20) = les **8 connues BD TOPO** + 2
+  CoSIA-seul en bande 20-40 (AP1216 : BD TOPO 0/max 27 ; AD0030 : BD TOPO 11/max 24 — jamais
+  déclassées par la règle E, mais dans le périmètre du filtre). CORRECTION du 1er envoi qui
+  titrait « 8 » un bucket de 9 (AR1511 à part). Nominatif :
+
+| idu | commune | ratio (max) | BD TOPO | max | année | étage | décision |
+|---|---|---:|---:|---:|---|---:|---|
+| 97403000AR1511 | Entre-Deux | **49,9 %** | 130 | 263 | Absent | 3 | **saturée** |
+| 97409000AR1260 | Saint-André | 28,1 % | 50 | 123 | Absent | 2 | saturée |
+| 97411000AD0030 | Saint-Denis | 11,1 % | 11 | 24 | Absent | 1 | servie |
+| 97411000EL0201 | Saint-Denis | 29,3 % | 93 | 165 | Absent | 2 | saturée |
+| 97412000AM0938 | Saint-Joseph | 11,5 % | 76 | 115 | Absent | 1 | servie |
+| 97415000CX1395 | Saint-Paul | 41,8 % | 113 | 254 | Absent | 3 | saturée |
+| 97416000CX1241 | Saint-Pierre | 13,3 % | 70 | 70 | Absent | 1 | servie |
+| 97416000EP0908 | Saint-Pierre | 33,5 % | 103 | 161 | Absent | 2 | saturée |
+| 97422000AP1216 | Le Tampon | 7,7 % | 0 | 27 | Absent | 1 | servie |
+| 97422000CY0197 | Le Tampon | 28,9 % | 194 | 251 | Absent | 2 | **divisible** |
+
+  Bilan : 4 servies · 1 divisible · 5 saturées (AR1511 incluse).
+- **AR1511 — correction** : ratio A1 = **49,9 %** (emprise_max CoSIA 263 m²), pas 24,6 %
+  (qui était le ratio BD TOPO seul) → étage 3 DIRECT (> 40 %), saturée.
 - **432 chaudes bâties** : 129 servies (ét. 1) · 66 divisibles · 1 servie (DPE ancien) ·
   291 saturées (188 ét. 2 + 103 ét. 3).
 - **CY0104 : la règle la met `declasse_bati_sature`** (étage 3, non divisible) — l'exception
