@@ -78,3 +78,9 @@ drwxr-xr-x  47 openclaw  staff     1504  5 aoû 12:23 ..
 -rw-r--r--   1 openclaw  staff     1210  5 aoû 12:23 mesure_phase_a.py
 -rw-r--r--   1 openclaw  staff    84889  5 aoû 12:31 populations_filtre.csv
 -rw-r--r--   1 openclaw  staff     8664  5 aoû 12:31 top100_mouvements.csv
+
+## Arbitrages point d'arrêt 1 (Vic, 05/08)
+- **Bande 20-40 / AP1216 + AD0030 : OPTION A actée** — la règle A1 tranche (elles sont dans
+  le périmètre du filtre, décision 'servie' étage 1). Elles SORTENT du périmètre de
+  l'adjudication manuelle bande 20-40 : l'adjudication en attente ne porte plus que sur les
+  cas HORS pool filtre.
