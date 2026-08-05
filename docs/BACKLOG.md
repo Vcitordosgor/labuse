@@ -51,6 +51,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [~] Inventaire des API déconnectées — M31 : cross-réf textuelle NON fiable (faux positifs massifs, ma propre erreur sur /map/parcels.geojson) → PAS de liste publiée. Exige une passe de **traçage par helper** api.ts. Seul candidat avéré : `/api/v1/*` (API partenaire externe, caller-less par conception — ne pas retirer sans savoir si un partenaire consomme). §PC4.
 - [x] **[S] Vic — bascule run servi (révélé + CORRIGÉ M31)** : point de vérité UNIQUE versionné `config/served_run.txt = q_v8_calibre`, lu par backend + bundle (vite) + build-mvt. `LABUSE_SERVED_RUN` = override dev loggé WARNING. Suite verte sans env, golden 117/117, run servi identique (plomberie). §ANNEXE CORRECTION RUN SERVI.
 - [ ] **[A] Passe helper-tracing des routes mortes** (déférée de M31) : résoudre chaque fn api.ts → chemin, tracer les appels, + fetch directs + cron/webhook/PDF, avant tout retrait.
+- [ ] **Cohérence run des builders de signaux dérivés** (relevé M31) : `score_e.py:158` et `pc_caducs` ont un défaut d'argument `run="q_v7_defisc"` en dur — ils bâtissent les SIGNAUX dérivés (score_e, pc_caducs) sur l'ancien run, pas sur le run servi (`Q_A_RUN_LABEL` = `config/served_run.txt`). Distinct du chemin de service (déjà unifié M31). À aligner : lire le point de vérité, ou passer le run explicitement à la construction. Vérifier d'abord sur quel run ces signaux ont réellement été bâtis.
 
 ## TRAIN 4 — FILTRES / RECHERCHE [A] Opus
 - [ ] Inventaire filtres : lesquels existent, marchent, mentent

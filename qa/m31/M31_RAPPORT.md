@@ -268,6 +268,57 @@ quel run bâtir score_e / pc_caducs), à trancher séparément — NOTÉ, pas to
 
 ---
 
+# ANNEXE — IDENTITÉ DU RUN SERVI (vérification pré-merge, Vic)
+
+**Question** : le contenu servi sous `q_v8_calibre` est-il bien le run post-M28/M29, pas un état
+antérieur ? **Réponse : OUI (cas (a)) — prouvé par le registre ET par le contenu.**
+
+## 1. Runs présents en base (`parcel_p_score_v2`, par date)
+
+| Label | Lignes | computed_at | Registre lignée ? |
+|---|---|---|---|
+| `q_v8_calibre` (**SERVI**) | 431 663 | 2026-08-05 14:50 | ✅ oui |
+| `q_v12_m28` | 431 663 | 2026-08-05 14:27 | ❌ **non** (mesure jetable) |
+| `q_v8_calibre_pre_m28` | 431 663 | 2026-08-04 23:23 | ✅ (archive) |
+| `q_v8_calibre_pre_regle` | 431 663 | 2026-08-04 18:17 | ✅ (archive) |
+| `q_v8_calibre_pre_pond` | 431 663 | 2026-08-04 15:14 | ✅ (archive) |
+| `q_v7_defisc` | 431 663 | 2026-07-15 | ✅ (base pré-M28) |
+
+## 2. Mécanisme — cas (a) : archive par RENOMMAGE, `q_v8_calibre` recalculé en place
+
+Le registre `p_score_v2_runs` pour le run servi :
+`q_v8_calibre` → `prev_run = q_v8_calibre_pre_m28`, **`seed_ties = 974`** (signature du départage M28),
+`n_entree = 6443`, snapshot `m5-2026-08-05`. La bascule M28 a donc : (1) archivé le contenu servi
+d'avant en le RENOMMANT `q_v8_calibre_pre_m28`, (2) RECALCULÉ `q_v8_calibre` en place avec la logique
+M28 (filtre bâti + départage). Le label de lignée ne change pas ; son contenu avance, `prev_run` trace
+la chaîne (pre_pond → pre_regle → pre_m28 → q_v8_calibre).
+
+**`q_v12_m28`** : label de **MESURE** (mesure à blanc M28). Il a des lignes dans `parcel_p_score_v2`
+mais **0 entrée dans `p_score_v2_runs`** → jamais enregistré comme run de lignée, **jamais servi**.
+
+## 3. Preuve par le contenu (sur le run servi `q_v8_calibre`)
+
+| Marqueur | Attendu M28/M29 | Obtenu | ✓ |
+|---|---|---|---|
+| `97422000AK1442` | `a_creuser` (override piscine FLAIR 88 m²) | `a_creuser`, rang 4150 | ✅ |
+| `97403000AR1511` | `declasse_bati_sature` (filtre bâti saturé) | `declasse_bati_sature`, rang 119 | ✅ |
+| Brûlantes / Chaudes | 119 / 1033 | **119 / 1033** | ✅ |
+| M29 caches servis | entree_tete + acquerabilite peuplés | 514 / 1060 | ✅ |
+
+## 4. Convention de nommage CONSIGNÉE (pour ne plus se reposer la question)
+
+- **Label de LIGNÉE** (ex. `q_v8_calibre`) : nom STABLE du run servi, enregistré dans
+  `p_score_v2_runs`. À chaque bascule, l'ancien contenu est **archivé par RENOMMAGE** en
+  `q_v8_calibre_pre_<geste>` (`pre_pond`, `pre_regle`, `pre_m28`) puis le label de lignée est
+  **RECALCULÉ EN PLACE** avec la nouvelle logique. Le label ne change pas ; `prev_run` trace la chaîne.
+  → Vérifier l'identité d'un run servi = lire `p_score_v2_runs.params` (`prev_run`, `seed_ties`…),
+  PAS le seul nom du label.
+- **Label de MESURE** (ex. `q_v12_m28`) : run JETABLE d'une mesure à blanc. Écrit des lignes dans
+  `parcel_p_score_v2` mais **jamais** dans `p_score_v2_runs`, et **jamais servi**. Reconnaissable :
+  présent dans les données, absent du registre de lignée.
+
+---
+
 ## Ce qui reste OUVERT (noté, non fait — consignes Vic)
 
 1. **Ops/DNS (Vic)** — créer le DMARC `labuse.immo` (`p=none` d'abord) et aligner l'envoi (DKIM
