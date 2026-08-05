@@ -1529,6 +1529,11 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     base = "" if ("f_tiers" in xp or "f_statuts" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # M31 PC4 (arbitrage M30) : ALIGNER la LISTE sur la CARTE — les slivers cadastraux < 2 m²
+    # (MIN_DISPLAY_SURFACE_M2), masqués de la carte/geojson depuis toujours, l'étaient PAS de la
+    # liste (asymétrie relevée à l'inventaire M30). Même plancher d'AFFICHAGE ici : les slivers
+    # restent en base et dans les compteurs de volumétrie (comme la carte), simplement pas listés.
+    _sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
     # Adresse BAN (M6 2a) : jointure APRÈS pagination (page de :lim lignes seulement) —
     # 1 lookup indexé par ligne servie, mesuré +0,03 s sur la liste île (contrainte 1,5 s OK).
     ban_ok = _ban_ready(db)
@@ -1567,6 +1572,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE s2.run_id = :v2run
               AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {_sliver}
               {base}
               {extra_where}"""
         page_sql = f"""
@@ -1594,6 +1600,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {_sliver}
               {base}
               {extra_where}
             ORDER BY {order}
@@ -1631,7 +1638,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN cl ON cl.siren = own.siren
         ORDER BY {_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
-               "need": limit + offset,
+               "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
                "v2run": v2run, **xp}
     ).mappings().all()
     return [{

@@ -6,14 +6,29 @@ Assainissement : mandat DETTE-REPO (cf. `docs/mandats/DETTE_TESTS_RAPPORT.md`).
 ## Commande
 
 ```bash
-export LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@localhost:5432/labuse
 LABUSE_DEV_MODE=1 PYTHONPATH=src .venv/bin/python -m pytest -q
 ```
 
 - Base **dédiée** `labuse_test` auto-créée (jamais la base applicative — cf. `tests/conftest.py`).
-  `conftest` lit `LABUSE_DATABASE_URL` **avant** le `.env` → l'exporter dans la commande.
-- Attendu (poste correctement configuré) : **suite verte** — `1259 passed, 19 skipped`, 0 xfail.
-  Aucun `failed`, aucun `error`.
+- **M31 PC1** : `conftest` **charge le `.env`** (via `python-dotenv`) avant de dériver l'URL de test
+  → plus besoin d'exporter `LABUSE_DATABASE_URL` à la main. Avant ce correctif, sans l'export, les
+  tests qui ouvrent `session_scope()` directement (facturation, audit_stripe, comptes, fiche_ask,
+  alertes) **erroraient** (`role "labuse" does not exist`) au lieu de tourner, car le repli codé
+  `labuse:labuse@localhost` ne matche pas un poste à auth peer (`openclaw`). Un `.env` valide (celui
+  qui fait déjà tourner l'app) suffit désormais. Un `LABUSE_DATABASE_URL` exporté reste prioritaire (CI).
+- Attendu (poste correctement configuré) : **1309 passed, 22 skipped**, à **un** rouge près consigné
+  ci-dessous (cohérence du run servi) — voir aussi `qa/m31/M31_RAPPORT.md`.
+
+### ⚠ Rouge CONSIGNÉ — cohérence du run servi (bascule M28 incomplète au niveau des constantes)
+
+`test_run_serving_coherence.py::test_tuiles_mvt_materialisees_sur_le_run_servi` échoue en défaut :
+les **tuiles** `mvt_meta.run_label` sont sur `q_v8_calibre` (rebuild M28) mais la constante de code
+`Q_A_RUN_LABEL` (et le défaut front `api.ts` SOURCE, et le bundle `dist`) restent sur **`q_v7_defisc`**.
+Aucune valeur de `LABUSE_SERVED_RUN` n'aligne les trois : forcer `q_v8_calibre` fait au contraire
+tomber les gardes front/bundle + des tests couplés aux données (anti_fiche, carnet, scoreur). C'est
+une **bascule de run servi non terminée au niveau du dépôt** — décision de service (régime [S], Vic) :
+avancer les deux défauts (`Q_A_RUN_LABEL` + `api.ts`) sur `q_v8_calibre` **et** `npm run build` +
+`labuse build-mvt`, en un seul geste. **Non corrigé en M31** (un prod-check [A] ne tranche pas ce qui est servi).
 
 ## Extras Python requis
 
