@@ -1,52 +1,183 @@
 # AU — OUVERTURE + PLANCHERS par zone (source du classifieur declasse_au_fermee / au_sous_plancher /
 # declasse_au_statut_inconnu). Dérivé des calibrations GPU-PILOTE (config/calibrage/calibration_*.yaml).
-# Ordre d'exécution (Vic) : Saint-Paul, La Possession, Saint-Leu, Les Trois-Bassins. Les autres
-# communes viendront ensuite. `ouverture` ∈ {fermee, conditionnelle_operation, conditionnelle_etat_tiers}.
+# M32 Phase C : INTÉGRATION groupée des communes calibrées (mesure à blanc AVANT bascule).
+# `ouverture` ∈ {fermee, conditionnelle_operation, conditionnelle_etat_tiers}.
 # `min_log` + `densite_log_ha` : plancher SOURCÉ (surface min = min_log/densite*10000). Absents = pas
-# de seuil-taille (densité seule ou délégation) → pas de au_sous_plancher possible.
-#
-# Le zonage se lit par PRÉFIXE de zone_lib (ex. « 1AUa » match préfixe « 1AUa » puis « AUa »).
-# `defaut` s'applique aux zones AU de la commune non listées explicitement.
+# de seuil-taille (densité seule, per-site, ou délégation) → pas de au_sous_plancher possible.
+# Le zonage se lit par PRÉFIXE de zone_lib (« 1AUa » match « 1AUa » puis « AUa »). `defaut` = zones AU
+# non listées. HORS intégration : Saint-André (97409, opposabilité en attente), Saint-Benoît (97410,
+# format 2 colonnes / 19 fiches graphiques → v2), Saint-Philippe (97417, RNU).
 
 communes:
-  # --- Saint-Paul (97415) : ouverture conditionnelle ; planchers DÉLÉGUÉS au PLH (non chiffrés) ---
+  # ── Saint-Paul (97415) : conditionnelle ; planchers DÉLÉGUÉS au PLH (non chiffrés) ──
   "97415":
     nom: "Saint-Paul"
-    defaut: {ouverture: conditionnelle_operation}   # AU1..AU6 indicées, toutes conditionnelles à modification
+    defaut: {ouverture: conditionnelle_operation}
     note: "planchers délégués au PLH TCO (non chiffrés) → pas de au_sous_plancher calculable"
 
-  # --- La Possession (97408) : AUST fermée ; autres conditionnelles ; densité 50 SANS min_log ---
+  # ── La Possession (97408) : AUST fermée ; densité 50 SANS min_log ──
   "97408":
     nom: "La Possession"
-    zones:
-      AUST: {ouverture: fermee}
-      AUst: {ouverture: fermee}
+    zones: {AUST: {ouverture: fermee}, AUst: {ouverture: fermee}}
     defaut: {ouverture: conditionnelle_operation}
-    note: "densité 50 log/ha SANS min-logements → pas de seuil-taille (pas de au_sous_plancher)"
+    note: "densité 50 log/ha SANS min-logements → pas de seuil-taille"
 
-  # --- Saint-Leu (97413) : AUs fermée ; AUa/b/c conditionnelles + PLANCHER (min 10 log) ---
+  # ── Saint-Leu (97413) : AUs fermée ; AUa/b/c PLANCHER (min 10 log) ──
   "97413":
     nom: "Saint-Leu"
     zones:
-      AUs:  {ouverture: fermee}
-      AUa:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
-      AUb:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
-      AUc:  {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 15}
+      AUs: {ouverture: fermee}
+      AUa: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
+      AUb: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
+      AUc: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 15}
     defaut: {ouverture: conditionnelle_operation}
 
-  # --- Les Trois-Bassins (97423) : 1AU condit.+plancher (min 5) ; 2AU phasage ; AUs/AUse fermées ---
+  # ── Les Trois-Bassins (97423) : 1AU plancher (min 5) ; 2AU phasage ; AUs/AUse fermées ──
   "97423":
     nom: "Les Trois-Bassins"
     zones:
-      AUs:  {ouverture: fermee}
+      AUs: {ouverture: fermee}
       AUse: {ouverture: fermee}
       "1AUa": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 35}
       "1AUb": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 30}
       "1AUc": {ouverture: conditionnelle_operation, min_log: 5, densite_log_ha: 20}
-      "2AUa": {ouverture: conditionnelle_etat_tiers}   # 2AU s'ouvre après aménagement des 1AU
+      "2AUa": {ouverture: conditionnelle_etat_tiers}
       "2AUb": {ouverture: conditionnelle_etat_tiers}
       "2AUc": {ouverture: conditionnelle_etat_tiers}
     defaut: {ouverture: conditionnelle_operation}
 
-# Saint-Louis (97414) : NON inclus — source du règlement indisponible → a_verifier, pas « pas de seuil »
-# (arbitrage Vic). À reprendre quand la source revient.
+  # ── L'Étang-Salé (97404) : trame DUTEILH-PERRAU (= Saint-Leu) ; AUs fermée ; PLANCHER min 10 log ──
+  "97404":
+    nom: "L'Étang-Salé"
+    zones:
+      AUs: {ouverture: fermee}   # AU 2.4 p.79 : AUs inconstructible
+      AUa: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 50}
+      AUb: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 30}
+      AUc: {ouverture: conditionnelle_operation, min_log: 10, densite_log_ha: 15}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "min 10 log + densité 50/30/15 (AU 1.2 p.75, verbatim « minimum de 10 logements … densité 50 log/ha »)"
+
+  # ── Saint-Louis (97414) : 1AU ouvrent (opération) ; 2AU phasés ; réserves strictes fermées ──
+  "97414":
+    nom: "Saint-Louis"
+    zones:
+      AUst: {ouverture: fermee}
+      "2AUst": {ouverture: fermee}
+      "1AUst": {ouverture: conditionnelle_etat_tiers}   # réserve stricte (override 1AU)
+      "2AU": {ouverture: conditionnelle_etat_tiers}      # tous les 2AU phasés (après aménagement 1AU)
+    defaut: {ouverture: conditionnelle_operation}         # 1AUa/b/c/d/e ouverts par opération
+    note: "densité OAP 30/50 log/ha SANS min_log uniforme (per-site) → pas de plancher ; 2AU phasé après 1AU (verbatim), 1AU ouvrent"
+
+  # ── Petite-Île (97405) : 1AU opération ; 2AU phasage inter-zones ──
+  "97405":
+    nom: "Petite-Île"
+    zones: {"2AU": {ouverture: conditionnelle_etat_tiers}, "2AUe": {ouverture: conditionnelle_etat_tiers}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité = objectif SAR (pas de plancher dur) ; 2AU n'ouvre qu'après TOUTES les 1AU (inter-zones)"
+
+  # ── Le Port (97407) : 1AU opération ; 2AU conditionnées à modif PLU ; densité OAP 50 sans min_log ──
+  "97407":
+    nom: "Le Port"
+    zones:
+      "2AU": {ouverture: conditionnelle_etat_tiers}
+      "2AUem": {ouverture: conditionnelle_etat_tiers}
+      "2AUmut": {ouverture: conditionnelle_etat_tiers}
+      "2AUp": {ouverture: conditionnelle_etat_tiers}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "OAP 50 log/ha SANS min_log → pas de plancher ; annulation Uppp/Up2 hors zonage AU (VALIDE)"
+
+  # ── Sainte-Suzanne (97420) : 1AU prioritaires (opération) ; 2AU date-butoir 2031 → non ouverts ──
+  "97420":
+    nom: "Sainte-Suzanne"
+    zones: {"2AU": {ouverture: conditionnelle_etat_tiers}}   # tous les 2AU phasés/date-butoir 2031
+    defaut: {ouverture: conditionnelle_operation}             # 1AU « espaces prioritaires » ouverts
+    note: "densité OAP 10/20/30 log/ha PER-SITE (pas de min_log uniforme) → pas de plancher ; 1AU prioritaires ouverts, 2AU date-butoir 2031 (v1 : non ouverts)"
+
+  # ── Les Avirons (97401) : conditionnelle ; AUes stricte fermée ; densité règlt SANS min_log ──
+  "97401":
+    nom: "Les Avirons"
+    zones: {AUes: {ouverture: fermee}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité règlement 30/30/20 log/ha SANS min_log → pas de plancher ; AUes stricte activité"
+
+  # ── La Plaine-des-Palmistes (97406) : conditionnelle ; AUs1/AUs2 réserves fermées ──
+  "97406":
+    nom: "La Plaine-des-Palmistes"
+    zones: {AUs1: {ouverture: fermee}, AUs2: {ouverture: fermee}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "plancher 10 LLS/opération SANS densité chiffrée (OAP graphique) → surface min non calculable, pas de plancher"
+
+  # ── Sainte-Rose (97419) : 1AU ouvrent (opération) ; 2AU phasés (après aménagement 1AU) ──
+  "97419":
+    nom: "Sainte-Rose"
+    zones: {"2AU": {ouverture: conditionnelle_etat_tiers}}   # 2AU ouvrent après aménagement des 1AU
+    defaut: {ouverture: conditionnelle_operation}             # 1AU ouverts par opération
+    note: "densité 20 log/ha (10 rural Bois Blanc) SANS min_log → pas de plancher ; 2AU phasé après 1AU (verbatim)"
+
+  # ── Salazie (97421) : conditionnelle ; densité règlt 20/20/10 SANS min_log ──
+  "97421":
+    nom: "Salazie"
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité règlement 20/20/10 log/ha (AUa/AUb/AUc) SANS min_log → pas de plancher ; social OAP 50%"
+
+  # ── Bras-Panon (97402) : 1AU ouvrent (opération, densité) ; 2AU réserves → modif PLU ; AUst fermée ──
+  "97402":
+    nom: "Bras-Panon"
+    zones: {"2AU": {ouverture: conditionnelle_etat_tiers}, AUst: {ouverture: fermee}}
+    defaut: {ouverture: conditionnelle_operation}             # 1AUa/b/c/d/e (densité 30/20/10) ouverts
+    note: "densité 30/20/10 log/ha + modulation TCSP SANS min_log → pas de plancher ; 2AU réserve (modif PLU)"
+
+  # ── Entre-Deux (97403) : conditionnelle ; densité 20 + logements per-site (pas de min_log uniforme) ──
+  "97403":
+    nom: "Entre-Deux"
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité 20 log/ha + min logements PER-SITE (tableau OAP) → pas de min_log uniforme, pas de plancher"
+
+  # ── Saint-Pierre (97416) : conditionnelle ; densité OAP 50/60/80 per-site ──
+  "97416":
+    nom: "Saint-Pierre"
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité OAP 50/60/80 log/ha PER-SITE (social 20-40%) → pas de min_log uniforme, pas de plancher"
+
+  # ── Sainte-Marie (97418) : conditionnelle ; 2AU date-butoir 2031 → non ouverte ; densité sans min_log ──
+  "97418":
+    nom: "Sainte-Marie"
+    zones: {"2AU": {ouverture: conditionnelle_etat_tiers}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité 50/25/25 log/ha SANS min_log → pas de plancher ; 2AU date-butoir 2031 (v1 : non ouverte)"
+
+  # ── Le Tampon (97422) : 1AU conditionnelle ; 2AU phasage ; densité per-secteur sans min_log ──
+  "97422":
+    nom: "Le Tampon"
+    zones:
+      "2AUa": {ouverture: conditionnelle_etat_tiers}
+      "2AUb": {ouverture: conditionnelle_etat_tiers}
+      "2AUc": {ouverture: conditionnelle_etat_tiers}
+      "2AUd": {ouverture: conditionnelle_etat_tiers}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "densité 10/20 log/ha par secteur + OAP 50 SANS min_log → pas de plancher ; golden 2AUd brûlante (97422000AD1237)"
+
+  # ── Saint-Denis (97411) : conditionnelle ; AUx fermée ; scan négatif planchers ──
+  "97411":
+    nom: "Saint-Denis"
+    zones: {AUx: {ouverture: fermee}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "scan négatif planchers (règlement 2026, OAP absente) → sans_objet, pas de plancher"
+
+  # ── Saint-Joseph (97412) : conditionnelle ; AUst réserve stricte fermée ; scan négatif ──
+  "97412":
+    nom: "Saint-Joseph"
+    zones: {AUst: {ouverture: fermee}}
+    defaut: {ouverture: conditionnelle_operation}
+    note: "scan négatif planchers (règlement 2025 185 p, OAP sans chiffre) → sans_objet"
+
+  # ── Cilaos (97424) : conditionnelle ; scan négatif (montagne) ──
+  "97424":
+    nom: "Cilaos"
+    defaut: {ouverture: conditionnelle_operation}
+    note: "scan négatif planchers (montagne, OAP graphique) → sans_objet"
+
+# HORS intégration (M32) :
+# · Saint-André (97409) : opposabilité en attente (PLU 2019 opposable, aucun doc GPU) — étiquette fraîcheur en place.
+# · Saint-Benoît (97410) : format 2 colonnes / 19 fiches AU graphiques → schéma v2.
+# · Saint-Philippe (97417) : RNU (aucun zonage).

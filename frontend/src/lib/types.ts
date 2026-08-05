@@ -187,6 +187,12 @@ export interface Fiche {
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).
   reglement_plu?: ReglementPlu | null
+  // M32 §2 : fraîcheur GPU-vs-mairie du zonage (horizon = date mairie ; statut = écart exposé).
+  plu_fraicheur?: {
+    idurba: string | null; horizon: string | null
+    statut: 'a_jour' | 'annule_partiel' | 'opposabilite_en_attente' | 'rnu'
+    libelle: string; note?: string | null; cadence?: string
+  } | null
   // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
   potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).

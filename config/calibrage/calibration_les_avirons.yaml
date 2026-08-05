@@ -8,6 +8,10 @@ meta:
   date_archive_gpu: "2024-12-06"
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  # M32 ré-extraction #5 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED, id 4ef0d90f).
+  idurba: "97401_PLU_20241206"
+  date_approbation: "2024-12-06"
+  reextraction_m32: "règlement 59 p relu : densités 30 (AUa/AUc) / 20 (AUd) log/ha CONFIRMÉES au règlement ; ouverture conditionnelle_operation CONFIRMÉE. CORRECTION : l'OAP porte des comptes de logements SOCIAUX par site (47 LLS ; 24 PLS + 42 LLS/RPA ; ~70) — pas « sans social »"
 
 zones_au:
   familles: [AUa, AUc, AUd, AUec, AUes, AUt]
@@ -21,7 +25,8 @@ zones_au:
     src: "règlement p.26 (« respecter les densités suivantes : en zones AUa et AUc, 30 logements par hectare ; en zone AUd, 20 logements par hectare »)"
   oap:
     contenu_extrait: oui
-    nature: "qualitative — décrit la vocation/phasage des zones AU, sans densité ni % social (les planchers sont au RÈGLEMENT, pas à l'OAP)"
+    nature: "densité au RÈGLEMENT (p.26) ; l'OAP porte le SOCIAL PAR SITE en comptes de logements — M32 : « 47 LLS » (AT422), « 24 PLS et 42 LLS/RPA » (322), « ~70 logements sociaux » — corrige le « sans social » du 30/07"
+    social_par_site: "comptes de logements sociaux/aidés par site (LLS, PLS, RPA) — non un %"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
   faits_nouveaux_vs_yaml: "ouverture conditionnelle + planchers densité 30 (AUa/AUc) / 20 (AUd) log/ha au règlement — absents du YAML"
   a_verifier: "densité AUec/AUes/AUt (non listées p.26) ; dimensions U"

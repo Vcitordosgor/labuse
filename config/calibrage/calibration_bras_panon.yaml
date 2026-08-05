@@ -10,6 +10,10 @@ meta:
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
   zonage_particulier: "AU à name=DESCRIPTION (garde-fou 21077 : identité par subtype, jamais le préfixe)"
+  # M32 ré-extraction #9 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED, 2026-04-28).
+  idurba: "97402_PLU_20260428"
+  date_approbation: "2026-04-28"
+  reextraction_m32: "règlement relu : ouverture conditionnée à modification PLU + densités 30 (AUa/AUb) / 20 (AUc) / 10 (AUd) log/ha minimum + MODULATION TCSP (densité majorée dans un rayon de 500 m des gares/stations) CONFIRMÉS (verbatim)"
 
 zones_au:
   ouverture: conditionnelle_etat_tiers

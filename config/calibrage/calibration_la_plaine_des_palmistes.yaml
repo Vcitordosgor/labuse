@@ -8,6 +8,10 @@ meta:
   date_archive_gpu: "2023-05-27"
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  # M32 ré-extraction #6 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED, id a6a3fe0a).
+  idurba: "97406_PLU_20230527"
+  date_approbation: "2023-05-27"
+  reextraction_m32: "règlement 217 p relu : ouverture conditionnelle (modif PLU, verbatim) + plancher 10 LLS/opération d'ensemble CONFIRMÉS. OAP toujours GRAPHIQUE (non extractible au texte) — inchangé, non_extrait honnête (limite v1)"
 
 zones_au:
   familles: [AUb, AUc, AUe, AUr, AUs1, AUs2]
