@@ -85,6 +85,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [x] Dette #11 FERMÉE pour la part PM (signal servi, arbitrage b, 05/08) : parcel_acquerabilite 3 états factuels (même propriétaire PM 329 / distincts 46 / non déterminable 685) sur la mention assemblage, Sourcé SIREN DGFiP-Cerema (millésime amont non tracé → Estimé affiché, champ prévu). 0 effet de classement.
 - [ ] Dette #11-PP (DISTINCTE, maintenue) : acquérabilité des personnes physiques NON déterminable — manquant nommé : source de propriété PP inexistante en open data (anonymisation DGFiP). Structurel.
 - [ ] Dette #13 (piscine — ouverte à la bascule M32) : le signal piscine (FLAIR + PVA) ne déclasse pas encore par RÈGLE produit — il est porté PARCELLE PAR PARCELLE au registre `served_run_exceptions` (a_creuser). Aujourd'hui 2 entrées : AK1442 (FLAIR 88 m², M28) + AL1154 (FLAIR 0,888, M32). Le filtre bâti (emprise) ne les attrape pas (une piscine n'est pas du bâti, ratio 0 %). Manquant nommé pour en faire une règle : couche piscine surfacique fiable + seuil (« piscine centrale ≠ terrain nu »). Tant que la couche n'est pas industrialisée, chaque cas piscine détecté = une entrée de registre motivée, pas un déclassement automatique.
+- [ ] Dette #14 (double-rail verdict/tier — ouverte à la bascule M32, mandat dédié AVANT le premier client) : le moteur **verdict de fiche (`score_e`)** déclasse le bâti marginal selon une logique **pré-M28**, indépendamment du **tier servi (`parcel_p_score_v2`)**. Symptôme : CY0197 servie `brûlante` (bâtie 22 % + divisible R+2, résiduel 194 m², étage 3) mais dont la synthèse de fiche affiche `À creuser` (« bâti significatif 22 %, occupation à vérifier ») — un déclassement silencieux, incohérent avec le tier. **Correction attendue** : le verdict de fiche doit s'aligner sur le **filtre 3 étages** (étage 3 divisible = servable → badge « bâtie + division possible », pas de déclassement). **Périmètre** : tous les bâtis marginaux/divisibles, pas seulement CY0197. À traiter en mandat dédié avant exposition client.
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
 - [ ] Anomalie AT1740 : « constructible N » + SDP 2 689 m² en zone N + 19-22 logts, ET deux SDP différentes sur la même fiche (2 689 vs 2 827). Mesurer : combien de zones N servent une SDP > 0 ? Localiser la violation du point de calcul unique.
 - [ ] Revue de code intégrale (propositions, rien d'appliqué)
@@ -121,8 +122,22 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
 #13 signal piscine (registre a_creuser, pas encore une règle produit) ·
+#14 double-rail verdict de fiche vs tier servi (bâti marginal déclassé en silence — mandat dédié avant client) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
+
+## Site marketing + perf sites + gelés (transmis Vic, post-M32)
+- [ ] **Split app / marketing** : séparer l'application (produit scoré) du site marketing (vitrine
+  labuse.immo). Deux surfaces, deux cycles de déploiement.
+- [ ] **Chiffres post-M32 à afficher sur la vitrine** (état servi `q_v8_calibre` après bascule M32) :
+  431 663 parcelles · **119 brûlantes · 1 041 chaudes** · 29 974 à creuser · 2 964 réserve foncière.
+  (Source unique : le run servi ; à rafraîchir à chaque bascule, ne pas figer un chiffre à la main.)
+- [ ] **Perf sites (Lighthouse)** : passer app + marketing au crible Lighthouse (perf/SEO/a11y),
+  budget de perf déclaré. À faire avant exposition client.
+- [ ] **MoteurImmo : GELÉ** — ne pas reprendre l'intégration/compat MoteurImmo (décision Vic).
+- [ ] **Reco Urbanease** : recommandation à formaliser (positionnement / différenciation vs Urbanease).
+- [ ] **Saint-Paul : référence à DÉCLARER CLOSE** — la commune de référence Saint-Paul est traitée ;
+  acter sa clôture (plus de point ouvert dessus) pour ne pas la rouvrir par inadvertance.
 
 ## Doctrine (leçons gravées)
 - **Frontière modèle/règles (Vic 04/08, prouvée par la mesure piscine)** : « Le modèle prédit
