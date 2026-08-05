@@ -1,13 +1,17 @@
-"""Tests assemblage foncier / parcelles voisines (Phase 5). PostGIS réel (base de test)."""
+"""Tests assemblage foncier / parcelles voisines (Phase 5). PostGIS réel (base de test).
+
+M34 (dette #14) : « intéressante » = SERVIE dans un tier actif du run servi — les seeds
+posent des tiers (`parcel_p_score_v2`), plus jamais des statuts cascade legacy."""
 import pytest
 from sqlalchemy import text
 
 from labuse.api.voisinage import compute_voisinage
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
 
 pytestmark = pytest.mark.db
 
 
-def _parcel(db, idu, x0, status=None, surface=1000.0):
+def _parcel(db, idu, x0, tier=None, surface=1000.0):
     """Carré ~104 m de côté à l'abscisse x0 (4326) ; le trigger pose geom_2975."""
     wkt = (f"POLYGON(({x0:.5f} -21.0,{x0 + 0.001:.5f} -21.0,{x0 + 0.001:.5f} -20.999,"
            f"{x0:.5f} -20.999,{x0:.5f} -21.0))")
@@ -15,21 +19,23 @@ def _parcel(db, idu, x0, status=None, surface=1000.0):
         "INSERT INTO parcels (idu, commune, geom, surface_m2, centroid) VALUES "
         "(:i,'Vz', ST_GeomFromText(:w,4326), :s, ST_Centroid(ST_GeomFromText(:w,4326))) RETURNING id"),
         {"i": idu, "w": wkt, "s": surface}).scalar()
-    if status:
+    if tier:
         db.execute(text(
-            "INSERT INTO parcel_evaluations (parcel_id, completeness_score, opportunity_score, status) "
-            "VALUES (:p, 60, 70, :st)"), {"p": pid, "st": status})
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
+            "contrib_z, contrib_d, copro, tier, model_version) "
+            "VALUES (:r, :i, 0.5, 1.0, 50, 1000, 0, 0, false, :t, 'm34-test')"),
+            {"r": Q_A_RUN_LABEL, "i": idu, "t": tier})
     return pid
 
 
 def test_voisines_adjacentes_et_assemblage(db_session):
     # A entourée de DEUX voisines contiguës intéressantes (G ouest, B est) → vrai bloc (J3 : ≥ 2).
-    a = _parcel(db_session, "VZ0000000000A1", 55.300, "opportunite", 1000)
-    _parcel(db_session, "VZ0000000000B2", 55.301, "opportunite", 1500)   # contiguë à A (est)
-    _parcel(db_session, "VZ0000000000G7", 55.299, "opportunite", 1200)   # contiguë à A (ouest)
+    a = _parcel(db_session, "VZ0000000000A1", 55.300, "chaude", 1000)
+    _parcel(db_session, "VZ0000000000B2", 55.301, "chaude", 1500)   # contiguë à A (est)
+    _parcel(db_session, "VZ0000000000G7", 55.299, "brulante", 1200)   # contiguë à A (ouest)
     _parcel(db_session, "VZ0000000000C3", 55.302, "a_creuser", 800)      # contiguë à B, pas à A
     db_session.flush()
-    vz = compute_voisinage(db_session, a, 1000.0, "opportunite")
+    vz = compute_voisinage(db_session, a, 1000.0, "chaude")
     idus = [v["idu"] for v in vz["voisines"]]
     assert "VZ0000000000B2" in idus and "VZ0000000000G7" in idus
     assert "VZ0000000000C3" not in idus                  # ne touche pas A
@@ -44,27 +50,27 @@ def test_voisines_adjacentes_et_assemblage(db_session):
 def test_une_seule_voisine_ne_suffit_pas(db_session):
     # J3 : une UNIQUE voisine contiguë ne déclenche plus d'assemblage (le bandeau ne sortait
     # avant sur ~99 % des opportunités) — il faut une vraie cohérence (≥ 2 voisines).
-    a = _parcel(db_session, "VZ0000000000H8", 55.330, "opportunite", 1000)
-    _parcel(db_session, "VZ0000000000I9", 55.331, "opportunite", 1500)   # unique voisine contiguë
+    a = _parcel(db_session, "VZ0000000000H8", 55.330, "chaude", 1000)
+    _parcel(db_session, "VZ0000000000I9", 55.331, "chaude", 1500)   # unique voisine contiguë
     db_session.flush()
-    vz = compute_voisinage(db_session, a, 1000.0, "opportunite")
+    vz = compute_voisinage(db_session, a, 1000.0, "chaude")
     assert [v["idu"] for v in vz["voisines"]] == ["VZ0000000000I9"]      # la voisine est listée…
     assert vz["assemblage"]["possible"] is False                        # …mais 1 ne suffit pas
     assert vz["assemblage"]["note"] is None
 
 
-def test_faux_positif_ne_propose_pas_d_assemblage(db_session):
-    a = _parcel(db_session, "VZ0000000000D4", 55.310, "faux_positif_probable", 1000)
-    _parcel(db_session, "VZ0000000000E5", 55.311, "opportunite", 1500)
+def test_declassee_ne_propose_pas_d_assemblage(db_session):
+    a = _parcel(db_session, "VZ0000000000D4", 55.310, "declasse_bati_sature", 1000)
+    _parcel(db_session, "VZ0000000000E5", 55.311, "chaude", 1500)
     db_session.flush()
-    vz = compute_voisinage(db_session, a, 1000.0, "faux_positif_probable")
+    vz = compute_voisinage(db_session, a, 1000.0, "declasse_bati_sature")
     assert vz["voisines"]                                  # la voisine est listée…
     assert vz["assemblage"]["possible"] is False           # …mais aucun assemblage proposé
     assert vz["assemblage"]["note"] is None
 
 
 def test_parcelle_isolee(db_session):
-    a = _parcel(db_session, "VZ0000000000F6", 55.320, "opportunite", 1000)
+    a = _parcel(db_session, "VZ0000000000F6", 55.320, "chaude", 1000)
     db_session.flush()
-    vz = compute_voisinage(db_session, a, 1000.0, "opportunite")
+    vz = compute_voisinage(db_session, a, 1000.0, "chaude")
     assert vz["voisines"] == [] and vz["assemblage"]["possible"] is False

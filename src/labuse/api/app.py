@@ -906,23 +906,27 @@ def list_parcels(commune: str | None = None,
                                           personne_morale, zonage, defisc_active, pc_caduc, marge_min)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
+    # M34 (dette #14) : le repli sans `source` raconte AUSSI le run servi — `status` = tier
+    # traduit (jamais le statut cascade legacy) ; les scores legacy restent informatifs.
     rows = db.execute(text(
         """
         SELECT p.idu, p.commune, p.surface_m2,
-               e.status, e.opportunity_score, e.completeness_score
+               s.tier AS status, s.rang,
+               e.opportunity_score, e.completeness_score
         FROM parcels p
+        LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
         LEFT JOIN LATERAL (
-            SELECT status, opportunity_score, completeness_score
+            SELECT opportunity_score, completeness_score
             FROM parcel_evaluations e WHERE e.parcel_id = p.id
             ORDER BY evaluated_at DESC LIMIT 1
         ) e ON true
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
         ORDER BY p.idu
         LIMIT :lim OFFSET :off
-        """), {"c": commune, "lim": limit, "off": offset}).mappings().all()
+        """), {"c": commune, "lim": limit, "off": offset, "run": Q_A_RUN_LABEL}).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
-        "status": r["status"], "opportunity_score": r["opportunity_score"],
+        "status": r["status"], "rang": r["rang"], "opportunity_score": r["opportunity_score"],
         "completeness_score": r["completeness_score"],
     } for r in rows]
 
@@ -1237,24 +1241,28 @@ def stats(commune: str | None = None, source: str | None = None,
             legacy=legacy))
 
     def _compute() -> dict:
+        # M34 (dette #14) : compteurs du repli = TIERS SERVIS (convention front : opportunité
+        # = brûlantes + chaudes). Plus jamais les statuts cascade legacy ; les agrégats de
+        # scores legacy restent informatifs.
         row = db.execute(
             text(
                 """
                 SELECT count(*) AS total,
-                       count(*) FILTER (WHERE e.status = 'opportunite') AS opportunite,
-                       count(*) FILTER (WHERE e.status = 'a_creuser')   AS a_creuser,
-                       count(*) FILTER (WHERE e.status = 'exclue')      AS exclue,
+                       count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS opportunite,
+                       count(*) FILTER (WHERE s.tier = 'a_creuser')             AS a_creuser,
+                       count(*) FILTER (WHERE s.tier = 'ecartee')               AS exclue,
                        round(avg(e.completeness_score)) AS completeness_avg,
                        max(e.opportunity_score)         AS opportunity_max
                 FROM parcels p
+                LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
                 LEFT JOIN LATERAL (
-                    SELECT status, opportunity_score, completeness_score
+                    SELECT opportunity_score, completeness_score
                     FROM parcel_evaluations e WHERE e.parcel_id = p.id
                     ORDER BY evaluated_at DESC LIMIT 1
                 ) e ON true
                 WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
                 """
-            ), {"c": commune}
+            ), {"c": commune, "run": Q_A_RUN_LABEL}
         ).mappings().one()
         out = {k: (int(v) if v is not None else None) for k, v in row.items()}
         out["active_signals"] = int(db.execute(
@@ -2314,19 +2322,26 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
     haut du panier (enrichi via la fiche existante). Aucune donnée inventée : tout provient
     d'évaluations déjà calculées ; ce qui manque reste explicitement nul côté UI."""
     from .. import shortlist as sl
+    from ..verdict_servi import TIERS_SERVABLES
     commune = commune or config.get_settings().pilot_commune_name
-    # Candidats = verdicts actionnables (opportunité / à creuser), mêmes champs que la carte.
+    # M34 (dette #14) : candidats = parcelles SERVIES dans un tier actif du run servi —
+    # plus jamais le statut cascade legacy. `status` = tier servi (traduction unique) ;
+    # les scores legacy restent des entrées de priorisation informatives, le motif de
+    # déclassement non-franc reste un malus de risque (vigilance), pas un verdict.
     rows = db.execute(
         text(
             """
             SELECT p.idu, p.commune, p.surface_m2,
-                   e.status, e.opportunity_score, e.completeness_score,
+                   s.tier AS status, s.rang,
+                   e.opportunity_score, e.completeness_score,
                    d.detail AS downgrade_reason,
                    r.sous_densite, r.sdp_residuelle_m2,
                    own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
             FROM parcels p
-            JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score
+            JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
+                 AND s.tier = ANY(:servables)
+            LEFT JOIN LATERAL (
+                SELECT opportunity_score, completeness_score
                 FROM parcel_evaluations e WHERE e.parcel_id = p.id
                 ORDER BY evaluated_at DESC LIMIT 1
             ) e ON true
@@ -2336,12 +2351,12 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
             ) d ON true
             LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
             LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
-            WHERE p.commune = :c AND e.status IN ('opportunite', 'a_creuser')
+            WHERE p.commune = :c
             """
-        ), {"c": commune}
+        ), {"c": commune, "run": Q_A_RUN_LABEL, "servables": list(TIERS_SERVABLES)}
     ).mappings().all()
     candidates = [
-        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status",
+        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status", "rang",
                               "opportunity_score", "completeness_score", "downgrade_reason",
                               "sous_densite", "sdp_residuelle_m2")},
          "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"])}
@@ -2591,20 +2606,31 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     }
 
     # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
+    # M34 (dette #14, option a) : le statut est la TRADUCTION du tier servi (verdict_servi,
+    # point de calcul unique) — le rail cascade legacy ne pilote plus AUCUN verdict. Ses
+    # signaux non-francs (accès/pente/surface/bâti partiel) restent des VIGILANCES (resume),
+    # ses scores restent informatifs. Constat : qa/m34/M34_P0_CONSTAT.md.
+    from ..verdict_servi import verdict_servi
     from .resume import is_micro_opportunite
-    _status_val = ev.status.value if ev else None
+    vs = verdict_servi(db, idu)
     verdict_block = {
-        "status": _status_val,
+        "status": vs["statut"], "label": vs["label"],
+        "tier": vs["tier"], "rang": vs["rang"], "servable": vs["servable"],
+        # Badge « bâtie + division possible » (étage 3 du filtre bâti, M28) — nuance, pas
+        # un déclassement.
+        "badge_division": vs["badge_division"],
+        "badge_division_libelle": vs["badge_division_libelle"],
+        "motif": vs["motif"], "exception_registre": vs["exception_registre"],
+        "source_run": vs["run"],
         "opportunity_score": ev.opportunity_score if ev else None,
         "completeness_score": ev.completeness_score if ev else None,
         "reasons": reasons,
-        # Motif de déclassement (garde-fou faux positifs), si la parcelle a été corrigée.
+        # Signal non-franc de la cascade legacy — VIGILANCE informative (jamais un verdict).
         "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
         "evaluated_at": ev.evaluated_at if ev else None,
         "rules_version": ev.rules_version if ev else None,
-        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur, n'affecte NI le
-        # verdict NI les scores (cf. resume.is_micro_opportunite). Le statut ci-dessus est intact.
-        "micro_opportunite": is_micro_opportunite(_status_val, p.surface_m2),
+        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur (tiers hauts).
+        "micro_opportunite": is_micro_opportunite(vs["statut"], p.surface_m2),
     }
     # Occupation bâtie (correctif R1) — ratio/nb/plus grand bâtiment + label prudent.
     from .. import bati as bati_mod
@@ -3216,6 +3242,10 @@ def _prio_keys() -> list[str]:
 def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
     p = e.parcel
     ev = _latest_eval(db, e.parcel_id)
+    # M34 (dette #14) : le verdict des cartes CRM = traduction du tier servi (le front
+    # affiche déjà `premium` via verdictMeta — ce bloc API raconte désormais le même run).
+    from ..verdict_servi import verdict_servi
+    vs = verdict_servi(db, p.idu)
     return {
         "id": e.id,
         "idu": p.idu,
@@ -3231,7 +3261,7 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": _ban_adresse(db, p.idu)},
         "verdict": {
-            "status": ev.status.value if ev else None,
+            "status": vs["statut"], "label": vs["label"], "rang": vs["rang"],
             "opportunity_score": ev.opportunity_score if ev else None,
         },
         # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban

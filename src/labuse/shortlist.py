@@ -17,8 +17,9 @@ from . import config
 # Familles de propriétaire « actionnables » (un contact est juridiquement préparable).
 OWNER_ACTIONABLE = {"public", "prive"}
 # Repli si la config est absente (mêmes valeurs que config/shortlist.yaml) — jamais de crash.
+# M34 : `status` = tier servi (traduction unique) — hiérarchie à deux niveaux conservée.
 _DEFAULTS = {
-    "verdict_base": {"opportunite": 120, "a_creuser": 50},
+    "verdict_base": {"brulante": 120, "chaude": 120, "reserve_fonciere": 50, "a_creuser": 50},
     "weights": {"opportunite": 1.0, "fiabilite": 0.4, "densification": 25,
                 "residuel_par_100m2": 1.0, "residuel_cap": 20,
                 "economique_par_100m2": 1.0, "economique_cap": 30,
@@ -184,8 +185,8 @@ def _confiance_label(score) -> str:
 
 
 def _action_defaut(status: str | None) -> str:
-    if status == "opportunite":
+    if status in ("brulante", "chaude"):
         return "Sécuriser le foncier : qualifier le terrain et approcher le propriétaire"
-    if status == "a_creuser":
+    if status in ("a_creuser", "reserve_fonciere"):
         return "Instruire les contraintes avant d'engager une démarche"
     return "À vérifier avant tout engagement"

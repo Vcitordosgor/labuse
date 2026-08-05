@@ -49,14 +49,44 @@ def test_source_test_sans_connecteur(client):
 
 
 def test_fiche_double_score_et_cascade(client):
+    # M34 (dette #14) : le verdict est la TRADUCTION du tier servi. La parcelle de démo n'a
+    # pas de ligne au run servi → « non évaluée au run servi », JAMAIS un repli legacy muet
+    # (l'ancien verrou attendait le statut cascade « opportunite »).
     f = client.get("/parcels/97415000AB0001").json()
-    assert f["verdict"]["status"] == "opportunite"
-    # Règle d'or : les DEUX scores présents
+    assert f["verdict"]["status"] == "non_evaluee"
+    assert f["verdict"]["label"] == "Non évaluée au run servi"
+    # Règle d'or : les DEUX scores (legacy, informatifs) restent présents
     assert f["verdict"]["opportunity_score"] is not None
     assert f["verdict"]["completeness_score"] is not None
     assert len(f["cascade"]) > 10
     assert f["sources_responded"] and f["ai"]["recommended_status"] == "opportunite"
     assert "jamais garanties" in f["disclaimer"]
+
+
+def test_fiche_verdict_traduit_le_tier_servi(client):
+    # Avec une ligne v2 au run servi, le verdict de fiche EST le tier (traduction unique).
+    from sqlalchemy import text as sqla_text
+
+    from labuse.db import session_scope
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    with session_scope() as s:
+        s.execute(sqla_text(
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, "
+            "rang, contrib_z, contrib_d, copro, tier, model_version) "
+            "VALUES (:r, '97415000AB0001', 0.9, 2.0, 99, 7, 0, 0, false, 'brulante', 'm34-test') "
+            "ON CONFLICT (run_id, parcelle_id) DO UPDATE SET tier = 'brulante', rang = 7"),
+            {"r": Q_A_RUN_LABEL})
+    try:
+        f = client.get("/parcels/97415000AB0001").json()
+        assert f["verdict"]["status"] == "brulante"
+        assert f["verdict"]["label"] == "Brûlante" and f["verdict"]["rang"] == 7
+        assert f["resume"]["statut"] == "brulante"
+        assert f["resume"]["synthese"].startswith("Classée Brûlante")
+    finally:
+        with session_scope() as s:
+            s.execute(sqla_text(
+                "DELETE FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = '97415000AB0001'"),
+                {"r": Q_A_RUN_LABEL})
 
 
 def test_fiche_404(client):

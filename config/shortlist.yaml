@@ -3,9 +3,14 @@
 # n'est PAS le score brut — c'est une lecture promoteur. Chaque poste est explicable
 # (renvoyé dans `priority_components` du payload /shortlist).
 
-# Base par verdict : on travaille les opportunités d'abord, puis les « à creuser ».
+# Base par verdict : on travaille les tiers hauts d'abord, puis le reste du servable.
+# M34 (dette #14) : clés = TIERS SERVIS (traduction unique) — les statuts cascade legacy
+# (opportunite) n'existent plus. Même hiérarchie à deux niveaux qu'avant (120/50) :
+# brûlante/chaude = l'ex-« opportunité », réserve foncière/à creuser = l'ex-« à creuser ».
 verdict_base:
-  opportunite: 120
+  brulante: 120
+  chaude: 120
+  reserve_fonciere: 50
   a_creuser: 50
 
 # Postes du score (calculés sur les champs « légers » de la couche carte).

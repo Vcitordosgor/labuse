@@ -8,15 +8,19 @@ from __future__ import annotations
 import html
 
 from ..ai.avis import AVIS_IA  # EXPRESS-01 · Volet B — avis IA (source unique)
+# M34 (dette #14) : libellés du POINT DE TRADUCTION UNIQUE (tier servi) — plus de table
+# locale de statuts legacy. Le verdict affiché ici est celui de verdict_servi.
+from ..verdict_servi import TIER_LABELS
 
 _RESULT_LABEL = {
     "HARD_EXCLUDE": "EXCLUSION", "SOFT_FLAG": "contrainte", "POSITIVE": "signal +",
     "PASS": "ok", "UNKNOWN": "donnée manquante",
 }
-_STATUS_LABEL = {
-    "opportunite": "Opportunité vérifiée", "a_creuser": "À creuser",
-    "faux_positif_probable": "Faux positif probable", "exclue": "Exclue",
-}
+
+
+def _verdict_label(v: dict | None) -> str:
+    v = v or {}
+    return v.get("label") or TIER_LABELS.get(v.get("status"), v.get("status") or "—")
 
 
 def fiche_markdown(fiche: dict) -> str:
@@ -32,12 +36,17 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         "## Verdict",
         "",
-        f"- **Statut :** {v['status'] or '—'}"
+        f"- **Statut :** {_verdict_label(v)}"
+        + (f" (rang {v['rang']})" if v.get("rang") and v.get("servable") else "")
         + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
         f"- **Opportunité :** {_score(v['opportunity_score'])} / 100  ·  "
         f"**Complétude :** {_score(v['completeness_score'])} / 100",
         "",
     ]
+    if v.get("badge_division_libelle"):
+        lines += [f"- **Nuance :** {v['badge_division_libelle']}", ""]
+    if v.get("motif"):
+        lines += [f"- **Motif ({'registre servi' if v.get('exception_registre') else 'filtre servi'}) :** {v['motif']}", ""]
     if v.get("micro_opportunite"):
         lines += ["> Petite parcelle : potentiel à analyser surtout en assemblage ou micro-opération.", ""]
     if v["reasons"]:
@@ -102,10 +111,10 @@ def fiche_markdown(fiche: dict) -> str:
         lines += ["## Parcelles voisines (contiguïté)", ""]
         if (vz.get("assemblage") or {}).get("note"):
             lines += [f"_{vz['assemblage']['note']}_", ""]
-        lines += ["| Parcelle | Statut LABUSE | Opp. | Zone PLU | Surface |", "|---|---|---|---|---|"]
+        lines += ["| Parcelle | Tier servi | Rang | Zone PLU | Surface |", "|---|---|---|---|---|"]
         for v in vz["voisines"]:
-            lines.append(f"| {v['idu']} | {_STATUS_LABEL.get(v.get('status'), v.get('status') or '—')} | "
-                         f"{v.get('opportunity_score') if v.get('opportunity_score') is not None else '—'} | "
+            lines.append(f"| {v['idu']} | {TIER_LABELS.get(v.get('status'), v.get('status') or '—')} | "
+                         f"{v.get('rang') if v.get('rang') is not None else '—'} | "
                          f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
         lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
                   "assemblage restent à vérifier._", ""]
@@ -192,14 +201,14 @@ def fiche_html(fiche: dict) -> str:
         note = (vz.get("assemblage") or {}).get("note")
         rows_vz = "".join(
             f"<tr><td>{html.escape(v['idu'])}</td>"
-            f"<td>{html.escape(_STATUS_LABEL.get(v.get('status'), v.get('status') or '—'))}</td>"
-            f"<td>{v.get('opportunity_score') if v.get('opportunity_score') is not None else '—'}</td>"
+            f"<td>{html.escape(TIER_LABELS.get(v.get('status'), v.get('status') or '—'))}</td>"
+            f"<td>{v.get('rang') if v.get('rang') is not None else '—'}</td>"
             f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
             f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
             for v in vz["voisines"])
         vz_html = ("<h2>Parcelles voisines (contiguïté)</h2>"
                    + (f"<p class='disc'>{html.escape(note)}</p>" if note else "")
-                   + "<table><tr><th>Parcelle</th><th>Statut LABUSE</th><th>Opp.</th><th>Zone PLU</th><th>Surface</th></tr>"
+                   + "<table><tr><th>Parcelle</th><th>Tier servi</th><th>Rang</th><th>Zone PLU</th><th>Surface</th></tr>"
                    + rows_vz + "</table>"
                    "<p class='disc'>Adjacence géométrique uniquement — propriétaires, accords et "
                    "faisabilité d'un assemblage restent à vérifier.</p>")
@@ -235,7 +244,9 @@ def fiche_html(fiche: dict) -> str:
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
-<p><span class="badge">{html.escape(v['status'] or '—')}</span>{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+<p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+{f'<p class="micro-note">{html.escape(v["badge_division_libelle"])}</p>' if v.get('badge_division_libelle') else ''}
+{f'<p class="disc">Motif ({"registre servi" if v.get("exception_registre") else "filtre servi"}) : {html.escape(v["motif"])}</p>' if v.get('motif') else ''}
 {'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
 <p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
@@ -441,7 +452,9 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
  .grid {{ display:grid; grid-template-columns: 1fr 460px; gap:12px; margin-top:8px; }}
  .verdict {{ display:flex; align-items:center; gap:10px; margin:6px 0; }}
  .badge {{ display:inline-block; padding:3px 10px; border-radius:5px; color:#fff; font-weight:700; font-size:12px; }}
- .v-opportunite{{background:#37976a}} .v-a_creuser{{background:#c2913f}} .v-exclue{{background:#697079}} .v-faux_positif_probable{{background:#b85f4c}}
+ /* M34 : classes = tiers servis (une seule échelle, alignée sur l'app) */
+ .v-brulante{{background:#b8574a}} .v-chaude{{background:#c2913f}} .v-reserve_fonciere{{background:#4a7ba6}}
+ .v-a_creuser{{background:#8fa69a}} .v-ecartee{{background:#697079}} .v-declasse{{background:#8c7468}} .v-non_evaluee{{background:#697079}}
  .scores {{ font-weight:600; color:#333; }}
  .synth {{ margin:6px 0; }}
  .kv {{ display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #f0f0f0; }}
@@ -463,8 +476,10 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
 </div>
 <div class="grid">
   <div>
-    <div class="verdict"><span class="badge v-{html.escape(status)}">{html.escape(_STATUS_LABEL.get(status, status))}</span>
+    <div class="verdict"><span class="badge v-{html.escape(_badge_class(status))}">{html.escape(_verdict_label(v))}</span>
+      {f"<span class='scores'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}
       <span class="scores">Opportunité {_score(v.get('opportunity_score'))}/100 · Complétude {_score(v.get('completeness_score'))}/100</span></div>
+    {f'<p class="synth"><b>{html.escape(v["badge_division_libelle"])}</b></p>' if v.get('badge_division_libelle') else ''}
     {f'<p class="synth">{synth}</p>' if synth else ''}
     <h3>Capacité &amp; potentiel</h3>
     {kv("Zone PLU", html.escape(str(fa.get('zone') or '—')))}
@@ -484,6 +499,13 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
 </div>
 <div class="foot">{html.escape(fiche.get('disclaimer') or '')} Document indicatif sur données publiques — pré-faisabilité et bilan ne valent pas étude réglementaire ni engagement.</div>
 </html>"""
+
+
+def _badge_class(status: str | None) -> str:
+    """Classe CSS du badge one-pager — les déclassées partagent une classe (terre éteinte)."""
+    if status and status.startswith("declasse_"):
+        return "declasse"
+    return status or "non_evaluee"
 
 
 def _rlt_link(lon: float | None, lat: float | None) -> str:

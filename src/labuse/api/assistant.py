@@ -124,11 +124,17 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
     return {
         "parcelle": {"idu": p.get("idu"), "commune": p.get("commune"),
                      "surface_m2": _num(p.get("surface_m2"))},
+        # M34 (dette #14) : statut = TRADUCTION du tier servi (verdict_servi). Le motif legacy
+        # (`signaux_vigilance`) est un signal non-franc informatif, plus jamais un déclassement.
         "verdict": {"statut": v.get("status"),
+                    "libelle": v.get("label"),
+                    "rang_servi": v.get("rang"),
+                    "badge_division": v.get("badge_division_libelle"),
+                    "motif_servi": v.get("motif"),
                     "score_opportunite": _num(v.get("opportunity_score")),
                     "score_completude": _num(v.get("completeness_score")),
                     "micro_opportunite": v.get("micro_opportunite"),
-                    "motif_declassement": v.get("downgrade_reason")},
+                    "signaux_vigilance": v.get("downgrade_reason")},
         "faisabilite": ({
             "zone_plu": fa.get("zone"), "constructible": fa.get("constructible"),
             "synthese": fa.get("verdict"),
@@ -155,12 +161,21 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
 
 
 # ── Synthèse DÉTERMINISTE (sans clé) — 5 blocs, dérivée UNIQUEMENT des faits ──────────────────────
+# M34 : clés = tiers servis (traduction unique), plus jamais les statuts cascade legacy.
 _STATUT_PHRASE = {
-    "opportunite": "Opportunité (signal favorable, données suffisantes)",
+    "brulante": "Brûlante (tête du classement servi)",
+    "chaude": "Chaude (haut du classement servi)",
+    "reserve_fonciere": "Réserve foncière (potentiel réel, horizon plus lointain)",
     "a_creuser": "À creuser (signal à confirmer ou données incomplètes)",
-    "exclue": "Écartée (contrainte bloquante identifiée)",
-    "faux_positif_probable": "Faux positif probable (artefact de détection)",
+    "ecartee": "Écartée (hors classement servi)",
+    "non_evaluee": "Non évaluée au run servi",
 }
+
+
+def _statut_phrase(statut: str | None, libelle: str | None) -> str:
+    if statut and statut.startswith("declasse_"):
+        return f"{libelle or 'Déclassée'} (déclassement motivé du run servi)"
+    return _STATUT_PHRASE.get(statut, "Statut non évalué")
 
 
 def _fmt_eur(x: Any) -> str:
@@ -192,10 +207,14 @@ def rules_summary(facts: dict) -> str:
     lignes: list[str] = []
 
     # 1. Potentiel
-    pot = _STATUT_PHRASE.get(statut, "Statut non évalué")
+    pot = _statut_phrase(statut, v.get("libelle"))
+    if v.get("rang_servi") and statut in ("brulante", "chaude"):
+        pot += f" · rang {v['rang_servi']}"
     score = v.get("score_opportunite")
     if score is not None:
         pot += f" · score {score}/100"
+    if v.get("badge_division"):
+        pot += f" · {v['badge_division']}"
     if v.get("micro_opportunite"):
         pot += " · micro-opportunité (≤ 500 m²)"
     cap = ""
@@ -210,8 +229,10 @@ def rules_summary(facts: dict) -> str:
 
     # 2. Contraintes
     blk = [c for c in contraintes if c.get("type") in ("HARD_EXCLUDE", "SOFT_FLAG")]
-    if v.get("motif_declassement"):
-        lignes.append(f"**Contraintes** — Déclassement : {v['motif_declassement']}.")
+    if statut and statut.startswith("declasse_") and v.get("motif_servi"):
+        lignes.append(f"**Contraintes** — Déclassement (run servi) : {v['motif_servi']}.")
+    elif v.get("signaux_vigilance"):
+        lignes.append(f"**Contraintes** — À vérifier (signal non-franc) : {v['signaux_vigilance']}.")
     elif blk:
         items = "; ".join(f"{c.get('motif')}" for c in blk[:4] if c.get("motif"))
         lignes.append(f"**Contraintes** — {items}.")
@@ -241,12 +262,16 @@ def rules_summary(facts: dict) -> str:
     # 5. Recommandation
     reco = (facts.get("resume_metier") or {}).get("prochaine_action")
     if not reco:
-        reco = {
-            "opportunite": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
-            "a_creuser": "Compléter les données manquantes (risques, pente, propriétaire) avant d'investir du temps.",
-            "exclue": "Ne pas prospecter : contrainte bloquante identifiée.",
-            "faux_positif_probable": "Écarter : la parcelle n'est probablement pas un foncier mobilisable.",
-        }.get(statut, "Vérifier les données avant toute décision.")
+        if statut and statut.startswith("declasse_"):
+            reco = "Écarter, ou vérifier sur le terrain si le motif de déclassement semble erroné."
+        else:
+            reco = {
+                "brulante": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
+                "chaude": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
+                "reserve_fonciere": "Suivre la parcelle — potentiel réel à horizon plus lointain ; vérifier PLU et contraintes.",
+                "a_creuser": "Compléter les données manquantes (risques, pente, propriétaire) avant d'investir du temps.",
+                "ecartee": "Ne pas prospecter : hors classement servi.",
+            }.get(statut, "Vérifier les données avant toute décision.")
     if v.get("micro_opportunite"):
         reco += " Petite parcelle : étudier l'assemblage avec les voisines."
     lignes.append(f"**Recommandation** — {reco}")
