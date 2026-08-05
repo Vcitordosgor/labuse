@@ -64,7 +64,16 @@ def compute_residuel(session: Session, parcel_id: int,
     hyp = Hypotheses.charger()
     st = bati_mod.stats_batch(session, [parcel_id]).get(parcel_id, {})
     surface = float(ctx.surface_m2 or 0.0)
-    emprise_batie = float(st.get("bati_ratio", 0.0)) * surface           # emprise au sol bâtie (réelle)
+    emprise_batie = float(st.get("bati_ratio", 0.0)) * surface           # emprise au sol bâtie (BD TOPO)
+    # Bâti RÉVÉLÉ (M32) : CoSIA voit l'emprise que BD TOPO rate. On retient la mesure la plus
+    # grande pour que ces parcelles cessent de s'afficher « terrain nu ». Ces parcelles sont
+    # déjà déclassées (declasse_bati_revele) → le résiduel ne les fait pas entrer en tête ; ce
+    # correctif est un affichage de fiche (résiduel = cache isolé du scoring, cf. en-tête).
+    rev = session.execute(text(
+        "SELECT max(emprise_cosia_m2) FROM parcel_bati_revele WHERE parcel_id = :p"),
+        {"p": parcel_id}).scalar()
+    if rev and float(rev) > emprise_batie:
+        emprise_batie = float(rev)
 
     niveaux_exist, niveaux_reels = _niveaux_existants(session, parcel_id, hyp.niveaux_bati_existant_defaut)
     sdp_existante = emprise_batie * niveaux_exist

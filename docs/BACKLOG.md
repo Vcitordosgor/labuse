@@ -84,6 +84,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [x] Dette #9 FERMÉE (signal servi, arbitrage b, 05/08) : parcel_entree_tete (514 entrées tracées via la chaîne d'archives), libellé factuel « entrée en tête à la bascule du JJ/MM — signal inchangé/en progression » (Sourcé), fiche seule, 0 effet de classement. À recalculer au geste de chaque bascule.
 - [x] Dette #11 FERMÉE pour la part PM (signal servi, arbitrage b, 05/08) : parcel_acquerabilite 3 états factuels (même propriétaire PM 329 / distincts 46 / non déterminable 685) sur la mention assemblage, Sourcé SIREN DGFiP-Cerema (millésime amont non tracé → Estimé affiché, champ prévu). 0 effet de classement.
 - [ ] Dette #11-PP (DISTINCTE, maintenue) : acquérabilité des personnes physiques NON déterminable — manquant nommé : source de propriété PP inexistante en open data (anonymisation DGFiP). Structurel.
+- [ ] Dette #13 (piscine — ouverte à la bascule M32) : le signal piscine (FLAIR + PVA) ne déclasse pas encore par RÈGLE produit — il est porté PARCELLE PAR PARCELLE au registre `served_run_exceptions` (a_creuser). Aujourd'hui 2 entrées : AK1442 (FLAIR 88 m², M28) + AL1154 (FLAIR 0,888, M32). Le filtre bâti (emprise) ne les attrape pas (une piscine n'est pas du bâti, ratio 0 %). Manquant nommé pour en faire une règle : couche piscine surfacique fiable + seuil (« piscine centrale ≠ terrain nu »). Tant que la couche n'est pas industrialisée, chaque cas piscine détecté = une entrée de registre motivée, pas un déclassement automatique.
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
 - [ ] Anomalie AT1740 : « constructible N » + SDP 2 689 m² en zone N + 19-22 logts, ET deux SDP différentes sur la même fiche (2 689 vs 2 827). Mesurer : combien de zones N servent une SDP > 0 ? Localiser la violation du point de calcul unique.
 - [ ] Revue de code intégrale (propositions, rien d'appliqué)
@@ -119,6 +120,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 ## Dettes (index)
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
+#13 signal piscine (registre a_creuser, pas encore une règle produit) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
