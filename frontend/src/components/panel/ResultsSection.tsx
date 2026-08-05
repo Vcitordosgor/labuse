@@ -4,7 +4,7 @@ import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults,
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { Tip } from '../Tip'
@@ -384,7 +384,7 @@ export function ResultsSection() {
               title="Aucune parcelle ici"
               hint={commune ? (
                 <>Aucune parcelle {filters.tiers.length === 1
-                  ? TIER_V2_META[filters.tiers[0]].label.toLowerCase()
+                  ? ALL_TIER_META[filters.tiers[0]].label.toLowerCase()
                   : scoped || filters.tiers.length ? 'correspondante' : ''} à {commune} —
                   élargissez à l'île ou ajustez les filtres.</>
               ) : (

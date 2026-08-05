@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { FicheLine } from '../lib/types'
-import type { TierV2 } from '../lib/status'
+import type { FilterTier } from '../lib/status'
 
 // M26-B : 'copilote' = l'écran Copilote (instruction de dossier, event log SSE) — vue de
 // premier niveau, la maquette B4 est pleine largeur (pas un module du panneau 320 px).
@@ -26,7 +26,7 @@ export interface LayerToggles {
 // M5.1 : le PILOTAGE passe aux TIERS v2 (`tiers`) — le filtre `statuts` (matrice) et le
 // tier v1.3 `brulantes` disparaissent de l'app (API : deprecated, servis par legacy=1).
 export interface Filters {
-  tiers: TierV2[]            // vide = univers v2 hors étage 0 servi
+  tiers: FilterTier[]        // vide = univers v2 hors étage 0 servi (M30 : déclassements inclus)
   scoreMin: number | null
   surfaceMin: number | null
   surfaceMax: number | null

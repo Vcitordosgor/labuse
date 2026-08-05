@@ -779,6 +779,7 @@ def _faisa_step_prov(source: str, prov: str) -> str:
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
+    from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
     from ..faisabilite.bilan import sector_price, compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
@@ -787,6 +788,15 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
     out: dict = {"idu": idu}
+    # M30 item 5 (anomalie AI1886, 9 m² servie avec un bilan R+6) : sous DELAISSE_MAX_M2
+    # (50 m² — seuil UNIQUE, celui des délaissés de voisinage d'au_ouverture), un bilan
+    # promoteur est un chiffre qui ment → il n'est PAS servi. LECTURE seulement : le moteur
+    # de faisabilité et le scoring ne bougent pas ; la capacité reste servie (steps tracés).
+    delaisse = row["s"] is not None and float(row["s"]) < DELAISSE_MAX_M2
+    out["delaisse"] = ({"surface_m2": int(row["s"]), "seuil_m2": int(DELAISSE_MAX_M2),
+                        "libelle": f"délaissé ({int(row['s'])} m²) — bilan non servi "
+                                   f"sous {int(DELAISSE_MAX_M2)} m²"}
+                       if delaisse else None)
     fz = parcel_faisabilite(db, row["id"])
     if fz:
         _ctx, f = fz
@@ -812,7 +822,8 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     out["marche"]["dvf_couverture"] = _dvf_couverture(db)
     # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — LE MÊME bilan que la fiche
     # (compute_bilan_servi : charge cohérente à l'euro, prix de sortie neuf, non calculable servi).
-    b, ps = compute_bilan_servi(db, row["id"], fz) if fz else (None, None)
+    # M30 item 5 : pas de bilan sur un délaissé (le libellé `delaisse` dit pourquoi)
+    b, ps = compute_bilan_servi(db, row["id"], fz) if (fz and not delaisse) else (None, None)
     if b is None:
         out["bilan"] = None
     else:
