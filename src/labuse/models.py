@@ -104,7 +104,14 @@ class DataSource(Base, TimestampMixin):
     )
     documentation_url: Mapped[str | None] = mapped_column(Text)
     endpoint_url: Mapped[str | None] = mapped_column(Text)
-    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # date d'INGESTION
+    # M32 Phase B §2 (spec millésime amont) — « la fraîcheur d'une donnée est celle de sa SOURCE
+    # amont, jamais celle de son ingestion ». Renseignées PAR l'ingester de chaque couche, jamais
+    # à la main. `last_sync_at` reste la date d'ingestion (méta d'exploitation, jamais servie client).
+    source_millesime: Mapped[str | None] = mapped_column(String(64))          # édition fournisseur (texte normé)
+    source_horizon_at: Mapped[date | None] = mapped_column(Date)             # fait le plus récent DANS la donnée
+    source_cadence: Mapped[str | None] = mapped_column(String(32))            # trimestriel/semestriel/hebdo/continu
+    prochain_millesime_at: Mapped[date | None] = mapped_column(Date)          # prochaine publication attendue (si connue)
     reliability_level: Mapped[enums.ReliabilityLevel | None] = mapped_column(
         _enum(enums.ReliabilityLevel, "reliability_level")
     )
@@ -1450,6 +1457,17 @@ def ensure_schema(engine) -> None:
     ensure_watch_zones(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
+    ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
+
+
+def ensure_data_sources_millesime(engine) -> None:
+    """M32 Phase B §2 (spec millésime amont) — 4 colonnes de fraîcheur AMONT sur data_sources,
+    renseignées par les ingesters. `ADD COLUMN IF NOT EXISTS` → durable au rebuild, idempotent."""
+    with engine.begin() as c:
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_millesime varchar(64)"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_horizon_at date"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_cadence varchar(32)"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS prochain_millesime_at date"))
 
 
 def ensure_dvf_marche(engine) -> None:

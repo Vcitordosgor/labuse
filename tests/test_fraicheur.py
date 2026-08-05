@@ -51,6 +51,48 @@ def test_etat_fraicheur_kv(db_session):
     assert f._etat_get(s, "test:cle") == "v2"
 
 
+def _ensure_millesime_cols(s):
+    # M32 : en prod, ensure_data_sources_millesime (boot) pose ces colonnes ; la table pré-existante
+    # de la base de TEST ne les a pas (create_all saute les tables existantes) → on les pose ici.
+    for col, typ in (("source_millesime", "varchar(64)"), ("source_horizon_at", "date"),
+                     ("source_cadence", "varchar(32)"), ("prochain_millesime_at", "date")):
+        s.execute(text(f"ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS {col} {typ}"))
+
+
+@pytest.mark.db
+def test_persist_millesime_dvf_horizon_calcule(db_session):
+    """M32 Phase B §2 : persist_millesime écrit l'HORIZON amont (max date_mutation) + cadence +
+    millésime dans data_sources, découpable par couche (only='dvf'). Horizon CALCULÉ, jamais figé."""
+    s = db_session
+    _ensure_millesime_cols(s)
+    s.execute(text("INSERT INTO data_sources (name, category, status) VALUES "
+                   "('DVF / valeurs foncières', 'marche', 'ok') ON CONFLICT (name) DO NOTHING"))
+    s.execute(text("CREATE TABLE IF NOT EXISTS dvf_mutations_parcelle "
+                   "(id_mutation text NOT NULL, date_mutation date, id_parcelle varchar(14), millesime smallint)"))
+    s.execute(text("INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, id_parcelle, millesime) "
+                   "VALUES ('m1','2025-12-31','97400000AA0001',2025),('m2','2024-06-01','97400000AA0002',2024)"))
+    rendu = f.persist_millesime(s, only="dvf", commit=False)
+    assert len(rendu) == 1 and rendu[0]["source"] == "dvf"
+    row = s.execute(text("SELECT source_horizon_at, source_cadence, source_millesime, prochain_millesime_at "
+                         "FROM data_sources WHERE name = 'DVF / valeurs foncières'")).one()
+    assert str(row[0]) == "2025-12-31"          # horizon = max(date_mutation), calculé
+    assert row[1] == "semestriel" and "géo-DVF" in row[2] and str(row[3]) == "2026-10-01"
+
+
+@pytest.mark.db
+def test_check_fraicheur_non_bloquant(db_session):
+    """M32 Phase B §2 : la garde de fraîcheur AVERTIT mais ne bloque JAMAIS (retard source ≠ faute
+    de bascule). Horizon très ancien → retard listé ; horizon récent → aucun retard. Zéro exception."""
+    from labuse import bascule_gardes as bg
+    s = db_session
+    _ensure_millesime_cols(s)
+    s.execute(text("INSERT INTO data_sources (name, category, status, source_horizon_at, source_cadence) "
+                   "VALUES ('TEST couche vieille', 'x', 'ok', '2020-01-01', 'semestriel') "
+                   "ON CONFLICT (name) DO UPDATE SET source_horizon_at='2020-01-01', source_cadence='semestriel'"))
+    r = bg.check_fraicheur(session=s)             # session de test (rollback) ; ne lève jamais
+    assert any(x["source"] == "TEST couche vieille" for x in r["retards"])  # retard vu, non bloquant
+
+
 @pytest.mark.db
 def test_dvf_detection_no_op_si_lastmod_connu(db_session, monkeypatch):
     """On ne retélécharge JAMAIS ce qu'on a : lastmod identique → no-op (aucun DELETE/reload)."""
