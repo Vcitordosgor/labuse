@@ -1,27 +1,40 @@
-# CALIBRATION LE PORT (97407) — depuis les pièces fournies par Vic (pack 97407_PLU_20241209,
-# téléchargé le 30/07 sha 2f47f34b, à jour = EN_VIGUEUR).
+# CALIBRATION LE PORT (97407) — RÉ-EXTRAITE sur la version OPPOSABLE (M32, ré-extraction #2)
+# =============================================================================
+# ⚠⚠ PLU PARTIELLEMENT ANNULÉ — VIGILANCE BLOQUANTE POUR L'INTÉGRATION.
+# M32 : ré-extraction sur l'opposable 97407_PLU_20241209 (GPU document.production,
+# legalStatus = PARTIALLY_ANNULLED). Le pack contient un JUGEMENT (97407_jugement_20241209.pdf,
+# 13 p) qui fixe la PORTÉE de l'annulation — mais c'est un SCAN IMAGE (420 car. extractibles, OCR
+# indisponible sur le poste). La portée de l'annulation N'A PAS PU ÊTRE LUE. Ni le règlement ni la
+# procédure (203 p, lus) ne la décrivent en texte.
+# → Les valeurs AU ci-dessous sont extraites du règlement/OAP TELS QUELS et CONFIRMENT l'extraction
+#   du 30/07, MAIS leur opposabilité dépend de la portée d'annulation NON RÉSOLUE.
+#   NE PAS INTÉGRER Le Port au moteur (Phase C) tant que la portée n'est pas confirmée
+#   (lecture du jugement par Vic, ou note GPU/mairie). Calibration PROVISOIRE.
 meta:
   commune: "Le Port"
   insee: "97407"
-  statut: "Sourcé"
-  source_type: "pack GPU 97407_PLU_20241209 (archive locale à jour — pointée par Vic)"
-  date_archive_gpu: "2024-12-09"
-  cabinet_redacteur: "non détecté au texte (logo page de garde)"
+  statut: "Sourcé (règlement/OAP) — PROVISOIRE : PLU PARTIELLEMENT ANNULÉ, portée non lue"
+  idurba: "97407_PLU_20241209"
+  date_approbation: "2024-12-09"
+  legal_status_gpu: "PARTIALLY_ANNULLED (document.production, EN_VIGUEUR)"
+  annulation_portee: "NON RÉSOLUE — jugement 97407_jugement_20241209.pdf est un SCAN (OCR indisponible) ; absente en texte du règlement + procédure. À lire par Vic avant intégration."
+  source_type: "pack GPU EN_VIGUEUR 97407_PLU_20241209 (re-téléchargé le 05/08, PACK_DU_97407_8cdd9249)"
+  cabinet_redacteur: "non détecté au texte"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
   contexte: "commune urbaine dense — nombreuses zones de RENOUVELLEMENT (suffixe 'mut' = mutation)"
 
 zones_au:
   familles: [1AU, 1AUa, 1AUe, 1AUm, 1AUmut, 1AUs, 2AU, 2AUem, 2AUmut, 2AUp, AU]
   ouverture_1AU: conditionnelle_operation
-  ouverture_2AU: fermee
-  ouverture_2AU_src: "règlement p.7 (« 2AU couvre des espaces réservés à l'urbanisation future. Les différents réseaux […] »[insuffisants])"
-  dependance: "2AU = réserve fermée (réseaux insuffisants) ; 1AU ouvrable par opération"
+  ouverture_2AU: conditionnelle_etat_tiers
+  ouverture_2AU_src: "règlement 20241209 : « La zone 2AU couvre des espaces réservés à l'urbanisation future […] l'ouverture à l'urbanisation de la zone est conditionnée à une modification du PLU » (verbatim M32)"
+  dependance: "2AU = réserve, ouverture par modification du PLU ; 1AU ouvrable par opération d'ensemble"
   planchers:
     localisation: "OAP (densité) ; règlement 319 p : aucun plancher"
     densite_moyenne_log_ha: 50
-    src: "OAP 2024 (58 p, texte) : « Densité moyenne 50 logts/ha »"
+    src: "OAP 20241209 (58 p, texte) : « les projets d'aménagement doivent atteindre au minimum l'équivalent de 50 logements par hectare » (verbatim M32)"
     social: "non chiffré dans l'OAP (scan négatif)"
     prevalence: "OAP prévaut"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "1AU ouvrable / 2AU fermée réserve + densité OAP 50 logts/ha + zones de renouvellement (mut) — absents du YAML"
-  a_verifier: "densité par site (moyenne 50 donnée globalement) ; zones mut (renouvellement) ; dimensions U"
+  faits_confirmes_20241209: "1AU opération d'ensemble ; 2AU conditionnée à modification PLU ; densité OAP min 50 log/ha — CONFIRMENT le 30/07. NOUVEAU : statut PARTIALLY_ANNULLED + portée non lue (bloque l'intégration)."
+  a_verifier: "PORTÉE DE L'ANNULATION (bloquant — jugement scanné) ; densité par site ; zones mut ; dimensions U"
