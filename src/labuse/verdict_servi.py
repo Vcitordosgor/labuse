@@ -52,21 +52,40 @@ NON_EVALUEE = {
     "motif": None, "exception_registre": False, "run": None,
 }
 
+#: repli quand une exception du registre n'a pas (encore) de motif client — on dit le fait
+#: sans exposer la machinerie interne (M35 Lot B : le motif brut ne sort JAMAIS).
+MOTIF_CLIENT_FALLBACK = ("Classement ajusté après vérification manuelle — détail disponible "
+                         "sur demande.")
+
+
 def _sql(db: Session) -> str:
     """SELECT de traduction — les caches optionnels (`parcel_filtre_bati`, registre
     `served_run_exceptions`) sont joints SEULEMENT s'ils existent (base de test, install
-    neuve) : leur absence dégrade en badge/motif absents, jamais en 500."""
+    neuve) : leur absence dégrade en badge/motif absents, jamais en 500.
+
+    M35 Lot B : le registre porte DEUX motifs — `motif` (interne, traçabilité, jamais servi)
+    et `motif_client` (formulation produit). Seul `motif_client` sort d'ici ; une exception
+    sans motif client reçoit MOTIF_CLIENT_FALLBACK, jamais le motif brut."""
     has_fb = bool(db.execute(text(
         "SELECT to_regclass('parcel_filtre_bati') IS NOT NULL")).scalar())
     has_ex = bool(db.execute(text(
         "SELECT to_regclass('served_run_exceptions') IS NOT NULL")).scalar())
+    has_ex_client = has_ex and bool(db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = 'served_run_exceptions' AND column_name = 'motif_client')")).scalar())
     fb_cols = ("fb.decision AS fb_decision, fb.ratio_pct AS fb_ratio, fb.motif AS fb_motif"
                if has_fb else
                "NULL AS fb_decision, NULL::float AS fb_ratio, NULL AS fb_motif")
     fb_join = "LEFT JOIN parcel_filtre_bati fb ON fb.idu = s.parcelle_id" if has_fb else ""
-    ex_col = "ex.motif AS ex_motif" if has_ex else "NULL AS ex_motif"
-    ex_join = ("LEFT JOIN served_run_exceptions ex ON ex.run_id = s.run_id "
-               "AND ex.idu = s.parcelle_id" if has_ex else "")
+    if has_ex:
+        ex_col = ("ex.motif_client AS ex_motif_client, (ex.idu IS NOT NULL) AS ex_present"
+                  if has_ex_client else
+                  "NULL AS ex_motif_client, (ex.idu IS NOT NULL) AS ex_present")
+        ex_join = ("LEFT JOIN served_run_exceptions ex ON ex.run_id = s.run_id "
+                   "AND ex.idu = s.parcelle_id")
+    else:
+        ex_col = "NULL AS ex_motif_client, false AS ex_present"
+        ex_join = ""
     return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, {fb_cols}, {ex_col} "
             f"FROM parcel_p_score_v2 s {fb_join} {ex_join} "
             f"WHERE s.run_id = :run AND s.parcelle_id = ANY(:idus)")
@@ -84,16 +103,20 @@ def _traduire(idu: str, row, run: str) -> dict:
         ratio = row["fb_ratio"]
         badge_lib = (f"{BADGE_DIVISION} (bâtie à ~{round(ratio)} %)"
                      if ratio is not None else BADGE_DIVISION)
-    # Motif : registre d'abord (exception motivée), sinon motif du filtre bâti pour les
-    # déclassées bâti saturé, sinon aucun — jamais un motif inventé.
-    motif = row["ex_motif"]
-    if motif is None and tier == "declasse_bati_sature":
+    # Motif : registre d'abord (exception motivée — motif CLIENT uniquement, repli neutre si
+    # absent, jamais le motif interne), sinon motif du filtre bâti pour les déclassées bâti
+    # saturé, sinon aucun — jamais un motif inventé.
+    ex_present = bool(row["ex_present"])
+    motif = None
+    if ex_present:
+        motif = row["ex_motif_client"] or MOTIF_CLIENT_FALLBACK
+    elif tier == "declasse_bati_sature":
         motif = row["fb_motif"]
     return {
         "statut": tier, "label": TIER_LABELS.get(tier, tier), "tier": tier,
         "rang": row["rang"], "servable": servable, "declasse": declasse,
         "badge_division": badge, "badge_division_libelle": badge_lib,
-        "motif": motif, "exception_registre": row["ex_motif"] is not None,
+        "motif": motif, "exception_registre": ex_present,
         "run": run,
     }
 

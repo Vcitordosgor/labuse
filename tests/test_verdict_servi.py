@@ -72,6 +72,8 @@ def _ensure_caches(session) -> None:
           motif text,
           created_at timestamptz DEFAULT now(),
           PRIMARY KEY (run_id, idu))"""))
+    session.execute(text(
+        "ALTER TABLE served_run_exceptions ADD COLUMN IF NOT EXISTS motif_client text"))
 
 
 def _seed(session) -> dict[str, int]:
@@ -97,9 +99,19 @@ def _seed(session) -> dict[str, int]:
         "(:p3, '97499000VS0003', 55.0, 440, 1, 'Absente', false, false, 'saturee', "
         " 'bâtie saturée — ratio 55 %')"),
         {"p2": ids["97499000VS0002"], "p3": ids["97499000VS0003"]})
+    # M35 Lot B : motif INTERNE volontairement « sale » (mandat/dette/prénom/score de modèle)
+    # + motif CLIENT propre — le verrou vérifie que seul le client sort.
+    session.execute(text(
+        "INSERT INTO served_run_exceptions (run_id, idu, tier_origine, tier_servi, motif, motif_client) "
+        "VALUES (:r, '97499000VS0004', 'chaude', 'a_creuser', "
+        "        'M99 (Vic) : piscine FLAIR 0,9 — dette #13, comme ZZ0000', "
+        "        'Piscine détectée sur imagerie aérienne — usage du terrain à vérifier.')"),
+        {"r": Q_A_RUN_LABEL})
+    # VS0005 : exception SANS motif client → repli neutre attendu, jamais le motif interne.
     session.execute(text(
         "INSERT INTO served_run_exceptions (run_id, idu, tier_origine, tier_servi, motif) "
-        "VALUES (:r, '97499000VS0004', 'chaude', 'a_creuser', 'piscine centrale (test) — registre')"),
+        "VALUES (:r, '97499000VS0005', 'chaude', 'reserve_fonciere', "
+        "        'M98 interne : FLAIR 0,7 — dette #42')"),
         {"r": Q_A_RUN_LABEL})
     session.flush()
     return ids
@@ -131,11 +143,25 @@ def test_declassee_reste_declassee_avec_motif(db_session):
     assert "saturée" in v["motif"]                      # motif du filtre, jamais remonté
 
 
-def test_exception_registre_son_motif_prime(db_session):
+def test_exception_registre_motif_client_seul(db_session):
+    # M35 Lot B : le motif servi est le motif CLIENT — la machinerie interne (mandat, dette,
+    # prénom, score de modèle, IDU tiers) ne sort JAMAIS.
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0004")
     assert v["statut"] == "a_creuser" and v["exception_registre"] is True
-    assert "registre" in v["motif"]
+    assert v["motif"] == "Piscine détectée sur imagerie aérienne — usage du terrain à vérifier."
+    for interdit in ("M99", "Vic", "FLAIR", "dette", "ZZ0000"):
+        assert interdit not in v["motif"]
+
+
+def test_exception_sans_motif_client_repli_neutre(db_session):
+    from labuse.verdict_servi import MOTIF_CLIENT_FALLBACK
+    _seed(db_session)
+    v = verdict_servi(db_session, "97499000VS0005")
+    assert v["exception_registre"] is True
+    assert v["motif"] == MOTIF_CLIENT_FALLBACK
+    for interdit in ("M98", "FLAIR", "dette"):
+        assert interdit not in v["motif"]
 
 
 def test_hors_run_dit_non_evaluee_jamais_legacy(db_session):
