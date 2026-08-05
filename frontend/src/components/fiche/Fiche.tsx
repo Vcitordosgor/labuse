@@ -75,8 +75,8 @@ function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children,
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
         style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
         <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
-        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-        {value != null && <span style={{ fontSize: 15, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : REF.mint), whiteSpace: 'nowrap' }}>{value}</span>}
+        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+        {value != null && <span style={{ fontSize: 15, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : REF.mint), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
         {children && <RefChevron open={open} accent={accent} />}
       </button>
       {micro && <div style={{ marginTop: 10 }}>{micro}</div>}
@@ -1071,7 +1071,11 @@ export function Fiche({ idu }: { idu: string }) {
   const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
   const cap = faisa.data?.capacite
   const fo = cap?.fourchette
-  const logementsTxt = fo?.logements_au_sol ? (Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]} logts` : `${fo.logements_au_sol} logts`) : (reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
+  // M30 item 5 (AI1886) : délaissé (< 50 m², seuil unique côté API) → le tiroir DIT
+  // « délaissé (N m²) » au lieu d'une promesse de logements sur 9 m².
+  const delaisse = faisa.data?.delaisse
+  const logementsTxt = delaisse ? `délaissé (${delaisse.surface_m2} m²)`
+    : fo?.logements_au_sol ? (Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]} logts` : `${fo.logements_au_sol} logts`) : (reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
   const pctConsomme = f?.potentiel_transformation?.pct_consomme
   const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
@@ -1317,7 +1321,8 @@ export function Fiche({ idu }: { idu: string }) {
           const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))
           // ALGO-1 item 2 : l'accent proprio ne dépend plus du Score V (retiré de l'affichage)
           const proprioAccent = !!proprioSignal
-          const viabValue = f.viabilisation?.libelle ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
+          // M30 item 7 : la value dupliquait « Viabilisation » et écrasait le titre du tiroir en « V »
+          const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
           const confianceValue = f.icd ? `${f.icd.score} %` : `${f.completeness_score} %`
           return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -1378,7 +1383,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* 4 · MARCHÉ — micro : sparkline + volume */}
             <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
               value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-              micro={<MicroSpark label={dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF'} />}>
+              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + (faisa.data?.marche?.dvf_couverture?.libelle ? ` · DVF — ${faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
@@ -1388,8 +1393,15 @@ export function Fiche({ idu }: { idu: string }) {
             <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
               micro={<MicroTriple items={[fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
               <div className="flex flex-col gap-3">
+                {delaisse && (
+                  /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
+                  <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
+                  </div>
+                )}
                 <FaisabiliteTab idu={idu} />
-                <BilanTab idu={idu} />
+                {!delaisse && <BilanTab idu={idu} />}
               </div>
             </RefDrawer>
 

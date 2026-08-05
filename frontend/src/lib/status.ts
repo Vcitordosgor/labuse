@@ -30,6 +30,27 @@ export const TIER_V2_META: Record<TierV2, { label: string; color: string }> = {
 }
 export const LEGEND_V2_ORDER: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
 
+// M30 item 3 (« tout montrer ») : les tiers de DÉCLASSEMENT deviennent atteignables au
+// filtre, avec un libellé MOTIVÉ (avant : absents du popover, verdict replié sur le statut
+// legacy muet). Type DISTINCT de TierV2 : les compteurs/entonnoir n'agrègent que les 5
+// tiers servables — la vue par défaut ne change pas. Ordre = volumétrie servie décroissante.
+export type TierDeclasse =
+  | 'declasse_bati_sature' | 'declasse_non_constructible' | 'declasse_bati_revele'
+  | 'declasse_zone_fermee' | 'declasse_au_statut_inconnu' | 'declasse_au_fermee'
+export type FilterTier = TierV2 | TierDeclasse
+const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique, jamais « chaude »
+export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; color: string }> = {
+  declasse_bati_sature: { label: 'Déclassée — bâti saturé', color: DECLASSE_COLOR },
+  declasse_non_constructible: { label: 'Déclassée — non constructible', color: DECLASSE_COLOR },
+  declasse_bati_revele: { label: 'Déclassée — bâti révélé', color: DECLASSE_COLOR },
+  declasse_zone_fermee: { label: 'Déclassée — zone fermée', color: DECLASSE_COLOR },
+  declasse_au_statut_inconnu: { label: 'Déclassée — AU à statut inconnu', color: DECLASSE_COLOR },
+  declasse_au_fermee: { label: 'Déclassée — AU fermée', color: DECLASSE_COLOR },
+}
+export const DECLASSE_ORDER = Object.keys(TIER_DECLASSE_META) as TierDeclasse[]
+export const ALL_TIER_META: Record<string, { label: string; color: string }> =
+  { ...TIER_V2_META, ...TIER_DECLASSE_META }
+
 // Correctif M5 (verdict d'en-tête) — règle UNIQUE, partout où un verdict s'affiche :
 // 1. exclusion dure étage 0 (run servi) → « Écartée » legacy, motifs sourcés (l'étage 0 prime) ;
 // 2. sinon, un run v2 existe → le TIER v2 est le verdict (avec rang/×N côté appelant) ;
@@ -46,6 +67,9 @@ export function verdictMeta(
     if (t === 'ecartee') return { ...STATUT_META.ecartee, v2: true, tier: t }
     return { ...TIER_V2_META[t], v2: true, tier: t }
   }
+  // M30 item 3 : tier de DÉCLASSEMENT servi → verdict motivé (avant : repli legacy muet)
+  const d = tierV2 ? TIER_DECLASSE_META[tierV2 as TierDeclasse] : undefined
+  if (d) return { ...d, v2: true, tier: null }
   return { ...(statut ? STATUT_META[statut] : { label: '—', color: NONE_COLOR }), v2: false, tier: null }
 }
 
@@ -59,6 +83,17 @@ export function effectiveTier(
   if (etage0) return 'ecartee'
   const t = tierV2 as TierV2 | null | undefined
   return t && TIER_V2_META[t] ? t : null
+}
+
+// M30 item 3 : même règle qu'effectiveTier, DÉCLASSEMENTS compris — pour le filtre tiers
+// uniquement (les compteurs restent sur effectiveTier : rien ne bouge par défaut).
+export function filterableTier(
+  tierV2: string | null | undefined,
+  etage0?: boolean | number | null,
+): FilterTier | null {
+  if (etage0) return 'ecartee'
+  const t = tierV2 as FilterTier | null | undefined
+  return t && ALL_TIER_META[t] ? t : null
 }
 
 export const NONE_COLOR = '#39463F'

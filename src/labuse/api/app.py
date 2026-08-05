@@ -732,7 +732,7 @@ def _m28_badges(db: Session, idu: str) -> dict:
         out["entree_tete"] = {
             "entree_le": et["entree_le"].isoformat(), "geste": et["geste"],
             "nature": et["nature"],
-            "libelle": f"entrée en tête à la bascule du {et['entree_le'].strftime('%d/%m/%Y')} — "
+            "libelle": f"entrée dans la sélection à la bascule du {et['entree_le'].strftime('%d/%m/%Y')} — "
                        + ("signal inchangé" if et["nature"] == "signal_inchange"
                           else "signal en progression"),
             "etiquette": "Sourcé", "source": "archives de bascule (contrib_d/rang par run)"}
@@ -771,7 +771,7 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, flags: str | None,
                 communes: str | None = None, flags_exclus: str | None = None,
-                v_bands: str | None = None, v_signal: str | None = None,
+                v_signal: str | None = None,
                 brulantes: bool = False, tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
@@ -835,10 +835,8 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                      " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
         params["f_flags_x"] = [f.strip() for f in flags_exclus.split(",") if f.strip()]
     # ── Score V (Vendabilité, Stage 3) : bandes, signal individuel, tier Brûlante ──
-    if v_bands:
-        conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs0 WHERE vs0.parcelle_id = p.idu"
-                     " AND vs0.v_band = ANY(:f_vbands))")
-        params["f_vbands"] = [b.strip() for b in v_bands.split(",") if b.strip()]
+    # M30 théâtre : `v_bands` SUPPRIMÉ — filtrait sur le Score V retiré du produit (M11
+    # Phase 0, RR=0,51) : un filtre qui ment. (Historique au rapport M30.)
     if v_signal:
         # signaux retenus (JSONB §5.4) : au moins UN des codes demandés présent
         conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs1 WHERE vs1.parcelle_id = p.idu"
@@ -882,7 +880,7 @@ def list_parcels(commune: str | None = None,
                  sdp_min: int | None = None, evenement: bool = False,
                  flags: str | None = None, communes: str | None = None,
                  flags_exclus: str | None = None,
-                 v_bands: str | None = None, v_signal: str | None = None,
+                 v_signal: str | None = None,
                  brulantes: bool = False, tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
@@ -904,7 +902,7 @@ def list_parcels(commune: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage, defisc_active, pc_caduc, marge_min)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
@@ -936,7 +934,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        sdp_min: int | None = None, evenement: bool = False,
                        flags: str | None = None, communes: str | None = None,
                        flags_exclus: str | None = None,
-                       v_bands: str | None = None, v_signal: str | None = None,
+                       v_signal: str | None = None,
                        brulantes: bool = False, tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
                        personne_morale: bool = False, zonage: str | None = None,
@@ -958,7 +956,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
-                                      v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                      v_signal, brulantes, tiers, hors_copro, veille,
                                       personne_morale, zonage, defisc_active, pc_caduc, marge_min)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
@@ -1216,7 +1214,7 @@ def stats(commune: str | None = None, source: str | None = None,
           sdp_min: int | None = None, evenement: bool = False,
           flags: str | None = None, communes: str | None = None,
           flags_exclus: str | None = None,
-          v_bands: str | None = None, v_signal: str | None = None,
+          v_signal: str | None = None,
           brulantes: bool = False, tiers: str | None = None,
           hors_copro: bool = False, veille: bool = False, legacy: bool = False,
           personne_morale: bool = False, zonage: str | None = None,
@@ -1228,11 +1226,11 @@ def stats(commune: str | None = None, source: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
                sdp_min, evenement, flags, communes, flags_exclus,
-               v_bands, v_signal, brulantes, tiers, hors_copro, veille, legacy,
+               v_signal, brulantes, tiers, hors_copro, veille, legacy,
                personne_morale, zonage)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
@@ -3057,46 +3055,8 @@ def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────────── Découverte (offre B) ─────────────────────────────
 
-@app.get("/discover")
-def discover(
-    commune: str | None = None,
-    min_opportunity: int = Query(0, ge=0, le=100),
-    statuses: str = "opportunite,a_creuser",
-    limit: int = Query(50, ge=1, le=2000),
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Survivantes de la cascade, classées (radar). S'appuie sur la dernière évaluation.
-
-    Dernière évaluation via LATERAL depuis `parcels` (comme la carte) plutôt que
-    DISTINCT ON sur TOUT l'historique d'évaluations : mêmes résultats, mais le coût ne
-    grossit plus avec l'historique (audit J1 : ~1,9 s → quelques dizaines de ms)."""
-    wanted = {s.strip() for s in statuses.split(",") if s.strip()}
-    rows = db.execute(
-        text(
-            """
-            SELECT p.idu, p.commune, p.surface_m2,
-                   e.status, e.opportunity_score, e.completeness_score, e.evaluated_at
-            FROM parcels p
-            JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score, evaluated_at
-                FROM parcel_evaluations e WHERE e.parcel_id = p.id
-                ORDER BY evaluated_at DESC LIMIT 1
-            ) e ON true
-            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-            """
-        ), {"c": commune, "minsurf": MIN_DISPLAY_SURFACE_M2}
-    ).mappings().all()
-    survivors = [
-        dict(r) for r in rows
-        if r["status"] in wanted and (r["opportunity_score"] or 0) >= min_opportunity
-    ]
-    survivors.sort(key=lambda r: (r["opportunity_score"] or 0, r["completeness_score"] or 0), reverse=True)
-    return survivors[:limit]
-
-
-# ───────────────────────────── Veille / signaux (offre C) ─────────────────────────────
-
+# M30 théâtre : /discover SUPPRIMÉ — endpoint orphelin (remplacé par /parcels + /stats
+# depuis M5.1, plus aucun appelant front ni QA).
 @app.get("/signals")
 def list_signals(commune: str | None = None, signal_type: str | None = None,
                  limit: int = Query(200, ge=0, le=10000), db: Session = Depends(get_db)) -> list[dict]:

@@ -176,7 +176,7 @@ export const CLIENT = {
   // ── M19 · fiche parcelle (refonte) — LOT C + explications de scores (P1.2) ──
   // Tout le texte client de la refonte fiche vit ici (R3) : Vic réécrit sans toucher au JSX.
   fiche: {
-    adresseAbsente: 'Adresse non disponible',
+    adresseAbsente: 'adresse non rattachée (Absent)',   // M30 item 4 — jamais un champ vide, étiquette boussole
     // C2 · le lien Pages Jaunes, renommé et assumé (jaune côté JSX)
     pagesJaunes: 'Voir sur Pages Jaunes',
     pagesJaunesTip:
