@@ -4,7 +4,7 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-04 — train 1 (CC) : **pondération option B SERVIE** (GO Vic),
+Dernière mise à jour : 2026-08-05 — M34 (CC) : dette #14 FERMÉE (verdict de fiche = traduction du tier servi, option a), mergée --no-ff par Vic. Golden : régén référence à M35 (écart externe hermes tracé).
 CX2555 levée, CH1893 pérennisée, golden 116/116 (référence régénérée), jetables purgés.
 Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation p=1,0 (rangs 1-5).
 
@@ -85,7 +85,19 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [x] Dette #11 FERMÉE pour la part PM (signal servi, arbitrage b, 05/08) : parcel_acquerabilite 3 états factuels (même propriétaire PM 329 / distincts 46 / non déterminable 685) sur la mention assemblage, Sourcé SIREN DGFiP-Cerema (millésime amont non tracé → Estimé affiché, champ prévu). 0 effet de classement.
 - [ ] Dette #11-PP (DISTINCTE, maintenue) : acquérabilité des personnes physiques NON déterminable — manquant nommé : source de propriété PP inexistante en open data (anonymisation DGFiP). Structurel.
 - [ ] Dette #13 (piscine — ouverte à la bascule M32) : le signal piscine (FLAIR + PVA) ne déclasse pas encore par RÈGLE produit — il est porté PARCELLE PAR PARCELLE au registre `served_run_exceptions` (a_creuser). Aujourd'hui 2 entrées : AK1442 (FLAIR 88 m², M28) + AL1154 (FLAIR 0,888, M32). Le filtre bâti (emprise) ne les attrape pas (une piscine n'est pas du bâti, ratio 0 %). Manquant nommé pour en faire une règle : couche piscine surfacique fiable + seuil (« piscine centrale ≠ terrain nu »). Tant que la couche n'est pas industrialisée, chaque cas piscine détecté = une entrée de registre motivée, pas un déclassement automatique.
-- [ ] Dette #14 (double-rail verdict/tier — ouverte à la bascule M32, mandat dédié AVANT le premier client) : le moteur **verdict de fiche (`score_e`)** déclasse le bâti marginal selon une logique **pré-M28**, indépendamment du **tier servi (`parcel_p_score_v2`)**. Symptôme : CY0197 servie `brûlante` (bâtie 22 % + divisible R+2, résiduel 194 m², étage 3) mais dont la synthèse de fiche affiche `À creuser` (« bâti significatif 22 %, occupation à vérifier ») — un déclassement silencieux, incohérent avec le tier. **Correction attendue** : le verdict de fiche doit s'aligner sur le **filtre 3 étages** (étage 3 divisible = servable → badge « bâtie + division possible », pas de déclassement). **Périmètre** : tous les bâtis marginaux/divisibles, pas seulement CY0197. À traiter en mandat dédié avant exposition client.
+- [x] **Dette #14 FERMÉE (M34, mergé 05/08, option a — dérivation totale)** : le verdict de
+      fiche est désormais une TRADUCTION du tier servi (`src/labuse/verdict_servi.py`, point de
+      calcul unique) sur TOUTES les surfaces non-v2 (fiche legacy, exports/one-pager comité,
+      comparateur, assistant IA, shortlist, Kanban, voisinage, /parcels et /stats fallback,
+      enrichment). Le rail cascade legacy ne pilote plus aucun verdict (signaux non-francs =
+      vigilances). Constat P0 : le moteur divergent était le rail cascade
+      (`parcel_evaluations.status`), PAS `score_e` ; ampleur réelle 3 251 déclassements
+      silencieux (97/119 brûlantes) + 2 263 divergences MONTANTES. Re-mesure : 0 divergence
+      dans les deux sens (1 071 fiches). CY0197 = Brûlante rang 163 + badge « bâtie + division
+      possible ». Bilan : qa/m34/M34_BILAN.md. RELIQUATS tracés au bilan : (c) extinction du
+      rail legacy post-Train 8 · compteurs /communes encore sur matrice_statut (même
+      incohérence côté chiffres, arbitrage Vic) · golden 115/117 (2 champs residuel, écart
+      externe hermes — writer désactivé, RÉGÉN RÉFÉRENCE À M35).
 - [ ] Cartographie retenue/écartée : motif traçable par parcelle
 - [ ] Anomalie AT1740 : « constructible N » + SDP 2 689 m² en zone N + 19-22 logts, ET deux SDP différentes sur la même fiche (2 689 vs 2 827). Mesurer : combien de zones N servent une SDP > 0 ? Localiser la violation du point de calcul unique.
 - [ ] Revue de code intégrale (propositions, rien d'appliqué)
@@ -122,7 +134,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
 #13 signal piscine (registre a_creuser, pas encore une règle produit) ·
-#14 double-rail verdict de fiche vs tier servi (bâti marginal déclassé en silence — mandat dédié avant client) ·
+#14 double-rail verdict/tier FERMÉE (M34 05/08 — traduction unique verdict_servi ; reliquats : rail legacy à éteindre post-Train 8, compteurs /communes sur matrice, golden régén M35) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
