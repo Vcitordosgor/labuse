@@ -8,13 +8,18 @@ meta:
   revision_allegee: "STE SUZANNE.pdf (24 p) — Révision allégée n°4, secteur Grande Ravine / ravine Bertin (2AUc/AU) : modification SECTORIELLE partielle, à superposer au règlement"
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
+  # M32 ré-extraction #4 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED, id 9ced5f68).
+  idurba: "97420_PLU_20250929"
+  date_approbation: "2025-09-29"
+  reextraction_m32: "règlement 48 p + OAP 42 p relus : densités 10/20/30 log/ha par site CONFIRMÉES ; ouverture conditionnelle CONFIRMÉE ; NOUVEAU = 2AU à DATE-BUTOIR (horizon 2031)"
 
 zones_au:
   familles: [1AU, 1AUe, 2AU, 2AUe, AUa, AUb, AUc]
   ouverture: conditionnelle_etat_tiers
-  ouverture_src: "règlement p.6"
-  ouverture_verbatim: "[l'ouverture] ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AU indicée entrepris de la zone"
-  dependance: "phasage 2AU → 1AU (par zone)"
+  ouverture_src: "règlement 20250929 p.6 — verbatim confirmé M32"
+  ouverture_verbatim: "1AU : « espaces prioritaires d'ouverture à l'urbanisation » ; 2AUindicée : « ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AUindicée entrepris dans le pôle urbain concerné »"
+  dependance: "phasage 2AU → 1AU (par pôle, INTER-ZONES — non portable v1)"
+  date_butoir: "2AU = « espaces d'ouverture à l'urbanisation à l'horizon 2031 » (règlement) — DATE-BUTOIR (comme Sainte-Marie) : le schéma au_ouverture v1 ne porte pas la date-butoir → limite consignée"
   planchers:
     localisation: "OAP (densité par site) ; règlement 48 p : aucun plancher densité"
     densite_min_log_ha_par_site: [10, 20, 30]
