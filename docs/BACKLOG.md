@@ -106,7 +106,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 
 ## Dettes (index)
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
-geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire ·
+geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
