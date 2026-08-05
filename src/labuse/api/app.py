@@ -723,6 +723,30 @@ def _m28_badges(db: Session, idu: str) -> dict:
     if fb:
         out["filtre_bati"] = {**dict(fb), "ratio_pct": round(fb["ratio_pct"], 1),
                               "source": "max(BD TOPO éd. 2026-06-15, CoSIA PVA juil.-août 2025)"}
+    # M29 (b)/(b) : signaux mérite/héritage (#9) + acquérabilité assemblage (#11) — fiche
+    # seulement, AUCUN effet de classement. Libellés factuels arbitrés Vic 05/08.
+    et = db.execute(text(
+        "SELECT entree_le, geste, nature FROM parcel_entree_tete WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if et:
+        out["entree_tete"] = {
+            "entree_le": et["entree_le"].isoformat(), "geste": et["geste"],
+            "nature": et["nature"],
+            "libelle": f"entrée en tête à la bascule du {et['entree_le'].strftime('%d/%m/%Y')} — "
+                       + ("signal inchangé" if et["nature"] == "signal_inchange"
+                          else "signal en progression"),
+            "etiquette": "Sourcé", "source": "archives de bascule (contrib_d/rang par run)"}
+    aq = db.execute(text(
+        "SELECT classe, n_meme_siren, n_siren_distincts, n_indetermine, source, "
+        "source_millesime, etiquette FROM parcel_acquerabilite WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if aq:
+        lib = {"meme_proprietaire_pm": "même propriétaire (PM) — source DGFiP/Cerema"
+                                       + (f", {aq['source_millesime']}" if aq["source_millesime"]
+                                          else " (millésime amont non tracé — Estimé)"),
+               "proprietaires_distincts_pm": "propriétaires distincts (PM)",
+               "propriete_non_determinable": "propriété non déterminable"}[aq["classe"]]
+        out["acquerabilite"] = {**dict(aq), "libelle": lib}
     g = db.execute(text(
         "SELECT largeur_inscriptible_m, polsby_popper FROM parcel_geometrie WHERE idu = :i"),
         {"i": idu}).mappings().first()
