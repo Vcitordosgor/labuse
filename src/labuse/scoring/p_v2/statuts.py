@@ -37,7 +37,7 @@ TIER_ECARTEE = "ecartee"
 # c'est un SIGNAL de fiche (pas de verdict → on ne déclasse pas), traité hors assign_tiers.
 from ...faisabilite.constructibilite import (   # noqa: E402  (constantes pures, sans DB)
     DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE, DECLASSE_AU_STATUT_INCONNU,
-    DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE,
+    DECLASSE_AU_FERMEE, DECLASSE_BATI_REVELE, DECLASSE_BATI_SATURE,
 )
 
 
@@ -99,7 +99,10 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # Colonne absente = aucun effet (rétro-compatible).
     br = (df["bati_revele"].fillna(False).astype(bool) if "bati_revele" in df.columns
           else pd.Series(False, index=df.index))
-    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au | br
+    # FILTRE CLIENT BÂTI (M28, A4) : décision 'saturee' du cache parcel_filtre_bati.
+    bs = (df["bati_sature"].fillna(False).astype(bool) if "bati_sature" in df.columns
+          else pd.Series(False, index=df.index))
+    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE]) | declasse_au | br | bs
     was_hot = (prev_tier.isin([TIER_CHAUDE, TIER_BRULANTE])
                if prev_tier is not None else pd.Series(False, index=df.index))
     event_recent = event_age <= params.event_bypass_mois
@@ -141,6 +144,9 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     # plus SPÉCIFIQUE (zone fermée, inconstructible, AU) prime sur le constat de bâti.
     _abd = _ab | au.isin([DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, "générique"])
     tier[br & ~_abd] = DECLASSE_BATI_REVELE
+    # F (bâtie saturée, M28) : après E — le constat « invisible des couches » (E) prime sur le
+    # constat « saturée » ; ni A/B/D/E déjà posés ne sont écrasés.
+    tier[bs & ~_abd & ~br] = DECLASSE_BATI_SATURE
     tier[df["ecartee_etage0"]] = TIER_ECARTEE
     return tier
 

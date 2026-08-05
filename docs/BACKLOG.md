@@ -67,8 +67,8 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 - [ ] Entretien (validé Vic, APRÈS le pilote) : BD TOPO trimestrielle avec dates conservées (code fait : ingest_batiments garde date_creation/date_modification/date_d_apparition/date_de_confirmation) + RNB pour l'ID pivot.
 - [ ] **N°2 — Saturation p=1,0** : 5 parcelles à p_raw=1,0 exact aux rangs 1-5 → le sommet du classement est un ex aequo départagé par un tri arbitraire (sujet de CRÉDIBILITÉ : le « n°1 de l'île » doit être le meilleur, pas le premier d'une égalité). Mesures : (a) combien de parcelles p_raw ≥ 0,99 et leurs rangs ; (b) « permis < 2 ans » (+1,30) seule cause ? ; (c) si on la plafonne, le top 20 change-t-il d'ordre ? ; (d) départage EXPLICITE des ex aequo (surface, faisabilité, charge foncière).
 - [ ] **N°3 — Rebuild parcel_renouvellement sur q_v8_calibre** : actif unique du positionnement (68 445 parcelles, 0 concurrent), mort en silence depuis la bascule v8. Mesure avant/après, POINT D'ARRÊT. Même motif : entonnoir_motifs (mort depuis q_v2/q_v6), ia_cache (cache). Doctrine : toute table run-scopée entre dans le geste de bascule OU est déclarée cache.
-- [ ] Étapes exactes de l'algo, écrites (parcelle brute → tier servi)
-- [ ] Audit complet P et C
+- [x] Étapes exactes de l'algo : docs/mandats/ALGO_ETAPES_EXACTES.md (9 étapes, fichier:ligne, 4 parcelles témoins, seuils vivants).
+- [x] PHASE 2 RENDUE (6 audits, lecture seule, rien modifié — docs/mandats/train5/) : AUDIT1 saturation (3 à p=1,0 MAIS **top 1000 = 19 valeurs de p, 988/1000 ex aequo, palier de 514 — coupures de tiers en plein palier** ; départage explicite proposé) · AUDIT2 renouvellement (rebuild à blanc : 67 258, ~2 min, sans risque) · AUDIT3 entonnoir (317 lignes, secondes) · AUDIT4 P/C (+ bâties-connues : 8 brûlantes + 432/1043 chaudes (41 %), portées par tenure/permis et même la feature piscine +0,41 — le filtre doit être une règle produit, pas un poids) · AUDIT5 cartographie (motifs 100 % reconstructibles sur 50 000 testées ; trous : params de coupure non persistés, ordre intra-palier) · AUDIT6 SDP bâties (5 132 parcelles affichent 3,48 M m² de SDP terrain-nu-théorique ; recalcul = bascule complète type v8). **POINT D'ARRÊT — phase 3 sur arbitrages.**
 - [ ] Dette #4 : filtre client bâti + hiérarchie par année (DPE/BDNB)
 - [ ] Dette #9 : mérite/héritage servi sur la fiche
 - [ ] Dette #11 : assemblage × propriété DGFiP
@@ -106,11 +106,14 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 
 ## Dettes (index)
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
-geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire ·
+geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
 ## Doctrine (leçons gravées)
+- **Frontière modèle/règles (Vic 04/08, prouvée par la mesure piscine)** : « Le modèle prédit
+  la mutation, il ne juge pas l'état de la parcelle. Tout ce qui relève de l'état (bâti,
+  zone, statut) est une règle explicite, jamais un poids. »
 - **RÈGLE DE CONCEPTION (Vic 04/08, 3 occurrences en une semaine — PLU GPU-vs-mairie, bâti
   BD TOPO-vs-cadastre triennal, ortho de revue) : « La fraîcheur d'une donnée est celle de sa
   source amont, jamais celle de son ingestion ni celle du moment où on la regarde. »

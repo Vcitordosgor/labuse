@@ -546,7 +546,14 @@ def matrice_apply_cmd(
     typer.echo(_json.dumps(out, ensure_ascii=False, indent=1))
     r = subprocess.run([_sys.executable, "scripts/gen_tops_ile.py"], capture_output=True, text=True)
     typer.echo(r.stdout.strip().splitlines()[-1] if r.returncode == 0 else f"✗ tops : {r.stderr[-300:]}")
-    typer.echo("✓ convention appliquée (matrice ×24 + MVT + tops).")
+    # 3.1 (train 5, Vic 04/08) : l'entonnoir se reconstruit avec la matrice — il était censé
+    # l'être (« à reconstruire après chaque matrice ») et est mort en silence sur 2 bascules.
+    from .scoring.dryrun import build_entonnoir
+    with session_scope() as s:
+        n_ent = build_entonnoir(s, label)
+        s.commit()
+    typer.echo(f"✓ entonnoir_motifs reconstruit ({n_ent} lignes).")
+    typer.echo("✓ convention appliquée (matrice ×24 + MVT + tops + entonnoir).")
 
 
 @app.command("build-mvt")

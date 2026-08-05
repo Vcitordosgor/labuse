@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from collections.abc import Iterator
@@ -709,6 +710,26 @@ def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | Non
         return None
     tail = " ".join(x for x in (cp, commune) if x)
     return f"{voie}, {tail}" if tail else voie
+
+
+def _m28_badges(db: Session, idu: str) -> dict:
+    """Badges M28 : `filtre_bati` (ratio, décision, motif, année étiquetée, source amont datée)
+    + `geometrie` (largeur inscriptible, Polsby-Popper, contrainte <8 m ou PP<0,1 — Sourcé,
+    cadastre Etalab 2026-06). Lecture seule des caches ; absents → clés absentes."""
+    out: dict = {}
+    fb = db.execute(text(
+        "SELECT ratio_pct, etage, annee_construction, annee_etiquette, passoire, divisible, "
+        "decision, motif FROM parcel_filtre_bati WHERE idu = :i"), {"i": idu}).mappings().first()
+    if fb:
+        out["filtre_bati"] = {**dict(fb), "ratio_pct": round(fb["ratio_pct"], 1),
+                              "source": "max(BD TOPO éd. 2026-06-15, CoSIA PVA juil.-août 2025)"}
+    g = db.execute(text(
+        "SELECT largeur_inscriptible_m, polsby_popper FROM parcel_geometrie WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if g and (float(g["largeur_inscriptible_m"]) < 8 or float(g["polsby_popper"]) < 0.1):
+        out["geometrie"] = {**dict(g), "contrainte": True, "etiquette": "Sourcé",
+                            "source": "cadastre Etalab 2026-06 (méthodes M-C)"}
+    return out
 
 
 def _ban_adresse(db: Session, idu: str) -> str | None:
@@ -1865,6 +1886,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
+        # M28 (gaté LABUSE_M28_BADGES=1, servi à la bascule phase B) : badges filtre bâti +
+        # géométrie contrainte — signaux de fiche, étiquetés, jamais un déclassement ici.
+        **(_m28_badges(db, idu) if os.environ.get("LABUSE_M28_BADGES") == "1" else {}),
         "proprietaire_moral": dict(pm) if pm else None,
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,

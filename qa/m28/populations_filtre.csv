@@ -1,0 +1,498 @@
+idu,commune,ratio_pct,etage,annee_construction,annee_etiquette,passoire,divisible,decision,motif,tier_servi,rang
+97416000EP1062,Saint-Pierre,14.723711006647406,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,33
+97408000AB0275,La Possession,19.736080579841822,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,34
+97411000EL0201,Saint-Denis,29.33657223289987,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",brulante,48
+97409000AR1260,Saint-André,28.073498392628217,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",brulante,82
+97415000CX0939,Saint-Paul,32.65662929167927,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,93
+97415000CX1395,Saint-Paul,41.76046907091499,3,,Absent,f,f,saturee,"bâtie saturée — ratio 42 % (emprise 254 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",brulante,100
+97415000CX0639,Saint-Paul,32.37501266110346,2,,Absent,f,t,divisible,bâtie 32 % mais DIVISIBLE : partie libre 759 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,113
+97412000CE2722,Saint-Joseph,39.83289960069211,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,139
+97412000CE2824,Saint-Joseph,10.622911145441144,1,,Absent,f,f,servie,bâtie 11 % — servie (bâti marginal),chaude,155
+97415000CY0845,Saint-Paul,29.672595030385317,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,176
+97415000CW0194,Saint-Paul,35.03681145404164,2,,Absent,f,t,divisible,bâtie 35 % mais DIVISIBLE : partie libre 657 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,180
+97422000AS0913,Le Tampon,9.412337276446086,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,186
+97416000EW1135,Saint-Pierre,26.53857276300556,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,190
+97412000AM1053,Saint-Joseph,30.305571702349916,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,200
+97411000DX0017,Saint-Denis,17.549612045916746,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,203
+97411000ER0095,Saint-Denis,4.509418706977582,1,,Absent,f,f,servie,bâtie 5 % — servie (bâti marginal),chaude,230
+97409000AR1997,Saint-André,40.924986937425494,3,,Absent,f,,saturee,"bâtie saturée — ratio 41 % (emprise 189 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,257
+97416000EX0803,Saint-Pierre,24.26701239522698,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,269
+97403000AR1511,Entre-Deux,49.8850536482158,3,,Absent,f,f,saturee,"bâtie saturée — ratio 50 % (emprise 263 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",brulante,276
+97413000DE2325,Saint-Leu,10.617230038837228,1,,Absent,f,f,servie,bâtie 11 % — servie (bâti marginal),chaude,279
+97411000AL0497,Saint-Denis,34.759489224125474,2,1971,Sourcé,f,f,servie,"bâtie 35 % — servie (bâti ancien/passoire, DPE Sourcé)",chaude,300
+97414000EN1730,Saint-Louis,26.329890215795555,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,305
+97405000AK1816,Petite-Île,20.953920671606262,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,330
+97408000AC2923,La Possession,7.92193206480751,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),chaude,334
+97411000KE0436,Saint-Denis,9.927095833903591,1,,Absent,f,f,servie,bâtie 10 % — servie (bâti marginal),chaude,338
+97411000DX0079,Saint-Denis,44.62285026321154,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,341
+97415000CT2821,Saint-Paul,25.284529548797508,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,344
+97412000AO0939,Saint-Joseph,14.956596201507708,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,345
+97415000EY1040,Saint-Paul,14.643437898561825,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,360
+97422000CY0197,Le Tampon,28.909789315363348,2,,Absent,f,t,divisible,bâtie 29 % mais DIVISIBLE : partie libre 617 m² ≥ 600 en U/AU (commune calibrée — Sourcé),brulante,368
+97418000AS0292,Sainte-Marie,14.846247618399838,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,371
+97412000AM0938,Saint-Joseph,11.513640389777763,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),brulante,380
+97422000CX0551,Le Tampon,34.1453329219995,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,382
+97415000AZ1993,Saint-Paul,25.780131227484834,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,383
+97408000AC3507,La Possession,3.32324812403654,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,384
+97414000HL0590,Saint-Louis,42.54974364344641,3,,Absent,f,f,saturee,"bâtie saturée — ratio 43 % (emprise 325 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,415
+97406000AL0413,La Plaine-des-Palmistes,6.298904755911836,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,417
+97415000CT1359,Saint-Paul,18.93120305168656,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,427
+97414000CV0998,Saint-Louis,24.018210893956592,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,428
+97410000AW1088,Saint-Benoît,19.874089159974407,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,442
+97416000IE1899,Saint-Pierre,37.79320738086656,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,445
+97412000BD0351,Saint-Joseph,6.32979389984036,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,460
+97411000HE0011,Saint-Denis,13.55169617320256,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,468
+97423000AB0321,Les Trois-Bassins,17.05046407154088,2,,Absent,f,t,divisible,bâtie 17 % mais DIVISIBLE : partie libre 3232 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,487
+97408000AC1895,La Possession,39.55780859265577,2,,Absent,f,t,divisible,bâtie 40 % mais DIVISIBLE : partie libre 1234 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,492
+97403000AS2102,Entre-Deux,9.375608403927036,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,498
+97415000CT0059,Saint-Paul,49.35196070112526,3,,Absent,f,f,saturee,"bâtie saturée — ratio 49 % (emprise 206 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,502
+97422000AP1093,Le Tampon,31.875239161328423,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,523
+97405000AV0204,Petite-Île,9.969226674328398,1,,Absent,f,t,servie,bâtie 10 % — servie (bâti marginal),chaude,530
+97423000AE0927,Les Trois-Bassins,4.274263438725681,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,551
+97415000EO1102,Saint-Paul,13.938484131370151,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,558
+97422000DK0311,Le Tampon,15.52428528953878,2,,Absent,f,t,divisible,bâtie 16 % mais DIVISIBLE : partie libre 822 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,597
+97408000AM0556,La Possession,26.979903935913292,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,612
+97405000BI1064,Petite-Île,6.2486944456924505,1,,Absent,f,t,servie,bâtie 6 % — servie (bâti marginal),chaude,648
+97411000BL0032,Saint-Denis,11.695221488131303,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,649
+97410000AV0657,Saint-Benoît,10.254047330433988,1,,Absent,f,f,servie,bâtie 10 % — servie (bâti marginal),chaude,658
+97415000ET1048,Saint-Paul,27.975349229485584,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,662
+97411000DY0164,Saint-Denis,34.21823629242873,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,672
+97422000BD3733,Le Tampon,47.884761519447565,3,,Absent,f,f,saturee,"bâtie saturée — ratio 48 % (emprise 171 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,695
+97408000AO1810,La Possession,27.589807593427352,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,699
+97415000DE0816,Saint-Paul,31.075666578274788,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,707
+97415000EO0571,Saint-Paul,6.325669021991552,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,734
+97422000AP0245,Le Tampon,27.333447921498774,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,752
+97415000BO0142,Saint-Paul,28.188310220842432,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,756
+97408000AO1908,La Possession,8.215578131257374,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),chaude,767
+97415000BN1343,Saint-Paul,27.84527640595562,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,771
+97416000EK0023,Saint-Pierre,23.08924916247147,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,779
+97410000BE1176,Saint-Benoît,21.77203138317948,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,783
+97411000CD1188,Saint-Denis,12.83567673843021,1,,Absent,f,t,servie,bâtie 13 % — servie (bâti marginal),chaude,813
+97412000AO0973,Saint-Joseph,8.806487067472114,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,820
+97413000CS0128,Saint-Leu,20.714925776724023,2,,Absent,f,t,divisible,bâtie 21 % mais DIVISIBLE : partie libre 1089 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,825
+97408000AC2940,La Possession,2.146856382618094,1,,Absent,f,t,servie,bâtie 2 % — servie (bâti marginal),chaude,850
+97403000AO0729,Entre-Deux,4.001891942103198,1,,Absent,f,f,servie,bâtie 4 % — servie (bâti marginal),chaude,863
+97413000DE2326,Saint-Leu,41.07630055008546,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 189 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,865
+97413000CX2897,Saint-Leu,1.2324552187549698,1,,Absent,f,t,servie,bâtie 1 % — servie (bâti marginal),chaude,890
+97405000AN0684,Petite-Île,21.83431290194383,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,899
+97422000CX1023,Le Tampon,41.66565106059876,3,,Absent,f,f,saturee,"bâtie saturée — ratio 42 % (emprise 296 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,913
+97415000AT0708,Saint-Paul,20.408762386787416,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,936
+97415000CT1210,Saint-Paul,42.93714213424016,3,,Absent,f,f,saturee,"bâtie saturée — ratio 43 % (emprise 274 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,946
+97422000AS0736,Le Tampon,38.26709329293843,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,947
+97415000EO0463,Saint-Paul,13.978928608451808,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,968
+97416000CY0759,Saint-Pierre,28.394081477587466,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,974
+97412000AM0599,Saint-Joseph,37.936565385701364,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,978
+97415000EY0942,Saint-Paul,70.42002130188497,3,,Absent,f,f,saturee,"bâtie saturée — ratio 70 % (emprise 212 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,981
+97409000AK1243,Saint-André,6.589411372624772,1,,Absent,f,,servie,bâtie 7 % — servie (bâti marginal),chaude,982
+97412000AM2014,Saint-Joseph,29.360719141604175,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,984
+97415000DK0042,Saint-Paul,17.683843808012362,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 745 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,985
+97410000AO0447,Saint-Benoît,30.762809998925448,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,986
+97412000CE2854,Saint-Joseph,5.598081199580533,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,992
+97415000CS0765,Saint-Paul,48.20442103729762,3,,Absent,f,f,saturee,"bâtie saturée — ratio 48 % (emprise 204 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1013
+97403000AM0816,Entre-Deux,4.784430498514187,1,,Absent,f,f,servie,bâtie 5 % — servie (bâti marginal),chaude,1015
+97415000EY0833,Saint-Paul,23.840424244713535,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1048
+97416000EP0726,Saint-Pierre,24.128487752392733,2,,Absent,f,t,divisible,bâtie 24 % mais DIVISIBLE : partie libre 755 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1050
+97411000HW0435,Saint-Denis,23.35260600417348,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1054
+97415000CM0955,Saint-Paul,51.34138633120955,3,,Absent,f,f,saturee,"bâtie saturée — ratio 51 % (emprise 157 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1063
+97411000AE0058,Saint-Denis,83.4904791117879,3,,Absent,f,f,saturee,"bâtie saturée — ratio 83 % (emprise 782 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1072
+97415000CW0228,Saint-Paul,31.93830663240138,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1087
+97403000AP0171,Entre-Deux,27.74844881947913,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1100
+97411000EK0108,Saint-Denis,17.40661978758626,2,,Absent,f,t,divisible,bâtie 17 % mais DIVISIBLE : partie libre 955 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1111
+97412000CE1505,Saint-Joseph,23.647180777096665,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1120
+97412000BY1430,Saint-Joseph,17.320883844818002,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1122
+97415000AW2210,Saint-Paul,8.517209846029852,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,1128
+97410000BE1190,Saint-Benoît,34.040097794673976,2,,Absent,f,t,divisible,bâtie 34 % mais DIVISIBLE : partie libre 730 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1151
+97411000HV0235,Saint-Denis,12.283755279344195,1,,Absent,f,f,servie,bâtie 12 % — servie (bâti marginal),chaude,1165
+97411000EK0005,Saint-Denis,30.39752329031035,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1180
+97412000AP0747,Saint-Joseph,17.828755234663447,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1185
+97415000CY0149,Saint-Paul,26.616101011480943,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1189
+97415000DE0350,Saint-Paul,21.528644166252548,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1195
+97418000AS0078,Sainte-Marie,29.33405410929489,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1204
+97413000DC0480,Saint-Leu,10.57874575353855,1,,Absent,f,f,servie,bâtie 11 % — servie (bâti marginal),chaude,1206
+97415000HN0318,Saint-Paul,32.01432309195058,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1207
+97418000AR1853,Sainte-Marie,41.1956442958505,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 237 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1209
+97422000CX0540,Le Tampon,27.60890947791881,2,,Absent,f,t,divisible,bâtie 28 % mais DIVISIBLE : partie libre 722 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1218
+97422000BO1419,Le Tampon,7.379719686969828,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,1231
+97412000CR0626,Saint-Joseph,29.650107946723345,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1232
+97409000AV1241,Saint-André,19.78830028750979,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1241
+97415000DR1384,Saint-Paul,8.71735972189692,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,1244
+97418000AY0476,Sainte-Marie,52.86100498084848,3,,Absent,f,f,saturee,"bâtie saturée — ratio 53 % (emprise 170 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1246
+97411000EH0144,Saint-Denis,22.139127442698683,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1247
+97410000CD0879,Saint-Benoît,13.017792284776823,1,,Absent,f,f,servie,bâtie 13 % — servie (bâti marginal),chaude,1262
+97411000AH0294,Saint-Denis,17.145721646153373,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1275
+97410000BI0556,Saint-Benoît,21.842602947856573,2,,Absent,f,t,divisible,bâtie 22 % mais DIVISIBLE : partie libre 602 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1290
+97422000CX0682,Le Tampon,8.782124018445439,1,,Absent,f,t,servie,bâtie 9 % — servie (bâti marginal),chaude,1300
+97416000EZ0553,Saint-Pierre,30.49881259787928,2,,Absent,f,t,divisible,bâtie 30 % mais DIVISIBLE : partie libre 1257 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1301
+97415000AH0692,Saint-Paul,29.8439785915146,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1303
+97414000EN4068,Saint-Louis,22.622347673912767,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1304
+97416000IE2047,Saint-Pierre,10.162337151206753,1,,Absent,f,t,servie,bâtie 10 % — servie (bâti marginal),chaude,1308
+97415000DT0355,Saint-Paul,55.986719145429475,3,,Absent,f,f,saturee,"bâtie saturée — ratio 56 % (emprise 337 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1316
+97422000CN0343,Le Tampon,7.18419982907191,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,1321
+97415000AC0253,Saint-Paul,8.289645194819638,1,,Absent,f,t,servie,bâtie 8 % — servie (bâti marginal),chaude,1324
+97404000BA0172,L'Étang-Salé,28.562288325048385,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1325
+97415000BV1289,Saint-Paul,18.105580987318316,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 822 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1330
+97411000EM0273,Saint-Denis,16.995634696451166,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1337
+97409000AC0716,Saint-André,40.17156675345125,3,,Absent,f,,saturee,"bâtie saturée — ratio 40 % (emprise 234 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1342
+97405000AZ1026,Petite-Île,16.24643156500529,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1354
+97416000HY1458,Saint-Pierre,20.364673560473346,2,,Absent,f,t,divisible,bâtie 20 % mais DIVISIBLE : partie libre 969 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1355
+97420000AO0487,Sainte-Suzanne,4.021400691744302,1,,Absent,f,f,servie,bâtie 4 % — servie (bâti marginal),chaude,1370
+97403000AR1151,Entre-Deux,8.326440940549562,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),chaude,1377
+97418000AR2574,Sainte-Marie,14.924572737012499,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,1384
+97415000CX0802,Saint-Paul,0.9774660188909395,1,,Absent,f,t,servie,bâtie 1 % — servie (bâti marginal),chaude,1388
+97415000HP0370,Saint-Paul,23.88301818807737,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1401
+97415000EO0572,Saint-Paul,37.916962387505336,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1402
+97409000AY1501,Saint-André,10.65059452137006,1,,Absent,f,,servie,bâtie 11 % — servie (bâti marginal),chaude,1408
+97406000AW0962,La Plaine-des-Palmistes,20.693225431007917,2,,Absent,f,t,divisible,bâtie 21 % mais DIVISIBLE : partie libre 694 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1411
+97408000AC3764,La Possession,1.7519642441714411,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1418
+97408000AP1682,La Possession,1.0744351341405387,1,,Absent,f,t,servie,bâtie 1 % — servie (bâti marginal),chaude,1431
+97413000CR0842,Saint-Leu,9.186076894362904,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,1432
+97411000HX0239,Saint-Denis,7.944918617185559,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),chaude,1436
+97415000EV0167,Saint-Paul,19.96975794709223,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1442
+97415000EY1415,Saint-Paul,25.664981094339733,2,,Absent,f,t,divisible,bâtie 26 % mais DIVISIBLE : partie libre 705 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1447
+97403000AR0697,Entre-Deux,43.8399794918638,3,,Absent,f,f,saturee,"bâtie saturée — ratio 44 % (emprise 329 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1451
+97415000DK1006,Saint-Paul,44.27948260934769,3,,Absent,f,f,saturee,"bâtie saturée — ratio 44 % (emprise 171 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1463
+97411000AM0421,Saint-Denis,37.14443100594861,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1482
+97404000AW0200,L'Étang-Salé,35.76462373987371,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1484
+97415000CT1663,Saint-Paul,42.029688230943115,3,,Absent,f,f,saturee,"bâtie saturée — ratio 42 % (emprise 166 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1485
+97413000CU0526,Saint-Leu,36.20643465121553,2,,Absent,f,t,divisible,bâtie 36 % mais DIVISIBLE : partie libre 662 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1495
+97414000DE1341,Saint-Louis,19.590819479437336,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1501
+97408000AN1286,La Possession,2.652067886117936,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,1508
+97416000EL0114,Saint-Pierre,29.659300197573888,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1514
+97409000AY0204,Saint-André,32.515044873971014,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1519
+97417000AT1361,Saint-Philippe,19.878544278747395,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1552
+97404000AE1574,L'Étang-Salé,54.18817143018487,3,,Absent,f,,saturee,"bâtie saturée — ratio 54 % (emprise 288 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1554
+97412000CE2568,Saint-Joseph,28.205822688803995,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1556
+97415000CW0930,Saint-Paul,33.32206774214678,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1577
+97411000AV0217,Saint-Denis,21.17667051348496,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1595
+97411000EH0012,Saint-Denis,39.296894229531524,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1622
+97415000CY1071,Saint-Paul,68.80346436286834,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1624
+97416000DE0715,Saint-Pierre,38.33987931256168,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1635
+97422000AY1105,Le Tampon,15.249860594202309,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1673
+97409000BO0631,Saint-André,8.204572157630698,1,,Absent,f,,servie,bâtie 8 % — servie (bâti marginal),chaude,1678
+97412000CK0809,Saint-Joseph,31.54035611316956,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1684
+97413000CX2611,Saint-Leu,33.566329448196996,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1686
+97409000AS1144,Saint-André,38.801488491582994,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1691
+97420000AI0906,Sainte-Suzanne,9.50558253906489,1,,Absent,f,f,servie,bâtie 10 % — servie (bâti marginal),chaude,1698
+97412000BW2412,Saint-Joseph,29.703708976375534,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1699
+97423000AH1823,Les Trois-Bassins,3.397962431055784,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,1715
+97415000EP0704,Saint-Paul,30.683897216625304,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1725
+97416000CT1031,Saint-Pierre,6.473834465405083,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,1732
+97415000BV0938,Saint-Paul,22.504463648038623,2,,Absent,f,t,divisible,bâtie 23 % mais DIVISIBLE : partie libre 728 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1733
+97416000CX0623,Saint-Pierre,25.035062155871238,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1738
+97413000CA0198,Saint-Leu,18.4199343999925,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 9512 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1743
+97416000HN1778,Saint-Pierre,18.112714646321933,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1749
+97415000AX0527,Saint-Paul,10.11465109346126,1,,Absent,f,f,servie,bâtie 10 % — servie (bâti marginal),chaude,1750
+97404000AY0331,L'Étang-Salé,26.184482106896954,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1753
+97416000ET1363,Saint-Pierre,14.01882683566919,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,1756
+97406000AH0227,La Plaine-des-Palmistes,29.357830130310486,2,,Absent,f,t,divisible,bâtie 29 % mais DIVISIBLE : partie libre 683 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1757
+97413000BM0715,Saint-Leu,3.904572343630854,1,,Absent,f,t,servie,bâtie 4 % — servie (bâti marginal),chaude,1760
+97404000AT0428,L'Étang-Salé,9.796779644297153,1,,Absent,f,,servie,bâtie 10 % — servie (bâti marginal),chaude,1764
+97411000BK0234,Saint-Denis,6.475231644220977,1,,Absent,f,t,servie,bâtie 6 % — servie (bâti marginal),chaude,1765
+97414000EM0928,Saint-Louis,16.59373308178536,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1766
+97408000AO1648,La Possession,29.551675179870205,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1769
+97411000CE0875,Saint-Denis,20.062827603572668,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1782
+97407000AH1120,Le Port,19.945869906243754,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1786
+97416000ES0905,Saint-Pierre,40.57812708331833,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 266 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1790
+97407000AH1220,Le Port,8.561355127745774,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,1797
+97422000AP0084,Le Tampon,22.364699971949406,2,,Absent,f,t,divisible,bâtie 22 % mais DIVISIBLE : partie libre 631 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1804
+97420000AD0341,Sainte-Suzanne,7.286951143628856,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,1805
+97418000AR1786,Sainte-Marie,8.708967435783439,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,1820
+97413000CC0189,Saint-Leu,42.772507752535894,3,,Absent,f,f,saturee,"bâtie saturée — ratio 43 % (emprise 311 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1827
+97422000AX1622,Le Tampon,14.256351315159778,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,1828
+97422000BS1957,Le Tampon,29.50148831256024,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1846
+97411000EK0007,Saint-Denis,34.39341933685064,2,,Absent,f,t,divisible,bâtie 34 % mais DIVISIBLE : partie libre 631 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1849
+97416000IE1900,Saint-Pierre,20.01838581438464,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1864
+97416000IL0741,Saint-Pierre,13.9880795296224,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,1865
+97415000CR0614,Saint-Paul,7.282195764971605,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,1869
+97415000CY0477,Saint-Paul,19.43798059962538,2,,Absent,f,t,divisible,bâtie 19 % mais DIVISIBLE : partie libre 1304 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1875
+97414000CO1043,Saint-Louis,30.238850353819828,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,1897
+97411000BX0171,Saint-Denis,18.772427769059046,2,,Absent,f,t,divisible,bâtie 19 % mais DIVISIBLE : partie libre 1459 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1898
+97416000ES2007,Saint-Pierre,45.42071859543051,3,,Absent,f,f,saturee,"bâtie saturée — ratio 45 % (emprise 227 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1900
+97415000DK0859,Saint-Paul,34.7549613457945,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1908
+97406000AV1338,La Plaine-des-Palmistes,3.650067189140829,1,,Absent,f,t,servie,bâtie 4 % — servie (bâti marginal),chaude,1913
+97422000AX1182,Le Tampon,27.41622890643358,2,,Absent,f,t,divisible,bâtie 27 % mais DIVISIBLE : partie libre 920 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1920
+97422000BK2082,Le Tampon,27.049456333007818,2,,Absent,f,t,divisible,bâtie 27 % mais DIVISIBLE : partie libre 1053 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,1924
+97413000DM0209,Saint-Leu,24.909042018383634,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1926
+97418000AO0603,Sainte-Marie,14.713240768642121,1,,Absent,f,f,servie,bâtie 15 % — servie (bâti marginal),chaude,1929
+97408000AO1681,La Possession,48.35841162621052,3,,Absent,f,f,saturee,"bâtie saturée — ratio 48 % (emprise 217 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,1935
+97415000CX0660,Saint-Paul,37.9016195293907,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,1940
+97415000CP0973,Saint-Paul,2.4484277743507015,1,,Absent,f,t,servie,bâtie 2 % — servie (bâti marginal),chaude,1996
+97404000AL1680,L'Étang-Salé,24.732724971474568,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2014
+97415000CS0434,Saint-Paul,33.8865796075177,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2018
+97408000AM0904,La Possession,32.801858969885245,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2022
+97415000CR1265,Saint-Paul,15.873783417406017,2,,Absent,f,t,divisible,bâtie 16 % mais DIVISIBLE : partie libre 1320 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2024
+97404000AI1989,L'Étang-Salé,16.872037542929743,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2029
+97410000BM1402,Saint-Benoît,12.262427961718036,1,,Absent,f,f,servie,bâtie 12 % — servie (bâti marginal),chaude,2033
+97412000CT0375,Saint-Joseph,28.26073124906586,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2038
+97408000AC2253,La Possession,10.516878232603931,1,,Absent,f,t,servie,bâtie 11 % — servie (bâti marginal),chaude,2057
+97408000AH0317,La Possession,44.849583871199385,3,,Absent,f,f,saturee,"bâtie saturée — ratio 45 % (emprise 240 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2061
+97412000AM1545,Saint-Joseph,19.65735026687138,2,,Absent,f,t,divisible,bâtie 20 % mais DIVISIBLE : partie libre 1060 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2073
+97418000AT1786,Sainte-Marie,29.824435461267747,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2095
+97410000BV0202,Saint-Benoît,17.107911771496102,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2097
+97413000CY0682,Saint-Leu,24.262317937622026,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2098
+97416000EV1703,Saint-Pierre,37.175903066827594,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2100
+97404000BA0253,L'Étang-Salé,51.75521228910596,3,,Absent,f,,saturee,"bâtie saturée — ratio 52 % (emprise 318 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2128
+97415000EV0310,Saint-Paul,12.566504863368056,1,,Absent,f,f,servie,bâtie 13 % — servie (bâti marginal),chaude,2135
+97415000CS0437,Saint-Paul,35.34751206075738,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2141
+97408000AC2450,La Possession,21.7477797185928,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2155
+97415000AY0144,Saint-Paul,0.72127351600723,1,,Absent,f,t,servie,bâtie 1 % — servie (bâti marginal),chaude,2157
+97412000AW0695,Saint-Joseph,25.70242832627357,2,,Absent,f,t,divisible,bâtie 26 % mais DIVISIBLE : partie libre 665 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2158
+97415000BN0187,Saint-Paul,23.387858334211057,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2164
+97416000ES1230,Saint-Pierre,59.581219404462956,3,,Absent,f,f,saturee,"bâtie saturée — ratio 60 % (emprise 732 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2168
+97412000BW0837,Saint-Joseph,26.540621254177562,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2173
+97411000EK0119,Saint-Denis,16.62283644633052,2,,Absent,f,t,divisible,bâtie 17 % mais DIVISIBLE : partie libre 834 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2176
+97412000BX1339,Saint-Joseph,6.931373868099374,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,2180
+97409000BD0689,Saint-André,27.178760472134456,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2181
+97416000EX1895,Saint-Pierre,22.620743949814766,2,,Absent,f,t,divisible,bâtie 23 % mais DIVISIBLE : partie libre 917 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2186
+97415000CZ1194,Saint-Paul,19.746016690120555,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2196
+97422000CX0716,Le Tampon,18.867245912192256,2,,Absent,f,t,divisible,bâtie 19 % mais DIVISIBLE : partie libre 1487 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2197
+97401000AP1294,Les Avirons,29.79138191485785,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2198
+97418000AT1839,Sainte-Marie,33.751578577988646,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2217
+97412000AZ0947,Saint-Joseph,25.594242833373794,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2222
+97415000DE0747,Saint-Paul,62.81238623526579,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2237
+97415000EZ0060,Saint-Paul,11.178896652441063,1,,Absent,f,t,servie,bâtie 11 % — servie (bâti marginal),chaude,2242
+97411000DW0005,Saint-Denis,8.503102507541769,1,,Absent,f,t,servie,bâtie 9 % — servie (bâti marginal),chaude,2257
+97416000ES0922,Saint-Pierre,29.52022493926754,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2264
+97415000AD0422,Saint-Paul,44.72552708296164,3,,Absent,f,f,saturee,"bâtie saturée — ratio 45 % (emprise 184 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2272
+97408000BM0115,La Possession,29.43251557981082,2,,Absent,f,t,divisible,bâtie 29 % mais DIVISIBLE : partie libre 664 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2273
+97415000CY0173,Saint-Paul,37.9109197135731,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2283
+97411000EK0006,Saint-Denis,18.079844175000197,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 683 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2292
+97415000CV1487,Saint-Paul,37.34946487508344,2,,Absent,f,t,divisible,bâtie 37 % mais DIVISIBLE : partie libre 674 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2293
+97413000CY0420,Saint-Leu,24.245628500840517,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2315
+97415000CM2083,Saint-Paul,28.227451712757656,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2317
+97416000EP0835,Saint-Pierre,34.14177907504016,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2329
+97410000AK0662,Saint-Benoît,37.815326832974186,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2334
+97412000CE1462,Saint-Joseph,35.080507817919845,2,,Absent,f,t,divisible,bâtie 35 % mais DIVISIBLE : partie libre 776 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2340
+97415000CY0978,Saint-Paul,45.89621172759009,3,,Absent,f,f,saturee,"bâtie saturée — ratio 46 % (emprise 185 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2352
+97408000AC2787,La Possession,39.87714495239414,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2355
+97406000AW0821,La Plaine-des-Palmistes,3.0546945404860804,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,2371
+97413000CR0792,Saint-Leu,29.836920205536934,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2374
+97416000EW0470,Saint-Pierre,2.5853428105430107,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,2377
+97408000AO0327,La Possession,14.485075647451104,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2382
+97422000CI0591,Le Tampon,12.842191123679378,1,,Absent,f,t,servie,bâtie 13 % — servie (bâti marginal),chaude,2388
+97410000BX1259,Saint-Benoît,6.297507124718938,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,2409
+97409000AX1070,Saint-André,57.413467142266306,3,,Absent,f,,saturee,"bâtie saturée — ratio 57 % (emprise 345 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2413
+97415000CY1027,Saint-Paul,49.39096477926746,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2425
+97408000BM0117,La Possession,41.099263001857494,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 366 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2450
+97422000AY1495,Le Tampon,12.523822080902509,1,,Absent,f,f,servie,bâtie 13 % — servie (bâti marginal),chaude,2459
+97416000HY1552,Saint-Pierre,49.899958769134585,3,,Absent,f,f,saturee,"bâtie saturée — ratio 50 % (emprise 198 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2469
+97411000EH0074,Saint-Denis,28.86086982446132,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2470
+97406000AI0542,La Plaine-des-Palmistes,9.187682076782814,1,,Absent,f,t,servie,bâtie 9 % — servie (bâti marginal),chaude,2473
+97409000AR2339,Saint-André,9.94678497530467,1,,Absent,f,,servie,bâtie 10 % — servie (bâti marginal),chaude,2476
+97419000AR0813,Sainte-Rose,16.80263165242966,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2490
+97415000CX0656,Saint-Paul,33.93096125716134,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2496
+97422000BN0344,Le Tampon,21.552639814191558,2,,Absent,f,t,divisible,bâtie 22 % mais DIVISIBLE : partie libre 962 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2501
+97407000AS1192,Le Port,29.406862070007715,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2522
+97408000AO1758,La Possession,23.072778120525285,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2525
+97404000AW0710,L'Étang-Salé,19.800478138784626,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2526
+97415000AY1406,Saint-Paul,28.55187410215714,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2530
+97411000DY0137,Saint-Denis,15.941420270546509,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2537
+97416000IE1990,Saint-Pierre,50.84357654936645,3,,Absent,f,f,saturee,"bâtie saturée — ratio 51 % (emprise 174 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2552
+97422000AK1410,Le Tampon,9.984388007237014,1,,Absent,f,t,servie,bâtie 10 % — servie (bâti marginal),chaude,2553
+97416000HV0227,Saint-Pierre,32.203013570934424,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2557
+97415000CW0264,Saint-Paul,16.360375641975345,2,,Absent,f,t,divisible,bâtie 16 % mais DIVISIBLE : partie libre 1926 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2575
+97412000CW1199,Saint-Joseph,23.409985835502003,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2589
+97415000BV1608,Saint-Paul,4.771654480907479,1,,Absent,f,t,servie,bâtie 5 % — servie (bâti marginal),chaude,2595
+97411000HA0147,Saint-Denis,11.853484014195647,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,2608
+97417000AO0261,Saint-Philippe,9.499369982312912,1,,Absent,f,,servie,bâtie 9 % — servie (bâti marginal),chaude,2610
+97414000CO1449,Saint-Louis,16.268351635388647,2,,Absent,f,t,divisible,bâtie 16 % mais DIVISIBLE : partie libre 1184 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2611
+97414000DH1439,Saint-Louis,2.7088507440814182,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,2617
+97413000DD1348,Saint-Leu,80.84520119544416,3,,Absent,f,f,saturee,"bâtie saturée — ratio 81 % (emprise 277 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2632
+97422000CX1241,Le Tampon,28.182407009693566,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2647
+97422000CX0175,Le Tampon,9.093780308488611,1,,Absent,f,t,servie,bâtie 9 % — servie (bâti marginal),chaude,2654
+97416000CW0526,Saint-Pierre,19.396572084525058,2,,Absent,f,t,divisible,bâtie 19 % mais DIVISIBLE : partie libre 755 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2665
+97418000AO0914,Sainte-Marie,6.304322509733787,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,2669
+97411000EZ0061,Saint-Denis,14.529306457302832,1,,Absent,f,t,servie,bâtie 15 % — servie (bâti marginal),chaude,2673
+97411000AC0024,Saint-Denis,34.08844526623594,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2683
+97416000DE1457,Saint-Pierre,45.566937725197626,3,,Absent,f,f,saturee,"bâtie saturée — ratio 46 % (emprise 149 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2684
+97416000EP0908,Saint-Pierre,33.45545772632398,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",brulante,2697
+97404000AX0095,L'Étang-Salé,18.62208676259705,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2698
+97411000BZ0999,Saint-Denis,15.103444433922672,2,,Absent,f,t,divisible,bâtie 15 % mais DIVISIBLE : partie libre 754 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2700
+97411000EV0197,Saint-Denis,23.21361198793784,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2702
+97412000CX0341,Saint-Joseph,20.790829392121935,2,,Absent,f,t,divisible,bâtie 21 % mais DIVISIBLE : partie libre 852 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2712
+97424000AI1015,Cilaos,29.223410808782955,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2720
+97415000CT2294,Saint-Paul,38.75176230291826,2,,Absent,f,t,divisible,bâtie 39 % mais DIVISIBLE : partie libre 655 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2722
+97414000HH0111,Saint-Louis,25.727413457105975,2,,Absent,f,t,divisible,bâtie 26 % mais DIVISIBLE : partie libre 613 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2729
+97415000DE0586,Saint-Paul,38.00887654120258,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2734
+97404000AW0609,L'Étang-Salé,8.706167887374203,1,,Absent,f,,servie,bâtie 9 % — servie (bâti marginal),chaude,2745
+97408000AC1950,La Possession,40.264416085723546,3,,Absent,f,f,saturee,"bâtie saturée — ratio 40 % (emprise 226 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2746
+97411000DY0099,Saint-Denis,33.84147906626108,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2748
+97416000HI0881,Saint-Pierre,5.619992107785383,1,,Absent,f,t,servie,bâtie 6 % — servie (bâti marginal),chaude,2754
+97404000AX0464,L'Étang-Salé,38.263084590873916,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2781
+97415000AW2359,Saint-Paul,19.546409190910104,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2786
+97416000EP1007,Saint-Pierre,14.137498385420708,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,2789
+97415000EY1329,Saint-Paul,36.73277165472554,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2795
+97413000AH0383,Saint-Leu,11.599455612458403,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,2797
+97401000AT0645,Les Avirons,13.668216252122123,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,2799
+97422000DH0982,Le Tampon,15.161298064726516,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2827
+97422000CX1242,Le Tampon,15.624990882220148,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2833
+97410000BW0849,Saint-Benoît,46.790427142229774,3,,Absent,f,f,saturee,"bâtie saturée — ratio 47 % (emprise 294 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2844
+97415000AY1400,Saint-Paul,35.11356732969261,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2870
+97416000ID0738,Saint-Pierre,22.26520545537939,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2872
+97422000AP0415,Le Tampon,21.390132799793633,2,,Absent,f,t,divisible,bâtie 21 % mais DIVISIBLE : partie libre 761 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2873
+97420000BH2086,Sainte-Suzanne,13.193573160641385,1,,Absent,f,t,servie,bâtie 13 % — servie (bâti marginal),chaude,2875
+97404000AL1675,L'Étang-Salé,36.6007306617309,3,,Absent,f,,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2877
+97408000AN0618,La Possession,26.447207189312536,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2885
+97422000CX0107,Le Tampon,11.762043372392908,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,2894
+97416000EV0940,Saint-Pierre,31.96236030961537,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,2906
+97415000CT2281,Saint-Paul,16.92568250995583,2,,Absent,f,t,divisible,bâtie 17 % mais DIVISIBLE : partie libre 1853 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2916
+97415000AW0529,Saint-Paul,22.022757331775654,2,,Absent,f,t,divisible,bâtie 22 % mais DIVISIBLE : partie libre 960 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2923
+97419000AR0524,Sainte-Rose,15.328275158580443,2,,Absent,f,t,divisible,bâtie 15 % mais DIVISIBLE : partie libre 1575 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,2939
+97408000AC1375,La Possession,14.80247535651837,1,,Absent,f,t,servie,bâtie 15 % — servie (bâti marginal),chaude,2940
+97415000ER1536,Saint-Paul,32.316117483302115,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2946
+97403000AP1301,Entre-Deux,39.54278540166902,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2947
+97422000CX1251,Le Tampon,22.95033564634321,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2967
+97411000CR0324,Saint-Denis,47.15838809750529,3,,Absent,f,f,saturee,"bâtie saturée — ratio 47 % (emprise 267 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,2984
+97410000BX0720,Saint-Benoît,18.952033014222117,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2985
+97408000AO1772,La Possession,25.30917883608387,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,2987
+97416000EV1496,Saint-Pierre,3.630568068520725,1,,Absent,f,t,servie,bâtie 4 % — servie (bâti marginal),chaude,2988
+97409000AL1467,Saint-André,15.12415363830007,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3004
+97405000AK1242,Petite-Île,11.531638180642263,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,3005
+97411000EH0070,Saint-Denis,26.54383095840384,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3014
+97411000BZ1705,Saint-Denis,26.95630956271607,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3020
+97404000AI1991,L'Étang-Salé,22.973747162469095,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3036
+97413000DE2193,Saint-Leu,11.949099205543437,1,,Absent,f,f,servie,bâtie 12 % — servie (bâti marginal),chaude,3041
+97415000EV0701,Saint-Paul,32.264363707041554,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3048
+97413000CU1056,Saint-Leu,35.41800306015321,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3054
+97404000AZ0108,L'Étang-Salé,37.068031928043524,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3055
+97416000HX1473,Saint-Pierre,24.19901044142123,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3062
+97408000AH0326,La Possession,22.44785624609753,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3069
+97411000AS0126,Saint-Denis,59.88747877758208,3,,Absent,f,f,saturee,"bâtie saturée — ratio 60 % (emprise 219 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3070
+97415000BW2113,Saint-Paul,23.25831354850819,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3072
+97411000IZ0414,Saint-Denis,5.300725288073964,1,,Absent,f,t,servie,bâtie 5 % — servie (bâti marginal),chaude,3075
+97403000AO0788,Entre-Deux,13.738465564009852,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,3084
+97415000BW0448,Saint-Paul,17.9927554438264,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 862 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3088
+97416000HX1007,Saint-Pierre,48.75983612786386,3,,Absent,f,f,saturee,"bâtie saturée — ratio 49 % (emprise 367 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3089
+97415000EV0715,Saint-Paul,31.23527470614567,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3092
+97416000IM0026,Saint-Pierre,17.137383479178602,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3095
+97408000AC2448,La Possession,33.55409014280148,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3096
+97408000AC2732,La Possession,28.21187147112328,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3109
+97418000AT2325,Sainte-Marie,49.89853500245288,3,,Absent,f,f,saturee,"bâtie saturée — ratio 50 % (emprise 150 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3132
+97409000AI1606,Saint-André,41.513102742993745,3,,Absent,f,,saturee,"bâtie saturée — ratio 42 % (emprise 150 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3136
+97413000AV1210,Saint-Leu,38.72030933329363,2,,Absent,f,t,divisible,bâtie 39 % mais DIVISIBLE : partie libre 674 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3151
+97422000AP0878,Le Tampon,22.674855763481343,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3157
+97411000DZ0196,Saint-Denis,34.343481380007105,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3172
+97415000CX0654,Saint-Paul,29.861775765159962,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3184
+97422000EI0344,Le Tampon,34.12516775975708,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3192
+97422000AK0587,Le Tampon,13.885552363568582,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,3199
+97411000EL0428,Saint-Denis,46.72340130088087,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3201
+97402000AK1630,Bras-Panon,25.1029793166295,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3214
+97415000CZ0242,Saint-Paul,28.20501085537768,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3220
+97422000AP1183,Le Tampon,11.895678911797766,1,,Absent,f,t,servie,bâtie 12 % — servie (bâti marginal),chaude,3226
+97415000BW2058,Saint-Paul,19.020961506167446,2,,Absent,f,t,divisible,bâtie 19 % mais DIVISIBLE : partie libre 1521 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3229
+97415000CY1271,Saint-Paul,16.841855426669966,2,,Absent,f,t,divisible,bâtie 17 % mais DIVISIBLE : partie libre 730 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3235
+97415000DN0347,Saint-Paul,7.183470481640831,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,3269
+97409000BE1631,Saint-André,58.29424601921855,3,,Absent,f,,saturee,"bâtie saturée — ratio 58 % (emprise 265 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3278
+97408000AS0442,La Possession,51.55689157014763,3,,Absent,f,f,saturee,"bâtie saturée — ratio 52 % (emprise 246 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3282
+97408000AH0334,La Possession,46.26671767483505,3,,Absent,f,f,saturee,"bâtie saturée — ratio 46 % (emprise 225 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3288
+97415000EV0714,Saint-Paul,28.498790637703806,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3291
+97412000AZ0943,Saint-Joseph,50.90042523520392,3,,Absent,f,f,saturee,"bâtie saturée — ratio 51 % (emprise 209 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3292
+97409000BI0276,Saint-André,46.08451521406657,3,,Absent,f,,saturee,"bâtie saturée — ratio 46 % (emprise 291 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3293
+97406000AC0630,La Plaine-des-Palmistes,22.57746589359495,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3295
+97408000AC0857,La Possession,32.180887427550275,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3305
+97416000IE0142,Saint-Pierre,21.05465924744617,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3318
+97412000AM1794,Saint-Joseph,23.991928109571642,2,,Absent,f,t,divisible,bâtie 24 % mais DIVISIBLE : partie libre 618 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3327
+97409000AR2763,Saint-André,17.534277504693517,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3344
+97408000AO1685,La Possession,62.663613790606945,3,,Absent,f,f,saturee,"bâtie saturée — ratio 63 % (emprise 255 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3370
+97411000EO0148,Saint-Denis,25.904309979806786,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3386
+97415000CR0393,Saint-Paul,20.87497092796281,2,,Absent,f,t,divisible,bâtie 21 % mais DIVISIBLE : partie libre 633 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3404
+97412000AZ0945,Saint-Joseph,32.2495744109891,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3405
+97415000BO0595,Saint-Paul,23.055586827723292,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3407
+97422000CX1273,Le Tampon,18.51696836514422,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3413
+97415000BN0542,Saint-Paul,27.748049880257255,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3422
+97418000AS1103,Sainte-Marie,28.36825714534859,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3426
+97415000DE0603,Saint-Paul,40.544862510028935,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 222 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3434
+97422000DK0376,Le Tampon,28.461832079600146,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3443
+97415000CP0010,Saint-Paul,21.580051778975726,2,,Absent,f,t,divisible,bâtie 22 % mais DIVISIBLE : partie libre 889 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3446
+97413000CS0908,Saint-Leu,59.070382544908874,3,,Absent,f,f,saturee,"bâtie saturée — ratio 59 % (emprise 572 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3449
+97416000HZ0451,Saint-Pierre,27.39835881102948,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3454
+97412000CX0456,Saint-Joseph,27.08248720056294,2,,Absent,f,t,divisible,bâtie 27 % mais DIVISIBLE : partie libre 722 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3463
+97402000AK2196,Bras-Panon,4.4879442942217675,1,,Absent,f,f,servie,bâtie 4 % — servie (bâti marginal),chaude,3474
+97408000BI0254,La Possession,36.2883329446436,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3500
+97415000EW1476,Saint-Paul,27.807233118036624,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3559
+97411000EZ0077,Saint-Denis,30.794468119977754,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3562
+97411000CM0180,Saint-Denis,16.958294630664184,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3568
+97406000AL0022,La Plaine-des-Palmistes,3.612610628530357,1,,Absent,f,f,servie,bâtie 4 % — servie (bâti marginal),chaude,3570
+97407000AL0696,Le Port,5.556107077103577,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,3572
+97412000CP0330,Saint-Joseph,27.273483727956968,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3575
+97424000AI2414,Cilaos,10.457578698264058,1,,Absent,f,t,servie,bâtie 10 % — servie (bâti marginal),chaude,3579
+97416000HW0652,Saint-Pierre,36.72475215849576,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3592
+97409000BE1911,Saint-André,1.1822602988292203,1,,Absent,f,,servie,bâtie 1 % — servie (bâti marginal),chaude,3594
+97416000EX1643,Saint-Pierre,29.135431393154107,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3600
+97406000AE0783,La Plaine-des-Palmistes,28.75710579790089,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3603
+97404000AV0254,L'Étang-Salé,33.56305211699192,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3607
+97415000HP0135,Saint-Paul,38.32257384607149,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3611
+97409000AS1747,Saint-André,16.940919500774566,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3616
+97415000BV1002,Saint-Paul,34.47666961409676,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3617
+97415000DE1111,Saint-Paul,27.929651670324436,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3619
+97424000AI0882,Cilaos,3.4489711003322947,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,3630
+97415000AY0352,Saint-Paul,33.661457608646494,2,,Absent,f,t,divisible,bâtie 34 % mais DIVISIBLE : partie libre 635 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3636
+97402000AI0998,Bras-Panon,8.589588213606056,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,3651
+97415000EY1875,Saint-Paul,47.696186475205685,3,,Absent,f,f,saturee,"bâtie saturée — ratio 48 % (emprise 84 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3660
+97418000AR1086,Sainte-Marie,39.09344390891646,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3669
+97418000AR1050,Sainte-Marie,38.460029168142874,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3673
+97415000BY0709,Saint-Paul,8.655221771928048,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,3684
+97418000AC1479,Sainte-Marie,18.166502769216294,2,,Absent,f,t,divisible,bâtie 18 % mais DIVISIBLE : partie libre 906 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3685
+97415000DM0314,Saint-Paul,13.988763027477587,1,,Absent,f,t,servie,bâtie 14 % — servie (bâti marginal),chaude,3693
+97408000AC2055,La Possession,39.73286209723753,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3714
+97412000CE2345,Saint-Joseph,29.472727691678124,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3720
+97417000AT1381,Saint-Philippe,22.384438493547776,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3723
+97416000CX1241,Saint-Pierre,13.340258643276528,1,,Absent,f,f,servie,bâtie 13 % — servie (bâti marginal),brulante,3729
+97415000CT2705,Saint-Paul,38.130890249789815,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3730
+97411000DW0009,Saint-Denis,25.359782828091294,2,,Absent,f,t,divisible,bâtie 25 % mais DIVISIBLE : partie libre 1859 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3740
+97415000DK1065,Saint-Paul,51.60873518567905,3,,Absent,f,f,saturee,"bâtie saturée — ratio 52 % (emprise 134 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3754
+97405000AV0483,Petite-Île,24.85042090902761,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3775
+97409000AW0536,Saint-André,28.328840285467482,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3791
+97415000ET1304,Saint-Paul,13.32228912369902,1,,Absent,f,f,servie,bâtie 13 % — servie (bâti marginal),chaude,3798
+97414000DE1800,Saint-Louis,14.323499064003576,1,,Absent,f,f,servie,bâtie 14 % — servie (bâti marginal),chaude,3805
+97408000AM0540,La Possession,37.936714149331706,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3819
+97411000EK0247,Saint-Denis,40.1777816937251,3,,Absent,f,f,saturee,"bâtie saturée — ratio 40 % (emprise 194 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3820
+97415000DK1061,Saint-Paul,39.835579456778675,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3833
+97409000BE2152,Saint-André,36.853942245102914,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3848
+97413000CR0881,Saint-Leu,31.405814089161627,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3900
+97413000DC0373,Saint-Leu,24.43306617379304,2,,Absent,f,t,divisible,bâtie 24 % mais DIVISIBLE : partie libre 945 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3917
+97408000AC2181,La Possession,32.00355151603845,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,3924
+97410000AT0585,Saint-Benoît,19.434341980099237,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3926
+97411000AD0030,Saint-Denis,11.050503281823683,1,,Absent,f,f,servie,bâtie 11 % — servie (bâti marginal),brulante,3928
+97408000AM0909,La Possession,24.34285948450651,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3932
+97412000BK1715,Saint-Joseph,2.844766807042173,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,3947
+97415000CT2498,Saint-Paul,23.38414716525419,2,,Absent,f,t,divisible,bâtie 23 % mais DIVISIBLE : partie libre 1252 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,3948
+97416000IB0236,Saint-Pierre,40.549937292853365,3,,Absent,f,f,saturee,"bâtie saturée — ratio 41 % (emprise 253 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,3965
+97408000AO1647,La Possession,35.69850662224166,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,3972
+97422000CX0813,Le Tampon,7.631238728802774,1,,Absent,f,t,servie,bâtie 8 % — servie (bâti marginal),chaude,3986
+97412000CT0371,Saint-Joseph,30.075366271658414,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4010
+97411000DX0074,Saint-Denis,29.07973573785304,3,,Absent,f,f,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,4013
+97408000AO1785,La Possession,25.562593118137162,2,,Absent,f,t,divisible,bâtie 26 % mais DIVISIBLE : partie libre 847 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,4022
+97413000CA0265,Saint-Leu,11.249806893220562,1,,Absent,f,t,servie,bâtie 11 % — servie (bâti marginal),chaude,4027
+97415000DK0861,Saint-Paul,39.68702553109427,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4029
+97418000AY0781,Sainte-Marie,35.39620956697491,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4034
+97411000AS0156,Saint-Denis,47.143347628979384,3,,Absent,f,f,saturee,"bâtie saturée — ratio 47 % (emprise 210 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4038
+97415000DK1132,Saint-Paul,47.18916314362686,3,,Absent,f,f,saturee,"bâtie saturée — ratio 47 % (emprise 135 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4043
+97415000CT2337,Saint-Paul,44.458233582727544,3,,Absent,f,f,saturee,"bâtie saturée — ratio 44 % (emprise 254 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4082
+97422000AY1035,Le Tampon,32.79147136652971,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4093
+97415000EY1410,Saint-Paul,36.77137178729572,2,,Absent,f,t,divisible,bâtie 37 % mais DIVISIBLE : partie libre 686 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,4114
+97413000CY0764,Saint-Leu,24.45371396045526,2,,Absent,f,t,divisible,bâtie 24 % mais DIVISIBLE : partie libre 946 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,4118
+97412000AZ0946,Saint-Joseph,50.665041087230826,3,,Absent,f,f,saturee,"bâtie saturée — ratio 51 % (emprise 193 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4134
+97404000AX0140,L'Étang-Salé,30.484216969147653,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4141
+97423000AB0347,Les Trois-Bassins,47.63962714187022,3,,Absent,f,t,saturee,"bâtie saturée — ratio 48 % (emprise 684 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4146
+97416000EX1891,Saint-Pierre,32.54258949937154,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4154
+97404000AL1601,L'Étang-Salé,31.42086657479618,2,,Absent,f,,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4157
+97422000AP1216,Le Tampon,7.724542700595436,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),brulante,4160
+97416000HY1560,Saint-Pierre,40.371672678005815,3,,Absent,f,f,saturee,"bâtie saturée — ratio 40 % (emprise 229 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,4169
+97418000AP4378,Sainte-Marie,19.929840231860137,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4180
+97408000BO0162,La Possession,29.870658549978764,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,4189
+97408000AC0440,La Possession,25.246837728544005,2,,Absent,f,t,divisible,bâtie 25 % mais DIVISIBLE : partie libre 738 m² ≥ 600 en U/AU (commune calibrée — Sourcé),chaude,4191
+97408000BO0454,La Possession,5.625815391871958,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,4194
+97411000EH0011,Saint-Denis,21.97692567485483,3,,Absent,f,t,saturee,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4,chaude,4203
+97415000AX0991,Saint-Paul,2.7162372681718328,1,,Absent,f,t,servie,bâtie 3 % — servie (bâti marginal),chaude,4210
+97411000CX1846,Saint-Denis,4.073575592894328,1,,Absent,f,t,servie,bâtie 4 % — servie (bâti marginal),chaude,4227
+97412000CV0402,Saint-Joseph,4.449062335856623,1,,Absent,f,t,servie,bâtie 4 % — servie (bâti marginal),chaude,4312
+97415000ET1722,Saint-Paul,7.712910905352887,1,,Absent,f,f,servie,bâtie 8 % — servie (bâti marginal),chaude,4428
+97405000AR1591,Petite-Île,7.3195497619245495,1,,Absent,f,f,servie,bâtie 7 % — servie (bâti marginal),chaude,4967
+97410000BX1958,Saint-Benoît,8.89504122732736,1,,Absent,f,f,servie,bâtie 9 % — servie (bâti marginal),chaude,5024
+97415000DK1060,Saint-Paul,60.82465692103662,3,,Absent,f,f,saturee,"bâtie saturée — ratio 61 % (emprise 203 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,5224
+97408000AC2409,La Possession,2.337568271414382,1,,Absent,f,t,servie,bâtie 2 % — servie (bâti marginal),chaude,5251
+97415000DK0831,Saint-Paul,19.440284468702338,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,5481
+97415000DK1127,Saint-Paul,38.51353373414002,2,,Absent,f,f,saturee,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",chaude,5487
+97416000ID0907,Saint-Pierre,5.556045639081591,1,,Absent,f,f,servie,bâtie 6 % — servie (bâti marginal),chaude,5531
+97415000DK1062,Saint-Paul,51.41565826662264,3,,Absent,f,f,saturee,"bâtie saturée — ratio 51 % (emprise 150 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",chaude,5585
