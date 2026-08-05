@@ -12,18 +12,22 @@ meta:
   cabinet_redacteur: "non détecté au texte (logo page de garde)"
   famille_trame: "PAS DUTEILH-PERRAU (aucune clause VRD opérateur)"
   contexte: "commune de montagne (cirque de Salazie)"
+  # M32 ré-extraction #8 (05/08) : version OPPOSABLE re-téléchargée du GPU (APPROVED, id résolu live).
+  idurba: "97421_PLU_20220524"
+  date_approbation: "2022-05-24"
+  reextraction_m32: "règlement relu : les VALEURS de densité a_verifier sont LEVÉES — 20 log/ha (AUa, AUb) / 10 log/ha (AUc)"
 
 zones_au:
   familles: [AU, AUa, AUb, AUc, AUe]
   ouverture: conditionnelle_operation
-  ouverture_src: "règlement p.29 (« [espaces] réservés à l'urbanisation future. Les constructions y sont autorisées soit lors d[']opérations d'ensemble… »)"
+  ouverture_src: "règlement 20220524 — « [espaces] réservés à l'urbanisation future ; autorisées lors d'opérations d'ensemble »"
   planchers:
-    localisation: "RÈGLEMENT (clause densité minimale p.29, par zone) + OAP (social)"
-    densite_min_log_ha: a_verifier
-    densite_note: "clause « densité minimale suivante, s'appliquant pour toutes les constructions et toutes les opérations… » (p.29) suivie d'une LISTE par zone — valeurs non captées (fichier devenu indisponible)"
+    localisation: "RÈGLEMENT (densité minimale par zone) + OAP (social)"
+    densite_min_log_ha: {AUa: 20, AUb: 20, AUc: 10}
+    densite_note: "M32 : « en zones AUa et AUb, 20 logements par hectare ; en zone AUc, 10 logements par hectare » (règlement, verbatim) — a_verifier LEVÉ"
     social_pct: 50
     social_src: "OAP 2022 (14 p, texte) : 50%"
     prevalence: "règlement (densité) + OAP (social)"
   vrd_charge_operateur: "sans_objet (aucune clause VRD opérateur — vérifié)"
-  faits_nouveaux_vs_yaml: "ouverture conditionnelle + plancher densité au règlement (par zone, valeurs a_verifier) + social OAP 50% — absents du YAML"
-  a_verifier: "VALEURS de densité minimale par zone (p.29, à relire) ; densité vs social par site ; dimensions U"
+  faits_confirmes_20220524: "ouverture conditionnelle_operation + densité 20/20/10 log/ha (AUa/AUb/AUc) au règlement + social OAP 50% — densité a_verifier LEVÉE"
+  a_verifier: "densité vs social par site (calque graphique) ; dimensions U — plus de valeur de densité en attente"
