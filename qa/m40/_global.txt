@@ -7,3 +7,12 @@ SYNTHESE: 23/24 idurba GPU == idurba mairie (config) ; 1 RNU (Saint-Philippe) ; 
 
 confrontation_gpu_mairie_p0.csv SHA256:
   ff1383b287cb4bf5f0097f3546b29b3a790679b501eb5bc91675af480a755a5d
+
+VERIF (2026-08-06):
+  golden: 117/117 PASS, 0 FAIL (plu_fraicheur ajoute a _build_fiche = golden-invisible)
+  re-mesure M34/M35 (mesure_p2, 1071 parcelles): 0 divergence — PASS
+  SHA256 vigilances M37: 482da6f6848989b34aac7cbafcddc413079c5c2e1a9bd1b4bf186b1689e9abe9 (INCHANGE)
+  tiers servis: 0 tier modifie (119 brulante / 1041 chaude)
+  pytest: 1318 verts (+6 idurba), 5 pre-existants (residuel x4, au_ouverture x1)
+  garde idurba: signale Saint-Joseph avant archive (630 j), clean apres (0 divergence)
+  archive SJ: 3 zones plu_gpu_zone -> plu_gpu_zone__archive_m40 (reversible)
