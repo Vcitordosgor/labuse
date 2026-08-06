@@ -1,0 +1,25 @@
+commune,n_hors_copro,taux_base_pct,k_c,positifs_topk,rr_intra,rr_min_tirages,rr_max_tirages,ic95_bas,ic95_haut,avertissement,n_top1158_ile,rr_dans_top_ile
+Sainte-Suzanne,12490,0.9,34,6,19.5,19.5,22.8,6.1,35.7,,18,30.7
+Le Port,10114,1.84,27,8,18.1,14.1,22.2,7.0,27.8,,25,17.4
+L'Étang-Salé,9011,1.63,24,7,17.9,17.9,20.4,6.7,29.3,,40,13.8
+Sainte-Rose,6284,0.81,17,2,14.5,14.5,14.5,0.0,40.2,⚠ <5 positifs top-k — aucune conclusion,4,30.8
+Saint-Benoît,21622,1.48,58,12,14.0,12.9,15.2,7.4,22.0,,47,18.7
+Saint-Philippe,4155,1.52,11,2,12.0,12.0,12.0,0.0,29.9,⚠ <5 positifs top-k — aucune conclusion,3,44.0
+Saint-Pierre,42045,1.51,114,16,9.9,8.7,10.4,5.7,14.3,,96,9.0
+Petite-Île,13122,1.46,35,5,8.8,5.9,9.8,1.9,15.5,,31,6.6
+Les Avirons,8560,1.52,23,3,8.6,5.7,8.6,0.0,16.3,⚠ <5 positifs top-k — aucune conclusion,22,9.0
+Saint-André,22513,1.35,61,7,8.5,8.5,8.5,2.6,14.1,,53,9.8
+La Plaine-des-Palmistes,6446,1.6,17,2,7.4,3.7,11.0,0.0,17.0,⚠ <5 positifs top-k — aucune conclusion,19,6.6
+Sainte-Marie,16646,1.33,45,4,6.7,6.7,6.7,1.5,13.4,⚠ <5 positifs top-k — aucune conclusion,32,9.4
+Salazie,7034,0.87,19,1,6.1,6.1,6.1,0.0,20.0,⚠ <5 positifs top-k — aucune conclusion,11,10.5
+Saint-Leu,22763,1.32,62,4,4.9,2.4,7.3,0.0,9.7,⚠ <5 positifs top-k — aucune conclusion,67,4.5
+Entre-Deux,6301,1.29,17,1,4.6,0.0,4.6,0.0,12.9,⚠ <5 positifs top-k — aucune conclusion,13,6.0
+Saint-Paul,50593,1.74,137,11,4.4,2.9,6.7,2.1,6.8,,194,4.7
+Saint-Louis,29141,1.39,79,4,4.1,2.7,5.5,0.9,8.3,⚠ <5 positifs top-k — aucune conclusion,72,5.0
+La Possession,13148,2.19,36,3,3.8,2.5,3.8,0.0,7.7,⚠ <5 positifs top-k — aucune conclusion,97,4.2
+Saint-Denis,36981,1.61,100,6,3.7,3.1,5.0,1.3,7.1,,127,2.9
+Le Tampon,42523,1.71,115,6,3.1,3.1,3.6,1.0,5.7,,80,2.9
+Saint-Joseph,28875,1.55,78,3,2.5,2.5,2.5,0.0,5.5,⚠ <5 positifs top-k — aucune conclusion,43,1.5
+Bras-Panon,6016,0.96,16,0,0.0,0.0,0.0,0.0,7.2,⚠ <5 positifs top-k — aucune conclusion,11,0.0
+Cilaos,6555,1.74,18,0,0.0,0.0,0.0,0.0,0.0,⚠ <5 positifs top-k — aucune conclusion,12,0.0
+Les Trois-Bassins,5301,1.38,14,0,0.0,0.0,0.0,0.0,4.9,⚠ <5 positifs top-k — aucune conclusion,41,1.8
