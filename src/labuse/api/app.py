@@ -2571,9 +2571,21 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     from .. import bati as bati_mod
     bati_block = bati_mod.fiche_block(db, p.id, p.surface_m2)
 
+    # M39 (dette #13) — surface de piscine MATÉRIALISÉE (couche 90,7 %), pour la vigilance
+    # informative de la fiche. None si pas de piscine matérialisée. N'affecte ni tier ni verdict.
+    # SAVEPOINT (idiome fraicheur.py) : une table absente (base de test) n'avorte pas la TX de fiche.
+    try:
+        with db.begin_nested():
+            _pisc = db.execute(text(
+                "SELECT piscine_surface_m2 FROM parcel_equipements WHERE idu = :i AND piscine"),
+                {"i": idu}).scalar()
+    except Exception:  # noqa: BLE001 - bloc additif, jamais bloquant pour la fiche
+        _pisc = None
+
     # Résumé « business » (Phase 2) — dérivé des signaux ci-dessus, repris dans les exports.
     from .resume import build_resume
-    resume = build_resume(verdict_block, cascade, faisabilite, prosp_block, bati=bati_block)
+    resume = build_resume(verdict_block, cascade, faisabilite, prosp_block, bati=bati_block,
+                          piscine_surface_m2=_pisc)
 
     # Assemblage foncier (Phase 5) — voisines adjacentes + drapeau prudent (requête indexée).
     from .voisinage import compute_voisinage
