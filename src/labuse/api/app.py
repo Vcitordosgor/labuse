@@ -773,6 +773,11 @@ def _ban_adresse(db: Session, idu: str) -> str | None:
 # API ne doit pas pouvoir les requêter via `flags`/`flags_exclus`. Cf. cadrage M45 (gérant âgé).
 FORBIDDEN_FLAGS_RGPD = frozenset({"age_dirigeant"})
 
+# M45 (P2a) : capacité logements ESTIMÉE = SDP résiduelle / ce ratio (SDP moyenne par logement,
+# ordre de grandeur métropole/DOM collectif). Point de calcul unique du filtre « capacité ≥ N » ;
+# le front l'étiquette « Estimé ». Un logement ~ 70 m² de SDP (surface de plancher, pas habitable).
+SDP_PAR_LOGEMENT_M2 = 70
+
 
 def _guard_flags_rgpd(demandes: list[str]) -> None:
     """Refuse toute couche personne physique en critère de requête (RGPD, cadrage M45).
@@ -791,7 +796,10 @@ def _q_v2_where(run_label: str, score_min: int | None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
                 defisc_active: bool = False, pc_caduc: bool = False,
-                marge_min: int | None = None) -> tuple[str, dict]:
+                marge_min: int | None = None,
+                sdp_max: int | None = None, constructibilite: str | None = None,
+                etat_sol: str | None = None, capacite_min: int | None = None,
+                zone_plu: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -879,6 +887,54 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM score_e se0 WHERE se0.idu = p.idu"
                      " AND se0.estimable AND se0.marge_estimee >= :f_marge)")
         params["f_marge"] = marge_min
+    # ── M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? » (facettes composables) ──
+    if sdp_max is not None:   # SDP résiduelle plafonnée (barre niveau 1, borne haute)
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel r1 WHERE r1.parcel_id = p.id"
+                     " AND r1.sdp_residuelle_m2 <= :f_sdpmax)")
+        params["f_sdpmax"] = sdp_max
+    if constructibilite:
+        # Constructibilité CALIBRÉE (le filtre différenciant) — dérivée du TIER effectif + zone,
+        # PAS de la zone brute. constructible = tier vivant non déclassé ; au_conditionnelle =
+        # AU fermée/statut inconnu ; fermee = zone fermée ; inconstructible = non constructible ;
+        # rnu = hors PLU outillé (aucune zone au parcellaire).
+        cl = [x.strip() for x in constructibilite.split(",") if x.strip()]
+        sub = []
+        if "constructible" in cl:
+            sub.append("(s2.tier IN ('brulante','chaude','reserve_fonciere','a_creuser') AND NOT " + _ETAGE0_SQL + ")")
+        if "au_conditionnelle" in cl:
+            sub.append("s2.tier IN ('declasse_au_fermee','declasse_au_statut_inconnu')")
+        if "fermee" in cl:
+            sub.append("s2.tier = 'declasse_zone_fermee'")
+        if "inconstructible" in cl:
+            sub.append("s2.tier = 'declasse_non_constructible'")
+        if "rnu" in cl:
+            sub.append("NOT EXISTS (SELECT 1 FROM parcel_zone_plu zr WHERE zr.idu = p.idu)")
+        if sub:
+            conds.append("(" + " OR ".join(sub) + ")")
+    if etat_sol:
+        # État du sol : nu/marginal dérivés de l'emprise bâtie (parcel_residuel), saturé/révélé du tier.
+        cl = [x.strip() for x in etat_sol.split(",") if x.strip()]
+        sub = []
+        if "nu" in cl:
+            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id AND COALESCE(rs.taux_emprise_pct,0) < 5)")
+        if "bati_marginal" in cl:
+            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id AND rs.taux_emprise_pct >= 5 AND rs.taux_emprise_pct < 25)")
+        if "bati_sature" in cl:
+            sub.append("s2.tier = 'declasse_bati_sature'")
+        if "bati_revele" in cl:
+            sub.append("s2.tier = 'declasse_bati_revele'")
+        if sub:
+            conds.append("(" + " OR ".join(sub) + ")")
+    if capacite_min is not None:
+        # Capacité logements ESTIMÉE ≥ N — dérivée de la SDP résiduelle (≈ 70 m² SDP / logement).
+        # Étiquette Estimé portée par le front. Le seuil SDP est le point de calcul unique.
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel rc WHERE rc.parcel_id = p.id"
+                     " AND rc.sdp_residuelle_m2 >= :f_capa)")
+        params["f_capa"] = capacite_min * SDP_PAR_LOGEMENT_M2
+    if zone_plu:   # zone PLU EXACTE (tiroir droit) — `zone_lib` (colonne du modèle), casse normalisée.
+        conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu zx WHERE zx.idu = p.idu"
+                     " AND upper(zx.zone_lib) = ANY(:f_zplu))")
+        params["f_zplu"] = [z.strip().upper() for z in zone_plu.split(",") if z.strip()]
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -1276,18 +1332,27 @@ class FiltreCriteres:
     defisc_active: bool = False
     pc_caduc: bool = False
     marge_min: int | None = None
+    # M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
+    sdp_max: int | None = None
+    constructibilite: str | None = None
+    etat_sol: str | None = None
+    capacite_min: int | None = None
+    zone_plu: str | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
                            self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
                            self.tiers, self.hors_copro, self.veille, self.personne_morale,
-                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min)
+                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                           self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
+                           self.zone_plu)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
                 self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
                 self.flags_exclus, self.tiers, self.hors_copro, self.veille,
-                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min)
+                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu)
 
 
 @app.get("/filtre")

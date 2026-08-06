@@ -60,6 +60,19 @@ def test_filtre_unifie_shape_et_source(client):
     assert client.get("/filtre", params={"source": Q_A_RUN_LABEL, "flags": "age_dirigeant"}).status_code == 400
 
 
+def test_p2a_facettes_composables(client):
+    # M45 (P2a) : les nouvelles facettes (barre niveau 1 + tiroir droit) filtrent sans erreur,
+    # sont composables, et le compteur reste un entier cohérent (<= total non filtré).
+    total = client.get("/filtre", params={"source": Q_A_RUN_LABEL}).json()["compte"]
+    for crit in [{"constructibilite": "constructible"}, {"constructibilite": "inconstructible,rnu"},
+                 {"etat_sol": "nu,bati_sature"}, {"capacite_min": 3}, {"zone_plu": "UA,UB"},
+                 {"sdp_max": 500}, {"surface_min": 300, "sdp_min": 100, "constructibilite": "constructible"}]:
+        r = client.get("/filtre", params={"source": Q_A_RUN_LABEL, "limit": 0, **crit})
+        assert r.status_code == 200, crit
+        c = r.json()["compte"]
+        assert isinstance(c, int) and 0 <= c <= total, (crit, c, total)
+
+
 def test_params_morts_inertes(client):
     # Passés, `v_signal`/`statuts`/`brulantes` sont ignorés (params inconnus) : pas d'erreur,
     # et surtout ils ne filtrent plus rien (le total ne bouge pas vs la requête sans eux).
