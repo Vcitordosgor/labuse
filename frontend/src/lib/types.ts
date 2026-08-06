@@ -199,7 +199,13 @@ export interface Fiche {
   idu: string
   commune: string
   adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
-  proprietaire_moral: { denomination: string | null; siren: string | null; groupe_label: string | null } | null
+  proprietaire_moral: {
+    denomination: string | null; siren: string | null; groupe_label: string | null
+    etat_societe?: {
+      etats: { type: string; date: string | null; libelle: string; source: string; etiquette: string }[]
+      libelle: string; note: string
+    } | null
+  } | null
   surface_m2: number | null
   statut: Statut
   mode_b?: ModeB

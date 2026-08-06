@@ -1,0 +1,4 @@
+signal,n,mutes,taux_pct,rr_brut,ic_bas,ic_haut,rr_tenure_mh,mh_ic_bas,mh_ic_haut,verdict
+cessee,1143,48,4.2,2.49,1.88,3.3,2.54,1.92,3.36,INTÉGRABLE
+radiee,467,36,7.71,4.57,3.33,6.29,4.49,3.27,6.17,INTÉGRABLE
+pcl,749,23,3.07,1.82,1.21,2.73,1.88,1.25,2.82,INTÉGRABLE
