@@ -2740,6 +2740,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
+        # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
+        # exports (one-pager), pas seulement la fiche premium. Jamais un zonage servi sans mention.
+        "plu_fraicheur": _plu_fraicheur(idu),
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
