@@ -48,6 +48,18 @@ def test_flags_age_dirigeant_refuse_rgpd(client):
     assert r3.status_code == 400
 
 
+def test_filtre_unifie_shape_et_source(client):
+    # M45 (P1) : endpoint unifié /filtre — compte + tiers + page en un appel ; source requise.
+    assert client.get("/filtre", params={"tiers": "brulante"}).status_code == 404  # sans source
+    r = client.get("/filtre", params={"source": Q_A_RUN_LABEL, "commune": "Saint-Paul", "limit": 2})
+    assert r.status_code == 200
+    d = r.json()
+    assert {"compte", "tiers", "opportunites", "page", "sort"} <= set(d)
+    assert isinstance(d["compte"], int) and isinstance(d["page"], list) and len(d["page"]) <= 2
+    # garde RGPD vaut aussi sur /filtre
+    assert client.get("/filtre", params={"source": Q_A_RUN_LABEL, "flags": "age_dirigeant"}).status_code == 400
+
+
 def test_params_morts_inertes(client):
     # Passés, `v_signal`/`statuts`/`brulantes` sont ignorés (params inconnus) : pas d'erreur,
     # et surtout ils ne filtrent plus rien (le total ne bouge pas vs la requête sans eux).

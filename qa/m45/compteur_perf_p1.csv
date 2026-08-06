@@ -1,0 +1,9 @@
+niveau;combo;compteur_ms;n_flag;note
+1;tier4+surface350+sdp100;217;;index-only rang
+1;tier4+surface550+sdp100;195;;
+1;tier4+surface750+sdp100;197;;
+2;flags=cinquante_pas;637;16099;apres index
+2;flags=sol_pollue;805;10333;apres index
+2;flags=ravine;1174;13972;apres index
+2;flags=pente;4141;60616;jointure ile (denorm requise)
+2;flags=bruit_route;7098;111228;jointure ile (denorm requise)

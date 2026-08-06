@@ -233,6 +233,12 @@ class DryrunCascadeResult(Base):
         # (filtre layer/result sur le tas via ix_dryrun_cascade). Index PARTIEL → probe pur, ~0,6 s.
         Index("ix_dryrun_cascade_bati_exclude", "run_label", "parcel_id",
               postgresql_where=text("layer_name = 'bati' AND result = 'HARD_EXCLUDE'")),
+        # M45 (P1) perf : le filtre `flags`/`flags_exclus` (vigilances par type) EXISTS-scannait
+        # dryrun_cascade_results en entier (~4-9 s île entière, seq scan de 9,7 M lignes). Index
+        # (run_label, layer_name, parcel_id) PARTIEL sur les non-francs (SOFT_FLAG + abf/UNKNOWN)
+        # → le filtre par couche de vigilance devient un probe indexé (compteur sous la barre).
+        Index("ix_dryrun_cascade_flag_probe", "run_label", "layer_name", "parcel_id",
+              postgresql_where=text("result IN ('SOFT_FLAG', 'UNKNOWN')")),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -1017,6 +1023,19 @@ def ensure_promesses_index(engine) -> None:
                      "WHERE layer_name = 'bati' AND result = 'HARD_EXCLUDE'"))
 
 
+def ensure_flags_probe_index(engine) -> None:
+    """M45 (P1) — index PARTIEL pour le filtre `flags`/`flags_exclus` (vigilances par type).
+    Sans lui, l'EXISTS sur dryrun_cascade_results seq-scanne 9,7 M lignes (~4-9 s île entière) ;
+    avec, probe indexé (compteur sous la barre). `create_all` saute les index d'une table déjà
+    existante → ensure explicite. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_dryrun_cascade_flag_probe "
+                     "ON dryrun_cascade_results (run_label, layer_name, parcel_id) "
+                     "WHERE result IN ('SOFT_FLAG', 'UNKNOWN')"))
+
+
 def ensure_pipeline_projet(engine) -> None:
     """Colonne `projet_id` sur pipeline_entries (copilote-projet) — la piste porte la
     référence du projet d'où elle vient. Idempotent, durable au rebuild sur base existante."""
@@ -1479,6 +1498,7 @@ def ensure_schema(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine, backfill=False)
     ensure_promesses_index(engine)
+    ensure_flags_probe_index(engine)   # M45 (P1) : compteur des filtres de vigilance sous la barre
     ensure_suggestions(engine)   # M16-C : table des retours « proposer une amélioration »
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)

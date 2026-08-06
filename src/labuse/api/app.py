@@ -17,6 +17,7 @@ import threading
 import time
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
@@ -1250,6 +1251,68 @@ def stats(commune: str | None = None, source: str | None = None,
     return _mem_cached(key, 30.0, lambda: _q_v2_stats(
         db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
         legacy=legacy))
+
+
+@dataclass
+class FiltreCriteres:
+    """M45 (P1) — critères composables du filtrage unifié. UN SEUL point d'entrée des filtres :
+    les endpoints s'y adossent, et une nouvelle facette (P2) s'ajoute ICI + dans `_q_v2_where`,
+    puis coule partout. Les champs deviennent des query-params (FastAPI `Depends`)."""
+    source: str | None = None
+    commune: str | None = None
+    score_min: int | None = None
+    surface_min: int | None = None
+    surface_max: int | None = None
+    sdp_min: int | None = None
+    evenement: bool = False
+    flags: str | None = None
+    communes: str | None = None
+    flags_exclus: str | None = None
+    tiers: str | None = None
+    hors_copro: bool = False
+    veille: bool = False
+    personne_morale: bool = False
+    zonage: str | None = None
+    defisc_active: bool = False
+    pc_caduc: bool = False
+    marge_min: int | None = None
+
+    def where(self) -> tuple[str, dict]:
+        return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
+                           self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
+                           self.tiers, self.hors_copro, self.veille, self.personne_morale,
+                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min)
+
+    def cache_key(self) -> tuple:
+        return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
+                self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
+                self.flags_exclus, self.tiers, self.hors_copro, self.veille,
+                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min)
+
+
+@app.get("/filtre")
+def filtre(c: FiltreCriteres = Depends(),
+           limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|commune)$"),
+           db: Session = Depends(get_db)) -> dict:
+    """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
+    d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
+    `FiltreCriteres` → `_q_v2_where`. Compteur mémorisé 30 s (SQL exact, index `ix_p_v2_run_rang`).
+    `source` (run q_v*) REQUISE — jamais de repli sur une source morte."""
+    if not (c.source and c.source.startswith("q_v")):
+        raise HTTPException(status_code=404,
+                            detail="source requise : préciser ?source=<run q_v*> (run servi)")
+    extra, extra_params = c.where()
+    stats = _mem_cached(c.cache_key(), 30.0, lambda: _q_v2_stats(
+        db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params))
+    page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
+                      extra_where=extra, extra_params=extra_params, sort=sort) if limit else []
+    return {
+        "compte": stats["total"],                    # le compteur (« 3 847 → 47 »)
+        "tiers": stats["tiers"],                      # ventilation par tier (dont potentiel long terme)
+        "opportunites": stats["opportunites"],
+        "page": page, "limit": limit, "offset": offset, "sort": sort or "rang",
+    }
 
 
 def _owner_famille(groupe, forme, denom) -> str:
