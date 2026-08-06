@@ -504,6 +504,23 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                 if pf.get("action") else "")
         plu_html = f"<h3>Zonage — source qui fait foi</h3>{''.join(_pl)}{_act}"
 
+    # M41 — Radar procédures PLU : stade de la procédure + conséquences parcellaires servables
+    # (sursis si armé ; veille AU sur les déclassées zone-fermée/AU). Jamais l'issue de la procédure.
+    rp = fiche.get("radar_procedure") or {}
+    radar_html = ""
+    if rp:
+        _rl = []
+        syn = rp.get("synthese") or {}
+        if syn.get("etat"):
+            _rl.append(kv("Procédure PLU", html.escape(syn["etat"])))
+        if rp.get("veille_au"):
+            _rl.append(kv("Veille AU", html.escape(rp["veille_au"])))
+        if rp.get("sursis"):
+            _rl.append(kv("Sursis à statuer", html.escape(rp["sursis"]["texte"])))
+            _rl.append(f'<div class="foot" style="margin-top:2px">{html.escape(rp["sursis"]["base_legale"])}</div>')
+        if _rl:
+            radar_html = f"<h3>Radar procédures PLU</h3>{''.join(_rl)}"
+
     synth = html.escape(rv.get("synthese") or "")
     action = html.escape(rv.get("prochaine_action") or "")
     loc = (f"{html.escape(p.get('commune') or '—')} · section {html.escape(p.get('section') or '—')} "
@@ -558,6 +575,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {bil_html}
     {mode_b_kv}
     {plu_html}
+    {radar_html}
     <h3>Contraintes</h3>
     <ul>{cont_html}</ul>
     <h3>À vérifier avant de démarcher</h3>

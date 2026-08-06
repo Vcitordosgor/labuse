@@ -1910,6 +1910,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
+        "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
@@ -2082,12 +2083,31 @@ def _plu_fraicheur(idu: str) -> dict | None:
         action = "Constructibilité au cas par cas (RNU) — vérifier en mairie."
     else:
         document_servi, fait_foi, en_cours, action = doc, None, None, None
+    # M41 — le radar procédures PLU précise « en cours » pour les cibles SOURCE (« révision générale
+    # prescrite le X, constaté le Y »), remplaçant le texte générique. None si commune non-cible.
+    try:
+        from ..veille_plu import fiche_en_cours as _radar_en_cours
+        _rec = _radar_en_cours(insee)
+        if _rec:
+            en_cours = _rec
+    except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
+        pass
     libelle = (f"{document_servi} — {fait_foi}" if fait_foi else document_servi)
     return {"idurba": c.get("idurba"), "horizon": horizon, "statut": statut,
             "libelle": libelle, "note": note, "cadence": "révisions (périodique)",
             # M40 : exposition en 3 temps (front + one-pager). fait_foi_ok = booléen honnête.
             "document_servi": document_servi, "fait_foi": fait_foi, "en_cours": en_cours,
             "action": action, "fait_foi_ok": statut in ("a_jour", "annule_partiel", "opposabilite_en_attente")}
+
+
+def _radar_proc(idu: str, tier: str | None) -> dict | None:
+    """M41 — bloc RADAR procédures PLU de la parcelle (point de calcul unique labuse.veille_plu) :
+    synthèse commune + sursis (si armé) + veille AU (si déclassée AU/zone-fermée). None si rien."""
+    try:
+        from ..veille_plu import radar_parcelle
+        return radar_parcelle(idu, tier)
+    except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
+        return None
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -2743,6 +2763,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
         # exports (one-pager), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
+        "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)

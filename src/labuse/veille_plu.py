@@ -92,6 +92,10 @@ def sursis_arme(e: dict) -> bool:
             and e.get("debat_padd") not in ("ABSENT", None, ""))
 
 
+def _cap(t: str) -> str:
+    return (t[:1].upper() + t[1:]) if t else t
+
+
 _TYPE_LABEL = {"revision_plu": "révision générale du PLU", "elaboration_plu": "élaboration du PLU",
                "modification_plu": "modification du PLU"}
 
@@ -117,7 +121,7 @@ def vigilance_sursis(insee: str | None) -> dict | None:
     if not e or not sursis_arme(e):
         return None
     lbl = _TYPE_LABEL.get(e["procedure"], e["procedure"])
-    return {"texte": (f"{lbl.capitalize()} en cours, débat PADD le {e['debat_padd']} — sursis à statuer "
+    return {"texte": (f"{_cap(lbl)} en cours, débat PADD le {e['debat_padd']} — sursis à statuer "
                       f"possible : sécuriser le calendrier en mairie avant engagement. {_src_suffixe(e)}"),
             "base_legale": BASE_LEGALE_SURSIS}
 
@@ -165,6 +169,29 @@ def a_reverifier(registre: dict | None = None, today=None) -> list[dict]:
     return sorted(out, key=lambda x: (x["age_jours"] is not None, x["age_jours"] or 0), reverse=True)
 
 
+#: tiers où un permis pourrait être demandé → concernés par le sursis (si armé)
+_TIERS_SURSIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+#: déclassées « zone fermée / AU » → concernées par la veille AU (ouverture à terme)
+_TIERS_VEILLE_AU = ("declasse_zone_fermee", "declasse_au_fermee", "declasse_au_statut_inconnu")
+
+
+def radar_parcelle(insee: str | None, tier: str | None) -> dict | None:
+    """Bloc RADAR d'une parcelle : synthèse commune + conséquences parcellaires SERVABLES selon le
+    tier. `sursis` seulement si armé (PADD sourcé) ET tier « permis possible ». `veille_au` seulement
+    sur les déclassées zone-fermée/AU d'une commune en procédure SOURCE. None si rien à montrer."""
+    e = entry(insee)
+    if not e:
+        return None
+    sursis = vigilance_sursis(insee) if tier in _TIERS_SURSIS else None
+    veille = vigilance_veille_au(insee) if tier in _TIERS_VEILLE_AU else None
+    synth = synthese_commune(insee)
+    # ne rien servir si la commune n'a aucune procédure active ET aucune conséquence parcellaire
+    if not sursis and not veille and not (synth and synth.get("servi_en_vigilance")):
+        return None
+    return {"synthese": synth, "sursis": sursis, "veille_au": veille,
+            "commune": e.get("commune"), "confiance": e.get("confiance")}
+
+
 def synthese_commune(insee: str | None) -> dict | None:
     """Synthèse radar pour la fiche COMMUNE : stade de la procédure + prochaine étape connue.
     Toujours honnête sur la confiance ; None si commune hors registre."""
@@ -180,7 +207,7 @@ def synthese_commune(insee: str | None) -> dict | None:
         etat = f"Élaboration prescrite le {e['date_acte']} — dormante (aucun acte postérieur connu)."
     else:
         lbl = _TYPE_LABEL.get(e["procedure"], e["procedure"])
-        etat = f"{lbl.capitalize()} en cours — stade « {e['stade']} », prescrite le {e['date_acte']}."
+        etat = f"{_cap(lbl)} en cours — stade « {e['stade']} », prescrite le {e['date_acte']}."
     padd = (f"Débat PADD constaté le {e['debat_padd']} — sursis à statuer possible."
             if sursis_arme(e) else
             "Débat PADD non constaté à ce jour — pas de sursis servi (donnée à curer).")

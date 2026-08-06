@@ -56,6 +56,9 @@ export const MODULES: ModuleDef[] = [
   // M12-D4 : « Scorer une adresse » quitte la barre d'en-tête et rejoint les Outils.
   { key: 'scoreur-adresse', num: 'O2', group: 'analyser', phare: true,
     label: 'Scorer une adresse', desc: 'Collez l’adresse d’un bien à vendre — seconde opinion avant d’offrir' },
+  // M41 (2.6) — Vérif procédure : la commune est-elle en révision/élaboration PLU, et qu’en découle-t-il ?
+  { key: 'verif-procedure', num: 'O11', group: 'analyser',
+    label: 'Vérif procédure PLU', desc: 'Un IDU — la commune est-elle en procédure PLU (sursis à statuer possible, veille AU) ?' },
   // M15-C2 : la calculette de charge foncière des fiches, portée en outil autonome.
   { key: 'calculette-fonciere', num: 'M23', group: 'analyser',
     label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },

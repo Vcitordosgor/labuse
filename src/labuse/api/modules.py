@@ -1126,3 +1126,61 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
                     "instruire ». Étude d'architecte requise."),
         "n": len(items), "items": top,   # n = VRAI nombre de correspondances ; items = top 200 affichées
     }
+
+
+@router.get("/verif-procedure/{idu}")
+def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
+    """M41 Phase 2.6 — outil « Vérif procédure » : un IDU → la commune a-t-elle une procédure PLU
+    en cours (OUI/NON), et les conséquences parcellaires applicables. L'outil LIT le radar
+    (labuse.veille_plu, point de calcul UNIQUE) — il ne calcule rien, mêmes libellés que la fiche.
+    L'absence est DATÉE elle aussi (« aucune procédure connue au JJ/MM — dernier constat le X »)."""
+    import datetime
+
+    from ..verdict_servi import verdict_servi
+    from .. import veille_plu as V
+
+    p = db.execute(text("SELECT idu, commune FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    insee = idu[:5]
+    try:
+        tier = (verdict_servi(db, idu) or {}).get("tier")
+    except Exception:  # noqa: BLE001 - l'outil ne doit jamais 500 sur le tier
+        tier = None
+    e = V.entry(insee)
+    today = datetime.date.today().isoformat()
+    out = {"idu": idu, "commune": p["commune"], "insee": insee, "tier_servi": tier,
+           "consulte_le": today}
+    if not e:
+        out.update({"procedure_en_cours": None,
+                    "message": "Commune hors registre radar — état de procédure inconnu."})
+        return out
+    radar = V.radar_parcelle(idu, tier)
+    active = V.procedure_active(e)
+    if active:
+        syn = V.synthese_commune(insee) or {}
+        out.update({
+            "procedure_en_cours": True,
+            "type": e["procedure"], "stade": e["stade"], "date_acte": e["date_acte"],
+            "source": e["source"], "source_url": e.get("source_url"),
+            "date_constat": e["date_constat"], "confiance": e["confiance"],
+            "synthese": syn.get("etat"),
+            "consequences": {
+                "sursis": (radar or {}).get("sursis"),          # None tant que débat PADD non constaté
+                "veille_au": (radar or {}).get("veille_au"),     # sur les déclassées zone-fermée/AU
+            },
+        })
+    else:
+        # aucune procédure active servie (aucune / clôturée / dormante) — l'absence est datée
+        detail = {"aucune": "aucune procédure PLU lourde",
+                  "cloturee": "procédure Sudocuh sans suite connue (clôture probable, non servie)",
+                  }.get(e["procedure"], f"procédure « {e['procedure']} » non servie au radar")
+        stade = e.get("stade")
+        if stade == "prescrite_dormante":
+            detail = f"élaboration prescrite le {e['date_acte']} — dormante, aucun acte postérieur connu"
+        out.update({
+            "procedure_en_cours": False, "confiance": e["confiance"],
+            "message": (f"Aucune procédure PLU en cours servie au {today} — {detail}. "
+                        f"Dernier constat le {e['date_constat']}."),
+        })
+    return out
