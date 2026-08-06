@@ -464,7 +464,11 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
         ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
         {"run": RUN, "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset,
-            "mention": "Données indicatives LABUSE (scoring q_v2) — usage selon convention partenaire.",
+            # M36 Lot A : l'ancienne mention « (scoring q_v2) » nommait un run MORT — étiquette
+            # fausse sur une surface EXTERNE. Ce robinet sert la MATRICE (historique), pas le
+            # classement servi : on le DIT (migration tiers = extinction (c), au backlog).
+            "mention": "Données indicatives LABUSE (classement interne historique — pas le "
+                       "classement servi) — usage selon convention partenaire.",
             "items": [dict(r) for r in rows]}
 
 

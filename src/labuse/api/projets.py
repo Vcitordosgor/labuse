@@ -73,16 +73,19 @@ def ensure_tables(engine) -> None:
 def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)$"),
                    db: Session = Depends(get_db)) -> dict:
     """Chiffres SOURCÉS par option d'un choix de l'entretien (secteur ou commune) : nombre
-    d'opportunités (q_v2 chaude/à surveiller/à creuser), prix médian du bâti (DVF, €/m²
+    d'opportunités (tiers servis brûlante → à creuser), prix médian du bâti (DVF, €/m²
     habitable) et communes carencées SRU. DÉTERMINISTE, 100 % SQL — l'IA n'en produit AUCUN
     (doctrine : arbitrages sourcés ou tus). Sous les chips : « N opportunités · ~P €/m² ».
     """
-    # opportunités par commune (les 3 statuts promus du run premium)
+    # M36 Lot A (famille M35 Lot D) : « opportunités » = parcelles SERVIES au classement
+    # (tiers actifs du run servi) — plus jamais la matrice historique (compteur produit,
+    # échappé à l'inventaire M35 ; même dérive que /communes).
+    from ..verdict_servi import TIERS_SERVABLES
     opp = {r["commune"]: r["n"] for r in db.execute(text(
         "SELECT p.commune, count(*) n FROM parcels p "
-        "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :runref "
-        " AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser') "
-        "GROUP BY p.commune"), {"runref": RUN}).mappings()}
+        "JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :runref "
+        " AND s.tier = ANY(:servables) "
+        "GROUP BY p.commune"), {"runref": RUN, "servables": list(TIERS_SERVABLES)}).mappings()}
     # prix médian bâti DVF (€/m² habitable) — bornes anti-aberration comme l'affichage marché
     dvf = {r["commune"]: int(r["m"]) for r in db.execute(text(
         "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
@@ -107,7 +110,8 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
         options = [{"key": c, "label": c, **bloc([c])}
                    for c in sorted(opp, key=lambda x: -opp[x])]
     return {"dimension": dimension, "options": options,
-            "note": "Opportunités : run premium q_v2. Prix médian : DVF bâti (€/m² habitable). "
+            "note": "Opportunités : parcelles servies au classement (brûlante → à creuser). "
+                    "Prix médian : DVF bâti (€/m² habitable). "
                     "Carencées : inventaire SRU. Aucun chiffre produit par l'IA."}
 
 

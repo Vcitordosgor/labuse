@@ -13,8 +13,11 @@ const API = 'http://127.0.0.1:8000'
 // F6 (M12) : le proxy dev doit couvrir TOUTES les routes métier — sinon /projets (chercher-plus,
 // ajouter, kanban…) et /ia, /crm, /pipeline, /modules… tombent en 404 en `npm run dev` et « rien
 // ne se passe » au clic. En prod FastAPI sert dist/ à la même origine (aucun proxy), donc sans effet.
+// M36 Lot A : '/v2' MANQUAIT — en dev, useV2Actif() (fetch /v2/modele) échouait toujours →
+// la légende retombait sur le repli « matrice » alors que le run servi existe. Le dev raconte
+// désormais la même chose que la prod (FastAPI même origine). '/mutation' retiré (M35 Lot E).
 const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discover',
-  '/health', '/coverage', '/assemblage', '/compare', '/mutation', '/communes',
+  '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/signalement', '/guide',
   '/api']   // M26-B : /api/copilote (runs + SSE)
