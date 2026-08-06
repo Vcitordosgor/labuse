@@ -87,6 +87,75 @@ def ingest_permits(session: Session, insee: str, commune: str, run_id: int | Non
 _TYPE_LABEL = {"PC": "Permis de construire", "PA": "Permis d'aménager",
                "DP": "Déclaration préalable", "PD": "Permis de démolir"}
 
+# M38 — fenêtre glissante du bloc « activité de dépôt » de la fiche. Paramètre NOMMÉ (arbitrage
+# Vic Phase 0 §2), jamais un littéral disséminé : un seul point à changer ici.
+DEPOTS_FENETRE_MOIS = 36
+
+# M38 — étiquette d'honnêteté obligatoire (arbitrage Vic Phase 0 §4). Le dataset Sitadel ne
+# publie QUE les permis aboutis, datés à leur dépôt : ni refus, ni dossiers en cours. On ne
+# laisse jamais croire à une visibilité temps-réel des dépôts en instance.
+DEPOTS_LIBELLE = "activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés)"
+
+
+def depots_recents(session, parcel_id: int, fenetre_mois: int = DEPOTS_FENETRE_MOIS) -> dict | None:
+    """M38 — activité de DÉPÔT récente (Sitadel3 `date_depot`), pour la fiche. Informatif seul :
+    lu par AUCUN calcul servi, ne touche ni tier ni verdict.
+
+    Deux lignes HIÉRARCHISÉES et DISTINCTES (arbitrage Vic Phase 0 §3), jamais fusionnées :
+    - `parcelle` : dépôts rattachés (IDU) à LA parcelle consultée — « sur cette parcelle : … ».
+    - `secteur`  : dépôts de la section cadastrale (préfixe IDU 10) — « sur le secteur : N sur M mois ».
+
+    Fenêtre glissante `fenetre_mois` (défaut nommé). Retourne None si AUCUN dépôt (ni parcelle ni
+    secteur) sur la fenêtre → pas de bloc vide hors couverture."""
+    row = session.execute(
+        text(
+            """
+            WITH p AS (SELECT idu FROM parcels WHERE id = :pid)
+            SELECT
+              count(*) FILTER (WHERE jsonb_exists(s.idu_codes, p.idu)) AS n_parcelle,
+              max(s.date_depot) FILTER (WHERE jsonb_exists(s.idu_codes, p.idu)) AS dernier_parcelle,
+              count(*) FILTER (WHERE EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) e
+                WHERE e LIKE left(p.idu, 10) || '%')) AS n_secteur,
+              max(s.date_depot) FILTER (WHERE EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) e
+                WHERE e LIKE left(p.idu, 10) || '%')) AS dernier_secteur
+            FROM sitadel_permits s, p
+            WHERE s.date_depot IS NOT NULL
+              AND s.date_depot >= (current_date - (:mois || ' months')::interval)
+            """
+        ), {"pid": parcel_id, "mois": fenetre_mois},
+    ).mappings().first()
+
+    n_parcelle = int(row["n_parcelle"]) if row else 0
+    n_secteur = int(row["n_secteur"]) if row else 0
+    if n_parcelle == 0 and n_secteur == 0:
+        return None  # hors couverture : pas de bloc vide
+
+    # Millésime = point de calcul unique (data_sources, écrit par l'ingestion). Jamais recalculé ici.
+    millesime = session.execute(text(
+        "SELECT source_millesime FROM data_sources WHERE name = 'SITADEL (autorisations d''urbanisme)'"
+    )).scalar()
+
+    def _d(v):
+        return v.isoformat() if v else None
+
+    return {
+        "fenetre_mois": fenetre_mois,
+        "source": "Sitadel3 / SDES",
+        "sourcage": "Sourcé",
+        "millesime": millesime,
+        # étiquette obligatoire : permis AUTORISÉS, datés au dépôt (jamais « en instance visible »).
+        "libelle": DEPOTS_LIBELLE,
+        "granularite": "permis autorisés, datés au dépôt",
+        # ligne 1 — sur CETTE parcelle (None si 0 : la ligne parcelle ne s'affiche que si dépôt dessus)
+        "parcelle": ({"count": n_parcelle, "dernier": _d(row["dernier_parcelle"])}
+                     if n_parcelle else None),
+        # ligne 2 — sur le SECTEUR (section cadastrale, préfixe IDU 10)
+        "secteur": ({"count": n_secteur, "dernier": _d(row["dernier_secteur"]),
+                     "maille": "section cadastrale"} if n_secteur else None),
+    }
+
 
 def _nature(raw: dict | None) -> str:
     """Nature lisible d'un permis depuis le raw ODS (nb logements / surface habitable)."""

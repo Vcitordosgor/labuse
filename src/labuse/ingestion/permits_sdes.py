@@ -102,12 +102,13 @@ def _cadastre_pairs(fieldnames: list[str]) -> list[tuple[str, str]]:
 
 
 _UPSERT = text(
-    """INSERT INTO sitadel_permits (permit_id, type, date, idu_codes, commune, geom, raw)
-       SELECT :pid, :typ, :dt, CAST(:idus AS jsonb), :c,
+    """INSERT INTO sitadel_permits (permit_id, type, date, date_depot, idu_codes, commune, geom, raw)
+       SELECT :pid, :typ, :dt, :ddep, CAST(:idus AS jsonb), :c,
               (SELECT centroid FROM parcels WHERE idu = ANY(:idu_arr) LIMIT 1),
               CAST(:raw AS jsonb)
        ON CONFLICT (permit_id) DO UPDATE SET
-         type = EXCLUDED.type, date = EXCLUDED.date, idu_codes = EXCLUDED.idu_codes,
+         type = EXCLUDED.type, date = EXCLUDED.date, date_depot = EXCLUDED.date_depot,
+         idu_codes = EXCLUDED.idu_codes,
          commune = EXCLUDED.commune, raw = EXCLUDED.raw,
          geom = COALESCE(EXCLUDED.geom, sitadel_permits.geom)""")
 
@@ -152,11 +153,32 @@ def _date_autorisation(rec: dict, raw: dict, stats: dict) -> str | None:
     return val
 
 
+def _date_depot(rec: dict, raw: dict, stats: dict) -> str | None:
+    """M38 — DR_DEPOT (date de dépôt) VALIDÉE, même discipline que la date d'autorisation :
+    invalide ou future → None (valeur brute tracée, compteur bruyant). Le dépôt précède
+    toujours l'autorisation ; une date de dépôt future est une anomalie de source, jamais
+    servie. On n'invente jamais une date."""
+    val = (rec.get("DR_DEPOT") or "").strip() or None
+    if val is None:
+        return None
+    try:
+        d = datetime.fromisoformat(val[:10]).date()
+    except ValueError:
+        stats["depots_invalides"] += 1
+        raw["date_depot_brute"] = val
+        return None
+    if d > datetime.now(timezone.utc).date():
+        stats["depots_futurs"] += 1
+        raw["date_depot_brute"] = val
+        return None
+    return val
+
+
 def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
     """Ingestion (backfill si since=None, delta sinon) des 4 datafiles — idempotente (upsert)."""
     communes = _commune_map(session)
     stats = {"lignes": 0, "upserts": 0, "sans_cadastre": 0, "petitioner": 0, "pv_col": None,
-             "dates_futures": 0, "dates_invalides": 0}
+             "dates_futures": 0, "dates_invalides": 0, "depots_futurs": 0, "depots_invalides": 0}
     for key, df in DATAFILES.items():
         raw_csv = _fetch_csv(df["rid"], since=since)
         reader = csv.DictReader(io.StringIO(raw_csv), delimiter=";")
@@ -200,6 +222,7 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
             session.execute(_UPSERT, {
                 "pid": pid, "typ": (rec.get(df.get("type_col")) or df.get("type_fixe") or "").strip() or None,
                 "dt": _date_autorisation(rec, raw, stats),
+                "ddep": _date_depot(rec, raw, stats),   # M38 : date de dépôt Sitadel (DR_DEPOT)
                 "idus": json.dumps(idus), "idu_arr": idus,
                 "c": communes.get(insee, insee),
                 "raw": json.dumps(raw, ensure_ascii=False)})
@@ -290,8 +313,14 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
             s.execute(text(
                 "UPDATE ingestion_runs SET finished_at = now(), status = 'ok', "
                 "parcels_count = :n WHERE id = :id"), {"n": stats["upserts"], "id": run_id})
+            # M38 : millésime canonique = horizon réel des données ingérées (dernier mois
+            # couvert, dépôt OU autorisation). Point de calcul unique lu par le bloc fiche.
             s.execute(text(
-                "UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                "UPDATE data_sources SET last_sync_at = now(), source_cadence = 'mensuelle', "
+                "source_millesime = ("
+                "  SELECT to_char(max(greatest(coalesce(date::date, date_depot), "
+                "         coalesce(date_depot, date::date))), 'YYYY-MM') FROM sitadel_permits) "
+                "WHERE name = :n"),
                 {"n": SOURCE_NAME})
         except Exception:
             s.execute(text(

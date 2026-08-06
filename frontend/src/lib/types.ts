@@ -231,6 +231,13 @@ export interface Fiche {
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null
+  // M38 — activité de dépôt (Sitadel3 date_depot), informatif seul ; null hors couverture.
+  depots?: {
+    fenetre_mois: number; source: string; sourcage: string; millesime: string | null
+    libelle: string; granularite: string
+    parcelle: { count: number; dernier: string | null } | null
+    secteur: { count: number; dernier: string | null; maille?: string } | null
+  } | null
 }
 
 export interface Renouvellement {

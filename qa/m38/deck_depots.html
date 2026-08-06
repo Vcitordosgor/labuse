@@ -1,0 +1,43 @@
+<!doctype html><meta charset='utf-8'><title>M38 — captures bloc dépôts</title><style>body{font:14px -apple-system,sans-serif;background:#0b0f0d;color:#dce8e1;margin:24px}
+h1{font-size:18px;color:#4ADE96}.sub{color:#8FA69A;font-size:13px;max-width:820px;line-height:1.5}
+.card{margin:20px 0;padding:16px;background:#111814;border:1px solid #1f2a24;border-radius:12px;max-width:820px}
+.idu{font-family:monospace;font-size:15px;color:#ECF5EF;margin:0}.muted{color:#5a6b62}
+.titre{color:#E8B44C;font-size:12.5px;margin:6px 0 12px}
+.fiche-block{background:#0d1310;border:1px solid #223029;border-radius:12px;padding:12px 14px}
+.hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.ti{font-weight:600;color:#ECF5EF;font-size:13px}
+.badge{border:1px solid rgba(74,222,150,.4);background:rgba(74,222,150,.1);color:#4ADE96;font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 9px}
+.l{font-size:12.5px;margin:3px 0;color:#dce8e1}.k{color:#8FA69A}.m{color:#5a6b62}
+.lib{font-size:10.5px;color:#5a6b62;margin-top:10px}
+.none{color:#8FA69A;font-size:12.5px;background:#0d1310;border:1px dashed #223029;border-radius:10px;padding:14px}
+details{margin-top:10px}summary{cursor:pointer;color:#5a6b62;font-size:11px}
+pre{background:#0a0e0c;border:1px solid #1a231d;border-radius:8px;padding:10px;font-size:11px;overflow:auto;color:#aebdb4}</style><h1>M38 · Bloc « Activité de dépôt de permis » — 3 captures de contrôle</h1><p class='sub'>Rendu réel du bloc à partir des payloads API (port 8010). Informatif seul : ne touche ni tier ni verdict. Fenêtre 36 mois (paramètre nommé). Deux lignes distinctes (parcelle / secteur), Sourcé Sitadel3 + millésime, étiquette d'honnêteté « permis aboutis — refus et dossiers en cours non publiés ».</p><div class='card'><p class='idu'>97402000AH1986 <span class='muted'>Bras-Panon</span></p><p class='titre'>Cas 1 — dépôts SUR la parcelle + secteur (les deux lignes)</p><div class='fiche-block'><div class='hd'><span class='ti'>Activité de dépôt de permis</span><span class='badge'>Sourcé Sitadel3 / SDES · 2026-06</span></div><p class='l'><span class='k'>Sur cette parcelle :</span> <b>5</b> dépôts sur 36 mois<span class='m'> · dernier 2025-01-01</span></p><p class='l'><span class='k'>Sur le secteur :</span> <b>37</b> dépôts sur 36 mois<span class='m'> · section cadastrale · dernier 2026-03-12</span></p><p class='lib'>activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).</p></div><details><summary>payload <code>depots</code> (API /parcels/97402000AH1986)</summary><pre>{
+  &quot;fenetre_mois&quot;: 36,
+  &quot;source&quot;: &quot;Sitadel3 / SDES&quot;,
+  &quot;sourcage&quot;: &quot;Sourcé&quot;,
+  &quot;millesime&quot;: &quot;2026-06&quot;,
+  &quot;libelle&quot;: &quot;activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés)&quot;,
+  &quot;granularite&quot;: &quot;permis autorisés, datés au dépôt&quot;,
+  &quot;parcelle&quot;: {
+    &quot;count&quot;: 5,
+    &quot;dernier&quot;: &quot;2025-01-01&quot;
+  },
+  &quot;secteur&quot;: {
+    &quot;count&quot;: 37,
+    &quot;dernier&quot;: &quot;2026-03-12&quot;,
+    &quot;maille&quot;: &quot;section cadastrale&quot;
+  }
+}</pre></details></div><div class='card'><p class='idu'>97415000AX0967 <span class='muted'>Saint-Paul</span></p><p class='titre'>Cas 2 — secteur seulement (aucun dépôt sur la parcelle : ligne parcelle absente)</p><div class='fiche-block'><div class='hd'><span class='ti'>Activité de dépôt de permis</span><span class='badge'>Sourcé Sitadel3 / SDES · 2026-06</span></div><p class='l'><span class='k'>Sur le secteur :</span> <b>20</b> dépôts sur 36 mois<span class='m'> · section cadastrale · dernier 2026-02-09</span></p><p class='lib'>activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).</p></div><details><summary>payload <code>depots</code> (API /parcels/97415000AX0967)</summary><pre>{
+  &quot;fenetre_mois&quot;: 36,
+  &quot;source&quot;: &quot;Sitadel3 / SDES&quot;,
+  &quot;sourcage&quot;: &quot;Sourcé&quot;,
+  &quot;millesime&quot;: &quot;2026-06&quot;,
+  &quot;libelle&quot;: &quot;activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés)&quot;,
+  &quot;granularite&quot;: &quot;permis autorisés, datés au dépôt&quot;,
+  &quot;parcelle&quot;: null,
+  &quot;secteur&quot;: {
+    &quot;count&quot;: 20,
+    &quot;dernier&quot;: &quot;2026-02-09&quot;,
+    &quot;maille&quot;: &quot;section cadastrale&quot;
+  }
+}</pre></details></div><div class='card'><p class='idu'>97415000BD0022 <span class='muted'>Saint-Paul</span></p><p class='titre'>Cas 3 — hors couverture (aucun dépôt : PAS de bloc affiché)</p><p class='none'>depots = null → <b>aucun bloc rendu</b> (pas de bloc vide hors couverture, arbitrage Vic).</p><details><summary>payload <code>depots</code> (API /parcels/97415000BD0022)</summary><pre>null</pre></details></div>
