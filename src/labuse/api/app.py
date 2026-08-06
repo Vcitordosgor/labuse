@@ -804,7 +804,13 @@ def _q_v2_where(run_label: str, score_min: int | None,
                 rang_max: int | None = None, renouvellement: bool = False,
                 division_or: bool = False, proprietaire_type: str | None = None,
                 etat_societe: str | None = None, copro: str | None = None,
-                npnru: bool = False, adresse_absente: bool = False) -> tuple[str, dict]:
+                npnru: bool = False, adresse_absente: bool = False,
+                budget_max: int | None = None, charge_min: int | None = None,
+                charge_max: int | None = None, prix_marche_min: int | None = None,
+                prix_marche_max: int | None = None, marche_fiable: bool = False,
+                ca_min: int | None = None, mode_b_rentable: bool = False,
+                modeb_travaux_m2: float | None = None, modeb_loyer_m2: float | None = None,
+                modeb_rendement_pct: float | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -992,6 +998,52 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM anru_quartiers aq WHERE aq.commune = p.commune)")
     if adresse_absente:   # veille : adresse BAN absente (dite « Absente (BAN) »)
         conds.append("NOT EXISTS (SELECT 1 FROM adresse_parcelles ap0 WHERE ap0.idu = p.idu)")
+    # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
+    if budget_max is not None:
+        # « Mon budget » : prix d'achat max admissible (charge foncière SUPPORTABLE, M22-A) ≤ budget.
+        # score_e.charge_supportable = bilan à rebours (Estimé). Rend le preset « Mon budget » réel.
+        conds.append("EXISTS (SELECT 1 FROM score_e sb WHERE sb.idu = p.idu AND sb.estimable"
+                     " AND sb.charge_supportable <= :f_budget)")
+        params["f_budget"] = budget_max
+    if charge_min is not None:   # charge foncière supportable — borne basse (tranches)
+        conds.append("EXISTS (SELECT 1 FROM score_e sc1 WHERE sc1.idu = p.idu AND sc1.estimable"
+                     " AND sc1.charge_supportable >= :f_chmin)")
+        params["f_chmin"] = charge_min
+    if charge_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM score_e sc2 WHERE sc2.idu = p.idu AND sc2.estimable"
+                     " AND sc2.charge_supportable <= :f_chmax)")
+        params["f_chmax"] = charge_max
+    if prix_marche_min is not None:   # prix marché DVF (€/m² terrain, dernière mutation de LA parcelle)
+        conds.append("EXISTS (SELECT 1 FROM v_parcel_dvf_last dl1 WHERE dl1.idu = p.idu"
+                     " AND dl1.prix_m2_terrain >= :f_pmmin)")
+        params["f_pmmin"] = prix_marche_min
+    if prix_marche_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM v_parcel_dvf_last dl2 WHERE dl2.idu = p.idu"
+                     " AND dl2.prix_m2_terrain <= :f_pmmax)")
+        params["f_pmmax"] = prix_marche_max
+    if marche_fiable:
+        # fiabilité DVF : le secteur cadastral (section = 10 1ers car. de l'idu) a n≥3 ventes
+        # (sinon « échantillon limité »). Un filtre « données marché fiables » assumé.
+        conds.append("EXISTS (SELECT 1 FROM dvf_secteur_medianes dm WHERE dm.secteur = left(p.idu, 10)"
+                     " AND dm.n_ventes >= 3)")
+    if ca_min is not None:
+        # bilan CA indicatif : prix de sortie neuf sectoriel × SDP résiduelle (Estimé, hors coûts).
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel rca JOIN dvf_prix_sortie_neuf sn"
+                     " ON sn.cle = left(p.idu, 10) WHERE rca.parcel_id = p.id"
+                     " AND rca.sdp_residuelle_m2 * sn.prix_m2_neuf >= :f_camin)")
+        params["f_camin"] = ca_min
+    if mode_b_rentable:
+        # Mode B rentable AU PARAMÈTRE COURANT (curseur session : travaux/loyer/rendement). Même
+        # forme que la fiche (M44) : achat_max = loyer_annuel / rendement − travaux ; rentable si
+        # achat_max ≥ prix probable du foncier. SDP ≈ surface exploitable (Estimé). Défauts sûrs.
+        conds.append(
+            "EXISTS (SELECT 1 FROM parcel_residuel rmb JOIN score_e smb ON smb.idu = p.idu"
+            " WHERE rmb.parcel_id = p.id AND smb.estimable AND rmb.sdp_residuelle_m2 > 0"
+            " AND (rmb.sdp_residuelle_m2 * :f_loyer * 12.0 / (:f_rend / 100.0)"
+            "      - rmb.sdp_residuelle_m2 * :f_travaux) >= smb.prix_probable)")
+        params["f_loyer"] = modeb_loyer_m2 if modeb_loyer_m2 is not None else 12.21
+        params["f_rend"] = modeb_rendement_pct if modeb_rendement_pct is not None else 6.0
+        params["f_travaux"] = modeb_travaux_m2 if modeb_travaux_m2 is not None else 1200.0
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -1406,6 +1458,18 @@ class FiltreCriteres:
     copro: str | None = None
     npnru: bool = False
     adresse_absente: bool = False
+    # M45-B (Lot 1+2) — tiroir Économie + curseur mode B (paramètres de session)
+    budget_max: int | None = None
+    charge_min: int | None = None
+    charge_max: int | None = None
+    prix_marche_min: int | None = None
+    prix_marche_max: int | None = None
+    marche_fiable: bool = False
+    ca_min: int | None = None
+    mode_b_rentable: bool = False
+    modeb_travaux_m2: float | None = None
+    modeb_loyer_m2: float | None = None
+    modeb_rendement_pct: float | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
@@ -1415,7 +1479,10 @@ class FiltreCriteres:
                            self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
                            self.zone_plu, self.sous_densite, self.mult_min, self.rang_max,
                            self.renouvellement, self.division_or, self.proprietaire_type,
-                           self.etat_societe, self.copro, self.npnru, self.adresse_absente)
+                           self.etat_societe, self.copro, self.npnru, self.adresse_absente,
+                           self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
+                           self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
+                           self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
@@ -1424,7 +1491,10 @@ class FiltreCriteres:
                 self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
                 self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu,
                 self.sous_densite, self.mult_min, self.rang_max, self.renouvellement, self.division_or,
-                self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente)
+                self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente,
+                self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
+                self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
+                self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
 
 
 @app.get("/filtre")
