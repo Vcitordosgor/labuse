@@ -1,0 +1,9 @@
+M43 P0 — digests (features propriétaire PM, lecture seule)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre · RGPD: PM only, niveau societe
+SYNTHESE: 91397 parcelles PM (millesime 2019-2024 tracé, dernier 2024). Servies actives PM 2024: ~5201.
+  Resolution: 70% enrichment (recherche-entreprises), 7% BODACC. Signaux SOURCES: cessee (etat=C),
+  radiee (BODACC), procedure_coll (BODACC pcl). Volumetrie actifs: cessee~183, radiee~67, pcl~108.
+  Signal RARE, quasi absent des tetes (brulante 0). Dette #11 millesime: la colonne EST peuplee.
+
+volumetrie_signaux_par_tier_p0.csv SHA256:
+  0db2bb1aeedc53ec512daca385ff0bebe7ddd376a0bfeef94aec08344d43c3fd
