@@ -73,6 +73,22 @@ def test_p2a_facettes_composables(client):
         assert isinstance(c, int) and 0 <= c <= total, (crit, c, total)
 
 
+def test_p2d_facettes_tiroirs(client):
+    # M45 (P2d) : facettes composables adossées à des tables PRÉSENTES dans labuse_test
+    # (parcel_residuel, parcel_p_score_v2, parcelle_personne_morale). Les facettes sur tables
+    # matérialisées hors modèle (renouvellement, division_or, NPNRU, état société, adresse BAN)
+    # sont vérifiées sur la base réelle (comptes au commit [M45-P2d]) — non exercées ici.
+    total = client.get("/filtre", params={"source": Q_A_RUN_LABEL}).json()["compte"]
+    for crit in [{"sous_densite": "true"}, {"mult_min": 2}, {"rang_max": 100},
+                 {"proprietaire_type": "bailleur"}, {"proprietaire_type": "pp"},
+                 {"copro": "avec"}, {"copro": "sans"},
+                 {"sous_densite": "true", "mult_min": 1.5, "proprietaire_type": "pm"}]:
+        r = client.get("/filtre", params={"source": Q_A_RUN_LABEL, "limit": 0, **crit})
+        assert r.status_code == 200, crit
+        c = r.json()["compte"]
+        assert isinstance(c, int) and 0 <= c <= total, (crit, c, total)
+
+
 def test_params_morts_inertes(client):
     # Passés, `v_signal`/`statuts`/`brulantes` sont ignorés (params inconnus) : pas d'erreur,
     # et surtout ils ne filtrent plus rien (le total ne bouge pas vs la requête sans eux).

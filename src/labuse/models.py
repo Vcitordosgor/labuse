@@ -952,6 +952,8 @@ def create_all(engine) -> None:
     ensure_icd_columns(engine)
     ensure_signalements(engine)
     ensure_suggestions(engine)
+    ensure_flags_probe_index(engine)   # M45 (P1)
+    ensure_parcel_flags(engine)        # M45 (P2)
 
 
 def ensure_icd_columns(engine) -> None:

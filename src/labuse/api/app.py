@@ -799,7 +799,12 @@ def _q_v2_where(run_label: str, score_min: int | None,
                 marge_min: int | None = None,
                 sdp_max: int | None = None, constructibilite: str | None = None,
                 etat_sol: str | None = None, capacite_min: int | None = None,
-                zone_plu: str | None = None) -> tuple[str, dict]:
+                zone_plu: str | None = None,
+                sous_densite: bool = False, mult_min: float | None = None,
+                rang_max: int | None = None, renouvellement: bool = False,
+                division_or: bool = False, proprietaire_type: str | None = None,
+                etat_societe: str | None = None, copro: str | None = None,
+                npnru: bool = False, adresse_absente: bool = False) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -936,6 +941,57 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu zx WHERE zx.idu = p.idu"
                      " AND upper(zx.zone_lib) = ANY(:f_zplu))")
         params["f_zplu"] = [z.strip().upper() for z in zone_plu.split(",") if z.strip()]
+    # ── M45 (P2d) — tiroirs éco / mutation / propriété / veille (facettes composables) ──
+    if sous_densite:   # éco/risques : bâti en sous-densité (parcel_residuel)
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel rd WHERE rd.parcel_id = p.id AND rd.sous_densite)")
+    if mult_min is not None:   # mutation : probabilité relative ×N (mult_base du scoring v2)
+        conds.append("s2.mult_base >= :f_mult")
+        params["f_mult"] = mult_min
+    if rang_max is not None:   # mutation : têtes de liste (rang P ≤ N, cohérent Q3-M36)
+        conds.append("s2.rang IS NOT NULL AND s2.rang <= :f_rang")
+        params["f_rang"] = rang_max
+    if renouvellement:   # mutation : segment Renouvellement (run-scopé, vérifié live sur le run servi)
+        conds.append("EXISTS (SELECT 1 FROM parcel_renouvellement rn WHERE rn.idu = p.idu AND rn.run_label = :runf)")
+    if division_or:   # mutation : segment Division en or (O12)
+        conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu)")
+    if proprietaire_type:
+        # propriété : PM identifiée (SIREN) / bailleur (Office HLM ou SEM) / PP non déterminable (absence).
+        pt = [x.strip() for x in proprietaire_type.split(",") if x.strip()]
+        sub = []
+        if "pm" in pt:
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmx WHERE pmx.idu = p.idu)")
+        if "bailleur" in pt:
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmb WHERE pmb.idu = p.idu"
+                       " AND (pmb.groupe_label ILIKE '%HLM%' OR pmb.groupe_label ILIKE '%conomie mixte%'))")
+        if "pp" in pt:
+            sub.append("NOT EXISTS (SELECT 1 FROM parcelle_personne_morale pmp WHERE pmp.idu = p.idu)")
+        if sub:
+            conds.append("(" + " OR ".join(sub) + ")")
+    if etat_societe:
+        # propriété : état PUBLIC de la société (M43, factuel) — cessée / radiée / procédure collective.
+        es = [x.strip() for x in etat_societe.split(",") if x.strip()]
+        sub = []
+        if "cessee" in es:
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pc JOIN owner_enrichment oe ON oe.siren = pc.siren"
+                       " WHERE pc.idu = p.idu AND oe.payload->>'etat_administratif' = 'C')")
+        if "radiee" in es:
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pr JOIN bodacc_annonces_owner br ON br.siren = pr.siren"
+                       " WHERE pr.idu = p.idu AND br.famille = 'radiation')")
+        if "procedure" in es:
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pp2 JOIN bodacc_annonces_owner bp ON bp.siren = pp2.siren"
+                       " WHERE pp2.idu = p.idu AND bp.famille = 'pcl')")
+        if sub:
+            conds.append("(" + " OR ".join(sub) + ")")
+    if copro:   # propriété : copropriété RNIC (avec / sans) — s2.copro
+        cp = [x.strip() for x in copro.split(",") if x.strip()]
+        if "avec" in cp and "sans" not in cp:
+            conds.append("COALESCE(s2.copro, false)")
+        elif "sans" in cp and "avec" not in cp:
+            conds.append("NOT COALESCE(s2.copro, false)")
+    if npnru:   # veille : proximité NPNRU/QPV — commune portant un quartier ANRU (granularité commune, dite).
+        conds.append("EXISTS (SELECT 1 FROM anru_quartiers aq WHERE aq.commune = p.commune)")
+    if adresse_absente:   # veille : adresse BAN absente (dite « Absente (BAN) »)
+        conds.append("NOT EXISTS (SELECT 1 FROM adresse_parcelles ap0 WHERE ap0.idu = p.idu)")
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -1339,6 +1395,17 @@ class FiltreCriteres:
     etat_sol: str | None = None
     capacite_min: int | None = None
     zone_plu: str | None = None
+    # M45 (P2d) — tiroirs éco / mutation / propriété / veille
+    sous_densite: bool = False
+    mult_min: float | None = None
+    rang_max: int | None = None
+    renouvellement: bool = False
+    division_or: bool = False
+    proprietaire_type: str | None = None
+    etat_societe: str | None = None
+    copro: str | None = None
+    npnru: bool = False
+    adresse_absente: bool = False
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
@@ -1346,14 +1413,18 @@ class FiltreCriteres:
                            self.tiers, self.hors_copro, self.veille, self.personne_morale,
                            self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
                            self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
-                           self.zone_plu)
+                           self.zone_plu, self.sous_densite, self.mult_min, self.rang_max,
+                           self.renouvellement, self.division_or, self.proprietaire_type,
+                           self.etat_societe, self.copro, self.npnru, self.adresse_absente)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
                 self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
                 self.flags_exclus, self.tiers, self.hors_copro, self.veille,
                 self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
-                self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu)
+                self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu,
+                self.sous_densite, self.mult_min, self.rang_max, self.renouvellement, self.division_or,
+                self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente)
 
 
 @app.get("/filtre")
