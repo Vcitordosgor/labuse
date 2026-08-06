@@ -1,0 +1,33 @@
+M39 — digests de preuve (P0 constat + P2 mesure à blanc)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre · millesime_ortho: 2025 (unique)
+regle: hot(brulante,chaude) ∩ piscine materialisee ∩ surface [15;60] m² → a_creuser
+compte_regle: 34 (2 brulante + 32 chaude, 9 communes) ; ecartes par plancher (<15): 13 ; par plafond (>60): 0
+
+candidats_declassement_p0.csv SHA256:
+  03e2115e9aa9c95fa878d5dfeccf6e6413ed03d554dc56ad2887cef39c0fa5f0
+mesure_a_blanc_p2.csv SHA256:
+  51f97802f343605e29b7522fb694135531a148c71210a26580469d3b1ce3a49b
+mesure_par_commune_p2.csv SHA256:
+  1aa697333d0f29ae5f66b479df95fc68528459870e98f4b08f3305ce4b3db7cd
+piscines_materialisees_x_tier.csv.gz SHA256:
+  3db738139435b4906f22ede1856706a6a9deabb39fe4e66161f80e47f616bbad
+piscines_materialisees_x_tier.csv.gz (contenu decompresse) SHA256:
+  9bc1966587d383475503ac51cbde04a75633c3db9e1d8028bd7156f4a1d75d6d
+
+geometrie_piscine_parcelle_p2.csv SHA256:
+  ad35b4cdf88e8ba63043752ab972ad2124a7f0fb2d9c4919b0ebe4cf025e2804
+
+mesure_scenarios_relatif_p2.csv SHA256:
+  a77994273ffbddc6ea5272a2c52c809600049ffd6a89ac529295d64b3a5f838f
+
+mesure_regle_figee_p2.csv SHA256:
+  cdc08aa47f0b1db042cea9f679479f1503f8540bf868a0511f8800a753cc13d4
+
+VERIF (2026-08-06):
+  golden: 117/117 PASS, 0 FAIL
+  re-mesure M34/M35 (mesure_p2, 1071 parcelles): 0 divergence — PASS
+  SHA256 vigilances M37: 482da6f6848989b34aac7cbafcddc413079c5c2e1a9bd1b4bf186b1689e9abe9 (INCHANGE)
+  tiers servis: identiques au baseline P0 (0 tier modifie)
+  geometrie: 34 candidats — 23 CONTENUE, 11 A_CHEVAL, 0 HORS ; centroide dans parcelle: 34/34
+  scenarios relatifs (contenance appliquee): >=5%->12, >=10%->8, >=15%->5, >=20%->1 ; reco bilan: >=15% + contenance
+  REGLE FIGEE (Vic): bande [15;60] + part>=15% + contenance (centroide dans + ratio>=0,7) -> 4 declassements (Saint-Paul 2, Les Avirons 1, La Possession 1) ; CY0985(0,55)+BE1329(0,44) exclues

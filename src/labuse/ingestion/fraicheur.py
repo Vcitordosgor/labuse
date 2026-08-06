@@ -73,6 +73,21 @@ SOURCES = {
                                "WHERE kind IN ('georisque_alea','cavite','mvt','sol_pollue')",
                    "ds_name": "Géorisques%", "auto": False,
                    "detection": "DÉTECTION SEULE (couches cascade) — même règle que GPU/PLU"},
+    "ortho_piscine": {"label": "BD ORTHO 20 cm (IGN) — millésime imagerie (piscine/PV/pente)",
+                      "cadence": "pluriannuelle (re-survol ~3-4 ans)",
+                      "date_sql": "SELECT to_date(max(millesime),'YYYY')::date FROM ortho_tiles "
+                                  "WHERE millesime ~ '^[0-9]{4}$'",
+                      "ds_name": "BD ORTHO 20 cm (IGN)", "auto": False,
+                      # M39 (dette #13) : millésime AMONT de la couche piscine — l'âge de l'image
+                      # EST l'âge du signal. `cadence_norme` VOLONTAIREMENT absente (re-survol
+                      # irrégulier ~3-4 ans → check_fraicheur ne l'évalue pas, comme gpu_plu : un
+                      # signal à 3 ans ne doit pas déclencher d'alerte de retard). Horizon = ANNÉE du
+                      # millésime (précision de prise de vue non publiée → jamais inventée, A1).
+                      "millesime": "BD ORTHO IGN 974 — millésime 2025 (piscine, 90,7 %)",
+                      "prochain": None,
+                      "detection": "DÉTECTION SEULE : re-survol IGN ~3-4 ans → commande --refresh "
+                                   "(wave-ortho Lot 7), jamais un cron ; la couche nourrit une RÈGLE "
+                                   "produit (piscine_signal), pas la cascade gelée."},
 }
 
 DDL = """

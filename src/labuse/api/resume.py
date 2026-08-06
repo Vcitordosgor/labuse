@@ -71,8 +71,18 @@ def _positifs(cascade: list[dict], bilan: dict) -> list[str]:
 
 
 def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dict,
-               bati: dict | None = None) -> list[str]:
+               bati: dict | None = None, piscine: dict | None = None) -> list[str]:
     out: list[str] = []
+    # M39 (dette #13) — signal PISCINE détectée, informatif : sur un tier haut, une piscine
+    # matérialisée (90,7 %) qui occupe ≥ 15 % de la parcelle ET y est contenue (centroïde dans +
+    # ratio ≥ 0,7) nuance l'intérêt (usage installé → mutation moins probable). N'affecte NI le tier
+    # NI le verdict ici ; c'est la RÈGLE produit (piscine_signal.yaml) exposée en fiche AVANT sa
+    # bascule gardée. Prioritaire → insérée en tête.
+    from ..faisabilite.piscine_signal import signal_actif, vigilance_texte
+    pisc = piscine or {}
+    if signal_actif(pisc.get("surface_m2"), verdict.get("status"), pisc.get("parcel_surface_m2"),
+                    pisc.get("ratio_dans"), pisc.get("centroide_dans")):
+        out.append(vigilance_texte())
     # M34 : les signaux non-francs de la cascade legacy (accès, pente, surface, bâti partiel)
     # sont des VIGILANCES — jamais un déclassement du verdict.
     dg = verdict.get("downgrade_reason")
@@ -172,14 +182,14 @@ def _prochaine_action(status: str, vigilance: list[str], prospection: dict) -> s
 
 def build_resume(verdict: dict, cascade: list[dict],
                  faisabilite: dict | None, prospection: dict | None,
-                 bati: dict | None = None) -> dict:
+                 bati: dict | None = None, piscine: dict | None = None) -> dict:
     """Bloc « Résumé opportunité » : statut traduit, synthèse, ≤3 positifs, ≤3 vigilances, action."""
     cascade = cascade or []
     prospection = prospection or {}
     bilan = _bilan(faisabilite)
     status = verdict.get("status") or "non_evaluee"
     positifs = _positifs(cascade, bilan)
-    vigilance = _vigilance(verdict, cascade, bilan, prospection, bati)
+    vigilance = _vigilance(verdict, cascade, bilan, prospection, bati, piscine)
     return {
         "statut": status,
         "statut_label": _label(verdict),
