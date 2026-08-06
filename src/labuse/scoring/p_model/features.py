@@ -26,6 +26,10 @@ class FeatureSpec:
     fenetre: str
     disponibilite: str
     note: str = ""
+    # M35 Lot E — feature RETIRÉE des entraînements FUTURS (instable M36 : signe non stable
+    # sur les folds, coefficient quasi nul). La spec RESTE au registre : l'artefact servi
+    # (épinglé) la référence encore — retrait physique au prochain ré-entraînement.
+    retired: bool = False
 
 
 #: τ (m) de la pondération exponentielle des distances aux équipements.
@@ -59,7 +63,8 @@ FEATURES: list[FeatureSpec] = [
                 "secteur via idu_codes, normalisés par le stock de parcelles",
                 "24 mois finissant au 31/12/Y-1",
                 "date d'autorisation connue immédiatement ; publication Dido "
-                "mensuelle, latence 1-3 mois consignée"),
+                "mensuelle, latence 1-3 mois consignée",
+                retired=True),
     FeatureSpec("dens_bati_secteur", "Z", "num", 0,
                 "BD TOPO bâtiments × parcelles (emprise / surface du secteur)",
                 "statique", _STATIQUE),
@@ -73,10 +78,12 @@ FEATURES: list[FeatureSpec] = [
     FeatureSpec("filo_pct_prop", "Z", "num", 0,
                 "Filosofi 200 m : part ménages propriétaires", "statique", _STATIQUE),
     FeatureSpec("filo_dens_pop", "Z", "num", 0,
-                "Filosofi 200 m : individus / km²", "statique", _STATIQUE),
+                "Filosofi 200 m : individus / km²", "statique", _STATIQUE,
+                retired=True),
     FeatureSpec("qpv", "Z", "bool", 0,
                 "périmètres QPV (spatial_layers kind=qpv), centroïde dans le polygone",
-                "statique", _STATIQUE),
+                "statique", _STATIQUE,
+                retired=True),
     FeatureSpec("pente_moy_deg", "Z", "num", 0,
                 "RGE ALTI 5 m (parcel_terrain.pente_moy_deg)", "statique", _STATIQUE),
     FeatureSpec("acces_equipements", "Z", "num", 0,
@@ -92,7 +99,8 @@ FEATURES: list[FeatureSpec] = [
     FeatureSpec("window_coverage", "Z", "num", 0,
                 "mois DVF réellement disponibles dans la fenêtre 36 mois / 36",
                 "par année d'observation", "déterministe",
-                "dégradation des fenêtres 2022 (burn-in court) — lot 1.4"),
+                "dégradation des fenêtres 2022 (burn-in court) — lot 1.4",
+                retired=True),
     # ============================== BLOC D ==============================
     FeatureSpec("nu_constructible", "D", "bool", 0,
                 "BD TOPO (emprise ≤ 20 m²) × zone PLU U/AU", "statique", _STATIQUE),
@@ -101,7 +109,8 @@ FEATURES: list[FeatureSpec] = [
     FeatureSpec("dormance_droits", "D", "num", +1,
                 "parcel_residuel.pct_potentiel : part du potentiel de droits PLU "
                 "non consommée (BD TOPO vs droits calibrés)", "statique",
-                _STATIQUE + " ; NULL = hors périmètre de calcul → bin 'manquant'"),
+                _STATIQUE + " ; NULL = hors périmètre de calcul → bin 'manquant'",
+                retired=True),
     FeatureSpec("sous_densite", "D", "bool", 0,
                 "parcel_residuel.sous_densite", "statique", _STATIQUE),
     FeatureSpec("sdp_residuelle_m2", "D", "num", 0,
@@ -133,6 +142,13 @@ FEATURES: list[FeatureSpec] = [
 
 FEATURE_NAMES = [f.name for f in FEATURES]
 META_COLS = ["idu", "annee", "label", "commune", "secteur", "owner_type"]
+
+# M35 Lot E — élagage : les features `retired` (instables M36 — permis_24m_norm,
+# filo_dens_pop, qpv, window_coverage, dormance_droits) sont EXCLUES de tout NOUVEL
+# entraînement. FEATURE_NAMES reste la liste complète (dictionnaire + artefact servi) ;
+# tout fit neuf DOIT partir de FEATURE_NAMES_ACTIFS.
+FEATURES_RETIREES = [f.name for f in FEATURES if f.retired]
+FEATURE_NAMES_ACTIFS = [f.name for f in FEATURES if not f.retired]
 
 
 def load_dataset(engine, years: tuple[int, ...]) -> pd.DataFrame:

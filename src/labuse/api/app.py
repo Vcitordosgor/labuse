@@ -1013,23 +1013,27 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 @app.get("/communes")
 def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
     """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage carte).
-    Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min."""
+    Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min.
+
+    M35 Lot D : les compteurs viennent du RUN SERVI (tiers `parcel_p_score_v2` — « chaudes »
+    = brûlantes + chaudes, même convention que /stats), plus jamais de la matrice historique
+    (dryrun.matrice_statut). `evaluees` = parcelles présentes au run servi."""
     def _compute() -> list[dict]:
         rows = db.execute(text(
             """
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
-                   count(*) FILTER (WHERE d.matrice_statut = 'chaude')      AS chaudes,
-                   count(DISTINCT pm.siren) FILTER (WHERE d.matrice_statut = 'chaude'
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS chaudes,
+                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude')
                          AND pm.siren IS NOT NULL)                          AS dossiers,
-                   count(*) FILTER (WHERE d.matrice_statut = 'chaude'
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')
                          AND pm.siren IS NULL)                              AS chaudes_sans_identite,
-                   count(d.parcel_id)                                       AS evaluees,
+                   count(s.parcelle_id)                                     AS evaluees,
                    ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1,
                    ST_XMax(ST_Extent(p.geom)) AS x2, ST_YMax(ST_Extent(p.geom)) AS y2
             FROM parcels p
-            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
             LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
@@ -2390,74 +2394,11 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
     }
 
 
-# ───────────────────────────── Radar Mutation (V1, lecture seule) ────────────────────────
-# Score Mutation DISTINCT du verdict d'opportunité (cf. src/labuse/mutation.py /
-# docs/product/RADAR_MUTATION_PHASE1_SPEC.md). Lecture seule : aucune écriture, ne touche NI
-# le scoring d'opportunité NI le verdict. Pas d'UI à ce stade (Phase 2B = API uniquement).
-
-@app.get("/mutation/{idu}")
-def mutation_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Score Mutation (Radar Mutation) d'une parcelle — potentiel de transformation à étudier. NON SERVI (ALGO-1 §7-G) : moteur V1 à pondérations placeholder, hors tiers, aucune UI — endpoint d'exploration uniquement."""
-    from .. import mutation as mut
-
-    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
-    if p is None:
-        raise HTTPException(404, "Parcelle inconnue")
-    m = mut.mutation_for_parcels(db, [p.id]).get(p.id)
-    if m is None:
-        raise HTTPException(404, "Parcelle non évaluée")
-    return {"idu": p.idu, "commune": p.commune, "mutation": m}
-
-
-@app.get("/mutation")
-def mutation_top(commune: str | None = None, niveau: str | None = None,
-                 min_score: int = Query(0, ge=0, le=100), limit: int = Query(20, ge=1, le=100),
-                 db: Session = Depends(get_db)) -> dict:
-    """[NON SERVI — ALGO-1 §7-G, moteur placeholder hors tiers] Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule).
-
-    Paramètres durcis : `niveau` hors nomenclature → 422 ; `commune` inconnue → 404 (plutôt
-    qu'une liste vide silencieuse). `min_score`/`limit` sont déjà bornés par FastAPI."""
-    from .. import mutation as mut
-
-    if niveau is not None and niveau not in mut.NIVEAUX:
-        raise HTTPException(422, f"niveau invalide : {niveau!r} (attendu : {', '.join(mut.NIVEAUX)})")
-    commune = commune or config.get_settings().pilot_commune_name
-    known = db.execute(text("SELECT 1 FROM parcels WHERE commune = :c LIMIT 1"), {"c": commune}).first()
-    if known is None:
-        raise HTTPException(404, f"Commune inconnue : {commune!r}")
-    parcels = mut.top_for_commune(db, commune, niveau=niveau, min_score=min_score, limit=limit)
-    return {"commune": commune, "niveau": niveau, "count": len(parcels), "parcels": parcels}
-
-
-@app.get("/map/mutation.geojson")
-def mutation_geojson(commune: str | None = None, niveau: str = "prioritaire",
-                     limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)) -> dict:
-    """[NON SERVI — ALGO-1 §7-G, moteur placeholder hors tiers] Calque carte Radar Mutation (LECTURE SEULE) : géométries du TOP mutation d'une commune,
-    `score_mutation`/`niveau` en propriétés. Réutilise le top MÉMORISÉ (léger) — n'évalue JAMAIS
-    toutes les parcelles. Fondation backend d'un futur calque « Radar » optionnel (Phase 2E),
-    distinct des couches verdict ; ne modifie aucune couche carte existante."""
-    from .. import mutation as mut
-
-    if niveau not in mut.NIVEAUX:
-        raise HTTPException(422, f"niveau invalide : {niveau!r} (attendu : {', '.join(mut.NIVEAUX)})")
-    commune = commune or config.get_settings().pilot_commune_name
-    known = db.execute(text("SELECT 1 FROM parcels WHERE commune = :c LIMIT 1"), {"c": commune}).first()
-    if known is None:
-        raise HTTPException(404, f"Commune inconnue : {commune!r}")
-    top = mut.top_for_commune(db, commune, niveau=niveau, min_score=0, limit=limit)
-    by_idu = {p["idu"]: p for p in top}
-    feats = []
-    if by_idu:
-        for idu, g in db.execute(text(
-                "SELECT idu, ST_AsGeoJSON(geom) g FROM parcels WHERE idu = ANY(:idus)"),
-                {"idus": list(by_idu)}).all():
-            if not g:
-                continue
-            p = by_idu.get(idu, {})
-            feats.append({"type": "Feature", "geometry": json.loads(g),
-                          "properties": {"idu": idu, "score_mutation": p.get("score_mutation"),
-                                         "niveau": p.get("niveau")}})
-    return {"type": "FeatureCollection", "features": feats}
+# ───────────────────────────── Radar Mutation : SUPPRIMÉ (M35 Lot E) ─────────────────────
+# Le moteur V1 (src/labuse/mutation.py, pondérations placeholder, hors tiers, zéro UI) et ses
+# 3 endpoints d'exploration [NON SERVI — ALGO-1 §7-G] sont retirés — décision Vic M35 (ALGO-1
+# recommandait conserver-documenter ; le maintien d'un deuxième « score » non servi nuisait à
+# la confiance). Récupération : git revert (module + endpoints + tests dans l'historique).
 
 
 # ═══ M-RENOUV lot B — segment Renouvellement : couche carte + liste (LECTURE SEULE) ═══

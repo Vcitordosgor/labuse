@@ -411,8 +411,10 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     # Résiduel.
     res_html = ""
     if res.get("disponible"):
+        # M35 Lot C : dénominateur EXPLICITE — ce taux rapporte le bâti à l'emprise
+        # CONSTRUCTIBLE MAX (faisabilité), pas à la surface de la parcelle.
         res_html = kv("Potentiel résiduel",
-                      f"bâtie à {res['taux_emprise_pct']} % de l'emprise · SDP résiduelle ~{_m2(res.get('sdp_residuelle_m2'))}"
+                      f"bâti au sol = {res['taux_emprise_pct']} % de l'emprise constructible max · SDP résiduelle ~{_m2(res.get('sdp_residuelle_m2'))}"
                       + (" · <b>sous-densité</b>" if res.get("sous_densite") else ""))
     # Bilan.
     bil_html = ""
