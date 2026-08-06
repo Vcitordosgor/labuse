@@ -101,9 +101,10 @@ def test_r3_tooltip_multiplicateur_de_rang():
 
 
 def test_r3_tooltip_jauge_completude():
-    # Wording servi validé : même sens, plus concis, la nuance « pas une note de qualité » est conservée.
-    assert "part des sources disponibles" in KANBAN_CRM
-    assert "pas une note de qualité" in KANBAN_CRM
+    # M36 Lot B : la jauge Complétude est RETIRÉE des cartes CRM (quasi-constante, M35 D3) —
+    # le verrou garde désormais son ABSENCE.
+    assert "part des sources disponibles" not in KANBAN_CRM
+    assert "completeness_score" not in KANBAN_CRM
 
 
 def test_r3_matrice_non_thermique():
@@ -118,15 +119,18 @@ def test_r3_matrice_non_thermique():
 def test_r3_desambiguisation_cote_a_cote():
     # TierBadge (les deux classements côte à côte) porte le tooltip d'explication
     assert "Deux classements distincts" in TIERBADGE
-    # légende matrice contextualisée (jamais un « VERDICT » thermique ambigu) —
-    # revue UI/UX S20 : libellé en casse mixte, les capitales viennent du token .label-caps
-    assert "Verdict · Matrice Q×A" in LEGEND
+    # M36 Lot A : étiquette de source VRAIE — cas nominal « Classement servi », repli
+    # honnête « Classement historique » ; le jargon « Matrice Q×A » ne s'affiche plus.
+    assert "Verdict · Classement servi" in LEGEND
+    assert "Verdict · Classement historique" in LEGEND
+    assert "Verdict · Matrice Q×A" not in LEGEND
 
 
-def test_r3_marqueur_commune_non_thermique():
-    # le compteur commune (matrice_statut='chaude' côté backend) s'affiche en vocabulaire dossier
-    assert "en priorité dossier (matrice Q×A)" in MAPVIEW
-    assert "chaude${c.chaudes" not in MAPVIEW       # l'ancien wording thermique a disparu
+def test_r3_marqueur_commune_etiquette_vraie():
+    # M35/M36 : le compteur commune sert les TIERS du run servi — le vocabulaire thermique
+    # est désormais LE BON (réservé au tier P, règle R3 respectée) et l'étiquette est vraie.
+    assert "parcelles brûlantes ou chaudes au classement servi" in MAPVIEW
+    assert "en priorité dossier (matrice Q×A)" not in MAPVIEW   # l'étiquette AFFICHÉE fausse a disparu
 
 
 # ───────────── R5 — UI des outils O2 (scoreur d'adresse) et O3 (anti-fiche) ─────────────
