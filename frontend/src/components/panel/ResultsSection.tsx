@@ -10,6 +10,7 @@ import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
+import { FiltreLabuse } from './FiltreLabuse'
 
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
@@ -301,6 +302,8 @@ export function ResultsSection() {
     // l'en-tête fixe (compteurs/chips) écrasait la liste (flex-1) à ~0 px. La liste garde une
     // hauteur minimale utilisable ET son scroll interne (cf. le conteneur data-results-scroll).
     <div data-results-panel className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-clip px-5">
+      {/* M45 (P2a) — les deux voies : barre niveau 1 + interrupteur Analyse LABUSE + tiroir droit. */}
+      <div className="mb-2 shrink-0"><FiltreLabuse /></div>
       {/* Fix cosmétique (point 3) : ligne de tri LISIBLE et alignée (contrôle segmenté), au lieu
           des options qui flottaient collées à droite sans hiérarchie. Fonction inchangée. */}
       <div className="shrink-0">

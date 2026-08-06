@@ -39,6 +39,13 @@ export interface Filters {
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
   personneMorale: boolean    // M11 B2 : détenue par une personne morale (DGFiP public — SCI/société/…)
   zonagePlu: string[]        // M11 B2 : zonage PLU par famille (U/AU/A/N) — au moins une
+  // M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
+  sdpMax: number | null              // SDP résiduelle maximale (m²)
+  constructibilite: string[]         // constructible / au_conditionnelle / fermee / inconstructible / rnu
+  etatSol: string[]                  // nu / bati_marginal / bati_sature / bati_revele
+  capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
+  zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
+  analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ON par défaut.
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -46,6 +53,8 @@ export const EMPTY_FILTERS: Filters = {
   evenement: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
+  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
+  analyseLabuse: true,
 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP

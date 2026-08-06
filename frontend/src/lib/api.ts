@@ -64,7 +64,35 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
   ...(f.personneMorale ? { personne_morale: 'true' } : {}),        // M11 B2 : propriétaire personne morale
   ...(f.zonagePlu.length ? { zonage: f.zonagePlu.join(',') } : {}), // M11 B2 : zonage PLU (familles U/AU/A/N)
+  // M45 (P2a) — barre niveau 1 + tiroir droit
+  ...(f.sdpMax != null ? { sdp_max: f.sdpMax } : {}),
+  ...(f.constructibilite.length ? { constructibilite: f.constructibilite.join(',') } : {}),
+  ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
+  ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
+  ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
 })
+
+/** M45 (P2a) — filtre v2 des tiers selon l'interrupteur « Analyse LABUSE » :
+ *  ACTIF → on applique le classement (les tiers choisis, défaut = univers hors écartées) ;
+ *  COUPÉ → voie manuelle pure : on n'impose AUCUN tier (le classement ne pilote plus). */
+const CLASSEMENT_TIERS = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser']  // opportunités (hors écartées)
+const tiersParam = (f: Filters): Record<string, string> =>
+  f.analyseLabuse
+    ? { tiers: (f.tiers.length ? f.tiers : CLASSEMENT_TIERS).join(',') }        // le classement pilote
+    : { tiers: [...CLASSEMENT_TIERS, 'ecartee'].join(',') }                     // trame entière, sans tri du classement
+
+export interface FiltreReponse {
+  compte: number
+  tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
+  opportunites: number
+  page: ParcelResult[]
+  limit: number; offset: number; sort: string
+}
+/** Endpoint UNIFIÉ M45 (« théâtre ») : compte exact + ventilation tier + page en un appel. */
+export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0) => {
+  const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
+  return j<FiltreReponse>(`/filtre?${q({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
+}
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'
