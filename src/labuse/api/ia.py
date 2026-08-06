@@ -230,9 +230,9 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     if re.search(r"chaude", low):
         f["tiers"].append("chaude")
         hits.append("chaudes v2")
-    if re.search(r"r[ée]serve\s*fonci|surveill", low):
+    if re.search(r"potentiel\s*long\s*terme|r[ée]serve\s*fonci|surveill", low):  # M45 : nouveau libellé + hérité
         f["tiers"].append("reserve_fonciere")
-        hits.append("réserve foncière")
+        hits.append("potentiel long terme")
     if re.search(r"creuser", low):
         f["tiers"].append("a_creuser")
         hits.append("à creuser")
@@ -296,8 +296,8 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
    personneMorale true (donnée DGFiP publique). « zone U / constructible / urbaine » → zonage ["U"] ;
    « zone à urbaniser / AU » → ["AU"] ; « zone agricole / A » → ["A"] ; « zone naturelle / N » → ["N"].
    Les VERDICTS sont les tiers du scoring v2 : « brûlantes » → tiers ["brulante"] ;
-   « chaudes » → tiers ["chaude"] ; « réserve foncière / à surveiller » → tiers
-   ["reserve_fonciere"] ; « à creuser » → tiers ["a_creuser"]. N'utilise JAMAIS le champ
+   « chaudes » → tiers ["chaude"] ; « potentiel long terme / réserve foncière / à surveiller »
+   → tiers ["reserve_fonciere"] ; « à creuser » → tiers ["a_creuser"]. N'utilise JAMAIS le champ
    deprecated `statuts`.
    ⚠ Les FLAGS SONT FILTRABLES : « proximité d'un monument historique / bâtiment de France »
    = {{"flags": ["abf"]}} (périmètre ABF) ; « près d'une usine » = {{"flags": ["icpe"]}} ;

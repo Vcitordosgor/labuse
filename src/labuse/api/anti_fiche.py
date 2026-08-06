@@ -26,7 +26,7 @@ router = APIRouter(prefix="/anti-fiche", tags=["anti-fiche"])
 _TIER_CADRE = {
     "ecartee": "Écartée — au moins un motif rédhibitoire.",
     "a_creuser": "Retenue avec réserves — potentiel partiel, points de vigilance à lever.",
-    "reserve_fonciere": "Réserve foncière — intéressante à moyen terme, quelques contraintes.",
+    "reserve_fonciere": "Potentiel long terme — intéressant à moyen terme, quelques contraintes.",
     "chaude": "Bien classée — peu de points bloquants.",
     "brulante": "Très bien classée — signaux forts, points bloquants rares.",
 }

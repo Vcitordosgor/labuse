@@ -18,7 +18,7 @@ type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertiss
 
 const TABS = [
   { key: 'brulantes', label: 'Brûlantes' },
-  { key: 'reserve', label: 'Réserve foncière' },
+  { key: 'reserve', label: 'Potentiel long terme' },
   { key: 'top', label: 'Classement' },   // M15 E1 : « Top P » (jargon) → « Classement »
 ] as const
 
@@ -50,7 +50,7 @@ export function ScoringV2Module() {
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
         de mutation</b> à 12 mois (changer de main ou d'usage). Le <b className="text-mint">×N</b> dit
         combien la parcelle est <b>plus probable de muter que la moyenne</b> de l'île (×13 = 13 fois
-        plus probable). <b>Brûlantes</b> = les plus chaudes ; <b>Réserve foncière</b> = fort potentiel
+        plus probable). <b>Brûlantes</b> = les plus chaudes ; <b>Potentiel long terme</b> = fort potentiel
         mais mutation peu probable à court terme ; <b>Classement</b> = toutes, par ordre de priorité.
       </div>
       <div className="flex items-center gap-1">

@@ -31,7 +31,7 @@ TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 TIER_LABELS = {
     "brulante": "Brûlante",
     "chaude": "Chaude",
-    "reserve_fonciere": "Réserve foncière",
+    "reserve_fonciere": "Potentiel long terme",
     "a_creuser": "À creuser",
     "ecartee": "Écartée",
     "declasse_bati_sature": "Déclassée — bâti saturé",

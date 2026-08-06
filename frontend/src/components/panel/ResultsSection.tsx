@@ -332,7 +332,7 @@ export function ResultsSection() {
         title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
         <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
-        <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> réserve foncière
+        <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
       {/* CRED-3 (revue externe 12/07) : les PARCELLES sont l'unité de la somme — avec dossier +

@@ -185,7 +185,7 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
 _STATUT_PHRASE = {
     "brulante": "Brûlante (tête du classement servi)",
     "chaude": "Chaude (haut du classement servi)",
-    "reserve_fonciere": "Réserve foncière (potentiel réel, horizon plus lointain)",
+    "reserve_fonciere": "Potentiel long terme (potentiel réel, horizon plus lointain)",
     "a_creuser": "À creuser (signal à confirmer ou données incomplètes)",
     "ecartee": "Écartée (hors classement servi)",
     "non_evaluee": "Non évaluée au run servi",

@@ -44,7 +44,7 @@ TIER_V2 = {
     "brulante": ("Brûlante v2", RED),
     "chaude": ("Chaude v2", AMBER),
     "a_creuser": ("À creuser", (95, 108, 101)),
-    "reserve_fonciere": ("Réserve foncière", (58, 100, 148)),
+    "reserve_fonciere": ("Potentiel long terme", (58, 100, 148)),
     "ecartee": ("Écartée", RED),
 }
 ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"), ("proprio", "PROPRIO")]

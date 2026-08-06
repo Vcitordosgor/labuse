@@ -139,7 +139,7 @@ def reserve(commune: str | None = Query(None), limit: int = Query(200, le=1000),
     la sélection négative de ce segment est prouvée (Phase 0)."""
     out = liste(tier="reserve_fonciere", commune=commune, include_copro=False,
                 limit=limit, offset=0, db=db)
-    out["note"] = ("réserve foncière = capacité forte, probabilité de mutation "
+    out["note"] = ("potentiel long terme = capacité forte, probabilité de mutation "
                    "FAIBLE — ne pas présenter comme pipeline")
     return out
 

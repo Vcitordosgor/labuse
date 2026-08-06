@@ -32,7 +32,9 @@ _AGG_RE = re.compile(
 _TIERS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r"br[ûu]lant", re.I), "brulante", "brûlante"),
     (re.compile(r"chaude", re.I), "chaude", "chaude"),
-    (re.compile(r"r[ée]serve\s*fonci|surveill", re.I), "reserve_fonciere", "réserve foncière"),
+    # M45 : « Potentiel long terme » (nouveau libellé) ET « réserve foncière »/« à surveiller »
+    # (entrées héritées) reconnus — un renommage d'affichage ne casse pas les requêtes existantes.
+    (re.compile(r"potentiel\s*long\s*terme|r[ée]serve\s*fonci|surveill", re.I), "reserve_fonciere", "potentiel long terme"),
     (re.compile(r"[àa]\s*creuser", re.I), "a_creuser", "à creuser"),
 ]
 _ALL_TIERS = ["brulante", "chaude", "reserve_fonciere", "a_creuser"]
