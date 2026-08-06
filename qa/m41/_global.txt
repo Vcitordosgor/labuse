@@ -1,0 +1,31 @@
+M41 P0 — Radar Procédures PLU (constat, lecture seule)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre
+
+SOURCE Sudocuh (Licence Ouverte 2.0, millésime 31/12/2024) :
+  dataset: data.gouv.fr — Planification nationale documents urbanisme PLU/PLUi/CC/RNU SuDocUH
+  fichier commune: r/61541a0f-e9b0-43dc-bace-6c3905714400 (sudocuh_3.xlsx, feuille ListeCommunes)
+  SHA256 source sudocuh_3.xlsx:
+    f0b8e92889cc9b065cd8d2844d329581c01ce322833f0c273bcf4691dbc0139a
+
+SYNTHESE:
+  24/24 communes 974 dans Sudocuh. 11 'en cours' bruts -> 4 CIBLES genuine apres reconciliation
+  (Sudocuh 31/12/2024 perime : 7 revisions approuvees 2025-2026 per M40). 13 sans procedure.
+  Cibles: Saint-Andre, Saint-Leu, Saint-Philippe, Trois-Bassins. Stade=ABSENT (a curer: debat PADD).
+  Sursis legal: L.153-11 CU, seuil = debat PADD (pas 'projet arrete'), max 2 ans, revision/elaboration seulement.
+  Population 4 cibles: 123 tetes, 411 declassees AU/zone-fermee (veille AU).
+
+sudocuh_974_p0.csv SHA256:
+  9357514168bdc799f70f17f30d02c90efe4214a19a93285a4877f77aa3580a61
+tableau_initial_p0.csv SHA256:
+  1998c25e9b1c87c993a7606d8da067743b21db68b54e2f0dc133d3e67d8ab73d
+
+VERIF P1/P2 (2026-08-06):
+  golden: 117/117 PASS, 0 FAIL (radar_procedure = bloc fiche golden-invisible)
+  re-mesure M34/M35: 0 divergence — PASS
+  SHA256 vigilances M37: 482da6f6848989b34aac7cbafcddc413079c5c2e1a9bd1b4bf186b1689e9abe9 (INCHANGE)
+  tiers servis: 0 tier modifie (119 brulante / 1041 chaude)
+  pytest: 1326 verts (+ veille_plu), 5 pre-existants (residuel x4, au_ouverture x1)
+  lint registre: passe (24 communes, confiance partout) ; geste trimestriel vide apres curation
+  tsc -b (front): exit 0
+  registre: 4 cibles SOURCE (sursis DARK, PADD absent), 7 clôturees DEDUIT, 13 aucune SOURCE
+  veille AU population: 411 declassees (SA 217, SL 119, TB 75)

@@ -1,0 +1,273 @@
+# M41 — RADAR PROCÉDURES PLU : registre curaté des 24 communes (chair du radar).
+# Squelette = Sudocuh (data.gouv.fr, Licence Ouverte 2.0). Chair = ce registre, curaté à la
+# main, rafraîchi par passe trimestrielle (scripts/veille_plu_check.py).
+#
+# DOCTRINE (arbitrages Vic M41) :
+# - `confiance` OBLIGATOIRE par entrée : SOURCE (pièce référencée) | DEDUIT (raisonnement
+#   écrit) | ABSENT (on ne sait pas). Le lint (labuse.veille_plu) refuse toute entrée
+#   incomplète ou sans confiance.
+# - Le radar ne SERT EN VIGILANCE que les entrées confiance=SOURCE. DEDUIT/ABSENT sont
+#   tracés mais jamais servis (on ne sert pas une inférence comme un fait).
+# - Vigilance SURSIS : servie UNIQUEMENT si `debat_padd` est une date constatée (sourcée).
+#   Tant que débat PADD = ABSENT, AUCUNE vigilance sursis (pas de conditionnel flou en fiche).
+# - Base légale sursis : Code de l'urbanisme L.153-11 (seuil = débat PADD) + L.424-1 (max 2 ans),
+#   révision/élaboration seulement (une modification n'a pas de PADD → pas de sursis L.153-11).
+# - Le radar dit le STADE et ses conséquences juridiques ACTUELLES, JAMAIS l'issue de la procédure.
+#
+# Schéma strict (tous champs obligatoires) : commune, procedure, stade, date_acte, debat_padd,
+#   source, source_url, date_constat, confiance. `raisonnement` obligatoire si confiance=DEDUIT.
+meta:
+  source_squelette: "Sudocuh 31/12/2024 (Planification nationale PLU/PLUi/CC/RNU — SuDocUH)"
+  source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+  date_constat_initial: "2026-08-06"
+  cadence: "annuelle (Sudocuh) ; curation trimestrielle (registre) ; radar actif = 30 j"
+communes:
+  "97401":
+    commune: "Avirons"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97402":
+    commune: "Bras-Panon"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97403":
+    commune: "Entre-Deux"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97404":
+    commune: "Étang-Salé"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-09-17)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2022-04-28 MAIS l'opposable M40/GPU est daté 2025-09-17 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97405":
+    commune: "Petite-Île"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97406":
+    commune: "Plaine-des-Palmistes"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2023-05-27)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2015-09-24 MAIS l'opposable M40/GPU est daté 2023-05-27 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97407":
+    commune: "Port"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97408":
+    commune: "Possession"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97409":
+    commune: "Saint-André"
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2022-06-22"
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (prescription)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97410":
+    commune: "Saint-Benoît"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+    note: "Sudocuh ne trace pas les modifications (procédure légère) : d'éventuelles modifs postérieures ne sont pas visibles ici — l'absence de procédure LOURDE est datée, les modifs restent à confirmer en mairie (M40)."
+  "97411":
+    commune: "Saint-Denis"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2026-04-23)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2024-09-27 MAIS l'opposable M40/GPU est daté 2026-04-23 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97412":
+    commune: "Saint-Joseph"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97413":
+    commune: "Saint-Leu"
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2022-05-17"
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (prescription)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97414":
+    commune: "Saint-Louis"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-12-18)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2022-02-25 MAIS l'opposable M40/GPU est daté 2025-12-18 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97415":
+    commune: "Saint-Paul"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-12-17)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2021-12-16 MAIS l'opposable M40/GPU est daté 2025-12-17 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97416":
+    commune: "Saint-Pierre"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97417":
+    commune: "Saint-Philippe"
+    procedure: "elaboration_plu"
+    stade: "prescrite_dormante"
+    date_acte: "2002-08-30"
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (prescription)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+    note: "Élaboration PLU prescrite il y a 24 ans, commune toujours en RNU, aucun acte postérieur connu — dormante. Au radar (factuel) mais pas de vigilance sursis."
+  "97418":
+    commune: "Sainte-Marie"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-11-26)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2021-06-03 MAIS l'opposable M40/GPU est daté 2025-11-26 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97419":
+    commune: "Sainte-Rose"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97420":
+    commune: "Sainte-Suzanne"
+    procedure: "cloturee"
+    stade: "approuvee_probable"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-09-29)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "DEDUIT"
+    raisonnement: "Sudocuh liste une révision prescrite 2018-02-28 MAIS l'opposable M40/GPU est daté 2025-09-29 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+  "97421":
+    commune: "Salazie"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97422":
+    commune: "Tampon"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97423":
+    commune: "Trois-Bassins"
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2022-06-02"
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (prescription)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"
+  "97424":
+    commune: "Cilaos"
+    procedure: "aucune"
+    stade: "aucune"
+    date_acte: ABSENT
+    debat_padd: ABSENT
+    source: "Sudocuh 31/12/2024 (aucune procédure lourde)"
+    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    date_constat: "2026-08-06"
+    confiance: "SOURCE"

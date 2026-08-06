@@ -1433,6 +1433,24 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
+                {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables
+                    (veille AU ; sursis si armé). Jamais l'issue de la procédure. */}
+                {f.radar_procedure?.synthese?.etat && (
+                  <div data-radar-procedure className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-txt">
+                    <span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}
+                    {f.radar_procedure.veille_au && (
+                      <span className="block text-[10px] text-mint mt-1">Veille AU — {f.radar_procedure.veille_au}</span>
+                    )}
+                    {f.radar_procedure.sursis ? (
+                      <span className="block text-[10px] text-st-ecartee mt-1">
+                        Sursis à statuer — {f.radar_procedure.sursis.texte}
+                        <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
+                      </span>
+                    ) : (
+                      <span className="block text-[10px] text-txt-dim mt-1">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
+                    )}
+                  </div>
+                )}
                 <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}

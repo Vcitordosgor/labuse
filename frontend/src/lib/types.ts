@@ -220,6 +220,13 @@ export interface Fiche {
     document_servi?: string | null; fait_foi?: string | null
     en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
   } | null
+  // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
+  radar_procedure?: {
+    commune?: string; confiance?: string
+    synthese?: { etat: string; prochaine_etape?: string | null; servi_en_vigilance?: boolean } | null
+    sursis?: { texte: string; base_legale: string } | null
+    veille_au?: string | null
+  } | null
   // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
   potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).

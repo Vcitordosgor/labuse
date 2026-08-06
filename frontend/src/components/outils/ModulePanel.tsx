@@ -18,6 +18,7 @@ import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
+import { VerifProcedure } from './VerifProcedure'
 import { ScoringV2Module } from './ScoringV2'
 import { RenouvellementModule } from './Renouvellement'
 import { TierBadge } from './TierBadge'
@@ -813,6 +814,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   'scoring-v2': ScoringV2Module,
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
+  'verif-procedure': VerifProcedure,
   'o5-servitudes': O5Servitudes,
   'o6-comparateur': O6Comparateur,
   'o7-carnet': O7Carnet,

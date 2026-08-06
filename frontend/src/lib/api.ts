@@ -114,6 +114,18 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+
+// M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.
+// L'outil LIT le radar (point de calcul unique), il ne calcule rien. L'absence est datée elle aussi.
+export interface VerifProcedure {
+  idu: string; commune: string; insee: string; tier_servi: string | null; consulte_le: string
+  procedure_en_cours: boolean | null; message?: string
+  type?: string; stade?: string; date_acte?: string; source?: string; source_url?: string | null
+  date_constat?: string; confiance?: string; synthese?: string
+  consequences?: { sursis: { texte: string; base_legale: string } | null; veille_au: string | null }
+}
+export const verifProcedure = (idu: string) => j<VerifProcedure>(`/modules/verif-procedure/${idu}`)
+
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
   j<import('./types').ModeB>(`/parcels/${idu}/mode-b${travauxM2 != null ? `?travaux_m2=${travauxM2}` : ''}`)
