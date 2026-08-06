@@ -80,7 +80,8 @@ def test_login_ok_cookie_securise_puis_acces(client, pilot):
     sc = r.headers["set-cookie"].lower()
     assert "httponly" in sc and "samesite=lax" in sc and "secure" in sc   # pilote = Secure
     assert client.get("/pipeline/meta").status_code == 200          # cookie conservé par TestClient
-    assert client.get("/stats").status_code == 200
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    assert client.get("/stats", params={"source": Q_A_RUN_LABEL}).status_code == 200  # M45 : source requise
 
 
 def test_logout_ferme_la_session(client, pilot):

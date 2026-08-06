@@ -167,21 +167,28 @@ def test_feedback(client):
 
 
 def test_stats_endpoint(client):
-    s = client.get("/stats", params={"commune": "Saint-Paul"}).json()
-    assert s["total"] >= 8
-    assert s["opportunite"] + s["a_creuser"] + s["exclue"] <= s["total"]
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    # M45 (P1) : `source` REQUISE — le compteur v2 (tiers effectifs), plus le repli mort. La démo
+    # Saint-Paul n'a PAS de ligne au run servi (cf. test_fiche_double_score) → total peut être 0
+    # sur la fixture : on verrouille la FORME + l'invariant (somme des tiers <= total), pas une
+    # magnitude legacy. Le filtrage v2 réel est verrouillé par test_verdict_effectif (données v2 semées).
+    s = client.get("/stats", params={"commune": "Saint-Paul", "source": Q_A_RUN_LABEL}).json()
+    assert isinstance(s["total"], int) and s["total"] >= 0
+    t = s["tiers"]
+    assert sum(t[k] for k in ("brulante", "chaude", "reserve_fonciere", "a_creuser", "ecartee")) <= s["total"]
 
 
 def test_parcels_list_paginated(client):
-    """#2 — /parcels est BORNÉ (limit) + structure attendue (plus de timeout : no-limit + N+1 corrigés)."""
-    r = client.get("/parcels", params={"commune": "Saint-Paul", "limit": 3})
+    """#2 — /parcels est BORNÉ (limit) + structure attendue. M45 : `source` requise."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    r = client.get("/parcels", params={"commune": "Saint-Paul", "limit": 3, "source": Q_A_RUN_LABEL})
     assert r.status_code == 200
     body = r.json()
     assert isinstance(body, list) and len(body) <= 3
     if body:
-        assert {"idu", "commune", "surface_m2", "status", "opportunity_score"} <= set(body[0])
-    assert client.get("/parcels", params={"limit": 9999}).status_code == 422   # borne dure
-    assert client.get("/parcels", params={"limit": 0}).status_code == 422
+        assert {"idu", "commune", "surface_m2", "status", "tier_v2"} <= set(body[0])
+    assert client.get("/parcels", params={"limit": 9999, "source": Q_A_RUN_LABEL}).status_code == 422  # borne dure
+    assert client.get("/parcels", params={"limit": 0, "source": Q_A_RUN_LABEL}).status_code == 422
 
 
 def test_map_geojson(client):

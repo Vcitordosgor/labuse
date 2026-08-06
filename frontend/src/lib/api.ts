@@ -6,7 +6,6 @@ export interface ParcelFeatureCollection {
 }
 
 import { useApp, type Filters } from '../store/useApp'
-import { vSignalCodes } from './filters'
 
 // M31 (arbitrage Vic) : run servi = point de vérité UNIQUE versionné config/served_run.txt (=
 // q_v8_calibre depuis la bascule M28). `vite.config.ts` lit ce fichier au build et injecte
@@ -50,7 +49,7 @@ const q = (extra: Record<string, string | number> = {}) => {
 }
 
 /** Filtres chips → query params serveur (mode île : la liste et les compteurs sont SQL).
- *  M5.1 : `tiers` (v2) pilote — plus jamais `statuts` (matrice) ni `brulantes` (v1.3). */
+ *  M5.1 : `tiers` (v2) pilote. M45 (P1) : `v_signal` (Score V) retiré — anti-filtre acté. */
 export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.tiers.length ? { tiers: f.tiers.join(',') } : {}),
   ...(f.scoreMin != null ? { score_min: f.scoreMin } : {}),
@@ -63,7 +62,6 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
   ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
-  ...(f.vSignals.length ? { v_signal: vSignalCodes(f.vSignals).join(',') } : {}),
   ...(f.personneMorale ? { personne_morale: 'true' } : {}),        // M11 B2 : propriétaire personne morale
   ...(f.zonagePlu.length ? { zonage: f.zonagePlu.join(',') } : {}), // M11 B2 : zonage PLU (familles U/AU/A/N)
 })

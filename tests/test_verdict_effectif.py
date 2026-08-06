@@ -93,8 +93,10 @@ def test_repli_legacy_sans_ligne_v2(db_session):
 def test_liste_porte_le_verdict_effectif(db_session):
     _seed(db_session)
     assert _score_v2_run_id(db_session) == V2RUN
+    # M45 (P1) : `f_statuts` retiré (matrice morte). Pour désactiver le périmètre par défaut
+    # (voir aussi l'étage 0), on passe une portée `f_tiers` explicite — même effet qu'avant.
     items = _q_v2_list(db_session, "Testville", 10, 0, run_label=RUN,
-                       extra_where="", extra_params={"f_statuts": ["ecartee"]})
+                       extra_where="", extra_params={"f_tiers": ["ecartee"]})
     by_idu = {i["idu"]: i for i in items}
     assert by_idu["97499000ZZ0001"]["tier_v2"] == "brulante"
     assert by_idu["97499000ZZ0001"]["rang_v2"] == 16

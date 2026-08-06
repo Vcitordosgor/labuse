@@ -767,12 +767,26 @@ def _ban_adresse(db: Session, idu: str) -> str | None:
     return _fmt_ban(r["voie"], r["cp"], r["com"]) if r else None
 
 
-def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
+# M45 (P1, clôture RGPD) : couches cascade INTERDITES en critère de requête — dérivées d'une
+# personne PHYSIQUE. Le verrou est CODE (refus API), pas une simple absence d'UI : un partenaire
+# API ne doit pas pouvoir les requêter via `flags`/`flags_exclus`. Cf. cadrage M45 (gérant âgé).
+FORBIDDEN_FLAGS_RGPD = frozenset({"age_dirigeant"})
+
+
+def _guard_flags_rgpd(demandes: list[str]) -> None:
+    """Refuse toute couche personne physique en critère de requête (RGPD, cadrage M45).
+    Levé AVANT toute exécution SQL — vaut pour l'UI comme pour un partenaire API direct."""
+    interdits = [f for f in demandes if f in FORBIDDEN_FLAGS_RGPD]
+    if interdits:
+        raise HTTPException(status_code=400,
+                            detail=f"critère interdit (RGPD, personne physique) : {', '.join(interdits)}")
+
+
+def _q_v2_where(run_label: str, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, flags: str | None,
                 communes: str | None = None, flags_exclus: str | None = None,
-                v_signal: str | None = None,
-                brulantes: bool = False, tiers: str | None = None,
+                tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
                 defisc_active: bool = False, pc_caduc: bool = False,
@@ -784,7 +798,10 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
     M5.1 : le PILOTAGE passe au scoring v2 — `tiers` (CSV) filtre par tier EFFECTIF
     (l'étage 0 du run servi prime : une parcelle en étage 0 est « écartée » quel que
     soit son tier v2 ; l'opt-in « ecartee » ne montre QUE l'étage 0 dur).
-    `statuts` (matrice) reste accepté — deprecated, servi par legacy=1."""
+
+    M45 (P1) : params `statuts` (matrice morte M37), `v_signal` (Score V retiré, RR 0,51,
+    anti-filtre cadrage) et `brulantes` (alias v1.3) RETIRÉS — plus aucun filtre sur une
+    source morte. Garde RGPD : `flags`/`flags_exclus` refusent les couches personne physique."""
     conds: list[str] = []
     params: dict = {"runf": run_label}
     if communes:   # secteurs du copilote cadreur (R2) : plusieurs communes à la fois
@@ -805,9 +822,6 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
         conds.append("NOT COALESCE(s2.copro, false)")
     if veille:      # veille succession (radar patrimonial)
         conds.append("EXISTS (SELECT 1 FROM parcel_veille_succession vw0 WHERE vw0.parcelle_id = p.idu)")
-    if statuts:
-        conds.append("d.matrice_statut = ANY(:f_statuts)")
-        params["f_statuts"] = [s.strip() for s in statuts.split(",") if s.strip()]
     if score_min is not None:
         conds.append("d.q_score >= :f_score")
         params["f_score"] = score_min
@@ -825,26 +839,22 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c0 WHERE c0.parcel_id = p.id"
                      " AND c0.run_label = :runf AND c0.evenement = 'rouge')")
     if flags:
+        fl = [f.strip() for f in flags.split(",") if f.strip()]
+        _guard_flags_rgpd(fl)
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c1 WHERE c1.parcel_id = p.id"
                      " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags)"
                      " AND (c1.result = 'SOFT_FLAG' OR (c1.layer_name = 'abf' AND c1.result = 'UNKNOWN')))")
-        params["f_flags"] = [f.strip() for f in flags.split(",") if f.strip()]
+        params["f_flags"] = fl
     if flags_exclus:   # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
+        flx = [f.strip() for f in flags_exclus.split(",") if f.strip()]
+        _guard_flags_rgpd(flx)
         conds.append("NOT EXISTS (SELECT 1 FROM dryrun_cascade_results c2 WHERE c2.parcel_id = p.id"
                      " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x)"
                      " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
-        params["f_flags_x"] = [f.strip() for f in flags_exclus.split(",") if f.strip()]
-    # ── Score V (Vendabilité, Stage 3) : bandes, signal individuel, tier Brûlante ──
-    # M30 théâtre : `v_bands` SUPPRIMÉ — filtrait sur le Score V retiré du produit (M11
-    # Phase 0, RR=0,51) : un filtre qui ment. (Historique au rapport M30.)
-    if v_signal:
-        # signaux retenus (JSONB §5.4) : au moins UN des codes demandés présent
-        conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs1 WHERE vs1.parcelle_id = p.idu"
-                     " AND EXISTS (SELECT 1 FROM jsonb_array_elements(vs1.signals) s0"
-                     "             WHERE s0->>'code' = ANY(:f_vsig)))")
-        params["f_vsig"] = [c.strip() for c in v_signal.split(",") if c.strip()]
-    if brulantes:  # deprecated (v1.3) : « brûlante » = le tier v2, un seul mot dans l'app (M5.1)
-        conds.append(f"(s2.tier = 'brulante' AND NOT {_ETAGE0_SQL})")
+        params["f_flags_x"] = flx
+    # M45 (P1) : blocs `v_signal` (Score V) et `brulantes` (alias) RETIRÉS — cf. docstring.
+    # M30 avait déjà supprimé `v_bands` (Score V, RR 0,51) ; M45 achève le retrait du dernier
+    # vestige Score V côté filtre. Pour une brûlante : `tiers=brulante`.
     # ── M11 B2 : propriétaire PERSONNE MORALE (DGFiP open-data — SCI/société/commune/HLM/État…).
     # PRIVACY : parcelle_personne_morale ne contient QUE des personnes morales (données publiques :
     # SIREN, dénomination, forme juridique) ; une parcelle ABSENTE de la table = personne physique
@@ -875,71 +885,46 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
 def list_parcels(commune: str | None = None,
                  limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
                  source: str | None = None,
-                 statuts: str | None = None, score_min: int | None = None,
+                 score_min: int | None = None,
                  surface_min: int | None = None, surface_max: int | None = None,
                  sdp_min: int | None = None, evenement: bool = False,
                  flags: str | None = None, communes: str | None = None,
                  flags_exclus: str | None = None,
-                 v_signal: str | None = None,
-                 brulantes: bool = False, tiers: str | None = None,
+                 tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
                  defisc_active: bool = False, pc_caduc: bool = False,
                  marge_min: int | None = None,
                  sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
-    """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
+    """Liste PAGINÉE (commune OU île entière), pilotée par le scoring v2.
 
     M5.1 — le scoring v2 PILOTE : périmètre par défaut = univers v2 HORS étage 0 du run
-    servi (une brûlante v2 « écartée matrice » apparaît) ; tri par défaut = rang P
-    (`sort` ∈ rang/mult/surface/commune ; 'v' accepté, deprecated). Filtres v2 : `tiers`
-    (CSV brulante/chaude/reserve_fonciere/a_creuser/ecartee — « ecartee » = étage 0 dur),
-    `hors_copro`, `veille`. `statuts` (matrice) reste accepté — deprecated.
+    servi ; tri par défaut = rang P. Filtres v2 : `tiers`, `hors_copro`, `veille`, etc.
 
-    safe-bugfix #2 : `limit` BORNÉ (défaut 100, max 1000) + `offset`, et le dernier `eval`
-    récupéré en UNE seule requête LATERAL (plus de N+1 qui chargeait toute la commune et
-    bloquait l'endpoint > 45 s)."""
-    if source and source.startswith("q_v"):
-        extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_signal, brulantes, tiers, hors_copro, veille,
-                                          personne_morale, zonage, defisc_active, pc_caduc, marge_min)
-        return _q_v2_list(db, commune, limit, offset, run_label=source,
-                          extra_where=extra, extra_params=extra_params, sort=sort)
-    # M34 (dette #14) : le repli sans `source` raconte AUSSI le run servi — `status` = tier
-    # traduit (jamais le statut cascade legacy) ; les scores legacy restent informatifs.
-    rows = db.execute(text(
-        """
-        SELECT p.idu, p.commune, p.surface_m2,
-               s.tier AS status, s.rang,
-               e.opportunity_score, e.completeness_score
-        FROM parcels p
-        LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
-        LEFT JOIN LATERAL (
-            SELECT opportunity_score, completeness_score
-            FROM parcel_evaluations e WHERE e.parcel_id = p.id
-            ORDER BY evaluated_at DESC LIMIT 1
-        ) e ON true
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-        ORDER BY p.idu
-        LIMIT :lim OFFSET :off
-        """), {"c": commune, "lim": limit, "off": offset, "run": Q_A_RUN_LABEL}).mappings().all()
-    return [{
-        "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
-        "status": r["status"], "rang": r["rang"], "opportunity_score": r["opportunity_score"],
-        "completeness_score": r["completeness_score"],
-    } for r in rows]
+    M45 (P1) : `source` (run q_v*) est REQUIS. L'ancien repli sans `source` lisait la table
+    morte `parcel_evaluations` en IGNORANT tous les filtres (piège dormant) — il renvoie
+    désormais un 404 explicite au lieu de mentir en silence. Params `statuts`/`v_signal`/
+    `brulantes` retirés (sources mortes)."""
+    if not (source and source.startswith("q_v")):
+        raise HTTPException(status_code=404,
+                            detail="source requise : préciser ?source=<run q_v*> (run servi)")
+    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
+                                      sdp_min, evenement, flags, communes, flags_exclus,
+                                      tiers, hors_copro, veille,
+                                      personne_morale, zonage, defisc_active, pc_caduc, marge_min)
+    return _q_v2_list(db, commune, limit, offset, run_label=source,
+                      extra_where=extra, extra_params=extra_params, sort=sort)
 
 
 @app.get("/parcels/export.csv")
 def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
-                       statuts: str | None = None, score_min: int | None = None,
+                       score_min: int | None = None,
                        surface_min: int | None = None, surface_max: int | None = None,
                        sdp_min: int | None = None, evenement: bool = False,
                        flags: str | None = None, communes: str | None = None,
                        flags_exclus: str | None = None,
-                       v_signal: str | None = None,
-                       brulantes: bool = False, tiers: str | None = None,
+                       tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
                        personne_morale: bool = False, zonage: str | None = None,
                        defisc_active: bool = False, pc_caduc: bool = False,
@@ -948,19 +933,19 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
     """Export CSV de la liste (mêmes filtres que /parcels) — le tier v2 EN PREMIER (M5.1,
-    même vérité que l'app), statut matrice en secondaire, signaux propriétaire (Score V)
-    en fin de ligne. La colonne « brûlante » v1.3 disparaît : brûlante = tier v2.
+    même vérité que l'app), signaux propriétaire en fin de ligne.
     M6 2a : encodage utf-8-sig (BOM Excel) + séparateur « ; » (standard maison, cf.
     /segments/export) + adresse postale BAN (référence parcelle = idu, 1re colonne).
+    M45 (P1) : params morts `statuts`/`v_signal`/`brulantes` retirés.
     ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes)."""
     import csv as _csv
     import io as _io
 
     from .export_commun import adresses_ban
 
-    extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
+    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
-                                      v_signal, brulantes, tiers, hors_copro, veille,
+                                      tiers, hors_copro, veille,
                                       personne_morale, zonage, defisc_active, pc_caduc, marge_min)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
@@ -1235,64 +1220,36 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
 @app.get("/stats")
 def stats(commune: str | None = None, source: str | None = None,
-          statuts: str | None = None, score_min: int | None = None,
+          score_min: int | None = None,
           surface_min: int | None = None, surface_max: int | None = None,
           sdp_min: int | None = None, evenement: bool = False,
           flags: str | None = None, communes: str | None = None,
           flags_exclus: str | None = None,
-          v_signal: str | None = None,
-          brulantes: bool = False, tiers: str | None = None,
+          tiers: str | None = None,
           hors_copro: bool = False, veille: bool = False, legacy: bool = False,
           personne_morale: bool = False, zonage: str | None = None,
           db: Session = Depends(get_db)) -> dict:
-    """Cartouches du dashboard : volumétrie + TIERS v2 effectifs (M5.1 — le run v2 est la
-    source ; l'étage 0 du run servi prime). `legacy=1` (deprecated) ajoute la ventilation
-    matrice historique. Mêmes paramètres de filtre que /parcels — compteurs SQL-exacts.
-    Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
-    if source and source.startswith("q_v"):
-        extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, flags, communes, flags_exclus,
-                                          v_signal, brulantes, tiers, hors_copro, veille,
-                                          personne_morale, zonage)
-        key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
-               sdp_min, evenement, flags, communes, flags_exclus,
-               v_signal, brulantes, tiers, hors_copro, veille, legacy,
-               personne_morale, zonage)
-        return _mem_cached(key, 30.0, lambda: _q_v2_stats(
-            db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
-            legacy=legacy))
+    """Cartouches du dashboard : volumétrie + TIERS v2 effectifs — le COMPTEUR EN DIRECT.
+    `legacy=1` (deprecated) ajoute la ventilation matrice historique. Mêmes paramètres de
+    filtre que /parcels — compteurs SQL-exacts, mémorisés 30 s (#7).
 
-    def _compute() -> dict:
-        # M34 (dette #14) : compteurs du repli = TIERS SERVIS (convention front : opportunité
-        # = brûlantes + chaudes). Plus jamais les statuts cascade legacy ; les agrégats de
-        # scores legacy restent informatifs.
-        row = db.execute(
-            text(
-                """
-                SELECT count(*) AS total,
-                       count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS opportunite,
-                       count(*) FILTER (WHERE s.tier = 'a_creuser')             AS a_creuser,
-                       count(*) FILTER (WHERE s.tier = 'ecartee')               AS exclue,
-                       round(avg(e.completeness_score)) AS completeness_avg,
-                       max(e.opportunity_score)         AS opportunity_max
-                FROM parcels p
-                LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
-                LEFT JOIN LATERAL (
-                    SELECT opportunity_score, completeness_score
-                    FROM parcel_evaluations e WHERE e.parcel_id = p.id
-                    ORDER BY evaluated_at DESC LIMIT 1
-                ) e ON true
-                WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-                """
-            ), {"c": commune, "run": Q_A_RUN_LABEL}
-        ).mappings().one()
-        out = {k: (int(v) if v is not None else None) for k, v in row.items()}
-        out["active_signals"] = int(db.execute(
-            text("""SELECT count(*) FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
-                    WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)"""), {"c": commune}).scalar() or 0)
-        return out
-
-    return _mem_cached(("stats", commune), 30.0, _compute)
+    M45 (P1) : `source` (run q_v*) REQUISE, comme /parcels. L'ancien repli sans source lisait
+    la table morte `parcel_evaluations` en ignorant les filtres → 404 explicite. Params morts
+    `statuts`/`v_signal`/`brulantes` retirés."""
+    if not (source and source.startswith("q_v")):
+        raise HTTPException(status_code=404,
+                            detail="source requise : préciser ?source=<run q_v*> (run servi)")
+    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
+                                      sdp_min, evenement, flags, communes, flags_exclus,
+                                      tiers, hors_copro, veille,
+                                      personne_morale, zonage)
+    key = ("stats_qv2", source, commune, score_min, surface_min, surface_max,
+           sdp_min, evenement, flags, communes, flags_exclus,
+           tiers, hors_copro, veille, legacy,
+           personne_morale, zonage)
+    return _mem_cached(key, 30.0, lambda: _q_v2_stats(
+        db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
+        legacy=legacy))
 
 
 def _owner_famille(groupe, forme, denom) -> str:
@@ -1503,13 +1460,13 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                sort: str | None = None) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
-    v2 « écartée matrice » APPARAÎT. Un filtre `tiers`/`statuts` explicite (extra_where)
-    remplace ce périmètre (l'opt-in « ecartee » = étage 0 dur uniquement)."""
+    v2 « écartée matrice » APPARAÎT. Un filtre `tiers` explicite (extra_where) remplace ce
+    périmètre (l'opt-in « ecartee » = étage 0 dur uniquement)."""
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
     xp = extra_params or {}
-    # périmètre par défaut : hors étage 0 servi, sauf filtre tier/statut explicite qui scope déjà
-    base = "" if ("f_tiers" in xp or "f_statuts" in xp
+    # périmètre par défaut : hors étage 0 servi, sauf filtre tier explicite qui scope déjà
+    base = "" if ("f_tiers" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
     # M31 PC4 (arbitrage M30) : ALIGNER la LISTE sur la CARTE — les slivers cadastraux < 2 m²

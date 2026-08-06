@@ -24,7 +24,6 @@ export interface ParcelProps {
   v_dernier_signal?: string | null   // CRED-4 : fraîcheur du dernier signal daté
   v_band?: string | null
   owner_type?: string | null
-  v_sig?: string[]         // codes des signaux retenus (filtre par signal)
   // M5.1 : le verdict v2 PILOTE (tier + étage 0 du run servi) — cf. verdictMeta()
   tier_v2?: string | null
   rang_v2?: number | null
@@ -43,24 +42,10 @@ export const FLAG_DEFS: { key: string; label: string }[] = [
   { key: 'prescription_plu', label: 'Prescription PLU' },
 ]
 
-//: filtres « par signal » du dossier propriétaire — un libellé métier = un groupe de codes §5.3.
-export const V_SIGNAL_DEFS: { key: string; label: string; codes: string[] }[] = [
-  // M13 A1/A2 : BODACC_RADIATION RETIRÉ du groupe « Procédure collective ». Une radiation
-  // (dissolution/fin d'activité) N'EST PAS une procédure collective — c'est une famille
-  // distincte (`radiation`), pondérée 0 (anti-signal Phase 0, score_v_constants.py:82). Une
-  // parcelle « radiation seule » n'affiche AUCUNE procédure sur sa fiche (v_score 0) → elle
-  // était servie comme faux positif (92 des 314 retournés). Codes conservés = vraies procédures
-  // collectives (LJ/LJ clôturée/RJ/sauvegarde), toutes pondérées > 0 et affichées sur la fiche.
-  { key: 'pcl', label: 'Procédure collective',
-    codes: ['BODACC_LJ', 'BODACC_LJ_CLOT', 'BODACC_RJ', 'BODACC_SAUVEGARDE'] },
-  { key: 'friche', label: 'Friche', codes: ['FRICHE'] },
-  { key: 'hors_ile', label: 'Propriétaire hors île', codes: ['GEO_HORS_ILE'] },
-  { key: 'dpe_fg', label: 'DPE F-G', codes: ['DPE_G_MULTI', 'DPE_G', 'DPE_F'] },
-  { key: 'tenure', label: 'Détention longue', codes: ['DVF_TENURE_OBS5'] },
-  // M30 théâtre : option 'dirigeant' supprimée (masquée depuis l'audit A5 — codes absents de la base).
-]
-export const vSignalCodes = (keys: string[]): string[] =>
-  V_SIGNAL_DEFS.filter((d) => keys.includes(d.key)).flatMap((d) => d.codes)
+// M45 (P1) : filtre « par signal » (Score V) RETIRÉ — anti-filtre acté au cadrage. Score V est
+// retiré du scoring (RR 0,51, M11 Phase 0) et de l'affichage (M35) ; filtrer sur un signal mort
+// est un vestige. `V_SIGNAL_DEFS`/`vSignalCodes`/`f.vSignals` supprimés (front + API). L'option
+// masquée « dirigeant 65+ » disparaît avec — un critère personne physique n'a pas sa place (RGPD).
 
 // M5.1 : appartenance au PÉRIMÈTRE PAR DÉFAUT (univers v2 hors étage 0 servi) — une
 // brûlante v2 « écartée matrice » appartient au périmètre ; l'étage 0 dur n'y est pas.
@@ -78,7 +63,6 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   if (f.horsCopro && p.copro_v2) return false
   if (f.flags.length && !f.flags.some((fl) => p.flags?.includes(fl))) return false
   if (f.flagsExclus.length && f.flagsExclus.some((fl) => p.flags?.includes(fl))) return false
-  if (f.vSignals.length && !vSignalCodes(f.vSignals).some((c) => p.v_sig?.includes(c))) return false
   if (zone && (!p.centroid || !pointInPolygon(p.centroid, zone))) return false
   return true
 }
@@ -95,7 +79,7 @@ export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) => {
 export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
   f.scoreMin != null || f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
   f.evenement || f.veille || f.horsCopro || f.flags.length > 0 ||
-  f.flagsExclus.length > 0 || f.communes.length > 0 || f.vSignals.length > 0 || !!zone
+  f.flagsExclus.length > 0 || f.communes.length > 0 || !!zone
 
 // ── Chips actifs (token → suppression ciblée) ──
 export interface Chip { token: string; label: string }
@@ -113,7 +97,6 @@ export function activeChips(f: Filters): Chip[] {
   for (const fl of f.flags) out.push({ token: `flag:${fl}`, label: FLAG_DEFS.find((d) => d.key === fl)?.label ?? fl })
   for (const fl of f.flagsExclus) out.push({ token: `flagx:${fl}`, label: `Sans ${FLAG_DEFS.find((d) => d.key === fl)?.label ?? fl}` })
   if (f.communes.length) out.push({ token: 'communes', label: `Secteur (${f.communes.length} communes)` })
-  for (const s of f.vSignals) out.push({ token: `vsig:${s}`, label: V_SIGNAL_DEFS.find((d) => d.key === s)?.label ?? s })
   return out
 }
 
@@ -121,7 +104,6 @@ export function removeToken(f: Filters, token: string): Filters {
   if (token.startsWith('tier:')) return { ...f, tiers: f.tiers.filter((t) => t !== token.slice(5)) }
   if (token.startsWith('flag:')) return { ...f, flags: f.flags.filter((x) => x !== token.slice(5)) }
   if (token.startsWith('flagx:')) return { ...f, flagsExclus: f.flagsExclus.filter((x) => x !== token.slice(6)) }
-  if (token.startsWith('vsig:')) return { ...f, vSignals: f.vSignals.filter((x) => x !== token.slice(5)) }
   if (token === 'communes') return { ...f, communes: [] }
   if (token === 'evenement') return { ...f, evenement: false }
   if (token === 'veille') return { ...f, veille: false }
@@ -145,7 +127,6 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   if (f.flags.length) p.set('fl', f.flags.join(','))
   if (f.flagsExclus.length) p.set('fx', f.flagsExclus.join(','))
   if (f.communes.length) p.set('cs', f.communes.join(','))
-  if (f.vSignals.length) p.set('vs', f.vSignals.join(','))
   if (zone) p.set('z', zone.map(([x, y]) => `${x.toFixed(5)}_${y.toFixed(5)}`).join('~'))
   const s = p.toString()
   return s ? `#f=1&${s}` : ''
@@ -172,7 +153,6 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
       flags: p.get('fl')?.split(',').filter(Boolean) ?? [],
       flagsExclus: p.get('fx')?.split(',').filter(Boolean) ?? [],
       communes: p.get('cs')?.split(',').filter(Boolean) ?? [],
-      vSignals: p.get('vs')?.split(',').filter(Boolean) ?? [],
     },
     zone: zone && zone.length >= 3 ? zone : null,
   }
