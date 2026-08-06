@@ -88,6 +88,20 @@ export function ContextePanel() {
         {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
         {d && (
           <>
+            {/* M36 Lot D : l'accroche commerciale EN DUR — le compteur du tier haut, visible
+                sans survol, même point de calcul que /communes (tiers du run servi). */}
+            {d.classement && (
+              <Section title="CLASSEMENT LABUSE">
+                <div data-classement-commune className="rounded-lg border border-mint/40 bg-mint/[0.08] px-3 py-2.5">
+                  <p className="font-display text-xl font-bold text-mint tnum">{d.classement.tiers_hauts.toLocaleString('fr-FR')}</p>
+                  <p className="mt-0.5 text-xs text-txt">{d.classement.libelle.replace(/^\d[\d\s]*\s/, '')}</p>
+                  {d.classement.dossiers > 0 && (
+                    <p className="mt-1 text-[10.5px] text-txt-mut">{d.classement.dossiers.toLocaleString('fr-FR')} propriétaires personnes morales identifiés parmi elles</p>
+                  )}
+                  <p className="mt-1.5 text-[10px] text-txt-dim">{d.classement.source}</p>
+                </div>
+              </Section>
+            )}
             <Section title="SRU — LOGEMENT SOCIAL">
               {d.sru ? (() => {
                 const m = SRU_META[d.sru.statut] ?? SRU_META.conforme

@@ -49,13 +49,17 @@ def test_facts_liste_blanche_seulement_les_vrais_champs():
     assert set(f) == {"parcelle", "verdict", "faisabilite", "bilan_promoteur", "occupation_bati",
                       "contraintes_et_signaux", "completude", "niveaux_fiabilite", "resume_metier"}
     assert f["parcelle"]["surface_m2"] == 1234.5
-    assert f["verdict"]["statut"] == "opportunite" and f["verdict"]["score_opportunite"] == 78
+    # M36 Lot B : les scores opportunité/complétude ne sont PLUS dans les faits (l'IA ne
+    # peut plus les citer au client) — le statut traduit reste.
+    assert f["verdict"]["statut"] == "opportunite"
+    assert "score_opportunite" not in f["verdict"] and "score_completude" not in f["verdict"]
     assert f["faisabilite"]["hauteur_m"] == 12.0 and f["faisabilite"]["volume_enveloppe_m3"] == 7200
     assert f["occupation_bati"]["code"] == "vacant"
     # Provenance dérivée : zonage + occupation = sourcés ; bilan = estimé ; BD TOPO = absent.
     nf = f["niveaux_fiabilite"]
     assert "zonage PLU" in nf["sourcé"] and "coûts & charge foncière (bilan)" in nf["estimé"]
-    assert "BD TOPO" in nf["absent_ou_a_verifier"] and nf["completude_niveau"] == "moyenne"
+    assert "BD TOPO" in nf["absent_ou_a_verifier"]
+    assert "completude_niveau" not in nf and "completude_sur_100" not in nf
     # Le centroïde (donnée parasite) n'est PAS transmis au modèle.
     assert "centroid" not in str(f["parcelle"])
 
@@ -74,7 +78,7 @@ def test_facts_donnee_absente_reste_nulle_jamais_inventee():
     assert f["occupation_bati"] is None
     assert f["verdict"]["statut"] is None
     assert f["contraintes_et_signaux"] == []
-    assert f["niveaux_fiabilite"]["completude_niveau"] == "inconnue"
+    assert "completude_niveau" not in f["niveaux_fiabilite"]
 
 
 # ── Prompt système : structure + sécurité imposées ────────────────────────────
@@ -156,7 +160,8 @@ def test_rules_summary_a_creuser_reste_prudent():
     md = rules_summary(_facts("a_creuser", completude=35, silent=["PPR", "pente"]))
     assert "À creuser" in md
     assert "PPR" in md and "pente" in md                       # données manquantes citées
-    assert "faible" in md.lower()                              # fiabilité faible signalée
+    # M36 Lot B : plus de « complétude N/100 » — la fiabilité se dit par les sources muettes
+    assert "2 source(s) muette(s)" in md and "/100" not in md.split("**Fiabilité**")[1]
 
 
 def test_rules_summary_ecartee():

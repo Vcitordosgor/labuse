@@ -75,6 +75,8 @@ export interface CommuneInfo { commune: string; insee: string; parcelles: number
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
 export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
+  // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
+  classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
   sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
   anru: { nom: string; interet: string; code_qpv: string; source_nom: string; source_url: string }[]
   qpv: { nom: string; code: string }[]

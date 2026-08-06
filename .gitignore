@@ -95,3 +95,9 @@ qa/captures/out/
 qa/qa/
 qa/node_modules/
 qa/*.zip
+
+# M36 : orphelins M32 volumineux (cartes/decks HTML de revue locale, jamais à committer)
+qa/cosia/cartes_entrantes_recomposition.html
+qa/cosia/cartes_mouvements_cosia.html
+qa/m32/deck_mesure.html
+qa/m32/deck_mini.html

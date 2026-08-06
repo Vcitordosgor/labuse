@@ -137,7 +137,14 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int]) -> int:
 
 
 def _libelle(taux: float, sdp_res: float, niveaux_reels: bool) -> str:
-    etat = ("terrain nu — potentiel quasi intégral" if taux < 2
-            else f"bâtie à ~{round(taux)} % de l'emprise constructible")
+    # M36 Lot C (Q1, arbitrage Vic) : au-delà de 100 % on ne plafonne PAS et on ne déduit
+    # RIEN (pas d'« antériorité probable ») — libellé factuel seul.
+    if taux > 100:
+        etat = (f"bâti existant supérieur à l'emprise constructible actuelle "
+                f"(~{round(taux)} % — à vérifier)")
+    elif taux < 2:
+        etat = "terrain nu — potentiel quasi intégral"
+    else:
+        etat = f"bâtie à ~{round(taux)} % de l'emprise constructible"
     suffix = "" if niveaux_reels else " (SDP résiduelle estimée — hauteur du bâti non ingérée)"
     return f"{etat} · SDP résiduelle ~{round(sdp_res)} m²{suffix}"

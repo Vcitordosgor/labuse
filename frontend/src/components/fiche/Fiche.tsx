@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { completudeColor, SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
+import { SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -661,7 +661,8 @@ export function Calculette({ idu }: { idu: string }) {
                 <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
                 <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
-              <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+              {/* M36 Lot C (Q2) : bornes identiques à l'affichage → valeur unique « ~X » */}
+              <p className="text-[11px] text-txt-dim">{euros(cf.bas) === euros(cf.haut) ? `~${euros(cf.bas)}` : `fourchette ${euros(cf.bas)} – ${euros(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
               {mode === 'achat_max' && (
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
                   = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
@@ -1328,7 +1329,8 @@ export function Fiche({ idu }: { idu: string }) {
           const proprioAccent = !!proprioSignal
           // M30 item 7 : la value dupliquait « Viabilisation » et écrasait le titre du tiroir en « V »
           const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
-          const confianceValue = f.icd ? `${f.icd.score} %` : `${f.completeness_score} %`
+          // M36 Lot B : plus de repli sur la Complétude (quasi-constante) — ICD ou rien.
+          const confianceValue = f.icd ? `${f.icd.score} %` : '—'
           return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
@@ -1459,14 +1461,9 @@ export function Fiche({ idu }: { idu: string }) {
                     <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span>
                   </div>
                 )}
-                <div className="card-elev flex items-center gap-3 px-3 py-2.5">
-                  <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90">
-                    <circle cx="18" cy="18" r="15" fill="none" stroke="#1E2A23" strokeWidth="3.5" />
-                    <circle cx="18" cy="18" r="15" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3.5" strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
-                    <text x="18" y="18" transform="rotate(90 18 18)" textAnchor="middle" dominantBaseline="central" className="fill-txt-hi font-display text-[11px] font-bold" style={{ fontVariantNumeric: 'tabular-nums' }}>{f.completeness_score}</text>
-                  </svg>
-                  <div><div className="label-caps">Complétude · {f.completeness_score} %</div><div className="mt-0.5 text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div></div>
-                </div>
+                {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
+                    parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
+                    jauge de confiance données par parcelle. */}
                 {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
                 <SignalerErreur idu={idu} />
               </div>

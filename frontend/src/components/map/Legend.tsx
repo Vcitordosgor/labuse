@@ -43,13 +43,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         aria-expanded={verdictOpen}
         title={verdictOpen ? 'Replier la légende du verdict' : 'Déplier la légende du verdict'}
       >
-        {/* R3 (PJ5) : sans run v2 la légende est celle de la MATRICE Q×A (vocabulaire « dossier »,
-            non thermique) — le thermique est réservé au scoring P servi. */}
+        {/* M36 Lot A : étiquette de source VRAIE, sans jargon interne. Cas nominal = classement
+            servi (tiers) ; le repli n'apparaît que si le classement servi est INJOIGNABLE
+            (avant M36 il s'affichait aussi en dev à cause du proxy /v2 manquant). */}
         {v2 ? (
-          <span className="label-caps">Verdict · Scoring</span>
+          <Tip block side="top" tip="Couleurs du classement servi (tiers Brûlante → Écartée).">
+            <span className="label-caps">Verdict · Classement servi</span>
+          </Tip>
         ) : (
-          <Tip block side="top" tip="Classement matrice Q×A (historique) — vocabulaire « dossier », distinct de l'échelle thermique du scoring P servi.">
-            <span className="label-caps">Verdict · Matrice Q×A</span>
+          <Tip block side="top" tip="Classement historique (repli) — le classement servi n'est pas joignable sur cette vue.">
+            <span className="label-caps">Verdict · Classement historique</span>
           </Tip>
         )}
         <span className={`text-txt-dim transition-transform duration-quick ${verdictOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>

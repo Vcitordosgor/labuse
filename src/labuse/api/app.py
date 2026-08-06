@@ -1010,14 +1010,13 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                              "X-Rows": str(len(items))})
 
 
-@app.get("/communes")
-def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
-    """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage carte).
-    Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min.
+def _communes_data(db: Session, source: str) -> list[dict]:
+    """Compteurs par commune (tiers du run servi) — POINT DE CALCUL UNIQUE, mémoïsé 5 min.
+    Consommé par /communes (sélecteur, marqueurs carte) ET par la fiche commune (M36 Lot D) :
+    le même chiffre partout, jamais figé, jamais la matrice historique.
 
-    M35 Lot D : les compteurs viennent du RUN SERVI (tiers `parcel_p_score_v2` — « chaudes »
-    = brûlantes + chaudes, même convention que /stats), plus jamais de la matrice historique
-    (dryrun.matrice_statut). `evaluees` = parcelles présentes au run servi."""
+    M35 Lot D : « chaudes » = brûlantes + chaudes du run servi (même convention que /stats) ;
+    `evaluees` = parcelles présentes au run servi."""
     def _compute() -> list[dict]:
         rows = db.execute(text(
             """
@@ -1052,6 +1051,13 @@ def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) ->
     return _mem_cached(("communes", source), 300.0, _compute)
 
 
+@app.get("/communes")
+def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
+    """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage
+    carte). Trié par nombre de chaudes décroissant. Source unique : _communes_data."""
+    return _communes_data(db, source)
+
+
 @app.get("/communes/{commune}/contexte")
 def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
@@ -1077,8 +1083,20 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     for d in (sru, insee_log, plh):
         if d:
             d.pop("importe_le", None)
+    # M36 Lot D : le compteur du tier haut EN DUR sur la fiche commune — même point de
+    # calcul (mémoïsé) que /communes : tiers du run servi, jamais figé, étiquette vraie.
+    _cd = next((c for c in _communes_data(db, Q_A_RUN_LABEL) if c["commune"] == commune), None)
+    classement = ({
+        "tiers_hauts": _cd["chaudes"], "dossiers": _cd["dossiers"],
+        "libelle": (f"{_cd['chaudes']} parcelles brûlantes ou chaudes au classement servi"
+                    if _cd["chaudes"] != 1 else
+                    "1 parcelle brûlante ou chaude au classement servi"),
+        "source": "Classement servi LABUSE (tiers brûlante + chaude) — recalculé à chaque "
+                  "bascule, jamais figé",
+    } if _cd else None)
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
+            "classement": classement,
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
             "notes": ["ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà "
                       "couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : "

@@ -187,12 +187,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                  new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
 
-    # ── Scores (Q / A / complétude — le score ne s'affiche jamais seul)
+    # ── Scores (Q / A — le score ne s'affiche jamais seul)
+    # M36 Lot B : la jauge COMPLÉTUDE est RETIRÉE (3 valeurs sur tout le parc — n'informe
+    # pas ; arbitrage Vic M35 D3). L'ICD ci-dessous est la vraie jauge par parcelle.
     y = pdf.get_y()
-    cw = (pdf.w - 28 - 8) / 3
-    vals = [("QUALITÉ", fiche["q_score"], MINT), ("ACCESSIBILITÉ", fiche["a_score"], (23, 122, 88)),
-            ("COMPLÉTUDE", fiche["completeness_score"],
-             MINT if fiche["completeness_score"] >= 50 else AMBER)]
+    cw = (pdf.w - 28 - 4) / 2
+    vals = [("QUALITÉ", fiche["q_score"], MINT), ("ACCESSIBILITÉ", fiche["a_score"], (23, 122, 88))]
     for i, (k, v, c) in enumerate(vals):
         x = 14 + i * (cw + 4)
         pdf.set_fill_color(*SURFACE)
@@ -204,7 +204,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(x + 5, y + 10.6)
         pdf.set_font("mono", size=6.3)
         pdf.set_text_color(*TXT_DIM)
-        pdf.cell(cw - 10, 4, f"{k} / 100" if k != "COMPLÉTUDE" else f"{k} %")
+        pdf.cell(cw - 10, 4, f"{k} / 100")
     pdf.set_y(y + 21)
 
     # ── M9 lot 1 — INDICE DE CONFIANCE DONNÉES (ICD). Méta d'affichage CLOISONNÉE du
