@@ -1,0 +1,52 @@
+SET
+SELECT 35988
+CREATE INDEX
+SELECT 431663
+CREATE INDEX
+SELECT 409123
+SELECT 392929
+=== 1. Population touchée (au moins un PC dans 400 m sous l une des deux datations) ===
+ parcelles_touchees | comptage_differe | magnitude_change | pct_mag_change 
+--------------------+------------------+------------------+----------------
+             392929 |           297669 |           197244 |          50.20
+(1 ligne)
+
+=== 2. Bascule du SIGNAL (0 <-> >0) : gagné / perdu ===
+ signal_gagne_depot | signal_perdu_depot 
+--------------------+--------------------
+                878 |               4567
+(1 ligne)
+
+=== 3. Direction du changement de magnitude ===
+ magnitude_hausse | magnitude_baisse | delta_moyen_signe 
+------------------+------------------+-------------------
+            36235 |           161009 |           -0.0848
+(1 ligne)
+
+=== 4. Amplitude des comptes (redate = plus ancien -> attendu: baisses au bord de fenetre) ===
+ delta_compte_moyen | delta_min | delta_max 
+--------------------+-----------+-----------
+             -1.366 |       -27 |        22
+(1 ligne)
+
+=== 5. Communes qui bougent le plus (parcelles a magnitude changee) — top 15 ===
+    commune     | parcelles_mag_change | parcelles_touchees | pct  
+----------------+----------------------+--------------------+------
+ Le Tampon      |                23510 |              39100 | 60.1
+ Saint-Denis    |                23009 |              36970 | 62.2
+ Saint-Paul     |                20812 |              46265 | 45.0
+ Saint-Joseph   |                16410 |              26103 | 62.9
+ Saint-Pierre   |                15138 |              40840 | 37.1
+ Saint-André    |                12335 |              22019 | 56.0
+ Saint-Leu      |                11115 |              20088 | 55.3
+ Saint-Louis    |                10148 |              27341 | 37.1
+ Saint-Benoît   |                 9614 |              18823 | 51.1
+ Sainte-Marie   |                 8822 |              15530 | 56.8
+ La Possession  |                 6439 |              12437 | 51.8
+ Les Avirons    |                 5039 |               7652 | 65.9
+ Sainte-Suzanne |                 4225 |              10928 | 38.7
+ Petite-Île     |                 3909 |              11526 | 33.9
+ Sainte-Rose    |                 3625 |               4759 | 76.2
+(15 lignes)
+
+=== 6. Anomalies & censure (contrôles complémentaires) === SELECT count(*) FILTER (WHERE date_depot > date::date) AS depot_posterieur_auto_anomalie, count(*) AS total_pc_geoloc FROM sitadel_permits WHERE type=PC AND geom IS NOT NULL; SELECT count(*) FILTER (WHERE date IS NULL OR date::date >= current_date - interval 60 months) AS pc_autorises_60m, count(*) FILTER (WHERE coalesce(date_depot,date::date) >= current_date - interval 60 months) AS pc_deposes_60m FROM sitadel_permits WHERE type=PC AND geom IS NOT NULL;
