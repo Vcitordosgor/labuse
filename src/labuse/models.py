@@ -183,7 +183,10 @@ class ParcelEvaluation(Base):
     parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
     completeness_score: Mapped[int] = mapped_column(Integer)
     opportunity_score: Mapped[int] = mapped_column(Integer)
-    status: Mapped[enums.EvaluationStatus] = mapped_column(_enum(enums.EvaluationStatus, "evaluation_status"))
+    # M37 : le VERDICT legacy `status` est ÉTEINT (rail mort depuis M34 — le verdict servi
+    # vient du tier `parcel_p_score_v2`). La colonne physique est ARCHIVÉE par renommage
+    # (`status_pre_m37`, réversible) via ensure_parcel_eval_status_archived — plus mappée ici,
+    # plus écrite, plus lue. Suppression physique = geste ultérieur Vic, à froid.
     ai_payload: Mapped[dict | None] = mapped_column(JSONB)
     model_version: Mapped[str | None] = mapped_column(String(64))
     rules_version: Mapped[str | None] = mapped_column(String(64))
@@ -885,8 +888,30 @@ class ParcelPScoreV2(Base):
     icd_detail: Mapped[dict | None] = mapped_column(JSONB)   # {groupe: bool} des 9 groupes
 
 
+def ensure_parcel_eval_status_archived(engine) -> None:
+    """M37 — ARCHIVE le rail legacy `parcel_evaluations.status` par RENOMMAGE (réversible).
+
+    Idempotent : renomme `status` → `status_pre_m37` (+ DROP NOT NULL) UNIQUEMENT si la
+    colonne `status` existe encore et que l'archive n'existe pas déjà. Aucune suppression
+    physique (geste ultérieur Vic, à froid). Rollback = renommage inverse :
+      ALTER TABLE parcel_evaluations RENAME COLUMN status_pre_m37 TO status;
+    S'applique partout où le schéma est réconcilié (boot/doctor + base de test)."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        has_status = c.execute(_t(
+            "SELECT 1 FROM information_schema.columns WHERE table_name='parcel_evaluations' "
+            "AND column_name='status'")).scalar()
+        has_archive = c.execute(_t(
+            "SELECT 1 FROM information_schema.columns WHERE table_name='parcel_evaluations' "
+            "AND column_name='status_pre_m37'")).scalar()
+        if has_status and not has_archive:
+            c.execute(_t("ALTER TABLE parcel_evaluations RENAME COLUMN status TO status_pre_m37"))
+            c.execute(_t("ALTER TABLE parcel_evaluations ALTER COLUMN status_pre_m37 DROP NOT NULL"))
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
+    ensure_parcel_eval_status_archived(engine)   # M37 : rail legacy status archivé (renommage)
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
