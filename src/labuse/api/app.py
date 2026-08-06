@@ -1911,6 +1911,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
+        "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
+        "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
@@ -2107,6 +2109,28 @@ def _radar_proc(idu: str, tier: str | None) -> dict | None:
         from ..veille_plu import radar_parcelle
         return radar_parcelle(idu, tier)
     except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
+        return None
+
+
+def _historique_site(db: Session, idu: str) -> dict | None:
+    """M42 — « Sur cette parcelle » (historique permis + caducité). None si rien. Jamais bloquant.
+    SAVEPOINT (idiome fraicheur.py) : une table/colonne absente (base de test) n'avorte pas la TX fiche."""
+    try:
+        from .site_voisinage import historique_permis
+        with db.begin_nested():
+            return historique_permis(db, idu)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _voisinage_proche(db: Session, idu: str) -> dict | None:
+    """M42 — « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois). None si rien. Jamais bloquant.
+    SAVEPOINT : une table/colonne absente (base de test) n'avorte pas la TX fiche."""
+    try:
+        from .site_voisinage import voisinage_proche
+        with db.begin_nested():
+            return voisinage_proche(db, idu)
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -2764,6 +2788,8 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # exports (one-pager), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
+        "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
+        "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)

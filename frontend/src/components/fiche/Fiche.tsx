@@ -1451,6 +1451,31 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
+                {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
+                {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
+                  <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                    <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
+                    <ul className="mt-1 list-disc pl-4 text-txt-mut">
+                      {f.historique_site.permis.slice(0, 6).map((pm, i) => (
+                        <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
+                      ))}
+                      {f.historique_site.caducite && (
+                        <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
+                      )}
+                    </ul>
+                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
+                  </div>
+                )}
+                {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
+                {f.voisinage_proche && (
+                  <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                    <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
+                    <div className="mt-1 text-txt-mut">
+                      {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
+                  </div>
+                )}
                 <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}

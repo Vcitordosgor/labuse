@@ -227,6 +227,18 @@ export interface Fiche {
     sursis?: { texte: string; base_legale: string } | null
     veille_au?: string | null
   } | null
+  // M42 : « Sur cette parcelle » (historique permis + caducité) — contexte, 0 tier.
+  historique_site?: {
+    titre: string; n_permis: number; source: string; honnetete: string
+    permis: { permit_id: string; type: string | null; date_autorisation: string | null; date_depot: string | null }[]
+    caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
+  } | null
+  // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.
+  voisinage_proche?: {
+    titre: string; rayon_m: number; fenetre_mois: number
+    ventes_dvf: number; prix_median_eur: number | null; prix_note: string | null; permis: number
+    source: string; honnetete: string
+  } | null
   // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
   potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
