@@ -37,12 +37,17 @@ declassement:
   tiers_source: [brulante, chaude]   # seuls les tiers hauts sont déclassés (ailleurs le signal est moot)
   tier_cible: a_creuser              # comme le registre M32 (fausse chaude → à creuser, jamais écartée)
   exige_materialisee: true           # parcel_equipements.piscine = true (couche produit, pas V0 seul)
-  # ── CONTENANCE (mesurée P2.2-bis, NON activée — décision Vic) ──
-  # Question : la piscine détectée est-elle géométriquement DANS la parcelle servie (pas celle du
-  # voisin) ? Mesuré sur les 34 : 23 CONTENUE, 11 À CHEVAL, 0 HORS ; centroïde dans la parcelle pour
-  # les 34 (qa/m39/geometrie_piscine_parcelle_p2.csv). Garde-fou recommandé quand Vic tranchera :
-  #   ratio_pool_dans_parcelle_min: 0.5   # + centroïde dans la parcelle (déjà vrai pour les 34)
-  # → écarterait le seul cas < 60 % nettement à cheval (BE1329, 44 %). Inactif tant que non décidé.
+  # ── CONTENANCE + SURFACE RELATIVE (mesurées P2.2-bis/ter, NON activées — décision Vic) ──
+  # 1) CONTENANCE : la piscine est-elle DANS la parcelle servie (pas celle du voisin) ? Sur les 34 :
+  #    23 CONTENUE, 11 À CHEVAL, 0 HORS ; centroïde dans la parcelle 34/34
+  #    (qa/m39/geometrie_piscine_parcelle_p2.csv). Garde recommandée :
+  #      ratio_pool_dans_parcelle_min: 0.5   # + centroïde dans (déjà vrai pour les 34) → écarte BE1329.
+  # 2) SURFACE RELATIVE : une piscine à 1-5 % d'une grande parcelle = maison occupée (filtre bâti),
+  #    PAS un usage installé. La bande absolue [15;60] seule sur-déclasse. Sweep pct piscine/parcelle
+  #    (contenance appliquée) : ≥5 %→12 · ≥10 %→8 · ≥15 %→5 · ≥20 %→1 (qa/m39/mesure_scenarios_relatif_p2.csv).
+  #    Recommandé (bilan P2.2-ter) : pct >= 15 % → 5 déclassées défendables (petites parcelles saturées).
+  #      pct_pool_parcelle_min: 15.0
+  # Tout inactif tant que Vic n'a pas tranché le seuil (10 vs 15 %) sur le deck qa/m39/deck_m39_s15.html.
 
 # ── MOTIF CLIENT (famille M35 — identique au registre AL1154, « motif client conservé ») ──
 # Étiquette Sourcé + précision assumée. Interdits M35 (mandat/prénom/modèle/dette/IDU tiers) absents.

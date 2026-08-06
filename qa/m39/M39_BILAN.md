@@ -123,6 +123,64 @@ position central/périphérique). **À-cheval en tête** (ratio croissant). Aper
 
 Rien n'est implémenté : le knob de contenance et son seuil sont à fixer par Vic après revue du deck.
 
+### P2.2-ter · Critère de surface RELATIVE — 4 scénarios mesurés (demande Vic)
+
+**Ce que le deck géométrique a révélé** : la piscine occupe **1 à 5 % de la parcelle dans la
+grande majorité des 34** (CY0363 1,8 % sur 1 335 m², AB0321 0,7 % sur 3 896 m²…). Une piscine de
+24 m² sur 1 300 m² **ne bloque pas** la parcelle — elle signale une maison occupée (domaine du
+**filtre bâti**), pas un « usage installé ». Déclasser ces chaudes serait une perte sèche
+d'opportunités. Vic a raison : la bande absolue [15;60] seule sur-déclasse.
+
+**Sweep du critère relatif** (piscine / surface parcelle), **avec garde de contenance appliquée**
+(centroïde dans + ratio ≥ 0,5 → base 33, BE1329 écartée). Digest par parcelle :
+`qa/m39/mesure_scenarios_relatif_p2.csv`.
+
+| scénario (bande [15;60] + contenance +) | déclassées | brûlante | chaude | communes |
+|---|---|---|---|---|
+| contenance seule (pct ≥ 0) | 33 | 2 | 31 | 9 |
+| **+ pct ≥ 5 %** | 12 | 2 | 10 | 6 |
+| **+ pct ≥ 10 %** | 8 | 1 | 7 | 5 |
+| **+ pct ≥ 15 %** | **5** | 1 | 4 | 3 |
+| **+ pct ≥ 20 %** | 1 | 0 | 1 | 1 |
+
+Par commune (déclassées, garde de contenance) :
+
+| INSEE · commune | ≥5 % | ≥10 % | ≥15 % | ≥20 % |
+|---|---|---|---|---|
+| 97415 Saint-Paul | 6 | 3 | 3 | 0 |
+| 97413 Saint-Leu | 2 | 2 | 0 | 0 |
+| 97401 Les Avirons | 1 | 1 | 1 | 1 |
+| 97408 La Possession | 1 | 1 | 1 | 0 |
+| 97411 Saint-Denis | 1 | 1 | 0 | 0 |
+| 97420 Sainte-Suzanne | 1 | 0 | 0 | 0 |
+
+**Scénario 15 % — les 5 retenues** (deck `qa/m39/deck_m39_s15.html`, aperçu
+`screens/5_deck_s15_apercu.png` ; 5 retenues + 5 témoins juste sous le seuil) :
+
+| IDU | tier | parcelle | piscine | pct | ratio |
+|---|---|---|---|---|---|
+| 97401000AR1289 | chaude | 157 m² | 40,2 m² | 25,7 % | 0,75 |
+| 97415000BV0606 | brûlante | 125 m² | 21,9 m² | 17,5 % | 1,00 |
+| 97415000CX0650 | chaude | 216 m² | 36,5 m² | 16,9 % | 1,00 |
+| 97415000CY0985 | chaude | 156 m² | 25,1 m² | 16,1 % | 0,55 |
+| 97408000AC2215 | chaude | 131 m² | 19,9 m² | 15,1 % | 1,00 |
+
+**Ma lecture métier (question 4 de Vic)** — à partir de quand le déclassement se défend ?
+- **< 10 %** : « une maison avec bassin » sur une parcelle qui garde du résiduel mobilisable
+  (parcelles de 500–3 900 m²). L'occupation est déjà le travail du **filtre bâti** ; le signal
+  piscine n'ajoute rien de décisif → **ne pas déclasser** (le doute profiterait au déclassement).
+- **≥ 15 %** : la piscine seule prend 1/6 à 1/4 du terrain — les 5 retenues sont de **petites
+  parcelles (125–216 m², une à 513 m²)** déjà bâties, où bassin + maison **saturent le lot**. Là
+  le signal dit « usage installé », pas « maison anodine ». Ces 5 sont servies chaude/brûlante donc
+  **non déjà prises par le filtre bâti-saturé** — le signal piscine apporte une info réelle.
+- **≥ 20 %** (1 seule) : trop étroit, on perd des vrais cas (BV0606/CX0650 à 17 %).
+
+**Recommandation : seuil relatif ≥ 15 % + bande [15;60] m² + contenance (centroïde dans +
+ratio ≥ 0,5).** Population défendable : **5 parcelles** (vs 34 sur la bande absolue seule) —
+Saint-Paul 3, Les Avirons 1, La Possession 1. C'est la boussole : on ne déclasse que là où on est
+sûr que la parcelle est réellement hors marché. **Rien n'est implémenté** ; la config reste inerte,
+la décision (seuil 10 vs 15 %) se prend sur les chiffres et le deck 15 %.
+
 ### P2.3 · Geste de bascule préparé, JAMAIS exécuté — commit `[M39-P2]`
 `scripts/bascule_m39.py` sur le modèle de `bascule_m32.py` : **DRY-RUN par défaut** (n'écrit rien),
 geste réel gaté derrière `LABUSE_M39_EXECUTE=1` (jamais posé). Le geste réel :
