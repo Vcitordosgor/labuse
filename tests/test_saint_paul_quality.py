@@ -21,6 +21,7 @@ import pytest
 from sqlalchemy import create_engine, text
 
 COMMUNE = "Saint-Paul"
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as _SP_RUN
 MIN_PARCELS = 51129         # GOLD STANDARD VERROUILLÉ : cadastre complet Etalab (LOT 2, 98 sections)
 EXPECTED_SECTIONS = 98
 BATI_MIN = 11285            # le bâti complet doit DÉPASSER l'état pilote initial (11 285)
@@ -132,14 +133,15 @@ def test_couverture_zonage_plu(db):
 
 
 def test_echantillon_des_verdicts_presents(db):
-    """Le gold standard doit exposer les 3 régimes de verdict (opportunité / à creuser / écartée)."""
+    """M37 : les régimes servis (tiers) doivent être présents — plus le rail legacy éteint."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
     with db.connect() as c:
-        statuses = set(r[0] for r in c.execute(text(
-            "SELECT DISTINCT e.status FROM parcels p JOIN LATERAL "
-            "(SELECT status FROM parcel_evaluations WHERE parcel_id=p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
-            "WHERE p.commune ILIKE :c"), {"c": COMMUNE}).all())
-    for needed in ("opportunite", "a_creuser", "faux_positif_probable"):
-        assert needed in statuses, f"aucune parcelle de verdict « {needed} » (échantillon incomplet)"
+        tiers = set(r[0] for r in c.execute(text(
+            "SELECT DISTINCT s.tier FROM parcels p "
+            "JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu AND s.run_id=:run "
+            "WHERE p.commune ILIKE :c"), {"c": COMMUNE, "run": Q_A_RUN_LABEL}).all())
+    for needed in ("chaude", "a_creuser", "ecartee"):
+        assert needed in tiers, f"aucune parcelle de tier « {needed} » (échantillon incomplet)"
 
 
 # ── Anti « fausse opportunité » (efficacité du correctif R1 bâti) ────────────────────────────
@@ -148,12 +150,12 @@ def test_aucune_opportunite_majoritairement_batie(db):
     with db.connect() as c:
         n = c.execute(text(
             "WITH opp AS (SELECT p.id, p.geom_2975, ST_Area(p.geom_2975) a FROM parcels p "
-            "  JOIN LATERAL (SELECT status FROM parcel_evaluations WHERE parcel_id=p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
-            "  WHERE p.commune ILIKE :c AND e.status='opportunite') "
+            "  JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu AND s.run_id=:run "
+            "  WHERE p.commune ILIKE :c AND s.tier IN ('brulante','chaude')) "
             "SELECT count(*) FROM opp WHERE a > 0 AND ("
             "  SELECT COALESCE(SUM(ST_Area(ST_Intersection(opp.geom_2975, b.geom_2975))),0) "
             "  FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(opp.geom_2975,b.geom_2975)"
-            ") > 0.5 * opp.a"), {"c": COMMUNE}).scalar()
+            ") > 0.5 * opp.a"), {"c": COMMUNE, "run": _SP_RUN}).scalar()
     assert n == 0, f"{n} « opportunité(s) » bâtie(s) à > 50% — R1 a laissé passer un faux positif"
 
 

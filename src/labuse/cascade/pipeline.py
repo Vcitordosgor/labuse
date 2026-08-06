@@ -179,12 +179,14 @@ def _persist(
             )
         )
     # parcel_evaluations : versionnée (on empile une nouvelle ligne).
+    # M37 : le writer ne persiste PLUS `status` (rail legacy éteint — verdict servi = tier
+    # parcel_p_score_v2). Le `status` reste calculé en mémoire (outcome.status, retour audit)
+    # mais n'est plus écrit. La vigilance (motif) reste écrite en cascade_results, INCHANGÉE.
     session.add(
         ParcelEvaluation(
             parcel_id=parcel.id,
             completeness_score=completeness.score,
             opportunity_score=opportunity.score,
-            status=status,
             ai_payload=ai_payload,
             model_version=model_version,
             rules_version=rules_v,

@@ -81,11 +81,25 @@ def _surface(session: Session, idu: str) -> float:
 
 
 def _cached(session: Session, idu: str) -> AuditResult | None:
-    """Réponse immédiate (< 5 s, sans réseau) si la parcelle est déjà évaluée."""
+    """Réponse immédiate (< 5 s, sans réseau) si la parcelle est déjà évaluée.
+
+    M37 : `status` = TIER SERVI (parcel_p_score_v2), plus le rail legacy
+    parcel_evaluations.status (éteint). Cache-hit = parcelle présente au run servi ; les
+    métadonnées opportunity/completeness restent lues de parcel_evaluations (inchangées)."""
+    from .scoring.score_v_constants import Q_A_RUN_LABEL
+    # cache-hit = la parcelle a DÉJÀ une évaluation (son cascade propre) — JOIN sur
+    # parcel_evaluations (métadonnées). `status` = tier servi si la parcelle est au run
+    # (LEFT JOIN), sinon None : une parcelle auditée hors run servi reste cacheable, sans
+    # verdict tier. Le rail legacy parcel_evaluations.status n'est plus lu (M37).
     row = session.execute(text(
-        """SELECT p.idu, p.origine, e.status, e.opportunity_score, e.completeness_score
-           FROM parcels p JOIN parcel_evaluations e ON e.parcel_id = p.id
-           WHERE p.idu = :i ORDER BY e.evaluated_at DESC LIMIT 1"""), {"i": idu}).mappings().first()
+        """SELECT p.idu, p.origine, s.tier AS status,
+                  e.opportunity_score, e.completeness_score
+           FROM parcels p
+           JOIN LATERAL (SELECT opportunity_score, completeness_score
+             FROM parcel_evaluations e WHERE e.parcel_id = p.id
+             ORDER BY evaluated_at DESC LIMIT 1) e ON true
+           LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
+           WHERE p.idu = :i LIMIT 1"""), {"i": idu, "run": Q_A_RUN_LABEL}).mappings().first()
     if not row:
         return None
     return AuditResult(

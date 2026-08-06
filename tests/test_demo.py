@@ -17,7 +17,11 @@ def _seed_parcels(db, commune="Testville", k=4):
 # ── Pur ───────────────────────────────────────────────────────────
 def test_parcelles_demo_documentees():
     assert len(demo.DEMO_PARCELS) >= 8
-    valid = {"opportunite", "a_creuser", "faux_positif_probable", "exclue"}
+    # M37 : `attendu` = TIER SERVI (rail legacy éteint) — vocabulaire tiers, incluant les
+    # tiers de déclassement (declasse_*), plus les statuts cascade legacy.
+    valid = {"brulante", "chaude", "reserve_fonciere", "a_creuser", "ecartee",
+             "declasse_bati_sature", "declasse_bati_revele", "declasse_non_constructible",
+             "declasse_zone_fermee", "declasse_au_statut_inconnu", "declasse_au_fermee"}
     for p in demo.DEMO_PARCELS:
         assert {"idu", "role", "montre", "vigilance", "attendu"} <= set(p)
         assert p["idu"].startswith("97415") and len(p["idu"]) == 14

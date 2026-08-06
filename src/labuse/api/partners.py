@@ -118,11 +118,12 @@ def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
     qui collent, plus de oui/non opaque). Déterministe. Les profils sont des DÉMOS (labellisés)."""
     p = db.execute(text("""
         SELECT p.commune, round(p.surface_m2) AS surf, COALESCE(r.sdp_residuelle_m2, 0) AS sdp,
-               zp.zone_fam, zp.zone_lib, d.matrice_statut AS statut
+               zp.zone_fam, zp.zone_lib, s2.tier AS statut
         FROM parcels p
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
-        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        -- M37 : statut = TIER SERVI (parcel_p_score_v2), plus la matrice historique.
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
         WHERE p.idu = :idu"""), {"idu": idu, "run": RUN}).mappings().first()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -453,22 +454,24 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
                    offset: int = Query(0, ge=0), db: Session = Depends(get_db)) -> dict:
     """API partenaire — le robinet B2B2C. Clé simple + quota journalier. Doc : /api/v1/docs."""
     _check_key(db, key)
+    # M37 : le robinet partenaire sert désormais le CLASSEMENT SERVI (tier parcel_p_score_v2),
+    # plus la matrice historique. `statut` (filtre + payload) = tier. Bascule faite MAINTENANT
+    # (zéro partenaire actif — gratuite aujourd'hui, coûteuse après le premier client).
     rows = db.execute(text("""
-        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
+        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
                d.q_score, d.a_score, d.completeness_score, r.sdp_residuelle_m2
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE p.commune = :c AND d.q_score >= :q
-          AND (CAST(:s AS text) IS NULL OR d.matrice_statut = :s)
+          AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
         ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
         {"run": RUN, "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset,
-            # M36 Lot A : l'ancienne mention « (scoring q_v2) » nommait un run MORT — étiquette
-            # fausse sur une surface EXTERNE. Ce robinet sert la MATRICE (historique), pas le
-            # classement servi : on le DIT (migration tiers = extinction (c), au backlog).
-            "mention": "Données indicatives LABUSE (classement interne historique — pas le "
-                       "classement servi) — usage selon convention partenaire.",
+            # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
+            "mention": "Données indicatives LABUSE (classement servi — tiers brûlante → à "
+                       "creuser) — usage selon convention partenaire.",
             "items": [dict(r) for r in rows]}
 
 

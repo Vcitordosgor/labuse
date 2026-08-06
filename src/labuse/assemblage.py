@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from . import config
 from .proprietaire_type import classify_owner_type
+from .scoring.score_v_constants import Q_A_RUN_LABEL  # run servi (point de vérité unique)
 
 ADJ_BUFFER_M = 0.5          # contact cadastral (cf. voisinage)
 _INTERESSANT = ("opportunite", "a_creuser")
@@ -48,18 +49,20 @@ def parcel_assemblage(session: Session, parcel_id: int) -> dict:
     p = _params()
     rows = session.execute(text(
         """
+        -- M37 : le statut du voisin = TIER SERVI (parcel_p_score_v2), plus le rail legacy
+        -- parcel_evaluations.status (éteint). Même source de vérité que voisinage.py (M34).
         SELECT n.id, n.idu, n.surface_m2, p.surface_m2 AS surf_p,
                (p.surface_m2 + n.surface_m2) AS cumul,
-               e.status
+               s.tier AS status
         FROM parcels p
         JOIN parcels n ON n.id <> p.id AND ST_DWithin(p.geom_2975, n.geom_2975, :buf)
-        LEFT JOIN LATERAL (SELECT status FROM parcel_evaluations e
-            WHERE e.parcel_id = n.id ORDER BY evaluated_at DESC LIMIT 1) e ON true
+        LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = n.idu AND s.run_id = :run
         WHERE p.id = :pid AND p.surface_m2 < :seuil          -- la parcelle est sous le seuil seule
           AND (p.surface_m2 + n.surface_m2) >= :seuil        -- mais l'assemblage franchit le seuil
         ORDER BY cumul DESC LIMIT 5
         """
-    ), {"pid": parcel_id, "buf": ADJ_BUFFER_M, "seuil": p["min_surface_m2"]}).mappings().all()
+    ), {"pid": parcel_id, "buf": ADJ_BUFFER_M, "seuil": p["min_surface_m2"],
+        "run": Q_A_RUN_LABEL}).mappings().all()
     if not rows:
         return {"possible": False}
     own_p = _owner_payload(session, parcel_id)

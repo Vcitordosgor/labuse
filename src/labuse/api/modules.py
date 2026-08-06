@@ -195,7 +195,7 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
     secondaire (« (matrice : X) » côté UI). Tri par rang P."""
     from .app import _score_v2_run_id
     rows = db.execute(text("""
-        SELECT p.idu, p.commune, p.surface_m2, d.matrice_statut AS statut, d.q_score, d.a_score,
+        SELECT p.idu, p.commune, p.surface_m2, s2.tier AS statut, d.q_score, d.a_score,
                d.completeness_score, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
@@ -393,7 +393,7 @@ def promesses(commune: str | None = None, months: int = 24,
     rows = db.execute(text("""
         WITH cand AS MATERIALIZED (
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
-                   p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
+                   p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.q_score,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
             FROM sitadel_permits s
             JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
@@ -524,7 +524,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
             db: Session = Depends(get_db)) -> dict:
     limit = max(1, min(limit, 600))  # « voir plus » pagine par offset
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.q_score,
                pm.siren, pm.denomination,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
@@ -585,7 +585,7 @@ def _sru_bloc(db: Session, commune: str) -> dict | None:
 @router.get("/bailleur")
 def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
-        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
+        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, cs.statut AS sru_statut,
@@ -596,17 +596,18 @@ def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN commune_contexte_sru cs ON cs.commune = p.commune
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
         ORDER BY (cs.statut = 'carencee') DESC NULLS LAST, COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-             AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+             AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
              AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
                          AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
-        {"c": commune, "run": RUN}).scalar() or 0)
+        {"c": commune, "run": RUN, "v2run": _v2run(db)}).scalar() or 0)
     sru = _sru_bloc(db, commune) if commune else None
     n_carencees = len({r["commune"] for r in rows if r["sru_statut"] == "carencee"}) if not commune else None
     return {"total": true_total, "affiches": len(rows), "sru": sru, "n_communes_carencees": n_carencees,
@@ -712,7 +713,7 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     for t in tokens[:60]:
         row = db.execute(text("""
             SELECT p.id AS parcel_id, p.idu, p.commune, round(p.surface_m2) AS surface_m2,
-                   d.matrice_statut AS statut, d.q_score, d.a_score, d.completeness_score,
+                   s2.tier AS statut, d.q_score, d.a_score, d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                    (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
@@ -1067,17 +1068,17 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     # des parcelles valides (hors des 300 plus grosses SDP) étaient jetées sans être examinées.
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
-               d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
+               s2.tier AS statut, d.q_score, cr.detail AS zonage,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcels p
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
           AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin"""),
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
+          AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')"""),
         {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
     import re as _re

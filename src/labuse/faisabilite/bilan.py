@@ -730,6 +730,9 @@ def compute_mode_b(session: Session, idu: str, *,
         # le prix d'achat max réhab n'est JAMAIS Sourcé — assumé au libellé.
         "etiquette": "Estimé",
         "achat_max_eur": round(achat_max),
+        # M37 Lot 0.1 — POINT DE FORMATAGE UNIQUE du montant mode B : au k€ (un Estimé à
+        # l'euro près contredit son étiquette). Toutes les surfaces lisent ce libellé.
+        "achat_max_libelle": _eur(achat_max),
         "negatif": achat_max <= 0,
         "message_negatif": ((("bilan négatif au paramètre par défaut — ajuster le coût "
                               "travaux selon l'état constaté") if travaux_est_defaut else

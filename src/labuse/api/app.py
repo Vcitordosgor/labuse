@@ -1306,61 +1306,14 @@ def _owner_famille(groupe, forme, denom) -> str:
 
 @app.get("/map/parcels.geojson")
 def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000),
-                    source: str | None = None, db: Session = Depends(get_db)) -> dict:
-    """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée.
+                    source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> dict:
+    """Parcelles (géométrie simplifiée 4326) + verdict SERVI, pour la carte colorée.
 
-    `source=<run q_v*>` (défaut Q_A_RUN_LABEL) (Socle V1) → lit le scoring premium v2 dans `dryrun_parcel_evaluations`
-    (matrice chaude/à surveiller/à creuser/écartée + Q/A + complétude + événement rouge),
-    la SOURCE DE VÉRITÉ. Sans `source`, comportement historique (parcel_evaluations live)."""
-    if source and source.startswith("q_v"):
-        return _q_v2_geojson(db, commune, limit, run_label=source)
-    rows = db.execute(
-        text(
-            """
-            SELECT p.idu, p.surface_m2,
-                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
-                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason,
-                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2,
-                   own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
-            FROM parcels p
-            LEFT JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score
-                FROM parcel_evaluations e WHERE e.parcel_id = p.id
-                ORDER BY evaluated_at DESC LIMIT 1
-            ) e ON true
-            LEFT JOIN LATERAL (
-                SELECT detail FROM cascade_results
-                WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
-            ) d ON true
-            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-            LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
-            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-            LIMIT :lim
-            """
-        ), {"c": commune, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2}
-    ).mappings().all()
-    feats = [
-        {
-            "type": "Feature",
-            "geometry": json.loads(r["g"]),
-            "properties": {
-                "idu": r["idu"],
-                "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
-                "status": r["status"],
-                "opportunity_score": r["opportunity_score"],
-                "completeness_score": r["completeness_score"],
-                "downgrade_reason": r["downgrade_reason"],
-                "taux_emprise_pct": r["taux_emprise_pct"],
-                "sous_densite": r["sous_densite"],
-                "sdp_residuelle_m2": r["sdp_residuelle_m2"],
-                # CLOISON exfiltration : famille de propriétaire masquée dans le dump île entière.
-                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]) if commune else None,
-            },
-        }
-        for r in rows if r["g"]
-    ]
-    return {"type": "FeatureCollection", "features": feats}
+    M37 : DÉFAUT = run servi (`Q_A_RUN_LABEL`, lu du point de vérité unique
+    `config/served_run.txt`) → toujours le scoring premium v2 (`dryrun_parcel_evaluations`),
+    tier servi. Le fallback legacy `parcel_evaluations.status` (rail éteint M37) est SUPPRIMÉ —
+    un seul chemin, une seule vérité. Le front envoyait déjà `?source=…` via le helper `q()`."""
+    return _q_v2_geojson(db, commune, limit, run_label=source)
 
 
 #: statuts de la matrice premium v2 (dryrun) — source de vérité du Socle V1.

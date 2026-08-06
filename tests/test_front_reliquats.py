@@ -117,8 +117,11 @@ def test_r3_matrice_non_thermique():
 
 
 def test_r3_desambiguisation_cote_a_cote():
-    # TierBadge (les deux classements côte à côte) porte le tooltip d'explication
-    assert "Deux classements distincts" in TIERBADGE
+    # M37 : la mention secondaire « (matrice : X) » du TierBadge est RETIRÉE (un seul
+    # classement à l'écran, le tier servi). Le tooltip de désambiguïsation disparaît (le
+    # repli STATUT_META « hors run » reste légitime). Plus de rendu « (matrice : » interpolé.
+    assert "Deux classements distincts" not in TIERBADGE
+    assert "(matrice :" not in TIERBADGE.replace("« (matrice : X) »", "")
     # M36 Lot A : étiquette de source VRAIE — cas nominal « Classement servi », repli
     # honnête « Classement historique » ; le jargon « Matrice Q×A » ne s'affiche plus.
     assert "Verdict · Classement servi" in LEGEND
