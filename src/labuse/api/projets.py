@@ -212,7 +212,7 @@ _STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser
 #: M5.1 : le TIER v2 est le verdict énoncé au client (l'étage 0 du run servi prime) ;
 #: le statut matrice ne sert plus que de repli (item sans run v2).
 _TIER_LABEL = {"brulante": "Brûlante v2", "chaude": "Chaude v2",
-               "reserve_fonciere": "Réserve foncière", "a_creuser": "À creuser",
+               "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
                "ecartee": "Écartée"}
 
 

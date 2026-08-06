@@ -5,8 +5,7 @@ export interface ParcelFeatureCollection {
   features: Array<{ type: 'Feature'; geometry: unknown; properties: Record<string, unknown> }>
 }
 
-import { useApp, type Filters } from '../store/useApp'
-import { vSignalCodes } from './filters'
+import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'
 
 // M31 (arbitrage Vic) : run servi = point de vérité UNIQUE versionné config/served_run.txt (=
 // q_v8_calibre depuis la bascule M28). `vite.config.ts` lit ce fichier au build et injecte
@@ -50,7 +49,7 @@ const q = (extra: Record<string, string | number> = {}) => {
 }
 
 /** Filtres chips → query params serveur (mode île : la liste et les compteurs sont SQL).
- *  M5.1 : `tiers` (v2) pilote — plus jamais `statuts` (matrice) ni `brulantes` (v1.3). */
+ *  M5.1 : `tiers` (v2) pilote. M45 (P1) : `v_signal` (Score V) retiré — anti-filtre acté. */
 export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.tiers.length ? { tiers: f.tiers.join(',') } : {}),
   ...(f.scoreMin != null ? { score_min: f.scoreMin } : {}),
@@ -63,10 +62,75 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
   ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
-  ...(f.vSignals.length ? { v_signal: vSignalCodes(f.vSignals).join(',') } : {}),
   ...(f.personneMorale ? { personne_morale: 'true' } : {}),        // M11 B2 : propriétaire personne morale
   ...(f.zonagePlu.length ? { zonage: f.zonagePlu.join(',') } : {}), // M11 B2 : zonage PLU (familles U/AU/A/N)
+  // M45 (P2a) — barre niveau 1 + tiroir droit
+  ...(f.sdpMax != null ? { sdp_max: f.sdpMax } : {}),
+  ...(f.constructibilite.length ? { constructibilite: f.constructibilite.join(',') } : {}),
+  ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
+  ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
+  ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
+  // M45 (P2d) — tiroirs éco / mutation / propriété / veille
+  ...(f.sousDensite ? { sous_densite: 'true' } : {}),
+  ...(f.multMin != null ? { mult_min: f.multMin } : {}),
+  ...(f.rangMax != null ? { rang_max: f.rangMax } : {}),
+  ...(f.renouvellement ? { renouvellement: 'true' } : {}),
+  ...(f.divisionOr ? { division_or: 'true' } : {}),
+  ...(f.proprietaireType.length ? { proprietaire_type: f.proprietaireType.join(',') } : {}),
+  ...(f.etatSociete.length ? { etat_societe: f.etatSociete.join(',') } : {}),
+  ...(f.copro.length ? { copro: f.copro.join(',') } : {}),
+  ...(f.npnru ? { npnru: 'true' } : {}),
+  ...(f.adresseAbsente ? { adresse_absente: 'true' } : {}),
+  // M45-B (L1) — tiroir Économie
+  ...(f.budgetMax != null ? { budget_max: f.budgetMax } : {}),
+  ...(f.chargeMin != null ? { charge_min: f.chargeMin } : {}),
+  ...(f.chargeMax != null ? { charge_max: f.chargeMax } : {}),
+  ...(f.prixMarcheMin != null ? { prix_marche_min: f.prixMarcheMin } : {}),
+  ...(f.prixMarcheMax != null ? { prix_marche_max: f.prixMarcheMax } : {}),
+  ...(f.marcheFiable ? { marche_fiable: 'true' } : {}),
+  ...(f.caMin != null ? { ca_min: f.caMin } : {}),
+  // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
+  ...(f.modeBRentable ? {
+    mode_b_rentable: 'true',
+    modeb_travaux_m2: useApp.getState().modeB.travauxM2,
+    modeb_loyer_m2: useApp.getState().modeB.loyerM2,
+    modeb_rendement_pct: useApp.getState().modeB.rendementPct,
+  } : {}),
 })
+
+/** M45 (P2a) — filtre v2 des tiers selon l'interrupteur « Analyse LABUSE » :
+ *  ACTIF → on applique le classement (les tiers choisis, défaut = univers hors écartées) ;
+ *  COUPÉ → voie manuelle pure : on n'impose AUCUN tier (le classement ne pilote plus). */
+// Univers « hors exclusions dures » (étage 0 écarté) = ce que l'analyse RETIENT — déclassements
+// INCLUS (doctrine « tout montrer », M30). Écartée = l'exclusion dure (étage 0). Les deux réunis
+// = la trame entière (le cadastre analysé). Réconcilie le compteur avec « 431 663 analysées ».
+const TIERS_ANALYSE = [
+  'brulante', 'chaude', 'reserve_fonciere', 'a_creuser',
+  'declasse_bati_sature', 'declasse_non_constructible', 'declasse_bati_revele',
+  'declasse_zone_fermee', 'declasse_au_statut_inconnu', 'declasse_au_fermee',
+]
+const tiersParam = (f: Filters): Record<string, string> =>
+  f.analyseLabuse
+    ? { tiers: (f.tiers.length ? f.tiers : TIERS_ANALYSE).join(',') }   // l'analyse retient (hors exclusions dures)
+    : { tiers: [...TIERS_ANALYSE, 'ecartee'].join(',') }               // toute la trame (le cadastre analysé)
+
+export interface FiltreReponse {
+  compte: number
+  total: number
+  tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
+  opportunites: number
+  opportunites_evenement: number
+  dossiers_opportunites: number
+  opportunites_avec_dossier: number
+  opportunites_sans_identite: number
+  page: ParcelResult[]
+  limit: number; offset: number; sort: string
+}
+/** Endpoint UNIFIÉ M45 (« théâtre ») : compte exact + ventilation tier + page en un appel. */
+export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0) => {
+  const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
+  return j<FiltreReponse>(`/filtre?${q({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
+}
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'
@@ -103,11 +167,13 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
-export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-// E3 (M12) : `offset` exposé — le back le supporte déjà (LIMIT/OFFSET en SQL, top-N sur index).
-// Permet la pagination « Charger plus » au lieu du plafond dur de 500.
+// M45-B (L3) — UNIFICATION : compteur/cartouches ET liste passent par /filtre (FiltreCriteres),
+// donc portent EXACTEMENT les mêmes facettes que le compteur du panneau. Plus jamais un compteur
+// filtré et une liste qui ignore les filtres. `f` absent = univers par défaut (analyse active).
+export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((r) => r as unknown as Stats)
+// E3 (M12) : `offset` exposé — pagination « Charger plus ». La page vient de /filtre (mêmes facettes).
 export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0) =>
-  j<ParcelResult[]>(`/parcels?${q({ limit, offset, sort, ...(f ? filterParams(f) : {}) })}`)
+  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset).then((r) => r.page)
 /** Export CSV de la liste courante (mêmes filtres, même tri) — tier v2 en premier. */
 export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
   `/parcels/export.csv?${q({ limit: 5000, sort, ...(f ? filterParams(f) : {}) })}`

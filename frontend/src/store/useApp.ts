@@ -37,17 +37,54 @@ export interface Filters {
   flags: string[]            // flags actifs requis (au moins un)
   flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
-  vSignals: string[]         // signaux propriétaire (dossier V, §5.3) — au moins un présent
   personneMorale: boolean    // M11 B2 : détenue par une personne morale (DGFiP public — SCI/société/…)
   zonagePlu: string[]        // M11 B2 : zonage PLU par famille (U/AU/A/N) — au moins une
+  // M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
+  sdpMax: number | null              // SDP résiduelle maximale (m²)
+  constructibilite: string[]         // constructible / au_conditionnelle / fermee / inconstructible / rnu
+  etatSol: string[]                  // nu / bati_marginal / bati_sature / bati_revele
+  capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
+  zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
+  analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ON par défaut.
+  // M45 (P2d) — tiroirs éco / mutation / propriété / veille
+  sousDensite: boolean
+  multMin: number | null
+  rangMax: number | null
+  renouvellement: boolean
+  divisionOr: boolean
+  proprietaireType: string[]         // pm / bailleur / pp
+  etatSociete: string[]              // cessee / radiee / procedure (M43 factuel)
+  copro: string[]                    // avec / sans (RNIC)
+  npnru: boolean
+  adresseAbsente: boolean
+  // M45-B (Lot 1) — tiroir Économie
+  budgetMax: number | null           // prix d'achat max admissible ≤ budget (Mon budget)
+  chargeMin: number | null
+  chargeMax: number | null
+  prixMarcheMin: number | null       // €/m² terrain DVF
+  prixMarcheMax: number | null
+  marcheFiable: boolean              // secteur n≥3 ventes
+  caMin: number | null               // bilan CA indicatif ≥ N
+  modeBRentable: boolean             // mode B rentable au paramètre courant (curseur session)
 }
 
 export const EMPTY_FILTERS: Filters = {
   tiers: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
   evenement: false, veille: false, horsCopro: false,
-  flags: [], flagsExclus: [], communes: [], vSignals: [],
+  flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
+  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
+  analyseLabuse: true,
+  sousDensite: false, multMin: null, rangMax: null, renouvellement: false, divisionOr: false,
+  proprietaireType: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
+  budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,
+  marcheFiable: false, caMin: null, modeBRentable: false,
 }
+
+// M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +
+// rendement, lus par la fiche ET le filtre (mode_b_rentable). Défauts = plafond BOFiP base + repères.
+export interface ModeBParams { travauxM2: number; loyerM2: number; rendementPct: number }
+export const MODE_B_DEFAUT: ModeBParams = { travauxM2: 1200, loyerM2: 12.21, rendementPct: 6 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP
 // besoin) — porté jusqu'à la restitution où « Enregistrer ce projet » le persiste (V3).
@@ -138,6 +175,8 @@ interface AppState {
   setFilter: <K extends keyof Filters>(k: K, v: Filters[K]) => void
   setFilters: (f: Filters) => void
   resetFilters: () => void
+  modeB: ModeBParams                                   // M45-B (L2) : curseur session partagé fiche/filtre
+  setModeB: (p: Partial<ModeBParams>) => void
   sourcesFocus: string | null // nom de source à surligner sur la page Sources
   openSources: (focus?: string | null) => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
@@ -246,6 +285,8 @@ export const useApp = create<AppState>((set) => ({
   setFilter: (k, v) => set((s) => ({ filters: { ...s.filters, [k]: v } })),
   setFilters: (filters) => set({ filters }),
   resetFilters: () => set({ filters: EMPTY_FILTERS, zone: null }),
+  modeB: MODE_B_DEFAUT,
+  setModeB: (p) => set((s) => ({ modeB: { ...s.modeB, ...p } })),
   sourcesFocus: null,
   // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,

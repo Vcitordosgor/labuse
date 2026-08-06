@@ -25,7 +25,7 @@ export const TIER_V2_META: Record<TierV2, { label: string; color: string }> = {
   brulante: { label: 'Brûlante', color: '#E8695A' },
   chaude: { label: 'Chaude', color: '#E8B44C' },
   a_creuser: { label: 'À creuser', color: '#8FA69A' },
-  reserve_fonciere: { label: 'Réserve foncière', color: '#6FA8DC' },
+  reserve_fonciere: { label: 'Potentiel long terme', color: '#6FA8DC' },
   ecartee: { label: 'Écartée', color: '#4A5A52' },
 }
 export const LEGEND_V2_ORDER: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']

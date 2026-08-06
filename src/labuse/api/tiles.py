@@ -167,6 +167,44 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     return int(n)
 
 
+def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
+    """M45 (P2) — DÉNORMALISE les vigilances (non-francs : SOFT_FLAG + abf/UNKNOWN) du run servi
+    en une table (run_label, parcel_id, layer_name) INDEXÉE, pour que le filtre `flags` (vigilances
+    par type) soit un PROBE indexé — le compteur île entière passait de 4-7 s à sous la barre.
+
+    RUN-SCOPÉE : (re)bâtie dans le geste de bascule (comme les MVT), jamais à la main. GARDE DE
+    COHÉRENCE : le compte par couche DOIT égaler la source (dryrun_cascade_results) — tout écart =
+    REFUS bruyant (rollback + RuntimeError). Jamais une 2e vérité qui dérive en silence. Idempotent."""
+    import time as _time
+    t0 = _time.perf_counter()
+    db.execute(text("DROP TABLE IF EXISTS parcel_flags"))
+    db.execute(text("""
+        CREATE TABLE parcel_flags AS
+        SELECT DISTINCT CAST(:run AS varchar) AS run_label, parcel_id, layer_name
+        FROM dryrun_cascade_results
+        WHERE run_label = :run
+          AND (result = 'SOFT_FLAG' OR (layer_name = 'abf' AND result = 'UNKNOWN'))
+    """), {"run": run_label})
+    db.execute(text("CREATE INDEX parcel_flags_probe ON parcel_flags (run_label, layer_name, parcel_id)"))
+    db.execute(text("ANALYZE parcel_flags"))
+    # ── GARDE DE COHÉRENCE : par couche, parcel_flags == source (DISTINCT parcelle) ──
+    src = dict(db.execute(text(
+        "SELECT layer_name, count(DISTINCT parcel_id) FROM dryrun_cascade_results "
+        "WHERE run_label=:run AND (result='SOFT_FLAG' OR (layer_name='abf' AND result='UNKNOWN')) "
+        "GROUP BY 1"), {"run": run_label}).all())
+    got = dict(db.execute(text(
+        "SELECT layer_name, count(*) FROM parcel_flags WHERE run_label=:run GROUP BY 1"),
+        {"run": run_label}).all())
+    ecarts = {k: (src.get(k), got.get(k)) for k in set(src) | set(got) if src.get(k) != got.get(k)}
+    if ecarts:
+        db.rollback()
+        raise RuntimeError(f"parcel_flags INCOHÉRENT vs dryrun_cascade_results (couche: source/flags) : {ecarts}")
+    n = db.execute(text("SELECT count(*) FROM parcel_flags")).scalar() or 0
+    db.commit()
+    return {"n": int(n), "couches": len(got), "coherence_ok": True,
+            "seconds": round(_time.perf_counter() - t0, 2)}
+
+
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
 _CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 _CACHE_MAX = 4096

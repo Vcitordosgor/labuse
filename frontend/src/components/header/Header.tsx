@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
-import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
+import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
@@ -130,8 +130,6 @@ function AddFilter() {
     setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
   const toggleFlag = (k: string) =>
     setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
-  const toggleVSignal = (k: string) =>
-    setFilter('vSignals', filters.vSignals.includes(k) ? filters.vSignals.filter((x) => x !== k) : [...filters.vSignals, k])
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)}
@@ -193,21 +191,9 @@ function AddFilter() {
                 </button>
               ))}
             </div>
-            {/* Signaux propriétaire (dossier de la fiche) — libellés métier, au moins un présent */}
-            <label className="label-caps mt-3 block">Signaux propriétaire</label>
-            {/* E1 (M12) : « Dirigeant 65+ » MASQUÉ — audit A5, les codes RNE_DIRIGEANT_* sont
-                absents des données (0 résultat sur le run servi). Le code du filtre reste
-                (V_SIGNAL_DEFS, R1 : masquer ≠ supprimer) ; il réapparaîtra dès le backfill du signal. */}
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {V_SIGNAL_DEFS.filter((d) => d.key !== 'dirigeant').map((d) => (
-                <button key={d.key} onClick={() => toggleVSignal(d.key)}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.vSignals.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}
-                  title={`Au moins un signal « ${d.label} » au dossier propriétaire`}>
-                  {d.label}
-                </button>
-              ))}
-            </div>
+            {/* M45 (P1) : bloc « Signaux propriétaire » (filtre Score V) RETIRÉ — anti-filtre acté
+                au cadrage (Score V retiré du scoring RR 0,51 / de l'affichage M35). L'option masquée
+                « Dirigeant 65+ » disparaît avec : un critère personne physique n'a pas sa place (RGPD). */}
             <button onClick={() => { setFilters(EMPTY_FILTERS); setOpen(false) }}
               className="mt-3 min-h-7 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt">
               Réinitialiser tous les filtres

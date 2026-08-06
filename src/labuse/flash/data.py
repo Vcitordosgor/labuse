@@ -200,7 +200,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 {"idu": idu}).mappings().first()
         if v2 or etage0:
             libelles = {"brulante": "Brûlante", "chaude": "Chaude",
-                        "reserve_fonciere": "Réserve foncière", "a_creuser": "À creuser",
+                        "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
                         "ecartee": "Écartée",
                         # déclassement tête-de-liste (étage 0) — visibles avec motif
                         "declasse_zone_fermee": "Zone fermée à l'urbanisation",

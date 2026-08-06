@@ -30,7 +30,7 @@ BAN_URL = "https://api-adresse.data.gouv.fr/search/"
 _TIER_LABELS = {
     "brulante": "Brûlante — signal de vendabilité fort",
     "chaude": "Chaude — opportunité foncière",
-    "reserve_fonciere": "Réserve foncière — potentiel à moyen terme",
+    "reserve_fonciere": "Potentiel long terme",
     "a_creuser": "À creuser — potentiel partiel",
     "ecartee": "Écartée — hors critères",
 }

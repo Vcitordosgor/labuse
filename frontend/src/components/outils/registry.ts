@@ -32,7 +32,7 @@ export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
 export const MODULES: ModuleDef[] = [
   // ── Détecter le foncier ──
   { key: 'scoring-v2', num: 'M25', group: 'detecter', phare: true,
-    label: 'Radar des mutations', desc: 'Probabilité de mutation à 12 mois — brûlantes, réserve foncière, top P' },
+    label: 'Radar des mutations', desc: 'Probabilité de mutation à 12 mois — brûlantes, potentiel long terme, top P' },
   { key: 'programme', num: 'M22', group: 'detecter', phare: true,
     label: 'Faisabilité', desc: 'Par critères (où poser un programme) ou par parcelle (ce qu’elle peut accueillir)' },
   { key: 'division', num: 'M01', group: 'detecter', phare: true,

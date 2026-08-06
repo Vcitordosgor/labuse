@@ -1,0 +1,61 @@
+niveau;filtre_cadrage;backing;param_existant;statut
+1;commune_secteur;commune/communes + parcels.geom_2975;commune,communes;requetable+polygone_a_exposer
+1;constructibilite_calibree;parcel_p_score_v2.tier declasse_* + parcel_constructibilite;tiers(partiel);a_exposer_axe_dedie
+1;surface_min_max;parcels.surface_m2;surface_min,surface_max;requetable
+1;sdp_residuelle;parcel_residuel.sdp_residuelle_m2;sdp_min;requetable_min_max_a_exposer
+1;etat_du_sol;tiers declasse_bati_* + parcel_bati_revele/parcel_filtre_bati;-;a_deriver
+1;capacite_logements;parcel_residuel.capacite_estimee(BOOL) + sdp_residuelle_m2;-;a_deriver_etiquette_Estime
+1;analyse_labuse_toggle;tiers + perimetre defaut;tiers;requetable(bascule=front)
+2droit;zone_plu_exacte;parcel_zone_plu.zone_libelle;-;a_exposer
+2droit;zonage_UAUAN;parcel_zone_plu.zone_fam;zonage;requetable
+2droit;statut_au_detaille;tiers declasse_au_* + parcel_constructibilite.motif;tiers(partiel);a_deriver
+2droit;plancher_densite;a_localiser;-;a_verifier
+2droit;ebc_partiel;aucun layer ebc vu;-;a_sourcer
+2droit;emplacement_reserve;a_sourcer;-;a_sourcer
+2droit;cinquante_pas;cascade cinquante_pas;flags;requetable
+2droit;parc_national;cascade parc_national;flags;requetable
+2droit;sol_naturel_zan;sar/potentiel_foncier_region;-;a_verifier
+2droit;fraicheur_plu;veille_plu(M41);-;a_exposer
+2eco;charge_fonciere_mediane;dvf_secteur_medianes;-;a_exposer
+2eco;prix_marche_dvf_fiabilite;v_parcel_dvf_last/dvf_secteur_medianes;-;a_exposer
+2eco;bilan_ca;score_e;-;a_exposer
+2eco;prix_achat_max_budget;score_e.marge (M22-A);marge_min(partiel);a_exposer
+2eco;mode_b_rentable_param;/parcels/{idu}/mode-b + defisc M44;-;a_exposer_curseur_session
+2eco;sous_densite;parcel_residuel.sous_densite;-;a_exposer
+2mut;tier;parcel_p_score_v2.tier;tiers;requetable
+2mut;proba_mutation_xN;parcel_p_score_v2.mult_base;-;a_exposer
+2mut;rang_leN;parcel_p_score_v2.rang;-;a_exposer_tetes
+2mut;entree_tete_recente;parcel_p_score_v2.event_date;-;a_exposer
+2mut;segment_renouvellement;parcel_renouvellement;-;a_exposer_APRES_verif_rebuild3_train5
+2mut;division_en_or_O12;division_or_candidates;-;a_exposer
+2mut;activite_permis_secteur;sitadel_permits/via_permits_geo(M38/M42);-;a_exposer
+2prop;type_proprietaire;parcelle_personne_morale.groupe_label(HLM/SEM=bailleur);personne_morale(presence);requetable+type_a_exposer
+2prop;etat_societe_M43;owner_enrichment/bodacc (_pm_etat_societe);-;a_exposer
+2prop;assemblage_meme_proprio;cluster SIREN;-;a_exposer
+2prop;acquerabilite;derive PM/SIREN;-;a_exposer
+2prop;copropriete_rnic;parcel_p_score_v2.copro + rnic_coproprietes;hors_copro;requetable+avec/sans_a_exposer
+2prop;dossier_proprietaire;tables projets;-;a_exposer
+2prop;gerant_age;cascade age_dirigeant;-;ANTI-FILTRE_RGPD_jamais
+2risq;ppr_aleas_risques;cascade risques;flags;requetable+niveau_a_exposer
+2risq;bruit_route;cascade bruit_route;flags;requetable+classes_a_exposer
+2risq;sis_pollution;cascade sol_pollue;flags;requetable
+2risq;pente;cascade pente + rgealti_pente_5m;flags;requetable+tranches_a_exposer
+2risq;acces_voirie;cascade acces;flags;requetable_etiquette_BDTOPO_dette12
+2risq;viabilisation;parcel_viabilisation.band/c100_acheve;-;a_exposer
+2risq;assainissement_anc;parcel_viabilisation.assainissement_zonage;-;a_exposer
+2risq;vigilances_par_type;dryrun_cascade_results SOFT_FLAG;flags;requetable_SAUF_piscine_M39_non_bascule
+2risq;geometrie_exploitable;osm_faux_positif/emprise_lineaire;flags;requetable
+2veille;motif_declassement;entonnoir_motifs + parcel_constructibilite.motif;getEntonnoir;a_exposer_filtre
+2veille;veille_au;tiers declasse_au_* + veille_plu;-;a_exposer
+2veille;potentiel_solaire_aper;parkings_aper;-;a_exposer
+2veille;proximite_npnru_qpv;anru_quartiers;-;a_exposer_spatial
+2veille;adresse_ban;tables _ban;-;a_exposer
+preset;6_presets_lancement;segment_presets(infra existe);-;a_semer
+preset;vues_utilisateur;table a ajouter cote compte;-;a_creer
+anti;score_opportunite;retire M36;-;ANTI-FILTRE
+anti;completude;retiree M36;-;ANTI-FILTRE
+anti;icd;fiche only;-;ANTI-FILTRE
+anti;statut_matrice;rail eteint M37;statuts;RETIRER_param
+anti;v_signal_scoreV;parcel_v_score retire RR0.51;v_signal;RETIRER_param_front+API
+anti;brulantes_alias;alias tier;brulantes;RETIRER_param
+anti;branche_sans_source;parcel_evaluations morte + ignore filtres;-;NEUTRALISER_404
