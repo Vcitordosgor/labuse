@@ -490,6 +490,20 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
         verifs = [c["detail"] for c in fiche["cascade"] if c["result"] == "UNKNOWN"][:4]
     verif_html = "".join(f"<li>{html.escape(x)}</li>" for x in verifs[:5]) or "<li>—</li>"
 
+    # M40 — Zonage & source qui fait foi : les 3 choses distinctes, jamais mélangées
+    # (1 document servi · 2 il fait foi · 3 ce qui est en cours et non servi) + action.
+    pf = fiche.get("plu_fraicheur") or {}
+    plu_html = ""
+    if pf.get("document_servi"):
+        _pl = [kv("Document servi", html.escape(pf["document_servi"]))]
+        if pf.get("fait_foi"):
+            _pl.append(kv("Fait foi", html.escape(pf["fait_foi"])))
+        if pf.get("en_cours"):
+            _pl.append(kv("En cours — non servi", html.escape(pf["en_cours"])))
+        _act = (f'<div class="action"><b>À vérifier :</b> {html.escape(pf["action"])}</div>'
+                if pf.get("action") else "")
+        plu_html = f"<h3>Zonage — source qui fait foi</h3>{''.join(_pl)}{_act}"
+
     synth = html.escape(rv.get("synthese") or "")
     action = html.escape(rv.get("prochaine_action") or "")
     loc = (f"{html.escape(p.get('commune') or '—')} · section {html.escape(p.get('section') or '—')} "
@@ -543,6 +557,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {res_html}
     {bil_html}
     {mode_b_kv}
+    {plu_html}
     <h3>Contraintes</h3>
     <ul>{cont_html}</ul>
     <h3>À vérifier avant de démarcher</h3>

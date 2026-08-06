@@ -2054,15 +2054,40 @@ def _plu_fraicheur(idu: str) -> dict | None:
         return None
     statut = c.get("statut")
     horizon = c.get("date_mairie")
-    libelles = {
-        "a_jour": f"zonage PLU {horizon} (à jour du GPU)" if horizon else "zonage PLU (à jour)",
-        "annule_partiel": f"zonage PLU {horizon} — annulation partielle (hors zonage servi)",
-        "opposabilite_en_attente": f"zonage PLU {horizon} opposable — révision en cours, non publiée au GPU (sous réserve)",
-        "rnu": "RNU — aucun PLU (règlement national d'urbanisme)",
-    }
+    note = c.get("note")
+    # M40 — les TROIS choses distinctes, jamais mélangées : (1) quel document LABUSE SERT,
+    # (2) qu'il est bien celui qui FAIT FOI à ce jour, (3) ce qui est EN COURS et non servi.
+    # `en_cours` dit UNIQUEMENT ce qui est pendant/non servi (jamais ne répète le document servi) ;
+    # le `note` config détaillé reste servi à part (traçabilité), il ne se substitue pas aux 3 temps.
+    doc = f"PLU approuvé le {horizon}" if horizon else "PLU"
+    if statut == "a_jour":
+        document_servi, fait_foi = doc, "Document à jour du GPU — c'est celui qui fait foi."
+        en_cours = ("Modifications postérieures éventuelles non intégrées au GPU — à confirmer en mairie."
+                    if note else None)
+        action = "Confirmer en mairie d'éventuelles modifications postérieures." if note else None
+    elif statut == "annule_partiel":
+        document_servi = doc
+        fait_foi = "Document opposable servi — l'annulation partielle ne touche pas le zonage servi."
+        en_cours = "Annulation contentieuse limitée, hors zonage servi (détail en note)."
+        action = "Pour le secteur visé par l'annulation, vérifier le règlement en mairie."
+    elif statut == "opposabilite_en_attente":
+        document_servi = f"{doc} (opposable, présent au GPU)"
+        fait_foi = "Document opposable — il fait foi à ce jour."
+        en_cours = "Une révision est en cours, non approuvée — non opposable, non servie."
+        action = "Vérifier en mairie le calendrier de révision avant engagement."
+    elif statut == "rnu":
+        document_servi = "Aucun PLU — RNU (règlement national d'urbanisme)."
+        fait_foi = "Le RNU s'applique ; aucun zonage communal servi."
+        en_cours = None
+        action = "Constructibilité au cas par cas (RNU) — vérifier en mairie."
+    else:
+        document_servi, fait_foi, en_cours, action = doc, None, None, None
+    libelle = (f"{document_servi} — {fait_foi}" if fait_foi else document_servi)
     return {"idurba": c.get("idurba"), "horizon": horizon, "statut": statut,
-            "libelle": libelles.get(statut, "zonage PLU"), "note": c.get("note"),
-            "cadence": "révisions (périodique)"}
+            "libelle": libelle, "note": note, "cadence": "révisions (périodique)",
+            # M40 : exposition en 3 temps (front + one-pager). fait_foi_ok = booléen honnête.
+            "document_servi": document_servi, "fait_foi": fait_foi, "en_cours": en_cours,
+            "action": action, "fait_foi_ok": statut in ("a_jour", "annule_partiel", "opposabilite_en_attente")}
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -2715,6 +2740,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
+        # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
+        # exports (one-pager), pas seulement la fiche premium. Jamais un zonage servi sans mention.
+        "plu_fraicheur": _plu_fraicheur(idu),
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)

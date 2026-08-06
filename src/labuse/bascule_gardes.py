@@ -256,3 +256,82 @@ def check_run_absent(target: str = TARGET) -> int:
             raise RunDejaExistantError(
                 f"{target} existe déjà — rollback d'abord (python scripts/rollback_v8_calibre.py).")
         return c.execute(text("SELECT count(*) FROM parcels")).scalar()
+
+
+def _idurba_date(idurba: str | None):
+    """Extrait la date (AAAAMMJJ finale) d'un idurba (`97412_PLU_20240320`, `97409_20190228`).
+    None si non parsable. Sert à chiffrer l'AMPLEUR d'une divergence."""
+    import datetime
+    import re
+    m = re.search(r"(\d{8})\D*$", idurba or "")
+    if not m:
+        return None
+    try:
+        return datetime.datetime.strptime(m.group(1), "%Y%m%d").date()
+    except ValueError:
+        return None
+
+
+def _confronter_idurba(communes: dict, gpu: dict) -> list[dict]:
+    """Cœur PUR de la confrontation (sans DB, testable) : `communes` = config plu_millesimes
+    ({insee: {idurba, commune, statut, date_mairie}}), `gpu` = {insee: [idurba ingérés]}.
+    Retourne la liste des divergences MANQUANT / RESIDU avec l'ampleur en jours."""
+    import datetime
+    out: list[dict] = []
+    for insee, cfg in sorted(communes.items()):
+        if cfg.get("statut") == "rnu":
+            continue
+        cidu = (cfg.get("idurba") or "").strip()
+        gidus = gpu.get(insee, [])
+        gset = {g.lower() for g in gidus}
+        d_mairie = _idurba_date(cidu)
+        if d_mairie is None and cfg.get("date_mairie"):
+            try:
+                d_mairie = datetime.date.fromisoformat(cfg["date_mairie"])
+            except (ValueError, TypeError):
+                d_mairie = None
+        if cidu and cidu.lower() not in gset:
+            newest = max((_idurba_date(g) for g in gidus if _idurba_date(g)), default=None)
+            ampleur = (d_mairie - newest).days if d_mairie and newest else None
+            out.append({"insee": insee, "commune": cfg.get("commune"), "type": "MANQUANT",
+                        "idurba_mairie": cidu, "idurba_gpu": " | ".join(sorted(gidus)) or "(aucun)",
+                        "ampleur_jours": ampleur})
+        for g in sorted(x for x in gidus if x.lower() != cidu.lower()):
+            dg = _idurba_date(g)
+            ampleur = (d_mairie - dg).days if d_mairie and dg else None
+            out.append({"insee": insee, "commune": cfg.get("commune"), "type": "RESIDU",
+                        "idurba_mairie": cidu, "idurba_gpu": g, "ampleur_jours": ampleur})
+    return out
+
+
+def check_coherence_idurba(session=None) -> dict:
+    """Garde de CONFRONTATION GPU-vs-mairie (M40) — bruyante, NON bloquante (même régime que
+    `check_fraicheur` : elle alerte, elle n'empêche pas un geste légitime). Oppose, par commune,
+    l'idurba MAIRIE (référence d'approbation, `config/plu_millesimes.yaml`) à l'idurba GPU
+    réellement ingéré (`spatial_layers.plu_gpu_zone`). Deux divergences :
+      · **MANQUANT** : le document mairie n'est PAS servi au GPU → vrai retard GPU-derrière-mairie
+        (la raison d'être de cette garde : elle attrapera ce cas le jour où il arrivera) ;
+      · **RESIDU**  : le GPU garde un document superseded à côté du courant (hygiène — Saint-Joseph).
+    `rnu` et communes hors config ignorées. Casse PLU/plu neutralisée. Lecture seule.
+    Retourne `{divergences: [...], n_manquant, n_residu}`."""
+    from labuse.config import load_yaml_config
+    communes = (load_yaml_config("plu_millesimes") or {}).get("communes", {})
+    sql = ("SELECT left(attrs->>'idurba',5) insee, array_agg(DISTINCT attrs->>'idurba') idus "
+           "FROM spatial_layers WHERE kind='plu_gpu_zone' AND attrs->>'idurba' IS NOT NULL GROUP BY 1")
+    if session is not None:
+        rows = session.execute(text(sql)).all()
+    else:
+        with engine().connect() as c:
+            rows = c.execute(text(sql)).all()
+    gpu = {insee: [i for i in idus if i] for insee, idus in rows}
+    divergences = _confronter_idurba(communes, gpu)
+    for d in divergences:
+        amp = f", ampleur {d['ampleur_jours']} j" if d.get("ampleur_jours") is not None else ""
+        print(f"{_ts()} ⚠ IDURBA [{d['type']}] — {d['commune']} ({d['insee']}) : "
+              f"mairie « {d['idurba_mairie']} » vs GPU « {d['idurba_gpu']} »{amp}. "
+              f"Confrontation GPU↔mairie — NON bloquant, à voir.", flush=True)
+    if not divergences:
+        print(f"{_ts()} ✓ idurba : GPU = mairie pour toutes les communes outillées.", flush=True)
+    n_manquant = sum(1 for d in divergences if d["type"] == "MANQUANT")
+    return {"divergences": divergences, "n": len(divergences),
+            "n_manquant": n_manquant, "n_residu": len(divergences) - n_manquant}

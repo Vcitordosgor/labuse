@@ -4,9 +4,14 @@
 # Source : reports/m51-unification/PLU-A-RECALIBRER.md (relevé 13/07, API GPU officielle) + les
 # idurba/dates d'approbation ancrés par la campagne de ré-extraction M32 (05/08). Cadence = révisions.
 # `statut` : a_jour (GPU=mairie) | annule_partiel (portée hors AU) | opposabilite_en_attente
-#   (mairie opposable mais AUCUN document GPU — révision en cours) | rnu.
+#   (PLU opposable SERVI et présent au GPU, mais une révision est en cours — non approuvée, donc
+#   non opposable et non servie) | rnu.
+# M40 (confrontation GPU-vs-mairie) : idurba GPU (spatial_layers) confronté à l'idurba mairie sur
+#   pièces → 23/24 identiques, 1 RNU, 0 document divergent (le GPU n'est PAS en retard aujourd'hui).
+#   DOCTRINE : une NOTE de config est une affirmation d'agent, PAS une source — elle se vérifie sur
+#   pièces comme le reste. La mention M32 « aucun document GPU » (Saint-André/Saint-Leu) était fausse.
 meta:
-  source: "PLU-A-RECALIBRER.md (13/07) + ré-extractions M32 (05/08)"
+  source: "PLU-A-RECALIBRER.md (13/07) + ré-extractions M32 (05/08) + confrontation idurba M40 (06/08)"
   cadence: "révisions (périodique, pas de fréquence fixe)"
 communes:
   "97401": {commune: "Les Avirons", idurba: "97401_PLU_20241206", date_mairie: "2024-12-06", statut: a_jour}
@@ -19,12 +24,13 @@ communes:
             note: "annulation limitée au secteur Uppp/Up2 (concession portuaire) — TA 1900330 + CAA 22BX01470 ; zones AU/N/U résidentielles intactes"}
   "97408": {commune: "La Possession", idurba: "97408_PLU_20251217", date_mairie: "2025-12-17", statut: a_jour}
   "97409": {commune: "Saint-André", idurba: "97409_20190228", date_mairie: "2019-02-28", statut: opposabilite_en_attente,
-            note: "révision en cours NON approuvée ; PLU 2019 reste opposable mais AUCUN document GPU en ligne — zonage servi sous réserve"}
-  "97410": {commune: "Saint-Benoît", idurba: "97410_PLU_20200206", date_mairie: "2020-02-06", statut: a_jour}
+            note: "PLU 2019 opposable, SERVI et présent au GPU (idurba 97409_20190228, 142 zones ingérées — vérifié M40) : il fait foi à ce jour. Révision en cours, NON approuvée → non opposable, non servie. [M40 : la mention M32 « aucun document GPU » était fausse sur pièces.]"}
+  "97410": {commune: "Saint-Benoît", idurba: "97410_PLU_20200206", date_mairie: "2020-02-06", statut: a_jour,
+            note: "PLU 2020 opposable servi et présent au GPU (idurba 97410_PLU_20200206). D'éventuelles modifications approuvées postérieurement (n°2/n°3 évoquées) ne seraient PAS intégrées au GPU — à confirmer en mairie (hors open-data). [M40 : modifs non vérifiables sur pièces — incertitude consignée, non fabriquée.]"}
   "97411": {commune: "Saint-Denis", idurba: "97411_PLU_20260423", date_mairie: "2026-04-23", statut: a_jour}
   "97412": {commune: "Saint-Joseph", idurba: "97412_PLU_20251210", date_mairie: "2025-12-10", statut: a_jour}
   "97413": {commune: "Saint-Leu", idurba: "97413_20070226", date_mairie: "2007-02-26", statut: opposabilite_en_attente,
-            note: "révision en cours (approbation visée S2 2026) ; PLU 2007 reste opposable mais AUCUN document GPU en ligne — zonage servi sous réserve"}
+            note: "PLU 2007 opposable, SERVI et présent au GPU (idurba 97413_20070226, 368 zones ingérées — vérifié M40) : il fait foi à ce jour. Révision en cours (approbation visée S2 2026), NON approuvée → non opposable, non servie. [M40 : la mention M32 « aucun document GPU » était fausse sur pièces.]"}
   "97414": {commune: "Saint-Louis", idurba: "97414_PLU_20251218", date_mairie: "2025-12-18", statut: a_jour,
             note: "republication faite — EN_VIGUEUR confirmé M32 (05/08)"}
   "97415": {commune: "Saint-Paul", idurba: "97415_PLU_20251217", date_mairie: "2025-12-17", statut: a_jour}
