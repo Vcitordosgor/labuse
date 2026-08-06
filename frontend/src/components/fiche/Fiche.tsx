@@ -1401,9 +1401,9 @@ export function Fiche({ idu }: { idu: string }) {
               value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
-                {/* M32 §2 : fraîcheur GPU-vs-mairie du zonage — horizon = date d'approbation mairie ;
-                    statut explicite (à jour / annulation partielle / opposabilité en attente / RNU),
-                    jamais silencieux. Couleur d'alerte hors « à jour ». */}
+                {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
+                    (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
+                    cours et non servi. + action « vérifier en mairie ». Couleur d'alerte hors « à jour ». */}
                 {f.plu_fraicheur?.libelle && (
                   <div data-plu-fraicheur={f.plu_fraicheur.statut}
                     className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${
@@ -1411,9 +1411,25 @@ export function Fiche({ idu }: { idu: string }) {
                         ? 'border-line-2 text-txt-mut'
                         : 'border-st-creuser/40 bg-st-creuser/10 text-txt'}`}>
                     <span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>
-                    {f.plu_fraicheur.libelle}
-                    {f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour' && (
-                      <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.note}</span>
+                    {f.plu_fraicheur.document_servi ? (
+                      <>
+                        <span>{f.plu_fraicheur.document_servi}</span>
+                        {f.plu_fraicheur.fait_foi && (
+                          <span className="block text-[10px] text-txt-dim mt-0.5">✓ {f.plu_fraicheur.fait_foi}</span>
+                        )}
+                        {f.plu_fraicheur.en_cours && (
+                          <span className="block text-[10px] text-st-creuser mt-0.5">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
+                        )}
+                        {f.plu_fraicheur.action && (
+                          <span className="block text-[10px] text-txt-mut mt-0.5">→ {f.plu_fraicheur.action}</span>
+                        )}
+                      </>
+                    ) : (
+                      <>{f.plu_fraicheur.libelle}
+                        {f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour' && (
+                          <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.note}</span>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

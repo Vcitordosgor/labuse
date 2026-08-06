@@ -216,6 +216,9 @@ export interface Fiche {
     idurba: string | null; horizon: string | null
     statut: 'a_jour' | 'annule_partiel' | 'opposabilite_en_attente' | 'rnu'
     libelle: string; note?: string | null; cadence?: string
+    // M40 : les 3 choses distinctes (jamais mélangées) + action.
+    document_servi?: string | null; fait_foi?: string | null
+    en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
   } | null
   // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
   potentiel_transformation?: PotentielTransformation | null
