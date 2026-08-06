@@ -521,6 +521,35 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
         if _rl:
             radar_html = f"<h3>Radar procédures PLU</h3>{''.join(_rl)}"
 
+    # M42 — « Sur cette parcelle » (historique permis + caducité) : un caduc DIT caduc, jamais masqué.
+    hs = fiche.get("historique_site") or {}
+    histo_html = ""
+    if hs.get("permis") or hs.get("caducite"):
+        lis = []
+        for pm in (hs.get("permis") or [])[:6]:
+            d = pm.get("date_depot") or pm.get("date_autorisation") or "?"
+            lis.append(f"<li>{html.escape(str(pm.get('type') or 'permis'))} — déposé {html.escape(str(d))}"
+                       + (f", autorisé {html.escape(str(pm['date_autorisation']))}" if pm.get("date_autorisation") else "")
+                       + "</li>")
+        cad = hs.get("caducite")
+        if cad:
+            lis.append(f"<li class='hard'>PC {html.escape(str(cad.get('pc_annee') or ''))} — "
+                       f"{html.escape(str(cad.get('libelle_court') or 'caduc'))}</li>")
+        histo_html = (f"<h3>Sur cette parcelle</h3><ul>{''.join(lis)}</ul>"
+                      f"<div class='foot' style='margin-top:2px'>{html.escape(hs.get('honnetete') or '')} "
+                      f"Source : {html.escape(hs.get('source') or '')}.</div>")
+
+    # M42 — « Autour, à moins de 100 m » : ventes DVF + permis récents. Rien si vide (doctrine M38).
+    vp = fiche.get("voisinage_proche") or {}
+    vois_html = ""
+    if vp:
+        prix = (f" · prix médian ~{_eur(vp['prix_median_eur'])}" if vp.get("prix_median_eur")
+                else (f" · {vp['prix_note']}" if vp.get("prix_note") else ""))
+        vois_html = (f"<h3>{html.escape(vp['titre'])}</h3>"
+                     + kv("Ventes (36 mois)", f"{vp['ventes_dvf']} vente(s) à &lt; {vp['rayon_m']} m{prix}")
+                     + kv("Permis (36 mois)", f"{vp['permis']} permis à &lt; {vp['rayon_m']} m")
+                     + f"<div class='foot' style='margin-top:2px'>{html.escape(vp.get('honnetete') or '')}</div>")
+
     synth = html.escape(rv.get("synthese") or "")
     action = html.escape(rv.get("prochaine_action") or "")
     loc = (f"{html.escape(p.get('commune') or '—')} · section {html.escape(p.get('section') or '—')} "
@@ -576,6 +605,8 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {mode_b_kv}
     {plu_html}
     {radar_html}
+    {histo_html}
+    {vois_html}
     <h3>Contraintes</h3>
     <ul>{cont_html}</ul>
     <h3>À vérifier avant de démarcher</h3>

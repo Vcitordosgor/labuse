@@ -1,0 +1,23 @@
+M42 P0 — digests de preuve (constat, lecture seule)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre · fenetre voisinage: 36 mois <100m
+SYNTHESE: historique permis brulante 97.5% / chaude 54.1% (idu_codes) ; caducs 565 tiers actifs ;
+  voisinage <100m 36mo: DVF med 2 (max 125), permis med 0 ; 22% aucun voisin ; dense 4.4 vs rural 1.2 ;
+  cout ~48ms voisinage + ~10ms historique / fiche ; maille proposee: 100m FIXE.
+  branches algo3 = feature scoring NE PAS PROMOUVOIR (methode reprenable, pas le cadrage ML) ;
+  residu: 7 tables algo3_* en base (a nettoyer, hors perimetre).
+
+historique_permis_par_tier_p0.csv SHA256:
+  845abd0cba2458287106fff544a0beed657305d76f4151be8649f4337ee068ff
+voisinage_distribution_p0.csv SHA256:
+  0049d52b48dc5c75404f057b040e9b8980f559dde8d0398c5a86f72dc7285b37
+
+VERIF P1/P2 (2026-08-06):
+  golden: 117/117 PASS (historique_site + voisinage_proche = cles fiche golden-invisibles)
+  SHA256 vigilances M37: 482da6f6848989b34aac7cbafcddc413079c5c2e1a9bd1b4bf186b1689e9abe9 (INCHANGE)
+  tiers servis: 0 tier modifie (119 brulante / 1041 chaude)
+  tsc -b (front): exit 0
+  perf: +~17 ms/fiche (voisinage 16.8 + historique 0.25) ; total fiche 17-82 ms selon densite
+  maille: 100m FIXE ; index: GIN(idu_codes) + geom_2975 permis (scripts/m42_indexes.py)
+  re-mesure M34/M35: 0 divergence — PASS
+  pytest: 1326 verts, 5 pre-existants (residuel x4, au_ouverture x1)
+  note: helpers M42 sous SAVEPOINT (idiome fraicheur) — table absente en base de test n'avorte pas la fiche
