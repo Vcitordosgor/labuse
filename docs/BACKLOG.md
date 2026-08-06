@@ -4,25 +4,31 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-06 — M35 (CC) mergé : golden RÉGÉNÉRÉ 117/117 (écart externe
-hermes acté) · motifs CLIENT au registre (la machinerie ne sort plus) · 3 pourcentages bâti
-libellés · compteurs /communes sur tiers servis (Saint-Denis 29→103, vérifié API+DOM) ·
-mutation.py + 2 docs fausses supprimés · 5 features instables retired (fits futurs).
-Revue Vic OK (5 captures + 5bis). File M36 ci-dessous (arbitrages rendus).
+Dernière mise à jour : 2026-08-06 — M36 (CC) mergé : étiquettes de source VRAIES partout ·
+score/complétude hors client (D2/D3) · Q1-Q3 servis · compteur fiche commune en dur ·
+RR par commune mesuré (sensibilité ex æquo découverte). M35+M34 clos avant. Golden 117/117.
+Chemin critique restant : M33 mode B → train 8 → premier client.
 
-## M36 — file d'attente (arbitrages Vic rendus à la revue M35, RIEN d'implémenté)
+## M36 — CLOS (mergé 06/08) — bilan qa/m36/M36_BILAN.md
 
-- [ ] D2 : score d'Opportunité RETIRÉ de l'affichage client (décorrélé du tier — médianes
-      52-57, brûlantes sous réserves) ; conservé en interne/API pour diagnostic.
-- [ ] D3 : Complétude RETIRÉE de l'affichage client (3 valeurs sur tout le parc — 92/74/84) ;
-      l'ICD est la jauge par parcelle.
-- [ ] Q1 : taux > 100 % non plafonné, libellé factuel « bâti existant supérieur à l'emprise
-      constructible actuelle (à vérifier) » — sans inférence d'antériorité.
-- [ ] Q2 : fourchettes à bornes identiques → valeur unique préfixée « ~ ».
-- [ ] Q3 : rang affiché sur brûlante/chaude uniquement.
-- [ ] Badge carte « VERDICT · MATRICE Q×A » (vocabulaire interne sur surface client) +
-      infobulle marqueurs communes encore libellée « (matrice Q×A) » alors qu'elle sert les
-      tiers — même famille Lot B.
+- [x] D2/D3 : score d'Opportunité + Complétude RETIRÉS de l'affichage client (exports,
+      one-pager, PDF, fiche web, Kanban, Tinder, faits IA) ; calcul conservé en interne.
+- [x] Q1/Q2/Q3 : dépassement d'emprise factuel sans inférence · fourchettes à bornes
+      identiques → « ~X » · rang sur brûlante/chaude uniquement.
+- [x] Étiquettes de source VRAIES : infobulle marqueurs + badge légende (« Classement
+      servi »/« Classement historique ») + mention API partenaire + compteur chips projets
+      basculé tiers. CAUSE RACINE dev : vite.config.js COMPILÉ masquait le .ts (supprimé,
+      gitignoré) + /v2 ajouté au proxy.
+- [x] Fiche commune : compteur du tier haut EN DUR (« 103 parcelles brûlantes ou chaudes au
+      classement servi », Saint-Denis) — un point de calcul unique partagé avec /communes.
+- [x] RR par commune MESURÉ (qa/m36/rr_commune.csv, IC95, harnais gelé) — DÉCOUVERTES :
+      RR île défini à l'ordre des ex æquo près (6,66 médian [6,09-7,00] — le 6,73 gelé est
+      UNE réalisation → renforce le départage explicite, train 5 N°2) ; label 2025 vivant
+      (fenêtre DVF). 14/24 communes non concluantes, 3 RR nuls (Bras-Panon, Cilaos,
+      Trois-Bassins) — discours client à calibrer par commune.
+- Reliquats consignés au bilan : score_e servi encore bâti sur q_v7_defisc (train 3) ·
+  payload partenaire matrice + sélections modules Outils + digest events + Q/A affichés
+  (PDF/Tinder/fiche) → extinction (c) post-Train 8.
 
 ## Régimes de supervision
 
