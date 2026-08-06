@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
+import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -1111,7 +1111,6 @@ export function Fiche({ idu }: { idu: string }) {
   // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
   const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
   const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
-  const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
@@ -1516,12 +1515,8 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="flex flex-col gap-3">
                 <ScoreV2Block idu={idu} />
                 {f.icd && <IcdBlockView icd={f.icd} />}
-                {v2Pilote && meta && (
-                  <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
-                    <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring (P×C)"><span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span></Tip>
-                    <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span>
-                  </div>
-                )}
+                {/* M37 : chip « Statut matrice (historique) » RETIRÉ (arbitrage Vic — le tier
+                    servi + l'ICD suffisent ; plus de classement historique en surface fiche). */}
                 {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
                     parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
                     jauge de confiance données par parcelle. */}
