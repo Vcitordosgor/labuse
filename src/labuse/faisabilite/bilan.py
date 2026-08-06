@@ -681,7 +681,10 @@ def _prix_bati_local(session: Session, idu: str) -> dict | None:
 
 def compute_mode_b(session: Session, idu: str, *,
                    travaux_m2: float | None = None,
-                   run: str | None = None) -> dict:
+                   run: str | None = None,
+                   regime_locatif: str | None = None,
+                   loyer_marche_m2: float | None = None,
+                   rendement_cible_pct: float | None = None) -> dict:
     """Bilan MODE B d'une parcelle — dict de fiche, jamais persisté.
 
     `disponible=False` + motif hors population ou données manquantes (ABSENT explicite).
@@ -723,9 +726,22 @@ def compute_mode_b(session: Session, idu: str, *,
     cout_travaux = shab * travaux
     achat_max = ca - cout_travaux
 
+    # M44 — SORTIE LOCATIVE, côte à côte avec la revente, JAMAIS fusionnée (point de calcul unique
+    # labuse.faisabilite.defisc). Bilan au plafond réglementaire Sourcé (défaut) ou loyer marché Estimé.
+    try:
+        from . import defisc
+        sortie_locative = defisc.sortie_locative(
+            shab, cout_travaux, regime=regime_locatif,
+            loyer_marche_m2=loyer_marche_m2, rendement_cible_pct=rendement_cible_pct)
+    except Exception:  # noqa: BLE001 — le locatif ne casse jamais le mode B
+        sortie_locative = None
+
     return {
         "disponible": True,
         "population_tier": tier,
+        # M44 — sortie LOCATIVE (plafond Sourcé / marché Estimé). None si indisponible. La revente
+        # reste au niveau ci-dessous (achat_max_eur) : les deux sorties côte à côte, jamais fusionnées.
+        "sortie_locative": sortie_locative,
         # HÉRITAGE STRICT (arbitrage Vic) : le paramètre travaux est TOUJOURS Estimé →
         # le prix d'achat max réhab n'est JAMAIS Sourcé — assumé au libellé.
         "etiquette": "Estimé",

@@ -1,0 +1,64 @@
+# M44 — SORTIE LOCATIVE : paramètres fiscaux MILLÉSIMÉS (année AU NOM DU FICHIER).
+# ⚠ GESTE ANNUEL (loi de finances) : chaque janvier, dupliquer en defisc_<annee+1>.yaml, remettre à
+#   jour depuis le barème officiel, changer `annee_active` dans le loader. Le nom porte l'année pour
+#   que le Vic de janvier 2027 sache d'un coup d'œil ce qu'il doit refaire.
+#
+# RÈGLE FISCALE (arbitrage Vic M44) : on sert un BILAN AU PLAFOND réglementaire Sourcé, DISPOSITIF-
+#   AGNOSTIQUE — JAMAIS un badge d'éligibilité. Chaque paramètre porte source + date ; le lint
+#   (labuse.faisabilite.defisc) refuse toute entrée incomplète (modèle registre M41).
+#
+# Sourcé sur pièce officielle : BOFiP BOI-BAREME-000017-20260310 (plafonds de loyer 2026) + CGI
+#   (coefficient de surface). Ce que je n'établis pas sur pièce reste ABSENT (Girardin/LLI/Loc'Avantages).
+
+annee: 2026
+mention_conseil_fiscal: >-
+  Hypothèses fiscales indicatives — le dispositif, l'éligibilité de la parcelle et les plafonds
+  applicables sont à valider avec un conseil fiscal. Ce bilan locatif est un calcul paramétré au
+  plafond réglementaire affiché ; il ne vaut ni conseil fiscal, ni promesse d'éligibilité. Les
+  plafonds affichés sont ceux publiés au barème officiel en vigueur à la date indiquée.
+
+# ── PLAFONDS DE LOYER 2026 (Sourcés) — DOM. Défaut = base (le plus prudent : le doute ne profite
+#    jamais au chiffre servi) ; l'intermédiaire est sélectionnable. Les deux visibles, étiquetés. ──
+plafonds_loyer:
+  base:
+    valeur_eur_m2_mois: 12.21
+    libelle: "plafond de loyer DOM (base)"
+    source: "BOFiP BOI-BAREME-000017"
+    date: "2026-03-10"
+  intermediaire:
+    valeur_eur_m2_mois: 12.71
+    libelle: "plafond de loyer DOM — secteur intermédiaire"
+    source: "BOFiP BOI-BAREME-000017"
+    date: "2026-03-10"
+defaut_regime: base   # le plus prudent
+
+# ── COEFFICIENT DE SURFACE réglementaire : plafond_effectif = plafond × (constante + numerateur/S),
+#    plafonné à `plafond_max`. S = surface habitable (m²). Le cap 1,2 mord pour S ≤ 38 m². ──
+coef_surface:
+  constante: 0.7
+  numerateur: 19.0
+  plafond_max: 1.2
+  source: "CGI (formule réglementaire du coefficient de surface) / BOFiP"
+  date: "2026-03-10"
+
+# ── RENDEMENT CIBLE (paramètre CLIENT, Estimé) : sert à retourner « prix d'achat max à rendement
+#    cible ». Défaut = valeur de PLACE argumentée, pas un chiffre sorti du chapeau. ──
+rendement_cible:
+  defaut_pct: 6.0
+  bornes_pct: [3.0, 12.0]
+  etiquette: "Estimé"
+  justification: >-
+    6 % brut = rendement locatif brut de place couramment visé pour de l'ancien réhabilité outre-mer
+    (fourchette observée ~5-8 % selon secteur et état). Paramètre CLIENT ajustable ; Estimé, jamais un
+    fait. Le doute ne profite pas au chiffre : un rendement cible plus haut abaisse le prix d'achat max.
+  source: "hypothèse de place (Estimé) — à ajuster par le client"
+  date: "2026-08-06"
+
+# ── DISPOSITIFS NON COUVERTS (dits, pas tus — doctrine M38 ; réponse assistant IA) ──
+dispositifs_non_couverts:
+  - "Girardin logement social (CGI 199 undecies C) — opérateur-dépendant, hors objectivation parcelle"
+  - "LLI (logement locatif intermédiaire) — zone/opérateur, non couvert v1"
+  - "Loc'Avantages (conventionnement Anah) — statut 2026 non établi sur pièce"
+  - "Denormandie : éligibilité par commune (ORT/Action Cœur de Ville) non servie comme fait (liste à confirmer sur pièce officielle)"
+  - "Pinel / Pinel+ Outre-mer — dispositif clos (fin 31/12/2024)"
+message_non_couvert: "Dispositif non couvert à ce jour — le bilan servi est au plafond réglementaire, sans affirmation d'éligibilité."
