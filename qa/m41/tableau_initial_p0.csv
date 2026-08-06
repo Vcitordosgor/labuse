@@ -1,0 +1,25 @@
+insee,commune,sudocuh_type,sudocuh_prescription,sudocuh_opp_approb,m40_date_mairie,m40_statut,stade,cible_radar,proposition
+97401,Avirons,Aucun,ABSENT,2024-12-06,2024-12-06,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97402,Bras-Panon,Aucun,ABSENT,2019-11-30,2026-04-28,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97403,Entre-Deux,Aucun,ABSENT,2024-09-24,2024-09-24,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97404,Étang-Salé,PLU,2022-04-28,2017-12-22,2025-09-17,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2025-09-17 POSTÉRIEUR à prescription 2022-04-28 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97405,Petite-Île,Aucun,ABSENT,2017-02-23,2023-06-09,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97406,Plaine-des-Palmistes,PLU,2015-09-24,2013-05-29,2023-05-27,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2023-05-27 POSTÉRIEUR à prescription 2015-09-24 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97407,Port,Aucun,ABSENT,2018-10-02,2024-12-09,annule_partiel,ABSENT,non,aucune procédure (Sudocuh)
+97408,Possession,Aucun,ABSENT,2019-06-12,2025-12-17,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97409,Saint-André,PLU,2022-06-22,2019-02-28,2019-02-28,opposabilite_en_attente,ABSENT,OUI,GENUINEMENT en cours : opposable M40 2019-02-28 ≤ prescription 2022-06-22. CIBLE radar. Stade ABSENT (curer: débat PADD ?)
+97410,Saint-Benoît,Aucun,ABSENT,2020-02-06,2020-02-06,a_jour,ABSENT,non,aucune procédure (Sudocuh) ; ⚠ modifs éventuelles HORS Sudocuh (ne trace pas les modifications au niveau commune)
+97411,Saint-Denis,PLU,2024-09-27,2013-10-26,2026-04-23,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2026-04-23 POSTÉRIEUR à prescription 2024-09-27 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97412,Saint-Joseph,Aucun,ABSENT,2019-06-26,2025-12-10,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97413,Saint-Leu,PLU,2022-05-17,2007-02-26,2007-02-26,opposabilite_en_attente,ABSENT,OUI,GENUINEMENT en cours : opposable M40 2007-02-26 ≤ prescription 2022-05-17. CIBLE radar. Stade ABSENT (curer: débat PADD ?)
+97414,Saint-Louis,PLU,2022-02-25,2014-03-11,2025-12-18,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2025-12-18 POSTÉRIEUR à prescription 2022-02-25 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97415,Saint-Paul,PLU,2021-12-16,2012-09-27,2025-12-17,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2025-12-17 POSTÉRIEUR à prescription 2021-12-16 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97416,Saint-Pierre,Aucun,ABSENT,2024-06-25,2024-06-25,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97417,Saint-Philippe,PLU,2002-08-30,ABSENT,ABSENT,rnu,ABSENT,OUI,GENUINEMENT en cours : opposable M40 RNU/absent ≤ prescription 2002-08-30. CIBLE radar. Stade ABSENT (curer: débat PADD ?)
+97418,Sainte-Marie,PLU,2021-06-03,2013-12-27,2025-11-26,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2025-11-26 POSTÉRIEUR à prescription 2021-06-03 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97419,Sainte-Rose,Aucun,ABSENT,2019-05-04,2019-05-04,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97420,Sainte-Suzanne,PLU,2018-02-28,2017-03-22,2025-09-29,a_jour,ABSENT,non,CLÔTURÉE probable : M40 opposable 2025-09-29 POSTÉRIEUR à prescription 2018-02-28 → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). À CONFIRMER.
+97421,Salazie,Aucun,ABSENT,2022-05-24,2022-05-24,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97422,Tampon,Aucun,ABSENT,2018-12-08,2023-08-11,a_jour,ABSENT,non,aucune procédure (Sudocuh)
+97423,Trois-Bassins,PLU,2022-06-02,2017-02-21,2022-06-02,a_jour,ABSENT,OUI,GENUINEMENT en cours : opposable M40 2022-06-02 ≤ prescription 2022-06-02. ⚠ M40 date_mairie == prescription Sudocuh (M40 a pris la date de PRESCRIPTION pour une approbation ; opposable réel=2017-02-21) CIBLE radar. Stade ABSENT (curer: débat PADD ?)
+97424,Cilaos,Aucun,ABSENT,2008-02-06,2024-02-13,a_jour,ABSENT,non,aucune procédure (Sudocuh)
