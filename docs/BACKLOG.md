@@ -4,9 +4,25 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-05 — M34 (CC) : dette #14 FERMÉE (verdict de fiche = traduction du tier servi, option a), mergée --no-ff par Vic. Golden : régén référence à M35 (écart externe hermes tracé).
-CX2555 levée, CH1893 pérennisée, golden 116/116 (référence régénérée), jetables purgés.
-Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation p=1,0 (rangs 1-5).
+Dernière mise à jour : 2026-08-06 — M35 (CC) mergé : golden RÉGÉNÉRÉ 117/117 (écart externe
+hermes acté) · motifs CLIENT au registre (la machinerie ne sort plus) · 3 pourcentages bâti
+libellés · compteurs /communes sur tiers servis (Saint-Denis 29→103, vérifié API+DOM) ·
+mutation.py + 2 docs fausses supprimés · 5 features instables retired (fits futurs).
+Revue Vic OK (5 captures + 5bis). File M36 ci-dessous (arbitrages rendus).
+
+## M36 — file d'attente (arbitrages Vic rendus à la revue M35, RIEN d'implémenté)
+
+- [ ] D2 : score d'Opportunité RETIRÉ de l'affichage client (décorrélé du tier — médianes
+      52-57, brûlantes sous réserves) ; conservé en interne/API pour diagnostic.
+- [ ] D3 : Complétude RETIRÉE de l'affichage client (3 valeurs sur tout le parc — 92/74/84) ;
+      l'ICD est la jauge par parcelle.
+- [ ] Q1 : taux > 100 % non plafonné, libellé factuel « bâti existant supérieur à l'emprise
+      constructible actuelle (à vérifier) » — sans inférence d'antériorité.
+- [ ] Q2 : fourchettes à bornes identiques → valeur unique préfixée « ~ ».
+- [ ] Q3 : rang affiché sur brûlante/chaude uniquement.
+- [ ] Badge carte « VERDICT · MATRICE Q×A » (vocabulaire interne sur surface client) +
+      infobulle marqueurs communes encore libellée « (matrice Q×A) » alors qu'elle sert les
+      tiers — même famille Lot B.
 
 ## Régimes de supervision
 
@@ -134,7 +150,7 @@ Rollback dispo : scripts/rollback_ponderation.py. Priorité train 5 : saturation
 #4 bâti · #9 mérite/héritage · #10 EBC/ER · #11 acquérabilité ·
 geometrie_drapeau · fraîcheur GPU-vs-mairie · couche batiment lacunaire · #12 voirie surfacique absente (HE0234, M-C.4) ·
 #13 signal piscine (registre a_creuser, pas encore une règle produit) ·
-#14 double-rail verdict/tier FERMÉE (M34 05/08 — traduction unique verdict_servi ; reliquats : rail legacy à éteindre post-Train 8, compteurs /communes sur matrice, golden régén M35) ·
+#14 double-rail verdict/tier FERMÉE (M34 05/08 — traduction unique verdict_servi ; M35 a soldé : golden régénéré 117/117, compteurs /communes sur tiers ; reliquat : rail legacy à éteindre post-Train 8) ·
 exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 (CX2555 levée le 04/08 à la bascule pondération)
 
