@@ -39,8 +39,8 @@ def fiche_markdown(fiche: dict) -> str:
         f"- **Statut :** {_verdict_label(v)}"
         + (f" (rang {v['rang']})" if v.get("rang") and v.get("servable") else "")
         + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
-        f"- **Opportunité :** {_score(v['opportunity_score'])} / 100  ·  "
-        f"**Complétude :** {_score(v['completeness_score'])} / 100",
+        # M36 Lot B : scores Opportunité/Complétude RETIRÉS de l'affichage client (décorrélés
+        # du tier / quasi-constants — arbitrage Vic M35 D2/D3). Calcul conservé en interne.
         "",
     ]
     if v.get("badge_division_libelle"):
@@ -248,7 +248,6 @@ def fiche_html(fiche: dict) -> str:
 {f'<p class="micro-note">{html.escape(v["badge_division_libelle"])}</p>' if v.get('badge_division_libelle') else ''}
 {f'<p class="disc">Motif ({"registre servi" if v.get("exception_registre") else "filtre servi"}) : {html.escape(v["motif"])}</p>' if v.get('motif') else ''}
 {'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
-<p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
 {resume_html}
 {bati_html}
@@ -479,8 +478,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
 <div class="grid">
   <div>
     <div class="verdict"><span class="badge v-{html.escape(_badge_class(status))}">{html.escape(_verdict_label(v))}</span>
-      {f"<span class='scores'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}
-      <span class="scores">Opportunité {_score(v.get('opportunity_score'))}/100 · Complétude {_score(v.get('completeness_score'))}/100</span></div>
+      {f"<span class='scores'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}</div>
     {f'<p class="synth"><b>{html.escape(v["badge_division_libelle"])}</b></p>' if v.get('badge_division_libelle') else ''}
     {f'<p class="synth">{synth}</p>' if synth else ''}
     <h3>Capacité &amp; potentiel</h3>

@@ -32,8 +32,8 @@ SYSTEM = (
     "UNIQUEMENT du JSON de données fourni, tu rédiges pour un promoteur une synthèse COURTE, "
     "structurée et actionnable.\n\n"
     "STRUCTURE IMPOSÉE — au plus 5 blocs courts, dans cet ordre, chaque titre en gras :\n"
-    "1. **Potentiel** — statut, score, zone PLU, capacité constructible ESTIMÉE (surface de plancher, "
-    "logements) si présente.\n"
+    "1. **Potentiel** — statut du classement servi (et rang s'il est fourni), zone PLU, capacité "
+    "constructible ESTIMÉE (surface de plancher, logements) si présente.\n"
     "2. **Contraintes** — signaux bloquants / de vigilance RÉELS du JSON ; s'il n'y en a pas, écris "
     "« aucune contrainte bloquante dans les données disponibles » (ne déduis jamais une absence de "
     "risque d'une donnée manquante).\n"
@@ -51,7 +51,7 @@ SYSTEM = (
     "nul ou source muette). Appuie-toi sur le bloc `niveaux_fiabilite`.\n"
     "- Ne déclare JAMAIS une parcelle « constructible » de façon certaine : parle de « zone X, "
     "capacité ESTIMÉE » et renvoie à la vérification PLU/CU.\n"
-    "- Si les données sont insuffisantes (complétude faible, bilan non fiable, sources muettes), tu "
+    "- Si les données sont insuffisantes (sources muettes nombreuses, bilan non fiable), tu "
     "REFUSES de conclure et tu le dis clairement — mieux vaut « à vérifier » qu'une fausse certitude.\n"
     "- Termine TOUJOURS par une ligne **Fiabilité** (niveau global) et une ligne **Données manquantes** "
     "(liste des sources muettes / champs absents).\n"
@@ -70,12 +70,6 @@ def is_configured() -> bool:
     from ..ai import core
     return core.has_key()
 
-
-def _completude_band(score: Any) -> str:
-    s = _num(score)
-    if s is None:
-        return "inconnue"
-    return "forte" if s >= 80 else "moyenne" if s >= 50 else "faible"
 
 
 def _niveaux_fiabilite(fiche: dict, *, fa: dict, bil: dict, occ: dict, v: dict) -> dict[str, Any]:
@@ -98,8 +92,8 @@ def _niveaux_fiabilite(fiche: dict, *, fa: dict, bil: dict, occ: dict, v: dict) 
         "sourcé": source or list(fiche.get("sources_responded") or []),
         "estimé": estime,
         "absent_ou_a_verifier": list(fiche.get("sources_silent") or []),
-        "completude_sur_100": _num(v.get("completeness_score")),
-        "completude_niveau": _completude_band(v.get("completeness_score")),
+        # M36 Lot B : completude_sur_100/completude_niveau RETIRÉS (3 valeurs sur le parc —
+        # n'informe pas ; M35 D3). La fiabilité se dit par les sources muettes, listées.
         "prix_bilan_fiable": (bil or {}).get("fiable"),
     }
 
@@ -126,13 +120,13 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
                      "surface_m2": _num(p.get("surface_m2"))},
         # M34 (dette #14) : statut = TRADUCTION du tier servi (verdict_servi). Le motif legacy
         # (`signaux_vigilance`) est un signal non-franc informatif, plus jamais un déclassement.
+        # M36 Lot B : score_opportunite/score_completude RETIRÉS des faits (l'IA cite les
+        # faits — un score décorrélé du tier ne doit plus pouvoir être cité au client).
         "verdict": {"statut": v.get("status"),
                     "libelle": v.get("label"),
                     "rang_servi": v.get("rang"),
                     "badge_division": v.get("badge_division_libelle"),
                     "motif_servi": v.get("motif"),
-                    "score_opportunite": _num(v.get("opportunity_score")),
-                    "score_completude": _num(v.get("completeness_score")),
                     "micro_opportunite": v.get("micro_opportunite"),
                     "signaux_vigilance": v.get("downgrade_reason")},
         "faisabilite": ({
@@ -210,9 +204,6 @@ def rules_summary(facts: dict) -> str:
     pot = _statut_phrase(statut, v.get("libelle"))
     if v.get("rang_servi") and statut in ("brulante", "chaude"):
         pot += f" · rang {v['rang_servi']}"
-    score = v.get("score_opportunite")
-    if score is not None:
-        pot += f" · score {score}/100"
     if v.get("badge_division"):
         pot += f" · {v['badge_division']}"
     if v.get("micro_opportunite"):
@@ -276,11 +267,13 @@ def rules_summary(facts: dict) -> str:
         reco += " Petite parcelle : étudier l'assemblage avec les voisines."
     lignes.append(f"**Recommandation** — {reco}")
 
-    # Mentions obligatoires : fiabilité globale + données manquantes
-    niveau = fia.get("completude_niveau", "inconnue")
-    cpl = fia.get("completude_sur_100")
-    lignes.append(f"**Fiabilité** — complétude des données {niveau}"
-                  + (f" ({cpl}/100)" if cpl is not None else "")
+    # Mentions obligatoires : fiabilité globale + données manquantes.
+    # M36 Lot B : plus de « complétude N/100 » (quasi-constante) — la fiabilité se dit par
+    # les sources muettes, comptées ici et LISTÉES au bloc suivant.
+    manq_n = len(fia.get("absent_ou_a_verifier") or [])
+    lignes.append("**Fiabilité** — "
+                  + (f"{manq_n} source(s) muette(s) sur cette parcelle"
+                     if manq_n else "toutes les sources interrogées ont répondu")
                   + (".  Bilan : prix de sortie fragile." if bil and bil.get("fiable") is False else "."))
     manq = fia.get("absent_ou_a_verifier") or []
     lignes.append("**Données manquantes** — " + (", ".join(manq) if manq else "aucune source muette signalée."))

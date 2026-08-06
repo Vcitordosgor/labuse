@@ -5,7 +5,7 @@ import {
   patchPipeline, renameCrmColumn, reorderCrmColumns, resetCrmColumns,
 } from '../../lib/api'
 import { fmtM2 } from '../../lib/format'
-import { completudeColor, SCORE_TIP, verdictMeta } from '../../lib/status'
+import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import type { PipelineColumn, PipelineEntry } from '../../lib/types'
 import { Tip } from '../Tip'
 import { ErrorState } from '../States'
@@ -100,11 +100,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
             <Tip tip={SCORE_TIP.q}>
               <span className="font-display text-xs font-bold tnum" style={{ color: meta?.color }}>{prem.q_score}</span>
             </Tip>
-            <Tip tip={`Complétude des données : ${prem.completeness_score}/100 — part des sources disponibles, pas une note de qualité.`}
-              className="items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: completudeColor(prem.completeness_score) }} />
-              <span className="text-[11px] text-txt-dim tnum">{prem.completeness_score}%</span>
-            </Tip>
+            {/* M36 Lot B : point/pourcentage Complétude RETIRÉS (quasi-constante — M35 D3). */}
           </>
         )}
         {!prem && <span className="text-[11px] text-txt-dim">hors run de référence</span>}
