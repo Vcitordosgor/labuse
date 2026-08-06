@@ -10,29 +10,31 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .scoring.score_v_constants import Q_A_RUN_LABEL as _SERVED_RUN
+
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
 # États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
 # États VÉRIFIÉS après rebuild + correctif R1 « déjà bâti » (BD TOPO bâtiments).
 # Mis à jour après l'IMPORT COMPLET (LOT 2, 51 129 parcelles) : BV0912 → « à creuser » (ER 81 +
 # accès) — la donnée commune complète affine le verdict, on accepte le verdict plus conservateur.
 DEMO_PARCELS = [
-    {"idu": "97415000BK0023", "attendu": "opportunite",
+    {"idu": "97415000BK0023", "attendu": "a_creuser",
      "role": "Parcelle VITRINE — opportunité VACANTE (0 % bâti, vérifiée à l'orthophoto)",
      "montre": "opp ~74, 9723 m² NUS avec accès voirie ; prix de marché FIABLE ~5310 €/m² (14 ventes) ; CA indicatif ~32-35 M€",
      "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
-    {"idu": "97415000HP0390", "attendu": "a_creuser",
+    {"idu": "97415000HP0390", "attendu": "declasse_bati_revele",
      "role": "À creuser — EMPLACEMENT RÉSERVÉ (ER 39) + accès à vérifier + surface limite",
      "montre": "score 63 en zone U (constructible) mais 3 SOFT_FLAG honnêtes : « ER 39 - Aménagement du chemin "
                "Bien-Aimé » (prescription PLU), « pas d'accès direct évident à la voirie » et « surface 397 m² "
                "sous le seuil de valorisation (400 m²) » → rétrogradée honnêtement en « à creuser », pas vendue "
                "comme opportunité",
      "vigilance": "ER réservé + accès à confirmer + surface limite ; LABUSE signale les contraintes, ne survend pas"},
-    {"idu": "97415000BP0571", "attendu": "faux_positif_probable",
+    {"idu": "97415000BP0571", "attendu": "ecartee",
      "role": "RÉSIDENCE EXISTANTE détectée — correctif « déjà bâti » (ex-fausse vitrine)",
      "montre": "score brut 77 MAIS « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif. "
                "Avant le correctif, LABUSE la vendait comme opportunité à 23,5 M€ — plus maintenant.",
      "vigilance": "l'histoire à raconter : le produit se corrige et le montre"},
-    {"idu": "97415000BN1351", "attendu": "a_creuser", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
+    {"idu": "97415000BN1351", "attendu": "reserve_fonciere", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
      "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",
      "vigilance": "PPR = prescriptions à vérifier, PAS une exclusion"},
     {"idu": "97415000DH0145", "attendu": "a_creuser",
@@ -41,12 +43,12 @@ DEMO_PARCELS = [
                "constructible, surface utile 706 m², marché fort ~2 087 €/m²) SAUF le risque réel : « PPR fort "
                "inondation + mouvement de terrain (~33 %) » + accès non identifié (~18 m) → à creuser",
      "vigilance": "parcelle tentante mais risque fort réel ; compatibilité SAR/zonage ne vaut pas constructibilité automatique"},
-    {"idu": "97415000BO0845", "attendu": "faux_positif_probable", "role": "Faux positif PARKING déclassé",
+    {"idu": "97415000BO0845", "attendu": "ecartee", "role": "Faux positif PARKING déclassé",
      "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
-    {"idu": "97415000BV1431", "attendu": "faux_positif_probable", "role": "Faux positif PENTE déclassé",
+    {"idu": "97415000BV1431", "attendu": "ecartee", "role": "Faux positif PENTE déclassé",
      "montre": "« pente 103 % — terrain non aménageable » + ⚠ proxy SAR divergent du PLU (zone AU)", "vigilance": "—"},
-    {"idu": "97415000BO0619", "attendu": "faux_positif_probable", "role": "Micro-parcelle déclassée",
+    {"idu": "97415000BO0619", "attendu": "ecartee", "role": "Micro-parcelle déclassée",
      "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
 ]
 
@@ -56,11 +58,13 @@ def demo_overview(session: Session, commune: str = "Saint-Paul") -> list[dict]:
     l'endpoint /demo et la QA (warm-demo). `conforme` = statut live == statut attendu."""
     out: list[dict] = []
     for i, spec in enumerate(DEMO_PARCELS, 1):
+        # M37 : verdict démo = TIER SERVI (parcel_p_score_v2), plus le rail legacy éteint.
         row = session.execute(text(
-            "SELECT p.id, e.status, e.opportunity_score FROM parcels p "
-            "LEFT JOIN LATERAL (SELECT status, opportunity_score FROM parcel_evaluations e "
+            "SELECT p.id, s.tier AS status, e.opportunity_score FROM parcels p "
+            "LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run "
+            "LEFT JOIN LATERAL (SELECT opportunity_score FROM parcel_evaluations e "
             "  WHERE e.parcel_id = p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
-            "WHERE p.idu = :idu"), {"idu": spec["idu"]}).mappings().first()
+            "WHERE p.idu = :idu"), {"idu": spec["idu"], "run": _SERVED_RUN}).mappings().first()
         status = row["status"] if row else None
         out.append({
             "ordre": i, "idu": spec["idu"], "role": spec["role"], "montre": spec["montre"],
@@ -107,11 +111,11 @@ def seed_demo_pipeline(session: Session, commune: str = "Saint-Paul") -> int:
     if len(pids) < len(_SEED_PIPELINE):                       # base de test / parcelles absentes
         extra = session.execute(text(
             """SELECT p.id FROM parcels p
-               LEFT JOIN LATERAL (SELECT status FROM parcel_evaluations e WHERE e.parcel_id=p.id
-                 ORDER BY evaluated_at DESC LIMIT 1) e ON true
+               LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
                WHERE p.commune = :c AND p.id <> ALL(:got)
-               ORDER BY (e.status = 'opportunite') DESC NULLS LAST, p.idu LIMIT :n"""),
-            {"c": commune, "got": list(pids) or [0], "n": len(_SEED_PIPELINE) - len(pids)}).scalars().all()
+               ORDER BY (s.tier IN ('brulante','chaude')) DESC NULLS LAST, p.idu LIMIT :n"""),
+            {"c": commune, "got": list(pids) or [0], "n": len(_SEED_PIPELINE) - len(pids),
+             "run": _SERVED_RUN}).scalars().all()
         pids = list(pids) + list(extra)
     n = 0
     for pid, spec in zip(pids, _SEED_PIPELINE):
@@ -158,22 +162,22 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
         n = scal("SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind=:k", k=kind) or 0
         chk(lbl, n > 0, f"{n} entités")
 
-    n_fp = scal("SELECT count(*) FROM parcels p JOIN LATERAL (SELECT status FROM parcel_evaluations e "
-                "WHERE e.parcel_id=p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
-                "WHERE p.commune=:c AND e.status='faux_positif_probable'") or 0
+    n_fp = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s "
+                "ON s.parcelle_id=p.idu AND s.run_id=:run "
+                "WHERE p.commune=:c AND s.tier LIKE 'declasse_%'", run=_SERVED_RUN) or 0
     n_decl = scal("SELECT count(*) FROM cascade_results WHERE layer_name='declassement'") or 0
-    chk("Déclassement appliqué", n_fp > 0 or n_decl > 0, f"{n_fp} faux positifs · {n_decl} motifs cascade")
+    chk("Déclassement appliqué", n_fp > 0 or n_decl > 0, f"{n_fp} déclassées · {n_decl} motifs cascade")
 
     # top 20 opportunités sans faux positif évident (surface ≥ 100, pas dominé par un équipement OSM)
     bad = scal("""
         WITH opp AS (SELECT p.id, p.geom_2975, ST_Area(p.geom_2975) a FROM parcels p
-          JOIN LATERAL (SELECT status, opportunity_score, evaluated_at FROM parcel_evaluations e
-            WHERE e.parcel_id=p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true
-          WHERE p.commune=:c AND e.status='opportunite'
-          ORDER BY e.opportunity_score DESC, ST_Area(p.geom_2975) DESC LIMIT 20)
+          JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu AND s.run_id=:run
+          WHERE p.commune=:c AND s.tier IN ('brulante','chaude')
+          ORDER BY s.rang ASC NULLS LAST, ST_Area(p.geom_2975) DESC LIMIT 20)
         SELECT count(*) FROM opp o WHERE o.a < 100
            OR EXISTS (SELECT 1 FROM spatial_layers s WHERE s.kind='osm_faux_positif' AND s.commune=:c
-                      AND ST_Area(ST_Intersection(s.geom_2975,o.geom_2975))/NULLIF(o.a,0) >= 0.5)""") if has_col else None
+                      AND ST_Area(ST_Intersection(s.geom_2975,o.geom_2975))/NULLIF(o.a,0) >= 0.5)""",
+               run=_SERVED_RUN) if has_col else None
     chk("Top 20 sans faux positif évident", bad == 0, f"{bad} faux positif(s) dans le top 20")
 
     crit_present = {k for (k,) in session.execute(text("SELECT DISTINCT kind FROM spatial_layers")).all()}

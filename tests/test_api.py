@@ -109,9 +109,11 @@ def test_demo_endpoint(client):
     assert {"commune", "parcels", "all_conform"} <= set(d)
     ps = d["parcels"]
     # R1 : la vitrine est désormais BK0023 (VACANTE) ; BP0571 (résidence) attendue en faux positif.
-    assert len(ps) == 8 and ps[0]["idu"] == "97415000BK0023" and ps[0]["attendu"] == "opportunite"
+    # M37 : les verdicts démo sont les TIERS SERVIS (rail legacy éteint). BK0023 est servie
+    # à creuser, BP0571 (résidence) écartée — ce que voit le client.
+    assert len(ps) == 8 and ps[0]["idu"] == "97415000BK0023" and ps[0]["attendu"] == "a_creuser"
     bp = next(p for p in ps if p["idu"] == "97415000BP0571")
-    assert bp["attendu"] == "faux_positif_probable"
+    assert bp["attendu"] == "ecartee"
     assert {"ordre", "role", "status", "conforme", "present"} <= set(ps[0])
 
 
@@ -183,11 +185,13 @@ def test_parcels_list_paginated(client):
 
 
 def test_map_geojson(client):
-    fc = client.get("/map/parcels.geojson", params={"commune": "Saint-Paul"}).json()
-    assert fc["type"] == "FeatureCollection" and len(fc["features"]) >= 8
-    props = fc["features"][0]["properties"]
-    assert props["idu"] and "status" in props and "opportunity_score" in props
-    assert fc["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
+    # M37 : le fallback legacy (parcel_evaluations.status) est SUPPRIMÉ — un seul chemin v2
+    # (dryrun, tier servi). La couche de test n'a pas de run dryrun → FC vide mais VALIDE
+    # (aucun 500). Le dispatch est couvert par test_api_q_v2, le contenu SQL par le golden.
+    r = client.get("/map/parcels.geojson", params={"commune": "Saint-Paul"})
+    assert r.status_code == 200
+    fc = r.json()
+    assert fc["type"] == "FeatureCollection" and isinstance(fc["features"], list)
 
 
 def test_map_bati_endpoint(client):
