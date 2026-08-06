@@ -5,7 +5,7 @@ export interface ParcelFeatureCollection {
   features: Array<{ type: 'Feature'; geometry: unknown; properties: Record<string, unknown> }>
 }
 
-import { useApp, type Filters } from '../store/useApp'
+import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'
 
 // M31 (arbitrage Vic) : run servi = point de vérité UNIQUE versionné config/served_run.txt (=
 // q_v8_calibre depuis la bascule M28). `vite.config.ts` lit ce fichier au build et injecte
@@ -81,6 +81,21 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.copro.length ? { copro: f.copro.join(',') } : {}),
   ...(f.npnru ? { npnru: 'true' } : {}),
   ...(f.adresseAbsente ? { adresse_absente: 'true' } : {}),
+  // M45-B (L1) — tiroir Économie
+  ...(f.budgetMax != null ? { budget_max: f.budgetMax } : {}),
+  ...(f.chargeMin != null ? { charge_min: f.chargeMin } : {}),
+  ...(f.chargeMax != null ? { charge_max: f.chargeMax } : {}),
+  ...(f.prixMarcheMin != null ? { prix_marche_min: f.prixMarcheMin } : {}),
+  ...(f.prixMarcheMax != null ? { prix_marche_max: f.prixMarcheMax } : {}),
+  ...(f.marcheFiable ? { marche_fiable: 'true' } : {}),
+  ...(f.caMin != null ? { ca_min: f.caMin } : {}),
+  // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
+  ...(f.modeBRentable ? {
+    mode_b_rentable: 'true',
+    modeb_travaux_m2: useApp.getState().modeB.travauxM2,
+    modeb_loyer_m2: useApp.getState().modeB.loyerM2,
+    modeb_rendement_pct: useApp.getState().modeB.rendementPct,
+  } : {}),
 })
 
 /** M45 (P2a) — filtre v2 des tiers selon l'interrupteur « Analyse LABUSE » :
@@ -101,8 +116,13 @@ const tiersParam = (f: Filters): Record<string, string> =>
 
 export interface FiltreReponse {
   compte: number
+  total: number
   tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
   opportunites: number
+  opportunites_evenement: number
+  dossiers_opportunites: number
+  opportunites_avec_dossier: number
+  opportunites_sans_identite: number
   page: ParcelResult[]
   limit: number; offset: number; sort: string
 }
@@ -147,11 +167,13 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
-export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-// E3 (M12) : `offset` exposé — le back le supporte déjà (LIMIT/OFFSET en SQL, top-N sur index).
-// Permet la pagination « Charger plus » au lieu du plafond dur de 500.
+// M45-B (L3) — UNIFICATION : compteur/cartouches ET liste passent par /filtre (FiltreCriteres),
+// donc portent EXACTEMENT les mêmes facettes que le compteur du panneau. Plus jamais un compteur
+// filtré et une liste qui ignore les filtres. `f` absent = univers par défaut (analyse active).
+export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((r) => r as unknown as Stats)
+// E3 (M12) : `offset` exposé — pagination « Charger plus ». La page vient de /filtre (mêmes facettes).
 export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0) =>
-  j<ParcelResult[]>(`/parcels?${q({ limit, offset, sort, ...(f ? filterParams(f) : {}) })}`)
+  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset).then((r) => r.page)
 /** Export CSV de la liste courante (mêmes filtres, même tri) — tier v2 en premier. */
 export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
   `/parcels/export.csv?${q({ limit: 5000, sort, ...(f ? filterParams(f) : {}) })}`

@@ -1515,9 +1515,11 @@ def filtre(c: FiltreCriteres = Depends(),
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort) if limit else []
     return {
+        **stats,                                     # total, tiers, opportunites, opportunites_evenement,
+                                                     # dossiers_* — la LISTE et les cartouches lisent LE MÊME
+                                                     # point (M45-B L3) : plus jamais un compteur et une liste
+                                                     # qui divergent sur les facettes.
         "compte": stats["total"],                    # le compteur (« 3 847 → 47 »)
-        "tiers": stats["tiers"],                      # ventilation par tier (dont potentiel long terme)
-        "opportunites": stats["opportunites"],
         "page": page, "limit": limit, "offset": offset, "sort": sort or "rang",
     }
 

@@ -942,15 +942,16 @@ function BilanTab({ idu }: { idu: string }) {
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
 function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
-  const [travaux, setTravaux] = useState<number>(initial.composantes?.travaux.hypothese_m2 ?? 1500)
-  const [saisi, setSaisi] = useState(false)
+  // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
+  // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
+  const travaux = useApp((s) => s.modeB.travauxM2)
+  const setModeB = useApp((s) => s.setModeB)
   const q = useQuery({
-    queryKey: ['mode-b', idu, saisi ? travaux : null],
-    queryFn: () => getModeB(idu, saisi ? travaux : undefined),
-    enabled: saisi,
+    queryKey: ['mode-b', idu, travaux],
+    queryFn: () => getModeB(idu, travaux),
     placeholderData: (prev) => prev,
   })
-  const mb = (saisi && q.data) ? q.data : initial
+  const mb = q.data ?? initial
   if (!mb.disponible || !mb.composantes) return null
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
@@ -986,7 +987,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
             <span style={{ color: '#9db5a8', flex: 1 }}>Coût travaux <b style={{ color: '#E8B44C', fontSize: 10 }}>ESTIMÉ</b></span>
             <input data-mode-b-travaux type="number" min={bMin} max={bMax} step={50} value={travaux}
-              onChange={(e) => { setTravaux(Number(e.target.value)); setSaisi(true) }}
+              onChange={(e) => setModeB({ travauxM2: Number(e.target.value) })}
               style={{ width: 80, background: '#0d1512', border: '1px solid #26302B', borderRadius: 6, color: '#f5fbf8', padding: '3px 6px', fontSize: 11 }} />
             <span style={{ color: '#9db5a8' }}>€/m²</span>
           </div>

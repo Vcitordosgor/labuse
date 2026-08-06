@@ -95,14 +95,40 @@ function Tiroir({ titre, sous, defaut = false, children }: { titre: string; sous
   )
 }
 
+// M45-B (L2) — curseur mode B : une valeur de SESSION unique (travaux + loyer + rendement),
+// partagée fiche ↔ filtre, rien persisté. Pilote le filtre « Mode B rentable » ET le calcul de la fiche.
+function ModeBCurseur() {
+  const modeB = useApp((s) => s.modeB)
+  const setModeB = useApp((s) => s.setModeB)
+  const Champ = ({ k, label, suffix, step }: { k: 'travauxM2' | 'loyerM2' | 'rendementPct'; label: string; suffix: string; step?: number }) => (
+    <label className="flex items-center gap-1 text-[11px] text-txt-mut">
+      {label}
+      <input type="number" step={step ?? 1} value={modeB[k]}
+        onChange={(e) => setModeB({ [k]: Number(e.target.value) })}
+        className="w-[62px] rounded-md border border-line-2 bg-transparent px-1.5 py-0.5 text-[11px] text-txt-hi focus:border-mint focus:outline-none" />
+      <span className="text-[9.5px] text-txt-dim">{suffix}</span>
+    </label>
+  )
+  return (
+    <div className="mt-1 rounded-lg border border-line-2/60 bg-surface-2/40 px-2.5 py-2">
+      <p className="label-caps">Curseur mode B <span className="text-[9px] font-normal normal-case text-txt-dim">— session partagée avec la fiche</span></p>
+      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
+        <Champ k="travauxM2" label="Travaux" suffix="€/m²" step={50} />
+        <Champ k="loyerM2" label="Loyer" suffix="€/m²/mois" step={0.5} />
+        <Champ k="rendementPct" label="Rendement" suffix="%" step={0.5} />
+      </div>
+    </div>
+  )
+}
+
 // Les 6 vues préréglées du cadrage — combinaisons nommées (setFilters). L'anti-60-checkboxes.
 const PRESETS: { nom: string; f: Partial<Filters> }[] = [
   { nom: 'Terrain nu constructible', f: { constructibilite: ['constructible'], etatSol: ['nu'], sdpMin: 100 } },
   { nom: 'Prêt à démarcher', f: { tiers: ['brulante', 'chaude'], flags: ['acces'], proprietaireType: ['pm'] } },
   { nom: 'Division en or', f: { divisionOr: true } },
-  { nom: 'Réhab rentable', f: { etatSol: ['bati_sature', 'bati_revele'] } },
+  { nom: 'Réhab rentable', f: { etatSol: ['bati_sature', 'bati_revele'], modeBRentable: true } },
   { nom: 'Veille AU', f: { analyseLabuse: false, constructibilite: ['fermee', 'au_conditionnelle'] } },
-  { nom: 'Renouvellement', f: { renouvellement: true } },
+  { nom: 'Mon budget', f: { budgetMax: 200000 } },   // M45-B : preset FONCTIONNEL (charge foncière ≤ budget)
 ]
 
 function Section({ title, tag, children }: { title: string; tag?: string; children: React.ReactNode }) {
@@ -231,11 +257,29 @@ export function FiltreLabuse() {
 
       {/* ── TIROIRS NIVEAU 2 (les autres questions) ── */}
       <Tiroir titre="Combien ça coûte, ça rapporte ?" sous="économie">
-        <Section title="Sous-densité"><div className="mt-1"><BoolChip field="sousDensite" label="Bâti en sous-densité" /></div></Section>
-        <div className="pt-1 text-[10px] text-txt-dim">
-          En attente d’exposition (M45 v1.1) : charge foncière médiane · prix marché DVF (fiabilité n≥3) ·
-          bilan CA · prix d’achat max ≤ budget · mode B rentable (curseur session).
+        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
+          <div><p className="label-caps flex items-center gap-1.5">Prix d’achat max ≤ budget
+            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Estimé</span></p>
+            <div className="mt-1 flex items-center gap-1"><NumField field="budgetMax" ph="€" suffix="€" /></div></div>
+          <div><p className="label-caps">Charge foncière (€)</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="chargeMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="chargeMax" ph="max" /></div></div>
         </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
+          <div><p className="label-caps flex items-center gap-1.5">Prix marché DVF (€/m²)
+            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Sourcé</span></p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="prixMarcheMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="prixMarcheMax" ph="max" suffix="€/m²" /></div></div>
+          <div><p className="label-caps flex items-center gap-1.5">Bilan CA
+            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Estimé</span></p>
+            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="caMin" ph="€" suffix="€" /></div></div>
+        </div>
+        <Section title="Repères">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <BoolChip field="marcheFiable" label="Données marché fiables (n≥3)" />
+            <BoolChip field="sousDensite" label="Bâti en sous-densité" />
+            <BoolChip field="modeBRentable" label="Mode B rentable (au paramètre)" />
+          </div>
+        </Section>
+        <ModeBCurseur />
       </Tiroir>
 
       <Tiroir titre="Ça va muter ?" sous="le cœur — voie analyse">
