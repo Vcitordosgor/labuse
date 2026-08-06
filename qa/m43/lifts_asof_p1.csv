@@ -1,0 +1,4 @@
+signal,n_asof,mutes_asof,taux_pct,rr_asof,ic_bas,ic_haut,pct_signal_precede_mutation,verdict
+cessee,785,9,1.15,0.67,0.35,1.28,10,NON predictif (reverse-causal / IC couvre 1)
+radiee,385,5,1.3,0.76,0.32,1.81,23,NON predictif (reverse-causal / IC couvre 1)
+pcl,687,22,3.2,1.86,1.23,2.82,52,INTEGRABLE (as-of concluant)
