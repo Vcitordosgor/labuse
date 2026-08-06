@@ -2586,6 +2586,14 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
         permits = None
 
+    # M38 — activité de DÉPÔT récente (Sitadel3 date_depot). Informatif seul : redate l'activité
+    # sur le dépôt (~9 mois avant l'autorisation), ne touche NI tier NI verdict. None hors couverture.
+    try:
+        from ..ingestion.permits import depots_recents
+        depots = depots_recents(db, p.id)
+    except Exception:  # noqa: BLE001 - bloc additif, jamais bloquant pour la fiche
+        depots = None
+
     # Assemblage foncier v1 (Lot C5) — paire contiguë qui débloque le seuil de taille.
     try:
         from .. import assemblage as _asm
@@ -2690,6 +2698,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "pc_caduc": pc_caduc_block,       # Phase A cycle 2 — PC caduc probable (badge, greffé bloc permis)
         "score_e": score_e_block,         # Nuit N1 — marge estimée € (Estimé, jamais un prix)
         "permits": permits,
+        "depots": depots,   # M38 — activité de dépôt (permis aboutis, datés au dépôt) ; informatif
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents

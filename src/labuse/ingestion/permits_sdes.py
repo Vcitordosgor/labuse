@@ -313,8 +313,14 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
             s.execute(text(
                 "UPDATE ingestion_runs SET finished_at = now(), status = 'ok', "
                 "parcels_count = :n WHERE id = :id"), {"n": stats["upserts"], "id": run_id})
+            # M38 : millésime canonique = horizon réel des données ingérées (dernier mois
+            # couvert, dépôt OU autorisation). Point de calcul unique lu par le bloc fiche.
             s.execute(text(
-                "UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                "UPDATE data_sources SET last_sync_at = now(), source_cadence = 'mensuelle', "
+                "source_millesime = ("
+                "  SELECT to_char(max(greatest(coalesce(date::date, date_depot), "
+                "         coalesce(date_depot, date::date))), 'YYYY-MM') FROM sitadel_permits) "
+                "WHERE name = :n"),
                 {"n": SOURCE_NAME})
         except Exception:
             s.execute(text(

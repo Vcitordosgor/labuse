@@ -14,6 +14,7 @@ import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
+import { DepotsBlock } from './DepotsBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -1507,6 +1508,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
                 {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
                 <PermitsProximityBlock idu={idu} />
+                {f.depots && <DepotsBlock d={f.depots} />}
               </div>
             </RefDrawer>
 
