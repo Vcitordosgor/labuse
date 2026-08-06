@@ -28,7 +28,6 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
       et données » = ICD (19 valeurs, médiane 90) — distinct de la Complétude, GARDÉ.
 - Reliquats consignés (bilan) : révision copy narration démo · micro-libellé ICD · digest
       events sur matrice · suppression physique status_pre_m37 (à froid, Vic).
-=======
 
 ## M36 — CLOS (mergé 06/08) — bilan qa/m36/M36_BILAN.md
 
@@ -158,7 +157,6 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
 
 ## TRAIN 7 — MODE B [A] Opus — CLOS (M33 mergé 06/08)
 - [x] Mode B réhabilitation 24/24 SERVI (M33, bilan qa/m33/M33_BILAN.md) : population = 2 tiers
-=======
       déclassés bâti (33 958 = saturé 29 907 + révélé 4 051 ; les « 8 031 » M32 incluaient la
       bande adjudication non déclassée). Sortie = prix d'achat max réhab (homogène mode A),
       briques mode A réutilisées (coef CA, préséance prix secteur→commune), TOUJOURS Estimé
