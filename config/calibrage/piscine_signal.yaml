@@ -1,0 +1,43 @@
+# M39 — SIGNAL « PISCINE DÉTECTÉE » (solde dette #13). Règle PRODUIT en config, jamais en dur
+# (même philosophie que au_ouverture_planchers.yaml). Lue par src/labuse/faisabilite/piscine_signal.py
+# (fiche + geste de bascule). AUCUN poids de modèle : la doctrine gravée (AUDIT4 train 5, la feature
+# piscine portait +0,41 dans P) veut « une RÈGLE produit, pas un poids » — ce fichier EST cette règle.
+#
+# PRINCIPE MÉTIER : une piscine sur une parcelle classée chaude = usage investi → probabilité de
+# vente en baisse. L'écarter épargne au client une visite pour rien (la boussole — réduire les faux
+# positifs — appliquée au terrain). Le doute ne profite jamais au classement, DANS LES DEUX SENS :
+# on ne déclasse pas non plus sur un signal douteux (V0 colorimétrique seul, hors bande, non
+# matérialisé). Voir qa/m39/M39_P0_CONSTAT.md.
+#
+# HONNÊTETÉ MILLÉSIME (arbitrage Vic A1) : un SEUL millésime ortho en base (2025). La datation
+# « récente » (absente N-1 / présente N) est INFABRICABLE → le motif dit « détectée sur imagerie
+# 2025 », JAMAIS « récente ». Le signal servi est « présente 2025 » (non daté), assumé.
+
+millesime: "2025"                 # BD ORTHO 974 IGN (source datée : data_sources « BD ORTHO 20 cm (IGN) »)
+precision_pct: 90.7               # précision mesurée de la couche matérialisée (échantillon interne)
+                                  # → libellé « détectée », JAMAIS « présente certifiée ».
+
+# ── SEUIL SURFACIQUE (arbitrage Vic B : bande [15 ; 60] m²) ──
+# Bornes = décisions MESURÉES sur les détections humain-validées (ok vs faux_positif), P0 §3.
+seuil:
+  surface_min_m2: 15   # PLANCHER. Sous 15 m² : 355 faux_positif pour 190 ok validés (FP-majoritaire —
+                       #   bassins, bâches, trampolines, artefacts cyan). En-dessous, on n'a pas une
+                       #   piscine « investissement d'usage » assez sûre pour déclasser.
+  surface_max_m2: 60   # PLAFOND. Au-dessus de 60 m² : 19 faux_positif pour 14 ok validés (FP-prone —
+                       #   terrains de sport, plans d'eau, grands bassins collectifs). Un grand bassin
+                       #   collectif n'est pas « l'usage investi du propriétaire » → hors signal.
+
+# ── PÉRIMÈTRE DU DÉCLASSEMENT (arbitrage Vic C1 : couche MATÉRIALISÉE seule) ──
+# La règle ne s'applique QU'À la couche matérialisée (juge FLAIR≥0,30 ET probe≥0,50, ∪ validation
+# humaine 'ok' — précision 90,7 %). Le V0 colorimétrique seul (probe-raté) est EXCLU (C3 enterré :
+# le doute profiterait au déclassement). Les seeds AK1442/AL1154 vivent dans cette bande probe-ratée
+# et restent au REGISTRE (geste manuel, œil de Vic) — deux mécanismes, deux niveaux de preuve, zéro
+# recouvrement (vérifié P0 §4). Ce n'est pas un pis-aller : c'est le système qui marche.
+declassement:
+  tiers_source: [brulante, chaude]   # seuls les tiers hauts sont déclassés (ailleurs le signal est moot)
+  tier_cible: a_creuser              # comme le registre M32 (fausse chaude → à creuser, jamais écartée)
+  exige_materialisee: true           # parcel_equipements.piscine = true (couche produit, pas V0 seul)
+
+# ── MOTIF CLIENT (famille M35 — identique au registre AL1154, « motif client conservé ») ──
+# Étiquette Sourcé + précision assumée. Interdits M35 (mandat/prénom/modèle/dette/IDU tiers) absents.
+motif_client: "Piscine détectée sur imagerie aérienne 2025 — usage du terrain à vérifier."
