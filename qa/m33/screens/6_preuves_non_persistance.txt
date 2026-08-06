@@ -1,0 +1,11 @@
+# M33 P3 — preuves de non-persistance + hors-population (API réelle, 2026-08-06)
+
+## 1. Recalcul client à 3000 €/m² (état UI seulement) :
+   achat_max: -49107 | travaux: 3000
+## 2. Re-lecture au DÉFAUT juste après (rien n'a été persisté) :
+   achat_max: 180851 | travaux: 1500 (= défaut 1500 ✓)
+## 3. Hors population (nue servie AP1610) — jamais un panneau :
+{
+    "disponible": false,
+    "motif": "hors population mode B (r\u00e9serv\u00e9 aux parcelles d\u00e9class\u00e9es pour cause de b\u00e2ti : satur\u00e9 ou r\u00e9v\u00e9l\u00e9)"
+}
