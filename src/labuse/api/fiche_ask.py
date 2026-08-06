@@ -235,6 +235,19 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
                 "texte": "Vous avez atteint la limite de questions pour cette parcelle aujourd'hui.",
                 "sources": []}
 
+    # M44 — DISPOSITIF NON COUVERT : question d'éligibilité fiscale (Girardin/Pinel/Denormandie/LLI/
+    # Loc'Avantages…) → réponse DÉTERMINISTE « non couvert à ce jour » (l'absence est dite, pas tue ;
+    # jamais une affirmation d'éligibilité, jamais un silence, jamais un appel modèle qui inventerait).
+    import re as _re
+    if _re.search(r"girardin|pinel|denormandie|loc.?avantages|\blli\b|défisc|defisc|éligib|eligib",
+                  question, _re.IGNORECASE):
+        from ..faisabilite import defisc as _dfc
+        return {"texte": (_dfc.message_non_couvert() + " Les dispositifs non couverts à ce jour : "
+                          + " ; ".join(_dfc.dispositifs_non_couverts()) + ". "
+                          + _dfc.mention_fiscale()),
+                "sources": ["config/calibrage/defisc_2026.yaml (dispositifs couverts)"],
+                "non_couvert": True}
+
     # 3. CONTEXTE AUTORISÉ (liste blanche) — rien hors catalogue n'est envoyé au modèle
     facts, deeplinks = _ask_context(db, idu)
     ctx = core.build_context(facts, allowed_fields=_allowed_fields(facts))

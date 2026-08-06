@@ -1,7 +1,10 @@
 """PHASE A cycle 2, volet 2 (badge) — « PC caducs ».
 
 Table ADDITIVE `pc_caducs`, dérivée en LECTURE de Sitadel/m10. Ne touche JAMAIS les tables servies
-(`parcel_p_score_v2`, `dryrun_*`, run servi `q_v7_defisc`). Signal parcellaire et horodaté :
+(p_model_permits + sitadel_permits + m10_permit_delais + parcels). Signal parcellaire et horodaté :
+# M44 Lot 0 (constaté sur pièces) : pc_caducs NE dépend d'AUCUN run — `_SELECT_RAW` lit les permis
+# et l'univers `parcels`, pas `parcel_p_score_v2`. La mention M31 « run servi q_v7_defisc » était une
+# note fausse (doctrine : une note n'est pas une source). Aligner un run ici est SANS OBJET (0 effet).
 la parcelle et ses dates, JAMAIS le demandeur (personne physique possible) ni un jugement du propriétaire.
 
 Doctrine (cf. A1_PC_CADUCS_CADRAGE.md) : un PC OCTROYÉ jamais réalisé porte une constructibilité prouvée

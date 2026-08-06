@@ -2374,17 +2374,18 @@ def renouv_cmd(
 
 @app.command("score-e")
 def score_e_cmd(
-    run: str = typer.Option("q_v7_defisc", help="Run servi dont scorer les parcelles non-écartées."),
+    run: str = typer.Option(None, help="Run servi dont scorer les parcelles non-écartées (défaut : run servi Q_A_RUN_LABEL)."),
     prix_neuf: bool = typer.Option(True, help="Reconstruire d'abord dvf_prix_sortie_neuf (O0)."),
 ) -> None:
     """SCORE É V2 (O0) : marge estimée (€) = charge foncière supportable (prix de sortie NEUF) − prix probable.
     Table additive score_e (Estimé partout). Lecture seule des sources ; ne touche jamais les runs servis."""
     from .ingestion import score_e, dvf_prix_neuf
+    from .scoring.score_v_constants import Q_A_RUN_LABEL  # M44 Lot 0 : point de vérité (plus de q_v7 en dur)
 
     with session_scope() as s:
         if prix_neuf:
             dvf_prix_neuf.build_prix_neuf(s, log=typer.echo)
-        r = score_e.build_score_e(s, run=run, log=typer.echo)
+        r = score_e.build_score_e(s, run=run or Q_A_RUN_LABEL, log=typer.echo)
         typer.echo(f"✓ score_e : {r['total']} non-écartées, {r['estimables']} marge estimable")
 
 

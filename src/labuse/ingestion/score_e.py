@@ -5,7 +5,8 @@ Le classement que le client comprend sans explication : combien cette parcelle p
   marge_estimee = charge_fonciere_supportable − prix_probable_foncier
 
 Table ADDITIVE `score_e`. Ne touche JAMAIS les tables servies. Univers : parcelles NON-ÉCARTÉES de
-`q_v7_defisc`. Tout est **Estimé** — jamais un prix ni une promesse ; jamais de marge sur une écartée.
+run SERVI (Q_A_RUN_LABEL). Tout est **Estimé** — jamais un prix ni une promesse ; jamais de marge sur une écartée.
+M44 Lot 0 : le défaut d'argument était `q_v7_defisc` (run mort) — aligné sur le point de vérité (served_run.txt).
 
 O0 (V2) — le prix de sortie n'est plus la médiane DVF de l'EXISTANT (~2 265 €/m², ancien dilué qui
 écrasait 90 % des marges) mais le **prix de sortie NEUF** reconstruit par `dvf_prix_sortie_neuf`
@@ -33,6 +34,8 @@ from __future__ import annotations
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+from ..scoring.score_v_constants import Q_A_RUN_LABEL  # M44 Lot 0 : point de vérité (served_run.txt)
 
 # Hypothèses DÉRIVÉES de la source unique (`hypotheses_faisabilite` YAML — mandat hypothèses
 # bilan, décision Vic 28/07/2026) : plus de constante de coût autonome ici. Numériquement
@@ -155,7 +158,7 @@ def _row(idu, surface_m2, sdp, terrain, prix_vente, niveau_prix) -> dict:
             "niveau": niveau_prix, "hv": HYP_VERSION, "court": court, "detail": detail}
 
 
-def build_score_e(session: Session, *, run: str = "q_v7_defisc",
+def build_score_e(session: Session, *, run: str = Q_A_RUN_LABEL,
                   commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `score_e` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels. Renvoie {'total', 'estimables'}."""

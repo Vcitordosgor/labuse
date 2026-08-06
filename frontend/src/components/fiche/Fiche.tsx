@@ -993,6 +993,30 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.travaux.libelle}</p>
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.frais_marge.libelle}</p>
         </div>
+        {/* M44 — SORTIE LOCATIVE : côte à côte avec la revente, jamais fusionnée. Loyer au plafond
+            réglementaire Sourcé (ou marché Estimé) ; prix d'achat max à rendement cible. Mention fiscale. */}
+        {mb.sortie_locative && (
+          <div data-mode-b-locatif style={{ borderTop: '1px solid #24312b', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#f5fbf8', fontWeight: 600 }}>Sortie locative</p>
+            {mb.sortie_locative.negatif ? (
+              <p style={{ margin: 0, fontSize: 11.5, color: '#E8B44C' }}>{mb.sortie_locative.message_negatif}</p>
+            ) : (
+              <p style={{ margin: 0, fontSize: 11.5, color: '#f5fbf8' }}>
+                Prix d'achat max : <b>~{mb.sortie_locative.achat_max_libelle}</b>
+                <span style={{ marginLeft: 4, fontSize: 10, color: '#8FA69A' }}>(Estimé)</span> à rendement cible {mb.sortie_locative.rendement_cible_pct} %
+                <span style={{ marginLeft: 4, fontSize: 10, color: '#8FA69A' }}>(paramètre client)</span>
+              </p>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+              <span style={{ color: '#9db5a8' }}>Loyer retenu</span>
+              <span style={{ color: '#f5fbf8' }}>~{fmtInt(mb.sortie_locative.loyer.annuel_eur)} €/an · {mb.sortie_locative.loyer.m2_mois_effectif} €/m²/mois</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
+              {mb.sortie_locative.loyer.etiquette}{mb.sortie_locative.loyer.coef_surface ? ` · coefficient de surface ${mb.sortie_locative.loyer.coef_surface}` : ''}
+            </p>
+            <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#E8B44C' }}>{mb.sortie_locative.mention_fiscale}</p>
+          </div>
+        )}
         <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
       </div>
     </RefDrawer>

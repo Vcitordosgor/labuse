@@ -1950,12 +1950,17 @@ def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:
 
 @app.get("/parcels/{idu}/mode-b")
 def parcel_mode_b(idu: str, travaux_m2: float | None = Query(None, ge=500, le=4000),
+                  regime_locatif: str | None = Query(None, pattern="^(base|intermediaire)$"),
+                  loyer_marche_m2: float | None = Query(None, ge=1, le=100),
+                  rendement_cible_pct: float | None = Query(None, ge=1, le=20),
                   db: Session = Depends(get_db)) -> dict:
-    """M33 — recalcul du bilan MODE B avec le paramètre CLIENT travaux (€/m² SHAB).
-    État de session/UI uniquement : RIEN n'est persisté en base (exigence P3.2)."""
+    """M33/M44 — recalcul du bilan MODE B avec les paramètres CLIENT (travaux €/m² SHAB ; et, pour la
+    sortie LOCATIVE M44 : régime de plafond, loyer de marché, rendement cible). État de session/UI
+    uniquement : RIEN n'est persisté en base (exigence P3.2)."""
     _check_idu(idu)
     from ..faisabilite.bilan import compute_mode_b
-    return compute_mode_b(db, idu, travaux_m2=travaux_m2)
+    return compute_mode_b(db, idu, travaux_m2=travaux_m2, regime_locatif=regime_locatif,
+                          loyer_marche_m2=loyer_marche_m2, rendement_cible_pct=rendement_cible_pct)
 
 
 def _renouvellement_block(db: Session, idu: str) -> dict | None:

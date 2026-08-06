@@ -1,0 +1,7 @@
+parametre,valeur,unite,source,date
+plafond_loyer_DOM_base,12.21,eur_m2_mois,BOFiP BOI-BAREME-000017,2026-03-10
+plafond_loyer_DOM_intermediaire,12.71,eur_m2_mois,BOFiP BOI-BAREME-000017,2026-03-10
+coef_surface_formule,0.7 + 19/S plafonne 1.2,coefficient,CGI/BOFiP,2026
+taux_reduction_OM_6ans,23,pct,Denormandie OM (informatif operateur),2026
+taux_reduction_OM_9ans,29,pct,Denormandie OM (informatif operateur),2026
+taux_reduction_OM_12ans,32,pct,Denormandie OM (informatif operateur),2026

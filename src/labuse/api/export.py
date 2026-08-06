@@ -477,8 +477,19 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
         cmb = mb["composantes"]
         val = (html.escape(mb["message_negatif"]) if mb.get("negatif")
                else f"prix d'achat max ~{mb['achat_max_libelle']} <b>(Estimé)</b>")
-        mode_b_kv = kv("Mode B — Réhab",
+        mode_b_kv = kv("Mode B — Réhab · REVENTE",
                        f"{val} · travaux ~{cmb['travaux']['hypothese_m2']} €/m² (ESTIMÉ, à ajuster)")
+        # M44 — SORTIE LOCATIVE, côte à côte, jamais fusionnée avec la revente.
+        sl = mb.get("sortie_locative")
+        if sl:
+            lo = sl["loyer"]
+            vl = (html.escape(sl["message_negatif"]) if sl.get("negatif")
+                  else f"prix d'achat max ~{html.escape(sl['achat_max_libelle'])} <b>(Estimé)</b> "
+                       f"à rendement cible {sl['rendement_cible_pct']} % (paramètre client)")
+            mode_b_kv += kv("Mode B — Réhab · LOCATIF",
+                            f"loyer ~{lo['annuel_eur']} €/an [{html.escape(lo['etiquette'])}] · {vl}")
+            mode_b_kv += (f"<div class='foot' style='margin-top:2px'>"
+                          f"{html.escape(sl.get('mention_fiscale') or '')}</div>")
 
     # Contraintes (HARD_EXCLUDE + SOFT_FLAG) et à-vérifier (UNKNOWN).
     contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]

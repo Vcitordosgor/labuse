@@ -1,0 +1,7 @@
+{
+    "texte": "Dispositif non couvert \u00e0 ce jour \u2014 le bilan servi est au plafond r\u00e9glementaire, sans affirmation d'\u00e9ligibilit\u00e9. Les dispositifs non couverts \u00e0 ce jour : Girardin logement social (CGI 199 undecies C) \u2014 op\u00e9rateur-d\u00e9pendant, hors objectivation parcelle ; LLI (logement locatif interm\u00e9diaire) \u2014 zone/op\u00e9rateur, non couvert v1 ; Loc'Avantages (conventionnement Anah) \u2014 statut 2026 non \u00e9tabli sur pi\u00e8ce ; Denormandie : \u00e9ligibilit\u00e9 par commune (ORT/Action C\u0153ur de Ville) non servie comme fait (liste \u00e0 confirmer sur pi\u00e8ce officielle) ; Pinel / Pinel+ Outre-mer \u2014 dispositif clos (fin 31/12/2024). Hypoth\u00e8ses fiscales indicatives \u2014 le dispositif, l'\u00e9ligibilit\u00e9 de la parcelle et les plafonds applicables sont \u00e0 valider avec un conseil fiscal. Ce bilan locatif est un calcul param\u00e9tr\u00e9 au plafond r\u00e9glementaire affich\u00e9 ; il ne vaut ni conseil fiscal, ni promesse d'\u00e9ligibilit\u00e9. Les plafonds affich\u00e9s sont ceux publi\u00e9s au bar\u00e8me officiel en vigueur \u00e0 la date indiqu\u00e9e.",
+    "sources": [
+        "config/calibrage/defisc_2026.yaml (dispositifs couverts)"
+    ],
+    "non_couvert": true
+}
