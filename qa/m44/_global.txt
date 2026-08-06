@@ -1,0 +1,13 @@
+M44 P0 — digests fiscaux (constat, lecture seule)
+genere_le: 2026-08-06
+SOURCES OFFICIELLES: BOFiP BOI-BAREME-000017-20260310 (plafonds loyer 2026) ; CGI art. 199 novovicies (Denormandie)
+SYNTHESE: Pinel MORT (fin 2024, ABSENT). Denormandie OM en vigueur jusqu'2027 mais eligibilite
+  operateur/commune-dependante -> jamais servie comme fait. Socle servi = BILAN AU PLAFOND
+  reglementaire SOURCE (12,71 eur/m2 intermediaire DOM x coef 0,7+19/S<=1,2), dispositif-agnostique.
+  Architecture loyers: (a) plafond Source defaut + (b) curseur marche Estime. Mode B seul v1.
+  Lot 0: score_e aligne q_v7->q_v8 (428 ecartees dropped) ; pc_caducs run-agnostique (effet run=0).
+
+dispositifs_2026_p0.csv SHA256:
+  3bd8aadea33c7f4b88efc0474f872669501c00ab6bac9d0f49e45fe33b124e50
+plafonds_2026_p0.csv SHA256:
+  2fc33e5755e461ebfd71a15f121a1ae89f189daf9fbc019479f3460b5ce592b1
