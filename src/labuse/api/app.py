@@ -1809,6 +1809,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    pm = dict(pm) if pm else None
+    if pm and pm.get("siren"):
+        pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
     # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
     dvf_last = db.execute(text(
         "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
@@ -1901,7 +1904,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M28 (gaté LABUSE_M28_BADGES=1, servi à la bascule phase B) : badges filtre bâti +
         # géométrie contrainte — signaux de fiche, étiquetés, jamais un déclassement ici.
         **(_m28_badges(db, idu) if os.environ.get("LABUSE_M28_BADGES") == "1" else {}),
-        "proprietaire_moral": dict(pm) if pm else None,
+        "proprietaire_moral": pm,   # M43 : + etat_societe (fait public PM, si présent)
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
@@ -2115,6 +2118,44 @@ def _radar_proc(idu: str, tier: str | None) -> dict | None:
         return radar_parcelle(idu, tier)
     except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
         return None
+
+
+def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
+    """M43 — état PUBLIC de la SOCIÉTÉ propriétaire (PM ONLY, niveau société) : cessée / radiée /
+    procédure collective, chacun Sourcé + daté. C'est un FAIT public d'entreprise — on le DIT, on
+    n'en déduit RIEN à l'écran (pas de vigilance, pas de badge, pas de filtre). None si société
+    saine / absente. RGPD : jamais la personne (dirigeants NON lus). SAVEPOINT : table absente en
+    base de test n'avorte pas la fiche."""
+    if not siren:
+        return None
+    try:
+        with db.begin_nested():
+            etats = []
+            ce = db.execute(text(
+                "SELECT payload->>'etat_administratif' AS etat, payload->>'date_fermeture' AS d "
+                "FROM owner_enrichment WHERE siren = :s LIMIT 1"), {"s": siren}).mappings().first()
+            if ce and ce["etat"] == "C":
+                etats.append({"type": "cessée", "date": (ce["d"] or None),
+                              "libelle": f"cessée{(' le ' + ce['d']) if ce['d'] else ''}",
+                              "source": "Sirene/INSEE (recherche-entreprises)", "etiquette": "Sourcé"})
+            for b in db.execute(text(
+                "SELECT famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
+                "WHERE siren = :s AND famille IN ('radiation','pcl') GROUP BY famille"),
+                    {"s": siren}).mappings().all():
+                if b["famille"] == "radiation":
+                    etats.append({"type": "radiée", "date": b["d"],
+                                  "libelle": f"radiée le {b['d']}", "source": "BODACC", "etiquette": "Sourcé"})
+                else:
+                    etats.append({"type": "procédure collective", "date": b["d"],
+                                  "libelle": f"procédure collective (dernière annonce {b['d']})",
+                                  "source": "BODACC", "etiquette": "Sourcé"})
+    except Exception:  # noqa: BLE001 — jamais bloquant pour la fiche
+        return None
+    if not etats:
+        return None
+    return {"etats": etats,
+            "libelle": "Société propriétaire : " + " ; ".join(e["libelle"] for e in etats) + ".",
+            "note": "Fait public d'entreprise (état de la société) — information de contexte, aucune déduction."}
 
 
 def _historique_site(db: Session, idu: str) -> dict | None:

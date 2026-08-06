@@ -1535,6 +1535,17 @@ export function Fiche({ idu }: { idu: string }) {
                       {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
                       {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
                     </div>
+                    {f.proprietaire_moral.etat_societe && (
+                      // M43 — fait public d'entreprise (état société) : on le DIT, on n'en déduit RIEN
+                      // (pas de vigilance, pas de badge, pas de filtre). PM only ; jamais la personne.
+                      <div className="mt-2 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
+                        <span className="text-txt-hi">{f.proprietaire_moral.etat_societe.libelle}</span>
+                        <span className="ml-1 text-txt-dim">
+                          (Sourcé {f.proprietaire_moral.etat_societe.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')})
+                        </span>
+                        <div className="mt-0.5 text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.etat_societe.note}</div>
+                      </div>
+                    )}
                     {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
                   </div>
                 ) : (
