@@ -46,6 +46,17 @@ export interface Filters {
   capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
   zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
   analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ON par défaut.
+  // M45 (P2d) — tiroirs éco / mutation / propriété / veille
+  sousDensite: boolean
+  multMin: number | null
+  rangMax: number | null
+  renouvellement: boolean
+  divisionOr: boolean
+  proprietaireType: string[]         // pm / bailleur / pp
+  etatSociete: string[]              // cessee / radiee / procedure (M43 factuel)
+  copro: string[]                    // avec / sans (RNIC)
+  npnru: boolean
+  adresseAbsente: boolean
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -55,6 +66,8 @@ export const EMPTY_FILTERS: Filters = {
   personneMorale: false, zonagePlu: [],
   sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
   analyseLabuse: true,
+  sousDensite: false, multMin: null, rangMax: null, renouvellement: false, divisionOr: false,
+  proprietaireType: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP

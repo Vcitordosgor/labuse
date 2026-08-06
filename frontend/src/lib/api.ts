@@ -70,6 +70,17 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
   ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
   ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
+  // M45 (P2d) — tiroirs éco / mutation / propriété / veille
+  ...(f.sousDensite ? { sous_densite: 'true' } : {}),
+  ...(f.multMin != null ? { mult_min: f.multMin } : {}),
+  ...(f.rangMax != null ? { rang_max: f.rangMax } : {}),
+  ...(f.renouvellement ? { renouvellement: 'true' } : {}),
+  ...(f.divisionOr ? { division_or: 'true' } : {}),
+  ...(f.proprietaireType.length ? { proprietaire_type: f.proprietaireType.join(',') } : {}),
+  ...(f.etatSociete.length ? { etat_societe: f.etatSociete.join(',') } : {}),
+  ...(f.copro.length ? { copro: f.copro.join(',') } : {}),
+  ...(f.npnru ? { npnru: 'true' } : {}),
+  ...(f.adresseAbsente ? { adresse_absente: 'true' } : {}),
 })
 
 /** M45 (P2a) — filtre v2 des tiers selon l'interrupteur « Analyse LABUSE » :

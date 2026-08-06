@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { getFiltre } from '../../lib/api'
-import { useApp, type Filters } from '../../store/useApp'
+import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const CONSTRUCTIBILITE = [
   { k: 'constructible', l: 'Constructible' },
@@ -28,6 +28,13 @@ const ETAT_SOL = [
   { k: 'bati_revele', l: 'Bâti révélé' },
 ]
 const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, { k: 'N', l: 'N' }]
+const PROPRIO_TYPE = [{ k: 'pm', l: 'PM identifiée (SIREN)' }, { k: 'bailleur', l: 'Bailleur (HLM/SEM)' }, { k: 'pp', l: 'Particulier / non déterminable' }]
+const ETAT_SOCIETE = [{ k: 'procedure', l: 'Procédure collective' }, { k: 'cessee', l: 'Cessée' }, { k: 'radiee', l: 'Radiée' }]
+const COPRO = [{ k: 'avec', l: 'En copropriété' }, { k: 'sans', l: 'Hors copropriété' }]
+const VIGILANCES: [string, string][] = [
+  ['pente', 'Pente'], ['bruit_route', 'Bruit routier'], ['sol_pollue', 'SIS / pollution'],
+  ['cavite', 'Cavité'], ['mvt', 'Mouvement de terrain'], ['ravine', 'Ravine'], ['icpe', 'ICPE'],
+]
 // Facettes du cadrage EN ATTENTE DE DONNÉE (P0) — montrées, désactivées, honnêtes.
 const DROIT_DIFFERES = ['Plancher de densité', 'EBC partiel', 'Emplacement réservé',
   'Sol naturel / ZAN', 'Fraîcheur PLU (radar M41)']
@@ -69,6 +76,35 @@ function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suf
   )
 }
 
+function BoolChip({ field, label }: { field: keyof Filters; label: string }) {
+  const { filters, setFilter } = useApp()
+  const on = !!filters[field]
+  return <Chip on={on} onClick={() => setFilter(field, !on as never)}>{label}</Chip>
+}
+
+function Tiroir({ titre, sous, defaut = false, children }: { titre: string; sous?: string; defaut?: boolean; children: React.ReactNode }) {
+  const [ouvert, setOuvert] = useState(defaut)
+  return (
+    <div className="border-t border-line-2/50">
+      <button onClick={() => setOuvert((o) => !o)} className="flex w-full items-center justify-between py-1.5 text-left">
+        <span className="text-xs font-medium text-txt-hi">{titre}{sous && <span className="text-txt-dim"> — {sous}</span>}</span>
+        <span className="text-txt-dim">{ouvert ? '▾' : '▸'}</span>
+      </button>
+      {ouvert && <div className="pb-1">{children}</div>}
+    </div>
+  )
+}
+
+// Les 6 vues préréglées du cadrage — combinaisons nommées (setFilters). L'anti-60-checkboxes.
+const PRESETS: { nom: string; f: Partial<Filters> }[] = [
+  { nom: 'Terrain nu constructible', f: { constructibilite: ['constructible'], etatSol: ['nu'], sdpMin: 100 } },
+  { nom: 'Prêt à démarcher', f: { tiers: ['brulante', 'chaude'], flags: ['acces'], proprietaireType: ['pm'] } },
+  { nom: 'Division en or', f: { divisionOr: true } },
+  { nom: 'Réhab rentable', f: { etatSol: ['bati_sature', 'bati_revele'] } },
+  { nom: 'Veille AU', f: { analyseLabuse: false, constructibilite: ['fermee', 'au_conditionnelle'] } },
+  { nom: 'Renouvellement', f: { renouvellement: true } },
+]
+
 function Section({ title, tag, children }: { title: string; tag?: string; children: React.ReactNode }) {
   return (
     <div className="py-2">
@@ -82,7 +118,7 @@ function Section({ title, tag, children }: { title: string; tag?: string; childr
 }
 
 export function FiltreLabuse() {
-  const { filters, setFilter, resetFilters } = useApp()
+  const { filters, setFilter, setFilters, resetFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
 
   // Compteur SQL des DEUX voies (le « théâtre »). analyse = hors exclusions dures ; trame = tout.
@@ -124,8 +160,18 @@ export function FiltreLabuse() {
         </button>
       </div>
 
+      {/* ── VUES PRÉRÉGLÉES (l'anti-60-checkboxes) : les 6 du cadrage ── */}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {PRESETS.map((p) => (
+          <button key={p.nom} onClick={() => setFilters({ ...EMPTY_FILTERS, ...p.f })}
+            className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">
+            {p.nom}
+          </button>
+        ))}
+      </div>
+
       {/* ── BARRE NIVEAU 1 ── */}
-      <div className="mt-1 divide-y divide-line-2/50">
+      <div className="mt-2 divide-y divide-line-2/50">
         <Section title="Constructibilité calibrée" tag="Sourcé">
           <ChipGroup field="constructibilite" options={CONSTRUCTIBILITE} />
         </Section>
@@ -181,6 +227,72 @@ export function FiltreLabuse() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── TIROIRS NIVEAU 2 (les autres questions) ── */}
+      <Tiroir titre="Combien ça coûte, ça rapporte ?" sous="économie">
+        <Section title="Sous-densité"><div className="mt-1"><BoolChip field="sousDensite" label="Bâti en sous-densité" /></div></Section>
+        <div className="pt-1 text-[10px] text-txt-dim">
+          En attente d’exposition (M45 v1.1) : charge foncière médiane · prix marché DVF (fiabilité n≥3) ·
+          bilan CA · prix d’achat max ≤ budget · mode B rentable (curseur session).
+        </div>
+      </Tiroir>
+
+      <Tiroir titre="Ça va muter ?" sous="le cœur — voie analyse">
+        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
+          <div><p className="label-caps">Probabilité ×N</p>
+            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="multMin" ph="N" suffix="×" /></div></div>
+          <div><p className="label-caps">Têtes (rang P)</p>
+            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≤</span><NumField field="rangMax" ph="N" /></div></div>
+        </div>
+        <Section title="Segments">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <BoolChip field="renouvellement" label="Renouvellement" />
+            <BoolChip field="divisionOr" label="Division en or (O12)" />
+          </div>
+        </Section>
+      </Tiroir>
+
+      <Tiroir titre="À qui c’est, puis-je l’acheter ?" sous="propriété">
+        <Section title="Type de propriétaire" tag="Sourcé"><ChipGroup field="proprietaireType" options={PROPRIO_TYPE} /></Section>
+        <Section title="État de la société" tag="Sourcé (M43)"><ChipGroup field="etatSociete" options={ETAT_SOCIETE} /></Section>
+        <Section title="Copropriété (RNIC)"><ChipGroup field="copro" options={COPRO} /></Section>
+        <div className="pt-1 text-[10px] text-txt-dim">
+          Dormance / succession : absent (attend avocat). Gérant âgé : jamais un critère (RGPD).
+        </div>
+      </Tiroir>
+
+      <Tiroir titre="Quels risques, quelles contraintes ?" sous="terrain">
+        <Section title="Vigilances par type" tag="Sourcé">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {VIGILANCES.map(([k, l]) => (
+              <Chip key={k} on={filters.flags.includes(k)}
+                onClick={() => setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])}>{l}</Chip>
+            ))}
+          </div>
+        </Section>
+        <div className="pt-1 text-[10px] text-txt-dim">
+          Accès voirie : étiquette « limite BD TOPO » (dette #12). Piscine (M39) : indisponible tant que non basculée.
+        </div>
+      </Tiroir>
+
+      <Tiroir titre="Veille & niches" sous="les différenciants">
+        <Section title="Niches">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <BoolChip field="npnru" label="Proximité NPNRU / QPV" />
+            <BoolChip field="adresseAbsente" label="Adresse absente (BAN)" />
+          </div>
+        </Section>
+        <div className="pt-1 text-[10px] text-txt-dim">
+          Motif de déclassement : coupe l’Analyse LABUSE pour explorer les écartées (jamais masquées) ·
+          potentiel solaire APER : M45 v1.1.
+        </div>
+      </Tiroir>
+
+      {/* Écartées : jamais masquées — consultables via la voie manuelle, avec leur motif au verdict. */}
+      <div className="mt-1 border-t border-line-2/50 pt-2 text-[10px] text-txt-dim">
+        Les écartées ne sont jamais masquées : coupez l’Analyse LABUSE (ou choisissez « Inconstructible /
+        Zone fermée » ci-dessus) pour les consulter — chaque parcelle garde son motif de déclassement.
       </div>
 
       <button onClick={resetFilters}
