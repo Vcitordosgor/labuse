@@ -4,11 +4,15 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-06 — M37 (CC) mergé : RAIL LEGACY parcel_evaluations.status
-ÉTEINT (option c) — verdict 100 % tier, 0 vigilance perdue sur 431 632 parcelles (SHA256
-identique, garde mécanique), colonne archivée par renommage (réversible), matrice_statut
-assainie (chip fiche/TierBadge sortis, modules/partenaire basculés tiers), mode B en k€.
-M33 (mode B, TRAIN 7 CLOS) + M34/M35/M36 clos avant. Golden 117/117.
+Dernière mise à jour : 2026-08-06 (M46 ménage) — **VAGUE 2 CLOSE** : M37→M45-B mergés sur main
+(6a6e0c17). **Bascule M39 EXÉCUTÉE (06/08)** : règle piscine [15;60] servie → 4 déclassements ;
+état servi `q_v8_calibre` : **brûlante 118 · chaude 1 038 · à-creuser 29 978 · réserve 2 964**
+(opportunités = brûlantes+chaudes = 1 156). Golden régénéré 117/117. Rail legacy
+parcel_evaluations.status éteint (M37) ; filtres & recherche complets (M45/M45-B : 2 voies,
+20 facettes SQL, parcel_flags, curseur mode B, ResultsSection unifiée). **Dettes #13 (piscine) et
+#14 (double-rail) FERMÉES.** M33 (mode B) + M34/M35/M36 clos avant.
+> ⚠ Les effectifs ci-dessus sont un instantané de la bascule M39 (06/08) — à RAFRAÎCHIR à chaque
+> bascule (source unique : le run servi). La vitrine Train 8 les LIT du run, ne les fige pas.
 **Chemin critique restant : TRAIN 8 (VPS/prod) → premier client.**
 Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
 
@@ -126,7 +130,7 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
 - [x] Dette #9 FERMÉE (signal servi, arbitrage b, 05/08) : parcel_entree_tete (514 entrées tracées via la chaîne d'archives), libellé factuel « entrée en tête à la bascule du JJ/MM — signal inchangé/en progression » (Sourcé), fiche seule, 0 effet de classement. À recalculer au geste de chaque bascule.
 - [x] Dette #11 FERMÉE pour la part PM (signal servi, arbitrage b, 05/08) : parcel_acquerabilite 3 états factuels (même propriétaire PM 329 / distincts 46 / non déterminable 685) sur la mention assemblage, Sourcé SIREN DGFiP-Cerema (millésime amont non tracé → Estimé affiché, champ prévu). 0 effet de classement.
 - [ ] Dette #11-PP (DISTINCTE, maintenue) : acquérabilité des personnes physiques NON déterminable — manquant nommé : source de propriété PP inexistante en open data (anonymisation DGFiP). Structurel.
-- [ ] Dette #13 (piscine — ouverte à la bascule M32) : le signal piscine (FLAIR + PVA) ne déclasse pas encore par RÈGLE produit — il est porté PARCELLE PAR PARCELLE au registre `served_run_exceptions` (a_creuser). Aujourd'hui 2 entrées : AK1442 (FLAIR 88 m², M28) + AL1154 (FLAIR 0,888, M32). Le filtre bâti (emprise) ne les attrape pas (une piscine n'est pas du bâti, ratio 0 %). Manquant nommé pour en faire une règle : couche piscine surfacique fiable + seuil (« piscine centrale ≠ terrain nu »). Tant que la couche n'est pas industrialisée, chaque cas piscine détecté = une entrée de registre motivée, pas un déclassement automatique.
+- [x] **Dette #13 FERMÉE (bascule M39 exécutée 06/08)** : le signal piscine est passé de « registre parcelle par parcelle » à **RÈGLE PRODUIT servie** (seuil [15;60] m²) → 4 déclassements à la bascule (brûlante 119→118, chaude 1041→1038, à-creuser 29974→29978), golden régénéré 117/117. Le registre `served_run_exceptions` n'est plus le porteur du signal piscine. (Historique : ouverte M32 ; entrées AK1442/AL1154 désormais couvertes par la règle.)
 - [x] **Dette #14 FERMÉE (M34, mergé 05/08, option a — dérivation totale)** : le verdict de
       fiche est désormais une TRADUCTION du tier servi (`src/labuse/verdict_servi.py`, point de
       calcul unique) sur TOUTES les surfaces non-v2 (fiche legacy, exports/one-pager comité,
@@ -193,9 +197,10 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 ## Site marketing + perf sites + gelés (transmis Vic, post-M32)
 - [ ] **Split app / marketing** : séparer l'application (produit scoré) du site marketing (vitrine
   labuse.immo). Deux surfaces, deux cycles de déploiement.
-- [ ] **Chiffres post-M32 à afficher sur la vitrine** (état servi `q_v8_calibre` après bascule M32) :
-  431 663 parcelles · **119 brûlantes · 1 041 chaudes** · 29 974 à creuser · 2 964 réserve foncière.
-  (Source unique : le run servi ; à rafraîchir à chaque bascule, ne pas figer un chiffre à la main.)
+- [ ] **Chiffres à afficher sur la vitrine** (état servi `q_v8_calibre` après **bascule M39, 06/08**) :
+  431 663 parcelles · **118 brûlantes · 1 038 chaudes** · 29 978 à creuser · 2 964 réserve foncière
+  (opportunités = 1 156). ⚠ **À DÉRIVER du run servi au build de la vitrine, ne JAMAIS figer** — ces
+  chiffres bougent à chaque bascule (source unique : le run). Le nombre ci-dessus n'est qu'un repère daté M39.
 - [ ] **Perf sites (Lighthouse)** : passer app + marketing au crible Lighthouse (perf/SEO/a11y),
   budget de perf déclaré. À faire avant exposition client.
 - [ ] **MoteurImmo : GELÉ** — ne pas reprendre l'intégration/compat MoteurImmo (décision Vic).
