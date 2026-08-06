@@ -4,10 +4,30 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-06 — M36 (CC) mergé : étiquettes de source VRAIES partout ·
-score/complétude hors client (D2/D3) · Q1-Q3 servis · compteur fiche commune en dur ·
-RR par commune mesuré (sensibilité ex æquo découverte). M35+M34 clos avant. Golden 117/117.
-Chemin critique restant : M33 mode B → train 8 → premier client.
+Dernière mise à jour : 2026-08-06 — M37 (CC) mergé : RAIL LEGACY parcel_evaluations.status
+ÉTEINT (option c) — verdict 100 % tier, 0 vigilance perdue sur 431 632 parcelles (SHA256
+identique, garde mécanique), colonne archivée par renommage (réversible), matrice_statut
+assainie (chip fiche/TierBadge sortis, modules/partenaire basculés tiers), mode B en k€.
+M33 (mode B, TRAIN 7 CLOS) + M34/M35/M36 clos avant. Golden 117/117.
+**Chemin critique restant : TRAIN 8 (VPS/prod) → premier client.**
+Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
+
+## M37 — CLOS (mergé 06/08) — bilan qa/m37/M37_BILAN.md
+
+- [x] Extinction rail legacy `parcel_evaluations.status` (option c tracée M34-P0). Lecteurs
+      coupés (geojson fallback supprimé → défaut run servi ; assemblage/audit/demo re-sourcés
+      tiers), writer gelé (_persist n'écrit plus status), colonne ARCHIVÉE par renommage
+      `status_pre_m37` (réversible, 0 donnée détruite). GARDE MÉCANIQUE : dump vigilances
+      avant/après = SHA256 identique + diff digests VIDE (431 632 parcelles) → 0 vigilance
+      perdue/modifiée/inventée (elles vivent en cascade_results, hors rail).
+- [x] matrice_statut assainie : chip « Statut matrice (historique) » + mention TierBadge
+      SORTIS ; modules Outils/moteurs/API partenaire basculés sur les tiers (zéro partenaire
+      actif — fait maintenant) + étiquette partenaire vraie. Maintenus (étiquette « historique »
+      vraie) : légende repli, tuiles MVT, /stats?legacy=1, digest events.
+- [x] Lot 0.1 mode B au k€ (point de formatage unique compute_mode_b). Lot 0.2 : « Confiance
+      et données » = ICD (19 valeurs, médiane 90) — distinct de la Complétude, GARDÉ.
+- Reliquats consignés (bilan) : révision copy narration démo · micro-libellé ICD · digest
+      events sur matrice · suppression physique status_pre_m37 (à froid, Vic).
 
 ## M36 — CLOS (mergé 06/08) — bilan qa/m36/M36_BILAN.md
 
@@ -135,8 +155,15 @@ Chemin critique restant : M33 mode B → train 8 → premier client.
 - [ ] Garde-fou fraîcheur GPU-vs-mairie
 - [ ] Rebuild + re-score final post-calibration (bascule, 5 gardes)
 
-## TRAIN 7 — MODE B [A] Opus
-- [ ] Bilan réhabilitation 24/24 (mandat + maquette prêts)
+## TRAIN 7 — MODE B [A] Opus — CLOS (M33 mergé 06/08)
+- [x] Mode B réhabilitation 24/24 SERVI (M33, bilan qa/m33/M33_BILAN.md) : population = 2 tiers
+      déclassés bâti (33 958 = saturé 29 907 + révélé 4 051). Sortie = prix d'achat max réhab
+      (homogène mode A), briques mode A réutilisées, TOUJOURS Estimé (travaux défaut 1 500 €/m²,
+      bornes 500-4 000, jamais persisté ; au k€ depuis M37). Étiquettes PAR composante, niveaux
+      Sourcé/Estimé visibles par parcelle. Bilan négatif dit honnêtement. Tiroir subordonné au
+      verdict M34 + exports + assistant. 0 tier touché, golden 117/117, non-persistance prouvée.
+      RELIQUATS : locatif/défisc = vague 2 pré-client (dette q_v7_defisc) · Q6 close (v1 = zéro
+      reclassement ; mode B classant futur exige une dimension parcellaire discriminante).
 
 ## TRAIN 8 — VPS / PRODUCTION [A] Opus — dernier avant client
 - [ ] Déploiement VPS + Caddy + certificats + SECRET_KEY
