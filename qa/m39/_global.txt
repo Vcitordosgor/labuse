@@ -14,8 +14,12 @@ piscines_materialisees_x_tier.csv.gz SHA256:
 piscines_materialisees_x_tier.csv.gz (contenu decompresse) SHA256:
   9bc1966587d383475503ac51cbde04a75633c3db9e1d8028bd7156f4a1d75d6d
 
+geometrie_piscine_parcelle_p2.csv SHA256:
+  ad35b4cdf88e8ba63043752ab972ad2124a7f0fb2d9c4919b0ebe4cf025e2804
+
 VERIF (2026-08-06):
   golden: 117/117 PASS, 0 FAIL
   re-mesure M34/M35 (mesure_p2, 1071 parcelles): 0 divergence — PASS
   SHA256 vigilances M37: 482da6f6848989b34aac7cbafcddc413079c5c2e1a9bd1b4bf186b1689e9abe9 (INCHANGE)
   tiers servis: identiques au baseline P0 (0 tier modifie)
+  geometrie: 34 candidats — 23 CONTENUE, 11 A_CHEVAL, 0 HORS ; centroide dans parcelle: 34/34

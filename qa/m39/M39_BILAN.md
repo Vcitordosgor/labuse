@@ -87,9 +87,41 @@ markdown (repris dans les exports).
 | 97401 | Les Avirons | 1 | 0 | 1 |
 
 Liste exhaustive (47 = 34 bande + 13 témoins) : `qa/m39/mesure_a_blanc_p2.csv`.
-**20 orthos de vérification** (17 en bande + 3 témoins sous-15, majorité en bande comme demandé) :
-`qa/m39/deck_m39.html` (ortho IGN 2025, polygone = piscine détectée, surface + confiance + tier).
-Générateur : `qa/m39/gen_deck_m39.py`. **À revoir par Vic** : vraie piscine ou faux positif ?
+
+### P2.2-bis · Vérification géométrique piscine ⊂ parcelle (demande Vic — chiffre d'abord)
+
+**La bonne question** (soulevée par Vic) : la piscine détectée est-elle géométriquement **contenue
+dans la parcelle servie**, ou est-ce celle du voisin (rattachement par proximité) ? Une détection
+décalée déclasserait un terrain nu à cause de la piscine d'à côté. **Mesuré sur les 34**
+(`ST_Contains` / `ST_Intersects` / centroïde, CRS métrique 2975 ;
+`qa/m39/geometrie_piscine_parcelle_p2.csv`) :
+
+| statut géométrique | n | lecture |
+|---|---|---|
+| **CONTENUE** (piscine 100 % dans la parcelle) | **23** | net |
+| **À CHEVAL** (straddle le bord cadastral) | **11** | dont 2 à ratio 1,00 (bord tangent = de fait contenues) |
+| **HORS parcelle** | **0** | aucune détection entièrement chez le voisin |
+
+**Point rassurant** : les **34 ont leur centroïde piscine DANS la parcelle servie** — le
+rattachement (par centroïde) n'a jamais désigné une piscine dont le centre est chez le voisin. Les
+à-cheval sont des bassins qui **traversent la limite cadastrale**. Les plus douteux (part de la
+piscine dans la parcelle < 60 %) : **BE1329 (44 %), CY0402 (52 %), DE2193 (52 %), CY0985 (55 %),
+AV0547 (60 %)** — 5 cas à trancher à l'œil.
+
+**Deck refait** (`qa/m39/deck_m39.html`, `gen_deck_m39.py`) : les **34** parcelles, **zoomées sur la
+parcelle**, avec **contour parcelle (orange, comme les fiches)** + **polygone piscine (bleu)** +
+rappel chiffré (surface parcelle, surface piscine, % piscine/parcelle, ratio dans la parcelle,
+position central/périphérique). **À-cheval en tête** (ratio croissant). Aperçu :
+`qa/m39/screens/4_deck_apercu_geo.png`.
+
+**Recommandation de règle (mesurée, NON implémentée — décision Vic)** : ajouter une exigence de
+**contenance** à `piscine_signal.yaml`. Options chiffrées :
+- `ST_Contains` **strict** → 23/34 (écarte les 11, dont 2 tangents pourtant OK) — trop dur.
+- **centroïde dans la parcelle** (déjà 34/34) **ET** part de la piscine dans la parcelle
+  `ratio ≥ 0,5` → écarte **BE1329 seul** (44 %) → 33/34. **Recommandé** comme garde-fou honnête
+  (« la piscine est majoritairement sur cette parcelle »), le reste tranché sur le deck.
+
+Rien n'est implémenté : le knob de contenance et son seuil sont à fixer par Vic après revue du deck.
 
 ### P2.3 · Geste de bascule préparé, JAMAIS exécuté — commit `[M39-P2]`
 `scripts/bascule_m39.py` sur le modèle de `bascule_m32.py` : **DRY-RUN par défaut** (n'écrit rien),

@@ -37,6 +37,12 @@ declassement:
   tiers_source: [brulante, chaude]   # seuls les tiers hauts sont déclassés (ailleurs le signal est moot)
   tier_cible: a_creuser              # comme le registre M32 (fausse chaude → à creuser, jamais écartée)
   exige_materialisee: true           # parcel_equipements.piscine = true (couche produit, pas V0 seul)
+  # ── CONTENANCE (mesurée P2.2-bis, NON activée — décision Vic) ──
+  # Question : la piscine détectée est-elle géométriquement DANS la parcelle servie (pas celle du
+  # voisin) ? Mesuré sur les 34 : 23 CONTENUE, 11 À CHEVAL, 0 HORS ; centroïde dans la parcelle pour
+  # les 34 (qa/m39/geometrie_piscine_parcelle_p2.csv). Garde-fou recommandé quand Vic tranchera :
+  #   ratio_pool_dans_parcelle_min: 0.5   # + centroïde dans la parcelle (déjà vrai pour les 34)
+  # → écarterait le seul cas < 60 % nettement à cheval (BE1329, 44 %). Inactif tant que non décidé.
 
 # ── MOTIF CLIENT (famille M35 — identique au registre AL1154, « motif client conservé ») ──
 # Étiquette Sourcé + précision assumée. Interdits M35 (mandat/prénom/modèle/dette/IDU tiers) absents.
