@@ -1047,6 +1047,85 @@ def _q_v2_where(run_label: str, score_min: int | None,
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
+@dataclass
+class FiltreCriteres:
+    """M45 (P1) — critères composables du filtrage unifié. UN SEUL point d'entrée des filtres :
+    les endpoints s'y adossent, et une nouvelle facette (P2) s'ajoute ICI + dans `_q_v2_where`,
+    puis coule partout. Les champs deviennent des query-params (FastAPI `Depends`)."""
+    source: str | None = None
+    commune: str | None = None
+    score_min: int | None = None
+    surface_min: int | None = None
+    surface_max: int | None = None
+    sdp_min: int | None = None
+    evenement: bool = False
+    flags: str | None = None
+    communes: str | None = None
+    flags_exclus: str | None = None
+    tiers: str | None = None
+    hors_copro: bool = False
+    veille: bool = False
+    personne_morale: bool = False
+    zonage: str | None = None
+    defisc_active: bool = False
+    pc_caduc: bool = False
+    marge_min: int | None = None
+    # M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
+    sdp_max: int | None = None
+    constructibilite: str | None = None
+    etat_sol: str | None = None
+    capacite_min: int | None = None
+    zone_plu: str | None = None
+    # M45 (P2d) — tiroirs éco / mutation / propriété / veille
+    sous_densite: bool = False
+    mult_min: float | None = None
+    rang_max: int | None = None
+    renouvellement: bool = False
+    division_or: bool = False
+    proprietaire_type: str | None = None
+    etat_societe: str | None = None
+    copro: str | None = None
+    npnru: bool = False
+    adresse_absente: bool = False
+    # M45-B (Lot 1+2) — tiroir Économie + curseur mode B (paramètres de session)
+    budget_max: int | None = None
+    charge_min: int | None = None
+    charge_max: int | None = None
+    prix_marche_min: int | None = None
+    prix_marche_max: int | None = None
+    marche_fiable: bool = False
+    ca_min: int | None = None
+    mode_b_rentable: bool = False
+    modeb_travaux_m2: float | None = None
+    modeb_loyer_m2: float | None = None
+    modeb_rendement_pct: float | None = None
+
+    def where(self) -> tuple[str, dict]:
+        return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
+                           self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
+                           self.tiers, self.hors_copro, self.veille, self.personne_morale,
+                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                           self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
+                           self.zone_plu, self.sous_densite, self.mult_min, self.rang_max,
+                           self.renouvellement, self.division_or, self.proprietaire_type,
+                           self.etat_societe, self.copro, self.npnru, self.adresse_absente,
+                           self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
+                           self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
+                           self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
+
+    def cache_key(self) -> tuple:
+        return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
+                self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
+                self.flags_exclus, self.tiers, self.hors_copro, self.veille,
+                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu,
+                self.sous_densite, self.mult_min, self.rang_max, self.renouvellement, self.division_or,
+                self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente,
+                self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
+                self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
+                self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
+
+
 @app.get("/parcels")
 def list_parcels(commune: str | None = None,
                  limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
@@ -1084,36 +1163,24 @@ def list_parcels(commune: str | None = None,
 
 
 @app.get("/parcels/export.csv")
-def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
-                       score_min: int | None = None,
-                       surface_min: int | None = None, surface_max: int | None = None,
-                       sdp_min: int | None = None, evenement: bool = False,
-                       flags: str | None = None, communes: str | None = None,
-                       flags_exclus: str | None = None,
-                       tiers: str | None = None,
-                       hors_copro: bool = False, veille: bool = False,
-                       personne_morale: bool = False, zonage: str | None = None,
-                       defisc_active: bool = False, pc_caduc: bool = False,
-                       marge_min: int | None = None,
+def export_parcels_csv(c: FiltreCriteres = Depends(),
                        sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
-    """Export CSV de la liste (mêmes filtres que /parcels) — le tier v2 EN PREMIER (M5.1,
-    même vérité que l'app), signaux propriétaire en fin de ligne.
-    M6 2a : encodage utf-8-sig (BOM Excel) + séparateur « ; » (standard maison, cf.
-    /segments/export) + adresse postale BAN (référence parcelle = idu, 1re colonne).
-    M45 (P1) : params morts `statuts`/`v_signal`/`brulantes` retirés.
+    """Export CSV de la liste — MÊMES facettes que le compteur et la liste (M46 Lot D : routé
+    sur `FiltreCriteres`, plus jamais un export qui ignore les filtres actifs). Tier v2 EN
+    PREMIER (M5.1), signaux propriétaire en fin de ligne. M6 2a : utf-8-sig (BOM Excel) +
+    séparateur « ; » + adresse postale BAN (1re colonne = idu).
     ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes)."""
     import csv as _csv
     import io as _io
 
     from .export_commun import adresses_ban
 
-    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
-                                      sdp_min, evenement, flags, communes, flags_exclus,
-                                      tiers, hors_copro, veille,
-                                      personne_morale, zonage, defisc_active, pc_caduc, marge_min)
-    items = _q_v2_list(db, commune, limit, 0, run_label=source,
+    source = c.source or Q_A_RUN_LABEL
+    c.source = source
+    extra, extra_params = c.where()
+    items = _q_v2_list(db, c.commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
     tops = {r[0]: r[1] for r in db.execute(text(
         "SELECT parcelle_id, (SELECT string_agg(s->>'label', ' | ') FROM ("
@@ -1418,83 +1485,6 @@ def stats(commune: str | None = None, source: str | None = None,
         legacy=legacy))
 
 
-@dataclass
-class FiltreCriteres:
-    """M45 (P1) — critères composables du filtrage unifié. UN SEUL point d'entrée des filtres :
-    les endpoints s'y adossent, et une nouvelle facette (P2) s'ajoute ICI + dans `_q_v2_where`,
-    puis coule partout. Les champs deviennent des query-params (FastAPI `Depends`)."""
-    source: str | None = None
-    commune: str | None = None
-    score_min: int | None = None
-    surface_min: int | None = None
-    surface_max: int | None = None
-    sdp_min: int | None = None
-    evenement: bool = False
-    flags: str | None = None
-    communes: str | None = None
-    flags_exclus: str | None = None
-    tiers: str | None = None
-    hors_copro: bool = False
-    veille: bool = False
-    personne_morale: bool = False
-    zonage: str | None = None
-    defisc_active: bool = False
-    pc_caduc: bool = False
-    marge_min: int | None = None
-    # M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
-    sdp_max: int | None = None
-    constructibilite: str | None = None
-    etat_sol: str | None = None
-    capacite_min: int | None = None
-    zone_plu: str | None = None
-    # M45 (P2d) — tiroirs éco / mutation / propriété / veille
-    sous_densite: bool = False
-    mult_min: float | None = None
-    rang_max: int | None = None
-    renouvellement: bool = False
-    division_or: bool = False
-    proprietaire_type: str | None = None
-    etat_societe: str | None = None
-    copro: str | None = None
-    npnru: bool = False
-    adresse_absente: bool = False
-    # M45-B (Lot 1+2) — tiroir Économie + curseur mode B (paramètres de session)
-    budget_max: int | None = None
-    charge_min: int | None = None
-    charge_max: int | None = None
-    prix_marche_min: int | None = None
-    prix_marche_max: int | None = None
-    marche_fiable: bool = False
-    ca_min: int | None = None
-    mode_b_rentable: bool = False
-    modeb_travaux_m2: float | None = None
-    modeb_loyer_m2: float | None = None
-    modeb_rendement_pct: float | None = None
-
-    def where(self) -> tuple[str, dict]:
-        return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
-                           self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
-                           self.tiers, self.hors_copro, self.veille, self.personne_morale,
-                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
-                           self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
-                           self.zone_plu, self.sous_densite, self.mult_min, self.rang_max,
-                           self.renouvellement, self.division_or, self.proprietaire_type,
-                           self.etat_societe, self.copro, self.npnru, self.adresse_absente,
-                           self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
-                           self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
-                           self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
-
-    def cache_key(self) -> tuple:
-        return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
-                self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
-                self.flags_exclus, self.tiers, self.hors_copro, self.veille,
-                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
-                self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu,
-                self.sous_densite, self.mult_min, self.rang_max, self.renouvellement, self.division_or,
-                self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente,
-                self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
-                self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
-                self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
 
 
 @app.get("/filtre")
@@ -2014,7 +2004,16 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         {"pid": head["id"], "run": run_label}).mappings().all()
 
     lines, flags, evenement_detail = [], [], None
+    _seen: set = set()
     for r in rows:
+        # M46 (Lot D) : DÉDUP des contraintes servies — une même contrainte peut être produite en
+        # double par la cascade (intersections multiples d'une même source, ex. « PPR zone rouge
+        # (inconstructible) » x2 sur 97421000AC0156, ou un aléa niveau moyen x3). Point de calcul
+        # unique : une contrainte identique (couche + résultat + détail) = UNE ligne servie.
+        _k = (r["layer_name"], r["result"], r["detail"])
+        if _k in _seen:
+            continue
+        _seen.add(_k)
         w = r["weight_applied"]
         line = {
             "layer": r["layer_name"],

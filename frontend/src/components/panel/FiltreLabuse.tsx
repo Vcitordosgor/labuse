@@ -147,27 +147,30 @@ export function FiltreLabuse() {
   const { filters, setFilter, setFilters, resetFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
 
-  // Compteur SQL des DEUX voies (le « théâtre »). analyse = hors exclusions dures ; trame = tout.
+  // Compteur SQL des DEUX voies (le « théâtre »). M46 (Lot D) : lever l'ambiguïté du mot « trame »
+  // — il désignait 431 663 (barre par défaut) MAIS le sous-ensemble filtré une fois un filtre posé.
+  // Un mot = un périmètre : on ne dit plus « trame » mais « AVANT analyse » (le sous-ensemble
+  // correspondant AUX FILTRES courants, avant que l'analyse n'en retire les exclusions dures).
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
   const off = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
-  const compteAnalyse = on.data?.compte             // ce que l'analyse RETIENT (déclassements inclus)
-  const compteTrame = off.data?.compte              // toute la trame (le cadastre analysé)
-  const compteExclues = (compteTrame != null && compteAnalyse != null) ? compteTrame - compteAnalyse : null
-  const compteActuel = filters.analyseLabuse ? compteAnalyse : compteTrame
+  const compteAnalyse = on.data?.compte             // retenues par l'analyse (déclassements inclus)
+  const compteAvant = off.data?.compte              // mêmes filtres, AVANT analyse (exclusions dures incluses)
+  const compteExclues = (compteAvant != null && compteAnalyse != null) ? compteAvant - compteAnalyse : null
+  const compteActuel = filters.analyseLabuse ? compteAnalyse : compteAvant
 
   return (
     <div className="card-elev px-3 py-2">
       {/* En-tête : compteur en direct + interrupteur — chaque nombre DIT son périmètre (réconcilié :
-          trame = retenues par l'analyse + exclusions dures ; jamais de soustraction laissée au client). */}
+          « avant analyse » = retenues + exclusions dures ; jamais de soustraction laissée au client). */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="label-caps">{filters.analyseLabuse ? 'Retenues par l’analyse' : 'Toute la trame'}</p>
+          <p className="label-caps">{filters.analyseLabuse ? 'Retenues par l’analyse' : 'Voie manuelle (sans analyse)'}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-[22px] font-semibold text-txt-hi tabular-nums">
               {compteActuel == null ? '…' : nf.format(compteActuel)}</span>
-            {filters.analyseLabuse && compteTrame != null && compteExclues != null && (
+            {filters.analyseLabuse && compteAvant != null && compteExclues != null && (
               <span className="text-[11px] text-txt-dim">
-                sur <span className="tabular-nums">{nf.format(compteTrame)}</span> de la trame
+                sur <span className="tabular-nums">{nf.format(compteAvant)}</span> avant analyse
                 <span className="mx-1 text-mint">·</span>
                 <span className="tabular-nums text-txt-mut">{nf.format(compteExclues)}</span> exclusions dures écartées
               </span>
