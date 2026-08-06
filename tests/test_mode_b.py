@@ -127,6 +127,15 @@ def test_repli_commune_etiquete(db_session):
     assert "repli" in r["composantes"]["prix_sortie"]["libelle"]
 
 
+def test_libelle_toujours_ke_point_unique(db_session):
+    # M37 Lot 0.1 : le montant mode B est formaté UNE fois (au k€) côté serveur — un Estimé
+    # à l'euro près contredit son étiquette. Petit montant aussi arrondi au k€.
+    _seed(db_session)
+    r = compute_mode_b(db_session, "97499000MB0001")
+    assert r["achat_max_libelle"].endswith("k€") or r["achat_max_libelle"].endswith("M€")
+    assert "€/m²" not in r["achat_max_libelle"]
+
+
 def test_absent_explicite_emprise(db_session):
     _seed(db_session)
     r = compute_mode_b(db_session, "97499000MB0004")

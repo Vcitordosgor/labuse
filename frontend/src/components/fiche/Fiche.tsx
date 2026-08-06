@@ -3,7 +3,7 @@ import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
-import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt, fmtEur } from '../../lib/format'
+import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -955,7 +955,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
   const [bMin, bMax] = c.travaux.bornes
   return (
     <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
-      value={mb.negatif ? 'bilan négatif' : `~${fmtEur(mb.achat_max_eur ?? 0)}`}
+      value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
       valueColor={mb.negatif ? '#E8B44C' : undefined}
       micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -963,7 +963,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
           <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
         ) : (
           <p style={{ margin: 0, fontSize: 12.5, color: '#f5fbf8' }}>
-            Prix d'achat max réhabilitation : <b data-mode-b-achat>~{fmtEur(mb.achat_max_eur ?? 0)}</b>
+            Prix d'achat max réhabilitation : <b data-mode-b-achat>~{mb.achat_max_libelle ?? '—'}</b>
             <span style={{ marginLeft: 6, fontSize: 10.5, color: '#8FA69A' }}>(Estimé — jamais un prix Sourcé : l'hypothèse travaux est toujours estimée)</span>
           </p>
         )}

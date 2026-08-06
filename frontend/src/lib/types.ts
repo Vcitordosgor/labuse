@@ -169,6 +169,7 @@ export interface ModeB {
   population_tier?: string
   etiquette?: string
   achat_max_eur?: number
+  achat_max_libelle?: string   // M37 Lot 0.1 : formaté k€ côté serveur (point unique)
   negatif?: boolean
   message_negatif?: string | null
   composantes?: {

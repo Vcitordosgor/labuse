@@ -79,7 +79,7 @@ def fiche_markdown(fiche: dict) -> str:
         if mb.get("negatif"):
             lines += [f"**{mb['message_negatif']}**", ""]
         else:
-            lines += [f"- **Prix d'achat max réhab (Estimé) :** ~{_eur(mb['achat_max_eur'])}", ""]
+            lines += [f"- **Prix d'achat max réhab (Estimé) :** ~{mb['achat_max_libelle']}", ""]
         lines += [
             f"- Surface réhabilitable : ~{c['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {c['surface']['emprise_bati_m2']} m² [Sourcé] × {c['surface']['niveaux']} niveau(x) "
@@ -196,7 +196,7 @@ def fiche_html(fiche: dict) -> str:
     if mb.get("disponible"):
         cmb = mb["composantes"]
         tete = (f"<p><strong>{html.escape(mb['message_negatif'])}</strong></p>" if mb.get("negatif")
-                else f"<p><strong>Prix d'achat max réhab (Estimé) :</strong> ~{html.escape(_eur(mb['achat_max_eur']))}</p>")
+                else f"<p><strong>Prix d'achat max réhab (Estimé) :</strong> ~{html.escape(mb['achat_max_libelle'])}</p>")
         mode_b_html = (
             "<h2>Mode B — Réhabilitation (Estimé)</h2>" + tete + "<ul>"
             f"<li>Surface réhabilitable : ~{cmb['surface']['shab_rehabilitable_m2']} m² habitables "
@@ -476,7 +476,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     if mb.get("disponible"):
         cmb = mb["composantes"]
         val = (html.escape(mb["message_negatif"]) if mb.get("negatif")
-               else f"prix d'achat max ~{_eur(mb['achat_max_eur'])} <b>(Estimé)</b>")
+               else f"prix d'achat max ~{mb['achat_max_libelle']} <b>(Estimé)</b>")
         mode_b_kv = kv("Mode B — Réhab",
                        f"{val} · travaux ~{cmb['travaux']['hypothese_m2']} €/m² (ESTIMÉ, à ajuster)")
 

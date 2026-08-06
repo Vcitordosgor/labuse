@@ -151,6 +151,7 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         # absent des faits hors population → l'IA ne peut pas l'inventer.
         "mode_b": ({
             "prix_achat_max_rehab_eur": mb.get("achat_max_eur"),
+            "prix_achat_max_rehab_libelle": mb.get("achat_max_libelle"),
             "etiquette": "Estimé",
             "negatif": mb.get("negatif"),
             "message_negatif": mb.get("message_negatif"),
@@ -273,7 +274,7 @@ def rules_summary(facts: dict) -> str:
             lignes.append(f"**Réhabilitation (mode B)** — {mb.get('message_negatif')} (ESTIMÉ).")
         else:
             lignes.append(f"**Réhabilitation (mode B)** — prix d'achat max ESTIMÉ "
-                          f"{_fmt_eur(mb.get('prix_achat_max_rehab_eur'))} "
+                          f"~{mb.get('prix_achat_max_rehab_libelle')} "
                           f"(hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster "
                           "selon l'état constaté).")
 
