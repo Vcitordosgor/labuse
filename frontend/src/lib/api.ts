@@ -114,6 +114,9 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+// M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
+export const getModeB = (idu: string, travauxM2?: number) =>
+  j<import('./types').ModeB>(`/parcels/${idu}/mode-b${travauxM2 != null ? `?travaux_m2=${travauxM2}` : ''}`)
 
 // ── R5 (reliquats front) — UI des outils O2/O3 ────────────────────────────────────────────
 // O2 · scoreur d'adresse inversé : adresse → parcelle déjà scorée → verdict compact ;

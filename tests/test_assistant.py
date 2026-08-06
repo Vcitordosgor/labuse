@@ -47,7 +47,9 @@ FICHE = {
 def test_facts_liste_blanche_seulement_les_vrais_champs():
     f = assistant_facts(FICHE)
     assert set(f) == {"parcelle", "verdict", "faisabilite", "bilan_promoteur", "occupation_bati",
-                      "contraintes_et_signaux", "completude", "niveaux_fiabilite", "resume_metier"}
+                      "mode_b", "contraintes_et_signaux", "completude", "niveaux_fiabilite",
+                      "resume_metier"}
+    assert f["mode_b"] is None      # M33 : absent des faits hors population — jamais inventable
     assert f["parcelle"]["surface_m2"] == 1234.5
     # M36 Lot B : les scores opportunité/complétude ne sont PLUS dans les faits (l'IA ne
     # peut plus les citer au client) — le statut traduit reste.

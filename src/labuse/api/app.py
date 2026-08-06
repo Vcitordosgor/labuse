@@ -1976,7 +1976,30 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # MANDAT RNU (B3) : étiquetage commune sans document local — flag GÉNÉRAL
         # (config/rnu_communes.yaml), jamais un cas Saint-Philippe codé en dur.
         "rnu": _rnu.rnu_block(idu, db),
+        # M33 — MODE B (réhabilitation) : lecture de fiche sur la population des 2 tiers
+        # déclassés bâti (rien persisté, aucun tier touché, TOUJOURS Estimé). Hors
+        # population → disponible=False, le front n'affiche rien.
+        "mode_b": _mode_b_block(db, idu, run_label),
     }
+
+
+def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:
+    """M33 — bloc mode B de la fiche (défaut travaux). Jamais un 500 sur la fiche."""
+    try:
+        from ..faisabilite.bilan import compute_mode_b
+        return compute_mode_b(db, idu, run=run_label)
+    except Exception:  # noqa: BLE001 — le mode B ne casse jamais la fiche
+        return {"disponible": False, "motif": "mode B indisponible (erreur interne)"}
+
+
+@app.get("/parcels/{idu}/mode-b")
+def parcel_mode_b(idu: str, travaux_m2: float | None = Query(None, ge=500, le=4000),
+                  db: Session = Depends(get_db)) -> dict:
+    """M33 — recalcul du bilan MODE B avec le paramètre CLIENT travaux (€/m² SHAB).
+    État de session/UI uniquement : RIEN n'est persisté en base (exigence P3.2)."""
+    _check_idu(idu)
+    from ..faisabilite.bilan import compute_mode_b
+    return compute_mode_b(db, idu, travaux_m2=travaux_m2)
 
 
 def _renouvellement_block(db: Session, idu: str) -> dict | None:
@@ -2719,6 +2742,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
         "verdict": verdict_block,
+        # M33 — mode B (réhabilitation) : présent aussi sur le payload legacy (exports
+        # md/html/one-pager) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
+        "mode_b": _mode_b_block(db, idu, Q_A_RUN_LABEL),
         "cascade": cascade,
         "sources_responded": sources_responded,
         "sources_silent": sources_silent,

@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
-import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
+import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt, fmtEur } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -937,6 +937,67 @@ function BilanTab({ idu }: { idu: string }) {
 /** RTAA DOM (mandat 5bis) — rappel réglementaire de CONCEPTION, vérifié Légifrance
  *  (config/rtaa_dom.yaml). Les seuils d'altitude (400/600 m) sont énoncés dans chaque
  *  exigence — l'altitude de la parcelle n'est pas calculée ici (consigné). */
+/** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
+ *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
+ *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
+function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
+  const [travaux, setTravaux] = useState<number>(initial.composantes?.travaux.hypothese_m2 ?? 1500)
+  const [saisi, setSaisi] = useState(false)
+  const q = useQuery({
+    queryKey: ['mode-b', idu, saisi ? travaux : null],
+    queryFn: () => getModeB(idu, saisi ? travaux : undefined),
+    enabled: saisi,
+    placeholderData: (prev) => prev,
+  })
+  const mb = (saisi && q.data) ? q.data : initial
+  if (!mb.disponible || !mb.composantes) return null
+  const c = mb.composantes
+  const [bMin, bMax] = c.travaux.bornes
+  return (
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
+      value={mb.negatif ? 'bilan négatif' : `~${fmtEur(mb.achat_max_eur ?? 0)}`}
+      valueColor={mb.negatif ? '#E8B44C' : undefined}
+      micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
+      <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {mb.negatif ? (
+          <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
+        ) : (
+          <p style={{ margin: 0, fontSize: 12.5, color: '#f5fbf8' }}>
+            Prix d'achat max réhabilitation : <b data-mode-b-achat>~{fmtEur(mb.achat_max_eur ?? 0)}</b>
+            <span style={{ marginLeft: 6, fontSize: 10.5, color: '#8FA69A' }}>(Estimé — jamais un prix Sourcé : l'hypothèse travaux est toujours estimée)</span>
+          </p>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+            <span style={{ color: '#9db5a8' }}>Surface réhabilitable</span>
+            <span style={{ color: '#f5fbf8' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
+            emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
+            <b style={{ color: c.surface.niveaux_reels ? '#5CE6A1' : '#E8B44C' }}>{c.surface.niveaux_reels ? 'Sourcé' : 'Estimé'}</b>
+            {' '}— {c.surface.niveaux_etiquette}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+            <span style={{ color: '#9db5a8' }}>Prix de sortie (revente)</span>
+            <span style={{ color: '#f5fbf8' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
+          </div>
+          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.prix_sortie.libelle}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+            <span style={{ color: '#9db5a8', flex: 1 }}>Coût travaux <b style={{ color: '#E8B44C', fontSize: 10 }}>ESTIMÉ</b></span>
+            <input data-mode-b-travaux type="number" min={bMin} max={bMax} step={50} value={travaux}
+              onChange={(e) => { setTravaux(Number(e.target.value)); setSaisi(true) }}
+              style={{ width: 80, background: '#0d1512', border: '1px solid #26302B', borderRadius: 6, color: '#f5fbf8', padding: '3px 6px', fontSize: 11 }} />
+            <span style={{ color: '#9db5a8' }}>€/m²</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.travaux.libelle}</p>
+          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.frais_marge.libelle}</p>
+        </div>
+        <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
+      </div>
+    </RefDrawer>
+  )
+}
+
 function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: { volet: string; exigence: string; reference: string; url: string; condition_altitude?: string }[] } }) {
   const [open, setOpen] = useState(false)
   const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
@@ -1471,6 +1532,9 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M-RENOUV : tiroir « pourquoi » du segment — les 4 composantes du score,
                 sourcées ; wording doctrinal (géométrie favorable, jamais « division »). */}
+            {/* M33 — mode B : lecture complémentaire SUBORDONNÉE (le verdict/tier M34 reste
+                premier à l'écran, en tête de fiche) — uniquement sur la population. */}
+            {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
             {f.renouvellement && (
               <RefDrawer id="renouvellement" icon={IC.faisa} name="Renouvellement — pourquoi ce rang"
                 value={`${f.renouvellement.renouv_score}/100`} valueColor={RENOUV.txt}

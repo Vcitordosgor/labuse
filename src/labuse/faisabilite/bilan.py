@@ -637,3 +637,142 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
                 "sens": "surcout" if surcout > 0 else "marge",
             }
     return out
+
+
+# ═══════════════════ M33 — MODE B : RÉHABILITATION DU BÂTI EXISTANT ═══════════════════
+# Lecture de fiche sur la POPULATION mode B (les 2 tiers déclassés bâti : saturé + révélé,
+# arbitrage Vic 06/08 — 33 958 parcelles) : « ce bâti existant vaut au plus X à l'achat pour
+# une opération de réhabilitation-revente ». MÊME sortie que le mode A (un prix d'achat max),
+# mêmes conventions (coef CA = 1 − marge − frais, préséance prix secteur → commune), AUCUN
+# tier touché, rien de persisté. Le coût travaux est un PARAMÈTRE CLIENT (aucune source
+# Réunion fiable — le produit ne prétend pas le savoir) : le résultat est TOUJOURS Estimé
+# (héritage strict : un bilan contenant un Estimé est Estimé — assumé au libellé).
+
+#: paramètre client travaux (€/m² SHAB) — défaut arbitré Vic 06/08, TOUJOURS Estimé.
+MODE_B_TRAVAUX_M2_DEFAUT = 1500.0
+MODE_B_TRAVAUX_M2_MIN = 500.0
+MODE_B_TRAVAUX_M2_MAX = 4000.0
+#: tiers de la population mode B (arbitrage Vic 06/08) — zone PLU INFORMATIVE, jamais ABSENT.
+MODE_B_TIERS = ("declasse_bati_sature", "declasse_bati_revele")
+
+
+def _prix_bati_local(session: Session, idu: str) -> dict | None:
+    """Prix de sortie BÂTI local (€/m² habitable) — médianes DVF maison/appartement,
+    préséance SECTEUR (n≥3) → repli COMMUNE (même logique de préséance que le mode A ;
+    le niveau retenu est tracé et étiqueté). None si aucun prix (hors mesure P0 : 0 cas)."""
+    r = session.execute(text(
+        "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
+        "WHERE secteur = :s AND type_bien IN ('maison','appartement') AND n_ventes >= 3"),
+        {"s": idu[:10]}).mappings().first()
+    if r and r["prix"]:
+        return {"prix_m2": float(r["prix"]), "niveau": "secteur",
+                "libelle": "médiane DVF maison/appartement du secteur (n ≥ 3)"}
+    r = session.execute(text(
+        "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
+        "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
+        "AND type_bien IN ('maison','appartement') AND n_ventes >= 3"),
+        {"c": idu[:5]}).mappings().first()
+    if r and r["prix"]:
+        return {"prix_m2": float(r["prix"]), "niveau": "commune",
+                "libelle": "médiane DVF maison/appartement de la commune (repli — pas assez "
+                           "de ventes au secteur)"}
+    return None
+
+
+def compute_mode_b(session: Session, idu: str, *,
+                   travaux_m2: float | None = None,
+                   run: str | None = None) -> dict:
+    """Bilan MODE B d'une parcelle — dict de fiche, jamais persisté.
+
+    `disponible=False` + motif hors population ou données manquantes (ABSENT explicite).
+    Bilan négatif au paramètre courant : DIT honnêtement (`negatif=True`, message), jamais
+    un prix négatif servi comme actionnable, jamais un masquage silencieux."""
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    run = run or Q_A_RUN_LABEL
+    tier = session.execute(text(
+        "SELECT tier FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
+        {"r": run, "i": idu}).scalar()
+    if tier not in MODE_B_TIERS:
+        return {"disponible": False,
+                "motif": "hors population mode B (réservé aux parcelles déclassées pour "
+                         "cause de bâti : saturé ou révélé)"}
+    emprise = session.execute(text(
+        "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    if not emprise or float(emprise) < 20:
+        return {"disponible": False,
+                "motif": "Absent — emprise bâtie non mesurable (< 20 m²) : pas de bilan inventé"}
+    px = _prix_bati_local(session, idu)
+    if px is None:
+        return {"disponible": False,
+                "motif": "Absent — aucun prix de sortie bâti local (DVF) : pas de bilan inventé"}
+
+    hyp = Hypotheses.charger()
+    pid = session.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    from .residuel import _niveaux_existants   # POINT UNIQUE du calcul de niveaux (M33)
+    niveaux, niveaux_reels = _niveaux_existants(session, pid, hyp.niveaux_bati_existant_defaut)
+
+    travaux_est_defaut = travaux_m2 is None
+    travaux = float(travaux_m2) if travaux_m2 is not None else MODE_B_TRAVAUX_M2_DEFAUT
+    travaux = min(max(travaux, MODE_B_TRAVAUX_M2_MIN), MODE_B_TRAVAUX_M2_MAX)
+    coef_ca = round(1.0 - (hyp.marge_promoteur_pct + hyp.frais_annexes_pct), 4)
+
+    emprise = float(emprise)
+    sdp_exist = emprise * niveaux
+    shab = sdp_exist / hyp.coef_plancher_habitable
+    ca = shab * px["prix_m2"] * coef_ca
+    cout_travaux = shab * travaux
+    achat_max = ca - cout_travaux
+
+    return {
+        "disponible": True,
+        "population_tier": tier,
+        # HÉRITAGE STRICT (arbitrage Vic) : le paramètre travaux est TOUJOURS Estimé →
+        # le prix d'achat max réhab n'est JAMAIS Sourcé — assumé au libellé.
+        "etiquette": "Estimé",
+        "achat_max_eur": round(achat_max),
+        "negatif": achat_max <= 0,
+        "message_negatif": ((("bilan négatif au paramètre par défaut — ajuster le coût "
+                              "travaux selon l'état constaté") if travaux_est_defaut else
+                             (f"bilan négatif à {round(travaux)} €/m² de travaux — le marché "
+                              "local n'absorbe pas cette hypothèse"))
+                            if achat_max <= 0 else None),
+        "composantes": {
+            "surface": {
+                "emprise_bati_m2": round(emprise),
+                "niveaux": round(niveaux, 1),
+                "niveaux_reels": niveaux_reels,
+                "niveaux_etiquette": ("Sourcé — étages/hauteur BD TOPO"
+                                      if niveaux_reels else
+                                      "Estimé — 1 niveau supposé (hauteur non mesurée)"),
+                "sdp_existante_m2": round(sdp_exist),
+                "shab_rehabilitable_m2": round(shab),
+                "source_emprise": "max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025)",
+                "etiquette_emprise": "Sourcé",
+            },
+            "prix_sortie": {
+                "prix_m2": round(px["prix_m2"]),
+                "niveau": px["niveau"], "libelle": px["libelle"],
+                "etiquette": "Sourcé (DVF)",
+            },
+            "travaux": {
+                "hypothese_m2": round(travaux),
+                "defaut_m2": round(MODE_B_TRAVAUX_M2_DEFAUT),
+                "bornes": [round(MODE_B_TRAVAUX_M2_MIN), round(MODE_B_TRAVAUX_M2_MAX)],
+                "etiquette": "ESTIMÉ",
+                "libelle": (f"coût travaux : hypothèse ~{round(travaux)} €/m² (ESTIMÉ) — "
+                            "à ajuster selon l'état constaté du bâti"),
+            },
+            "frais_marge": {
+                "coef_ca": coef_ca,
+                "libelle": f"marge {hyp.marge_promoteur_pct:.0%} + frais {hyp.frais_annexes_pct:.0%} "
+                           "du CA (mêmes conventions que le mode A)",
+                "etiquette": "Estimé (conventions de bilan)",
+            },
+        },
+        "formule": ("prix d'achat max réhab = SHAB × prix de sortie × coef CA − SHAB × travaux "
+                    f"= {round(shab)} × {round(px['prix_m2'])} × {coef_ca} − "
+                    f"{round(shab)} × {round(travaux)}"),
+        "avertissement": ("Estimé — ni un prix ni une promesse ; sans donnée d'état du bâti, "
+                          "l'incertitude est portée par le paramètre travaux. Sortie = revente "
+                          "(homogène mode A)."),
+    }
