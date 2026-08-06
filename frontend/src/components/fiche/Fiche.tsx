@@ -661,7 +661,8 @@ export function Calculette({ idu }: { idu: string }) {
                 <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
                 <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
-              <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+              {/* M36 Lot C (Q2) : bornes identiques à l'affichage → valeur unique « ~X » */}
+              <p className="text-[11px] text-txt-dim">{euros(cf.bas) === euros(cf.haut) ? `~${euros(cf.bas)}` : `fourchette ${euros(cf.bas)} – ${euros(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
               {mode === 'achat_max' && (
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
                   = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas

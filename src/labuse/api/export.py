@@ -37,7 +37,8 @@ def fiche_markdown(fiche: dict) -> str:
         "## Verdict",
         "",
         f"- **Statut :** {_verdict_label(v)}"
-        + (f" (rang {v['rang']})" if v.get("rang") and v.get("servable") else "")
+        # M36 Lot C (Q3) : rang affiché sur brûlante/chaude UNIQUEMENT
+        + (f" (rang {v['rang']})" if v.get("rang") and v.get("tier") in ("brulante", "chaude") else "")
         + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
         # M36 Lot B : scores Opportunité/Complétude RETIRÉS de l'affichage client (décorrélés
         # du tier / quasi-constants — arbitrage Vic M35 D2/D3). Calcul conservé en interne.
@@ -114,7 +115,7 @@ def fiche_markdown(fiche: dict) -> str:
         lines += ["| Parcelle | Tier servi | Rang | Zone PLU | Surface |", "|---|---|---|---|---|"]
         for v in vz["voisines"]:
             lines.append(f"| {v['idu']} | {TIER_LABELS.get(v.get('status'), v.get('status') or '—')} | "
-                         f"{v.get('rang') if v.get('rang') is not None else '—'} | "
+                         f"{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude') else '—'} | "
                          f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
         lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
                   "assemblage restent à vérifier._", ""]
@@ -202,7 +203,7 @@ def fiche_html(fiche: dict) -> str:
         rows_vz = "".join(
             f"<tr><td>{html.escape(v['idu'])}</td>"
             f"<td>{html.escape(TIER_LABELS.get(v.get('status'), v.get('status') or '—'))}</td>"
-            f"<td>{v.get('rang') if v.get('rang') is not None else '—'}</td>"
+            f"<td>{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude') else '—'}</td>"
             f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
             f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
             for v in vz["voisines"])
@@ -244,7 +245,7 @@ def fiche_html(fiche: dict) -> str:
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
-<p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+<p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
 {f'<p class="micro-note">{html.escape(v["badge_division_libelle"])}</p>' if v.get('badge_division_libelle') else ''}
 {f'<p class="disc">Motif ({"registre servi" if v.get("exception_registre") else "filtre servi"}) : {html.escape(v["motif"])}</p>' if v.get('motif') else ''}
 {'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
@@ -284,6 +285,13 @@ def _eur(x) -> str:
     if ax >= 1_000:
         return f"{x / 1_000:.0f} k€"
     return f"{x:.0f} €"
+
+
+def _eur_fourchette(bas, haut) -> str:
+    """M36 Lot C (Q2) : bornes identiques À L'AFFICHAGE → valeur unique « ~X » (jamais
+    « ~X–X », jamais d'élargissement artificiel)."""
+    b, h = _eur(bas), _eur(haut)
+    return f"~{b}" if b == h else f"~{b}–{h}"
 
 
 _SOURCE_LABEL = {"non_renseignee": "non renseignée", "saisi_utilisateur": "saisie utilisateur",
@@ -412,8 +420,13 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     if res.get("disponible"):
         # M35 Lot C : dénominateur EXPLICITE — ce taux rapporte le bâti à l'emprise
         # CONSTRUCTIBLE MAX (faisabilité), pas à la surface de la parcelle.
+        # M36 Lot C (Q1) : > 100 % → factuel, sans plafond ni inférence d'antériorité.
+        taux = res["taux_emprise_pct"]
+        taux_txt = (f"bâti existant supérieur à l'emprise constructible actuelle (~{taux} % — à vérifier)"
+                    if (taux or 0) > 100 else
+                    f"bâti au sol = {taux} % de l'emprise constructible max")
         res_html = kv("Potentiel résiduel",
-                      f"bâti au sol = {res['taux_emprise_pct']} % de l'emprise constructible max · SDP résiduelle ~{_m2(res.get('sdp_residuelle_m2'))}"
+                      f"{taux_txt} · SDP résiduelle ~{_m2(res.get('sdp_residuelle_m2'))}"
                       + (" · <b>sous-densité</b>" if res.get("sous_densite") else ""))
     # Bilan.
     bil_html = ""
@@ -421,7 +434,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
         ca = bilan.get("ca") or {}
         cf = bilan.get("charge_fonciere") or {}
         bil_html = kv("Bilan (indicatif)",
-                      f"CA ~{_eur(ca.get('bas'))}–{_eur(ca.get('haut'))} · charge foncière médiane ~{_eur(cf.get('central'))}"
+                      f"CA {_eur_fourchette(ca.get('bas'), ca.get('haut'))} · charge foncière médiane ~{_eur(cf.get('central'))}"
                       + (f" (~{cf.get('par_m2_terrain')} €/m² terrain)" if cf.get("par_m2_terrain") else ""))
 
     # Contraintes (HARD_EXCLUDE + SOFT_FLAG) et à-vérifier (UNKNOWN).
@@ -478,7 +491,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
 <div class="grid">
   <div>
     <div class="verdict"><span class="badge v-{html.escape(_badge_class(status))}">{html.escape(_verdict_label(v))}</span>
-      {f"<span class='scores'>rang {v['rang']}</span>" if v.get('rang') and v.get('servable') else ''}</div>
+      {f"<span class='scores'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude') else ''}</div>
     {f'<p class="synth"><b>{html.escape(v["badge_division_libelle"])}</b></p>' if v.get('badge_division_libelle') else ''}
     {f'<p class="synth">{synth}</p>' if synth else ''}
     <h3>Capacité &amp; potentiel</h3>

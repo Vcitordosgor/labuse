@@ -124,7 +124,8 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         # faits — un score décorrélé du tier ne doit plus pouvoir être cité au client).
         "verdict": {"statut": v.get("status"),
                     "libelle": v.get("label"),
-                    "rang_servi": v.get("rang"),
+                    # M36 Lot C (Q3) : rang cité sur brûlante/chaude uniquement
+                    "rang_servi": v.get("rang") if v.get("status") in ("brulante", "chaude") else None,
                     "badge_division": v.get("badge_division_libelle"),
                     "motif_servi": v.get("motif"),
                     "micro_opportunite": v.get("micro_opportunite"),
@@ -213,7 +214,11 @@ def rules_summary(facts: dict) -> str:
         cap = f" Zone {fa['zone_plu']}"
         if fa.get("surface_plancher_m2"):
             logts = fa.get("logements_au_sol")
-            lg = f", {logts[0]}–{logts[1]} logements" if isinstance(logts, list) and len(logts) == 2 else ""
+            # M36 Lot C (Q2) : bornes identiques → valeur unique (« 2 logements », pas « 2–2 »)
+            lg = ""
+            if isinstance(logts, list) and len(logts) == 2:
+                lg = (f", {logts[0]} logements" if logts[0] == logts[1]
+                      else f", {logts[0]}–{logts[1]} logements")
             cap += f", capacité ESTIMÉE ~{round(fa['surface_plancher_m2'])} m² de plancher{lg}"
         cap += "."
     lignes.append(f"**Potentiel** — {pot}.{cap}")
