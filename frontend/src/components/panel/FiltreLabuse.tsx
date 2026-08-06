@@ -85,28 +85,33 @@ export function FiltreLabuse() {
   const { filters, setFilter, resetFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
 
-  // Compteur SQL des DEUX voies (le « théâtre »). q_on = classement appliqué ; q_off = trame manuelle.
+  // Compteur SQL des DEUX voies (le « théâtre »). analyse = hors exclusions dures ; trame = tout.
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
   const off = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
-  const compteClassement = on.data?.compte
-  const compteTrame = off.data?.compte
-  const compteActuel = filters.analyseLabuse ? compteClassement : compteTrame
+  const compteAnalyse = on.data?.compte             // ce que l'analyse RETIENT (déclassements inclus)
+  const compteTrame = off.data?.compte              // toute la trame (le cadastre analysé)
+  const compteExclues = (compteTrame != null && compteAnalyse != null) ? compteTrame - compteAnalyse : null
+  const compteActuel = filters.analyseLabuse ? compteAnalyse : compteTrame
 
   return (
     <div className="card-elev px-3 py-2">
-      {/* En-tête : compteur en direct + interrupteur Analyse LABUSE avec le CONTRASTE */}
+      {/* En-tête : compteur en direct + interrupteur — chaque nombre DIT son périmètre (réconcilié :
+          trame = retenues par l'analyse + exclusions dures ; jamais de soustraction laissée au client). */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="label-caps">{filters.analyseLabuse ? 'Au classement' : 'Dans la trame · voie manuelle'}</p>
+          <p className="label-caps">{filters.analyseLabuse ? 'Retenues par l’analyse' : 'Toute la trame'}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-[22px] font-semibold text-txt-hi tabular-nums">
               {compteActuel == null ? '…' : nf.format(compteActuel)}</span>
-            {filters.analyseLabuse && compteTrame != null && compteClassement != null && (
+            {filters.analyseLabuse && compteTrame != null && compteExclues != null && (
               <span className="text-[11px] text-txt-dim">
-                <span className="tabular-nums">{nf.format(compteTrame)}</span> dans la trame
-                <span className="mx-1 text-mint">→</span>
-                <span className="tabular-nums text-txt-mut">{nf.format(compteClassement)}</span> retenues
+                sur <span className="tabular-nums">{nf.format(compteTrame)}</span> de la trame
+                <span className="mx-1 text-mint">·</span>
+                <span className="tabular-nums text-txt-mut">{nf.format(compteExclues)}</span> exclusions dures écartées
               </span>
+            )}
+            {!filters.analyseLabuse && compteAnalyse != null && (
+              <span className="text-[11px] text-txt-dim">dont <span className="tabular-nums text-txt-mut">{nf.format(compteAnalyse)}</span> retenues par l’analyse</span>
             )}
           </div>
         </div>

@@ -75,11 +75,18 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
 /** M45 (P2a) — filtre v2 des tiers selon l'interrupteur « Analyse LABUSE » :
  *  ACTIF → on applique le classement (les tiers choisis, défaut = univers hors écartées) ;
  *  COUPÉ → voie manuelle pure : on n'impose AUCUN tier (le classement ne pilote plus). */
-const CLASSEMENT_TIERS = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser']  // opportunités (hors écartées)
+// Univers « hors exclusions dures » (étage 0 écarté) = ce que l'analyse RETIENT — déclassements
+// INCLUS (doctrine « tout montrer », M30). Écartée = l'exclusion dure (étage 0). Les deux réunis
+// = la trame entière (le cadastre analysé). Réconcilie le compteur avec « 431 663 analysées ».
+const TIERS_ANALYSE = [
+  'brulante', 'chaude', 'reserve_fonciere', 'a_creuser',
+  'declasse_bati_sature', 'declasse_non_constructible', 'declasse_bati_revele',
+  'declasse_zone_fermee', 'declasse_au_statut_inconnu', 'declasse_au_fermee',
+]
 const tiersParam = (f: Filters): Record<string, string> =>
   f.analyseLabuse
-    ? { tiers: (f.tiers.length ? f.tiers : CLASSEMENT_TIERS).join(',') }        // le classement pilote
-    : { tiers: [...CLASSEMENT_TIERS, 'ecartee'].join(',') }                     // trame entière, sans tri du classement
+    ? { tiers: (f.tiers.length ? f.tiers : TIERS_ANALYSE).join(',') }   // l'analyse retient (hors exclusions dures)
+    : { tiers: [...TIERS_ANALYSE, 'ecartee'].join(',') }               // toute la trame (le cadastre analysé)
 
 export interface FiltreReponse {
   compte: number
