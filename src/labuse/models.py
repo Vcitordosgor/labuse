@@ -1023,6 +1023,21 @@ def ensure_promesses_index(engine) -> None:
                      "WHERE layer_name = 'bati' AND result = 'HARD_EXCLUDE'"))
 
 
+def ensure_parcel_flags(engine) -> None:
+    """M45 (P2) — la table `parcel_flags` (vigilances dénormalisées, run-scopée) est MATÉRIALISÉE
+    par le geste de bascule (`labuse build-mvt` → build_parcel_flags_table, avec garde de cohérence).
+    Ici on garantit seulement son EXISTENCE (schéma) pour que le filtre `flags` ne casse jamais sur
+    une base neuve/de test : vide tant que build-mvt n'a pas tourné (le filtre renvoie 0, pas d'erreur).
+    Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("CREATE TABLE IF NOT EXISTS parcel_flags "
+                     "(run_label varchar(48), parcel_id integer, layer_name varchar(48))"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS parcel_flags_probe "
+                     "ON parcel_flags (run_label, layer_name, parcel_id)"))
+
+
 def ensure_flags_probe_index(engine) -> None:
     """M45 (P1) — index PARTIEL pour le filtre `flags`/`flags_exclus` (vigilances par type).
     Sans lui, l'EXISTS sur dryrun_cascade_results seq-scanne 9,7 M lignes (~4-9 s île entière) ;
@@ -1499,6 +1514,7 @@ def ensure_schema(engine) -> None:
     ensure_geom_2975(engine, backfill=False)
     ensure_promesses_index(engine)
     ensure_flags_probe_index(engine)   # M45 (P1) : compteur des filtres de vigilance sous la barre
+    ensure_parcel_flags(engine)        # M45 (P2) : table vigilances dénormalisée (existence ; build = bascule)
     ensure_suggestions(engine)   # M16-C : table des retours « proposer une amélioration »
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)

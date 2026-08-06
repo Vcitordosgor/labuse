@@ -565,12 +565,17 @@ def build_mvt_cmd(
 ) -> None:
     """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
-    from .api.tiles import RUN, build_mvt_table, build_overlay_mvt
+    from .api.tiles import RUN, build_mvt_table, build_overlay_mvt, build_parcel_flags_table
 
     label = label or RUN
     with session_scope() as s:
         n = build_mvt_table(s, label)
         n_ov = build_overlay_mvt(s)
+        # M45 : parcel_flags (vigilances dénormalisées) — MÊME geste que les MVT. Garde de
+        # cohérence bruyante intégrée ; le temps de build est reporté (coût du geste de bascule).
+        pf = build_parcel_flags_table(s, label)
+        typer.echo(f"✓ parcel_flags : {pf['n']} paires parcelle×vigilance sur {pf['couches']} "
+                   f"couches · cohérence OK · {pf['seconds']} s.")
         # M6 post-merge : le label matérialisé est ENREGISTRÉ — le test de cohérence
         # (tests/test_run_serving_coherence.py) pète si tuiles et run servi divergent.
         s.execute(text(

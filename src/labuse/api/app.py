@@ -847,19 +847,20 @@ def _q_v2_where(run_label: str, score_min: int | None,
     if evenement:
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c0 WHERE c0.parcel_id = p.id"
                      " AND c0.run_label = :runf AND c0.evenement = 'rouge')")
+    # M45 (P2) : les filtres de vigilance PROBENT `parcel_flags` (dénormalisée au geste de bascule,
+    # non-francs déjà résolus, indexée) — le seq-scan de dryrun_cascade_results (4-7 s île entière)
+    # devient un probe indexé. Table run-scopée cohérente-par-construction (garde au build).
     if flags:
         fl = [f.strip() for f in flags.split(",") if f.strip()]
         _guard_flags_rgpd(fl)
-        conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c1 WHERE c1.parcel_id = p.id"
-                     " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags)"
-                     " AND (c1.result = 'SOFT_FLAG' OR (c1.layer_name = 'abf' AND c1.result = 'UNKNOWN')))")
+        conds.append("EXISTS (SELECT 1 FROM parcel_flags c1 WHERE c1.parcel_id = p.id"
+                     " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags))")
         params["f_flags"] = fl
     if flags_exclus:   # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
         flx = [f.strip() for f in flags_exclus.split(",") if f.strip()]
         _guard_flags_rgpd(flx)
-        conds.append("NOT EXISTS (SELECT 1 FROM dryrun_cascade_results c2 WHERE c2.parcel_id = p.id"
-                     " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x)"
-                     " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
+        conds.append("NOT EXISTS (SELECT 1 FROM parcel_flags c2 WHERE c2.parcel_id = p.id"
+                     " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x))")
         params["f_flags_x"] = flx
     # M45 (P1) : blocs `v_signal` (Score V) et `brulantes` (alias) RETIRÉS — cf. docstring.
     # M30 avait déjà supprimé `v_bands` (Score V, RR 0,51) ; M45 achève le retrait du dernier
