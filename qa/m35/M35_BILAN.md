@@ -148,7 +148,19 @@ parcelle existe déjà : l'ICD (0-100, 9 groupes, servi en fiche v2). **Feu vert
    compteurs, code non servi, tests, golden).
 4. Captures `qa/m35/screens/` : 1 AL1154 (motif client nettoyé) · 2 CY0197 · 3 CX0639
    (pourcentages libellés) · 4 AP1610 (**nue banale — le témoin manquant de M34**) ·
-   5 sélecteur /communes (ordre = tiers servis).
+   5 sélecteur /communes (ordre = tiers servis) · **5bis (reprise revue Vic)** carte île,
+   analyse activée + `5bis_marqueurs_infobulles.txt` (dump VERBATIM du DOM).
+
+   **Constat de surface (demande revue)** : les compteurs /communes ne sont AFFICHÉS en
+   chiffres nulle part à l'écran — c'est un choix de design antérieur (P8/A2 post-revue :
+   « plus de compteur de chaudes visible ») . Ils pilotent : l'ORDRE du sélecteur, la
+   TAILLE/ÉCLAT des marqueurs communes de la carte île (analyse activée), et l'INFOBULLE
+   native au survol du marqueur. Preuve chiffrée (DOM réel, 5bis_marqueurs_infobulles.txt) :
+   « Saint-Denis — 103 en priorité dossier (matrice Q×A) » · La Possession 112 · La Plaine 35
+   — les valeurs post-bascule. **Saint-Denis = 103 confirmé** (API /communes + DOM).
+   ⚠ Relevé M36 : le wording de l'infobulle dit encore « (matrice Q×A) » alors qu'elle sert
+   désormais les tiers — même famille que le badge carte « VERDICT · MATRICE Q×A » relevé
+   par Vic (aucune modification ici, consigne « rien d'autre sur cette branche »).
 5. Suite pytest : 1 301 verts (−21 = tests mutation supprimés) ; 5 échecs PRÉ-EXISTANTS hors
    périmètre (residuel ×4, au_ouverture ×1 — env test, consignés M34, reproduits sans les
    modifs). Écriture DB hors scoring, tracée : colonne + 5 valeurs `motif_client` (Lot B).
