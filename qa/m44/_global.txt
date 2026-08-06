@@ -1,13 +1,19 @@
-M44 P0 — digests fiscaux (constat, lecture seule)
+M44 — digests de preuve (Lot 0 + sortie locative)
 genere_le: 2026-08-06
-SOURCES OFFICIELLES: BOFiP BOI-BAREME-000017-20260310 (plafonds loyer 2026) ; CGI art. 199 novovicies (Denormandie)
-SYNTHESE: Pinel MORT (fin 2024, ABSENT). Denormandie OM en vigueur jusqu'2027 mais eligibilite
-  operateur/commune-dependante -> jamais servie comme fait. Socle servi = BILAN AU PLAFOND
-  reglementaire SOURCE (12,71 eur/m2 intermediaire DOM x coef 0,7+19/S<=1,2), dispositif-agnostique.
-  Architecture loyers: (a) plafond Source defaut + (b) curseur marche Estime. Mode B seul v1.
-  Lot 0: score_e aligne q_v7->q_v8 (428 ecartees dropped) ; pc_caducs run-agnostique (effet run=0).
+SOURCES: BOFiP BOI-BAREME-000017-20260310 (plafonds loyer 2026) ; CGI art. 199 novovicies
+
+LOT 0: score_e q_v7->q_v8 (77718->77308, 428 ecartees retirees) ; pc_caducs run-agnostique (effet run=0)
+SOCLE: bilan AU PLAFOND Source (base 12,21 defaut / interm 12,71) x coef 0,7+19/S<=1,2 ; rendement 6% Estime
+REGLE: zero badge eligibilite ; Pinel mort=ABSENT ; Girardin/LLI/Loc'Avantages=ABSENT ; assistant dit non-couvert
 
 dispositifs_2026_p0.csv SHA256:
   3bd8aadea33c7f4b88efc0474f872669501c00ab6bac9d0f49e45fe33b124e50
 plafonds_2026_p0.csv SHA256:
   2fc33e5755e461ebfd71a15f121a1ae89f189daf9fbc019479f3460b5ce592b1
+assistant_non_couvert_evidence.json SHA256:
+  bbd2bf94836ea99942313852e612c5c971b83eeeee7142afc0e0b9f864e64e8e
+
+VERIF (2026-08-06):
+  golden 117/117 · SHA M37 inchange (482da6f6) · 0 tier · tsc 0
+  re-mesure M34/M35: 0 divergence — PASS
+  pytest: 1332 verts, 5 pre-existants (residuel x4, au_ouverture x1)
