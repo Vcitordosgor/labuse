@@ -4,10 +4,11 @@
 > Vic arbitre, CC exécute, ce fichier fait foi.
 > Statuts : [ ] à faire · [~] en cours · [x] fait · [!] bloqué (dire par quoi)
 
-Dernière mise à jour : 2026-08-06 — M36 (CC) mergé : étiquettes de source VRAIES partout ·
-score/complétude hors client (D2/D3) · Q1-Q3 servis · compteur fiche commune en dur ·
-RR par commune mesuré (sensibilité ex æquo découverte). M35+M34 clos avant. Golden 117/117.
-Chemin critique restant : M33 mode B → train 8 → premier client.
+Dernière mise à jour : 2026-08-06 — M33 (CC) mergé : MODE B réhabilitation 24/24 SERVI
+(TRAIN 7 CLOS) — population 33 958, prix d'achat max réhab toujours Estimé, tiroir subordonné
+au verdict M34, 0 tier touché. M34/M35/M36 clos avant. Golden 117/117.
+**Chemin critique restant : TRAIN 8 (VPS/prod) → premier client.** Avant client : dette
+double-rail soldée (M34-36), mode B servi (M33). Vic seul : SMTP DMARC/DKIM, avocat CGU/CGV.
 
 ## M36 — CLOS (mergé 06/08) — bilan qa/m36/M36_BILAN.md
 
@@ -135,8 +136,18 @@ Chemin critique restant : M33 mode B → train 8 → premier client.
 - [ ] Garde-fou fraîcheur GPU-vs-mairie
 - [ ] Rebuild + re-score final post-calibration (bascule, 5 gardes)
 
-## TRAIN 7 — MODE B [A] Opus
-- [ ] Bilan réhabilitation 24/24 (mandat + maquette prêts)
+## TRAIN 7 — MODE B [A] Opus — CLOS (M33 mergé 06/08)
+- [x] Mode B réhabilitation 24/24 SERVI (M33, bilan qa/m33/M33_BILAN.md) : population = 2 tiers
+      déclassés bâti (33 958 = saturé 29 907 + révélé 4 051 ; les « 8 031 » M32 incluaient la
+      bande adjudication non déclassée). Sortie = prix d'achat max réhab (homogène mode A),
+      briques mode A réutilisées (coef CA, préséance prix secteur→commune), TOUJOURS Estimé
+      (paramètre travaux défaut 1 500 €/m², bornes 500-4 000, jamais persisté). Étiquettes
+      PAR composante, niveaux Sourcé/Estimé visibles par parcelle. Bilan négatif dit
+      honnêtement. Tiroir de fiche subordonné au verdict M34 + exports + assistant. 0 tier
+      touché, golden 117/117, non-persistance prouvée.
+      RELIQUATS : locatif/défisc = vague 2 pré-client (dette q_v7_defisc) · Q6 close
+      (v1 = zéro reclassement ; tout mode B CLASSANT futur exige une dimension parcellaire
+      discriminante : prix d'acquisition observé, état du bâti).
 
 ## TRAIN 8 — VPS / PRODUCTION [A] Opus — dernier avant client
 - [ ] Déploiement VPS + Caddy + certificats + SECRET_KEY
