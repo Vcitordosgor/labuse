@@ -162,6 +162,28 @@ export interface SourceInfo {
   } | null
 }
 
+// M33 — mode B (réhabilitation) : lecture de fiche, TOUJOURS Estimé, jamais persisté.
+export interface ModeB {
+  disponible: boolean
+  motif?: string
+  population_tier?: string
+  etiquette?: string
+  achat_max_eur?: number
+  negatif?: boolean
+  message_negatif?: string | null
+  composantes?: {
+    surface: { emprise_bati_m2: number; niveaux: number; niveaux_reels: boolean
+      niveaux_etiquette: string; sdp_existante_m2: number; shab_rehabilitable_m2: number
+      source_emprise: string; etiquette_emprise: string }
+    prix_sortie: { prix_m2: number; niveau: string; libelle: string; etiquette: string }
+    travaux: { hypothese_m2: number; defaut_m2: number; bornes: [number, number]
+      etiquette: string; libelle: string }
+    frais_marge: { coef_ca: number; libelle: string; etiquette: string }
+  }
+  formule?: string
+  avertissement?: string
+}
+
 export interface Fiche {
   idu: string
   commune: string
@@ -169,6 +191,7 @@ export interface Fiche {
   proprietaire_moral: { denomination: string | null; siren: string | null; groupe_label: string | null } | null
   surface_m2: number | null
   statut: Statut
+  mode_b?: ModeB
   q_score: number
   a_score: number
   a_completude: number | null

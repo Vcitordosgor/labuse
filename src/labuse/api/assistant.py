@@ -40,7 +40,9 @@ SYSTEM = (
     "3. **Bâti / libre** — occupation au sol (BD TOPO) : libre, partiellement bâti, déjà bâti ; si la "
     "couche est absente, dis « occupation non vérifiée ».\n"
     "4. **Économie indicative** — bilan promoteur (charge foncière) TOUJOURS qualifié d'INDICATIF / "
-    "ESTIMÉ ; précise si le prix de sortie est fiable ou fragile.\n"
+    "ESTIMÉ ; précise si le prix de sortie est fiable ou fragile. Si un bloc `mode_b` est présent "
+    "(réhabilitation), tu peux le citer UNIQUEMENT comme ESTIMÉ, en rappelant l'hypothèse travaux "
+    "€/m² ; s'il est absent, tu n'en parles JAMAIS.\n"
     "5. **Recommandation** — la prochaine action concrète (ex. vérifier PLU/CU, identifier le "
     "propriétaire, étudier l'assemblage, écarter).\n\n"
     "RÈGLES ABSOLUES (anti-hallucination) :\n"
@@ -145,6 +147,16 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
             "label": occ.get("label"), "code": occ.get("code"),
             "ratio_bati_pct": _num(occ.get("ratio_pct")), "disponible": occ.get("disponible"),
         } if occ else None),
+        # M33 — mode B : cité UNIQUEMENT avec son étiquette (Estimé + hypothèse travaux) ;
+        # absent des faits hors population → l'IA ne peut pas l'inventer.
+        "mode_b": ({
+            "prix_achat_max_rehab_eur": mb.get("achat_max_eur"),
+            "etiquette": "Estimé",
+            "negatif": mb.get("negatif"),
+            "message_negatif": mb.get("message_negatif"),
+            "travaux_hypothese_m2": ((mb.get("composantes") or {}).get("travaux") or {}).get("hypothese_m2"),
+            "avertissement": mb.get("avertissement"),
+        } if (mb := (fiche.get("mode_b") or {})).get("disponible") else None),
         "contraintes_et_signaux": contraintes,
         "completude": {
             "sources_ayant_repondu": fiche.get("sources_responded"),
@@ -254,6 +266,16 @@ def rules_summary(facts: dict) -> str:
                       f"({qual} ; coûts estimés).")
     else:
         lignes.append("**Économie indicative** — Non chiffrée (prix DVF insuffisant — pas de bilan inventé).")
+    # M33 — mode B : cité UNIQUEMENT si présent, toujours ESTIMÉ avec son hypothèse travaux.
+    mb = facts.get("mode_b") or {}
+    if mb:
+        if mb.get("negatif"):
+            lignes.append(f"**Réhabilitation (mode B)** — {mb.get('message_negatif')} (ESTIMÉ).")
+        else:
+            lignes.append(f"**Réhabilitation (mode B)** — prix d'achat max ESTIMÉ "
+                          f"{_fmt_eur(mb.get('prix_achat_max_rehab_eur'))} "
+                          f"(hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster "
+                          "selon l'état constaté).")
 
     # 5. Recommandation
     reco = (facts.get("resume_metier") or {}).get("prochaine_action")

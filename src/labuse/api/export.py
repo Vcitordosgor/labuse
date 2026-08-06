@@ -72,6 +72,23 @@ def fiche_markdown(fiche: dict) -> str:
         if rv.get("prochaine_action"):
             lines += [f"**Prochaine action :** {rv['prochaine_action']}", ""]
 
+    mb = fiche.get("mode_b") or {}
+    if mb.get("disponible"):
+        c = mb["composantes"]
+        lines += ["## Mode B — Réhabilitation (Estimé)", ""]
+        if mb.get("negatif"):
+            lines += [f"**{mb['message_negatif']}**", ""]
+        else:
+            lines += [f"- **Prix d'achat max réhab (Estimé) :** ~{_eur(mb['achat_max_eur'])}", ""]
+        lines += [
+            f"- Surface réhabilitable : ~{c['surface']['shab_rehabilitable_m2']} m² habitables "
+            f"(emprise {c['surface']['emprise_bati_m2']} m² [Sourcé] × {c['surface']['niveaux']} niveau(x) "
+            f"[{'Sourcé' if c['surface']['niveaux_reels'] else 'Estimé'}] ÷ 1,15)",
+            f"- Prix de sortie : {c['prix_sortie']['prix_m2']} €/m² — {c['prix_sortie']['libelle']} [Sourcé DVF]",
+            f"- {c['travaux']['libelle']}",
+            f"- Frais & marge : {c['frais_marge']['libelle']}",
+            "", f"_{mb['avertissement']}_", ""]
+
     bt = fiche.get("bati") or {}
     if bt:
         lines += ["## Occupation actuelle (bâti détecté)", "", f"**{bt.get('label', '—')}**"]
@@ -174,6 +191,21 @@ def fiche_html(fiche: dict) -> str:
             f"<p><strong>Pourquoi elle ressort :</strong></p><ul>{pos}</ul>"
             f"<p><strong>À vérifier :</strong></p><ul>{vig}</ul>"
             f"<p><strong>Prochaine action :</strong> {html.escape(rv.get('prochaine_action', ''))}</p>")
+    mb = fiche.get("mode_b") or {}
+    mode_b_html = ""
+    if mb.get("disponible"):
+        cmb = mb["composantes"]
+        tete = (f"<p><strong>{html.escape(mb['message_negatif'])}</strong></p>" if mb.get("negatif")
+                else f"<p><strong>Prix d'achat max réhab (Estimé) :</strong> ~{html.escape(_eur(mb['achat_max_eur']))}</p>")
+        mode_b_html = (
+            "<h2>Mode B — Réhabilitation (Estimé)</h2>" + tete + "<ul>"
+            f"<li>Surface réhabilitable : ~{cmb['surface']['shab_rehabilitable_m2']} m² habitables "
+            f"(emprise {cmb['surface']['emprise_bati_m2']} m² [Sourcé] × {cmb['surface']['niveaux']} niveau(x) "
+            f"[{'Sourcé' if cmb['surface']['niveaux_reels'] else 'Estimé'}])</li>"
+            f"<li>Prix de sortie : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} [Sourcé DVF]</li>"
+            f"<li>{html.escape(cmb['travaux']['libelle'])}</li>"
+            f"<li>Frais &amp; marge : {html.escape(cmb['frais_marge']['libelle'])}</li></ul>"
+            f"<p class='disc'>{html.escape(mb['avertissement'])}</p>")
     bt = fiche.get("bati") or {}
     bati_html = ""
     if bt:
@@ -251,6 +283,7 @@ def fiche_html(fiche: dict) -> str:
 {'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
 {resume_html}
+{mode_b_html}
 {bati_html}
 <h2>Cascade — traçabilité</h2>
 <table><tr><th>Couche</th><th>Verdict</th><th>Sévérité</th><th>Détail</th><th>Source</th></tr>{rows}</table>
@@ -437,6 +470,16 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                       f"CA {_eur_fourchette(ca.get('bas'), ca.get('haut'))} · charge foncière médiane ~{_eur(cf.get('central'))}"
                       + (f" (~{cf.get('par_m2_terrain')} €/m² terrain)" if cf.get("par_m2_terrain") else ""))
 
+    # M33 — mode B (réhabilitation) : une ligne kv, TOUJOURS avec son étiquette.
+    mb = fiche.get("mode_b") or {}
+    mode_b_kv = ""
+    if mb.get("disponible"):
+        cmb = mb["composantes"]
+        val = (html.escape(mb["message_negatif"]) if mb.get("negatif")
+               else f"prix d'achat max ~{_eur(mb['achat_max_eur'])} <b>(Estimé)</b>")
+        mode_b_kv = kv("Mode B — Réhab",
+                       f"{val} · travaux ~{cmb['travaux']['hypothese_m2']} €/m² (ESTIMÉ, à ajuster)")
+
     # Contraintes (HARD_EXCLUDE + SOFT_FLAG) et à-vérifier (UNKNOWN).
     contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
     cont_html = "".join(
@@ -499,6 +542,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {kv("Capacité estimée", cap)}
     {res_html}
     {bil_html}
+    {mode_b_kv}
     <h3>Contraintes</h3>
     <ul>{cont_html}</ul>
     <h3>À vérifier avant de démarcher</h3>

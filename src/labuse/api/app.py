@@ -2742,6 +2742,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
         "verdict": verdict_block,
+        # M33 — mode B (réhabilitation) : présent aussi sur le payload legacy (exports
+        # md/html/one-pager) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
+        "mode_b": _mode_b_block(db, idu, Q_A_RUN_LABEL),
         "cascade": cascade,
         "sources_responded": sources_responded,
         "sources_silent": sources_silent,
