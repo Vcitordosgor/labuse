@@ -25,13 +25,17 @@ def _config() -> dict:
 
 
 def regle() -> dict:
-    """Vue normalisée de la règle : seuils, tiers source, tier cible, motif, millésime, précision."""
+    """Vue normalisée de la règle : seuils (absolus + part de parcelle), contenance, tiers, motif."""
     cfg = _config()
     seuil = cfg.get("seuil") or {}
     decl = cfg.get("declassement") or {}
+    cont = cfg.get("contenance") or {}
     return {
         "surface_min_m2": float(seuil.get("surface_min_m2", 15)),
         "surface_max_m2": float(seuil.get("surface_max_m2", 60)),
+        "pct_pool_parcelle_min": float(seuil.get("pct_pool_parcelle_min", 15.0)),
+        "centroide_dans_requis": bool(cont.get("centroide_dans_parcelle", True)),
+        "ratio_pool_dans_parcelle_min": float(cont.get("ratio_pool_dans_parcelle_min", 0.7)),
         "tiers_source": tuple(decl.get("tiers_source") or _TIERS_DEFAUT),
         "tier_cible": decl.get("tier_cible", "a_creuser"),
         "exige_materialisee": bool(decl.get("exige_materialisee", True)),
@@ -43,20 +47,46 @@ def regle() -> dict:
 
 
 def dans_bande(surface_m2: float | None, r: dict | None = None) -> bool:
-    """Vrai si la surface détectée tombe dans la bande déclassante [min ; max]."""
+    """Vrai si la surface détectée tombe dans la bande absolue [min ; max]."""
     if surface_m2 is None:
         return False
     r = r or regle()
     return r["surface_min_m2"] <= float(surface_m2) <= r["surface_max_m2"]
 
 
-def signal_actif(surface_m2: float | None, tier: str | None, r: dict | None = None) -> bool:
-    """Vrai si le signal piscine DÉCLASSE ce tier : tier haut ET surface en bande.
-
-    Pur : la matérialisation (`piscine=true`) est présumée vérifiée par l'appelant (la surface
-    non-nulle vient de `parcel_equipements`). Ne lit pas la base, ne modifie rien."""
+def part_ok(surface_m2: float | None, parcel_surface_m2: float | None, r: dict | None = None) -> bool:
+    """Vrai si la piscine occupe assez la parcelle (part ≥ seuil). Un signal négatif surfacique se
+    juge en PART de parcelle, pas en surface absolue : la surface mesure l'objet, la part le blocage."""
+    if not surface_m2 or not parcel_surface_m2:
+        return False
     r = r or regle()
-    return tier in r["tiers_source"] and dans_bande(surface_m2, r)
+    return (100.0 * float(surface_m2) / float(parcel_surface_m2)) >= r["pct_pool_parcelle_min"]
+
+
+def contenance_ok(ratio_dans: float | None, centroide_dans: bool | None, r: dict | None = None) -> bool:
+    """Vrai si la piscine est bien DANS la parcelle servie (pas celle du voisin) : centroïde dans la
+    parcelle ET part de la piscine dans la parcelle ≥ seuil. Le doute (piscine mitoyenne) ne
+    déclasse pas."""
+    r = r or regle()
+    if r["centroide_dans_requis"] and not centroide_dans:
+        return False
+    if ratio_dans is None:
+        return False
+    return float(ratio_dans) >= r["ratio_pool_dans_parcelle_min"]
+
+
+def signal_actif(surface_m2: float | None, tier: str | None, parcel_surface_m2: float | None = None,
+                 ratio_dans: float | None = None, centroide_dans: bool | None = None,
+                 r: dict | None = None) -> bool:
+    """Vrai si le signal piscine DÉCLASSE ce tier — les 3 critères figés (seuil Vic) :
+    tier haut · surface en bande [15;60] · part de parcelle ≥ 15 % · contenance (centroïde dans +
+    ratio ≥ 0,7). Données spatiales manquantes → False (le doute ne profite pas au déclassement).
+    Pur, sans DB : l'appelant fournit surface parcelle, ratio et centroïde (calculés en base)."""
+    r = r or regle()
+    return (tier in r["tiers_source"]
+            and dans_bande(surface_m2, r)
+            and part_ok(surface_m2, parcel_surface_m2, r)
+            and contenance_ok(ratio_dans, centroide_dans, r))
 
 
 def vigilance_texte(r: dict | None = None) -> str:

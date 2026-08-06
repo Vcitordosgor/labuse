@@ -1,0 +1,5 @@
+insee,idu,tier,surf_parcelle_m2,surf_piscine_m2,pct_pool_parcelle,ratio_dans,tier_apres_regle
+97401,97401000AR1289,chaude,157,40.2,25.7,0.75,a_creuser
+97415,97415000BV0606,brulante,125,21.9,17.5,1.00,a_creuser
+97415,97415000CX0650,chaude,216,36.5,16.9,1.00,a_creuser
+97408,97408000AC2215,chaude,131,19.9,15.1,1.00,a_creuser

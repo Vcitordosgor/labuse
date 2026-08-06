@@ -43,23 +43,37 @@ EXECUTE = os.environ.get("LABUSE_M39_EXECUTE") == "1"
 
 
 def plan_declassements(run_id: str = LABEL) -> list[dict]:
-    """Les déclassements de la règle sur le run servi : hot ∩ piscine matérialisée ∩ bande [min;max].
+    """Les déclassements de la règle FIGÉE (seuil Vic) sur le run servi : hot ∩ piscine matérialisée ∩
+    bande [min;max] ∩ part de parcelle ≥ pct_min ∩ contenance (centroïde dans + ratio ≥ ratio_min).
     EXCLUT les parcelles déjà au registre (zéro double comptage). Lecture seule."""
     r = regle()
     with engine().connect() as c:
         rows = c.execute(text("""
             SELECT s.parcelle_id AS idu, s.tier AS tier_origine,
-                   round(pe.piscine_surface_m2::numeric,1) AS surface_m2,
-                   round(pe.piscine_confiance::numeric,3) AS confiance
+                   round(d.surface_m2::numeric,1) AS surface_m2,
+                   round(pe.piscine_confiance::numeric,3) AS confiance,
+                   round((100*d.surface_m2/NULLIF(p.surface_m2,0))::numeric,1) AS pct,
+                   round((ST_Area(ST_Intersection(ST_MakeValid(p.geom_2975),ST_MakeValid(d.geom_2975)))
+                          /NULLIF(ST_Area(ST_MakeValid(d.geom_2975)),0))::numeric,2) AS ratio_dans
             FROM parcel_p_score_v2 s
             JOIN parcel_equipements pe ON pe.idu = s.parcelle_id AND pe.piscine
+            JOIN parcels p ON p.idu = s.parcelle_id
+            JOIN LATERAL (SELECT geom_2975, surface_m2 FROM ortho_detections
+                          WHERE idu = s.parcelle_id AND type='piscine'
+                          ORDER BY surface_m2 DESC LIMIT 1) d ON true
             WHERE s.run_id = :run
               AND s.tier = ANY(:tiers)
-              AND pe.piscine_surface_m2 BETWEEN :lo AND :hi
+              AND d.surface_m2 BETWEEN :lo AND :hi
+              AND (100*d.surface_m2/NULLIF(p.surface_m2,0)) >= :pct
+              AND (NOT :cent OR ST_Contains(ST_MakeValid(p.geom_2975), ST_Centroid(d.geom_2975)))
+              AND ST_Area(ST_Intersection(ST_MakeValid(p.geom_2975),ST_MakeValid(d.geom_2975)))
+                    /NULLIF(ST_Area(ST_MakeValid(d.geom_2975)),0) >= :rat
               AND s.parcelle_id NOT IN (SELECT idu FROM served_run_exceptions WHERE run_id = :run)
-            ORDER BY substring(s.parcelle_id,1,5), s.tier, pe.piscine_surface_m2 DESC
+            ORDER BY substring(s.parcelle_id,1,5), s.tier, d.surface_m2 DESC
         """), {"run": run_id, "tiers": list(r["tiers_source"]),
-               "lo": r["surface_min_m2"], "hi": r["surface_max_m2"]}).mappings().all()
+               "lo": r["surface_min_m2"], "hi": r["surface_max_m2"],
+               "pct": r["pct_pool_parcelle_min"], "cent": r["centroide_dans_requis"],
+               "rat": r["ratio_pool_dans_parcelle_min"]}).mappings().all()
     return [dict(x) for x in rows]
 
 
@@ -73,10 +87,14 @@ def _dry_run() -> None:
         par_commune[d["idu"][:5]] = par_commune.get(d["idu"][:5], 0) + 1
     n_brul = sum(1 for d in plan if d["tier_origine"] == "brulante")
     n_chaud = sum(1 for d in plan if d["tier_origine"] == "chaude")
-    print(f"  DÉCLASSEMENTS RÈGLE : {len(plan)} ({n_brul} brûlante + {n_chaud} chaude), "
-          f"{len(par_commune)} communes.")
+    print(f"  DÉCLASSEMENTS RÈGLE FIGÉE (bande [{r['surface_min_m2']:.0f};{r['surface_max_m2']:.0f}] "
+          f"+ part ≥ {r['pct_pool_parcelle_min']:.0f} % + contenance ratio ≥ {r['ratio_pool_dans_parcelle_min']}) : "
+          f"{len(plan)} ({n_brul} brûlante + {n_chaud} chaude), {len(par_commune)} communes.")
+    for d in plan:
+        print(f"    {d['idu']} [{d['tier_origine']}] piscine {d['surface_m2']} m² "
+              f"= {d['pct']} % parcelle, ratio {d['ratio_dans']}")
     for insee, n in sorted(par_commune.items(), key=lambda kv: -kv[1]):
-        print(f"    {insee} : {n}")
+        print(f"    · {insee} : {n}")
     with engine().connect() as c:
         reg = c.execute(text("SELECT count(*) FROM served_run_exceptions WHERE run_id=:l"),
                         {"l": LABEL}).scalar()

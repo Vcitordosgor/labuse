@@ -175,11 +175,50 @@ Par commune (déclassées, garde de contenance) :
   **non déjà prises par le filtre bâti-saturé** — le signal piscine apporte une info réelle.
 - **≥ 20 %** (1 seule) : trop étroit, on perd des vrais cas (BV0606/CX0650 à 17 %).
 
-**Recommandation : seuil relatif ≥ 15 % + bande [15;60] m² + contenance (centroïde dans +
-ratio ≥ 0,5).** Population défendable : **5 parcelles** (vs 34 sur la bande absolue seule) —
-Saint-Paul 3, Les Avirons 1, La Possession 1. C'est la boussole : on ne déclasse que là où on est
-sûr que la parcelle est réellement hors marché. **Rien n'est implémenté** ; la config reste inerte,
-la décision (seuil 10 vs 15 %) se prend sur les chiffres et le deck 15 %.
+**Recommandation : seuil relatif ≥ 15 % + bande [15;60] m² + contenance.** Population défendable :
+5 parcelles au ratio ≥ 0,5.
+
+### P2 FINAL · Règle FIGÉE (seuil arrêté Vic) — config ACTIVÉE
+
+Vic a figé la règle après revue du deck 15 % : **bande [15;60] m² · part piscine ≥ 15 % ·
+contenance = centroïde dans la parcelle ET ratio piscine-dans-parcelle ≥ 0,7** (et non 0,5 : à
+0,55, CY0985 est visiblement mitoyenne — on ne déclasse pas sur une piscine à moitié chez le
+voisin). **Config `piscine_signal.yaml` activée** (plus de commentaire inerte) ; loader
+`signal_actif()` = 3 critères ; fiche + bascule lisent la même règle.
+
+**Population figée : 4 déclassements** (confirmé dry-run) — CY0985 (ratio 0,55) et BE1329 (0,44)
+écartées par la contenance :
+
+| IDU | commune | tier | parcelle | piscine | pct | ratio |
+|---|---|---|---|---|---|---|
+| 97401000AR1289 | Les Avirons | chaude | 157 m² | 40,2 m² | 25,7 % | 0,75 |
+| 97415000BV0606 | Saint-Paul | brûlante | 125 m² | 21,9 m² | 17,5 % | 1,00 |
+| 97415000CX0650 | Saint-Paul | chaude | 216 m² | 36,5 m² | 16,9 % | 1,00 |
+| 97408000AC2215 | La Possession | chaude | 131 m² | 19,9 m² | 15,1 % | 1,00 |
+
+Digest : `mesure_regle_figee_p2.csv`. **Deck final** `deck_m39_final.html` (aperçu
+`screens/6_deck_final_apercu.png`) : les 4 déclassées + **CY0985 en témoin EXCLU** (bassin mitoyen,
+ratio 0,55 — la garde de contenance a fait son travail). Fiche vérifiée bout-en-bout : la vigilance
+s'affiche sur AR1289, **plus** sur EL0203 (4,6 % — exclue par la part) ni CY0985 (exclue par la
+contenance).
+
+**La borne haute [60 m²]** n'a **jamais rien écarté** sur aucune mesure M39 (0 hot-piscine > 60 m²).
+Conservée comme **garde-fou** contre un futur faux positif de grande surface (terrain de sport,
+plan d'eau) — **à réévaluer dans six mois** si elle ne sert toujours à rien.
+
+### P2.3 · Bascule sur la règle figée — dry-run vérifié, JAMAIS exécutée
+`scripts/bascule_m39.py` : `plan_declassements()` applique les 3 critères en SQL (part + contenance
+spatiale). Dry-run vérifié : **4 déclassements** (Saint-Paul 2, Les Avirons 1, La Possession 1),
+chevauchement règle∩registre = 0, 5 entrées registre préservées. **GO Vic pour préparer** ; le geste
+réel reste gaté `LABUSE_M39_EXECUTE=1` — **non exécuté** (la main de Vic).
+
+### DOCTRINE (dégagée par M39, pour les prochains signaux négatifs)
+**Un signal négatif SURFACIQUE se juge en PART de parcelle, pas en surface absolue** : la surface
+absolue mesure l'OBJET (la piscine fait bien 24 m²), la part mesure le BLOCAGE (24 m² sur 1 300 m²
+ne bloquent rien ; 22 m² sur 125 m² saturent le lot). La bande absolue [15;60] filtre l'objet
+(vrai bassin, pas un FP) ; le seuil relatif (≥ 15 %) qualifie le blocage ; la contenance vérifie
+que l'objet est bien sur la parcelle servie. À rappliquer aux futurs signaux surfaciques
+(bâti révélé, emprises, panneaux, etc.).
 
 ### P2.3 · Geste de bascule préparé, JAMAIS exécuté — commit `[M39-P2]`
 `scripts/bascule_m39.py` sur le modèle de `bascule_m32.py` : **DRY-RUN par défaut** (n'écrit rien),

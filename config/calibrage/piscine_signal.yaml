@@ -20,12 +20,18 @@ precision_pct: 90.7               # précision mesurée de la couche matérialis
 # ── SEUIL SURFACIQUE (arbitrage Vic B : bande [15 ; 60] m²) ──
 # Bornes = décisions MESURÉES sur les détections humain-validées (ok vs faux_positif), P0 §3.
 seuil:
-  surface_min_m2: 15   # PLANCHER. Sous 15 m² : 355 faux_positif pour 190 ok validés (FP-majoritaire —
-                       #   bassins, bâches, trampolines, artefacts cyan). En-dessous, on n'a pas une
-                       #   piscine « investissement d'usage » assez sûre pour déclasser.
-  surface_max_m2: 60   # PLAFOND. Au-dessus de 60 m² : 19 faux_positif pour 14 ok validés (FP-prone —
-                       #   terrains de sport, plans d'eau, grands bassins collectifs). Un grand bassin
-                       #   collectif n'est pas « l'usage investi du propriétaire » → hors signal.
+  surface_min_m2: 15   # PLANCHER absolu. Sous 15 m² : 355 faux_positif pour 190 ok validés (FP-majoritaire
+                       #   — bassins, bâches, trampolines, artefacts cyan). En-dessous, pas une piscine
+                       #   « investissement d'usage » assez sûre pour déclasser.
+  surface_max_m2: 60   # PLAFOND absolu. Au-dessus de 60 m² : 19 faux_positif pour 14 ok validés (FP-prone —
+                       #   terrains de sport, plans d'eau, grands bassins collectifs). GARDE-FOU : n'a
+                       #   écarté AUCUN cas sur aucune mesure M39 (0 hot-piscine > 60 m²) — conservé
+                       #   contre un futur FP de grande surface, à réévaluer s'il ne sert toujours à rien.
+  pct_pool_parcelle_min: 15.0  # PART DE PARCELLE (seuil figé Vic). Un signal négatif SURFACIQUE se juge en
+                       #   PART de parcelle, pas en surface absolue : la surface mesure l'objet, la part
+                       #   mesure le BLOCAGE. Sous 15 %, la piscine = maison occupée (domaine du filtre
+                       #   bâti), résiduel encore mobilisable → NE PAS déclasser. À 15 %+, petite parcelle
+                       #   saturée = usage installé. Sweep mesuré : ≥5 %→12, ≥10 %→8, ≥15 %→4, ≥20 %→1.
 
 # ── PÉRIMÈTRE DU DÉCLASSEMENT (arbitrage Vic C1 : couche MATÉRIALISÉE seule) ──
 # La règle ne s'applique QU'À la couche matérialisée (juge FLAIR≥0,30 ET probe≥0,50, ∪ validation
@@ -37,17 +43,14 @@ declassement:
   tiers_source: [brulante, chaude]   # seuls les tiers hauts sont déclassés (ailleurs le signal est moot)
   tier_cible: a_creuser              # comme le registre M32 (fausse chaude → à creuser, jamais écartée)
   exige_materialisee: true           # parcel_equipements.piscine = true (couche produit, pas V0 seul)
-  # ── CONTENANCE + SURFACE RELATIVE (mesurées P2.2-bis/ter, NON activées — décision Vic) ──
-  # 1) CONTENANCE : la piscine est-elle DANS la parcelle servie (pas celle du voisin) ? Sur les 34 :
-  #    23 CONTENUE, 11 À CHEVAL, 0 HORS ; centroïde dans la parcelle 34/34
-  #    (qa/m39/geometrie_piscine_parcelle_p2.csv). Garde recommandée :
-  #      ratio_pool_dans_parcelle_min: 0.5   # + centroïde dans (déjà vrai pour les 34) → écarte BE1329.
-  # 2) SURFACE RELATIVE : une piscine à 1-5 % d'une grande parcelle = maison occupée (filtre bâti),
-  #    PAS un usage installé. La bande absolue [15;60] seule sur-déclasse. Sweep pct piscine/parcelle
-  #    (contenance appliquée) : ≥5 %→12 · ≥10 %→8 · ≥15 %→5 · ≥20 %→1 (qa/m39/mesure_scenarios_relatif_p2.csv).
-  #    Recommandé (bilan P2.2-ter) : pct >= 15 % → 5 déclassées défendables (petites parcelles saturées).
-  #      pct_pool_parcelle_min: 15.0
-  # Tout inactif tant que Vic n'a pas tranché le seuil (10 vs 15 %) sur le deck qa/m39/deck_m39_s15.html.
+
+# ── CONTENANCE (seuil figé Vic) : la piscine est-elle DANS la parcelle servie, pas celle du voisin ?
+# ACTIVE. Sans elle, une piscine mitoyenne (moitié chez le voisin) déclasserait un terrain nu.
+contenance:
+  centroide_dans_parcelle: true          # le centre de la piscine doit tomber dans la parcelle servie
+  ratio_pool_dans_parcelle_min: 0.7      # ≥ 70 % de la piscine dans la parcelle (0,7 et non 0,5 : à 0,55
+                                         #   CY0985 est visiblement mitoyenne — on ne déclasse pas sur une
+                                         #   piscine à moitié chez le voisin). Écarte CY0985 (0,55) + BE1329 (0,44).
 
 # ── MOTIF CLIENT (famille M35 — identique au registre AL1154, « motif client conservé ») ──
 # Étiquette Sourcé + précision assumée. Interdits M35 (mandat/prénom/modèle/dette/IDU tiers) absents.
