@@ -73,6 +73,17 @@ SOURCES = {
                                "WHERE kind IN ('georisque_alea','cavite','mvt','sol_pollue')",
                    "ds_name": "Géorisques%", "auto": False,
                    "detection": "DÉTECTION SEULE (couches cascade) — même règle que GPU/PLU"},
+    "sudocuh": {"label": "Sudocuh (suivi des procédures d'urbanisme)", "cadence": "annuelle (état au 31/12)",
+                "date_sql": "SELECT max(millesime_date)::date FROM sudocuh_procedures",
+                "ds_name": "Sudocuh%", "auto": False,
+                # M41 (radar procédures PLU) : squelette du radar. `cadence_norme` VOLONTAIREMENT absente
+                # (comme gpu_plu) → check_fraicheur ne l'ALARME PAS : un Sudocuh d'un an n'est pas une
+                # faute (le registre curaté config/veille_plu.yaml est la chair servie, rafraîchi
+                # trimestriellement — geste scripts/veille_plu_check.py). Horizon = l'état daté (31/12).
+                "millesime": "Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)",
+                "prochain": None,
+                "detection": "DÉTECTION SEULE : publication annuelle data.gouv.fr ; le radar servi vient "
+                             "du registre curaté, pas d'un ingest automatique. Re-vérif = geste trimestriel."},
     "ortho_piscine": {"label": "BD ORTHO 20 cm (IGN) — millésime imagerie (piscine/PV/pente)",
                       "cadence": "pluriannuelle (re-survol ~3-4 ans)",
                       "date_sql": "SELECT to_date(max(millesime),'YYYY')::date FROM ortho_tiles "

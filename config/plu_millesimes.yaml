@@ -42,5 +42,6 @@ communes:
   "97420": {commune: "Sainte-Suzanne", idurba: "97420_plu_20250929", date_mairie: "2025-09-29", statut: a_jour}
   "97421": {commune: "Salazie", idurba: "97421_PLU_20220524", date_mairie: "2022-05-24", statut: a_jour}
   "97422": {commune: "Le Tampon", idurba: "97422_PLU_20230811", date_mairie: "2023-08-11", statut: a_jour}
-  "97423": {commune: "Les Trois-Bassins", idurba: "97423_PLU_20220602", date_mairie: "2022-06-02", statut: a_jour}
+  "97423": {commune: "Les Trois-Bassins", idurba: "97423_PLU_20220602", date_mairie: "2017-02-21", statut: a_jour,
+            note: "[M41] date_mairie corrigée 2022-06-02 → 2017-02-21 : le 2022-06-02 était la date de PRESCRIPTION de la révision (Sudocuh 31/12/2024), PAS l'approbation de l'opposable (approuvé 2017-02-21, Sudocuh). idurba GPU conservé (97423_PLU_20220602 — ce que le GPU sert) : discordance GPU↔Sudocuh à investiguer côté M40. Révision en cours = radar M41."}
   "97424": {commune: "Cilaos", idurba: "97424_plu_20240213", date_mairie: "2024-02-13", statut: a_jour}
