@@ -209,6 +209,13 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   acter sa clôture (plus de point ouvert dessus) pour ne pas la rouvrir par inadvertance.
 
 ## Doctrine (leçons gravées)
+- **Archives de bascule `q_v8_calibre_pre_*` = DÉPENDANCE PRODUIT, pas des déchets (Vic 06/08, M46)** :
+  « Les archives de bascule `pre_*` ne sont pas des déchets purgeables : la chaîne d'archives est la
+  source du signal `parcel_entree_tete` (dette #9). Toute purge exige d'abord de matérialiser
+  l'historique ailleurs — mandat dédié, pas un geste de ménage. » Concrètement : `lignee_tete.py`
+  `CHAINE_GESTES` lit `pre_pond`/`pre_regle`/`pre_m28` (+ le run servi) pour bâtir l'entrée-en-tête.
+  GARDE : `scripts/m46_purge_runs.py` REFUSE dynamiquement tout label présent dans `CHAINE_GESTES`.
+  (M46 : seul `pre_m32`, hors chaîne, a été purgé ; `pre_m39` conservé = rollback.)
 - **Frontière modèle/règles (Vic 04/08, prouvée par la mesure piscine)** : « Le modèle prédit
   la mutation, il ne juge pas l'état de la parcelle. Tout ce qui relève de l'état (bâti,
   zone, statut) est une règle explicite, jamais un poids. »

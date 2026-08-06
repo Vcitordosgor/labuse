@@ -39,8 +39,27 @@ TABLES = [("parcel_p_score_v2", "run_id"), ("p_score_v2_runs", "run_id"),
           ("score_snapshots", "run_label"), ("served_run_exceptions", "run_label")]
 
 
+def _labels_lus_par_lignee() -> set[str]:
+    """GARDE dynamique (arbitrage Vic M46-LotE) : la chaîne d'archives de `lignee_tete` est la
+    SOURCE du signal servi `parcel_entree_tete` (dette #9). Tout label qui y figure est une
+    DÉPENDANCE PRODUIT — jamais un déchet purgeable. Lu dynamiquement pour rester en phase : si un
+    geste futur référence une nouvelle archive, elle est protégée automatiquement."""
+    from labuse.scoring.lignee_tete import CHAINE_GESTES
+    lus: set[str] = set()
+    for avant, apres, *_ in CHAINE_GESTES:
+        lus.update((avant, apres))
+    return lus
+
+
 def main() -> None:
     apply = "--apply" in sys.argv
+    lignee = _labels_lus_par_lignee()
+    # GARDE : refuser tout PURGEABLE lu par lignee_tete (dépendance produit) — avant tout DELETE.
+    conflit = [lbl for lbl in PURGEABLES if lbl in lignee]
+    if conflit:
+        raise SystemExit(f"REFUS : {conflit} est lu par lignee_tete.CHAINE_GESTES "
+                         "(source de parcel_entree_tete, dette #9). Purge interdite — mandat dédié requis.")
+    print(f"garde lignee_tete : {sorted(lignee)} PROTÉGÉS (dépendance produit)\n")
     with engine().connect().execution_options(isolation_level="AUTOCOMMIT") as c:
         for label in PURGEABLES:
             total = 0
