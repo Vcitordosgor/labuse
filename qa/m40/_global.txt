@@ -1,0 +1,9 @@
+M40 P0 — digest de confrontation GPU vs mairie (constat, lecture seule)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre · source zonage: spatial_layers plu_gpu_zone (5848) vs config/plu_millesimes.yaml (24 communes)
+
+SYNTHESE: 23/24 idurba GPU == idurba mairie (config) ; 1 RNU (Saint-Philippe) ; 0 non/autre ;
+  1 residu multi-idurba (Saint-Joseph : 3 zones stale 20240320 en plus du courant 20251210).
+  => AUCUNE divergence de CONTENU GPU-vs-mairie vivante au niveau document (M32 a reconcilie).
+
+confrontation_gpu_mairie_p0.csv SHA256:
+  ff1383b287cb4bf5f0097f3546b29b3a790679b501eb5bc91675af480a755a5d
