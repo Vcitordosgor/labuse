@@ -1,0 +1,11 @@
+M39 P0 — digests de preuve (constat, lecture seule)
+genere_le: 2026-08-06
+run_servi: q_v8_calibre
+millesime_ortho: 2025 (unique)
+
+candidats_declassement_p0.csv (47 lignes) SHA256:
+  03e2115e9aa9c95fa878d5dfeccf6e6413ed03d554dc56ad2887cef39c0fa5f0
+piscines_materialisees_x_tier.csv.gz (8299 parcelles) SHA256:
+  3db738139435b4906f22ede1856706a6a9deabb39fe4e66161f80e47f616bbad
+  contenu decompresse SHA256:
+  9bc1966587d383475503ac51cbde04a75633c3db9e1d8028bd7156f4a1d75d6d
