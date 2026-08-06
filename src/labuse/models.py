@@ -458,7 +458,11 @@ class SitadelPermit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     permit_id: Mapped[str | None] = mapped_column(String(64))
     type: Mapped[str | None] = mapped_column(String(8))      # PC / PA / PD / DP
-    date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # DATE_REELLE_AUTORISATION
+    # M38 : date de DÉPÔT (Sitadel3 DR_DEPOT), validée. Le permis n'entre au dataset qu'une
+    # fois AUTORISÉ (les refus/en-instance ne sont pas publiés) — cette date DATE le dépôt du
+    # permis abouti, ~9 mois avant `date` (délai médian 276 j mesuré M38-P0). Informatif seul.
+    date_depot: Mapped[date | None] = mapped_column(Date)
     idu_codes: Mapped[list | None] = mapped_column(JSONB)    # IDU 14 car. reconstitués (1..3)
     commune: Mapped[str | None] = mapped_column(String(64))
     geom: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=True))
@@ -909,9 +913,19 @@ def ensure_parcel_eval_status_archived(engine) -> None:
             c.execute(_t("ALTER TABLE parcel_evaluations ALTER COLUMN status_pre_m37 DROP NOT NULL"))
 
 
+def ensure_sitadel_depot(engine) -> None:
+    """M38 — colonne `date_depot` (Sitadel3 DR_DEPOT) sur sitadel_permits. Idempotent
+    (ADD COLUMN IF NOT EXISTS) — durable au rebuild, présent pour la fiche même avant
+    ré-ingestion. Informatif seul, jamais lu par le scoring."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE sitadel_permits ADD COLUMN IF NOT EXISTS date_depot date"))
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_parcel_eval_status_archived(engine)   # M37 : rail legacy status archivé (renommage)
+    ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
