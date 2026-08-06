@@ -185,7 +185,7 @@ class ParcelEvaluation(Base):
     opportunity_score: Mapped[int] = mapped_column(Integer)
     # M37 : le VERDICT legacy `status` est ÉTEINT (rail mort depuis M34 — le verdict servi
     # vient du tier `parcel_p_score_v2`). La colonne physique est ARCHIVÉE par renommage
-    # (`status_pre_m37`, réversible) via ensure_parcel_eval_status_archived — plus mappée ici,
+    # (rail legacy) SUPPRIMÉE physiquement via ensure_parcel_eval_status_dropped (M46) — plus mappée ici,
     # plus écrite, plus lue. Suppression physique = geste ultérieur Vic, à froid.
     ai_payload: Mapped[dict | None] = mapped_column(JSONB)
     model_version: Mapped[str | None] = mapped_column(String(64))
@@ -898,25 +898,20 @@ class ParcelPScoreV2(Base):
     icd_detail: Mapped[dict | None] = mapped_column(JSONB)   # {groupe: bool} des 9 groupes
 
 
-def ensure_parcel_eval_status_archived(engine) -> None:
-    """M37 — ARCHIVE le rail legacy `parcel_evaluations.status` par RENOMMAGE (réversible).
+def ensure_parcel_eval_status_dropped(engine) -> None:
+    """M46 (Lot C) — SUPPRESSION PHYSIQUE du rail legacy `parcel_evaluations.status` (le geste
+    « à froid » prévu en M37, exécuté à froid ici).
 
-    Idempotent : renomme `status` → `status_pre_m37` (+ DROP NOT NULL) UNIQUEMENT si la
-    colonne `status` existe encore et que l'archive n'existe pas déjà. Aucune suppression
-    physique (geste ultérieur Vic, à froid). Rollback = renommage inverse :
-      ALTER TABLE parcel_evaluations RENAME COLUMN status_pre_m37 TO status;
-    S'applique partout où le schéma est réconcilié (boot/doctor + base de test)."""
+    Le rail est éteint depuis M37 (verdict 100 % tier) et l'archive `status_pre_m37` a tenu
+    plusieurs jours sans anomalie. Vérifié M46 : AUCUN lecteur de données ne subsiste — toutes
+    les mentions de `parcel_evaluations.status` sont des commentaires « éteint » ; les lecteurs
+    vivants lisent `dryrun_parcel_evaluations.status` (table DISTINCTE, servie, conservée).
+    Idempotent : DROP des colonnes `status` (si jamais restée) et `status_pre_m37` si présentes ;
+    sur base neuve aucune n'existe → no-op. (M37 renommait status→status_pre_m37 ; M46 solde.)"""
     from sqlalchemy import text as _t
     with engine.begin() as c:
-        has_status = c.execute(_t(
-            "SELECT 1 FROM information_schema.columns WHERE table_name='parcel_evaluations' "
-            "AND column_name='status'")).scalar()
-        has_archive = c.execute(_t(
-            "SELECT 1 FROM information_schema.columns WHERE table_name='parcel_evaluations' "
-            "AND column_name='status_pre_m37'")).scalar()
-        if has_status and not has_archive:
-            c.execute(_t("ALTER TABLE parcel_evaluations RENAME COLUMN status TO status_pre_m37"))
-            c.execute(_t("ALTER TABLE parcel_evaluations ALTER COLUMN status_pre_m37 DROP NOT NULL"))
+        c.execute(_t("ALTER TABLE parcel_evaluations DROP COLUMN IF EXISTS status_pre_m37"))
+        c.execute(_t("ALTER TABLE parcel_evaluations DROP COLUMN IF EXISTS status"))
 
 
 def ensure_sitadel_depot(engine) -> None:
@@ -930,7 +925,7 @@ def ensure_sitadel_depot(engine) -> None:
 
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
-    ensure_parcel_eval_status_archived(engine)   # M37 : rail legacy status archivé (renommage)
+    ensure_parcel_eval_status_dropped(engine)    # M46 (Lot C) : rail legacy status SUPPRIMÉ (à froid)
     ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)

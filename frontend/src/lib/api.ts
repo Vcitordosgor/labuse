@@ -174,9 +174,14 @@ export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((
 // E3 (M12) : `offset` exposé — pagination « Charger plus ». La page vient de /filtre (mêmes facettes).
 export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0) =>
   getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset).then((r) => r.page)
-/** Export CSV de la liste courante (mêmes filtres, même tri) — tier v2 en premier. */
-export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
-  `/parcels/export.csv?${q({ limit: 5000, sort, ...(f ? filterParams(f) : {}) })}`
+/** Export CSV de la liste courante — M46 (Lot D) : EXACTEMENT les mêmes facettes + interrupteur
+ *  que la liste/compteur (même construction que getFiltre : facettes hors tiers + tiersParam).
+ *  Plus jamais un export qui ignore un filtre actif. */
+export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
+  const ff = f ?? EMPTY_FILTERS
+  const { tiers: _t, ...rest } = filterParams(ff)
+  return `/parcels/export.csv?${q({ limit: 5000, sort, ...rest, ...tiersParam(ff) })}`
+}
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)

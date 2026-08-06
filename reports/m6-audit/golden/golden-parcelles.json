@@ -1,15 +1,15 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-05T23:17:57",
+  "genere_le": "2026-08-06T22:24:57",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 117,
   "run_cascade": "q_v8_calibre",
   "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
-   "a_creuser": 29974,
-   "brulante": 119,
-   "chaude": 1041,
+   "a_creuser": 29978,
+   "brulante": 118,
+   "chaude": 1038,
    "declasse_au_fermee": 70,
    "declasse_au_statut_inconnu": 210,
    "declasse_bati_revele": 4051,
