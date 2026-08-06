@@ -1,0 +1,12 @@
+M42 P0 — digests de preuve (constat, lecture seule)
+genere_le: 2026-08-06 · run_servi: q_v8_calibre · fenetre voisinage: 36 mois <100m
+SYNTHESE: historique permis brulante 97.5% / chaude 54.1% (idu_codes) ; caducs 565 tiers actifs ;
+  voisinage <100m 36mo: DVF med 2 (max 125), permis med 0 ; 22% aucun voisin ; dense 4.4 vs rural 1.2 ;
+  cout ~48ms voisinage + ~10ms historique / fiche ; maille proposee: 100m FIXE.
+  branches algo3 = feature scoring NE PAS PROMOUVOIR (methode reprenable, pas le cadrage ML) ;
+  residu: 7 tables algo3_* en base (a nettoyer, hors perimetre).
+
+historique_permis_par_tier_p0.csv SHA256:
+  845abd0cba2458287106fff544a0beed657305d76f4151be8649f4337ee068ff
+voisinage_distribution_p0.csv SHA256:
+  0049d52b48dc5c75404f057b040e9b8980f559dde8d0398c5a86f72dc7285b37
