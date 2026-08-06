@@ -183,6 +183,16 @@ export interface ModeB {
   }
   formule?: string
   avertissement?: string
+  // M44 — sortie LOCATIVE, côte à côte avec la revente (jamais fusionnée). Loyer plafond Sourcé
+  // ou marché Estimé ; prix d'achat max à rendement cible (Estimé, contient les travaux).
+  sortie_locative?: {
+    loyer: { m2_mois_effectif: number; plafond_brut_m2: number | null; coef_surface: number | null
+      regime: string; mensuel_eur: number; annuel_eur: number; etiquette: string
+      source: string | null; date: string | null }
+    rendement_cible_pct: number; rendement_cible_etiquette: string
+    etiquette: string; achat_max_eur: number; achat_max_libelle: string
+    negatif: boolean; message_negatif: string | null; formule: string; mention_fiscale: string
+  } | null
 }
 
 export interface Fiche {

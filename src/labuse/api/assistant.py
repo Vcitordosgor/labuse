@@ -150,11 +150,23 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         # M33 — mode B : cité UNIQUEMENT avec son étiquette (Estimé + hypothèse travaux) ;
         # absent des faits hors population → l'IA ne peut pas l'inventer.
         "mode_b": ({
-            "prix_achat_max_rehab_eur": mb.get("achat_max_eur"),
-            "prix_achat_max_rehab_libelle": mb.get("achat_max_libelle"),
-            "etiquette": "Estimé",
-            "negatif": mb.get("negatif"),
-            "message_negatif": mb.get("message_negatif"),
+            "sortie_revente": {
+                "prix_achat_max_rehab_eur": mb.get("achat_max_eur"),
+                "prix_achat_max_rehab_libelle": mb.get("achat_max_libelle"),
+                "etiquette": "Estimé", "negatif": mb.get("negatif"),
+                "message_negatif": mb.get("message_negatif"),
+            },
+            # M44 — SORTIE LOCATIVE (côte à côte, jamais fusionnée) : loyer au plafond réglementaire
+            # Sourcé (ou marché Estimé) ; prix d'achat max à rendement cible. Mention conseil-fiscal.
+            "sortie_locative": ({
+                "loyer_annuel_eur": (sl.get("loyer") or {}).get("annuel_eur"),
+                "loyer_etiquette": (sl.get("loyer") or {}).get("etiquette"),
+                "prix_achat_max_eur": sl.get("achat_max_eur"),
+                "prix_achat_max_libelle": sl.get("achat_max_libelle"),
+                "rendement_cible_pct": sl.get("rendement_cible_pct"),
+                "etiquette": "Estimé", "negatif": sl.get("negatif"),
+                "mention_conseil_fiscal": sl.get("mention_fiscale"),
+            } if (sl := (mb.get("sortie_locative") or {})) else None),
             "travaux_hypothese_m2": ((mb.get("composantes") or {}).get("travaux") or {}).get("hypothese_m2"),
             "avertissement": mb.get("avertissement"),
         } if (mb := (fiche.get("mode_b") or {})).get("disponible") else None),
@@ -270,13 +282,20 @@ def rules_summary(facts: dict) -> str:
     # M33 — mode B : cité UNIQUEMENT si présent, toujours ESTIMÉ avec son hypothèse travaux.
     mb = facts.get("mode_b") or {}
     if mb:
-        if mb.get("negatif"):
-            lignes.append(f"**Réhabilitation (mode B)** — {mb.get('message_negatif')} (ESTIMÉ).")
+        rev = mb.get("sortie_revente") or {}
+        if rev.get("negatif"):
+            lignes.append(f"**Réhabilitation (mode B) · revente** — {rev.get('message_negatif')} (ESTIMÉ).")
         else:
-            lignes.append(f"**Réhabilitation (mode B)** — prix d'achat max ESTIMÉ "
-                          f"~{mb.get('prix_achat_max_rehab_libelle')} "
-                          f"(hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster "
-                          "selon l'état constaté).")
+            lignes.append(f"**Réhabilitation (mode B) · revente** — prix d'achat max ESTIMÉ "
+                          f"~{rev.get('prix_achat_max_rehab_libelle')} "
+                          f"(hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster).")
+        # M44 — sortie LOCATIVE, côte à côte, jamais fusionnée ; mention conseil-fiscal.
+        sl = mb.get("sortie_locative") or {}
+        if sl:
+            lignes.append(f"**Réhabilitation (mode B) · locatif** — loyer ~{sl.get('loyer_annuel_eur')} €/an "
+                          f"[{sl.get('loyer_etiquette')}], prix d'achat max ~{sl.get('prix_achat_max_libelle')} "
+                          f"(ESTIMÉ) à rendement cible {sl.get('rendement_cible_pct')} %. "
+                          "Hypothèses fiscales indicatives — à valider avec un conseil fiscal.")
 
     # 5. Recommandation
     reco = (facts.get("resume_metier") or {}).get("prochaine_action")
