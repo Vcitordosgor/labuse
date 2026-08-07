@@ -576,6 +576,20 @@ def build_mvt_cmd(
         pf = build_parcel_flags_table(s, label)
         typer.echo(f"✓ parcel_flags : {pf['n']} paires parcelle×vigilance sur {pf['couches']} "
                    f"couches · cohérence OK · {pf['seconds']} s.")
+        # M47 : segment Renouvellement (run-scopé) — MÊME geste que les MVT/parcel_flags. C'était la
+        # SEULE table run-scopée montée par une commande isolée (`labuse renouv`), donc la seule qui
+        # pouvait remourir en silence à une bascule (constat M47-P0). Câblée ici, elle ne le peut plus.
+        import time as _t
+        from . import renouvellement as _renouv
+        _t0 = _t.perf_counter()
+        rr = _renouv.build(s, run_label=label, commit=False)
+        _rr_s = round(_t.perf_counter() - _t0, 2)
+        # Garde de cohérence bruyante, NON bloquante (modèle check_fraicheur/check_coherence_idurba) :
+        # le run de la table DOIT être le run servi — sinon un chiffre périmé serait servi en fiche/carte.
+        from .bascule_gardes import check_coherence_renouvellement
+        cr = check_coherence_renouvellement(session=s)
+        typer.echo(f"✓ parcel_renouvellement : {rr['n']} parcelles (run {rr['run_label']}) · "
+                   f"entonnoir {rr['funnel']['1_bati_exclues']}→{rr['n']} · cohérence {cr['statut']} · {_rr_s} s.")
         # M6 post-merge : le label matérialisé est ENREGISTRÉ — le test de cohérence
         # (tests/test_run_serving_coherence.py) pète si tuiles et run servi divergent.
         s.execute(text(

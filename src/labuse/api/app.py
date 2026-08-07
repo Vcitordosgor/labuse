@@ -2204,10 +2204,13 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite, "
         "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
-        "       (SELECT count(*) FROM parcel_renouvellement)                      AS total_segment, "
+        "       (SELECT count(*) FROM parcel_renouvellement WHERE run_label = :run)  AS total_segment, "
         "       (SELECT count(*) FROM parcel_renouvellement r2 "
-        "        WHERE r2.commune = parcel_renouvellement.commune)                AS total_commune "
-        "FROM parcel_renouvellement WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        "        WHERE r2.commune = parcel_renouvellement.commune "
+        "          AND r2.run_label = :run)                                          AS total_commune "
+        # M47 : scopé sur le run servi (config/served_run.txt via Q_A_RUN_LABEL) — jamais un label en dur.
+        "FROM parcel_renouvellement WHERE idu = :idu AND run_label = :run"),
+        {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
     if not r:
         return None
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
@@ -2752,15 +2755,16 @@ def renouvellement_geojson(commune: str | None = None,
     dit si le calque est tronqué (jamais un « tout » silencieux)."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
         return {"type": "FeatureCollection", "features": [], "total": 0, "servis": 0}
-    where = "WHERE p.commune = :c" if commune else ""
+    # M47 : TOUJOURS scopé sur le run servi (config/served_run.txt via Q_A_RUN_LABEL) ; commune en sus.
+    where = "WHERE r.run_label = :run" + (" AND p.commune = :c" if commune else "")
     rows = db.execute(text(f"""
         SELECT r.idu, r.renouv_score, r.rang_segment, r.rang_commune, ST_AsGeoJSON(p.geom) AS g
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
         {where} ORDER BY r.rang_segment LIMIT :n"""),
-        {"c": commune, "n": limit}).all()
+        {"c": commune, "n": limit, "run": Q_A_RUN_LABEL}).all()
     total = int(db.execute(text(f"""
         SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune}).scalar() or 0)
+        {"c": commune, "run": Q_A_RUN_LABEL}).scalar() or 0)
     feats = [{"type": "Feature", "geometry": json.loads(g),
               "properties": {"idu": idu, "renouv_score": sc, "rang_segment": rg, "rang_commune": rc}}
              for idu, sc, rg, rc, g in rows if g]
@@ -2781,7 +2785,8 @@ def renouvellement_liste(commune: str | None = None,
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
               "surface": "r.surface_m2 DESC NULLS LAST, r.idu",
               "rang_commune": "r.commune, r.rang_commune"}
-    where = "WHERE p.commune = :c" if commune else ""
+    # M47 : TOUJOURS scopé sur le run servi (config/served_run.txt via Q_A_RUN_LABEL) ; commune en sus.
+    where = "WHERE r.run_label = :run" + (" AND p.commune = :c" if commune else "")
     rows = db.execute(text(f"""
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
                r.comp_potentiel, r.comp_assiette, r.comp_marche, r.comp_divisibilite,
@@ -2789,10 +2794,10 @@ def renouvellement_liste(commune: str | None = None,
                r.rang_segment, r.rang_commune
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
         {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
-        {"c": commune, "n": limit, "o": offset}).mappings().all()
+        {"c": commune, "n": limit, "o": offset, "run": Q_A_RUN_LABEL}).mappings().all()
     total = int(db.execute(text(f"""
         SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune}).scalar() or 0)
+        {"c": commune, "run": Q_A_RUN_LABEL}).scalar() or 0)
     return {"total": total, "n": len(rows), "items": [dict(r) for r in rows],
             "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
