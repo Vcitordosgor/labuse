@@ -3465,21 +3465,8 @@ def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
 
 # M30 théâtre : /discover SUPPRIMÉ — endpoint orphelin (remplacé par /parcels + /stats
 # depuis M5.1, plus aucun appelant front ni QA).
-@app.get("/signals")
-def list_signals(commune: str | None = None, signal_type: str | None = None,
-                 limit: int = Query(200, ge=0, le=10000), db: Session = Depends(get_db)) -> list[dict]:
-    """Signaux de veille (offre C) récents, filtrables par commune / type."""
-    rows = db.execute(
-        text(
-            """SELECT s.signal_type, s.payload, s.detected_at, p.idu, p.commune
-               FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
-               WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-                 AND (CAST(:t AS text) IS NULL OR s.signal_type = :t)
-               ORDER BY s.detected_at DESC LIMIT :lim"""
-        ), {"c": commune, "t": signal_type, "lim": limit}
-    ).mappings().all()
-    return [dict(r) for r in rows]
-
+# M49 (Lot A) : GET /signals RETIRÉ — vestige de l'offre C (parcel_signals), 0 caller prouvé
+# (front `signals` = vestige retiré filters.ts ; 0 hit frontend/qa/scripts ; seul test_api l'exerçait).
 
 # ───────────────────────── Alertes intelligentes (3.C) ─────────────────────────
 # Scope défini par l'utilisateur (zones de veille + parcelles suivies) → « nouveautés ».
@@ -3817,11 +3804,8 @@ from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — serv
 from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
 from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
 from .argumentaire import router as _argumentaire_router  # noqa: E402  (M22-C — argumentaire de négociation PDF)
-from .potentiel import router as _potentiel_router  # noqa: E402  (M22-D — rapport de potentiel PDF)
 from .onboarding import router as _onboarding_router  # noqa: E402  (PREMIER EURO — onboarding + légal + webhook)
-from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
 from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
-from .operations import router as _operations_router  # noqa: E402  (O11 — opérations & lots)
 from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
@@ -3849,11 +3833,8 @@ app.include_router(_servitudes_router)
 app.include_router(_comparateur_router)
 app.include_router(_carnet_router)
 app.include_router(_argumentaire_router)
-app.include_router(_potentiel_router)
 app.include_router(_onboarding_router)
-app.include_router(_tension_router)
 app.include_router(_rarete_router)
-app.include_router(_operations_router)
 app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)

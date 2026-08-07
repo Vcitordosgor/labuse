@@ -1,0 +1,17 @@
+{
+ "texte": "Cette parcelle est **écartée** pour deux motifs exclusifs : elle est **déjà bâtie avec 6 bâtiments couvrant 100 % de sa surface** , et elle se situe en **zone rouge du PPR inondation-mouvement de terrain (inconstructible)** . Son classement au rang **283 280** reflète cette double contrainte réglementaire et physique. Aucun potentiel de densification n'est donc envisageable sur cette parcelle.",
+ "sources": [
+  "motif_exclusion",
+  "rang_classement",
+  "statut_tier"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_exclusion": "SOURCE",
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

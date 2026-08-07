@@ -1,0 +1,19 @@
+{
+ "texte": "Cette parcelle est **déclassée — bâti saturé** avec un rang de classement de **113 446** . Le motif exact est : bâtie entre 15 et 40 %, bâti d'année absente (traité comme récent par défaut), et non divisible . En zone Ud3 , elle reste soumise aux règles de recul, hauteur et emprise, mais son potentiel de densification est limité par sa saturation existante et l'absence de possibilité de division parcellaire.",
+ "sources": [
+  "motif_classement",
+  "rang_classement",
+  "statut_tier",
+  "zone_plu"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_classement": "SOURCE",
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

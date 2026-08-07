@@ -266,8 +266,8 @@ def test_coverage_banner(client):
 def test_limit_negatif_rejete_en_422(client):
     # M3 : un limit négatif doit renvoyer un 422 propre (pas un 500 Postgres).
     assert client.get("/map/parcels.geojson", params={"limit": -5}).status_code == 422
-    assert client.get("/signals", params={"limit": -5}).status_code == 422
     # M31 PC1 : ligne /discover retirée — route supprimée au M30 (renverrait 404, pas 422).
+    # M49 (Lot A) : ligne /signals retirée — route morte supprimée (0 caller prouvé).
 
 
 def test_feedback_terrain_decote_le_score(client):
@@ -303,8 +303,12 @@ def test_watch_snapshot_delta_zonage(client):
         r2 = signals.run_watch(s, "Saint-Paul")
     assert r2["baseline"] is False
     assert r2["zonage_change"] >= 1 and r2["reevaluated"] >= 1  # delta détecté + ré-évaluation
-
-    sig = client.get("/signals", params={"commune": "Saint-Paul", "signal_type": "zonage_change"}).json()
+    # M49 (Lot A) : la ROUTE GET /signals est retirée (0 caller) ; la détection reste vérifiée
+    # via signals.run_watch + la table parcel_signals (le moteur, pas la route morte).
+    with session_scope() as s2:
+        sig = [dict(r) for r in s2.execute(text(
+            "SELECT s.signal_type, s.payload FROM parcel_signals s JOIN parcels p ON p.id=s.parcel_id "
+            "WHERE p.commune='Saint-Paul' AND s.signal_type='zonage_change'")).mappings().all()]
     assert sig and sig[0]["signal_type"] == "zonage_change" and sig[0]["payload"]["to"] == "U"
 
 

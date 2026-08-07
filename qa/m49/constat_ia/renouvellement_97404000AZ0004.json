@@ -1,0 +1,25 @@
+{
+ "texte": "Cette parcelle est **écartée** en raison de son **ensemble bâti existant : 28 bâtiments couvrant 24 % de la surface** . Elle est classée au **rang 6916** dans l'ordre de potentiel, avec un potentiel estimé **faible** car elle a déjà consommé **72 % de sa capacité constructible** . Son classement en zone **UBv** impose des contraintes strictes (50 % d'emprise maximum, 50 % de perméabilité), qui réduisent encore la marge de développement sur ce terrain déjà largement occupé.",
+ "sources": [
+  "motif_exclusion",
+  "pct_consomme",
+  "potentiel_niveau",
+  "rang_classement",
+  "statut_tier",
+  "zone_plu"
+ ],
+ "deeplinks": {
+  "zone_plu": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404#page=27"
+ },
+ "provenance": {
+  "motif_exclusion": "SOURCE",
+  "pct_consomme": "ESTIME",
+  "potentiel_niveau": "ESTIME",
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

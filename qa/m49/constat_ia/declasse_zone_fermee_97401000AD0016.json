@@ -1,0 +1,21 @@
+{
+ "texte": "Cette parcelle est **déclassée — fermée à l'urbanisation** avec un rang de classement de **329 081** . Le motif exact d'exclusion n'est pas disponible pour cette parcelle . Elle est classée en zone A + Ud3 , ce qui signifie qu'elle relève d'une zone agricole (A) avec une sous-zone urbaine dégradée (Ud3) soumise à des règles strictes de recul, hauteur et emprise , mais son statut de déclassement la rend indisponible pour tout projet d'urbanisation.",
+ "sources": [
+  "motif_exclusion",
+  "rang_classement",
+  "reglement_regles",
+  "statut_tier",
+  "zone_plu"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_exclusion": "ABSENT",
+  "rang_classement": "SOURCE",
+  "reglement_regles": "SOURCE",
+  "statut_tier": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

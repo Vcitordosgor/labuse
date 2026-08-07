@@ -127,6 +127,34 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
     if not reglement_url:
         reglement_url = next((z.get("url") for z in zones if z.get("url")), None)
 
+    # ── M49 (Lot B) : l'IA doit TOUT montrer, pas que la sélection LABUSE. Version conversationnelle
+    # du « Pourquoi pas ? » : motif exact d'écartement/déclassement/registre + vigilances + segment
+    # Renouvellement + mode B. Les motifs STRUCTURELS (le tier EST le motif) sont explicités ici pour
+    # que l'IA ne réponde jamais « non disponible » sur une déclassée dont la cause est le zonage.
+    _MOTIF_STRUCTUREL = {
+        "declasse_zone_fermee": "zone fermée à l'urbanisation (N/A au zonage, ou AU non ouverte)",
+        "declasse_au_fermee": "zone AU fermée — urbanisation non encore ouverte",
+        "declasse_au_statut_inconnu": "zone AU au statut d'ouverture indéterminé",
+        "declasse_non_constructible": "géométrie inconstructible (assiette trop petite ou trop étroite)",
+        "declasse_bati_revele": "bâti révélé — occupation détectée à l'orthophoto",
+    }
+    motif_classement = vs.get("motif") or _MOTIF_STRUCTUREL.get(vs.get("tier"))
+    # vigilances informatives (SOFT_FLAG) — HORS couches personne physique (RGPD, M45) et techniques.
+    _VIG_EXCLURE = {"age_dirigeant", "proprietaire", "residuel_socle", "ocs_ge", "zonage_plu_gpu"}
+    vigilances = [ln.get("detail") for ln in (f.get("lines") or [])
+                  if ln.get("result") == "SOFT_FLAG" and (ln.get("layer") or "") not in _VIG_EXCLURE
+                  and ln.get("detail")] or None
+    # segment Renouvellement (parcelle occupée à potentiel) — fait public si présent.
+    _rn = f.get("renouvellement") or {}
+    renouv_txt = (f"{_rn.get('libelle')} — rang {_rn.get('rang_segment')}/{_rn.get('total_segment')} "
+                  f"(score {_rn.get('renouv_score')}/100)") if _rn else None
+    # mode B (réhabilitation locative/défisc) quand applicable — sortie locative estimée.
+    _mb = f.get("mode_b") or {}
+    _loyer = (_mb.get("sortie_locative") or {}).get("loyer") or {}
+    modeb_txt = (f"réhabilitation locative possible (population {_mb.get('population_tier')})"
+                 + (f", loyer estimé {_loyer.get('mensuel_eur')} €/mois" if _loyer.get("mensuel_eur") else "")
+                 ) if _mb.get("disponible") else None
+
     facts: dict[str, core.Fact] = {
         # ── identité / zonage (SOURCÉ) ──
         "idu": _F(f.get("idu")),
@@ -159,6 +187,13 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         "amenites": _F(amenites),
         # ── motif d'exclusion (SOURCÉ) ──
         "motif_exclusion": _F(motifs_exclusion or None),
+        # ── M49 (Lot B) : « l'IA doit tout montrer » — pourquoi cette parcelle est écartée/déclassée ──
+        "motif_classement": _F(motif_classement),   # motif EXACT (registre / bâti saturé / structurel)
+        "classement_registre": _F("classement ajusté après vérification manuelle (registre)"
+                                  if vs.get("exception_registre") else None),
+        "vigilances": _F(vigilances),                # signaux informatifs (accès, bruit, pente, risques…)
+        "segment_renouvellement": _F(renouv_txt),    # parcelle occupée à potentiel de renouvellement urbain
+        "mode_b_rehabilitation": _F(modeb_txt, "ESTIME"),
         # ── faisabilité (ESTIMÉ) ──
         "faisabilite": _F(faisa, "ESTIME"),
     }
