@@ -1,0 +1,13 @@
+tier,total,reconstructible,manquants,pct,source_motif
+ecartee,354355,354355,0,100.0,table motif dédiée / cascade
+declasse_bati_sature,29907,29907,0,100.0,table motif dédiée / cascade
+declasse_non_constructible,6168,6168,0,100.0,table motif dédiée / cascade
+declasse_zone_fermee,2804,2804,0,100.0,table motif dédiée / cascade
+declasse_au_fermee,70,70,0,100.0,table motif dédiée / cascade
+declasse_au_statut_inconnu,210,210,0,100.0,table motif dédiée / cascade
+declasse_bati_revele,4051,4051,0,100.0,table motif dédiée / cascade
+brulante,118,118,0,100.0,paramètres du run (rang+contrib_d+cutoffs) OU flag copro
+chaude,1038,1038,0,100.0,paramètres du run (rang+contrib_d+cutoffs) OU flag copro
+a_creuser,29978,29978,0,100.0,paramètres du run (rang+contrib_d+cutoffs) OU flag copro
+reserve_fonciere,2964,2964,0,100.0,paramètres du run (rang+contrib_d+cutoffs) OU flag copro
+TOTAL,431663,431663,0,100.0,11 familles
