@@ -221,7 +221,15 @@ export interface Fiche {
   score_v: ScoreV | null
   // correctif M5 : verdict d'en-tête piloté par le tier v2 quand un run existe ;
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
-  score_v2: { tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean } | null
+  score_v2: {
+    tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean
+    // M52 Lot 1 (présentation) : mot verbal + ⓘ + fréquence par tier + « pourquoi » (top5 traduites).
+    verbal?: {
+      mot?: string; cle?: string; info: string
+      frequence?: { sur_100: number; base_sur_100: number; fenetre: string; sous_moyenne: boolean; source_dite: string }
+    }
+    pourquoi?: { feature: string; libelle: string; phrase?: string; signe?: string }[]
+  } | null
   etage0: boolean
   // M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, CLOISONNÉE du score P.
   icd?: IcdBlock | null

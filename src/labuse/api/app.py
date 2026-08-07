@@ -1983,14 +1983,25 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     # quand il existe ; l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
     v2run = _score_v2_run_id(db)
     s2 = db.execute(text(
-        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail "
+        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail, top5_contributions "
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = :idu"),
         {"r": v2run, "idu": idu}).mappings().first() if v2run else None
-    score_v2 = ({"tier": s2["tier"], "rang": s2["rang"],
-                 "mult_base": float(s2["mult_base"]) if s2["mult_base"] is not None else None,
-                 "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
-                 "copro": bool(s2["copro"])} if s2 else None)
+    score_v2 = None
+    if s2:
+        from ..scoring.echelle_verbale import enrichir_verbal
+        from ..scoring.p_v2.libelles_client import enrichir_contributions
+        _mult = float(s2["mult_base"]) if s2["mult_base"] is not None else None
+        _top5 = s2["top5_contributions"]
+        if isinstance(_top5, str):
+            _top5 = json.loads(_top5)
+        score_v2 = {"tier": s2["tier"], "rang": s2["rang"], "mult_base": _mult,
+                    "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
+                    "copro": bool(s2["copro"]),
+                    # M52 Lot 1 (présentation, 0 calcul) : mot verbal + ⓘ + fréquence par tier (config)
+                    # + « pourquoi » (top5 traduites, libelles_client existant).
+                    "verbal": enrichir_verbal(_mult, s2["tier"]),
+                    "pourquoi": enrichir_contributions(_top5) if _top5 else []}
     # M9 lot 1 — Indice de confiance données (ICD). Méta d'AFFICHAGE, CLOISONNÉE du score P :
     # ne modifie ni le tier, ni le rang, ni p_raw (cf. scoring/icd.py). Bloc annexe.
     icd_block = _icd_block(s2)

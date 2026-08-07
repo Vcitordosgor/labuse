@@ -1,0 +1,35 @@
+# M52 Lot 1 — Échelle VERBALE du score + fréquence mesurée par tier.
+# PRÉSENTATION SEULE : rien ici ne change un tier ou un calcul. Le ×N reste ; le mot l'accompagne.
+# Seuils EN CONFIG (pas en dur). Validé Vic 07/08.
+
+# 1.1 — bandes du multiplicateur ×N → mot. Bornes = [min, borne sup exclusive de la bande suivante).
+bandes:
+  - {min: 10,  mot: "très forte probabilité relative", cle: tres_forte}
+  - {min: 4,   mot: "forte probabilité relative",       cle: forte}
+  - {min: 2,   mot: "nettement au-dessus de la moyenne", cle: au_dessus}
+  - {min: 1,   mot: "proche de la moyenne",             cle: proche}
+  - {min: 0,   mot: "en dessous de la moyenne",         cle: en_dessous}
+
+# 1.2 — ⓘ explicatif (famille des libellés M36). Sobre, factuel.
+info_multiplicateur: >-
+  Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne
+  de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une
+  prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.
+
+# 1.3 — fréquence MESURÉE par tier (source : qa/audit-rr/c1_monotonie.csv, mesure `strate_fold`,
+# backtest OUT-OF-SAMPLE walk-forward). La brûlante SERVIE a un IC incluant 1 (censure forward) →
+# on sert la bande BACKTEST (fiable). La source est DITE à l'écran (arbitrage Vic #1, honnêteté M38).
+frequence:
+  base_sur_100: 1.5                 # taux de base île ~1,51 %
+  fenetre: "2 ans"
+  # DITE à l'écran (ⓘ de la phrase) — même honnêteté que M38 (dépôts en instance non publiés) :
+  source_dite: >-
+    Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont
+    pas encore toutes publiées.
+  source_technique: "audit RR · c1_monotonie · strate_fold (out-of-sample)"
+  tiers:
+    brulante:         {sur_100: 20, ic_fiable: true}   # top-118 band : 20,3 % [IC RR 9,4–19,2]
+    chaude:           {sur_100: 9,  ic_fiable: true}   # 119-1156 : 8,9 % [4,8–7,1]
+    a_creuser:        {sur_100: 3,  ic_fiable: true}   # 1157-31134 : 3,1 % [1,9–2,2]
+    reserve_fonciere: {sur_100: 1,  ic_fiable: true, sous_moyenne: true}  # servi 0,3 % — potentiel long terme
+    ecartee:          {ic_fiable: false}               # écartée = étage 0 : la fréquence ne s'applique pas

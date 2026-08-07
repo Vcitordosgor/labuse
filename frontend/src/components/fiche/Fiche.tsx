@@ -1275,10 +1275,55 @@ export function Fiche({ idu }: { idu: string }) {
               {f.score_v2?.mult_base != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>plus probable de muter</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>
+                    plus probable d’être vendue
+                    {f.score_v2.verbal?.info && (
+                      <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                    )}
+                  </p>
+                  {f.score_v2.verbal?.mot && (
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, fontWeight: 600, color: verdict.color }}>{f.score_v2.verbal.mot}</p>
+                  )}
                 </div>
               )}
             </div>
+            {/* M52 Lot 1 — réglette de position (percentile), fréquence mesurée par tier, « pourquoi ce
+                score ». Présentation ; aucun calcul. Pas de note /100, pas d'étoiles (doctrine). */}
+            {f.score_v2 && (
+              <div style={{ margin: '12px 0 0' }}>
+                {f.score_v2.percentile != null && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: '#5f7568', marginBottom: 3 }}>
+                      <span>moyenne</span><span>très forte</span>
+                    </div>
+                    <div style={{ position: 'relative', height: 7, borderRadius: 5, background: 'linear-gradient(90deg,#3a4d44,#6fb3d9 35%,#ffc266 70%,#ff7a59)' }}>
+                      <i data-reglette style={{ position: 'absolute', top: -3, left: `${Math.max(1, Math.min(99, f.score_v2.percentile))}%`, width: 3, height: 13, background: '#fff', borderRadius: 2, boxShadow: '0 0 5px #000' }} />
+                    </div>
+                  </>
+                )}
+                {f.score_v2.verbal?.frequence && (
+                  <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: '#9db5a8', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
+                    {f.score_v2.verbal.frequence.sous_moyenne
+                      ? <>Fréquence de vente en dessous de la moyenne de l’île (potentiel de plus long terme).</>
+                      : <>Parmi les parcelles de ce niveau, environ <b>{f.score_v2.verbal.frequence.sur_100} sur 100</b> ont été vendues en {f.score_v2.verbal.frequence.fenetre}, contre ~{f.score_v2.verbal.frequence.base_sur_100} sur 100 en moyenne.</>}
+                    <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                  </p>
+                )}
+                {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
+                  <details data-pourquoi style={{ marginTop: 8 }} open={verdict.tier === 'brulante' || verdict.tier === 'chaude'}>
+                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>Pourquoi ce score</summary>
+                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
+                      {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (
+                        <li key={i} style={{ padding: '3px 0', fontSize: 11.5, color: '#c9d6cf' }}>
+                          <span style={{ color: c.signe === '-' ? '#8ba69a' : '#5fd0a8' }}>{c.signe === '-' ? '▽' : '▲'}</span>{' '}
+                          {c.phrase || c.libelle}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
             {/* chips d'arguments : 1 seul violet = le signal chaud (spec) ; le reste vert. */}
             {(proprioSignal || reglesZone || risquesLines.length > 0) && (
               <div style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>

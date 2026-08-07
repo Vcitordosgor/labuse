@@ -48,10 +48,10 @@ export function ScoringV2Module() {
       {/* M15 E1 (RG2) : bandeau client — dire ce que mesure le classement et ce qu'est le ×N. */}
       <div className="rounded-lg border border-mint/30 bg-mint/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
-        de mutation</b> à 12 mois (changer de main ou d'usage). Le <b className="text-mint">×N</b> dit
-        combien la parcelle est <b>plus probable de muter que la moyenne</b> de l'île (×13 = 13 fois
+        de vente</b> à 12 mois (changement de main). Le <b className="text-mint">×N</b> dit
+        combien la parcelle est <b>plus probable d'être vendue que la moyenne</b> de l'île (×13 = 13 fois
         plus probable). <b>Brûlantes</b> = les plus chaudes ; <b>Potentiel long terme</b> = fort potentiel
-        mais mutation peu probable à court terme ; <b>Classement</b> = toutes, par ordre de priorité.
+        mais vente peu probable à court terme ; <b>Classement</b> = toutes, par ordre de priorité.
       </div>
       <div className="flex items-center gap-1">
         {TABS.map((t) => (
@@ -67,7 +67,7 @@ export function ScoringV2Module() {
       {tab === 'reserve' && (
         <p className="rounded-lg bg-surface-3 px-2 py-1.5 text-[10.5px] leading-snug text-txt-mut">
           Vitrine <b className="text-txt">capacité</b> (C fort, P faible) — ce n'est <b className="text-txt">pas</b> un pipeline :
-          ces parcelles ont peu de chances de muter à 12 mois.
+          ces parcelles ont peu de chances d'être vendues à 12 mois.
         </p>
       )}
       {tab === 'top' && (

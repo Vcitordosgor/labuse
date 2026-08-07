@@ -285,7 +285,7 @@ export function FiltreLabuse() {
         <ModeBCurseur />
       </Tiroir>
 
-      <Tiroir titre="Ça va muter ?" sous="le cœur — voie analyse">
+      <Tiroir titre="Ça va se vendre ?" sous="le cœur — voie analyse">
         <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
           <div><p className="label-caps">Probabilité ×N</p>
             <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="multMin" ph="N" suffix="×" /></div></div>
