@@ -197,6 +197,26 @@ export interface VerifProcedure {
 }
 export const verifProcedure = (idu: string) => j<VerifProcedure>(`/modules/verif-procedure/${idu}`)
 
+// M51 — Annuaire PLU : recherche verbatim sourcé dans le règlement opposable (article, page PDF, lien).
+// Aucun résumé. doute + pagination_ambigue rendus. RNU / hors-corpus = message honnête.
+export interface PluExtrait {
+  insee: string; commune: string; idurba: string; millesime: string | null; document: string
+  zone: string | null; article_ref: string | null; page_pdf: number
+  texte_verbatim: string; doute: boolean; doute_motif: string | null
+  pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
+}
+export interface PluSearch {
+  query: string; insee: string | null; n: number; resultats: PluExtrait[]; message?: string; avis?: string
+}
+export interface PluCommune {
+  insee: string; commune: string; statut: string; idurba?: string; millesime?: string
+  extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
+}
+export const pluAnnuaireSearch = (qy: string, insee?: string) =>
+  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}`)
+export const pluAnnuaireCommunes = () =>
+  j<{ n_communes: number; servables: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
   j<import('./types').ModeB>(`/parcels/${idu}/mode-b${travauxM2 != null ? `?travaux_m2=${travauxM2}` : ''}`)

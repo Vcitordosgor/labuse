@@ -59,6 +59,9 @@ export const MODULES: ModuleDef[] = [
   // M41 (2.6) — Vérif procédure : la commune est-elle en révision/élaboration PLU, et qu’en découle-t-il ?
   { key: 'verif-procedure', num: 'O11', group: 'analyser',
     label: 'Vérif procédure PLU', desc: 'Un IDU — la commune est-elle en procédure PLU (sursis à statuer possible, veille AU) ?' },
+  // M51 — Annuaire PLU : recherche verbatim sourcé dans le règlement opposable des 24 communes.
+  { key: 'plu-annuaire', num: 'O13', group: 'analyser',
+    label: 'Annuaire PLU', desc: 'Cherchez dans le règlement des communes — verbatim sourcé (article, page, lien), jamais un résumé' },
   // M15-C2 : la calculette de charge foncière des fiches, portée en outil autonome.
   { key: 'calculette-fonciere', num: 'M23', group: 'analyser',
     label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
