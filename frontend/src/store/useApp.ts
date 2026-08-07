@@ -217,6 +217,8 @@ interface AppState {
   setM22Prefill: (p: Record<string, unknown> | null) => void
   m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
   setM02Prefill: (s: string | null) => void
+  pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
+  setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
   calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
@@ -323,6 +325,8 @@ export const useApp = create<AppState>((set) => ({
   setM22Prefill: (m22Prefill) => set({ m22Prefill }),
   m02Prefill: null,
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
+  pluPrefill: null,
+  setPluPrefill: (pluPrefill) => set({ pluPrefill }),
   calculette: null,
   setCalculette: (calculette) => set({ calculette }),
 }))

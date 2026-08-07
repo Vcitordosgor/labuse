@@ -1,0 +1,439 @@
+{
+  "ok": [
+    {
+      "insee": "97401",
+      "commune": "Les Avirons",
+      "statut": "a_jour",
+      "idurba_attendu": "97401_PLU_20241206",
+      "idurba_gpu": "97401_PLU_20241206",
+      "garde_ok": true,
+      "doc_id": "abd1a1e45fd4a550e7e0ab22a31a3d42",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97401",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97401_abd1a1e45fd4a550e7e0ab22a31a3d42/97401_PLU_20241206.zip",
+      "fetched_at": "2026-08-07T19:30:47+00:00",
+      "entries": [
+        {
+          "name": "97401_reglement_20241206.pdf",
+          "path": "data/plu_reglements/97401_reglement_20241206.pdf",
+          "bytes": 1697758,
+          "sha256": "af666755570bd125c1c1d3c0d769b85ddf0de89d745c9ce6f827abde1d1a5103"
+        }
+      ]
+    },
+    {
+      "insee": "97402",
+      "commune": "Bras-Panon",
+      "statut": "a_jour",
+      "idurba_attendu": "97402_PLU_20260428",
+      "idurba_gpu": "97402_PLU_20260428",
+      "garde_ok": true,
+      "doc_id": "66ba6a474f15ca68cd0ed773752b5d0a",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97402",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97402_66ba6a474f15ca68cd0ed773752b5d0a/97402_PLU_20260428.zip",
+      "fetched_at": "2026-08-07T19:30:54+00:00",
+      "entries": [
+        {
+          "name": "97402_reglement_20260428.pdf",
+          "path": "data/plu_reglements/97402_reglement_20260428.pdf",
+          "bytes": 5335274,
+          "sha256": "6596a3a75c9ac3ccdb8c00ae075665cb7993c288431bc903404b75aa87e57284"
+        }
+      ]
+    },
+    {
+      "insee": "97403",
+      "commune": "Entre-Deux",
+      "statut": "a_jour",
+      "idurba_attendu": "97403_plu_20240924",
+      "idurba_gpu": "97403_PLU_20240924",
+      "garde_ok": true,
+      "doc_id": "b6ba5771ca53558bd57148f7382b9346",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97403",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97403_b6ba5771ca53558bd57148f7382b9346/97403_PLU_20240924.zip",
+      "fetched_at": "2026-08-07T19:31:01+00:00",
+      "entries": [
+        {
+          "name": "97403_reglement_20240924.pdf",
+          "path": "data/plu_reglements/97403_reglement_20240924.pdf",
+          "bytes": 3484304,
+          "sha256": "91b7c6ede148f82ec1ea9b1c4b7d1ec1b17a0609618abc5bbe4142f5d1cbe1c9"
+        }
+      ]
+    },
+    {
+      "insee": "97404",
+      "commune": "L'Étang-Salé",
+      "statut": "a_jour",
+      "idurba_attendu": "97404_PLU_20250917",
+      "idurba_gpu": "97404_PLU_20250917",
+      "garde_ok": true,
+      "doc_id": "0f997d78ccf283bce6b463fd84eeb274",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97404_0f997d78ccf283bce6b463fd84eeb274/97404_PLU_20250917.zip",
+      "fetched_at": "2026-08-07T19:31:08+00:00",
+      "entries": [
+        {
+          "name": "97404_reglement_20250917.pdf",
+          "path": "data/plu_reglements/97404_reglement_20250917.pdf",
+          "bytes": 1994246,
+          "sha256": "0b05392e5e88009026bbfc112a9d189a51094c59e4099a97d5006f135487c7ca"
+        }
+      ]
+    },
+    {
+      "insee": "97405",
+      "commune": "Petite-Île",
+      "statut": "a_jour",
+      "idurba_attendu": "97405_PLU_20230609",
+      "idurba_gpu": "97405_PLU_20230609",
+      "garde_ok": true,
+      "doc_id": "aeadcd5f2d709f5c2f6973472397e022",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97405",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97405_aeadcd5f2d709f5c2f6973472397e022/97405_PLU_20230609.zip",
+      "fetched_at": "2026-08-07T19:31:14+00:00",
+      "entries": [
+        {
+          "name": "97405_reglement_20230609.pdf",
+          "path": "data/plu_reglements/97405_reglement_20230609.pdf",
+          "bytes": 2090276,
+          "sha256": "c88011948347ecea08cb331b41e6383fdcb914cd64b2d9c816db992bfbaafb82"
+        }
+      ]
+    },
+    {
+      "insee": "97406",
+      "commune": "La Plaine-des-Palmistes",
+      "statut": "a_jour",
+      "idurba_attendu": "97406_PLU_20230527",
+      "idurba_gpu": "97406_PLU_20230527",
+      "garde_ok": true,
+      "doc_id": "a6a3fe0a985c5e102ed1810b8130788e",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97406",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97406_a6a3fe0a985c5e102ed1810b8130788e/97406_PLU_20230527.zip",
+      "fetched_at": "2026-08-07T19:31:22+00:00",
+      "entries": [
+        {
+          "name": "97406_reglement_20230527.pdf",
+          "path": "data/plu_reglements/97406_reglement_20230527.pdf",
+          "bytes": 20620026,
+          "sha256": "0c600c83a64af48ecffaf3edcb9c1cecef4009cb09e6aae228c3942a1809eaa5"
+        }
+      ]
+    },
+    {
+      "insee": "97407",
+      "commune": "Le Port",
+      "statut": "annule_partiel",
+      "idurba_attendu": "97407_PLU_20241209",
+      "idurba_gpu": "97407_PLU_20241209",
+      "garde_ok": true,
+      "doc_id": "3648bf1e8d7ea4c6f71feec7d67fdbb0",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97407",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97407_3648bf1e8d7ea4c6f71feec7d67fdbb0/97407_PLU_20241209.zip",
+      "fetched_at": "2026-08-07T19:31:29+00:00",
+      "entries": [
+        {
+          "name": "97407_reglement_20241209.pdf",
+          "path": "data/plu_reglements/97407_reglement_20241209.pdf",
+          "bytes": 32876715,
+          "sha256": "9ec7e9cdc985c45aa1d7952e5457c0d2531a9cff03ea6613becbecbf23cd8a7f"
+        }
+      ]
+    },
+    {
+      "insee": "97408",
+      "commune": "La Possession",
+      "statut": "a_jour",
+      "idurba_attendu": "97408_PLU_20251217",
+      "idurba_gpu": "97408_PLU_20251217",
+      "garde_ok": true,
+      "doc_id": "3fa1dbaa347af47ed5b743696ea098f6",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97408",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97408_3fa1dbaa347af47ed5b743696ea098f6/97408_PLU_20251217.zip",
+      "fetched_at": "2026-08-07T19:31:37+00:00",
+      "entries": [
+        {
+          "name": "97408_reglement_20251217.pdf",
+          "path": "data/plu_reglements/97408_reglement_20251217.pdf",
+          "bytes": 21063765,
+          "sha256": "2840f4e5bd21ba477d8acf27390db43a7d7bcc7ab46034d5a97563ff4f286fe5"
+        }
+      ]
+    },
+    {
+      "insee": "97410",
+      "commune": "Saint-Benoît",
+      "statut": "a_jour",
+      "idurba_attendu": "97410_PLU_20200206",
+      "idurba_gpu": "97410_PLU_20200206",
+      "garde_ok": true,
+      "doc_id": "77260522306e0350ed054b54d35a35fa",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97410",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97410_77260522306e0350ed054b54d35a35fa/97410_PLU_20200206.zip",
+      "fetched_at": "2026-08-07T19:31:50+00:00",
+      "entries": [
+        {
+          "name": "97410_reglement_20200206.pdf",
+          "path": "data/plu_reglements/97410_reglement_20200206.pdf",
+          "bytes": 22249184,
+          "sha256": "9bb929c6669754f0121e0d3af9c6e87258f31e84c096aee12b2c70af2657d6e3"
+        }
+      ]
+    },
+    {
+      "insee": "97411",
+      "commune": "Saint-Denis",
+      "statut": "a_jour",
+      "idurba_attendu": "97411_PLU_20260423",
+      "idurba_gpu": "97411_PLU_20260423",
+      "garde_ok": true,
+      "doc_id": "c82625411bfc9db63085be81f24fe537",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97411",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97411_c82625411bfc9db63085be81f24fe537/97411_PLU_20260423.zip",
+      "fetched_at": "2026-08-07T19:31:57+00:00",
+      "entries": [
+        {
+          "name": "97411_reglement_20260423.pdf",
+          "path": "data/plu_reglements/97411_reglement_20260423.pdf",
+          "bytes": 5922761,
+          "sha256": "35ee9bbd511161acd9dfbcb62ed228566f32e5190639ff0f97b68e422d3323dd"
+        }
+      ]
+    },
+    {
+      "insee": "97412",
+      "commune": "Saint-Joseph",
+      "statut": "a_jour",
+      "idurba_attendu": "97412_PLU_20251210",
+      "idurba_gpu": "97412_PLU_20251210",
+      "garde_ok": true,
+      "doc_id": "ce1a1274209313eeaf6c85f947d03a13",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97412",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97412_ce1a1274209313eeaf6c85f947d03a13/97412_PLU_20251210.zip",
+      "fetched_at": "2026-08-07T19:32:04+00:00",
+      "entries": [
+        {
+          "name": "97412_Reglement_20251210.pdf",
+          "path": "data/plu_reglements/97412_Reglement_20251210.pdf",
+          "bytes": 16078958,
+          "sha256": "b8cbe84a93b3b77f8a4017852fcca5e55bd79b516bdb74ca16d43faa2ad7e2a0"
+        }
+      ]
+    },
+    {
+      "insee": "97414",
+      "commune": "Saint-Louis",
+      "statut": "a_jour",
+      "idurba_attendu": "97414_PLU_20251218",
+      "idurba_gpu": "97414_PLU_20251218",
+      "garde_ok": true,
+      "doc_id": "be40a0ea1ebe11366025aea136c1e54b",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97414",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97414_be40a0ea1ebe11366025aea136c1e54b/97414_PLU_20251218.zip",
+      "fetched_at": "2026-08-07T19:32:18+00:00",
+      "entries": [
+        {
+          "name": "97414_reglement_20251218.pdf",
+          "path": "data/plu_reglements/97414_reglement_20251218.pdf",
+          "bytes": 5400928,
+          "sha256": "1535c13eb24b13a95dcbfc92682fe80a5ae4cd31b46181b4f0380a655a7f8175"
+        }
+      ]
+    },
+    {
+      "insee": "97415",
+      "commune": "Saint-Paul",
+      "statut": "a_jour",
+      "idurba_attendu": "97415_PLU_20251217",
+      "idurba_gpu": "97415_PLU_20251217",
+      "garde_ok": true,
+      "doc_id": "0f717dab1a17e973d81fe6b5ea79fe22",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97415",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97415_0f717dab1a17e973d81fe6b5ea79fe22/97415_PLU_20251217.zip",
+      "fetched_at": "2026-08-07T19:32:25+00:00",
+      "entries": [
+        {
+          "name": "97415_reglement_20251217.pdf",
+          "path": "data/plu_reglements/97415_reglement_20251217.pdf",
+          "bytes": 8649661,
+          "sha256": "704ad5a990881a64cfbb6a1622ee1ddaf0483d8bd430d3c77abfd88ff6cd11fe"
+        }
+      ]
+    },
+    {
+      "insee": "97416",
+      "commune": "Saint-Pierre",
+      "statut": "a_jour",
+      "idurba_attendu": "97416_PLU_20240625",
+      "idurba_gpu": "97416_PLU_20240625",
+      "garde_ok": true,
+      "doc_id": "6c6320c68195297390a319acb951dc4b",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97416",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97416_6c6320c68195297390a319acb951dc4b/97416_PLU_20240625.zip",
+      "fetched_at": "2026-08-07T19:32:32+00:00",
+      "entries": [
+        {
+          "name": "97416_reglement_20240625.pdf",
+          "path": "data/plu_reglements/97416_reglement_20240625.pdf",
+          "bytes": 5073387,
+          "sha256": "918f1a2e43574ceea6eabd09e492b0371e3480e56054beec7c25ac1de9cfccff"
+        }
+      ]
+    },
+    {
+      "insee": "97418",
+      "commune": "Sainte-Marie",
+      "statut": "a_jour",
+      "idurba_attendu": "97418_plu_20251126",
+      "idurba_gpu": "97418_PLU_20251126",
+      "garde_ok": true,
+      "doc_id": "54cf15d941230465f2d947f9667b8db2",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97418",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97418_54cf15d941230465f2d947f9667b8db2/97418_PLU_20251126.zip",
+      "fetched_at": "2026-08-07T19:32:39+00:00",
+      "entries": [
+        {
+          "name": "97418_reglement_20251126.pdf",
+          "path": "data/plu_reglements/97418_reglement_20251126.pdf",
+          "bytes": 3099673,
+          "sha256": "f8b1174ef44df402cec85a7297eb268d4d202d5de5a8d4c0e2e1ece0dcc25968"
+        }
+      ]
+    },
+    {
+      "insee": "97419",
+      "commune": "Sainte-Rose",
+      "statut": "a_jour",
+      "idurba_attendu": "97419_PLU_20190504",
+      "idurba_gpu": "97419_PLU_20190504",
+      "garde_ok": true,
+      "doc_id": "b85322d6fbeee20a8a96ec7ffe04d218",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97419",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97419_b85322d6fbeee20a8a96ec7ffe04d218/97419_PLU_20190504.zip",
+      "fetched_at": "2026-08-07T19:32:47+00:00",
+      "entries": [
+        {
+          "name": "97419_reglement_20190504.pdf",
+          "path": "data/plu_reglements/97419_reglement_20190504.pdf",
+          "bytes": 5226749,
+          "sha256": "c05d64062c731d0c2ce6eb34a432f7a4a2fd3053c8de8b328d81f9a22d4c9604"
+        }
+      ]
+    },
+    {
+      "insee": "97420",
+      "commune": "Sainte-Suzanne",
+      "statut": "a_jour",
+      "idurba_attendu": "97420_plu_20250929",
+      "idurba_gpu": "97420_PLU_20250929",
+      "garde_ok": true,
+      "doc_id": "9ced5f687357ee837e1ecfe079f0ced1",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97420",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97420_9ced5f687357ee837e1ecfe079f0ced1/97420_PLU_20250929.zip",
+      "fetched_at": "2026-08-07T19:32:53+00:00",
+      "entries": [
+        {
+          "name": "97420_reglement_20250929.pdf",
+          "path": "data/plu_reglements/97420_reglement_20250929.pdf",
+          "bytes": 1005398,
+          "sha256": "ff551c81c7914509699f660da54aa35c3c426933f269f9d2e5d19b0c15f97264"
+        }
+      ]
+    },
+    {
+      "insee": "97421",
+      "commune": "Salazie",
+      "statut": "a_jour",
+      "idurba_attendu": "97421_PLU_20220524",
+      "idurba_gpu": "97421_PLU_20220524",
+      "garde_ok": true,
+      "doc_id": "ef46ea93a9a4d26d8e7783aa62ac0bec",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97421",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97421_ef46ea93a9a4d26d8e7783aa62ac0bec/97421_PLU_20220524.zip",
+      "fetched_at": "2026-08-07T19:33:00+00:00",
+      "entries": [
+        {
+          "name": "97421_reglement_20220524.pdf",
+          "path": "data/plu_reglements/97421_reglement_20220524.pdf",
+          "bytes": 3360964,
+          "sha256": "059fb4ef0a4e83a8227b513f781dacd95abde5dcf7d54faee4e177fdc71587ee"
+        }
+      ]
+    },
+    {
+      "insee": "97422",
+      "commune": "Le Tampon",
+      "statut": "a_jour",
+      "idurba_attendu": "97422_PLU_20230811",
+      "idurba_gpu": "97422_PLU_20230811",
+      "garde_ok": true,
+      "doc_id": "3bd1b9d43addd334e64405c82343c405",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97422",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97422_3bd1b9d43addd334e64405c82343c405/97422_PLU_20230811.zip",
+      "fetched_at": "2026-08-07T19:33:08+00:00",
+      "entries": [
+        {
+          "name": "97422_reglement_20230811.pdf",
+          "path": "data/plu_reglements/97422_reglement_20230811.pdf",
+          "bytes": 7746216,
+          "sha256": "4feb75fa8340ab69f313abbd924bae235e0314ff03f111cc7f3b36bdfa30bc88"
+        }
+      ]
+    },
+    {
+      "insee": "97423",
+      "commune": "Les Trois-Bassins",
+      "statut": "a_jour",
+      "idurba_attendu": "97423_PLU_20220602",
+      "idurba_gpu": "97423_PLU_20220602",
+      "garde_ok": true,
+      "doc_id": "cf21c184c89988947c077c0500749264",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97423",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97423_cf21c184c89988947c077c0500749264/97423_PLU_20220602.zip",
+      "fetched_at": "2026-08-07T19:33:15+00:00",
+      "entries": [
+        {
+          "name": "97423_reglement_20220602.pdf",
+          "path": "data/plu_reglements/97423_reglement_20220602.pdf",
+          "bytes": 8311207,
+          "sha256": "df887e3095614614ce184a9ee2789bf52e122c5902d57c33bd3bff3013b6e84a"
+        }
+      ]
+    },
+    {
+      "insee": "97424",
+      "commune": "Cilaos",
+      "statut": "a_jour",
+      "idurba_attendu": "97424_plu_20240213",
+      "idurba_gpu": "97424_PLU_20240213",
+      "garde_ok": true,
+      "doc_id": "cf474c28b88a6b7e76e3d02f64f885cc",
+      "url_api": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97424",
+      "url_archive": "https://data.geopf.fr/telechargement/download/pack_plu2/PACK_DU_97424_cf474c28b88a6b7e76e3d02f64f885cc/97424_PLU_20240213.zip",
+      "fetched_at": "2026-08-07T19:33:22+00:00",
+      "entries": [
+        {
+          "name": "97424_reglement_20240213.pdf",
+          "path": "data/plu_reglements/97424_reglement_20240213.pdf",
+          "bytes": 2317719,
+          "sha256": "c2a57ea96f8f76396f592e3f30836a164fdec1504c3a12c3211b4b6fdabcf517"
+        }
+      ]
+    }
+  ],
+  "ecart_idurba": [
+    {
+      "insee": "97409",
+      "commune": "Saint-André",
+      "idurba_attendu": "97409_20190228",
+      "erreur": "97409 : idurba attendu « 97409_20190228 » ABSENT du GPU. Documents servis : aucun. STOP — règlement non réconcilié, on ne sert pas."
+    },
+    {
+      "insee": "97413",
+      "commune": "Saint-Leu",
+      "idurba_attendu": "97413_20070226",
+      "erreur": "97413 : idurba attendu « 97413_20070226 » ABSENT du GPU. Documents servis : aucun. STOP — règlement non réconcilié, on ne sert pas."
+    }
+  ],
+  "erreurs": []
+}

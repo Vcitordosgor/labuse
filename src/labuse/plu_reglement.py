@@ -41,6 +41,7 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
             "url": _GPU_CONSULT,
             "idurba": idurba,
             "articles": [],
+            "annuaire": {"insee": (idurba or "")[:5] or None, "zone": zone_code},   # M51 — O13 deep-link
             "note": "Règlement PLU non outillé pour cette commune — consultez le "
                     "Géoportail de l'Urbanisme (recherche par commune)."
                     + (f" Réf. document : {idurba}." if idurba else ""),
@@ -74,6 +75,8 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
         "edition": src.get("edition"),
         "idurba": idurba,
         "articles": articles,
+        # M51 — lien contextuel vers l'annuaire PLU (O13) : le verbatim de la zone servie.
+        "annuaire": {"insee": (idurba or "")[:5] or None, "zone": zone_code},
         "note": None if calibree else
                 "Zone hors périmètre calibré du règlement — lien vers le document complet ; "
                 "référez-vous à l'article de la zone.",

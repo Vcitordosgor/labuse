@@ -1,0 +1,43 @@
+
+===== RECHERCHE 'emprise au sol' @ Saint-Pierre — verbatim+référence+lien =====
+{
+  "n": 2,
+  "1er": {
+    "commune": "Saint-Pierre",
+    "article_ref": "ARTICLE N1",
+    "zone": "N",
+    "page_pdf": 212,
+    "document": "97416_reglement_20240625.pdf",
+    "millesime": "2024-06-25",
+    "source_url": "https://data.geopf.fr/telechargement/download/pack_plu1/PACK_DU_97416_6c6320c68195297390a319acb951dc4b/97416_PLU_20240625.zip",
+    "doute": false
+  },
+  "verbatim_debut": "ARTICLE N1 : DESTINATION ET SOUS DESTINATION DES CONSTRUCTIONS \n1/ Sont interdites : \n \nDans l’ensemble de la zone N, à l’exception de la zone Npnr, sont interdites tout"
+}
+
+===== RÉPONSE RNU @ Saint-Philippe (honnête) =====
+{
+  "query": "hauteur",
+  "insee": "97417",
+  "commune": "Saint-Philippe",
+  "n": 0,
+  "resultats": [],
+  "message": "Saint-Philippe : RNU — pas de règlement communal à interroger."
+}
+
+===== RÉPONSE RÉVISION @ Saint-Leu (honnête) =====
+{
+  "message": "Saint-Leu : règlement non ingéré (révision non réconciliée ou hors corpus) — rien à servir. Voir /plu-annuaire/communes."
+}
+
+===== SAINT-BENOÎT — pagination ambiguë SERVIE =====
+{
+  "note": "pagination du document ambiguë (double numérotation) — la page citée est la PAGE PDF du fichier, pas la page imprimée.",
+  "page_pdf": 5
+}
+
+===== LIEN FICHE→ANNUAIRE (bloc règlement, zone U Saint-Paul) =====
+{
+  "insee": "97415",
+  "zone": "U"
+}

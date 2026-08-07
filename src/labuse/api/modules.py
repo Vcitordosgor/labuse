@@ -1184,3 +1184,82 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
                         f"Dernier constat le {e['date_constat']}."),
         })
     return out
+
+
+# ── M51 — Annuaire PLU interrogeable (verbatim sourcé) ───────────────────────────────────────────
+import functools as _ft  # noqa: E402
+
+
+@_ft.lru_cache(maxsize=1)
+def _plu_millesimes() -> dict:
+    """Vérité idurba/statut par commune (M40) — chargée une fois."""
+    import pathlib
+
+    import yaml
+    p = pathlib.Path(__file__).resolve().parents[3] / "config" / "plu_millesimes.yaml"
+    return yaml.safe_load(p.read_text())["communes"]
+
+
+@router.get("/plu-annuaire/communes")
+def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
+    """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
+    ou non ingéré. Réponse HONNÊTE (pas de trou masqué)."""
+    from ..ingestion.plu_ingest import corpus_status
+    ing = corpus_status(db)
+    out = []
+    for insee, c in sorted(_plu_millesimes().items()):
+        e = ing.get(insee)
+        if e:
+            out.append({"insee": insee, "commune": c["commune"], "statut": "servable",
+                        "idurba": e["idurba"], "millesime": e["millesime"], "extraits": e["extraits"],
+                        "doutes": e["doutes"], "pagination_ambigue": e["pagination_ambigue"]})
+        elif c["statut"] == "rnu":
+            out.append({"insee": insee, "commune": c["commune"], "statut": "rnu", "extraits": 0,
+                        "message": "RNU (règlement national d'urbanisme) — pas de règlement communal."})
+        elif c["statut"] == "opposabilite_en_attente":
+            out.append({"insee": insee, "commune": c["commune"], "statut": "revision", "extraits": 0,
+                        "idurba": c.get("idurba"),
+                        "message": "Révision en cours — règlement non servi par le GPU, vérifier en "
+                                   "mairie. Complétion automatique à l'approbation (veille trimestrielle "
+                                   "M41). On ne sert pas un règlement non réconcilié (garde idurba+sha)."})
+        else:
+            out.append({"insee": insee, "commune": c["commune"], "statut": "non_ingere",
+                        "idurba": c.get("idurba"), "extraits": 0,
+                        "message": "Règlement non ingéré pour cette commune."})
+    servables = sum(1 for c in out if c["statut"] == "servable")
+    return {"n_communes": len(out), "servables": servables, "communes": out}
+
+
+@router.get("/plu-annuaire/search")
+def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None, limit: int = 25,
+                        db: Session = Depends(get_db)) -> dict:
+    """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
+    commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
+    `pagination_ambigue` sont RENDUS. `insee` absent = île entière. RNU / commune non ingérée =
+    réponse honnête."""
+    from ..ingestion.plu_ingest import corpus_status, search_reglement
+    q = (q or "").strip()
+    if not q:
+        raise HTTPException(400, "Requête vide.")
+    if insee:
+        mil = _plu_millesimes().get(insee)
+        if mil and mil["statut"] == "rnu":
+            return {"query": q, "insee": insee, "commune": mil["commune"], "n": 0, "resultats": [],
+                    "message": f"{mil['commune']} : RNU — pas de règlement communal à interroger."}
+        if insee not in corpus_status(db):
+            nm = mil["commune"] if mil else insee
+            rev = mil and mil["statut"] == "opposabilite_en_attente"
+            return {"query": q, "insee": insee, "commune": nm, "n": 0, "resultats": [],
+                    "message": (f"{nm} : révision en cours — règlement non servi par le GPU, vérifier "
+                                f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
+                               (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
+                                f"Voir /plu-annuaire/communes.")}
+    res = search_reglement(db, q, insee, limit=limit, zone=zone)
+    for r in res:
+        r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
+        if r.get("pagination_ambigue"):
+            r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
+                                    "citée est la PAGE PDF du fichier, pas la page imprimée.")
+    return {"query": q, "insee": insee, "n": len(res), "resultats": res,
+            "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
+                    "(lien) ; ceci n'est pas un conseil juridique."}
