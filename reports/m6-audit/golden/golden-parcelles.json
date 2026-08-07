@@ -1,7 +1,7 @@
 {
  "meta": {
-  "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-08-06T22:24:57",
+  "api_base": "http://127.0.0.1:8000",
+  "genere_le": "2026-08-07T14:36:31",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 117,
   "run_cascade": "q_v8_calibre",
@@ -239,7 +239,6 @@
       "rang": 55950,
       "tier": "declasse_bati_sature"
      },
-     "statut": "ecartee",
      "surface_m2": 735,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -378,7 +377,6 @@
       "rang": 135,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 298,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -523,7 +521,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 35,
+     "n_lignes_cascade": 33,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "renouvellement": null,
@@ -539,7 +537,6 @@
       "rang": 317899,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 4403,
      "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
     },
@@ -731,7 +728,6 @@
       "rang": 750,
       "tier": "declasse_non_constructible"
      },
-     "statut": "a_creuser",
      "surface_m2": 683,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -864,7 +860,6 @@
       "rang": 233570,
       "tier": "reserve_fonciere"
      },
-     "statut": "a_surveiller",
      "surface_m2": 3462,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -986,7 +981,6 @@
       "rang": 1,
       "tier": "brulante"
      },
-     "statut": "a_creuser",
      "surface_m2": 382,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -1131,7 +1125,6 @@
       "rang": 265435,
       "tier": "declasse_bati_sature"
      },
-     "statut": "a_surveiller",
      "surface_m2": 2599,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -1272,7 +1265,6 @@
       "rang": 10,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 300,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -1397,7 +1389,6 @@
       "rang": 73,
       "tier": "chaude"
      },
-     "statut": "ecartee",
      "surface_m2": 477,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -1522,7 +1513,6 @@
       "rang": 6,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 334,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -1667,7 +1657,6 @@
       "rang": null,
       "tier": "declasse_bati_sature"
      },
-     "statut": "ecartee",
      "surface_m2": 439,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -1785,7 +1774,6 @@
       "rang": 257513,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 7483,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -1913,7 +1901,6 @@
       "rang": 5,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 300,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -2078,7 +2065,6 @@
       "rang": 134,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 337,
      "zonage_detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible)."
     },
@@ -2208,7 +2194,6 @@
       "rang": 4956,
       "tier": "declasse_bati_sature"
      },
-     "statut": "ecartee",
      "surface_m2": 581,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -2334,7 +2319,6 @@
       "rang": 54095,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 687,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -2516,7 +2500,6 @@
       "rang": 17,
       "tier": "declasse_non_constructible"
      },
-     "statut": "ecartee",
      "surface_m2": 130,
      "zonage_detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~33 % ; emprise clippée en pré-faisabilité)."
     },
@@ -2627,7 +2610,6 @@
       "rang": 57,
       "tier": "declasse_bati_sature"
      },
-     "statut": "a_creuser",
      "surface_m2": 608,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -2742,7 +2724,6 @@
       "rang": 3694,
       "tier": "declasse_bati_sature"
      },
-     "statut": "ecartee",
      "surface_m2": 943,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -2864,7 +2845,6 @@
       "rang": 231579,
       "tier": "reserve_fonciere"
      },
-     "statut": "chaude",
      "surface_m2": 1352,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -3003,7 +2983,6 @@
       "rang": 115024,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 95,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -3110,7 +3089,6 @@
       "rang": 280960,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 3562,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
     },
@@ -3283,7 +3261,6 @@
       "rang": 7,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 253,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -3421,7 +3398,6 @@
       "rang": 294509,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 43,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -3572,7 +3548,6 @@
       "rang": 59,
       "tier": "brulante"
      },
-     "statut": "ecartee",
      "surface_m2": 366,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -3708,7 +3683,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 34,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "renouvellement": null,
@@ -3724,7 +3699,6 @@
       "rang": 379309,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 1092,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible sur ~56 % de la parcelle)."
     },
@@ -3870,7 +3844,6 @@
       "rang": 4,
       "tier": "declasse_zone_fermee"
      },
-     "statut": "a_creuser",
      "surface_m2": 599,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
     },
@@ -3991,7 +3964,6 @@
       "rang": 107,
       "tier": "declasse_zone_fermee"
      },
-     "statut": "ecartee",
      "surface_m2": 27084,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
     },
@@ -4102,7 +4074,6 @@
       "rang": 7967,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 481,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },
@@ -4222,7 +4193,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 36,
      "proprietaire_moral_siren": "807931308",
      "q_score": 50,
      "renouvellement": null,
@@ -4238,7 +4209,6 @@
       "rang": 4131,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 355,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible sur ~53 % de la parcelle)."
     },
@@ -4367,7 +4337,6 @@
       "rang": 2080,
       "tier": "declasse_bati_revele"
      },
-     "statut": "ecartee",
      "surface_m2": 313,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
     },
@@ -4517,7 +4486,6 @@
       "rang": 111563,
       "tier": "ecartee"
      },
-     "statut": "ecartee",
      "surface_m2": 8,
      "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
     },
@@ -4637,7 +4605,6 @@
       "rang": 142045,
       "tier": "declasse_bati_sature"
      },
-     "statut": "ecartee",
      "surface_m2": 679,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
     },

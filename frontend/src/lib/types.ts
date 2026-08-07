@@ -207,7 +207,7 @@ export interface Fiche {
     } | null
   } | null
   surface_m2: number | null
-  statut: Statut
+  statut?: Statut   // M48 (F4) : retiré du payload (matrice morte) — le tier vient de score_v2 ; repli legacy seulement
   mode_b?: ModeB
   q_score: number
   a_score: number

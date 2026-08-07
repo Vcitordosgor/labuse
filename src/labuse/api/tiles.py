@@ -138,7 +138,10 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune, p.surface_m2,
                ST_Transform(p.geom, 3857) AS geom_3857,
-               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+               -- M48 (F4) : `matrice_statut` (v1 morte) N'EST PLUS bakée comme `status` — elle
+               -- contredisait tier_v2. La carte colore par tier_v2 (+ etage0). `d.status` ci-dessous
+               -- reste le statut d'EXCLUSION (exclue/faux_positif) qui alimente etage0, pas la matrice.
+               d.q_score, d.a_score, d.a_completude,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
@@ -203,6 +206,37 @@ def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
     db.commit()
     return {"n": int(n), "couches": len(got), "coherence_ok": True,
             "seconds": round(_time.perf_counter() - t0, 2)}
+
+
+def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) -> dict:
+    """GESTE UNIQUE de matérialisation carte (M48) — « un geste = tout ou rien ». À appeler DANS
+    chaque bascule du run servi (après le re-score) ET par `labuse build-mvt` : plus jamais un
+    re-score sans tuiles à jour (constat M48 : la bascule M39 a régénéré le golden mais PAS les
+    tuiles → 4 tiers + 7 854 SDP périmés sur la carte). Reconstruit d'un bloc `mvt_parcels` +
+    overlays + `parcel_flags` (M45) + `parcel_renouvellement` (M47) et enregistre `mvt_meta`.
+    Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
+    import time as _t
+    from .. import renouvellement as _renouv
+    from ..bascule_gardes import check_coherence_renouvellement, check_peremption_tuiles
+    t0 = _t.perf_counter()
+    n = build_mvt_table(db, run_label)
+    n_ov = build_overlay_mvt(db)
+    pf = build_parcel_flags_table(db, run_label)
+    log(f"✓ parcel_flags : {pf['n']} paires sur {pf['couches']} couches · cohérence OK · {pf['seconds']} s.")
+    rr = _renouv.build(db, run_label=run_label, commit=False)
+    cr = check_coherence_renouvellement(session=db)
+    log(f"✓ parcel_renouvellement : {rr['n']} parcelles (run {rr['run_label']}) · cohérence {cr['statut']}.")
+    db.execute(text("""CREATE TABLE IF NOT EXISTS mvt_meta
+                       (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
+    db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
+                       ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": run_label})
+    log(f"✓ mvt_parcels : {n} parcelles · overlays {n_ov} · {round(_t.perf_counter() - t0, 1)} s "
+        f"(run {run_label}).")
+    # M48 : garde de péremption DANS le point unique → CLI `build-mvt` ET bascules la voient (post-build
+    # elle confirme la fraîcheur ; entre deux builds elle crie si un re-score hors geste a eu lieu).
+    per = check_peremption_tuiles(session=db)
+    return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
+            "renouv_coherence": cr["statut"], "peremption_ok": per["ok"], "run_label": run_label}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
@@ -275,8 +309,9 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # c'est la COULEUR de la couche « Zonage PLU (parcelles) », visible dès z9 en mode île.
     zone_props = "m.zone_fam, " if has_zone else ""
     zone_props_full = "m.zone_lib, m.zone_fam, " if has_zone else ""
-    props = (f"m.status, {v2_props}{zone_props}m.commune" if z <= 11 else
-             "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
+    # M48 (F4) : `m.status` (matrice morte) retiré des propriétés servies — la carte lit tier_v2/etage0.
+    props = (f"{v2_props}{zone_props}m.commune" if z <= 11 else
+             "m.idu, m.commune, m.surface_m2, m.q_score, m.a_score, "
              f"{v2_props_full}{zone_props_full}"
              "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.evenement, m.flags")

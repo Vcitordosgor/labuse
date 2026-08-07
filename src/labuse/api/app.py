@@ -2136,7 +2136,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
-        "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
+        # M48 (F4) : le champ mort `statut` (matrice_statut v1, éteinte M37) est RETIRÉ du payload —
+        # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
+        # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
+        "q_score": head["q_score"], "a_score": head["a_score"],
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),

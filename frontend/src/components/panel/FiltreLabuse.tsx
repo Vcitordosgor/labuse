@@ -297,6 +297,15 @@ export function FiltreLabuse() {
             <BoolChip field="renouvellement" label="Renouvellement" />
             <BoolChip field="divisionOr" label="Division en or (O12)" />
           </div>
+          {/* M48 : le segment Renouvellement = des parcelles ÉCARTÉES par conception → 0 retenue par
+              l'analyse. On le DIT quand le filtre est actif, pour lever le « 0 » déroutant du compteur. */}
+          {filters.renouvellement && (
+            <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
+              Segment consultable via la <b className="text-txt-mut">voie manuelle</b> — coupez
+              l’Analyse LABUSE pour l’explorer : ces parcelles occupées sont écartées du classement
+              principal par conception (d’où 0 retenue par l’analyse).
+            </p>
+          )}
         </Section>
       </Tiroir>
 

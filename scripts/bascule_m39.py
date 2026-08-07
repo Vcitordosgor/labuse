@@ -21,7 +21,8 @@ Ce que le geste réel ferait (modèle M32) :
   5. RE-APPLIQUE le registre existant (5 entrées M28/M32) à l'identique.
   6. APPLIQUE la règle : les N déclassements piscine (hot → a_creuser), motif_client famille.
   7. verify_completude + check_fraicheur.
-  8. golden_regen DANS LE GESTE (6e garde check_golden_regenere).
+  7bis. build-mvt DANS LE GESTE (M48, rebuild_mvt_servies) — tuiles + flags + renouvellement.
+  8. golden_regen DANS LE GESTE (6e garde) + check_peremption_tuiles (M48).
 
 Usage (dry-run) : PYTHONPATH=src python scripts/bascule_m39.py
 """
@@ -180,12 +181,21 @@ def _execute() -> None:
     counts = verify_completude(LABEL, n_expected_cascade=n_parcels, n_expected_scores=n_parcels)
     print(f"  [7] complétude : {counts}", flush=True)
     check_fraicheur()
+    # 7bis. TUILES DANS LE GESTE (M48) — « un geste = tout ou rien » : re-score + tuiles + flags +
+    # renouvellement ENSEMBLE. C'est LE trou qui a laissé la carte périmée après le M39 servi
+    # (build-mvt était un « SUITE » manuel, oublié → 4 tiers + 7 854 SDP périmés sur la carte).
+    from labuse.api.tiles import rebuild_mvt_servies
+    with session_scope() as s:
+        mvt = rebuild_mvt_servies(s, LABEL, log=lambda m: print(f"  [7bis] {m}", flush=True))
+    print(f"  [7bis] tuiles reconstruites : {mvt['n']} parcelles "
+          f"(flags {mvt['parcel_flags']}, renouv {mvt['renouvellement']})", flush=True)
     # 8. golden_regen DANS LE GESTE (6e garde) — régénérer AVANT de vérifier
     import subprocess
     here = os.path.dirname(__file__)
     subprocess.run([sys.executable, os.path.join(here, "..", "qa", "golden_regen.py")], check=True)
     check_golden_regenere(LABEL)
-    print(f"\n✓ BASCULE M39 en {time.time()-t0:.0f}s. golden régénéré, 6e garde OK.", flush=True)
+    # (la garde de péremption tuiles M48 tourne DANS rebuild_mvt_servies à l'étape 7bis)
+    print(f"\n✓ BASCULE M39 en {time.time()-t0:.0f}s. tuiles + golden dans le geste, gardes OK.", flush=True)
 
 
 if __name__ == "__main__":
