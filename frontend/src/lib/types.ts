@@ -195,6 +195,13 @@ export interface ModeB {
   } | null
 }
 
+// M52 L4 — qualité par commune, DITE (mesure réelle gelée, audit RR fold 2025 OOS).
+export interface QualiteCommune {
+  commune: string; insee: string; rr_intra: number; rr_ile: number | null
+  echantillon: number; taux_base_pct: number | null; fragile: boolean; degradee: boolean
+  libelle: string; source: string
+}
+
 export interface Fiche {
   idu: string
   commune: string
@@ -221,8 +228,21 @@ export interface Fiche {
   score_v: ScoreV | null
   // correctif M5 : verdict d'en-tête piloté par le tier v2 quand un run existe ;
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
-  score_v2: { tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean } | null
+  score_v2: {
+    tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean
+    // M52 Lot 1 (présentation) : mot verbal + ⓘ + fréquence par tier + « pourquoi » (top5 traduites).
+    verbal?: {
+      mot?: string; cle?: string; info: string; reglette_pct?: number
+      frequence?: { sur_100: number; base_sur_100: number; fenetre: string; sous_moyenne: boolean; source_dite: string }
+    }
+    pourquoi?: { feature: string; libelle: string; phrase?: string; signe?: string }[]
+  } | null
   etage0: boolean
+  parc_analysees?: number | null   // M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
+  // M52 L3 — « Les données » : sources réellement utilisées sur cette fiche (0 nouvelle donnée).
+  data_sources?: { nom: string; categorie: string | null; fournisseur: string | null; millesime: string | null; fiabilite: string | null }[]
+  // M52 L4 — qualité par commune, DITE (mesure réelle gelée ; degradee = arme le rappel discret).
+  qualite_commune?: QualiteCommune | null
   // M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, CLOISONNÉE du score P.
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).

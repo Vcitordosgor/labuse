@@ -56,6 +56,31 @@ const IC = {
   faisa: drSvg(<><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-5h6v5" /></>),
   viab: drSvg(<><path d="M12 3v6" /><path d="M8 9h8l-1 5a3 3 0 0 1-6 0z" /><path d="M12 17v4" /></>),
   confiance: drSvg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></>),
+  contexte: drSvg(<><circle cx="12" cy="10" r="3" /><path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" /></>),
+}
+
+/** M52 L2 — théâtre : compteur « N parcelles analysées » qui s'incrémente 0→N en ~700 ms au
+ *  chargement puis fige. Sobre, une ligne. N = compte GELÉ du run (`parc_analysees`), jamais
+ *  inventé. Présentation seule. */
+function TheatreCompteur({ n }: { n: number }) {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 700)
+      setV(Math.round(n * (1 - Math.pow(1 - p, 3))))   // easeOutCubic → fige à n
+      if (p < 1) raf = requestAnimationFrame(tick)
+      else setV(n)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [n])
+  return (
+    <p data-theatre style={{ margin: '2px 0 1px', fontSize: 11, color: '#5f7568', letterSpacing: .2 }}>
+      <b style={{ color: '#8FA69A', fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('fr-FR')}</b> parcelles analysées
+    </p>
+  )
 }
 
 function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
@@ -950,7 +975,7 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
+function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: import('../../lib/types').ModeB; defaultOpen?: boolean }) {
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -965,7 +990,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation" defaultOpen={defaultOpen}
       value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
       valueColor={mb.negatif ? '#E8B44C' : undefined}
       micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
@@ -1146,6 +1171,26 @@ export function Fiche({ idu }: { idu: string }) {
   // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
   const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
   const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
+  // M52 L2 (correction #1) : parcelle écartée/déclassée MAIS à signal ×N fort → cadrage « signal
+  // brut ». Sans lui, « Déclassée » + « très forte probabilité relative » côte à côte forment une
+  // contradiction (famille M48 : un statut mort à côté d'une promesse). Le ×N reste (réel), il
+  // devient « signal brut » ; le mot passe en atténué ; un encadré dit que l'écartement PRIME et
+  // pourquoi la fréquence est absente. Déclenché hors tiers servables (verdict.tier == null) et
+  // seulement si le signal dépasse la moyenne (×N ≥ 2) — l'écartée simple ×1,3 reste sobre.
+  const multBase = f?.score_v2?.mult_base ?? null
+  const signalEcarte = !!(f?.score_v2 && verdict && verdict.tier == null && (multBase ?? 0) >= 2)
+  const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
+  // M52 L2 — hiérarchie : l'essentiel (droit du sol + économie) s'ouvre à l'arrivée pour un tier
+  // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
+  // que le verdict. La déclassée à signal fort remonte le Mode B en 2 (ouvert), l'essentiel replié.
+  const servable = !!(verdict && verdict.tier != null)
+  // M52 L3 — données ABSENTES, DITES (jamais approximées) : dérivées de nuls RÉELS du payload +
+  // faits open-data connus. Chaque entrée est un fait vérifiable, pas une excuse vague.
+  const donneesAbsentes: { quoi: string; pourquoi: string }[] = f ? [
+    { quoi: 'Année de construction', pourquoi: 'non disponible en open data à la parcelle (ABSENTE)' },
+    ...(!f.adresse ? [{ quoi: 'Adresse postale', pourquoi: 'parcelle non rattachée à une voie (BAN)' }] : []),
+    ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
+  ] : []
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
@@ -1274,11 +1319,69 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
               {f.score_v2?.mult_base != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>plus probable de muter</p>
+                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>
+                    {signalEcarte ? 'signal brut' : 'plus probable d’être vendue'}
+                    {f.score_v2.verbal?.info && (
+                      <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                    )}
+                  </p>
+                  {/* mot d'échelle : en couleur du tier quand servable ; ATTÉNUÉ quand écartée à
+                      signal fort (le mot ne doit pas faire promesse à côté d'un statut mort). */}
+                  {f.score_v2.verbal?.mot && (
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, fontWeight: 600, color: signalEcarte ? '#8C7468' : verdict.color }}>
+                      {signalEcarte ? <>{f.score_v2.verbal.mot} <span style={{ fontWeight: 500, color: '#7d9488' }}>· écartée</span></> : f.score_v2.verbal.mot}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
+            {/* M52 Lot 1 — réglette de position (×N, échelle LOG — arbitrage Vic L2, plus le
+                percentile rang), fréquence mesurée par tier, « pourquoi ce score ». Présentation ;
+                aucun calcul. Pas de note /100, pas d'étoiles (doctrine). */}
+            {f.score_v2 && (
+              <div style={{ margin: '12px 0 0' }}>
+                {f.score_v2.verbal?.reglette_pct != null && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: '#5f7568', marginBottom: 3 }}>
+                      <span>moyenne</span><span>très forte</span>
+                    </div>
+                    <div style={{ position: 'relative', height: 7, borderRadius: 5, background: 'linear-gradient(90deg,#3a4d44,#6fb3d9 35%,#ffc266 70%,#ff7a59)' }}>
+                      <i data-reglette style={{ position: 'absolute', top: -3, left: `${f.score_v2.verbal.reglette_pct}%`, width: 3, height: 13, background: '#fff', borderRadius: 2, boxShadow: '0 0 5px #000' }} />
+                    </div>
+                  </>
+                )}
+                {/* écartée/déclassée à signal fort : l'écartement PRIME — dit pourquoi la fréquence
+                    est absente (doctrine étage 0 M5). Bordure « terre éteinte », pas de menthe. */}
+                {signalEcarte && (
+                  <p data-signal-ecarte style={{ margin: '9px 0 0', fontSize: 11, color: '#b9a898', borderLeft: '3px solid #8C7468', paddingLeft: 8 }}>
+                    La parcelle porte {(multBase ?? 0) >= 4 ? 'un signal fort' : 'un signal au-dessus de la moyenne'} (×{f.score_v2.mult_base!.toFixed(1).replace('.', ',')}) <b>mais elle est écartée</b>{motifEcart ? <> : {motifEcart.toLowerCase()}</> : null} — l’écartement prime. La fréquence par tier ne s’affiche pas.
+                    <span title="Le ×N est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                  </p>
+                )}
+                {f.score_v2.verbal?.frequence && (
+                  <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: '#9db5a8', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
+                    {f.score_v2.verbal.frequence.sous_moyenne
+                      ? <>Fréquence de vente en dessous de la moyenne de l’île (potentiel de plus long terme).</>
+                      : <>Parmi les parcelles de ce niveau, environ <b>{f.score_v2.verbal.frequence.sur_100} sur 100</b> ont été vendues en {f.score_v2.verbal.frequence.fenetre}, contre ~{f.score_v2.verbal.frequence.base_sur_100} sur 100 en moyenne.</>}
+                    <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                  </p>
+                )}
+                {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
+                  <details data-pourquoi style={{ marginTop: 8 }} open={verdict.tier === 'brulante' || verdict.tier === 'chaude' || signalEcarte}>
+                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>{signalEcarte ? 'Pourquoi ce signal (avant l’écart)' : 'Pourquoi ce score'}</summary>
+                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
+                      {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (
+                        <li key={i} style={{ padding: '3px 0', fontSize: 11.5, color: '#c9d6cf' }}>
+                          <span style={{ color: c.signe === '-' ? '#8ba69a' : '#5fd0a8' }}>{c.signe === '-' ? '▽' : '▲'}</span>{' '}
+                          {c.phrase || c.libelle}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
             {/* chips d'arguments : 1 seul violet = le signal chaud (spec) ; le reste vert. */}
             {(proprioSignal || reglesZone || risquesLines.length > 0) && (
               <div style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1309,6 +1412,14 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
           </div>
+        )}
+
+        {/* M52 L4 — rappel DISCRET quand la mesure de la commune est dégradée (échantillon limité) :
+            le classement reste, la fréquence exacte est indicative. Jamais une excuse vague. */}
+        {f?.qualite_commune?.degradee && (
+          <p data-qualite-commune-rappel style={{ margin: '9px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#9db5a8' }}>
+            <span style={{ color: '#e8b84d' }}>◐</span> {f.qualite_commune.libelle}
+          </p>
         )}
 
         {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
@@ -1430,8 +1541,15 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
-            {/* 1 · RÈGLES D'URBANISME — micro : jauge SDP + zone/article */}
-            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
+            {/* M52 L2 — théâtre : « N parcelles analysées » (compte gelé du run, jamais inventé). */}
+            {f.parc_analysees != null && <TheatreCompteur n={f.parc_analysees} />}
+
+            {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
+                juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
+            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} defaultOpen />}
+
+            {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
+            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme" defaultOpen={servable}
               value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
@@ -1485,31 +1603,6 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
-                {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
-                {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-                  <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                    <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
-                    <ul className="mt-1 list-disc pl-4 text-txt-mut">
-                      {f.historique_site.permis.slice(0, 6).map((pm, i) => (
-                        <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-                      ))}
-                      {f.historique_site.caducite && (
-                        <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
-                      )}
-                    </ul>
-                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
-                  </div>
-                )}
-                {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
-                {f.voisinage_proche && (
-                  <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                    <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
-                    <div className="mt-1 text-txt-mut">
-                      {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
-                    </div>
-                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
-                  </div>
-                )}
                 <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
@@ -1523,16 +1616,95 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* 2 · RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ) */}
-            <RefDrawer id="risques" icon={IC.risques} name="Risques"
-              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
-              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
-              {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+            {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
+            {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt} defaultOpen={servable}
+              micro={<MicroTriple items={delaisse
+                /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
+                   promet plus un gabarit/SDP sur une parcelle sous le seuil. */
+                ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
+                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+              <div className="flex flex-col gap-3">
+                {delaisse && (
+                  /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
+                  <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
+                  </div>
+                )}
+                <FaisabiliteTab idu={idu} />
+                {!delaisse && <BilanTab idu={idu} />}
+              </div>
+            </RefDrawer>
+
+            {/* MARCHÉ — micro : sparkline + volume */}
+            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
+              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
+              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
+              {marcheLines.length
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </RefDrawer>
 
-            {/* 3 · PROPRIÉTAIRE — CARTE ACCENTUÉE VIOLETTE (le signal chaud, une seule sur la fiche) */}
+            {/* VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
+                <EquipementsBadges idu={idu} />
+                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
+                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
+                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
+                  </div>
+                )}
+                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+                <PermitsProximityBlock idu={idu} />
+                {f.depots && <DepotsBlock d={f.depots} />}
+              </div>
+            </RefDrawer>
+
+            {/* ③ ÉCONOMIE (suite) — Mode B (M44) pour un tier SERVABLE : reste dans l'économie
+                (la déclassée l'a déjà remonté en 2). Lecture complémentaire, subordonnée au verdict. */}
+            {!signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+
+            {/* ④ CONTEXTE — « Sur cette parcelle » (historique permis + caducité) et « Autour »
+                (voisinage proche : ventes DVF + permis 36 mois). M42. Rien si les deux sont vides. */}
+            {((f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite)) || f.voisinage_proche) && (
+              <RefDrawer id="contexte" icon={IC.contexte} name="Contexte"
+                value={f.voisinage_proche ? `${f.voisinage_proche.ventes_dvf} vente(s) · ${f.voisinage_proche.permis} permis` : 'voir'}>
+                <div className="flex flex-col gap-3">
+                  {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
+                  {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
+                    <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                      <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
+                      <ul className="mt-1 list-disc pl-4 text-txt-mut">
+                        {f.historique_site.permis.slice(0, 6).map((pm, i) => (
+                          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
+                        ))}
+                        {f.historique_site.caducite && (
+                          <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
+                        )}
+                      </ul>
+                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
+                    </div>
+                  )}
+                  {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
+                  {f.voisinage_proche && (
+                    <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                      <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
+                      <div className="mt-1 text-txt-mut">
+                        {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
+                    </div>
+                  )}
+                </div>
+              </RefDrawer>
+            )}
+
+            {/* ⑤ PROPRIÉTÉ — société (M43) + signaux vendeur. CARTE ACCENTUÉE VIOLETTE = le signal chaud. */}
             <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'privé')}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
@@ -1568,74 +1740,17 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* 4 · MARCHÉ — micro : sparkline + volume */}
-            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
-              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
-              {marcheLines.length
-                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+            {/* ⑥ RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ). */}
+            <RefDrawer id="risques" icon={IC.risques} name="Risques"
+              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
+              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
+              {risquesLines.length
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-            </RefDrawer>
-
-            {/* 5 · FAISABILITÉ ET BILAN — micro : 3 données sur une ligne */}
-            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
-              micro={<MicroTriple items={delaisse
-                /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
-                   promet plus un gabarit/SDP sur une parcelle sous le seuil. */
-                ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
-              <div className="flex flex-col gap-3">
-                {delaisse && (
-                  /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
-                  <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                    <span aria-hidden className="text-st-creuser">▲</span>
-                    <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
-                  </div>
-                )}
-                <FaisabiliteTab idu={idu} />
-                {!delaisse && <BilanTab idu={idu} />}
-              </div>
-            </RefDrawer>
-
-            {/* 6 · VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
-              <div className="flex flex-col gap-3">
-                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
-                <EquipementsBadges idu={idu} />
-                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                    <span aria-hidden className="text-st-creuser">▲</span>
-                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
-                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
-                  </div>
-                )}
-                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
-                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
-                <PermitsProximityBlock idu={idu} />
-                {f.depots && <DepotsBlock d={f.depots} />}
-              </div>
-            </RefDrawer>
-
-            {/* 7 · CONFIANCE ET DONNÉES — score P (pourquoi), ICD, complétude, statut, flags, signaler */}
-            <RefDrawer id="confiance" icon={IC.confiance} name="Confiance et données" value={confianceValue}>
-              <div className="flex flex-col gap-3">
-                <ScoreV2Block idu={idu} />
-                {f.icd && <IcdBlockView icd={f.icd} />}
-                {/* M37 : chip « Statut matrice (historique) » RETIRÉ (arbitrage Vic — le tier
-                    servi + l'ICD suffisent ; plus de classement historique en surface fiche). */}
-                {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
-                    parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
-                    jauge de confiance données par parcelle. */}
-                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
-                <SignalerErreur idu={idu} />
-              </div>
             </RefDrawer>
 
             {/* M-RENOUV : tiroir « pourquoi » du segment — les 4 composantes du score,
                 sourcées ; wording doctrinal (géométrie favorable, jamais « division »). */}
-            {/* M33 — mode B : lecture complémentaire SUBORDONNÉE (le verdict/tier M34 reste
-                premier à l'écran, en tête de fiche) — uniquement sur la population. */}
-            {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
             {f.renouvellement && (
               <RefDrawer id="renouvellement" icon={IC.faisa} name="Renouvellement — pourquoi ce rang"
                 value={`${f.renouvellement.renouv_score}/100`} valueColor={RENOUV.txt}
@@ -1677,6 +1792,79 @@ export function Fiche({ idu }: { idu: string }) {
                 <PourquoiPasTab idu={idu} />
               </RefDrawer>
             )}
+
+            {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
+                cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
+                signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
+            <RefDrawer id="confiance" icon={IC.confiance} name="Les données"
+              value={f.data_sources?.length ? `${f.data_sources.length} sources` : confianceValue}>
+              <div className="flex flex-col gap-3">
+                {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
+                {f.data_sources && f.data_sources.length > 0 && (
+                  <div data-data-sources>
+                    <p className="label-caps mb-1.5">Sources utilisées sur cette fiche</p>
+                    <div className="flex flex-col gap-1">
+                      {f.data_sources.map((s, i) => {
+                        // millésime affiché seulement s'il est une date propre (AAAA / AAAA-MM) — les
+                        // notes longues (« révisions par commune… ») cassent la ligne, le détail vit ailleurs.
+                        const mill = s.millesime && /^\d{4}(-\d{2})?$/.test(s.millesime) ? s.millesime : null
+                        return (
+                        <div key={i} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
+                          <div className="min-w-0">
+                            <span className="text-xs text-txt">{s.nom}</span>
+                            {s.fournisseur && <span className="ml-1 text-[10.5px] text-txt-dim">· {s.fournisseur}</span>}
+                          </div>
+                          <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
+                            {mill && <span className="tnum">{mill}</span>}
+                            {s.fiabilite && <span className="rounded-full px-1.5" style={{ background: s.fiabilite === 'vérifiée' ? '#5CE6A122' : '#e8b84d22', color: s.fiabilite === 'vérifiée' ? '#5CE6A1' : '#e8b84d' }}>{s.fiabilite}</span>}
+                          </div>
+                        </div>
+                      )})}
+                    </div>
+                  </div>
+                )}
+                {/* Données ABSENTES — dites, jamais approximées (doctrine M52). Dérivées de nuls RÉELS
+                    du payload + faits open-data connus. Chaque absence est un fait, pas une excuse. */}
+                {donneesAbsentes.length > 0 && (
+                  <div data-donnees-absentes>
+                    <p className="label-caps mb-1.5">Données absentes</p>
+                    <ul className="flex flex-col gap-1">
+                      {donneesAbsentes.map((a, i) => (
+                        <li key={i} className="flex gap-2 text-[11px] leading-snug text-txt-mut">
+                          <span aria-hidden className="text-txt-dim">○</span>
+                          <span><span className="text-txt">{a.quoi}</span> — {a.pourquoi}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {/* M52 L4 — Qualité de la mesure PAR COMMUNE, DITE (audit RR fold 2025 OOS). RR intra
+                    = pouvoir discriminant dans la commune ; « fragile » = <5 ventes en tête → fréquence
+                    indicative. Mesure seule, aucun tier/seuil/modèle. */}
+                {f.qualite_commune && (
+                  <div data-qualite-commune className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="label-caps">Qualité de la mesure · {f.qualite_commune.commune}</p>
+                      <span className="shrink-0 rounded-full px-1.5 text-[10.5px]" style={{ background: f.qualite_commune.fragile ? '#e8b84d22' : '#5CE6A122', color: f.qualite_commune.fragile ? '#e8b84d' : '#5CE6A1' }}>
+                        {f.qualite_commune.fragile ? 'échantillon limité' : 'robuste'}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
+                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile}</span> : null}</span>
+                      <span>{f.qualite_commune.echantillon.toLocaleString('fr-FR')} parcelles</span>
+                      {f.qualite_commune.taux_base_pct != null && <span>base {f.qualite_commune.taux_base_pct} %</span>}
+                    </div>
+                    <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{f.qualite_commune.libelle}</p>
+                    <p className="mt-1 text-[10px] text-txt-dim">{f.qualite_commune.source}</p>
+                  </div>
+                )}
+                {/* Confiance données (ICD) + score P « pourquoi ». */}
+                {f.icd && <IcdBlockView icd={f.icd} />}
+                <ScoreV2Block idu={idu} />
+                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
+                <SignalerErreur idu={idu} />
+              </div>
+            </RefDrawer>
 
             {/* CARTE IA — EN BAS de la pile (jamais en tête), une seule ligne (spec) */}
             <button onClick={() => setAskOpen(true)} data-askbar-open

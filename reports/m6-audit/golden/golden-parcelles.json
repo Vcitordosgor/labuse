@@ -1,7 +1,7 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8000",
-  "genere_le": "2026-08-07T14:36:31",
+  "genere_le": "2026-08-07T23:52:41",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 117,
   "run_cascade": "q_v8_calibre",
@@ -236,8 +236,56 @@
       "copro": false,
       "mult_base": 1.32,
       "percentile": 86.94,
+      "pourquoi": [
+       {
+        "bin": "3+",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.3188,
+        "phrase": "dernière mutation il y a plus de 3 ans",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.001992, 0.003646]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.0891,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       },
+       {
+        "bin": "5-10a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": -0.0526,
+        "phrase": "dernier permis entre 5 et 10 ans",
+        "signe": "-"
+       },
+       {
+        "bin": "false",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": -0.0519,
+        "phrase": "terrain non nu-constructible",
+        "signe": "-"
+       }
+      ],
       "rang": 55950,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 8.6
+      }
      },
      "surface_m2": 735,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -374,8 +422,63 @@
       "copro": false,
       "mult_base": 7.13,
       "percentile": 99.97,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "surface_m2*permis_bin",
+        "libelle": "croisement surface de la parcelle × ancienneté du dernier permis",
+        "log_hazard": 0.1252,
+        "phrase": "surface combinée aux permis récents du secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 135,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "forte probabilité relative",
+       "reglette_pct": 61.0
+      }
      },
      "surface_m2": 298,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -534,8 +637,56 @@
       "copro": false,
       "mult_base": 0.7,
       "percentile": 25.77,
+      "pourquoi": [
+       {
+        "bin": "A",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": -0.4051,
+        "phrase": "en zone agricole (A)",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.3421",
+        "feature": "pct_bati_secteur",
+        "libelle": "part de parcelles bâties du secteur",
+        "log_hazard": 0.2133,
+        "phrase": "peu de parcelles bâties autour",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "filo_pct_pauv",
+        "libelle": "part de ménages pauvres",
+        "log_hazard": -0.1572,
+        "phrase": "part de ménages pauvres : donnée non disponible",
+        "signe": "-"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.01005",
+        "feature": "dens_bati_secteur",
+        "libelle": "densité bâtie du secteur",
+        "log_hazard": 0.1561,
+        "phrase": "secteur très peu bâti",
+        "signe": "+"
+       }
+      ],
       "rang": 317899,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 4403,
      "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
@@ -725,8 +876,56 @@
       "copro": false,
       "mult_base": 5.88,
       "percentile": 99.83,
+      "pourquoi": [
+       {
+        "bin": "<1",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.8917,
+        "phrase": "dernière mutation il y a moins d'un an",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*rot_nu",
+        "libelle": "croisement ancienneté de la dernière mutation × rotation foncier nu du secteur",
+        "log_hazard": -0.2245,
+        "phrase": "ancienneté de mutation combinée à la rotation du secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 750,
-      "tier": "declasse_non_constructible"
+      "tier": "declasse_non_constructible",
+      "verbal": {
+       "cle": "forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "forte probabilité relative",
+       "reglette_pct": 55.0
+      }
      },
      "surface_m2": 683,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -857,8 +1056,63 @@
       "copro": false,
       "mult_base": 0.92,
       "percentile": 45.46,
+      "pourquoi": [
+       {
+        "bin": "> 61.2",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": -0.4599,
+        "phrase": "parcelle très boisée",
+        "signe": "-"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       },
+       {
+        "bin": "> 1341",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1482,
+        "phrase": "droits à bâtir résiduels importants",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.07692",
+        "feature": "filo_pct_pauv",
+        "libelle": "part de ménages pauvres",
+        "log_hazard": 0.1364,
+        "phrase": "secteur aisé (peu de ménages pauvres)",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.006453, 0.008753]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.1316,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 233570,
-      "tier": "reserve_fonciere"
+      "tier": "reserve_fonciere",
+      "verbal": {
+       "cle": "en_dessous",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": true,
+        "sur_100": 1
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 3462,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -978,8 +1232,63 @@
       "copro": false,
       "mult_base": 64.36,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       }
+      ],
       "rang": 1,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 99.0
+      }
      },
      "surface_m2": 382,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -1122,8 +1431,56 @@
       "copro": false,
       "mult_base": 0.85,
       "percentile": 38.02,
+      "pourquoi": [
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "> 1341",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1482,
+        "phrase": "droits à bâtir résiduels importants",
+        "signe": "-"
+       },
+       {
+        "bin": "(1239, 1.204e+04]",
+        "feature": "surface_m2",
+        "libelle": "surface de la parcelle",
+        "log_hazard": -0.1116,
+        "phrase": "grande parcelle",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.002709, 0.004481]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": -0.1063,
+        "phrase": "rotation du bâti modérée dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       }
+      ],
       "rang": 265435,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 2599,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -1262,8 +1619,63 @@
       "copro": false,
       "mult_base": 22.12,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 10,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 96.2
+      }
      },
      "surface_m2": 300,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -1386,8 +1798,63 @@
       "copro": false,
       "mult_base": 13.15,
       "percentile": 99.98,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 73,
-      "tier": "chaude"
+      "tier": "chaude",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 9
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 80.0
+      }
      },
      "surface_m2": 477,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -1510,8 +1977,63 @@
       "copro": false,
       "mult_base": 22.12,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       }
+      ],
       "rang": 6,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 96.2
+      }
      },
      "surface_m2": 334,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -1654,8 +2176,56 @@
       "copro": true,
       "mult_base": 1.66,
       "percentile": null,
+      "pourquoi": [
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.5319,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "1-2",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.5136,
+        "phrase": "dernière mutation il y a 1 à 2 ans",
+        "signe": "+"
+       },
+       {
+        "bin": "10a+",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": -0.4504,
+        "phrase": "aucun permis récent (10 ans ou plus)",
+        "signe": "-"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*surface_m2",
+        "libelle": "croisement ancienneté de la dernière mutation × surface de la parcelle",
+        "log_hazard": -0.2098,
+        "phrase": "ancienneté de mutation combinée à la surface",
+        "signe": "-"
+       },
+       {
+        "bin": "> 0.01526",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.1824,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": null,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 15.7
+      }
      },
      "surface_m2": 439,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -1771,8 +2341,56 @@
       "copro": false,
       "mult_base": 0.85,
       "percentile": 39.87,
+      "pourquoi": [
+       {
+        "bin": "> 1341",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1482,
+        "phrase": "droits à bâtir résiduels importants",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.4, 1.9]",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.1227,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "(1239, 1.204e+04]",
+        "feature": "surface_m2",
+        "libelle": "surface de la parcelle",
+        "log_hazard": -0.1116,
+        "phrase": "grande parcelle",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.01002, 0.01179]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.0904,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       }
+      ],
       "rang": 257513,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 7483,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -1898,8 +2516,63 @@
       "copro": false,
       "mult_base": 22.12,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 5,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 96.2
+      }
      },
      "surface_m2": 300,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -2062,8 +2735,56 @@
       "copro": false,
       "mult_base": 7.13,
       "percentile": 99.97,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       }
+      ],
       "rang": 134,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "forte probabilité relative",
+       "reglette_pct": 61.0
+      }
      },
      "surface_m2": 337,
      "zonage_detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible)."
@@ -2191,8 +2912,56 @@
       "copro": false,
       "mult_base": 2.65,
       "percentile": 98.84,
+      "pourquoi": [
+       {
+        "bin": "<1",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.8917,
+        "phrase": "dernière mutation il y a moins d'un an",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*surface_m2",
+        "libelle": "croisement ancienneté de la dernière mutation × surface de la parcelle",
+        "log_hazard": -0.1672,
+        "phrase": "ancienneté de mutation combinée à la surface",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.4, 1.9]",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.1227,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*rot_nu",
+        "libelle": "croisement ancienneté de la dernière mutation × rotation foncier nu du secteur",
+        "log_hazard": 0.0933,
+        "phrase": "ancienneté de mutation combinée à la rotation du secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.001992, 0.003646]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.0891,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "-"
+       }
+      ],
       "rang": 4956,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "au_dessus",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "nettement au-dessus de la moyenne",
+       "reglette_pct": 30.3
+      }
      },
      "surface_m2": 581,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -2316,8 +3085,56 @@
       "copro": false,
       "mult_base": 1.32,
       "percentile": 87.37,
+      "pourquoi": [
+       {
+        "bin": "true",
+        "feature": "piscine",
+        "libelle": "piscine détectée",
+        "log_hazard": 0.4121,
+        "phrase": "piscine détectée",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.01315, 0.01526]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.1282,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.001992, 0.003646]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.0891,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       },
+       {
+        "bin": "inconnu",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": -0.0743,
+        "phrase": "date de la dernière mutation inconnue",
+        "signe": "-"
+       }
+      ],
       "rang": 54095,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 8.6
+      }
      },
      "surface_m2": 687,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -2497,8 +3314,56 @@
       "copro": false,
       "mult_base": 15.55,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       }
+      ],
       "rang": 17,
-      "tier": "declasse_non_constructible"
+      "tier": "declasse_non_constructible",
+      "verbal": {
+       "cle": "tres_forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 85.2
+      }
      },
      "surface_m2": 130,
      "zonage_detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~33 % ; emprise clippée en pré-faisabilité)."
@@ -2607,8 +3472,56 @@
       "copro": false,
       "mult_base": 13.15,
       "percentile": 99.99,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "piscine",
+        "libelle": "piscine détectée",
+        "log_hazard": 0.4121,
+        "phrase": "piscine détectée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.07692",
+        "feature": "filo_pct_pauv",
+        "libelle": "part de ménages pauvres",
+        "log_hazard": 0.1364,
+        "phrase": "secteur aisé (peu de ménages pauvres)",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.006453, 0.008753]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.1316,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 57,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "tres_forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 80.0
+      }
      },
      "surface_m2": 608,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -2721,8 +3634,56 @@
       "copro": false,
       "mult_base": 3.25,
       "percentile": 99.14,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": -0.9494,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "-"
+       },
+       {
+        "bin": "true",
+        "feature": "piscine",
+        "libelle": "piscine détectée",
+        "log_hazard": 0.4121,
+        "phrase": "piscine détectée",
+        "signe": "+"
+       },
+       {
+        "bin": "3+",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.3188,
+        "phrase": "dernière mutation il y a plus de 3 ans",
+        "signe": "+"
+       },
+       {
+        "bin": "(27.5, 44.8]",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": -0.2549,
+        "phrase": "parcelle très boisée",
+        "signe": "-"
+       }
+      ],
       "rang": 3694,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "au_dessus",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "nettement au-dessus de la moyenne",
+       "reglette_pct": 36.6
+      }
      },
      "surface_m2": 943,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -2842,8 +3803,63 @@
       "copro": false,
       "mult_base": 0.92,
       "percentile": 45.92,
+      "pourquoi": [
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "> 1341",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1482,
+        "phrase": "droits à bâtir résiduels importants",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.01315, 0.01526]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.1282,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "(1239, 1.204e+04]",
+        "feature": "surface_m2",
+        "libelle": "surface de la parcelle",
+        "log_hazard": -0.1116,
+        "phrase": "grande parcelle",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.001992, 0.003646]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.0891,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "-"
+       }
+      ],
       "rang": 231579,
-      "tier": "reserve_fonciere"
+      "tier": "reserve_fonciere",
+      "verbal": {
+       "cle": "en_dessous",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": true,
+        "sur_100": 1
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 1352,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -2980,8 +3996,56 @@
       "copro": false,
       "mult_base": 1.17,
       "percentile": 73.14,
+      "pourquoi": [
+       {
+        "bin": "(0.001831, 0.002709]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": -0.2634,
+        "phrase": "rotation du bâti faible dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.006453, 0.008753]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.1316,
+        "phrase": "rotation du foncier nu modérée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.3421, 0.4356]",
+        "feature": "pct_bati_secteur",
+        "libelle": "part de parcelles bâties du secteur",
+        "log_hazard": 0.1235,
+        "phrase": "voisinage moyennement construit",
+        "signe": "+"
+       }
+      ],
       "rang": 115024,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 4.9
+      }
      },
      "surface_m2": 95,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -3086,8 +4150,56 @@
       "copro": false,
       "mult_base": 0.81,
       "percentile": 34.39,
+      "pourquoi": [
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.001202",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.2765,
+        "phrase": "rotation du foncier nu faible dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.001831, 0.002709]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": -0.2634,
+        "phrase": "rotation du bâti faible dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "filo_pct_pauv",
+        "libelle": "part de ménages pauvres",
+        "log_hazard": -0.1572,
+        "phrase": "part de ménages pauvres : donnée non disponible",
+        "signe": "-"
+       }
+      ],
       "rang": 280960,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 3562,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
@@ -3258,8 +4370,63 @@
       "copro": false,
       "mult_base": 22.12,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       }
+      ],
       "rang": 7,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 96.2
+      }
      },
      "surface_m2": 253,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -3395,8 +4562,56 @@
       "copro": false,
       "mult_base": 0.81,
       "percentile": 31.23,
+      "pourquoi": [
+       {
+        "bin": "(44.8, 61.2]",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": -0.3891,
+        "phrase": "parcelle très boisée",
+        "signe": "-"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       },
+       {
+        "bin": "inconnu",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": -0.0743,
+        "phrase": "date de la dernière mutation inconnue",
+        "signe": "-"
+       }
+      ],
       "rang": 294509,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 43,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -3545,8 +4760,63 @@
       "copro": false,
       "mult_base": 13.15,
       "percentile": 99.99,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       }
+      ],
       "rang": 59,
-      "tier": "brulante"
+      "tier": "brulante",
+      "verbal": {
+       "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 20
+       },
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 80.0
+      }
      },
      "surface_m2": 366,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -3696,8 +4966,56 @@
       "copro": false,
       "mult_base": 0.52,
       "percentile": 11.43,
+      "pourquoi": [
+       {
+        "bin": "A",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": -0.4051,
+        "phrase": "en zone agricole (A)",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.001831",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": -0.3411,
+        "phrase": "rotation du bâti faible dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.001202",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": -0.2765,
+        "phrase": "rotation du foncier nu faible dans le secteur",
+        "signe": "-"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       }
+      ],
       "rang": 379309,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "en_dessous",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "en dessous de la moyenne",
+       "reglette_pct": 1.0
+      }
      },
      "surface_m2": 1092,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible sur ~56 % de la parcelle)."
@@ -3841,8 +5159,56 @@
       "copro": false,
       "mult_base": 22.12,
       "percentile": 100.0,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "piscine",
+        "libelle": "piscine détectée",
+        "log_hazard": 0.4121,
+        "phrase": "piscine détectée",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       }
+      ],
       "rang": 4,
-      "tier": "declasse_zone_fermee"
+      "tier": "declasse_zone_fermee",
+      "verbal": {
+       "cle": "tres_forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 96.2
+      }
      },
      "surface_m2": 599,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
@@ -3961,8 +5327,56 @@
       "copro": false,
       "mult_base": 13.15,
       "percentile": 99.98,
+      "pourquoi": [
+       {
+        "bin": "",
+        "feature": "tenure_bin*surface_m2",
+        "libelle": "croisement ancienneté de la dernière mutation × surface de la parcelle",
+        "log_hazard": 1.4551,
+        "phrase": "ancienneté de mutation combinée à la surface",
+        "signe": "+"
+       },
+       {
+        "bin": "<1",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.8917,
+        "phrase": "dernière mutation il y a moins d'un an",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "> 1.204e+04",
+        "feature": "surface_m2",
+        "libelle": "surface de la parcelle",
+        "log_hazard": -0.2624,
+        "phrase": "grande parcelle",
+        "signe": "-"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       }
+      ],
       "rang": 107,
-      "tier": "declasse_zone_fermee"
+      "tier": "declasse_zone_fermee",
+      "verbal": {
+       "cle": "tres_forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "très forte probabilité relative",
+       "reglette_pct": 80.0
+      }
      },
      "surface_m2": 27084,
      "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
@@ -4071,8 +5485,56 @@
       "copro": false,
       "mult_base": 2.13,
       "percentile": 98.14,
+      "pourquoi": [
+       {
+        "bin": "<1",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": 0.8917,
+        "phrase": "dernière mutation il y a moins d'un an",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*surface_m2",
+        "libelle": "croisement ancienneté de la dernière mutation × surface de la parcelle",
+        "log_hazard": -0.3643,
+        "phrase": "ancienneté de mutation combinée à la surface",
+        "signe": "-"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       },
+       {
+        "bin": "(0.01002, 0.01179]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.0904,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 7967,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "au_dessus",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "nettement au-dessus de la moyenne",
+       "reglette_pct": 23.5
+      }
      },
      "surface_m2": 481,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -4206,8 +5668,56 @@
       "copro": false,
       "mult_base": 2.8,
       "percentile": 99.04,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "true",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": 0.1954,
+        "phrase": "terrain nu constructible",
+        "signe": "+"
+       }
+      ],
       "rang": 4131,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "au_dessus",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "nettement au-dessus de la moyenne",
+       "reglette_pct": 32.0
+      }
      },
      "surface_m2": 355,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible sur ~53 % de la parcelle)."
@@ -4334,8 +5844,56 @@
       "copro": false,
       "mult_base": 4.16,
       "percentile": 99.51,
+      "pourquoi": [
+       {
+        "bin": "<2a",
+        "feature": "permis_bin",
+        "libelle": "ancienneté du dernier permis",
+        "log_hazard": 1.2953,
+        "phrase": "permis de construire récent (moins de 2 ans)",
+        "signe": "+"
+       },
+       {
+        "bin": "AU",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.3881,
+        "phrase": "en zone à urbaniser (AU)",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "",
+        "feature": "tenure_bin*permis_bin",
+        "libelle": "croisement ancienneté de la dernière mutation × ancienneté du dernier permis",
+        "log_hazard": 0.2213,
+        "phrase": "mutation et permis récents combinés",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       }
+      ],
       "rang": 2080,
-      "tier": "declasse_bati_revele"
+      "tier": "declasse_bati_revele",
+      "verbal": {
+       "cle": "forte",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "forte probabilité relative",
+       "reglette_pct": 44.3
+      }
      },
      "surface_m2": 313,
      "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
@@ -4483,8 +6041,56 @@
       "copro": false,
       "mult_base": 1.17,
       "percentile": 73.95,
+      "pourquoi": [
+       {
+        "bin": "A",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": -0.4051,
+        "phrase": "en zone agricole (A)",
+        "signe": "-"
+       },
+       {
+        "bin": "> 0.01151",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.3116,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.4",
+        "feature": "canopee_pct",
+        "libelle": "canopée",
+        "log_hazard": 0.2395,
+        "phrase": "parcelle peu boisée",
+        "signe": "+"
+       },
+       {
+        "bin": "≤ 0.3421",
+        "feature": "pct_bati_secteur",
+        "libelle": "part de parcelles bâties du secteur",
+        "log_hazard": 0.2133,
+        "phrase": "peu de parcelles bâties autour",
+        "signe": "+"
+       },
+       {
+        "bin": "manquant",
+        "feature": "sdp_residuelle_m2",
+        "libelle": "SDP résiduelle",
+        "log_hazard": -0.1562,
+        "phrase": "SDP résiduelle : donnée non disponible",
+        "signe": "-"
+       }
+      ],
       "rang": 111563,
-      "tier": "ecartee"
+      "tier": "ecartee",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 4.9
+      }
      },
      "surface_m2": 8,
      "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
@@ -4602,8 +6208,56 @@
       "copro": false,
       "mult_base": 1.06,
       "percentile": 66.83,
+      "pourquoi": [
+       {
+        "bin": "(0.008753, 0.01151]",
+        "feature": "rot_nu",
+        "libelle": "rotation foncier nu du secteur",
+        "log_hazard": 0.2143,
+        "phrase": "rotation du foncier nu élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "(0.01002, 0.01179]",
+        "feature": "rot_bati",
+        "libelle": "rotation bâti du secteur",
+        "log_hazard": 0.0904,
+        "phrase": "rotation du bâti élevée dans le secteur",
+        "signe": "+"
+       },
+       {
+        "bin": "U",
+        "feature": "zone_plu",
+        "libelle": "zone PLU",
+        "log_hazard": 0.0768,
+        "phrase": "en zone urbaine (U)",
+        "signe": "+"
+       },
+       {
+        "bin": "inconnu",
+        "feature": "tenure_bin",
+        "libelle": "ancienneté de la dernière mutation",
+        "log_hazard": -0.0743,
+        "phrase": "date de la dernière mutation inconnue",
+        "signe": "-"
+       },
+       {
+        "bin": "false",
+        "feature": "nu_constructible",
+        "libelle": "nu constructible",
+        "log_hazard": -0.0519,
+        "phrase": "terrain non nu-constructible",
+        "signe": "-"
+       }
+      ],
       "rang": 142045,
-      "tier": "declasse_bati_sature"
+      "tier": "declasse_bati_sature",
+      "verbal": {
+       "cle": "proche",
+       "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+       "mot": "proche de la moyenne",
+       "reglette_pct": 1.8
+      }
      },
      "surface_m2": 679,
      "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."

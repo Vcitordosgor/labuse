@@ -1315,6 +1315,7 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "classement": classement,
+            "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
             "notes": ["ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà "
                       "couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : "
@@ -1556,6 +1557,83 @@ def _score_v2_run_id(db: Session) -> str | None:
     return db.execute(text(
         "SELECT run_id FROM p_score_v2_runs WHERE run_id = :label LIMIT 1"),
         {"label": Q_A_RUN_LABEL}).scalar()
+
+
+#: cache mémoire du nombre de parcelles analysées par run (théâtre M52 L2). Le compte est GELÉ
+#: à l'écriture du run (`p_score_v2_runs.n_parcelles`) — pas un COUNT(*) par fiche.
+_PARC_ANALYSEES: dict[str, int | None] = {}
+
+
+def _parc_analysees(db: Session, run: str | None) -> int | None:
+    """Nombre de parcelles analysées du run servi (théâtre « N parcelles analysées »). Lit le
+    compte GELÉ dans `p_score_v2_runs.n_parcelles` (aucun COUNT par requête). Requête EN
+    begin_nested (contrat savepoint : toute requête ajoutée au build de fiche est isolée)."""
+    if not run:
+        return None
+    if run not in _PARC_ANALYSEES:
+        with db.begin_nested():
+            _PARC_ANALYSEES[run] = db.execute(text(
+                "SELECT n_parcelles FROM p_score_v2_runs WHERE run_id = :r"), {"r": run}).scalar()
+    return _PARC_ANALYSEES[run]
+
+
+def _qualite_commune(insee: str | None) -> dict | None:
+    """M52 L4 — qualité PAR COMMUNE, DITE (mesure réelle gelée : `config/qualite_commune.yaml`,
+    dérivé de l'audit RR fold 2025 OOS). Renvoie le RR intra-commune, l'échantillon, le drapeau
+    « fragile » (<5 positifs → fréquence indicative) et une phrase honnête. `degradee` arme le
+    rappel discret en fiche parcelle. PRÉSENTATION SEULE : aucun tier, aucun seuil, aucun modèle."""
+    if not insee:
+        return None
+    try:
+        cfg = config.load_yaml_config("qualite_commune")
+    except FileNotFoundError:
+        return None
+    c = (cfg.get("communes") or {}).get(insee)
+    if not c:
+        return None
+    rr_ile = (cfg.get("ile") or {}).get("rr_1158")
+    fragile = bool(c.get("positifs_faibles"))
+    nom = c.get("commune")
+    n = c.get("n_hors_copro")
+    rr = c.get("rr_intra")
+    n_fr = f"{n:,}".replace(",", " ") if isinstance(n, int) else str(n)   # espace fine insécable comme séparateur de milliers
+    if fragile:
+        libelle = (f"{nom} : marché peu actif ({n_fr} parcelles analysées, base {c.get('taux_base_pct')} %) — "
+                   "le classement reste fiable, la fréquence exacte est indicative (échantillon limité : "
+                   "pouvoir discriminant mesuré sur moins de 5 ventes dans le haut du classement).")
+    else:
+        libelle = (f"{nom} : pouvoir discriminant RR {rr} mesuré sur {n_fr} parcelles (robuste, "
+                   f"≥ 5 ventes dans le haut du classement) — île {rr_ile}.")
+    return {
+        "commune": nom, "insee": insee, "rr_intra": rr, "rr_ile": rr_ile,
+        "echantillon": n, "taux_base_pct": c.get("taux_base_pct"),
+        "fragile": fragile, "degradee": fragile, "libelle": libelle,
+        "source": "audit RR fold 2025 (out-of-sample) · mesure seule",
+    }
+
+
+def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dict]:
+    """M52 L3 — « Les données » : sources RÉELLEMENT utilisées sur CETTE fiche (distinct des
+    couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
+    donnée). Requête EN begin_nested (contrat savepoint : requête ajoutée au build de fiche)."""
+    with db.begin_nested():
+        rows = db.execute(text(
+            """SELECT DISTINCT ds.name, ds.category, ds.provider,
+                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level
+               FROM dryrun_cascade_results cr JOIN data_sources ds ON ds.id = cr.data_source_id
+               WHERE cr.run_label = :run AND cr.parcel_id = :pid
+               ORDER BY ds.category, ds.name"""),
+            {"run": run_label, "pid": parcel_id}).mappings().all()
+    _FIAB = {"verifie": "vérifiée", "estime": "estimée", "declaratif": "déclarative",
+             "a_confirmer": "à confirmer"}
+    out = []
+    for r in rows:
+        mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
+        out.append({
+            "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
+            "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
+        })
+    return out
 
 
 def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
@@ -1983,14 +2061,25 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     # quand il existe ; l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
     v2run = _score_v2_run_id(db)
     s2 = db.execute(text(
-        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail "
+        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail, top5_contributions "
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = :idu"),
         {"r": v2run, "idu": idu}).mappings().first() if v2run else None
-    score_v2 = ({"tier": s2["tier"], "rang": s2["rang"],
-                 "mult_base": float(s2["mult_base"]) if s2["mult_base"] is not None else None,
-                 "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
-                 "copro": bool(s2["copro"])} if s2 else None)
+    score_v2 = None
+    if s2:
+        from ..scoring.echelle_verbale import enrichir_verbal
+        from ..scoring.p_v2.libelles_client import enrichir_contributions
+        _mult = float(s2["mult_base"]) if s2["mult_base"] is not None else None
+        _top5 = s2["top5_contributions"]
+        if isinstance(_top5, str):
+            _top5 = json.loads(_top5)
+        score_v2 = {"tier": s2["tier"], "rang": s2["rang"], "mult_base": _mult,
+                    "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
+                    "copro": bool(s2["copro"]),
+                    # M52 Lot 1 (présentation, 0 calcul) : mot verbal + ⓘ + fréquence par tier (config)
+                    # + « pourquoi » (top5 traduites, libelles_client existant).
+                    "verbal": enrichir_verbal(_mult, s2["tier"]),
+                    "pourquoi": enrichir_contributions(_top5) if _top5 else []}
     # M9 lot 1 — Indice de confiance données (ICD). Méta d'AFFICHAGE, CLOISONNÉE du score P :
     # ne modifie ni le tier, ni le rang, ni p_raw (cf. scoring/icd.py). Bloc annexe.
     icd_block = _icd_block(s2)
@@ -2141,6 +2230,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
         "q_score": head["q_score"], "a_score": head["a_score"],
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
+        "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
+        "data_sources": _data_sources_fiche(db, head["id"], run_label),   # M52 L3 — « Les données » (sources utilisées)
+        "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage

@@ -1,0 +1,177 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>M52 — Maquette fiche v2 (STOP validation Vic)</title>
+<style>
+:root{--bg:#0e1512;--s1:#141d19;--s2:#1a2621;--s3:#22322b;--line:#2b3a33;--txt:#dCe7e1;
+--mut:#8ba69a;--dim:#5f7568;--violet:#a78bfa;--mint:#5fd0a8;--hot:#ff7a59;--warm:#ffc266;
+--cold:#6fb3d9;--red:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:20px}
+h1{font-size:18px}h2{font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 8px}
+.note{background:#1c140b;border:1px solid #5a4322;border-radius:8px;padding:8px 12px;font-size:11.5px;color:var(--warm);margin:8px 0}
+.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{margin:0 0 2px;font-size:13px}.sub{color:var(--dim);font-size:11px}
+.chip{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600}
+.c-hot{background:rgba(255,122,89,.16);color:var(--hot)}.c-warm{background:rgba(255,194,102,.16);color:var(--warm)}
+.c-cold{background:rgba(111,179,217,.16);color:var(--cold)}.c-dim{background:var(--s3);color:var(--mut)}
+.mult{font-size:30px;font-weight:700;letter-spacing:-.5px}.mult small{font-size:13px;color:var(--mut);font-weight:400}
+.verbal{font-size:13px;font-weight:600;margin-top:-2px}
+.info{color:var(--dim);cursor:help;border-bottom:1px dotted var(--dim);font-size:11px}
+.freq{background:var(--s2);border-left:3px solid var(--mint);border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin:8px 0}
+.reg{height:8px;border-radius:5px;margin:10px 0 3px;
+background:linear-gradient(90deg,#3a4d44 0%,var(--cold) 35%,var(--warm) 70%,var(--hot) 100%);position:relative}
+.reg i{position:absolute;top:-4px;width:3px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 6px #000}
+.reglab{display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim)}
+details{border-top:1px solid var(--line);margin-top:8px;padding-top:6px}
+summary{cursor:pointer;font-size:11.5px;color:var(--violet);font-weight:600;list-style:none}
+summary::-webkit-details-marker{display:none}summary:before{content:"▸ ";color:var(--dim)}
+details[open] summary:before{content:"▾ "}
+.why{margin:6px 0 0;padding:0;list-style:none}.why li{padding:3px 0;font-size:11.5px;border-bottom:1px dashed #223}
+.why .w{color:var(--mint)}.why .m{color:var(--warm)}
+.stack{list-style:none;padding:0;margin:0}.stack li{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:5px 0;font-size:11.5px;display:flex;justify-content:space-between;align-items:center}
+.badge{font-size:9.5px;color:var(--dim)}.open{color:var(--mint)}.fold{color:var(--dim)}
+.q-good{color:var(--mint)}.q-warn{color:var(--warm)}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}td,th{text-align:left;padding:3px 6px;border-bottom:1px solid var(--line)}th{color:var(--mut)}
+.src td:first-child{color:var(--txt)}.absent{color:var(--red)}
+.anim{background:var(--s2);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--dim);text-align:center;margin:6px 0}
+.k{color:var(--dim)}.v{color:var(--txt)}
+</style></head><body><div class="wrap">
+<h1>M52 — Maquette fiche parcelle v2 · <span class="sub">présentation seule · 0 tier · 0 calcul · chiffres réels du run servi q_v8_calibre</span></h1>
+<div class="note">⚠ MAQUETTE STATIQUE pour validation. Aucun code front écrit. Tous les chiffres viennent d'un calcul existant (score_v2, audit-rr, data_sources, b_commune_rr). Une donnée manquante est ABSENTE, jamais approximée.</div>
+
+<div class="anim">🎬 LOT 2.3 — au chargement : micro-animation sobre « <b>431&nbsp;663 parcelles analysées</b> » (compteur 0→431663 en ~700 ms, puis fige). Pas d'usine à gaz.</div>
+
+<div class="cols">
+
+<!-- ============ BRÛLANTE RICHE ============ -->
+<div class="card">
+  <h3>🔥 Brûlante riche</h3>
+  <div class="sub">97418000AT2379 · Sainte-Marie · rang 7 / 431&nbsp;663</div>
+
+  <h2>Lot 1 — Lisibilité du score</h2>
+  <div><span class="mult">×22,1</span> <small>vs moyenne de l'île</small></div>
+  <div class="verbal c-hot" style="background:none">Très forte probabilité relative <span class="chip c-hot">×10+</span></div>
+  <div style="margin-top:4px"><span class="info" title="Ce que mesure le ×N : la probabilité RELATIVE, comparée à la moyenne de l'île, qu'une parcelle soit vendue à court terme — modèle backtesté sur les ventes réelles (DVF). Ce qu'il N'EST PAS : ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.">ⓘ que mesure ce chiffre ?</span></div>
+
+  <div class="freq">Parmi les parcelles de ce niveau, <b>~20 sur 100</b> ont été vendues dans les 2 ans, contre <b>~1 à 2 sur 100</b> en moyenne sur l'île. <span class="sub">(mesure backtest out-of-sample, IC95 9,4–19,2×)</span></div>
+
+  <div class="reglab"><span>moyenne</span><span>très forte</span></div>
+  <div class="reg"><i style="left:96%"></i></div>
+  <div class="sub" style="text-align:right">position de la parcelle (pas de note /100, pas d'étoiles)</div>
+
+  <details open><summary>Pourquoi ce score</summary>
+    <ul class="why">
+      <li><span class="w">▲</span> permis de construire récent (moins de 2 ans) <span class="badge">fort</span></li>
+      <li><span class="w">▲</span> rotation du foncier nu élevée dans le secteur</li>
+      <li><span class="w">▲</span> parcelle peu boisée</li>
+      <li><span class="w">▲</span> mutation et permis récents combinés</li>
+      <li><span class="w">▲</span> terrain nu constructible</li>
+    </ul>
+    <div class="sub" style="margin-top:4px">traduit des 5 contributions du modèle (mapping feature→libellé en config).</div>
+  </details>
+
+  <h2>Lot 4 — Qualité commune (DITE)</h2>
+  <div class="freq" style="border-color:var(--warm)"><span class="q-warn">⚠ Sainte-Marie : marché peu actif</span> — la fréquence exacte repose sur un échantillon limité (peu de ventes mesurées). Le <b>classement reste fiable</b> (RR 6,7×), la fréquence en « X sur 100 » est indicative.</div>
+
+  <h2>Lot 2 — Hiérarchie (ordre + états)</h2>
+  <ol class="stack">
+    <li>① Verdict + score <span class="badge open">ouvert</span></li>
+    <li>② Droit du sol (zonage M40, procédure M41) <span class="badge open">ouvert</span></li>
+    <li>③ Économie (capacité, mode B) <span class="badge open">ouvert</span></li>
+    <li>④ Contexte (voisinage M42, historique) <span class="badge fold">replié</span></li>
+    <li>⑤ Propriété (société M43, signaux vendeur) <span class="badge fold">replié</span></li>
+    <li>⑥ Risques & vigilances <span class="badge fold">replié</span></li>
+    <li>⑦ Outils (annuaire M51…) <span class="badge fold">replié</span></li>
+    <li>⑧ <b>Les données</b> (Lot 3) <span class="badge fold">replié</span></li>
+  </ol>
+
+  <h2>Lot 3 — Les données (fin de fiche)</h2>
+  <table class="src"><tr><th>source</th><th>millésime</th><th>apporte</th></tr>
+    <tr><td>Sitadel (permis)</td><td>2025</td><td>permis récents</td></tr>
+    <tr><td>DVF (ventes)</td><td>2024</td><td>backtest du score</td></tr>
+    <tr><td>BD ORTHO IGN</td><td>2025-01</td><td>canopée, bâti</td></tr>
+    <tr><td class="absent">Année de construction</td><td colspan="2" class="absent">non disponible en open data → ABSENTE</td></tr>
+  </table>
+  <div class="sub" style="margin-top:4px">→ <span class="info" title="Lien vers la fiche qualité de la commune (Lot 4)">qualité des données à Sainte-Marie ↗</span></div>
+</div>
+
+<!-- ============ DÉCLASSÉE MODE B ============ -->
+<div class="card">
+  <h3>⛔ Déclassée · mode B</h3>
+  <div class="sub">97416000EY1406 · Saint-Pierre · bâti révélé</div>
+
+  <h2>Lot 1 — Lisibilité du score</h2>
+  <div><span class="mult">×13,2</span> <small>signal brut</small></div>
+  <div class="verbal c-hot" style="background:none">Signal fort, mais <span class="chip c-dim">ÉCARTÉE étage 0</span></div>
+  <div class="freq" style="border-color:var(--dim)">La parcelle porte un signal fort (×13,2) MAIS elle est écartée : <b>bâti récent révélé</b> (ortho/CoSIA) — déjà construite. La fréquence par tier ne s'affiche pas (l'écartement prime).</div>
+  <div class="sub"><span class="info" title="Le ×N est réel ; l'écartement (étage 0) est la doctrine M5 : l'étage 0 prime sur le tier. On montre le signal ET la raison de l'écart.">ⓘ pourquoi écartée malgré ×13 ?</span></div>
+
+  <details open><summary>Pourquoi ce signal (avant écart)</summary>
+    <ul class="why">
+      <li><span class="w">▲</span> permis de construire récent (moins de 2 ans)</li>
+      <li><span class="w">▲</span> piscine détectée</li>
+      <li><span class="w">▲</span> parcelle peu boisée</li>
+      <li><span class="m">✕</span> <b>bâti révélé</b> → écarte la parcelle (étage 0)</li>
+    </ul>
+  </details>
+
+  <h2>Économie — Mode B (« et si… »)</h2>
+  <div class="freq" style="border-color:var(--violet)">MODE B — capacité résiduelle SI le bâti révélé était retiré / la contrainte levée. <span class="sub">(recalcul existant, présenté ; aucune valeur inventée — si une donnée manque, la ligne est absente)</span></div>
+
+  <h2>Lot 2 — ordre adapté (déclassée)</h2>
+  <ol class="stack">
+    <li>① Verdict : <b>écartée</b> + raison <span class="badge open">ouvert</span></li>
+    <li>② Mode B (le « et si ») <span class="badge open">ouvert</span></li>
+    <li>③ Droit du sol <span class="badge fold">replié</span></li>
+    <li>④ Les données <span class="badge fold">replié</span></li>
+  </ol>
+</div>
+
+<!-- ============ ÉCARTÉE SIMPLE ============ -->
+<div class="card">
+  <h3>· Écartée simple</h3>
+  <div class="sub">97416000IL0307 · Saint-Pierre · rang 44&nbsp;245</div>
+
+  <h2>Lot 1 — Lisibilité du score</h2>
+  <div><span class="mult">×1,3</span> <small>vs moyenne de l'île</small></div>
+  <div class="verbal c-cold" style="background:none">Proche de la moyenne <span class="chip c-cold">×1–2</span></div>
+  <div style="margin-top:4px"><span class="info" title="Même ⓘ que partout : probabilité relative, backtestée, pas une prédiction de prix.">ⓘ que mesure ce chiffre ?</span></div>
+
+  <div class="freq" style="border-color:var(--dim)">À ce niveau, la probabilité de vente est <b>proche de la moyenne de l'île</b> (~1 à 2 sur 100 sur 2 ans). Pas de sur-signal.</div>
+
+  <div class="reglab"><span>moyenne</span><span>très forte</span></div>
+  <div class="reg"><i style="left:12%"></i></div>
+
+  <details><summary>Pourquoi ce score</summary>
+    <ul class="why">
+      <li><span class="w">▲</span> détention ancienne (3 ans et +)</li>
+      <li><span class="w">▲</span> parcelle peu boisée · en zone urbaine (U)</li>
+      <li><span class="m">▽</span> rotation du foncier nu faible dans le secteur</li>
+    </ul>
+  </details>
+
+  <h2>Lot 2 — fiche courte</h2>
+  <ol class="stack">
+    <li>① Verdict + score <span class="badge open">ouvert</span></li>
+    <li>② Droit du sol <span class="badge fold">replié</span></li>
+    <li>③ Les données <span class="badge fold">replié</span></li>
+  </ol>
+  <div class="sub" style="margin-top:6px">L'écartée simple reste sobre : l'essentiel visible, le reste à un clic.</div>
+</div>
+
+</div><!--cols-->
+
+<h2>Lot 5 — Vues utilisateur sauvegardées (barre de filtres)</h2>
+<div class="card" style="max-width:420px">
+  <div class="sub">Dans la barre de filtres :</div>
+  <ul class="stack">
+    <li>★ Mes brûlantes Saint-Pierre <span class="badge">appliquer · renommer · ✕</span></li>
+    <li>★ Nu constructible &lt; 2000 m² <span class="badge">appliquer · renommer · ✕</span></li>
+    <li style="border-style:dashed;color:var(--violet)">+ Sauvegarder les filtres actuels…</li>
+  </ul>
+  <div class="sub">Nom + combinaison de filtres, stocké côté compte. Rien de partagé entre comptes.</div>
+</div>
+
+<div class="note" style="color:var(--mut);border-color:var(--line);background:var(--s1)">STOP — Phase 0. Vic valide ou corrige sur pièce. Choix argumentés : <b>qa/m52/M52_P0_MAQUETTE.md</b>. Aucun code front avant validation.</div>
+</div></body></html>

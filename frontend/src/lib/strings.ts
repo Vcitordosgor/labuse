@@ -39,7 +39,7 @@ export const CLIENT = {
     mult: 'mutation ×N',
     surface: 'surface',
     rangTip: 'Classe les parcelles par ordre de priorité (n°1 = la plus prometteuse) — copropriétés en queue',
-    multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible de muter que la moyenne de l’île',
+    multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
     surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
   },
 
@@ -151,7 +151,7 @@ export const CLIENT = {
       },
       {
         h: 'Le « ×N »',
-        p: 'Une parcelle « ×13 » est jugée 13 fois plus susceptible de muter que la moyenne. ' +
+        p: 'Une parcelle « ×13 » est jugée 13 fois plus susceptible d’être vendue que la moyenne. ' +
           'Le plafond est ×64 : une poignée de parcelles atteignent la certitude maximale du ' +
           'modèle et partagent donc ce même score de tête.',
       },
