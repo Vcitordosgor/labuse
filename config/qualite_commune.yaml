@@ -1,0 +1,205 @@
+# M52 L4 — Qualité par commune, DITE (mesure réelle gelée). Généré depuis qa/audit-rr/b_commune_rr.md.
+# PRÉSENTATION SEULE : aucun tier, aucun seuil, aucun modèle. Sert l'encart « qualité commune ».
+_source: 'qa/audit-rr/b_commune_rr.md — fold 2025 walk-forward (out-of-sample), hors
+  copro, ties seedés 974. Île : RR@1158=6.73, taux base 1.51%. Mesure SEULE (aucun
+  tier/seuil/modèle modifié).'
+_note: RR intra = pouvoir discriminant DANS la commune (top-k_c). « positifs_faibles
+  » (<5 positifs dans le top-k_c) = mesure fragile, ne supporte aucune conclusion
+  fine ; le CLASSEMENT reste, la fréquence exacte est indicative.
+ile:
+  rr_1158: 6.73
+  taux_base_pct: 1.51
+  n_hors_copro: 428239
+communes:
+  '97420':
+    commune: Sainte-Suzanne
+    n_hors_copro: 12490
+    taux_base_pct: 0.9
+    k_c: 34
+    rr_intra: 19.5
+    positifs_faibles: false
+    dans_top_ile: 18
+  '97404':
+    commune: L'Étang-Salé
+    n_hors_copro: 9011
+    taux_base_pct: 1.63
+    k_c: 24
+    rr_intra: 17.9
+    positifs_faibles: false
+    dans_top_ile: 40
+  '97407':
+    commune: Le Port
+    n_hors_copro: 10114
+    taux_base_pct: 1.84
+    k_c: 27
+    rr_intra: 16.1
+    positifs_faibles: false
+    dans_top_ile: 25
+  '97419':
+    commune: Sainte-Rose
+    n_hors_copro: 6284
+    taux_base_pct: 0.81
+    k_c: 17
+    rr_intra: 14.5
+    positifs_faibles: true
+    dans_top_ile: 4
+  '97410':
+    commune: Saint-Benoît
+    n_hors_copro: 21622
+    taux_base_pct: 1.48
+    k_c: 58
+    rr_intra: 14.0
+    positifs_faibles: false
+    dans_top_ile: 47
+  '97417':
+    commune: Saint-Philippe
+    n_hors_copro: 4155
+    taux_base_pct: 1.52
+    k_c: 11
+    rr_intra: 12.0
+    positifs_faibles: true
+    dans_top_ile: 3
+  '97405':
+    commune: Petite-Île
+    n_hors_copro: 13122
+    taux_base_pct: 1.46
+    k_c: 35
+    rr_intra: 9.8
+    positifs_faibles: false
+    dans_top_ile: 31
+  '97416':
+    commune: Saint-Pierre
+    n_hors_copro: 42045
+    taux_base_pct: 1.51
+    k_c: 114
+    rr_intra: 9.3
+    positifs_faibles: false
+    dans_top_ile: 96
+  '97401':
+    commune: Les Avirons
+    n_hors_copro: 8560
+    taux_base_pct: 1.52
+    k_c: 23
+    rr_intra: 8.6
+    positifs_faibles: true
+    dans_top_ile: 22
+  '97409':
+    commune: Saint-André
+    n_hors_copro: 22513
+    taux_base_pct: 1.35
+    k_c: 61
+    rr_intra: 8.5
+    positifs_faibles: false
+    dans_top_ile: 53
+  '97406':
+    commune: La Plaine-des-Palmistes
+    n_hors_copro: 6446
+    taux_base_pct: 1.6
+    k_c: 17
+    rr_intra: 7.4
+    positifs_faibles: true
+    dans_top_ile: 19
+  '97418':
+    commune: Sainte-Marie
+    n_hors_copro: 16646
+    taux_base_pct: 1.32
+    k_c: 45
+    rr_intra: 6.7
+    positifs_faibles: true
+    dans_top_ile: 32
+  '97421':
+    commune: Salazie
+    n_hors_copro: 7034
+    taux_base_pct: 0.87
+    k_c: 19
+    rr_intra: 6.1
+    positifs_faibles: true
+    dans_top_ile: 11
+  '97413':
+    commune: Saint-Leu
+    n_hors_copro: 22763
+    taux_base_pct: 1.32
+    k_c: 62
+    rr_intra: 4.9
+    positifs_faibles: true
+    dans_top_ile: 67
+  '97415':
+    commune: Saint-Paul
+    n_hors_copro: 50593
+    taux_base_pct: 1.74
+    k_c: 137
+    rr_intra: 4.6
+    positifs_faibles: false
+    dans_top_ile: 194
+  '97403':
+    commune: Entre-Deux
+    n_hors_copro: 6301
+    taux_base_pct: 1.29
+    k_c: 17
+    rr_intra: 4.6
+    positifs_faibles: true
+    dans_top_ile: 13
+  '97408':
+    commune: La Possession
+    n_hors_copro: 13148
+    taux_base_pct: 2.19
+    k_c: 36
+    rr_intra: 3.8
+    positifs_faibles: true
+    dans_top_ile: 97
+  '97411':
+    commune: Saint-Denis
+    n_hors_copro: 36981
+    taux_base_pct: 1.6
+    k_c: 100
+    rr_intra: 3.8
+    positifs_faibles: false
+    dans_top_ile: 127
+  '97414':
+    commune: Saint-Louis
+    n_hors_copro: 29141
+    taux_base_pct: 1.39
+    k_c: 79
+    rr_intra: 3.7
+    positifs_faibles: true
+    dans_top_ile: 72
+  '97422':
+    commune: Le Tampon
+    n_hors_copro: 42523
+    taux_base_pct: 1.71
+    k_c: 115
+    rr_intra: 3.1
+    positifs_faibles: false
+    dans_top_ile: 80
+  '97412':
+    commune: Saint-Joseph
+    n_hors_copro: 28875
+    taux_base_pct: 1.55
+    k_c: 78
+    rr_intra: 2.5
+    positifs_faibles: true
+    dans_top_ile: 43
+  '97402':
+    commune: Bras-Panon
+    n_hors_copro: 6016
+    taux_base_pct: 0.96
+    k_c: 16
+    rr_intra: 0.0
+    positifs_faibles: true
+    dans_top_ile: 11
+  '97423':
+    commune: Les Trois-Bassins
+    n_hors_copro: 5301
+    taux_base_pct: 1.38
+    k_c: 14
+    rr_intra: 0.0
+    positifs_faibles: true
+    dans_top_ile: 41
+  '97424':
+    commune: Cilaos
+    n_hors_copro: 6555
+    taux_base_pct: 1.74
+    k_c: 18
+    rr_intra: 0.0
+    positifs_faibles: true
+    dans_top_ile: 12

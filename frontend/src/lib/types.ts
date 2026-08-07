@@ -195,6 +195,13 @@ export interface ModeB {
   } | null
 }
 
+// M52 L4 — qualité par commune, DITE (mesure réelle gelée, audit RR fold 2025 OOS).
+export interface QualiteCommune {
+  commune: string; insee: string; rr_intra: number; rr_ile: number | null
+  echantillon: number; taux_base_pct: number | null; fragile: boolean; degradee: boolean
+  libelle: string; source: string
+}
+
 export interface Fiche {
   idu: string
   commune: string
@@ -232,6 +239,10 @@ export interface Fiche {
   } | null
   etage0: boolean
   parc_analysees?: number | null   // M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
+  // M52 L3 — « Les données » : sources réellement utilisées sur cette fiche (0 nouvelle donnée).
+  data_sources?: { nom: string; categorie: string | null; fournisseur: string | null; millesime: string | null; fiabilite: string | null }[]
+  // M52 L4 — qualité par commune, DITE (mesure réelle gelée ; degradee = arme le rappel discret).
+  qualite_commune?: QualiteCommune | null
   // M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, CLOISONNÉE du score P.
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).

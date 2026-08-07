@@ -1184,6 +1184,13 @@ export function Fiche({ idu }: { idu: string }) {
   // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
   // que le verdict. La déclassée à signal fort remonte le Mode B en 2 (ouvert), l'essentiel replié.
   const servable = !!(verdict && verdict.tier != null)
+  // M52 L3 — données ABSENTES, DITES (jamais approximées) : dérivées de nuls RÉELS du payload +
+  // faits open-data connus. Chaque entrée est un fait vérifiable, pas une excuse vague.
+  const donneesAbsentes: { quoi: string; pourquoi: string }[] = f ? [
+    { quoi: 'Année de construction', pourquoi: 'non disponible en open data à la parcelle (ABSENTE)' },
+    ...(!f.adresse ? [{ quoi: 'Adresse postale', pourquoi: 'parcelle non rattachée à une voie (BAN)' }] : []),
+    ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
+  ] : []
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
@@ -1405,6 +1412,14 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
           </div>
+        )}
+
+        {/* M52 L4 — rappel DISCRET quand la mesure de la commune est dégradée (échantillon limité) :
+            le classement reste, la fréquence exacte est indicative. Jamais une excuse vague. */}
+        {f?.qualite_commune?.degradee && (
+          <p data-qualite-commune-rappel style={{ margin: '9px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#9db5a8' }}>
+            <span style={{ color: '#e8b84d' }}>◐</span> {f.qualite_commune.libelle}
+          </p>
         )}
 
         {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
@@ -1778,17 +1793,74 @@ export function Fiche({ idu }: { idu: string }) {
               </RefDrawer>
             )}
 
-            {/* ⑧ CONFIANCE ET DONNÉES — dernier bloc de contenu (score P « pourquoi », ICD, flags,
-                signaler). Devient « Les données » en L3 (data_sources + absentes dites). */}
-            <RefDrawer id="confiance" icon={IC.confiance} name="Confiance et données" value={confianceValue}>
+            {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
+                cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
+                signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
+            <RefDrawer id="confiance" icon={IC.confiance} name="Les données"
+              value={f.data_sources?.length ? `${f.data_sources.length} sources` : confianceValue}>
               <div className="flex flex-col gap-3">
-                <ScoreV2Block idu={idu} />
+                {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
+                {f.data_sources && f.data_sources.length > 0 && (
+                  <div data-data-sources>
+                    <p className="label-caps mb-1.5">Sources utilisées sur cette fiche</p>
+                    <div className="flex flex-col gap-1">
+                      {f.data_sources.map((s, i) => {
+                        // millésime affiché seulement s'il est une date propre (AAAA / AAAA-MM) — les
+                        // notes longues (« révisions par commune… ») cassent la ligne, le détail vit ailleurs.
+                        const mill = s.millesime && /^\d{4}(-\d{2})?$/.test(s.millesime) ? s.millesime : null
+                        return (
+                        <div key={i} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
+                          <div className="min-w-0">
+                            <span className="text-xs text-txt">{s.nom}</span>
+                            {s.fournisseur && <span className="ml-1 text-[10.5px] text-txt-dim">· {s.fournisseur}</span>}
+                          </div>
+                          <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
+                            {mill && <span className="tnum">{mill}</span>}
+                            {s.fiabilite && <span className="rounded-full px-1.5" style={{ background: s.fiabilite === 'vérifiée' ? '#5CE6A122' : '#e8b84d22', color: s.fiabilite === 'vérifiée' ? '#5CE6A1' : '#e8b84d' }}>{s.fiabilite}</span>}
+                          </div>
+                        </div>
+                      )})}
+                    </div>
+                  </div>
+                )}
+                {/* Données ABSENTES — dites, jamais approximées (doctrine M52). Dérivées de nuls RÉELS
+                    du payload + faits open-data connus. Chaque absence est un fait, pas une excuse. */}
+                {donneesAbsentes.length > 0 && (
+                  <div data-donnees-absentes>
+                    <p className="label-caps mb-1.5">Données absentes</p>
+                    <ul className="flex flex-col gap-1">
+                      {donneesAbsentes.map((a, i) => (
+                        <li key={i} className="flex gap-2 text-[11px] leading-snug text-txt-mut">
+                          <span aria-hidden className="text-txt-dim">○</span>
+                          <span><span className="text-txt">{a.quoi}</span> — {a.pourquoi}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {/* M52 L4 — Qualité de la mesure PAR COMMUNE, DITE (audit RR fold 2025 OOS). RR intra
+                    = pouvoir discriminant dans la commune ; « fragile » = <5 ventes en tête → fréquence
+                    indicative. Mesure seule, aucun tier/seuil/modèle. */}
+                {f.qualite_commune && (
+                  <div data-qualite-commune className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="label-caps">Qualité de la mesure · {f.qualite_commune.commune}</p>
+                      <span className="shrink-0 rounded-full px-1.5 text-[10.5px]" style={{ background: f.qualite_commune.fragile ? '#e8b84d22' : '#5CE6A122', color: f.qualite_commune.fragile ? '#e8b84d' : '#5CE6A1' }}>
+                        {f.qualite_commune.fragile ? 'échantillon limité' : 'robuste'}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
+                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile}</span> : null}</span>
+                      <span>{f.qualite_commune.echantillon.toLocaleString('fr-FR')} parcelles</span>
+                      {f.qualite_commune.taux_base_pct != null && <span>base {f.qualite_commune.taux_base_pct} %</span>}
+                    </div>
+                    <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{f.qualite_commune.libelle}</p>
+                    <p className="mt-1 text-[10px] text-txt-dim">{f.qualite_commune.source}</p>
+                  </div>
+                )}
+                {/* Confiance données (ICD) + score P « pourquoi ». */}
                 {f.icd && <IcdBlockView icd={f.icd} />}
-                {/* M37 : chip « Statut matrice (historique) » RETIRÉ (arbitrage Vic — le tier
-                    servi + l'ICD suffisent ; plus de classement historique en surface fiche). */}
-                {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
-                    parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
-                    jauge de confiance données par parcelle. */}
+                <ScoreV2Block idu={idu} />
                 {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
                 <SignalerErreur idu={idu} />
               </div>

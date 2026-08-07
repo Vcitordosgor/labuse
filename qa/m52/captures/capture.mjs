@@ -36,6 +36,18 @@ for (const [idu, name] of PARCELS) {
   await sleep(1200) // stabilisation (fetch score_v2 + rendu réglette)
   const panel = page.locator('aside.absolute.right-0.top-0').first()
   const PREFIX = process.env.PREFIX || 'L1'
+  if (process.env.DRAWER) {
+    // ouvre un tiroir précis (ex. « Les données ») et le capture seul. Viewport haut → le tiroir
+    // entier tient ; attente longue pour les sous-blocs async (ScoreV2Block, ICD).
+    await page.setViewportSize({ width: 460, height: 3000 })
+    const d = page.locator(`[data-drawer="${process.env.DRAWER}"]`).first()
+    await d.scrollIntoViewIfNeeded()
+    await d.locator('button[aria-expanded]').first().click()
+    await sleep(1600)
+    await d.screenshot({ path: join(OUT, `${PREFIX}_${LABEL}_${name}__${process.env.DRAWER}.png`) })
+    console.log(`✓ ${LABEL} ${name} — drawer ${process.env.DRAWER}`)
+    continue
+  }
   if (process.env.FULLSTACK) {
     // viewport TRÈS haut → l'aside h-full grandit, le conteneur scrollable montre toute la pile
     // sans hack DOM (ordre des tuiles + états dépliés). Ne change QUE le screenshot, pas le produit.
