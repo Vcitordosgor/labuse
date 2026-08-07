@@ -54,7 +54,12 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
 
     Retourne (facts, deeplinks). Défensif : un bloc manquant devient ABSENT, jamais une erreur."""
     from .app import _q_v2_fiche
+    from ..verdict_servi import verdict_servi
     f = _q_v2_fiche(db, idu)  # fiche PREMIUM (ce que le client voit)
+    # M48 (F1) : le classement SERVI au client, PAS le champ mort `statut` (matrice v1 éteinte M37).
+    # verdict_servi traduit parcel_p_score_v2.tier — point de vérité unique (M34). L'IA doit dire
+    # ce que la fiche affiche (« Brûlante »), jamais l'inverse.
+    vs = verdict_servi(db, idu)
 
     regl = f.get("reglement_plu") or {}
     via = f.get("viabilisation") or {}
@@ -127,7 +132,8 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         "idu": _F(f.get("idu")),
         "commune": _F(f.get("commune")),
         "surface_m2": _F(f.get("surface_m2")),
-        "statut_tier": _F(f.get("statut")),
+        "statut_tier": _F(vs.get("label")),   # M48 (F1) : verdict SERVI (« Brûlante »…), pas la matrice morte
+        "rang_classement": _F(vs.get("rang")),
         "zone_plu": _F(zone_str),                     # toutes les zones jointes (« U4b + UD » si bizone)
         "reglement_regles": _F(regles_zones),         # règles + références par zone
         # ── viabilisation M-VIA (SOURCÉ) ──
