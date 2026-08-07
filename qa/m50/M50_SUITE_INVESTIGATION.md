@@ -68,3 +68,37 @@ anciens — les périmés restent. C'est ce que Vic observe.
 **STOP.** Rien écrit, aucun rebuild île. Tu arbitres : (a) accepter INSEE+nom côté builder, (b) la
 purge par commune adossée au snapshot de revue, (c) rebâtir Saint-Paul (1 candidat) + purger les 5
 périmés — geste servi, ta main.
+
+---
+
+## CORRECTIONS (post-fixes, constatées) — §2 était imprécis + un AVEU d'écriture accidentelle
+
+### Correction §2 : les « 5 disparus » sont des DÉCOUPES, pas des « tués par v8 »
+Les 6 candidats Saint-Paul se répartissent : **BV0182 = `demolition` (RÉSIDUEL, run q_v8)** +
+**AX1059/CH1198/CP0511/DS0617/HO0423 = `decoupe` (run q_v7)**. Le résiduel (`build_divisions`, la
+commande `division-or` de Vic) **ne produit QUE le résiduel** → il reproduit **BV0182**, et ne
+« perd » pas les 5 : ils relèvent d'une **AUTRE commande** (`build_divisions_partiel`, pool découpe
+MASQUÉ). Mon §2 comparait à tort la sortie résiduelle aux 6 (tous types). **BV0182 est le survivant
+résiduel ; les 5 découpes se rejouent via le partiel** (dont la garde `exclue` écarte les 3
+`status='exclue'` — CH1198/CP0511/DS0617). Le fond tient (BV0182 survit, les périmés doivent partir)
+mais la mécanique est « bon type / bonne commande », pas « tués par la calibration v8 ».
+
+### AVEU : écriture accidentelle sur la table servie (commit=True par défaut)
+En traçant §2, j'ai appelé `build_divisions(s, ["Saint-Paul"])` **sans `commit=False`** — or le
+défaut est `commit=True`. Le `rollback()` du `finally` est intervenu APRÈS le commit → **sans
+effet**. Conséquence CONSTATÉE : **1 ligne écrite** — `BV0182` rafraîchie q_v7→**q_v8_calibre**
+(upsert). **Le compte reste 35** (le §2 précédait l'ajout de la purge → aucune suppression) ; les 34
+autres restent q_v7. La valeur écrite est CORRECTE (BV0182 EST un candidat résiduel q_v8), mais
+c'était une **violation du « lecture seule »**. Je ne peux pas revert parfaitement (l'upsert a
+touché plusieurs colonnes, je n'ai pas les pré-valeurs) — **ton rebuild île réécrira tout proprement**.
+Jobs tués, plus aucune écriture depuis.
+
+## COMMANDES DE REBUILD (ta main)
+- **Résiduel** (produit libre/demolition, purge incluse) :
+  `PYTHONPATH=src labuse division-or --communes 97401,97402,97403,97404,97405,97406,97407,97408,97409,97410,97411,97412,97413,97414,97415,97416,97417,97418,97419,97420,97421,97422,97423,97424`
+- **Découpe** (pool MASQUÉ, 27 périmés q_v7) : la commande `partiel` équivalente (build_divisions_partiel).
+- **Estimé à blanc** : je ne l'ai PAS relancé (pour ne plus écrire par accident). Attendu qualitatif :
+  résiduel **≪ 8** (BV0182 sûr ; les 7 libre q_v7 à re-confronter à la garde `exclue`+géométrie v8) ;
+  découpe fortement réduit (la garde `exclue` tue au moins 3 des Saint-Paul). Un `--communes` avec
+  `commit=False` donnerait le compte exact — à toi de me redemander si tu veux que je le lance (safe).
+- Après : garde M50 → **OK (q_v8_calibre)**, périmés purgés, BV0182 présent.
