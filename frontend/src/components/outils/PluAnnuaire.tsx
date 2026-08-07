@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, type PluExtrait } from '../../lib/api'
+import { useApp } from '../../store/useApp'
 
 // M51 — ANNUAIRE PLU : recherche full-text dans le règlement écrit OPPOSABLE des communes (source
 // Géoportail de l'Urbanisme). SERT DU VERBATIM SOURCÉ — commune, document, article, PAGE PDF, lien —
@@ -9,10 +10,22 @@ import { pluAnnuaireSearch, pluAnnuaireCommunes, type PluExtrait } from '../../l
 export function PluAnnuaire() {
   const [q, setQ] = useState('')
   const [insee, setInsee] = useState('')
+  const [zone, setZone] = useState('')                       // filtre zone (lien contextuel fiche → O13)
+  const pluPrefill = useApp((s) => s.pluPrefill)
+  const setPluPrefill = useApp((s) => s.setPluPrefill)
   const communes = useQuery({ queryKey: ['plu-communes'], queryFn: pluAnnuaireCommunes })
-  const m = useMutation({ mutationFn: () => pluAnnuaireSearch(q.trim(), insee || undefined) })
+  const m = useMutation({ mutationFn: () => pluAnnuaireSearch(q.trim(), insee || undefined, zone || undefined) })
   const d = m.data
   const run = () => { if (q.trim().length >= 2) m.mutate() }
+
+  // Ouvert depuis une fiche : la commune + la zone servie sont pré-remplies (verbatim de CETTE zone).
+  useEffect(() => {
+    if (pluPrefill) {
+      setInsee(pluPrefill.insee)
+      setZone(pluPrefill.zone ?? '')
+      setPluPrefill(null)
+    }
+  }, [pluPrefill, setPluPrefill])
   const nomInsee = (code: string | null) => communes.data?.communes.find((c) => c.insee === code)?.commune
 
   return (
@@ -44,6 +57,12 @@ export function PluAnnuaire() {
             {m.isPending ? '…' : 'Chercher'}
           </button>
         </div>
+        {zone && (
+          <div className="flex items-center gap-1.5 text-[10.5px] text-txt-mut">
+            <span>Filtré sur la <span className="font-mono text-violet">zone {zone}</span> (depuis la fiche)</span>
+            <button onClick={() => setZone('')} className="rounded bg-surface-3 px-1 text-txt-dim hover:text-txt">✕ retirer</button>
+          </div>
+        )}
         {communes.data && (
           <div className="text-[10px] text-txt-dim">
             {communes.data.servables}/24 communes servables — les autres (RNU, révision en cours) sont

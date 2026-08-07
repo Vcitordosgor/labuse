@@ -327,6 +327,7 @@ export interface ReglementZone {
   edition?: string | null
   idurba?: string | null
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
+  annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
 }
 export interface ReglementPlu { zones: ReglementZone[]; disclaimer: string }

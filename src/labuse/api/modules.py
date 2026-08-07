@@ -1219,9 +1219,9 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
         elif c["statut"] == "opposabilite_en_attente":
             out.append({"insee": insee, "commune": c["commune"], "statut": "revision", "extraits": 0,
                         "idurba": c.get("idurba"),
-                        "message": "PLU en révision ; l'opposable n'est pas servi au Géoportail par "
-                                   "cette référence — non ingéré (à réconcilier, on ne sert pas un "
-                                   "règlement non réconcilié)."})
+                        "message": "Révision en cours — règlement non servi par le GPU, vérifier en "
+                                   "mairie. Complétion automatique à l'approbation (veille trimestrielle "
+                                   "M41). On ne sert pas un règlement non réconcilié (garde idurba+sha)."})
         else:
             out.append({"insee": insee, "commune": c["commune"], "statut": "non_ingere",
                         "idurba": c.get("idurba"), "extraits": 0,
@@ -1248,9 +1248,12 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                     "message": f"{mil['commune']} : RNU — pas de règlement communal à interroger."}
         if insee not in corpus_status(db):
             nm = mil["commune"] if mil else insee
+            rev = mil and mil["statut"] == "opposabilite_en_attente"
             return {"query": q, "insee": insee, "commune": nm, "n": 0, "resultats": [],
-                    "message": f"{nm} : règlement non ingéré (révision non réconciliée ou hors "
-                               f"corpus) — rien à servir. Voir /plu-annuaire/communes."}
+                    "message": (f"{nm} : révision en cours — règlement non servi par le GPU, vérifier "
+                                f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
+                               (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
+                                f"Voir /plu-annuaire/communes.")}
     res = search_reglement(db, q, insee, limit=limit, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"

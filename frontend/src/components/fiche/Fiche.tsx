@@ -289,6 +289,8 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
+  const setModule = useApp((s) => s.setModule)
+  const setPluPrefill = useApp((s) => s.setPluPrefill)
   return (
     <div data-reglement-plu className="card-elev px-3 py-2.5">
       <p className="label-caps">Règlement PLU</p>
@@ -300,6 +302,13 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
               {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
                 {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
               </a>}
+              {z.annuaire?.insee && (
+                <button data-plu-annuaire-link
+                  onClick={() => { setPluPrefill({ insee: z.annuaire!.insee!, zone: z.annuaire!.zone ?? null }); setModule('plu-annuaire') }}
+                  className="text-[11px] text-violet hover:underline">
+                  Annuaire PLU →
+                </button>
+              )}
             </div>
             {z.articles.length > 0 && (
               <ul className="mt-1 flex flex-col gap-0.5">

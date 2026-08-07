@@ -212,8 +212,8 @@ export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
 }
-export const pluAnnuaireSearch = (qy: string, insee?: string) =>
-  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}`)
+export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
+  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
   j<{ n_communes: number; servables: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
 
