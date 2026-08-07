@@ -3821,7 +3821,6 @@ from .potentiel import router as _potentiel_router  # noqa: E402  (M22-D — rap
 from .onboarding import router as _onboarding_router  # noqa: E402  (PREMIER EURO — onboarding + légal + webhook)
 from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
 from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
-from .operations import router as _operations_router  # noqa: E402  (O11 — opérations & lots)
 from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
@@ -3853,7 +3852,6 @@ app.include_router(_potentiel_router)
 app.include_router(_onboarding_router)
 app.include_router(_tension_router)
 app.include_router(_rarete_router)
-app.include_router(_operations_router)
 app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
