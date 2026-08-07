@@ -198,7 +198,113 @@ def test_exclusions_revue_idu_coherents():
     assert "97416000AV0203"[:5] != faux_insee                  # 97416 ≠ 97411 : incohérent
 
 
+def test_detect_indexe_par_nom_jamais_left_idu():
+    """M50-SUITE-2 : le détecteur filtre parcels.commune (NOM, indexé ix_parcels_commune) et JAMAIS
+    left(idu,5) — expression non indexable (btree idu sous collation ≠ C) qui forçait un Parallel Seq
+    Scan de 431 k lignes à chaque commune (~3 min → île >1 h → interrompue → rien commité)."""
+    for sql in (d._DETECT, d._DETECT_PARTIEL):
+        assert "p.commune = :commune" in sql
+        assert "left(p.idu" not in sql       # plus de prédicat non indexable dans le détecteur
+
+
 @pytest.mark.db
+def test_resolution_insee_vers_nom(db_session):
+    """M50-SUITE-2 : l'entrée INSEE est résolue en NOM EN AMONT (réf commune_conso_enaf, O(1)),
+    pas dans le SQL. Un nom (ou un code hors réf) passe tel quel."""
+    s = db_session
+    assert d._resolve_commune(s, "Saint-Paul") == "Saint-Paul"   # déjà un nom → inchangé
+    assert d._resolve_commune(s, "ZZ") == "ZZ"                    # ni code ni nom connu → inchangé
+    if s.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is not None:
+        assert d._resolve_commune(s, "97415") == "Saint-Paul"    # code → nom exact de parcels.commune
+        assert d._resolve_commune(s, "99999") == "99999"         # code hors réf → tel quel
+
+
+@pytest.mark.db
+def test_all_communes_liste_canonique(db_session):
+    """M50-SUITE-2 : --all s'appuie sur all_communes() = la réf canonique de l'île, en NOMS (jamais
+    des codes → chemin indexé), pour ne pouvoir en oublier aucune."""
+    s = db_session
+    noms = d.all_communes(s)
+    if s.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is None:
+        assert noms == []                                        # réf absente → l'appelant décide
+        return
+    assert len(noms) == 24                                       # l'île entière
+    assert "Saint-Paul" in noms and "Le Port" in noms           # des NOMS, pas des codes INSEE
+    assert all(isinstance(n, str) and not n.isdigit() for n in noms)
+
+
+@pytest.mark.db
+def test_purge_commune_avant_reecriture(db_session):
+    """M50-SUITE : un rebuild par commune PURGE ses lignes avant réécriture (un rebuild à 0 laisse
+    la commune VIDE, pas périmée) ; les tracés REVUS (note_revue) sont PRÉSERVÉS."""
+    s = db_session
+    d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)  # crée la table
+    s.execute(text(
+        "INSERT INTO division_or_candidates (idu, commune, type_division, run_label, note_revue) VALUES "
+        "('97499000ZZ0001','ZZPurge','libre','q_v7_defisc', NULL),"          # périmé non-revu → purgé
+        "('97499000ZZ0002','ZZPurge','libre','q_v7_defisc','revu par Vic')," # REVU → préservé
+        "('97499000ZZ0003','ZZPurge','decoupe','q_v7_defisc', NULL)"))       # découpe → hors build_divisions
+    # rebuild résiduel de la commune (0 détecté en base de test) : la purge doit tourner
+    d.build_divisions(s, ["ZZPurge"], commit=False, log=lambda *_: None)
+    restant = {r[0]: r[1] for r in s.execute(text(
+        "SELECT idu, type_division FROM division_or_candidates WHERE commune='ZZPurge'"))}
+    assert "97499000ZZ0001" not in restant                 # périmé non-revu PURGÉ (commune vide, pas périmée)
+    assert restant.get("97499000ZZ0002") == "libre"        # REVU préservé
+    assert restant.get("97499000ZZ0003") == "decoupe"      # découpe intacte (autre path)
+
+
+@pytest.mark.db
+def test_ile_resiliente_commune_qui_casse(monkeypatch):
+    """M50-SUITE-2 : une commune qui CASSE en cours d'île est ISOLÉE (rollback de sa seule
+    transaction) et l'île CONTINUE — les communes AVANT **et APRÈS** sont commitées et persistent
+    (vérifié depuis une NOUVELLE connexion). Reproduit le cas réel (Vic : crash 'Les Avirons', île
+    avortée alors qu'elle est en tête d'ordre INSEE). Commit=True + session_factory (écritures RÉELLES
+    sur communes synthétiques, auto-nettoyées) car la fixture transactionnelle ne prouve pas le
+    cross-connexion. La preuve que le commit-par-commune survit à un crash SUIVANT."""
+    from labuse.db import session_factory, session_scope
+    A, CRASH, C = "ZZ-RESIL-A", "ZZ-RESIL-CRASH", "ZZ-RESIL-C"      # A avant · CRASH casse · C après
+    comm = {"a": A, "c": CRASH, "z": C}
+
+    def _wipe():
+        sc = session_factory()()
+        sc.execute(text("DELETE FROM division_or_candidates WHERE commune IN (:a,:c,:z)"), comm)
+        sc.commit(); sc.close()
+
+    try:
+        s0 = session_factory()()
+        d.build_divisions(s0, ["ZZ-DDL"], commit=False, log=lambda *_: None)   # garantit la DDL
+        s0.execute(text("DELETE FROM division_or_candidates WHERE commune IN (:a,:c,:z)"), comm)
+        s0.execute(text(
+            "INSERT INTO division_or_candidates (idu, commune, type_division, run_label, note_revue) VALUES "
+            "('99990000ZR0001', :a, 'libre', 'q_v7_defisc', NULL),"    # A     → doit être PURGÉ+commité
+            "('99990000ZR0002', :c, 'libre', 'q_v7_defisc', NULL),"    # CRASH → doit RESTER (rollback)
+            "('99990000ZR0003', :z, 'libre', 'q_v7_defisc', NULL)"), comm)  # C → doit être PURGÉ+commité
+        s0.commit(); s0.close()
+
+        orig = d._emprise_max_sql
+        def boom(commune):
+            if commune == CRASH:
+                raise RuntimeError("crash simulé en cours d'île")
+            return orig(commune)
+        monkeypatch.setattr(d, "_emprise_max_sql", boom)
+
+        with session_scope() as s:                     # EXACTEMENT le chemin CLI ; ne DOIT PAS lever
+            r = d.build_divisions(s, [A, CRASH, C], commit=True, log=lambda *_: None)
+        assert r["failures"] == [CRASH]                # crash isolé ET rapporté (pas avalé en silence)
+
+        s2 = session_factory()()                       # NOUVELLE connexion
+        def cnt(name):
+            return s2.execute(text("SELECT count(*) FROM division_or_candidates WHERE commune=:x"),
+                              {"x": name}).scalar()
+        a_rows, c_rows, z_rows = cnt(A), cnt(CRASH), cnt(C)
+        s2.close()
+        assert a_rows == 0     # A (avant le crash) : purge COMMITÉE, visible malgré le crash suivant
+        assert c_rows == 1     # CRASH : purge ROLLBACKÉE, son périmé reste
+        assert z_rows == 0     # C (après le crash) : l'île a CONTINUÉ → C purgée+commitée
+    finally:
+        _wipe()
+
+
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session
     r = d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)

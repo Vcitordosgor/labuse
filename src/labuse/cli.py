@@ -2238,14 +2238,31 @@ def prospection_notion_cmd(
 
 @app.command("division-or")
 def division_or_cmd(
-    communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
+    communes: str = typer.Option(None, help="Communes (virgules) — NOM « Saint-Paul » OU code INSEE "
+                                            "« 97415 » ; les deux acceptés (M50-SUITE). Ignoré si --all."),
+    all_communes: bool = typer.Option(False, "--all", help="Toute l'île (24 communes, réf "
+                                      "commune_conso_enaf) — un rebuild qui n'en oublie aucune (M50-SUITE-2)."),
 ) -> None:
     """O12 — Division en or (MASQUÉ) : détecte les parcelles à lot détachable constructible.
+    `--communes` accepte le NOM ou le code INSEE ; `--all` = les 24 communes de l'île. Rebuild par
+    commune : la commune est PURGÉE avant réécriture (un rebuild à 0 laisse la commune VIDE, pas
+    périmée ; tracés revus préservés) et COMMITÉE par commune (durable/reprenable, M50-SUITE-2).
     Table division_or_candidates (flag EXPOSE=False). Exposition = APRÈS validation du dossier 20 cartes par Vic."""
     from .ingestion import division_or
 
     with session_scope() as s:
-        r = division_or.build_divisions(s, [c.strip() for c in communes.split(",") if c.strip()], log=typer.echo)
+        if all_communes:
+            cibles = division_or.all_communes(s)
+            if not cibles:
+                raise typer.BadParameter("réf commune_conso_enaf absente — --all indisponible")
+        elif communes:
+            cibles = [c.strip() for c in communes.split(",") if c.strip()]
+        else:
+            raise typer.BadParameter("préciser --communes <NOM|INSEE,...> ou --all")
+        r = division_or.build_divisions(s, cibles, log=typer.echo)
+        if r.get("failures"):
+            typer.echo(f"⚠ {len(r['failures'])} commune(s) en échec (île poursuivie, non écrites) : "
+                       f"{', '.join(r['failures'])} — voir les lignes ÉCHEC ci-dessus.")
         typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
 
 
