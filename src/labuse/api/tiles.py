@@ -205,6 +205,34 @@ def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
             "seconds": round(_time.perf_counter() - t0, 2)}
 
 
+def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) -> dict:
+    """GESTE UNIQUE de matérialisation carte (M48) — « un geste = tout ou rien ». À appeler DANS
+    chaque bascule du run servi (après le re-score) ET par `labuse build-mvt` : plus jamais un
+    re-score sans tuiles à jour (constat M48 : la bascule M39 a régénéré le golden mais PAS les
+    tuiles → 4 tiers + 7 854 SDP périmés sur la carte). Reconstruit d'un bloc `mvt_parcels` +
+    overlays + `parcel_flags` (M45) + `parcel_renouvellement` (M47) et enregistre `mvt_meta`.
+    Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
+    import time as _t
+    from .. import renouvellement as _renouv
+    from ..bascule_gardes import check_coherence_renouvellement
+    t0 = _t.perf_counter()
+    n = build_mvt_table(db, run_label)
+    n_ov = build_overlay_mvt(db)
+    pf = build_parcel_flags_table(db, run_label)
+    log(f"✓ parcel_flags : {pf['n']} paires sur {pf['couches']} couches · cohérence OK · {pf['seconds']} s.")
+    rr = _renouv.build(db, run_label=run_label, commit=False)
+    cr = check_coherence_renouvellement(session=db)
+    log(f"✓ parcel_renouvellement : {rr['n']} parcelles (run {rr['run_label']}) · cohérence {cr['statut']}.")
+    db.execute(text("""CREATE TABLE IF NOT EXISTS mvt_meta
+                       (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
+    db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
+                       ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": run_label})
+    log(f"✓ mvt_parcels : {n} parcelles · overlays {n_ov} · {round(_t.perf_counter() - t0, 1)} s "
+        f"(run {run_label}).")
+    return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
+            "renouv_coherence": cr["statut"], "run_label": run_label}
+
+
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
 _CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 _CACHE_MAX = 4096

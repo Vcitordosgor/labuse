@@ -375,3 +375,48 @@ def check_coherence_renouvellement(session=None) -> dict:
         print(f"{_ts()} ⚠ RENOUVELLEMENT [{statut}] — run servi « {servi} », table {runs or '∅'}. "
               f"Relancer `labuse build-mvt` (segment câblé au geste). NON bloquant, à voir.", flush=True)
     return {"ok": ok, "servi": servi, "runs": runs, "statut": statut}
+
+
+def check_peremption_tuiles(session=None) -> dict:
+    """Garde de PÉREMPTION des tuiles carte (M48) — bruyante, NON bloquante (même régime que
+    `check_fraicheur`/`check_coherence_renouvellement`). La carte est servie depuis la table
+    MATÉRIALISÉE `mvt_parcels` ; si elle a été bâtie AVANT le dernier re-score du run servi
+    (`parcel_p_score_v2`) ou le dernier calcul de `parcel_residuel`, elle raconte des tiers/SDP
+    périmés — la carte contredit alors la fiche (constat M48 : bascule M39 sans `build-mvt`).
+    Compare `mvt_meta.updated_at` aux `max(computed_at)` des tables amont. Lecture seule.
+    Retourne `{ok, mvt_at, amont_at, retard_min}`."""
+    import datetime
+    sql = {
+        "mvt": "SELECT value AS run, updated_at FROM mvt_meta WHERE key='run_label'",
+        "score": "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id="
+                 "(SELECT value FROM mvt_meta WHERE key='run_label')",
+        "resid": "SELECT max(computed_at) FROM parcel_residuel",
+    }
+    def _run(conn):
+        m = conn.execute(text(sql["mvt"])).first()
+        if not m:
+            return None, None, None
+        sc = conn.execute(text(sql["score"])).scalar()
+        rs = conn.execute(text(sql["resid"])).scalar()
+        amont = max([d for d in (sc, rs) if d is not None], default=None)
+        return m.run, m.updated_at, amont
+    if session is not None:
+        run, mvt_at, amont_at = _run(session)
+    else:
+        with engine().connect() as c:
+            run, mvt_at, amont_at = _run(c)
+    if mvt_at is None:
+        print(f"{_ts()} ⚠ TUILES [ABSENTES] — `mvt_parcels`/`mvt_meta` non matérialisées. "
+              f"Lancer `labuse build-mvt`. NON bloquant, à voir.", flush=True)
+        return {"ok": False, "mvt_at": None, "amont_at": None, "retard_min": None}
+    ok = amont_at is None or mvt_at >= amont_at
+    retard = None if amont_at is None else round((amont_at - mvt_at).total_seconds() / 60)
+    if ok:
+        print(f"{_ts()} ✓ tuiles : `mvt_parcels` (run « {run} ») postérieure au dernier calcul amont.",
+              flush=True)
+    else:
+        print(f"{_ts()} ⚠ TUILES [PÉRIMÉES] — bâties {mvt_at} < amont {amont_at} (retard {retard} min). "
+              f"La carte sert des tiers/SDP périmés — relancer `labuse build-mvt`. NON bloquant, à voir.",
+              flush=True)
+    return {"ok": ok, "mvt_at": str(mvt_at), "amont_at": str(amont_at) if amont_at else None,
+            "retard_min": retard}

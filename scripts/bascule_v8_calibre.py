@@ -151,6 +151,16 @@ def main():
     score()
     counts = verify_completude(TARGET, n_expected_cascade=n_parcels, n_expected_scores=n_parcels)
 
+    # M48 : TUILES DANS LE GESTE — « un geste = tout ou rien ». Le build-mvt manuel post-bascule
+    # (« SUITE » dans les scripts) laissait la carte périmée (constat M48 : M39 servi sans build-mvt).
+    from labuse.api.tiles import rebuild_mvt_servies
+    from labuse.bascule_gardes import check_peremption_tuiles
+    with session_scope() as s:
+        mvt = rebuild_mvt_servies(s, TARGET, log=lambda m: print(f"  [5] {m}", flush=True))
+    print(f"  [5] tuiles reconstruites : {mvt['n']} parcelles "
+          f"(flags {mvt['parcel_flags']}, renouv {mvt['renouvellement']})", flush=True)
+    check_peremption_tuiles()
+
     with engine().connect() as c:
         dist = c.execute(text("SELECT tier, count(*) FROM parcel_p_score_v2 WHERE run_id=:t GROUP BY tier ORDER BY count(*)"), {"t": TARGET}).all()
     print(f"\n✓ BASCULE COMPLÈTE ET VÉRIFIÉE en {(time.time()-t0)/60:.0f} min. Tables : {counts}")

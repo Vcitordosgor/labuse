@@ -565,43 +565,17 @@ def build_mvt_cmd(
 ) -> None:
     """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
-    from .api.tiles import RUN, build_mvt_table, build_overlay_mvt, build_parcel_flags_table
+    # M48 : le geste tuiles est un POINT UNIQUE (`rebuild_mvt_servies`), partagé avec les bascules
+    # (« un geste = tout ou rien ») — le CLI n'en est qu'un mince appelant.
+    from .api.tiles import RUN, rebuild_mvt_servies
 
     label = label or RUN
     with session_scope() as s:
-        n = build_mvt_table(s, label)
-        n_ov = build_overlay_mvt(s)
-        # M45 : parcel_flags (vigilances dénormalisées) — MÊME geste que les MVT. Garde de
-        # cohérence bruyante intégrée ; le temps de build est reporté (coût du geste de bascule).
-        pf = build_parcel_flags_table(s, label)
-        typer.echo(f"✓ parcel_flags : {pf['n']} paires parcelle×vigilance sur {pf['couches']} "
-                   f"couches · cohérence OK · {pf['seconds']} s.")
-        # M47 : segment Renouvellement (run-scopé) — MÊME geste que les MVT/parcel_flags. C'était la
-        # SEULE table run-scopée montée par une commande isolée (`labuse renouv`), donc la seule qui
-        # pouvait remourir en silence à une bascule (constat M47-P0). Câblée ici, elle ne le peut plus.
-        import time as _t
-        from . import renouvellement as _renouv
-        _t0 = _t.perf_counter()
-        rr = _renouv.build(s, run_label=label, commit=False)
-        _rr_s = round(_t.perf_counter() - _t0, 2)
-        # Garde de cohérence bruyante, NON bloquante (modèle check_fraicheur/check_coherence_idurba) :
-        # le run de la table DOIT être le run servi — sinon un chiffre périmé serait servi en fiche/carte.
-        from .bascule_gardes import check_coherence_renouvellement
-        cr = check_coherence_renouvellement(session=s)
-        typer.echo(f"✓ parcel_renouvellement : {rr['n']} parcelles (run {rr['run_label']}) · "
-                   f"entonnoir {rr['funnel']['1_bati_exclues']}→{rr['n']} · cohérence {cr['statut']} · {_rr_s} s.")
-        # M6 post-merge : le label matérialisé est ENREGISTRÉ — le test de cohérence
-        # (tests/test_run_serving_coherence.py) pète si tuiles et run servi divergent.
-        s.execute(text(
-            """CREATE TABLE IF NOT EXISTS mvt_meta
-               (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
-        s.execute(text(
-            """INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
-               ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": label})
+        res = rebuild_mvt_servies(s, label, log=typer.echo)
     if label != RUN:
         typer.echo(f"⚠ ATTENTION : tuiles matérialisées sur « {label} » ≠ run servi « {RUN} » "
                    f"(Q_A_RUN_LABEL) — les fiches/listes et la carte raconteront deux mondes.")
-    typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}) · mvt_overlays : {n_ov} géométries.")
+    typer.echo(f"✓ mvt_parcels reconstruite : {res['n']} parcelles (label {label}).")
 
 
 @app.command("dryrun-matrice")
