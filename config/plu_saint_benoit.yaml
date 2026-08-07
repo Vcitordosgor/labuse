@@ -82,6 +82,11 @@ hypotheses_faisabilite:
 # sont définies par secteurs graphiques, non portables par le schéma v1. Les valeurs
 # textuelles saines (emprise 80 %, limites 1 m, stationnement, 20 % perméable) sont
 # consignées en regles_transverses et dans les motifs ci-dessous pour un futur v2.
+#
+# EXCEPTION DIFFÉRÉE (M51-P2, clôture Vic) — NE PAS ajouter d'entrée zones ici pour la traiter
+# (calibree=True changerait au_statut). Voir `config/exceptions_calibration.md` AK1442-01 :
+# AUb2 « Bourbier » recul voirie 10 m (fiche N°02) vs 5 m servi ; 4 parcelles réserve ;
+# à porter à la PROCHAINE calibration Saint-Benoît (rouverte par modifs n°2/n°3, cf. M40).
 zones: {}
 
 zones_au_renvoi: {}
