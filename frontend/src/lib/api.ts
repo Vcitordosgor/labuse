@@ -262,7 +262,9 @@ export const getMapLayer = (kind: string) => {
 export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
-export type RenouvFC = ParcelFeatureCollection & { total: number; servis: number }
+export type RenouvFC = ParcelFeatureCollection & {
+  total: number; servis: number; source: string; run_label: string; maj: string | null
+}
 export const getRenouvGeojson = () => {
   const c = commune()
   return j<RenouvFC>(`/map/renouvellement.geojson${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
@@ -275,6 +277,7 @@ export interface RenouvItem {
 }
 export interface RenouvListe {
   total: number; n: number; items: RenouvItem[]
+  source: string; run_label: string; maj: string | null
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
 export const getRenouvListe = (sort: string, communeNom?: string | null) =>

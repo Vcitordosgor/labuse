@@ -280,6 +280,10 @@ export interface Fiche {
 
 export interface Renouvellement {
   libelle: string
+  // M47 : étiquette source · millésime (run servi + date de matérialisation).
+  source: string
+  run_label: string
+  maj: string | null
   renouv_score: number
   rang_segment: number
   total_segment: number

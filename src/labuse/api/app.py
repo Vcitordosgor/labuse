@@ -2204,6 +2204,8 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite, "
         "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
+        # M47 (P2) : millésime/source de la couche servie — run servi + date de matérialisation.
+        "       run_label, to_char(computed_at, 'YYYY-MM-DD') AS maj, "
         "       (SELECT count(*) FROM parcel_renouvellement WHERE run_label = :run)  AS total_segment, "
         "       (SELECT count(*) FROM parcel_renouvellement r2 "
         "        WHERE r2.commune = parcel_renouvellement.commune "
@@ -2216,6 +2218,9 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
     return {
         "libelle": LIBELLE_SEGMENT,
+        # M47 (P2) : étiquette « source · millésime » (doctrine : toute couche servie porte la date
+        # de sa source amont). Source = Analyse LABUSE (segment calculé) ; millésime = run servi + maj.
+        "source": "Analyse LABUSE", "run_label": r["run_label"], "maj": r["maj"],
         "renouv_score": r["renouv_score"],
         "rang_segment": r["rang_segment"], "total_segment": r["total_segment"],
         "rang_commune": r["rang_commune"], "total_commune": r["total_commune"],
@@ -2762,13 +2767,17 @@ def renouvellement_geojson(commune: str | None = None,
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
         {where} ORDER BY r.rang_segment LIMIT :n"""),
         {"c": commune, "n": limit, "run": Q_A_RUN_LABEL}).all()
-    total = int(db.execute(text(f"""
-        SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune, "run": Q_A_RUN_LABEL}).scalar() or 0)
+    meta = db.execute(text(f"""
+        SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
+        FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
+        {"c": commune, "run": Q_A_RUN_LABEL}).mappings().first()
+    total = int(meta["n"] or 0)
     feats = [{"type": "Feature", "geometry": json.loads(g),
               "properties": {"idu": idu, "renouv_score": sc, "rang_segment": rg, "rang_commune": rc}}
              for idu, sc, rg, rc, g in rows if g]
-    return {"type": "FeatureCollection", "features": feats, "total": total, "servis": len(feats)}
+    # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
+    return {"type": "FeatureCollection", "features": feats, "total": total, "servis": len(feats),
+            "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"]}
 
 
 @app.get("/renouvellement/liste")
@@ -2795,10 +2804,14 @@ def renouvellement_liste(commune: str | None = None,
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
         {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
         {"c": commune, "n": limit, "o": offset, "run": Q_A_RUN_LABEL}).mappings().all()
-    total = int(db.execute(text(f"""
-        SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune, "run": Q_A_RUN_LABEL}).scalar() or 0)
+    meta = db.execute(text(f"""
+        SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
+        FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
+        {"c": commune, "run": Q_A_RUN_LABEL}).mappings().first()
+    total = int(meta["n"] or 0)
+    # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
     return {"total": total, "n": len(rows), "items": [dict(r) for r in rows],
+            "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"],
             "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
                               "renouvellement — ni une mise en vente prévisible, ni une "

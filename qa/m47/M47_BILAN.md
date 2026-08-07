@@ -85,15 +85,45 @@ câbler ces deux-là.
 | Garde live | statut **OK**, servi `q_v8_calibre`, 67 258 parcelles |
 | Tests | **22/22** (guard 5 · renouvellement 7 · idurba 7 · gardes 3) |
 
-## 6. Exposition (P2) — état constaté
+## 6. Exposition (P2) — LIVRÉE (arbitrage Vic : étiquette OUI)
 
-- **Filtre M45 « Renouvellement »** (tiroir « Ça va muter ? ») : **déjà LIVE** (chip
-  `FiltreLabuse.tsx`, run-scopé côté `/parcels`). Rien à activer.
-- Surfaces (fiche, carte `/map/renouvellement.geojson`, outil MR1, liste) : **lisent la table
-  rebâtie**, désormais **scopées sur le run servi**.
-- **Étiquette millésime/source (P2.3)** : **ABSENTE aujourd'hui** — le segment est servi sans
-  libellé de run. Petit reste d'exposition ; **hors portée (d)** → laissé à l'arbitrage Vic (ajout
-  cheap : le `run_label` est déjà dans la table).
+- **Filtre M45 « Renouvellement »** (tiroir « Ça va muter ? ») : **LIVE** (chip `FiltreLabuse.tsx`,
+  run-scopé `/parcels`). Compteur vérifié : filtre posé → **67 258** « avant analyse » (= le
+  segment entier, toutes écartées/occupées, donc 0 retenue par l'analyse — doctrinalement exact).
+- Surfaces (fiche, carte `/map/renouvellement.geojson`, outil MR1, liste) : lisent la table
+  rebâtie, **scopées sur le run servi**.
+- **Étiquette millésime/source (P2.3) — FAITE.** Doctrine « toute couche servie porte la date de
+  sa source amont, affichée ». Ajout API + front, **même famille de libellé** :
+  **« Analyse LABUSE · run servi {run_label} · maj {date} »**.
+  - API : `run_label` + `computed_at::date (maj)` renvoyés par les 3 blocs (fiche, geojson, liste) —
+    faits déjà en base, aucun label en dur.
+  - Front : ligne source dans le tiroir fiche « pourquoi », le bandeau de l'outil MR1
+    (`types.ts`/`api.ts`/`Fiche.tsx`/`Renouvellement.tsx`). tsc `--noEmit` vert.
+  - Vérifié servi : fiche AZ0004 → « Analyse LABUSE · run servi q_v8_calibre · maj 2026-08-05 ».
+
+**Captures** (`qa/m47/captures/`, Chrome piloté, front buildé servi sous `/socle/`) :
+- `1_fiche_segment_etiquette.png` + `1b_fiche_etiquette_zoom.png` — fiche AZ0004 (rang 1), tiroir
+  « pourquoi », **étiquette source·millésime lisible**.
+- `2_filtre_renouvellement_compteur.png` + `2b_filtre_chip_actif.png` — chip Renouvellement **actif**.
+- `2c_filtre_compteur.png` — **compteur 67 258** (segment) avec Analyse LABUSE active.
+- `3_calque_carte_renouvellement.png` — calque cuivre L'Étang-Salé, **légende 1 500 / 1 598**.
+
+## 7. DETTE NOMMÉE — « stamper + câbler les CLI isolées » (mandat futur)
+
+Le balayage (§4) a trouvé **deux tables servies bâties par des commandes CLI isolées, run-dépendantes
+et SANS colonne `run_label`** — donc **incapables de s'auto-détecter périmées** (aucune garde de
+cohérence possible en l'état) :
+
+1. **`score_e`** (`labuse score-e`, `run=Q_A_RUN_LABEL`) — sert le bilan CA / marges (16 surfaces API).
+   **Antécédent avéré (M44)** : score_e a déjà servi **428 marges calculées sur un run mort**
+   (défaut historique `q_v7_defisc`) avant réalignement — c'est la matérialisation du risque, pas
+   une hypothèse.
+2. **`division_or_candidates`** (`labuse division-or`, `:served` = étage 0 du run servi) — sert le
+   filtre O12 + la fiche ; bâtie par commune à la demande.
+
+**Travail à faire (futur, PAS ici)** : (a) ajouter une colonne `run_label` à ces deux tables, (b)
+les câbler au geste de bascule (comme renouvellement en M47), (c) une garde de cohérence par table.
+Consigné comme **dette « stamper + câbler les CLI isolées »**. Détail : `cli_builders_sweep.csv.gz`.
 
 ## Annexes (digests machine, .csv.gz — convention QA)
 - `M47_P0_CONSTAT.md` · `sister_tables_inventaire.csv.gz` · `rebuild_blanc_funnel_diff.csv.gz` (P0)
