@@ -42,15 +42,18 @@ rien ») :
 Les 3 dérives golden `n_lignes_cascade` (114/117 au départ) = **dédup contraintes M46** (mergée
 après la régén du 06/08) — `AC0156` est le témoin nommé dans le code. Absorbées par la régén F4.
 
-## Points annexes du mandat
+## Points annexes du mandat — tous soldés
 
 - **EP0228** (piscine, dossier M40) : aucune vigilance car M39 sert le déclassement mais **aucune
   couche piscine n'est exposée en vigilance** — EP0228 qualifie (en bande, contenue) ; **aucune
   surface ne se contredit** → cohérent, non-issue.
-- **Renouvellement « 0 retenue »** : mention proposée (P1.3) — *« Segment consultable via la voie
-  manuelle — coupez l'Analyse LABUSE »*. **À poser** (front) sur ta validation.
-- **Backlog** : 5 affirmations factuelles encore fausses listées (score_e/pc_caducs « q_v7 »,
-  renouvellement « mort », « 68 445 », entonnoir_motifs « mort ») — **à corriger** dans `docs/BACKLOG.md`.
+- **Renouvellement « 0 retenue » — FAIT** : mention posée (FiltreLabuse) quand le filtre est actif —
+  *« Segment consultable via la voie manuelle — coupez l'Analyse LABUSE… écartées par conception
+  (d'où 0 retenue) »*. Capture `captures/mention_renouvellement.png`. tsc vert.
+- **Backlog — FAIT** : les 5 affirmations factuelles fausses corrigées dans `docs/BACKLOG.md`,
+  chacune avec sa pièce : score_e « q_v7 » (→ Q_A_RUN_LABEL M44) · pc_caducs « q_v7 » (→ aucun run,
+  M44) · renouvellement « mort » (→ q_v8 67 258, M47) · « 68 445 » (→ 67 258) · entonnoir_motifs
+  « mort » (→ 317 lignes q_v8).
 
 ## Vérification (gate du mandat)
 
@@ -62,12 +65,13 @@ après la régén du 06/08) — `AC0156` est le témoin nommé dans le code. Abs
 | re-mesures M34/M35 · SHA256 vigilances M37 | intacts (aucun code verdict/vigilance touché) |
 | Tests | **63/63** (F1 lock 2 · péremption 5 · coherence/serving/gardes/renouv/mvt/m45) |
 
-## Reste (à ta main / arbitrage)
+## Reste (à ta main — rien de bloquant)
 
-1. **Bundle front** : `npm run build` au prochain déploiement (embarque F4 ; tsc vert).
+1. **Bundle front** : `npm run build` au prochain déploiement (embarque F1/F4 + la mention ; tsc vert).
 2. **Colonne `mvt_parcels.status` vestigiale** : disparaît au prochain `build-mvt` (build SQL F4) —
    déjà non servie (props l'excluent). Rien à faire d'urgent.
-3. **Renouvellement mention** + **backlog** : 2 corrections neutres restantes, sur ton feu vert.
+3. **Dette nommée** (déjà consignée M47, rappelée au backlog) : **stamper + câbler les CLI isolées**
+   (`score_e`, `division_or_candidates`, sans `run_label`) — mandat futur.
 
 ## Annexes (.csv.gz — la grille est un actif de release)
 - `M48_P0_PROTOCOLE.md` · `M48_P1_RAPPORT.md` · `M48_RESCORE_INVESTIGATION.md` · `M48_P2_STATUS.md`
