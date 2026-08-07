@@ -47,6 +47,11 @@ export function RenouvellementModule() {
         mais en zone constructible avec une <b className="text-txt">capacité restante réelle</b> :
         un <b style={{ color: TOKENS.renouv }}>potentiel de renouvellement urbain</b> (densifier,
         diviser, reconstruire). {data.avertissement}
+        {/* M47 : étiquette source · millésime — comme toute couche servie. */}
+        <span className="mt-1 block text-[9.5px] text-txt-dim">
+          {data.source} · run servi <span className="font-mono">{data.run_label}</span>
+          {data.maj ? ` · maj ${data.maj}` : ''}
+        </span>
       </div>
       <div className="flex items-center gap-1">
         <span className="mr-1 text-[10px] text-txt-dim">Trier :</span>

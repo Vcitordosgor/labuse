@@ -1653,6 +1653,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <p style={{ margin: 0, fontSize: 10.5, lineHeight: 1.5, color: REF.dim }}>
                     Potentiel physique et réglementaire — ni une mise en vente prévisible, ni une garantie de constructibilité.
                   </p>
+                  {/* M47 : étiquette source · millésime — comme toute couche servie. */}
+                  <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>
+                    {f.renouvellement.source} · run servi {f.renouvellement.run_label}
+                    {f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}
+                  </p>
                 </div>
               </RefDrawer>
             )}

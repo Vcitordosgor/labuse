@@ -335,3 +335,43 @@ def check_coherence_idurba(session=None) -> dict:
     n_manquant = sum(1 for d in divergences if d["type"] == "MANQUANT")
     return {"divergences": divergences, "n": len(divergences),
             "n_manquant": n_manquant, "n_residu": len(divergences) - n_manquant}
+
+
+def check_coherence_renouvellement(session=None) -> dict:
+    """Garde de COHÉRENCE du segment Renouvellement (M47) — bruyante, NON bloquante (même régime
+    que `check_fraicheur`/`check_coherence_idurba` : elle alerte, elle n'empêche jamais un geste).
+    `parcel_renouvellement` était la SEULE table run-scopée montée par une commande isolée
+    (`labuse renouv`) : sans garde ni câblage, elle re-portait un run mort en silence à la première
+    bascule (constat M47-P0). On oppose le(s) `run_label` présent(s) dans la table au run SERVI
+    (`config/served_run.txt`, via `Q_A_RUN_LABEL`). Trois cas d'alerte :
+      · **ABSENTE**  : la table n'existe pas → segment non calculé (relancer `labuse build-mvt`) ;
+      · **PÉRIMÉE**  : run(table) ≠ run servi → un chiffre périmé serait servi (fiche/carte/liste) ;
+      · **MÉLANGÉE** : plusieurs run_label coexistent → une lecture non scopée mélangerait deux runs.
+    Lecture seule. Retourne `{ok, servi, runs, statut}`."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    servi = Q_A_RUN_LABEL
+    sql_exist = "SELECT to_regclass('parcel_renouvellement') IS NOT NULL"
+    sql_runs = "SELECT run_label, count(*) FROM parcel_renouvellement GROUP BY 1 ORDER BY 2 DESC"
+    if session is not None:
+        exists = bool(session.execute(text(sql_exist)).scalar())
+        rows = session.execute(text(sql_runs)).all() if exists else []
+    else:
+        with engine().connect() as c:
+            exists = bool(c.execute(text(sql_exist)).scalar())
+            rows = c.execute(text(sql_runs)).all() if exists else []
+    runs = {r: int(n) for r, n in rows}
+    if not exists:
+        statut, ok = "ABSENTE", False
+    elif set(runs) == {servi}:
+        statut, ok = "OK", True
+    elif servi not in runs:
+        statut, ok = "PÉRIMÉE", False
+    else:
+        statut, ok = "MÉLANGÉE", False
+    if ok:
+        print(f"{_ts()} ✓ renouvellement : segment sur le run servi « {servi} » "
+              f"({runs[servi]} parcelles).", flush=True)
+    else:
+        print(f"{_ts()} ⚠ RENOUVELLEMENT [{statut}] — run servi « {servi} », table {runs or '∅'}. "
+              f"Relancer `labuse build-mvt` (segment câblé au geste). NON bloquant, à voir.", flush=True)
+    return {"ok": ok, "servi": servi, "runs": runs, "statut": statut}
