@@ -217,16 +217,9 @@ def share_create(idu: str, request: Request, db: Session = Depends(get_db)) -> d
     return {"token": token, "url": f"/p/{token}", "expire_dans_jours": SHARE_TTL_JOURS}
 
 
-@router.delete("/partners/share/token/{token}")
-def share_revoke(token: str, db: Session = Depends(get_db)) -> dict:
-    """M23-B : révocation — le lien meurt immédiatement (journalisé, jamais supprimé)."""
-    _share_colonnes(db)
-    n = db.execute(text(
-        "UPDATE share_links SET revoked_at = now() WHERE token = :t AND revoked_at IS NULL"),
-        {"t": token}).rowcount
-    if not n:
-        raise HTTPException(404, "Lien inconnu ou déjà révoqué")
-    return {"ok": True, "token": token}
+# M49 (Lot A) : DELETE /partners/share/token/{token} (share_revoke) RETIRÉ — 0 caller prouvé
+# (aucun helper api.ts, 0 hit `share/token` frontend/qa/scripts). La révocation n'est pas câblée
+# au front ; la logique `revoked_at` reste lue par share_public. Vestige M23-B.
 
 
 @router.get("/partners/share/{idu}/list")
