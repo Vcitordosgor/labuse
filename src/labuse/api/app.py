@@ -1592,6 +1592,10 @@ def _qualite_commune(insee: str | None) -> dict | None:
     if not c:
         return None
     rr_ile = (cfg.get("ile") or {}).get("rr_1158")
+    # M52-B micro-correction (règle Lot D audit RR : JAMAIS la fausse précision) — le RR île
+    # affiché est un ordre de grandeur, pas une mesure au centième. On DIT « ~6,7 » (une décimale,
+    # virgule FR, tilde d'approximation) au lieu de « 6.73 ». La valeur brute reste en config.
+    rr_ile_dit = f"~{rr_ile:.1f}".replace(".", ",") if isinstance(rr_ile, (int, float)) else None
     fragile = bool(c.get("positifs_faibles"))
     nom = c.get("commune")
     n = c.get("n_hors_copro")
@@ -1603,9 +1607,9 @@ def _qualite_commune(insee: str | None) -> dict | None:
                    "pouvoir discriminant mesuré sur moins de 5 ventes dans le haut du classement).")
     else:
         libelle = (f"{nom} : pouvoir discriminant RR {rr} mesuré sur {n_fr} parcelles (robuste, "
-                   f"≥ 5 ventes dans le haut du classement) — île {rr_ile}.")
+                   f"≥ 5 ventes dans le haut du classement) — île {rr_ile_dit or rr_ile}.")
     return {
-        "commune": nom, "insee": insee, "rr_intra": rr, "rr_ile": rr_ile,
+        "commune": nom, "insee": insee, "rr_intra": rr, "rr_ile": rr_ile, "rr_ile_dit": rr_ile_dit,
         "echantillon": n, "taux_base_pct": c.get("taux_base_pct"),
         "fragile": fragile, "degradee": fragile, "libelle": libelle,
         "source": "audit RR fold 2025 (out-of-sample) · mesure seule",

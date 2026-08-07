@@ -1850,7 +1850,7 @@ export function Fiche({ idu }: { idu: string }) {
                       </span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
-                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile}</span> : null}</span>
+                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile_dit ?? f.qualite_commune.rr_ile}</span> : null}</span>
                       <span>{f.qualite_commune.echantillon.toLocaleString('fr-FR')} parcelles</span>
                       {f.qualite_commune.taux_base_pct != null && <span>base {f.qualite_commune.taux_base_pct} %</span>}
                     </div>
