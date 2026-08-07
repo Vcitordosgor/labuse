@@ -647,6 +647,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     résiduels — jamais fusionnée). Univers disjoint du pool résiduel (ratio > 50 % vs ≤ 50 %) :
     aucun conflit de clé. Mêmes gardes que le pool validé, aucun critère assoupli."""
     _ensure_ddl(session)
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL   # M50 : stamp du run servi (:served)
     has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
@@ -671,7 +672,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
         else:
             insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
                 "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-        session.execute(text(insert_sql), {"commune": commune})
+        session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
         n = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE commune = :c AND type_division = 'decoupe'"),
             {"c": commune}).scalar()
