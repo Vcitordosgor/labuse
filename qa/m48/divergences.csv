@@ -1,0 +1,3 @@
+idu,strate,grandeur,gravite,note
+97415000CX0650,tier_a_creuser,tier,G1,"valeurs différentes {'fiche_v2': 'a_creuser', 'fiche_legacy': 'a_creuser', 'carte_tuile': 'chaude', 'db_verite': 'a_creuser', 'export_md': 'a_creuser'}"
+97416000EY1406,tier_declasse_bati_revele,sdp_residuelle,G1,"valeurs contradictoires {'fiche_v2': 0, 'carte_tuile': 111, 'db_residuel': 0}"
