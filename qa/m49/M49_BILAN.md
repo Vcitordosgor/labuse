@@ -29,18 +29,21 @@ MORTE · DOUTEUSE.
 Tests des routeurs supprimés retirés (`test_operations/potentiel/tension.py` — ne testaient que la
 logique de ces surfaces mortes, aucun importeur LIVE hors tests).
 
-**Le reste NON retiré, listé** (règle du mandat + leçon pre_pond « aucun retrait sans preuve de
-non-usage ») :
-- **~13 MORTES candidates** (vestiges superseded : `/compare`, `/shortlist`, `/assemblages`+`/study`,
-  `/courrier/statut|envois`, `/dossier/statut`, `/events/reprise`, `/parcels/{idu}/enrichment|explain|
-  spf-letter`, `/map/permits.geojson`) — retirables, mais laissées à ton feu vert (dont la couche
-  carte `permits.geojson`, prudence).
-- **~30 DOUTEUSES** : surtout des routes **admin/ops/calibration** (`/bilan/params`, `/parcels/{idu}/
-  evaluate`, `/audit/*`, `/watch-zones`, `/alertes`, `/filters`, `/coverage`, `/demo*`, `/sources/{id}/
-  test`, `/stats`, `/parcels`) — 0 caller **front** mais joignables par opérateur/curl ou test-support →
-  **NON touchées** (exactement la classe pre_pond). Plus des **helpers api.ts orphelins** (M19 partners
-  `match/*`, `share/list` ; `ia/synthese`, `ia/pourquoi` ; `moi/logo|marque`) — à décider : retirer le
-  helper OU la route.
+**Le reste — arbitrage Vic appliqué** (règle du mandat + leçon pre_pond « aucun retrait sans preuve
+de non-usage » ; « une route morte qui dort ne coûte rien, un retrait est irréversible pour un
+partenaire inconnu ») :
+- **~13 MORTES candidates NON retirées** (vestiges superseded : `/compare`, `/shortlist`,
+  `/assemblages`+`/study`, `/courrier/statut|envois`, `/dossier/statut`, `/events/reprise`,
+  `/parcels/{idu}/enrichment|explain|spf-letter`, `/map/permits.geojson`) — **listées** au tableau,
+  retrait au cas par cas dans un geste futur AVEC preuve individuelle. **Exception « menteuse »
+  (chiffre périmé, famille M48) vérifiée : AUCUNE ne s'applique** — elles sont MORTES (0 caller),
+  donc ne servent aucun chiffre à personne (rien à mentir).
+- **~30 DOUTEUSES admin/ops GARDÉES** (`/bilan/params`, `/parcels/{idu}/evaluate`, `/audit/*`,
+  `/watch-zones`, `/alertes`, `/filters`, `/coverage`, `/demo*`, `/sources/{id}/test`, `/stats`,
+  `/parcels`) — outils d'opérateur (joignables curl), **NON touchées** (confirmé Vic).
+- **5 helpers api.ts orphelins RETIRÉS** (arbitrage Vic : retirer le HELPER, pas la route) :
+  `iaSynthese`, `iaPourquoi`, `runMatch`, `matchCompatibilite`, `listShares` — 0 importeur vérifié,
+  code mort front, tsc vert. Les routes serveur restent listées « douteuses ».
 
 ## LOT B — L'assistant IA couvre les écartées
 
@@ -92,10 +95,15 @@ Captures de l'existant : `captures/cadrage_askbar.png`, `captures/cadrage_copilo
 | **route morte retirée (avant/après)** | 6 routes, un commit chacun, preuve au message |
 | Captures | phrase de cadrage (2) · mention/segment IA transcriptions (6) |
 
+## Actif rejouable
+`routes_inventaire.csv.gz` = **le tableau complet 205 routes × statut × preuve**, consigné comme
+actif (comme la grille M48) — resservira à chaque passe API/release : rejouer les 4 traçages,
+diff le CSV, tout nouveau MORTE se voit.
+
 ## Reste (à ta main)
-- **Lot A** : feu vert pour retirer les ~13 MORTES candidates listées ? Et arbitrer les DOUTEUSES
-  (admin/ops = garder ; helpers api.ts orphelins = retirer helper ou route).
-- **Bundle front** : `npm run build` au déploiement (embarque Lot B — aucun changement Lot C).
+- **Bundle front** : `npm run build` au déploiement (embarque Lot B + le retrait des 5 helpers
+  morts ; aucun changement Lot C).
+- Retrait des ~13 MORTES candidates : au cas par cas, dans un futur mandat qui les croise (pas en bloc).
 
 ## Annexes
 - `routes_inventaire.csv.gz` — table complète routes × statut × preuve (actionnables + résumé).
