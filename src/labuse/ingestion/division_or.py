@@ -164,6 +164,7 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Po
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS aire_bati_dans_lot_m2 numeric(6,1);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS solidite numeric(4,3);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS note_revue varchar(120);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS run_label text;  -- M50 : run servi (étage 0 lu)
 
 -- SNAPSHOT des tracés REVUS (revue 2) : photographie des lots découpés AVANT un re-run, pour
 -- que le re-run distingue « tracé inchangé » (déjà revu / exclusion liée-géométrie tenue) de
@@ -291,15 +292,17 @@ ORDER BY idu, (variante = 'demolition'), free_m2 DESC;
 _INSERT = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
     residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
-    type_division, bati_lot_m2, compacite, emprise_restante, gain_estime_eur, clarte)
+    type_division, bati_lot_m2, compacite, emprise_restante, gain_estime_eur, clarte, run_label)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
        d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
        d.type_division, d.bati_lot_m2, d.compacite, d.emprise_restante,
        se.marge_estimee,
-       round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
+       round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte,
+       :served AS run_label   -- M50 : stamp du run servi (étage 0 lu)
 FROM ({detect}) d
 LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable
 ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.surface_m2,
+    run_label=EXCLUDED.run_label,
     bati_m2=EXCLUDED.bati_m2, bati_ratio=EXCLUDED.bati_ratio, residuel_m2=EXCLUDED.residuel_m2,
     residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone,
@@ -463,16 +466,18 @@ _INSERT_PARTIEL = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
     residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
     type_division, bati_lot_m2, compacite, solidite, emprise_restante, lot_geom,
-    aire_bati_dans_lot_m2, gain_estime_eur, clarte)
+    aire_bati_dans_lot_m2, gain_estime_eur, clarte, run_label)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
        d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
        d.type_division, d.bati_lot_m2, d.compacite, d.solidite, d.emprise_restante, d.lot_geom,
        d.aire_bati_dans_lot_m2,
        se.marge_estimee,
-       round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
+       round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte,
+       :served AS run_label   -- M50 : stamp du run servi (étage 0 lu)
 FROM ({detect}) d
 LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable
 ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.surface_m2,
+    run_label=EXCLUDED.run_label,
     bati_m2=EXCLUDED.bati_m2, bati_ratio=EXCLUDED.bati_ratio, residuel_m2=EXCLUDED.residuel_m2,
     residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone, zone_lib=EXCLUDED.zone_lib,

@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS score_e (
   hypotheses_version text NOT NULL,
   libelle_court      text NOT NULL,     -- chip fiche
   detail             text NOT NULL,     -- survol : formule + caveats
+  run_label          text,               -- M50 : run servi dont sont issus les tiers/résiduels lus
   computed_at        timestamptz DEFAULT now()
 );
 """
@@ -103,13 +104,14 @@ WHERE s.run_id = :run AND s.tier <> 'ecartee';
 
 _INSERT = """
 INSERT INTO score_e (idu, estimable, marge_estimee, charge_supportable, prix_probable,
-                     niveau_prix, hypotheses_version, libelle_court, detail, computed_at)
-VALUES (:idu, :estimable, :marge, :charge, :prix, :niveau, :hv, :court, :detail, now())
+                     niveau_prix, hypotheses_version, libelle_court, detail, run_label, computed_at)
+VALUES (:idu, :estimable, :marge, :charge, :prix, :niveau, :hv, :court, :detail, :run_label, now())
 ON CONFLICT (idu) DO UPDATE SET
   estimable = EXCLUDED.estimable, marge_estimee = EXCLUDED.marge_estimee,
   charge_supportable = EXCLUDED.charge_supportable, prix_probable = EXCLUDED.prix_probable,
   niveau_prix = EXCLUDED.niveau_prix, hypotheses_version = EXCLUDED.hypotheses_version,
-  libelle_court = EXCLUDED.libelle_court, detail = EXCLUDED.detail, computed_at = now();
+  libelle_court = EXCLUDED.libelle_court, detail = EXCLUDED.detail,
+  run_label = EXCLUDED.run_label, computed_at = now();
 """
 
 _CAVEAT = ("Estimé (hypothèses de bilan génériques) — prix de sortie neuf médian DVF ≠ prix négocié ; "
@@ -171,7 +173,7 @@ def build_score_e(session: Session, *, run: str = Q_A_RUN_LABEL,
                            "validees": list(ILE_VALIDEES_INSEE)}).mappings().all()
     rows = [_row(r["idu"], r["surface_m2"], r["sdp"], r["terrain"], r["prix_vente"], r["niveau_prix"]) for r in raw]
     for r in rows:
-        session.execute(text(_INSERT), r)
+        session.execute(text(_INSERT), {**r, "run_label": run})   # M50 : stamp du run servi lu
     if commit:
         session.commit()
     n_est = sum(1 for r in rows if r["estimable"])
