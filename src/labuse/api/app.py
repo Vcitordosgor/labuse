@@ -1558,6 +1558,24 @@ def _score_v2_run_id(db: Session) -> str | None:
         {"label": Q_A_RUN_LABEL}).scalar()
 
 
+#: cache mémoire du nombre de parcelles analysées par run (théâtre M52 L2). Le compte est GELÉ
+#: à l'écriture du run (`p_score_v2_runs.n_parcelles`) — pas un COUNT(*) par fiche.
+_PARC_ANALYSEES: dict[str, int | None] = {}
+
+
+def _parc_analysees(db: Session, run: str | None) -> int | None:
+    """Nombre de parcelles analysées du run servi (théâtre « N parcelles analysées »). Lit le
+    compte GELÉ dans `p_score_v2_runs.n_parcelles` (aucun COUNT par requête). Requête EN
+    begin_nested (contrat savepoint : toute requête ajoutée au build de fiche est isolée)."""
+    if not run:
+        return None
+    if run not in _PARC_ANALYSEES:
+        with db.begin_nested():
+            _PARC_ANALYSEES[run] = db.execute(text(
+                "SELECT n_parcelles FROM p_score_v2_runs WHERE run_id = :r"), {"r": run}).scalar()
+    return _PARC_ANALYSEES[run]
+
+
 def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
@@ -2152,6 +2170,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
         "q_score": head["q_score"], "a_score": head["a_score"],
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
+        "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage

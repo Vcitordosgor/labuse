@@ -56,6 +56,31 @@ const IC = {
   faisa: drSvg(<><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-5h6v5" /></>),
   viab: drSvg(<><path d="M12 3v6" /><path d="M8 9h8l-1 5a3 3 0 0 1-6 0z" /><path d="M12 17v4" /></>),
   confiance: drSvg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></>),
+  contexte: drSvg(<><circle cx="12" cy="10" r="3" /><path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" /></>),
+}
+
+/** M52 L2 — théâtre : compteur « N parcelles analysées » qui s'incrémente 0→N en ~700 ms au
+ *  chargement puis fige. Sobre, une ligne. N = compte GELÉ du run (`parc_analysees`), jamais
+ *  inventé. Présentation seule. */
+function TheatreCompteur({ n }: { n: number }) {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 700)
+      setV(Math.round(n * (1 - Math.pow(1 - p, 3))))   // easeOutCubic → fige à n
+      if (p < 1) raf = requestAnimationFrame(tick)
+      else setV(n)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [n])
+  return (
+    <p data-theatre style={{ margin: '2px 0 1px', fontSize: 11, color: '#5f7568', letterSpacing: .2 }}>
+      <b style={{ color: '#8FA69A', fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('fr-FR')}</b> parcelles analysées
+    </p>
+  )
 }
 
 function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
@@ -950,7 +975,7 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
+function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: import('../../lib/types').ModeB; defaultOpen?: boolean }) {
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -965,7 +990,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation" defaultOpen={defaultOpen}
       value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
       valueColor={mb.negatif ? '#E8B44C' : undefined}
       micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
@@ -1155,6 +1180,10 @@ export function Fiche({ idu }: { idu: string }) {
   const multBase = f?.score_v2?.mult_base ?? null
   const signalEcarte = !!(f?.score_v2 && verdict && verdict.tier == null && (multBase ?? 0) >= 2)
   const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
+  // M52 L2 — hiérarchie : l'essentiel (droit du sol + économie) s'ouvre à l'arrivée pour un tier
+  // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
+  // que le verdict. La déclassée à signal fort remonte le Mode B en 2 (ouvert), l'essentiel replié.
+  const servable = !!(verdict && verdict.tier != null)
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
@@ -1497,8 +1526,15 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
-            {/* 1 · RÈGLES D'URBANISME — micro : jauge SDP + zone/article */}
-            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
+            {/* M52 L2 — théâtre : « N parcelles analysées » (compte gelé du run, jamais inventé). */}
+            {f.parc_analysees != null && <TheatreCompteur n={f.parc_analysees} />}
+
+            {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
+                juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
+            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} defaultOpen />}
+
+            {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
+            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme" defaultOpen={servable}
               value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
@@ -1552,31 +1588,6 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
-                {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
-                {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-                  <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                    <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
-                    <ul className="mt-1 list-disc pl-4 text-txt-mut">
-                      {f.historique_site.permis.slice(0, 6).map((pm, i) => (
-                        <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-                      ))}
-                      {f.historique_site.caducite && (
-                        <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
-                      )}
-                    </ul>
-                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
-                  </div>
-                )}
-                {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
-                {f.voisinage_proche && (
-                  <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                    <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
-                    <div className="mt-1 text-txt-mut">
-                      {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
-                    </div>
-                    <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
-                  </div>
-                )}
                 <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
@@ -1590,16 +1601,95 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* 2 · RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ) */}
-            <RefDrawer id="risques" icon={IC.risques} name="Risques"
-              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
-              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
-              {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+            {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
+            {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt} defaultOpen={servable}
+              micro={<MicroTriple items={delaisse
+                /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
+                   promet plus un gabarit/SDP sur une parcelle sous le seuil. */
+                ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
+                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+              <div className="flex flex-col gap-3">
+                {delaisse && (
+                  /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
+                  <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
+                  </div>
+                )}
+                <FaisabiliteTab idu={idu} />
+                {!delaisse && <BilanTab idu={idu} />}
+              </div>
+            </RefDrawer>
+
+            {/* MARCHÉ — micro : sparkline + volume */}
+            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
+              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
+              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
+              {marcheLines.length
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </RefDrawer>
 
-            {/* 3 · PROPRIÉTAIRE — CARTE ACCENTUÉE VIOLETTE (le signal chaud, une seule sur la fiche) */}
+            {/* VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
+                <EquipementsBadges idu={idu} />
+                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
+                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
+                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
+                  </div>
+                )}
+                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+                <PermitsProximityBlock idu={idu} />
+                {f.depots && <DepotsBlock d={f.depots} />}
+              </div>
+            </RefDrawer>
+
+            {/* ③ ÉCONOMIE (suite) — Mode B (M44) pour un tier SERVABLE : reste dans l'économie
+                (la déclassée l'a déjà remonté en 2). Lecture complémentaire, subordonnée au verdict. */}
+            {!signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+
+            {/* ④ CONTEXTE — « Sur cette parcelle » (historique permis + caducité) et « Autour »
+                (voisinage proche : ventes DVF + permis 36 mois). M42. Rien si les deux sont vides. */}
+            {((f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite)) || f.voisinage_proche) && (
+              <RefDrawer id="contexte" icon={IC.contexte} name="Contexte"
+                value={f.voisinage_proche ? `${f.voisinage_proche.ventes_dvf} vente(s) · ${f.voisinage_proche.permis} permis` : 'voir'}>
+                <div className="flex flex-col gap-3">
+                  {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
+                  {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
+                    <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                      <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
+                      <ul className="mt-1 list-disc pl-4 text-txt-mut">
+                        {f.historique_site.permis.slice(0, 6).map((pm, i) => (
+                          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
+                        ))}
+                        {f.historique_site.caducite && (
+                          <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
+                        )}
+                      </ul>
+                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
+                    </div>
+                  )}
+                  {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
+                  {f.voisinage_proche && (
+                    <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                      <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
+                      <div className="mt-1 text-txt-mut">
+                        {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
+                    </div>
+                  )}
+                </div>
+              </RefDrawer>
+            )}
+
+            {/* ⑤ PROPRIÉTÉ — société (M43) + signaux vendeur. CARTE ACCENTUÉE VIOLETTE = le signal chaud. */}
             <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'privé')}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
@@ -1635,74 +1725,17 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* 4 · MARCHÉ — micro : sparkline + volume */}
-            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
-              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
-              {marcheLines.length
-                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+            {/* ⑥ RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ). */}
+            <RefDrawer id="risques" icon={IC.risques} name="Risques"
+              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
+              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
+              {risquesLines.length
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-            </RefDrawer>
-
-            {/* 5 · FAISABILITÉ ET BILAN — micro : 3 données sur une ligne */}
-            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
-              micro={<MicroTriple items={delaisse
-                /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
-                   promet plus un gabarit/SDP sur une parcelle sous le seuil. */
-                ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
-              <div className="flex flex-col gap-3">
-                {delaisse && (
-                  /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
-                  <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                    <span aria-hidden className="text-st-creuser">▲</span>
-                    <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
-                  </div>
-                )}
-                <FaisabiliteTab idu={idu} />
-                {!delaisse && <BilanTab idu={idu} />}
-              </div>
-            </RefDrawer>
-
-            {/* 6 · VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
-              <div className="flex flex-col gap-3">
-                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
-                <EquipementsBadges idu={idu} />
-                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                    <span aria-hidden className="text-st-creuser">▲</span>
-                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
-                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
-                  </div>
-                )}
-                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
-                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
-                <PermitsProximityBlock idu={idu} />
-                {f.depots && <DepotsBlock d={f.depots} />}
-              </div>
-            </RefDrawer>
-
-            {/* 7 · CONFIANCE ET DONNÉES — score P (pourquoi), ICD, complétude, statut, flags, signaler */}
-            <RefDrawer id="confiance" icon={IC.confiance} name="Confiance et données" value={confianceValue}>
-              <div className="flex flex-col gap-3">
-                <ScoreV2Block idu={idu} />
-                {f.icd && <IcdBlockView icd={f.icd} />}
-                {/* M37 : chip « Statut matrice (historique) » RETIRÉ (arbitrage Vic — le tier
-                    servi + l'ICD suffisent ; plus de classement historique en surface fiche). */}
-                {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
-                    parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
-                    jauge de confiance données par parcelle. */}
-                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
-                <SignalerErreur idu={idu} />
-              </div>
             </RefDrawer>
 
             {/* M-RENOUV : tiroir « pourquoi » du segment — les 4 composantes du score,
                 sourcées ; wording doctrinal (géométrie favorable, jamais « division »). */}
-            {/* M33 — mode B : lecture complémentaire SUBORDONNÉE (le verdict/tier M34 reste
-                premier à l'écran, en tête de fiche) — uniquement sur la population. */}
-            {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
             {f.renouvellement && (
               <RefDrawer id="renouvellement" icon={IC.faisa} name="Renouvellement — pourquoi ce rang"
                 value={`${f.renouvellement.renouv_score}/100`} valueColor={RENOUV.txt}
@@ -1744,6 +1777,22 @@ export function Fiche({ idu }: { idu: string }) {
                 <PourquoiPasTab idu={idu} />
               </RefDrawer>
             )}
+
+            {/* ⑧ CONFIANCE ET DONNÉES — dernier bloc de contenu (score P « pourquoi », ICD, flags,
+                signaler). Devient « Les données » en L3 (data_sources + absentes dites). */}
+            <RefDrawer id="confiance" icon={IC.confiance} name="Confiance et données" value={confianceValue}>
+              <div className="flex flex-col gap-3">
+                <ScoreV2Block idu={idu} />
+                {f.icd && <IcdBlockView icd={f.icd} />}
+                {/* M37 : chip « Statut matrice (historique) » RETIRÉ (arbitrage Vic — le tier
+                    servi + l'ICD suffisent ; plus de classement historique en surface fiche). */}
+                {/* M36 Lot B : la couronne « Complétude » est RETIRÉE (3 valeurs sur tout le
+                    parc — n'informe pas ; arbitrage Vic M35 D3). L'ICD ci-dessus est la vraie
+                    jauge de confiance données par parcelle. */}
+                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
+                <SignalerErreur idu={idu} />
+              </div>
+            </RefDrawer>
 
             {/* CARTE IA — EN BAS de la pile (jamais en tête), une seule ligne (spec) */}
             <button onClick={() => setAskOpen(true)} data-askbar-open

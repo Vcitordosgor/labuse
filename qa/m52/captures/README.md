@@ -60,3 +60,23 @@ L1 validé sur brûlante + écartée. Deux corrections appliquées, re-capturée
    log10(×N / 1) / log10(25 / 1) × 100, bornée [1, 99], ancres en config
    (`echelle_verbale_score.yaml` → `reglette`). Résultat : IL0307 ×1,3 → **8,6 %** (près de
    « moyenne ») ; EY1406 ×13,2 → 80,0 % ; AT2379 ×22,1 → 96,2 %.
+
+## L2 — Hiérarchie
+
+Ordre des tuiles réordonné à la séquence de décision promoteur. **Preuve = dump DOM réel**
+`L2_ordre_tuiles.txt` (+ panneaux `L2_apres_*__panel.png`) :
+
+- **Servable (brûlante)** : ① VERDICT (en tête, hors scroll) → théâtre → ② droit du sol
+  (`regles`, **ouvert**) → ③ économie (`faisabilite` **ouvert**, marché/viabilisation repliés)
+  → ④ contexte (historique + voisinage, sorti de `regles`) → ⑤ propriété → ⑥ risques →
+  [pourquoi pas] → ⑧ **Les données** (`confiance`). ⑦ outils = barre d'actions en pied.
+- **Déclassée à signal fort (EY1406)** : le **Mode B remonte en 2** (juste après le verdict),
+  **ouvert** ; le reste replié.
+- **Écartée simple (IL0307)** : seul le verdict est ouvert ; toutes les tuiles repliées.
+
+Détails L2 : `états dépliés` pilotés par `servable` (tier servable) et `signalEcarte` ;
+théâtre « **431 663 parcelles analysées** » (compte GELÉ `p_score_v2_runs.n_parcelles`, jamais
+un COUNT par fiche, jamais inventé) — s'incrémente 0→N en ~700 ms puis fige, une ligne sobre.
+**Nuance assumée** : les « outils » (⑦) restent la barre d'actions de pied (CTA persistants
+pipeline/projet/PDF/annuaire) — placés APRÈS « Les données » plutôt qu'avant, pour ne pas
+enterrer les CTA. L'ordre des tuiles de CONTENU respecte la séquence validée.

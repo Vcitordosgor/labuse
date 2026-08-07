@@ -231,6 +231,7 @@ export interface Fiche {
     pourquoi?: { feature: string; libelle: string; phrase?: string; signe?: string }[]
   } | null
   etage0: boolean
+  parc_analysees?: number | null   // M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
   // M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, CLOISONNÉE du score P.
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).

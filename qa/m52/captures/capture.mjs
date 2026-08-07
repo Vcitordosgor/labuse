@@ -35,13 +35,23 @@ for (const [idu, name] of PARCELS) {
   await page.locator(`[data-fiche-idu]`).first().waitFor({ state: 'visible', timeout: 20000 })
   await sleep(1200) // stabilisation (fetch score_v2 + rendu réglette)
   const panel = page.locator('aside.absolute.right-0.top-0').first()
-  await panel.screenshot({ path: join(OUT, `L1_${LABEL}_${name}__panel.png`) })
-  const card = page.locator('[data-verdict-card]').first()
-  if (await card.count()) {
-    await card.screenshot({ path: join(OUT, `L1_${LABEL}_${name}__verdict.png`) })
-    console.log(`✓ ${LABEL} ${name} — panel + verdict`)
+  const PREFIX = process.env.PREFIX || 'L1'
+  if (process.env.FULLSTACK) {
+    // viewport TRÈS haut → l'aside h-full grandit, le conteneur scrollable montre toute la pile
+    // sans hack DOM (ordre des tuiles + états dépliés). Ne change QUE le screenshot, pas le produit.
+    await page.setViewportSize({ width: 1480, height: 2800 })
+    await sleep(400)
+    await panel.screenshot({ path: join(OUT, `${PREFIX}_${LABEL}_${name}__stack.png`) })
+    console.log(`✓ ${LABEL} ${name} — stack`)
   } else {
-    console.log(`✓ ${LABEL} ${name} — panel (pas de data-verdict-card)`)
+    await panel.screenshot({ path: join(OUT, `${PREFIX}_${LABEL}_${name}__panel.png`) })
+    const card = page.locator('[data-verdict-card]').first()
+    if (await card.count()) {
+      await card.screenshot({ path: join(OUT, `${PREFIX}_${LABEL}_${name}__verdict.png`) })
+      console.log(`✓ ${LABEL} ${name} — panel + verdict`)
+    } else {
+      console.log(`✓ ${LABEL} ${name} — panel (pas de data-verdict-card)`)
+    }
   }
 }
 

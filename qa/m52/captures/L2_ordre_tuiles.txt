@@ -1,0 +1,6 @@
+M52-L2 — ordre des tuiles (dump DOM réel, run q_v8_calibre, 2026-08-07)
+verdict = carte VERDICT (hors conteneur scroll, toujours ① en tête). outils = barre d'actions (pied).
+
+brulante   THEATRE → regles(open) → faisabilite(open) → marche(closed) → viabilisation(closed) → contexte(closed) → proprio(closed) → risques(closed) → pourquoi(closed) → confiance(closed)
+declasseB  THEATRE → mode-b(open) → regles(closed) → faisabilite(closed) → marche(closed) → viabilisation(closed) → contexte(closed) → proprio(closed) → risques(closed) → pourquoi(closed) → confiance(closed)
+ecartee    THEATRE → regles(closed) → faisabilite(closed) → marche(closed) → viabilisation(closed) → contexte(closed) → proprio(closed) → risques(closed) → pourquoi(closed) → confiance(closed)
