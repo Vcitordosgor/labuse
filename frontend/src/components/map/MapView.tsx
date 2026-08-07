@@ -26,18 +26,11 @@ const STYLE: maplibregl.StyleSpecification = {
 
 // Correctif M5 (verdict effectif) : la couleur EST le verdict sur la carte — étage 0 prime
 // (écartée quasi invisible, inchangé), puis tier v2 quand un run existe (palette TIER_V2_META,
-// cf. lib/status.ts), repli statut matrice legacy (tuiles/geojson d'avant le rebuild MVT).
+// cf. lib/status.ts). M48 (F4) : le repli `status` (matrice v1 morte) est RETIRÉ — le MVT ne bake
+// plus matrice_statut et le GeoJSON l'avait déjà supprimé (M37) ; sans tier v2 → défaut neutre.
 // `etage0` est bool en GeoJSON et int (0/1) en MVT → to-number.
-const LEGACY_COLOR: maplibregl.ExpressionSpecification = [
-  'match', ['get', 'status'],
-  'chaude', '#5CE6A1', 'a_surveiller', '#4ADE96', 'a_creuser', '#E8B44C', 'ecartee', '#E8695A',
-  '#39463F',
-]
-const LEGACY_OPACITY: maplibregl.ExpressionSpecification = [
-  'match', ['get', 'status'],
-  'chaude', 0.92, 'a_surveiller', 0.85, 'a_creuser', 0.55, 'ecartee', 0.04,
-  0.03,
-]
+const LEGACY_COLOR = '#39463F'
+const LEGACY_OPACITY = 0.03
 const ETAGE0: maplibregl.ExpressionSpecification = ['>=', ['to-number', ['coalesce', ['get', 'etage0'], 0]], 1]
 const TIER_V2: maplibregl.ExpressionSpecification = ['coalesce', ['get', 'tier_v2'], '']
 const STATUS_COLOR: maplibregl.ExpressionSpecification = [
@@ -54,10 +47,10 @@ const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
     'reserve_fonciere', 0.55, 'ecartee', 0.04,
     LEGACY_OPACITY],
 ]
-// liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0) OU promues legacy
-const PROMUES_FILTER: maplibregl.FilterSpecification = ['any',
-  ['all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0]],
-  ['all', ['==', TIER_V2, ''], ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]]],
+// liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
+// `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
+const PROMUES_FILTER: maplibregl.FilterSpecification = [
+  'all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0],
 ] as unknown as maplibregl.FilterSpecification
 
 // M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par

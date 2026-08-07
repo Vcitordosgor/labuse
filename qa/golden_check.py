@@ -300,7 +300,7 @@ def collect_api(idu: str) -> dict:
         out["fiche"] = {
             "commune": fiche.get("commune"),
             "surface_m2": fiche.get("surface_m2"),
-            "statut": fiche.get("statut"),
+            # M48 (F4) : `statut` (matrice morte) retiré du payload fiche — plus collecté ici.
             "etage0": fiche.get("etage0"),
             "q_score": fiche.get("q_score"), "a_score": fiche.get("a_score"),
             "a_completude": fiche.get("a_completude"),
@@ -351,7 +351,8 @@ def coherence_db_api(db: dict, api: dict) -> list[str]:
         elif a != b:
             pb.append(f"{label}: db={a} api={b}")
 
-    eq("statut (matrice)", db.get("matrice_statut"), f.get("statut"))
+    # M48 (F4) : la fiche n'expose plus `statut` (matrice morte retirée du payload). La régression
+    # matrice_statut reste gelée par les ANCRES J3 (db, cf. cur_couple) — pas via la fiche.
     eq("etage0", db.get("etage0"), f.get("etage0"))
     eq("surface_m2", db.get("surface_m2"), f.get("surface_m2"), tol=1)
     eq("commune", db.get("commune"), f.get("commune"))

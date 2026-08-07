@@ -408,7 +408,7 @@ idu,strate,grandeur,surface,valeur
 97415000CW1056,tier_declasse_non_constructible,vigilances,carte_tuile,"declassement,icpe,risques,zonage_plu_gpu"
 97415000CX0650,tier_a_creuser,tier,fiche_v2,a_creuser
 97415000CX0650,tier_a_creuser,tier,fiche_legacy,a_creuser
-97415000CX0650,tier_a_creuser,tier,carte_tuile,chaude
+97415000CX0650,tier_a_creuser,tier,carte_tuile,a_creuser
 97415000CX0650,tier_a_creuser,tier,db_verite,a_creuser
 97415000CX0650,tier_a_creuser,tier,export_md,a_creuser
 97415000CX0650,tier_a_creuser,rang,fiche_v2,688
@@ -507,7 +507,7 @@ idu,strate,grandeur,surface,valeur
 97416000EY1406,tier_declasse_bati_revele,modeb_dispo,fiche_legacy,True
 97416000EY1406,tier_declasse_bati_revele,modeb_dispo,endpoint_modeb,True
 97416000EY1406,tier_declasse_bati_revele,sdp_residuelle,fiche_v2,0
-97416000EY1406,tier_declasse_bati_revele,sdp_residuelle,carte_tuile,111
+97416000EY1406,tier_declasse_bati_revele,sdp_residuelle,carte_tuile,0
 97416000EY1406,tier_declasse_bati_revele,sdp_residuelle,db_residuel,0
 97416000EY1406,tier_declasse_bati_revele,vigilances,fiche_v2,"parc_national,residuel_socle,risques"
 97416000EY1406,tier_declasse_bati_revele,vigilances,carte_tuile,"parc_national,residuel_socle,risques"

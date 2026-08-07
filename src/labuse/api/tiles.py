@@ -138,7 +138,10 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune, p.surface_m2,
                ST_Transform(p.geom, 3857) AS geom_3857,
-               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+               -- M48 (F4) : `matrice_statut` (v1 morte) N'EST PLUS bakée comme `status` — elle
+               -- contredisait tier_v2. La carte colore par tier_v2 (+ etage0). `d.status` ci-dessous
+               -- reste le statut d'EXCLUSION (exclue/faux_positif) qui alimente etage0, pas la matrice.
+               d.q_score, d.a_score, d.a_completude,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
@@ -306,8 +309,9 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # c'est la COULEUR de la couche « Zonage PLU (parcelles) », visible dès z9 en mode île.
     zone_props = "m.zone_fam, " if has_zone else ""
     zone_props_full = "m.zone_lib, m.zone_fam, " if has_zone else ""
-    props = (f"m.status, {v2_props}{zone_props}m.commune" if z <= 11 else
-             "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
+    # M48 (F4) : `m.status` (matrice morte) retiré des propriétés servies — la carte lit tier_v2/etage0.
+    props = (f"{v2_props}{zone_props}m.commune" if z <= 11 else
+             "m.idu, m.commune, m.surface_m2, m.q_score, m.a_score, "
              f"{v2_props_full}{zone_props_full}"
              "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.evenement, m.flags")
