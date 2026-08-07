@@ -59,3 +59,58 @@ GPU idurba `97410_PLU_20200206`, garde idurba+sha OK, ingéré P1). Les arbitrag
 L'annuaire sert le **PLU 2020 opposable** (idurba `97410_PLU_20200206`, présent au GPU, garde OK).
 D'**éventuelles modifications n°2/n°3** approuvées postérieurement **ne sont PAS au GPU** (à confirmer
 en mairie, hors open-data) — comme en M40. Rien n'est inventé : le verbatim servi est celui du 2020.
+
+---
+
+# M51-P2 — MESURES (les 4 réponses ; rien appliqué)
+
+## Écart 1 — Recul voirie : DÉJÀ SERVI (5 m défaut), impact réel MARGINAL
+**Constat qui renverse la question** : le moteur (`faisabilite/engine.py`) applique DÉJÀ un recul
+voirie — `recul_voirie_defaut_m = 5 m` quand la zone n'est pas calibrée (Saint-Benoît `zones:{}` →
+défaut 5 m, source « Art. 6 à_vérifier → hypothèse »). Ce n'est donc PAS « recul voirie absent » :
+c'est un **défaut 5 m**.
+- **17 fiches sur 18 = recul 3 m < 5 m servi** → capacité **CONSERVATRICE** (sur-recul de 2 m), **aucune
+  sur-estimation**. Appliquer le 3 m exact AUGMENTERAIT légèrement la capacité — non requis pour la justesse.
+- **Seule exception : N°02 (AUb2, Bourbier les Hauts) = 10 m > 5 m** → sous-recul de 5 m. Parcelles
+  concernées : **4, TOUTES `reserve_fonciere`**, non déclassées. Impact géométrique mesuré (inset 5 m→10 m) :
+  **perte d'emprise 27–57 %** (AE0025 32 %, AE0027 28 %, AE0250 27 %, AE0251 57 %) → SDP réduite >10 % pour
+  les 4 **si** on corrigeait.
+- **Verdict (ta règle) : MARGINAL** — 4 parcelles, toutes déjà en réserve (pas de brûlante/chaude). →
+  **correction en config possible (recul_voirie 10 m pour AUb2/Bourbier), note au bilan, PAS de bascule.**
+  ⚠ **Wrinkle à ton arbitrage** : ajouter une entrée `zones: {AUb2: …}` repasse `resolve_zone(AUb2)` en
+  `calibree=True` → change le chemin `au_statut` de cette zone (aujourd'hui `conditionnelle_operation` via
+  le sentier générique). Une correction recul-seul a donc un effet de bord sur la classification. **Je
+  n'ai rien écrit** — tu tranches la forme (entrée dédiée recul-only sans toucher `calibree`, ou on
+  documente le sous-recul de 4 parcelles réserve et on laisse).
+
+## Écart 2 — Régime 1AU : PAS D'ÉCART, Saint-Benoît est raccordé
+`parcel_au_statut` (chaîne train 6, AU-OUVERTURE) SERT déjà Saint-Benoît :
+- **237 parcelles AUa/AUb = `conditionnelle_operation`** (la porte « opération d'ensemble » — zones AUa5,
+  AUb2, AUb6…, = les fiches) ;
+- **12 AUe3/AUp1 = `declasse_au_fermee`** (habitat interdit, cohérent `zones_au_st`).
+Les 18 fiches **confirment le servi**. La porte 1AU est portée par la classification. **Rien à corriger.**
+*(Nuance non bloquante : `conditionnelle_operation` est une VIGILANCE — les parcelles restent tiérées ;
+si tu voulais que la porte pèse davantage sur le tier, c'est un débat de calibration séparé, pas un écart.)*
+
+## Écart 3 — N°04 absente : consigné à ta liste mairie
+Ajouté à la liste mairie Saint-Benoît : **« fiche AU N°04 absente du règlement GPU 2020 »** (avec les
+modifs n°2/n°3, hors open-data). Rien d'autre — ta main.
+
+## PPR R1 — couche ACTIVE, PAS de trou
+**Correction d'un chiffre du bilan P2 : 5 fiches référencent le PPR (N°01, 03, 07, 14, 19), pas 8**
+(le 8 était les emplacements réservés — confusion ER↔PPR, corrigée). Couche `ppr` présente pour
+Saint-Benoît (3 INTERDICTION + 4 PRESCRIPTION) ; **268 parcelles Saint-Benoît `declasse_non_constructible`**.
+Croisement spatial des parcelles AU **servies** ∩ PPR INTERDICTION (R1) :
+- **AUb14 : 3 parcelles correctement déclassées** (la couche fire).
+- **AUb7 (4 servies) et AUb19 (18 servies) : 0 intersection avec le R1** — les parcelles servies sont
+  HORS R1 ; le « secteur R1 » des fiches est ailleurs dans la zone (cohérent : les fiches parlent de
+  *secteurs*, pas de la zone entière).
+→ **Aucune parcelle AU servie en R1 sans vigilance. Pas de trou de couche (famille EP0228).** On est tranquilles.
+
+## Synthèse pour clôture
+| écart | verdict | action |
+|---|---|---|
+| 1 Recul voirie | déjà servi 5 m ; 17/18 conservateur ; N°02 sous-recul, **4 parcelles réserve** | marginal → config (ta forme) + bilan, pas de bascule |
+| 2 Régime 1AU | **pas d'écart** — raccordé (237 conditionnelle_operation) | rien |
+| 3 N°04 absente | consigné | liste mairie (ta main) |
+| PPR R1 | couche active, **pas de trou** (0 servie en R1) | rien |
