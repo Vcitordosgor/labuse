@@ -175,3 +175,55 @@ PYTHONPATH=src labuse division-or --communes 97401,97402,97403,97404,97405,97406
 Estimé **1–3 min**. Après : `check_coherence_tables_run_scopees` → **division_or OK (q_v8_calibre)**
 dès que l'île a tourné et commité (aujourd'hui elle est **MÉLANGÉE** : 34 q_v7 + BV0182 q_v8, car
 l'île n'avait jamais persisté). Le pool découpe (MASQUÉ) se rejoue via `build_divisions_partiel`.
+
+---
+
+# M50-SUITE — BILAN FINAL (clôture)
+
+## Livré
+1. **Fix (a) INSEE→NOM résolu EN AMONT** (`_resolve_commune`, réf `commune_conso_enaf`) → détecteur
+   sur le chemin **indexé** `p.commune=:commune`, plus aucun `left(idu,5)` (seq scan de 431 k tué) ;
+   Saint-Paul **9,4 s vs >180 s (~20×)** ; calibration PLU récupérée pour l'entrée INSEE.
+2. **Fix (b) commit ATOMIQUE PAR COMMUNE** (`session.commit()` dans la boucle, purge+insert même
+   transaction) → durable + **incrémental/reprenable** ; une île interrompue garde les communes finies.
+3. **`--all`** (`labuse division-or --all`, défaut = les 24 de `commune_conso_enaf`, en NOMS/indexé) —
+   un rebuild île qui **ne peut oublier aucune commune**. `--communes` devient optionnel.
+4. **Test d'intégration ACTIF** `qa/m50/integration_persist_commune.py` (cross-connexion, vraie base,
+   auto-nettoyant) + **pytest 17/17**.
+
+## Diff nominal 35 → 10 (mécanisme ; exactitude par-idu = base cible de Vic, cf. réserve ci-dessous)
+Le **35** (état servi sur `localhost:5432/labuse`) = **27 découpe q_v7 + 7 libre q_v7 + BV0182 démolition
+q_v8**. Un rebuild île complet q_v8 **re-détecte tout** avec le détecteur actuel (plus strict) + la
+**O12-GARDE**. Ce qui régit meurt/survit/entre :
+- **MEURENT** : les supports `status='exclue'` (écartés DÉFINITIVEMENT — la O12-GARDE les tue ; ex.
+  Saint-Paul CH1198/CP0511/DS0617) et les géométries qui échouent le détecteur resserré (façade ≥ 12 m,
+  lot libre ≥ 500 m², compacité) — bâtis par un détecteur d'itération antérieure, plus laxiste.
+- **SURVIVENT** : les candidats qui repassent le détecteur v8 **et** la garde (ex. Saint-Paul **BV0182**,
+  résiduel démolition, faux_positif toléré + géométrie OK — le seul déjà en q_v8).
+- **ENTRENT** : **Le Port (97407)** — **1re commune hors périmètre de revue v7** à produire un candidat
+  (les 14 communes v7 n'en couvraient pas les 24 ; l'île complète la couvre enfin). C'est le « +1 » de Vic.
+Résultat Vic : **10 = 9 (survivants v8 des communes déjà couvertes) + 1 (Le Port, nouveau)**,
+**q_v8_calibre unique, 0 résidu q_v7**.
+
+## Incidents consignés (ce mandat)
+- **Push main accidentel** (M50-SUITE) : `[M50-SUITE]` docs-only poussé sur `origin/main` après que HEAD
+  s'y soit retrouvé post-merge. Historique laissé (53ef593d), protection de branche = geste Vic. →
+  **TOUJOURS `git branch --show-current` avant commit.**
+- **Écriture BV0182** (M50-SUITE) : `build_divisions(...)` sans `commit=False` en trace « lecture seule »
+  (défaut `commit=True`) → 1 ligne servie rafraîchie q_v7→q_v8. Valeur correcte, mais violation du
+  read-only. → **`commit=False` explicite** pour tout builder tracé.
+- **GOTCHA OPS** (M50-SUITE-2) : `kill -9` du client python ne tue PAS le backend postgres (INSERT
+  PostGIS **ininterruptible**) → zombies calculant + tenant un verrou sur `division_or_candidates`
+  (jusqu'à 5 empilés, le plus vieux 1 h 30). Ne pas lancer de build lourd en tâche de fond puis tuer le
+  client ; vérifier `pg_stat_activity` avant de rendre la main. **Le partiel (découpe) est lourd
+  (~8 min/commune) — l'estimé « 1–3 min » ne vaut QUE pour le résiduel.**
+
+## ⚠ RÉSERVE — les 10 de Vic ne sont PAS sur ce cluster
+Constaté sur pièces : **un seul cluster** (PID 45967, `/Users/openclaw/labuse-pgdata`, TCP+socket), et
+**seule la base `labuse` porte la table → toujours 35** (34 q_v7 + BV0182 q_v8), **dernière écriture
+20:51** (BV0182). Le « 10 / q_v8 unique » de Vic, vérifié cross-connexion de SON côté, **n'est visible
+nulle part ici**. Explication la plus probable : le rebuild de Vic tourne avec un **`LABUSE_DATABASE_URL`
+différent** (autre base/instance) que le `localhost:5432/labuse` interrogé dans ce checkout. La garde,
+mesurée ici, reste donc **MÉLANGÉE** (34 q_v7 + 1 q_v8) — elle passera **OK** sur la base **où l'île a
+persisté**. Le diff par-idu exhaustif des 10 est enumérable sur cette base-là (ou via `--all` à blanc
+qui y tourne) — pas depuis ce cluster.

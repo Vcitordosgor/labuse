@@ -664,6 +664,17 @@ def _resolve_commune(session: Session, commune: str) -> str:
     return nom or commune
 
 
+def all_communes(session: Session) -> list[str]:
+    """Liste CANONIQUE des communes de l'île — la réf `commune_conso_enaf` (24 lignes), ordonnée par
+    INSEE (stable/reproductible), renvoyée en NOMS (parcels.commune, chemin indexé). Pour un rebuild
+    `--all` qui ne peut oublier aucune commune (M50-SUITE-2 : `--communes` seul = manque). Réf absente
+    (base de test) → liste vide (l'appelant décide)."""
+    if session.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is None:
+        return []
+    return [r[0] for r in session.execute(text(
+        "SELECT commune FROM commune_conso_enaf ORDER BY insee"))]
+
+
 def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
                             log=lambda *_: None) -> dict:
     """O12-PARTIEL — détecte les LOTS DÉCOUPÉS (type 'decoupe', famille DISTINCTE des lots

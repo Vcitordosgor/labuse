@@ -220,6 +220,20 @@ def test_resolution_insee_vers_nom(db_session):
 
 
 @pytest.mark.db
+def test_all_communes_liste_canonique(db_session):
+    """M50-SUITE-2 : --all s'appuie sur all_communes() = la réf canonique de l'île, en NOMS (jamais
+    des codes → chemin indexé), pour ne pouvoir en oublier aucune."""
+    s = db_session
+    noms = d.all_communes(s)
+    if s.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is None:
+        assert noms == []                                        # réf absente → l'appelant décide
+        return
+    assert len(noms) == 24                                       # l'île entière
+    assert "Saint-Paul" in noms and "Le Port" in noms           # des NOMS, pas des codes INSEE
+    assert all(isinstance(n, str) and not n.isdigit() for n in noms)
+
+
+@pytest.mark.db
 def test_purge_commune_avant_reecriture(db_session):
     """M50-SUITE : un rebuild par commune PURGE ses lignes avant réécriture (un rebuild à 0 laisse
     la commune VIDE, pas périmée) ; les tracés REVUS (note_revue) sont PRÉSERVÉS."""
