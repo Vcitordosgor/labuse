@@ -3465,21 +3465,8 @@ def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
 
 # M30 théâtre : /discover SUPPRIMÉ — endpoint orphelin (remplacé par /parcels + /stats
 # depuis M5.1, plus aucun appelant front ni QA).
-@app.get("/signals")
-def list_signals(commune: str | None = None, signal_type: str | None = None,
-                 limit: int = Query(200, ge=0, le=10000), db: Session = Depends(get_db)) -> list[dict]:
-    """Signaux de veille (offre C) récents, filtrables par commune / type."""
-    rows = db.execute(
-        text(
-            """SELECT s.signal_type, s.payload, s.detected_at, p.idu, p.commune
-               FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
-               WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-                 AND (CAST(:t AS text) IS NULL OR s.signal_type = :t)
-               ORDER BY s.detected_at DESC LIMIT :lim"""
-        ), {"c": commune, "t": signal_type, "lim": limit}
-    ).mappings().all()
-    return [dict(r) for r in rows]
-
+# M49 (Lot A) : GET /signals RETIRÉ — vestige de l'offre C (parcel_signals), 0 caller prouvé
+# (front `signals` = vestige retiré filters.ts ; 0 hit frontend/qa/scripts ; seul test_api l'exerçait).
 
 # ───────────────────────── Alertes intelligentes (3.C) ─────────────────────────
 # Scope défini par l'utilisateur (zones de veille + parcelles suivies) → « nouveautés ».
