@@ -374,10 +374,8 @@ export const iaSearch = (body: { text: string; history?: { role: string; content
       aggregate?: boolean; texte?: string; sources?: string[]; provenance?: Record<string, string>; rejected?: boolean;
       data?: { kind: 'count' | 'superlative' | 'distribution'; commune?: string; tier?: string; nombre?: number; classement?: { commune: string; nombre: number }[] } }>('/ia/search', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-export const iaSynthese = (idu: string) =>
-  j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })
-export const iaPourquoi = (idu: string) =>
-  j<{ stub: boolean; texte: string; mention: string }>(`/ia/pourquoi/${idu}`, { method: 'POST' })
+// M49 (Lot A, arbitrage Vic) : helpers iaSynthese/iaPourquoi RETIRÉS — 0 importeur (code mort front).
+// Les routes serveur /ia/synthese, /ia/pourquoi restent listées « douteuses » (routes_inventaire.csv).
 
 // M11 Surface A — barre de fiche : question libre → réponse SOURCÉE (grounding du socle IA)
 export type Provenance = 'SOURCE' | 'ESTIME' | 'ABSENT'
@@ -426,11 +424,10 @@ export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
 export const getProfiles = () => j<Record<string, any>[]>('/partners/profiles')
 export const addProfile = (p: Record<string, unknown>) =>
   j<{ ok: boolean }>('/partners/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
-export const runMatch = () => j<{ matches: number }>('/partners/match/run', { method: 'POST' })
-export const matchCompatibilite = (idu: string) => j<Record<string, any>>(`/partners/match/compatibilite/${idu}`)
+// M49 (Lot A, arbitrage Vic) : helpers runMatch/matchCompatibilite/listShares RETIRÉS — 0 importeur
+// (vestiges M19, code mort front). Routes serveur correspondantes listées « douteuses » (non retirées).
 export const promoteursActifs = (commune: string) => j<Record<string, any>>(`/partners/promoteurs-actifs?commune=${encodeURIComponent(commune)}`)
 export const createShare = (idu: string) => j<{ token: string; url: string }>(`/partners/share/${idu}`, { method: 'POST' })
-export const listShares = (idu: string) => j<{ token: string; date: string; views: number }[]>(`/partners/share/${idu}/list`)
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
