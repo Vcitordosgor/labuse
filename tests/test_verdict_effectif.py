@@ -68,9 +68,9 @@ def _seed(session):
 def test_fiche_expose_score_v2_et_etage0(db_session):
     _seed(db_session)
     f = _q_v2_fiche(db_session, "97499000ZZ0001", run_label=RUN)
-    # le statut matrice reste servi (section Qualité, « historique »)…
-    assert f["statut"] == "ecartee" and f["etage0"] is False
-    # …et le tier v2 pilote l'en-tête côté front (rang + ×N)
+    # M48 (F4) : le champ mort `statut` (matrice v1) est RETIRÉ du payload — plus jamais exposé.
+    assert "statut" not in f and f["etage0"] is False
+    # le tier v2 pilote l'en-tête côté front (rang + ×N)
     assert f["score_v2"]["tier"] == "brulante"
     assert f["score_v2"]["rang"] == 16 and f["score_v2"]["mult_base"] == 21.99
 
@@ -87,7 +87,9 @@ def test_etage0_du_run_servi_prime(db_session):
 def test_repli_legacy_sans_ligne_v2(db_session):
     _seed(db_session)
     f = _q_v2_fiche(db_session, "97499000ZZ0003", run_label=RUN)
-    assert f["score_v2"] is None and f["statut"] == "ecartee"
+    # M48 (F4) : le repli `statut` (matrice v1) est RETIRÉ — sans ligne v2, score_v2 est None et
+    # le champ mort n'est plus exposé (le front rend « — » ; aucun parcelle servie n'est hors v2).
+    assert f["score_v2"] is None and "statut" not in f
 
 
 def test_liste_porte_le_verdict_effectif(db_session):

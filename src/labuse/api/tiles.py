@@ -213,11 +213,13 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     chaque bascule du run servi (après le re-score) ET par `labuse build-mvt` : plus jamais un
     re-score sans tuiles à jour (constat M48 : la bascule M39 a régénéré le golden mais PAS les
     tuiles → 4 tiers + 7 854 SDP périmés sur la carte). Reconstruit d'un bloc `mvt_parcels` +
-    overlays + `parcel_flags` (M45) + `parcel_renouvellement` (M47) et enregistre `mvt_meta`.
-    Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
+    overlays + `parcel_flags` (M45) + `parcel_renouvellement` (M47) + `score_e` (M50) et enregistre
+    `mvt_meta`. Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
     import time as _t
     from .. import renouvellement as _renouv
-    from ..bascule_gardes import check_coherence_renouvellement, check_peremption_tuiles
+    from ..ingestion import score_e as _score_e
+    from ..bascule_gardes import (check_coherence_renouvellement, check_peremption_tuiles,
+                                  check_coherence_tables_run_scopees)
     t0 = _t.perf_counter()
     n = build_mvt_table(db, run_label)
     n_ov = build_overlay_mvt(db)
@@ -226,6 +228,10 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     rr = _renouv.build(db, run_label=run_label, commit=False)
     cr = check_coherence_renouvellement(session=db)
     log(f"✓ parcel_renouvellement : {rr['n']} parcelles (run {rr['run_label']}) · cohérence {cr['statut']}.")
+    # M50 : score_e (bilan CA, run-scopé) rejoint le geste — plus la seule table servie montée par
+    # une commande isolée `labuse score-e` (dette M47 : score_e avait servi 428 marges d'un run mort).
+    se = _score_e.build_score_e(db, run=run_label, commit=False)
+    log(f"✓ score_e : {se['total']} parcelles ({se['estimables']} estimables), run {run_label}.")
     db.execute(text("""CREATE TABLE IF NOT EXISTS mvt_meta
                        (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
     db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
@@ -235,8 +241,12 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     # M48 : garde de péremption DANS le point unique → CLI `build-mvt` ET bascules la voient (post-build
     # elle confirme la fraîcheur ; entre deux builds elle crie si un re-score hors geste a eu lieu).
     per = check_peremption_tuiles(session=db)
+    # M50 : garde de cohérence de TOUTES les tables servies run-scopées (le point unique les voit
+    # toutes) — assertion « plus aucune table servie ne peut être silencieusement périmée ».
+    coh = check_coherence_tables_run_scopees(session=db)
     return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
-            "renouv_coherence": cr["statut"], "peremption_ok": per["ok"], "run_label": run_label}
+            "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
+            "tables_coherence": coh, "run_label": run_label}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)

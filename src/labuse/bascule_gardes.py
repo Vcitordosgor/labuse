@@ -420,3 +420,40 @@ def check_peremption_tuiles(session=None) -> dict:
               flush=True)
     return {"ok": ok, "mvt_at": str(mvt_at), "amont_at": str(amont_at) if amont_at else None,
             "retard_min": retard}
+
+
+def check_coherence_tables_run_scopees(session=None) -> dict:
+    """Garde M50 — assertion « aucune table SERVIE run-scopée silencieusement périmée ». Pour CHAQUE
+    table servie portant `run_label`, compare son/ses run(s) au run servi (`config/served_run.txt`).
+    Bruyante, NON bloquante (régime check_fraicheur). `division_or_candidates` = workflow de revue PAR
+    COMMUNE (peut légitimement retarder le run servi, il attend une revue humaine) → alerté mais toléré.
+    Statuts par table : OK / PÉRIMÉE / MÉLANGÉE / ABSENTE. Retourne `{table: statut}`."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    servi = Q_A_RUN_LABEL
+    # (table, colonne_run, workflow_par_commune?) — flags/renouvellement/score_e montent DANS le geste ;
+    # division_or est un workflow de revue par commune (garde informative, tolérée).
+    tables = [("parcel_renouvellement", "run_label", False), ("score_e", "run_label", False),
+              ("parcel_flags", "run_label", False), ("division_or_candidates", "run_label", True)]
+    out: dict[str, str] = {}
+
+    def _run(conn):
+        for tbl, col, wf in tables:
+            if not conn.execute(text(f"SELECT to_regclass('{tbl}')")).scalar():
+                out[tbl] = "ABSENTE"
+                print(f"{_ts()} ⚠ {tbl} [ABSENTE] — table non matérialisée. NON bloquant.", flush=True)
+                continue
+            runs = dict(conn.execute(text(f"SELECT {col}, count(*) FROM {tbl} GROUP BY 1")).all())
+            if set(runs) == {servi}:
+                out[tbl] = "OK"
+                print(f"{_ts()} ✓ {tbl} : run servi « {servi} » ({runs[servi]}).", flush=True)
+            else:
+                out[tbl] = "PÉRIMÉE" if servi not in runs else "MÉLANGÉE"
+                note = " (workflow revue par commune — toléré)" if wf else ""
+                print(f"{_ts()} ⚠ {tbl} [{out[tbl]}]{note} — servi « {servi} », table {runs or '∅'}. "
+                      f"NON bloquant, à voir.", flush=True)
+    if session is not None:
+        _run(session)
+    else:
+        with engine().connect() as c:
+            _run(c)
+    return out

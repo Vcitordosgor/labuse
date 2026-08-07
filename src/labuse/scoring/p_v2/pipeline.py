@@ -419,6 +419,17 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             k += 1
         _snapshot_v2(session, snapshot_label, run_id, rows)
 
+    # M50 (Lot A) : cutoffs de RÉSERVE FONCIÈRE + critère de DÉPARTAGE intra-palier persistés dans
+    # l'artefact du run (comme le registre des features) — pour que « pourquoi réserve et pas à
+    # creuser » / « pourquoi ce rang » aient une réponse DATÉE dans deux ans. Mêmes formules que
+    # statuts.assign_tiers (seuil_c = q0.9 des SDP>0 ; p_median) — recalcul de trace, 0 tier/rang touché.
+    _sdp_pos = pd.to_numeric(work["sdp_residuelle_m2"], errors="coerce").fillna(0)
+    _sdp_pos = _sdp_pos[_sdp_pos > 0]
+    reserve_seuil_c = round(float(_sdp_pos.quantile(0.9)), 3) if len(_sdp_pos) else None
+    reserve_p_median = round(float(pd.to_numeric(work["p"], errors="coerce").median()), 8)
+    # Départage explicite (M28) — la clé de tri qui rend le rang REPRODUCTIBLE (le seed n'est que
+    # le fallback ultime, inatteignable, l'IDU étant unique).
+    departage = "rang: p desc → contrib_D desc → SDP_résiduelle desc → surface desc → IDU alpha → seed"
     session.execute(text("""
         INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params,
                                      n_parcelles, duration_s, snapshot_label)
@@ -428,6 +439,11 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "c_surface_min_m2": params.c_surface_min_m2,
                          "brulante_seuil_d": params.brulante_seuil_d,
                          "brulante_top_decile_d": params.brulante_top_decile_d,
+                         "event_bypass_mois": params.event_bypass_mois,
+                         "brulante_event_mois": params.brulante_event_mois,
+                         "reserve_seuil_c_sdp": reserve_seuil_c, "reserve_p_median": reserve_p_median,
+                         "n_entree_cible": 1150, "brulante_effectif_min": 30, "brulante_effectif_max": 120,
+                         "departage": departage,
                          "annee_features": annee, "recale_intercept_sur": last_labeled,
                          "seed_ties": SEED,   # 3.3 (train 5) : la graine du départage, tant qu'elle existe
                          "taux_base": taux_base, "prev_run": prev_run}),
