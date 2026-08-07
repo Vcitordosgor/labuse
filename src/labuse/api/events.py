@@ -529,6 +529,19 @@ def searches_del(sid: int, request: Request, db: Session = Depends(get_db)) -> d
     return {"ok": True}
 
 
+class SearchRenameIn(BaseModel):
+    nom: str
+
+
+@router.patch("/searches/{sid}")
+def searches_rename(sid: int, body: SearchRenameIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M52 L5 — renommer une vue/veille sauvegardée (compte-scopé, SEC-IDOR comme la suppression)."""
+    from .tenant import current_compte
+    db.execute(text("UPDATE saved_searches SET nom = :n WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+               {"n": body.nom[:80], "i": sid, "cid": current_compte(request)})
+    return {"ok": True}
+
+
 # ── M13 — digest hebdo ──
 
 def _digest_data(db: Session, cid: int | None = None) -> dict:

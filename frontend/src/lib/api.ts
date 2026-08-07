@@ -420,6 +420,9 @@ export const getSavedSearches = () => j<{ id: number; nom: string; hash: string;
 export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
+// M52 L5 — renommer une vue sauvegardée (compte-scopé).
+export const renameSearch = (id: number, nom: string) =>
+  j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
 // M17-B : veille en langage naturel — traduction réutilisée (schéma), garde-fou déclenchable côté back.
 export const veilleNL = (text: string) =>
   j<{ ok: boolean; refus?: string; indeclenchable?: boolean; filters?: Record<string, unknown>; resume?: string; ignores?: string[] }>(

@@ -80,3 +80,39 @@ un COUNT par fiche, jamais inventé) — s'incrémente 0→N en ~700 ms puis fig
 **Nuance assumée** : les « outils » (⑦) restent la barre d'actions de pied (CTA persistants
 pipeline/projet/PDF/annuaire) — placés APRÈS « Les données » plutôt qu'avant, pour ne pas
 enterrer les CTA. L'ordre des tuiles de CONTENU respecte la séquence validée.
+
+## L3 — « Les données » (fin de fiche)
+
+Le dernier tiroir devient **« Les données »** (`L3_apres_*__confiance.png`) :
+- **Sources utilisées sur cette fiche** = distinct RÉEL des couches cascade jointes à
+  `data_sources` (nom · fournisseur · millésime · fiabilité). Backend `_data_sources_fiche`
+  (requête begin_nested). Millésime affiché seulement si date propre (AAAA/AAAA-MM) — les
+  notes longues (GPU) cassaient la ligne, retirées.
+- **Données absentes** — DITES, jamais approximées, dérivées de nuls RÉELS : « Année de
+  construction — non disponible en open data (ABSENTE) » (universel) ; « Adresse postale »
+  si non rattachée ; « Identité du propriétaire » si personne physique. Dynamique par parcelle.
+- ICD + score P « pourquoi » conservés dessous. **Zéro nouvelle donnée.**
+
+## L4 — Qualité par commune, DITE
+
+Mesure réelle GELÉE : `config/qualite_commune.yaml` (généré depuis `qa/audit-rr/b_commune_rr.md`,
+fold 2025 OOS). Backend `_qualite_commune` sur l'INSEE de la parcelle → RR intra, échantillon,
+drapeau « fragile » (<5 positifs), phrase honnête.
+- **Encart** dans « Les données » (`L3_apres_brulante_AT2379__confiance.png`) : « QUALITÉ DE LA
+  MESURE · Sainte-Marie / échantillon limité / RR intra 6,7 · île 6,73 / 16 646 parcelles /
+  base 1,32 % » + phrase. Saint-Pierre : « robuste » (RR 9,3, n 42 045).
+- **Rappel discret en fiche parcelle** quand `degradee` (`L4_apres_brulante_AT2379__panel.png`) :
+  « ◐ Sainte-Marie : marché peu actif — le classement reste fiable, la fréquence exacte est
+  indicative (échantillon limité) ». N'apparaît PAS sur une commune robuste (Saint-Pierre).
+- Ajouté aussi à `/communes/{c}/contexte` (`qualite`) pour l'encart fiche commune.
+- Mesure SEULE : aucun tier, aucun seuil, aucun modèle.
+
+## L5 — Vues sauvegardées (reste M45)
+
+Contrôle **« Mes vues »** dans la barre de filtres (`L5_apres_mes_vues.png` +
+`…_rename.png`) : nom + combinaison de filtres courante, **stockage côté compte**
+(`saved_searches`, compte-scopé, jamais partagé). **Appliquer** (clic sur le nom →
+`filtersFromHash` → setFilters/setZone) · **renommer** (✎, inline) · **supprimer** (×).
+Backend : `PATCH /events/searches/{id}` ajouté (SEC-IDOR compte-scopé) ; réutilise
+save/list/delete existants. CRUD vérifié bout-à-bout (save→list→rename→delete). **Une vue
+nommée EST aussi une veille** (même objet `saved_searches`) — unifié, pas dupliqué.

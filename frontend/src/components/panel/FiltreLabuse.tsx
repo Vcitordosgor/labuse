@@ -8,10 +8,11 @@
  * Le compteur est SQL-exact (endpoint unifié /filtre) — jamais un calcul client. Chaque facette
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { getFiltre } from '../../lib/api'
+import { deleteSearch, getFiltre, getSavedSearches, renameSearch, saveSearch } from '../../lib/api'
+import { filtersFromHash, filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const CONSTRUCTIBILITE = [
@@ -143,6 +144,62 @@ function Section({ title, tag, children }: { title: string; tag?: string; childr
   )
 }
 
+/** M52 L5 — VUES SAUVEGARDÉES (reste M45) : nom + combinaison de filtres courante, stockage CÔTÉ
+ *  COMPTE (table `saved_searches`, jamais partagé entre comptes). Appliquer (clic) / renommer /
+ *  supprimer. Une vue nommée EST aussi une veille (même objet) — cohérent, pas dupliqué. */
+function MesVues() {
+  const { filters, zone, setFilters, setZone } = useApp()
+  const qc = useQueryClient()
+  const [nom, setNom] = useState('')
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editNom, setEditNom] = useState('')
+  const vues = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches })
+  const inval = () => qc.invalidateQueries({ queryKey: ['searches'] })
+  const add = useMutation({ mutationFn: () => saveSearch(nom.trim(), filtersToHash(filters, zone) || '#f=1'), onSuccess: () => { setNom(''); inval() } })
+  const del = useMutation({ mutationFn: deleteSearch, onSuccess: inval })
+  const ren = useMutation({ mutationFn: ({ id, n }: { id: number; n: string }) => renameSearch(id, n), onSuccess: () => { setEditId(null); inval() } })
+  const appliquer = (hash: string) => {
+    const parsed = filtersFromHash(hash)
+    setFilters({ ...EMPTY_FILTERS, ...(parsed?.filters ?? {}) })
+    setZone(parsed?.zone ?? null)
+  }
+  const liste = vues.data ?? []
+  return (
+    <div data-mes-vues className="mt-2">
+      <div className="flex items-center gap-2">
+        <p className="label-caps">Mes vues</p>
+        <span className="text-[10px] text-txt-dim">enregistrées sur votre compte</span>
+      </div>
+      {liste.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {liste.map((v) => (
+            editId === v.id ? (
+              <input key={v.id} autoFocus value={editNom} onChange={(e) => setEditNom(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && editNom.trim()) ren.mutate({ id: v.id, n: editNom.trim() }); if (e.key === 'Escape') setEditId(null) }}
+                onBlur={() => editNom.trim() && editNom !== v.nom ? ren.mutate({ id: v.id, n: editNom.trim() }) : setEditId(null)}
+                className="rounded-full border border-mint bg-surface-3 px-2 py-0.5 text-[11px] text-txt focus:outline-none" />
+            ) : (
+              <span key={v.id} className="group inline-flex items-center gap-1 rounded-full border border-line-2 py-0.5 pl-2.5 pr-1 text-[11px] text-txt-mut hover:border-mint">
+                <button onClick={() => appliquer(v.hash)} title={`Appliquer « ${v.nom} »`} className="hover:text-mint">{v.nom}</button>
+                <button onClick={() => { setEditId(v.id); setEditNom(v.nom) }} aria-label="Renommer" title="Renommer" className="text-txt-dim hover:text-mint">✎</button>
+                <button onClick={() => del.mutate(v.id)} aria-label="Supprimer" title="Supprimer" className="flex h-4 w-4 items-center justify-center rounded-full text-txt-dim hover:bg-surface-3 hover:text-st-ecartee">×</button>
+              </span>
+            )
+          ))}
+        </div>
+      )}
+      <div className="mt-1.5 flex gap-1.5">
+        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nommer la combinaison de filtres actuelle…"
+          onKeyDown={(e) => { if (e.key === 'Enter' && nom.trim()) add.mutate() }}
+          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
+        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim() || add.isPending}
+          className="shrink-0 rounded border border-mint/50 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
+          Enregistrer la vue</button>
+      </div>
+    </div>
+  )
+}
+
 export function FiltreLabuse() {
   const { filters, setFilter, setFilters, resetFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
@@ -198,6 +255,9 @@ export function FiltreLabuse() {
           </button>
         ))}
       </div>
+
+      {/* ── MES VUES (L5) : combinaisons de filtres nommées, côté compte ── */}
+      <MesVues />
 
       {/* ── BARRE NIVEAU 1 ── */}
       <div className="mt-2 divide-y divide-line-2/50">
