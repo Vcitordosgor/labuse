@@ -113,8 +113,8 @@ def _dry_run() -> None:
 
 def _execute() -> None:
     from labuse.bascule_gardes import (check_disque, check_fraicheur, check_golden_regenere,
-                                       check_peremption, check_peremption_tuiles, check_run_absent,
-                                       ensure_backups, verify_completude, _ts)
+                                       check_peremption, check_run_absent, ensure_backups,
+                                       verify_completude, _ts)
     from labuse.ingestion.fraicheur import persist_millesime
     from labuse.scoring.p_v2.pipeline import run_score_v2
     r = regle()
@@ -194,8 +194,7 @@ def _execute() -> None:
     here = os.path.dirname(__file__)
     subprocess.run([sys.executable, os.path.join(here, "..", "qa", "golden_regen.py")], check=True)
     check_golden_regenere(LABEL)
-    # garde de péremption tuiles (M48) : confirme que la carte est postérieure au re-score
-    check_peremption_tuiles()
+    # (la garde de péremption tuiles M48 tourne DANS rebuild_mvt_servies à l'étape 7bis)
     print(f"\n✓ BASCULE M39 en {time.time()-t0:.0f}s. tuiles + golden dans le geste, gardes OK.", flush=True)
 
 

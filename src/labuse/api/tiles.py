@@ -214,7 +214,7 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
     import time as _t
     from .. import renouvellement as _renouv
-    from ..bascule_gardes import check_coherence_renouvellement
+    from ..bascule_gardes import check_coherence_renouvellement, check_peremption_tuiles
     t0 = _t.perf_counter()
     n = build_mvt_table(db, run_label)
     n_ov = build_overlay_mvt(db)
@@ -229,8 +229,11 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
                        ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": run_label})
     log(f"✓ mvt_parcels : {n} parcelles · overlays {n_ov} · {round(_t.perf_counter() - t0, 1)} s "
         f"(run {run_label}).")
+    # M48 : garde de péremption DANS le point unique → CLI `build-mvt` ET bascules la voient (post-build
+    # elle confirme la fraîcheur ; entre deux builds elle crie si un re-score hors geste a eu lieu).
+    per = check_peremption_tuiles(session=db)
     return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
-            "renouv_coherence": cr["statut"], "run_label": run_label}
+            "renouv_coherence": cr["statut"], "peremption_ok": per["ok"], "run_label": run_label}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
