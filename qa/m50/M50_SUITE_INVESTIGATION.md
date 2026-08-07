@@ -102,3 +102,76 @@ Jobs tués, plus aucune écriture depuis.
   découpe fortement réduit (la garde `exclue` tue au moins 3 des Saint-Paul). Un `--communes` avec
   `commit=False` donnerait le compte exact — à toi de me redemander si tu veux que je le lance (safe).
 - Après : garde M50 → **OK (q_v8_calibre)**, périmés purgés, BV0182 présent.
+
+---
+
+# M50-SUITE-2 — RÉCONCILIATION : « 9 candidats affichés mais rien persisté »
+
+**Constat Vic** : son rebuild île a affiché ses comptes (« 9, q_v8 unique, 0 résidu v7 ») mais la
+base est restée à **35** (34 q_v7 + BV0182 q_v8). Un seul cluster (PID 45967) — pas deux instances.
+Hypothèse Vic : le chemin purge+réécriture ne COMMITE pas. **Établi sur pièces — l'hypothèse est
+partiellement vraie, mais la cause profonde est ailleurs. DEUX défauts se combinent.**
+
+## 1. Le commit EXISTE — mais une seule fois, en FIN de boucle (tout-ou-rien sur 24 communes)
+Reproduction du chemin CLI réel sur **une** commune (Saint-Paul) : `max(computed_at)` 18:22 → **20:51**,
+**vu depuis un process séparé** → **le commit persiste**. `session_scope` (commit à la sortie propre)
+ET `build_divisions(commit=True)` commitent bien. L'hypothèse « ne commite jamais » est donc **fausse
+pour une commune**. MAIS `build_divisions` ne commitait qu'**UNE fois, après la boucle des 24** : une
+île encore en cours (ou interrompue) = **0 persisté**, et les comptes vus dans la session appelante
+étaient **transaction-locaux** (sa propre session voit ses purges+inserts non commités → « 9 » ;
+toute autre connexion voit « 35 »). C'est exactement le symptôme de Vic.
+
+## 2. La cause qui rendait l'île ININTERROMPTIBLEMENT longue : SEQ SCAN (régression du fix (a) M50-SUITE)
+Le fix INSEE-ou-nom de M50-SUITE utilisait `p.commune = :c OR left(p.idu,5) = :c` **dans le
+détecteur**. Or `left(idu,5)` n'est **pas indexable** (le btree `ix_parcels_idu` est sous collation
+≠ C ; aucune borne d'octets ne s'y mappe) et le `OR` **cassait aussi** l'usage de `ix_parcels_commune`
+pour l'entrée-nom. Résultat mesuré (`EXPLAIN`) : **Parallel Seq Scan de 431 663 parcelles à CHAQUE
+commune** (~3 min/commune, ~180 s Saint-Paul). Île = 24 × ~3 min ≈ **>1 h** → Vic interrompt (ou
+attend) → jamais le commit de fin → **rien persisté**. Constaté en direct : jusqu'à **5 backends
+INSERT concurrents** empilés (le plus vieux **1 h 30**), non bloqués par des locks mais **génuinement
+en calcul** — et `pg_terminate_backend` sans effet immédiat (PostGIS ininterruptible tant que la
+fonction C ne rend pas la main). Purgés.
+
+**En prime** : l'entrée INSEE perdait aussi la **calibration PLU** (`_emprise_max_sql` dérive le slug
+du libellé → `plu_97415.yaml` n'existe pas → plancher prudent partout au lieu du PLU de Saint-Paul).
+
+## 3. LE FIX (2 volets, appliqués — branche `m50-suite-division-or`)
+**(a) Commit ATOMIQUE PAR COMMUNE** — `session.commit()` déplacé DANS la boucle, après le purge+insert
+de chaque commune (les deux dans LA même transaction ; jamais de purge commitée sans son insert).
+Durable + **incrémental** : une île lente/interrompue **garde les communes déjà finies** (reprise
+possible), et chaque commune est immédiatement visible ailleurs. `build_divisions` **et**
+`build_divisions_partiel`.
+
+**(b) Résolution INSEE→NOM EN AMONT** (`_resolve_commune`) via la réf **`commune_conso_enaf`** (24
+lignes, O(1), les 24 codes → noms EXACTS de `parcels.commune`). Le détecteur, le purge et le compte
+reviennent au **chemin indexé `p.commune = :commune`** (plus aucun `left(idu,5)`). L'entrée-nom passe
+telle quelle. **Mesuré : Saint-Paul (INSEE 97415, résolu) = 9,4 s** (vs >180 s en seq scan) → **~20×**.
+Île résiduelle estimée **1–3 min** (Saint-Paul est la plus grosse commune).
+
+## 4. PREUVES
+- **Test d'intégration** (`qa/m50/integration_persist_commune.py`, vraie base, auto-nettoyant) :
+  seed périmé-non-revu + REVU (commités) → `build_divisions(commit=True)` → **NOUVELLE connexion** :
+  périmé **purgé & persisté** (visible cross-connexion), REVU **préservé**. → `INTEGRATION_OK`.
+  *(La fixture pytest — base dédiée `labuse_test` + transaction rollback-ée — ne peut pas prouver le
+  cross-connexion ; d'où le script sur la vraie base.)*
+- **pytest** `tests/test_division_or.py` : **16/16** (détecteur indexé sans `left(idu)` ; résolution
+  INSEE→nom ; purge par commune préservant `note_revue`).
+- **`EXPLAIN`** : INSEE `left(idu,5)` → Parallel Seq Scan (cost ~50 658) ; NOM → Bitmap Index Scan
+  (`ix_parcels_commune`). Base laissée **propre** (0 INSERT actif) et **intacte** (35, 20:51).
+
+## 5. « Pas de mode île » (question Vic) — un MANQUE, désormais outillable
+`labuse division-or --communes` reste **obligatoire** (`typer.Option(...)`), aucun `--all`. Une île
+complète exige de lister les 24 communes ; en oublier = les manquer. Ce n'était pas un choix, c'est un
+manque — d'autant que la **réf `commune_conso_enaf` fournit exactement la liste canonique des 24**.
+**Reco (petit fix, à ton feu vert)** : `--all` (défaut = les 24 de `commune_conso_enaf`), pour qu'un
+rafraîchissement île soit **une commande qui ne peut oublier aucune commune**.
+
+## 6. COMMANDE DE REBUILD ÎLE (ta main — DB propre, verrou levé)
+Les deux formes marchent désormais (INSEE résolu → index), la purge par commune est incluse, le commit
+est par commune (durable/reprenable) :
+```
+PYTHONPATH=src labuse division-or --communes 97401,97402,97403,97404,97405,97406,97407,97408,97409,97410,97411,97412,97413,97414,97415,97416,97417,97418,97419,97420,97421,97422,97423,97424
+```
+Estimé **1–3 min**. Après : `check_coherence_tables_run_scopees` → **division_or OK (q_v8_calibre)**
+dès que l'île a tourné et commité (aujourd'hui elle est **MÉLANGÉE** : 34 q_v7 + BV0182 q_v8, car
+l'île n'avait jamais persisté). Le pool découpe (MASQUÉ) se rejoue via `build_divisions_partiel`.

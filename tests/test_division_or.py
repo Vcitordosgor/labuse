@@ -198,12 +198,25 @@ def test_exclusions_revue_idu_coherents():
     assert "97416000AV0203"[:5] != faux_insee                  # 97416 ≠ 97411 : incohérent
 
 
-@pytest.mark.db
-def test_detect_accepte_insee_ou_nom():
-    """M50-SUITE : le détecteur matche le NOM (parcels.commune) OU le code INSEE (préfixe idu) —
-    la CLI passait « 97415 » là où parcels.commune = « Saint-Paul » → 0 candidat (rebuild-à-0)."""
+def test_detect_indexe_par_nom_jamais_left_idu():
+    """M50-SUITE-2 : le détecteur filtre parcels.commune (NOM, indexé ix_parcels_commune) et JAMAIS
+    left(idu,5) — expression non indexable (btree idu sous collation ≠ C) qui forçait un Parallel Seq
+    Scan de 431 k lignes à chaque commune (~3 min → île >1 h → interrompue → rien commité)."""
     for sql in (d._DETECT, d._DETECT_PARTIEL):
-        assert "p.commune = :commune OR left(p.idu, 5) = :commune" in sql
+        assert "p.commune = :commune" in sql
+        assert "left(p.idu" not in sql       # plus de prédicat non indexable dans le détecteur
+
+
+@pytest.mark.db
+def test_resolution_insee_vers_nom(db_session):
+    """M50-SUITE-2 : l'entrée INSEE est résolue en NOM EN AMONT (réf commune_conso_enaf, O(1)),
+    pas dans le SQL. Un nom (ou un code hors réf) passe tel quel."""
+    s = db_session
+    assert d._resolve_commune(s, "Saint-Paul") == "Saint-Paul"   # déjà un nom → inchangé
+    assert d._resolve_commune(s, "ZZ") == "ZZ"                    # ni code ni nom connu → inchangé
+    if s.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is not None:
+        assert d._resolve_commune(s, "97415") == "Saint-Paul"    # code → nom exact de parcels.commune
+        assert d._resolve_commune(s, "99999") == "99999"         # code hors réf → tel quel
 
 
 @pytest.mark.db

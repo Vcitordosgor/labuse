@@ -182,7 +182,7 @@ WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
   -- M50-SUITE : accepte le NOM (parcels.commune) OU le code INSEE (préfixe idu) — la CLI passait
   -- « 97415 » là où parcels.commune = « Saint-Paul » → 0 candidat (bug rebuild-à-0).
-  WHERE (p.commune = :commune OR left(p.idu, 5) = :commune) AND p.surface_m2 BETWEEN 1000 AND 6000
+  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -323,7 +323,7 @@ _DETECT_PARTIEL = """
 WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
   -- M50-SUITE : NOM (parcels.commune) OU code INSEE (préfixe idu) — cf. _DETECT.
-  WHERE (p.commune = :commune OR left(p.idu, 5) = :commune) AND p.surface_m2 BETWEEN 1000 AND 6000
+  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -644,6 +644,26 @@ def _activite_pred_sql(commune: str) -> str:
     return "(zone_lib IS NULL OR (" + " AND ".join(clauses) + "))"
 
 
+def _resolve_commune(session: Session, commune: str) -> str:
+    """INSEE (5 chiffres) → NOM (parcels.commune), via la réf `commune_conso_enaf` (24 lignes, O(1)).
+    Une entrée déjà-nom (ou un code introuvable) passe telle quelle.
+
+    POURQUOI (M50-SUITE-2) : le détecteur filtre `parcels.commune` (= le NOM), indexé par
+    `ix_parcels_commune`. Filtrer par le code INSEE demandait `left(idu,5) = :c` — expression NON
+    indexable (le btree `ix_parcels_idu` est sous collation ≠ C, aucune borne d'octets ne s'y mappe)
+    → **Parallel Seq Scan de 431 663 lignes** à CHAQUE commune (~3 min), et le `OR` avec le nom
+    cassait AUSSI l'index pour l'entrée-nom. C'est ce qui rendait le rebuild île >1 h → interrompu →
+    jamais commité (constaté). En amont, on résout une fois vers le NOM : détecteur indexé (~s),
+    plafonds PLU (slug = nom) correctement chargés, et la colonne `commune` reste stockée en NOM."""
+    if not (len(commune) == 5 and commune.isdigit()):
+        return commune
+    if session.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is None:
+        return commune  # réf absente (base de test) → on laisse l'entrée telle quelle
+    nom = session.execute(
+        text("SELECT commune FROM commune_conso_enaf WHERE insee = :c"), {"c": commune}).scalar()
+    return nom or commune
+
+
 def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
                             log=lambda *_: None) -> dict:
     """O12-PARTIEL — détecte les LOTS DÉCOUPÉS (type 'decoupe', famille DISTINCTE des lots
@@ -660,10 +680,11 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
                f"AND sp.type = 'PC' AND sp.date >= '{PC_FRAIS_DEPUIS}')") if has_sitadel else "true"
     total = 0
     for commune in communes:
+        commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
         # M50-SUITE : PURGE des découpes de la commune AVANT réécriture (mêmes règles : commune vide,
         # pas périmée ; tracés REVUS préservés ; le snapshot de revue conserve les géométries revues).
         session.execute(text(
-            "DELETE FROM division_or_candidates WHERE (commune = :c OR left(idu,5) = :c) "
+            "DELETE FROM division_or_candidates WHERE commune = :c "
             "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
             {"c": commune})
         detect = _DETECT_PARTIEL.format(
@@ -682,14 +703,16 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
                 "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
         session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
+        # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (cf. build_divisions) — durable + incrémental.
+        if commit:
+            session.commit()
         n = session.execute(text(
-            "SELECT count(*) FROM division_or_candidates WHERE commune = :c AND type_division = 'decoupe'"),
+            "SELECT count(*) FROM division_or_candidates WHERE commune = :c "
+            "AND type_division = 'decoupe'"),
             {"c": commune}).scalar()
         total = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
         log(f"division-or-partiel {commune} : {n} lots à découper")
-    if commit:
-        session.commit()
     log(f"division_or_candidates (decoupe) : {total} lots à découper (MASQUÉ)")
     return {"total": total, "expose": EXPOSE}
 
@@ -728,11 +751,12 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                     if has_constr else "true")
     total = 0
     for commune in communes:
+        commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
         # M50-SUITE : PURGE de la commune AVANT réécriture (résiduel libre/demolition) — un rebuild
         # à 0/moins doit laisser la commune VIDE, pas périmée (avant : upsert seul → périmés survivants).
-        # Tracés REVUS (note_revue = décision humaine) PRÉSERVÉS. Match NOM (parcels.commune) OU INSEE.
+        # Tracés REVUS (note_revue = décision humaine) PRÉSERVÉS. Commune résolue en NOM (parcels.commune).
         session.execute(text(
-            "DELETE FROM division_or_candidates WHERE (commune = :c OR left(idu,5) = :c) "
+            "DELETE FROM division_or_candidates WHERE commune = :c "
             "AND type_division IN ('libre','demolition') AND coalesce(note_revue,'') = ''"),
             {"c": commune})
         # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
@@ -751,12 +775,19 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
             insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
                 "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
         session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
-        n = session.execute(text("SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
-                            {"c": commune}).scalar()
+        # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (purge+insert dans LA MÊME transaction, puis
+        # commit). Durable + incrémental : un rebuild île lent/interrompu GARDE les communes finies.
+        # Avant : commit unique en fin de boucle → île encore en cours (INSERT lent, >1 h constaté)
+        # = 0 persisté ; les comptes vus dans la session appelante étaient transaction-locaux,
+        # invisibles ailleurs (« toujours 35 »). Jamais de purge commitée sans son insert : le
+        # DELETE et l'INSERT de la commune commitent ensemble, ici, après l'INSERT.
+        if commit:
+            session.commit()
+        n = session.execute(text(
+            "SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
+            {"c": commune}).scalar()
         total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
         log(f"division-or {commune} : {n} candidats")
-    if commit:
-        session.commit()
     log(f"division_or_candidates : {total} candidats (MASQUÉ — attend le dossier de revue Vic)")
     return {"total": total, "expose": EXPOSE}
 
