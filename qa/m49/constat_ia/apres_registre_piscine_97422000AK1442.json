@@ -1,0 +1,19 @@
+{
+ "texte": "Cette parcelle n'est **pas écartée ou déclassée** au sens strict. Son statut est « À creuser » et elle occupe le rang **4132** dans l'analyse.\n\nLe motif de classement est : **détection d'une piscine sur imagerie aérienne 2025** . Cela signifie que le terrain n'est pas nu mais déjà aménagé, ce qui nécessite une vérification manuelle de son usage réel avant de confirmer son potentiel de développement.\n\nPlusieurs vigilances compliquent le dossier : aire d'adhésion du Parc National, proximité d'une installation classée (230 m), aléa mouvement de terrain faible, et **accès non identifié** . L'absence de desserte confirmée est le point critique à clarifier.",
+ "sources": [
+  "motif_classement",
+  "rang_classement",
+  "statut_tier",
+  "vigilances"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_classement": "SOURCE",
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "vigilances": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

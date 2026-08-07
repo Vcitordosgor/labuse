@@ -1,0 +1,17 @@
+{
+ "texte": "Cette parcelle n'est **pas écartée ou déclassée** au sens administratif. Son statut est « À creuser » et son rang de classement est **306 320** , ce qui indique une position basse dans l'ordre de priorité d'étude.\n\nLes motifs exacts d'exclusion ou de classement ne sont pas disponibles pour cette parcelle . En revanche, plusieurs vigilances pèsent sur le terrain : **aléa inondation niveau fort**, aire d'adhésion du Parc National avec contraintes de charte, et aléas mouvements de terrain . Ces éléments expliquent probablement son classement peu favorable, indépendamment de tout déclassement formel.",
+ "sources": [
+  "rang_classement",
+  "statut_tier",
+  "vigilances"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "vigilances": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

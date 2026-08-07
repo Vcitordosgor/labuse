@@ -1,0 +1,17 @@
+{
+ "texte": "Cette parcelle est **écartée** pour deux raisons majeures : elle est **déjà bâtie à 100 %** avec 6 bâtiments couvrant l'intégralité de la surface , et elle se situe en **zone rouge du Plan de Prévention des Risques (PPR), qui la rend inconstructible** . Son classement la place au rang **283 280** , reflétant son très faible potentiel de développement. Aucune densification n'est donc possible sur cette parcelle.",
+ "sources": [
+  "motif_exclusion",
+  "rang_classement",
+  "statut_tier"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_exclusion": "SOURCE",
+  "rang_classement": "SOURCE",
+  "statut_tier": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

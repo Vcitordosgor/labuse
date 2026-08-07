@@ -1,0 +1,19 @@
+{
+ "texte": "Cette parcelle est **déclassée — fermée à l'urbanisation** . Le motif exact est : **zone fermée à l'urbanisation (N/A au zonage, ou AU non ouverte)** . Elle se situe en zone A + Ud3 , ce qui signifie qu'elle relève d'une zone agricole ou naturelle où l'urbanisation n'est pas autorisée, ou qu'une zone à urbaniser (AU) applicable n'a pas été ouverte à la construction.\n\nDeux vigilances supplémentaires pèsent sur le site : elle est en aire d'adhésion du Parc National (contraintes de charte) et exposée à un aléa mouvement de terrain de niveau faible .",
+ "sources": [
+  "motif_classement",
+  "statut_tier",
+  "vigilances",
+  "zone_plu"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "motif_classement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "vigilances": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

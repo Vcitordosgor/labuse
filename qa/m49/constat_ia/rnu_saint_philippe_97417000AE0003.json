@@ -1,0 +1,25 @@
+{
+ "texte": "Cette parcelle n'est **pas écartée ou déclassée** : son statut est « À creuser » et elle occupe le rang **306 320** dans l'analyse LA BUSE, ce qui indique un potentiel faible mais non éliminé.\n\nLes données manquantes expliquent ce classement prudent : la zone PLU , le règlement applicable , les risques et le potentiel réel ne sont pas disponibles pour cette parcelle. La faisabilité constructive ne peut donc pas être calculée .\n\nPour progresser, il faudrait consulter le PLU de Saint-Philippe et confirmer les conditions de viabilisation (eau, assainissement, électricité actuellement inconnues).",
+ "sources": [
+  "faisabilite",
+  "potentiel_niveau",
+  "rang_classement",
+  "reglement_regles",
+  "risques",
+  "statut_tier",
+  "zone_plu"
+ ],
+ "deeplinks": {},
+ "provenance": {
+  "faisabilite": "ESTIME",
+  "potentiel_niveau": "ABSENT",
+  "rang_classement": "SOURCE",
+  "reglement_regles": "ABSENT",
+  "risques": "ABSENT",
+  "statut_tier": "SOURCE",
+  "zone_plu": "ABSENT"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

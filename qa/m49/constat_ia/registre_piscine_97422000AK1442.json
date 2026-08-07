@@ -1,0 +1,27 @@
+{
+ "texte": "Cette parcelle n'est **pas écartée ou déclassée**. Son statut est « À creuser » , ce qui signifie qu'elle reste en évaluation et n'a pas de motif d'exclusion documenté . Elle est classée au **rang 4132** en zone **Uc** , avec un potentiel estimé **fort** et une surface résiduelle estimée à **335 m²** . Aucun risque documenté n'apparaît sur cette parcelle .",
+ "sources": [
+  "motif_exclusion",
+  "potentiel_niveau",
+  "rang_classement",
+  "risques",
+  "sdp_residuelle_m2",
+  "statut_tier",
+  "zone_plu"
+ ],
+ "deeplinks": {
+  "zone_plu": "https://www.geoportail-urbanisme.gouv.fr/document/by-id/3bd1b9d43addd334e64405c82343c405#page=45"
+ },
+ "provenance": {
+  "motif_exclusion": "ABSENT",
+  "potentiel_niveau": "ESTIME",
+  "rang_classement": "SOURCE",
+  "risques": "ABSENT",
+  "sdp_residuelle_m2": "ESTIME",
+  "statut_tier": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}

@@ -1,0 +1,26 @@
+{
+ "texte": "Cette parcelle est **écartée** en raison de la présence d'un **ensemble bâti : 28 bâtiments couvrant 24 % de la surface** . Elle ne figure donc pas dans le classement principal de LA BUSE, mais elle est néanmoins identifiée comme un **potentiel de renouvellement urbain** (rang 1/67 258 en score de renouvellement).\n\nSon classement PLU est **N + UBv** , ce qui impose des règles strictes : recul voirie, recul limites, hauteur R+2 maximum, emprise 50 %, perméabilité 50 % . Attention : la parcelle est au contact des **50 pas géométriques** (domaine public littoral) et soumise à un **PPR littoral** — ces servitudes réglementaires peuvent affecter la constructibilité réelle.",
+ "sources": [
+  "motif_exclusion",
+  "reglement_regles",
+  "segment_renouvellement",
+  "statut_tier",
+  "vigilances",
+  "zone_plu"
+ ],
+ "deeplinks": {
+  "reglement_regles": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404#page=27",
+  "zone_plu": "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97404#page=27"
+ },
+ "provenance": {
+  "motif_exclusion": "SOURCE",
+  "reglement_regles": "SOURCE",
+  "segment_renouvellement": "SOURCE",
+  "statut_tier": "SOURCE",
+  "vigilances": "SOURCE",
+  "zone_plu": "SOURCE"
+ },
+ "model": "claude-haiku-4-5-20251001",
+ "rejected": false,
+ "cached": false
+}
