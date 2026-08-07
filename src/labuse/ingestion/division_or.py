@@ -689,34 +689,42 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     has_sitadel = session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is not None
     pc_pred = (f"NOT EXISTS (SELECT 1 FROM sitadel_permits sp WHERE sp.idu_codes ? zon.idu "
                f"AND sp.type = 'PC' AND sp.date >= '{PC_FRAIS_DEPUIS}')") if has_sitadel else "true"
-    total = 0
+    total = session.execute(text(
+        "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
+    failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
-        # M50-SUITE : PURGE des découpes de la commune AVANT réécriture (mêmes règles : commune vide,
-        # pas périmée ; tracés REVUS préservés ; le snapshot de revue conserve les géométries revues).
-        session.execute(text(
-            "DELETE FROM division_or_candidates WHERE commune = :c "
-            "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
-            {"c": commune})
-        detect = _DETECT_PARTIEL.format(
-            pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
-            grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
-            lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
-            compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M,
-            solidite_min=SOLIDITE_MIN_DECOUPE,
-            activite_pred=_activite_pred_sql(commune),
-            erosion_m=EROSION_RESTE_M, dist_bati_min=DIST_BATI_MIN_M,
-            descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
-            pc_pred=pc_pred, revue_pred=_revue_pred_sql(decoupe=True)).strip().rstrip(";")
-        if has_score_e:
-            insert_sql = _INSERT_PARTIEL.format(detect=detect)
-        else:
-            insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
-                "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-        session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
-        # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (cf. build_divisions) — durable + incrémental.
-        if commit:
-            session.commit()
+        try:
+            # M50-SUITE : PURGE des découpes de la commune AVANT réécriture (mêmes règles : commune vide,
+            # pas périmée ; tracés REVUS préservés ; le snapshot de revue conserve les géométries revues).
+            session.execute(text(
+                "DELETE FROM division_or_candidates WHERE commune = :c "
+                "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
+                {"c": commune})
+            detect = _DETECT_PARTIEL.format(
+                pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
+                grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
+                lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
+                compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M,
+                solidite_min=SOLIDITE_MIN_DECOUPE,
+                activite_pred=_activite_pred_sql(commune),
+                erosion_m=EROSION_RESTE_M, dist_bati_min=DIST_BATI_MIN_M,
+                descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
+                pc_pred=pc_pred, revue_pred=_revue_pred_sql(decoupe=True)).strip().rstrip(";")
+            if has_score_e:
+                insert_sql = _INSERT_PARTIEL.format(detect=detect)
+            else:
+                insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
+                    "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
+            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
+            # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (cf. build_divisions) — durable + incrémental.
+            if commit:
+                session.commit()
+        except Exception as e:   # noqa: BLE001 — commune ISOLÉE (rollback), l'île continue (cf. build_divisions)
+            session.rollback()
+            failures.append(commune)
+            log(f"⚠ division-or-partiel {commune} ÉCHEC ({type(e).__name__}: {str(e)[:120]}) — ignorée, continue")
+            continue
         n = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE commune = :c "
             "AND type_division = 'decoupe'"),
@@ -724,8 +732,10 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
         total = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
         log(f"division-or-partiel {commune} : {n} lots à découper")
+    if failures:
+        log(f"⚠ {len(failures)} commune(s) EN ÉCHEC (non écrites, île poursuivie) : {failures}")
     log(f"division_or_candidates (decoupe) : {total} lots à découper (MASQUÉ)")
-    return {"total": total, "expose": EXPOSE}
+    return {"total": total, "expose": EXPOSE, "failures": failures}
 
 
 def _emprise_max_sql(commune: str) -> str:
@@ -760,47 +770,57 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     constr_guard = ("NOT EXISTS (SELECT 1 FROM parcel_constructibilite pc WHERE pc.parcel_id = zon.id "
                     "AND pc.label IN ('declasse_zone_fermee','declasse_non_constructible'))"
                     if has_constr else "true")
-    total = 0
+    total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
+    failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
-        # M50-SUITE : PURGE de la commune AVANT réécriture (résiduel libre/demolition) — un rebuild
-        # à 0/moins doit laisser la commune VIDE, pas périmée (avant : upsert seul → périmés survivants).
-        # Tracés REVUS (note_revue = décision humaine) PRÉSERVÉS. Commune résolue en NOM (parcels.commune).
-        session.execute(text(
-            "DELETE FROM division_or_candidates WHERE commune = :c "
-            "AND type_division IN ('libre','demolition') AND coalesce(note_revue,'') = ''"),
-            {"c": commune})
-        # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
-        detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
-                                grand_bat_m2=int(GRAND_BATIMENT_M2),
-                                compacite_min=COMPACITE_MIN,
-                                emprise_max=_emprise_max_sql(commune),
-                                activite_pred=_activite_pred_sql(commune),
-                                descr_re=ACTIVITE_DESCR_RE,
-                                descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
-                                constr_guard=constr_guard,
-                                revue_pred=_revue_pred_sql(decoupe=False)).strip().rstrip(";")
-        if has_score_e:
-            insert_sql = _INSERT.format(detect=detect)
-        else:   # pas de Score É → gain NULL, sans jointure
-            insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
-                "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-        session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
-        # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (purge+insert dans LA MÊME transaction, puis
-        # commit). Durable + incrémental : un rebuild île lent/interrompu GARDE les communes finies.
-        # Avant : commit unique en fin de boucle → île encore en cours (INSERT lent, >1 h constaté)
-        # = 0 persisté ; les comptes vus dans la session appelante étaient transaction-locaux,
-        # invisibles ailleurs (« toujours 35 »). Jamais de purge commitée sans son insert : le
-        # DELETE et l'INSERT de la commune commitent ensemble, ici, après l'INSERT.
-        if commit:
-            session.commit()
+        try:
+            # M50-SUITE : PURGE de la commune AVANT réécriture (résiduel libre/demolition) — un rebuild
+            # à 0/moins doit laisser la commune VIDE, pas périmée (avant : upsert seul → périmés survivants).
+            # Tracés REVUS (note_revue = décision humaine) PRÉSERVÉS. Commune résolue en NOM (parcels.commune).
+            session.execute(text(
+                "DELETE FROM division_or_candidates WHERE commune = :c "
+                "AND type_division IN ('libre','demolition') AND coalesce(note_revue,'') = ''"),
+                {"c": commune})
+            # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
+            detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
+                                    grand_bat_m2=int(GRAND_BATIMENT_M2),
+                                    compacite_min=COMPACITE_MIN,
+                                    emprise_max=_emprise_max_sql(commune),
+                                    activite_pred=_activite_pred_sql(commune),
+                                    descr_re=ACTIVITE_DESCR_RE,
+                                    descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
+                                    constr_guard=constr_guard,
+                                    revue_pred=_revue_pred_sql(decoupe=False)).strip().rstrip(";")
+            if has_score_e:
+                insert_sql = _INSERT.format(detect=detect)
+            else:   # pas de Score É → gain NULL, sans jointure
+                insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
+                    "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
+            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
+            # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (purge+insert dans LA MÊME transaction, puis
+            # commit). Durable + incrémental : un rebuild île lent/interrompu GARDE les communes finies.
+            # Jamais de purge commitée sans son insert : DELETE et INSERT commitent ensemble, ici.
+            if commit:
+                session.commit()
+        except Exception as e:   # noqa: BLE001
+            # M50-SUITE-2 : une commune qui CASSE (ex. requête pathologique + timeout, géométrie
+            # invalide) est ISOLÉE — rollback de SA SEULE transaction (les communes déjà commitées
+            # restent, prouvé) — et l'île CONTINUE. Avant : l'exception remontait et avortait tout ;
+            # comme Les Avirons est en tête d'ordre INSEE, l'île ne produisait alors RIEN.
+            session.rollback()
+            failures.append(commune)
+            log(f"⚠ division-or {commune} ÉCHEC ({type(e).__name__}: {str(e)[:120]}) — ignorée, l'île continue")
+            continue
         n = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
             {"c": commune}).scalar()
         total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
         log(f"division-or {commune} : {n} candidats")
+    if failures:
+        log(f"⚠ {len(failures)} commune(s) EN ÉCHEC (non écrites, île poursuivie) : {failures}")
     log(f"division_or_candidates : {total} candidats (MASQUÉ — attend le dossier de revue Vic)")
-    return {"total": total, "expose": EXPOSE}
+    return {"total": total, "expose": EXPOSE, "failures": failures}
 
 
 def top_candidates(session: Session, *, limit: int = 20, communes: list[str] | None = None,

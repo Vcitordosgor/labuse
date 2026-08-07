@@ -253,6 +253,58 @@ def test_purge_commune_avant_reecriture(db_session):
     assert restant.get("97499000ZZ0003") == "decoupe"      # découpe intacte (autre path)
 
 
+@pytest.mark.db
+def test_ile_resiliente_commune_qui_casse(monkeypatch):
+    """M50-SUITE-2 : une commune qui CASSE en cours d'île est ISOLÉE (rollback de sa seule
+    transaction) et l'île CONTINUE — les communes AVANT **et APRÈS** sont commitées et persistent
+    (vérifié depuis une NOUVELLE connexion). Reproduit le cas réel (Vic : crash 'Les Avirons', île
+    avortée alors qu'elle est en tête d'ordre INSEE). Commit=True + session_factory (écritures RÉELLES
+    sur communes synthétiques, auto-nettoyées) car la fixture transactionnelle ne prouve pas le
+    cross-connexion. La preuve que le commit-par-commune survit à un crash SUIVANT."""
+    from labuse.db import session_factory, session_scope
+    A, CRASH, C = "ZZ-RESIL-A", "ZZ-RESIL-CRASH", "ZZ-RESIL-C"      # A avant · CRASH casse · C après
+    comm = {"a": A, "c": CRASH, "z": C}
+
+    def _wipe():
+        sc = session_factory()()
+        sc.execute(text("DELETE FROM division_or_candidates WHERE commune IN (:a,:c,:z)"), comm)
+        sc.commit(); sc.close()
+
+    try:
+        s0 = session_factory()()
+        d.build_divisions(s0, ["ZZ-DDL"], commit=False, log=lambda *_: None)   # garantit la DDL
+        s0.execute(text("DELETE FROM division_or_candidates WHERE commune IN (:a,:c,:z)"), comm)
+        s0.execute(text(
+            "INSERT INTO division_or_candidates (idu, commune, type_division, run_label, note_revue) VALUES "
+            "('99990000ZR0001', :a, 'libre', 'q_v7_defisc', NULL),"    # A     → doit être PURGÉ+commité
+            "('99990000ZR0002', :c, 'libre', 'q_v7_defisc', NULL),"    # CRASH → doit RESTER (rollback)
+            "('99990000ZR0003', :z, 'libre', 'q_v7_defisc', NULL)"), comm)  # C → doit être PURGÉ+commité
+        s0.commit(); s0.close()
+
+        orig = d._emprise_max_sql
+        def boom(commune):
+            if commune == CRASH:
+                raise RuntimeError("crash simulé en cours d'île")
+            return orig(commune)
+        monkeypatch.setattr(d, "_emprise_max_sql", boom)
+
+        with session_scope() as s:                     # EXACTEMENT le chemin CLI ; ne DOIT PAS lever
+            r = d.build_divisions(s, [A, CRASH, C], commit=True, log=lambda *_: None)
+        assert r["failures"] == [CRASH]                # crash isolé ET rapporté (pas avalé en silence)
+
+        s2 = session_factory()()                       # NOUVELLE connexion
+        def cnt(name):
+            return s2.execute(text("SELECT count(*) FROM division_or_candidates WHERE commune=:x"),
+                              {"x": name}).scalar()
+        a_rows, c_rows, z_rows = cnt(A), cnt(CRASH), cnt(C)
+        s2.close()
+        assert a_rows == 0     # A (avant le crash) : purge COMMITÉE, visible malgré le crash suivant
+        assert c_rows == 1     # CRASH : purge ROLLBACKÉE, son périmé reste
+        assert z_rows == 0     # C (après le crash) : l'île a CONTINUÉ → C purgée+commitée
+    finally:
+        _wipe()
+
+
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session
     r = d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)

@@ -2260,6 +2260,9 @@ def division_or_cmd(
         else:
             raise typer.BadParameter("préciser --communes <NOM|INSEE,...> ou --all")
         r = division_or.build_divisions(s, cibles, log=typer.echo)
+        if r.get("failures"):
+            typer.echo(f"⚠ {len(r['failures'])} commune(s) en échec (île poursuivie, non écrites) : "
+                       f"{', '.join(r['failures'])} — voir les lignes ÉCHEC ci-dessus.")
         typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
 
 

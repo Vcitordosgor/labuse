@@ -227,3 +227,52 @@ différent** (autre base/instance) que le `localhost:5432/labuse` interrogé dan
 mesurée ici, reste donc **MÉLANGÉE** (34 q_v7 + 1 q_v8) — elle passera **OK** sur la base **où l'île a
 persisté**. Le diff par-idu exhaustif des 10 est enumérable sur cette base-là (ou via `--all` à blanc
 qui y tourne) — pas depuis ce cluster.
+
+---
+
+# M50-SUITE-3 — Le crash « Les Avirons » : île avortée, résilience par commune
+
+## 0. Correction de MON hypothèse précédente : UNE SEULE BASE (marqueur)
+`SELECT * FROM m50_marker` → **`vic | 2026-08-07 21:55:52`** : je vois le marqueur de Vic. **Un seul
+cluster, une seule base.** Mon hypothèse « `LABUSE_DATABASE_URL` différent » (M50-SUITE bilan) était
+**FAUSSE** — corrigée. Le « 10 » de Vic n'a pas survécu parce que **l'île a planté**, pas parce
+qu'elle visait une autre base.
+
+## 1. Pourquoi « Les Avirons » casse — le PARTIEL (découpe), pas le résiduel
+- **Résiduel** (`build_divisions`, `division-or --all`) sur Les Avirons : **0 candidat, rapide, AUCUN
+  crash** (reproduit). Le `cand` CTE utilise bien `ix_parcels_commune` (fix résolution OK).
+- **Partiel** (`build_divisions_partiel`, découpe) sur Les Avirons : `EXPLAIN` = **coût ~3 450 000**
+  — une pile d'**anti-joins en boucle imbriquée sur `st_intersects`/`st_intersection`** (GEOS par
+  candidat). Query **intrinsèquement lourde** (déjà noté « INSERT longs O12-PARTIEL »), **pas** une
+  régression de mes fixes (le CTE de base est indexé). Reproduit : >5 min sur Les Avirons (petite
+  commune, 8 268 parcelles) sans finir. Sous un timeout (ou une géométrie invalide en fin de course),
+  cette lenteur devient le **plantage** vu par Vic (params `{served, commune=Les Avirons}` = l'INSERT).
+  **Il n'existe AUCUNE commande CLI pour le partiel** → Vic l'a lancé manuellement (python).
+
+## 2. Pourquoi les communes « déjà commitées » ont disparu — LES AVIRONS EST EN TÊTE
+`all_communes()` ordonne **par INSEE** : **97401 = Les Avirons = position #1**. L'île a donc planté
+sur **la 1re commune** → **rien n'avait encore été commité** → retour à 35. Ce n'est PAS une faille du
+commit-par-commune. **Preuve** (test `test_ile_resiliente_commune_qui_casse`, cross-connexion) : une île
+`[A, CRASH, C]` où CRASH lève → **A (avant) ET C (après) sont commitées et persistent**, CRASH est
+rollbackée. Le commit-par-commune marche exactement comme testé ; c'était juste le crash **en #1**.
+
+## 3. LE FIX — isoler la commune qui casse, l'île CONTINUE
+Avant : une exception commune remontait et **avortait toute l'île** (et comme Les Avirons est #1, elle
+ne produisait alors RIEN). Désormais, dans `build_divisions` **et** `build_divisions_partiel`, chaque
+commune est en **try/except** : sur échec → `session.rollback()` de **sa seule** transaction (les
+communes déjà commitées restent), on **log l'échec** et on **continue**. Retour enrichi de
+`failures: list[str]` ; la CLI l'affiche (`⚠ N commune(s) en échec … île poursuivie`). Une île de 24
+avec une Les Avirons cassée produit donc **les 23 autres** + un rapport clair, au lieu de 0.
+
+## 4. PREUVES
+- **pytest 18/18** (`test_ile_resiliente_commune_qui_casse` : A avant + C après persistent
+  cross-connexion, CRASH isolée, `failures==['…CRASH']`, aucune exception remontée).
+- `EXPLAIN` partiel Les Avirons = coût ~3,45 M (la lenteur-racine). Base **propre** (0 INSERT actif,
+  0 ligne synthétique) et **intacte** (35, 20:51).
+
+## 5. RESTE (hors ce fix, à ton arbitrage)
+Le **partiel est intrinsèquement lent** (~min/commune ; île découpe = potentiellement heures). La
+résilience le rend **survivable** (les communes lentes qui timeout sont ignorées, l'île finit) mais
+**ne l'accélère pas**. Un vrai run partiel île demande une **optimisation de la requête découpe**
+(pré-filtrer les candidats avant les `st_intersection` en boucle, ou index GiST dédié) — chantier
+séparé, plus gros. Le **résiduel `--all`, lui, tourne en 1–3 min** et ne casse pas.
