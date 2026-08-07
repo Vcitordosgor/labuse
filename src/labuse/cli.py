@@ -2238,9 +2238,12 @@ def prospection_notion_cmd(
 
 @app.command("division-or")
 def division_or_cmd(
-    communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
+    communes: str = typer.Option(..., help="Communes (virgules) — NOM « Saint-Paul » OU code INSEE "
+                                            "« 97415 » ; les deux acceptés (M50-SUITE)."),
 ) -> None:
     """O12 — Division en or (MASQUÉ) : détecte les parcelles à lot détachable constructible.
+    `--communes` accepte le NOM ou le code INSEE. Rebuild par commune : la commune est PURGÉE avant
+    réécriture (un rebuild à 0 laisse la commune VIDE, pas périmée ; tracés revus préservés).
     Table division_or_candidates (flag EXPOSE=False). Exposition = APRÈS validation du dossier 20 cartes par Vic."""
     from .ingestion import division_or
 

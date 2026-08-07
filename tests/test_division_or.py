@@ -199,6 +199,33 @@ def test_exclusions_revue_idu_coherents():
 
 
 @pytest.mark.db
+def test_detect_accepte_insee_ou_nom():
+    """M50-SUITE : le détecteur matche le NOM (parcels.commune) OU le code INSEE (préfixe idu) —
+    la CLI passait « 97415 » là où parcels.commune = « Saint-Paul » → 0 candidat (rebuild-à-0)."""
+    for sql in (d._DETECT, d._DETECT_PARTIEL):
+        assert "p.commune = :commune OR left(p.idu, 5) = :commune" in sql
+
+
+@pytest.mark.db
+def test_purge_commune_avant_reecriture(db_session):
+    """M50-SUITE : un rebuild par commune PURGE ses lignes avant réécriture (un rebuild à 0 laisse
+    la commune VIDE, pas périmée) ; les tracés REVUS (note_revue) sont PRÉSERVÉS."""
+    s = db_session
+    d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)  # crée la table
+    s.execute(text(
+        "INSERT INTO division_or_candidates (idu, commune, type_division, run_label, note_revue) VALUES "
+        "('97499000ZZ0001','ZZPurge','libre','q_v7_defisc', NULL),"          # périmé non-revu → purgé
+        "('97499000ZZ0002','ZZPurge','libre','q_v7_defisc','revu par Vic')," # REVU → préservé
+        "('97499000ZZ0003','ZZPurge','decoupe','q_v7_defisc', NULL)"))       # découpe → hors build_divisions
+    # rebuild résiduel de la commune (0 détecté en base de test) : la purge doit tourner
+    d.build_divisions(s, ["ZZPurge"], commit=False, log=lambda *_: None)
+    restant = {r[0]: r[1] for r in s.execute(text(
+        "SELECT idu, type_division FROM division_or_candidates WHERE commune='ZZPurge'"))}
+    assert "97499000ZZ0001" not in restant                 # périmé non-revu PURGÉ (commune vide, pas périmée)
+    assert restant.get("97499000ZZ0002") == "libre"        # REVU préservé
+    assert restant.get("97499000ZZ0003") == "decoupe"      # découpe intacte (autre path)
+
+
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session
     r = d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)

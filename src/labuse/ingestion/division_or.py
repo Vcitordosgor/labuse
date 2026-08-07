@@ -180,7 +180,9 @@ CREATE TABLE IF NOT EXISTS division_or_revue_snapshot (
 _DETECT = """
 WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
-  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
+  -- M50-SUITE : accepte le NOM (parcels.commune) OU le code INSEE (préfixe idu) — la CLI passait
+  -- « 97415 » là où parcels.commune = « Saint-Paul » → 0 candidat (bug rebuild-à-0).
+  WHERE (p.commune = :commune OR left(p.idu, 5) = :commune) AND p.surface_m2 BETWEEN 1000 AND 6000
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -320,7 +322,8 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
 _DETECT_PARTIEL = """
 WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
-  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
+  -- M50-SUITE : NOM (parcels.commune) OU code INSEE (préfixe idu) — cf. _DETECT.
+  WHERE (p.commune = :commune OR left(p.idu, 5) = :commune) AND p.surface_m2 BETWEEN 1000 AND 6000
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -657,6 +660,12 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
                f"AND sp.type = 'PC' AND sp.date >= '{PC_FRAIS_DEPUIS}')") if has_sitadel else "true"
     total = 0
     for commune in communes:
+        # M50-SUITE : PURGE des découpes de la commune AVANT réécriture (mêmes règles : commune vide,
+        # pas périmée ; tracés REVUS préservés ; le snapshot de revue conserve les géométries revues).
+        session.execute(text(
+            "DELETE FROM division_or_candidates WHERE (commune = :c OR left(idu,5) = :c) "
+            "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
+            {"c": commune})
         detect = _DETECT_PARTIEL.format(
             pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
             grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
@@ -719,6 +728,13 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                     if has_constr else "true")
     total = 0
     for commune in communes:
+        # M50-SUITE : PURGE de la commune AVANT réécriture (résiduel libre/demolition) — un rebuild
+        # à 0/moins doit laisser la commune VIDE, pas périmée (avant : upsert seul → périmés survivants).
+        # Tracés REVUS (note_revue = décision humaine) PRÉSERVÉS. Match NOM (parcels.commune) OU INSEE.
+        session.execute(text(
+            "DELETE FROM division_or_candidates WHERE (commune = :c OR left(idu,5) = :c) "
+            "AND type_division IN ('libre','demolition') AND coalesce(note_revue,'') = ''"),
+            {"c": commune})
         # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
         detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                                 grand_bat_m2=int(GRAND_BATIMENT_M2),
