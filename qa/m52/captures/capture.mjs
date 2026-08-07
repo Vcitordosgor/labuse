@@ -8,11 +8,14 @@ import { dirname, join } from 'node:path'
 const LABEL = process.env.LABEL || 'apres'
 const BASE = process.env.BASE || 'http://127.0.0.1:8000'
 const OUT = dirname(fileURLToPath(import.meta.url))
-const PARCELS = [
+const ALL = [
   ['97418000AT2379', 'brulante_AT2379'],   // Sainte-Marie ×22,1 rang 7
   ['97416000EY1406', 'declasseB_EY1406'],   // Saint-Pierre ×13,2 bâti révélé
   ['97416000IL0307', 'ecartee_IL0307'],     // Saint-Pierre ×1,3
 ]
+// IDUS=id1,id2 → ne capture que ceux-là (recapture ciblée après correction).
+const only = (process.env.IDUS || '').split(',').map((s) => s.trim()).filter(Boolean)
+const PARCELS = only.length ? ALL.filter(([idu]) => only.includes(idu)) : ALL
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

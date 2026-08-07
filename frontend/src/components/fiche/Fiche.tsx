@@ -1146,6 +1146,15 @@ export function Fiche({ idu }: { idu: string }) {
   // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
   const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
   const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
+  // M52 L2 (correction #1) : parcelle écartée/déclassée MAIS à signal ×N fort → cadrage « signal
+  // brut ». Sans lui, « Déclassée » + « très forte probabilité relative » côte à côte forment une
+  // contradiction (famille M48 : un statut mort à côté d'une promesse). Le ×N reste (réel), il
+  // devient « signal brut » ; le mot passe en atténué ; un encadré dit que l'écartement PRIME et
+  // pourquoi la fréquence est absente. Déclenché hors tiers servables (verdict.tier == null) et
+  // seulement si le signal dépasse la moyenne (×N ≥ 2) — l'écartée simple ×1,3 reste sobre.
+  const multBase = f?.score_v2?.mult_base ?? null
+  const signalEcarte = !!(f?.score_v2 && verdict && verdict.tier == null && (multBase ?? 0) >= 2)
+  const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
@@ -1274,32 +1283,45 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
               {f.score_v2?.mult_base != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
+                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
                   <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>
-                    plus probable d’être vendue
+                    {signalEcarte ? 'signal brut' : 'plus probable d’être vendue'}
                     {f.score_v2.verbal?.info && (
                       <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                     )}
                   </p>
+                  {/* mot d'échelle : en couleur du tier quand servable ; ATTÉNUÉ quand écartée à
+                      signal fort (le mot ne doit pas faire promesse à côté d'un statut mort). */}
                   {f.score_v2.verbal?.mot && (
-                    <p style={{ margin: '2px 0 0', fontSize: 11.5, fontWeight: 600, color: verdict.color }}>{f.score_v2.verbal.mot}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, fontWeight: 600, color: signalEcarte ? '#8C7468' : verdict.color }}>
+                      {signalEcarte ? <>{f.score_v2.verbal.mot} <span style={{ fontWeight: 500, color: '#7d9488' }}>· écartée</span></> : f.score_v2.verbal.mot}
+                    </p>
                   )}
                 </div>
               )}
             </div>
-            {/* M52 Lot 1 — réglette de position (percentile), fréquence mesurée par tier, « pourquoi ce
-                score ». Présentation ; aucun calcul. Pas de note /100, pas d'étoiles (doctrine). */}
+            {/* M52 Lot 1 — réglette de position (×N, échelle LOG — arbitrage Vic L2, plus le
+                percentile rang), fréquence mesurée par tier, « pourquoi ce score ». Présentation ;
+                aucun calcul. Pas de note /100, pas d'étoiles (doctrine). */}
             {f.score_v2 && (
               <div style={{ margin: '12px 0 0' }}>
-                {f.score_v2.percentile != null && (
+                {f.score_v2.verbal?.reglette_pct != null && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: '#5f7568', marginBottom: 3 }}>
                       <span>moyenne</span><span>très forte</span>
                     </div>
                     <div style={{ position: 'relative', height: 7, borderRadius: 5, background: 'linear-gradient(90deg,#3a4d44,#6fb3d9 35%,#ffc266 70%,#ff7a59)' }}>
-                      <i data-reglette style={{ position: 'absolute', top: -3, left: `${Math.max(1, Math.min(99, f.score_v2.percentile))}%`, width: 3, height: 13, background: '#fff', borderRadius: 2, boxShadow: '0 0 5px #000' }} />
+                      <i data-reglette style={{ position: 'absolute', top: -3, left: `${f.score_v2.verbal.reglette_pct}%`, width: 3, height: 13, background: '#fff', borderRadius: 2, boxShadow: '0 0 5px #000' }} />
                     </div>
                   </>
+                )}
+                {/* écartée/déclassée à signal fort : l'écartement PRIME — dit pourquoi la fréquence
+                    est absente (doctrine étage 0 M5). Bordure « terre éteinte », pas de menthe. */}
+                {signalEcarte && (
+                  <p data-signal-ecarte style={{ margin: '9px 0 0', fontSize: 11, color: '#b9a898', borderLeft: '3px solid #8C7468', paddingLeft: 8 }}>
+                    La parcelle porte {(multBase ?? 0) >= 4 ? 'un signal fort' : 'un signal au-dessus de la moyenne'} (×{f.score_v2.mult_base!.toFixed(1).replace('.', ',')}) <b>mais elle est écartée</b>{motifEcart ? <> : {motifEcart.toLowerCase()}</> : null} — l’écartement prime. La fréquence par tier ne s’affiche pas.
+                    <span title="Le ×N est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                  </p>
                 )}
                 {f.score_v2.verbal?.frequence && (
                   <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: '#9db5a8', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
@@ -1310,8 +1332,8 @@ export function Fiche({ idu }: { idu: string }) {
                   </p>
                 )}
                 {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
-                  <details data-pourquoi style={{ marginTop: 8 }} open={verdict.tier === 'brulante' || verdict.tier === 'chaude'}>
-                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>Pourquoi ce score</summary>
+                  <details data-pourquoi style={{ marginTop: 8 }} open={verdict.tier === 'brulante' || verdict.tier === 'chaude' || signalEcarte}>
+                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>{signalEcarte ? 'Pourquoi ce signal (avant l’écart)' : 'Pourquoi ce score'}</summary>
                     <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
                       {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (
                         <li key={i} style={{ padding: '3px 0', fontSize: 11.5, color: '#c9d6cf' }}>

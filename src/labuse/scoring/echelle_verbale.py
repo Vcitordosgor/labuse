@@ -4,6 +4,7 @@ par tier. PRÉSENTATION SEULE : ne change aucun tier, aucun calcul. Seuils/mots/
 from __future__ import annotations
 
 import functools
+import math
 import pathlib
 
 import yaml
@@ -41,13 +42,30 @@ def frequence_du_tier(tier: str | None) -> dict | None:
     }
 
 
+def reglette_du_multiplicateur(mult: float | None) -> float | None:
+    """Position 1–99 de la réglette pour ×N, en échelle LOG (arbitrage Vic L2). PRÉSENTATION :
+    positionne le ×N déjà calculé, ne le recalcule pas. None si mult absent."""
+    if mult is None:
+        return None
+    r = _cfg().get("reglette") or {}
+    lo, hi = float(r.get("min_mult", 1.0)), float(r.get("max_mult", 25.0))
+    span = math.log10(hi / lo)
+    if span <= 0:
+        return None
+    pos = math.log10(max(mult, lo) / lo) / span * 100.0
+    return round(max(1.0, min(99.0, pos)), 1)
+
+
 def enrichir_verbal(mult: float | None, tier: str | None) -> dict:
-    """{mot, cle, info, frequence?} — à joindre au payload score_v2 de la fiche. Champs absents
-    si non applicables (jamais approximés)."""
+    """{mot, cle, info, reglette_pct?, frequence?} — à joindre au payload score_v2 de la fiche.
+    Champs absents si non applicables (jamais approximés)."""
     out: dict = {"info": _cfg()["info_multiplicateur"].strip()}
     m = mot_du_multiplicateur(mult)
     if m:
         out.update(m)
+    reg = reglette_du_multiplicateur(mult)
+    if reg is not None:
+        out["reglette_pct"] = reg
     fr = frequence_du_tier(tier)
     if fr:
         out["frequence"] = fr

@@ -40,13 +40,23 @@ run servi `q_v8_calibre`).
 `L1_{avant,apres}_{brulante_AT2379,declasseB_EY1406,ecartee_IL0307}__{verdict,panel}.png`
 (6 avant + 6 après). Script : `capture.mjs`.
 
-## ⚠ À trancher par Vic (constaté, NON corrigé — c'est une décision L1)
+## Corrections L1 validées par Vic (repliées dans le geste L2)
 
-**Réglette incohérente sur l'écartée.** La réglette est mappée sur `percentile` (rang :
-89,67 = mieux classée que ~90 % des parcelles, car rang 44245/~431 663), tandis que le
-*mot* est mappé sur la bande de **×N** (×1,3 → « proche de la moyenne »). Résultat : sur
-`IL0307`, le curseur blanc est collé à « très forte » alors que le libellé dit « proche de
-la moyenne ». Cohérent pour brûlante/déclassée (percentile 100). Deux échelles racontent
-deux histoires. Options : (a) mapper la réglette sur le ×N (log) plutôt que le percentile
-rang ; (b) garder le percentile mais changer les ancres (« mieux classée que X % ») ; (c)
-masquer la réglette hors tiers hauts. → arbitrage présentation.
+L1 validé sur brûlante + écartée. Deux corrections appliquées, re-capturées
+`L1_apres_L1corr_*` :
+
+1. **Déclassée/écartée à signal fort (EY1406) — cadrage « signal brut ».** « Déclassée » +
+   « très forte probabilité relative » côte à côte = contradiction famille M48 (statut mort
+   à côté d'une promesse). Corrigé : hors tiers servables (`verdict.tier == null`) ET ×N ≥ 2,
+   le ×N devient **« signal brut »** (teinte terre éteinte), le mot passe **atténué** avec
+   « · écartée », et un encadré dit « la parcelle porte un signal fort (×N) **mais elle est
+   écartée** : [motif] — l'écartement prime. La fréquence par tier ne s'affiche pas. » + ⓘ
+   doctrine étage 0 (M5). « Pourquoi ce signal (avant l'écart) » ouvert. La fréquence reste
+   absente (correct). L'écartée simple ×1,3 (< 2) NE déclenche PAS ce cadrage — reste sobre.
+
+2. **Réglette sur ×N (échelle LOG), plus le percentile rang.** Le percentile rang plaçait
+   l'écartée ×1,3 à ~89,7 % (« très forte ») car mieux classée que ~90 % des parcelles —
+   contradiction avec « proche de la moyenne ». Corrigé : `verbal.reglette_pct` =
+   log10(×N / 1) / log10(25 / 1) × 100, bornée [1, 99], ancres en config
+   (`echelle_verbale_score.yaml` → `reglette`). Résultat : IL0307 ×1,3 → **8,6 %** (près de
+   « moyenne ») ; EY1406 ×13,2 → 80,0 % ; AT2379 ×22,1 → 96,2 %.

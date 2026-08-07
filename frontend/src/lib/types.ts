@@ -225,7 +225,7 @@ export interface Fiche {
     tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean
     // M52 Lot 1 (présentation) : mot verbal + ⓘ + fréquence par tier + « pourquoi » (top5 traduites).
     verbal?: {
-      mot?: string; cle?: string; info: string
+      mot?: string; cle?: string; info: string; reglette_pct?: number
       frequence?: { sur_100: number; base_sur_100: number; fenetre: string; sous_moyenne: boolean; source_dite: string }
     }
     pourquoi?: { feature: string; libelle: string; phrase?: string; signe?: string }[]
