@@ -153,15 +153,20 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
             "doutes": n_doute, "pagination_ambigue": ambigu}
 
 
-def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25) -> list[dict]:
+def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25,
+                     zone: str | None = None) -> list[dict]:
     """Recherche full-text (french) qui rend le VERBATIM SOURCÉ complet + la référence + le lien.
-    `insee` None = île entière. Aucun résumé : `texte_verbatim` est le texte brut du règlement ;
-    `doute` et `pagination_ambigue` sont RENDUS pour affichage."""
+    `insee` None = île entière. `zone` filtre la famille de zone (lien contextuel fiche → règlement
+    de la zone servie). Aucun résumé : `texte_verbatim` est le texte brut du règlement ; `doute` et
+    `pagination_ambigue` sont RENDUS pour affichage."""
     where = ["tsv @@ websearch_to_tsquery('french', :q)"]
     params: dict = {"q": q, "lim": limit}
     if insee:
         where.append("insee = :insee")
         params["insee"] = insee
+    if zone:
+        where.append("upper(zone) = upper(:zone)")
+        params["zone"] = zone
     rows = session.execute(text(f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
                zone, article_ref, page_pdf, texte_verbatim, doute, doute_motif, pagination_ambigue,

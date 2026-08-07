@@ -1231,7 +1231,7 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/plu-annuaire/search")
-def plu_annuaire_search(q: str, insee: str | None = None, limit: int = 25,
+def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None, limit: int = 25,
                         db: Session = Depends(get_db)) -> dict:
     """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
@@ -1251,7 +1251,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, limit: int = 25,
             return {"query": q, "insee": insee, "commune": nm, "n": 0, "resultats": [],
                     "message": f"{nm} : règlement non ingéré (révision non réconciliée ou hors "
                                f"corpus) — rien à servir. Voir /plu-annuaire/communes."}
-    res = search_reglement(db, q, insee, limit=limit)
+    res = search_reglement(db, q, insee, limit=limit, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         if r.get("pagination_ambigue"):
