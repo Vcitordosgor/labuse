@@ -276,3 +276,53 @@ résilience le rend **survivable** (les communes lentes qui timeout sont ignoré
 **ne l'accélère pas**. Un vrai run partiel île demande une **optimisation de la requête découpe**
 (pré-filtrer les candidats avant les `st_intersection` en boucle, ou index GiST dédié) — chantier
 séparé, plus gros. Le **résiduel `--all`, lui, tourne en 1–3 min** et ne casse pas.
+
+---
+
+# M50-SUITE — BILAN FINAL CORRIGÉ (clôture définitive)
+
+## L'état servi RÉEL (île résiduel rejouée, persistée — 22:45:34, MÊME base, marqueur)
+**34 candidats** = **7 résiduels q_v8_calibre** (6 `libre` + 1 `demolition`) **+ 27 `decoupe` q_v7_defisc**.
+Île résiduelle `division-or --all` : **24/24 communes, 0 échec, purge correcte sur SON périmètre**
+(libre/demolition). Les **7 q_v8** :
+
+| idu | commune | type |
+|---|---|---|
+| 97412000AM0946 | Saint-Joseph | libre |
+| 97413000CQ0412 | Saint-Leu | libre |
+| 97413000CX0585 | Saint-Leu | libre |
+| 97415000BV0182 | Saint-Paul | demolition |
+| 97416000DM0665 | Saint-Pierre | libre |
+| 97418000AV2092 | Sainte-Marie | libre |
+| 97420000BH1036 | Sainte-Suzanne | libre |
+
+**Correction d'un chiffre antérieur** : le « 10 = 9 + Le Port » était le résultat d'un run qui a
+**planté (Les Avirons) et n'a jamais persisté** — transaction-local. Le résultat AUTORITAIRE, persisté,
+du résiduel est **7, sans Le Port**. Le diff nominal réel n'est donc pas « 35→10 » mais **le pool
+résiduel = 7 q_v8** (les anciens `libre` q_v7 re-confrontés au détecteur v8 : ceux qui repassent
+survivent en q_v8, les autres tombent), **le pool découpe = 27 q_v7 INCHANGÉ** (hors périmètre résiduel).
+
+## DETTE NOMMÉE — pool découpe périmé (à NE PAS rejouer maintenant)
+**27 lignes `type_division='decoupe'`, `run_label='q_v7_defisc'` (28/07/2026)** — périmées vs le run
+servi q_v8_calibre. **Non rejouées volontairement** :
+- le builder **`build_divisions_partiel` n'a AUCUNE commande CLI** (lancé à la main uniquement) ;
+- il est **lent** (~min/commune ; île découpe = **heures**) — requête `EXPLAIN` ~3,45 M de coût
+  (anti-joins en boucle sur `st_intersects`/`st_intersection`) ;
+- **avant tout rejeu**, sa requête demande une **optimisation** : pré-filtrage des candidats **avant**
+  les `st_intersection` en boucle, et/ou **index GiST dédié** sur les géométries jointes. Chantier séparé.
+
+**Conséquence garde** : `check_coherence_tables_run_scopees` restera **MÉLANGÉE** (27 q_v7 + 7 q_v8)
+**tant que le pool découpe n'est pas rejoué**. C'est **VRAI et VOULU** — la garde ne ment pas, on ne
+l'assouplit pas. Une garde qui dit l'inconfort vaut mieux qu'une garde relâchée. Elle passera **OK**
+le jour où le partiel (optimisé) rejouera les 27 en q_v8.
+
+## Clôture M50-SUITE — livré (branche `m50-suite-division-or`)
+1. **Fix INSEE→NOM résolu en amont** (seq scan 431 k tué ; Saint-Paul 9,4 s vs >180 s).
+2. **Fix commit atomique par commune** (durable/incrémental — prouvé cross-connexion).
+3. **Fix île résiliente** (une commune qui casse est isolée, l'île continue ; `failures` remontés/CLI).
+4. **`--all`** (24 communes via `commune_conso_enaf`).
+5. **Tests** : pytest **18/18** ; intégration persistance + intégration résilience (cross-connexion).
+6. **Incidents consignés** : push main accidentel · écriture BV0182 · gotcha ops (INSERT PostGIS
+   ininterruptible → zombies) · mon hypothèse « autre base » FAUSSE (corrigée par le marqueur).
+7. **Dette nommée** : pool découpe périmé (27 q_v7) + optim requête partiel — hors périmètre, garde
+   MÉLANGÉE assumée.
