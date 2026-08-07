@@ -200,6 +200,64 @@ function MesVues() {
   )
 }
 
+// M52-B — SÉLECTEUR DE PROFIL « Vous cherchez ? », le DERNIER geste : à l'activation de l'analyse,
+// le promoteur dit s'il veut du terrain nu, du bâti (réhab/démolition) ou les deux. Le choix
+// PRÉ-APPLIQUE des filtres qui EXISTENT DÉJÀ (état du sol + mode B rentable) — zéro calcul nouveau,
+// zéro endpoint. La donnée « année de construction » n'existe pas à l'échelle (BDNB hors 974, DPE
+// non obligatoire avant 2028) : ce sélecteur ne l'invente pas, il ouvre le bâti à celui qui l'accepte.
+// La puce active est DÉRIVÉE de l'état réel des filtres (jamais un état fantôme) → toujours cohérente
+// avec le compteur « Retenues par l'analyse ». Re-cliquable à tout moment (chips visibles, pas un tunnel).
+const BATI_SOLS = ['bati_marginal', 'bati_sature', 'bati_revele']
+type Profil = 'nu' | 'bati' | 'deux'
+const PROFILS: { k: Profil; l: string; sous?: string }[] = [
+  { k: 'nu', l: 'Terrain nu' },
+  { k: 'bati', l: 'Bâti', sous: 'réhab / démolition' },
+  { k: 'deux', l: 'Les deux' },
+]
+const memeSet = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|')
+
+function ProfilSelecteur() {
+  const { filters, setFilters } = useApp()
+  // Dérivation : la puce active REFLÈTE les filtres réels. Hors des 3 combinaisons (l'utilisateur
+  // a affiné l'état du sol à la main), aucune puce n'est allumée — on ne ment pas sur le périmètre.
+  const profil: Profil | null =
+    memeSet(filters.etatSol, ['nu']) && !filters.modeBRentable ? 'nu'
+      : memeSet(filters.etatSol, BATI_SOLS) && filters.modeBRentable ? 'bati'
+        : filters.etatSol.length === 0 && !filters.modeBRentable ? 'deux'
+          : null
+  const appliquer = (k: Profil) => {
+    const patch = k === 'nu' ? { etatSol: ['nu'], modeBRentable: false }
+      : k === 'bati' ? { etatSol: [...BATI_SOLS], modeBRentable: true }
+        : { etatSol: [], modeBRentable: false }
+    setFilters({ ...filters, ...patch })   // ne touche QUE état du sol + mode B — le reste des filtres reste
+  }
+  return (
+    <div data-profil-selecteur className="mb-2 rounded-lg border border-line-2/60 bg-surface-2/40 px-2.5 py-2">
+      <p className="label-caps flex flex-wrap items-center gap-x-1.5">Vous cherchez ?
+        <span className="text-[9px] font-normal normal-case text-txt-dim">— pré-règle l’état du sol + le mode B, rien d’autre</span></p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {PROFILS.map((p) => (
+          <button key={p.k} data-profil={p.k} onClick={() => appliquer(p.k)}
+            title={p.k === 'nu' ? 'État du sol : Nu' : p.k === 'bati' ? 'État du sol : bâti marginal/saturé/révélé + Mode B rentable en avant' : 'Aucune restriction d’état du sol (défaut)'}
+            className={`rounded-full border px-3 py-0.5 text-[11px] transition-colors duration-quick ${
+              profil === p.k ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+            {p.l}{p.sous && <span className="ml-1 text-[9.5px] opacity-70">{p.sous}</span>}
+          </button>
+        ))}
+      </div>
+      {/* Honnêteté (point 2 + cohérence M48) : le segment bâti est servi par le MÊME tri (signal
+          d'activité), mais le backtest ne mesure QUE le classement principal — on le DIT. */}
+      {profil === 'bati' && (
+        <p data-profil-bati-note className="mt-1.5 text-[10px] leading-snug text-txt-dim">
+          Segment bâti trié par <b className="text-txt-mut">signal d’activité</b> — performance non
+          mesurée séparément (le backtest couvre le classement principal). Cohérent avec le segment
+          Renouvellement : les occupées gardent leur motif, jamais masquées.
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function FiltreLabuse() {
   const { filters, setFilter, setFilters, resetFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
@@ -217,6 +275,9 @@ export function FiltreLabuse() {
 
   return (
     <div className="card-elev px-3 py-2">
+      {/* ── SÉLECTEUR DE PROFIL (M52-B) : « Vous cherchez ? » en tête — le choix pré-règle les
+          filtres existants, le compteur ci-dessous réagit tout seul (aucun calcul nouveau). ── */}
+      <ProfilSelecteur />
       {/* En-tête : compteur en direct + interrupteur — chaque nombre DIT son périmètre (réconcilié :
           « avant analyse » = retenues + exclusions dures ; jamais de soustraction laissée au client). */}
       <div className="flex items-center justify-between">

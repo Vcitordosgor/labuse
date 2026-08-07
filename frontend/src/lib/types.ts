@@ -198,6 +198,7 @@ export interface ModeB {
 // M52 L4 — qualité par commune, DITE (mesure réelle gelée, audit RR fold 2025 OOS).
 export interface QualiteCommune {
   commune: string; insee: string; rr_intra: number; rr_ile: number | null
+  rr_ile_dit?: string | null   // M52-B : RR île DIT en ordre de grandeur (« ~6,7 ») — jamais la fausse précision
   echantillon: number; taux_base_pct: number | null; fragile: boolean; degradee: boolean
   libelle: string; source: string
 }
