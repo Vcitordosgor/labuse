@@ -63,11 +63,19 @@ def is_aggregate(query: str) -> bool:
     return bool(_AGG_RE.search(query or ""))
 
 
-def _run_params(db: Session) -> dict | None:
-    v2 = db.execute(text("SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
-    if not v2:
-        return None
-    return {"run": Q_A_RUN_LABEL, "v2run": v2}
+def _run_params(db: Session) -> dict:
+    """Paramètres de run des agrégats : dryrun (`run`) ET scores v2 (`v2run`) ÉPINGLÉS au run
+    SERVI (Q_A_RUN_LABEL). Les comptes « combien de brûlantes à Saint-Paul » DOIVENT correspondre
+    EXACTEMENT à ce que la carte et la liste montrent — mêmes tables, même run. Plus jamais « le
+    dernier run calculé » : un run candidat comptait des brûlantes absentes de la carte servie.
+    Run servi absent de p_score_v2_runs → erreur BRUYANTE (aligné sur score_v2._served_run), jamais
+    un repli silencieux qui servirait des comptes vides."""
+    if not db.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"),
+                      {"r": Q_A_RUN_LABEL}).scalar():
+        raise RuntimeError(
+            f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs — agrégats /ia/search "
+            "indisponibles ; lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
+    return {"run": Q_A_RUN_LABEL, "v2run": Q_A_RUN_LABEL}
 
 
 def _detect_tiers(low: str) -> list[tuple[str, str]]:
@@ -82,9 +90,7 @@ def answer_aggregate(db: Session, query: str) -> dict | None:
     low = (query or "").lower()
     from .ia import _detect_commune  # import tardif : ia.py importe ce module (évite le cycle)
 
-    params = _run_params(db)
-    if params is None:
-        return None
+    params = _run_params(db)   # run servi épinglé ; lève bruyamment si non matérialisé
 
     commune = _detect_commune(low)
     tiers = _detect_tiers(low)

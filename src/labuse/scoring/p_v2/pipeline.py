@@ -152,6 +152,9 @@ def top5_lisibles(model: PModel, contrib: pd.DataFrame, df: pd.DataFrame) -> lis
 
 
 def previous_run(session: Session) -> tuple[str | None, pd.Series | None]:
+    # M-L : lecture VOLONTAIRE du dernier run calculé (≠ Q_A_RUN_LABEL) — sert à mesurer le delta de
+    # tiers qu'un NOUVEAU run introduit vs le précédent, pendant le calcul. Étape interne du pipeline,
+    # jamais une surface servie : aucun run candidat ne fuit dans le produit par ce chemin.
     run = session.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
     if not run:
