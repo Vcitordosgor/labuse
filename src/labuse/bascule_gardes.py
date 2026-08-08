@@ -118,30 +118,56 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
     sont ignorées (pas de cadence de référence). `session` optionnelle (tests) ; sinon session_scope.
     Retourne la liste des retards constatés."""
     import datetime
-    retards = []
-    _sql = ("SELECT name, source_horizon_at, source_cadence FROM data_sources "
-            "WHERE source_horizon_at IS NOT NULL AND source_cadence IS NOT NULL")
+
+    from labuse.ingestion.fraicheur import DS_NAMES, SOURCES
+    # M-R (P2-fraîcheur) : la garde parcourt L'UNIVERS des couches fraîcheur (fraicheur.SOURCES),
+    # plus « les lignes data_sources qui ont un source_cadence » (l'ancien filtre n'en voyait qu'UNE
+    # — dvf — et affichait « tout va bien »). Chaque couche est CLASSÉE :
+    #   · évaluée   : cadence bornable + horizon connu → on mesure le retard ;
+    #   · inconnu   : horizon amont NULL (ex. gpu_plu/georisques, M-O) → « inconnu », JAMAIS un retard ;
+    #   · non bornable : cadence irrégulière/continue non déclarée (sudocuh, ortho, bodacc event-driven).
+    # La garde DIT combien elle a évalué sur le total — un OK honnête, pas un OK aveugle.
+    all_names = sorted({n for names in DS_NAMES.values() for n in names})
+
+    def _run(conn):
+        rows = conn.execute(text("SELECT name, source_horizon_at FROM data_sources WHERE name = ANY(:n)"),
+                            {"n": all_names}).all()
+        horizons = {name: hz for name, hz in rows}
+        today = datetime.date.today()
+        evaluees, retards, inconnues, non_bornables = 0, [], [], []
+        for key, s in SOURCES.items():
+            jours = _CADENCE_JOURS.get((s.get("cadence_norme") or "").lower())
+            if not jours:
+                non_bornables.append(key)
+                continue
+            hs = [horizons[n] for n in DS_NAMES.get(key, []) if horizons.get(n) is not None]
+            horizon = max(hs) if hs else None
+            if horizon is None:                          # horizon amont inconnu (NULL) → pas un retard
+                inconnues.append(key)
+                continue
+            evaluees += 1
+            age = (today - horizon).days
+            if age > jours * seuil_facteur:
+                retards.append({"source": key, "horizon": str(horizon), "age_jours": age,
+                                "cadence": s.get("cadence_norme"), "seuil_jours": int(jours * seuil_facteur)})
+        return evaluees, retards, inconnues, non_bornables
+
     if session is not None:
-        rows = session.execute(text(_sql)).all()
+        evaluees, retards, inconnues, non_bornables = _run(session)
     else:
         with session_scope() as s:
-            rows = s.execute(text(_sql)).all()
-    today = datetime.date.today()
-    for name, horizon, cadence in rows:
-        jours_attendus = _CADENCE_JOURS.get((cadence or "").lower())
-        if not jours_attendus:
-            continue  # cadence non bornable (continu) → pas de seuil de retard
-        age = (today - horizon).days
-        if age > jours_attendus * seuil_facteur:
-            retards.append({"source": name, "horizon": str(horizon), "age_jours": age,
-                            "cadence": cadence, "seuil_jours": int(jours_attendus * seuil_facteur)})
+            evaluees, retards, inconnues, non_bornables = _run(s)
+    total = len(SOURCES)
     for r in retards:
         print(f"{_ts()} ⚠ FRAÎCHEUR — « {r['source']} » : horizon {r['horizon']} "
               f"({r['age_jours']} j, cadence {r['cadence']} → seuil {r['seuil_jours']} j). "
               f"Source en retard — NON bloquant, mais à voir.", flush=True)
-    if not retards:
-        print(f"{_ts()} ✓ fraîcheur : toutes les couches datées dans leur cadence.", flush=True)
-    return {"retards": retards, "n_retards": len(retards)}
+    print(f"{_ts()} {'✓' if not retards else '⚠'} fraîcheur : {evaluees}/{total} couches évaluées, "
+          f"{len(retards)} retard(s) · {len(inconnues)} horizon inconnu"
+          f"{' (' + ','.join(inconnues) + ')' if inconnues else ''} · "
+          f"{len(non_bornables)} cadence non bornable.", flush=True)
+    return {"retards": retards, "n_retards": len(retards), "evaluees": evaluees, "total": total,
+            "horizon_inconnu": inconnues, "non_bornable": non_bornables}
 
 
 def _ts() -> str:
@@ -151,29 +177,44 @@ def _ts() -> str:
     return datetime.datetime.now().strftime("%H:%M:%S")
 
 
-def check_disque(target: str = TARGET, marge: float = 1.25) -> dict:
+def check_disque(target: str = TARGET, marge: float = 1.25, session=None) -> dict:
     """Garde DISQUE (garde manquante qui a tué le job à 20 %, Vic 30/07). Estime l'espace que la
-    re-passe q_v8 va CONSOMMER (cascade + evaluations + scores + snapshot, dimensionné sur la
-    référence complète q_v7_defisc), le compare à l'espace DISPONIBLE = libre OS + espace mort
-    RÉUTILISABLE dans les tables cibles (le job réutilise les lignes supprimées sans grossir le
-    fichier). Refuse de démarrer si disponible < besoin × marge. Idempotent, lecture seule."""
+    re-passe q_v8 va CONSOMMER (cascade + evaluations + scores + snapshot, dimensionné sur le PLUS
+    GRAND run existant), le compare à l'espace DISPONIBLE = libre OS + espace mort RÉUTILISABLE dans
+    les tables cibles (le job réutilise les lignes supprimées sans grossir le fichier). Refuse de
+    démarrer si disponible < besoin × marge, ET si AUCUN run n'est mesurable. `session` optionnelle
+    (tests). Idempotent, lecture seule."""
     import shutil
-    with engine().connect() as c:
-        # besoin = taille des tranches q_v7 (référence complète) MOINS ce que q_v8 a déjà écrit
+
+    def _run(c):
+        # M-R (P2-76) : dimensionner sur le PLUS GRAND run existant (proxy d'un run complet), plus
+        # sur « q_v7_defisc » EN DUR. Quand ce run mort est purgé — ce que le message d'erreur de la
+        # garde recommande ! — les NULLIF renvoyaient NULL, `need` tombait à 0 et la garde passait
+        # TOUJOURS : une garde qui se DÉSARME quand on suit son propre conseil.
+        def _biggest(table: str, col: str):
+            return c.execute(text(
+                f"SELECT max(c) FROM (SELECT count(*) c FROM {table} GROUP BY {col}) q")).scalar()
+        ref_cascade = _biggest("dryrun_cascade_results", "run_label") or 0
+        ref_eval = _biggest("dryrun_parcel_evaluations", "run_label") or 0
+        n_runs_scores = c.execute(text("SELECT count(DISTINCT run_id) FROM parcel_p_score_v2")).scalar() or 0
+        if not (ref_cascade and ref_eval and n_runs_scores):
+            # AUCUN run mesurable → on ne SAIT PAS dimensionner. Échec BRUYANT, jamais un OK aveugle
+            # (une garde qui ne sait pas mesurer doit le DIRE, pas approuver).
+            raise DisqueInsuffisantError(
+                "GARDE DISQUE INOPÉRANTE : aucun run de référence mesurable (tables de run vides) — "
+                "impossible de dimensionner la re-passe. Refus de démarrer plutôt qu'un OK aveugle. "
+                "Vérifier les tables de run, ou --skip-disk-check en connaissance de cause.")
+        # besoin = taille d'un run de référence (le plus grand) MOINS ce que le run cible a déjà écrit
         need = c.execute(text("""
-            SELECT
-              (SELECT pg_total_relation_size('dryrun_cascade_results')::float
-                      * (SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc')
-                      / NULLIF((SELECT count(*) FROM dryrun_cascade_results),0)) +
-              (SELECT pg_total_relation_size('parcel_p_score_v2')::float / NULLIF((SELECT count(DISTINCT run_id) FROM parcel_p_score_v2),0)) +
-              (SELECT pg_total_relation_size('dryrun_parcel_evaluations')::float
-                      * (SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label='q_v7_defisc')
-                      / NULLIF((SELECT count(*) FROM dryrun_parcel_evaluations),0))
-        """)).scalar() or 0.0
+            SELECT (pg_total_relation_size('dryrun_cascade_results')::float * :rc
+                    / NULLIF((SELECT count(*) FROM dryrun_cascade_results),0)) +
+                   (pg_total_relation_size('parcel_p_score_v2')::float / :nrs) +
+                   (pg_total_relation_size('dryrun_parcel_evaluations')::float * :re
+                    / NULLIF((SELECT count(*) FROM dryrun_parcel_evaluations),0))
+        """), {"rc": ref_cascade, "re": ref_eval, "nrs": n_runs_scores}).scalar() or 0.0
         already = c.execute(text("""
-            SELECT (SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:t)::float
-                   / NULLIF((SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc'),0)"""),
-            {"t": target}).scalar() or 0.0
+            SELECT (SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:t)::float / :rc"""),
+            {"t": target, "rc": ref_cascade}).scalar() or 0.0
         need_rest = need * max(0.0, 1.0 - already)
         # espace RÉUTILISABLE dans les tables cibles (lignes supprimées non rendues à l'OS, mais
         # réutilisées par les INSERT). Mesure EXACTE via pg_freespacemap (FSM) si l'extension est
@@ -189,6 +230,13 @@ def check_disque(target: str = TARGET, marge: float = 1.25) -> dict:
             dead = c.execute(text("""
                 SELECT COALESCE(sum(n_dead_tup::float / NULLIF(n_live_tup,0) * pg_relation_size(relid)),0)
                 FROM pg_stat_user_tables WHERE relname = ANY(:t)"""), {"t": list(_tables)}).scalar() or 0.0
+        return need_rest, dead
+
+    if session is not None:
+        need_rest, dead = _run(session)
+    else:
+        with engine().connect() as c:
+            need_rest, dead = _run(c)
     free = shutil.disk_usage(".").free
     # Le FSM ABSORBE les écritures (réutilisation sans grossir le fichier) ; seul le DÉBORDEMENT
     # (besoin − FSM) tombe sur le disque OS. On garde donc sur le besoin OS RÉEL, pas le brut.
@@ -216,26 +264,38 @@ def ensure_backups() -> None:
                 print(f"  backup créé : {bak}", flush=True)
 
 
-def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: int) -> dict:
+def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: int, session=None) -> dict:
     """5) AUTO-VÉRIFICATION. Compte chaque table clé-run vs attendu. Lève RunIncompletError (échec
     BRUYANT) au premier manque — le run n'est PAS déclaré servable tant que les 4 tables ne sont pas
-    complètes : scores P, cascade (evaluations + résultats), snapshot."""
-    with engine().connect() as c:
-        counts = {
+    complètes : scores P (+ TIER v2 renseigné), cascade (evaluations + résultats + étage 0), snapshot.
+    `session` optionnelle (tests)."""
+    def _counts(c):
+        return {
             "parcel_p_score_v2":         c.execute(text("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r"), {"r": target}).scalar(),
             "dryrun_parcel_evaluations": c.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r"), {"r": target}).scalar(),
             "dryrun_cascade_results":    c.execute(text("SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:r"), {"r": target}).scalar(),
-            "matrice_statut_non_null":   c.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r AND matrice_statut IS NOT NULL"), {"r": target}).scalar(),
+            # M-R (P2-75) : la complétude du run servi se mesure sur le TIER v2 (le verdict servi),
+            # PLUS sur `matrice_statut` (matrice éteinte M37, retirée partout — l'exiger ici forçait
+            # à peupler un champ mort juste pour la garde) ; et sur l'étage 0 (status résolu partout).
+            "tier_non_null":             c.execute(text("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r AND tier IS NOT NULL"), {"r": target}).scalar(),
+            "status_non_null":           c.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r AND status IS NOT NULL"), {"r": target}).scalar(),
             "p_score_v2_runs":           c.execute(text("SELECT count(*) FROM p_score_v2_runs WHERE run_id=:r"), {"r": target}).scalar(),
             "snapshot_parcelles":        c.execute(text("SELECT count(*) FROM score_snapshot_parcelles sp JOIN score_snapshots ss ON ss.id=sp.snapshot_id WHERE ss.run_label=:r"), {"r": target}).scalar(),
         }
+    if session is not None:
+        counts = _counts(session)
+    else:
+        with engine().connect() as c:
+            counts = _counts(c)
     problems = []
     if counts["parcel_p_score_v2"] != n_expected_scores:
         problems.append(f"scores P {counts['parcel_p_score_v2']} ≠ {n_expected_scores}")
     if counts["dryrun_parcel_evaluations"] != n_expected_cascade:
         problems.append(f"cascade evaluations {counts['dryrun_parcel_evaluations']} ≠ {n_expected_cascade}")
-    if counts["matrice_statut_non_null"] != n_expected_cascade:
-        problems.append(f"matrice_statut renseigné {counts['matrice_statut_non_null']} ≠ {n_expected_cascade}")
+    if counts["tier_non_null"] != n_expected_scores:
+        problems.append(f"tier v2 renseigné {counts['tier_non_null']} ≠ {n_expected_scores} (run NON servable sans tier)")
+    if counts["status_non_null"] != n_expected_cascade:
+        problems.append(f"étage 0 / status renseigné {counts['status_non_null']} ≠ {n_expected_cascade}")
     if counts["dryrun_cascade_results"] <= 0:
         problems.append("dryrun_cascade_results VIDE (cascade non produite)")
     if counts["p_score_v2_runs"] != 1:

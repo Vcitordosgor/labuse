@@ -84,13 +84,18 @@ def test_check_fraicheur_non_bloquant(db_session):
     """M32 Phase B §2 : la garde de fraîcheur AVERTIT mais ne bloque JAMAIS (retard source ≠ faute
     de bascule). Horizon très ancien → retard listé ; horizon récent → aucun retard. Zéro exception."""
     from labuse import bascule_gardes as bg
+    from labuse.ingestion.fraicheur import DS_NAMES
     s = db_session
     _ensure_millesime_cols(s)
-    s.execute(text("INSERT INTO data_sources (name, category, status, source_horizon_at, source_cadence) "
-                   "VALUES ('TEST couche vieille', 'x', 'ok', '2020-01-01', 'semestriel') "
-                   "ON CONFLICT (name) DO UPDATE SET source_horizon_at='2020-01-01', source_cadence='semestriel'"))
+    # M-R : la garde parcourt l'UNIVERS des couches fraîcheur (fraicheur.SOURCES) — on donne à une
+    # couche RÉELLE et bornable (dvf, semestriel) un horizon très ancien → retard listé, non bloquant.
+    name = DS_NAMES["dvf"][0]
+    s.execute(text("INSERT INTO data_sources (name, category, status, source_horizon_at) "
+                   "VALUES (:n, 'x', 'ok', '2020-01-01') "
+                   "ON CONFLICT (name) DO UPDATE SET source_horizon_at='2020-01-01'"), {"n": name})
     r = bg.check_fraicheur(session=s)             # session de test (rollback) ; ne lève jamais
-    assert any(x["source"] == "TEST couche vieille" for x in r["retards"])  # retard vu, non bloquant
+    assert any(x["source"] == "dvf" for x in r["retards"])  # retard vu, non bloquant
+    assert r["total"] == 10 and r["evaluees"] >= 1          # M-R : dénominateur honnête (N/total)
 
 
 @pytest.mark.db
