@@ -87,6 +87,22 @@ def _doc(commune: str | None = None) -> dict:
     return _doc_for(str(_calibrated_yaml(commune) or _YAML))
 
 
+def _hypotheses_faisabilite(commune: str | None = None) -> dict:
+    """Section `hypotheses_faisabilite` du YAML PLU de la commune (M-N P1-13).
+
+    Contrairement à `_doc()` — qui retombe TOUJOURS sur Saint-Paul quand la commune n'a pas de
+    YAML —, ce point de lecture RESPECTE l'absence : commune non outillée → {} (l'appelant
+    `Hypotheses.charger` retombe alors sur les défauts du dataclass, jamais sur Saint-Paul).
+      - `commune=None` → Saint-Paul (back-compat pilote & tests) ;
+      - commune outillée → sa section ; commune sans YAML → {}."""
+    if commune is None:
+        return _doc().get("hypotheses_faisabilite") or {}
+    path = _calibrated_yaml(commune)
+    if path is None:
+        return {}
+    return _doc_for(str(path)).get("hypotheses_faisabilite") or {}
+
+
 def load_rules(commune: str | None = None) -> dict[str, ZoneRules]:
     """(Sous-)zones détaillées du YAML PLU de la commune → ZoneRules (défaut = Saint-Paul)."""
     path = _calibrated_yaml(commune)
@@ -212,7 +228,11 @@ def _zone_generique(code: str) -> ZoneRules:
     if not constructible:
         return ZoneRules(code=code, calibree=False, constructible_neuf=False,
                          notes=[note], sources={"zone": "estimation générique"})
-    he = float((_doc().get("hypotheses_faisabilite") or {}).get("he_defaut_generique_m", 9.0))
+    # M-N P1-13 : hé générique = constante SOURCE UNIQUE (défaut du dataclass), plus d'emprunt au
+    # YAML Saint-Paul pour estimer une zone d'une commune non outillée. Import différé (engine
+    # dépend de plu_rules) pour éviter le cycle.
+    from .engine import HE_DEFAUT_GENERIQUE_M
+    he = float(HE_DEFAUT_GENERIQUE_M)
     return ZoneRules(code=code, calibree=False, he_m=he, notes=[note],
                      sources={"hauteur": "estimation générique (PLU non outillé)",
                               "zone": "estimation générique"})

@@ -201,7 +201,7 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
                         notes=[*rules.notes,
                                f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
 
-    hyp = Hypotheses.charger()
+    hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
@@ -297,7 +297,7 @@ def volume3d_payload(session: Session, parcel_id: int,
 
     from .engine import Hypotheses
     rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
-    hyp = Hypotheses.charger()
+    hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
     recul = (float(rules.recul_limites_sep_m)
              if rules is not None and isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)

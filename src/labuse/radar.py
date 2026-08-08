@@ -18,11 +18,40 @@ Types de sonde :
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+
+def _parse_date_amont(valeur: str | None) -> datetime | None:
+    """M-N P2-51 — convertit la valeur OBSERVÉE d'une sonde en date AMONT réelle (aware), ou None
+    si non datable. Doctrine : fraîcheur = date de la SOURCE amont, jamais date d'ingestion/constat.
+      - HTTP `Last-Modified` (« Wed, 03 Jul 2024 10:00:00 GMT ») — sonde `head` ;
+      - date ISO 8601 (champs JSON : dateparution, last_modified…) — sonde `json` ;
+      - horodatage epoch (s ou ms) — certains portails (Socrata `dataUpdatedAt`).
+    Non datable (ETag opaque, chaîne libre) → None : l'appelant garde `now()` (constaté, non publié)."""
+    if not valeur:
+        return None
+    v = str(valeur).strip()
+    try:                                    # 1) date HTTP RFC 2822 (Last-Modified)
+        d = parsedate_to_datetime(v)
+        if d is not None:
+            return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        pass
+    try:                                    # 2) ISO 8601 (dateparution / last_modified…)
+        d = datetime.fromisoformat(v.replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except ValueError:
+        pass
+    if re.fullmatch(r"\d{10}|\d{13}", v):   # 3) epoch secondes (10) ou millisecondes (13)
+        ts = int(v)
+        return datetime.fromtimestamp(ts / 1000 if len(v) == 13 else ts, tz=timezone.utc)
+    return None
 
 log = logging.getLogger("labuse.radar")
 
@@ -149,6 +178,10 @@ def run_radar(db: Session) -> dict:
             continue
         change = bool(prev and prev["valeur"] and prev["valeur"] != valeur)
         statut = "nouvelle_publication" if change else "a_jour"
+        # M-N P2-51 — `dernier_changement` = date AMONT réellement observée (Last-Modified / champ
+        # daté JSON) quand la valeur est datable, PAS `now()` (heure de constat). Sinon (ETag
+        # opaque) on garde `now()` : constaté, non publié — l'affichage doit le dire « constaté le ».
+        chg_t = (_parse_date_amont(valeur) or now) if change else now
         if change:
             resume["changements"].append({"source": name, "avant": prev["valeur"], "apres": valeur})
             log.info("radar : %s a publié (%s → %s)", name, prev["valeur"], valeur)
@@ -158,11 +191,11 @@ def run_radar(db: Session) -> dict:
             VALUES (:n, :m, :c, :k, :u, :v, :t, :t, NULL, 'a_jour', NULL)
             ON CONFLICT (source_name) DO UPDATE SET
                 mode = :m, cadence = :c, sonde = :k, url = :u, valeur = :v, derniere_verif = :t,
-                dernier_changement = CASE WHEN :chg THEN :t ELSE source_radar.dernier_changement END,
+                dernier_changement = CASE WHEN :chg THEN :chg_t ELSE source_radar.dernier_changement END,
                 statut = :s, detail = NULL"""),
             {"n": name, "m": s["mode"], "c": s["cadence"],
              "k": "endpoint" if s.get("repli") else s["kind"], "u": s["url"], "v": valeur,
-             "t": now, "chg": change, "s": statut})
+             "t": now, "chg_t": chg_t, "chg": change, "s": statut})
     db.commit()
     return resume
 
