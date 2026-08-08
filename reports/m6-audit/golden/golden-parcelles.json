@@ -3,7 +3,7 @@
   "api_base": "http://127.0.0.1:8000",
   "genere_le": "2026-08-07T23:52:41",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
-  "n_parcelles": 117,
+  "n_parcelles": 118,
   "run_cascade": "q_v8_calibre",
   "run_v2_servi": "q_v8_calibre",
   "tiers_effectifs": {
@@ -6342,6 +6342,14 @@
      "zone": "U"
     }
    }
+  },
+  "97415000AC0253": {
+   "anchor": true,
+   "validation": "coherence",
+   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable)",
+   "cascade_status": "opportunite",
+   "matrice_statut": "chaude",
+   "tier_v2": "chaude"
   }
  }
 }
