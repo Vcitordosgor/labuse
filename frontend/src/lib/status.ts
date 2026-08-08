@@ -72,7 +72,15 @@ export function verdictMeta(
   // M30 item 3 : tier de DÉCLASSEMENT servi → verdict motivé (avant : repli legacy muet)
   const d = tierV2 ? TIER_DECLASSE_META[tierV2 as TierDeclasse] : undefined
   if (d) return { ...d, v2: true, tier: null }
-  return { ...(statut ? STATUT_META[statut] : { label: '—', color: NONE_COLOR }), v2: false, tier: null }
+  // M-Q P2-69 : repli sur la matrice legacy (éteinte M37). Sur le parc servi, TOUTES les parcelles
+  // portent un tier v2 → ce repli ne s'arme jamais. S'il s'armait (parc sans run v2), il ne doit
+  // JAMAIS se faire passer pour un verdict servi : libellé DISTINCT + couleur NEUTRE (modèle
+  // Legend.tsx « Classement historique »), jamais une teinte thermique ni un statut matriciel
+  // indistinguable du vrai verdict. Le motif legacy reste lisible ailleurs (section Qualité).
+  if (statut && STATUT_META[statut]) {
+    return { label: 'Classement historique', color: NONE_COLOR, v2: false, tier: null }
+  }
+  return { label: '—', color: NONE_COLOR, v2: false, tier: null }
 }
 
 // M5.1 : le TIER EFFECTIF d'une parcelle — la même règle que verdictMeta, sous forme de

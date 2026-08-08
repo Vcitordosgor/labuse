@@ -35,7 +35,10 @@ export interface ParcelResult {
   commune: string
   surface_m2: number | null
   lieu_dit: string | null
-  status: Statut
+  // M-Q P2-69 : `status` (matrice legacy éteinte M37) OPTIONNEL — le verdict vient du tier v2 ;
+  // le repli legacy (verdictMeta) ne s'arme jamais sur le parc servi et, s'il s'armait, s'affiche
+  // en « Classement historique » distinct. Consommé seulement via `verdictMeta(p.status, …)`.
+  status?: Statut
   q_score: number
   a_score: number
   a_completude: number | null

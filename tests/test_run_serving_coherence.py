@@ -34,18 +34,26 @@ def test_served_run_fichier_est_la_source_unique():
         "pas le point de vérité versionné (ou un override LABUSE_SERVED_RUN traîne dans l'env de test)")
 
 
-def test_front_source_aligne_sur_le_run_servi():
-    """frontend/src/lib/api.ts : SOURCE doit être IDENTIQUE à Q_A_RUN_LABEL."""
+def test_front_source_lit_le_run_injecte_sans_repli_code_en_dur():
+    """M-Q P2-70 : frontend/src/lib/api.ts — SOURCE lit VITE_RUN_LABEL (injecté au build depuis
+    config/served_run.txt par vite.config.ts) avec un repli VIDE. Plus de run codé en dur : un
+    littéral figé servirait SILENCIEUSEMENT l'ancien run après une bascule si l'injection manquait
+    (front sur l'ancien, backend sur le nouveau → listes vides, aucun message). La cohérence du run
+    RÉEL est vérifiée sur le BUNDLE (test_bundle_front_construit_sur_le_run_servi), et l'absence
+    d'injection déclenche une garde VISIBLE au démarrage (main.tsx) — pas un run muet."""
     api_ts = (ROOT / "frontend" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
-    # SOURCE est désormais configurable (clôture A-1) : `import.meta.env.VITE_RUN_LABEL ?? 'défaut'`.
-    # On vérifie que le DÉFAUT de repli (littéral) reste aligné sur le défaut backend Q_A_RUN_LABEL.
-    # La regex accepte l'ancienne forme (littéral seul) ET la nouvelle (env ?? littéral).
-    m = re.search(r"export const SOURCE = (?:import\.meta\.env\.VITE_RUN_LABEL \?\? )?'([^']+)'", api_ts)
-    assert m, "constante SOURCE (ou son défaut de repli) introuvable dans frontend/src/lib/api.ts"
-    assert m.group(1) == Q_A_RUN_LABEL, (
-        f"front SOURCE défaut={m.group(1)!r} ≠ backend Q_A_RUN_LABEL={Q_A_RUN_LABEL!r} — "
-        "bascule incomplète : mettre à jour config/served_run.txt PUIS le littéral de repli api.ts "
-        "(le bundle, lui, lit le fichier via vite.config.ts) PUIS npm run build.")
+    m = re.search(r"export const SOURCE = import\.meta\.env\.VITE_RUN_LABEL \?\? '([^']*)'", api_ts)
+    assert m, ("SOURCE doit valoir `import.meta.env.VITE_RUN_LABEL ?? '...'` "
+               "dans frontend/src/lib/api.ts")
+    assert m.group(1) == "", (
+        f"repli SOURCE={m.group(1)!r} — attendu chaîne VIDE (M-Q P2-70). Un run codé en dur en repli "
+        "sert l'ancien run après une bascule si VITE_RUN_LABEL n'est pas injecté ; le repli vide + la "
+        "garde de démarrage rendent l'erreur franche au lieu de servir un mauvais run.")
+    # garde de démarrage : main.tsx refuse de booter sur un run vide (écran « run non configuré »)
+    main_tsx = (ROOT / "frontend" / "src" / "main.tsx").read_text(encoding="utf-8")
+    assert "SOURCE" in main_tsx and "RunNonConfigure" in main_tsx, (
+        "main.tsx doit importer SOURCE et garder le démarrage (RunNonConfigure) si SOURCE est vide — "
+        "sinon un build sans injection démarrerait sur un run indéterminé sans le dire.")
 
 
 def test_bundle_front_construit_sur_le_run_servi():
