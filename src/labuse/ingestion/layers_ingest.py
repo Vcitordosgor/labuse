@@ -674,6 +674,13 @@ def ingest_dvf(session, insee, commune, run_id, sids) -> int:
     global _GEO_DVF_CACHE
     if _GEO_DVF_CACHE is None:
         _GEO_DVF_CACHE = fetch_geo_dvf()  # dept 974 entier, une seule fois
+    # M-O P2-55 — IDEMPOTENCE : purge de la commune AVANT réinsertion (comme refresh_dvf par
+    # millésime). `ingest_layers` est appelable SEUL (contrat) et le SAVEPOINT par couche le rend
+    # rejouable : sans ce DELETE, un re-run sans purge DOUBLE les mutations → médianes DVF (prix
+    # SERVI) faussées silencieusement. Garde : ne JAMAIS purger si le cache amont est vide (fetch
+    # KO) — on ne remplace pas des données par du néant.
+    if _GEO_DVF_CACHE:
+        session.execute(text("DELETE FROM dvf_mutations WHERE commune = :com"), {"com": commune})
     muts = [m for m in _GEO_DVF_CACHE if m["insee"] == insee]
     if not muts:
         return 0

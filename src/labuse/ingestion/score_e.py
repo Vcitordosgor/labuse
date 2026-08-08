@@ -165,17 +165,21 @@ def build_score_e(session: Session, *, run: str = Q_A_RUN_LABEL,
     """Construit/rafraîchit `score_e` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels. Renvoie {'total', 'estimables'}."""
     from .dvf_prix_neuf import SOCIAL_DOMINANT_INSEE, ILE_VALIDEES_INSEE
-    session.execute(text("DROP TABLE IF EXISTS score_e"))
-    session.execute(text(DDL))
-    raw = session.execute(text(_SELECT_RAW),
-                          {"run": run, "nt": N_MIN_TERRAIN, "nv": N_MIN_VENTE,
-                           "social": list(SOCIAL_DOMINANT_INSEE),
-                           "validees": list(ILE_VALIDEES_INSEE)}).mappings().all()
-    rows = [_row(r["idu"], r["surface_m2"], r["sdp"], r["terrain"], r["prix_vente"], r["niveau_prix"]) for r in raw]
-    for r in rows:
-        session.execute(text(_INSERT), {**r, "run_label": run})   # M50 : stamp du run servi lu
-    if commit:
-        session.commit()
-    n_est = sum(1 for r in rows if r["estimable"])
-    log(f"score_e : {len(rows)} parcelles non-écartées, {n_est} avec marge estimable")
-    return {"total": len(rows), "estimables": n_est}
+    # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par division_or + scoreur d'adresse ;
+    # ~13 s de build). SELECT + INSERT hors-ligne dans une shadow, swap ~ms (cf. _rebuild).
+    from ._rebuild import rebuild_swap
+
+    def _populate(target: str) -> dict:
+        raw = session.execute(text(_SELECT_RAW),
+                              {"run": run, "nt": N_MIN_TERRAIN, "nv": N_MIN_VENTE,
+                               "social": list(SOCIAL_DOMINANT_INSEE),
+                               "validees": list(ILE_VALIDEES_INSEE)}).mappings().all()
+        rows = [_row(r["idu"], r["surface_m2"], r["sdp"], r["terrain"], r["prix_vente"], r["niveau_prix"]) for r in raw]
+        ins = text(_INSERT.replace("INTO score_e", f'INTO "{target}"', 1))
+        for r in rows:
+            session.execute(ins, {**r, "run_label": run})        # M50 : stamp du run servi lu
+        return {"total": len(rows), "estimables": sum(1 for r in rows if r["estimable"])}
+
+    out = rebuild_swap(session, "score_e", DDL, _populate, commit=commit)
+    log(f"score_e : {out['total']} parcelles non-écartées, {out['estimables']} avec marge estimable")
+    return out

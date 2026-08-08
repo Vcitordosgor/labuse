@@ -9,9 +9,16 @@ Le parsing reste couvert par des fixtures (tests/test_connectors.py).
 from __future__ import annotations
 
 from .base import ConnectionTestResult, Connector, GenericGetConnector
+from .bodacc import BodaccConnector
 from .cadastre import CadastreConnector
+from .cartofriches import CartofrichesConnector
+from .dpe import DpeConnector
 from .georisques import GeorisquesConnector
 from .gpu import GpuConnector
+from .inpi_rne import InpiRneConnector
+from .merimee import MerimeeConnector
+from .qpv import QpvConnector
+from .recherche_entreprises import RechercheEntreprisesConnector
 from .wfs import WfsConnector
 
 # Petit polygone de test sur le centre de Saint-Paul (97415) pour les endpoints `geom`.
@@ -75,10 +82,16 @@ REGISTRY: dict[str, Connector] = {
         f"{_ODS}/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/records",
         {"limit": 1},
     ),
-    "ABF / Monuments historiques": GenericGetConnector(
-        "ABF / Monuments historiques", "https://apicarto.ign.fr/api/gpu/assiette-sup-s",
-        {"geom": _SAINT_PAUL_TOWN},
-    ),
+    # M-O P2-56 — connecteurs SPÉCIALISÉS écrits mais non branchés : ils testent la VRAIE source
+    # (et non un GET générique). Mérimée REMPLACE le doublon générique « ABF / Monuments historiques »
+    # (qui testait l'API Carto GPU assiette-sup-s, pas la base Mérimée) — même `name`, meilleur test.
+    "BODACC (procédures collectives)": BodaccConnector(),
+    "Cartofriches (Cerema)": CartofrichesConnector(),
+    "DPE ADEME (logements existants)": DpeConnector(),
+    "INPI RNE (dirigeants)": InpiRneConnector(),
+    "ABF / Monuments historiques": MerimeeConnector(),
+    "QPV 2024 (ANCT)": QpvConnector(),
+    "Recherche d'entreprises (DINUM)": RechercheEntreprisesConnector(),
 }
 
 
@@ -89,4 +102,6 @@ def get_connector(source_name: str) -> Connector | None:
 __all__ = [
     "ConnectionTestResult", "Connector", "GenericGetConnector", "CadastreConnector",
     "GpuConnector", "GeorisquesConnector", "WfsConnector", "REGISTRY", "get_connector",
+    "BodaccConnector", "CartofrichesConnector", "DpeConnector", "InpiRneConnector",
+    "MerimeeConnector", "QpvConnector", "RechercheEntreprisesConnector",
 ]

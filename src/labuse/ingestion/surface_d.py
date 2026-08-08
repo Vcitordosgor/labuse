@@ -80,10 +80,12 @@ _SOURCES = {
 
 def build_events(session: Session, *, commit: bool = True, log=lambda *_: None) -> dict:
     """(Re)construit `surface_d_events` depuis les signaux datés déjà en base. Rebuild complet idempotent."""
-    session.execute(text("DROP TABLE IF EXISTS surface_d_events"))
+    # M-O P2-59 — TRUNCATE au lieu de DROP (build rapide ~0,3 s, schéma stable) : garde schéma, index
+    # et OID (pas d'invalidation des plans lecteurs), verrou bien plus court que DROP+CREATE.
     for stmt in DDL.strip().split(";\n"):
         if stmt.strip():
-            session.execute(text(stmt))
+            session.execute(text(stmt))                  # CREATE … IF NOT EXISTS (table + index)
+    session.execute(text("TRUNCATE surface_d_events"))
     counts: dict[str, int] = {}
     for typ, (table, sql) in _SOURCES.items():
         if session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None:

@@ -185,8 +185,14 @@ def _index_inverse(session: Session) -> dict[str, int]:
     return out
 
 
-def ingest_ban(session: Session, csv_path: Path | str) -> dict:
-    """Ingestion complète (remplacement idempotent) + rattachement parcelles → stats."""
+def ingest_ban(session: Session, csv_path: Path | str, *, allow_shrink: bool = False,
+               seuil_plausibilite: float = 0.80) -> dict:
+    """Ingestion complète (remplacement idempotent) + rattachement parcelles → stats.
+
+    M-O P2-61 — GARDE DE PLAUSIBILITÉ (esprit refresh_dvf n_avant→n_apres) : un CSV BAN tronqué ne
+    doit pas remplacer un référentiel COMPLET par un incomplet (`adresse_parcelles` suit). Si le
+    nouveau lot (staging) fait moins de `seuil_plausibilite` de l'existant → REFUS bruyant, avant
+    tout DELETE. `allow_shrink=True` force (baisse légitime — refonte du référentiel amont)."""
     t0 = time.monotonic()
     csv_path = Path(csv_path)
     if not csv_path.exists():
@@ -195,6 +201,13 @@ def ingest_ban(session: Session, csv_path: Path | str) -> dict:
         if stmt.strip():
             session.execute(text(stmt))
     n_staging = _copy_staging(session, csv_path)
+
+    n_avant = int(session.execute(text("SELECT count(*) FROM adresses")).scalar() or 0)
+    if not allow_shrink and n_avant > 0 and n_staging < seuil_plausibilite * n_avant:
+        raise ValueError(
+            f"BAN staging suspect : {n_staging} adresses < {seuil_plausibilite:.0%} de l'existant "
+            f"({n_avant}) — CSV probablement tronqué. Ingestion REFUSÉE, référentiel PRÉSERVÉ "
+            f"(adresse_parcelles inclus). Forcer avec allow_shrink=True si la baisse est légitime.")
 
     session.execute(text("DELETE FROM adresses"))
     session.execute(text(

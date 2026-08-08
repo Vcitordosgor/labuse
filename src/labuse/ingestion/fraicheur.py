@@ -101,6 +101,32 @@ SOURCES = {
                                    "produit (piscine_signal), pas la cascade gelée."},
 }
 
+# M-O P1-14 — noms EXACTS de `data_sources` par source, pour l'ÉCRITURE du millésime. Les patterns
+# `%` de `ds_name` faisaient du fan-out : `Géorisques%` matchait 5 lignes (Géorisques, ICPE, cavités,
+# MVT, sols pollués) → le MÊME `source_horizon_at` écrit à 5 sources dont plusieurs sans rapport avec
+# les kinds mesurés. persist_millesime n'écrit désormais QUE ces lignes-là. Liste vide = aucune ligne
+# catalogue dédiée (l'ancien `%CatNat%` matchait 0 : no-op conservé, explicitement). `ds_name` (motif)
+# reste pour les LECTEURS (etat_sources, page Sources) — ce n'est pas lui qui écrivait le mauvais horizon.
+DS_NAMES: dict[str, list[str]] = {
+    "sitadel": ["SITADEL (autorisations d'urbanisme)"],
+    "bodacc": ["BODACC (procédures collectives)"],
+    "dvf": ["DVF / valeurs foncières"],
+    "dpe": ["DPE ADEME (logements existants)"],
+    "ban": ["Base Adresse Nationale"],
+    "catnat": [],   # aucune ligne data_sources dédiée (ancien '%CatNat%' → 0 ligne : no-op explicite)
+    "gpu_plu": ["Urbanisme PLU/GPU (API Carto)"],
+    "georisques": ["Géorisques", "Géorisques — ICPE", "Géorisques — cavités souterraines",
+                   "Géorisques — mouvements de terrain", "Géorisques — sites et sols pollués"],
+    "sudocuh": ["Sudocuh (procédures d'urbanisme)"],
+    "ortho_piscine": ["BD ORTHO 20 cm (IGN)"],
+}
+
+# M-O P1-14 — sources dont le `date_sql` lit max(created_at) de `spatial_layers` = la DATE
+# D'INGESTION LABUSE, PAS un fait daté amont → `source_horizon_at` NULL (« horizon inconnu » servi
+# tel quel). Doctrine : fraîcheur = date SOURCE amont, jamais date d'ingestion. Les autres `date_sql`
+# lisent un vrai fait amont (max date_mutation / date_annonce / millesime…).
+HORIZON_NON_AMONT = frozenset({"gpu_plu", "georisques"})
+
 DDL = """
 CREATE TABLE IF NOT EXISTS fraicheur_etat (
   cle          text PRIMARY KEY,          -- ex. 'dvf:lastmod:2025' ou 'dpe:compteur_reveil'
@@ -165,19 +191,24 @@ def persist_millesime(session: Session, only: str | None = None, *, commit: bool
     for key, s in SOURCES.items():
         if only and key != only:
             continue
-        try:
-            with session.begin_nested():
-                horizon = session.execute(text(s["date_sql"])).scalar()
-        except Exception:  # noqa: BLE001 — table absente = horizon inconnu, pas une erreur
-            horizon = None
-        horizon = horizon if isinstance(horizon, date) else None      # normalise (jamais un datetime)
-        session.execute(text(
-            "UPDATE data_sources SET source_horizon_at = :h, source_cadence = :c, "
-            "source_millesime = :m, prochain_millesime_at = :p, updated_at = now() "
-            "WHERE name ILIKE :n"),
-            {"h": horizon, "c": s.get("cadence_norme"), "m": s.get("millesime"),
-             "p": s.get("prochain"), "n": s["ds_name"]})
-        rendu.append({"source": key, "ds_name": s["ds_name"], "horizon": str(horizon) if horizon else None,
+        names = DS_NAMES.get(key, [])
+        if key in HORIZON_NON_AMONT:
+            horizon = None                       # date_sql = date d'ingestion → horizon amont inconnu (NULL)
+        else:
+            try:
+                with session.begin_nested():
+                    horizon = session.execute(text(s["date_sql"])).scalar()
+            except Exception:  # noqa: BLE001 — table absente = horizon inconnu, pas une erreur
+                horizon = None
+            horizon = horizon if isinstance(horizon, date) else None   # normalise (jamais un datetime)
+        if names:                                # noms EXACTS (plus de pattern % : aucun fan-out)
+            session.execute(text(
+                "UPDATE data_sources SET source_horizon_at = :h, source_cadence = :c, "
+                "source_millesime = :m, prochain_millesime_at = :p, updated_at = now() "
+                "WHERE name = ANY(:names)"),
+                {"h": horizon, "c": s.get("cadence_norme"), "m": s.get("millesime"),
+                 "p": s.get("prochain"), "names": names})
+        rendu.append({"source": key, "ds_names": names, "horizon": str(horizon) if horizon else None,
                       "cadence": s.get("cadence_norme"), "millesime": s.get("millesime"),
                       "prochain": s.get("prochain")})
     if commit:
@@ -308,20 +339,44 @@ def run_derives(session: Session, *, hebdo: bool = False, commit: bool = True, l
     (re-fetch réseau SDES, plus lourd)."""
     from . import defisc_fenetres, pc_caducs, surface_d
 
+    # M-O P2-60 — chaque dérivé est COMMITÉ et ISOLÉ (contrat build_divisions : « une commune qui
+    # casse est isolée, l'île continue »). Avant : un seul commit final → les verrous exclusifs des
+    # cinq rebuilds s'accumulaient jusqu'au bout, et un échec de `surface_d` emportait pc_caducs +
+    # defisc pourtant bons. L'ordre est EXPLICITE : surface_d lit defisc/pc_caducs, désormais
+    # committés AVANT lui (plus de couplage d'ordre dans une transaction unique).
+    # En mode transactionnel (commit=False, tests) on garde l'ancienne sémantique : une seule TX,
+    # l'échec REMONTE (jamais masqué).
     out: dict = {}
-    r = pc_caducs.build_pc_caducs(session, commit=False, log=log_fn)
-    out["pc_caducs"] = r if isinstance(r, (int, dict)) else str(r)
-    r = defisc_fenetres.build_defisc_fenetres(session, commit=False, log=log_fn)
-    out["defisc_fenetres"] = r if isinstance(r, (int, dict)) else str(r)
-    out["surface_d"] = surface_d.build_events(session, commit=False, log=log_fn)
+    etapes = [
+        ("pc_caducs", lambda: pc_caducs.build_pc_caducs(session, commit=commit, log=log_fn)),
+        ("defisc_fenetres", lambda: defisc_fenetres.build_defisc_fenetres(session, commit=commit, log=log_fn)),
+        ("surface_d", lambda: surface_d.build_events(session, commit=commit, log=log_fn)),
+    ]
+    for nom, fn in etapes:
+        try:
+            r = fn()
+            out[nom] = r if isinstance(r, (int, dict)) else str(r)
+        except Exception as exc:  # noqa: BLE001 — dérivé isolé : les précédents (committés) sont saufs
+            if not commit:
+                raise                                  # tests (TX unique) : ne pas masquer l'échec
+            session.rollback()
+            out[nom] = {"erreur": f"{type(exc).__name__}: {exc}"}
+            log_fn(f"⚠ dérivé {nom} ÉCHOUÉ (isolé — les précédents sont conservés) : {exc}")
     out["dpe_reveil"] = compteur_reveil_dpe(session)
     if out["dpe_reveil"]["franchi"]:
         log_fn(f"⚑ RÉVEIL DPE : critère franchi ({out['dpe_reveil']['n']} ≥ {SEUIL_REVEIL_DPE}) — "
                "le badge en réserve peut être réinstruit (cf. A1_DPE_CADRAGE).")
     if hebdo:
         from . import permit_delais_m10
-        out["m10_delais"] = permit_delais_m10.build_delais(session, log=log_fn)
+        try:
+            out["m10_delais"] = permit_delais_m10.build_delais(session, log=log_fn)
+        except Exception as exc:  # noqa: BLE001 — hebdo réseau (SDES) : isolé comme les autres
+            if not commit:
+                raise
+            session.rollback()
+            out["m10_delais"] = {"erreur": f"{type(exc).__name__}: {exc}"}
+            log_fn(f"⚠ dérivé m10_delais ÉCHOUÉ (isolé) : {exc}")
     if commit:
-        session.commit()
+        session.commit()                               # dpe_reveil (fraicheur_etat) + reliquat éventuel
     log_fn(f"dérivés rafraîchis : {list(out)}")
     return out

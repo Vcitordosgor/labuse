@@ -203,8 +203,10 @@ def resolve_prix_neuf_marche(session: Session, parcel_id: int,
 
 def build_prix_neuf(session: Session, *, commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `dvf_prix_sortie_neuf` (rebuild complet idempotent). Renvoie {'secteurs','communes'}."""
-    session.execute(text("DROP TABLE IF EXISTS dvf_prix_sortie_neuf"))
-    session.execute(text(DDL))
+    # M-O P2-59 — TRUNCATE au lieu de DROP (build rapide ~0,05 s, schéma stable ; table lue en direct
+    # par resolve_prix_neuf_marche) : garde schéma/index/OID, verrou bien plus court.
+    session.execute(text(DDL))                           # CREATE … IF NOT EXISTS
+    session.execute(text("TRUNCATE dvf_prix_sortie_neuf"))
     session.execute(text(_BUILD),
                     {"nmin": N_MIN, "nfragile": N_FRAGILE, "seuil": SEUIL_BASCULE,
                      "social": list(SOCIAL_SIREN)})
