@@ -167,19 +167,16 @@ def ingest_iris_contours(session: Session, log=print) -> dict[str, int]:
             if len(page) < 1000:
                 break
             start += 1000
+    # M-H — écrire via _insert_layer (chemin UNIQUE) → data_source_id posé (fin de l'orphelin).
+    from .layers_ingest import KIND_SOURCE, _insert_layer
+    sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                          {"n": KIND_SOURCE["iris_insee"]}).scalar()
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'iris_insee'"))
     for f in feats:
         p = f["properties"]
-        session.execute(text("""
-            INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, commune)
-            VALUES ('iris_insee', :code, :nom,
-                    ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
-                    CAST(:attrs AS jsonb), :commune)
-        """), {"code": p["code_iris"], "nom": p.get("nom_iris"),
-               "gj": json.dumps(f["geometry"]),
-               "attrs": json.dumps({"type_iris": p.get("type_iris"),
-                                    "source": "Contours IRIS © IGN/INSEE"}),
-               "commune": _INSEE_NOM.get(p.get("code_insee"), p.get("nom_commune"))})
+        _insert_layer(session, "iris_insee", p["code_iris"], p.get("nom_iris"), f["geometry"], sid,
+                      _INSEE_NOM.get(p.get("code_insee"), p.get("nom_commune")), None,
+                      {"type_iris": p.get("type_iris"), "source": "Contours IRIS © IGN/INSEE"})
     session.commit()
     log(f"  {len(feats)} IRIS 974 ingérés (spatial_layers kind='iris_insee')")
     return {"iris": len(feats)}
@@ -200,6 +197,10 @@ def ingest_zonages_gpu(session: Session, log=print) -> dict[str, Any]:
     (« zonage d'assainissement » CNIG). Tableau de couverture pour le rapport."""
     cfg = _cfg()["gpu"]
     couverture: dict[str, Any] = {}
+    # M-H — écrire via _insert_layer (chemin UNIQUE) → data_source_id posé (fin de l'orphelin).
+    from .layers_ingest import KIND_SOURCE, _insert_layer
+    sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                          {"n": KIND_SOURCE["zonage_assainissement"]}).scalar()
     session.execute(text(
         "DELETE FROM spatial_layers WHERE kind = 'zonage_assainissement'"))
     with httpx.Client(headers={"User-Agent": "labuse/anc-974"}, timeout=120) as client:
@@ -220,16 +221,10 @@ def ingest_zonages_gpu(session: Session, log=print) -> dict[str, Any]:
                 libelles[lib] = libelles.get(lib, 0) + 1
                 if zone is None:
                     continue   # libellé non classable (ex. captages mal typés 19) : ignoré
-                session.execute(text("""
-                    INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, commune)
-                    VALUES ('zonage_assainissement', :zone, :lib,
-                            ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
-                            CAST(:attrs AS jsonb), :commune)
-                """), {"zone": zone, "lib": lib[:255], "gj": json.dumps(f["geometry"]),
-                       "attrs": json.dumps({"libelle": lib, "typeinf": "19",
-                                            "partition": f"DU_{insee}",
-                                            "source": "Géoportail de l'urbanisme"}),
-                       "commune": nom})
+                _insert_layer(session, "zonage_assainissement", zone, lib[:255], f["geometry"], sid,
+                              nom, None,
+                              {"libelle": lib, "typeinf": "19", "partition": f"DU_{insee}",
+                               "source": "Géoportail de l'urbanisme"})
                 n_ok += 1
             couverture[nom] = ({"source": "zonage_officiel (GPU)", "polygones": n_ok,
                                 "libelles": libelles} if n_ok

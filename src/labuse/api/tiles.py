@@ -229,7 +229,7 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     from .. import renouvellement as _renouv
     from ..ingestion import score_e as _score_e
     from ..bascule_gardes import (check_coherence_renouvellement, check_peremption_tuiles,
-                                  check_coherence_tables_run_scopees)
+                                  check_coherence_tables_run_scopees, check_sources_declarees)
     t0 = _t.perf_counter()
     n = build_mvt_table(db, run_label)
     n_ov = build_overlay_mvt(db)
@@ -254,9 +254,12 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     # M50 : garde de cohérence de TOUTES les tables servies run-scopées (le point unique les voit
     # toutes) — assertion « plus aucune table servie ne peut être silencieusement périmée ».
     coh = check_coherence_tables_run_scopees(session=db)
+    # M-H : garde de traçabilité source ↔ couche (aucune couche spatial_layers sans data_source_id) —
+    # dans la MÊME séquence que les autres gardes (bruyante, non bloquante).
+    srcs = check_sources_declarees(session=db)
     return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
             "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
-            "tables_coherence": coh, "run_label": run_label}
+            "tables_coherence": coh, "sources_declarees": srcs, "run_label": run_label}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)

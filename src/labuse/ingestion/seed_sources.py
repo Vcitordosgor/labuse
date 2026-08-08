@@ -40,6 +40,22 @@ SOURCES: list[dict] = [
          endpoint_url="https://apicarto.ign.fr/api/gpu/zone-urba",
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), documents d'urbanisme des collectivités ».",
          technical_notes="✓ live : Saint-Paul DÉMATÉRIALISÉE (partition DU_97415). zone-urba + assiette-sup-s (SUP) OK."),
+    # M-H — source des zonages d'assainissement (couches d'information CNIG typeinf 19) : distincte
+    # du zonage d'urbanisme (zone-urba) bien que servie par le même Géoportail. Consommée par anc.py.
+    dict(name="GPU — zonages d'assainissement", category="urbanisme", provider="IGN / Géoportail de l'urbanisme",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/municipality/document/info-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), annexes d'assainissement des collectivités ».",
+         technical_notes="✓ couches d'information surfaciques typeinf=19 (« zonage d'assainissement » CNIG). Couverture SIG partielle (4/24 communes au 11/07/2026) ; ailleurs proba INSEE."),
+    # M-H — contours IRIS (maille infra-communale IGN/INSEE) : support des taux d'assainissement
+    # agrégés (RP2022 EGOUL). Consommé par anc.py (ingest_iris_contours).
+    dict(name="Contours IRIS (IGN/INSEE)", category="attractivite", provider="IGN / INSEE",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://geoservices.ign.fr/contoursiris",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Contours IRIS © IGN/INSEE ».",
+         technical_notes="✓ WFS Géoplateforme, filtre code_insee 974 (330 IRIS). Maille la plus fine diffusée pour l'agrégation statistique."),
     dict(name="Géorisques", category="risques", provider="BRGM / MTE",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.georisques.gouv.fr/doc-api",
