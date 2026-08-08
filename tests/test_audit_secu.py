@@ -613,6 +613,28 @@ def _login_admin(client: TestClient, email: str) -> TestClient:
     return client
 
 
+def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
+    """M-K P2-5 : au-delà du plafond JOURNALIER (kind 'nl'), /ia/search renvoie un 429 honnête.
+    Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée."""
+    from labuse import config
+    monkeypatch.setenv("LABUSE_NL_QUOTA_JOUR", "2")
+    config.get_settings.cache_clear()
+    email = f"nl-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, email)
+        assert c.post("/ia/search", json={"text": "terrains à Saint-Paul"}).status_code == 200
+        assert c.post("/ia/search", json={"text": "grandes parcelles"}).status_code == 200
+        r = c.post("/ia/search", json={"text": "encore une recherche"})   # 3e > quota 2
+        assert r.status_code == 429, r.text
+        assert "Quota" in r.json()["detail"]["detail"]
+    finally:
+        _purge(email)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM usage_compteurs WHERE sujet=:s AND kind='nl'"), {"s": f"c:{cid}"}); s.commit()
+        config.get_settings.cache_clear()
+
+
 def test_quota_dossier_epingle_au_compte_survit_au_relogin(app_client):
     """M-K P2-38 : le quota mensuel de dossiers est compté PAR COMPTE — un logout/login ne le
     remet PAS à zéro (avant, le sujet-session changeait à chaque session → quota contournable,
