@@ -92,9 +92,10 @@ def check_peremption(ack_motif: str | None = None) -> dict:
     if not ack_motif:
         raise PeremptionError(
             f"BLOCAGE PÉREMPTION — {n} déclassées AU dépassent {SEUIL_BLOCAGE_JOURS} j sans "
-            f"vérification d'ouverture.\n    Le déclassement était TEMPORAIRE : lis les règlements "
-            f"(labuse compute-au-statut après calibration) OU contourne, tracé :\n"
-            f"    --peremption-ack \"motif du passage en force\"")
+            f"vérification d'ouverture (les deux taxonomies : générique, declasse_au_fermee, "
+            f"declasse_au_statut_inconnu).\n    Le déclassement était TEMPORAIRE : lis les règlements "
+            f"(calibre puis `labuse compute-au-ouverture` ; `compute-au-statut` pour le reste) OU "
+            f"contourne, tracé :\n    --peremption-ack \"motif du passage en force\"")
     who = getpass.getuser()
     with session_scope() as s:
         journalise_peremption_ack(s, acked_by=who, n_parcels=n,

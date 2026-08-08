@@ -31,7 +31,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .plu_rules import resolve_zone
-from .constructibilite import DECLASSE_AU_FERMEE
+from .constructibilite import (
+    DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, AU_SOUS_PLANCHER,
+)
+from .au_ouverture import OUVERTURE_CONDITIONNELLE  # "conditionnelle_operation" (source unique)
 
 #: catégorie 'générique' → tier `declasse_au_statut_inconnu`
 CLASSE_GENERIQUE = "générique"
@@ -39,6 +42,16 @@ CLASSE_GENERIQUE = "générique"
 CLASSE_DIMENSIONS_SEULES = "dimensions_seules"
 #: catégorie fermée-au-règlement → tier `declasse_au_fermee` (même taxonomie que le modèle affiné).
 CLASSE_AU_FERMEE = DECLASSE_AU_FERMEE
+
+# M-S — `parcel_au_statut.classe` porte DEUX taxonomies (ancien modèle + affiné GPU-PILOTE) qui
+# coexistent. Le point unique qui dit « cette classe RETIRE la parcelle de la tête » (donc entre
+# dans la péremption / bloque la bascule) vs « cette classe SERT la parcelle (mention seule) ».
+#  · déclassantes : 'générique' (ancien) + 'declasse_au_fermee'/'declasse_au_statut_inconnu' (affiné).
+#  · servies      : 'dimensions_seules' (ancien) + 'conditionnelle_operation'/'au_sous_plancher' (affiné).
+# `au_sous_plancher` est SERVIE (candidate à l'assemblage) — jamais dans le compteur de péremption
+# (l'y mettre bloquerait une bascule pour des parcelles qui ne sont PAS déclassées).
+CLASSES_DECLASSANTES = frozenset({CLASSE_GENERIQUE, DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU})
+CLASSES_SERVIES = frozenset({CLASSE_DIMENSIONS_SEULES, OUVERTURE_CONDITIONNELLE, AU_SOUS_PLANCHER})
 
 # Péremption (arbitrage Vic 30/07, option B) — un déclassement TEMPORAIRE qui vieillit devient une
 # DETTE : le temps écoulé mesure NOTRE oubli (règlement non lu), jamais la parcelle. Deux seuils :
@@ -129,7 +142,19 @@ def build_au_statut_batch(session: Session, idus: list[str]) -> int:
     """Classe un lot de parcelles (par IDU) et upsert `parcel_au_statut`. Ne marque QUE les
     parcelles en zone AU générique/dimensions-seules ; PURGE la marque des IDUs du lot qui ne
     sont plus un risque (zone re-calibrée, ouverture lue) → idempotent, réversible, auto-nettoyant.
-    Renvoie le nombre de parcelles marquées dans ce lot."""
+    Renvoie le nombre de parcelles marquées dans ce lot.
+
+    M-S — PRÉSÉANCE : le modèle AFFINÉ (`au_ouverture`) prime là où la commune est CALIBRÉE
+    (`au_ouverture_planchers.yaml`). L'ancien modèle N'Y TOUCHE PAS : les deux traitent des
+    communes DISJOINTES (affiné = calibrées, ancien = le reste). Sans cette garde, un
+    `compute-au-statut` sur une commune calibrée écraserait les classes affinées (les deux upsert
+    la même clé parcel_id) et le statut dépendrait de l'ordre d'exécution. Rejouer les deux builds
+    dans n'importe quel ordre → même état final."""
+    if not idus:
+        return 0
+    from .au_ouverture import _config as _au_ouverture_config
+    calibrees = set(_au_ouverture_config().keys())
+    idus = [i for i in idus if i and i[:5] not in calibrees]   # communes calibrées → au modèle affiné
     if not idus:
         return 0
     rows = session.execute(text("""
@@ -186,23 +211,32 @@ def au_statut_peremption(session: Session) -> dict:
     par_classe = {r["classe"]: {"n": int(r["n"]),
                                 "jours_plus_ancien": int(r["jours_max"] or 0),
                                 "jours_median": int(r["jours_median"] or 0)} for r in row}
-    jours_plus_ancien = max((v["jours_plus_ancien"] for v in par_classe.values()), default=0)
+    # M-S — DEUX taxonomies dans la table : on distingue DÉCLASSÉES EN ATTENTE (retirées de la tête,
+    # sujettes à péremption) de SERVIES AVEC MENTION (jamais retirées). L'ÂGE qui pilote le blocage
+    # (`statut`) ne regarde QUE les déclassantes — sinon une `au_sous_plancher` SERVIE qui vieillit
+    # bloquerait une bascule pour des parcelles qui ne sont pas déclassées.
+    declassantes = {c: v for c, v in par_classe.items() if c in CLASSES_DECLASSANTES}
+    servies = {c: v for c, v in par_classe.items() if c in CLASSES_SERVIES}
+    jours_plus_ancien = max((v["jours_plus_ancien"] for v in declassantes.values()), default=0)
     return {"par_classe": par_classe,
             "total_en_attente": sum(v["n"] for v in par_classe.values()),
-            "declassees": par_classe.get(CLASSE_GENERIQUE, {}).get("n", 0),
-            "servies_avec_mention": par_classe.get(CLASSE_DIMENSIONS_SEULES, {}).get("n", 0),
+            "declassees": sum(v["n"] for v in declassantes.values()),
+            "servies_avec_mention": sum(v["n"] for v in servies.values()),
             "jours_plus_ancien": jours_plus_ancien,
             "statut": statut_peremption(jours_plus_ancien)}
 
 
 def declassees_perimees(session: Session, seuil_jours: int = SEUIL_BLOCAGE_JOURS) -> int:
-    """Nombre de parcelles DÉCLASSÉES (génériques) dont la marque dépasse `seuil_jours`. C'est le
-    compte que la garde de bascule bloque (les dimensions-seules servies ne bloquent pas : elles
-    ne sont pas retirées du produit, seulement mentionnées). Lecture seule."""
+    """Nombre de parcelles DÉCLASSÉES dont la marque dépasse `seuil_jours`. C'est le compte que la
+    garde de bascule bloque. M-S — les DEUX taxonomies déclassent : 'générique' (ancien) ET
+    'declasse_au_fermee' / 'declasse_au_statut_inconnu' (affiné) ; sans cela, un déclassement affiné
+    périmé échappait au compteur, donc à la garde. Les SERVIES ('dimensions_seules',
+    'conditionnelle_operation', 'au_sous_plancher') ne bloquent JAMAIS : pas retirées du produit,
+    seulement mentionnées. Lecture seule."""
     return int(session.execute(text("""
         SELECT count(*) FROM parcel_au_statut
-        WHERE classe = :g AND now() - computed_at >= make_interval(days => :j)
-    """), {"g": CLASSE_GENERIQUE, "j": seuil_jours}).scalar() or 0)
+        WHERE classe = ANY(:cs) AND now() - computed_at >= make_interval(days => :j)
+    """), {"cs": list(CLASSES_DECLASSANTES), "j": seuil_jours}).scalar() or 0)
 
 
 def journalise_peremption_ack(session: Session, *, acked_by: str, n_parcels: int,

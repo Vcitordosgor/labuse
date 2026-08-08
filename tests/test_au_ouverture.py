@@ -67,8 +67,11 @@ def test_prefixe_le_plus_specifique():
 
 
 def test_zone_non_calibree_aucun_marquage():
-    # commune hors config → None (comportement d'avant, rétro-compatible)
-    assert classify("97404", "AUa", 3000) is None
+    # commune hors config → None (comportement d'avant, rétro-compatible).
+    # M-S : 97404 (L'Étang-Salé) a été CALIBRÉE depuis (M32 Phase C) → n'est plus un exemple valide
+    # de commune non calibrée. On prend 97417 (Saint-Philippe, RNU, aucun zonage) : hors config par
+    # nature, jamais calibrable. Le code est juste (97404 EST calibrée) — c'est l'exemple qui datait.
+    assert classify("97417", "AUa", 3000) is None
     assert classify("99999", "AUa", 3000) is None
 
 
