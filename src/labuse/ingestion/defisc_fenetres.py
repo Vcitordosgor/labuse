@@ -167,15 +167,22 @@ def build_defisc_fenetres(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
                           commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `defisc_fenetres` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels (fixture rollback-ée). Renvoie {'total', 'active'}."""
-    session.execute(text("DROP TABLE IF EXISTS defisc_fenetres"))  # rebuild complet (table dérivée : schéma évolutif)
-    session.execute(text(DDL))
-    decote_pct, decote_n = _compute_decote(session)              # N2 — recalculé une fois pour tout le run
-    raw = session.execute(text(_SELECT_RAW), {"vefa": VEFA}).mappings().all()
-    rows = [_row(r["idu"], int(r["y"]), r["proxy"], r["ach_year"], ref_year, decote_pct, decote_n) for r in raw]
-    for r in rows:
-        session.execute(text(_INSERT), r)
-    if commit:
-        session.commit()
-    n_active = sum(1 for r in rows if r["active"])
-    log(f"defisc_fenetres : {len(rows)} parcelles mono neuf, {n_active} fenêtre active (ref {ref_year}-{ref_year+2})")
-    return {"total": len(rows), "active": n_active}
+    # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par l'API ; le build mesuré à ~95 s
+    # tenait un ACCESS EXCLUSIVE tout du long). Tout le lourd (décote + SELECT + INSERT) se fait
+    # hors-ligne dans une shadow, swap ~ms (cf. _rebuild). La table reste à SCHÉMA STABLE (DDL fraîche
+    # créée à chaque rebuild sur la shadow → une évolution de schéma est prise sans DROP sur le live).
+    from ._rebuild import rebuild_swap
+
+    def _populate(target: str) -> dict:
+        decote_pct, decote_n = _compute_decote(session)          # N2 — recalculé une fois pour tout le run
+        raw = session.execute(text(_SELECT_RAW), {"vefa": VEFA}).mappings().all()
+        rows = [_row(r["idu"], int(r["y"]), r["proxy"], r["ach_year"], ref_year, decote_pct, decote_n) for r in raw]
+        ins = text(_INSERT.replace("INTO defisc_fenetres", f'INTO "{target}"', 1))
+        for r in rows:
+            session.execute(ins, r)
+        return {"total": len(rows), "active": sum(1 for r in rows if r["active"])}
+
+    out = rebuild_swap(session, "defisc_fenetres", DDL, _populate, commit=commit)
+    log(f"defisc_fenetres : {out['total']} parcelles mono neuf, {out['active']} fenêtre active "
+        f"(ref {ref_year}-{ref_year+2})")
+    return out

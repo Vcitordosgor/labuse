@@ -35,8 +35,13 @@ class Connector:
     def __init__(self, timeout: float | None = None):
         self.timeout = timeout if timeout is not None else get_settings().http_timeout_s
 
-    def _client(self) -> httpx.Client:
-        return httpx.Client(timeout=self.timeout, headers={"User-Agent": "LA-BUSE/0.1 (+pre-qualification fonciere)"})
+    def _client(self, timeout: float | None = None) -> httpx.Client:
+        # M-O P2-57 : follow_redirects=True (httpx ne suit PAS les 3xx par défaut → raise_for_status
+        # ne lève pas dessus et r.json() portait sur un corps de redirection). Aligné sur tous les
+        # clients hors-package. `timeout` surchargeable (gros téléchargements, cf. qpv.fetch_dep).
+        return httpx.Client(timeout=timeout if timeout is not None else self.timeout,
+                            follow_redirects=True,
+                            headers={"User-Agent": "LA-BUSE/0.1 (+pre-qualification fonciere)"})
 
     def test_connection(self) -> ConnectionTestResult:
         """Tente l'appel réel et rapporte honnêtement (réseau souvent bloqué ici)."""

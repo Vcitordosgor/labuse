@@ -90,13 +90,18 @@ def build_pc_caducs(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
                     commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `pc_caducs` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels. Renvoie {'total': n}."""
-    session.execute(text("DROP TABLE IF EXISTS pc_caducs"))
-    session.execute(text(DDL))
-    raw = session.execute(text(_SELECT_RAW), {"ycut": ref_year - 4}).mappings().all()
-    rows = [_row(r["idu"], int(r["y_octroye"]), int(r["n_octroyes"])) for r in raw]
-    for r in rows:
-        session.execute(text(_INSERT), r)
-    if commit:
-        session.commit()
-    log(f"pc_caducs : {len(rows)} parcelles caduc probable (PC octroyé jamais achevé, Y ≤ {ref_year - 4})")
-    return {"total": len(rows)}
+    # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par l'API : badges projet_parcelles) :
+    # le SELECT + INSERT se fait hors-ligne dans une shadow, puis swap ~ms (cf. _rebuild).
+    from ._rebuild import rebuild_swap
+
+    def _populate(target: str) -> dict:
+        raw = session.execute(text(_SELECT_RAW), {"ycut": ref_year - 4}).mappings().all()
+        rows = [_row(r["idu"], int(r["y_octroye"]), int(r["n_octroyes"])) for r in raw]
+        ins = text(_INSERT.replace("INTO pc_caducs", f'INTO "{target}"', 1))
+        for r in rows:
+            session.execute(ins, r)
+        return {"total": len(rows)}
+
+    out = rebuild_swap(session, "pc_caducs", DDL, _populate, commit=commit)
+    log(f"pc_caducs : {out['total']} parcelles caduc probable (PC octroyé jamais achevé, Y ≤ {ref_year - 4})")
+    return out
