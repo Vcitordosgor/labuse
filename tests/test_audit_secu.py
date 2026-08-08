@@ -601,3 +601,35 @@ def test_protection_admin_exige_une_session(app_client):
     from labuse.api import auth
     for p in ("/protection/admin", "/protection/admin/gel/x", "/protection/admin/degel/x"):
         assert not auth.is_public(p)
+
+
+def _login_admin(client: TestClient, email: str) -> TestClient:
+    """Login puis élève l'utilisateur en role='admin' (le rôle est relu en base à chaque
+    requête → l'élévation prend effet immédiatement)."""
+    _login(client, email)
+    with session_scope() as s:
+        s.execute(text("UPDATE utilisateurs SET role='admin' WHERE email=:e"), {"e": email})
+        s.commit()
+    return client
+
+
+def test_gate_admin_protection_et_bilan(app_client):
+    """M-K P1-10/P1-11 : un TITULAIRE (client payant authentifié) est REFUSÉ (403) sur les
+    routes d'administration (tableau protection, gel/dégel d'un sujet) et sur POST
+    /bilan/params (paramètres servis à tous) ; un ADMIN n'est jamais 403."""
+    et, eadm = f"t-{uuid.uuid4().hex[:8]}@x.test", f"adm-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(et); _compte_actif(eadm)
+    routes = [("get", "/protection/admin", None),
+              ("post", "/protection/admin/gel/1.2.3.4", None),
+              ("post", "/protection/admin/degel/1.2.3.4", None),
+              ("post", "/bilan/params", {"secteur": "*", "param": "prix_sortie_m2", "value": 2500})]
+    try:
+        ct = TestClient(app_client.app, base_url="https://testserver"); _login(ct, et)
+        cadm = TestClient(app_client.app, base_url="https://testserver"); _login_admin(cadm, eadm)
+        for meth, path, body in routes:
+            kw = {"json": body} if body is not None else {}
+            assert getattr(ct, meth)(path, **kw).status_code == 403, f"titulaire non bloqué sur {path}"
+            radm = getattr(cadm, meth)(path, **kw).status_code
+            assert radm != 403, f"admin bloqué à tort sur {path} (reçu {radm})"
+    finally:
+        _purge(et, eadm)

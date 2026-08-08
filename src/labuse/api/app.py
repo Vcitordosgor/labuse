@@ -3475,8 +3475,12 @@ def get_bilan_params(secteur: str = Query("*"), db: Session = Depends(get_db)) -
 
 
 @app.post("/bilan/params")
-def set_bilan_param(body: BilanParamIn, db: Session = Depends(get_db)) -> dict:
-    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre)."""
+def set_bilan_param(body: BilanParamIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre).
+    GATE ADMIN (M-K P1-10) : ces paramètres sont SERVIS À TOUS ; seul un admin les réécrit
+    (sans le gate, n'importe quel client payant réécrivait le bilan de tout le monde)."""
+    from . import auth
+    auth.exiger_admin(request)
     from ..faisabilite import bilan_params as bp
     try:
         bp.save(db, body.secteur.strip() or "*", body.param, body.value)
@@ -3501,10 +3505,15 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
 
 
 @app.post("/parcels/{idu}/evaluate")
-def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db)) -> dict:
+def evaluate_one(idu: str, request: Request, ai: bool = Query(False), db: Session = Depends(get_db)) -> dict:
+    """Re-score + PERSISTE une parcelle (rail ops/admin legacy). GATE ADMIN (M-K P2-35) :
+    écrivain lourd (DELETE+INSERT cascade, appel IA optionnel), aucun appelant front — réservé
+    à l'admin plutôt que retiré (encore utilisé en ops/QA)."""
     from ..ai import get_provider
     from ..cascade import evaluate_parcels
+    from . import auth
 
+    auth.exiger_admin(request)
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:

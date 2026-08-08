@@ -404,11 +404,16 @@ async def repondre_defi(request: Request) -> JSONResponse:
     return JSONResponse(content={"ok": True})
 
 
-# ── Admin (Vic — couvert par l'auth globale comme les routes admin des segments) ────────
+# ── Admin (Vic) — GATE ADMIN explicite (M-K P1-11) ──────────────────────────────────────
+# La garde globale posait déjà le 401 sans session, mais TOUT compte payant authentifié
+# pouvait lister les sujets et geler un autre client. exiger_admin ferme ce trou : session
+# utilisateur non-admin → 403 ; admin / pilote (mot de passe partagé) → OK.
 
 @router.get("/admin")
-def protection_admin() -> dict:
+def protection_admin(request: Request) -> dict:
     """Tableau de bord : alertes récentes, scores du dernier scan, gels actifs."""
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         alertes = [dict(r) for r in db.execute(text(
@@ -424,7 +429,9 @@ def protection_admin() -> dict:
 
 
 @router.post("/admin/gel/{sujet}")
-def protection_gel(sujet: str, motif: str = "décision admin") -> dict:
+def protection_gel(sujet: str, request: Request, motif: str = "décision admin") -> dict:
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         geler(db, sujet, motif)
@@ -432,7 +439,9 @@ def protection_gel(sujet: str, motif: str = "décision admin") -> dict:
 
 
 @router.post("/admin/degel/{sujet}")
-def protection_degel(sujet: str) -> dict:
+def protection_degel(sujet: str, request: Request) -> dict:
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         degeler(db, sujet)
