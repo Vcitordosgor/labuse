@@ -487,16 +487,26 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # qui vient d'être matérialisé pour CE run. Colonnes annexes icd/icd_detail,
     # CLOISONNÉES du score P (n'altèrent ni tier, ni rang, ni p_raw). Best-effort :
     # une absence de dataset (ex. run sans rebuild) ne doit pas faire échouer le scoring.
+    # M-E (P1-5) : best-effort ≠ SILENCIEUX. Un backfill qui casse laissait n_icd=0 muet — donc
+    # un ICD absent/périmé se serait servi sans que personne ne le sache. On garde le run en vie
+    # (ICD cloisonné) mais on SIGNALE : warning + `icd_error` dans le rapport lu à la bascule.
+    icd_error: str | None = None
     try:
         from ..icd import backfill_run as _icd_backfill
         n_icd = _icd_backfill(session, run_id, annee=annee)
     except Exception as _e:  # noqa: BLE001
         n_icd = 0
+        icd_error = f"{type(_e).__name__}: {_e}"
+        import warnings
+        warnings.warn(f"ICD backfill ÉCHEC (colonnes icd/icd_detail non écrites, run '{run_id}') "
+                      f"— {icd_error}. Score P intact ; méta d'affichage ICD manquante.",
+                      stacklevel=2)
 
     tiers_counts = tier.value_counts().to_dict()
     return {"run_id": run_id, "n": len(rows), "duree_s": int(time.time() - t0),
             "params": params, "tiers": tiers_counts, "taux_base": taux_base,
             "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd,
+            "icd_error": icd_error,   # M-E (P1-5) : None si OK, sinon la cause — signalé, pas comblé
             # M-F (P1-6) : compteur de permis intégrés + fraîcheur — lu pour valider une bascule.
             "permits": feat_stats}
 
