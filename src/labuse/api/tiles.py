@@ -131,9 +131,16 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     db.execute(text("DROP TABLE IF EXISTS mvt_parcels"))
     # correctif M5 (verdict) : tier v2 embarqué dans les tuiles — la carte colore par le
     # verdict effectif (tier v2 quand un run existe, étage 0 du run servi prime).
+    # M-L : le run v2 embarqué est ÉPINGLÉ au label servi (Q_A_RUN_LABEL = RUN, source unique
+    # de vérité) — MÊME règle que la fiche (`score_v2._served_run`). Plus jamais « le dernier par
+    # computed_at » : un run CANDIDAT calculé après le servi bâtirait les tuiles sur le mauvais
+    # run et la carte contredirait la fiche. Label absent → échec bruyant, pas de repli silencieux.
     v2run = db.execute(text(
-        "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar() \
-        if db.execute(text("SELECT to_regclass('p_score_v2_runs')")).scalar() else None
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": RUN}).scalar()
+    if v2run is None:
+        raise RuntimeError(
+            f"run servi « {RUN} » absent de p_score_v2_runs — "
+            "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
     db.execute(text("""
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune, p.surface_m2,
@@ -162,7 +169,10 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
                    GROUP BY parcel_id) fl ON fl.parcel_id = p.id
     """), {"run": run_label, "v2run": v2run})
     db.execute(text("CREATE INDEX mvt_parcels_gix ON mvt_parcels USING GIST (geom_3857)"))
-    db.execute(text("CREATE INDEX mvt_parcels_status ON mvt_parcels (status)"))
+    # M-L : index `mvt_parcels_status` SUPPRIMÉ — la colonne `status` n'est plus bakée depuis M48
+    # (vestige d'avant M48 ; ce CREATE INDEX aurait levé au rebuild). Aucun index de remplacement :
+    # `tier_v2` n'est QUE projeté (propriétés servies), jamais filtré/trié — le seul filtre à la
+    # volée est spatial (`geom_3857 && env`), déjà couvert par le GIST ci-dessus.
     db.execute(text("ANALYZE mvt_parcels"))
     n = db.execute(text("SELECT count(*) FROM mvt_parcels")).scalar() or 0
     db.commit()
