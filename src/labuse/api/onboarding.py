@@ -298,8 +298,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 # ── E3 · pages légales (drafts SOLIDES — relecture Vic obligatoire, avocat recommandé
 #     avant premières signatures : noté au rapport ; non bloquant pour construire) ──
 
-_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · 97417 Saint-Denis, Île de La Réunion, France.<br>"
-            "SIREN : <b>[à confirmer par Vic]</b> · "
+# M-P (point 5) : identité EI renseignée — SIRET connu 987 641 917 00016 (→ SIREN 987 641 917) ;
+# établissement à SAINT-PAUL (Réunion), pas Saint-Denis. ⚠ RELIQUAT Vic : rue + code postal précis
+# à compléter (l'adresse de rue exacte n'était pas fournie) ; e-mail de contact à brander ou assumer.
+_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · Saint-Paul, Île de La Réunion, France.<br>"
+            "SIREN : <b>987&nbsp;641&nbsp;917</b> · SIRET : <b>987&nbsp;641&nbsp;917&nbsp;00016</b> · "
             "contact : kampusreunion@gmail.com")
 
 
@@ -357,6 +360,9 @@ génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.
 mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de 12 mois</b>,
 sauf dénonciation par le client au plus tard <b>un mois avant la date anniversaire</b> (depuis son espace
 ou par e-mail à son contact LABUSE).</p>
+<!-- M-P (point 5) — À SIGNALER À L'AVOCAT : L. 215-1 est un article du code de la CONSOMMATION,
+     invoqué ici dans un contrat annoncé « B2B entre professionnels ». L'offrir contractuellement
+     n'est pas faux (protection Chatel accordée au client), mais à valider en relecture juridique. -->
 <p>Conformément à l'article L. 215-1 du code de la consommation (loi Chatel), LABUSE <b>informe le client,
 au plus tôt trois mois et au plus tard un mois avant le terme de chaque période, de sa faculté de ne pas
 reconduire</b> l'abonnement. À défaut d'information dans ce délai, le client peut mettre fin gratuitement à
@@ -384,8 +390,14 @@ rediffusion systématique des contenus du service.</p>
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
 la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gmail.com).
-Sous-traitants : Stripe (paiement), hébergeur du serveur (UE). Aucun email automatique.
-Pas de prospection automatisée, pas de revente de données.</p>
+Sous-traitants : Stripe (paiement), hébergeur du serveur (UE), service d'acheminement des
+e-mails (SMTP).</p>
+<p><b>E-mails envoyés.</b> LABUSE adresse des e-mails <b>transactionnels</b>, nécessaires au service
+et sans consentement requis : réinitialisation de mot de passe (à votre demande) et avis d'échéance
+avant reconduction (art. L. 215-1). LABUSE peut aussi adresser une <b>lettre récapitulative
+périodique</b> (« le point de la semaine ») liée à votre usage : chaque envoi porte un lien de
+<b>désinscription en un clic</b> (en-tête <i>List-Unsubscribe</i>) et vous pouvez vous y opposer à
+tout moment. <b>Aucune prospection commerciale, aucune revente de données.</b></p>
 
 <h2>9. Responsabilité</h2>
 <p>Dans les limites permises par la loi entre professionnels, la responsabilité totale de
@@ -405,8 +417,11 @@ def mentions_page():
 <div class="legal"><h1>Mentions légales</h1>
 <h2>Éditeur</h2><p>{_EDITEUR}</p>
 <h2>Hébergement</h2><p>Serveur dédié dans l'Union européenne (OVHcloud). Paiements :
-Stripe Payments Europe Ltd. Aucun envoi d'email automatique (les liens sont transmis
-directement par votre contact LABUSE).</p>
+Stripe Payments Europe Ltd.</p>
+<h2>E-mails</h2><p>LABUSE envoie des e-mails <b>transactionnels</b> (réinitialisation de mot de
+passe à votre demande, avis d'échéance avant reconduction) et, le cas échéant, une <b>lettre
+récapitulative périodique opt-out</b> (désinscription en un clic, en-tête <i>List-Unsubscribe</i>).
+Détail à l'<a href="/cgv">article 8 des CGV</a>. Aucune prospection commerciale, aucune revente.</p>
 <h2>Propriété</h2><p>Marque, interface et traitements LABUSE — tous droits réservés. Les
 données publiques agrégées restent soumises à leurs licences d'origine.</p></div>"""))
 

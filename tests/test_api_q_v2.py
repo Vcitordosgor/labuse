@@ -58,7 +58,9 @@ def test_layers_whitelist():
         m.map_layers_geojson(kind="batiment", commune=None, limit=10, db=None)
 
 
-def test_pdf_statut_couleurs_completes():
-    # le PDF connaît les 5 statuts de la matrice (jamais de KeyError sur une écartée/exclue)
-    from labuse.api.pdf_premium import STATUT
-    assert set(STATUT) == {"chaude", "a_surveiller", "a_creuser", "ecartee", "exclue"}
+def test_pdf_verdict_pas_de_matrice_morte():
+    # M-P (P2-62) : la table STATUT (matrice Q/A morte, avec a_surveiller) est SUPPRIMÉE du PDF ;
+    # le verdict d'en-tête vient du tier v2 (palette complète, jamais de KeyError).
+    from labuse.api import pdf_premium as pp
+    assert not hasattr(pp, "STATUT"), "matrice morte encore présente dans pdf_premium"
+    assert set(pp.TIER_V2) == {"brulante", "chaude", "a_creuser", "reserve_fonciere", "ecartee"}
