@@ -7,14 +7,16 @@
 // chaque parcelle concernée, jamais un filtre.
 import { fmtEurCompact, fmtM2 } from '../../lib/format'
 import { fmtInt } from '../../lib/format'
-import { TIER_V2_META, type TierV2 } from '../../lib/status'
+import { ALL_TIER_META } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import type { RecapAssemblage, Restituee } from '../../lib/copilote'
 import { Etiquette } from './ui'
 
 const S = CLIENT.copilote.resultats
 
-const tierLabel = (t: string) => TIER_V2_META[t as TierV2]?.label ?? t
+// M-Q P7 : ALL_TIER_META (v2 + déclassements) — sinon un tier de déclassement retombait sur le
+// repli `?? t` et affichait l'identifiant technique brut au client. Repli neutre, jamais le nom technique.
+const tierLabel = (t: string) => ALL_TIER_META[t]?.label ?? '—'
 
 /** Étiquettes par moteur producteur (extraites du fil par l'appelant — payload, pas front). */
 export interface EtiquettesMoteurs {

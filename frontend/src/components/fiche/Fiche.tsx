@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
-import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
+import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -589,16 +589,10 @@ function ProjetButton({ idu }: { idu: string }) {
   )
 }
 
-function euros(x: number | null | undefined): string {
-  if (x == null) return '—'
-  const ax = Math.abs(x)
-  if (ax >= 1_000_000) return `${(x / 1_000_000).toFixed(1)} M€`
-  if (ax >= 1_000) return `${Math.round(x / 1_000).toLocaleString('fr-FR')} k€`
-  return `${Math.round(x).toLocaleString('fr-FR')} €`
-}
-
-const CALC_COUT_DEFAUT = 2500
-const CALC_MARGE_DEFAUT = 21
+// M-Q P2-73 — un SEUL formateur de montants dans l'app (LOI-3). L'ancien `fmtEurCompact()` local (seuil
+// k€ à 1 000) divergeait de `fmtEurCompact` (seuil k€ à 10 000) : 5 000 € s'affichait « 5 k€ »
+// en fiche, « 5 000 € » au copilote. On bascule sur `fmtEurCompact` (format.ts) — même dessin
+// partout. Le copilote l'utilisait déjà correctement.
 
 /** Champ éditable d'hypothèse promoteur — valeur SAISIE (jamais estimée par LABUSE). */
 function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
@@ -624,19 +618,37 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
 /** LA CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette). LABUSE affiche le SOURCÉ (SDP,
  *  prix DVF) ; le promoteur saisit SES hypothèses (coût, marge) ; le résultat « selon vos
  *  hypothèses » se recalcule côté moteur (endpoint déterministe, aucune arithmétique dupliquée
- *  en JS). Cas limites honnêtes : capacité non résolue / prix insuffisant → pas de faux chiffre. */
+ *  en JS). Cas limites honnêtes : capacité non résolue / prix insuffisant → pas de faux chiffre.
+ *
+ *  M-Q P1-16 — les défauts (coût, marge) viennent du SERVEUR (getCalculetteDefaults, dérivé du
+ *  YAML), plus d'une constante 2500 gravée ici qui divergeait du 2550 serveur (donc du PDF « Note
+ *  de financement »). On seed les champs une fois les défauts connus : calculette et PDF portent le
+ *  même coût par défaut sur la même parcelle. */
 export function Calculette({ idu }: { idu: string }) {
-  const [cout, setCout] = useState<number | null>(CALC_COUT_DEFAUT)
-  const [marge, setMarge] = useState<number | null>(CALC_MARGE_DEFAUT)
+  const defs = useQuery({ queryKey: ['calculette-defaults'], queryFn: getCalculetteDefaults, staleTime: Infinity })
+  if (!defs.data) {
+    return (
+      <div data-calculette>
+        <p className="label-caps mb-1">Calculette de charge foncière</p>
+        <div className="card-elev px-3 py-2.5 text-[11px] text-txt"><Loading label="Chargement" /></div>
+      </div>
+    )
+  }
+  return <CalculetteBody idu={idu} defauts={defs.data} />
+}
+
+function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefaults }) {
+  const [cout, setCout] = useState<number | null>(defauts.cout_construction_m2)
+  const [marge, setMarge] = useState<number | null>(defauts.marge_frais_pct)
   const [prixDemande, setPrixDemande] = useState<number | null>(null)
   // M22-A : la même équation, deux lectures — charge supportable (historique) ou prix d'achat
   // max admissible (inverse). Le moteur garantit l'identité des totaux (aucun calcul en JS).
   const [mode, setMode] = useState<'charge' | 'achat_max'>('charge')
-  const [deb, setDeb] = useState({ cout: CALC_COUT_DEFAUT, marge: CALC_MARGE_DEFAUT, prix: null as number | null })
+  const [deb, setDeb] = useState({ cout: defauts.cout_construction_m2, marge: defauts.marge_frais_pct, prix: null as number | null })
   useEffect(() => {
-    const t = setTimeout(() => setDeb({ cout: cout ?? CALC_COUT_DEFAUT, marge: marge ?? CALC_MARGE_DEFAUT, prix: prixDemande }), 350)
+    const t = setTimeout(() => setDeb({ cout: cout ?? defauts.cout_construction_m2, marge: marge ?? defauts.marge_frais_pct, prix: prixDemande }), 350)
     return () => clearTimeout(t)
-  }, [cout, marge, prixDemande])
+  }, [cout, marge, prixDemande, defauts])
   const q = useQuery({
     queryKey: ['charge', idu, deb.cout, deb.marge, deb.prix, mode],
     queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix, mode }),
@@ -693,11 +705,11 @@ export function Calculette({ idu }: { idu: string }) {
             <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
               <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
-                <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
+                <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(cf.central)}</b>
                 <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
               {/* M36 Lot C (Q2) : bornes identiques à l'affichage → valeur unique « ~X » */}
-              <p className="text-[11px] text-txt-dim">{euros(cf.bas) === euros(cf.haut) ? `~${euros(cf.bas)}` : `fourchette ${euros(cf.bas)} – ${euros(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+              <p className="text-[11px] text-txt-dim">{fmtEurCompact(cf.bas) === fmtEurCompact(cf.haut) ? `~${fmtEurCompact(cf.bas)}` : `fourchette ${fmtEurCompact(cf.bas)} – ${fmtEurCompact(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
               {mode === 'achat_max' && (
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
                   = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
@@ -713,8 +725,8 @@ export function Calculette({ idu }: { idu: string }) {
             {mode === 'achat_max' && d.ecart_negociation && (
               <div data-calc-ecart className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${d.ecart_negociation.sens === 'marge' ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {d.ecart_negociation.sens === 'surcout'
-                  ? <>Écart : prix demandé {euros(d.ecart_negociation.prix_demande_eur)} − prix d'achat max {euros(d.ecart_negociation.prix_achat_max_eur)} = <b>surcoût de {euros(d.ecart_negociation.demande_moins_max_eur)}</b> (+{d.ecart_negociation.demande_moins_max_pct} % au-dessus du max admissible).</>
-                  : <>Écart : prix demandé {euros(d.ecart_negociation.prix_demande_eur)} est <b>sous votre prix d'achat max</b> ({euros(d.ecart_negociation.prix_achat_max_eur)}) — marge de {euros(Math.abs(d.ecart_negociation.demande_moins_max_eur))}.</>}
+                  ? <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} − prix d'achat max {fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)} = <b>surcoût de {fmtEurCompact(d.ecart_negociation.demande_moins_max_eur)}</b> (+{d.ecart_negociation.demande_moins_max_pct} % au-dessus du max admissible).</>
+                  : <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} est <b>sous votre prix d'achat max</b> ({fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)}) — marge de {fmtEurCompact(Math.abs(d.ecart_negociation.demande_moins_max_eur))}.</>}
               </div>
             )}
             {/* M22-C : l'argumentaire PDF reprend LES MÊMES hypothèses que la calculette */}
@@ -728,8 +740,8 @@ export function Calculette({ idu }: { idu: string }) {
             {mode === 'charge' && achat && (
               <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
-                  ? <>✓ Supportable — le terrain peut valoir {euros(achat.prix_demande_eur)} ; marge de {euros(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
-                  : <>✗ Trop cher — à {euros(achat.prix_demande_eur)}, l'opération dépasse de {euros(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
+                  ? <>✓ Supportable — le terrain peut valoir {fmtEurCompact(achat.prix_demande_eur)} ; marge de {fmtEurCompact(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
+                  : <>✗ Trop cher — à {fmtEurCompact(achat.prix_demande_eur)}, l'opération dépasse de {fmtEurCompact(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
               </div>
             )}
             {(d.avertissements ?? []).length > 0 && (
@@ -1850,7 +1862,9 @@ export function Fiche({ idu }: { idu: string }) {
                       </span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
-                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile_dit ?? f.qualite_commune.rr_ile}</span> : null}</span>
+                      {/* M-Q P2-74 : `rr_ile_dit` sert l'ordre de grandeur (« ~6,7 ») — jamais la
+                          fausse précision 6.73. Sans lui, on N'affiche PAS le float brut : repli « — ». */}
+                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile_dit ?? '—'}</span> : null}</span>
                       <span>{f.qualite_commune.echantillon.toLocaleString('fr-FR')} parcelles</span>
                       {f.qualite_commune.taux_base_pct != null && <span>base {f.qualite_commune.taux_base_pct} %</span>}
                     </div>

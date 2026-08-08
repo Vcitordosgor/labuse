@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
-import { CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { ALL_TIER_META, CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
@@ -33,20 +33,36 @@ const LEGACY_COLOR = '#39463F'
 const LEGACY_OPACITY = 0.03
 const ETAGE0: maplibregl.ExpressionSpecification = ['>=', ['to-number', ['coalesce', ['get', 'etage0'], 0]], 1]
 const TIER_V2: maplibregl.ExpressionSpecification = ['coalesce', ['get', 'tier_v2'], '']
+// M-Q P2-72 — la palette de remplissage DÉRIVE de lib/status.ts (ALL_TIER_META = 5 tiers v2 + 6
+// déclassements), plus de littéraux recopiés qui divergeaient. Deux effets réparés : (1) une
+// retouche de palette dans status.ts suit désormais sur la carte ; (2) les 6 tiers de déclassement
+// — dans le filtre par défaut « tout montrer » (M30) — sont peints en TERRE (TIER_DECLASSE_META
+// #8C7468) au lieu de tomber sur le gris de fond (invisibles alors que la liste les colore).
+// Le patron est celui de ZONE_FAM_COLOR ci-dessous.
+// Seule exception GRAVÉE : le tier v2 'ecartee' suit la DOCTRINE du verdict d'en-tête (écartée =
+// braise #E8695A, cf. verdictMeta) et partage la teinte d'exclusion de l'étage 0 — pas le gris de
+// TIER_V2_META.ecartee. De toute façon quasi éteint (opacité 0.04), color secondaire.
+const ECARTEE_COLOR = '#E8695A'
 const STATUS_COLOR: maplibregl.ExpressionSpecification = [
-  'case', ETAGE0, '#E8695A',
+  'case', ETAGE0, ECARTEE_COLOR,
   ['match', TIER_V2,
-    'brulante', '#E8695A', 'chaude', '#E8B44C', 'a_creuser', '#8FA69A',
-    'reserve_fonciere', '#6FA8DC', 'ecartee', '#E8695A',
+    ...Object.entries(ALL_TIER_META).flatMap(([k, m]) => [k, k === 'ecartee' ? ECARTEE_COLOR : m.color]),
     LEGACY_COLOR],
-]
+] as unknown as maplibregl.ExpressionSpecification
+// Opacité PAR DÉFAUT (carte non filtrée) : les tiers servables ressortent, les autres restent
+// atténués — inchangé. Les déclassements héritent de l'opacité d'écartée (0.04, quasi éteints par
+// défaut) ; ils deviennent PLEINEMENT visibles dès qu'on les FILTRE (l'effet plus bas force alors
+// fill-opacity à 0,72). Table dérivée d'ALL_TIER_META : aucun tier ne peut retomber muet.
+const TIER_OPACITY: Record<string, number> = {
+  brulante: 0.95, chaude: 0.9, reserve_fonciere: 0.55, a_creuser: 0.45, ecartee: 0.04,
+}
+const DECLASSE_OPACITY = 0.04
 const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
   'case', ETAGE0, 0.04,
   ['match', TIER_V2,
-    'brulante', 0.95, 'chaude', 0.9, 'a_creuser', 0.45,
-    'reserve_fonciere', 0.55, 'ecartee', 0.04,
+    ...Object.keys(ALL_TIER_META).flatMap((k) => [k, TIER_OPACITY[k] ?? DECLASSE_OPACITY]),
     LEGACY_OPACITY],
-]
+] as unknown as maplibregl.ExpressionSpecification
 // liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
 // `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
 const PROMUES_FILTER: maplibregl.FilterSpecification = [

@@ -9,10 +9,13 @@ import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'
 
 // M31 (arbitrage Vic) : run servi = point de vérité UNIQUE versionné config/served_run.txt (=
 // q_v8_calibre depuis la bascule M28). `vite.config.ts` lit ce fichier au build et injecte
-// VITE_RUN_LABEL → SOURCE. Le littéral de repli DOIT rester égal à cette valeur (garde-fou :
-// tests/test_run_serving_coherence.py le compare au backend Q_A_RUN_LABEL, lui-même lu du fichier).
-// Pour BASCULER : changer config/served_run.txt puis `npm run build`. JAMAIS parcel_evaluations.
-export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v8_calibre'
+// VITE_RUN_LABEL → SOURCE. Pour BASCULER : changer config/served_run.txt puis `npm run build`.
+// M-Q P2-70 — repli VIDE (jamais un run codé en dur) : si l'injection manque (env absente, build
+// hors script, cache Vite), un littéral figé servirait SILENCIEUSEMENT l'ancien run après une
+// bascule (front sur l'ancien, backend sur le nouveau → listes vides, aucun message). Le repli ''
+// + la garde de démarrage (main.tsx : refuse de booter si SOURCE est vide) rendent l'erreur
+// FRANCHE. La cohérence du bundle réel reste garantie par test_bundle_front_construit_sur_le_run_servi.
+export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? ''
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
@@ -458,6 +461,13 @@ export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/
 export const faisabiliteExplain = (idu: string) =>
   j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;
       sources?: string[]; provenance?: Record<string, string>; cached?: boolean }>(`/modules/faisabilite/${idu}/explain`)
+
+// M-Q P1-16 — défauts d'hypothèses de la calculette servis par l'API (source unique côté serveur,
+// dérivés du YAML). Le front ne grave plus 2500 : il seed ses champs depuis ici → calculette,
+// Dossier banquier et Note de financement portent le même coût par défaut sur la même parcelle.
+export interface CalculetteDefaults { cout_construction_m2: number; marge_frais_pct: number }
+export const getCalculetteDefaults = () =>
+  j<CalculetteDefaults>('/bilan/calculette-defaults')
 
 // Calculette de charge foncière (mandat bilan-calculette) : LABUSE calcule le déterministe
 // (SDP, prix DVF) ; le coût de construction et la marge sont les hypothèses SAISIES.

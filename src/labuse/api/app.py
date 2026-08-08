@@ -3472,6 +3472,18 @@ class BilanParamIn(BaseModel):
     value: float | None = None   # None → réinitialise au défaut
 
 
+@app.get("/bilan/calculette-defaults")
+def get_calculette_defaults() -> dict:
+    """M-Q P1-16 — défauts d'hypothèses de la calculette (coût de construction, marge & frais),
+    DÉRIVÉS de la source unique (`hypotheses_faisabilite` du YAML → CALCULETTE_COUT_DEFAUT_M2 /
+    CALCULETTE_MARGE_FRAIS_DEFAUT_PCT). Point unique servi au front : la calculette n'embarque plus
+    sa propre constante (2500 gravé en React) qui divergeait du serveur (2550). Ainsi calculette,
+    Dossier banquier et Note de financement portent le MÊME coût par défaut sur la même parcelle."""
+    from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
+    return {"cout_construction_m2": CALCULETTE_COUT_DEFAUT_M2,
+            "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT}
+
+
 @app.get("/bilan/params")
 def get_bilan_params(secteur: str = Query("*"), db: Session = Depends(get_db)) -> dict:
     """Paramètres du bilan (1.C) résolus pour un secteur (registre + overrides + non calibrés)."""

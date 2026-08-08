@@ -12,7 +12,7 @@
  * état honnête « Non scorée » au lieu d'un bloc qui disparaît sans explication.
  */
 import { useQuery } from '@tanstack/react-query'
-import { TIER_V2_META } from '../../lib/status'
+import { ALL_TIER_META } from '../../lib/status'
 import { Tip } from '../Tip'
 
 type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number; phrase?: string }
@@ -23,9 +23,11 @@ type ScoreV2 = {
   model_version: string; avertissement: string
 }
 
-// palette des tiers v2 : source unique dans lib/status.ts (correctif M5 — le verdict
-// d'en-tête et ce bloc doivent être rigoureusement raccord)
-const TIER_META = TIER_V2_META as Record<string, { label: string; color: string }>
+// palette des tiers : source unique dans lib/status.ts (correctif M5 — le verdict d'en-tête et ce
+// bloc doivent être rigoureusement raccord). M-Q P7 : ALL_TIER_META (v2 + déclassements) et non
+// TIER_V2_META seul — sinon un tier de déclassement affichait l'identifiant technique brut au
+// client (« declasse_bati_sature »), contraire à la doctrine « jamais le nom technique ».
+const TIER_META = ALL_TIER_META
 
 type ErreurV2 = Error & { status?: number }
 
@@ -77,7 +79,8 @@ export function ScoreV2Block({ idu }: { idu: string }) {
     )
   }
   if (!data) return null
-  const tier = TIER_META[data.tier] ?? { label: data.tier, color: '#8FA69A' }
+  // repli d'un tier inconnu : libellé NEUTRE (jamais l'identifiant technique brut, doctrine P7).
+  const tier = TIER_META[data.tier] ?? { label: 'Non classée', color: '#8FA69A' }
   return (
     <div data-score-v2 className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
