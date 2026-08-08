@@ -152,6 +152,21 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("backfill-sources")
+def backfill_sources_cmd() -> None:
+    """M-H — seed le catalogue (crée les sources manquantes) puis rattache les couches
+    spatial_layers HISTORIQUES sans data_source_id à leur source, et affiche la garde."""
+    from .bascule_gardes import check_sources_declarees
+    from .ingestion import layers_ingest, seed_sources
+
+    with session_scope() as s:
+        n = seed_sources.seed(s)
+        rattaches = layers_ingest.backfill_layer_sources(s)
+        s.commit()
+        typer.echo(f"✓ Catalogue : {n} sources. Backfill : {rattaches or 'rien à rattacher'}.")
+        check_sources_declarees(session=s)
+
+
 @app.command("bilan-calibrate")
 def bilan_calibrate_cmd(
     csv_path: str = typer.Argument("config/bilan_calibration_vic.csv",

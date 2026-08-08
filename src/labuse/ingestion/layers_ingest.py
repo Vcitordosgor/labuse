@@ -53,7 +53,15 @@ KIND_SOURCE = {
     "osm_faux_positif": "OpenStreetMap / Overpass",
     "ppr": "DEAL Réunion — PPR / aléas",            # zonage rouge/bleu (fallback PM1 API Carto si commune sans PPR approuvé)
     "georisque_alea": "DEAL Réunion — PPR / aléas",
-    "sar": "data.regionreunion.com — SAR (vocation via potentiel foncier)",
+    # M-H : la vocation SAR est DÉRIVÉE du potentiel foncier Région (ODS) — l'ancien nom
+    # « data.regionreunion.com — SAR (vocation via potentiel foncier) » n'existait pas au catalogue
+    # (→ data_source_id NULL). On pointe la source RÉELLE des données (le jeu ODS effectivement lu).
+    "sar": "data.regionreunion.com — Potentiel foncier",
+    # M-H : couches écrites hors layers_ingest (anc.py, cinquante_pas.py) — déclarées ici pour que
+    # KIND_SOURCE soit le registre kind→source COMPLET que la garde check_sources_declarees consulte.
+    "iris_insee": "Contours IRIS (IGN/INSEE)",
+    "zonage_assainissement": "GPU — zonages d'assainissement",
+    "cinquante_pas": "50 pas géométriques — limite haute (DEAL)",
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).
@@ -100,6 +108,26 @@ def _bbox_polygon(bbox: tuple[float, float, float, float]) -> dict:
 
 def _source_ids(session: Session) -> dict[str, int]:
     return {n: i for (n, i) in session.execute(text("SELECT name, id FROM data_sources")).all()}
+
+
+def backfill_layer_sources(session: Session) -> dict[str, int]:
+    """M-H — rattache les couches spatial_layers HISTORIQUES sans data_source_id à leur source
+    (via KIND_SOURCE). Idempotent : ne touche QUE les lignes NULL, et JAMAIS un kind dont la source
+    est absente du catalogue (on ne fabrique pas de lien faux — la garde check_sources_declarees
+    le criera). Prérequis : `seed_sources.seed()` a créé les sources manquantes. Renvoie {kind: n}."""
+    sids = _source_ids(session)
+    out: dict[str, int] = {}
+    for kind, name in KIND_SOURCE.items():
+        sid = sids.get(name)
+        if sid is None:
+            continue
+        n = session.execute(text(
+            "UPDATE spatial_layers SET data_source_id = :sid "
+            "WHERE kind = :k AND data_source_id IS NULL"),
+            {"sid": sid, "k": kind}).rowcount
+        if n:
+            out[kind] = n
+    return out
 
 
 def _insert_layer(session: Session, kind: str, subtype: str | None, name: str | None,

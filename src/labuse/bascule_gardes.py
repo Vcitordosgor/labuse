@@ -423,6 +423,46 @@ def check_peremption_tuiles(session=None) -> dict:
             "retard_min": retard}
 
 
+#: kinds spatial_layers pour lesquels l'ABSENCE de data_source_id est LÉGITIME (documentée) :
+#: couches synthétiques sans producteur externe. Vide aujourd'hui (le jeu de démo pose déjà sa source).
+SOURCES_DECLAREES_LEGITIMES: frozenset[str] = frozenset()
+
+
+def check_sources_declarees(session=None) -> dict:
+    """Garde M-H — assertion « toute couche spatial_layers DÉCLARE sa source ». Rien ne détectait
+    qu'un kind était ingéré sans data_source_id (traçabilité source ↔ couche trouée). Pour CHAQUE
+    kind : OK (aucune ligne sans source) / ORPHELIN (des lignes sans data_source_id) / SOURCE ABSENTE
+    (le kind est mappé — KIND_SOURCE — à un nom data_sources inexistant au catalogue). Bruyante, NON
+    bloquante (même régime que check_coherence_tables_run_scopees). Retourne `{kind: statut}`."""
+    from labuse.ingestion.layers_ingest import KIND_SOURCE
+    out: dict[str, str] = {}
+
+    def _run(conn):
+        noms = {n for (n,) in conn.execute(text("SELECT name FROM data_sources"))}
+        rows = conn.execute(text(
+            "SELECT kind, count(*) FILTER (WHERE data_source_id IS NULL) AS orphelins, count(*) AS n "
+            "FROM spatial_layers GROUP BY kind ORDER BY kind")).all()
+        for kind, orphelins, n in rows:
+            src = KIND_SOURCE.get(kind)
+            if src is not None and src not in noms:
+                out[kind] = "SOURCE ABSENTE"
+                print(f"{_ts()} ⚠ {kind} [SOURCE ABSENTE] — mappé à « {src} », absent du catalogue "
+                      f"data_sources. {n} ligne(s). NON bloquant.", flush=True)
+            elif orphelins and kind not in SOURCES_DECLAREES_LEGITIMES:
+                out[kind] = "ORPHELIN"
+                print(f"{_ts()} ⚠ {kind} [ORPHELIN] — {orphelins}/{n} ligne(s) sans data_source_id "
+                      f"(source ↔ couche non tracée). NON bloquant, à rattacher.", flush=True)
+            else:
+                out[kind] = "OK"
+                print(f"{_ts()} ✓ {kind} : source déclarée ({n}).", flush=True)
+    if session is not None:
+        _run(session)
+    else:
+        with engine().connect() as c:
+            _run(c)
+    return out
+
+
 def check_coherence_tables_run_scopees(session=None) -> dict:
     """Garde M50 — assertion « aucune table SERVIE run-scopée silencieusement périmée ». Pour CHAQUE
     table servie portant `run_label`, compare son/ses run(s) au run servi (`config/served_run.txt`).
