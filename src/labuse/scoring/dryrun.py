@@ -39,13 +39,22 @@ def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
     # de zone sur les résultats STOCKÉS (pas de ré-évaluation) : marqueur « SIGNAL DE ZONE »
     # dans le détail — CONTRAT documenté avec SitadelLayer (phase2.py), ne pas reformuler l'un
     # sans l'autre. Le verdict « RATTACHÉ par IDU » (fait parcellaire) garde son pouvoir.
+    # P2-26 — DÉDUP (cohérence M46 Lot D) : la cascade peut produire une même contrainte en
+    # double (intersections multiples d'une même source : « PPR zone rouge » ×2, aléa moyen ×3).
+    # La FICHE dédoublonne déjà les lignes servies sur (couche, résultat, détail) ; sans la même
+    # dédup ICI, la SOMME des poids double-comptait la pénalité → q/a servis incohérents avec les
+    # lignes affichées. DISTINCT ON aligne le calcul sur l'affichage (une contrainte identique =
+    # UN poids). Départage déterministe : |poids| le plus fort, puis événement rouge.
     session.execute(text(
         "WITH w AS ("
-        "  SELECT cr.parcel_id, (cr.layer_name = ANY(:a_layers)) AS is_a, cr.result, cr.weight_applied, cr.evenement, "
+        "  SELECT DISTINCT ON (cr.parcel_id, cr.layer_name, cr.result, cr.detail) "
+        "    cr.parcel_id, (cr.layer_name = ANY(:a_layers)) AS is_a, cr.result, cr.weight_applied, cr.evenement, "
         "    (cr.layer_name = ANY(:az_layers) AND cr.result='POSITIVE' "
         "     AND cr.detail LIKE '%SIGNAL DE ZONE%') AS is_zone "
         "  FROM dryrun_cascade_results cr JOIN parcels p ON p.id=cr.parcel_id "
-        "  WHERE cr.run_label=:r AND p.commune=:c), "
+        "  WHERE cr.run_label=:r AND p.commune=:c "
+        "  ORDER BY cr.parcel_id, cr.layer_name, cr.result, cr.detail, "
+        "           abs(COALESCE(cr.weight_applied,0)) DESC, (cr.evenement='rouge') DESC), "
         "qa AS ("
         "  SELECT parcel_id, bool_or(result='HARD_EXCLUDE') AS excl, "
         "    GREATEST(1,LEAST(100, :base + COALESCE(sum(weight_applied) FILTER (WHERE NOT is_a),0)))::int AS q, "

@@ -14,6 +14,8 @@ curatée) + Sudocuh (squelette). Doctrine (arbitrages Vic M41) :
 """
 from __future__ import annotations
 
+from datetime import date
+
 from .config import load_yaml_config
 
 REQUIRED = ("commune", "procedure", "stade", "date_acte", "debat_padd", "source",
@@ -47,7 +49,6 @@ def lint(registre: dict | None = None) -> list[str]:
     """Vérifie le registre : tous champs obligatoires, `confiance` valide, `raisonnement` si DEDUIT,
     dates ISO ou ABSENT. Retourne la liste des erreurs (vide = OK). Utilisé par le test + le geste
     trimestriel. Un registre qui ne passe pas le lint ne doit jamais être servi."""
-    import datetime
     reg = _registre() if registre is None else registre
     errs: list[str] = []
 
@@ -55,7 +56,7 @@ def lint(registre: dict | None = None) -> list[str]:
         if v == "ABSENT" or v is None:
             return True
         try:
-            datetime.date.fromisoformat(str(v))
+            date.fromisoformat(str(v))
             return True
         except (ValueError, TypeError):
             return False
@@ -146,14 +147,13 @@ def a_reverifier(registre: dict | None = None, today=None) -> list[dict]:
     """Entrées dont `date_constat` dépasse le seuil de fraîcheur (90 j ; 30 j si procédure active).
     Pur/testable (`today` injectable). Retourne la liste triée par âge décroissant, avec l'URL à
     visiter. C'est la matière du geste trimestriel de Vic."""
-    import datetime
     reg = _registre() if registre is None else registre
-    today = today or datetime.date.today()
+    today = today or date.today()
     out = []
     for insee, e in (reg or {}).items():
         dc = e.get("date_constat")
         try:
-            d = datetime.date.fromisoformat(str(dc))
+            d = date.fromisoformat(str(dc))
         except (ValueError, TypeError):
             out.append({"insee": insee, "commune": e.get("commune"), "age_jours": None,
                         "seuil": 0, "source_url": e.get("source_url"), "actif": False,

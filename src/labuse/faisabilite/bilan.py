@@ -91,7 +91,15 @@ def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
     """Exclut les €/m² aberrants : Tukey (Q1−1,5·IQR ; Q3+1,5·IQR) borné au bon sens
     réunionnais [1000 ; 12000] €/m² — sous 1 000 €/m² bâti, c'est quasi toujours un
     artefact DVF (lot annexe, vente familiale), qui entamait la confiance d'un
-    promoteur dans un échantillon dit « fiable » (audit J6). Retourne (gardées, exclues)."""
+    promoteur dans un échantillon dit « fiable » (audit J6). Retourne (gardées, exclues).
+
+    P2-48 — ÉCART ASSUMÉ avec le Baromètre (`api/moteurs._BAROMETRE_RETENUE`) : là, le €/m²
+    est borné [100 ; 12000] (garde-fou anti-ratio-aberrant seulement) + un filtre ABSOLU
+    `valeur_fonciere > 1000 €` pour les prix symboliques. Deux intentions différentes sur la
+    MÊME donnée : ici on construit un ÉCHANTILLON DE COMPARABLES robuste pour un bilan financier
+    (plancher €/m² serré à 1000) ; le Baromètre OBSERVE tout le marché (plancher €/m² lâche à 100,
+    nettoyage des symboliques par le prix absolu). Ne pas aligner l'un sur l'autre sans arbitrage
+    produit — les deux planchers sont voulus."""
     prices = [s["prix"] for s in sales]
     if len(prices) < 4:
         return sales, 0

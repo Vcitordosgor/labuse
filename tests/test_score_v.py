@@ -109,6 +109,24 @@ def test_sci_dormante():
     assert sigs == []
 
 
+def test_sci_dormante_29_fevrier():
+    """M-C (F2) : quand today == 29/02 (année bissextile), le recul de INACTIVITE_ANS (5) tombe
+    sur 2023, année NON bissextile → today.replace(year=2023) levait ValueError. Il faut une
+    date_mise_a_jour_rne non nulle pour que le `or` n' écourte pas et atteigne le replace.
+    _years_before doit reculer sans crasher (repli 28/02) et le verdict rester correct."""
+    leap = date(2028, 2, 29)
+    # maj RNE ancienne (2005) ⇒ inactive ; SCI de 2001 ⇒ vieille ⇒ dormante. Pré-fix : ValueError.
+    sigs = famille_b("1", _fiche(date_creation="2001-05-01",
+                                 date_mise_a_jour_rne="2005-01-01T00:00:00"),
+                     None, "SCI", MATCH, leap)
+    assert [s["code"] for s in sigs] == ["RNE_SCI_DORMANTE"]
+    # maj RNE récente (2027) ⇒ pas inactive → pas dormante, et toujours pas de crash sur le replace.
+    sigs = famille_b("1", _fiche(date_creation="2001-05-01",
+                                 date_mise_a_jour_rne="2027-06-01T00:00:00"),
+                     None, "SCI", MATCH, leap)
+    assert sigs == []
+
+
 def test_v13_radiation_et_cessation_sont_des_anti_signaux():
     """v1.3 : la dédup D6 est SANS OBJET — radiation (A) et cessation (B) valent 0 toutes
     les deux ; les DEUX événements restent tracés (rien n'est supprimé de la traçabilité)."""

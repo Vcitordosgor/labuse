@@ -43,7 +43,8 @@ seuils:
 # Bascule événementielle : BODACC procédure OUVERTE (evenement='rouge') → « chaude » quel que soit Q/A,
 # SUR LES SURVIVANTES (l'exclusion étage 0 — non constructible — n'est pas surchargée par un événement).
 # ⚠ DOCTRINE — NE PASSE PAS SOUS LES SEUILS : un vendeur en procédure collective est une
-# urgence de prospection quelle que soit la barre du moment. matrice-simulate ne balaie
-# JAMAIS cette clé ; la parcelle-canari 97415000AC0253 (chaude PAR événement) doit survivre
-# à toute convention — si elle tombe, c'est la bascule qui est cassée, pas un seuil.
-evenement_rouge_force_chaude: true
+# urgence de prospection quelle que soit la barre du moment ; la parcelle-canari 97415000AC0253
+# (chaude PAR événement) doit survivre à toute convention.
+# Cette règle est CÂBLÉE EN DUR dans dryrun.compute_matrice (« WHEN qa.rouge THEN 'chaude' ») —
+# non négociable, donc PAS un réglage. (M-C/P2 : l'ancienne clé `evenement_rouge_force_chaude: true`
+# n'était lue par AUCUN code — la garder laissait croire qu'on pouvait la désactiver.)
