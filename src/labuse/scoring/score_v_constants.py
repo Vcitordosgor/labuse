@@ -201,9 +201,16 @@ BAILLEURS_SOCIAUX_SIREN = {
     "378918510",  # SODIAC
     "310863378",  # SEDRE
     "380177170",  # SODEGIS
+    "470801168",  # CDC Habitat (M-D — voir note pattern ci-dessous)
 }
-# Pattern dénomination complémentaire (uppercase, sans accents).
-BAILLEUR_DENOM_PATTERN = r"\b(HABITAT|HLM)\b"
+# Pattern dénomination complémentaire (uppercase, sans accents). RESSERRÉ (M-D 08/08/2026) :
+# le token nu « HABITAT » était trop large — il classait bailleur toute société dont la raison
+# sociale contient le mot (promoteurs, constructeurs, conseils immobiliers, et surtout la SICA
+# agricole « SICA HABITAT REUNION »). On ne retient plus que les marqueurs NON ambigus du logement
+# social : « HLM » et « HABITATIONS À LOYER MODÉRÉ ». Les vrais bailleurs restent captés par la
+# liste SIREN ci-dessus (D4, extensible) et par le groupe DGFiP 5 (Office HLM). CDC Habitat, seul
+# bailleur légitime que le token nu retenait, est désormais épinglé par son SIREN.
+BAILLEUR_DENOM_PATTERN = r"\bHLM\b|HABITATIONS? A LOYER MODERE"
 
 # v1.1 : GRANDS GROUPES (catégorie INSEE, payload recherche-entreprises). Pour un GE/ETI, les
 # familles B (âge dirigeant, cessation, dormance) et C (détachement géo) ne signalent RIEN d'une

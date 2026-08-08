@@ -212,9 +212,29 @@ def test_classify_owner():
     assert classify_owner({**lk, "groupe": 5}, None, None) == "bailleur"
     assert classify_owner({**lk, "groupe": 7}, None, None) == "copro"
     assert classify_owner(lk, "310895172", None) == "bailleur"          # SIREN liste SHLMR
-    assert classify_owner({**lk, "denomination": "REUNION HABITAT"}, None, None) == "bailleur"
+    # Marqueurs NON ambigus du logement social — restent bailleur.
+    assert classify_owner({**lk, "denomination": "OFFICE HLM DU SUD"}, None, None) == "bailleur"
+    assert classify_owner(
+        {**lk, "denomination": "SA D'HABITATIONS A LOYER MODERE"}, None, None) == "bailleur"
     assert classify_owner(lk, "1", _fiche(nature_juridique="7210")) == "public"
     assert classify_owner(lk, "1", _fiche()) == "pm"
+
+
+def test_classify_owner_bailleur_resserre_m_d():
+    """M-D : le token nu « HABITAT » ne suffit plus (pattern trop large — 66 faux positifs).
+
+    CDC HABITAT (vrai bailleur) reste bailleur par son SIREN épinglé ; SICA HABITAT REUNION
+    (SICA agricole) et ses voisines redescendent en « pm »."""
+    lk = {"groupe": 0, "denomination": "PEU IMPORTE"}
+    # Cas nommés du mandat.
+    assert classify_owner(
+        {**lk, "denomination": "CDC HABITAT"}, "470801168", None) == "bailleur"   # SIREN épinglé
+    assert classify_owner(
+        {**lk, "denomination": "SICA HABITAT REUNION"}, "323768309", None) == "pm"
+    # Voisines qui tombaient dans le même piège (« HABITAT » nu).
+    for denom in ("SUD HABITAT CONSEIL", "ELMOJO HABITAT",
+                  "CONSTRUCTION HABITAT OCEAN INDIEN", "ARTHUR HABITAT"):
+        assert classify_owner({**lk, "denomination": denom}, None, None) == "pm", denom
 
 
 # ── Connecteur BODACC élargi ──────────────────────────────────────────────────
