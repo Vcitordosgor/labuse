@@ -587,6 +587,21 @@ def test_entrees_pipeline_idu_jamais_500(app_client):
         _purge(email)
 
 
+def test_entrees_idu_rail_premium_jamais_500(app_client):
+    """M-K P2-31 : IDU hostile/malformé sur le rail premium (/v2, /modules) → 4xx propre
+    (garde de forme _check_idu alignée sur le rail principal), jamais un 500 driver."""
+    email = f"pr-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        c.cookies.set("labuse_session", _session_cookie(cid, email))
+        for idu in ["court!!", "'; DROP TABLE parcels;--", "x" * 40]:
+            assert c.get(f"/v2/score/{idu}").status_code < 500, idu
+            assert c.get(f"/modules/faisabilite/{idu}").status_code < 500, idu
+    finally:
+        _purge(email)
+
+
 def test_protection_admin_exige_une_session(app_client):
     """M31 PC2 — les endpoints d'ADMINISTRATION (tableau de bord protection, gel/dégel d'un
     sujet) ne sont JAMAIS publics : sans session, la garde middleware répond 401 (jamais 200,

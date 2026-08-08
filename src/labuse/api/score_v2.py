@@ -20,6 +20,13 @@ from ..scoring.p_v2.libelles_client import enrichir_contributions
 
 router = APIRouter(prefix="/v2", tags=["scoring-v2"])
 
+
+def _check_idu(idu: str) -> str:
+    """M-K (P2-31) : garde de FORME d'IDU du rail principal (alphanumérique ≤ 20, sinon 404),
+    absente du rail premium /v2. Délègue à app._check_idu (source unique)."""
+    from .app import _check_idu as _c
+    return _c(idu)
+
 AVERTISSEMENT_CENSURE = ("les ventes récentes apparaissent dans DVF avec 1 à 3 ans "
                          "de retard — les niveaux 2025-2026 sont provisoires, "
                          "le classement est fiable")
@@ -82,6 +89,7 @@ def score_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     """Score P v2 d'une parcelle : ×N, percentile, rang, tier, 5 contributions
     lisibles, badges (copro, veille_succession, événement daté). p_raw stocké
     mais non exposé ici (défaut produit — saturation isotonique en tête)."""
+    _check_idu(idu)   # M-K (P2-31)
     run = _served_run(db)
     r = db.execute(text("""
         SELECT s.*, (vs.parcelle_id IS NOT NULL) AS veille_succession

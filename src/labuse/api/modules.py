@@ -25,6 +25,14 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/modules", tags=["modules"])
 
+
+def _check_idu(idu: str) -> str:
+    """M-K (P2-31) : même garde de FORME d'IDU que le rail principal (alphanumérique ≤ 20,
+    sinon 404 — jamais un 500 driver sur un octet nul). Le rail premium /modules ne l'avait
+    pas. Délègue à app._check_idu (source unique, pas de copie qui diverge)."""
+    from .app import _check_idu as _c
+    return _c(idu)
+
 from ..faisabilite.bilan import (  # défauts calculette dérivés de la source unique (mandat hypothèses bilan)
     CALCULETTE_COUT_DEFAUT_M2,
     CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
@@ -808,6 +816,7 @@ def _faisa_step_prov(source: str, prov: str) -> str:
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
+    _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
     from ..faisabilite.bilan import sector_price, compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
@@ -899,6 +908,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     (capacité) + prix de sortie (DVF) sont SOURCÉS ; le coût de construction et la marge viennent
     du corps de requête (hypothèses du promoteur). Cas limites honnêtes : capacité non résolue ou
     prix DVF insuffisant → `calculable:false` + raison, jamais un faux chiffre."""
+    _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.bilan import (
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
@@ -1014,6 +1024,7 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     """M11 Surface C : explication EN CLAIR de la dérivation du chiffrage, ancrée sur les STEPS du
     moteur (déterministes). L'IA narre, elle ne recalcule pas ; la couche 2 du socle rejette tout
     chiffre absent des étapes. Sur clic uniquement (coût) ; caché par (idu, run, question)."""
+    _check_idu(idu)   # M-K (P2-31)
     from ..ai import core
     from ..scoring.score_v_constants import Q_A_RUN_LABEL
     QUESTION = "explication_faisabilite"
@@ -1138,6 +1149,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     en cours (OUI/NON), et les conséquences parcellaires applicables. L'outil LIT le radar
     (labuse.veille_plu, point de calcul UNIQUE) — il ne calcule rien, mêmes libellés que la fiche.
     L'absence est DATÉE elle aussi (« aucune procédure connue au JJ/MM — dernier constat le X »)."""
+    _check_idu(idu)   # M-K (P2-31)
     import datetime
 
     from ..verdict_servi import verdict_servi
