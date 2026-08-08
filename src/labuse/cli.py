@@ -1055,10 +1055,11 @@ def compute_au_statut_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
     chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
 ) -> None:
-    """Calcule et cache le STATUT D'OUVERTURE des zones AU (mandat AU-OUVERTURE). Alimente
-    `parcel_au_statut` : 'générique' (AU non calibrée → déclassée `declasse_au_statut_inconnu`) ou
-    'dimensions_seules' (règles extraites, ouverture non lue → servie + mention). Lu par le scoring
-    et la fiche. Horodaté (péremption)."""
+    """Calcule et cache le STATUT D'OUVERTURE des zones AU (ANCIEN modèle, communes NON calibrées).
+    Alimente `parcel_au_statut` : 'générique' (AU non calibrée → déclassée `declasse_au_statut_inconnu`)
+    ou 'dimensions_seules' (règles extraites, ouverture non lue → servie + mention). Lu par le scoring
+    et la fiche. Horodaté (péremption). M-S : les communes CALIBRÉES sont traitées par
+    `compute-au-ouverture` (modèle affiné) et IGNORÉES ici — les deux modèles ne se chevauchent pas."""
     from .faisabilite.au_statut import build_au_statut_batch
 
     commune = _resolve_commune(commune)
@@ -1080,6 +1081,36 @@ def compute_au_statut_cmd(
         per = au_statut_peremption(s)
     typer.echo(f"✓ Statut AU caché : {total} parcelles marquées ({per['declassees']} déclassées, "
                f"{per['servies_avec_mention']} servies+mention) — {commune}.")
+
+
+@app.command("compute-au-ouverture")
+def compute_au_ouverture_cmd() -> None:
+    """Calcule le statut d'ouverture AU AFFINÉ (GPU-PILOTE, Vic 30/07) pour les communes CALIBRÉES
+    de `config/calibrage/au_ouverture_planchers.yaml`. Trois traitements lus au règlement :
+    `declasse_au_fermee` (réserve), `declasse_au_statut_inconnu` (phasage 2AU→1AU),
+    `conditionnelle_operation` (SERVIE) et `au_sous_plancher` (SERVIE, candidate à l'assemblage —
+    surface manquante + voisines). Prime sur l'ancien modèle là où la commune est calibrée
+    (les deux ne se chevauchent pas). Alimente `parcel_au_statut` UNIQUEMENT (peupler ≠ basculer)."""
+    from .faisabilite.au_ouverture import build_au_ouverture, _config
+
+    communes = list(_config().keys())
+    if not communes:
+        typer.echo("Aucune commune calibrée dans au_ouverture_planchers.yaml.")
+        raise typer.Exit(1)
+    models.ensure_au_statut_cache(engine())
+    with session_scope() as s:
+        compte = build_au_ouverture(s, communes)
+    total = sum(compte.values())
+    typer.echo(f"✓ Ouverture AU affinée : {total} parcelles marquées sur {len(communes)} communes "
+               f"calibrées.")
+    for statut, n in sorted(compte.items(), key=lambda kv: -kv[1]):
+        typer.echo(f"    {statut:32} {n}")
+    with session_scope() as s:
+        from .faisabilite.au_statut import au_statut_peremption
+        per = au_statut_peremption(s)
+    typer.echo(f"  → péremption : {per['declassees']} déclassées en attente, "
+               f"{per['servies_avec_mention']} servies+mention "
+               f"(plus ancienne {per['jours_plus_ancien']} j, statut {per['statut']}).")
 
 
 @app.command("au-statut-compteur")
