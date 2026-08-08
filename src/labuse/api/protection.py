@@ -130,9 +130,13 @@ _TUILE_FLUSH = 25          # écritures DB par lots (les tuiles sont volumineuse
 
 #: préfixes des endpoints métier soumis au rate limiting (jamais les statiques/tuiles —
 #: une carte qui panne charge des dizaines de tuiles/s, ce n'est pas du scraping).
+# M-K (P2-43) : /modules, /v2, /scoreur-adresse ajoutés — ils étaient hors 60/min alors que
+# /modules/patrimoine déverse un portefeuille SIREN, /modules/division/compute est un écrivain
+# lourd, et /scoreur-adresse déclenche un géocodage BAN externe par requête (data.gouv nous
+# rate-limiterait). Les tuiles gardent leur régime carto dédié (jamais le 60/min).
 PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/map/parcels",
                      "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier",
-                     "/pre-dossier", "/courrier")
+                     "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse")
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 

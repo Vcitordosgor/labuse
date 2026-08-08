@@ -17,7 +17,7 @@ import csv
 import io
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import text
@@ -71,9 +71,13 @@ def ensure_tables(engine) -> None:
 # ───────────────────────── M01 — DIVISION PARCELLAIRE ─────────────────────────
 
 @router.post("/division/compute")
-def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def division_compute(request: Request, commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
     """Pré-calcule les candidats division (C1-C5) — idempotent PAR COMMUNE (extension île : les
-    24 communes coexistent dans module_division, on ne repart propre que sur celle calculée)."""
+    24 communes coexistent dans module_division, on ne repart propre que sur celle calculée).
+    GATE ADMIN (M-K P2-43) : écrivain lourd (DELETE+INSERT PostGIS commune entière), aucun
+    appelant front — c'est un recalcul d'ops, pas une action client."""
+    from .auth import exiger_admin
+    exiger_admin(request)
     db.execute(text("DELETE FROM module_division m USING parcels p"
                     " WHERE p.id = m.parcel_id AND p.commune = :c"), {"c": commune})
     db.execute(text("""

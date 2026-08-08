@@ -25,8 +25,9 @@ SYSTEM_PROMPT = (
     "Tu ne garantis jamais la constructibilité, la propriété, la rentabilité ni la faisabilité. Tu "
     "cites toujours les sources utilisées (par leur nom dans le payload) et tu signales les sources "
     "manquantes.\n\n"
-    "Réponds STRICTEMENT en JSON conforme au schéma fourni. opportunity_score_adjustment est un "
-    "entier dans [-20, 20]. recommended_status et confidence_level sont des énumérations strictes."
+    "Réponds STRICTEMENT en JSON conforme au schéma fourni. recommended_status et "
+    "confidence_level sont des énumérations strictes. Tu ne proposes AUCUN ajustement de score : "
+    "l'IA ne calcule ni ne modifie aucun score (doctrine M11)."
 )
 
 

@@ -26,7 +26,7 @@ def test_stub_est_valide_et_ne_corrige_pas():
     out = StubProvider().analyze(SAMPLE_PAYLOAD)
     assert validate_ai_output(out) == []
     assert out["recommended_status"] == "opportunite"
-    assert out["opportunity_score_adjustment"] == 0
+    assert "opportunity_score_adjustment" not in out   # M-K (P2-44) : champ retiré (M11)
     assert out["confidence_level"] == "eleve"
     # cite les sources et reprend les signaux sans inventer
     assert any(s["source"] == "SAR Réunion (PEIGEO)" for s in out["blocking_or_risk_signals"])
@@ -40,7 +40,7 @@ def test_stub_est_valide_et_ne_corrige_pas():
 
 def test_schema_rejette_les_sorties_invalides():
     bad = StubProvider().analyze(SAMPLE_PAYLOAD)
-    bad["opportunity_score_adjustment"] = 50  # hors [-20, 20]
+    bad["opportunity_score_adjustment"] = 5  # champ RETIRÉ (M-K P2-44) → propriété interdite (additionalProperties=False)
     assert validate_ai_output(bad)
     bad2 = StubProvider().analyze(SAMPLE_PAYLOAD)
     bad2["recommended_status"] = "peut-etre"  # hors énumération
