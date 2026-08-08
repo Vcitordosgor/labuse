@@ -689,8 +689,10 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     has_sitadel = session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is not None
     pc_pred = (f"NOT EXISTS (SELECT 1 FROM sitadel_permits sp WHERE sp.idu_codes ? zon.idu "
                f"AND sp.type = 'PC' AND sp.date >= '{PC_FRAIS_DEPUIS}')") if has_sitadel else "true"
-    total = session.execute(text(
-        "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
+    # M-C (F5) : total = somme des lots découpés des communes de CE RUN, accumulé dans la boucle
+    # (avant : count(*) global 'decoupe' avant la boucle PUIS refait à chaque commune — mélange
+    # « pré-run » et « toute la table », pas la mesure du run).
+    total = 0
     failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
@@ -729,8 +731,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             "SELECT count(*) FROM division_or_candidates WHERE commune = :c "
             "AND type_division = 'decoupe'"),
             {"c": commune}).scalar()
-        total = session.execute(text(
-            "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
+        total += n
         log(f"division-or-partiel {commune} : {n} lots à découper")
     if failures:
         log(f"⚠ {len(failures)} commune(s) EN ÉCHEC (non écrites, île poursuivie) : {failures}")
@@ -770,7 +771,10 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     constr_guard = ("NOT EXISTS (SELECT 1 FROM parcel_constructibilite pc WHERE pc.parcel_id = zon.id "
                     "AND pc.label IN ('declasse_zone_fermee','declasse_non_constructible'))"
                     if has_constr else "true")
-    total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
+    # M-C (F5) : total = somme des candidats des communes de CE RUN (accumulé dans la boucle), pas
+    # un count(*) GLOBAL de toute la table refait à chaque commune (avant : 24 scans complets pour
+    # un seul log, et un total incluant les communes hors de ce run).
+    total = 0
     failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
@@ -815,7 +819,7 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
         n = session.execute(text(
             "SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
             {"c": commune}).scalar()
-        total = session.execute(text("SELECT count(*) FROM division_or_candidates")).scalar()
+        total += n
         log(f"division-or {commune} : {n} candidats")
     if failures:
         log(f"⚠ {len(failures)} commune(s) EN ÉCHEC (non écrites, île poursuivie) : {failures}")
