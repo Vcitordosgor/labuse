@@ -68,6 +68,10 @@ def evaluate_parcels(
     (doctrine M11) : compute_opportunity reçoit ai_adjustment=0 partout, et le champ
     d'ajustement a été retiré du schéma (M-K P2-44).
     """
+    # M-B : garde de CÂBLAGE (statique, mémoïsée) au lancement de tout calcul de cascade — refuse
+    # de scorer sur un câblage incohérent. Part DB (kinds) déléguée aux commandes de run d'île.
+    from .cablage import ensure_cablage_static
+    ensure_cablage_static()
     ctx = EvalContext(session)
     ctx.prime(parcel_ids)  # précalcul batch (commune entière) — sinon 1 requête/parcelle×couche
     parcels = _load_parcel_refs(session, parcel_ids)

@@ -139,6 +139,12 @@ async def _lifespan(app: FastAPI):
     if not s.secret_key:  # ici forcément 'local' : clé éphémère (sessions perdues au reboot)
         log.warning("LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère "
                     "(les sessions ne survivront pas à un redémarrage).")
+    # M-B : garde de CÂBLAGE scoring — BLOQUANTE au boot (statique, sans base, ~0 ms). Un câblage
+    # incohérent (couche YAML sans implémentation ou l'inverse, sévérité inconnue, bonus_key absente
+    # de la config) ne doit PAS servir. Fail-closed, comme exiger_secret_prod ci-dessus. La part DB
+    # (kinds spatiaux, ~1,2 s) est déléguée au RUN de scoring, pas au boot.
+    from ..cascade.cablage import check_cablage_scoring
+    check_cablage_scoring()
     yield
 
 
