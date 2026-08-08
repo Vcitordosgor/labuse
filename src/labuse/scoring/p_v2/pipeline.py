@@ -91,15 +91,47 @@ def verify_artifact() -> tuple[PModel, str]:
     return joblib.load(MODEL_ARTIFACT), sha
 
 
-def rebuild_features(session: Session) -> None:
-    """Re-matérialise l'union DVF + le dataset ext (builder M3.6, importé)."""
+def check_permits_fraicheur(session: Session, seuil_jours: int = 0) -> dict:
+    """M-F (P1-6) — GARDE DOUBLE de fraîcheur des permis. Après le rebuild, la date max des permis
+    en features (`p_model_permits`) DOIT rejoindre celle de la source (`sitadel_permits`, restreinte
+    aux permis rattachables à une parcelle — les seuls qui entrent dans les features). Un écart
+    supérieur à `seuil_jours` = build_permits n'a pas rafraîchi les features → le prédicteur « permis
+    voisin » (l'un des plus lourds du hazard model) scorerait sur des permis PÉRIMÉS. Échec BRUYANT,
+    jamais un avertissement silencieux. Renvoie aussi le compteur de permis (rapport de build)."""
+    feat = session.execute(text(
+        "SELECT max(date_autorisation), count(*) FROM p_model_permits")).first()
+    feat_max, n_permits = (feat[0], feat[1]) if feat else (None, 0)
+    src_max = session.execute(text(
+        "SELECT max(s.date::date) FROM sitadel_permits s "
+        "WHERE s.idu_codes IS NOT NULL AND jsonb_array_length(s.idu_codes) > 0")).scalar()
+    gap = (src_max - feat_max).days if (src_max and feat_max) else None
+    stats = {"n_permits": int(n_permits or 0),
+             "permits_max": str(feat_max) if feat_max else None,
+             "src_max": str(src_max) if src_max else None, "gap_jours": gap}
+    if src_max is not None and (feat_max is None or (gap is not None and gap > seuil_jours)):
+        raise RuntimeError(
+            f"FRAÎCHEUR PERMIS (P1-6) : p_model_permits max={feat_max} EN RETARD de {gap} j sur "
+            f"sitadel max={src_max} (seuil {seuil_jours} j). Les features permis n'ont pas été "
+            "rafraîchies avant le scoring → le prédicteur « permis voisin » scorerait sur des permis "
+            "périmés. Scoring REFUSÉ (échec bruyant).")
+    return stats
+
+
+def rebuild_features(session: Session) -> dict:
+    """Re-matérialise l'union DVF + le dataset ext (builder M3.6, importé). M-F (P1-6) : rafraîchit
+    AUSSI `p_model_permits` (permis Sitadel — prédicteur LOURD du hazard) AVANT le dataset qui les
+    consomme, puis vérifie la fraîcheur. Renvoie les compteurs (dont permis) pour le rapport de build."""
+    from ..p_model import sql as p_sql  # copro/permis dépendent de p_model_frame
+    # M-F : build_permits AVANT build_ext_dataset (qui LIT p_model_permits, lecture seule) — sinon le
+    # modèle score sur des permis PÉRIMÉS. Coût mesuré ~0,2 s → intégré inconditionnellement.
+    p_sql.build_permits(session)
     ext_sql.build_ext_union(session)
     ext_sql.build_ext_mutations(session)
     ext_sql.build_ext_dataset(session)
-    from ..p_model import sql as p_sql  # copro dépend de p_model_frame
     ext_sql.build_copro_flags(session)
-    _ = p_sql  # import documentaire : le frame M3 est réutilisé tel quel
+    stats = check_permits_fraicheur(session)   # garde double : features à jour avec la source
     session.commit()   # F7 : commit à la FRONTIÈRE (les builders ext ne committent plus) — testabilité.
+    return stats
 
 
 def load_events(session: Session) -> pd.DataFrame:
@@ -210,8 +242,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         raise RuntimeError(f"run_id '{run_id}' existe déjà — relance avec un "
                            "run_id explicite différent (aucun écrasement silencieux).")
 
-    if rebuild:
-        rebuild_features(session)
+    feat_stats = rebuild_features(session) if rebuild else None   # M-F : compteurs permis pour le rapport
 
     df = pd.read_sql(text("SELECT * FROM p_model_ext_dataset WHERE annee = :a"),
                      session.connection(), params={"a": annee})
@@ -465,7 +496,9 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     tiers_counts = tier.value_counts().to_dict()
     return {"run_id": run_id, "n": len(rows), "duree_s": int(time.time() - t0),
             "params": params, "tiers": tiers_counts, "taux_base": taux_base,
-            "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd}
+            "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd,
+            # M-F (P1-6) : compteur de permis intégrés + fraîcheur — lu pour valider une bascule.
+            "permits": feat_stats}
 
 
 def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame) -> None:
