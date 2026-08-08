@@ -54,63 +54,63 @@ def _follow(db, pid):
 def test_vente_dvf_dans_zone_apparait_en_nouveaute(db_session):
     """Le cas du brief : une vente DVF SIMULÉE dans une zone de veille → nouveauté."""
     lon, lat = 55.30, -21.05
-    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat))
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 0   # rien encore
+    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat), None)
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 0   # rien encore
     _dvf(db_session, lon, lat)                                                # ← donnée nouvelle
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 1
-    new = alertes.list_alertes(db_session, COMMUNE, only_new=True)
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 1
+    new = alertes.list_alertes(db_session, COMMUNE, None, only_new=True)
     assert any(a["kind"] == "dvf_in_zone" and a["zone_name"] == "Centre-bourg" for a in new)
 
 
 def test_vente_hors_zone_ignoree(db_session):
     lon, lat = 55.31, -21.05
-    alertes.create_watch_zone(db_session, "Petite zone", COMMUNE, _zone(lon, lat, half=0.001))
+    alertes.create_watch_zone(db_session, "Petite zone", COMMUNE, _zone(lon, lat, half=0.001), None)
     _dvf(db_session, lon + 0.05, lat + 0.05)                                  # ~5 km plus loin
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 0
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 0
 
 
 def test_permis_pres_parcelle_suivie_apparait(db_session):
     lon, lat = 55.32, -21.06
     _follow(db_session, _parcel(db_session, "ALERT0001", lon, lat))
     _permit(db_session, lon + 0.0005, lat)                                    # ~50 m
-    assert alertes.compute_alertes(db_session, COMMUNE)["permit_near_followed"] == 1
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["permit_near_followed"] == 1
 
 
 def test_permis_loin_de_parcelle_suivie_ignore(db_session):
     lon, lat = 55.34, -21.07
     _follow(db_session, _parcel(db_session, "ALERT0002", lon, lat))
     _permit(db_session, lon + 0.01, lat)                                      # ~1 km > 200 m
-    assert alertes.compute_alertes(db_session, COMMUNE)["permit_near_followed"] == 0
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["permit_near_followed"] == 0
 
 
 def test_idempotent_pas_de_doublon(db_session):
     lon, lat = 55.30, -21.05
-    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat))
+    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat), None)
     _dvf(db_session, lon, lat)
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 1
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 0   # re-run = aucune
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 1
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 0   # re-run = aucune
     _dvf(db_session, lon + 0.0001, lat + 0.0001, valeur=420000)              # 2e vente
-    assert alertes.compute_alertes(db_session, COMMUNE)["dvf_in_zone"] == 1
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 1
 
 
 def test_accuse_de_lecture(db_session):
     lon, lat = 55.30, -21.05
-    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat))
+    alertes.create_watch_zone(db_session, "Centre-bourg", COMMUNE, _zone(lon, lat), None)
     _dvf(db_session, lon, lat)
-    alertes.compute_alertes(db_session, COMMUNE)
-    assert len(alertes.list_alertes(db_session, COMMUNE, only_new=True)) == 1
-    assert alertes.acknowledge(db_session, commune=COMMUNE) == 1
-    assert alertes.list_alertes(db_session, COMMUNE, only_new=True) == []
+    alertes.compute_alertes(db_session, COMMUNE, None)
+    assert len(alertes.list_alertes(db_session, COMMUNE, None, only_new=True)) == 1
+    assert alertes.acknowledge(db_session, None, commune=COMMUNE) == 1
+    assert alertes.list_alertes(db_session, COMMUNE, None, only_new=True) == []
 
 
 def test_suppression_zone_efface_ses_alertes(db_session):
     lon, lat = 55.30, -21.05
-    z = alertes.create_watch_zone(db_session, "Éphémère", COMMUNE, _zone(lon, lat))
+    z = alertes.create_watch_zone(db_session, "Éphémère", COMMUNE, _zone(lon, lat), None)
     _dvf(db_session, lon, lat)
-    alertes.compute_alertes(db_session, COMMUNE)
-    assert len(alertes.list_alertes(db_session, COMMUNE)) == 1
-    assert alertes.delete_watch_zone(db_session, z["id"]) is True
-    assert alertes.list_alertes(db_session, COMMUNE) == []                    # cascade
+    alertes.compute_alertes(db_session, COMMUNE, None)
+    assert len(alertes.list_alertes(db_session, COMMUNE, None)) == 1
+    assert alertes.delete_watch_zone(db_session, z["id"], None) is True
+    assert alertes.list_alertes(db_session, COMMUNE, None) == []                    # cascade
 
 
 # ───────────────────────── Bout en bout via l'API (HTTP) ─────────────────────────

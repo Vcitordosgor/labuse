@@ -109,6 +109,19 @@ def sujet_de(request: Request) -> str:
     return "ip:" + hashlib.sha256(ip_reelle(request).encode()).hexdigest()[:20]
 
 
+def sujet_quota(request: Request) -> str:
+    """Sujet des QUOTAS MÉTIER (fiches vues, questions IA/fiche, dossiers mensuels) — épinglé
+    au COMPTE quand il existe (« c:<cid> »), repli session/IP sinon. M-K (P2-38) : un
+    logout/login ne remet plus ces compteurs à zéro (le sujet-session changeait à chaque
+    session ; le quota mensuel Essentiel, le plus rentable à contourner, était le plus exposé).
+    MÊME recette que copilote._sujet_quota. Le rate-limit et le gel restent adossés à sujet_de
+    (session/IP, anti-scraping) — c'est volontaire, un scraper ne doit pas se réinitialiser en
+    se déconnectant."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    return f"c:{cid}" if cid is not None else sujet_de(request)
+
+
 def _cle_hmac() -> bytes:
     # Clé du filigrane des exports = clé de signature de l'app (plus de constante en dur
     # « labuse-protection » : elle rendait la ref/les canaris rejouables par un tiers). Hors
@@ -130,9 +143,13 @@ _TUILE_FLUSH = 25          # écritures DB par lots (les tuiles sont volumineuse
 
 #: préfixes des endpoints métier soumis au rate limiting (jamais les statiques/tuiles —
 #: une carte qui panne charge des dizaines de tuiles/s, ce n'est pas du scraping).
+# M-K (P2-43) : /modules, /v2, /scoreur-adresse ajoutés — ils étaient hors 60/min alors que
+# /modules/patrimoine déverse un portefeuille SIREN, /modules/division/compute est un écrivain
+# lourd, et /scoreur-adresse déclenche un géocodage BAN externe par requête (data.gouv nous
+# rate-limiterait). Les tuiles gardent leur régime carto dédié (jamais le 60/min).
 PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/map/parcels",
                      "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier",
-                     "/pre-dossier", "/courrier")
+                     "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse")
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 
@@ -293,6 +310,7 @@ async def garde_protection(request: Request, call_next):
     if s.qa_allowlist and ip_reelle(request) in {x.strip() for x in s.qa_allowlist.split(",") if x.strip()}:
         return await call_next(request)
     sujet = sujet_de(request)
+    sujet_q = sujet_quota(request)   # quotas métier (fiches) épinglés au compte (M-K P2-38)
     jour = _aujourdhui()
     now = time.time()
 
@@ -354,7 +372,10 @@ async def garde_protection(request: Request, call_next):
     m = _FICHE_RE.match(path)
     if m and request.method == "GET":
         idu = m.group(1)
-        vues = _fiches_vues(jour, sujet)
+        # M-K (P2-38) : le quota de fiches est compté PAR COMPTE (sujet_q) — un logout/login
+        # ne le réinitialise plus. La journalisation forensic (consultation_log, abuse-scan)
+        # garde le sujet session/IP : c'est la corrélation d'un comportement, pas un quota.
+        vues = _fiches_vues(jour, sujet_q)
         if idu not in vues and len(vues) >= max(1, s.quota_fiches_jour):
             return JSONResponse(status_code=429, content={
                 "detail": f"Quota de consultation atteint ({s.quota_fiches_jour} fiches "
@@ -363,7 +384,7 @@ async def garde_protection(request: Request, call_next):
         if idu not in vues:
             vues.add(idu)
             def _persiste():
-                _incr_compteur(jour, sujet, "fiche")
+                _incr_compteur(jour, sujet_q, "fiche")
                 _db_exec("INSERT INTO consultation_log (sujet, chemin, idu) "
                          "VALUES (:s, :c, :i)", {"s": sujet, "c": "fiche", "i": idu})
             await anyio.to_thread.run_sync(_persiste)
@@ -404,11 +425,16 @@ async def repondre_defi(request: Request) -> JSONResponse:
     return JSONResponse(content={"ok": True})
 
 
-# ── Admin (Vic — couvert par l'auth globale comme les routes admin des segments) ────────
+# ── Admin (Vic) — GATE ADMIN explicite (M-K P1-11) ──────────────────────────────────────
+# La garde globale posait déjà le 401 sans session, mais TOUT compte payant authentifié
+# pouvait lister les sujets et geler un autre client. exiger_admin ferme ce trou : session
+# utilisateur non-admin → 403 ; admin / pilote (mot de passe partagé) → OK.
 
 @router.get("/admin")
-def protection_admin() -> dict:
+def protection_admin(request: Request) -> dict:
     """Tableau de bord : alertes récentes, scores du dernier scan, gels actifs."""
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         alertes = [dict(r) for r in db.execute(text(
@@ -424,7 +450,9 @@ def protection_admin() -> dict:
 
 
 @router.post("/admin/gel/{sujet}")
-def protection_gel(sujet: str, motif: str = "décision admin") -> dict:
+def protection_gel(sujet: str, request: Request, motif: str = "décision admin") -> dict:
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         geler(db, sujet, motif)
@@ -432,7 +460,9 @@ def protection_gel(sujet: str, motif: str = "décision admin") -> dict:
 
 
 @router.post("/admin/degel/{sujet}")
-def protection_degel(sujet: str) -> dict:
+def protection_degel(sujet: str, request: Request) -> dict:
+    from . import auth
+    auth.exiger_admin(request)
     from ..db import session_scope
     with session_scope() as db:
         degeler(db, sujet)

@@ -99,7 +99,7 @@ class StubProvider:
             "missing_data": missing,
             "must_check_before_showing_developer": must_check,
             "recommended_status": status,
-            "opportunity_score_adjustment": 0,  # le stub ne corrige pas le score
+            # M-K (P2-44) : plus d'opportunity_score_adjustment — l'IA ne touche aucun score (M11).
             "confidence_level": _confidence_from_band(band),
             "developer_pitch": "",
             "warnings": ["Analyse générée hors-ligne (provider stub) : aucune interprétation libre."],

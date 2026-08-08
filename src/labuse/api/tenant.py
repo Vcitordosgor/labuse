@@ -26,8 +26,12 @@ from sqlalchemy.orm import Session
 # event_log / watched_parcels ajoutées au P0 « avant multi-comptes » : la cloche de
 # notifications et le suivi de cible sont l'intention commerciale d'un compte — ils ne
 # doivent jamais fuiter à un autre. Elles reçoivent compte_id + FK cascade comme les autres.
+# watch_zones / alertes ajoutées au M-K (P1-9) : les zones de veille dessinées et les
+# nouveautés (ventes DVF en zone, permis près d'une parcelle suivie) sont l'intention
+# commerciale d'un compte — elles ne doivent jamais fuiter à un autre. compte_id + FK cascade
+# comme les autres ; la dédup permis passe à (compte_id, parcel_id, source_ref), cf. models.
 SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
-                 "signalements", "event_log", "watched_parcels")
+                 "signalements", "event_log", "watched_parcels", "watch_zones", "alertes")
 
 
 def ensure_scoping(db: Session) -> None:
@@ -84,6 +88,18 @@ def current_compte(request: Request | None) -> int | None:
     sur request.state.compte_id ; None si absent (route publique, mode local sans auth, ou
     appel direct de la fonction en test — tolérant à request=None)."""
     return getattr(getattr(request, "state", None), "compte_id", None)
+
+
+def compte_ou_401(request: Request | None) -> int:
+    """current_compte STRICT (M-K P2-65) : un compte IDENTIFIÉ est requis — None (aucune
+    session / pilote) → 401. Chemin UNIQUE pour les écritures qui DOIVENT appartenir à un
+    compte (marque/logo d'onboarding). Le compte est déjà résolu par la garde d'auth sur
+    request.state.compte_id ; on ne relit jamais le cookie à la main."""
+    from fastapi import HTTPException
+    cid = current_compte(request)
+    if cid is None:
+        raise HTTPException(401, "Session requise — connectez-vous à votre compte.")
+    return int(cid)
 
 
 def scope_clause(alias: str = "") -> str:

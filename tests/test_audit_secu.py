@@ -264,6 +264,71 @@ def test_idor_watched_parcels_cloison(app_client):
             s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
 
 
+def test_idor_alertes_watch_zones_cloison(app_client):
+    """M-K (P1-9) — Alertes intelligentes : B ne voit NI les zones de veille NI les nouveautés
+    de A, ne matérialise rien de A dans son scope au refresh, ne peut ni accuser réception de
+    l'alerte de A ni supprimer sa zone (404). Et si A et B suivent la MÊME parcelle, un permis
+    proche alerte CHACUN (dédup PAR COMPTE — l'ancienne clé (parcel_id, source_ref) mangeait
+    l'alerte du 2e compte)."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    commune = "AlertIDOR"
+    idu = f"974AZ{uuid.uuid4().hex[:7].upper()}"
+    poly = {"type": "Polygon", "coordinates": [[
+        [55.50, -21.20], [55.52, -21.20], [55.52, -21.18], [55.50, -21.18], [55.50, -21.20]]]}
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        # A crée une zone de veille ; une vente DVF tombe dedans → une nouveauté POUR A
+        rz = ca.post("/watch-zones", json={"name": "Zone secrète de A", "geometry": poly, "commune": commune})
+        assert rz.status_code == 200, rz.text
+        zid_a = rz.json()["zone"]["id"]
+        with session_scope() as s:
+            s.execute(text("INSERT INTO dvf_mutations (date_mutation, valeur_fonciere, nature_mutation, commune, geom) "
+                           "VALUES (now(), 300000, 'Vente', :c, ST_SetSRID(ST_MakePoint(55.51,-21.19),4326))"), {"c": commune})
+            s.commit()
+        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["dvf_in_zone"] == 1
+        # A voit SA zone et SA nouveauté
+        assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
+        a_alertes = ca.get("/alertes", params={"commune": commune}).json()
+        assert len(a_alertes) == 1 and a_alertes[0]["kind"] == "dvf_in_zone"
+        aid = a_alertes[0]["id"]
+        # B ne voit NI la zone NI la nouveauté de A ; son refresh ne matérialise rien dans SON scope
+        assert cb.get("/watch-zones", params={"commune": commune}).json() == []
+        assert cb.get("/alertes", params={"commune": commune}).json() == []
+        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["dvf_in_zone"] == 0
+        # B ne peut ni accuser réception de l'alerte de A (0 effet) ni supprimer sa zone (404)
+        assert cb.post("/alertes/ack", json={"id": aid, "commune": commune}).json()["acknowledged"] == 0
+        assert cb.delete(f"/watch-zones/{zid_a}").status_code == 404
+        # A reste intact : zone présente, nouveauté toujours non-lue
+        assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
+        assert len(ca.get("/alertes", params={"commune": commune, "only_new": True}).json()) == 1
+
+        # Dédup permis PAR COMPTE : A et B suivent la MÊME parcelle → un permis proche alerte CHACUN.
+        _wkt = "POLYGON((55.51 -21.19,55.5105 -21.19,55.5105 -21.1905,55.51 -21.1905,55.51 -21.19))"
+        with session_scope() as s:
+            s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
+                           "VALUES (:i,:c,'ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+                           " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                      {"i": idu, "c": commune, "w": _wkt})
+            s.execute(text("INSERT INTO sitadel_permits (type, date, commune, geom) "
+                           "VALUES ('PC', now(), :c, ST_SetSRID(ST_MakePoint(55.5102,-21.1902),4326))"), {"c": commune})
+            s.commit()
+        assert ca.post("/pipeline", json={"idu": idu}).status_code == 200
+        assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
+        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1
+        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1  # PAS mangé
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM watch_zones WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM dvf_mutations WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM sitadel_permits WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM pipeline_entries WHERE parcel_id IN (SELECT id FROM parcels WHERE idu=:i)"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+            s.commit()
+
+
 # ─────────────────────── Statuts × routes (la matrice d'accès) ───────────────────────
 
 def _session_cookie(compte_id: int, email: str) -> str:
@@ -522,6 +587,21 @@ def test_entrees_pipeline_idu_jamais_500(app_client):
         _purge(email)
 
 
+def test_entrees_idu_rail_premium_jamais_500(app_client):
+    """M-K P2-31 : IDU hostile/malformé sur le rail premium (/v2, /modules) → 4xx propre
+    (garde de forme _check_idu alignée sur le rail principal), jamais un 500 driver."""
+    email = f"pr-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        c.cookies.set("labuse_session", _session_cookie(cid, email))
+        for idu in ["court!!", "'; DROP TABLE parcels;--", "x" * 40]:
+            assert c.get(f"/v2/score/{idu}").status_code < 500, idu
+            assert c.get(f"/modules/faisabilite/{idu}").status_code < 500, idu
+    finally:
+        _purge(email)
+
+
 def test_protection_admin_exige_une_session(app_client):
     """M31 PC2 — les endpoints d'ADMINISTRATION (tableau de bord protection, gel/dégel d'un
     sujet) ne sont JAMAIS publics : sans session, la garde middleware répond 401 (jamais 200,
@@ -536,3 +616,118 @@ def test_protection_admin_exige_une_session(app_client):
     from labuse.api import auth
     for p in ("/protection/admin", "/protection/admin/gel/x", "/protection/admin/degel/x"):
         assert not auth.is_public(p)
+
+
+def _login_admin(client: TestClient, email: str) -> TestClient:
+    """Login puis élève l'utilisateur en role='admin' (le rôle est relu en base à chaque
+    requête → l'élévation prend effet immédiatement)."""
+    _login(client, email)
+    with session_scope() as s:
+        s.execute(text("UPDATE utilisateurs SET role='admin' WHERE email=:e"), {"e": email})
+        s.commit()
+    return client
+
+
+def test_idor_partners_share_et_profiles(app_client):
+    """M-K P2-45 : share_list est SCOPÉ au compte (B ne voit pas les tokens de A pour une même
+    parcelle — un token = accès public en lecture) ; POST /partners/profiles est GELÉ admin
+    (M19 démo) : un titulaire → 403, un admin → 200."""
+    ea, eb, eadm = (f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test",
+                    f"adm-{uuid.uuid4().hex[:8]}@x.test")
+    _compte_actif(ea); _compte_actif(eb); _compte_actif(eadm)
+    idu = f"974SH{uuid.uuid4().hex[:7].upper()}"
+    _wkt = "POLYGON((55.47 -21.0,55.471 -21.0,55.471 -21.001,55.47 -21.001,55.47 -21.0))"
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        with session_scope() as s:
+            s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
+                           "VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+                           " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                      {"i": idu, "w": _wkt}); s.commit()
+        # A crée un lien de partage → A le voit ; B ne voit AUCUN lien pour la même parcelle
+        rt = ca.post(f"/partners/share/{idu}")
+        assert rt.status_code == 200, rt.text
+        tok = rt.json()["token"]
+        assert any(x["token"] == tok for x in ca.get(f"/partners/share/{idu}/list").json())
+        assert cb.get(f"/partners/share/{idu}/list").json() == []
+        # POST /partners/profiles : titulaire 403, admin 200
+        assert ca.post("/partners/profiles", json={"nom": "profil pirate"}).status_code == 403
+        cadm = TestClient(app_client.app, base_url="https://testserver"); _login_admin(cadm, eadm)
+        assert cadm.post("/partners/profiles", json={"nom": "profil admin M-K"}).status_code == 200
+    finally:
+        _purge(ea, eb, eadm)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM share_links WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM match_profiles WHERE nom = 'profil admin M-K'"))
+            s.commit()
+
+
+def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
+    """M-K P2-5 : au-delà du plafond JOURNALIER (kind 'nl'), /ia/search renvoie un 429 honnête.
+    Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée."""
+    from labuse import config
+    monkeypatch.setenv("LABUSE_NL_QUOTA_JOUR", "2")
+    config.get_settings.cache_clear()
+    email = f"nl-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, email)
+        assert c.post("/ia/search", json={"text": "terrains à Saint-Paul"}).status_code == 200
+        assert c.post("/ia/search", json={"text": "grandes parcelles"}).status_code == 200
+        r = c.post("/ia/search", json={"text": "encore une recherche"})   # 3e > quota 2
+        assert r.status_code == 429, r.text
+        assert "Quota" in r.json()["detail"]["detail"]
+    finally:
+        _purge(email)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM usage_compteurs WHERE sujet=:s AND kind='nl'"), {"s": f"c:{cid}"}); s.commit()
+        config.get_settings.cache_clear()
+
+
+def test_quota_dossier_epingle_au_compte_survit_au_relogin(app_client):
+    """M-K P2-38 : le quota mensuel de dossiers est compté PAR COMPTE — un logout/login ne le
+    remet PAS à zéro (avant, le sujet-session changeait à chaque session → quota contournable,
+    le mensuel Essentiel étant le plus exposé)."""
+    email = f"q-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, email)
+        assert c.get("/dossier/statut").json()["utilises_mois"] == 0
+        # un dossier généré ce mois-ci, compté sur le sujet COMPTE (« c:<cid> »)
+        with session_scope() as s:
+            s.execute(text("INSERT INTO usage_compteurs (jour, sujet, kind, n) "
+                           "VALUES (CURRENT_DATE, :s, 'dossier', 1)"), {"s": f"c:{cid}"})
+            s.commit()
+        assert c.get("/dossier/statut").json()["utilises_mois"] == 1
+        # logout puis relogin (nouvelle session, nouveau cookie) → le compteur NE bouge PAS
+        c.get("/logout", follow_redirects=False)
+        c2 = TestClient(app_client.app, base_url="https://testserver"); _login(c2, email)
+        assert c2.get("/dossier/statut").json()["utilises_mois"] == 1
+    finally:
+        _purge(email)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM usage_compteurs WHERE sujet = :s"), {"s": f"c:{cid}"}); s.commit()
+
+
+def test_gate_admin_protection_et_bilan(app_client):
+    """M-K P1-10/P1-11 : un TITULAIRE (client payant authentifié) est REFUSÉ (403) sur les
+    routes d'administration (tableau protection, gel/dégel d'un sujet) et sur POST
+    /bilan/params (paramètres servis à tous) ; un ADMIN n'est jamais 403."""
+    et, eadm = f"t-{uuid.uuid4().hex[:8]}@x.test", f"adm-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(et); _compte_actif(eadm)
+    routes = [("get", "/protection/admin", None),
+              ("post", "/protection/admin/gel/1.2.3.4", None),
+              ("post", "/protection/admin/degel/1.2.3.4", None),
+              ("post", "/bilan/params", {"secteur": "*", "param": "prix_sortie_m2", "value": 2500})]
+    try:
+        ct = TestClient(app_client.app, base_url="https://testserver"); _login(ct, et)
+        cadm = TestClient(app_client.app, base_url="https://testserver"); _login_admin(cadm, eadm)
+        for meth, path, body in routes:
+            kw = {"json": body} if body is not None else {}
+            assert getattr(ct, meth)(path, **kw).status_code == 403, f"titulaire non bloqué sur {path}"
+            radm = getattr(cadm, meth)(path, **kw).status_code
+            assert radm != 403, f"admin bloqué à tort sur {path} (reçu {radm})"
+    finally:
+        _purge(et, eadm)

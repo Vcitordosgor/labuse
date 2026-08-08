@@ -63,9 +63,10 @@ def evaluate_parcels(
 ) -> list[EvaluationOutcome]:
     """Évalue un ensemble de parcelles (offre A : N=1 ; offre B : toute la commune).
 
-    Si `ai_provider` est fourni, l'agent IA (§9) produit un JSON borné validé, dont
-    l'`opportunity_score_adjustment` (∈ [−20, 20]) corrige le score, et l'ensemble
-    est stocké dans parcel_evaluations.ai_payload.
+    Si `ai_provider` est fourni, l'agent IA (§9) produit un JSON borné validé, stocké
+    dans parcel_evaluations.ai_payload — narratif SEUL. L'IA ne touche AUCUN score
+    (doctrine M11) : compute_opportunity reçoit ai_adjustment=0 partout, et le champ
+    d'ajustement a été retiré du schéma (M-K P2-44).
     """
     ctx = EvalContext(session)
     ctx.prime(parcel_ids)  # précalcul batch (commune entière) — sinon 1 requête/parcelle×couche

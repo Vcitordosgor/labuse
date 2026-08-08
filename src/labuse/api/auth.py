@@ -145,6 +145,34 @@ def token_ok(token: str | None) -> bool:
         return False
 
 
+def exiger_admin(request) -> dict:
+    """Gate ADMIN (M-K, P1-10/P1-11/P2-35) — réutilisable par tout endpoint d'administration
+    (paramètres de bilan servis à tous, gel/dégel d'un sujet, re-score d'une parcelle…).
+
+    - auth non active (local/rideau ouvert, comme test_api) → no-op : le reste de l'auth est
+      déjà désactivé là, on ne durcit pas ce seul point ; hors 'local' `enabled()` est
+      TOUJOURS vrai (fail-closed), donc le gate est actif en pilot/production ;
+    - session UTILISATEUR de rôle 'admin' → OK ;
+    - session UTILISATEUR non-admin (titulaire/membre/qa = client payant) → 403 ;
+    - session PILOTE (mot de passe partagé, pas de compte utilisateur) → OK (admin de fait) ;
+    - aucune session valide → 401.
+
+    Double-vérifie la session (ne suppose pas la garde globale) pour rester correct même
+    appelé hors garde."""
+    from fastapi import HTTPException
+    if not enabled():
+        return {"role": "local"}
+    cookie = request.cookies.get(COOKIE) or request.cookies.get("session")
+    info = session_info(cookie)
+    if info is not None:
+        if info.get("role") != "admin":
+            raise HTTPException(403, "Action réservée aux administrateurs LABUSE.")
+        return info
+    if token_ok(cookie):          # session pilote (mot de passe partagé) = admin de fait
+        return {"role": "pilote"}
+    raise HTTPException(401, "Session administrateur requise.")
+
+
 def password_ok(candidate: str) -> bool:
     """Compare en temps constant ; supporte « sha256:<hex> » pour ne pas mettre le
     mot de passe en clair dans l'environnement si l'opérateur préfère un hash."""

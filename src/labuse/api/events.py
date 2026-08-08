@@ -377,13 +377,12 @@ def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depe
         raise HTTPException(422, "mois ∈ {3, 6, 12, 24}")
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")
-    compte_id = None
-    try:
-        from .auth import session_info
-        info = session_info(request.cookies.get("labuse_session") or request.cookies.get("session"))
-        compte_id = info["compte_id"] if info else None
-    except Exception:  # noqa: BLE001
-        pass
+    # M-K (P2-65) : chemin UNIQUE — current_compte (request.state, posé par la garde d'auth).
+    # Plus de lecture cookie à la main : une session invalide est déjà 401 en amont ; None =
+    # bucket pilote légitime. Avant, un try/except silencieux rangeait la réalerte dans le feed
+    # pilote (compte_id NULL) au lieu du client, sans erreur.
+    from .tenant import current_compte
+    compte_id = current_compte(request)
     cur = db.execute(text(
         "SELECT tier, event_date FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
         {"r": Q_A_RUN_LABEL, "i": idu}).mappings().first()

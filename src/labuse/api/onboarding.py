@@ -634,12 +634,10 @@ def flash_telecharger(token: str = "", db: Session = Depends(get_db)):
 # n'affiche JAMAIS cette marque (produit LABUSE).
 
 def _compte_session(request: Request, db) -> int:
-    from .auth import session_info
-    tok = request.cookies.get("labuse_session") or request.cookies.get("session")
-    info = session_info(tok)
-    if not info:
-        raise HTTPException(401, "Session requise — connectez-vous à votre compte.")
-    return int(info["compte_id"])
+    # M-K (P2-65) : délègue au résolveur UNIQUE tenant.compte_ou_401 (current_compte + 401 si
+    # None). Plus de lecture cookie à la main — même règle partout.
+    from .tenant import compte_ou_401
+    return compte_ou_401(request)
 
 
 @router.post("/moi/logo", include_in_schema=False)

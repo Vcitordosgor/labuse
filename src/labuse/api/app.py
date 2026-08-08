@@ -3475,8 +3475,12 @@ def get_bilan_params(secteur: str = Query("*"), db: Session = Depends(get_db)) -
 
 
 @app.post("/bilan/params")
-def set_bilan_param(body: BilanParamIn, db: Session = Depends(get_db)) -> dict:
-    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre)."""
+def set_bilan_param(body: BilanParamIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre).
+    GATE ADMIN (M-K P1-10) : ces paramètres sont SERVIS À TOUS ; seul un admin les réécrit
+    (sans le gate, n'importe quel client payant réécrivait le bilan de tout le monde)."""
+    from . import auth
+    auth.exiger_admin(request)
     from ..faisabilite import bilan_params as bp
     try:
         bp.save(db, body.secteur.strip() or "*", body.param, body.value)
@@ -3501,10 +3505,15 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
 
 
 @app.post("/parcels/{idu}/evaluate")
-def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db)) -> dict:
+def evaluate_one(idu: str, request: Request, ai: bool = Query(False), db: Session = Depends(get_db)) -> dict:
+    """Re-score + PERSISTE une parcelle (rail ops/admin legacy). GATE ADMIN (M-K P2-35) :
+    écrivain lourd (DELETE+INSERT cascade, appel IA optionnel), aucun appelant front — réservé
+    à l'admin plutôt que retiré (encore utilisé en ops/QA)."""
     from ..ai import get_provider
     from ..cascade import evaluate_parcels
+    from . import auth
 
+    auth.exiger_admin(request)
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
@@ -3579,57 +3588,65 @@ class AlerteAckIn(BaseModel):
 
 
 @app.get("/watch-zones")
-def watch_zones_list(commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
-    """Zones de veille définies (polygones surveillés)."""
+def watch_zones_list(request: Request, commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+    """Zones de veille du compte connecté (cloison M-K : jamais celles d'un autre compte)."""
     from .. import alertes
+    from .tenant import current_compte
     commune = commune or config.get_settings().pilot_commune_name
-    return alertes.list_watch_zones(db, commune)
+    return alertes.list_watch_zones(db, commune, current_compte(request))
 
 
 @app.post("/watch-zones")
-def watch_zones_create(body: WatchZoneIn, db: Session = Depends(get_db)) -> dict:
+def watch_zones_create(body: WatchZoneIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Crée une zone de veille (polygone dessiné). Détecte aussitôt les nouveautés du scope."""
     from .. import alertes
+    from .tenant import current_compte
     if (body.geometry or {}).get("type") != "Polygon":
         raise HTTPException(422, "geometry doit être un Polygon GeoJSON")
+    cid = current_compte(request)
     commune = body.commune or config.get_settings().pilot_commune_name
-    zone = alertes.create_watch_zone(db, body.name, commune, body.geometry)
-    counts = alertes.compute_alertes(db, commune)
+    zone = alertes.create_watch_zone(db, body.name, commune, body.geometry, cid)
+    counts = alertes.compute_alertes(db, commune, cid)
     return {"zone": zone, "detected": counts}
 
 
 @app.delete("/watch-zones/{zone_id}")
-def watch_zones_delete(zone_id: int, db: Session = Depends(get_db)) -> dict:
-    """Supprime une zone de veille (et ses alertes, par cascade)."""
+def watch_zones_delete(zone_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Supprime une zone de veille du compte (et ses alertes, par cascade). SEC-IDOR : 404 si
+    la zone n'est pas au compte connecté."""
     from .. import alertes
-    if not alertes.delete_watch_zone(db, zone_id):
+    from .tenant import current_compte
+    if not alertes.delete_watch_zone(db, zone_id, current_compte(request)):
         raise HTTPException(404, "Zone de veille inconnue")
     return {"ok": True}
 
 
 @app.get("/alertes")
-def alertes_list(commune: str | None = None, only_new: bool = False,
+def alertes_list(request: Request, commune: str | None = None, only_new: bool = False,
                  limit: int = Query(100, ge=0, le=1000), db: Session = Depends(get_db)) -> list[dict]:
-    """Liste des « nouveautés » : ventes DVF en zone de veille + permis près d'une parcelle suivie."""
+    """Liste des « nouveautés » DU COMPTE : ventes DVF en zone de veille + permis près d'une parcelle suivie."""
     from .. import alertes
+    from .tenant import current_compte
     commune = commune or config.get_settings().pilot_commune_name
-    return alertes.list_alertes(db, commune, only_new=only_new, limit=limit)
+    return alertes.list_alertes(db, commune, current_compte(request), only_new=only_new, limit=limit)
 
 
 @app.post("/alertes/refresh")
-def alertes_refresh(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
-    """Re-détecte les nouveautés du scope au rafraîchissement des données (idempotent)."""
+def alertes_refresh(request: Request, commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Re-détecte les nouveautés du scope du compte au rafraîchissement des données (idempotent)."""
     from .. import alertes
+    from .tenant import current_compte
     commune = commune or config.get_settings().pilot_commune_name
-    return alertes.compute_alertes(db, commune)
+    return alertes.compute_alertes(db, commune, current_compte(request))
 
 
 @app.post("/alertes/ack")
-def alertes_ack(body: AlerteAckIn, db: Session = Depends(get_db)) -> dict:
-    """Marque une nouveauté (ou toutes celles de la commune) comme lue."""
+def alertes_ack(body: AlerteAckIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Marque une nouveauté du compte (ou toutes celles de la commune) comme lue. SEC-IDOR."""
     from .. import alertes
+    from .tenant import current_compte
     commune = body.commune or config.get_settings().pilot_commune_name
-    n = alertes.acknowledge(db, alerte_id=body.id, commune=commune)
+    n = alertes.acknowledge(db, current_compte(request), alerte_id=body.id, commune=commune)
     return {"ok": True, "acknowledged": n}
 
 

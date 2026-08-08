@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from jsonschema import ValidationError, validate
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -322,8 +322,31 @@ Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe 
 "programme" — jamais dans un objet de filtres."""
 
 
+def _porte_nl(request) -> None:
+    """M-K (P2-5) : plafond JOURNALIER par sujet des appels IA en langage naturel (kind 'nl').
+    Le kind 'nl' était déclaré dans usage_compteurs SANS aucun écrivain → /ia/* n'avait que le
+    60/min, un client scripté brûlait du sonnet toute la journée. Recette copilote.creer_run
+    (compteur_incr_et_lire + 429 même style que M23). request None = réutilisation INTERNE
+    (events.veille_nl) → exemptée ; dev_mode → exempté."""
+    if request is None:
+        return
+    from datetime import date
+
+    from .. import config
+    from .protection import compteur_incr_et_lire, sujet_quota
+    s = config.get_settings()
+    if s.dev_mode:
+        return
+    n = compteur_incr_et_lire(date.today().isoformat(), sujet_quota(request), "nl")
+    if n > s.nl_quota_jour:
+        raise HTTPException(429, detail={
+            "detail": f"Quota d'analyses IA atteint ({s.nl_quota_jour}/jour). Reprend à minuit.",
+            "quota": s.nl_quota_jour, "gel_jusqua": "minuit"})
+
+
 @router.post("/search")
-def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
+def ia_search(body: SearchIn, db: Session = Depends(get_db), request: Request = None) -> dict:
+    _porte_nl(request)   # M-K (P2-5) : plafond journalier des analyses IA (kind 'nl')
     # M11 B2 : question AGRÉGÉE (compter/classer) → réponse CHIFFRÉE SQL-sourcée, ≠ filtre.
     # Le chiffre vient d'un COUNT/GROUP BY réel ; la couche 2 du socle rejette tout compte inventé.
     # Repli gracieux : answer_aggregate renvoie None (API indispo / question inexploitable) → flux filtres.
@@ -524,7 +547,8 @@ def _neutralise_opinion(data: dict, db: Session) -> dict:
 
 
 @router.post("/entretien")
-def ia_entretien(body: EntretienIn, db: Session = Depends(get_db)) -> dict:
+def ia_entretien(body: EntretienIn, db: Session = Depends(get_db), request: Request = None) -> dict:
+    _porte_nl(request)   # M-K (P2-5)
     """L'entretien de cadrage projet — RÉEL uniquement (doctrine : pas d'entretien simulé).
     Sans clé API, on renvoie `fallback` : le front bascule sur la recherche directe."""
     if not _has_key():
@@ -627,7 +651,8 @@ def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
 
 
 @router.post("/synthese/{idu}")
-def ia_synthese(idu: str, db: Session = Depends(get_db)) -> dict:
+def ia_synthese(idu: str, db: Session = Depends(get_db), request: Request = None) -> dict:
+    _porte_nl(request)   # M-K (P2-5)
     f = _fiche_json(db, idu)
     if _has_key():
         return {"stub": False, "texte": _real_text(db, "synthese", _SYNTH_SYSTEM, f),
@@ -638,7 +663,8 @@ def ia_synthese(idu: str, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/pourquoi/{idu}")
-def ia_pourquoi(idu: str, db: Session = Depends(get_db)) -> dict:
+def ia_pourquoi(idu: str, db: Session = Depends(get_db), request: Request = None) -> dict:
+    _porte_nl(request)   # M-K (P2-5)
     f = _fiche_json(db, idu)
     if _has_key():
         sys_p = ("Tu expliques pédagogiquement un score foncier à partir du JSON de lignes tracées. "

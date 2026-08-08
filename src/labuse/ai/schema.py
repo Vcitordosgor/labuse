@@ -18,7 +18,7 @@ AI_OUTPUT_SCHEMA: dict = {
     "required": [
         "executive_summary", "confirmed_facts", "positive_signals", "blocking_or_risk_signals",
         "false_positive_risks", "missing_data", "must_check_before_showing_developer",
-        "recommended_status", "opportunity_score_adjustment", "confidence_level",
+        "recommended_status", "confidence_level",
     ],
     "properties": {
         "executive_summary": {"type": "string"},
@@ -58,7 +58,10 @@ AI_OUTPUT_SCHEMA: dict = {
         "missing_data": {"type": "array", "items": {"type": "string"}},
         "must_check_before_showing_developer": {"type": "array", "items": {"type": "string"}},
         "recommended_status": {"enum": _STATUS},
-        "opportunity_score_adjustment": {"type": "integer", "minimum": -20, "maximum": 20},
+        # M-K (P2-44) : `opportunity_score_adjustment` RETIRÉ — une IA qui ajuste un score
+        # contredit la doctrine M11 (« l'IA ne calcule ni ne modifie aucun score »). Preuve
+        # 0-caller : compute_opportunity reçoit ai_adjustment=0 partout (cascade/pipeline.py),
+        # le champ n'atteignait aucun score mais restait servi (fiche.ai). Plus produit du tout.
         "confidence_level": {"enum": _CONFIDENCE},
         "developer_pitch": {"type": "string"},
         "warnings": {"type": "array", "items": {"type": "string"}},
