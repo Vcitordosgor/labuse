@@ -409,10 +409,14 @@ def dryrun_evaluate_cmd(
     import time
 
     from .cascade import evaluate_parcels
+    from .cascade.cablage import check_cablage_scoring
 
     nom = _resolve_commune(commune)
     t0 = time.time()
     with session_scope() as s:
+        # M-B : garde de câblage COMPLÈTE (statique + kinds spatiaux en base) au lancement du run —
+        # la part DB (~1,2 s) est ici, pas au boot de l'API. Bloquante, nomme le fautif.
+        check_cablage_scoring(session=s)
         ids = _parcel_ids(s, nom)
         if not ids:
             _fail_zero_parcel(s, commune, nom)
