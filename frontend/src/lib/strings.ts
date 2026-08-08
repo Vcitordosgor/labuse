@@ -11,8 +11,9 @@
 export const CLIENT = {
   // ── EXPRESS-01 · Volet B — AVIS IA (au mot près). SOURCE UNIQUE, réutilisée par TOUTES
   //    les surfaces front où l'IA s'exprime (fiche AskBar/faisa/traducteur, recherche IA,
-  //    entretien, Copilote) via <AvisIA>. Jumelle Python `AVIS_IA` (export.py, banquier.py)
-  //    à garder identique au mot près. Ne jamais recopier ce texte ailleurs. ──
+  //    entretien, Copilote) via <AvisIA>. Jumelle Python `AVIS_IA`, défini dans ai/avis.py
+  //    (source unique, importé par export.py et banquier.py) — à garder identique au mot
+  //    près. Ne jamais recopier ce texte ailleurs. ──
   avisIa: "L'IA ne juge pas le sentiment d'une communauté, n'évalue pas le risque politique d'un processus d'autorisation, et ne remplace pas les éléments relationnels du sourcing.",
 
   // ── B1/B2 · métrique ×N et libellés de liste ──────────────────────────────

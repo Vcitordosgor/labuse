@@ -144,7 +144,9 @@ def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
     row = db.execute(text("SELECT id, idu, statut FROM flash_commandes WHERE stripe_session_id = :s"),
                      {"s": session_id}).mappings().first()
     if not row:
-        # webhook arrivé avant l'insert (course rare) — créer la ligne depuis les métadonnées
+        # webhook arrivé avant l'insert (course rare) : on ne fait RIEN ici (pas de création
+        # depuis les métadonnées). La ligne est posée par le flux d'insert normal, et la reprise
+        # idempotente de `flash_statut` (poll) fait le fulfillment au prochain passage.
         return
     if row["statut"] in ("generee",):
         return

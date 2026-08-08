@@ -606,8 +606,12 @@ def _stub_synthese(f: dict) -> str:
     pos = sorted([ln for ln in f["lines"] if (ln["weight"] or 0) > 0], key=lambda x: -x["weight"])[:3]
     neg = sorted([ln for ln in f["lines"] if (ln["weight"] or 0) < 0], key=lambda x: x["weight"])[:3]
     unk = [ln for ln in f["lines"] if ln["result"] == "UNKNOWN"]
-    p = [f"Parcelle {f['idu']} ({f.get('surface_m2') or '?'} m², {f['commune']}) — statut "
-         f"« {f['statut']} » : qualité {f['q_score']}/100, accessibilité {f['a_score']}/100, "
+    # M-C (F1) : citer le VERDICT SERVI (score_v2.tier), pas la matrice morte M37. Le champ
+    # `statut` (matrice_statut) a été retiré du payload de fiche en M48/F4 ; le lire ici
+    # levait un KeyError et, avant M48, contredisait le tier servi.
+    tier = (f.get("score_v2") or {}).get("tier") or "non classée"
+    p = [f"Parcelle {f['idu']} ({f.get('surface_m2') or '?'} m², {f['commune']}) — verdict "
+         f"« {tier} » : qualité {f['q_score']}/100, accessibilité {f['a_score']}/100, "
          f"complétude {f['completeness_score']} %."]
     if f.get("evenement") == "rouge":
         p.append(f"⚠ Événement : {f.get('evenement_detail')}")
