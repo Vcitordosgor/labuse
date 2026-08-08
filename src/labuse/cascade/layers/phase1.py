@@ -24,6 +24,11 @@ SRC_SAR = "SAR Réunion (PEIGEO)"
 SRC_GPU = "Urbanisme PLU/GPU (API Carto)"
 SRC_SAFER = "Zonage SAFER (DAAF)"
 SRC_GEORISQUES = "Géorisques"
+# M-G (P2) : les deux FLUX réels du kind='ppr' — le zoné rouge/bleu vient de DEAL Lizmap ; l'assiette
+# SUP PM1 (repli quand la commune n'a pas de PPR zoné dématérialisé) vient de l'API Carto GPU. La
+# source affichée doit nommer LE FLUX réel, jamais « GPU » pour du zoné DEAL.
+SRC_DEAL_PPR = "DEAL Réunion — PPR / aléas"
+SRC_SUP_GPU = "SUP — assiettes GPU (API Carto)"
 SRC_TRAIT = "DEAL Réunion — trait de côte"
 SRC_ALTI = "RGE ALTI (altimétrie)"
 SRC_ABF = "ABF / Monuments historiques"
@@ -486,34 +491,40 @@ class RisquesLayer(Layer):
         for i in ctx.intersections(parcel.id, kind_ppr):
             if i.coverage <= 0:
                 continue
-            if i.subtype in red:
+            attrs = i.attrs or {}
+            # M-G : distinguer l'ASSIETTE SUP PM1 (API Carto GPU, périmètre — zonage interne inconnu)
+            # du PPR ZONÉ réglementaire DEAL (rouge INTERDICTION / bleu PRESCRIPTION). Le zoné DEAL a
+            # un DEGRE (INTERDICTION/PRESCRIPTION) ; le PM1 porte un code de risque + suptype='PM1'.
+            is_pm1 = (attrs.get("suptype") == "PM1" or attrs.get("statut") == "reglementaire"
+                      or (i.subtype or "").upper() not in ("INTERDICTION", "PRESCRIPTION"))
+            src = SRC_SUP_GPU if is_pm1 else SRC_DEAL_PPR   # P2 : la source nomme le FLUX réel
+            risque = attrs.get("risque") or "risque naturel"
+            cov_pct = i.coverage * 100
+            pct = f" (~{cov_pct:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
+            if i.subtype in red:   # 'INTERDICTION' = zone rouge DEAL (jamais une assiette PM1)
                 verdicts.append(
-                    hard_exclude(self.name, "Exclue : PPR zone rouge (inconstructible).", kind="exclue", source=SRC_GPU)
-                )
+                    hard_exclude(self.name, "Exclue : PPR zone rouge (inconstructible).",
+                                 kind="exclue", source=src))
+                continue
+            # Intersection MARGINALE (< min_coverage_pct) → note informative FAIBLE (bord rogné ≠ zone
+            # critique) ; sinon FORT prudent. Sévérité INCHANGÉE (score intact) ; seul le LIBELLÉ et la
+            # SOURCE changent selon PM1/zoné (M-G).
+            min_cov = float(params.get("min_coverage_pct", 0))
+            marginal = cov_pct < min_cov
+            marg = f", intersection marginale (< {min_cov:.0f} %)" if marginal else ""
+            if is_pm1:
+                # M-G (point 4) : l'assiette PM1 est un PÉRIMÈTRE réglementaire, PAS un zonage
+                # rouge/bleu. Boussole : le doute NE CLASSE PAS — on DIT que le zonage interne est
+                # inconnu, jamais une exclusion.
+                detail = (f"Périmètre réglementaire PPR {risque}{pct}{marg} — assiette de servitude "
+                          "(PM1) : le zonage interne rouge/bleu N'EST PAS connu ; "
+                          + ("à vérifier au règlement, sans présomption de contrainte." if marginal
+                             else "prescriptions possibles à vérifier au règlement — jamais une exclusion automatique."))
             else:
-                # Assiette PPR (servitude PM1) : on connaît le PÉRIMÈTRE réglementaire, pas le
-                # zonage rouge/bleue interne → flag fort PRUDENT, jamais une exclusion automatique.
-                risque = (i.attrs or {}).get("risque") or "risque naturel"
-                cov_pct = i.coverage * 100
-                pct = f" (~{cov_pct:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
-                # Étape A (quick-win PPR v2) : une intersection MARGINALE du périmètre PM1 (couverture
-                # < min_coverage_pct) ne suffit pas à présumer une contrainte forte — on ignore si la
-                # parcelle est en rouge ou bleu, et un bord rogné est rarement la zone critique → note
-                # INFORMATIVE faible (jamais un flag fort bloquant). Le rouge/bleu réglementaire reste
-                # géré séparément (Étape B) ; le seuil de scoring n'est pas modifié.
-                min_cov = float(params.get("min_coverage_pct", 0))
-                if cov_pct < min_cov:
-                    verdicts.append(soft_flag(
-                        self.name,
-                        f"Périmètre PPR {risque}{pct} — intersection marginale (< {min_cov:.0f} %) : "
-                        "à vérifier au règlement, sans présomption de contrainte forte.",
-                        Severity.FAIBLE, source=SRC_GPU))
-                else:
-                    verdicts.append(soft_flag(
-                        self.name,
-                        f"Périmètre PPR {risque}{pct} — servitude réglementaire approuvée ; prescriptions "
-                        "applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie).",
-                        Severity.FORT, source=SRC_GPU))
+                # Zone BLEUE DEAL (PRESCRIPTION) : zonage connu, constructible sous prescriptions.
+                detail = (f"Zone bleue PPR {risque}{pct}{marg} — constructible SOUS PRESCRIPTIONS "
+                          "(règlement DEAL)" + (", à confirmer sur l'intersection marginale." if marginal else "."))
+            verdicts.append(soft_flag(self.name, detail, Severity.FAIBLE if marginal else Severity.FORT, source=src))
 
         sev_map = params.get("alea_severity_map", {})
         for i in ctx.intersections(parcel.id, kind_alea):
