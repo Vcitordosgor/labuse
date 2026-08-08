@@ -18,6 +18,12 @@ from .plu_rules import A_VERIFIER, EXEMPT, ZoneRules
 
 SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → "trop exigu"
 
+# hé prudent (~R+2) des zones U/AU des communes NON outillées (config/plu_<commune>.yaml absent).
+# SOURCE UNIQUE du défaut générique (M-N P1-13) : partagée par le champ de dataclass ci-dessous ET
+# par plu_rules._zone_generique, pour que l'estimation d'une commune sans YAML ne LISE JAMAIS le
+# YAML Saint-Paul (emprunt à la commune la mieux calibrée = faux « générique »).
+HE_DEFAUT_GENERIQUE_M = 9.0
+
 
 @dataclass
 class Hypotheses:
@@ -47,7 +53,7 @@ class Hypotheses:
     # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
     niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
     sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
-    he_defaut_generique_m: float = 9.0          # hé prudent des zones U/AU NON outillées (≈ R+2)
+    he_defaut_generique_m: float = HE_DEFAUT_GENERIQUE_M   # hé prudent des zones U/AU NON outillées (≈ R+2)
     # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
     pct_lls: float = 0.0              # % de logements aidés (validé Vic : 30 % — Art. 2 règlement PLU)
     prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (PLACEHOLDER, 0 = non calibré)
@@ -57,17 +63,37 @@ class Hypotheses:
     mixite_sdp_seuil_m2: float = 1500.0       # « SDP ≥ 1 500 m² » (bornes 1500/1800 du texte)
     mixite_logements_seuil: float = 20.0      # « programme de 20 logements ou plus »
     mixite_terrain_seuil_m2: float = 6000.0   # « terrain d'habitation de plus de 6 000 m² »
+    # --- Provenance D'AFFICHAGE (M-N P1-13, n'altère AUCUN calcul) ---
+    # commune servie (traçabilité) et RÉFÉRENCE SOURCÉE des seuils de mixité : renseignée UNIQUEMENT
+    # si le YAML de la commune la DÉCLARE explicitement (`mixite_source_ref`, ex. « Art. 2 règlement
+    # PLU »). La seule présence des NOMBRES (souvent recopiés de Saint-Paul dans les YAML communaux)
+    # ne suffit pas à en faire un Sourcé : None → étiquette « Estimé — seuils par défaut », JAMAIS
+    # l'Art. 2 d'une autre commune (un Estimé emprunté présenté en Sourcé est interdit — boussole).
+    commune: str | None = None
+    mixite_source_ref: str | None = None
 
     @classmethod
-    def charger(cls) -> "Hypotheses":
-        """Hypothèses depuis la section `hypotheses_faisabilite` du YAML (config éditable
-        sans toucher au code) ; sinon valeurs par défaut."""
-        from .plu_rules import _doc
-        h = (_doc().get("hypotheses_faisabilite") or {})
+    def charger(cls, commune: str | None = None) -> "Hypotheses":
+        """Hypothèses depuis la section `hypotheses_faisabilite` du YAML PLU de la COMMUNE (config
+        éditable sans toucher au code).
+
+        M-N P1-13 — `commune` est propagée par les appelants (paramètre optionnel, back-compat) :
+          - `commune=None` → Saint-Paul (comportement historique : pilote & tests) ;
+          - commune OUTILLÉE (config/plu_<slug>.yaml) → SA section `hypotheses_faisabilite` ;
+          - commune SANS YAML → DÉFAUTS DU DATACLASS, JAMAIS Saint-Paul (plus d'emprunt silencieux
+            des seuils/coûts de la commune la mieux calibrée).
+        On mémorise la provenance des seuils de mixité (`mixite_source`) pour l'affichage."""
+        from .plu_rules import _hypotheses_faisabilite
+        h = _hypotheses_faisabilite(commune)
         out = cls()
+        out.commune = commune
         for k, v in h.items():
             if hasattr(out, k) and isinstance(v, (int, float)):
                 setattr(out, k, float(v))
+        # Source AFFICHÉE des seuils de mixité : « Art. 2 » SEULEMENT si le YAML de la commune la
+        # DÉCLARE (mixite_source_ref) — des nombres recopiés de Saint-Paul ne sont pas un Sourcé.
+        _ref = h.get("mixite_source_ref")
+        out.mixite_source_ref = _ref.strip() if isinstance(_ref, str) and _ref.strip() else None
         return out
 
 

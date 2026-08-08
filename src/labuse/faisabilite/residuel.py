@@ -61,7 +61,7 @@ def compute_residuel(session: Session, parcel_id: int,
     if emprise_max <= 0 or sdp_max <= 0:
         return {"disponible": False, "raison": "Capacité max nulle — résiduel non défini."}
 
-    hyp = Hypotheses.charger()
+    hyp = Hypotheses.charger(getattr(ctx, "commune", None))   # M-N P1-13 : hypothèses de la commune
     st = bati_mod.stats_batch(session, [parcel_id]).get(parcel_id, {})
     surface = float(ctx.surface_m2 or 0.0)
     emprise_batie = float(st.get("bati_ratio", 0.0)) * surface           # emprise au sol bâtie (BD TOPO)

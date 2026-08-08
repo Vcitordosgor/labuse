@@ -270,7 +270,7 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
     shab = fr.get("shab_vendable_m2")
     if not shab:
         return None, None
-    hyp = Hypotheses.charger()
+    hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la COMMUNE servie (mixité, coûts)
     rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
     secteur = (rules.bassin if rules else None) or "Saint-Paul"
     ps = resolve_prix_sortie_servi(session, parcel_id, secteur)
@@ -285,7 +285,8 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     b = compute_bilan(float(shab), float(ctx.surface_m2 or 0),
-                      sector_price(session, parcel_id, hyp), hyp, contexte_eco=eco, bilan_params=bp)
+                      sector_price(session, parcel_id, hyp), hyp, contexte_eco=eco,
+                      bilan_params=bp, prix_neuf=ps)   # M-N P2-47 : fiabilité/dispo du bilan = prix NEUF
     return b, ps
 
 
@@ -313,9 +314,24 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
                        f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
 
 
+def _fiabilite_prix_neuf(niveau: str | None) -> tuple[str, list[str]]:
+    """M-N P2-47 — fiabilité du bilan DÉRIVÉE du prix de sortie NEUF résolu (jamais de la dispersion
+    de l'ancien). Local observé (secteur/commune) ou bassin sourcé → « fiable » ; repli ÎLE
+    (estimation ±12 %) → « fragile » (montants arrondis + avertissement). Renvoie (niveau, raisons)."""
+    if niveau in ("override_bassin", "secteur", "commune"):
+        return "fiable", []
+    if niveau == "ile_validee":
+        return "fragile", ["prix de sortie neuf estimé par repli île (±12 %, validé sur cette "
+                           "commune) — montants arrondis"]
+    if niveau == "ile_sans_operation":
+        return "fragile", ["prix de sortie neuf estimé par repli île — aucune opération de marché "
+                           "observée sur cette commune ; ordre de grandeur"]
+    return "fragile", ["prix de sortie neuf estimé — fiabilité prudente"]
+
+
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                   prix: dict, hyp: Hypotheses, contexte_eco: dict | None = None,
-                  bilan_params: dict | None = None) -> Bilan:
+                  bilan_params: dict | None = None, prix_neuf: dict | None = None) -> Bilan:
     """Cœur pur (testable). Protège le bilan selon la fiabilité du prix.
 
     `bilan_params` (1.C) = paramètres résolus par SECTEUR (prix neuf override, coût construction,
@@ -329,10 +345,28 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     calibrés (> 0), le CA est PONDÉRÉ : CA = SDP_vendable × [(1−pct_lls)×prix_DVF +
     pct_lls×prix_m2_lls] ; sinon avertissement PLACEHOLDER, CA inchangé. En zonage eaux
     pluviales, `majoration_vrd_pluvial` (%) majore le coût de construction (0 = neutre)."""
-    niveau = prix.get("fiabilite", "insuffisant")
-    raisons = prix.get("fiabilite_raisons", [])
+    # 1.C — paramètres effectifs (secteur si fourni, sinon hypothèses YAML).
+    bp = bilan_params or {}
 
-    if niveau == "insuffisant" or not prix.get("fiable"):
+    def _p(key: str, fallback: float) -> float:
+        v = bp.get(key)
+        return float(v) if v is not None else float(fallback)
+
+    prix_neuf_override = _p("prix_m2_neuf", 0.0)
+    # M-N P2-47 — quand le prix de sortie NEUF est résolu (override présent), c'est LUI qui gouverne
+    # la FIABILITÉ et la DISPONIBILITÉ du bilan ; sector_price (prix de l'EXISTANT) redevient
+    # purement documentaire (bloc comparables / prix_dvf, plus bas). Avant, un prix neuf parfaitement
+    # résolu pouvait se voir refuser son bilan — ou l'étiqueter « fragile » — sur la seule dispersion
+    # de l'ancien. Repli EXPLICITE : sans prix neuf (prix_neuf None ou override 0), le comportement
+    # historique (fiabilité de sector_price) s'applique inchangé — on ne crée aucun bilan silencieux.
+    neuf_actif = prix_neuf is not None and prix_neuf_override > 0
+    if neuf_actif:
+        niveau, raisons = _fiabilite_prix_neuf(prix_neuf.get("niveau"))
+    else:
+        niveau = prix.get("fiabilite", "insuffisant")
+        raisons = prix.get("fiabilite_raisons", [])
+
+    if not neuf_actif and (niveau == "insuffisant" or not prix.get("fiable")):
         return Bilan(False, "insuffisant",
                      f"Prix de sortie indisponible — échantillon DVF insuffisant "
                      f"({prix.get('n', 0)} vente(s) comparable(s)) : pas de bilan chiffré "
@@ -342,17 +376,14 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         return Bilan(False, "insuffisant", "Surface vendable nulle — pas de bilan.", prix, None, None)
 
     fragile = niveau == "fragile"
-    q1, med, q3 = prix["q1"], prix["median"], prix["q3"]
+    # q1/med/q3 portés par l'ancien DVF quand il est exploitable ; en repli (neuf actif + ancien
+    # insuffisant) ils sont écrasés juste après par le prix neuf → .get défensif, car sector_price
+    # « insuffisant » n'expose ni médiane ni quartiles (sinon KeyError sur un cas désormais servi).
+    q1 = prix.get("q1", prix_neuf_override)
+    med = prix.get("median", prix_neuf_override)
+    q3 = prix.get("q3", prix_neuf_override)
     surf = shab_vendable_m2
 
-    # 1.C — paramètres effectifs (secteur si fourni, sinon hypothèses YAML).
-    bp = bilan_params or {}
-
-    def _p(key: str, fallback: float) -> float:
-        v = bp.get(key)
-        return float(v) if v is not None else float(fallback)
-
-    prix_neuf_override = _p("prix_m2_neuf", 0.0)
     cout_m2 = _p("cout_construction_m2_sdp", 0.0)            # 0 → fourchette YAML bas/haut
     vrd_base = _p("cout_vrd_base", 0.0)
     maj_pente = _p("majoration_vrd_pente_pct", 0.0)
@@ -363,7 +394,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     prix_lls = _p("prix_m2_lls", hyp.prix_m2_lls)
     if prix_neuf_override > 0:                                # override du prix de sortie neuf
         q1 = med = q3 = prix_neuf_override
-    lieu = "commune entière" if prix.get("commune_fallback") else f"{prix['radius_m']:.0f} m"
+    lieu = "commune entière" if prix.get("commune_fallback") else f"{prix.get('radius_m', 0):.0f} m"
     steps: list[Step] = []
     hypotheses: list[str] = []
     avert: list[str] = []
@@ -371,17 +402,34 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     steps.append(Step("Surface habitable vendable",
                       "issue de la faisabilité (post-rendement, plafond, modulation)",
                       f"~{surf:.0f} m²", "faisabilité", prov="derive"))
-    detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
-              f"dans {lieu}"
-              + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")
-              + (f" · {prix['n_doublons']} doublon(s) écarté(s)" if prix.get("n_doublons") else ""))
-    steps.append(Step("Prix de vente (DVF secteur)", detail,
-                      f"{q1}–{q3} €/m² (médiane {med} ; min {prix['min']} / max {prix['max']})",
-                      f"DVF Région ODS · fiabilité {niveau}", prov="sourcee"))
+    if neuf_actif:
+        # Prix de SORTIE NEUF servi (mandat 28/07) — q1=med=q3=neuf. Sa fiabilité EST celle du
+        # bilan ; l'ancien DVF n'est ici que comparable documentaire (jamais le juge), et peut
+        # manquer sans que le bilan disparaisse (M-N P2-47).
+        ancien_dispo = prix.get("median") is not None and prix.get("periode")
+        note_anc = (f" · comparables ancien : {prix.get('n', 0)} ventes "
+                    f"({prix['periode'][0]}-{prix['periode'][1]})" if ancien_dispo
+                    else " · comparables ancien indisponibles (échantillon insuffisant)")
+        steps.append(Step("Prix de sortie neuf (marché)",
+                          (prix_neuf.get("label") or "prix de sortie neuf") + note_anc,
+                          f"{med} €/m² (habitable, neuf)",
+                          f"prix de sortie neuf · {prix_neuf.get('niveau')}", prov="sourcee"))
+    else:
+        detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
+                  f"dans {lieu}"
+                  + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")
+                  + (f" · {prix['n_doublons']} doublon(s) écarté(s)" if prix.get("n_doublons") else ""))
+        steps.append(Step("Prix de vente (DVF secteur)", detail,
+                          f"{q1}–{q3} €/m² (médiane {med} ; min {prix['min']} / max {prix['max']})",
+                          f"DVF Région ODS · fiabilité {niveau}", prov="sourcee"))
 
     eco = contexte_eco or {}
     mixite, pluvial = bool(eco.get("mixite")), bool(eco.get("pluvial"))
     p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
+    # M-N P1-13 — source AFFICHÉE des seuils de mixité : la référence Sourcée SEULEMENT si le YAML
+    # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut → jamais l'Art. 2 d'une
+    # autre commune (un Estimé emprunté ne se présente pas en Sourcé).
+    mixite_src = hyp.mixite_source_ref or "Estimé — seuils de mixité par défaut (Saint-Paul)"
     # Clause de mixité : déclenchée seulement si le PROGRAMME estimé franchit un seuil de l'Art. 2.
     clause = _clause_mixite(eco, hyp) if mixite else None
     declenchee = bool(clause and clause["declenchee"])
@@ -395,18 +443,23 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         if not declenchee:
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",
-                              "Art. 2 règlement PLU", prov="derive"))
+                              mixite_src, prov="derive"))
         elif pondere:
             steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
                               f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
                               f"{p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
                               f"{_px(med):.0f} €/m² (médiane pondérée)",
-                              "Art. 2 · pct_lls / prix_m2_lls", prov="estimee"))
-        else:  # déclenchée mais prix LLS non calibré → on NE chiffre PAS
+                              f"{mixite_src} · pct_lls / prix_m2_lls", prov="estimee"))
+        elif p_lls > 0:  # taux connu mais prix LLS non calibré → on NE chiffre PAS
             avert.append(
                 f"Clause de mixité sociale DÉCLENCHÉE ({clause['critere']}) — {p_lls:.0%} de "
                 f"logements aidés imposés ({lib_sms}). Impact non chiffré : prix LLS non calibré "
                 "(PLACEHOLDER) → saisir le prix LLS dans le panneau pour pondérer le CA.")
+        else:  # M-N P1-13 : taux de logements aidés NON calibré pour cette commune (seuils estimés)
+            avert.append(
+                f"Secteur de mixité sociale ({lib_sms}) — programme au-dessus des seuils estimés "
+                f"({clause['critere']}). Taux de logements aidés non calibré pour cette commune "
+                f"(seuils : {mixite_src}) → impact non chiffré.")
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
     sdp = surf * hyp.coef_plancher_habitable
@@ -472,12 +525,18 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       f"(fourchette {_eur(max(0, cf_bas))} – {_eur(cf_haut)})",
                       "dérivé", prov="derive"))
 
+    if neuf_actif:
+        prix_desc = (f"Prix de sortie = médiane du NEUF de marché "
+                     f"({prix_neuf.get('label') or prix_neuf.get('niveau')}) ≈ {med} €/m² habitable ; "
+                     "l'ancien DVF ne sert que de comparable documentaire.")
+    else:
+        prix_desc = (f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% "
+                     f"d'appartements), {prix['periode'][0]}-{prix['periode'][1]}, {lieu}.")
     hypotheses += [
         f"Coût de construction supposé {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m² "
         f"de surface de plancher (habitable × {hyp.coef_plancher_habitable:.2f}) — hypothèse prudente Réunion.",
         f"Marge promoteur supposée {hyp.marge_promoteur_pct:.0%} du CA ; frais annexes {hyp.frais_annexes_pct:.0%}.",
-        f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% d'appartements), "
-        f"{prix['periode'][0]}-{prix['periode'][1]}, {lieu}.",
+        prix_desc,
         "Le prix de sortie est une donnée de MARCHÉ (DVF) ; le bilan complet reste INDICATIF. "
         "À valider par un professionnel : coût travaux, marge, frais, TVA, VRD, stationnement et aléas.",
     ]
