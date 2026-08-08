@@ -91,6 +91,15 @@ FAMILY_CAPS = {"A": 35, "B": 25, "C": 15, "D": 25, "E": 15}
 # A, B, C, E : MAX intra-famille ; D : SOMME plafonnée.
 SUM_FAMILIES = {"D"}
 
+# ── Calendrier réglementaire DOM d'interdiction de mise en location des passoires (M-G, P2-36) ──
+# SOURCE UNIQUE, lue par TOUTES les surfaces qui affichent l'échéance — plus aucune date recopiée.
+# Loi Climat & Résilience (n°2021-1104 du 22/08/2021), application OUTRE-MER DIFFÉRÉE : le DPE
+# adapté au climat tropical n'est obligatoire dans les DROM que depuis le 01/07/2024, d'où un
+# calendrier DÉCALÉ de la métropole (où G=2025, F=2028, E=2034). En DROM (Guadeloupe, Martinique,
+# Guyane, La Réunion) : classe G interdite à la location au 01/01/2028, classe F au 01/01/2031.
+# Classes G et F seulement (les seules DATÉES en outre-mer à ce jour ; E non fixée en DROM).
+DPE_DOM_INTERDICTION_LOCATION = {"G": "01/01/2028", "F": "01/01/2031"}
+
 # ── Barème par signal : code → (famille, points, label UI) ────────────────────────────────
 # v1.3 « CORRECTION DES SIGNES » (mandat M1 12/07/2026 — Phase 0, reports/phase0-validite) :
 # le backtest daté montre que cessation/radiation vendent à ~0,35× la base, SCI dormante à
@@ -123,12 +132,11 @@ SIGNALS = {
     # de lift (bruit) ; la détention longue n'est un signal QUE combinée (succession, dormance).
     "DVF_TENURE_OBS5":      ("D", 8, "Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux"),
     "NU_PM_HORS_IMMO":      ("D", 5, "Terrain nu détenu par PM hors construction/immobilier"),
-    # Famille E — Pression réglementaire (DPE) — ⚠ libellés UI = calendrier DOM :
-    # interdiction de location classe G au 01/01/2028, classe F au 01/01/2031
-    # (loi Climat & Résilience, calendrier outre-mer — PAS 2025/2028).
-    "DPE_G_MULTI":          ("E", 15, "≥ 2 DPE classe G — location interdite au 01/01/2028 (DOM)"),
-    "DPE_G":                ("E", 12, "DPE classe G — location interdite au 01/01/2028 (DOM)"),
-    "DPE_F":                ("E", 8, "DPE classe F — location interdite au 01/01/2031 (DOM)"),
+    # Famille E — Pression réglementaire (DPE) — libellés UI LUS de la SOURCE UNIQUE
+    # DPE_DOM_INTERDICTION_LOCATION (M-G) : plus aucune date recopiée (calendrier DOM).
+    "DPE_G_MULTI":          ("E", 15, f"≥ 2 DPE classe G — location interdite au {DPE_DOM_INTERDICTION_LOCATION['G']} (DOM)"),
+    "DPE_G":                ("E", 12, f"DPE classe G — location interdite au {DPE_DOM_INTERDICTION_LOCATION['G']} (DOM)"),
+    "DPE_F":                ("E", 8, f"DPE classe F — location interdite au {DPE_DOM_INTERDICTION_LOCATION['F']} (DOM)"),
 }
 
 # Familles/codes QUALIFIANTS pour la tenure conditionnelle (v1.1) : la détention longue ne

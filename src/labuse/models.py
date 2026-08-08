@@ -1348,10 +1348,11 @@ def ensure_passoire_thermique_view(engine) -> None:
     et RÉCENT (< 5 ans) — le propriétaire fait face à un mur réglementaire daté (voir ci-dessous),
     signal de propension à vendre pour l'étage 2.
 
-    ⚖️ Calendrier réglementaire DOM (la pression datée que l'étage 2 exploitera) :
+    ⚖️ Calendrier réglementaire DOM (source unique : score_v_constants.DPE_DOM_INTERDICTION_LOCATION,
+       loi Climat & Résilience, application outre-mer différée) :
       - gel des loyers des logements F et G depuis le 01/07/2024 ;
       - interdiction de LOUER les G au 01/01/2028 ;
-      - interdiction de louer les F en 2034.
+      - interdiction de louer les F au 01/01/2031 (calendrier DOM — PAS 2034, qui est la métropole).
     (En DROM le DPE n'est obligatoire que depuis le 01/07/2024 → base jeune, signal « positif
     quand présent », jamais exhaustif.)
 

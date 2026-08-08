@@ -88,7 +88,11 @@ class DpePassoireLayer(Layer):
         if not p:
             return passed(self.name, "Pas de passoire thermique F/G recensée.", source=SRC_DPE)
         et = p.get("etiquette_dpe")
-        detail = (f"Passoire thermique (maison {et}) — pression réglementaire datée : "
-                  f"gel des loyers depuis 07/2024, location interdite G en 2028 / F en 2034.")
+        # M-G (P2-36) : échéance LUE de la source unique DPE_DOM_INTERDICTION_LOCATION — plus le
+        # calendrier MÉTROPOLE servi en DOM ; le vrai calendrier outre-mer est G au 01/01/2028, F au 01/01/2031.
+        from ...scoring.score_v_constants import DPE_DOM_INTERDICTION_LOCATION as _DPE
+        detail = (f"Passoire thermique (maison {et}) — pression réglementaire datée (calendrier DOM) : "
+                  f"gel des loyers depuis 07/2024, location interdite G en {_DPE['G'][-4:]} "
+                  f"/ F en {_DPE['F'][-4:]}.")
         return _trace(soft_flag(self.name, detail, Severity.INFO, source=SRC_DPE),  # ×0 : flag d'accessibilité
                       "v_passoire_thermique", parcel.idu)
