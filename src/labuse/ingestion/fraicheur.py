@@ -32,10 +32,17 @@ SOURCES = {
     "sitadel": {"label": "SITADEL (permis, SDES/Dido)", "cadence": "mensuelle",
                 "date_sql": "SELECT max(date)::date FROM sitadel_permits WHERE date <= now()",
                 "ds_name": "SITADEL (autorisations d'urbanisme)", "auto": True,
+                # M-R : cadence BORNABLE — SDES publie mensuellement, max(date) avance chaque mois
+                # (permis fréquents sur l'île). check_fraicheur peut donc l'évaluer (seuil 2×30 j).
+                "cadence_norme": "mensuel",
                 "detection": "refresh delta quotidien (recouvrement 3 mois) — no-op si rien de neuf"},
     "bodacc": {"label": "BODACC (procédures collectives)", "cadence": "quotidienne",
                "date_sql": "SELECT max(date_annonce)::date FROM bodacc_procedures",
                "ds_name": "BODACC%", "auto": True,
+               # M-R : PAS de cadence_norme — VÉRIFIÉ : l'horizon = max(date_annonce) parmi les SEULS
+               # propriétaires suivis (~12,6k SIREN), donc des ÉVÉNEMENTS RARES (mesuré : ~37 j
+               # d'ancienneté normale). Un seuil « quotidien » alarmerait en permanence sur une
+               # absence d'événement, pas sur une donnée périmée → non bornable (event-driven).
                "detection": "re-interrogation batchée des 12,6k SIREN propriétaires (upsert annonce_id)"},
     "dvf": {"label": "DVF (mutations, Etalab geo-dvf)", "cadence": "semestrielle (avril / octobre)",
             "date_sql": "SELECT max(date_mutation)::date FROM dvf_mutations_parcelle",
@@ -49,10 +56,15 @@ SOURCES = {
     "dpe": {"label": "DPE ADEME (logements existants)", "cadence": "hebdomadaire (flux continu)",
             "date_sql": "SELECT max(date_etablissement)::date FROM dpe_records",
             "ds_name": "DPE ADEME%", "auto": True,
+            # M-R : cadence BORNABLE — flux ADEME continu, max(date_etablissement) avance chaque
+            # semaine ; check_fraicheur l'évalue (seuil 2×7 j) et alerte si l'ingestion prend du retard.
+            "cadence_norme": "hebdomadaire",
             "detection": "ré-ingestion API par commune (upsert numero_dpe)"},
     "ban": {"label": "BAN (adresses)", "cadence": "mensuelle",
             "date_sql": "SELECT max(refreshed_at)::date FROM adresses",
             "ds_name": "Base Adresse Nationale", "auto": True,
+            # M-R : cadence BORNABLE — full reload mensuel, max(refreshed_at) avance chaque mois.
+            "cadence_norme": "mensuel",
             "detection": "cron mensuel existant (full reload idempotent)"},
     "catnat": {"label": "CatNat (GASPAR)", "cadence": "au fil de l'eau (arrêtés JO)",
                "date_sql": "SELECT max(date_arrete) FROM catnat_arretes",
