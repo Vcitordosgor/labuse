@@ -13,6 +13,7 @@ Upload : png/jpg/svg, ≤ 512 Ko, signature de fichier VÉRIFIÉE (pas le mime d
 from __future__ import annotations
 
 import base64
+import re
 
 from sqlalchemy import text
 
@@ -41,8 +42,18 @@ def valider_logo(contenu: bytes, mime_declare: str) -> str:
             return mime
     tete = contenu[:256].lstrip().lower()
     if tete.startswith(b"<svg") or (tete.startswith(b"<?xml") and b"<svg" in contenu[:2048].lower()):
-        if b"<script" in contenu.lower():           # SVG : jamais de script embarqué
+        bas = contenu.lower()
+        # M-C (F6) — durcissement SVG : au-delà de <script>, refuser les autres vecteurs
+        # d'exécution. Sans risque aujourd'hui (SVG en base64 dans WeasyPrint) mais requis AVANT
+        # tout affichage INLINE (le SVG inline exécute onload=/<foreignObject>/URIs javascript:).
+        if b"<script" in bas:                        # SVG : jamais de script embarqué
             raise ValueError("SVG refusé : contenu actif (<script>) interdit.")
+        if b"<foreignobject" in bas:                 # embarque du HTML (donc du JS) dans le SVG
+            raise ValueError("SVG refusé : <foreignObject> (HTML embarqué) interdit.")
+        if b"javascript:" in bas:                    # URI active (href/xlink:href)
+            raise ValueError("SVG refusé : URI javascript: interdite.")
+        if re.search(rb"\son[a-z]+\s*=", bas):       # gestionnaires onload=/onerror=/onclick=…
+            raise ValueError("SVG refusé : gestionnaire d'événement (on…=) interdit.")
         return "image/svg+xml"
     raise ValueError("Format non reconnu — png, jpg ou svg uniquement.")
 

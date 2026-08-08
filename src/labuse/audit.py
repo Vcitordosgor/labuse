@@ -20,7 +20,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from . import config, models
-from .connectors.cadastre import CadastreConnector, ingest_parcels, parse_parcelles
+from .connectors.cadastre import CadastreConnector, parse_parcelles
+from .ingestion.cadastre_ingest import ingest_parcels
 
 BAN_URL = "https://api-adresse.data.gouv.fr/search/"
 

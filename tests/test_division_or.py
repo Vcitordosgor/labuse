@@ -133,10 +133,15 @@ def test_correctifs_o12_partiel_2():
     assert "aire_bati_dans_lot_m2" in d._INSERT_PARTIEL      # rendu dans la table → CSV
     # C4 : zonages exclus, liste en CONFIG (jamais devinée) + motifs AU fermées (2AU*/3AU*)
     assert "({activite_pred})" in q
+    # M-C (F6) : le prédicat passe désormais par des VALEURS LIÉES (:activite_libs / :activite_pats),
+    # plus de littéraux concaténés. On teste (a) que le fragment utilise bien les binds, (b) que les
+    # VALEURS (par commune + motifs) sont correctes côté source.
     p = d._activite_pred_sql("Petite-Île")
-    assert "'UEa'" in p and "'UT'" in p and "'UZ'" in p        # activité + arbitrés (touristique, ZAC)
-    assert "zone_lib !~ '^2AU'" in p and "zone_lib !~ '^3AU'" in p
-    assert "'U1e'" in d._activite_pred_sql("Saint-Paul")       # PLU calibré : habitat interdit
+    assert ":activite_libs" in p and ":activite_pats" in p and "'" not in p
+    libs_pi = d._zones_activite("Petite-Île")
+    assert "UEa" in libs_pi and "UT" in libs_pi and "UZ" in libs_pi   # activité + arbitrés (touristique, ZAC)
+    assert "^2AU" in d._activite_pats() and "^3AU" in d._activite_pats()
+    assert "U1e" in d._zones_activite("Saint-Paul")            # PLU calibré : habitat interdit
     # C4-libellé (finding BP0363) : mots-clés d'activité dans le DESCRIPTIF, appliqué aux
     # DEUX familles ; descriptions mixtes habitat/proximité protégées
     for sql in (q, d._DETECT):
@@ -174,9 +179,11 @@ def test_revue_2_solidite_et_gardes():
     assert "({revue_pred})" in q and "({revue_pred})" in d._DETECT
     # revue 3 : exclusion PERMANENTE par IDU (liee_geometrie abandonnée — s'auto-annulait) ;
     # tous les IDU exclus sont dans le prédicat des DEUX familles, sans comparaison de tracé
+    # M-C (F6) : exclusion par VALEUR LIÉE (:revue_idus) — plus de concaténation de littéraux.
     for fam in (d._revue_pred_sql(decoupe=True), d._revue_pred_sql(decoupe=False)):
-        assert "'97416000CX0214'" in fam and "'97411000AV0203'" in fam
+        assert ":revue_idus" in fam and "'" not in fam
         assert "ST_SymDifference" not in fam and "snapshot" not in fam
+    assert "97416000CX0214" in d._revue_idus() and "97411000AV0203" in d._revue_idus()
 
 
 def test_exclusions_revue_idu_coherents():

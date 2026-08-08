@@ -32,16 +32,19 @@ SOURCES_ATTRIBUTION = (
 
 def pied_de_page_pdf(pdf, doc_label: str) -> None:
     """Pied de page commun des PDF fpdf2 : non-garantie + disclaimer CU (au mot près),
-    attributions sources, date de génération et pagination. Suppose la fonte « inter »
-    déjà enregistrée (render_*_pdf le fait avant add_page)."""
+    attributions sources, date de génération et pagination. Utilise « inter » si enregistrée
+    (render_*_pdf le fait avant add_page), sinon repli sur une police cœur."""
+    # M-C (F6) : GARDE — si « inter » n'a pas été enregistrée en amont (appelant tiers, régression),
+    # ne pas lever une FPDFException ; retomber sur helvetica (police cœur, latin-1 suffit ici).
+    fam = "inter" if "inter" in getattr(pdf, "fonts", {}) else "helvetica"
     pdf.set_y(-24)
-    pdf.set_font("inter", size=6)
+    pdf.set_font(fam, size=6)
     pdf.set_text_color(140, 152, 145)
     pdf.multi_cell(0, 2.9, f"{NON_GARANTIE} {DISCLAIMER_CU} À vérifier au règlement et "
                            "auprès des services.", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("inter", size=5.4)
+    pdf.set_font(fam, size=5.4)
     pdf.multi_cell(0, 2.6, SOURCES_ATTRIBUTION, align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("inter", size=6)
+    pdf.set_font(fam, size=6)
     pdf.cell(0, 3.2, f"LABUSE · radar foncier La Réunion · {doc_label} · "
                      f"généré le {date.today().isoformat()} · page {pdf.page_no()}/{{nb}}",
              align="C")

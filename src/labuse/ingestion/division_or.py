@@ -580,11 +580,12 @@ def _revue_pred_sql(*, decoupe: bool) -> str:
     """Prédicat SQL des EXCLUSIONS DE REVUE — exclusion PERMANENTE par IDU (revue 3, 2e
     correctif : `liee_geometrie` abandonnée car elle s'auto-annulait, cf. yaml). `decoupe`
     est conservé pour la signature ; les deux familles excluent par IDU (une parcelle découpe
-    ne matche pas un résiduel et vice-versa — l'union est inoffensive)."""
-    idus = _revue_idus()
-    if not idus:
-        return "true"
-    return "idu NOT IN (" + ", ".join(f"'{i}'" for i in idus) + ")"
+    ne matche pas un résiduel et vice-versa — l'union est inoffensive).
+
+    M-C (F6) : VALEURS LIÉES — plus de concaténation de littéraux (ancienne garde « ' » not in x).
+    La liste d'IDU passe en paramètre :revue_idus (rempli par les build). `<> ALL(ARRAY[])` = vrai
+    pour tous → le cas « aucune exclusion » est géré sans branche « true » spéciale."""
+    return "idu <> ALL(:revue_idus)"
 
 
 def snapshot_review_lots(session: Session, *, commit: bool = True) -> int:
@@ -628,20 +629,23 @@ def _zones_activite(commune: str) -> list[str]:
     return [str(x) for x in (_zones_activite_doc().get("exclusions") or {}).get(commune, [])]
 
 
-def _activite_pred_sql(commune: str) -> str:
+def _activite_pats() -> list[str]:
+    """Motifs regex toutes-communes (exclusions_pattern : familles AU fermées 2AU*/3AU*…),
+    liés en paramètre :activite_pats."""
+    return [str(p) for p in (_zones_activite_doc().get("exclusions_pattern") or [])]
+
+
+def _activite_pred_sql(commune: str | None = None) -> str:
     """Prédicat SQL « la zone du lot n'est PAS un zonage exclu » : liste par commune +
-    motifs toutes-communes (exclusions_pattern : familles AU fermées 2AU*/3AU*)."""
-    clauses = []
-    libs = [lib for lib in _zones_activite(commune) if "'" not in lib]
-    if libs:
-        clauses.append("zone_lib NOT IN (" + ", ".join(f"'{lib}'" for lib in libs) + ")")
-    for pat in _zones_activite_doc().get("exclusions_pattern") or []:
-        pat = str(pat)
-        if "'" not in pat:
-            clauses.append(f"zone_lib !~ '{pat}'")
-    if not clauses:
-        return "true"
-    return "(zone_lib IS NULL OR (" + " AND ".join(clauses) + "))"
+    motifs toutes-communes (familles AU fermées 2AU*/3AU*).
+
+    M-C (F6) : VALEURS LIÉES — plus de littéraux concaténés (ancienne garde « ' » not in x). Les
+    libellés (par commune) passent en :activite_libs, les motifs regex en :activite_pats ; les
+    build remplissent ces paramètres. `commune` n'influe plus sur le TEXTE (il détermine la VALEUR
+    de :activite_libs, calculée côté appelant via _zones_activite). `<> ALL([])` / `~ ANY([])`
+    gèrent le cas vide (vrai partout)."""
+    return ("(zone_lib IS NULL OR (zone_lib <> ALL(:activite_libs) "
+            "AND NOT (zone_lib ~ ANY(:activite_pats))))")
 
 
 def _resolve_commune(session: Session, commune: str) -> str:
@@ -693,6 +697,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     # (avant : count(*) global 'decoupe' avant la boucle PUIS refait à chaque commune — mélange
     # « pré-run » et « toute la table », pas la mesure du run).
     total = 0
+    revue_idus, activite_pats = _revue_idus(), _activite_pats()   # M-C (F6) : valeurs LIÉES (une fois)
     failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
@@ -718,7 +723,9 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             else:
                 insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
                     "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
+            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL,
+                                               "revue_idus": revue_idus, "activite_pats": activite_pats,
+                                               "activite_libs": _zones_activite(commune)})
             # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (cf. build_divisions) — durable + incrémental.
             if commit:
                 session.commit()
@@ -775,6 +782,7 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     # un count(*) GLOBAL de toute la table refait à chaque commune (avant : 24 scans complets pour
     # un seul log, et un total incluant les communes hors de ce run).
     total = 0
+    revue_idus, activite_pats = _revue_idus(), _activite_pats()   # M-C (F6) : valeurs LIÉES (une fois)
     failures: list[str] = []
     for commune in communes:
         commune = _resolve_commune(session, commune)  # M50-SUITE-2 : INSEE → NOM (indexé) en amont
@@ -801,7 +809,9 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
             else:   # pas de Score É → gain NULL, sans jointure
                 insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
                     "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL})
+            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL,
+                                               "revue_idus": revue_idus, "activite_pats": activite_pats,
+                                               "activite_libs": _zones_activite(commune)})
             # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (purge+insert dans LA MÊME transaction, puis
             # commit). Durable + incrémental : un rebuild île lent/interrompu GARDE les communes finies.
             # Jamais de purge commitée sans son insert : DELETE et INSERT commitent ensemble, ici.

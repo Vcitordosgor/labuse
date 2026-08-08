@@ -240,7 +240,7 @@ def ingest_real_cmd(
     reset: bool = typer.Option(True, help="Vide les tables avant ingestion."),
 ) -> None:
     """Ingestion RÉELLE : cadastre bulk Etalab + couches structurantes live (remplace la démo)."""
-    from .connectors.cadastre import ingest_parcels
+    from .ingestion.cadastre_ingest import ingest_parcels
     from .ingestion import cadastre_bulk, demo_saint_paul, layers_ingest, seed_sources
     from .models import IngestionRun
 
