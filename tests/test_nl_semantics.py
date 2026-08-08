@@ -62,6 +62,37 @@ def test_plusieurs_criteres_non_supportes_tous_listes():
     assert len(non_appliques) == len(set(non_appliques)), "pas de doublon"
 
 
+# ─────────────────── M-C (F3) — plus de « oui-et-non » veille/succession ───────────────────
+
+def test_succession_veille_appliquee_pas_signalee_non_appliquee():
+    """« les successions » déclenchait veille=true (SERVIE) ET « profil du propriétaire (âge /
+    succession) : non appliqué » simultanément → contradiction. Quand la veille est appliquée,
+    la famille qu'elle COUVRE ne doit plus être annoncée non appliquée."""
+    q = "les successions à Saint-Denis"
+    filters, non_appliques = check_semantics(q, {"commune": "Saint-Denis", "veille": True})
+    assert filters.get("veille") is True, "la veille succession reste appliquée"
+    assert not any("profil du propriétaire" in c for c in non_appliques), \
+        "ne pas dire « non appliqué » ce que la veille vient de servir"
+
+
+def test_profil_proprietaire_toujours_signale_si_veille_absente():
+    """Symétrie : sans filtre veille appliqué, un critère de profil NON couvert (« propriétaire âgé »,
+    mot hors pattern veille) reste bien signalé non appliqué — le garde-fou ne masque rien à tort."""
+    q = "les parcelles de propriétaires âgés à Saint-Denis"
+    filters, non_appliques = check_semantics(q, {"commune": "Saint-Denis"})
+    assert "veille" not in filters
+    assert any("profil du propriétaire" in c for c in non_appliques)
+
+
+def test_bodacc_evenement_applique_pas_signale_non_applique():
+    """Même classe de contradiction, généralisée : « en liquidation » avec evenement=true servi
+    ne doit plus lister « état juridique du propriétaire (BODACC) » comme non appliqué."""
+    q = "les parcelles dont le propriétaire est en liquidation à Saint-Paul"
+    filters, non_appliques = check_semantics(q, {"commune": "Saint-Paul", "evenement": True})
+    assert filters.get("evenement") is True
+    assert not any("BODACC" in c for c in non_appliques)
+
+
 # ─────────────────────── B2 — personne morale & zonage désormais SUPPORTÉS ───────────────────────
 
 def test_b2_personne_morale_appliquee_pas_signalee():

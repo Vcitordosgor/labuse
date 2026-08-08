@@ -3251,9 +3251,15 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     ).one()
     payload = enrichment_cached(db, p, lon, lat)
     ca = db.execute(text("SELECT computed_at FROM parcel_enrichment WHERE parcel_id = :p"), {"p": p.id}).scalar()
+    # M-C (F3) : le cache parcel_enrichment n'a PAS de TTL (le recalcul déclenche des appels
+    # externes lents RGE ALTI/GPU → péremption automatique trop coûteuse ; le refresh reste
+    # explicite, cf. `enrichment_cached(refresh=True)` / CLI enrich). On EXPOSE donc la fraîcheur :
+    # `computed_at` (date du calcul) + `cache_age_jours` (âge dérivé) → le client sait de quand
+    # date l'enrichissement servi au lieu de le croire « live ».
+    age_jours = (datetime.now(timezone.utc) - ca).days if ca else None
     # 3.B — lien « Remonter le temps » calculé HORS cache (déterministe, jamais périmé).
     return {**payload, "remonter_le_temps": remonter_le_temps(lon, lat),
-            "computed_at": ca.isoformat() if ca else None}
+            "computed_at": ca.isoformat() if ca else None, "cache_age_jours": age_jours}
 
 
 @app.get("/assistant/status")

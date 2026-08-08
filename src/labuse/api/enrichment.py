@@ -533,7 +533,12 @@ def _ensure_cache_table(db: Session) -> None:
 
 
 def enrichment_cached(db: Session, parcel, lon: float, lat: float, *, refresh: bool = False) -> dict[str, Any]:
-    """Enrichissement servi depuis le cache ; calculé puis stocké au premier accès."""
+    """Enrichissement servi depuis le cache ; calculé puis stocké au premier accès.
+
+    M-C (F3) — PAS de TTL : le cache ne se PÉRIME jamais tout seul (le recalcul fait des appels
+    externes lents RGE ALTI/GPU). La péremption est EXPLICITE (`refresh=True`, CLI enrich). La
+    colonne `computed_at` est le marqueur de fraîcheur ; l'endpoint /parcels/{idu}/enrichment
+    l'EXPOSE (computed_at + cache_age_jours) — l'enrichissement servi n'est pas « live »."""
     _ensure_cache_table(db)
     if not refresh:
         cached = db.execute(text("SELECT payload FROM parcel_enrichment WHERE parcel_id = :p"),

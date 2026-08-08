@@ -51,6 +51,16 @@ _BOOL_KW: dict[str, re.Pattern] = {
     # M11 B2 : propriétaire personne morale (DGFiP public) — justifié par SCI/société/SIREN/…
     "personneMorale": re.compile(r"personne\s*morale|soci[ée]t[ée]|\bsci\b|\bsarl\b|\bsas[u]?\b|siren|entreprise|d[ée]tenu", re.I),
 }
+# M-C (F3) : familles _UNSUPPORTED effectivement COUVERTES par un filtre catégoriel appliqué.
+# Sans ce garde-fou, « les successions » déclenchait À LA FOIS veille=true (succession SERVIE)
+# ET « profil du propriétaire (âge / succession) : non appliqué » → le client recevait oui-et-non
+# sur le même concept. La veille succession (parcel_veille_succession = dirigeant âgé / SCI
+# dormante / succession) EST cette famille ; l'événement BODACC EST l'état juridique. Quand le
+# filtre couvrant est réellement appliqué, on n'annonce plus la famille comme « non appliquée ».
+_COUVERT_PAR_FILTRE: dict[str, str] = {
+    "profil du propriétaire (âge / succession)": "veille",
+    "état juridique du propriétaire (BODACC)": "evenement",
+}
 # M11 B2 : zonage PLU par famille — chaque famille produite doit être justifiée (anti-mistraduction)
 _ZONE_KW: dict[str, re.Pattern] = {
     "U": re.compile(r"zone\s*u\b|constructible|urbaine?s?\b|urbanis[ée]", re.I),
@@ -90,6 +100,11 @@ def check_semantics(query: str, filters: dict) -> tuple[dict, list[str]]:
     seen: set[str] = set()
     for pat, label in _UNSUPPORTED:
         if pat.search(q) and label not in seen:
+            # déjà SERVI par un filtre catégoriel appliqué → ne pas le déclarer « non appliqué »
+            couvrant = _COUVERT_PAR_FILTRE.get(label)
+            if couvrant and out.get(couvrant) is True:
+                seen.add(label)
+                continue
             non_appliques.append(label)
             seen.add(label)
 
