@@ -224,6 +224,12 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
         {"idu": idu}).mappings().first() if db.execute(text(
             "SELECT to_regclass('adresse_parcelles') IS NOT NULL")).scalar() else None
 
+    # M-K : porte de quota M23-E — le pré-dossier ZIP est l'export le PLUS lourd (weasyprint +
+    # CERFA + plan de situation OSM). Il manquait la porte que dossier.pdf a déjà ; on la pose
+    # par cohérence, APRÈS le 404 (jamais de quota consommé pour une parcelle inconnue).
+    from ..quota import porte_export
+    porte_export(request, db)
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(f"cerfa_{CERFA_VERSION.replace('*', '-')}_prerempli_{idu}.pdf",
