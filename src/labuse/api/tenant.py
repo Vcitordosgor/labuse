@@ -26,8 +26,12 @@ from sqlalchemy.orm import Session
 # event_log / watched_parcels ajoutées au P0 « avant multi-comptes » : la cloche de
 # notifications et le suivi de cible sont l'intention commerciale d'un compte — ils ne
 # doivent jamais fuiter à un autre. Elles reçoivent compte_id + FK cascade comme les autres.
+# watch_zones / alertes ajoutées au M-K (P1-9) : les zones de veille dessinées et les
+# nouveautés (ventes DVF en zone, permis près d'une parcelle suivie) sont l'intention
+# commerciale d'un compte — elles ne doivent jamais fuiter à un autre. compte_id + FK cascade
+# comme les autres ; la dédup permis passe à (compte_id, parcel_id, source_ref), cf. models.
 SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
-                 "signalements", "event_log", "watched_parcels")
+                 "signalements", "event_log", "watched_parcels", "watch_zones", "alertes")
 
 
 def ensure_scoping(db: Session) -> None:

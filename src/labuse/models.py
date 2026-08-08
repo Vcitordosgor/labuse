@@ -1393,9 +1393,13 @@ def ensure_watch_zones(engine) -> None:
     from sqlalchemy import text as _t
 
     with engine.begin() as c:
+        # M-K (P1-9) : `compte_id` porté par watch_zones ET alertes (fresh installs via le
+        # CREATE ; bases en place via l'ALTER plus bas). La cloison (FK cascade + index compte)
+        # est posée par api/tenant.ensure_scoping — watch_zones/alertes ∈ SCOPED_TABLES.
         c.execute(_t(
             "CREATE TABLE IF NOT EXISTS watch_zones ("
             " id serial PRIMARY KEY, name varchar(120) NOT NULL, commune varchar(64) NOT NULL,"
+            " compte_id integer,"
             " geom geometry(Polygon, 4326) NOT NULL,"
             " created_at timestamptz NOT NULL DEFAULT now(), last_run_at timestamptz)"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS idx_watch_zones_geom ON watch_zones USING gist (geom)"))
@@ -1405,13 +1409,24 @@ def ensure_watch_zones(engine) -> None:
             " id serial PRIMARY KEY, kind varchar(32) NOT NULL,"
             " zone_id integer REFERENCES watch_zones(id) ON DELETE CASCADE,"
             " parcel_id integer REFERENCES parcels(id) ON DELETE CASCADE,"
+            " compte_id integer,"
             " source_ref varchar(64) NOT NULL, label text NOT NULL, payload jsonb,"
             " acknowledged boolean NOT NULL DEFAULT false,"
             " detected_at timestamptz NOT NULL DEFAULT now())"))
+        # ALTER idempotent : les bases créées avant M-K n'ont pas la colonne (CREATE IF NOT
+        # EXISTS ne la rajoute pas sur une table existante).
+        c.execute(_t("ALTER TABLE watch_zones ADD COLUMN IF NOT EXISTS compte_id integer"))
+        c.execute(_t("ALTER TABLE alertes ADD COLUMN IF NOT EXISTS compte_id integer"))
+        # dvf_in_zone : la dédup par (zone_id, source_ref) est DÉJÀ cloisonnée — une zone
+        # appartient à un seul compte, donc son zone_id ne fuit pas entre comptes.
         c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_zone_dvf "
                      "ON alertes (zone_id, source_ref) WHERE kind = 'dvf_in_zone'"))
-        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_parcel_permit "
-                     "ON alertes (parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
+        # permit_near_followed : la dédup DOIT inclure compte_id. Deux comptes suivant la MÊME
+        # parcelle doivent chacun recevoir l'alerte ; l'ancienne clé (parcel_id, source_ref)
+        # faisait manger l'alerte du 2e compte par ON CONFLICT DO NOTHING.
+        c.execute(_t("DROP INDEX IF EXISTS uq_alertes_parcel_permit"))
+        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_compte_parcel_permit "
+                     "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
 
 
 def ensure_residuel_cache(engine) -> None:

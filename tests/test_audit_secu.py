@@ -264,6 +264,71 @@ def test_idor_watched_parcels_cloison(app_client):
             s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
 
 
+def test_idor_alertes_watch_zones_cloison(app_client):
+    """M-K (P1-9) — Alertes intelligentes : B ne voit NI les zones de veille NI les nouveautés
+    de A, ne matérialise rien de A dans son scope au refresh, ne peut ni accuser réception de
+    l'alerte de A ni supprimer sa zone (404). Et si A et B suivent la MÊME parcelle, un permis
+    proche alerte CHACUN (dédup PAR COMPTE — l'ancienne clé (parcel_id, source_ref) mangeait
+    l'alerte du 2e compte)."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    commune = "AlertIDOR"
+    idu = f"974AZ{uuid.uuid4().hex[:7].upper()}"
+    poly = {"type": "Polygon", "coordinates": [[
+        [55.50, -21.20], [55.52, -21.20], [55.52, -21.18], [55.50, -21.18], [55.50, -21.20]]]}
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        # A crée une zone de veille ; une vente DVF tombe dedans → une nouveauté POUR A
+        rz = ca.post("/watch-zones", json={"name": "Zone secrète de A", "geometry": poly, "commune": commune})
+        assert rz.status_code == 200, rz.text
+        zid_a = rz.json()["zone"]["id"]
+        with session_scope() as s:
+            s.execute(text("INSERT INTO dvf_mutations (date_mutation, valeur_fonciere, nature_mutation, commune, geom) "
+                           "VALUES (now(), 300000, 'Vente', :c, ST_SetSRID(ST_MakePoint(55.51,-21.19),4326))"), {"c": commune})
+            s.commit()
+        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["dvf_in_zone"] == 1
+        # A voit SA zone et SA nouveauté
+        assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
+        a_alertes = ca.get("/alertes", params={"commune": commune}).json()
+        assert len(a_alertes) == 1 and a_alertes[0]["kind"] == "dvf_in_zone"
+        aid = a_alertes[0]["id"]
+        # B ne voit NI la zone NI la nouveauté de A ; son refresh ne matérialise rien dans SON scope
+        assert cb.get("/watch-zones", params={"commune": commune}).json() == []
+        assert cb.get("/alertes", params={"commune": commune}).json() == []
+        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["dvf_in_zone"] == 0
+        # B ne peut ni accuser réception de l'alerte de A (0 effet) ni supprimer sa zone (404)
+        assert cb.post("/alertes/ack", json={"id": aid, "commune": commune}).json()["acknowledged"] == 0
+        assert cb.delete(f"/watch-zones/{zid_a}").status_code == 404
+        # A reste intact : zone présente, nouveauté toujours non-lue
+        assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
+        assert len(ca.get("/alertes", params={"commune": commune, "only_new": True}).json()) == 1
+
+        # Dédup permis PAR COMPTE : A et B suivent la MÊME parcelle → un permis proche alerte CHACUN.
+        _wkt = "POLYGON((55.51 -21.19,55.5105 -21.19,55.5105 -21.1905,55.51 -21.1905,55.51 -21.19))"
+        with session_scope() as s:
+            s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
+                           "VALUES (:i,:c,'ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+                           " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                      {"i": idu, "c": commune, "w": _wkt})
+            s.execute(text("INSERT INTO sitadel_permits (type, date, commune, geom) "
+                           "VALUES ('PC', now(), :c, ST_SetSRID(ST_MakePoint(55.5102,-21.1902),4326))"), {"c": commune})
+            s.commit()
+        assert ca.post("/pipeline", json={"idu": idu}).status_code == 200
+        assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
+        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1
+        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1  # PAS mangé
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM watch_zones WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM dvf_mutations WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM sitadel_permits WHERE commune = :c"), {"c": commune})
+            s.execute(text("DELETE FROM pipeline_entries WHERE parcel_id IN (SELECT id FROM parcels WHERE idu=:i)"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+            s.commit()
+
+
 # ─────────────────────── Statuts × routes (la matrice d'accès) ───────────────────────
 
 def _session_cookie(compte_id: int, email: str) -> str:
