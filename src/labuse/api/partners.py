@@ -77,7 +77,12 @@ def profiles(db: Session = Depends(get_db)) -> list[dict]:
 
 
 @router.post("/partners/profiles")
-def profile_add(body: ProfileIn, db: Session = Depends(get_db)) -> dict:
+def profile_add(body: ProfileIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    # M-K (P2-45) : match_profiles est une table GLOBALE (pas de compte_id) et M19 est en DÉMO —
+    # sans gate, un profil de recherche RÉEL d'un client serait publié à tous. Tant que M19 est
+    # démo, la création est GELÉE derrière l'admin (les 2 profils de démo restent semés au boot).
+    from .auth import exiger_admin
+    exiger_admin(request)
     db.execute(text("""INSERT INTO match_profiles (nom, commune, surface_min, surface_max, sdp_min)
                        VALUES (:n, :c, :smin, :smax, :sdp)"""),
                {"n": body.nom[:80], "c": body.commune, "smin": body.surface_min,
@@ -199,16 +204,12 @@ def share_create(idu: str, request: Request, db: Session = Depends(get_db)) -> d
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")
     _share_colonnes(db)
-    # M23-B journal : créé PAR QUI (compte session si présent — pilote : libellé legacy)
-    compte_id, created_by = None, None
-    try:
-        from .auth import session_info
-        info = session_info(request.cookies.get("labuse_session") or request.cookies.get("session"))
-        if info:
-            compte_id = info["compte_id"]
-            created_by = f"compte {compte_id}"
-    except Exception:  # noqa: BLE001
-        pass
+    # M-K (P2-65) : chemin UNIQUE de résolution du compte (current_compte via request.state,
+    # posé par la garde d'auth). Plus de lecture cookie à la main : la garde a déjà 401 une
+    # session invalide en amont ; None = bucket pilote légitime (libellé legacy).
+    from .tenant import current_compte
+    compte_id = current_compte(request)
+    created_by = f"compte {compte_id}" if compte_id is not None else None
     token = secrets.token_urlsafe(12)[:16]
     db.execute(text(
         "INSERT INTO share_links (token, idu, compte_id, created_by, expires_at) "
@@ -223,14 +224,18 @@ def share_create(idu: str, request: Request, db: Session = Depends(get_db)) -> d
 
 
 @router.get("/partners/share/{idu}/list")
-def share_list(idu: str, db: Session = Depends(get_db)) -> list[dict]:
+def share_list(idu: str, request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    # M-K (P2-45) : SCOPÉ AU COMPTE — la liste exposait token + created_by de TOUS les comptes
+    # pour n'importe quelle parcelle (un token = accès public en lecture via /p/{token}).
     _share_colonnes(db)
+    from .tenant import current_compte
     return [dict(r) for r in db.execute(text(
         """SELECT token, created_at::date::text AS date, views, created_by,
                   expires_at::date::text AS expire_le,
                   (revoked_at IS NOT NULL) AS revoque,
                   (expires_at IS NOT NULL AND expires_at < now()) AS expire
-           FROM share_links WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
+           FROM share_links WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid
+           ORDER BY created_at DESC"""), {"i": idu, "cid": current_compte(request)}).mappings()]
 
 
 # Points clés = FORMATAGE déterministe des facteurs de scoring (aucune IA). Titre de pitch par

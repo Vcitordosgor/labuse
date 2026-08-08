@@ -51,14 +51,13 @@ def charger(db, request) -> dict | None:
     """Marque du compte de la requête (session utilisateur) — None en pilote/dev ou si
     RIEN n'est configuré (M22-C4 : on n'imprime pas un bloc vide)."""
     try:
-        from .api.auth import session_info
-        tok = request.cookies.get("labuse_session") or request.cookies.get("session")
-        info = session_info(tok)
-        if not info:
+        from .api.tenant import current_compte   # M-K (P2-65) : chemin unique de résolution du compte
+        cid = current_compte(request)
+        if cid is None:
             return None
         row = db.execute(text(
             "SELECT logo, logo_mime, marque FROM comptes WHERE id = :c"),
-            {"c": info["compte_id"]}).mappings().first()
+            {"c": cid}).mappings().first()
         if not row:
             return None
         m = row["marque"] or {}

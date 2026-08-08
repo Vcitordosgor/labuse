@@ -90,6 +90,18 @@ def current_compte(request: Request | None) -> int | None:
     return getattr(getattr(request, "state", None), "compte_id", None)
 
 
+def compte_ou_401(request: Request | None) -> int:
+    """current_compte STRICT (M-K P2-65) : un compte IDENTIFIÉ est requis — None (aucune
+    session / pilote) → 401. Chemin UNIQUE pour les écritures qui DOIVENT appartenir à un
+    compte (marque/logo d'onboarding). Le compte est déjà résolu par la garde d'auth sur
+    request.state.compte_id ; on ne relit jamais le cookie à la main."""
+    from fastapi import HTTPException
+    cid = current_compte(request)
+    if cid is None:
+        raise HTTPException(401, "Session requise — connectez-vous à votre compte.")
+    return int(cid)
+
+
 def scope_clause(alias: str = "") -> str:
     """Fragment WHERE de cloison — `<alias>compte_id IS NOT DISTINCT FROM :cid`. `alias`
     inclut le point (« p. »). Le paramètre `:cid` est à fournir par l'appelant."""

@@ -613,6 +613,42 @@ def _login_admin(client: TestClient, email: str) -> TestClient:
     return client
 
 
+def test_idor_partners_share_et_profiles(app_client):
+    """M-K P2-45 : share_list est SCOPÉ au compte (B ne voit pas les tokens de A pour une même
+    parcelle — un token = accès public en lecture) ; POST /partners/profiles est GELÉ admin
+    (M19 démo) : un titulaire → 403, un admin → 200."""
+    ea, eb, eadm = (f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test",
+                    f"adm-{uuid.uuid4().hex[:8]}@x.test")
+    _compte_actif(ea); _compte_actif(eb); _compte_actif(eadm)
+    idu = f"974SH{uuid.uuid4().hex[:7].upper()}"
+    _wkt = "POLYGON((55.47 -21.0,55.471 -21.0,55.471 -21.001,55.47 -21.001,55.47 -21.0))"
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        with session_scope() as s:
+            s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
+                           "VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+                           " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                      {"i": idu, "w": _wkt}); s.commit()
+        # A crée un lien de partage → A le voit ; B ne voit AUCUN lien pour la même parcelle
+        rt = ca.post(f"/partners/share/{idu}")
+        assert rt.status_code == 200, rt.text
+        tok = rt.json()["token"]
+        assert any(x["token"] == tok for x in ca.get(f"/partners/share/{idu}/list").json())
+        assert cb.get(f"/partners/share/{idu}/list").json() == []
+        # POST /partners/profiles : titulaire 403, admin 200
+        assert ca.post("/partners/profiles", json={"nom": "profil pirate"}).status_code == 403
+        cadm = TestClient(app_client.app, base_url="https://testserver"); _login_admin(cadm, eadm)
+        assert cadm.post("/partners/profiles", json={"nom": "profil admin M-K"}).status_code == 200
+    finally:
+        _purge(ea, eb, eadm)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM share_links WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM match_profiles WHERE nom = 'profil admin M-K'"))
+            s.commit()
+
+
 def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
     """M-K P2-5 : au-delà du plafond JOURNALIER (kind 'nl'), /ia/search renvoie un 429 honnête.
     Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée."""
