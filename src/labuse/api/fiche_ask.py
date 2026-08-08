@@ -237,8 +237,8 @@ class AskIn(BaseModel):
 
 def _sujet(request: Request) -> str:
     try:
-        from .protection import sujet_de
-        return sujet_de(request)
+        from .protection import sujet_quota
+        return sujet_quota(request)          # M-K (P2-38) : quota IA/fiche épinglé au compte
     except Exception:  # noqa: BLE001
         return (request.client.host if request.client else "anon")[:64]
 

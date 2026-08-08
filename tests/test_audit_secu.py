@@ -613,6 +613,31 @@ def _login_admin(client: TestClient, email: str) -> TestClient:
     return client
 
 
+def test_quota_dossier_epingle_au_compte_survit_au_relogin(app_client):
+    """M-K P2-38 : le quota mensuel de dossiers est compté PAR COMPTE — un logout/login ne le
+    remet PAS à zéro (avant, le sujet-session changeait à chaque session → quota contournable,
+    le mensuel Essentiel étant le plus exposé)."""
+    email = f"q-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, email)
+        assert c.get("/dossier/statut").json()["utilises_mois"] == 0
+        # un dossier généré ce mois-ci, compté sur le sujet COMPTE (« c:<cid> »)
+        with session_scope() as s:
+            s.execute(text("INSERT INTO usage_compteurs (jour, sujet, kind, n) "
+                           "VALUES (CURRENT_DATE, :s, 'dossier', 1)"), {"s": f"c:{cid}"})
+            s.commit()
+        assert c.get("/dossier/statut").json()["utilises_mois"] == 1
+        # logout puis relogin (nouvelle session, nouveau cookie) → le compteur NE bouge PAS
+        c.get("/logout", follow_redirects=False)
+        c2 = TestClient(app_client.app, base_url="https://testserver"); _login(c2, email)
+        assert c2.get("/dossier/statut").json()["utilises_mois"] == 1
+    finally:
+        _purge(email)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM usage_compteurs WHERE sujet = :s"), {"s": f"c:{cid}"}); s.commit()
+
+
 def test_gate_admin_protection_et_bilan(app_client):
     """M-K P1-10/P1-11 : un TITULAIRE (client payant authentifié) est REFUSÉ (403) sur les
     routes d'administration (tableau protection, gel/dégel d'un sujet) et sur POST

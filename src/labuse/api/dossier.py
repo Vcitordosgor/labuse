@@ -43,7 +43,7 @@ def _quota_mois(db: Session, sujet: str) -> int:
 @router.get("/statut")
 def dossier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
     """Disponibilité + quota restant — le front adapte le bouton (grisé/compteur)."""
-    from .protection import sujet_de
+    from .protection import sujet_quota
     s = get_settings()
     try:
         import labuse.flash  # noqa: F401
@@ -51,7 +51,7 @@ def dossier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
     except ImportError:
         generateur = False
     illimite = plans.acces("dossier_illimite")
-    utilises = _quota_mois(db, sujet_de(request))
+    utilises = _quota_mois(db, sujet_quota(request))   # M-K (P2-38) : quota dossiers par compte
     return {"disponible": generateur,
             "raison": None if generateur else
             "générateur de rapports non déployé (mandat module-flash à merger)",
@@ -66,9 +66,9 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
                 db: Session = Depends(get_db)) -> Response:
     """PDF brandé de LA parcelle (template Flash allégé — pas de page tarifaire).
     `carte=false` : sans fond cartographique (tests, environnements sans réseau)."""
-    from .protection import sujet_de
+    from .protection import sujet_quota
     s = get_settings()
-    sujet = sujet_de(request)
+    sujet = sujet_quota(request)          # M-K (P2-38) : quota mensuel dossiers épinglé au compte
 
     if not plans.acces("dossier_parcelle"):          # stub : toujours vrai aujourd'hui
         raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
