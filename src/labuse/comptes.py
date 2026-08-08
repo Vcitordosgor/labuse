@@ -310,8 +310,15 @@ def avis_echeance_dus(db: Session, today: date | None = None) -> list[dict]:
     (entre ~1 et ~3 mois à venir) ET pas encore prévenus pour CE terme (dédup via evenements_compte).
     Lecture seule — le déclencheur envoie et enregistre."""
     today = today or datetime.now(timezone.utc).date()
+    # M-C (F4) : l'échéance Chatel s'ancre sur la DATE D'ACTIVATION de l'abonnement (reconduction
+    # annuelle, art. L.215-1), PAS sur created_at (création/invitation du compte). Un compte invité
+    # des semaines avant de souscrire aurait sinon un avis calé sur la mauvaise date. Source :
+    # 1ᵉʳ événement 'stripe_activation' (evenements_compte.at) ; repli created_at si absent.
     rows = db.execute(text(
-        "SELECT c.id AS compte_id, u.email, c.created_at::date AS depuis"
+        "SELECT c.id AS compte_id, u.email,"
+        " COALESCE((SELECT min(e.at)::date FROM evenements_compte e"
+        "           WHERE e.compte_id = c.id AND e.type = 'stripe_activation'),"
+        "          c.created_at::date) AS depuis"
         " FROM comptes c JOIN utilisateurs u ON u.compte_id = c.id AND u.role = 'titulaire'"
         " WHERE c.statut = 'actif'")).mappings().all()
     dus: list[dict] = []
@@ -356,8 +363,12 @@ def creer_admin(db: Session, email: str, password: str) -> int:
     """Le compte ADMIN de Vic — hors plans, jamais suspendu par Stripe."""
     ensure_tables(db)
     email = _norm_email(email)
+    # M-C (F4) : 'pro' n'est PAS un plan connu (PLANS = integral | illimite). L'admin a 99 sièges
+    # et vit hors facturation → 'illimite' (plan valide le plus haut). N'affecte pas les gardes
+    # admin (rôle 'admin', jamais suspendu par Stripe). Les admins déjà en base à 'pro' restent
+    # inchangés (pas de migration ici) mais ne se re-créent jamais avec une valeur inconnue.
     cid = db.execute(text("INSERT INTO comptes (nom, plan, statut, sieges)"
-                          " VALUES ('LABUSE (admin)', 'pro', 'actif', 99) RETURNING id")).scalar()
+                          " VALUES ('LABUSE (admin)', 'illimite', 'actif', 99) RETURNING id")).scalar()
     uid = db.execute(text(
         "INSERT INTO utilisateurs (compte_id, email, hash, role, statut, cgv_acceptees_at, cgv_version)"
         " VALUES (:c, :e, :h, 'admin', 'actif', now(), :v) RETURNING id"),

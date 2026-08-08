@@ -254,11 +254,18 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
         db.execute(text("CREATE TABLE IF NOT EXISTS stripe_events ("
                         " event_id text PRIMARY KEY, recu_at timestamptz NOT NULL DEFAULT now())"))
         db.commit()
+        # P2-41 — DÉDUP DANS LA MÊME TRANSACTION que le traitement. On POSE la marque mais on NE
+        # COMMIT PAS ici : avant, la marque était committée AVANT de traiter l'événement → un
+        # événement marqué « reçu » puis dont le traitement échouait (exception, crash) était PERDU
+        # au rejeu Stripe (la dédup le croyait déjà fait). Désormais la marque et son effet
+        # (activation, suspension…) commitent ENSEMBLE : si le traitement rollback, la marque
+        # disparaît → Stripe rejoue et l'effet est ré-appliqué. Deux rejeux concurrents : le 2ᵉ
+        # INSERT bloque sur le verrou PK jusqu'au commit/rollback du 1ᵉʳ (exactly-once sérialisé).
         seen = db.execute(text("INSERT INTO stripe_events (event_id) VALUES (:e)"
                                " ON CONFLICT (event_id) DO NOTHING RETURNING event_id"),
                           {"e": eid}).scalar()
-        db.commit()
         if seen is None:
+            db.rollback()
             log.info("webhook stripe %s : déjà traité (rejeu ignoré)", eid)
             return {"type": event["type"], "action": "rejeu_ignore", "compte_id": None}
     t = event["type"]
@@ -323,6 +330,11 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
     elif t == "customer.subscription.deleted" and cid:
         suspendre_compte(db, cid, "subscription.deleted")
         action = "suspension"
+    # P2-41 — flush FINAL : commite la marque de dédup AVEC l'effet, pour les branches qui n'ont
+    # pas committé elles-mêmes (invoice.paid sans transition, event ignoré…). No-op là où une
+    # branche a déjà committé. Si une exception a sauté avant ici, la marque n'est jamais committée
+    # → Stripe rejoue (comportement voulu).
+    db.commit()
     log.info("webhook stripe %s → %s (compte %s)", t, action, cid)
     return {"type": t, "action": action, "compte_id": cid}
 
