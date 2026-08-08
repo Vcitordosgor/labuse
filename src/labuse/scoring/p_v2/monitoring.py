@@ -55,6 +55,9 @@ def run_monitor(session: Session, snapshot_label: str | None = None) -> dict:
     hits_perm = permis[permis["idu"].isin(top_set)]
 
     # sonde faux négatifs : P bas ou écartée AVEC événement post-gel
+    # M-L : ici on lit VOLONTAIREMENT le DERNIER run calculé (pas Q_A_RUN_LABEL) — le monitoring
+    # forward évalue le run qui VIENT d'être calculé, avant toute décision de bascule. Ce n'est PAS
+    # une surface servie au client : aucun run candidat ne fuit dans le produit par ce chemin.
     latest_run = session.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
     scores = pd.read_sql(text("""
@@ -66,7 +69,8 @@ def run_monitor(session: Session, snapshot_label: str | None = None) -> dict:
     fn = fn.merge(muts, left_on="parcelle_id", right_on="idu", how="left") \
            .merge(permis, left_on="parcelle_id", right_on="idu", how="left")
 
-    # churn observé entre les deux derniers runs
+    # churn observé entre les deux derniers runs (analyse interne : les DEUX derniers calculés, par
+    # construction ≠ run servi épinglé — mesure de rotation, jamais servie au client).
     runs = [r[0] for r in session.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 2")).all()]
     churn = None

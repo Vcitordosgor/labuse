@@ -78,15 +78,54 @@ def data_status(session: Session, commune: str) -> dict:
     return {"ok": not missing, "missing": missing}
 
 
+def served_run_status(session: Session) -> dict:
+    """Niveau 3 — le RUN SERVI (Q_A_RUN_LABEL) est-il MATÉRIALISÉ ? {ok, run, missing[]}.
+
+    P2-33 : `data_status` ne juge QUE le rail LEGACY (parcel_evaluations / cascade). Il ne dit RIEN
+    du rail réellement servi — dryrun + p_score_v2, épinglés à Q_A_RUN_LABEL — que lisent désormais
+    la carte, la liste ET la fiche premium. Sans ce contrôle, /readyz répondait 200 alors que ces
+    surfaces servaient du vide (listes vides, fiche premium en 404). On vérifie ici le run servi
+    NOMMÉMENT, aligné sur `score_v2._served_run` : le registre des runs, les scores v2 ET les
+    évaluations dryrun DU LABEL SERVI. Lecture seule ; `to_regclass` ne sert qu'à DÉTECTER un manque
+    (qui devient un 503 explicite), jamais à replier silencieusement sur des données vides."""
+    from .scoring.score_v_constants import Q_A_RUN_LABEL
+    missing: list[str] = []
+
+    def regclass(name: str):
+        return session.execute(text("SELECT to_regclass(:n)"), {"n": name}).scalar()
+
+    def scal(sql: str) -> int:
+        return int(session.execute(text(sql), {"r": Q_A_RUN_LABEL}).scalar() or 0)
+
+    if regclass("p_score_v2_runs") is None:
+        missing.append("table p_score_v2_runs (rail scoring v2 non déployé)")
+    elif not scal("SELECT count(*) FROM p_score_v2_runs WHERE run_id = :r"):
+        missing.append(f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs")
+    if regclass("parcel_p_score_v2") is None:
+        missing.append("table parcel_p_score_v2")
+    elif not scal("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r"):
+        missing.append(f"scores parcel_p_score_v2 du run « {Q_A_RUN_LABEL} »")
+    if regclass("dryrun_parcel_evaluations") is None:
+        missing.append("table dryrun_parcel_evaluations")
+    elif not scal("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label = :r"):
+        missing.append(f"évaluations dryrun_parcel_evaluations du run « {Q_A_RUN_LABEL} »")
+    return {"ok": not missing, "run": Q_A_RUN_LABEL, "missing": missing}
+
+
 def readiness(session: Session, commune: str) -> dict:
-    """Vue /readyz : schéma + données critiques, avec l'action à lancer si dégradé."""
+    """Vue /readyz : schéma + données critiques + RUN SERVI matérialisé, avec l'action si dégradé."""
     schema = schema_status(session)
     data = data_status(session, commune) if schema["ok"] else {"ok": False, "missing": ["(schéma d'abord)"]}
+    served = (served_run_status(session) if schema["ok"]
+              else {"ok": False, "run": None, "missing": ["(schéma d'abord)"]})
     actions: list[str] = []
     if not schema["ok"]:
         actions.append(f"{CMD_DOCTOR}  (répare le schéma en secondes)")
     if not data["ok"]:
         actions.append(f"{CMD_REBUILD}  (reconstruit couches + évaluation, ~5 min)")
+    if schema["ok"] and not served["ok"]:
+        actions.append(f"run servi « {served['run']} » non matérialisé — lancer `labuse score-v2` "
+                       f"(+ pipeline dryrun) ; manque : {', '.join(served['missing'])}")
     # Péremption des déclassements AU (arbitrage Vic 30/07, option B) : champ CONSULTATIF, remonté
     # de lui-même sur la surface pollée en continu. Il n'entre JAMAIS dans `ready` (un déclassement
     # oublié est une DETTE, pas une panne : /readyz reste 200 pour ne pas sortir l'app du service —
@@ -95,8 +134,8 @@ def readiness(session: Session, commune: str) -> dict:
     if au and au["statut"] != "ok":
         actions.append(f"lire les règlements des zones AU en attente "
                        f"({au['n']} déclassées, plus ancienne {au['jours_plus_ancien']} j)")
-    return {"ready": schema["ok"] and data["ok"], "commune": commune,
-            "schema": schema, "data": data, "actions": actions,
+    return {"ready": schema["ok"] and data["ok"] and served["ok"], "commune": commune,
+            "schema": schema, "data": data, "served_run": served, "actions": actions,
             "au_statut_en_attente": au,
             "checked_at": datetime.now(timezone.utc).isoformat()}
 

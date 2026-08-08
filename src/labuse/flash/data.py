@@ -190,14 +190,19 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
         # grille matrice Q/A ci-dessus est reléguée en complément « historique ».
         etage0 = bool(r["etage0"]) if r else False
         v2 = None
+        # M-L (P1-15) : sur la page de garde du Flash (document VENDU 79 €), le tier v2 est ÉPINGLÉ
+        # au run SERVI (Q_A_RUN_LABEL) — EXACTEMENT le même run que l'étage 0 lu quelques lignes plus
+        # haut (`d.run_label = Q_A_RUN_LABEL`). Plus jamais « le dernier run calculé » : sinon le
+        # rapport mélangeait l'étage 0 du run servi et le tier v2 d'un run CANDIDAT non arbitré
+        # (deux verdicts, un faux). Les deux DOIVENT lire le même run. Le garde `to_regclass` reste
+        # la résilience propre du Flash (rail v2 pas déployé → section omise, jamais d'erreur) ; la
+        # garantie « run servi matérialisé » est portée en amont par /readyz (state.served_run_status).
         if db.execute(text("SELECT to_regclass('p_score_v2_runs') IS NOT NULL")).scalar():
             v2 = db.execute(text(
                 """SELECT s2.tier, s2.rang, s2.mult_base
                    FROM parcel_p_score_v2 s2
-                   WHERE s2.parcelle_id = :idu
-                     AND s2.run_id = (SELECT run_id FROM p_score_v2_runs
-                                      ORDER BY computed_at DESC LIMIT 1)"""),
-                {"idu": idu}).mappings().first()
+                   WHERE s2.parcelle_id = :idu AND s2.run_id = :run"""),
+                {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
         if v2 or etage0:
             libelles = {"brulante": "Brûlante", "chaude": "Chaude",
                         "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
@@ -395,6 +400,23 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
 def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "sitadel_permits" not in avail:
         return None
+    # Compte + logements : agrégats SQL (COUNT/SUM) sur toute la fenêtre — jamais une matérialisation
+    # de toutes les lignes côté Python. n et total_logements restent donc EXACTS.
+    agg = db.execute(text(
+        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
+           SELECT count(*) AS n,
+                  COALESCE(sum(NULLIF(sp.raw->>'nb_lgt', '')::int), 0) AS total_lgt
+           FROM sitadel_permits sp, p
+           WHERE sp.geom IS NOT NULL
+             AND sp.date >= (CURRENT_DATE - make_interval(months => :mois))
+             AND ST_DWithin(ST_Transform(sp.geom, 2975), p.geom_2975, :r)"""),
+        {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().first()
+    n = int(agg["n"]) if agg else 0
+    if not n:
+        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS}
+    # P3-8 : seuls les 3 plus gros projets sont AFFICHÉS → LIMIT côté SQL (borne le payload en
+    # secteur dense, où le rayon pouvait ramener des centaines de permis sans raison). Les compteurs
+    # ci-dessus restent exacts ; « cohérent avec l'affichage » = on ne rapatrie que ce qui est montré.
     rows = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT sp.type, to_char(sp.date, 'MM/YYYY') AS mois,
@@ -404,14 +426,12 @@ def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
            WHERE sp.geom IS NOT NULL
              AND sp.date >= (CURRENT_DATE - make_interval(months => :mois))
              AND ST_DWithin(ST_Transform(sp.geom, 2975), p.geom_2975, :r)
-           ORDER BY nb_lgt DESC NULLS LAST"""),
+             AND NULLIF(sp.raw->>'nb_lgt', '')::int > 0
+           ORDER BY nb_lgt DESC NULLS LAST LIMIT 3"""),
         {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().all()
-    if not rows:
-        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS}
-    total_lgt = sum(r["nb_lgt"] or 0 for r in rows)
-    return {"n": len(rows), "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
-            "total_logements": total_lgt,
-            "plus_gros": [dict(r) for r in rows[:3] if (r["nb_lgt"] or 0) > 0]}
+    return {"n": n, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
+            "total_logements": int(agg["total_lgt"]),
+            "plus_gros": [dict(r) for r in rows]}
 
 
 def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:

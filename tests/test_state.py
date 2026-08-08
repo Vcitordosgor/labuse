@@ -12,6 +12,31 @@ from typer.testing import CliRunner
 pytestmark = pytest.mark.db
 
 
+def _seed_served_run(s):
+    """M-L (P2-33) : matérialise un run SERVI minimal (une parcelle) sous Q_A_RUN_LABEL — registre
+    + score v2 + évaluation dryrun. Le seed démo ne bâtit que le rail legacy ; sans ce run servi,
+    /readyz doit (à raison) répondre 503. On rend donc la démo RÉELLEMENT servable (carte/liste/
+    fiche premium) pour que « prêt » ait un sens."""
+    from sqlalchemy import select
+
+    from labuse import models
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+
+    pid = s.execute(select(models.Parcel.id)).scalars().first()
+    idu = s.execute(select(models.Parcel.idu).where(models.Parcel.id == pid)).scalar()
+    s.execute(text("INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256) "
+                   "VALUES (:r, 'm36-l2f-2026', 'demo') ON CONFLICT DO NOTHING"),
+              {"r": Q_A_RUN_LABEL})
+    s.execute(text("INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, "
+                   "contrib_z, contrib_d, model_version, tier, copro) "
+                   "VALUES (:r, :idu, 0.5, 2.0, 0.1, 0.1, 'm36-l2f-2026', 'chaude', false) "
+                   "ON CONFLICT DO NOTHING"), {"r": Q_A_RUN_LABEL, "idu": idu})
+    s.execute(text("INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, "
+                   "completeness_score, opportunity_score, status) "
+                   "VALUES (:r, :pid, 80, 50, 'opportunite') ON CONFLICT DO NOTHING"),
+              {"r": Q_A_RUN_LABEL, "pid": pid})
+
+
 # ───────────────────────── Schéma : auto-réconciliation ─────────────────────────
 
 def test_ensure_schema_repare_colonne_trigger_index(engine):
@@ -89,10 +114,16 @@ def client(engine):
         demo_saint_paul.seed_demo(s)
         ids = [r[0] for r in s.execute(select(models.Parcel.id)).all()]
         evaluate_parcels(ids, s, persist=True, ai_provider=StubProvider())
+        _seed_served_run(s)   # M-L (P2-33) : /readyz gate désormais aussi le run servi
     try:
         yield TestClient(app)
     finally:
+        from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
         with session_scope() as s:
+            # p_score_v2_runs / parcel_p_score_v2 ne sont pas FK aux parcelles → nettoyage explicite
+            # (dryrun_* part en CASCADE avec les parcelles via reset_demo).
+            s.execute(text("DELETE FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": Q_A_RUN_LABEL})
+            s.execute(text("DELETE FROM p_score_v2_runs WHERE run_id = :r"), {"r": Q_A_RUN_LABEL})
             demo_saint_paul.reset_demo(s)
 
 
@@ -131,6 +162,31 @@ def test_readyz_503_si_couche_critique_absente(client):
                     "INSERT INTO spatial_layers (kind, subtype, name, geom, commune) VALUES "
                     "(:k,:st,:n, ST_GeomFromText(:w,4326), :c)"),
                     {"k": kind, "st": subtype, "n": name, "w": wkt, "c": commune})
+    assert client.get("/readyz").status_code == 200      # état restauré
+
+
+def test_readyz_503_si_run_servi_absent(client):
+    """P2-33 : le rail LEGACY prêt ne suffit PAS. Si le run SERVI (dryrun + p_score_v2, épinglé
+    Q_A_RUN_LABEL) n'est pas matérialisé, /readyz répond 503 en NOMMANT le run — jamais 200 sur
+    des surfaces (carte/liste/fiche premium) qui serviraient du vide."""
+    from labuse.db import session_scope
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+
+    with session_scope() as s:   # retire le run servi (commit hors transaction de test)
+        s.execute(text("DELETE FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": Q_A_RUN_LABEL})
+        s.execute(text("DELETE FROM p_score_v2_runs WHERE run_id = :r"), {"r": Q_A_RUN_LABEL})
+        s.execute(text("DELETE FROM dryrun_parcel_evaluations WHERE run_label = :r"), {"r": Q_A_RUN_LABEL})
+    try:
+        r = client.get("/readyz")
+        assert r.status_code == 503
+        js = r.json()
+        assert js["ready"] is False
+        assert js["served_run"]["ok"] is False
+        assert Q_A_RUN_LABEL in " ".join(js["served_run"]["missing"])
+        assert any(Q_A_RUN_LABEL in a for a in js["actions"])
+    finally:
+        with session_scope() as s:
+            _seed_served_run(s)
     assert client.get("/readyz").status_code == 200      # état restauré
 
 

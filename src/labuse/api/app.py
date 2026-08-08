@@ -2061,8 +2061,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     if not head:
         raise HTTPException(404, f"Parcelle {idu} absente du run {run_label}")
 
-    # Correctif M5 (verdict d'en-tête) : tier v2 du dernier run — pilote la bannière/badge
-    # quand il existe ; l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
+    # Correctif M5 (verdict d'en-tête) : tier v2 du run SERVI (`_score_v2_run_id` = Q_A_RUN_LABEL,
+    # épinglé — PAS « le dernier run par timestamp ») — pilote la bannière/badge quand il existe ;
+    # l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
     v2run = _score_v2_run_id(db)
     s2 = db.execute(text(
         "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail, top5_contributions "
@@ -2586,7 +2587,14 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
 
 @app.get("/parcels/{idu}")
 def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
-    """Fiche « Tout ce que LA BUSE a trouvé » (§8). `source=<run q_v*>` (défaut Q_A_RUN_LABEL) → fiche premium (dryrun)."""
+    """Fiche « Tout ce que LA BUSE a trouvé » (§8).
+
+    P2-32 (mesuré) : SANS `source`, on rend la fiche LEGACY (`_build_fiche`) ; la fiche premium
+    (dryrun, `_q_v2_fiche`) n'est servie QUE si `source` commence par `q_v`. Le front envoie
+    TOUJOURS `source=VITE_RUN_LABEL` (= Q_A_RUN_LABEL, cf. api.ts `getFiche`) → le client voit donc
+    la premium ; le défaut sans `source` n'est PAS premium (l'ancienne docstring l'affirmait à tort).
+    Le `Q_A_RUN_LABEL` n'est le défaut que du paramètre `run_label` de `_q_v2_fiche`, atteint
+    seulement quand `source` est un label `q_v*`."""
     if source and source.startswith("q_v"):
         return _q_v2_fiche(db, idu, run_label=source)
     return _build_fiche(db, idu)

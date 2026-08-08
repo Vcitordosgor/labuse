@@ -36,9 +36,16 @@ DEFAULT_GOLDEN = os.path.join(os.path.dirname(__file__), "..", "..", "..",
 # ───────────────────────────── chargement (lecture seule) ─────────────────────────────
 
 def served_run(session: Session) -> str | None:
-    """Dernier run servi (même règle que l'API/golden) = champion par défaut."""
+    """Run SERVI (Q_A_RUN_LABEL, point de vérité unique) = champion par défaut de l'arène.
+
+    M-L : la MÊME règle que l'API/golden/fiche — le juge oppose un challenger au run RÉELLEMENT
+    servi, jamais « le dernier run calculé ». Ce dernier peut être un CANDIDAT non encore arbitré :
+    comparer deux candidats entre eux (challenger vs un autre challenger) n'a aucun sens pour une
+    décision de promotion. Le nom `served_run` était juste, l'implémentation ne l'était pas.
+    Label absent de la table → None → `run_arene` lève « run champion absent de parcel_p_score_v2 »."""
+    from .score_v_constants import Q_A_RUN_LABEL
     return session.execute(text(
-        "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": Q_A_RUN_LABEL}).scalar()
 
 
 def latest_label_year(session: Session) -> int:
