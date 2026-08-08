@@ -463,6 +463,44 @@ def check_sources_declarees(session=None) -> dict:
     return out
 
 
+def check_unicite_pm(session=None) -> dict:
+    """Garde M-A — assertion « un lien personne morale ↔ parcelle est UNIQUE » avant de servir le
+    build V. `parcelle_personne_morale` a une PK sur `idu` (mesure M-A : 0 doublon aujourd'hui) —
+    cette garde est la vérification EXPLICITE de l'invariant AVANT service : si la PK sautait, si un
+    import parallèle doublait un idu, ou si la source dégroupait un idu en plusieurs sirens, le build V
+    servirait un propriétaire arbitraire pour cette parcelle (dernier écrasant). Bruyante, NON
+    bloquante (même régime que check_sources_declarees / check_coherence_tables_run_scopees).
+    Retourne `{statut, n_doublons_idu, idus}` (statut OK / DOUBLONS / ABSENTE)."""
+    out: dict = {"statut": "OK", "n_doublons_idu": 0, "idus": []}
+
+    def _run(conn):
+        if not conn.execute(text("SELECT to_regclass('parcelle_personne_morale')")).scalar():
+            out["statut"] = "ABSENTE"
+            print(f"{_ts()} ⚠ unicité PM [ABSENTE] — `parcelle_personne_morale` non matérialisée. "
+                  "NON bloquant.", flush=True)
+            return
+        rows = conn.execute(text(
+            "SELECT idu, count(*) AS n FROM parcelle_personne_morale "
+            "GROUP BY idu HAVING count(*) > 1 ORDER BY n DESC, idu")).all()
+        if rows:
+            out["statut"] = "DOUBLONS"
+            out["n_doublons_idu"] = len(rows)
+            out["idus"] = [r[0] for r in rows[:20]]
+            print(f"{_ts()} ⚠ unicité PM [DOUBLONS] — {len(rows)} idu porté(s) par >1 lien PM "
+                  f"(ex. {out['idus'][:5]}). Le build V servirait un propriétaire arbitraire. "
+                  "NON bloquant, à corriger à la source.", flush=True)
+        else:
+            n = conn.execute(text("SELECT count(*) FROM parcelle_personne_morale")).scalar()
+            print(f"{_ts()} ✓ unicité PM : lien idu↔PM unique ({n} liens, 0 doublon).", flush=True)
+
+    if session is not None:
+        _run(session)
+    else:
+        with engine().connect() as c:
+            _run(c)
+    return out
+
+
 def check_coherence_tables_run_scopees(session=None) -> dict:
     """Garde M50 — assertion « aucune table SERVIE run-scopée silencieusement périmée ». Pour CHAQUE
     table servie portant `run_label`, compare son/ses run(s) au run servi (`config/served_run.txt`).

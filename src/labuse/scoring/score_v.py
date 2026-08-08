@@ -69,7 +69,8 @@ def _load_owner_links(session: Session) -> list[dict]:
     rows = session.execute(text(
         "SELECT idu, regexp_replace(COALESCE(siren,''), '[^0-9]', '', 'g') AS siren, "
         "       COALESCE(denomination,''), groupe, COALESCE(forme_juridique,'') "
-        "FROM parcelle_personne_morale")).all()
+        "FROM parcelle_personne_morale ORDER BY idu")).all()   # M-A : ordre stable (déterminisme
+    # de la review queue + du chunking terrain nu ; le contenu par idu est déjà idempotent)
     return [{"idu": r[0], "siren": r[1] if len(r[1]) == 9 else None,
              "denomination": r[2], "groupe": r[3], "forme": r[4]} for r in rows]
 
@@ -141,16 +142,21 @@ def _load_bodacc(session: Session) -> dict[str, list[dict]]:
 def _load_friches(session: Session) -> dict[str, dict]:
     """idu → friche (rattachement EXACT refcad ∪ intersection géométrique)."""
     out: dict[str, dict] = {}
+    # M-A (P3-3) : ORDER BY DÉTERMINISTE. Une parcelle peut toucher plusieurs friches (rattachement
+    # refcad ∪ intersection géométrique) ; sans tri stable, le `setdefault`/`DISTINCT ON` retenait
+    # une friche ARBITRAIRE (site_id/site_nom variant d'un build à l'autre → 21 refs instables
+    # mesurées). On fige le gagnant sur le plus petit site_id, à idu égal.
     for idu, nom, sid in session.execute(text(
             "SELECT r.value, f.attrs->>'site_nom', f.attrs->>'site_id' "
             "FROM spatial_layers f, jsonb_array_elements_text(f.attrs->'refcad') r "
-            "WHERE f.kind='friche' AND f.attrs ? 'refcad'")).all():
+            "WHERE f.kind='friche' AND f.attrs ? 'refcad' "
+            "ORDER BY r.value, f.attrs->>'site_id'")).all():
         out.setdefault(idu, {"nom": nom, "site_id": sid})
     for idu, nom, sid in session.execute(text(
             "SELECT DISTINCT ON (p.idu) p.idu, f.attrs->>'site_nom', f.attrs->>'site_id' "
             "FROM parcels p JOIN spatial_layers f "
             "  ON f.kind='friche' AND ST_Intersects(f.geom_2975, p.geom_2975) "
-            "ORDER BY p.idu")).all():
+            "ORDER BY p.idu, f.attrs->>'site_id'")).all():
         out.setdefault(idu, {"nom": nom, "site_id": sid})
     return out
 
@@ -550,8 +556,12 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                      json.dumps(retained, ensure_ascii=False)))
 
     log("Score V — écriture parcel_v_score (COPY)…")
+    # M-A (P1-2) : DELETE + COPY dans la MÊME transaction — modèle division_or.build_divisions
+    # (« DELETE et INSERT commitent ensemble »). Avant : un commit S'INTERCALAIT entre le DELETE et
+    # le COPY → un COPY qui casse (ou le process qui meurt entre les deux) laissait parcel_v_score
+    # VIDE. Désormais, un seul commit final ; toute erreur pendant le COPY rollback aussi le DELETE
+    # (session_scope rollback), la table garde son contenu d'avant. Idempotence inchangée.
     session.execute(text("DELETE FROM parcel_v_score"))
-    session.commit()
     raw = session.connection().connection.driver_connection
     now = datetime.now(timezone.utc).isoformat()
     with raw.cursor() as cur:
