@@ -206,34 +206,7 @@
   <p class="note"><strong>⚠ {{ c.rnu_ligne }}</strong></p>
   {% endif %}
 
-  {% if c.score %}
-  <h3>Score LABUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
-      du verdict v2 ci-dessus{% else %}valeur absolue{% endif %})</h3>
-  <div class="cartouches">
-    <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
-      <div class="valeur">{{ c.score.q }} <small>/100</small></div></div>
-    <div class="cartouche"><div class="titre">A — Accessibilité (mutabilité)</div>
-      <div class="valeur">{{ c.score.a }} <small>/100</small></div></div>
-    {% if c.score.completude is not none %}
-    <div class="cartouche"><div class="titre">Complétude du signal A</div>
-      <div class="valeur">{{ c.score.completude }} <small>%</small></div></div>
-    {% endif %}
-  </div>
-  <table class="donnees grille">
-    <tr><th>Grille de lecture</th><th>Interprétation</th></tr>
-    <tr><td class="num-cell">Q ≥ {{ c.score.grille.q_seuil }}</td>
-        <td>Qualité foncière élevée : la parcelle « vaut le coup » au regard des règles et
-            contraintes analysées.</td></tr>
-    <tr><td class="num-cell">Q &lt; {{ c.score.grille.q_faible }}</td>
-        <td>Qualité foncière faible : contraintes ou déqualifications identifiées.</td></tr>
-    <tr><td class="num-cell">A ≥ {{ c.score.grille.a_seuil }}</td>
-        <td>Signaux de mutabilité réels détectés (cycle de vie du propriétaire, marché…).</td></tr>
-    <tr><td class="num-cell">A ≈ 50</td>
-        <td>Aucun signal particulier — valeur de base, ni positif ni négatif.</td></tr>
-  </table>
-  <p class="note">Score propre à cette parcelle, exprimé en valeur absolue sur la grille
-     LABUSE — ce rapport ne compare pas la parcelle à d'autres.</p>
-  {% endif %}
+  {# M-P (P2-67) : grille matrice Q/A RETIRÉE du Flash (rail éteint M37) — un seul verdict (v2). #}
 </section>
 {% endif %}
 
@@ -326,6 +299,7 @@
       <div class="valeur">{{ "{:,}".format(m.med_m2_terrain).replace(",", " ") }} <small>€/m²</small></div></div>
     {% endif %}
   </div>
+  {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
 
   {% if m.comparables %}
   <h3>Comparables récents (anonymisés)</h3>

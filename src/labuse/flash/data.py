@@ -16,7 +16,6 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .. import config
 from ..scoring.score_v_constants import Q_A_RUN_LABEL
 
 log = logging.getLogger("labuse.flash")
@@ -177,17 +176,10 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
                WHERE p.idu = :idu AND d.run_label = :run"""),
             {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
-        if r and r["q_score"] is not None:
-            seuils = config.load_yaml_config("scoring_matrice").get("seuils", {})
-            # Score en valeur ABSOLUE + grille de lecture — jamais de classement (mandat §2).
-            out["score"] = {"q": r["q_score"], "a": r["a_score"],
-                            "completude": r["a_completude"],
-                            "grille": {"q_seuil": seuils.get("q_chaude", 65),
-                                       "a_seuil": seuils.get("a_chaude", 60),
-                                       "q_faible": seuils.get("q_ecartee", 50)}}
-        # M6 2a (P0 « une seule vérité ») : verdict v2 EN PREMIER — même doctrine que la
-        # fiche et pdf_premium (le tier v2 pilote, l'étage 0 du run SERVI prime) ; la
-        # grille matrice Q/A ci-dessus est reléguée en complément « historique ».
+        # M-P (P2-67) : la grille matrice Q/A (out["score"], seuils scoring_matrice) est RETIRÉE du
+        # Flash — document VENDU 79 €, l'acheteur n'a aucun contexte pour arbitrer un second verdict
+        # issu d'un rail éteint (M37). Un seul verdict : le tier v2 (out["verdict_v2"]) ci-dessous.
+        # M6 2a (P0 « une seule vérité ») : verdict v2 — le tier v2 pilote, l'étage 0 du run SERVI prime.
         etage0 = bool(r["etage0"]) if r else False
         v2 = None
         # M-L (P1-15) : sur la page de garde du Flash (document VENDU 79 €), le tier v2 est ÉPINGLÉ
@@ -379,7 +371,15 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().all()
     out = {"n": int(stats["n"]), "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
            "med_m2_bati": _i(stats["med_m2_bati"]), "med_m2_terrain": _i(stats["med_m2_terrain"]),
-           "comparables": [dict(c) for c in comps], "derniere_mutation": None, "secteur": []}
+           "comparables": [dict(c) for c in comps], "derniere_mutation": None, "secteur": [],
+           # M-P (P2-66) : étiquette de MÉTHODE — ce bloc est un indicateur de marché LOCAL (tous
+           # types, rayon fixe, sans exclusion d'aberrants), DISTINCT du prix de sortie du bilan
+           # (sector_price : appartements, rayon adaptatif 500→1500→commune, aberrants exclus).
+           # Les deux médianes peuvent légitimement différer — la méthode l'explique, jamais un écart nu.
+           "methode": (f"Médiane €/m² observée, tous types de biens, rayon {RAYON_MARCHE_M} m sur "
+                       f"{FENETRE_MARCHE_ANNEES} ans, sans exclusion d'aberrants — indicateur de marché "
+                       "local, distinct du prix de sortie du bilan (appartements, rayon adaptatif, "
+                       "aberrants exclus).")}
     if "v_parcel_dvf_last" in avail:
         last = db.execute(text(
             "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain "
@@ -472,37 +472,39 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
 
 # ── Sources & millésimes (page argument de vente, pas une annexe — mandat §3.9) ──────────
 
-# section rendue -> [(id data_sources, complément de millésime statique)]
-_SECTION_SOURCES: list[tuple[str, str, int | None, str | None]] = [
-    # (clé section, libellé source si data_sources indisponible, ds_id, millésime statique)
-    ("identite", "Cadastre Etalab (DGFiP)", 2, None),
-    ("identite", "PLU / GPU (API Carto, IGN)", 3, None),
+# M-P (P2-68) : sources référencées par NOM CANONIQUE data_sources (les serial `id` dépendent de
+# l'ordre d'insertion du seed → sur une base reconstruite, le rapport VENDU attribuait la mauvaise
+# date de synchro au mauvais bloc). Les noms sont déclarés « NE PAS renommer » (seed_sources).
+# tuple : (clé section, libellé affiché, NOM data_sources | None, millésime statique).
+_SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
+    ("identite", "Cadastre Etalab (DGFiP)", "Cadastre Etalab (bulk DGFiP/Etalab)", None),
+    ("identite", "PLU / GPU (API Carto, IGN)", "Urbanisme PLU/GPU (API Carto)", None),
     ("identite", "Droits résiduels — calibrage LABUSE sur règlements PLU", None,
      "calibrage continu 2026"),
-    ("risques", "Géorisques (BRGM / MTE)", 4, None),
-    ("risques", "Géorisques — sites et sols pollués", 32, None),
-    ("risques", "Géorisques — cavités souterraines", 33, None),
-    ("risques", "Géorisques — ICPE", 34, None),
-    ("risques", "Géorisques — mouvements de terrain", 36, None),
-    ("risques", "PPR / aléas (DEAL Réunion)", 30, None),
-    ("risques", "Classement sonore ITT (Cerema)", 46, None),
-    ("risques", "Recul du trait de côte (Cerema / GéoLittoral)", 28, None),
-    ("risques", "50 pas géométriques (DEAL)", 47, None),
-    ("patrimoine", "Base Mérimée / ABF (Ministère de la Culture)", 24, None),
-    ("patrimoine", "ENS (INPN / Département)", 25, None),
-    ("patrimoine", "QPV 2024 (ANCT)", 38, None),
-    ("patrimoine", "Cartofriches (Cerema)", 35, None),
-    ("patrimoine", "Parc National de La Réunion (INPN)", 7, None),
-    ("marche", "DVF — valeurs foncières (DGFiP / Cerema)", 5, None),
-    ("dynamique", "Sitadel — autorisations d'urbanisme (SDES)", 16, None),
-    ("terrain", "RGE ALTI 5 m (IGN)", 6, None),
+    ("risques", "Géorisques (BRGM / MTE)", "Géorisques", None),
+    ("risques", "Géorisques — sites et sols pollués", "Géorisques — sites et sols pollués", None),
+    ("risques", "Géorisques — cavités souterraines", "Géorisques — cavités souterraines", None),
+    ("risques", "Géorisques — ICPE", "Géorisques — ICPE", None),
+    ("risques", "Géorisques — mouvements de terrain", "Géorisques — mouvements de terrain", None),
+    ("risques", "PPR / aléas (DEAL Réunion)", "DEAL Réunion — PPR / aléas", None),
+    ("risques", "Classement sonore ITT (Cerema)", "Classement sonore ITT (Cerema)", None),
+    ("risques", "Recul du trait de côte (Cerema / GéoLittoral)", "DEAL Réunion — trait de côte", None),
+    ("risques", "50 pas géométriques (DEAL)", "50 pas géométriques — limite haute (DEAL)", None),
+    ("patrimoine", "Base Mérimée / ABF (Ministère de la Culture)", "ABF / Monuments historiques", None),
+    ("patrimoine", "ENS (INPN / Département)", "ENS (Département)", None),
+    ("patrimoine", "QPV 2024 (ANCT)", "QPV 2024 (ANCT)", None),
+    ("patrimoine", "Cartofriches (Cerema)", "Cartofriches (Cerema)", None),
+    ("patrimoine", "Parc National de La Réunion (INPN)", "Parc National de La Réunion (INPN)", None),
+    ("marche", "DVF — valeurs foncières (DGFiP / Cerema)", "DVF / valeurs foncières", None),
+    ("dynamique", "Sitadel — autorisations d'urbanisme (SDES)", "SITADEL (autorisations d'urbanisme)", None),
+    ("terrain", "RGE ALTI 5 m (IGN)", "RGE ALTI (altimétrie)", None),
     ("terrain", "PVGIS — gisement solaire (Commission européenne)", None, "modèle SARAH3"),
-    ("carte", "Fond de carte © OpenStreetMap contributors (ODbL)", 19, None),
-    ("adresse", "Base Adresse Nationale (DINUM / IGN)", 18, None),
+    ("carte", "Fond de carte © OpenStreetMap contributors (ODbL)", "OpenStreetMap / Overpass", None),
+    ("adresse", "Base Adresse Nationale (DINUM / IGN)", "Base Adresse Nationale", None),
     # M18 — contexte commune
-    ("contexte_commune", "Sitadel — délais d'instruction (SDES/Dido)", 16, "historique 2013+"),
+    ("contexte_commune", "Sitadel — délais d'instruction (SDES/Dido)", "SITADEL (autorisations d'urbanisme)", "historique 2013+"),
     ("contexte_commune", "Inventaire SRU / LLS (DHUP)", None, "inventaire 2024 · périmètre 2025"),
-    ("contexte_commune", "QPV (ANCT)", 38, "génération 2024"),
+    ("contexte_commune", "QPV (ANCT)", "QPV 2024 (ANCT)", "génération 2024"),
     ("contexte_commune", "Consommation d'espace ENAF (Cerema)", None, "2009-2024 · publié 05/2025"),
 ]
 
@@ -574,17 +576,18 @@ def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> d
 
 
 def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[dict]:
-    sync: dict[int, str] = {}
+    # M-P (P2-68) : synchro indexée par NOM (stable), plus par id serial (dépendant du seed).
+    sync: dict[str, str] = {}
     if "data_sources" in avail:
         for r in db.execute(text(
-                "SELECT id, last_sync_at FROM data_sources WHERE last_sync_at IS NOT NULL")):
+                "SELECT name, last_sync_at FROM data_sources WHERE last_sync_at IS NOT NULL")):
             sync[r[0]] = r[1].date().isoformat()
     out, vus = [], set()
-    for section, label, ds_id, statique in _SECTION_SOURCES:
+    for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
             continue
         vus.add(label)
-        millesime = statique or (sync.get(ds_id) and f"synchronisé le {sync[ds_id]}") or "—"
+        millesime = statique or (sync.get(src_name) and f"synchronisé le {sync[src_name]}") or "—"
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 

@@ -31,13 +31,13 @@ RED = (183, 63, 50)        # rouge d'impression
 RED_SOFT = (250, 233, 230)
 AMBER = (168, 121, 22)
 
-STATUT = {
-    "chaude": ("Chaude", MINT),
-    "a_surveiller": ("À surveiller", (23, 122, 88)),
-    "a_creuser": ("À creuser", AMBER),
-    "ecartee": ("Écartée", RED),
-    "exclue": ("Exclue", (107, 122, 114)),
-}
+# M-P (P2-62) : la table STATUT (matrice Q/A, avec `a_surveiller`) est SUPPRIMÉE — matrice éteinte
+# (M37), plus jamais un verdict matriciel dans un document client. Le verdict d'en-tête vient du
+# tier v2 (étage 0 prime) ; sans run v2 → libellé neutre « Classement historique ».
+# M-P (P2-63) : un PDF circule plus loin qu'une page web — on exclut la donnée personnelle sensible
+# `age_dirigeant` (âge d'un dirigeant), comme share_public (COUCHES_PROPRIETAIRE). L'onglet PROPRIO
+# reste imprimé (document abonné, derrière auth, PM publique DGFiP) ; seule cette ligne est retirée.
+COUCHES_EXCLUES = {"age_dirigeant"}
 
 # correctif M5 : tiers v2 (P×C) — verdict d'en-tête quand un run v2 existe (étage 0 prime)
 TIER_V2 = {
@@ -148,8 +148,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_text_color(*(TXT if adr else TXT_DIM))
     pdf.cell(0, 4.6, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(0.6)
-    # verdict d'en-tête (correctif M5) : étage 0 → écartée ; sinon tier v2 s'il existe ;
-    # sinon statut matrice. Le statut matrice descend en « historique » (ligne dim).
+    # M-P (P2-62) : UN SEUL verdict. La matrice Q/A est ÉTEINTE (M37) — plus jamais imprimée en
+    # second verdict « historique » sur un document remis à un comité/banquier. étage 0 du run servi
+    # prime → Écartée ; sinon le tier v2 pilote ; sinon (aucun run v2 sur ce parc) libellé NEUTRE —
+    # jamais un statut matriciel mort présenté comme un verdict.
     s2 = fiche.get("score_v2")
     v2_pilote = bool(s2) and not fiche.get("etage0")
     if v2_pilote:
@@ -158,8 +160,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             label += f" · rang {s2['rang']}"
         if s2.get("mult_base") is not None:
             label += f" · ×{s2['mult_base']:.1f}"
+    elif fiche.get("etage0"):
+        label, color = "Écartée", RED
     else:
-        label, color = STATUT.get(fiche["statut"], ("?", TXT_MUT))
+        label, color = "Classement historique", TXT_MUT
     # ── M22-F C4 : VERDICT EN TÊTE, hiérarchie M19 — carte pleine largeur, gros label
     surf = f"{fiche['surface_m2']:,} m²".replace(",", " ") if fiche.get("surface_m2") else "surface n/d"
     lon, lat = fiche.get("coords", [None, None])
@@ -179,13 +183,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_xy(14, y + 7.8)
     pdf.cell(pdf.w - 33, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}", align="R")
     pdf.set_y(y + 17)
-    if v2_pilote:
-        hist, _ = STATUT.get(fiche["statut"], ("?", TXT_MUT))
-        pdf.set_font("inter", size=6.5)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 3.6, f"Statut matrice (historique) : {hist} — remplacé par le scoring v2 (P×C)",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(1)
+    # M-P (P2-62) : le second verdict issu de la matrice éteinte est SUPPRIMÉ — un seul verdict/document.
 
     # ── Scores (Q / A — le score ne s'affiche jamais seul)
     # M36 Lot B : la jauge COMPLÉTUDE est RETIRÉE (3 valeurs sur tout le parc — n'informe
@@ -321,12 +319,15 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     TITRES_M19 = {"regles": "Règles d'urbanisme", "risques": "Risques",
                   "marche": "Marché", "proprio": "Propriétaire"}
     omises = 0
+    sections_omises: list[str] = []   # M-P (P2-64) : NOMMER la section tronquée, pas juste compter
     for key, titre in ONGLETS:
-        lines = [ln for ln in fiche["lines"] if ln["onglet"] == key]
+        # M-P (P2-63) : `age_dirigeant` (donnée personnelle) exclue du PDF (COUCHES_EXCLUES).
+        lines = [ln for ln in fiche["lines"] if ln["onglet"] == key and ln["layer"] not in COUCHES_EXCLUES]
         if not lines:
             continue
         if pdf.page >= 2 and pdf.get_y() > pdf.h - 60:
             omises += len(lines)
+            sections_omises.append(TITRES_M19.get(key, titre))
             continue
         pdf.ln(1.5)
         # en-tête de section en CARTOUCHE (comme un tiroir M19) + résumé à droite
@@ -344,9 +345,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(14, y + 1.8)
         pdf.cell(pdf.w - 32, 4, resume, align="R")
         pdf.set_y(y + 8.6)
+        titre_m19 = TITRES_M19.get(key, titre)
         for ln in lines:
             if pdf.page >= 2 and pdf.get_y() > pdf.h - 44:
                 omises += 1
+                if titre_m19 not in sections_omises:   # section tronquée en cours d'impression
+                    sections_omises.append(titre_m19)
                 continue
             if pdf.get_y() > pdf.h - 34:
                 pdf.add_page()
@@ -375,12 +379,16 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.ln(0.8)
 
     if omises:
-        # plafond 2 pages (C4) — jamais silencieux : le compteur dit ce qui n'est pas imprimé
+        # plafond 2 pages (C4) — jamais silencieux : le compteur dit ce qui n'est pas imprimé,
+        # et M-P (P2-64) NOMME la/les section(s) tronquée(s) (souvent PROPRIO, la plus utile en
+        # prospection) — le lecteur sait EXACTEMENT ce qui manque, pas juste un total.
+        quoi = " · ".join(sections_omises)
         pdf.set_font("inter", size=6.8)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.6,
-                       f"… {omises} signal(aux) supplémentaire(s) non imprimé(s) (format 2 pages) — "
-                       "la fiche écran porte la liste complète.", new_x="LMARGIN", new_y="NEXT")
+                       f"… {omises} signal(aux) non imprimé(s) (format 2 pages)"
+                       + (f" — section(s) : {quoi}" if quoi else "")
+                       + ". La fiche écran porte la liste complète.", new_x="LMARGIN", new_y="NEXT")
 
     # ── A6 (mandat bilan-calculette) : CHARGE FONCIÈRE « selon vos hypothèses », si passée à l'export
     calc = fiche.get("calculette")
