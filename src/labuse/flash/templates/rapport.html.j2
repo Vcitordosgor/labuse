@@ -155,6 +155,11 @@
   {% elif c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
   {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
      on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
+  {# M54-AB C2 : NOMMER le scénario — ici on CONSERVE le bâti existant (SDP résiduelle = droits
+     PLU − emprise déjà bâtie). Le dossier banquier chiffre l'autre scénario (table rase, neuf). #}
+  <h3>Potentiel résiduel — bâti conservé</h3>
+  <p class="note">Ce qu'il reste à construire au regard du PLU en gardant le bâti existant (le
+    dossier banquier chiffre l'hypothèse « faisabilité neuve », bâti démoli).</p>
   <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
     <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div>
     {# Clôture cycle 2 (fix N8) : la SDP n'est PAS l'habitable — surface de plancher au sens PLU

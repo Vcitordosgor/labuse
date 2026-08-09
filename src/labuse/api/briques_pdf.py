@@ -421,7 +421,14 @@ def faisabilite(out: dict) -> str:
                       f"ci-dessous aboutit à la surface habitable au rendement — même scénario, "
                       f"écart de méthode/arrondi.</p>")
     avert = "".join(f"<li>{esc(a)}</li>" for a in (fais.avertissements or []))
-    return (f"<div class='pb'></div><h2>Faisabilité — dérivation détaillée</h2>{synth}"
+    # M54-AB C2 : NOMMER le scénario. Ce bloc chiffre le NEUF hors bâti existant (reculs, table
+    # rase) — l'autre document (dossier/flash) chiffre le résiduel « bâti conservé ». L'avertissement
+    # démolition est visible PRÈS du chiffre (le coût de démolition n'est PAS inclus au bilan).
+    return (f"<div class='pb'></div><h2>Faisabilité neuve — hors bâti existant</h2>"
+            f"<p class='note'><b>Scénario table rase</b> : capacité en construction neuve, bâti "
+            f"existant supposé démoli (reculs réglementaires appliqués). La démolition est à "
+            f"chiffrer — <b>non incluse</b> dans le bilan. Le potentiel « bâti conservé » figure "
+            f"au dossier parcelle.</p>{synth}"
             f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
             + (f"<p class='note'>Avertissements : <ul>{avert}</ul></p>" if avert else "")
             + f"<p class='note'>{esc(fais.bandeau)}</p>")
