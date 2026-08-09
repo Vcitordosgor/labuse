@@ -231,6 +231,50 @@ def test_idor_event_log_cloison(app_client):
             s.execute(text("DELETE FROM event_log WHERE idu = '974EVT00000001'")); s.commit()
 
 
+def test_broadcast_marche_visible_de_tous_mais_perso_cloisonne(app_client):
+    """M-T V2 : un événement de MARCHÉ (compte_id NULL, kind bascule) est visible de TOUS les
+    abonnés ; un événement PERSONNEL de A (veille) reste invisible de B (cloison non régressée)."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    cid_a = _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        with session_scope() as s:
+            mid = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('bascule', '974MKT00000001', '▲ bascule marché', NULL) RETURNING id")).scalar()
+            pid = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('veille', '974PRV00000001', 'veille privée de A', :c) RETURNING id"),
+                {"c": cid_a}).scalar()
+            s.commit()
+        a_items = ca.get("/events").json()["items"]
+        b_items = cb.get("/events").json()["items"]
+        # MARCHÉ (NULL) visible des DEUX comptes
+        assert any(e["id"] == mid for e in a_items) and any(e["id"] == mid for e in b_items)
+        # PERSONNEL de A : A le voit, B jamais (cloison stricte préservée)
+        assert any(e["id"] == pid for e in a_items) and all(e["id"] != pid for e in b_items)
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM event_log WHERE idu IN ('974MKT00000001','974PRV00000001')"))
+            s.commit()
+
+
+def test_digest_resume_marche_sans_evenement_perso():
+    """M-T V2 : un abonné SANS veille reçoit un digest si le résumé marché est non vide (fin du
+    « digest vide à vie »). Le marché est BORNÉ en résumé (jamais la liste) + lien de désinscription."""
+    from labuse.emails import digest_notifications
+    sujet, corps = digest_notifications([], "https://x/events/desabonner?c=1&t=zz",
+                                        marche={"total": 5, "dans_vos_communes": 2})
+    assert "5 mouvement" in corps and "dont 2 dans vos communes" in corps
+    assert "mouvement" in sujet                       # sujet marché quand aucun événement perso
+    assert "desabonner" in corps                      # désinscription obligatoire présente
+    # « vos communes » absent → total seul (pas de parcelles suivies)
+    _, corps2 = digest_notifications([], "https://x/d", marche={"total": 3, "dans_vos_communes": None})
+    assert "sur l'île" in corps2 and "dans vos communes" not in corps2
+
+
 def test_idor_watched_parcels_cloison(app_client):
     """Suivi de cible : A et B peuvent suivre la MÊME parcelle sans se voir ; B « unwatch »
     ne défait pas le suivi de A."""
