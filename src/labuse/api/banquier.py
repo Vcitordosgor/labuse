@@ -84,10 +84,14 @@ def _facts_synthese(out: dict, core_mod):
     label_neuf = out.get("prix_neuf_label")
     if label_neuf:
         facts["prix_sortie_neuf"] = F(f"prix de sortie neuf retenu pour le bilan — {label_neuf}", "ESTIME")
-    se = out.get("score_e")
-    if se and se["estimable"]:
-        facts["marge"] = F(f"marge foncière estimée {_eur(se['marge_estimee'])} "
-                           f"(prix de sortie neuf, niveau {se['niveau_prix']})", "ESTIME")
+    # M54-AB C3 : la marge SYNTHÉTISÉE découle de la charge du bilan à rebours (point de calcul
+    # unique), jamais de la charge Score É recalculée à 21 % — sinon la synthèse cite -18 k€ et le
+    # bloc Score É -19 k€ dans le même dossier.
+    from .briques_pdf import score_e_affiche
+    sa = score_e_affiche(out)
+    if sa:
+        facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} "
+                           f"(prix de sortie neuf, niveau {sa['niveau_prix']})", "ESTIME")
     perm = out.get("permits")
     if perm and perm.get("n"):
         facts["permis_voisins"] = F(f"{perm['n']} permis de construire dans le voisinage récent", "SOURCE")

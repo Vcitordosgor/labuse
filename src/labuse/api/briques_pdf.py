@@ -308,6 +308,26 @@ def map_html(geojson: str, ign: bool = False) -> str:
             f"<p class='note'>{esc(carte['attribution'])}</p>")
 
 
+def score_e_affiche(out: dict) -> dict | None:
+    """M54-AB C3 — POINT DE CALCUL UNIQUE de la charge foncière DANS le dossier banquier.
+
+    Le Score É (table précalculée `score_e`) déduit 21 % du CA (× 0.79) ; le bilan à rebours
+    SERVI en déduit 24 % (hypothèses de la commune, honoraires calibrés) → deux « charges »
+    (71 vs 69 k€) sur le même document. On SERT la charge du bilan à rebours partout ; la marge
+    en découle (charge − prix probable du foncier). Le prix probable du foncier reste la donnée
+    Score É (médiane terrain sectorielle × surface), non recalculée ici."""
+    se = out.get("score_e")
+    if not (se and se.get("estimable")):
+        return None
+    bilan_ = out.get("bilan")
+    cf_central = (getattr(bilan_, "charge_fonciere", None) or {}).get("central") if bilan_ else None
+    charge = cf_central if cf_central is not None else se["charge_supportable"]
+    prix_probable = se["prix_probable"]
+    return {"charge": charge, "prix_probable": prix_probable,
+            "marge": round(charge - prix_probable), "niveau_prix": se["niveau_prix"],
+            "charge_du_bilan": cf_central is not None}
+
+
 def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
           produit_sous_titre: str = "DOSSIER BANQUIER · présentation financeur",
           synthese_titre: str = "Synthèse exécutive", marque: dict | None = None) -> str:
@@ -324,9 +344,10 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
     fo = (out.get("faisabilite").fourchette if out.get("faisabilite") else {}) or {}
     if fo.get("shab_vendable_m2"):
         kpis.append(cartouche("Surface vendable · Estimé", f"~{fo['shab_vendable_m2']:.0f} m²"))
-    se = out.get("score_e")
-    if se and se["estimable"]:
-        kpis.append(cartouche("Marge estimée · Estimé", eur(se["marge_estimee"])))
+    sa = score_e_affiche(out)
+    if sa:
+        # marge = charge (bilan à rebours, point de calcul unique) − prix probable du foncier
+        kpis.append(cartouche("Marge estimée · Estimé", eur(sa["marge"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
     return (f"<section class='garde'>"
             f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau, marque=marque)}"
@@ -386,6 +407,14 @@ def faisabilite(out: dict) -> str:
         if fo.get("hauteur_m"):
             parts.append(f"hauteur ~{fo['hauteur_m']} m")
         synth = f"<p><b>Potentiel indicatif :</b> {esc(' · '.join(parts))} {s('E')}</p>"
+        # M54-AB C3 : la surface vendable retenue (capacité en logements, portée au bilan) et la
+        # dérivation de plancher ci-dessous peuvent différer de ~1-2 m² — même scénario, méthodes
+        # distinctes. On l'ÉTIQUETTE plutôt que de laisser deux chiffres nus se contredire.
+        if fo.get("shab_vendable_m2"):
+            synth += (f"<p class='note'>Surface vendable retenue ~{fo['shab_vendable_m2']:.0f} m² "
+                      f"(capacité en logements, valeur portée au bilan) ; la dérivation de plancher "
+                      f"ci-dessous aboutit à la surface habitable au rendement — même scénario, "
+                      f"écart de méthode/arrondi.</p>")
     avert = "".join(f"<li>{esc(a)}</li>" for a in (fais.avertissements or []))
     return (f"<div class='pb'></div><h2>Faisabilité — dérivation détaillée</h2>{synth}"
             f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
@@ -421,13 +450,22 @@ def bilan(out: dict) -> str:
                      f"<tr><td class='n'>{eur(cf.get('bas'))}</td><td class='n'>{eur(cf.get('central'))}</td>"
                      f"<td class='n'>{eur(cf.get('haut'))}</td><td class='n'>{esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>"
                      f"<p class='note'>Fiabilité du bilan : {esc(bilan_.fiabilite)}. {esc(bilan_.bandeau)}</p>")
-    if se and se["estimable"]:
+    sa = score_e_affiche(out)
+    if sa:
         from ..ingestion.score_e import niveau_label
+        # M54-AB C3 : la charge LUE ici = celle du bilan à rebours ci-dessus (point de calcul
+        # unique), jamais la charge Score É recalculée à 21 % — sinon 71 vs 69 k€ sur le même
+        # document. La marge en découle. On ne réutilise plus se['detail'] (il citait 71 k€ / ×0.79).
+        terrain = out["parcelle"]["surface_m2"]
+        detail = (f"Charge supportable = charge foncière acceptable du bilan à rebours ci-dessus "
+                  f"({eur(sa['charge'])}) ; prix probable du foncier = médiane terrain sectorielle "
+                  f"× {terrain:.0f} m². Estimé — hors coûts spécifiques (démolition, dépollution, VRD, "
+                  f"stationnement, TVA, aléas). N'est ni un prix ni une promesse.")
         body += (f"<h3>Score É — marge foncière estimée {s('E')}</h3>"
-                 f"<p><b>{eur(se['marge_estimee'])}</b> = charge supportable {eur(se['charge_supportable'])} "
-                 f"− prix probable du foncier {eur(se['prix_probable'])} "
-                 f"(prix de sortie neuf — {esc(niveau_label(se['niveau_prix']))}).</p>"
-                 f"<p class='note'>{esc(se['detail'])}</p>")
+                 f"<p><b>{eur(sa['marge'])}</b> = charge supportable {eur(sa['charge'])} "
+                 f"− prix probable du foncier {eur(sa['prix_probable'])} "
+                 f"(prix de sortie neuf — {esc(niveau_label(sa['niveau_prix']))}).</p>"
+                 f"<p class='note'>{esc(detail)}</p>")
     elif se:
         body += f"<h3>Score É</h3><p class='note'>Marge {s('A')} — données de marché insuffisantes.</p>"
     return body
