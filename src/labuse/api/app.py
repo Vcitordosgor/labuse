@@ -3343,7 +3343,10 @@ def _compare_row(fiche: dict) -> dict:
     return {
         "idu": p["idu"], "commune": p.get("commune"), "section": p.get("section"), "numero": p.get("numero"),
         "surface_m2": round(p["surface_m2"]) if p.get("surface_m2") else None,
-        "status": v.get("status"), "opportunity_score": v.get("opportunity_score"),
+        "status": v.get("status"),
+        # M54-EXPO-3 A8 — le verdict CLIENT côté front dérive du tier v2 + étage 0 (verdictMeta).
+        "tier_v2": v.get("tier_v2"), "etage0": v.get("etage0"), "rang_v2": v.get("rang_v2"),
+        "opportunity_score": v.get("opportunity_score"),
         "completeness_score": v.get("completeness_score"),
         "zone": fa.get("zone"), "constructible": fa.get("constructible"),
         "capacite": fa.get("verdict") if fa.get("constructible") else None,
@@ -3615,6 +3618,10 @@ class WatchZoneIn(BaseModel):
     commune: str | None = None
 
 
+class WatchZoneRenameIn(BaseModel):
+    name: str
+
+
 class AlerteAckIn(BaseModel):
     id: int | None = None    # None → accuse réception de toutes les nouveautés de la commune
     commune: str | None = None
@@ -3641,6 +3648,16 @@ def watch_zones_create(body: WatchZoneIn, request: Request, db: Session = Depend
     zone = alertes.create_watch_zone(db, body.name, commune, body.geometry, cid)
     counts = alertes.compute_alertes(db, commune, cid)
     return {"zone": zone, "detected": counts}
+
+
+@app.patch("/watch-zones/{zone_id}")
+def watch_zones_rename(zone_id: int, body: WatchZoneRenameIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M54-EXPO-3 — renomme une zone de veille du compte. SEC-IDOR : 404 si pas au compte."""
+    from .. import alertes
+    from .tenant import current_compte
+    if not alertes.rename_watch_zone(db, zone_id, body.name, current_compte(request)):
+        raise HTTPException(404, "Zone de veille inconnue")
+    return {"ok": True, "name": body.name.strip()[:120]}
 
 
 @app.delete("/watch-zones/{zone_id}")

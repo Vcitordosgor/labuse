@@ -96,7 +96,7 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
 
   return (
     <>
@@ -127,6 +127,15 @@ export function Rail() {
         })}
 
         <div className="mt-auto flex flex-col items-center gap-2">
+          {/* M54-EXPO-3 — « Veilles » : panneau des zones de veille géographiques (surimpression carte). */}
+          <button data-rail-veilles onClick={() => toggleVeilles()} className="group flex w-full flex-col items-center gap-1"
+            title="Mes veilles — zones de surveillance et alertes DVF">
+            <span className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
+              veillesOpen ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
+            </span>
+            <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Veilles</span>
+          </button>
           {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
               claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}
           <button

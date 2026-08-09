@@ -1914,6 +1914,12 @@ export function Fiche({ idu }: { idu: string }) {
               <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
+                {/* M54-EXPO-3 A8 — ajouter cette parcelle au comparateur (jusqu'à 3). */}
+                <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
+                  title="Comparer avec d'autres parcelles"
+                  style={{ flexShrink: 0, padding: '0 12px', borderRadius: 9, border: '1px solid #2a3a33', background: '#0e1311', color: '#8fd8b4', fontSize: 12, cursor: 'pointer' }}>
+                  ⇄ Comparer
+                </button>
               </div>
               {/* BLOC SEGMENTÉ UNIQUE — 6 tuiles (spec), plus 6 boutons séparés (C5 réglé structurellement). */}
               {/* M20-B1 : bloc segmenté UNIQUE, 6→7 colonnes (PDF·Dossier·Financier·1950·Cadastre·Maps·Courrier),

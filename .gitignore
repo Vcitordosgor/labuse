@@ -112,3 +112,6 @@ qa/m54_captures/
 
 # M54-EXPO-2 captures
 qa/m54b_captures/
+
+# M54-EXPO-3 captures
+qa/m54c_captures/

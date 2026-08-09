@@ -13,6 +13,8 @@ import { SourcesPage } from './components/sources/SourcesPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
+import { VeillesPanel } from './components/veilles/VeillesPanel'
+import { ComparePanel } from './components/compare/ComparePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
@@ -250,7 +252,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen, compareIdus } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -301,6 +303,8 @@ export default function App() {
                 {module === 'temps' ? <TimeMachine /> : <MapView />}
               </Suspense>
               {parcours && <ParcoursTinder />}
+              {veillesOpen && <VeillesPanel />}
+              {compareOpen && compareIdus.length > 0 && <ComparePanel />}
             </>
           )}
           {view === 'crm' && <Kanban />}

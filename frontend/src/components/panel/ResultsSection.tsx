@@ -47,13 +47,16 @@ function ShortlistToggle() {
           {sujets.map((s, i) => {
             const meta = verdictMeta((s.status ?? null) as ParcelProps['status'], (s.tier_v2 ?? null) as TierV2 | null, false)
             return (
-              <button key={s.idu} data-shortlist-item onClick={() => select(s.idu)}
-                className="flex items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-left hover:border-[#2E5A45]">
+              <div key={s.idu} data-shortlist-item className="flex items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 hover:border-[#2E5A45]">
                 <span className="w-4 shrink-0 text-center font-mono text-[10px] text-txt-dim">{i + 1}</span>
-                <span className="shrink-0 font-mono text-[11px] text-txt-hi">{s.idu.slice(8, 10)} {s.idu.slice(10)}</span>
-                <span className="shrink-0 rounded-full px-1.5 text-[9.5px]" style={{ color: meta.color, border: `1px solid ${meta.color}55` }}>{meta.label}</span>
-                {s.surface_m2 != null && <span className="ml-auto shrink-0 text-[10px] text-txt-dim">{fmt(Math.round(s.surface_m2))} m²</span>}
-              </button>
+                <button onClick={() => select(s.idu)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                  <span className="shrink-0 font-mono text-[11px] text-txt-hi">{s.idu.slice(8, 10)} {s.idu.slice(10)}</span>
+                  <span className="shrink-0 rounded-full px-1.5 text-[9.5px]" style={{ color: meta.color, border: `1px solid ${meta.color}55` }}>{meta.label}</span>
+                  {s.surface_m2 != null && <span className="ml-auto shrink-0 text-[10px] text-txt-dim">{fmt(Math.round(s.surface_m2))} m²</span>}
+                </button>
+                {/* M54-EXPO-3 A8 — ajouter au comparateur */}
+                <button data-shortlist-compare onClick={() => useApp.getState().addToCompare(s.idu)} title="Comparer" className="shrink-0 text-[12px] text-txt-dim hover:text-mint">⇄</button>
+              </div>
             )
           })}
         </div>

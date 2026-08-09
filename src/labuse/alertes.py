@@ -64,6 +64,15 @@ def list_watch_zones(session: Session, commune: str | None, cid: int | None) -> 
     return out
 
 
+def rename_watch_zone(session: Session, zone_id: int, name: str, cid: int | None) -> bool:
+    """M54-EXPO-3 — renomme une zone du compte `cid` (SEC-IDOR : rowcount 0 → 404). Nom borné."""
+    n = session.execute(
+        text("UPDATE watch_zones SET name = :n WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+        {"n": name.strip()[:120] or "Zone de veille", "i": zone_id, "cid": cid}).rowcount
+    session.flush()
+    return n > 0
+
+
 def delete_watch_zone(session: Session, zone_id: int, cid: int | None) -> bool:
     """SEC-IDOR (M-K) : ne supprime QUE si la zone appartient au compte `cid` (sinon rowcount
     0 → l'endpoint répond 404, jamais 403)."""
