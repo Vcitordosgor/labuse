@@ -1,5 +1,7 @@
 # SCORING_SPEC — Spécification complète du scoring LA BUSE
 
+> ⚠️ **DOCUMENT PÉRIMÉ — état antérieur à M53 (revue de code intégrale, août 2026).** Cette spec a été reconstruite depuis le code en juillet 2026. Le code et les mandats M-* font foi, pas ce document.
+
 > **Mandat DOC-P.** Description exhaustive et fidèle du scoring, **reconstruite depuis le
 > code réel** (le code fait foi ; les docs existantes ne sont PAS la source). Rapport seul,
 > aucun code modifié. Généré le 2026-07-26.
