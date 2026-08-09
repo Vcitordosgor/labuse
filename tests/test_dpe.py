@@ -15,6 +15,7 @@ from labuse.ingestion.dpe import (
     _norm,
     _parse_brut,
     ingest_commune,
+    is_reunion_authentic,
     parse_record,
     sample_report,
 )
@@ -56,6 +57,20 @@ def test_norm_et_parse_brut():
     assert _parse_brut("12 bis rue des Lilas 97440 Saint-André") == ("12", "rue des lilas")
     assert _parse_brut("Chemin des Anglais 97419 La Possession") == (None, "chemin des anglais")
     assert _parse_brut("") is None
+
+
+def test_is_reunion_authentic():
+    # CP brut réunionnais → authentique (int ou str, avec ou sans zéro de tête normalisé).
+    assert is_reunion_authentic({"code_postal_brut": 97460})
+    assert is_reunion_authentic({"code_postal_brut": "97400"})
+    # CP brut métropolitain (le géocodeur BAN a menti sur code_insee_ban) → rejeté.
+    assert not is_reunion_authentic({"code_postal_brut": 59440, "code_insee_ban": "97411"})
+    assert not is_reunion_authentic({"code_postal_brut": "62200", "code_insee_ban": "97415"})
+    # autres DOM (Mayotte 976xx) → pas La Réunion.
+    assert not is_reunion_authentic({"code_postal_brut": 97600})
+    # CP brut absent → on laisse passer (0 cas mesuré ; la cascade locale tranche).
+    assert is_reunion_authentic({"code_insee_ban": "97415"})
+    assert is_reunion_authentic({"code_postal_brut": None})
 
 
 # ───────────────────────── DB : ingestion + signal ─────────────────────────
@@ -107,7 +122,7 @@ def test_rattachement_ban_locale_et_passoire(db_session):
              55.291, -21.009, "97415000AB0001")
     db_session.flush()
     res = ingest_commune(db_session, "97415", "Saint-Paul", connector=_StubDpe([REC]))
-    assert res == {"dpe": 1, "geocodes": 1, "rattaches_parcelle": 1}
+    assert res == {"dpe": 1, "geocodes": 1, "rattaches_parcelle": 1, "hors_reunion": 0}
 
     row = db_session.execute(text(
         "SELECT parcelle_idu, rattachement FROM dpe_records WHERE numero_dpe='2397E0123456X'")).first()
@@ -187,6 +202,27 @@ def test_adresse_locale_ambigue_refusee(db_session):
            "coordonnee_cartographique_x_ban": None, "coordonnee_cartographique_y_ban": None}
     res = ingest_commune(db_session, "97415", "Saint-Paul", connector=_StubDpe([rec]))
     assert res["rattaches_parcelle"] == 0
+
+
+@pytest.mark.db
+def test_contamination_metropole_ecartee(db_session):
+    """Logement métropolitain rabattu par BAN sur un INSEE 974 : son id_ban réunionnais matche
+    une adresse locale — mais le CP brut métropolitain le fait ÉCARTER avant tout épinglage.
+    Sans le garde-fou, ce bien de métropole serait épinglé sur une vraie parcelle réunionnaise."""
+    _ensure_adresses(db_session)
+    _parcel(db_session, "97415000AB0001", "Saint-Paul", PARCEL_WKT)
+    # l'adresse locale existe : la passe 1 (id_ban) matcherait sans le garde-fou.
+    _adresse(db_session, "97415_9999_00012", "12", "Rue des Bougainvilliers", "97415",
+             55.291, -21.009, "97415000AB0001")
+    db_session.flush()
+    # même id_ban réunionnais, mais CP brut = 62200 (Boulogne-sur-Mer) : c'est un bien métropolitain.
+    rec = {**REC, "numero_dpe": "META0000001X", "code_postal_brut": 62200,
+           "nom_commune_brut": "BOULOGNE-SUR-MER"}
+    res = ingest_commune(db_session, "97415", "Saint-Paul", connector=_StubDpe([rec]))
+    assert res == {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 1}
+    # rien inséré → aucune parcelle réunionnaise fantôme, aucun signal passoire.
+    assert db_session.execute(text("SELECT count(*) FROM dpe_records")).scalar() == 0
+    assert db_session.execute(text("SELECT count(*) FROM v_passoire_thermique")).scalar() == 0
 
 
 @pytest.mark.db

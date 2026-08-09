@@ -35,8 +35,19 @@ CREATE TABLE IF NOT EXISTS event_log (
   detail text,
   run_from varchar(40), run_to varchar(40),
   demo boolean DEFAULT false,           -- événement de DÉMONSTRATION (étiqueté à l'écran)
-  lu boolean DEFAULT false,
+  lu boolean DEFAULT false,             -- lu PARTAGÉ : ne vaut que pour les events du compte (perso + pilote NULL)
   compte_id integer                     -- cloison : NULL = feed pilote/démo (marché, données publiques)
+);
+-- M-V V2 : suivi « vu » PAR COMPTE des events de MARCHÉ (compte_id NULL, ligne partagée). Un
+-- compte réel ne peut PAS écrire `lu` sur une ligne partagée sans l'écraser pour tous → il pose
+-- ici une ligne (compte_id, event_id). PK composite, idempotente. FK event → CASCADE (les vus
+-- d'un event supprimé partent avec). La FK compte_id → comptes(id) est posée par tenant.ensure_scoping
+-- (comptes n'existe pas encore quand ce DDL tourne au boot).
+CREATE TABLE IF NOT EXISTS event_seen (
+  compte_id integer NOT NULL,
+  event_id  integer NOT NULL REFERENCES event_log(id) ON DELETE CASCADE,
+  seen_at   timestamptz DEFAULT now(),
+  PRIMARY KEY (compte_id, event_id)
 );
 CREATE TABLE IF NOT EXISTS watched_parcels (
   idu varchar(14) NOT NULL, created_at timestamptz DEFAULT now(),
@@ -316,21 +327,32 @@ def _visible(alias: str = "e") -> str:
             f"OR ({p}compte_id IS NULL AND {p}kind = ANY(:market)))")
 
 
+def _seen(alias: str = "e") -> str:
+    """Fragment SQL : l'event est-il LU pour le compte courant ? (M-V V2)
+    - event du compte (perso, ou pilote sur ses lignes NULL) → colonne partagée `lu`.
+    - event de MARCHÉ vu par un compte réel → présence dans `event_seen` (jamais la colonne
+      partagée, qui appartient au bucket pilote). `:cid` lié par l'appelant."""
+    p = f"{alias}." if alias else ""
+    return (f"(CASE WHEN {p}compte_id IS NOT DISTINCT FROM :cid THEN {p}lu "
+            f"ELSE EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = {p}id AND s.compte_id = :cid) END)")
+
+
 @router.get("")
 def list_events(request: Request, unread_only: bool = False, limit: int = 100, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
     mk = list(_MARKET_KINDS)
     rows = db.execute(text(f"""
-        SELECT e.id, e.ts::date::text AS date, e.kind, e.idu, e.titre, e.detail, e.demo, e.lu,
+        SELECT e.id, e.ts::date::text AS date, e.kind, e.idu, e.titre, e.detail, e.demo,
+               {_seen('e')} AS lu,
                d.matrice_statut AS statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE {_visible('e')} {"AND NOT e.lu" if unread_only else ""}
+        WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}
         ORDER BY e.ts DESC, e.id DESC LIMIT :lim"""),
         {"lim": limit, "run": RUN, "cid": cid, "market": mk}).mappings().all()
-    unread = db.execute(text(f"SELECT count(*) FROM event_log e WHERE NOT lu AND {_visible('e')}"),
+    unread = db.execute(text(f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"),
                         {"cid": cid, "market": mk}).scalar()
     return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}
 
@@ -340,27 +362,52 @@ def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
     mk = list(_MARKET_KINDS)
-    n = db.execute(text(f"SELECT count(*) FROM event_log e WHERE NOT lu AND {_visible('e')}"),
+    n = db.execute(text(f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"),
                    {"cid": cid, "market": mk}).scalar()
-    per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE NOT lu AND idu IS NOT NULL"
-                          f" AND {_visible('e')} GROUP BY idu"), {"cid": cid, "market": mk}).all()
+    per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE idu IS NOT NULL"
+                          f" AND {_visible('e')} AND NOT {_seen('e')} GROUP BY idu"),
+                     {"cid": cid, "market": mk}).all()
     return {"unread": int(n or 0), "par_parcelle": {r[0]: r[1] for r in per}}
 
 
 @router.post("/{event_id}/read")
 def mark_read(event_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    # SEC-IDOR : on ne marque QUE ses propres événements
     from .tenant import current_compte
-    db.execute(text("UPDATE event_log SET lu = true WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
-               {"i": event_id, "cid": current_compte(request)})
+    cid = current_compte(request)
+    # 1) event du compte (perso, ou pilote sur ses lignes NULL) : on marque la colonne partagée.
+    #    SEC-IDOR : compte_id IS NOT DISTINCT FROM :cid → jamais l'event d'un autre compte.
+    marque = db.execute(
+        text("UPDATE event_log SET lu = true WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+        {"i": event_id, "cid": cid}).rowcount
+    # 2) event de MARCHÉ (ligne partagée compte_id NULL) vu par un compte réel : on pose un « vu »
+    #    PAR COMPTE — jamais d'UPDATE sur la ligne partagée. Le WHERE borne au marché : impossible
+    #    de « voir » ainsi l'event perso d'autrui ni une ligne NULL hors marché.
+    if not marque and cid is not None:
+        db.execute(text(
+            "INSERT INTO event_seen (compte_id, event_id) "
+            "SELECT :cid, e.id FROM event_log e "
+            "WHERE e.id = :i AND e.compte_id IS NULL AND e.kind = ANY(:market) "
+            "ON CONFLICT (compte_id, event_id) DO NOTHING"),
+            {"cid": cid, "i": event_id, "market": list(_MARKET_KINDS)})
     return {"ok": True}
 
 
 @router.post("/read-all")
 def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
+    cid = current_compte(request)
+    # perso (+ pilote sur ses NULL) : colonne partagée.
     n = db.execute(text("UPDATE event_log SET lu = true WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
-                   {"cid": current_compte(request)}).rowcount
+                   {"cid": cid}).rowcount
+    # marché vu par un compte réel : un « vu » par compte pour chaque event de marché pas encore vu.
+    if cid is not None:
+        n += db.execute(text(
+            "INSERT INTO event_seen (compte_id, event_id) "
+            "SELECT :cid, e.id FROM event_log e "
+            "WHERE e.compte_id IS NULL AND e.kind = ANY(:market) "
+            "  AND NOT EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = :cid) "
+            "ON CONFLICT (compte_id, event_id) DO NOTHING"),
+            {"cid": cid, "market": list(_MARKET_KINDS)}).rowcount
     return {"ok": True, "marques": n}
 
 

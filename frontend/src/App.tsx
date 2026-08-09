@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createProjet, projetPdfUrl } from './lib/api'
 import { AvisIA } from './components/AvisIA'
 import { Fiche } from './components/fiche/Fiche'
@@ -8,7 +8,6 @@ import { Header } from './components/header/Header'
 import { IAStub } from './components/ia/IAStub'
 import { Kanban } from './components/crm/Kanban'
 import { LeftPanel } from './components/panel/LeftPanel'
-import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
@@ -19,8 +18,26 @@ import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
 import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
-import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
+
+// M-V V3 — code-splitting maplibre : MapView et TimeMachine chargent maplibre-gl (~800 kB), inutile
+// au premier écran (login, fiche directe, outils). On les charge à la DEMANDE (import dynamique),
+// derrière un <Suspense> avec un état de chargement propre (jamais d'écran blanc). Le chunk
+// maplibre sort ainsi du graphe initial (cf. manualChunks conservé dans vite.config).
+const MapView = lazy(() => import('./components/map/MapView').then((m) => ({ default: m.MapView })))
+const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
+
+// État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
+function MapLoading() {
+  return (
+    <div className="relative flex min-h-0 flex-1 items-center justify-center bg-bg" aria-busy="true">
+      <div className="flex items-center gap-2 text-xs text-txt-mut">
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-mint" />
+        Chargement de la carte…
+      </div>
+    </div>
+  )
+}
 
 // R2/V3 : la restitution du copilote — compteur animé + top cliquables. En mode PROJET, chaque
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
@@ -280,7 +297,9 @@ export default function App() {
               {/* P1 : quand le tiroir Outils est ouvert, il REMPLACE le panneau Cartes (COUCHES/
                   résultats) — la carte reste derrière. Un seul panneau gauche à la fois. */}
               {outilsOpen ? null : module ? <ModulePanel /> : parcours ? null : <LeftPanel />}
-              {module === 'temps' ? <TimeMachine /> : <MapView />}
+              <Suspense fallback={<MapLoading />}>
+                {module === 'temps' ? <TimeMachine /> : <MapView />}
+              </Suspense>
               {parcours && <ParcoursTinder />}
             </>
           )}

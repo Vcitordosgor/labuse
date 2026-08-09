@@ -2,10 +2,15 @@
 
 API data-fair : GET https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines
     filtre `qs=` (Lucene), pagination par curseur `after` (URL `next`), `size`, `select`.
-Sans clé (quota anonyme réduit ; ~1200 req/min authentifié). Base nationale 15,2 M ;
-974 = ~912 (vérifié 11/07/2026 par `code_insee_ban:974*` ET `code_region_ban:04` — le DPE
-réglementaire reste marginal à La Réunion, ~10/mois depuis 07/2021). +2 enregistrements 974
-hors filtre BAN (CP brut 974xx sans `code_insee_ban`) → `fetch_orphelins_974()`.
+Sans clé (quota anonyme réduit ; ~1200 req/min authentifié). Base nationale 15,3 M.
+
+⚠ `code_insee_ban:974*` rend ~913 lignes (revérifié 09/08/2026) mais c'est un LEURRE : ~897
+portent un CP BRUT métropolitain (Boulogne-sur-Mer, Sète, Schiltigheim…). Le géocodeur BAN de
+l'ADEME rabat en masse des logements de métropole sur des codes INSEE 974. Le gisement
+RÉUNIONNAIS AUTHENTIQUE = ~17 DPE (15 CP brut 974xx cohérents + 2 orphelins) — le DPE
+réglementaire est neuf en DROM (obligation 01/07/2024). L'ingesteur tranche sur le CP BRUT,
+jamais sur BAN : cf. `ingestion.dpe.is_reunion_authentic`. +2 enregistrements 974 hors filtre
+BAN (CP brut 974xx sans `code_insee_ban`) → `fetch_orphelins_974()`.
 
 ⚠ Le champ `_geopoint` de l'ADEME est FAUX au 974 (100 % hors Réunion). En revanche
 `coordonnee_cartographique_x/y_ban` sont les coordonnées BAN natives en EPSG:2975 (RGR92 /

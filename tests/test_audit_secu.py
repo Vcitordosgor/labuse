@@ -261,6 +261,50 @@ def test_broadcast_marche_visible_de_tous_mais_perso_cloisonne(app_client):
             s.commit()
 
 
+def test_seen_marche_par_compte(app_client):
+    """M-V V2 : A marque LU un event de MARCHÉ → SON badge descend, celui de B est INCHANGÉ
+    (jamais d'UPDATE sur la ligne partagée) ; les events perso gardent le comportement d'avant ;
+    « tout lire » couvre aussi le marché ; la ligne partagée `lu` reste false."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    cid_a = _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        with session_scope() as s:
+            mid = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('bascule', '974SEEN0000001', '▲ bascule marché', NULL) RETURNING id")).scalar()
+            pid_a = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('veille', '974SEEN0000002', 'veille privée de A', :c) RETURNING id"),
+                {"c": cid_a}).scalar()
+            s.commit()
+        a0 = ca.get("/events/count").json()["unread"]
+        b0 = cb.get("/events/count").json()["unread"]
+        assert a0 >= 2 and b0 >= 1  # A voit marché + sa veille ; B voit le marché
+
+        # A marque LU l'event de MARCHÉ (par id, puis vérifie l'item passe à lu=true côté A)
+        assert ca.post(f"/events/{mid}/read").json()["ok"]
+        assert ca.get("/events/count").json()["unread"] == a0 - 1        # badge de A descend
+        assert cb.get("/events/count").json()["unread"] == b0            # badge de B INCHANGÉ
+        assert next(e for e in ca.get("/events").json()["items"] if e["id"] == mid)["lu"] is True
+        assert next(e for e in cb.get("/events").json()["items"] if e["id"] == mid)["lu"] is False
+        with session_scope() as s:  # la ligne partagée n'a JAMAIS été écrite
+            assert s.execute(text("SELECT lu FROM event_log WHERE id=:i"), {"i": mid}).scalar() is False
+            assert s.execute(text("SELECT count(*) FROM event_seen WHERE event_id=:i"), {"i": mid}).scalar() == 1
+
+        # « tout lire » de B couvre le marché (et sa propre veille éventuelle) → badge B à ses perso près
+        assert cb.post("/events/read-all").json()["ok"]
+        assert next(e for e in cb.get("/events").json()["items"] if e["id"] == mid)["lu"] is True
+        assert ca.get("/events").json()  # A intact : son marché déjà lu, sa veille encore non lue
+        assert next(e for e in ca.get("/events").json()["items"] if e["id"] == pid_a)["lu"] is False
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM event_log WHERE idu IN ('974SEEN0000001','974SEEN0000002')"))
+            s.commit()
+
+
 def test_digest_resume_marche_sans_evenement_perso():
     """M-T V2 : un abonné SANS veille reçoit un digest si le résumé marché est non vide (fin du
     « digest vide à vie »). Le marché est BORNÉ en résumé (jamais la liste) + lien de désinscription."""
