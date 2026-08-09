@@ -923,11 +923,16 @@ def ensure_sitadel_depot(engine) -> None:
         c.execute(_t("ALTER TABLE sitadel_permits ADD COLUMN IF NOT EXISTS date_depot date"))
 
 
-def create_all(engine) -> None:
-    Base.metadata.create_all(engine)
+def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
+    """P2-37 — LISTE UNIQUE des réconciliations de schéma idempotentes, partagée par `create_all`
+    (première création, backfill geom) et `ensure_schema` (boot/doctor, sans backfill). Avant, les
+    deux tenaient chacune leur liste et elles DIVERGEAIENT (4 ensures seulement dans create_all :
+    status legacy droppé, sitadel_depot, icd, signalements ; 2 seulement dans ensure_schema :
+    promesses_index, data_sources_millesime). Toute nouvelle table/colonne/index ADDITIVE s'ajoute
+    ICI, une seule fois → plus de dérive possible. Seul `backfill` du geom_2975 diffère (paramétré)."""
     ensure_parcel_eval_status_dropped(engine)    # M46 (Lot C) : rail legacy status SUPPRIMÉ (à froid)
     ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
-    ensure_geom_2975(engine)
+    ensure_geom_2975(engine, backfill=geom_backfill)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
@@ -944,11 +949,18 @@ def create_all(engine) -> None:
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
-    ensure_icd_columns(engine)
-    ensure_signalements(engine)
-    ensure_suggestions(engine)
-    ensure_flags_probe_index(engine)   # M45 (P1)
-    ensure_parcel_flags(engine)        # M45 (P2)
+    ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
+    ensure_icd_columns(engine)              # M9 lot 1
+    ensure_signalements(engine)             # M9 lot 3
+    ensure_suggestions(engine)              # M16-C
+    ensure_promesses_index(engine)          # index partiel /promesses
+    ensure_flags_probe_index(engine)        # M45 (P1)
+    ensure_parcel_flags(engine)             # M45 (P2)
+
+
+def create_all(engine) -> None:
+    Base.metadata.create_all(engine)
+    _ensure_schema_steps(engine, geom_backfill=True)
 
 
 def ensure_icd_columns(engine) -> None:
@@ -1524,28 +1536,7 @@ def ensure_schema(engine) -> None:
     manquent (geom_2975 NULL, couches absentes), c'est /readyz et `labuse doctor` qui le
     disent, et `rebuild-demo` qui reconstruit."""
     Base.metadata.create_all(engine)
-    ensure_geom_2975(engine, backfill=False)
-    ensure_promesses_index(engine)
-    ensure_flags_probe_index(engine)   # M45 (P1) : compteur des filtres de vigilance sous la barre
-    ensure_parcel_flags(engine)        # M45 (P2) : table vigilances dénormalisée (existence ; build = bascule)
-    ensure_suggestions(engine)   # M16-C : table des retours « proposer une amélioration »
-    ensure_pipeline_prospection(engine)
-    ensure_pipeline_projet(engine)
-    ensure_enrichment_cache(engine)
-    ensure_parcel_origine(engine)
-    ensure_residuel_cache(engine)
-    ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
-    ensure_au_statut_cache(engine)          # AU-OUVERTURE : statut d'ouverture des zones AU non lu
-    ensure_saved_filters(engine)
-    ensure_personnes_morales(engine)
-    ensure_bodacc_view(engine)
-    ensure_pm_propension_view(engine)
-    ensure_passoire_thermique_view(engine)
-    ensure_bilan_params(engine)
-    ensure_watch_zones(engine)
-    ensure_score_v_view(engine)
-    ensure_dvf_marche(engine)
-    ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
+    _ensure_schema_steps(engine, geom_backfill=False)
 
 
 def ensure_data_sources_millesime(engine) -> None:

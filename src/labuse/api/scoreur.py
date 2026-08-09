@@ -5,8 +5,8 @@ Chemin : adresse → BAN (géocodage) → point → parcelle CONTENANT le point 
 scorée) → verdict compact. Si un prix est saisi, on le confronte à la charge foncière supportable
 et au prix probable du foncier (Score É V2, O0) — sans jamais prétendre que c'est LE prix.
 
-Réutilise l'existant : géocodage BAN (comme `audit.audit_by_address`), run servi `q_v7_defisc`,
-table `score_e`. Île entière (pas de restriction commune-pilote : on lit une parcelle déjà en base,
+Réutilise l'existant : géocodage BAN (comme `audit.audit_by_address`), run servi lu depuis la
+constante `Q_A_RUN_LABEL` (aujourd'hui `q_v8_calibre`, cf. config/served_run.txt), table `score_e`. Île entière (pas de restriction commune-pilote : on lit une parcelle déjà en base,
 aucune ingestion live). Zéro scraping.
 """
 from __future__ import annotations

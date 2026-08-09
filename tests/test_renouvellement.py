@@ -80,7 +80,11 @@ def _seed_parcelle(s, idu, surface=800):
         {"i": idu, "w": _WKT, "su": surface}).scalar()
 
 
-def _seed_bati_exclude(s, pid, detail="déjà bâtie : 2 bâtiment(s) couvrant 60 % de la parcelle (BD TOPO)"):
+def _seed_bati_exclude(s, pid, detail=None):
+    # Le motif servi vient de bati.classify (source unique) — on NE réinvente PAS la chaîne :
+    # si le wording de classify change, le seed suit (même principe que test_code_from_detail).
+    if detail is None:
+        detail = bati.classify(0.6, 2, 100, 800)["motif"]   # « déjà bâtie : 2 bâtiment(s) couvrant 60 % … »
     s.execute(text(
         "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
         "VALUES (:r, :p, 'bati', 'HARD_EXCLUDE', :d)"), {"r": _RUN, "p": pid, "d": detail})
@@ -123,7 +127,7 @@ def test_build_definition_a1(db_session):
     s.execute(text("INSERT INTO division_or_candidates (idu) VALUES (:i) ON CONFLICT DO NOTHING"), {"i": IN1})
     # IN2 : bati-exclue (ensemble), AU, sdp 0 mais surface 900 ≥ 600 → ENTRE par la surface
     p = _seed_parcelle(s, IN2, 900); _seed_bati_exclude(
-        s, p, "ensemble bâti : 4 bâtiments couvrant 20 % de la parcelle (BD TOPO)")
+        s, p, bati.classify(0.20, 4, 100, 800)["motif"])   # « ensemble bâti : 4 bâtiments … »
     _seed_dataset(s, IN2, zone="AU", sdp=0, surface=900.0)
     # COP : idem IN1 mais copro → N'ENTRE PAS
     p = _seed_parcelle(s, COP); _seed_bati_exclude(s, p); _seed_dataset(s, COP, sdp=500)

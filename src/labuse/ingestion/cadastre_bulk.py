@@ -5,7 +5,7 @@ GeoJSON bulk de la commune (PCI/DGFiP, millésimé par Etalab) et on ingère en 
 
 Format Etalab (≠ API Carto) : properties = {id, commune, prefixe, section, numero,
 contenance, ...} où `id` EST l'IDU 14 caractères. Géométries en 4326 ; surface
-recalculée en 2975 à l'insertion (cf. connectors/cadastre.ingest_parcels).
+recalculée en 2975 à l'insertion (cf. ingestion/cadastre_ingest.ingest_parcels).
 """
 from __future__ import annotations
 

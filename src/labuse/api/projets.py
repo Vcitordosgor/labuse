@@ -332,11 +332,18 @@ def projet_derive(body: ProjetIn) -> dict:
     }
 
 
-def _counts_by_projet(db: Session) -> dict[int, dict]:
+def _counts_by_projet(db: Session, projet_ids: list[int]) -> dict[int, dict]:
     """Compteurs de tri (proposee/retenue/ecartee/a_analyser) par projet, en UNE requête —
-    alimente les mini-compteurs des fiches projet (Lot 4). Un projet jamais trié → tout à 0."""
+    alimente les mini-compteurs des fiches projet (Lot 4). Un projet jamais trié → tout à 0.
+
+    M-C (F6) : SCOPÉ aux projets fournis (ceux du compte affiché). Avant : GROUP BY sur TOUTE la
+    table projet_parcelles puis on jetait tout sauf le compte courant — aucune fuite (le caller
+    filtre) mais un scan global qui grossit avec les tenants pour rien."""
+    if not projet_ids:
+        return {}
     rows = db.execute(text("SELECT projet_id, statut, count(*) AS n FROM projet_parcelles "
-                           "GROUP BY projet_id, statut")).all()
+                           "WHERE projet_id = ANY(:ids) GROUP BY projet_id, statut"),
+                      {"ids": projet_ids}).all()
     out: dict[int, dict] = {}
     for r in rows:
         out.setdefault(r.projet_id, {})[r.statut] = r.n
@@ -356,7 +363,7 @@ def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     SEC-IDOR : bornée au compte de la session."""
     cid = current_compte(request)
     rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
-    by_projet = _counts_by_projet(db)
+    by_projet = _counts_by_projet(db, [p.id for p in rows])
     return [_projet_dict_counts(p, by_projet) for p in rows]
 
 

@@ -113,9 +113,11 @@ class GeorisquesConnector(Connector):
         """Agrège quelques risques autour d'un point (rayon en m)."""
         common = {"latlon": f"{lon},{lat}", "rayon": rayon_m}
         out: dict[str, Any] = {}
+        # M-C (F6) : /rga (argiles) RETIRÉ — le docstring de la classe l'écarte déjà (500/vide sur
+        # latlon, aléa géologiquement N/A à La Réunion, île volcanique ; cf. georisques_layers.py).
+        # Le garder ici interrogeait un endpoint mort à chaque appel.
         for key, path in [
             ("zonage_sismique", "zonage_sismique"),
-            ("argiles", "rga"),
             ("cavites", "cavites"),
             ("pollution", "ssp"),
         ]:

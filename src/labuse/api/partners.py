@@ -136,7 +136,10 @@ def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
                             "FROM match_profiles ORDER BY id")).mappings().all()
     surf, sdp = float(p["surf"] or 0), float(p["sdp"] or 0)
     constructible = p["zone_fam"] in ("U", "AU")
-    chaude = p["statut"] in ("chaude", "a_surveiller")
+    # M-C (F3) : `statut` = TIER SERVI (s2.tier). L'ancien test ("chaude","a_surveiller") ratait
+    # les BRÛLANTES (tier le plus chaud) et testait "a_surveiller" — valeur de la MATRICE MORTE,
+    # jamais un tier → branche inerte. Le signal marché doit couvrir brulante + chaude.
+    chaude = p["statut"] in ("brulante", "chaude")
     out = []
     for mp in profs:
         s_ok = ((mp["surface_min"] is None or surf >= mp["surface_min"])
@@ -486,7 +489,7 @@ clé, quota 500 appels/jour.</p>
 <table style="width:100%;font-size:12.5px;border-collapse:collapse">
 <tr style="color:#5C7268;text-align:left"><th style="padding:6px 8px">Paramètre</th><th>Type</th><th>Description</th></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">key</td><td>string</td><td>clé API (obligatoire)</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">statut</td><td>enum</td><td>chaude · a_surveiller · a_creuser · ecartee</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">statut</td><td>enum</td><td>brulante · chaude · reserve_fonciere · a_creuser · ecartee (tier servi ; + variantes declasse_* pour les déclassées). L'ancien « a_surveiller » (matrice retirée) ne renvoie rien.</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">min_q</td><td>int</td><td>score Qualité minimal (0-100)</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">commune</td><td>string</td><td>défaut Saint-Paul (périmètre V1)</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">limit / offset</td><td>int</td><td>pagination (limit ≤ 200)</td></tr>

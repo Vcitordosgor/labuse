@@ -134,15 +134,17 @@ def build_viabilisation(session: Session, communes: list[str] | None = None) -> 
         communes = [r[0] for r in session.execute(text(
             "SELECT DISTINCT commune FROM parcels WHERE geom_2975 IS NOT NULL ORDER BY 1")).all()]
 
+    # M-C (F5) : les compteurs mesurent CE RUN, pas toute la table. Avant : per_commune faisait un
+    # count(*) de la tranche commune (rows d'anciens runs inclus), `total += 0` était mort, et total
+    # était un count(*) GLOBAL (toutes communes, même hors de ce run). On lit le rowcount de l'INSERT
+    # ... ON CONFLICT DO UPDATE = lignes réellement insérées/mises à jour par ce run pour la commune.
     total = 0
     per_commune = {}
     for c in communes:
-        session.execute(text(_INSERT_COMMUNE), {"commune": c, "annee": V.ANNEE_RECENTE})
-        n = session.execute(text(
-            "SELECT count(*) FROM parcel_viabilisation WHERE commune=:c"), {"c": c}).scalar()
+        res = session.execute(text(_INSERT_COMMUNE), {"commune": c, "annee": V.ANNEE_RECENTE})
+        n = res.rowcount if res.rowcount is not None and res.rowcount >= 0 else 0
         session.commit()
         per_commune[c] = n
-        total += 0  # total recomputed below
-    total = session.execute(text("SELECT count(*) FROM parcel_viabilisation")).scalar()
+        total += n
     return {"n": total, "communes": len(communes), "per_commune": per_commune,
             "duree_s": round(time.time() - t0, 1)}

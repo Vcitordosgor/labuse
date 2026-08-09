@@ -297,6 +297,10 @@ def zan(db: Session = Depends(get_db)) -> dict:
 
 #: Critère P1-03 (M6 Phase 2a) : une mutation n'entre dans le Baromètre — médianes ET
 #: volumes affichés — que si elle est une VENTE au sens strict. Voir `_barometre_data`.
+#: P2-48 — ÉCART ASSUMÉ avec le bilan (`faisabilite.bilan._trim_aberrants`) : là, le €/m² est
+#: planché à 1000 (échantillon de comparables robuste). Ici, plancher €/m² lâche à 100 (garde-fou
+#: anti-ratio-aberrant) + filtre absolu `valeur_fonciere > 1000` : on OBSERVE tout le marché, on
+#: n'en sélectionne pas un sous-échantillon fiable. Les deux planchers sont voulus, pas à aligner.
 _BAROMETRE_RETENUE = """nature_mutation = 'Vente'
                  AND valeur_fonciere > 1000
                  AND valeur_fonciere / NULLIF(surface_reelle_bati, 0) BETWEEN 100 AND 12000"""

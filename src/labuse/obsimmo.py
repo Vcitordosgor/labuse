@@ -89,11 +89,17 @@ def _index() -> dict[str, dict[tuple[str, str], dict[str, Any]]]:
     by_sector: dict[tuple[str, str], dict[str, Any]] = {}
     by_parent: dict[tuple[str, str], dict[str, Any]] = {}
     by_region: dict[tuple[str, str], dict[str, Any]] = {}
-    for r in load():
+    # P2-53 — TRI EXPLICITE : avant, le fallback « première ligne rencontrée » (parent et région)
+    # n'était déterministe QUE parce que le JSON était physiquement ordonné — une réécriture/tri
+    # du fichier aurait silencieusement changé la ligne servie. On ordonne sur des clés stables
+    # (parent, secteur, typologie) → le choix ne dépend plus de l'ordre du fichier.
+    rows = sorted(load(), key=lambda r: (_norm(r.get("parent_commune")), _norm(r.get("sector")),
+                                         str(r.get("property_type") or "")))
+    for r in rows:
         pt = r.get("property_type")
         by_sector[(_norm(r.get("sector")), pt)] = r
         # parent_commune : on PRIVILÉGIE la ligne du secteur « chef-lieu » (sector == parent),
-        # sinon la première rencontrée (fallback déterministe car le JSON est ordonné).
+        # sinon la première en ordre (secteur) trié — déterministe, indépendant de l'ordre JSON.
         kp = (_norm(r.get("parent_commune")), pt)
         if kp not in by_parent or _norm(r.get("sector")) == _norm(r.get("parent_commune")):
             by_parent[kp] = r

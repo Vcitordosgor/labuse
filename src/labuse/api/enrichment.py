@@ -31,8 +31,7 @@ def _live_enabled() -> bool:
     """Appels externes (RGE ALTI / GPU) actifs ? OFF en test (déterminisme/vitesse)."""
     return os.environ.get("LABUSE_ENRICH_LIVE", "1") != "0"
 
-# RGE ALTI (altimétrie) — service de calcul d'altitude IGN (déjà utilisé pour la pente).
-ALTI_URL = "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json"
+# RGE ALTI (altimétrie) : endpoint + throttle UNIFIÉS dans connectors.rge_alti (M-C/F6).
 
 # Tolérance latérale (m) entre l'axe d'une voie (BD TOPO = filaire) et la limite
 # parcellaire : une voie de desserte fait ~quelques mètres de demi-largeur, donc la
@@ -109,21 +108,11 @@ def _alti_sample_points(db: Session, parcel_id: int) -> tuple[list[tuple[float, 
 
 
 def _alti_query(points: list[tuple[float, float]], timeout: float) -> list[float | None]:
-    """Interroge RGE ALTI par lots de 100 (quota 5 req/s). NODATA → None."""
-    out: list[float | None] = []
+    """Interroge RGE ALTI (connecteur unifié, quota 5 req/s). NODATA (<= -1000) → None."""
+    from ..connectors.rge_alti import fetch_elevations
     with httpx.Client(timeout=timeout, headers={"User-Agent": "LA-BUSE/0.1 (+fiche promoteur)"}) as c:
-        for k in range(0, len(points), 100):
-            part = points[k:k + 100]
-            r = c.get(ALTI_URL, params={
-                "lon": "|".join(f"{lon:.6f}" for lon, _ in part),
-                "lat": "|".join(f"{lat:.6f}" for _, lat in part),
-                "resource": "ign_rge_alti_wld", "zonly": "true"})
-            r.raise_for_status()
-            for h in r.json().get("elevations", []):
-                out.append(None if h is None or h <= -1000 else float(h))
-            if len(points) > 100:
-                time.sleep(0.21)
-    return out
+        elevs = fetch_elevations(points, client=c)
+    return [None if h is None or h <= -1000 else float(h) for h in elevs]
 
 
 def altimetry(db: Session, parcel_id: int) -> dict[str, Any]:
@@ -533,7 +522,12 @@ def _ensure_cache_table(db: Session) -> None:
 
 
 def enrichment_cached(db: Session, parcel, lon: float, lat: float, *, refresh: bool = False) -> dict[str, Any]:
-    """Enrichissement servi depuis le cache ; calculé puis stocké au premier accès."""
+    """Enrichissement servi depuis le cache ; calculé puis stocké au premier accès.
+
+    M-C (F3) — PAS de TTL : le cache ne se PÉRIME jamais tout seul (le recalcul fait des appels
+    externes lents RGE ALTI/GPU). La péremption est EXPLICITE (`refresh=True`, CLI enrich). La
+    colonne `computed_at` est le marqueur de fraîcheur ; l'endpoint /parcels/{idu}/enrichment
+    l'EXPOSE (computed_at + cache_age_jours) — l'enrichissement servi n'est pas « live »."""
     _ensure_cache_table(db)
     if not refresh:
         cached = db.execute(text("SELECT payload FROM parcel_enrichment WHERE parcel_id = :p"),

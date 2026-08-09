@@ -55,14 +55,20 @@ DB_URL = (os.environ.get("LABUSE_DATABASE_URL")
 # Défaut inchangé (localhost:8010). C'est le geste que M7 fera contre le VPS.
 API_BASE = os.environ.get("LABUSE_QA_TARGET",
                           os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8010")).rstrip("/")
-# M8b — run cascade lu par le golden. Défaut = run SERVI (source unique Q_A_RUN_LABEL), plus
-# « q_v3_datagap » codé en dur (run mort). Override `LABUSE_GOLDEN_RUN_LABEL` pour tester un candidat.
+# M8b — run cascade lu par le golden. Défaut = run SERVI (source unique Q_A_RUN_LABEL).
+# Override `LABUSE_GOLDEN_RUN_LABEL` pour tester un candidat.
+# P2-29 — plus de repli SILENCIEUX sur un run mort (« q_v5_m6b ») : comparer le golden à un run
+# inexistant produit un diff faux et rassurant. Si Q_A_RUN_LABEL est introuvable, on ÉCHOUE
+# BRUYAMMENT (sys.exit) — l'appelant doit réparer l'install ou fixer LABUSE_GOLDEN_RUN_LABEL.
 RUN_LABEL = os.environ.get("LABUSE_GOLDEN_RUN_LABEL")
 if not RUN_LABEL:
     try:
         from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as RUN_LABEL
-    except Exception:
-        RUN_LABEL = "q_v5_m6b"
+    except Exception as e:
+        print(f"ERREUR golden : run cascade introuvable — import de Q_A_RUN_LABEL "
+              f"(config/served_run.txt) échoué : {e}. Fixe LABUSE_GOLDEN_RUN_LABEL ou répare "
+              f"l'installation ; refus de retomber sur un run mort.", file=sys.stderr)
+        sys.exit(2)
 DEFAULT_GOLDEN = os.path.join(os.path.dirname(__file__), "..",
                               "reports", "m6-audit", "golden", "golden-parcelles.json")
 

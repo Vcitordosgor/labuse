@@ -87,6 +87,32 @@ def test_cycle_stripe_complet(db):
     db.commit()
 
 
+def test_dedup_marque_rollback_si_traitement_echoue(db, monkeypatch):
+    """P2-41 — la marque de dédup et l'effet commitent DANS LA MÊME TRANSACTION : si le
+    traitement échoue APRÈS la pose de la marque, la marque doit disparaître (rollback) → Stripe
+    peut REJOUER l'événement. Avant, la marque était committée d'abord → événement perdu au rejeu."""
+    import labuse.facturation as F
+    cus = f"cus_{uuid.uuid4().hex[:10]}"
+    cid = comptes.creer_invitation(db, f"dedup-{uuid.uuid4().hex[:8]}@exemple.test")["compte_id"]
+    db.commit()
+    evt = _evt("checkout.session.completed",
+               {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_boom"})
+    body, sig = _signe(evt)
+    # le traitement casse APRÈS l'INSERT de la marque (audit est appelé juste avant le commit)
+    def _boom(*a, **k):
+        raise RuntimeError("panne de traitement")
+    monkeypatch.setattr(F, "audit", _boom)
+    with pytest.raises(RuntimeError):
+        traiter_webhook(db, body, sig)
+    db.rollback()   # la session de test était avortée par l'exception
+    # marque ABSENTE (rollback atomique) → l'événement n'est pas « déjà traité »
+    n = db.execute(text("SELECT count(*) FROM stripe_events WHERE event_id = :e"),
+                   {"e": evt["id"]}).scalar()
+    assert n == 0, "la marque de dédup ne doit pas survivre à un traitement échoué"
+    # et le compte n'a PAS été activé (l'effet a rollback avec la marque)
+    assert db.execute(text("SELECT statut FROM comptes WHERE id = :c"), {"c": cid}).scalar() != "actif"
+
+
 def test_flash_fulfillment_reel(db):
     """FLASH : webhook signé mode=payment → génération RÉELLE du PDF (weasyprint, .venv)
     → statut generee → token de téléchargement valide. Le test le plus cher de la suite

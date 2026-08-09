@@ -291,15 +291,18 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                  new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=7.2)
         pdf.set_text_color(40, 50, 45)
+        # M-C (F6) : accents restaurés (la fonte inter est unicode, le reste du document est accentué ;
+        # l'ASCII-isation était un vieux contournement d'encodage inutile). Opérateurs >=/<= laissés
+        # en ASCII (non demandés, pas d'unicode math ailleurs dans le doc).
         resume = {
             "thermique": "Protection solaire (parois : S<=0,03/0,09 ; baies : S max par orientation, "
-                         "seuils 400/600 m) · ventilation naturelle traversante (sejour 22 %, chambres 18 % "
-                         "sous 400 m ; exemption > 600 m, regime isolation) · brasseurs d'air.",
-            "acoustique": "Separatifs >= 350 kg/m2 ou Rw+C >= 54 dB · plancher >= 450 kg/m2 · equipements "
-                          "<= 35 dB(A) pieces principales · isolement de facade en secteur d'infrastructure classee.",
-            "aeration": "Cuisine : baie >= 1 m2 sur l'exterieur · SdB/WC ouvrants ou extraction mecanique · "
-                        "ventilation mecanique obligatoire si pieces climatisees.",
-            "ecs": "ECS obligatoire, produite a >= 50 % par sources de chaleur renouvelables "
+                         "seuils 400/600 m) · ventilation naturelle traversante (séjour 22 %, chambres 18 % "
+                         "sous 400 m ; exemption > 600 m, régime isolation) · brasseurs d'air.",
+            "acoustique": "Séparatifs >= 350 kg/m² ou Rw+C >= 54 dB · plancher >= 450 kg/m² · équipements "
+                          "<= 35 dB(A) pièces principales · isolement de façade en secteur d'infrastructure classée.",
+            "aération": "Cuisine : baie >= 1 m² sur l'extérieur · SdB/WC ouvrants ou extraction mécanique · "
+                        "ventilation mécanique obligatoire si pièces climatisées.",
+            "ecs": "ECS obligatoire, produite à >= 50 % par sources de chaleur renouvelables "
                    "(solaire thermique en pratique) — CCH R.192-2, en vigueur 01/01/2025.",
         }
         for volet, txt in resume.items():
@@ -308,10 +311,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_font("inter", size=6.2)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.4,
-                       "References : arretes du 17/04/2009 (thermique, acoustique, aeration) modifies par "
-                       "l'arrete du 11/01/2016 (PC/DP depuis le 01/07/2016) ; cadre CCH R.192-1 a R.192-4 "
-                       "(decret n 2024-168, 01/01/2025). Rappel de conception - ne remplace pas l'etude "
-                       "reglementaire du maitre d'oeuvre.", new_x="LMARGIN", new_y="NEXT")
+                       "Références : arrêtés du 17/04/2009 (thermique, acoustique, aération) modifiés par "
+                       "l'arrêté du 11/01/2016 (PC/DP depuis le 01/07/2016) ; cadre CCH R.192-1 à R.192-4 "
+                       "(décret n° 2024-168, 01/01/2025). Rappel de conception — ne remplace pas l'étude "
+                       "réglementaire du maître d'œuvre.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
     # ── Lignes tracées, par onglet — M22-F C4 : SECTIONS CARTOUCHES (hiérarchie M19)
@@ -419,19 +422,19 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_text_color(*TXT_MUT)
         pdf.multi_cell(pdf.w - 28, 4,
                        "Hypothèses promoteur (saisies, non estimées par LABUSE) : coût de "
-                       f"construction {round(inp.get('cout_construction_m2') or 0):,} EUR/m2 · "
+                       f"construction {round(inp.get('cout_construction_m2') or 0):,} €/m² · "
                        f"marge & frais {inp.get('marge_frais_pct')} %.".replace(",", " "),
                        new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.5)
         pdf.set_font("grotesk", size=12)
         pdf.set_text_color(*MINT)
         pdf.cell(0, 6, f"Charge foncière supportable : {_e(cf.get('central'))}  "
-                 f"(~ {round(cf.get('par_m2_terrain') or 0):,} EUR/m2 terrain)".replace(",", " "),
+                 f"(~ {round(cf.get('par_m2_terrain') or 0):,} €/m² terrain)".replace(",", " "),
                  new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, f"fourchette {_e(cf.get('bas'))} - {_e(cf.get('haut'))} · "
-                 f"fiabilite prix : {calc.get('fiabilite')}", new_x="LMARGIN", new_y="NEXT")
+                 f"fiabilité prix : {calc.get('fiabilite')}", new_x="LMARGIN", new_y="NEXT")
         ach = calc.get("achat")
         if ach:
             pdf.ln(0.3)

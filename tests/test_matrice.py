@@ -81,3 +81,22 @@ def test_matrice_statuts(db_session):
     row = d.execute(text("SELECT q_score, a_score, a_completude FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id=d.parcel_id "
                          "WHERE d.run_label=:r AND p.idu='97415000MA0001'"), {"r": LABEL}).first()
     assert row[0] == 66 and row[1] == 62 and row[2] == 100
+
+
+@pytest.mark.db
+def test_matrice_dedup_contrainte_identique(db_session):
+    """P2-26 (cohérence M46 Lot D) : une contrainte IDENTIQUE produite en double par la cascade
+    (même couche, résultat, détail) ne doit compter qu'UNE fois dans la somme Q/A — sinon la
+    pénalité/le bonus est double-compté et le score servi contredit les lignes (déjà dédup) de la fiche."""
+    d = db_session
+    p = _parcel(d, "97415000DD0001")
+    # même contrainte Q (zonage +8) insérée DEUX fois, + surface +8 une fois
+    _line(d, p, "zonage_plu_gpu", weight=8)
+    _line(d, p, "zonage_plu_gpu", weight=8)
+    _line(d, p, "surface", weight=8)
+    d.flush()
+    compute_matrice(d, LABEL, "Saint-Paul")
+    q = d.execute(text("SELECT q_score FROM dryrun_parcel_evaluations dd JOIN parcels pp ON pp.id=dd.parcel_id "
+                       "WHERE dd.run_label=:r AND pp.idu='97415000DD0001'"), {"r": LABEL}).scalar()
+    # base 50 + 8 (zonage, une seule fois) + 8 (surface) = 66. Sans dédup : 50+8+8+8 = 74.
+    assert q == 66

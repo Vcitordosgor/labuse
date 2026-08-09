@@ -51,6 +51,15 @@ def _months_ago(months: int) -> date:
     return _today() - timedelta(days=round(months * 30.44))
 
 
+def _years_before(d: date, years: int) -> date:
+    """Recule `d` de `years` ans. Gère le 29/02 : si l'année cible n'est pas bissextile,
+    `date.replace(year=...)` lèverait ValueError → repli sur le 28/02 (convention « anniversaire »)."""
+    try:
+        return d.replace(year=d.year - years)
+    except ValueError:
+        return d.replace(year=d.year - years, day=28)
+
+
 def _signal(code: str, *, points: int | None = None, source: str, ref: str | None = None,
             url: str | None = None, date_evenement: str | None = None,
             match: dict | None = None) -> dict:
@@ -324,8 +333,8 @@ def famille_b(siren: str, fiche: dict | None, age: int | None, forme_dgfip: str,
             maj_d = date.fromisoformat(maj) if maj else None
         except ValueError:
             maj_d = None
-        vieille = creation and creation <= today.replace(year=today.year - C.SCI_DORMANTE_AGE_ANS)
-        inactive = maj_d is None or maj_d <= today.replace(year=today.year - C.SCI_DORMANTE_INACTIVITE_ANS)
+        vieille = creation and creation <= _years_before(today, C.SCI_DORMANTE_AGE_ANS)
+        inactive = maj_d is None or maj_d <= _years_before(today, C.SCI_DORMANTE_INACTIVITE_ANS)
         if vieille and inactive:
             cands.append(_signal("RNE_SCI_DORMANTE", source=RE_SRC,
                                  ref=f"SCI créée le {creation}, aucune mise à jour RNE récente",

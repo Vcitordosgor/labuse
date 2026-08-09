@@ -31,7 +31,7 @@ from . import agorah_plu
 
 APICARTO = "https://apicarto.ign.fr/api"
 ODS_BASE = "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets"
-ALTI_URL = "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json"
+# M-C (F6) : URL/throttle RGE ALTI déménagés dans connectors.rge_alti (unifiés avec la fiche).
 # Indicateur national d'érosion côtière (Cerema/GéoLittoral), emprise Réunion, EPSG:2975.
 EROSION_URL = ("https://geolittoral.din.developpement-durable.gouv.fr/telechargement/"
                "couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip")
@@ -662,16 +662,12 @@ def ingest_pente(session, bbox, commune, run_id, sids, step_m: float = 180.0, ch
         x += dlon
     nodes = [(i, j, lons[j], lats[i]) for i in range(len(lats)) for j in range(len(lons))]
     elev: dict[tuple[int, int], float] = {}
+    # M-C (F6) : throttle/endpoint RGE ALTI UNIFIÉS dans connectors.rge_alti (plus de recopie).
+    from ..connectors.rge_alti import fetch_elevations
     with _client() as c:
-        for k in range(0, len(nodes), chunk):
-            part = nodes[k:k + chunk]
-            r = c.get(ALTI_URL, params={
-                "lon": "|".join(f"{p[2]:.6f}" for p in part),
-                "lat": "|".join(f"{p[3]:.6f}" for p in part),
-                "resource": "ign_rge_alti_wld", "zonly": "true"})
-            for idx, h in enumerate(r.json().get("elevations", [])):
-                elev[(part[idx][0], part[idx][1])] = h
-            time.sleep(0.21)  # quota 5 req/s
+        elevs = fetch_elevations([(p[2], p[3]) for p in nodes], client=c, batch=chunk)
+    for idx, h in enumerate(elevs):
+        elev[(nodes[idx][0], nodes[idx][1])] = h
     n = 0
     for i in range(len(lats) - 1):
         for j in range(len(lons) - 1):

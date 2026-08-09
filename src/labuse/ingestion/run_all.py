@@ -18,7 +18,7 @@ import time
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..connectors.cadastre import ingest_parcels
+from .cadastre_ingest import ingest_parcels
 from ..models import IngestionRun
 from . import cadastre_bulk, layers_ingest
 
