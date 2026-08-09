@@ -106,3 +106,6 @@ data/plu_reglements/
 
 # M-W micro : captures de la sonde carte (preuves locales, non versionnées)
 qa/mw_captures/
+
+# M54-EXPO captures (preuves locales)
+qa/m54_captures/

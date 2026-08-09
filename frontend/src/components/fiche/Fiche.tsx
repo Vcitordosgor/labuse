@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1760,6 +1760,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
+                    {/* M54-EXPO A2 — le courrier SPF pré-rempli, branché LÀ où l'UI le promet. */}
+                    <a data-spf-letter href={spfLetterUrl(idu)} target="_blank" rel="noreferrer"
+                      className="mt-1.5 block text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
+                      → {CLIENT.fiche.export.spf} (courrier pré-rempli à envoyer au SPF)
+                    </a>
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
@@ -1950,9 +1955,19 @@ export function Fiche({ idu }: { idu: string }) {
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.courrier}</p>
                 </button>
               </div>
+              {/* M54-EXPO — rangée « documents » (one-pager comité, pré-dossier PC) SOUS la barre à 7
+                  tuiles, qui n'est PAS réordonnée. */}
+              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'flex', overflow: 'hidden' }}>
+                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: '9px 0 8px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
+                  <p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
+                </a>
+                <PreDossierTile idu={idu} />
+              </div>
               <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
               </p>
+              <FeedbackStrip idu={idu} />
             </div>
           </div>
           )
@@ -1961,6 +1976,51 @@ export function Fiche({ idu }: { idu: string }) {
 
 
     </aside>
+  )
+}
+
+
+/** M54-EXPO A4 — retour promoteur par parcelle (POST /feedback). Discret : 3 verdicts + un mot
+ *  facultatif ; se replie en « merci » après envoi. Le verdict alimente models.ParcelFeedback. */
+function FeedbackStrip({ idu }: { idu: string }) {
+  const [sent, setSent] = useState(false)
+  const [comment, setComment] = useState('')
+  const [open, setOpen] = useState(false)
+  useEffect(() => { setSent(false); setComment(''); setOpen(false) }, [idu])
+  const send = useMutation({ mutationFn: (v: FeedbackVerdict) => postFeedback(idu, v, comment.trim() || undefined), onSuccess: () => setSent(true) })
+  if (sent) return <p data-feedback-merci style={{ marginTop: 8, fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbMerci}</p>
+  const btn = { padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0e1311', color: '#8fd8b4', cursor: 'pointer' } as const
+  return (
+    <div data-feedback style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbAccroche}</span>
+      {open && <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder={CLIENT.fiche.export.fbComment}
+        style={{ flex: 1, minWidth: 120, padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0b0f0d', color: '#c8d6cf' }} />}
+      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('good_lead')} title={CLIENT.fiche.export.fbGood}>👍 {CLIENT.fiche.export.fbGood}</button>
+      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('not_interested')}>{CLIENT.fiche.export.fbNot}</button>
+      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('false_positive')}>{CLIENT.fiche.export.fbFalse}</button>
+      {!open && <button style={{ ...btn, border: 0, background: 'none', color: '#5f7568' }} onClick={() => setOpen(true)}>+ un mot</button>}
+    </div>
+  )
+}
+
+
+/** M54-EXPO — tuile « Pré-dossier PC » (ZIP CERFA). Réservée au plan Intégral (backend :
+ *  pre_dossier.py → plans.acces('pre_dossier_pc') = 403 sinon + quota M-K). Le front lit le plan
+ *  (getMoi) et grise la tuile hors Intégral (pas de téléchargement d'un 403). */
+function PreDossierTile({ idu }: { idu: string }) {
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi })
+  const integral = moi.data?.plan === 'integral'
+  const cell = { flex: 1, padding: '9px 0 8px', textAlign: 'center' as const, display: 'block', textDecoration: 'none' }
+  const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
+  if (!integral) return (
+    <span data-predossier-gate aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+    </span>
+  )
+  return (
+    <a data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4' }} title={CLIENT.fiche.export.preDossierTip}>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+    </a>
   )
 }
 
