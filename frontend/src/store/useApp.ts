@@ -184,6 +184,14 @@ interface AppState {
   veillesOpen: boolean
   toggleVeilles: () => void
   setVeillesOpen: (v: boolean) => void
+  // M54-EXPO-3 A8 — comparateur : 2 à 3 parcelles côte à côte (GET /compare). Sélection cumulative
+  // depuis la fiche (« Comparer ») et la shortlist ; panneau en surimpression.
+  compareIdus: string[]
+  compareOpen: boolean
+  addToCompare: (idu: string) => void
+  removeFromCompare: (idu: string) => void
+  clearCompare: () => void
+  setCompareOpen: (v: boolean) => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
   sourceLine: FicheLine | null
   openSourceDrawer: (line: FicheLine) => void
@@ -302,6 +310,14 @@ export const useApp = create<AppState>((set) => ({
   veillesOpen: false,
   setVeillesOpen: (v) => set({ veillesOpen: v }),
   toggleVeilles: () => set((s) => ({ veillesOpen: !s.veillesOpen, view: 'cartes' })),
+  compareIdus: [],
+  compareOpen: false,
+  addToCompare: (idu) => set((s) => ({
+    compareIdus: s.compareIdus.includes(idu) ? s.compareIdus : [...s.compareIdus, idu].slice(0, 3),
+    compareOpen: true, view: 'cartes' })),
+  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen } }),
+  clearCompare: () => set({ compareIdus: [], compareOpen: false }),
+  setCompareOpen: (v) => set({ compareOpen: v }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),

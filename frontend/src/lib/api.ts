@@ -353,6 +353,18 @@ export const ackAlerte = (id?: number) =>
   j<{ ok: boolean; acknowledged: number }>('/alertes/ack', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(id != null ? { id } : (commune() ? { commune: commune() } : {})) })
 
+// M54-EXPO-3 A8 — comparateur de parcelles (2 à 3 côte à côte).
+export interface CompareRow {
+  idu: string; commune?: string; section?: string; numero?: string; surface_m2?: number | null
+  status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
+  zone?: string | null; constructible?: boolean | null; capacite?: string | null
+  sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
+  ca_bas?: number | null; ca_haut?: number | null; charge_fonciere_m2?: number | null
+  n_contraintes?: number; contraintes?: string[]; synthese?: string | null
+}
+export const getCompare = (idus: string[]) =>
+  j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
+
 // M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
 export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }
 export const getMarque = () => j<Marque>('/moi/marque')
