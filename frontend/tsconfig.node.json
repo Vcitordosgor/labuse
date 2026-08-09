@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "composite": true,
+    // M-W (micro) : `tsc -b` émettait `vite.config.js` à côté du `.ts`. Vite résout `.js` AVANT
+    // `.ts` → il chargeait ce compilé (potentiellement PÉRIMÉ : toute édition de vite.config.ts
+    // n'était prise en compte qu'après un rebuild). On ne garde QUE la déclaration (.d.ts) — ce
+    // dont a besoin le projet composite — sans produire le .js fantôme. Vite charge alors le .ts.
+    "emitDeclarationOnly": true,
     "skipLibCheck": true,
     "target": "ES2020",
     "lib": ["ES2020"],

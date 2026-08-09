@@ -21,6 +21,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/signalement', '/guide',
   '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
+  '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
+                       // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W
+                       //  ni de la carte — présentes aussi en vite 5, comblées ici pour un dev honnête)
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
@@ -31,11 +34,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: {
+    // M-W (vite 8, Rolldown) : `rollupOptions` → `rolldownOptions`, et l'ancien `manualChunks`
+    // OBJET (retiré sous Rolldown) → `output.codeSplitting.groups` (test par chemin ; `advancedChunks`
+    // est lui-même déprécié → on prend le nom courant `codeSplitting`). Découpage IDENTIQUE :
+    // maplibre-gl dans son chunk (isolé + différé par le lazy-load M-V), react/react-dom/react-query/
+    // zustand dans `vendor`. Vérifié après build : chunks maplibre/vendor présents, maplibre HORS du
+    // graphe initial (index.html), pas d'explosion de bundle, aucun avertissement.
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          maplibre: ['maplibre-gl'],
-          vendor: ['react', 'react-dom', '@tanstack/react-query', 'zustand'],
+        codeSplitting: {
+          groups: [
+            { name: 'maplibre', test: /[\\/]node_modules[\\/]maplibre-gl[\\/]/ },
+            { name: 'vendor', test: /[\\/]node_modules[\\/](react|react-dom|scheduler|@tanstack[\\/]react-query|zustand)[\\/]/ },
+          ],
         },
       },
     },

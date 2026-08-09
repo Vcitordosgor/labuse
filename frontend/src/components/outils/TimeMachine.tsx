@@ -123,8 +123,11 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       onMouseUp={() => { dragging.current = false }}
       onMouseLeave={() => { dragging.current = false }}
     >
-      <div ref={leftRef} className="absolute inset-0" />
-      <div ref={rightRef} className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
+      {/* h-full w-full : cf. MapView — maplibre-gl.css (`.maplibregl-map{position:relative}`, chargée
+          après l'app depuis le lazy-load M-V) écrase `.absolute` → conteneur en `relative`, inset-0
+          n'étire plus → hauteur 0 → noir. Dimensions explicites = immunité à l'ordre CSS. */}
+      <div ref={leftRef} className="absolute inset-0 h-full w-full" />
+      <div ref={rightRef} className="absolute inset-0 h-full w-full" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
       {/* M15 D1 : la barre de contrôle « Comparer » (choix des deux fonds + Quitter) a été
           DÉPLACÉE dans le bandeau gauche (M08, ModulePanel). Seule la poignée reste sur la carte. */}
       {/* poignée */}

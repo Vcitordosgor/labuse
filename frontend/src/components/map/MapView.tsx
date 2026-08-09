@@ -862,7 +862,12 @@ export function MapView() {
 
   return (
     <div className="relative min-w-0 flex-1">
-      <div ref={ref} className="absolute inset-0" />
+      {/* h-full w-full EN PLUS de `absolute inset-0` : maplibre-gl.css pose `.maplibregl-map{position:
+          relative}` (même spécificité que Tailwind `.absolute`) et, depuis le lazy-load M-V, cette CSS
+          se charge APRÈS le bundle app → elle gagne → le conteneur repasse en `relative`, `inset-0` ne
+          l'étire plus, ses enfants sont absolus → hauteur 0 → carte clippée (noir). Les dimensions
+          explicites survivent quel que soit le `position` gagnant. Cf. RAPPORT_M_W_CARTE_NOIRE.md. */}
+      <div ref={ref} className="absolute inset-0 h-full w-full" />
       <div className="absolute left-4 top-4 flex flex-col gap-2">
         {(['+', '−'] as const).map((s) => (
           <button key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
