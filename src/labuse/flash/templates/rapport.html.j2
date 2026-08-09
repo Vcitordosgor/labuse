@@ -171,13 +171,18 @@
       <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
     {% if c.verdict_v2.rang %}
     <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
-      <div class="valeur">{{ c.verdict_v2.rang }}</div></div>
+      <div class="valeur">{{ "{:,}".format(c.verdict_v2.rang).replace(",", " ") }}{% if c.verdict_v2.rang_total %} <small>/ {{ "{:,}".format(c.verdict_v2.rang_total).replace(",", " ") }}</small>{% endif %}</div></div>
     {% endif %}
     {% if c.verdict_v2.mult %}
     <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
       <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
     {% endif %}
   </div>
+  {# M54-AB C1 : UNE phrase de motif sous le verdict (le « pourquoi » déterministe servi) —
+     surtout pour les déclassements, pour qu'un code technique ne soit jamais le seul énoncé. #}
+  {% if c.verdict_v2.motif %}
+  <p class="note">{{ c.verdict_v2.motif }}</p>
+  {% endif %}
   {# AU-OUVERTURE (Vic 30/07) : la mention d'ouverture non vérifiée est VUE — en tête, dans le
      bloc Verdict, jamais reléguée en bas de fiche. Étiquette « Absent » (ni un fait, ni Estimé). #}
   {% if c.verdict_v2.mention_ouverture %}

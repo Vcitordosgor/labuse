@@ -14,6 +14,7 @@ from pathlib import Path
 from fpdf import FPDF
 
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from ..verdict_servi import TIER_LABELS, DECLASSE_RGB  # source unique des libellés client (écran = papier)
 
 FONTS = Path(__file__).resolve().parent / "fonts"
 
@@ -93,6 +94,21 @@ def _chip(pdf: _Pdf, x: float, y: float, label: str, color: tuple) -> float:
     return w
 
 
+def _motif_verdict(s2: dict) -> str | None:
+    """UNE phrase de « pourquoi » sous le verdict — assemblée depuis les DONNÉES moteur
+    (probabilité de mutation vs base + motif servi). Déterministe, pas d'IA ; c'est le MÊME
+    motif que l'écran et le one-pager (verdict_servi). Borné pour tenir sur ~2 lignes."""
+    bouts: list[str] = []
+    if s2.get("mult_base") is not None:
+        bouts.append(f"probabilité de mutation ×{s2['mult_base']:.1f} vs base")
+    if s2.get("motif"):
+        bouts.append(str(s2["motif"]))
+    phrase = " — ".join(bouts)
+    if not phrase:
+        return None
+    return phrase if len(phrase) <= 190 else phrase[:187].rstrip() + "…"
+
+
 def render_fiche_pdf(fiche: dict) -> bytes:
     pdf = _Pdf(format="A4")
     pdf.set_auto_page_break(auto=True, margin=26)   # pied de page commun (4 lignes)
@@ -154,22 +170,31 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # jamais un statut matriciel mort présenté comme un verdict.
     s2 = fiche.get("score_v2")
     v2_pilote = bool(s2) and not fiche.get("etage0")
+    motif = None
     if v2_pilote:
-        label, color = TIER_V2.get(s2["tier"], (s2["tier"], TXT_MUT))
-        if s2["tier"] in ("brulante", "chaude") and s2.get("rang") is not None:
-            label += f" · rang {s2['rang']}"
-        if s2.get("mult_base") is not None:
-            label += f" · ×{s2['mult_base']:.1f}"
+        tier = s2["tier"]
+        is_declasse = bool(s2.get("declasse")) or (isinstance(tier, str) and tier.startswith("declasse_"))
+        # M54-AB C1 : libellé CLIENT (source unique verdict_servi), JAMAIS le code technique ni « v2 ».
+        label = s2.get("label") or TIER_LABELS.get(tier, tier)
+        # couleur « terre » pour tout déclassement (palette M-Q) ; sinon la couleur du tier servable.
+        color = DECLASSE_RGB if is_declasse else TIER_V2.get(tier, ("", TXT_MUT))[1]
+        # rang AVEC son dénominateur (un rang seul ne dit rien) — pour tout tier classé.
+        if s2.get("rang") is not None:
+            label += f" · rang {s2['rang']:,}".replace(",", " ")
+            if s2.get("rang_total"):
+                label += f" / {s2['rang_total']:,}".replace(",", " ")
+        motif = _motif_verdict(s2)  # la « ×1.3 » migre du gros titre vers la phrase de motif
     elif fiche.get("etage0"):
         label, color = "Écartée", RED
     else:
         label, color = "Classement historique", TXT_MUT
-    # ── M22-F C4 : VERDICT EN TÊTE, hiérarchie M19 — carte pleine largeur, gros label
+    # ── M22-F C4 : VERDICT EN TÊTE, hiérarchie M19 — carte pleine largeur, gros label + motif
     surf = f"{fiche['surface_m2']:,} m²".replace(",", " ") if fiche.get("surface_m2") else "surface n/d"
     lon, lat = fiche.get("coords", [None, None])
     y = pdf.get_y() + 1
+    card_h = 21.5 if motif else 15
     pdf.set_fill_color(*SURFACE)
-    pdf.rect(14, y, pdf.w - 28, 15, style="F", round_corners=True, corner_radius=2.4)
+    pdf.rect(14, y, pdf.w - 28, card_h, style="F", round_corners=True, corner_radius=2.4)
     pdf.set_xy(19, y + 2.2)
     pdf.set_font("mono", size=6.6)
     pdf.set_text_color(*TXT_DIM)
@@ -182,7 +207,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_text_color(*TXT_MUT)
     pdf.set_xy(14, y + 7.8)
     pdf.cell(pdf.w - 33, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}", align="R")
-    pdf.set_y(y + 17)
+    if motif:
+        pdf.set_xy(19, y + 13.2)
+        pdf.set_font("inter", size=7.4)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.multi_cell(pdf.w - 38, 3.4, motif)
+    pdf.set_y(y + card_h + 2)
     # M-P (P2-62) : le second verdict issu de la matrice éteinte est SUPPRIMÉ — un seul verdict/document.
 
     # ── Scores (Q / A — le score ne s'affiche jamais seul)

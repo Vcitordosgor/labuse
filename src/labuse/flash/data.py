@@ -196,20 +196,22 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                    WHERE s2.parcelle_id = :idu AND s2.run_id = :run"""),
                 {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
         if v2 or etage0:
-            libelles = {"brulante": "Brûlante", "chaude": "Chaude",
-                        "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
-                        "ecartee": "Écartée",
-                        # déclassement tête-de-liste (étage 0) — visibles avec motif
-                        "declasse_zone_fermee": "Zone fermée à l'urbanisation",
-                        "declasse_non_constructible": "Parcelle non constructible",
-                        "declasse_au_statut_inconnu": "Zone AU — ouverture non vérifiée",
-                        "declasse_au_fermee": "Zone AU fermée à l'urbanisation (réserve)"}
+            # M54-AB C1 : libellé CLIENT + motif = POINT DE TRADUCTION UNIQUE (verdict_servi),
+            # jamais une table recopiée dans le générateur (l'ancienne, incomplète, laissait
+            # « declasse_bati_sature » brut fuir au client). + dénominateur du rang.
+            from ..verdict_servi import TIER_LABELS, verdict_servi, rang_total
             tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
             if tier_eff:
+                vs = verdict_servi(db, idu)
                 out["verdict_v2"] = {
-                    "tier": tier_eff, "libelle": libelles.get(tier_eff, tier_eff),
+                    "tier": tier_eff, "libelle": TIER_LABELS.get(tier_eff, tier_eff),
                     "etage0": etage0,
+                    "declasse": tier_eff.startswith("declasse_"),
+                    # motif servi (« pourquoi ») — même phrase que l'écran/one-pager ; jamais sur l'étage 0
+                    # (l'exclusion dure a sa propre note ci-dessous).
+                    "motif": (None if etage0 else vs.get("motif")),
                     "rang": (None if etage0 or not v2 else v2["rang"]),
+                    "rang_total": (None if etage0 or not v2 else rang_total(db)),
                     "mult": (None if etage0 or not v2 or v2["mult_base"] is None
                              else round(float(v2["mult_base"]), 1))}
         # M-RENOUV (B3) : UNE ligne conditionnelle dans la synthèse — segment + rang +
