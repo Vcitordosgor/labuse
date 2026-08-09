@@ -109,3 +109,6 @@ qa/mw_captures/
 
 # M54-EXPO captures (preuves locales)
 qa/m54_captures/
+
+# M54-EXPO-2 captures
+qa/m54b_captures/
