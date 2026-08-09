@@ -69,18 +69,19 @@ def test_vente_hors_zone_ignoree(db_session):
     assert alertes.compute_alertes(db_session, COMMUNE, None)["dvf_in_zone"] == 0
 
 
-def test_permis_pres_parcelle_suivie_apparait(db_session):
+def test_permis_ne_passe_plus_par_ce_canal(db_session):
+    """M54-EXPO-2 (arbitrage Vic) : le kind `permit_near_followed` est RETIRÉ — la cloche
+    (events kind='permis') couvre déjà les permis près d'une parcelle suivie. Test JUMEAU :
+    même AVEC une parcelle suivie ET un permis à 50 m, ce canal n'émet AUCUNE alerte permis
+    (ni clé `permit_near_followed`, ni ligne d'alerte). Un signal, un canal."""
     lon, lat = 55.32, -21.06
     _follow(db_session, _parcel(db_session, "ALERT0001", lon, lat))
-    _permit(db_session, lon + 0.0005, lat)                                    # ~50 m
-    assert alertes.compute_alertes(db_session, COMMUNE, None)["permit_near_followed"] == 1
-
-
-def test_permis_loin_de_parcelle_suivie_ignore(db_session):
-    lon, lat = 55.34, -21.07
-    _follow(db_session, _parcel(db_session, "ALERT0002", lon, lat))
-    _permit(db_session, lon + 0.01, lat)                                      # ~1 km > 200 m
-    assert alertes.compute_alertes(db_session, COMMUNE, None)["permit_near_followed"] == 0
+    _permit(db_session, lon + 0.0005, lat)                                    # ~50 m — jadis détecté
+    res = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert "permit_near_followed" not in res                                  # clé disparue
+    assert res == {"dvf_in_zone": 0, "total": 0}                              # rien via ce canal
+    assert not any(a["kind"] == "permit_near_followed"
+                   for a in alertes.list_alertes(db_session, COMMUNE, None))  # aucune ligne permis
 
 
 def test_idempotent_pas_de_doublon(db_session):

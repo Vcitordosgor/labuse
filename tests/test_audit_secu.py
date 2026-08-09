@@ -392,7 +392,9 @@ def test_idor_alertes_watch_zones_cloison(app_client):
         assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
         assert len(ca.get("/alertes", params={"commune": commune, "only_new": True}).json()) == 1
 
-        # Dédup permis PAR COMPTE : A et B suivent la MÊME parcelle → un permis proche alerte CHACUN.
+        # M54-EXPO-2 (arbitrage Vic) : le canal alertes NE traite PLUS les permis (retiré — la cloche
+        # les couvre). Même avec 2 comptes suivant la MÊME parcelle ET un permis proche, /alertes/refresh
+        # n'émet AUCUN permit_near_followed (clé absente pour chacun).
         _wkt = "POLYGON((55.51 -21.19,55.5105 -21.19,55.5105 -21.1905,55.51 -21.1905,55.51 -21.19))"
         with session_scope() as s:
             s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
@@ -404,8 +406,8 @@ def test_idor_alertes_watch_zones_cloison(app_client):
             s.commit()
         assert ca.post("/pipeline", json={"idu": idu}).status_code == 200
         assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
-        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1
-        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1  # PAS mangé
+        assert "permit_near_followed" not in ca.post("/alertes/refresh", params={"commune": commune}).json()
+        assert "permit_near_followed" not in cb.post("/alertes/refresh", params={"commune": commune}).json()
     finally:
         _purge(ea, eb)
         with session_scope() as s:
