@@ -281,6 +281,40 @@ def ligne9_loyer(db: Session, commune: str) -> dict:
                   fiabilite=seg.get("fiabilite", "moyenne"), etiquette="Sourcé · millésime DHUP")
 
 
+def market_signal(db: Session, commune: str) -> dict:
+    """M-U volet B — signal de marché REBRANCHÉ sur les ACTES : label dérivé de la liquidité (DVF,
+    ligne 5) et de l'offre engagée future (Sitadel, ligne 6). REPREND la logique du signal Obsimmo
+    (score 50 ± composantes → favorable/neutre/prudence + fiabilité) mais SANS aucune lecture du
+    JSON Obsimmo. Servi UNIQUEMENT avec ses deux composantes visibles — jamais un mot nu. Source :
+    « DVF (actes) + Sitadel (autorisations) ». « Non calculable » si les deux entrées manquent."""
+    liq = ligne5_liquidite(db, commune)
+    off = ligne6_offre_engagee(db, commune)
+    composantes: list[dict] = []
+    score = 50  # neutre, ajusté par composante, borné 0–100
+
+    if liq["calculable"] and liq["valeurs"].get("delta_pct_an") is not None:
+        d = liq["valeurs"]["delta_pct_an"]           # + : plus de ventes qu'un an avant = plus liquide
+        score += round(max(-1.0, min(1.0, d / 40.0)) * 20)
+        composantes.append({"cle": "Liquidité (DVF)", "sens": "+" if d > 0 else "−" if d < 0 else "=",
+                            "valeur": f"{liq['valeurs']['mutations_dernier_trim']} ventes au dernier "
+                                      f"trimestre ({d:+d} % vs an−1)"})
+    if off["calculable"]:
+        lg = off["valeurs"]["logements_12m"]          # offre engagée forte = concurrence à la revente
+        score += 10 if lg == 0 else 4 if lg < 50 else -6 if lg < 200 else -12
+        composantes.append({"cle": "Offre engagée (Sitadel)", "sens": "−" if lg >= 50 else "+",
+                            "valeur": f"{lg} logements autorisés / 12 mois"})
+
+    if not composantes:
+        return {"disponible": False, "source": "DVF (actes) + Sitadel (autorisations)",
+                "note": "Signal non calculable — ni liquidité DVF ni offre Sitadel exploitables."}
+    score = max(0, min(100, score))
+    label = "favorable" if score >= 60 else "prudence" if score < 40 else "neutre"
+    fiab = "bonne" if (liq["calculable"] and off["calculable"]) else "moyenne"
+    return {"disponible": True, "label": label, "composantes": composantes, "fiabilite": fiab,
+            "source": "DVF (actes) + Sitadel (autorisations)",
+            "date_amont": {"liquidite": liq["date_amont"], "offre": off["date_amont"]}}
+
+
 def build_marche_commune(db: Session, commune: str) -> dict:
     """Assemble le bloc « Marché » d'une commune — les 9 lignes, chacune avec sa date amont. Toutes
     les surfaces (outil, fiche, market_signal) lisent CE bloc : point de calcul unique."""
@@ -292,5 +326,6 @@ def build_marche_commune(db: Session, commune: str) -> dict:
         ligne9_loyer(db, commune),
     ]
     return {"commune": commune, "lignes": lignes,
+            "market_signal": market_signal(db, commune),
             "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un "
                     "millésime unique (P2-54). Fraîcheur = date source amont."}

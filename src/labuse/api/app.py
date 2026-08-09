@@ -3111,13 +3111,14 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - orientation optionnelle, jamais bloquante
         plh_block = None
 
-    # LOT 4-C — Marché Obsimmo (vente) : indicateurs locaux + comparaison régionale pour la commune.
-    obsimmo_block = None
+    # M-U volet B — le signal de marché servi vient désormais des ACTES (DVF liquidité + Sitadel
+    # offre), plus AUCUNE lecture Obsimmo. obsimmo.fiche_block/market_signal ne sont plus servis.
+    market_signal_block = None
     try:
-        from .. import obsimmo as obsimmo_mod
-        obsimmo_block = obsimmo_mod.fiche_block(p.commune)
+        from ..faisabilite.marche_commune import market_signal as _mkt_signal
+        market_signal_block = _mkt_signal(db, p.commune)
     except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
-        obsimmo_block = None
+        market_signal_block = None
 
     # LOT 4-B — Marché locatif (carte des loyers DHUP) : loyer €/m² appartement & maison, source ouverte.
     loyers_block = None
@@ -3196,7 +3197,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
-        "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
+        "market_signal": market_signal_block,   # M-U — signal marché DVF (actes) + Sitadel (autorisations)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
         "occupation": occupation_block,   # LOT 4-B — statut d'occupation (INSEE RP 2022)
         "defisc_fenetres": defisc_block,  # Phase A-1 — fenêtre de sortie de défisc (badge, mono, Estimé)

@@ -66,6 +66,20 @@ def test_gisement_run_servi_et_dpe_denominateur_connu():
 
 
 @pytest.mark.skipif(not _has_data("Saint-Paul"), reason="base sans données")
+def test_market_signal_jamais_un_label_nu_source_dvf_sitadel():
+    from labuse.faisabilite.marche_commune import market_signal
+    with session_scope() as s:
+        sig = market_signal(s, "Saint-Paul")
+    if sig["disponible"]:
+        # jamais un mot nu : le label est TOUJOURS accompagné de ses composantes visibles
+        assert sig["label"] in ("favorable", "neutre", "prudence")
+        assert sig["composantes"] and len(sig["composantes"]) >= 1
+        assert sig["source"] == "DVF (actes) + Sitadel (autorisations)"
+        # aucune lecture Obsimmo dans la source servie
+        assert "obsimmo" not in sig["source"].lower()
+
+
+@pytest.mark.skipif(not _has_data("Saint-Paul"), reason="base sans données")
 def test_ligne2_cellule_sous_seuil_non_calculable_jamais_mediane_sur_3_ventes():
     lignes, _ = _bloc("Salazie") if _has_data("Salazie") else _bloc("Saint-Paul")
     pz = lignes["prix_terrain_nu_par_zone"]["valeurs"]["par_zone"]

@@ -150,7 +150,10 @@ def local_disponible(row: dict[str, Any] | None) -> bool:
 
 # ── Sous-score « market_signal » : SÉPARÉ, transparent, faiblement pondéré ───────────────────
 def market_signal(row: dict[str, Any] | None) -> dict[str, Any]:
-    """Signal de marché Obsimmo, DÉRIVÉ et transparent (jamais injecté dans le scoring foncier).
+    """⚠ NON SERVI depuis M-U : le signal marché servi vient de faisabilite.marche_commune.market_signal
+    (DVF actes + Sitadel autorisations). Cette version Obsimmo n'a plus d'appelant servi.
+
+    Signal de marché Obsimmo, DÉRIVÉ et transparent (jamais injecté dans le scoring foncier).
 
     Construit à partir de deux composantes lisibles, ancrées sur les chiffres du dataset :
       • Liquidité = délai de vente LOCAL comparé au délai RÉGIONAL (vendre plus vite = favorable).
@@ -214,7 +217,11 @@ def market_signal(row: dict[str, Any] | None) -> dict[str, Any]:
 
 # ── Bloc fiche « Marché Obsimmo » ───────────────────────────────────────────────────────────
 def fiche_block(commune: str, sector: str | None = None) -> dict[str, Any] | None:
-    """Bloc marché pour la fiche d'une parcelle (None si commune/secteur hors dataset).
+    """⚠ NON SERVI depuis M-U (décision Vic 08/08 : Obsimmo écarté) — plus AUCUN appelant servi
+    (le signal marché de fiche vient de faisabilite.marche_commune : DVF + Sitadel). Conservé pour
+    les données historiques ; ne pas rebrancher sur une surface servie.
+
+    Bloc marché pour la fiche d'une parcelle (None si commune/secteur hors dataset).
 
     Priorise les `terrains_constructibles` (cœur foncier) ; joint appartements & maisons pour le
     contexte, la comparaison régionale et le signal dérivé. `sector` permet de cibler un secteur
