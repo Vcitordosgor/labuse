@@ -214,6 +214,12 @@ export const CLIENT = {
       premium: 'Premium',
       demander: 'demander →',
       gardee: 'dernière réponse gardée — rouvrir →',
+      // M54-EXPO-2 — synthèse IA de toute la fiche
+      synthese: 'Synthèse IA',
+      syntheseTip: 'Une synthèse en prose de la fiche (verdict, capacité, points de vigilance), rédigée par l’IA à partir des seules données servies.',
+      syntheseEnCours: 'L’IA rédige la synthèse…',
+      syntheseErreur: 'Synthèse indisponible — réessayez.',
+      syntheseStub: 'Synthèse automatique (repli déterministe — analyse IA enrichie non servie).',
     },
     // C6 · « Banquier » renommé — 3 pistes étudiées, la 1re retenue :
     //   1. « Note de financement » (RETENU — dit l'objet : un document pour financer)

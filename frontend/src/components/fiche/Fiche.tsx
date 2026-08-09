@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1907,6 +1907,7 @@ export function Fiche({ idu }: { idu: string }) {
               <span style={{ fontSize: 13, color: '#8a6ff0', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
             </button>
             {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
+            <SyntheseIA idu={idu} />
 
             {/* ═══ BARRE D'ACTIONS · 2 niveaux (spec) — DANS le flux (fin du « double écran de vide ») ═══ */}
             <div style={{ marginTop: 7, paddingTop: 14, borderTop: '1px solid #1a2320' }}>
@@ -1976,6 +1977,42 @@ export function Fiche({ idu }: { idu: string }) {
 
 
     </aside>
+  )
+}
+
+
+/** M54-EXPO-2 — « Synthèse IA » : prose IA de toute la fiche (GET /parcels/{idu}/explain). La
+ *  couche 2 M-T garantit une sortie soit VALIDÉE (available) soit un repli STUB déterministe
+ *  (available=false, stub=true) — on affiche le libellé de repli quand c'est un stub. Le quota IA
+ *  existant s'applique au niveau du socle IA ; un 429 tombe dans le message d'erreur. */
+function SyntheseIA({ idu }: { idu: string }) {
+  const q = useMutation({ mutationFn: () => getExplain(idu) })
+  useEffect(() => { q.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
+  const d = q.data
+  const box = { marginTop: 8, background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '11px 14px' } as const
+  if (!d && !q.isPending) return (
+    <button onClick={() => q.mutate()} data-synthese-ia
+      style={{ ...box, display: 'flex', alignItems: 'center', gap: 9, width: '100%', textAlign: 'left', color: '#c9b6f2', cursor: 'pointer' }} title={CLIENT.fiche.ia.syntheseTip}>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
+      <span style={{ flex: 1, fontSize: 13 }}>{CLIENT.fiche.ia.synthese}</span>
+      <span style={{ fontSize: 12, color: '#8a6ff0' }}>rédiger →</span>
+    </button>
+  )
+  if (q.isPending) return <p style={{ ...box, color: '#c9b6f2', fontSize: 12 }}><span style={{ display: 'inline-block', width: 6, height: 6, marginRight: 8, borderRadius: 9, background: '#8a6ff0' }} className="animate-pulse" />{CLIENT.fiche.ia.syntheseEnCours}</p>
+  if (q.isError) return <p style={{ ...box, color: '#E8695A', fontSize: 12 }}>{CLIENT.fiche.ia.syntheseErreur}</p>
+  const stub = d && !d.available
+  const rs = d?.rules_summary
+  return (
+    <div data-synthese-ia-result style={box}>
+      <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#c9b6f2', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {CLIENT.fiche.ia.synthese}
+        {stub && <span data-synthese-stub style={{ fontSize: 9.5, fontWeight: 500, color: '#b7a3e6', border: '1px solid #47386e', borderRadius: 5, padding: '1px 5px' }}>repli</span>}
+      </p>
+      <p style={{ margin: '7px 0 0', fontSize: 12, lineHeight: 1.5, color: '#d8ccf5', whiteSpace: 'pre-wrap' }}>{d?.available ? d.explanation : d?.message}</p>
+      {stub && Array.isArray(rs) && rs.length > 0 && <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{rs.map((r, i) => <li key={i}>{r}</li>)}</ul>}
+      {stub && typeof rs === 'string' && rs && <p style={{ margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2', whiteSpace: 'pre-wrap' }}>{rs}</p>}
+      {stub && <p style={{ margin: '7px 0 0', fontSize: 10, color: '#8f80b8' }}>{CLIENT.fiche.ia.syntheseStub}</p>}
+    </div>
   )
 }
 
