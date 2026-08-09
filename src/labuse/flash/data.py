@@ -452,8 +452,15 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
             "SELECT pente_moy_deg, pente_max_deg, flag_terrassement_lourd "
             "FROM parcel_terrain WHERE idu = :idu"), {"idu": idu}).mappings().first()
         if r and r["pente_moy_deg"] is not None:
-            out["pente"] = {"moy_deg": round(float(r["pente_moy_deg"]), 1),
+            # M54-AB C7 : la pente est SERVIE en degrés ET en % (même source RGE ALTI), avec son
+            # qualificatif — une seule mesure partout (fin du « ~10 % » coarse vs « 11,4° »).
+            from ..pente_fmt import pente_pct, pente_label
+            moy = round(float(r["pente_moy_deg"]), 1)
+            out["pente"] = {"moy_deg": moy, "moy_pct": pente_pct(moy),
+                            "label": pente_label(pente_pct(moy)),
                             "max_deg": round(float(r["pente_max_deg"]), 1)
+                            if r["pente_max_deg"] is not None else None,
+                            "max_pct": pente_pct(float(r["pente_max_deg"]))
                             if r["pente_max_deg"] is not None else None,
                             "terrassement_lourd": bool(r["flag_terrassement_lourd"])}
     # Mandats futurs (ANC & Végétation) : colonnes déclarées par le registre des

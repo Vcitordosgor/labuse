@@ -71,7 +71,9 @@
       </div></div>
     {% endif %}
     {% if ident.regles and ident.regles.hauteur_max_m %}
-    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+    {# M54-AB C6 : c'est la hauteur TOTALE de zone (plafond PLU) — le dossier banquier chiffre, lui,
+       la hauteur d'égout RETENUE (~9 m, R+2) pour le scénario neuf. Deux hauteurs, deux libellés. #}
+    <div class="cartouche"><div class="titre">Hauteur totale de zone (règle calibrée)</div>
       <div class="valeur">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} <small>m</small></div></div>
     {% endif %}
     {% endif %}
@@ -428,8 +430,8 @@
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
-      <div class="valeur">{{ t.pente.moy_deg }}<small>°</small>
-        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}°</small>{% endif %}
+      <div class="valeur">{{ t.pente.moy_deg }}<small>° ≈ {{ t.pente.moy_pct }} % · {{ t.pente.label }}</small>
+        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}° ≈ {{ t.pente.max_pct }} %</small>{% endif %}
       </div></div>
     {% endif %}
     {% if t.solaire %}

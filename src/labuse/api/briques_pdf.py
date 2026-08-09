@@ -389,7 +389,10 @@ def identite(out: dict) -> str:
     if r.get("emprise_max_m2"):
         regles += f"<tr><td>Emprise au sol maximale</td><td class='n'>{r['emprise_max_m2']} m²</td><td>{s('E')}</td></tr>"
     if r.get("hauteur_max_m"):
-        regles += f"<tr><td>Hauteur maximale</td><td class='n'>{r['hauteur_max_m']} m</td><td>{s('E')}</td></tr>"
+        # M54-AB C6 : hauteur TOTALE de zone (plafond PLU) — à distinguer de la hauteur d'égout
+        # RETENUE (~9 m, R+2) du scénario neuf en Faisabilité ci-après.
+        regles += (f"<tr><td>Hauteur totale de zone</td><td class='n'>{r['hauteur_max_m']} m</td>"
+                   f"<td>{s('E')}</td></tr>")
     body = ("<table>" + "".join(
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td><td>{s(prov)}</td></tr>" for k, v, prov in rows) + "</table>"
         f"<h3>Zonage du document d'urbanisme</h3>"
@@ -420,7 +423,9 @@ def faisabilite(out: dict) -> str:
             lo, hi = fo["logements_au_sol"]
             parts.append(f"{lo} à {hi} logements")
         if fo.get("hauteur_m"):
-            parts.append(f"hauteur ~{fo['hauteur_m']} m")
+            # M54-AB C6 : hauteur d'égout RETENUE (R+2), distincte de la hauteur totale de zone
+            # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
+            parts.append(f"hauteur d'égout retenue ~{fo['hauteur_m']} m")
         synth = f"<p><b>Potentiel indicatif :</b> {esc(' · '.join(parts))} {s('E')}</p>"
         # M54-AB C3 : la surface vendable retenue (capacité en logements, portée au bilan) et la
         # dérivation de plancher ci-dessous peuvent différer de ~1-2 m² — même scénario, méthodes
@@ -559,8 +564,10 @@ def risques(out: dict) -> str:
         body += "<p class='note'>Aucune servitude ni risque connu dans les couches analysées (à confirmer).</p>"
     if zan:
         c2 = zan.get("conso_2021_2024_m2")
+        # M54-AB C8 : le banquier montre le TOTAL consommé sur la période (ha) ; le dossier/flash
+        # montre le RYTHME annuel (m²/an) sur les MÊMES périodes — chaque métrique est étiquetée.
         body += (f"<h3>ZAN — consommation d'espaces (commune) {s('S')}</h3>"
-                 f"<table><tr><th>Période</th><th class='n'>ENAF consommé</th></tr>"
+                 f"<table><tr><th>Période</th><th class='n'>ENAF consommé (total période)</th></tr>"
                  f"<tr><td>2011–2021</td><td class='n'>{esc(round(zan['conso_2011_2021_m2']/10000, 1) if zan.get('conso_2011_2021_m2') else '—')} ha</td></tr>"
                  f"<tr><td>2021–2024</td><td class='n'>{esc(round(c2/10000, 1) if c2 else '—')} ha</td></tr></table>"
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "

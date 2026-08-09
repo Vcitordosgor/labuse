@@ -403,7 +403,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.set_font("inter", size=7.2)
             pdf.set_text_color(*TXT_MUT)
             x = pdf.get_x()
-            pdf.multi_cell(pdf.w - 14 - x, 3.6, ln["detail"] or "", new_x="LMARGIN", new_y="NEXT")
+            # M54-AB C7 : la pente client = RGE ALTI (parcel_terrain), en ° ET %, MÊME source que
+            # dossier/flash — plus de « ~10 % » (relief coarse) contredisant « 11,4° ≈ 20 % ».
+            detail = ln["detail"] or ""
+            if ln["layer"] == "pente" and fiche.get("pente_terrain"):
+                detail = f"Pente {fiche['pente_terrain']} — RGE ALTI 5 m, non éliminatoire."
+            pdf.multi_cell(pdf.w - 14 - x, 3.6, detail, new_x="LMARGIN", new_y="NEXT")
             # traçabilité : source + référence + date (exigence fraîcheur par ligne)
             src = ln.get("source") or ""
             ref = f"{ln['source_table']}#{ln['source_id']}" if ln.get("source_id") is not None else ""
