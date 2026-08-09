@@ -644,39 +644,47 @@ _SYNTH_SYSTEM = ("Tu rédiges une synthèse de prospection foncière EXCLUSIVEME
                  "foncière, SDP, prospect, R+n. Le texte s'affiche dans un panneau étroit.")
 
 
-def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
-    # Via le socle : sérialisation SÛRE (default=str) → plus de 500 `Decimal not JSON serializable`
-    # (la fiche contient des numeric DVF/RPLS/filosofi). timeout=30 pour la synthèse (sonnet).
-    res = core.complete(db, kind=kind, system=system, context=payload,
-                        model=MODEL_SYNTH, max_tokens=700, timeout=30.0)
-    if res.degraded:
-        raise RuntimeError(res.reason or "IA indisponible")
-    return res.text
+def _validee_ou_stub(db: Session, kind: str, system: str, payload: dict, stub_fn,
+                     mention_ok: str, mention_stub: str) -> dict:
+    """M-T V1 — couche 2 du socle (ancrage MÉCANIQUE des chiffres, `strict_numbers=True`). On sert la
+    synthèse LLM UNIQUEMENT si elle passe la validation ; au moindre doute — pas de clé, erreur
+    réseau/API/timeout, ou chiffre non ancré au contexte — on sert le STUB déterministe EXACT avec son
+    flag. JAMAIS « indisponible », jamais un écran vide, jamais un chiffre douteux.
+
+    `require_sources=False` : les prompts de synthèse n'émettent pas de marqueurs ⟨src:…⟩ (couche 1) ;
+    seule la couche 2 (chiffres) s'applique — c'est l'arbitrage. Sérialisation SÛRE (default=str) via
+    le socle. NON caché : ces surfaces n'utilisent pas `ia_cache` → aucun stub ne peut masquer une
+    synthèse qui passerait au prochain appel (cf. rapport de clé de cache)."""
+    res = core.complete(db, kind=kind, system=system, context=payload, model=MODEL_SYNTH,
+                        max_tokens=700, timeout=30.0, validate=True, require_sources=False,
+                        strict_numbers=True)
+    if res.degraded or res.rejected:
+        motif = ("clé IA absente" if res.reason == "no_key"
+                 else "chiffre non ancré" if res.rejected else "IA indisponible")
+        _log(db, kind, "stub-rejet" if res.rejected else "stub-degrade", True)
+        return {"stub": True, "texte": stub_fn(payload), "mention": mention_stub, "stub_motif": motif}
+    return {"stub": False, "texte": res.text, "mention": mention_ok, "sources": res.sources}
 
 
 @router.post("/synthese/{idu}")
 def ia_synthese(idu: str, db: Session = Depends(get_db), request: Request = None) -> dict:
     _porte_nl(request)   # M-K (P2-5)
     f = _fiche_json(db, idu)
-    if _has_key():
-        return {"stub": False, "texte": _real_text(db, "synthese", _SYNTH_SYSTEM, f),
-                "mention": "Synthèse générée — vérifier les sources (chaque fait est tracé dans la fiche)."}
-    _log(db, "synthese", "stub-local", True)
-    return {"stub": True, "texte": _stub_synthese(f),
-            "mention": "Synthèse générée (stub local, clé IA absente) — vérifier les sources."}
+    return _validee_ou_stub(
+        db, "synthese", _SYNTH_SYSTEM, f, _stub_synthese,
+        "Synthèse générée — vérifier les sources (chaque fait est tracé dans la fiche).",
+        "Synthèse générée (stub local exact — chiffre non validé ou IA absente) — vérifier les sources.")
 
 
 @router.post("/pourquoi/{idu}")
 def ia_pourquoi(idu: str, db: Session = Depends(get_db), request: Request = None) -> dict:
     _porte_nl(request)   # M-K (P2-5)
     f = _fiche_json(db, idu)
-    if _has_key():
-        sys_p = ("Tu expliques pédagogiquement un score foncier à partir du JSON de lignes tracées. "
-                 "INTERDIT d'inventer. FORMAT : texte brut sans markdown, 150 mots max — les 3 "
-                 "signaux qui pèsent le plus sur Q, puis sur A, chacun en une ligne « ±N — "
-                 "explication ». Rappelle en une phrase que le score est déterministe et tracé.")
-        return {"stub": False, "texte": _real_text(db, "pourquoi", sys_p, f),
-                "mention": "Explication générée — le score reste 100 % déterministe."}
-    _log(db, "pourquoi", "stub-local", True)
-    return {"stub": True, "texte": _stub_pourquoi(f),
-            "mention": "Explication générée (stub local) — le score reste 100 % déterministe."}
+    sys_p = ("Tu expliques pédagogiquement un score foncier à partir du JSON de lignes tracées. "
+             "INTERDIT d'inventer. FORMAT : texte brut sans markdown, 150 mots max — les 3 "
+             "signaux qui pèsent le plus sur Q, puis sur A, chacun en une ligne « ±N — "
+             "explication ». Rappelle en une phrase que le score est déterministe et tracé.")
+    return _validee_ou_stub(
+        db, "pourquoi", sys_p, f, _stub_pourquoi,
+        "Explication générée — le score reste 100 % déterministe.",
+        "Explication générée (stub local exact — chiffre non validé ou IA absente) — le score reste 100 % déterministe.")
