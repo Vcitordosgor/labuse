@@ -16,7 +16,6 @@ Clé API : variable d'environnement **ANTHROPIC_API_KEY** (jamais en clair, jama
 """
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
@@ -343,16 +342,19 @@ def explain_parcel(fiche: dict, *, timeout: float = 25.0) -> dict[str, Any]:
     if not core.has_key():
         return _no_key(facts)
     model = os.environ.get(ENV_MODEL, "").strip() or core.MODEL_REASONING
+    # M-T V1 — couche 2 (ancrage mécanique des chiffres). Le contexte devient STRUCTURÉ (dict `facts`)
+    # car validate=True l'exige ; le SYSTEM impose déjà « UNIQUEMENT du JSON fourni ». require_sources
+    # =False (ce prompt n'émet pas de marqueurs ⟨src:…⟩) ; seule la couche 2 s'applique.
     res = core.complete(
         None, kind="explain", model=model, max_tokens=700, timeout=timeout, system=SYSTEM,
-        context="Données structurées de la fiche (n'utilise QUE ceci) :\n"
-                + json.dumps(facts, ensure_ascii=False, indent=2, default=str))
-    if res.degraded:  # clé/réseau/timeout/API → dégrade PROPREMENT (jamais de 500 sur la fiche)
-        return {"available": False, "reason": res.reason or "error", "facts": facts,
+        context=facts, validate=True, require_sources=False, strict_numbers=True)
+    # Au moindre doute — clé/réseau/timeout/API (degraded), chiffre non ancré (rejected), ou vide —
+    # on NE sert JAMAIS « indisponible » : on sert la synthèse règles DÉTERMINISTE (le stub), flaggée.
+    if res.degraded or res.rejected or not res.text:
+        motif = ("chiffre non ancré" if res.rejected
+                 else "vide" if not res.text else (res.reason or "error"))
+        return {"available": False, "stub": True, "reason": motif, "facts": facts,
                 "rules_summary": rules_summary(facts),
-                "message": "Assistant IA momentanément indisponible — synthèse automatique ci-dessous."}
-    if not res.text:
-        return {"available": False, "reason": "empty", "facts": facts,
-                "rules_summary": rules_summary(facts),
-                "message": "Réponse vide de l'assistant — synthèse automatique ci-dessous."}
+                "message": "Synthèse automatique dérivée des seules données de la fiche "
+                           "(analyse IA enrichie non servie : " + motif + ")."}
     return {"available": True, "explanation": res.text, "model": res.model}

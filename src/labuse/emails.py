@@ -59,24 +59,50 @@ def avis_echeance(echeance_iso: str, lien_espace: str) -> tuple[str, str]:
 
 # ── B3 · digest de notifications ─────────────────────────────────────────────
 def digest_notifications(evenements: list[dict], lien_desabo: str, *,
-                         periode: str = "cette semaine", base_url: str = "") -> tuple[str, str]:
-    """`evenements` : liste de dicts {kind, titre, detail, idu}. `lien_desabo` : lien de désinscription."""
+                         periode: str = "cette semaine", base_url: str = "",
+                         marche: dict | None = None) -> tuple[str, str]:
+    """`evenements` : liste PERSONNELLE {kind, titre, detail, idu} (parcelles suivies + veilles).
+    `marche` (M-T V2) : RÉSUMÉ BORNÉ du marché {total, dans_vos_communes} — jamais une liste
+    exhaustive. `lien_desabo` : lien de désinscription (obligatoire)."""
     n = len(evenements)
-    sujet = f"LABUSE — {n} nouveauté{'s' if n > 1 else ''} sur vos parcelles ({periode})"
+    marche = marche or {}
+    m_total = marche.get("total") or 0
+    m_com = marche.get("dans_vos_communes")
+    # Résumé marché BORNÉ (jamais la liste). « dont M dans vos communes » si le compte a des
+    # parcelles suivies ; sinon le total seul (dans_vos_communes=None).
+    if m_total:
+        cadre = (f", dont {m_com} dans vos communes" if m_com is not None else " sur l'île")
+        marche_txt = (f"Marché ({periode}) : {m_total} mouvement{'s' if m_total > 1 else ''} "
+                      f"(bascules de statut, procédures BODACC, matchs){cadre}. "
+                      "Le détail est dans la cloche de l'application.")
+    else:
+        marche_txt = ""
+    # Sujet : reflète le contenu réel (perso prioritaire, sinon marché).
+    if n:
+        sujet = f"LABUSE — {n} nouveauté{'s' if n > 1 else ''} sur vos parcelles ({periode})"
+    else:
+        sujet = f"LABUSE — {m_total} mouvement{'s' if m_total > 1 else ''} de marché ({periode})"
     lignes = []
     for e in evenements:
         idu = e.get("idu") or ""
         lien = f"{base_url}/socle/#parcelle={idu}" if (idu and base_url) else (f"parcelle {idu}" if idu else "")
         detail = (e.get("detail") or "").strip()
         lignes.append(f"• {e.get('titre', '')}" + (f"\n  {detail}" if detail else "") + (f"\n  {lien}" if lien else ""))
+    if n:
+        bloc = (f"Voici le point sur vos parcelles suivies et vos veilles pour {periode} "
+                f"({n} événement{'s' if n > 1 else ''}) :\n\n" + "\n\n".join(lignes))
+        if marche_txt:
+            bloc += "\n\n— — —\n" + marche_txt
+    else:
+        # Aucun événement personnel : le RÉSUMÉ MARCHÉ suffit à déclencher le digest (fin du
+        # « digest vide à vie »). L'appelant a déjà vérifié qu'il y a du contenu.
+        bloc = marche_txt
     corps = (
         "Bonjour,\n\n"
-        f"Voici le point sur vos parcelles suivies et vos veilles pour {periode} "
-        f"({n} événement{'s' if n > 1 else ''}) :\n\n"
-        + "\n\n".join(lignes)
+        + bloc
         + "\n\n— — —\n"
-        "Vous recevez cet e-mail parce que vous suivez des parcelles ou avez enregistré des veilles "
-        "sur LABUSE. Pour ne plus recevoir ce résumé :\n"
+        "Vous recevez cet e-mail parce que vous suivez des parcelles, avez enregistré des veilles, "
+        "ou êtes abonné au résumé de marché LABUSE. Pour ne plus le recevoir :\n"
         f"{lien_desabo}"
         + _SIGNATURE
     )

@@ -54,10 +54,15 @@ def ensure_tables(engine) -> None:
             INSERT INTO match_profiles (nom, commune, surface_min, surface_max, sdp_min, demo)
             SELECT 'CMiste démo — maisons (île)', NULL, 300, 1500, 150, true
             WHERE NOT EXISTS (SELECT 1 FROM match_profiles WHERE nom LIKE 'CMiste démo%')"""))
+        # M-T V3 : la clé démo est bridée à 50 appels/jour (bac à sable). Seed à 50 ET migration
+        # de la clé démo existante (le seed idempotent ne l'aurait pas rétro-corrigée de 500→50).
+        # On ne touche QUE la clé démo — les vraies clés partenaires gardent leur quota.
         c.execute(text("""
             INSERT INTO api_keys (key, nom, quota_jour, demo)
-            SELECT 'demo-labuse-partner-key', 'Partenaire de démonstration', 500, true
+            SELECT 'demo-labuse-partner-key', 'Partenaire de démonstration (bac à sable)', 50, true
             WHERE NOT EXISTS (SELECT 1 FROM api_keys WHERE key = 'demo-labuse-partner-key')"""))
+        c.execute(text("UPDATE api_keys SET quota_jour = 50 "
+                       "WHERE key = 'demo-labuse-partner-key' AND demo AND quota_jour <> 50"))
 
 
 # ───────────────────────── M19 — MATCHING TERRAIN ↔ PROMOTEUR ─────────────────────────
@@ -434,10 +439,19 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
 
 # ───────────────────────── M21 — API PARTENAIRE (B2B2C) ─────────────────────────
 
+# M-T V3 (arbitrage Vic 08/08) — la clé de DÉMONSTRATION ne sert plus le parc réel : bac à sable.
+# Une seule commune RÉELLE mais non stratégique (Cilaos — Vic confirme au rapport), plafond 50/jour
+# (au lieu de 500), et chaque réponse porte "demo": true. Les vraies clés partenaires (générées
+# manuellement) ne changent pas.
+_DEMO_KEY = "demo-labuse-partner-key"
+_DEMO_COMMUNE = "Cilaos"
+_DEMO_QUOTA = 50
+
+
 def _check_key(db: Session, key: str | None) -> dict:
     if not key:
         raise HTTPException(401, "Clé API requise (paramètre ?key=…)")
-    k = db.execute(text("SELECT key, nom, quota_jour, jour, utilise FROM api_keys WHERE key = :k"),
+    k = db.execute(text("SELECT key, nom, quota_jour, jour, utilise, demo FROM api_keys WHERE key = :k"),
                    {"k": key}).mappings().first()
     if not k:
         raise HTTPException(401, "Clé API inconnue")
@@ -451,10 +465,23 @@ def _check_key(db: Session, key: str | None) -> dict:
 
 @router.get("/api/v1/parcels")
 def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int = 0,
-                   commune: str = "Saint-Paul", limit: int = Query(50, ge=1, le=200),
+                   commune: str | None = None, limit: int = Query(50, ge=1, le=200),
                    offset: int = Query(0, ge=0), db: Session = Depends(get_db)) -> dict:
-    """API partenaire — le robinet B2B2C. Clé simple + quota journalier. Doc : /api/v1/docs."""
-    _check_key(db, key)
+    """API partenaire — le robinet B2B2C. Clé simple + quota journalier. Doc : /api/v1/docs.
+
+    M-T V3 : la clé de démonstration est BRIDÉE (bac à sable) — une seule commune (Cilaos),
+    50 appels/jour, chaque réponse porte "demo": true. Les vraies clés servent le parc entier."""
+    k = _check_key(db, key)
+    demo = bool(k.get("demo"))
+    if demo:
+        # Bac à sable : hors de la commune démo → 403 EXPLICITE (jamais le parc réel en fuite).
+        if commune is not None and commune != _DEMO_COMMUNE:
+            raise HTTPException(403, f"Clé de démonstration : bac à sable limité à la commune "
+                                     f"{_DEMO_COMMUNE}. Clé complète (parc réel, autres communes) "
+                                     f"sur convention partenaire — contact LABUSE.")
+        commune = _DEMO_COMMUNE
+    else:
+        commune = commune or "Saint-Paul"
     # M37 : le robinet partenaire sert désormais le CLASSEMENT SERVI (tier parcel_p_score_v2),
     # plus la matrice historique. `statut` (filtre + payload) = tier. Bascule faite MAINTENANT
     # (zéro partenaire actif — gratuite aujourd'hui, coûteuse après le premier client).
@@ -469,10 +496,13 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
         ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
         {"run": RUN, "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
-    return {"count": len(rows), "offset": offset,
+    return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
-            "mention": "Données indicatives LABUSE (classement servi — tiers brûlante → à "
-                       "creuser) — usage selon convention partenaire.",
+            "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "
+                        f"{_DEMO_QUOTA} appels/jour. Clé complète sur convention partenaire."
+                        if demo else
+                        "Données indicatives LABUSE (classement servi — tiers brûlante → à "
+                        "creuser) — usage selon convention partenaire."),
             "items": [dict(r) for r in rows]}
 
 
@@ -484,19 +514,22 @@ def api_v1_docs() -> str:
 <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LABUSE</span></span>
 <span style="color:#5C7268;font-size:12px"> · API partenaire v1</span>
 <h1 style="font-size:20px;color:#ECF5EF">GET /api/v1/parcels</h1>
-<p style="font-size:13px;color:#8FA69A">Parcelles scorées (run premium q_v2). Authentification par
-clé, quota 500 appels/jour.</p>
+<p style="font-size:13px;color:#8FA69A">Parcelles scorées (classement servi — tiers). Authentification
+par clé, quota journalier.</p>
+<p style="font-size:12.5px;color:#B497F0;background:#160F24;border:1px solid #2A1E3E;border-radius:8px;padding:10px 12px">
+<b>Clé de démonstration</b> — <code>demo-labuse-partner-key</code> : données <b>RÉELLES</b>, limitée à la
+commune <b>Cilaos</b>, <b>50 appels/jour</b>, chaque réponse porte <code>"demo": true</code>.
+Clé complète (parc entier, toutes communes) sur convention — contact LABUSE.</p>
 <table style="width:100%;font-size:12.5px;border-collapse:collapse">
 <tr style="color:#5C7268;text-align:left"><th style="padding:6px 8px">Paramètre</th><th>Type</th><th>Description</th></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">key</td><td>string</td><td>clé API (obligatoire)</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">statut</td><td>enum</td><td>brulante · chaude · reserve_fonciere · a_creuser · ecartee (tier servi ; + variantes declasse_* pour les déclassées). L'ancien « a_surveiller » (matrice retirée) ne renvoie rien.</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">min_q</td><td>int</td><td>score Qualité minimal (0-100)</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">commune</td><td>string</td><td>défaut Saint-Paul (périmètre V1)</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">commune</td><td>string</td><td>défaut Saint-Paul (vraie clé) · clé démo : <b>Cilaos</b> uniquement (toute autre → 403)</td></tr>
 <tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">limit / offset</td><td>int</td><td>pagination (limit ≤ 200)</td></tr>
 </table>
 <h2 style="font-size:14px;color:#ECF5EF;margin-top:22px">Exemple</h2>
-<pre style="background:#111814;border:1px solid #1E2A23;border-radius:8px;padding:12px;font-size:11.5px;color:#C9DCD1;overflow-x:auto">curl "https://…/api/v1/parcels?key=demo-labuse-partner-key&statut=chaude&min_q=70&limit=10"</pre>
-<p style="font-size:11px;color:#5C7268">Erreurs : 401 clé absente/inconnue · 429 quota atteint.
-Clé de démonstration : <code style="color:#B497F0">demo-labuse-partner-key</code> (étiquetée démo).
+<pre style="background:#111814;border:1px solid #1E2A23;border-radius:8px;padding:12px;font-size:11.5px;color:#C9DCD1;overflow-x:auto">curl "https://…/api/v1/parcels?key=demo-labuse-partner-key&commune=Cilaos&statut=chaude&min_q=70&limit=10"</pre>
+<p style="font-size:11px;color:#5C7268">Erreurs : 401 clé absente/inconnue · 403 clé démo hors commune Cilaos · 429 quota atteint (démo : 50/jour).
 Réponses indicatives — usage selon convention partenaire.</p>
 </div></body></html>"""

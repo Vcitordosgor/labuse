@@ -300,21 +300,38 @@ def seed_demo(db: Session) -> dict:
 
 # ───────────────────────── API ─────────────────────────
 
+# M-T V2 — BROADCAST BORNÉ DU MARCHÉ. Les événements de MARCHÉ (compte_id NULL, données publiques :
+# bascule de statut, procédure BODACC, match de marché) deviennent visibles de TOUS les abonnés en
+# LECTURE. Les kinds PERSONNELS (permis suivis, veilles, reprises de veille) restent cloisonnés
+# STRICT (jamais partagés — cf. cloison M-K). Le broadcast ne touche QUE ces trois kinds.
+_MARKET_KINDS = ("bascule", "bodacc", "match")
+_PERSO_KINDS = ("permis", "veille")
+
+
+def _visible(alias: str = "e") -> str:
+    """Fragment SQL de visibilité d'un event_log : SES lignes (cloison) ∪ le marché public
+    (compte_id NULL sur un kind de marché). `:cid` et `:market` doivent être liés par l'appelant."""
+    p = f"{alias}." if alias else ""
+    return (f"({p}compte_id IS NOT DISTINCT FROM :cid "
+            f"OR ({p}compte_id IS NULL AND {p}kind = ANY(:market)))")
+
+
 @router.get("")
 def list_events(request: Request, unread_only: bool = False, limit: int = 100, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
+    mk = list(_MARKET_KINDS)
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.kind, e.idu, e.titre, e.detail, e.demo, e.lu,
                d.matrice_statut AS statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE e.compte_id IS NOT DISTINCT FROM :cid {"AND NOT e.lu" if unread_only else ""}
+        WHERE {_visible('e')} {"AND NOT e.lu" if unread_only else ""}
         ORDER BY e.ts DESC, e.id DESC LIMIT :lim"""),
-        {"lim": limit, "run": RUN, "cid": cid}).mappings().all()
-    unread = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
-                        {"cid": cid}).scalar()
+        {"lim": limit, "run": RUN, "cid": cid, "market": mk}).mappings().all()
+    unread = db.execute(text(f"SELECT count(*) FROM event_log e WHERE NOT lu AND {_visible('e')}"),
+                        {"cid": cid, "market": mk}).scalar()
     return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}
 
 
@@ -322,10 +339,11 @@ def list_events(request: Request, unread_only: bool = False, limit: int = 100, d
 def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
-    n = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
-                   {"cid": cid}).scalar()
-    per = db.execute(text("SELECT idu, count(*) FROM event_log WHERE NOT lu AND idu IS NOT NULL"
-                          " AND compte_id IS NOT DISTINCT FROM :cid GROUP BY idu"), {"cid": cid}).all()
+    mk = list(_MARKET_KINDS)
+    n = db.execute(text(f"SELECT count(*) FROM event_log e WHERE NOT lu AND {_visible('e')}"),
+                   {"cid": cid, "market": mk}).scalar()
+    per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE NOT lu AND idu IS NOT NULL"
+                          f" AND {_visible('e')} GROUP BY idu"), {"cid": cid, "market": mk}).all()
     return {"unread": int(n or 0), "par_parcelle": {r[0]: r[1] for r in per}}
 
 
@@ -543,22 +561,54 @@ def searches_rename(sid: int, body: SearchRenameIn, request: Request, db: Sessio
 
 # ── M13 — digest hebdo ──
 
+def _mes_communes(db: Session, cid: int | None) -> list[str]:
+    """Communes des parcelles SUIVIES/en veille du compte (« dont M dans vos communes »).
+    Vide (ou pilote) → le résumé marché montre le total seul."""
+    if cid is None:
+        return []
+    rows = db.execute(text(
+        "SELECT DISTINCT p.commune FROM watched_parcels w JOIN parcels p ON p.idu = w.idu "
+        "WHERE w.compte_id = :c AND p.commune IS NOT NULL"), {"c": cid}).all()
+    return [r[0] for r in rows]
+
+
 def _digest_data(db: Session, cid: int | None = None) -> dict:
+    # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici — il est borné
+    # en résumé plus bas ; jamais la liste exhaustive du marché dans un digest).
     events = db.execute(text("""
         SELECT e.kind, e.idu, e.titre, e.detail, e.demo, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE e.ts >= now() - interval '7 days' AND e.compte_id IS NOT DISTINCT FROM :cid
+        WHERE e.ts >= now() - interval '7 days'
+          AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
         ORDER BY (e.kind = 'bascule') DESC, d.q_score DESC NULLS LAST LIMIT 10"""),
-        {"run": RUN, "cid": cid}).mappings().all()
+        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
+    # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
+    # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
+    communes = _mes_communes(db, cid)
+    marche = db.execute(text("""
+        SELECT e.kind, count(*) AS n,
+               count(*) FILTER (WHERE p.commune = ANY(:coms)) AS n_communes
+        FROM event_log e LEFT JOIN parcels p ON p.idu = e.idu
+        WHERE e.ts >= now() - interval '7 days' AND e.compte_id IS NULL AND e.kind = ANY(:market)
+        GROUP BY e.kind"""), {"market": list(_MARKET_KINDS), "coms": communes}).mappings().all()
+    marche_resume = {"total": sum(r["n"] for r in marche),
+                     "dans_vos_communes": (sum(r["n_communes"] for r in marche) if communes else None),
+                     "par_kind": {r["kind"]: r["n"] for r in marche}}
+    # TOP 5 sur les TIERS SERVIS (plus jamais matrice_statut morte M37 — comme /reperes en M36).
+    # « chaudes » = les deux tiers les plus chauds servis (brulante + chaude), run ÉPINGLÉ.
     top = db.execute(text("""
-        SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2
-        FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+        SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2,
+               r.sdp_residuelle_m2, s.tier
+        FROM parcel_p_score_v2 s
+        JOIN parcels p ON p.idu = s.parcelle_id
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE d.run_label = :run AND d.matrice_statut = 'chaude'
-        ORDER BY d.q_score + d.a_score DESC LIMIT 5"""), {"run": RUN}).mappings().all()
-    return {"evenements": [dict(r) for r in events], "top_chaudes": [dict(r) for r in top]}
+        WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude')
+        ORDER BY s.rang NULLS LAST LIMIT 5"""), {"run": RUN}).mappings().all()
+    return {"evenements": [dict(r) for r in events], "marche_resume": marche_resume,
+            "top_chaudes": [dict(r) for r in top]}
 
 
 @router.get("/digest")
@@ -583,6 +633,16 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
         f"<td style='padding:6px;font:13px sans-serif'>{t.get('commune') or ''} · Q {t['q_score']} · A {t['a_score']}</td>"
         f"<td style='padding:6px;font:12px sans-serif;color:#667'>{t['surface_m2'] or '—'} m² · SDP {round(t['sdp_residuelle_m2'] or 0)} m²</td></tr>"
         for t in d["top_chaudes"])
+    # M-T V2 : résumé marché BORNÉ (jamais la liste). Ici la cloche/preview PEUT donner le détail,
+    # mais le digest e-mail reste au résumé — on affiche le compte agrégé.
+    mr = d["marche_resume"]
+    cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
+             if mr.get("dans_vos_communes") is not None else " sur l'île")
+    marche_row = (
+        f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e9e7;font:13px sans-serif'>"
+        f"{mr['total']} mouvement(s) de marché (bascules, BODACC, matchs){cadre}."
+        f"<div style='color:#667;font-size:11px'>Résumé — le détail est dans la cloche.</div></td></tr>"
+        if mr.get("total") else "")
     return f"""<!doctype html><html><body style="margin:0;background:#f2f5f3;padding:24px">
 <table width="600" align="center" style="background:#fff;border-radius:12px;overflow:hidden">
 <tr><td style="background:#060A08;padding:18px 24px">
@@ -590,6 +650,7 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
   <span style="font:12px sans-serif;color:#8FA69A"> · la chasse au trésor de la semaine</span></td></tr>
 <tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">CE QUI A BOUGÉ</td></tr>
 {ev_rows}
+{marche_row}
 <tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">TOP 5 CHAUDES (île entière)</td></tr>
 <tr><td><table width="100%">{top_rows}</table></td></tr>
 <tr><td style="padding:14px 24px;font:10px sans-serif;color:#99a">Estimations indicatives issues de
@@ -641,13 +702,17 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "hebdo", for
             continue
         data = _digest_data(db, cid)
         evs = [e for e in data["evenements"] if not e.get("demo")]   # jamais de démo dans un vrai digest
-        if not evs:
+        marche = data["marche_resume"]
+        # M-T V2 : un abonné SANS veille reçoit désormais un digest si le RÉSUMÉ MARCHÉ est non vide
+        # (le « digest vide à vie » était le bug). L'opt-out et le mini-intervalle ont déjà filtré
+        # AU-DESSUS, et List-Unsubscribe est posé à l'envoi → les deux garanties tiennent sur ce chemin.
+        if not evs and not marche.get("total"):
             ignores += 1
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"
         sujet, corps = digest_notifications(
-            evs, lien_desabo, base_url=base_url,
+            evs, lien_desabo, base_url=base_url, marche=marche,
             periode="aujourd'hui" if freq == "quotidien" else "cette semaine")
         send_email(email, sujet, corps, headers={"List-Unsubscribe": f"<{lien_desabo}>"})
         db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
