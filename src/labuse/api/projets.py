@@ -211,7 +211,8 @@ def _projet_dict(p: models.Projet) -> dict:
 _STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser": "À creuser"}
 #: M5.1 : le TIER v2 est le verdict énoncé au client (l'étage 0 du run servi prime) ;
 #: le statut matrice ne sert plus que de repli (item sans run v2).
-_TIER_LABEL = {"brulante": "Brûlante v2", "chaude": "Chaude v2",
+# M54-AB F11 : libellés client SANS suffixe « v2 » (jargon interne) — « Brûlante », pas « Brûlante v2 ».
+_TIER_LABEL = {"brulante": "Brûlante", "chaude": "Chaude",
                "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
                "ecartee": "Écartée"}
 
@@ -226,11 +227,20 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
     elif item.get("tier_v2") in _TIER_LABEL:
         st = _TIER_LABEL[item["tier_v2"]]
     else:
-        st = _STATUT_LABEL.get(statut, statut or "—")
+        # M54-AB F11 : repli sur le libellé CLIENT (verdict_servi), jamais le code technique brut
+        # (« ecartee », « declasse_… ») dans le « pourquoi » du projet.
+        from ..verdict_servi import TIER_LABELS
+        st = _STATUT_LABEL.get(statut) or TIER_LABELS.get(statut) or statut or "—"
     if item.get("q_score") is not None:
         out.append(f"{st} · qualité {item['q_score']}/100")
     else:
         out.append(st)
+    # M54-AB F11 : ligne pédagogique quand P (proba de mutation) et Q (qualité intrinsèque)
+    # divergent fortement — le classement peut être « chaud » sur une parcelle de qualité limitée.
+    _mult, _q = item.get("mult_base"), item.get("q_score")
+    _p_eleve = (_mult is not None and _mult >= 1.3) or item.get("tier_v2") in ("brulante", "chaude")
+    if _p_eleve and _q is not None and _q < 40:
+        out.append("Probabilité de mutation élevée, qualité intrinsèque limitée — voir la fiche.")
     sdp = item.get("sdp") or item.get("sdp_residuelle_m2")
     if sdp and sdp_besoin:
         pct = round(100 * sdp / sdp_besoin)

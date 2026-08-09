@@ -174,10 +174,10 @@
   {% endif %}
 
   {% if c.verdict_v2 %}
-  <h3>Verdict LABUSE (scoring v2)</h3>
+  <h3>Verdict LABUSE</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Verdict</div>
-      <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
+      <div class="valeur">{{ c.verdict_v2.libelle }}</div></div>
     {% if c.verdict_v2.rang %}
     <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
       <div class="valeur">{{ "{:,}".format(c.verdict_v2.rang).replace(",", " ") }}{% if c.verdict_v2.rang_total %} <small>/ {{ "{:,}".format(c.verdict_v2.rang_total).replace(",", " ") }}</small>{% endif %}</div></div>
