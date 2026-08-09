@@ -320,6 +320,14 @@ export const onePagerUrl = (idu: string) => `/parcels/${idu}/export?format=onepa
 export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 export const spfLetterUrl = (idu: string) => `/parcels/${idu}/spf-letter`
 
+// M54-EXPO — retour promoteur par parcelle (POST /feedback : verdict + commentaire libre).
+export type FeedbackVerdict = 'good_lead' | 'not_interested' | 'false_positive'
+export const postFeedback = (idu: string, verdict: FeedbackVerdict, comment?: string) =>
+  j<{ ok: boolean; id: number }>('/feedback', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idu, verdict, ...(comment ? { comment } : {}) }),
+  })
+
 // ── Pipeline (CRM kanban) ──
 export const getPipelineMeta = () => j<PipelineMeta>('/pipeline/meta')
 export const getPipeline = () => j<PipelineEntry[]>('/pipeline')
