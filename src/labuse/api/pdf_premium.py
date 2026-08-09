@@ -304,6 +304,9 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             lignes.append(f"Marché (INSEE RP 2023) : {int(mar['logements']):,} logements — "
                           f"{mar['locataires_pct']} % locataires · {mar['maisons_pct']} % maisons · "
                           f"{mar['typologie'].get('vacance_pct')} % de vacance".replace(",", " "))
+        # M54-AB C5 : UNE ligne de synthèse marché DVF datée (M-U), pas les 9 lignes du bloc complet.
+        if fiche.get("marche_synthese"):
+            lignes.append(fiche["marche_synthese"])
         for ln_txt in lignes:
             pdf.multi_cell(pdf.w - 28, 4.0, ln_txt, new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=6.2)

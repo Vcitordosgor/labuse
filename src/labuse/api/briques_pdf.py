@@ -284,6 +284,16 @@ def collect(db: Session, idu: str) -> dict:
                 "FROM commune_conso_enaf WHERE insee = :c LIMIT 1"), {"c": insee}).mappings().first()
     except Exception:  # noqa: BLE001
         pass
+    # M54-AB C5 : bloc Marché commune (M-U) condensé — 3 lignes pour le banquier (tendance,
+    # liquidité, offre engagée), chacune datée. Consommé, jamais recalculé.
+    try:
+        from .marche_bloc import bloc_condense
+        commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if commune:
+            out["commune_marche"] = bloc_condense(db, commune,
+                                                  ["tendance_12m", "liquidite", "offre_engagee"])
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
@@ -495,6 +505,11 @@ def comparables(out: dict) -> str:
     if not prix and not perm:
         return ""
     body = "<div class='pb'></div><h2>Marché de comparaison</h2>"
+    # M54-AB C5 : 3 lignes commune du bloc Marché M-U (tendance, liquidité, offre), chacune datée.
+    cm = out.get("commune_marche") or []
+    if cm:
+        lignes = "".join(f"<li>{esc(l['phrase'])}</li>" for l in cm)
+        body += f"<h3>Marché de la commune {s('S')}</h3><ul>{lignes}</ul>"
     if prix and prix.get("median"):
         # Comparables DVF de l'EXISTANT (pas le prix de sortie neuf du bilan — mandat prix sortie
         # consommateurs, Vic 28/07/2026 : ne pas étiqueter « prix de sortie » ce qui est l'existant).

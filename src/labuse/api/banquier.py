@@ -78,11 +78,16 @@ def _facts_synthese(out: dict, core_mod):
         # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — `sector_price` est le prix des
         # COMPARABLES (existant), PAS le prix de sortie du bilan (neuf). Distingués pour ne pas
         # servir deux « prix de sortie » incohérents dans le même dossier.
+        # M54-AB C5 : la synthèse IA ne cite plus de n divergent (« 54 ventes » vs tableau 51) —
+        # le n des comparables reste dans le TABLEAU, les n de marché dans le bloc commune M-U.
         facts["marche"] = F(f"comparables DVF du secteur {prix.get('median')} €/m² (existant, "
-                            f"{prix.get('n', '?')} ventes, fiabilité {prix.get('fiabilite')})",
+                            f"fiabilité {prix.get('fiabilite')})",
                             "SOURCE" if prix.get("fiabilite") == "fiable" else "ESTIME")
     label_neuf = out.get("prix_neuf_label")
     if label_neuf:
+        import re
+        # retire tout « , N ventes » du label : le n divergent ne doit pas entrer dans la prose IA.
+        label_neuf = re.sub(r",?\s*\d[\d\s]*ventes", "", label_neuf).strip(" ·—,")
         facts["prix_sortie_neuf"] = F(f"prix de sortie neuf retenu pour le bilan — {label_neuf}", "ESTIME")
     # M54-AB C3 : la marge SYNTHÉTISÉE découle de la charge du bilan à rebours (point de calcul
     # unique), jamais de la charge Score É recalculée à 21 % — sinon la synthèse cite -18 k€ et le

@@ -339,6 +339,13 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "dvf_mutations" not in avail:
         return None
+    # M54-AB C5 : bloc Marché COMMUNE (M-U) condensé — prix ancien, tendance, liquidité, chacun DATÉ.
+    # Calculé en tête pour figurer même sans comparable de proximité ; les comparables restent.
+    commune_marche: list = []
+    commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if commune:
+        from ..api.marche_bloc import bloc_condense
+        commune_marche = bloc_condense(db, commune, ["prix_ancien_median", "tendance_12m", "liquidite"])
     stats = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT count(*) AS n,
@@ -357,7 +364,8 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().first()
     if not stats or not stats["n"]:
-        return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES}
+        return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
+                "commune_marche": commune_marche}
     # Comparables ANONYMISÉS : type, surface, prix, mois — JAMAIS d'adresse exacte (mandat).
     comps = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
@@ -396,6 +404,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
             "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
             "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()
         out["secteur"] = [dict(s) for s in sect]
+    out["commune_marche"] = commune_marche
     return out
 
 

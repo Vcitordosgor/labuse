@@ -2634,6 +2634,14 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     fiche["adresse_ban"] = adresse_ban_texte(db, idu)
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
+    try:
+        from .marche_bloc import bloc_condense
+        _mc = {l["cle"]: l["phrase"] for l in
+               bloc_condense(db, fiche["commune"], ["prix_ancien_median", "tendance_12m"])}
+        fiche["marche_synthese"] = _mc.get("prix_ancien_median") or _mc.get("tendance_12m")
+    except Exception:  # noqa: BLE001
+        pass
     fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)

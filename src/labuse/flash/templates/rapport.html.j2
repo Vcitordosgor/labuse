@@ -292,26 +292,24 @@
 {% set m = data.marche %}
 {% if m %}
 <section>
-  <h2><span class="num">05</span>Marché — mutations à proximité</h2>
+  <h2><span class="num">05</span>Marché — commune &amp; comparables</h2>
+  {# M54-AB C5 : le bloc Marché commune (M-U) — prix ancien, tendance, liquidité, chaque ligne
+     DATÉE — remplace la médiane brute à rayon fixe. Les comparables anonymisés de proximité restent. #}
+  {% if m.commune_marche %}
+  <h3>Marché de la commune</h3>
+  <ul class="marche-commune">
+    {% for l in m.commune_marche %}<li>{{ l.phrase }}</li>{% endfor %}
+  </ul>
+  {% endif %}
   {% if m.rien %}
-  <p>Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les
-     {{ m.annees }} dernières années.</p>
+  <p class="note">Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les
+     {{ m.annees }} dernières années — pas de comparable de proximité.</p>
   {% else %}
-  <div class="cartouches">
-    <div class="cartouche"><div class="titre">Ventes ({{ m.rayon_m }} m · {{ m.annees }} ans)</div>
-      <div class="valeur">{{ m.n }}</div></div>
-    {% if m.med_m2_bati %}
-    <div class="cartouche"><div class="titre">Prix médian bâti</div>
-      <div class="valeur">{{ "{:,}".format(m.med_m2_bati).replace(",", " ") }} <small>€/m²</small></div></div>
-    {% endif %}
-    {% if m.med_m2_terrain %}
-    <div class="cartouche"><div class="titre">Prix médian terrain</div>
-      <div class="valeur">{{ "{:,}".format(m.med_m2_terrain).replace(",", " ") }} <small>€/m²</small></div></div>
-    {% endif %}
-  </div>
-  {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
 
   {% if m.comparables %}
+  <p class="note">Comparables de proximité : {{ m.n }} ventes dans un rayon de {{ m.rayon_m }} m
+     sur {{ m.annees }} ans.</p>
+  {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
   <h3>Comparables récents (anonymisés)</h3>
   <table class="donnees">
     <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>
