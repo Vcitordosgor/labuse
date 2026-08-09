@@ -195,14 +195,19 @@ def cartouches(items: list[str]) -> str:
     return f"<div class='cartouches'>{''.join(items)}</div>"
 
 
-def hypotheses_encadre(cout_m2: float, marge_pct: float) -> str:
+def hypotheses_encadre(cout_m2: float, marge_pct: float, composantes: str | None = None) -> str:
     """C1 — l'encadré « Hypothèses de calcul », IDENTIQUE en forme dans tous les documents
     qui chiffrent. Deux documents aux hypothèses différentes l'affichent chacun — le
-    lecteur qui tient les deux comprend d'où vient tout écart."""
+    lecteur qui tient les deux comprend d'où vient tout écart.
+
+    M54-AB C4 : `marge_pct` doit être le total RÉELLEMENT déduit par le bilan servi (24 % =
+    marge + honoraires + frais financiers du secteur), pas le défaut global agrégé (21 %) —
+    sinon l'encadré dit 21 % et la ligne bilan 24 %. `composantes` nomme la décomposition."""
+    detail = f" (soit {composantes})" if composantes else ""
     return (f"<div class='hyp-encadre'><span class='titre'>Hypothèses de calcul</span>"
             f"Coût de construction <b>{cout_m2:g} €/m²</b> de surface de plancher · "
-            f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires — hypothèses "
-            f"par défaut, à ajuster : LABUSE ne les estime pas. Les valeurs sourcées "
+            f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires{detail} — hypothèses "
+            f"à ajuster : LABUSE ne les estime pas. Les valeurs sourcées "
             f"(surface vendable, prix DVF) viennent du moteur.</div>")
 
 
@@ -435,9 +440,15 @@ def bilan(out: dict) -> str:
         body += (f"<p class='note'><b>Charge foncière de marché non calculable.</b> "
                  f"{esc(getattr(bilan_, 'verdict', '') or getattr(bilan_, 'bandeau', ''))}</p>")
     elif bilan_ is not None:
-        # C1 — l'encadré d'hypothèses, même forme partout (défauts uniques du moteur)
+        # C1/C4 — l'encadré d'hypothèses reflète le bilan RÉELLEMENT servi : le total marge & frais
+        # DÉDUIT du CA (24 % = marge + honoraires + frais financiers du secteur), avec ses composantes
+        # nommées — jamais le défaut global agrégé (21 %) qui contredirait la ligne bilan.
         from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
-        body += hypotheses_encadre(CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT)
+        _coef = (getattr(bilan_, "calc", None) or {}).get("coef")
+        _marge_frais = round((1 - _coef) * 100) if _coef is not None else CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
+        _composantes = next((st.formule for st in (bilan_.steps or [])
+                             if st.label.startswith("Marge + frais")), None)
+        body += hypotheses_encadre(CALCULETTE_COUT_DEFAUT_M2, _marge_frais, composantes=_composantes)
         steps = "".join(
             f"<tr><td>{esc(st.label)}</td><td class='n'>{esc(st.valeur)}</td>"
             f"<td>{s({'sourcee':'S'}.get(st.prov, 'E'))}</td></tr>" for st in bilan_.steps)
