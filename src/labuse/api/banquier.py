@@ -66,7 +66,9 @@ def _facts_synthese(out: dict, core_mod):
                                   f"(zone {fais.zone_resolue or fais.zone})", "ESTIME")
         if fo.get("logements_au_sol"):
             lo, hi = fo["logements_au_sol"]
-            facts["logements"] = F(f"potentiel indicatif {lo} à {hi} logements", "ESTIME")
+            # M54-AB F10 : borner quand min = max (« ~2 à 2 » → « ~2 »).
+            lg = f"~{lo}" if lo == hi else f"{lo} à {hi}"
+            facts["logements"] = F(f"potentiel indicatif {lg} logements", "ESTIME")
     bilan = out.get("bilan")
     if bilan is not None and bilan.charge_fonciere:
         cf = bilan.charge_fonciere
@@ -134,8 +136,10 @@ def _synthese_html(db: Session, out: dict) -> str:
         txt = " · ".join(f.value for f in facts.values())
     # EXPRESS-01 · Volet B : l'avis IA n'apparaît QUE si la synthèse a été générée par le
     # LLM (jamais sur le repli déterministe — critère : uniquement là où l'IA s'exprime).
+    # M54-AB F10 : le cartouche « L'IA ne juge pas… » passe APRÈS la synthèse (il la commente,
+    # il ne l'introduit pas).
     avis = f"<div class='avis-ia'>{_esc(AVIS_IA)}</div>" if ai_used else ""
-    return f"{avis}<div class='exec'>{_esc(txt) if txt else '—'}</div>"
+    return f"<div class='exec'>{_esc(txt) if txt else '—'}</div>{avis}"
 
 
 # ───────────────────────── endpoints ─────────────────────────

@@ -294,6 +294,15 @@ def collect(db: Session, idu: str) -> dict:
                                                   ["tendance_12m", "liquidite", "offre_engagee"])
     except Exception:  # noqa: BLE001
         pass
+    # M54-AB F10 : verdict LABUSE servi (libellé client + rang + motif) — le financeur DOIT savoir
+    # si le scoring déclasse la parcelle (décision produit Vic 09/08). Source unique verdict_servi.
+    try:
+        from ..verdict_servi import verdict_servi, rang_total
+        vs = verdict_servi(db, idu)
+        if vs.get("tier"):
+            out["verdict"] = {**vs, "rang_total": rang_total(db)}
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
@@ -364,9 +373,24 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
         # marge = charge (bilan à rebours, point de calcul unique) − prix probable du foncier
         kpis.append(cartouche("Marge estimée · Estimé", eur(sa["marge"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
+    # M54-AB F10 : encadré SOBRE du verdict LABUSE (libellé client + rang + motif), pour que le
+    # financeur sache si le scoring déclasse la parcelle. Bordure « terre » pour les déclassements.
+    vd = out.get("verdict")
+    verdict_box = ""
+    if vd and vd.get("tier"):
+        from ..verdict_servi import DECLASSE_COLOR
+        rg = ""
+        if vd.get("rang") is not None:
+            rg = f" · rang {vd['rang']:,}".replace(",", " ")
+            if vd.get("rang_total"):
+                rg += f" / {vd['rang_total']:,}".replace(",", " ")
+        motif = f"<div class='note' style='margin:1mm 0 0'>{esc(vd['motif'])}</div>" if vd.get("motif") else ""
+        col = DECLASSE_COLOR if vd.get("declasse") else "#5f6c65"
+        verdict_box = (f"<div style='border-left:3px solid {col};padding:2mm 3mm;margin:2mm 0;"
+                       f"background:#f7faf8'><b>Verdict LABUSE</b> : {esc(vd['label'])}{rg}{motif}</div>")
     return (f"<section class='garde'>"
             f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau, marque=marque)}"
-            f"{synthese}"
+            f"{verdict_box}{synthese}"
             f"{cartouches(kpis)}"
             f"<h2>Situation</h2>{photo}</section>")
 
@@ -409,9 +433,12 @@ def faisabilite(out: dict) -> str:
     if fais is None:
         return ("<div class='pb'></div><h2>Faisabilité</h2>"
                 "<p class='note'>Capacité constructible non résolue pour cette parcelle — non estimable.</p>")
+    import re as _re
+    def _borne(v: str) -> str:  # M54-AB F10 : « 2 à 2 » / « 2–2 » → « 2 » (borner quand min = max)
+        return _re.sub(r"(\d+(?:[.,]\d+)?)\s*(?:à|–|-)\s*\1\b", r"\1", v or "")
     _pmap = {"sourcee": "S", "estimee": "E", "derive": "E", "": "E"}
     steps = "".join(
-        f"<tr><td>{esc(st.label)}</td><td>{esc(st.formule)}</td><td class='n'>{esc(st.valeur)}</td>"
+        f"<tr><td>{esc(st.label)}</td><td>{esc(_borne(st.formule))}</td><td class='n'>{esc(_borne(st.valeur))}</td>"
         f"<td>{s(_pmap.get(st.prov, 'E'))}</td></tr>" for st in fais.steps)
     fo = fais.fourchette or {}
     synth = ""
@@ -421,7 +448,7 @@ def faisabilite(out: dict) -> str:
             parts.append(f"surface vendable ~{fo['shab_vendable_m2']} m²")
         if fo.get("logements_au_sol"):
             lo, hi = fo["logements_au_sol"]
-            parts.append(f"{lo} à {hi} logements")
+            parts.append(f"~{lo} logements" if lo == hi else f"{lo} à {hi} logements")
         if fo.get("hauteur_m"):
             # M54-AB C6 : hauteur d'égout RETENUE (R+2), distincte de la hauteur totale de zone
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
