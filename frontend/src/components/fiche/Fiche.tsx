@@ -544,6 +544,8 @@ function ProjetButton({ idu }: { idu: string }) {
 
       {open && (
         <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-64 p-2 text-[11px]">
+          {/* M-C/merge : le bloc « Ouvrir » de M13-E3 (en tête) est RETIRÉ — main (QA-59) sert déjà
+              les projets rattachés en bas (« Déjà dans — ouvrir »), l'auto-merge les avait dupliqués. */}
           <p className="label-caps px-1 pb-1">Rattacher à un projet</p>
           {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
           {!projetsQ.isLoading && ajoutables.length === 0 && (
