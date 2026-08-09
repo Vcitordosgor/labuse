@@ -701,3 +701,24 @@ def moi_marque(payload: dict, request: Request, db: Session = Depends(get_db)) -
                {"m": _json.dumps(m), "c": cid})
     db.commit()
     return {"ok": True, "marque": m}
+
+
+@router.get("/moi/marque", include_in_schema=False)
+def moi_marque_get(request: Request, db: Session = Depends(get_db)) -> dict:
+    """M54-EXPO-2 — relit la marque + logo COURANTS du compte (préremplissage/prévisualisation du
+    widget). Même chemin de compte que l'upload (`_compte_session`) → round-trip fidèle. `has_logo`
+    + `logo_data_uri` alimentent l'aperçu ; les 3 champs préremplissent le formulaire."""
+    import base64 as _b64
+    from sqlalchemy import text as _t
+
+    from ..marque import ensure_colonnes
+    cid = _compte_session(request, db)
+    ensure_colonnes(db)
+    row = db.execute(_t("SELECT logo, logo_mime, marque FROM comptes WHERE id = :c"),
+                     {"c": cid}).mappings().first()
+    m = (row and row["marque"]) or {}
+    out: dict = {k: (m.get(k) or "") for k in ("raison_sociale", "coordonnees", "mention")}
+    out["has_logo"] = bool(row and row["logo"])
+    if row and row["logo"]:
+        out["logo_data_uri"] = f"data:{row['logo_mime']};base64," + _b64.b64encode(row["logo"]).decode()
+    return out

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
+import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
@@ -476,13 +476,63 @@ function SuggestionForm({ onDone }: { onDone: () => void }) {
   )
 }
 
+/** M54-EXPO-2 A6 — widget marque blanche : logo (upload body brut ≤512 Ko png/jpg/svg) + 3
+ *  libellés. GET /moi/marque préremplit et prévisualise ; les documents brandés (dossier,
+ *  briques…) portent déjà cette marque côté générateurs — on ne l'ajoute nulle part ailleurs. */
+function MarqueForm() {
+  const qc = useQueryClient()
+  const m = useQuery({ queryKey: ['marque'], queryFn: getMarque })
+  const [rs, setRs] = useState<string | null>(null)
+  const [co, setCo] = useState<string | null>(null)
+  const [me, setMe] = useState<string | null>(null)
+  const d = m.data
+  // valeurs affichées = édition locale si commencée, sinon la valeur serveur relue
+  const vRs = rs ?? d?.raison_sociale ?? ''
+  const vCo = co ?? d?.coordonnees ?? ''
+  const vMe = me ?? d?.mention ?? ''
+  const inval = () => qc.invalidateQueries({ queryKey: ['marque'] })
+  const upLogo = useMutation({ mutationFn: (f: File) => postLogo(f), onSuccess: inval })
+  const delLogo = useMutation({ mutationFn: () => deleteLogo(), onSuccess: inval })
+  const save = useMutation({ mutationFn: () => postMarque({ raison_sociale: vRs, coordonnees: vCo, mention: vMe }), onSuccess: () => { inval(); setRs(null); setCo(null); setMe(null) } })
+  const field = 'w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt placeholder:text-txt-dim'
+  return (
+    <div data-marque-form className="flex flex-col gap-2 p-3 text-[12px]">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line-2 bg-surface-3">
+          {d?.logo_data_uri ? <img data-marque-logo src={d.logo_data_uri} alt="logo" className="max-h-full max-w-full" /> : <span className="text-[9px] text-txt-dim">logo</span>}
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="cursor-pointer text-[11px] text-mint hover:underline">
+            {upLogo.isPending ? 'Envoi…' : d?.has_logo ? 'Remplacer le logo' : 'Ajouter un logo'}
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) upLogo.mutate(f) }} />
+          </label>
+          {d?.has_logo && <button onClick={() => delLogo.mutate()} className="text-left text-[10.5px] text-txt-dim hover:text-st-ecartee">Retirer</button>}
+          <span className="text-[9.5px] text-txt-dim">png/jpg/svg · ≤ 512 Ko</span>
+        </div>
+      </div>
+      {upLogo.isError && <p className="text-[10.5px] text-st-ecartee">Logo refusé (format ou taille).</p>}
+      <input className={field} placeholder="Raison sociale" value={vRs} onChange={(e) => setRs(e.target.value)} />
+      <input className={field} placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
+      <input className={field} placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
+      <button data-marque-save disabled={save.isPending} onClick={() => save.mutate()}
+        className="mt-0.5 rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-50">
+        {save.isSuccess && rs === null ? '✓ Enregistré' : save.isPending ? 'Enregistrement…' : 'Enregistrer'}
+      </button>
+      <p className="text-[10px] leading-snug text-txt-dim">Apparaît sur vos documents brandés (Dossier, briques PDF). Champs vides = rien ne s’imprime.</p>
+    </div>
+  )
+}
+
+
 /** M16-C — menu compte (avatar VL). Palier RÉEL (via /moi + plan_courant), pas de faux « Pro ». */
 function AccountMenu() {
   const [open, setOpen] = useState(false)
   const [suggOpen, setSuggOpen] = useState(false)
+  const [marqueOpen, setMarqueOpen] = useState(false)   // M54-EXPO-2 A6
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, enabled: open })
   const d = moi.data
-  const close = () => { setOpen(false); setSuggOpen(false) }
+  const close = () => { setOpen(false); setSuggOpen(false); setMarqueOpen(false) }
   return (
     <div className="relative">
       <button data-account-btn onClick={() => setOpen((o) => !o)} title="Mon compte" aria-label="Mon compte"
@@ -492,10 +542,12 @@ function AccountMenu() {
           <div className="fixed inset-0 z-10" onClick={close} />
           <div data-account-menu className="floating absolute right-0 top-11 z-20 flex w-[300px] flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="label-caps">{suggOpen ? 'Proposer une amélioration' : 'Mon compte'}</p>
-              {suggOpen && <button onClick={() => setSuggOpen(false)} className="text-[11px] text-txt-mut hover:text-txt">← retour</button>}
+              <p className="label-caps">{marqueOpen ? 'Marque blanche' : suggOpen ? 'Proposer une amélioration' : 'Mon compte'}</p>
+              {(suggOpen || marqueOpen) && <button onClick={() => { setSuggOpen(false); setMarqueOpen(false) }} className="text-[11px] text-txt-mut hover:text-txt">← retour</button>}
             </div>
-            {suggOpen ? (
+            {marqueOpen ? (
+              <MarqueForm />
+            ) : suggOpen ? (
               <SuggestionForm onDone={close} />
             ) : (
               <div className="flex flex-col p-2 text-[12px]">
@@ -514,6 +566,14 @@ function AccountMenu() {
                   <p className="text-[10px] uppercase tracking-wide text-txt-dim">Compte</p>
                   <p className="mt-0.5 text-txt">{d?.mode === 'compte' ? `Rôle : ${d.role}` : 'Session pilote'}</p>
                 </div>
+                {/* MARQUE BLANCHE (M54-EXPO-2 A6) — réservé aux comptes réels (les documents la portent) */}
+                {d?.mode === 'compte' && (
+                  <button data-account-marque onClick={() => setMarqueOpen(true)}
+                    className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                    <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="4" width="14" height="12" rx="2" /><path d="M3 8h14M7 12h6" strokeLinecap="round" /></svg>
+                    Marque blanche <span className="ml-auto text-[10px] text-txt-dim">logo · coordonnées</span>
+                  </button>
+                )}
                 {/* PROPOSER UNE AMÉLIORATION */}
                 <button data-account-suggest onClick={() => setSuggOpen(true)}
                   className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">

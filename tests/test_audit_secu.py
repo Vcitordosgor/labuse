@@ -821,3 +821,28 @@ def test_gate_admin_protection_et_bilan(app_client):
             assert radm != 403, f"admin bloqué à tort sur {path} (reçu {radm})"
     finally:
         _purge(et, eadm)
+
+
+def test_marque_roundtrip_logo_relu(app_client):
+    """M54-EXPO-2 A6 : upload logo (body brut) + marque, puis GET /moi/marque relit le tout
+    (has_logo + logo_data_uri + les 3 champs). Round-trip fidèle : même compte que l'upload
+    (_compte_session). Suppression du logo → le GET le reflète."""
+    e = f"marque-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(e)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, e)
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 40
+        r = c.post("/moi/logo", content=png, headers={"Content-Type": "image/png"})
+        assert r.status_code == 200 and r.json()["octets"] == len(png), r.text
+        assert c.post("/moi/marque", json={"raison_sociale": "Foncière Test",
+                                           "coordonnees": "01 23 45 67", "mention": "Doc interne"}).status_code == 200
+        g = c.get("/moi/marque").json()
+        assert g["has_logo"] is True
+        assert g["logo_data_uri"].startswith("data:image/png;base64,")
+        assert g["raison_sociale"] == "Foncière Test" and g["mention"] == "Doc interne"
+        # suppression du logo → relu à false, marque conservée
+        assert c.delete("/moi/logo").json()["ok"]
+        g2 = c.get("/moi/marque").json()
+        assert g2["has_logo"] is False and g2["raison_sociale"] == "Foncière Test"
+    finally:
+        _purge(e)
