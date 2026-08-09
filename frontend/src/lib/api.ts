@@ -328,6 +328,12 @@ export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
 export const getCourrierEnvois = () => j<{ envois: CourrierEnvoi[]; n: number }>('/courrier/envois')
 
+// M54-EXPO-2 A7 — shortlist : « sujets à traiter aujourd'hui » du run servi (top parcelles).
+export interface ShortlistSujet { idu: string; commune?: string; surface_m2?: number; status?: string | null; tier_v2?: string | null; rang?: number | null; motif?: string | null }
+export const getShortlist = (limit = 8) =>
+  j<{ commune: string; count: number; candidates_total: number; sujets: ShortlistSujet[] }>(
+    `/shortlist?limit=${limit}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
+
 // M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
 export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }
 export const getMarque = () => j<Marque>('/moi/marque')
