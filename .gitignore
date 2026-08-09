@@ -103,3 +103,6 @@ qa/cosia/cartes_mouvements_cosia.html
 qa/m32/deck_mesure.html
 qa/m32/deck_mini.html
 data/plu_reglements/
+
+# M-W micro : captures de la sonde carte (preuves locales, non versionnées)
+qa/mw_captures/

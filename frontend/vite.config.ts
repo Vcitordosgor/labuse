@@ -21,6 +21,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/signalement', '/guide',
   '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
+  '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
+                       // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W
+                       //  ni de la carte — présentes aussi en vite 5, comblées ici pour un dev honnête)
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
