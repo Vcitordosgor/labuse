@@ -73,6 +73,8 @@ export const MODULES: ModuleDef[] = [
     label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
   { key: 'barometre', num: 'M18', group: 'analyser',
     label: 'Baromètre foncier', desc: 'Un état du marché foncier prêt à distribuer (PDF)' },
+  { key: 'marche', num: 'MU1', group: 'analyser', phare: true,
+    label: 'Marché', desc: 'Le marché d’une commune, 9 lignes sourcées et datées : prix ancien, terrain nu par zone (U/AU), neuf, tendance, liquidité, offre engagée et potentielle, pression DPE, loyer' },
   { key: 'permis', num: 'M03', group: 'analyser',
     label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
   { key: 'promesses', num: 'M04', group: 'analyser',

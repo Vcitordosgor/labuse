@@ -9,6 +9,26 @@
 // -----------------------------------------------------------------------------
 
 export const CLIENT = {
+  // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
+  marche: {
+    banner: 'Le marché d’une commune, ligne par ligne — chaque chiffre porte sa source et sa date. '
+      + 'Aucune annonce, aucune source privée : uniquement les actes (DVF) et les autorisations (Sitadel).',
+    signal: 'Signal de marché',
+    signalIndispo: 'Signal de marché non calculable (liquidité ou offre indisponible).',
+    nonCalculable: 'non calculable',
+    note: 'Chaque ligne porte sa propre date de source amont — le bloc ne prétend pas à un millésime unique.',
+    lignes: {
+      prix_ancien_median: 'Prix ancien médian (€/m²)',
+      prix_terrain_nu_par_zone: 'Prix du terrain nu, par zone (U / AU)',
+      prix_sortie_neuf: 'Prix de sortie neuf (€/m²)',
+      tendance_12m: 'Tendance 12 mois',
+      liquidite: 'Liquidité (mutations/trimestre)',
+      offre_engagee: 'Offre engagée (logements autorisés)',
+      gisement_constructible: 'Offre potentielle (gisement constructible)',
+      pression_dpe: 'Pression DPE (F/G)',
+      loyer_median: 'Loyer médian (€/m²)',
+    },
+  },
   // ── EXPRESS-01 · Volet B — AVIS IA (au mot près). SOURCE UNIQUE, réutilisée par TOUTES
   //    les surfaces front où l'IA s'exprime (fiche AskBar/faisa/traducteur, recherche IA,
   //    entretien, Copilote) via <AvisIA>. Jumelle Python `AVIS_IA`, défini dans ai/avis.py

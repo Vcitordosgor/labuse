@@ -445,6 +445,9 @@ export const motAssemblage = (idus: string[]) =>
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')
 export const zanParcelle = (idu: string) => j<Record<string, any>>(`/moteurs/zan/parcelle/${idu}`)
 export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
+// M-U — bloc « Marché » par commune (9 lignes datées + market_signal DVF/Sitadel)
+export const motMarcheCommune = (commune: string) =>
+  j<Record<string, any>>(`/moteurs/marche/${encodeURIComponent(commune)}`)
 
 // ── Vague 5 : matching + partage ──
 export const getProfiles = () => j<Record<string, any>[]>('/partners/profiles')
