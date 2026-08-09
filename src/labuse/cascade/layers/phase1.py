@@ -502,9 +502,32 @@ class RisquesLayer(Layer):
             cov_pct = i.coverage * 100
             pct = f" (~{cov_pct:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
             if i.subtype in red:   # 'INTERDICTION' = zone rouge DEAL (jamais une assiette PM1)
-                verdicts.append(
-                    hard_exclude(self.name, "Exclue : PPR zone rouge (inconstructible).",
-                                 kind="exclue", source=src))
+                # M-I (arbitrage Vic 08/08) : le PPR rouge n'est plus binaire. TROIS PALIERS selon la
+                # PART DE SURFACE en zone rouge (i.coverage — point de calcul UNIQUE, déjà en 2975) :
+                #   < marginal (2 %)   : servi NORMALEMENT (rouge hors exclusion ET hors score) + une
+                #                        mention discrète en fiche — « rien n'est invisible » ;
+                #   marginal..exclusion: servi avec FLAG FORT (vigilance, jamais une exclusion) ;
+                #   >= exclusion (50 %): ÉCARTÉE comme avant (motif ventilé + % de surface).
+                # La zone rouge (INTERDICTION) n'est JAMAIS une assiette PM1 → aucune PM1 n'est graduée.
+                marg_pct = float(params.get("ppr_red_marginal_pct", 2))
+                excl_pct = float(params.get("ppr_red_exclude_pct", 50))
+                red_m2 = round((parcel.surface_m2 or 0) * i.coverage)
+                if cov_pct >= excl_pct:
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
+                        kind="exclue", source=src))
+                elif cov_pct >= marg_pct:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"PPR zone rouge sur {cov_pct:.0f} % de la surface — vigilance forte ; "
+                        "constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+                        Severity.FORT, source=src))
+                else:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"PPR rouge marginal : {red_m2} m² ({cov_pct:.1f} %), hors emprise probable.",
+                        Severity.INFO, source=src))
                 continue
             # Intersection MARGINALE (< min_coverage_pct) → note informative FAIBLE (bord rogné ≠ zone
             # critique) ; sinon FORT prudent. Sévérité INCHANGÉE (score intact) ; seul le LIBELLÉ et la

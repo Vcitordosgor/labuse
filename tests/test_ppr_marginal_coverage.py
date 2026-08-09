@@ -81,11 +81,31 @@ def test_parcelle_sans_ppr_inchangee():
     assert any(v.result == CascadeVerdict.PASS for v in out)
 
 
-# ── Rouge réglementaire : logique inchangée (HARD_EXCLUDE), non touchée par l'Étape A ─────────
-def test_rouge_reglementaire_reste_exclu_meme_marginal():
-    # même à couverture marginale, le rouge reste une exclusion dure (l'Étape A ne touche que le périmètre).
+# ── Rouge réglementaire GRADUÉ (M-I, arbitrage Vic 08/08) : 3 paliers selon la part de surface ─
+def test_rouge_ge_50pct_reste_exclu():
+    # >= 50 % de surface rouge → écartée, comme avant, avec le % au motif.
+    out = RisquesLayer().evaluate(P, _Ctx({"ppr": [_i("rouge", 0.60)]}), RISQUES)
+    hx = [v for v in out if v.result == CascadeVerdict.HARD_EXCLUDE]
+    assert hx and "60 %" in hx[0].detail and "surface" in hx[0].detail
+
+
+def test_rouge_2_50pct_flag_fort_pas_exclusion():
+    # 2–50 % → SERVI avec flag FORT (vigilance), JAMAIS une exclusion.
     out = RisquesLayer().evaluate(P, _Ctx({"ppr": [_i("rouge", 0.05)]}), RISQUES)
-    assert any(v.result == CascadeVerdict.HARD_EXCLUDE for v in out)
+    assert not any(v.result == CascadeVerdict.HARD_EXCLUDE for v in out)
+    f = [v for v in out if v.result == CascadeVerdict.SOFT_FLAG]
+    assert f and f[0].severity == Severity.FORT and "5 %" in f[0].detail
+
+
+def test_rouge_marginal_lt_2pct_mention_info_hors_score():
+    # < 2 % → servi normalement, mention INFO (×0, hors score), m² + % affichés, jamais d'exclusion.
+    out = RisquesLayer().evaluate(P, _Ctx({"ppr": [_i("rouge", 0.01)]}), RISQUES)
+    assert not any(v.result == CascadeVerdict.HARD_EXCLUDE for v in out)
+    f = [v for v in out if v.result == CascadeVerdict.SOFT_FLAG]
+    assert f and f[0].severity == Severity.INFO
+    assert "marginal" in f[0].detail and "10 m²" in f[0].detail   # 1000 m² × 1 %
+    # INFO → 0 point : le rouge marginal n'entre pas dans le score.
+    assert compute_opportunity([f[0]]).has_fort_flag is False
 
 
 # ── « Ne bloque plus fort » de bout en bout (compute_opportunity) ─────────────────────────────

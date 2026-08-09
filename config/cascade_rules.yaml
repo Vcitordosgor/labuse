@@ -139,6 +139,13 @@ layers:
       # (inconstructible) ; 'PRESCRIPTION' (bleu, constructible sous conditions) → SOFT_FLAG (branche
       # non-rouge). Aléa (georisque_alea) : niveau faible/moyen/fort → flag gradué.
       ppr_red_subtypes: ['INTERDICTION']
+      # M-I (arbitrage Vic 08/08) — le PPR rouge est GRADUÉ sur la part de surface en zone rouge :
+      #   < ppr_red_marginal_pct  → servi normalement + mention fiche (rouge hors score) ;
+      #   [marginal, exclude)      → servi avec flag FORT (vigilance, pas d'exclusion) ;
+      #   >= ppr_red_exclude_pct   → écartée (motif + % de surface).
+      # Un liseré marginal n'est pas un faux positif : c'est une information, pas un motif d'exclusion.
+      ppr_red_marginal_pct: 2
+      ppr_red_exclude_pct: 50
       # Étape A (quick-win PPR v2) : couverture MINIMALE du périmètre PM1 (% de la parcelle) en deçà
       # de laquelle l'intersection est jugée MARGINALE → note informative FAIBLE au lieu d'un flag FORT
       # (le périmètre seul ne dit pas rouge/bleu ; un bord rogné n'est pas une contrainte forte présumée).

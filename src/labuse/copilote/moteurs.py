@@ -119,9 +119,15 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     rows = db.execute(text("""
         SELECT p.id AS parcel_id, p.idu, p.commune, round(p.surface_m2) AS surface_m2,
                v.tier, v.rang, v.percentile, z.zone_lib, z.zone_fam,
+               -- M-I : PPR rouge GRADUÉ. La cascade n'ÉCARTE (HARD_EXCLUDE) plus que le rouge
+               -- >= 50 % de surface → `ppr_rouge` (exclusion) ne cible plus que ces parcelles.
                EXISTS (SELECT 1 FROM cascade_results r
                        WHERE r.parcel_id = p.id AND r.layer_name = 'risques'
                          AND r.result = 'HARD_EXCLUDE' AND r.detail ILIKE '%ppr%') AS ppr_rouge,
+               -- Palier 2–50 % : SERVI mais sous vigilance forte (flag, jamais filtré) → surfacé.
+               EXISTS (SELECT 1 FROM cascade_results r
+                       WHERE r.parcel_id = p.id AND r.layer_name = 'risques'
+                         AND r.result = 'SOFT_FLAG' AND r.detail ILIKE '%PPR zone rouge sur%') AS ppr_partiel,
                EXISTS (SELECT 1 FROM cascade_results r
                        WHERE r.parcel_id = p.id AND r.layer_name = 'abf'
                          AND r.result = 'SOFT_FLAG') AS abf
@@ -148,6 +154,9 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     if zones:
         kept = _filtre("zones", kept, lambda r: r["zone_fam"] in set(zones))
     if contraintes.get("exclure_ppr_rouge", True):
+        # M-I : « exclure le PPR rouge » = écarter les terrains MAJORITAIREMENT rouges (>= 50 %,
+        # seuls à porter le HARD_EXCLUDE désormais). Les parcelles partiellement rouges (2–50 %)
+        # NE sont PAS filtrées : elles restent servies, signalées par `ppr_partiel` (vigilance).
         kept = _filtre("exclure_ppr_rouge", kept, lambda r: not r["ppr_rouge"])
     if contraintes.get("exclure_abf"):
         kept = _filtre("exclure_abf", kept, lambda r: not r["abf"])
