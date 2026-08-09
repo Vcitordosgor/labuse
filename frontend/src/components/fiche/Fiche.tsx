@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1953,10 +1953,11 @@ export function Fiche({ idu }: { idu: string }) {
               {/* M54-EXPO — rangée « documents » (one-pager comité, pré-dossier PC) SOUS la barre à 7
                   tuiles, qui n'est PAS réordonnée. */}
               <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'flex', overflow: 'hidden' }}>
-                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: '9px 0 8px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
+                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: '9px 0 8px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
                   <p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
                 </a>
+                <PreDossierTile idu={idu} />
               </div>
               <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
@@ -1969,6 +1970,27 @@ export function Fiche({ idu }: { idu: string }) {
 
 
     </aside>
+  )
+}
+
+
+/** M54-EXPO — tuile « Pré-dossier PC » (ZIP CERFA). Réservée au plan Intégral (backend :
+ *  pre_dossier.py → plans.acces('pre_dossier_pc') = 403 sinon + quota M-K). Le front lit le plan
+ *  (getMoi) et grise la tuile hors Intégral (pas de téléchargement d'un 403). */
+function PreDossierTile({ idu }: { idu: string }) {
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi })
+  const integral = moi.data?.plan === 'integral'
+  const cell = { flex: 1, padding: '9px 0 8px', textAlign: 'center' as const, display: 'block', textDecoration: 'none' }
+  const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
+  if (!integral) return (
+    <span data-predossier-gate aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+    </span>
+  )
+  return (
+    <a data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4' }} title={CLIENT.fiche.export.preDossierTip}>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+    </a>
   )
 }
 
