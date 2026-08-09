@@ -50,6 +50,13 @@ def ensure_scoping(db: Session) -> None:
             db.execute(text(f"ALTER TABLE {t} ADD CONSTRAINT {fk} FOREIGN KEY (compte_id)"
                             f" REFERENCES comptes(id) ON DELETE CASCADE"))
 
+    # M-V V2 : event_seen (vus par compte des events de marché). FK compte_id → comptes posée
+    # ici (comptes n'existe pas au DDL de events). RGPD : supprimer un compte emporte SES vus.
+    if db.execute(text("SELECT to_regclass('event_seen')")).scalar():
+        if not db.execute(text("SELECT 1 FROM pg_constraint WHERE conname = 'fk_event_seen_compte'")).scalar():
+            db.execute(text("ALTER TABLE event_seen ADD CONSTRAINT fk_event_seen_compte"
+                            " FOREIGN KEY (compte_id) REFERENCES comptes(id) ON DELETE CASCADE"))
+
     # SEC-IDOR (le plus profond) : le CRM était UNIQUE(parcel_id) — une parcelle ne pouvait
     # vivre que dans UN pipeline de toute la base. Multi-tenant : la clé devient
     # (compte_id, parcel_id). NULLS NOT DISTINCT (PG 15+) garde le bucket pilote à une entrée
