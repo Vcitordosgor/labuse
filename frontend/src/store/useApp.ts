@@ -179,6 +179,11 @@ interface AppState {
   setModeB: (p: Partial<ModeBParams>) => void
   sourcesFocus: string | null // nom de source à surligner sur la page Sources
   openSources: (focus?: string | null) => void
+  // M54-EXPO-3 — panneau « Mes veilles » en surimpression de la carte (vue cartes conservée pour
+  // dessiner). Pas une View exclusive : la carte + l'outil zone restent dispo.
+  veillesOpen: boolean
+  toggleVeilles: () => void
+  setVeillesOpen: (v: boolean) => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
   sourceLine: FicheLine | null
   openSourceDrawer: (line: FicheLine) => void
@@ -294,6 +299,9 @@ export const useApp = create<AppState>((set) => ({
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
     parcours: null, openProjet: null }),
+  veillesOpen: false,
+  setVeillesOpen: (v) => set({ veillesOpen: v }),
+  toggleVeilles: () => set((s) => ({ veillesOpen: !s.veillesOpen, view: 'cartes' })),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),

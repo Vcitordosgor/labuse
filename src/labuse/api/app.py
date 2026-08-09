@@ -3615,6 +3615,10 @@ class WatchZoneIn(BaseModel):
     commune: str | None = None
 
 
+class WatchZoneRenameIn(BaseModel):
+    name: str
+
+
 class AlerteAckIn(BaseModel):
     id: int | None = None    # None → accuse réception de toutes les nouveautés de la commune
     commune: str | None = None
@@ -3641,6 +3645,16 @@ def watch_zones_create(body: WatchZoneIn, request: Request, db: Session = Depend
     zone = alertes.create_watch_zone(db, body.name, commune, body.geometry, cid)
     counts = alertes.compute_alertes(db, commune, cid)
     return {"zone": zone, "detected": counts}
+
+
+@app.patch("/watch-zones/{zone_id}")
+def watch_zones_rename(zone_id: int, body: WatchZoneRenameIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M54-EXPO-3 — renomme une zone de veille du compte. SEC-IDOR : 404 si pas au compte."""
+    from .. import alertes
+    from .tenant import current_compte
+    if not alertes.rename_watch_zone(db, zone_id, body.name, current_compte(request)):
+        raise HTTPException(404, "Zone de veille inconnue")
+    return {"ok": True, "name": body.name.strip()[:120]}
 
 
 @app.delete("/watch-zones/{zone_id}")

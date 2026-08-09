@@ -147,3 +147,15 @@ def test_api_alertes_bout_en_bout(api_client):
     assert len(items) == 1 and items[0]["kind"] == "dvf_in_zone"
     assert client.post("/alertes/ack", json={"id": items[0]["id"], "commune": commune}).json()["acknowledged"] == 1
     assert client.get("/alertes", params={"commune": commune, "only_new": True}).json() == []
+
+
+def test_api_watch_zone_rename(api_client):
+    """M54-EXPO-3 : PATCH /watch-zones/{id} renomme ; GET reflète ; id inconnu → 404."""
+    client, commune = api_client
+    poly = {"type": "Polygon", "coordinates": [[
+        [55.40, -21.10], [55.42, -21.10], [55.42, -21.08], [55.40, -21.08], [55.40, -21.10]]]}
+    zid = client.post("/watch-zones", json={"name": "Avant", "geometry": poly, "commune": commune}).json()["zone"]["id"]
+    assert client.patch(f"/watch-zones/{zid}", json={"name": "Après"}).json()["ok"] is True
+    z = [x for x in client.get("/watch-zones", params={"commune": commune}).json() if x["id"] == zid][0]
+    assert z["name"] == "Après"
+    assert client.patch("/watch-zones/99999999", json={"name": "X"}).status_code == 404

@@ -334,6 +334,25 @@ export const getShortlist = (limit = 8) =>
   j<{ commune: string; count: number; candidates_total: number; sujets: ShortlistSujet[] }>(
     `/shortlist?limit=${limit}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
+// M54-EXPO-3 — veilles géographiques (zones dessinées + alertes DVF en zone). Le kind permis a été
+// retiré (dédup cloche, EXPO-2) : ce canal ne porte plus que dvf_in_zone.
+export interface WatchZone { id: number; name: string; commune: string; created_at: string | null; area_m2: number | null; n_alertes: number }
+const _comm = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
+export const getWatchZones = () => j<WatchZone[]>(`/watch-zones${_comm() ? `?${_comm()}` : ''}`)
+export const createWatchZone = (name: string, geometry: { type: 'Polygon'; coordinates: number[][][] }) =>
+  j<{ zone: { id: number; name: string; commune: string }; detected: { dvf_in_zone: number; total: number } }>(
+    '/watch-zones', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, geometry, ...(commune() ? { commune: commune() } : {}) }) })
+export const renameWatchZone = (id: number, name: string) =>
+  j<{ ok: boolean; name: string }>(`/watch-zones/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+export const deleteWatchZone = (id: number) => j<{ ok: boolean }>(`/watch-zones/${id}`, { method: 'DELETE' })
+export interface Alerte { id: number; kind: string; label: string; payload: Record<string, unknown>; acknowledged: boolean; detected_at: string; zone_name: string | null; parcel_idu: string | null }
+export const getAlertes = (onlyNew = false) => j<Alerte[]>(`/alertes?only_new=${onlyNew}${_comm() ? `&${_comm()}` : ''}`)
+export const refreshAlertes = () => j<{ dvf_in_zone: number; total: number }>(`/alertes/refresh${_comm() ? `?${_comm()}` : ''}`, { method: 'POST' })
+export const ackAlerte = (id?: number) =>
+  j<{ ok: boolean; acknowledged: number }>('/alertes/ack', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(id != null ? { id } : (commune() ? { commune: commune() } : {})) })
+
 // M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
 export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }
 export const getMarque = () => j<Marque>('/moi/marque')
