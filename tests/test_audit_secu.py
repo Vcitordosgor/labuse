@@ -392,7 +392,9 @@ def test_idor_alertes_watch_zones_cloison(app_client):
         assert any(z["id"] == zid_a for z in ca.get("/watch-zones", params={"commune": commune}).json())
         assert len(ca.get("/alertes", params={"commune": commune, "only_new": True}).json()) == 1
 
-        # Dédup permis PAR COMPTE : A et B suivent la MÊME parcelle → un permis proche alerte CHACUN.
+        # M54-EXPO-2 (arbitrage Vic) : le canal alertes NE traite PLUS les permis (retiré — la cloche
+        # les couvre). Même avec 2 comptes suivant la MÊME parcelle ET un permis proche, /alertes/refresh
+        # n'émet AUCUN permit_near_followed (clé absente pour chacun).
         _wkt = "POLYGON((55.51 -21.19,55.5105 -21.19,55.5105 -21.1905,55.51 -21.1905,55.51 -21.19))"
         with session_scope() as s:
             s.execute(text("INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
@@ -404,8 +406,8 @@ def test_idor_alertes_watch_zones_cloison(app_client):
             s.commit()
         assert ca.post("/pipeline", json={"idu": idu}).status_code == 200
         assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
-        assert ca.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1
-        assert cb.post("/alertes/refresh", params={"commune": commune}).json()["permit_near_followed"] == 1  # PAS mangé
+        assert "permit_near_followed" not in ca.post("/alertes/refresh", params={"commune": commune}).json()
+        assert "permit_near_followed" not in cb.post("/alertes/refresh", params={"commune": commune}).json()
     finally:
         _purge(ea, eb)
         with session_scope() as s:
@@ -819,3 +821,28 @@ def test_gate_admin_protection_et_bilan(app_client):
             assert radm != 403, f"admin bloqué à tort sur {path} (reçu {radm})"
     finally:
         _purge(et, eadm)
+
+
+def test_marque_roundtrip_logo_relu(app_client):
+    """M54-EXPO-2 A6 : upload logo (body brut) + marque, puis GET /moi/marque relit le tout
+    (has_logo + logo_data_uri + les 3 champs). Round-trip fidèle : même compte que l'upload
+    (_compte_session). Suppression du logo → le GET le reflète."""
+    e = f"marque-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(e)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, e)
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 40
+        r = c.post("/moi/logo", content=png, headers={"Content-Type": "image/png"})
+        assert r.status_code == 200 and r.json()["octets"] == len(png), r.text
+        assert c.post("/moi/marque", json={"raison_sociale": "Foncière Test",
+                                           "coordonnees": "01 23 45 67", "mention": "Doc interne"}).status_code == 200
+        g = c.get("/moi/marque").json()
+        assert g["has_logo"] is True
+        assert g["logo_data_uri"].startswith("data:image/png;base64,")
+        assert g["raison_sociale"] == "Foncière Test" and g["mention"] == "Doc interne"
+        # suppression du logo → relu à false, marque conservée
+        assert c.delete("/moi/logo").json()["ok"]
+        g2 = c.get("/moi/marque").json()
+        assert g2["has_logo"] is False and g2["raison_sociale"] == "Foncière Test"
+    finally:
+        _purge(e)

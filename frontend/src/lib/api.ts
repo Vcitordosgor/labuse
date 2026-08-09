@@ -320,6 +320,37 @@ export const onePagerUrl = (idu: string) => `/parcels/${idu}/export?format=onepa
 export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 export const spfLetterUrl = (idu: string) => `/parcels/${idu}/spf-letter`
 
+// M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
+export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
+export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
+export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null }
+export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
+export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
+export const getCourrierEnvois = () => j<{ envois: CourrierEnvoi[]; n: number }>('/courrier/envois')
+
+// M54-EXPO-2 A7 — shortlist : « sujets à traiter aujourd'hui » du run servi (top parcelles).
+export interface ShortlistSujet { idu: string; commune?: string; surface_m2?: number; status?: string | null; tier_v2?: string | null; rang?: number | null; motif?: string | null }
+export const getShortlist = (limit = 8) =>
+  j<{ commune: string; count: number; candidates_total: number; sujets: ShortlistSujet[] }>(
+    `/shortlist?limit=${limit}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
+
+// M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
+export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }
+export const getMarque = () => j<Marque>('/moi/marque')
+export const postLogo = (file: Blob) => j<{ ok: boolean; mime: string; octets: number }>(
+  '/moi/logo', { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file })
+export const deleteLogo = () => j<{ ok: boolean }>('/moi/logo', { method: 'DELETE' })
+export const postMarque = (m: { raison_sociale: string; coordonnees: string; mention: string }) =>
+  j<{ ok: boolean }>('/moi/marque', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) })
+
+// M54-EXPO-2 — synthèse IA de la fiche (GET /parcels/{idu}/explain). Validée (available) OU repli
+// stub déterministe (available=false, stub=true) — la couche 2 M-T garantit l'un ou l'autre.
+export interface ExplainResult {
+  available: boolean; explanation?: string; stub?: boolean; reason?: string
+  message?: string; rules_summary?: string | string[]; model?: string
+}
+export const getExplain = (idu: string) => j<ExplainResult>(`/parcels/${idu}/explain`)
+
 // M54-EXPO — retour promoteur par parcelle (POST /feedback : verdict + commentaire libre).
 export type FeedbackVerdict = 'good_lead' | 'not_interested' | 'false_positive'
 export const postFeedback = (idu: string, verdict: FeedbackVerdict, comment?: string) =>

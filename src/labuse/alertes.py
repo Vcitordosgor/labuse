@@ -2,19 +2,21 @@
 
 Le SCOPE est défini par l'utilisateur — on n'inonde pas avec les 3 000 parcelles :
 - **ZONES DE VEILLE** : polygones dessinés sur la carte (`watch_zones`).
-- **PARCELLES SUIVIES** : les parcelles du pipeline de prospection (`pipeline_entries`).
 
 Au RAFRAÎCHISSEMENT (`compute_alertes`), on détecte les faits qui touchent ce scope :
-- une vente **DVF** tombant dans une zone de veille            → alerte `dvf_in_zone`
-- un **permis** (SITADEL géocodé, 1.B) à ≤ R d'une parcelle suivie → `permit_near_followed`
+- une vente **DVF** tombant dans une zone de veille dessinée      → alerte `dvf_in_zone`
+
+M54-EXPO-2 (arbitrage Vic 10/08) : le kind `permit_near_followed` (permis SITADEL près d'une
+parcelle suivie) est RETIRÉ — la cloche (events M-T, kind='permis') couvre déjà ce fait. Un
+signal, un canal. Ce module ne garde que sa valeur UNIQUE : les ventes DVF en zone dessinée.
 
 **Idempotent** : un même fait-source ne déclenche qu'UNE alerte (index unique partiel +
 `ON CONFLICT DO NOTHING`). Re-rafraîchir sans donnée neuve n'ajoute rien ; une donnée
 nouvellement ingérée apparaît exactement une fois. v1 = détection + liste de nouveautés
 (pas de notification push — hors scope, cf. brief 3.C).
 
-Ce module ne fabrique aucune donnée : il croise des faits RÉELS déjà ingérés (DVF, SITADEL)
-avec un scope choisi par l'utilisateur.
+Ce module ne fabrique aucune donnée : il croise des faits RÉELS déjà ingérés (DVF) avec un
+scope choisi par l'utilisateur.
 """
 from __future__ import annotations
 
@@ -74,14 +76,16 @@ def delete_watch_zone(session: Session, zone_id: int, cid: int | None) -> bool:
 
 # ───────────────────────────── Détection ─────────────────────────────
 
-def compute_alertes(session: Session, commune: str, cid: int | None, *,
-                    permit_radius_m: int = 200) -> dict[str, int]:
-    """Détecte les nouveautés du scope DU COMPTE `cid` (zones + parcelles suivies). Renvoie le
-    nb de NOUVELLES alertes par type (les faits déjà vus sont ignorés par les index uniques).
+def compute_alertes(session: Session, commune: str, cid: int | None) -> dict[str, int]:
+    """Détecte les nouveautés du scope DU COMPTE `cid`. Renvoie le nb de NOUVELLES alertes par
+    type (les faits déjà vus sont ignorés par les index uniques).
 
-    Cloison M-K (P1-9) : ne croise QUE les zones de veille et le pipeline du compte `cid` ;
-    l'alerte hérite du compte propriétaire (z.compte_id / pe.compte_id, = :cid) — jamais le
-    pipeline d'un compte n'alimente les alertes d'un autre."""
+    Cloison M-K (P1-9) : ne croise QUE les zones de veille du compte `cid` ; l'alerte hérite du
+    compte propriétaire (z.compte_id = :cid) — jamais la zone d'un compte n'alimente un autre.
+
+    M54-EXPO-2 (arbitrage Vic 10/08) : le kind `permit_near_followed` est RETIRÉ. Les permis près
+    d'une parcelle suivie sont DÉJÀ servis par la cloche (events M-T, kind='permis') — un signal,
+    un canal. Ce canal ne garde que sa valeur UNIQUE : les ventes DVF dans une zone DESSINÉE."""
     n_dvf = session.execute(
         text("""INSERT INTO alertes (kind, zone_id, compte_id, source_ref, label, payload, detected_at)
                 SELECT 'dvf_in_zone', z.id, z.compte_id, d.id::text,
@@ -98,30 +102,12 @@ def compute_alertes(session: Session, commune: str, cid: int | None, *,
         {"c": commune, "cid": cid},
     ).rowcount
 
-    n_permit = session.execute(
-        text("""INSERT INTO alertes (kind, parcel_id, compte_id, source_ref, label, payload, detected_at)
-                SELECT 'permit_near_followed', p.id, pe.compte_id, s.id::text,
-                       'Permis ' || COALESCE(s.type, '') || ' près de ' || p.idu,
-                       jsonb_build_object('date', s.date, 'type', s.type, 'idu', p.idu,
-                          'within_m', round(ST_Distance(ST_Transform(p.centroid, 2975),
-                                                        ST_Transform(s.geom, 2975))::numeric)),
-                       now()
-                FROM pipeline_entries pe
-                JOIN parcels p ON p.id = pe.parcel_id
-                JOIN sitadel_permits s ON s.geom IS NOT NULL
-                     AND ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(s.geom, 2975), :r)
-                WHERE p.commune = :c AND pe.compte_id IS NOT DISTINCT FROM :cid
-                ON CONFLICT DO NOTHING
-                RETURNING 1"""),
-        {"c": commune, "r": permit_radius_m, "cid": cid},
-    ).rowcount
-
     session.execute(
         text("UPDATE watch_zones SET last_run_at = now() "
              "WHERE commune = :c AND compte_id IS NOT DISTINCT FROM :cid"),
         {"c": commune, "cid": cid})
     session.flush()
-    return {"dvf_in_zone": n_dvf, "permit_near_followed": n_permit, "total": n_dvf + n_permit}
+    return {"dvf_in_zone": n_dvf, "total": n_dvf}
 
 
 # ───────────────────────────── Liste / accusé ─────────────────────────────
