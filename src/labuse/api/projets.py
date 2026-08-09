@@ -279,13 +279,20 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         source = "m22"
     else:
         from .app import _q_v2_list, _q_v2_where
-        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
-                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
-                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")),
-                                    ",".join(filtres.get("flags") or []) or None,
-                                    ",".join(communes) if communes else None,
-                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
+        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
+        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
+        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
+        where, params = _q_v2_where(
+            RUN,
+            score_min=filtres.get("scoreMin"),
+            surface_min=filtres.get("surfaceMin"),
+            surface_max=filtres.get("surfaceMax"),
+            sdp_min=filtres.get("sdpMin"),
+            evenement=bool(filtres.get("evenement")),
+            flags=",".join(filtres.get("flags") or []) or None,
+            communes=",".join(communes) if communes else None,
+            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
         n = db.execute(text(
             "SELECT count(*) FROM parcels p JOIN dryrun_parcel_evaluations d "
             "ON d.parcel_id = p.id AND d.run_label = :runref "
@@ -581,13 +588,20 @@ def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None =
             items = [it for it in items if it["commune"] in communes]
     else:
         from .app import _q_v2_list, _q_v2_where
-        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
-                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
-                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")),
-                                    ",".join(filtres.get("flags") or []) or None,
-                                    ",".join(communes) if communes else None,
-                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
+        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
+        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
+        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
+        where, params = _q_v2_where(
+            RUN,
+            score_min=filtres.get("scoreMin"),
+            surface_min=filtres.get("surfaceMin"),
+            surface_max=filtres.get("surfaceMax"),
+            sdp_min=filtres.get("sdpMin"),
+            evenement=bool(filtres.get("evenement")),
+            flags=",".join(filtres.get("flags") or []) or None,
+            communes=",".join(communes) if communes else None,
+            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
         items = _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
     return items[:limit]
 
