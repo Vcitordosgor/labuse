@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1923,10 +1923,7 @@ export function Fiche({ idu }: { idu: string }) {
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
                 </a>
-                <a href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Dossier parcelle PDF brandé">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
-                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier</p>
-                </a>
+                <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
                 {f.coords && (
                   <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
@@ -2037,6 +2034,29 @@ function FeedbackStrip({ idu }: { idu: string }) {
       <button style={btn} disabled={send.isPending} onClick={() => send.mutate('false_positive')}>{CLIENT.fiche.export.fbFalse}</button>
       {!open && <button style={{ ...btn, border: 0, background: 'none', color: '#5f7568' }} onClick={() => setOpen(true)}>+ un mot</button>}
     </div>
+  )
+}
+
+
+/** M54-EXPO-2 Volet C — tuile « Dossier » enrichie du STATUT (GET /dossier/statut) : quota
+ *  restant du mois affiché, ou grisée + raison si le générateur n'est pas déployé (501). La barre
+ *  à 7 tuiles n'est PAS réordonnée : c'est la même cellule, avec l'état en plus. */
+function DossierTile({ idu }: { idu: string }) {
+  const st = useQuery({ queryKey: ['dossier-statut'], queryFn: getDossierStatut })
+  const cell = { padding: '10px 0 9px', textAlign: 'center' as const, borderRight: '1px solid #16201c', display: 'block' }
+  const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+  const d = st.data
+  if (d && !d.disponible) return (
+    <span data-dossier-indispo aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={d.raison ?? 'Générateur de dossier indisponible'}>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier</p>
+    </span>
+  )
+  const compteur = d && !d.illimite && d.restants != null
+  const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
+  return (
+    <a data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4', textDecoration: 'none' }} title={tip}>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : '#7de3ab' }}> · {d!.restants}</span> : ''}</p>
+    </a>
   )
 }
 
