@@ -7,10 +7,19 @@ Un DPE par logement (dédup `numero_dpe`). Rattachement parcelle 100 % LOCAL (ma
   3. `adresse_brut` normalisée (numéro + voie) → `adresses` de la commune              → 'adresse_locale'
   4. sinon 'aucun' (un « aucun » honnête vaut mieux qu'un rattachement faux).
 
-Gisement réel : ~912 DPE pour toute l'île (11/07/2026) — le DPE réglementaire reste marginal
-en DROM (~10/mois depuis 07/2021). Signal « positif quand présent », JAMAIS exhaustif.
-La donnée d'abord, le scoring ensuite : ce module PEUPLE `dpe_records` ; le signal est branché
-par le Score V (famille E) et la vue v_passoire_thermique.
+⚠ CONTAMINATION MÉTROPOLE (mesuré live 09/08/2026, mandat M-V). Le filtre amont
+`code_insee_ban:974*` rend ~913 lignes pour l'île — mais **897 d'entre elles portent un CP
+BRUT métropolitain** (ex. 62200 Boulogne-sur-Mer, 34200 Sète, 67300 Schiltigheim) : le
+géocodeur BAN de l'ADEME rabat massivement des logements de métropole sur des codes INSEE 974,
+avec un `identifiant_ban` d'allure réunionnaise (`97415_1330_00038`). Ce faux id_ban matche la
+table `adresses` locale en passe 1 → le logement métropolitain se voit ÉPINGLÉ sur une vraie
+parcelle réunionnaise (coordonnées valides mais FAUSSES). Le gisement RÉUNIONNAIS AUTHENTIQUE
+est de ~17 DPE seulement (15 CP brut 974xx cohérents + 2 orphelins) — le DPE réglementaire est
+neuf en DROM (obligation 01/07/2024). On tranche sur le CP BRUT (saisi par le diagnostiqueur
+d'après le bien, fiable), JAMAIS sur le géocodage BAN : cf. `is_reunion_authentic`.
+
+Signal « positif quand présent », JAMAIS exhaustif. La donnée d'abord, le scoring ensuite : ce
+module PEUPLE `dpe_records` ; le signal est branché par le Score V (famille E) et v_passoire_thermique.
 """
 from __future__ import annotations
 
@@ -46,6 +55,26 @@ def _to_date(v) -> date | None:
         return date.fromisoformat(str(v)[:10])
     except (TypeError, ValueError):
         return None
+
+
+def _cp_reunion(cp) -> bool:
+    """CP réunionnais : 97400–97490 (97600 = Mayotte, 977xx/978xx = Antilles françaises)."""
+    n = _to_int(cp)
+    return n is not None and 97400 <= n <= 97490
+
+
+def is_reunion_authentic(rec: dict) -> bool:
+    """Vrai si l'enregistrement est un logement RÉUNIONNAIS d'après le CP BRUT (saisi par le
+    diagnostiqueur d'après le bien — fiable), et JAMAIS d'après le géocodage BAN de l'ADEME
+    (faux à ~98 % au 974 : il rabat des logements métropolitains sur des codes INSEE 974).
+
+    Règle : on rejette une ligne dont le CP brut CONTREDIT La Réunion. CP brut absent → on laisse
+    passer (0 cas mesuré sur les 913 lignes 974 au 09/08/2026 ; la cascade locale reste seul juge).
+    """
+    cp = rec.get("code_postal_brut")
+    if cp in (None, ""):
+        return True
+    return _cp_reunion(cp)
 
 
 def parse_record(rec: dict) -> dict | None:
@@ -178,10 +207,15 @@ def ingest_commune(session: Session, insee: str, commune: str,
     """
     connector = connector or DpeConnector()
     idx_adresses: dict | None = None
-    n = n_geo = n_rat = 0
+    n = n_geo = n_rat = n_hors = 0
     for rec in connector.fetch_commune(insee):
         p = parse_record(rec)
         if not p:
+            continue
+        if not is_reunion_authentic(rec):
+            # logement métropolitain rabattu sur un INSEE 974 par le géocodeur BAN : on ne
+            # l'épingle PAS sur une parcelle réunionnaise (cf. docstring module).
+            n_hors += 1
             continue
         if idx_adresses is None:
             idx_adresses = _index_adresses(session, insee)
@@ -192,7 +226,7 @@ def ingest_commune(session: Session, insee: str, commune: str,
         n += 1
     _touch_source(session)
     session.flush()
-    return {"dpe": n, "geocodes": n_geo, "rattaches_parcelle": n_rat}
+    return {"dpe": n, "geocodes": n_geo, "rattaches_parcelle": n_rat, "hors_reunion": n_hors}
 
 
 def ingest_orphelins(session: Session, connector: DpeConnector | None = None) -> dict:
@@ -202,10 +236,13 @@ def ingest_orphelins(session: Session, connector: DpeConnector | None = None) ->
     (adresse brute). code_insee reste NULL si le CP couvre plusieurs communes sans match adresse.
     """
     connector = connector or DpeConnector()
-    n = n_rat = 0
+    n = n_rat = n_hors = 0
     for rec in connector.fetch_orphelins_974():
         p = parse_record(rec)
         if not p:
+            continue
+        if not is_reunion_authentic(rec):  # ceinture-bretelles : le filtre amont est déjà CP brut 974xx
+            n_hors += 1
             continue
         geo = {"lon": None, "lat": None, "sc": None, "idu": None, "rat": "aucun"}
         insees = [r[0] for r in session.execute(text(
@@ -222,7 +259,7 @@ def ingest_orphelins(session: Session, connector: DpeConnector | None = None) ->
         _upsert(session, rec, p, geo)
         n += 1
     session.flush()
-    return {"dpe": n, "rattaches_parcelle": n_rat}
+    return {"dpe": n, "rattaches_parcelle": n_rat, "hors_reunion": n_hors}
 
 
 def sample_report(session: Session, insee: str) -> dict:

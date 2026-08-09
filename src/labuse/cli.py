@@ -891,7 +891,7 @@ def ingest_dpe_cmd(
     conn = DpeConnector(throttle_s=throttle)
     targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
     t0 = time.time()
-    tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0}
+    tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 0}
     for insee, nom in targets:
         with session_scope() as s:
             has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
@@ -901,7 +901,7 @@ def ingest_dpe_cmd(
             res = dpe.ingest_commune(s, insee, nom, connector=conn)
             s.commit()
             for k in tot:
-                tot[k] += res[k]
+                tot[k] += res.get(k, 0)
             typer.echo(f"  ✓ {nom} : {res}")
     if not commune:
         with session_scope() as s:
@@ -909,8 +909,12 @@ def ingest_dpe_cmd(
             s.commit()
             tot["dpe"] += res["dpe"]
             tot["rattaches_parcelle"] += res["rattaches_parcelle"]
+            tot["hors_reunion"] += res.get("hors_reunion", 0)
             typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
     typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
+    if tot["hors_reunion"]:
+        typer.echo(f"  ⓘ {tot['hors_reunion']} lignes métropolitaines écartées (géocodage BAN "
+                   f"ADEME rabattu sur INSEE 974 — jugées sur le CP brut, cf. is_reunion_authentic).")
 
 
 @app.command("ingest-mvt")
