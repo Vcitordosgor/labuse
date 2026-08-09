@@ -1658,6 +1658,18 @@ export function Fiche({ idu }: { idu: string }) {
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+              {/* M-U — signal de marché condensé (DVF actes + Sitadel), jamais un mot nu : les 2
+                  composantes sont affichées ; l'outil « Marché » donne le bloc commune complet (9 lignes). */}
+              {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal
+                return sig?.disponible ? (
+                  <div data-fiche-market-signal className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
+                    <span className="font-medium text-txt">Signal de marché : {sig.label}</span>
+                    {(sig.composantes as Record<string, any>[]).map((c, i) => (
+                      <div key={i} className="mt-0.5 text-[10px] text-txt-mut">{c.sens} {c.cle} — {c.valeur}</div>
+                    ))}
+                    <p className="mt-0.5 text-[9px] text-txt-dim">{sig.source} · outil « Marché » pour le détail commune</p>
+                  </div>
+                ) : null })()}
             </RefDrawer>
 
             {/* VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}

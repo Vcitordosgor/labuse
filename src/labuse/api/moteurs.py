@@ -376,6 +376,14 @@ def barometre(db: Session = Depends(get_db)) -> dict:
     return _barometre_data(db)
 
 
+@router.get("/marche/{commune}")
+def marche_commune(commune: str, db: Session = Depends(get_db)) -> dict:
+    """M-U — bloc « Marché » par commune (9 lignes Sourcées, chacune avec sa date amont). Point de
+    calcul unique lu par l'outil, la fiche et market_signal. Auth standard + rail rate-limité /moteurs."""
+    from ..faisabilite.marche_commune import build_marche_commune
+    return build_marche_commune(db, commune)
+
+
 @router.get("/barometre.pdf")
 def barometre_pdf(db: Session = Depends(get_db)) -> Response:
     """Rapport trimestriel auto-généré — le canal marketing. Palette impression (blanc)."""

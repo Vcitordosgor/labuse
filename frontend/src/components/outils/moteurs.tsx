@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { CLIENT } from '../../lib/strings'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
@@ -309,6 +310,106 @@ export function M18() {
           </div>
         ))}
       </div>
+    </>
+  )
+}
+
+
+/* ───────────── M-U — MARCHÉ PAR COMMUNE (Agent Prix) ───────────── */
+
+const MU_COMMUNES = ['Bras-Panon', 'Cilaos', 'Entre-Deux', "L'Étang-Salé", 'La Plaine-des-Palmistes',
+  'La Possession', 'Le Port', 'Le Tampon', 'Les Avirons', 'Les Trois-Bassins', 'Petite-Île',
+  'Saint-André', 'Saint-Benoît', 'Saint-Denis', 'Saint-Joseph', 'Saint-Leu', 'Saint-Louis',
+  'Saint-Paul', 'Saint-Philippe', 'Saint-Pierre', 'Sainte-Marie', 'Sainte-Rose', 'Sainte-Suzanne', 'Salazie']
+
+const MU_FIAB: Record<string, string> = { bonne: TOKENS.mint, moyenne: TOKENS.stCreuser,
+  faible: TOKENS.txtMut, insuffisant: TOKENS.txtDim }
+
+function MuSignal({ sig }: { sig: Record<string, any> | undefined }) {
+  if (!sig?.disponible) return <p className="text-[10.5px] text-txt-dim">{CLIENT.marche.signalIndispo}</p>
+  const col = sig.label === 'favorable' ? TOKENS.mint : sig.label === 'prudence' ? TOKENS.stEcartee : TOKENS.stCreuser
+  return (
+    <div data-marche-signal className="rounded-lg border px-3 py-2" style={{ borderColor: `${col}55` }}>
+      <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: `${col}22`, color: col }}>
+        {CLIENT.marche.signal} : {sig.label}</span>
+      {/* jamais un mot nu : les 2 composantes DVF/Sitadel sont toujours affichées */}
+      {(sig.composantes as Record<string, any>[]).map((c, i) => (
+        <div key={i} className="mt-1 flex gap-1.5 text-[10.5px] text-txt-mut">
+          <span style={{ color: col }}>{c.sens}</span><span>{c.cle} — {c.valeur}</span></div>
+      ))}
+      <p className="mt-1 text-[9px] text-txt-dim">{sig.source}</p>
+    </div>
+  )
+}
+
+function MuLigne({ l }: { l: Record<string, any> }) {
+  const label = CLIENT.marche.lignes[l.cle as keyof typeof CLIENT.marche.lignes] ?? l.cle
+  return (
+    <div className="border-b border-line py-1.5 text-[11px]">
+      <div className="flex items-start gap-2">
+        <span className="min-w-0 flex-1 text-txt">{label}</span>
+        <span className={`shrink-0 text-right font-mono tnum ${l.calculable ? 'text-txt-hi' : 'text-txt-dim'}`}>
+          {l.calculable ? muValeur(l) : CLIENT.marche.nonCalculable}
+        </span>
+      </div>
+      <div className="mt-0.5 flex items-center gap-2 text-[9.5px] text-txt-dim">
+        <span>{l.etiquette}</span>
+        {l.date_amont && <span>· {l.date_amont}</span>}
+        {!l.calculable && l.motif && <span className="text-st-ecartee">· {l.motif}</span>}
+        <span className="ml-auto rounded px-1" style={{ color: MU_FIAB[l.fiabilite] ?? TOKENS.txtDim }}>{l.fiabilite}</span>
+      </div>
+    </div>
+  )
+}
+
+function muValeur(l: Record<string, any>): string {
+  const v = l.valeurs ?? {}
+  switch (l.cle) {
+    case 'prix_ancien_median': return `${fmt(v.median_eur_m2)} €/m² (q1 ${fmt(v.q1)}–q3 ${fmt(v.q3)}, n${v.n})`
+    case 'prix_terrain_nu_par_zone': {
+      const cell = (z: string) => v.par_zone?.[z]?.calculable ? `${fmt(v.par_zone[z].median_eur_m2)} €/m²` : '—'
+      return `U ${cell('U')} · AU ${cell('AU')}`
+    }
+    case 'prix_sortie_neuf': return `${fmt(v.prix_eur_m2)} €/m²`
+    case 'tendance_12m': return `${v.delta_pct > 0 ? '↑' : v.delta_pct < 0 ? '↓' : '→'} ${v.delta_pct}% (${v.sens})`
+    case 'liquidite': return `${fmt(v.mutations_dernier_trim)} mut./trim (${v.delta_pct_an ?? '—'}% an)`
+    case 'offre_engagee': return `${fmt(v.logements_12m)} lgt./12 m`
+    case 'gisement_constructible': return `${fmt(v.sdp_residuelle_m2)} m² SDP`
+    case 'pression_dpe': return `${v.pct_fg}% F/G (${v.fg}/${v.dpe_connus})`
+    case 'loyer_median': return `${v.loyer_eur_m2} €/m²`
+    default: return '—'
+  }
+}
+
+export function MarcheCommune() {
+  const appCommune = useApp((s) => s.commune)
+  const [commune, setCommune] = useState(appCommune && MU_COMMUNES.includes(appCommune) ? appCommune : 'Saint-Paul')
+  useEffect(() => { if (appCommune && MU_COMMUNES.includes(appCommune)) setCommune(appCommune) }, [appCommune])
+  const q = useQuery({ queryKey: ['mu-marche', commune], queryFn: () => motMarcheCommune(commune) })
+  const d = q.data
+  const groupes: [string, string][] = [['PRIX', 'Prix'], ['DYNAMIQUE', 'Dynamique'], ['OFFRE', 'Offre'], ['LOYER', 'Loyer']]
+  return (
+    <>
+      <Banner>{CLIENT.marche.banner}</Banner>
+      <select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
+        className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-violet focus:outline-none">
+        {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Marché…" big /></div>}
+      {d && <>
+        <MuSignal sig={d.market_signal} />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {groupes.map(([g, titre]) => {
+            const lignes = (d.lignes as Record<string, any>[]).filter((l) => l.groupe === g)
+            if (!lignes.length) return null
+            return <div key={g}>
+              <p className="label-caps mt-1">{titre}</p>
+              {lignes.map((l) => <MuLigne key={l.cle} l={l} />)}
+            </div>
+          })}
+        </div>
+        <p className="text-[9.5px] italic text-txt-dim">{CLIENT.marche.note}</p>
+      </>}
     </>
   )
 }

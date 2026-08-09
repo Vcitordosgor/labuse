@@ -20,6 +20,7 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
   '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/signalement', '/guide',
+  '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
