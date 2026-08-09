@@ -595,17 +595,33 @@ def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> d
 
 def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[dict]:
     # M-P (P2-68) : synchro indexée par NOM (stable), plus par id serial (dépendant du seed).
+    # M54-AB F9 : on LIT aussi `source_millesime` (jusqu'ici ignoré → DVF, PLU/GPU… affichaient
+    # « — » alors que leur millésime amont est renseigné). Priorité : statique → millésime amont →
+    # date de synchro → motif. ZÉRO « — » sec.
     sync: dict[str, str] = {}
+    mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        for r in db.execute(text(
-                "SELECT name, last_sync_at FROM data_sources WHERE last_sync_at IS NOT NULL")):
-            sync[r[0]] = r[1].date().isoformat()
+        for r in db.execute(text("SELECT name, last_sync_at, source_millesime FROM data_sources")):
+            if r[1] is not None:
+                sync[r[0]] = r[1].date().isoformat()
+            if r[2]:
+                mill_amont[r[0]] = r[2]
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
             continue
         vus.add(label)
-        millesime = statique or (sync.get(src_name) and f"synchronisé le {sync[src_name]}") or "—"
+        if statique:
+            millesime = statique
+        elif src_name and mill_amont.get(src_name):
+            millesime = mill_amont[src_name]
+        elif src_name and sync.get(src_name):
+            millesime = f"synchronisé le {sync[src_name]}"
+        else:
+            # M-O : GPU/PLU et Géorisques n'exposent PAS d'horizon amont daté (NULL voulu) — on le
+            # DIT, jamais un « — » muet. (Pour les sources à millésime réel non encore enregistré,
+            # même motif honnête ; le peuplement de data_sources.source_millesime est une dette data.)
+            millesime = "horizon amont non publié"
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 
