@@ -232,7 +232,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(x + 5, y + 10.6)
         pdf.set_font("mono", size=6.3)
         pdf.set_text_color(*TXT_DIM)
-        pdf.cell(cw - 10, 4, f"{k} / 100")
+        # M54-AB F8 : chiffre de tête étiqueté (doctrine Sourcé/Estimé du banquier) — Q/A = Estimé.
+        pdf.cell(cw - 10, 4, f"{k} / 100 · ESTIMÉ")
     pdf.set_y(y + 21)
 
     # ── M9 lot 1 — INDICE DE CONFIANCE DONNÉES (ICD). Méta d'affichage CLOISONNÉE du
@@ -243,19 +244,26 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         col = AMBER if bande == "faible" else (TXT_MUT if bande == "partielle" else (23, 122, 88))
         pdf.set_font("inter", size=7.4)
         pdf.set_text_color(*col)
-        txt = f"Confiance des données : {val}/100 — {icd.get('libelle', '')}"
+        # M54-AB F8 : « Confiance des DONNÉES » (complétude) — dit ce qu'elle mesure, à ne pas
+        # confondre avec la « Confiance du calibrage (règles PLU) » du dossier parcelle.
+        txt = f"Confiance des données (complétude) : {val}/100 — {icd.get('libelle', '')}"
         manque = icd.get("manquants") or []
         if manque:
             txt += " · manque : " + ", ".join(manque[:4]) + ("…" if len(manque) > 4 else "")
+        # M54-AB F8 : X réinitialisé à la marge avant chaque multi_cell — sinon le cadre dérive et
+        # « L'indice mes… » était coupé au bord droit de la p.1. Largeur = pleine colonne (marges 14).
+        pdf.set_x(14)
         pdf.multi_cell(pdf.w - 28, 3.8, txt)
         if bande == "faible":
             pdf.set_font("inter", size=6.6)
             pdf.set_text_color(*AMBER)
+            pdf.set_x(14)
             pdf.multi_cell(pdf.w - 28, 3.4,
                            "⚠ Confiance faible : données de la parcelle incomplètes — "
                            "verdict à confirmer par vérification terrain/CU.")
         pdf.set_text_color(*TXT_DIM)
         pdf.set_font("inter", size=6.2)
+        pdf.set_x(14)
         pdf.multi_cell(pdf.w - 28, 3.2,
                        "L'indice mesure la complétude des données ; il n'entre pas dans le score d'opportunité.")
         pdf.ln(1.2)

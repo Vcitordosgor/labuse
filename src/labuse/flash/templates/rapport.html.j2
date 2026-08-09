@@ -103,7 +103,9 @@
         <td class="num-cell">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} m</td></tr>
     {% endif %}
     {% if ident.regles.confiance %}
-    <tr><td>Confiance du calibrage</td><td>{{ ident.regles.confiance }}</td></tr>
+    {# M54-AB F8 : dire CE qu'elle mesure — la confiance du CALIBRAGE des règles PLU (retraits,
+       hauteurs…), distincte de la « confiance des données » (complétude) de la fiche premium. #}
+    <tr><td>Confiance du calibrage (règles PLU)</td><td>{{ ident.regles.confiance }}</td></tr>
     {% endif %}
   </table>
   <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
