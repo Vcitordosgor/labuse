@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1760,6 +1760,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
+                    {/* M54-EXPO A2 — le courrier SPF pré-rempli, branché LÀ où l'UI le promet. */}
+                    <a data-spf-letter href={spfLetterUrl(idu)} target="_blank" rel="noreferrer"
+                      className="mt-1.5 block text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
+                      → {CLIENT.fiche.export.spf} (courrier pré-rempli à envoyer au SPF)
+                    </a>
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
