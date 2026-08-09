@@ -220,6 +220,14 @@ export const CLIENT = {
     //   2. « Dossier financeur »
     //   3. « Présentation banque »
     export: {
+      // M54-EXPO — exports « document » branchés (One-pager comité, Pré-dossier PC, courrier SPF).
+      onepager: 'One-pager',
+      onepagerTip: 'One-pager A4 imprimable — le document de comité (verdict, capacité, résiduel, bilan, contraintes, mini-carte).',
+      preDossier: 'Pré-dossier PC',
+      preDossierTip: 'Pack pré-dossier de permis : CERFA pré-rempli + plan de situation + fiche règles du zonage (réservé au plan Intégral).',
+      preDossierGate: 'Réservé au plan Intégral',
+      spf: 'Courrier SPF',
+      spfTip: 'Génère le courrier de demande au Service de la Publicité Foncière, pré-rempli avec la référence cadastrale (voie légale d’identification du propriétaire).',
       banquier: 'Note de financement',
       banquierPret: 'Note — prête',
       banquierEnCours: 'Note…',

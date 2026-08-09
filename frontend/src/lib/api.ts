@@ -315,6 +315,11 @@ export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge
   return `/parcels/${idu}/export.pdf?${p.toString()}`
 }
 
+// M54-EXPO — exports « document » orphelins branchés (URLs directes, ouvertes en onglet/téléchargées).
+export const onePagerUrl = (idu: string) => `/parcels/${idu}/export?format=onepager`
+export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
+export const spfLetterUrl = (idu: string) => `/parcels/${idu}/spf-letter`
+
 // ── Pipeline (CRM kanban) ──
 export const getPipelineMeta = () => j<PipelineMeta>('/pipeline/meta')
 export const getPipeline = () => j<PipelineEntry[]>('/pipeline')
