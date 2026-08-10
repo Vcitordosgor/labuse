@@ -221,7 +221,10 @@ export function MapView() {
   // R6 : parc (8 Mo simplifiés, opt-in), ANRU (10 Ko) et équipements (2,3 Mo) servis ÎLE
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
   const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
-  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements })
+  // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
+  // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
+  // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
+  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite', 20_000), enabled: layers.equipements })
   // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
   const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
@@ -508,6 +511,11 @@ export function MapView() {
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
       ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
+      // M55-E : plafond endpoint (20 000) ATTEINT → la couche est tronquée, on le DIT (règle
+      // no-silent-caps — un marqueur manquant sans avertissement est un mensonge visuel).
+      if (layers.equipements && equip.data.features.length >= 20_000) {
+        useApp.getState().setToast('Équipements : plus de 20 000 objets — l\u2019affichage est tronqué au plafond du serveur.')
+      }
     }
     // M6 2a (§1.6, anomalie A3) : couche activée mais VIDE sur le périmètre → le dire,
     // jamais un silence (l'utilisateur ne sait pas si la couche est vide ou cassée).
