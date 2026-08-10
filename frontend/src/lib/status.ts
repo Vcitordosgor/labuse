@@ -163,6 +163,10 @@ export const EQUIP_META: { key: string; emoji: string; color: string; label: str
   { key: 'tcsp', emoji: '🚌', color: '#6FD3C6', label: 'Transport' },
   { key: 'police', emoji: '🚓', color: '#8FB4F0', label: 'Police / gendarmerie' },
   { key: 'sport', emoji: '⚽', color: '#E8B44C', label: 'Sport' },
+  // M55-A (10/08) : élargissement borné validé Vic — marché forain, crèche, collège/lycée.
+  { key: 'marche', emoji: '🧺', color: '#E59BC4', label: 'Marché forain' },
+  { key: 'creche', emoji: '🧸', color: '#F2B08A', label: 'Crèche' },
+  { key: 'college_lycee', emoji: '🎓', color: '#79C9A0', label: 'Collège / lycée' },
 ]
 
 // Item 7 (UX V1) : définitions Q/A/V — UNE phrase chacune, identique partout où la lettre

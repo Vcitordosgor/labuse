@@ -81,7 +81,7 @@ export const LAYER_INFO: Record<string, string> = {
   cinquante_pas:
     'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée (source : cadastre). Elle ne longe que le rivage — normalement absente des communes sans littoral (les Hauts).',
   equipements:
-    'Les équipements du quotidien à proximité, relevés dans OpenStreetMap (les 24 communes) : mairie, écoles (école, collège), santé (pharmacie, hôpital, clinique, médecin), commerces (supermarché, supérette, boulangerie, centre commercial — pas toutes les boutiques), transport (arrêts de bus), police / gendarmerie, sport (terrains, gymnases, stades, piscines). Sur la fiche d’une parcelle, LABUSE indique la distance jusqu’à chaque équipement le plus proche.',
+    'Les équipements du quotidien à proximité, relevés dans OpenStreetMap (les 24 communes) : mairie, écoles primaires, collège / lycée, crèche, santé (pharmacie, hôpital, clinique, médecin), commerces — c’est-à-dire supermarché, supérette, boulangerie et centre commercial (pas toutes les boutiques) — marché forain, transport (arrêts de bus), police / gendarmerie et sport (terrains, gymnases, stades, piscines). Sur la fiche d’une parcelle, LABUSE indique la distance jusqu’à chaque équipement le plus proche.',
   renouv:
     'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire). Segment calculé par LABUSE (68 445 parcelles sur l’île) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
 }

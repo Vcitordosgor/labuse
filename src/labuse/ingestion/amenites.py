@@ -28,6 +28,14 @@ CATEGORIES_AFFICHAGE = {
     "mairie": '["amenity"="townhall"]',
     "police": '["amenity"~"^(police)$"]',           # gendarmerie taguée amenity=police en OSM
     "sport": '["leisure"~"^(sports_centre|stadium|pitch|swimming_pool)$"]',
+    # M55-A (10/08) : élargissement BORNÉ validé Vic — marché forain, crèche, collège/lycée.
+    # Rien d'autre. Affichage seul (le scoring ne les lit pas).
+    "marche": '["amenity"="marketplace"]',
+    "creche": '["amenity"="childcare"]',
+    # collège & lycée : en France ils sont tagués amenity=school (comme le primaire) ; OSM ne les
+    # sépare pas proprement — on les distingue par le nom (« Collège … » / « Lycée … »), best-effort
+    # d'affichage. Le « . » couvre le caractère accentué (è / é) ; `,i` = insensible à la casse.
+    "college_lycee": '["amenity"="school"]["name"~"coll.ge|lyc.e",i]',
 }
 DIST_COL = {"ecole": "dist_ecole_m", "sante": "dist_sante_m",
             "commerce": "dist_commerce_m", "tcsp": "dist_tcsp_m"}
