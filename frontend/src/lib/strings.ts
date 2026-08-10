@@ -17,6 +17,32 @@ export const CLIENT = {
     accrocheOff: (n: number) => `Filtrez les ${n.toLocaleString('fr-FR')} parcelles de La Réunion`,
     accrocheOn: (n: number) => `Affinez parmi les ${n.toLocaleString('fr-FR')} analysées par LABUSE`,
   },
+  // ── M55-D stage 5 · LA RÉVÉLATION — tout le texte du rituel d'analyse. RÈGLE D'HONNÊTETÉ :
+  //    le score est PRÉ-CALCULÉ (run servi versionné) ; pendant le décompte on APPLIQUE des
+  //    critères, on ne « calcule » aucun score. Aucun mot ne doit prétendre le contraire. ──
+  revelation: {
+    contexte: (n: number, date: string | null) =>
+      `${n.toLocaleString('fr-FR')} parcelles notées par LABUSE` +
+      (date ? ` — classement du ${date}` : ''),
+    contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
+    bouton: 'Analyser les parcelles',
+    decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
+    decompteFin: 'parcelles analysées',
+    phraseIntro: (n: number, perimetre: string) =>
+      `LABUSE a analysé les ${n.toLocaleString('fr-FR')} parcelles de ${perimetre}. Selon vos critères :`,
+    phraseZero: 'aucune parcelle retenue — élargissez vos critères (surface, zonage, verdict).',
+    voir: 'Voir les parcelles',
+    relancer: 'Relancer l’analyse',
+    desactiver: 'désactiver l’analyse',
+    erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',
+    reessayer: 'Réessayer',
+    // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
+    defTiers: {
+      brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
+      chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
+      reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
+    } as Record<string, string>,
+  },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
   marche: {
     banner: 'Le marché d’une commune, ligne par ligne — chaque chiffre porte sa source et sa date. '

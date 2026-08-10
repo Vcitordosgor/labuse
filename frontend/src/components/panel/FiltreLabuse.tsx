@@ -9,12 +9,14 @@
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import { deleteSearch, getFiltre, getSavedSearches, renameSearch, saveSearch } from '../../lib/api'
+import { deleteSearch, getFiltre, getSavedSearches, getV2Modele, renameSearch, saveSearch } from '../../lib/api'
 import { filtersFromHash, filtersToHash, hasOpinion } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
+import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
+import { Tip } from '../Tip'
 
 const CONSTRUCTIBILITE = [
   { k: 'constructible', l: 'Constructible' },
@@ -267,8 +269,8 @@ function ProfilSelecteur() {
   )
 }
 
-export function FiltreLabuse() {
-  const { filters, setFilter, setFilters, setVerdict } = useApp()
+export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
+  const { filters, setFilter, setFilters, setVerdict, commune } = useApp()
   const analyseOn = filters.analyseLabuse
   const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   const toggleTier = (t: FilterTier) =>
@@ -290,7 +292,75 @@ export function FiltreLabuse() {
   const off = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
   const parc = off.data?.compte
-  const retenues = on.data?.compte
+
+  // ═══ M55-D stage 5 · LA RÉVÉLATION — couche de PRÉSENTATION par-dessus l'état stage 4 (al/verdict
+  // intouchés jusqu'au geste final). Décompte 3 s CONSTANT (rituel, décision Vic) ; pendant
+  // l'animation la VRAIE requête /filtre part (refetch) — le résultat attend la fin pour se révéler.
+  // Échec réseau pendant le décompte → interruption propre (jamais un faux succès). Le score est
+  // PRÉ-CALCULÉ : le texte dit « application de vos critères », jamais « calcul du score ». ═══
+  type Phase = 'idle' | 'counting' | 'revealed' | 'error'
+  const [phase, setPhase] = useState<Phase>('idle')
+  const phaseRef = useRef<Phase>('idle')
+  phaseRef.current = phase
+  const [countVal, setCountVal] = useState(0)
+  // réponse FRAÎCHE du rituel (appel DIRECT, sans retry) — la phrase révèle CES nombres-là
+  const [fresh, setFresh] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
+  const timerRef = useRef<number | null>(null)
+  const rafRef = useRef<number | null>(null)
+  // date du run servi (champ `gel` du modèle épinglé) — la ligne de contexte de l'appel
+  const modele = useQuery({ queryKey: ['v2-modele'], queryFn: getV2Modele, staleTime: 3_600_000, retry: false })
+  const runDate = (() => {
+    const g = modele.data?.gel
+    if (!g) return null
+    const d = new Date(g.replace(' ', 'T'))
+    return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
+  })()
+  // prefers-reduced-motion : décompte remplacé par une transition simple (courte)
+  const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const RITUEL_MS = reduced ? 400 : 3000
+  const lancer = () => {
+    setPhase('counting'); setCountVal(0); setFresh(null)
+    // la VRAIE requête part MAINTENANT (appel direct, SANS retry : un échec interrompt le rituel
+    // au lieu d'être masqué par les retries react-query au-delà des 3 s)
+    getFiltre({ ...filters, analyseLabuse: true }, 0)
+      .then((r) => setFresh(r))
+      .catch(() => {
+        if (phaseRef.current !== 'counting') return
+        if (timerRef.current) window.clearTimeout(timerRef.current)
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        setPhase('error')
+      })
+    if (!reduced) {
+      const t0 = performance.now()
+      const cible = parc ?? 431_663
+      const tick = (now: number) => {
+        const p = Math.min(1, (now - t0) / RITUEL_MS)
+        setCountVal(Math.round(cible * p * p * p))   // easing cubique : les chiffres ACCÉLÈRENT
+        if (p < 1) rafRef.current = requestAnimationFrame(tick)
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    timerRef.current = window.setTimeout(() => setPhase((ph) => (ph === 'counting' ? 'revealed' : ph)), RITUEL_MS)
+  }
+  useEffect(() => {   // échec réseau pendant le décompte → état d'erreur honnête
+    if (phase === 'counting' && on.isError) {
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      setPhase('error')
+    }
+  }, [phase, on.isError])
+  useEffect(() => () => {   // démontage : aucun timer orphelin
+    if (timerRef.current) window.clearTimeout(timerRef.current)
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+  }, [])
+  // geste final : l'analyse s'ALLUME (état stage 4, biunivoque) et la section se rétracte
+  const voirParcelles = () => { setPhase('idle'); setAnalyse(true); onRetract?.() }
+  const perimetre = commune ?? 'La Réunion'
+  // la phrase révèle les nombres du RITUEL (réponse fraîche) ; hors rituel, la requête vivante
+  const src = phase === 'revealed' && fresh ? fresh : on.data
+  const phraseRetenues = src?.compte
+  const t = src?.tiers
+  const pl = (n: number, s: string) => `${nf.format(n)} ${s}${n > 1 ? 's' : ''}`
 
   return (
     <div className="card-elev px-3 py-2">
@@ -322,26 +392,70 @@ export function FiltreLabuse() {
         </div>
       </div>
 
-      {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (interrupteur en vedette, ÉTEINT par défaut) ═══════ */}
-      <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${analyseOn ? 'border-mint/60 bg-mint/[0.07]' : 'border-line-2 bg-surface-2/40'}`}>
-        <button data-analyse-toggle onClick={() => setAnalyse(!analyseOn)} aria-pressed={analyseOn}
-          className="flex w-full items-center gap-2.5 text-left" title="Appliquer le regard LABUSE (classement, potentiel, SDP…) — ou rester au tri factuel.">
-          <span className={`flex h-5 w-9 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick ${analyseOn ? 'bg-mint' : 'bg-line-2'}`}>
-            <span className={`h-4 w-4 rounded-full bg-white shadow transition-transform duration-quick ${analyseOn ? 'translate-x-4' : ''}`} />
-          </span>
-          <span className={`font-display text-[13px] font-bold ${analyseOn ? 'text-mint' : 'text-txt'}`}>② Afficher l’analyse LABUSE</span>
-        </button>
-        {/* compteur — la transition « parc → retenues » rend visible ce que l'analyse RETIENT. */}
-        <p className="mt-2 text-[11.5px] leading-snug text-txt-dim tabular-nums">
-          {analyseOn ? (
-            <><span className="text-txt-mut">{parc == null ? '…' : nf.format(parc)}</span>
-              <span className="mx-1.5 text-mint">→</span>
-              <span className="text-[15px] font-semibold text-txt-hi">{retenues == null ? '…' : nf.format(retenues)}</span> retenues par l’analyse</>
-          ) : (
-            <><span className="text-txt">{parc == null ? '…' : nf.format(parc)}</span> parcelles · <span className="text-txt-mut">tri factuel</span></>
-          )}
-        </p>
-        {analyseOn && (
+      {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════ */}
+      <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${
+        analyseOn || phase === 'counting' || phase === 'revealed' ? 'border-mint/60 bg-mint/[0.07]' : 'border-line-2 bg-surface-2/40'}`}>
+        {phase === 'counting' ? (
+          /* ── 2. LE DÉCOMPTE — 3 s constantes ; texte honnête (on APPLIQUE des critères) ── */
+          <div data-decompte className="py-2 text-center" aria-live="polite">
+            <p className="font-display text-[24px] font-bold text-mint tabular-nums">
+              {reduced ? '…' : nf.format(countVal)}
+              {!reduced && parc != null && countVal >= parc && <span aria-hidden> ✓</span>}
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-txt-dim">
+              {CLIENT.revelation.decompte(parc ?? 431_663)}…
+            </p>
+          </div>
+        ) : phase === 'error' ? (
+          /* ── échec réseau : état d'erreur honnête, jamais un faux succès ── */
+          <div data-analyse-erreur className="py-1">
+            <p className="text-[12px] leading-snug text-st-ecartee">{CLIENT.revelation.erreur}</p>
+            <button onClick={lancer}
+              className="mt-2 rounded-lg border border-line-2 px-3 py-1 text-[11.5px] text-txt transition-colors duration-quick hover:border-mint hover:text-mint">
+              {CLIENT.revelation.reessayer}
+            </button>
+          </div>
+        ) : phase === 'revealed' || analyseOn ? (
+          /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier) ── */
+          <div data-phrase>
+            <p className="text-[11.5px] leading-relaxed text-txt-mut">{CLIENT.revelation.phraseIntro(parc ?? 0, perimetre)}</p>
+            {phraseRetenues === 0 ? (
+              <p data-phrase-zero className="mt-1 text-[12.5px] font-medium leading-snug text-st-creuser">{CLIENT.revelation.phraseZero}</p>
+            ) : (
+              <p className="mt-1 text-[13px] leading-relaxed text-txt">
+                <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
+                {t && phraseRetenues != null && (
+                  <> — dont{' '}
+                    <Tip side="top" tip={CLIENT.revelation.defTiers.brulante}>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'brûlante')}</b></Tip>,{' '}
+                    <Tip side="top" tip={CLIENT.revelation.defTiers.chaude}>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.chaude, 'chaude')}</b></Tip>,{' '}
+                    <Tip side="top" tip={CLIENT.revelation.defTiers.reserve_fonciere}>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} en potentiel long terme</b></Tip>
+                  </>
+                )}.
+              </p>
+            )}
+            {phase === 'revealed' && (
+              /* ── 4. LE GESTE FINAL — l'analyse s'allume, la section se rétracte ── */
+              <button data-voir-parcelles onClick={voirParcelles}
+                className="mt-3 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+                {CLIENT.revelation.voir}
+              </button>
+            )}
+          </div>
+        ) : (
+          /* ── 1. L'APPEL — contexte sobre + LE bouton chaud du panneau éteint ── */
+          <div data-appel>
+            <p className="text-[11.5px] leading-snug text-txt">{CLIENT.revelation.contexte(parc ?? 431_663, runDate)}</p>
+            <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
+            <button data-analyser-btn onClick={lancer}
+              className="mt-2.5 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-shadow duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)]">
+              {CLIENT.revelation.bouton}
+            </button>
+          </div>
+        )}
+        {analyseOn && phase === 'idle' && (
           <div className="mt-3 flex flex-col gap-3">
             <div>
               <p className="label-caps text-txt-dim">Verdict · tiers</p>
@@ -449,6 +563,18 @@ export function FiltreLabuse() {
         </div>
       </Tiroir>
 
+            {/* relance (re-décompte 3 s, décision Vic) + extinction DISCRÈTE (la cérémonie est à
+                l'allumage, pas à l'extinction) */}
+            <div className="flex items-center justify-between pt-1">
+              <button data-relancer onClick={lancer}
+                className="rounded-lg border border-mint/50 px-3 py-1 text-[11.5px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">
+                {CLIENT.revelation.relancer}
+              </button>
+              <button data-desactiver onClick={() => setAnalyse(false)}
+                className="text-[10.5px] text-txt-dim underline decoration-txt-dim/50 underline-offset-2 transition-colors duration-quick hover:text-txt">
+                {CLIENT.revelation.desactiver}
+              </button>
+            </div>
           </div>
         )}
       </div>

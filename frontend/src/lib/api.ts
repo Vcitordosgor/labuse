@@ -285,6 +285,9 @@ export const getMapLayer = (kind: string) => {
 // M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
 // (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
 export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
+// M55-D stage 5 : la DATE du run servi (champ `gel` du modèle épinglé) — pour la ligne de contexte
+// de la Révélation (« classement du … »). Introuvable → null, la ligne s'affiche sans date.
+export const getV2Modele = () => j<{ model_version?: string; gel?: string }>('/v2/modele')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {
