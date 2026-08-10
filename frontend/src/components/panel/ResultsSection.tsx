@@ -89,7 +89,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="ml-2 flex shrink-0 flex-col items-end">
         {/* B2 : ×N (affichage produit du scoring v2). JAMAIS le nombre nu — l'unité de sens
             « plus probable » vit juste dessous, et l'infobulle porte le détail. Calcul inchangé (A3). */}
-        <Tip tip={p.mult_v2 != null ? CLIENT.mult.tip(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
+        <Tip tip={p.mult_v2 != null ? CLIENT.tri.multBadge(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
           <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
             {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
           </span>
@@ -304,7 +304,13 @@ export function ResultsSection() {
             de tri ne tiennent pas sur la largeur du volet (~300 px) et étaient rognées. Le libellé
             « Trier » et le contrôle segmenté passent à la ligne, le pilule wrappe ses boutons. */}
         <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">Trier</span>
+          <span className="flex shrink-0 items-center gap-1 text-[10px] uppercase tracking-wide text-txt-dim">Trier
+            {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
+            <Tip side="top" tip={CLIENT.tri.lunettes}>
+              <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
+                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
+          </span>
           {/* B3 : espacement régulier entre les 4 options (gap-1 + px-2.5 uniformes) */}
           <div className="flex flex-wrap items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
             {SORTS.map((s) => (

@@ -151,13 +151,19 @@ export const CLIENT = {
   //      2. « probabilité de mutation »
   //      3. « ×N susceptibilité »
   //    Le title détaille la sémantique complète.
+  // M55-F point 6 — le tri parle CLIENT : les libellés disent la valeur, pas la mécanique.
   tri: {
-    rang: 'classement',
-    mult: 'mutation ×N',
-    surface: 'surface',
+    rang: 'Meilleures opportunités',
+    mult: 'Plus susceptibles de se vendre',
+    surface: 'Surface',
     rangTip: 'Classe les parcelles par ordre de priorité (n°1 = la plus prometteuse) — copropriétés en queue',
     multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
     surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
+    // le « i » de la barre TRIER : les deux lunettes, en deux phrases
+    lunettes: 'Meilleures opportunités = probabilité de vente × qualité du terrain (l’opportunité globale). '
+      + 'Plus susceptibles de se vendre = la probabilité de vente seule (ce qui va bouger bientôt).',
+    // tooltip du badge ×N sur les cartes de résultat (une ligne)
+    multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
   },
 
   // ── B1 · scores ───────────────────────────────────────────────────────────
