@@ -226,7 +226,7 @@ function AddFilter() {
 // Sélecteur de commune — le périmètre n'est plus fixe : les 24 communes + « Toute l'île ».
 // Pilote carte, compteurs, liste, modules ; l'état vit dans l'URL (App.tsx).
 function CommuneSelect() {
-  const { commune, setCommune, setContexteCommune } = useApp()
+  const { commune, setCommune, setContexteCommune, focusCommune } = useApp()
   const [open, setOpen] = useState(false)
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   useEffect(() => {
@@ -235,7 +235,14 @@ function CommuneSelect() {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open])
-  const pick = (c: string | null) => { setCommune(c); setOpen(false) }
+  // M55-C point 4 : choisir un périmètre cale la commune (comportement d'origine). « Toute l'île »
+  // remet l'état initial (fiche fermée, pas de fantôme) ; et si une fiche est ouverte, elle SUIT le
+  // périmètre choisi plutôt que de rester sur l'ancienne commune.
+  const pick = (c: string | null) => {
+    setCommune(c)
+    if (c == null || useApp.getState().contexteCommune != null) setContexteCommune(c)
+    setOpen(false)
+  }
   return (
     <div className="relative shrink-0">
       <button onClick={() => setOpen((o) => !o)} data-commune-select
@@ -264,9 +271,9 @@ function CommuneSelect() {
                   className={`min-w-0 flex-1 px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
                 </button>
-                <button data-fiche-commune onClick={() => { setContexteCommune(c.commune); setOpen(false) }}
+                <button data-fiche-commune onClick={() => { focusCommune(c.commune); setOpen(false) }}
                   className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim hover:text-mint"
-                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (sources officielles)`}>
+                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement — cale aussi le périmètre et recadre la carte`}>
                   voir la fiche commune →
                 </button>
               </div>
@@ -281,10 +288,10 @@ function CommuneSelect() {
 
 // bouton CONTEXTE — visible quand une commune est active : le volet SRU/ANRU/PLH/marché
 function ContexteButton() {
-  const { commune, setContexteCommune } = useApp()
+  const { commune, focusCommune } = useApp()
   if (!commune) return null
   return (
-    <button onClick={() => setContexteCommune(commune)} data-contexte-btn
+    <button onClick={() => focusCommune(commune)} data-contexte-btn
       className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-violet/40 bg-violet/[0.08] px-2.5 text-[11px] text-violet transition-colors duration-quick hover:border-violet"
       title="Contexte commune — SRU, ANRU, PLH, marché logement (sources officielles)">
       ⓘ Contexte

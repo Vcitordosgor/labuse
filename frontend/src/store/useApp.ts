@@ -128,6 +128,11 @@ interface AppState {
   // volet CONTEXTE COMMUNE (SRU/ANRU/PLH/marché) — ouvert depuis le sélecteur ou le header
   contexteCommune: string | null
   setContexteCommune: (c: string | null) => void
+  // M55-C point 4 : cliquer un NOM de commune = UN seul geste à trois effets — ouvrir la fiche,
+  // caler le PÉRIMÈTRE sur la commune (comme le sélecteur : liste/compteurs/filtres suivent) et
+  // recadrer la carte (l'effet de fit sur `commune` s'en charge). À câbler partout où un nom de
+  // commune est cliquable, pour un comportement identique.
+  focusCommune: (c: string) => void
   // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
   toast: string | null
   setToast: (t: string | null) => void
@@ -245,6 +250,8 @@ export const useApp = create<AppState>((set) => ({
   setCommune: (commune) => set({ commune, zone: null }),
   contexteCommune: null,
   setContexteCommune: (contexteCommune) => set({ contexteCommune }),
+  // M55-C point 4 : périmètre + fiche en un geste ; le recadrage carte suit (effet fit sur `commune`).
+  focusCommune: (c) => set({ commune: c, contexteCommune: c, zone: null }),
   toast: null,
   setToast: (toast) => set({ toast }),
   verdict: false,
