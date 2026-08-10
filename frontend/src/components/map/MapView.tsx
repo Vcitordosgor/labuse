@@ -327,17 +327,8 @@ export function MapView() {
         filter: ['all', ['==', TIER_V2, 'brulante'], ['!', ETAGE0]] as never,
         paint: { 'line-color': '#FF6B35', 'line-width': 1.8, 'line-opacity': 0.95 },
       })
-      m.addLayer({
-        id: 'parcels-v-badge', type: 'symbol', source: 'parcels', minzoom: 15,
-        filter: ['all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0],
-                 ['!=', ['coalesce', ['get', 'rang_v2'], -1], -1]] as never,
-        layout: {
-          'text-field': ['concat', '#', ['to-string', ['get', 'rang_v2']]] as never,
-          'text-size': 10, 'text-anchor': 'top', 'text-offset': [0, 0.8], 'text-optional': true,
-        },
-        paint: { 'text-color': ['case', ['==', TIER_V2, 'brulante'], '#FF8A50', '#E8B44C'] as never,
-                 'text-halo-color': '#06130C', 'text-halo-width': 1.2 },
-      })
+      // M55-F point 4 (décision Vic) : les étiquettes « #rang » ont QUITTÉ la carte — la
+      // référence cadastrale vit sur la fiche. Layer parcels-v-badge retirée (0-caller).
       // M6.1 item 1 : étiquette de la zone PLU PRÉCISE (zone_lib) au zoom ≥ 16 — mode commune
       m.addLayer({
         id: 'parcels-zone-label', type: 'symbol', source: 'parcels', minzoom: 16,
@@ -674,10 +665,8 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    // M5.1 : badges carte v2 (liseré brûlantes v2 + pastille #rang) — verdict allumé, mode commune
-    for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
-      if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
-    }
+    // M5.1 : liseré brûlantes v2 — verdict allumé, mode commune (M55-F : pastille #rang retirée)
+    if (m.getLayer('parcels-brulantes')) m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && verdict))
   }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill, module])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
