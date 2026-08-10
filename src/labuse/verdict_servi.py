@@ -44,6 +44,19 @@ TIER_LABELS = {
 
 BADGE_DIVISION = "bâtie + division possible"
 
+#: couleur des déclassements — « terre éteinte », MIROIR de DECLASSE_COLOR (frontend/status.ts),
+#: hors palette thermique (jamais « chaude »). Une seule valeur écran / papier / carte M-Q.
+DECLASSE_COLOR = "#8C7468"
+DECLASSE_RGB = (140, 116, 104)
+
+
+def rang_total(db: Session, run: str = Q_A_RUN_LABEL) -> int | None:
+    """Dénominateur du rang servi : nombre de parcelles CLASSÉES (hors copropriétés) du run.
+    Un rang ne dit rien sans lui (« rang 57 643 / 428 239 »). Lecture seule, niveau run."""
+    return db.execute(text(
+        "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND rang IS NOT NULL"),
+        {"r": run}).scalar()
+
 #: hors run servi (parcelle absente de la table) — on le DIT, jamais un repli legacy muet.
 NON_EVALUEE = {
     "statut": "non_evaluee", "label": "Non évaluée au run servi", "tier": None,

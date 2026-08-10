@@ -2084,9 +2084,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         _top5 = s2["top5_contributions"]
         if isinstance(_top5, str):
             _top5 = json.loads(_top5)
+        # M54-AB F1 : le VERDICT servi (libellé client + motif) vient du POINT DE TRADUCTION
+        # UNIQUE (verdict_servi) — jamais le code technique du tier, jamais une table recopiée.
+        # + dénominateur du rang (un rang seul ne dit rien).
+        from ..verdict_servi import (verdict_servi as _verdict_servi, rang_total as _rang_total,
+                                      DECLASSE_COLOR as _DECLASSE_COLOR)
+        _vs = _verdict_servi(db, idu, run=v2run)
         score_v2 = {"tier": s2["tier"], "rang": s2["rang"], "mult_base": _mult,
                     "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
                     "copro": bool(s2["copro"]),
+                    # libellé/motif client = source unique verdict_servi (miroir de l'écran)
+                    "label": _vs["label"], "motif": _vs["motif"], "declasse": _vs["declasse"],
+                    "exception_registre": _vs["exception_registre"],
+                    "couleur_hex": _DECLASSE_COLOR if _vs["declasse"] else None,
+                    "rang_total": _rang_total(db, v2run),
                     # M52 Lot 1 (présentation, 0 calcul) : mot verbal + ⓘ + fréquence par tier (config)
                     # + « pourquoi » (top5 traduites, libelles_client existant).
                     "verbal": enrichir_verbal(_mult, s2["tier"]),
@@ -2623,6 +2634,23 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     fiche["adresse_ban"] = adresse_ban_texte(db, idu)
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
+    try:
+        from .marche_bloc import bloc_condense
+        _mc = {l["cle"]: l["phrase"] for l in
+               bloc_condense(db, fiche["commune"], ["prix_ancien_median", "tendance_12m"])}
+        fiche["marche_synthese"] = _mc.get("prix_ancien_median") or _mc.get("tendance_12m")
+    except Exception:  # noqa: BLE001
+        pass
+    # M54-AB C7 : pente CLIENT = RGE ALTI (parcel_terrain), ° ET %, MÊME source que dossier/flash.
+    try:
+        from ..pente_fmt import pente_texte
+        _pd = db.execute(text("SELECT pente_moy_deg FROM parcel_terrain WHERE idu = :i"),
+                         {"i": idu}).scalar()
+        if _pd is not None:
+            fiche["pente_terrain"] = pente_texte(float(_pd))
+    except Exception:  # noqa: BLE001
+        pass
     fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)

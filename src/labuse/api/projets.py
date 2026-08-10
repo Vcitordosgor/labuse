@@ -211,7 +211,8 @@ def _projet_dict(p: models.Projet) -> dict:
 _STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser": "À creuser"}
 #: M5.1 : le TIER v2 est le verdict énoncé au client (l'étage 0 du run servi prime) ;
 #: le statut matrice ne sert plus que de repli (item sans run v2).
-_TIER_LABEL = {"brulante": "Brûlante v2", "chaude": "Chaude v2",
+# M54-AB F11 : libellés client SANS suffixe « v2 » (jargon interne) — « Brûlante », pas « Brûlante v2 ».
+_TIER_LABEL = {"brulante": "Brûlante", "chaude": "Chaude",
                "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
                "ecartee": "Écartée"}
 
@@ -226,11 +227,20 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
     elif item.get("tier_v2") in _TIER_LABEL:
         st = _TIER_LABEL[item["tier_v2"]]
     else:
-        st = _STATUT_LABEL.get(statut, statut or "—")
+        # M54-AB F11 : repli sur le libellé CLIENT (verdict_servi), jamais le code technique brut
+        # (« ecartee », « declasse_… ») dans le « pourquoi » du projet.
+        from ..verdict_servi import TIER_LABELS
+        st = _STATUT_LABEL.get(statut) or TIER_LABELS.get(statut) or statut or "—"
     if item.get("q_score") is not None:
         out.append(f"{st} · qualité {item['q_score']}/100")
     else:
         out.append(st)
+    # M54-AB F11 : ligne pédagogique quand P (proba de mutation) et Q (qualité intrinsèque)
+    # divergent fortement — le classement peut être « chaud » sur une parcelle de qualité limitée.
+    _mult, _q = item.get("mult_base"), item.get("q_score")
+    _p_eleve = (_mult is not None and _mult >= 1.3) or item.get("tier_v2") in ("brulante", "chaude")
+    if _p_eleve and _q is not None and _q < 40:
+        out.append("Probabilité de mutation élevée, qualité intrinsèque limitée — voir la fiche.")
     sdp = item.get("sdp") or item.get("sdp_residuelle_m2")
     if sdp and sdp_besoin:
         pct = round(100 * sdp / sdp_besoin)
@@ -279,13 +289,20 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         source = "m22"
     else:
         from .app import _q_v2_list, _q_v2_where
-        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
-                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
-                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")),
-                                    ",".join(filtres.get("flags") or []) or None,
-                                    ",".join(communes) if communes else None,
-                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
+        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
+        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
+        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
+        where, params = _q_v2_where(
+            RUN,
+            score_min=filtres.get("scoreMin"),
+            surface_min=filtres.get("surfaceMin"),
+            surface_max=filtres.get("surfaceMax"),
+            sdp_min=filtres.get("sdpMin"),
+            evenement=bool(filtres.get("evenement")),
+            flags=",".join(filtres.get("flags") or []) or None,
+            communes=",".join(communes) if communes else None,
+            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
         n = db.execute(text(
             "SELECT count(*) FROM parcels p JOIN dryrun_parcel_evaluations d "
             "ON d.parcel_id = p.id AND d.run_label = :runref "
@@ -581,13 +598,20 @@ def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None =
             items = [it for it in items if it["commune"] in communes]
     else:
         from .app import _q_v2_list, _q_v2_where
-        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
-                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
-                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")),
-                                    ",".join(filtres.get("flags") or []) or None,
-                                    ",".join(communes) if communes else None,
-                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
+        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
+        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
+        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
+        where, params = _q_v2_where(
+            RUN,
+            score_min=filtres.get("scoreMin"),
+            surface_min=filtres.get("surfaceMin"),
+            surface_max=filtres.get("surfaceMax"),
+            sdp_min=filtres.get("sdpMin"),
+            evenement=bool(filtres.get("evenement")),
+            flags=",".join(filtres.get("flags") or []) or None,
+            communes=",".join(communes) if communes else None,
+            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
         items = _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
     return items[:limit]
 

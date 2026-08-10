@@ -115,3 +115,5 @@ qa/m54b_captures/
 
 # M54-EXPO-3 captures
 qa/m54c_captures/
+# M54-AB — sorties de régénération (artefacts)
+qa/m54ab_out/

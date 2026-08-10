@@ -196,20 +196,22 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                    WHERE s2.parcelle_id = :idu AND s2.run_id = :run"""),
                 {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
         if v2 or etage0:
-            libelles = {"brulante": "Brûlante", "chaude": "Chaude",
-                        "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
-                        "ecartee": "Écartée",
-                        # déclassement tête-de-liste (étage 0) — visibles avec motif
-                        "declasse_zone_fermee": "Zone fermée à l'urbanisation",
-                        "declasse_non_constructible": "Parcelle non constructible",
-                        "declasse_au_statut_inconnu": "Zone AU — ouverture non vérifiée",
-                        "declasse_au_fermee": "Zone AU fermée à l'urbanisation (réserve)"}
+            # M54-AB C1 : libellé CLIENT + motif = POINT DE TRADUCTION UNIQUE (verdict_servi),
+            # jamais une table recopiée dans le générateur (l'ancienne, incomplète, laissait
+            # « declasse_bati_sature » brut fuir au client). + dénominateur du rang.
+            from ..verdict_servi import TIER_LABELS, verdict_servi, rang_total
             tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
             if tier_eff:
+                vs = verdict_servi(db, idu)
                 out["verdict_v2"] = {
-                    "tier": tier_eff, "libelle": libelles.get(tier_eff, tier_eff),
+                    "tier": tier_eff, "libelle": TIER_LABELS.get(tier_eff, tier_eff),
                     "etage0": etage0,
+                    "declasse": tier_eff.startswith("declasse_"),
+                    # motif servi (« pourquoi ») — même phrase que l'écran/one-pager ; jamais sur l'étage 0
+                    # (l'exclusion dure a sa propre note ci-dessous).
+                    "motif": (None if etage0 else vs.get("motif")),
                     "rang": (None if etage0 or not v2 else v2["rang"]),
+                    "rang_total": (None if etage0 or not v2 else rang_total(db)),
                     "mult": (None if etage0 or not v2 or v2["mult_base"] is None
                              else round(float(v2["mult_base"]), 1))}
         # M-RENOUV (B3) : UNE ligne conditionnelle dans la synthèse — segment + rang +
@@ -337,6 +339,13 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "dvf_mutations" not in avail:
         return None
+    # M54-AB C5 : bloc Marché COMMUNE (M-U) condensé — prix ancien, tendance, liquidité, chacun DATÉ.
+    # Calculé en tête pour figurer même sans comparable de proximité ; les comparables restent.
+    commune_marche: list = []
+    commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if commune:
+        from ..api.marche_bloc import bloc_condense
+        commune_marche = bloc_condense(db, commune, ["prix_ancien_median", "tendance_12m", "liquidite"])
     stats = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT count(*) AS n,
@@ -355,7 +364,8 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().first()
     if not stats or not stats["n"]:
-        return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES}
+        return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
+                "commune_marche": commune_marche}
     # Comparables ANONYMISÉS : type, surface, prix, mois — JAMAIS d'adresse exacte (mandat).
     comps = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
@@ -394,6 +404,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
             "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
             "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()
         out["secteur"] = [dict(s) for s in sect]
+    out["commune_marche"] = commune_marche
     return out
 
 
@@ -441,8 +452,15 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
             "SELECT pente_moy_deg, pente_max_deg, flag_terrassement_lourd "
             "FROM parcel_terrain WHERE idu = :idu"), {"idu": idu}).mappings().first()
         if r and r["pente_moy_deg"] is not None:
-            out["pente"] = {"moy_deg": round(float(r["pente_moy_deg"]), 1),
+            # M54-AB C7 : la pente est SERVIE en degrés ET en % (même source RGE ALTI), avec son
+            # qualificatif — une seule mesure partout (fin du « ~10 % » coarse vs « 11,4° »).
+            from ..pente_fmt import pente_pct, pente_label
+            moy = round(float(r["pente_moy_deg"]), 1)
+            out["pente"] = {"moy_deg": moy, "moy_pct": pente_pct(moy),
+                            "label": pente_label(pente_pct(moy)),
                             "max_deg": round(float(r["pente_max_deg"]), 1)
+                            if r["pente_max_deg"] is not None else None,
+                            "max_pct": pente_pct(float(r["pente_max_deg"]))
                             if r["pente_max_deg"] is not None else None,
                             "terrassement_lourd": bool(r["flag_terrassement_lourd"])}
     # Mandats futurs (ANC & Végétation) : colonnes déclarées par le registre des
@@ -577,17 +595,33 @@ def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> d
 
 def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[dict]:
     # M-P (P2-68) : synchro indexée par NOM (stable), plus par id serial (dépendant du seed).
+    # M54-AB F9 : on LIT aussi `source_millesime` (jusqu'ici ignoré → DVF, PLU/GPU… affichaient
+    # « — » alors que leur millésime amont est renseigné). Priorité : statique → millésime amont →
+    # date de synchro → motif. ZÉRO « — » sec.
     sync: dict[str, str] = {}
+    mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        for r in db.execute(text(
-                "SELECT name, last_sync_at FROM data_sources WHERE last_sync_at IS NOT NULL")):
-            sync[r[0]] = r[1].date().isoformat()
+        for r in db.execute(text("SELECT name, last_sync_at, source_millesime FROM data_sources")):
+            if r[1] is not None:
+                sync[r[0]] = r[1].date().isoformat()
+            if r[2]:
+                mill_amont[r[0]] = r[2]
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
             continue
         vus.add(label)
-        millesime = statique or (sync.get(src_name) and f"synchronisé le {sync[src_name]}") or "—"
+        if statique:
+            millesime = statique
+        elif src_name and mill_amont.get(src_name):
+            millesime = mill_amont[src_name]
+        elif src_name and sync.get(src_name):
+            millesime = f"synchronisé le {sync[src_name]}"
+        else:
+            # M-O : GPU/PLU et Géorisques n'exposent PAS d'horizon amont daté (NULL voulu) — on le
+            # DIT, jamais un « — » muet. (Pour les sources à millésime réel non encore enregistré,
+            # même motif honnête ; le peuplement de data_sources.source_millesime est une dette data.)
+            millesime = "horizon amont non publié"
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 

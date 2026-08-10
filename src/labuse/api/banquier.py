@@ -66,7 +66,9 @@ def _facts_synthese(out: dict, core_mod):
                                   f"(zone {fais.zone_resolue or fais.zone})", "ESTIME")
         if fo.get("logements_au_sol"):
             lo, hi = fo["logements_au_sol"]
-            facts["logements"] = F(f"potentiel indicatif {lo} à {hi} logements", "ESTIME")
+            # M54-AB F10 : borner quand min = max (« ~2 à 2 » → « ~2 »).
+            lg = f"~{lo}" if lo == hi else f"{lo} à {hi}"
+            facts["logements"] = F(f"potentiel indicatif {lg} logements", "ESTIME")
     bilan = out.get("bilan")
     if bilan is not None and bilan.charge_fonciere:
         cf = bilan.charge_fonciere
@@ -78,16 +80,25 @@ def _facts_synthese(out: dict, core_mod):
         # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — `sector_price` est le prix des
         # COMPARABLES (existant), PAS le prix de sortie du bilan (neuf). Distingués pour ne pas
         # servir deux « prix de sortie » incohérents dans le même dossier.
+        # M54-AB C5 : la synthèse IA ne cite plus de n divergent (« 54 ventes » vs tableau 51) —
+        # le n des comparables reste dans le TABLEAU, les n de marché dans le bloc commune M-U.
         facts["marche"] = F(f"comparables DVF du secteur {prix.get('median')} €/m² (existant, "
-                            f"{prix.get('n', '?')} ventes, fiabilité {prix.get('fiabilite')})",
+                            f"fiabilité {prix.get('fiabilite')})",
                             "SOURCE" if prix.get("fiabilite") == "fiable" else "ESTIME")
     label_neuf = out.get("prix_neuf_label")
     if label_neuf:
+        import re
+        # retire tout « , N ventes » du label : le n divergent ne doit pas entrer dans la prose IA.
+        label_neuf = re.sub(r",?\s*\d[\d\s]*ventes", "", label_neuf).strip(" ·—,")
         facts["prix_sortie_neuf"] = F(f"prix de sortie neuf retenu pour le bilan — {label_neuf}", "ESTIME")
-    se = out.get("score_e")
-    if se and se["estimable"]:
-        facts["marge"] = F(f"marge foncière estimée {_eur(se['marge_estimee'])} "
-                           f"(prix de sortie neuf, niveau {se['niveau_prix']})", "ESTIME")
+    # M54-AB C3 : la marge SYNTHÉTISÉE découle de la charge du bilan à rebours (point de calcul
+    # unique), jamais de la charge Score É recalculée à 21 % — sinon la synthèse cite -18 k€ et le
+    # bloc Score É -19 k€ dans le même dossier.
+    from .briques_pdf import score_e_affiche
+    sa = score_e_affiche(out)
+    if sa:
+        facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} "
+                           f"(prix de sortie neuf, niveau {sa['niveau_prix']})", "ESTIME")
     perm = out.get("permits")
     if perm and perm.get("n"):
         facts["permis_voisins"] = F(f"{perm['n']} permis de construire dans le voisinage récent", "SOURCE")
@@ -125,8 +136,10 @@ def _synthese_html(db: Session, out: dict) -> str:
         txt = " · ".join(f.value for f in facts.values())
     # EXPRESS-01 · Volet B : l'avis IA n'apparaît QUE si la synthèse a été générée par le
     # LLM (jamais sur le repli déterministe — critère : uniquement là où l'IA s'exprime).
+    # M54-AB F10 : le cartouche « L'IA ne juge pas… » passe APRÈS la synthèse (il la commente,
+    # il ne l'introduit pas).
     avis = f"<div class='avis-ia'>{_esc(AVIS_IA)}</div>" if ai_used else ""
-    return f"{avis}<div class='exec'>{_esc(txt) if txt else '—'}</div>"
+    return f"<div class='exec'>{_esc(txt) if txt else '—'}</div>{avis}"
 
 
 # ───────────────────────── endpoints ─────────────────────────

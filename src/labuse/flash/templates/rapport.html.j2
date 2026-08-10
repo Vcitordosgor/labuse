@@ -71,7 +71,9 @@
       </div></div>
     {% endif %}
     {% if ident.regles and ident.regles.hauteur_max_m %}
-    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+    {# M54-AB C6 : c'est la hauteur TOTALE de zone (plafond PLU) — le dossier banquier chiffre, lui,
+       la hauteur d'égout RETENUE (~9 m, R+2) pour le scénario neuf. Deux hauteurs, deux libellés. #}
+    <div class="cartouche"><div class="titre">Hauteur totale de zone (règle calibrée)</div>
       <div class="valeur">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} <small>m</small></div></div>
     {% endif %}
     {% endif %}
@@ -101,7 +103,9 @@
         <td class="num-cell">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} m</td></tr>
     {% endif %}
     {% if ident.regles.confiance %}
-    <tr><td>Confiance du calibrage</td><td>{{ ident.regles.confiance }}</td></tr>
+    {# M54-AB F8 : dire CE qu'elle mesure — la confiance du CALIBRAGE des règles PLU (retraits,
+       hauteurs…), distincte de la « confiance des données » (complétude) de la fiche premium. #}
+    <tr><td>Confiance du calibrage (règles PLU)</td><td>{{ ident.regles.confiance }}</td></tr>
     {% endif %}
   </table>
   <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
@@ -155,6 +159,11 @@
   {% elif c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
   {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
      on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
+  {# M54-AB C2 : NOMMER le scénario — ici on CONSERVE le bâti existant (SDP résiduelle = droits
+     PLU − emprise déjà bâtie). Le dossier banquier chiffre l'autre scénario (table rase, neuf). #}
+  <h3>Potentiel résiduel — bâti conservé</h3>
+  <p class="note">Ce qu'il reste à construire au regard du PLU en gardant le bâti existant (le
+    dossier banquier chiffre l'hypothèse « faisabilité neuve », bâti démoli).</p>
   <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
     <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div>
     {# Clôture cycle 2 (fix N8) : la SDP n'est PAS l'habitable — surface de plancher au sens PLU
@@ -165,19 +174,24 @@
   {% endif %}
 
   {% if c.verdict_v2 %}
-  <h3>Verdict LABUSE (scoring v2)</h3>
+  <h3>Verdict LABUSE</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Verdict</div>
-      <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
+      <div class="valeur">{{ c.verdict_v2.libelle }}</div></div>
     {% if c.verdict_v2.rang %}
     <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
-      <div class="valeur">{{ c.verdict_v2.rang }}</div></div>
+      <div class="valeur">{{ "{:,}".format(c.verdict_v2.rang).replace(",", " ") }}{% if c.verdict_v2.rang_total %} <small>/ {{ "{:,}".format(c.verdict_v2.rang_total).replace(",", " ") }}</small>{% endif %}</div></div>
     {% endif %}
     {% if c.verdict_v2.mult %}
     <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
       <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
     {% endif %}
   </div>
+  {# M54-AB C1 : UNE phrase de motif sous le verdict (le « pourquoi » déterministe servi) —
+     surtout pour les déclassements, pour qu'un code technique ne soit jamais le seul énoncé. #}
+  {% if c.verdict_v2.motif %}
+  <p class="note">{{ c.verdict_v2.motif }}</p>
+  {% endif %}
   {# AU-OUVERTURE (Vic 30/07) : la mention d'ouverture non vérifiée est VUE — en tête, dans le
      bloc Verdict, jamais reléguée en bas de fiche. Étiquette « Absent » (ni un fait, ni Estimé). #}
   {% if c.verdict_v2.mention_ouverture %}
@@ -282,26 +296,24 @@
 {% set m = data.marche %}
 {% if m %}
 <section>
-  <h2><span class="num">05</span>Marché — mutations à proximité</h2>
+  <h2><span class="num">05</span>Marché — commune &amp; comparables</h2>
+  {# M54-AB C5 : le bloc Marché commune (M-U) — prix ancien, tendance, liquidité, chaque ligne
+     DATÉE — remplace la médiane brute à rayon fixe. Les comparables anonymisés de proximité restent. #}
+  {% if m.commune_marche %}
+  <h3>Marché de la commune</h3>
+  <ul class="marche-commune">
+    {% for l in m.commune_marche %}<li>{{ l.phrase }}</li>{% endfor %}
+  </ul>
+  {% endif %}
   {% if m.rien %}
-  <p>Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les
-     {{ m.annees }} dernières années.</p>
+  <p class="note">Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les
+     {{ m.annees }} dernières années — pas de comparable de proximité.</p>
   {% else %}
-  <div class="cartouches">
-    <div class="cartouche"><div class="titre">Ventes ({{ m.rayon_m }} m · {{ m.annees }} ans)</div>
-      <div class="valeur">{{ m.n }}</div></div>
-    {% if m.med_m2_bati %}
-    <div class="cartouche"><div class="titre">Prix médian bâti</div>
-      <div class="valeur">{{ "{:,}".format(m.med_m2_bati).replace(",", " ") }} <small>€/m²</small></div></div>
-    {% endif %}
-    {% if m.med_m2_terrain %}
-    <div class="cartouche"><div class="titre">Prix médian terrain</div>
-      <div class="valeur">{{ "{:,}".format(m.med_m2_terrain).replace(",", " ") }} <small>€/m²</small></div></div>
-    {% endif %}
-  </div>
-  {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
 
   {% if m.comparables %}
+  <p class="note">Comparables de proximité : {{ m.n }} ventes dans un rayon de {{ m.rayon_m }} m
+     sur {{ m.annees }} ans.</p>
+  {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
   <h3>Comparables récents (anonymisés)</h3>
   <table class="donnees">
     <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>
@@ -420,8 +432,8 @@
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
-      <div class="valeur">{{ t.pente.moy_deg }}<small>°</small>
-        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}°</small>{% endif %}
+      <div class="valeur">{{ t.pente.moy_deg }}<small>° ≈ {{ t.pente.moy_pct }} % · {{ t.pente.label }}</small>
+        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}° ≈ {{ t.pente.max_pct }} %</small>{% endif %}
       </div></div>
     {% endif %}
     {% if t.solaire %}
