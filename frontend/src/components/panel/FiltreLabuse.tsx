@@ -11,8 +11,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getV2Modele } from '../../lib/api'
-import { resumeCriteres } from '../../lib/filters'
+import { getFiltre, getFiltreCount, getV2Modele } from '../../lib/api'
+import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
@@ -35,14 +35,6 @@ const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, 
 const PROPRIO_TYPE = [{ k: 'pm', l: 'PM identifiée (SIREN)' }, { k: 'bailleur', l: 'Bailleur (HLM/SEM)' }, { k: 'pp', l: 'Particulier / non déterminable' }]
 const ETAT_SOCIETE = [{ k: 'procedure', l: 'Procédure collective' }, { k: 'cessee', l: 'Cessée' }, { k: 'radiee', l: 'Radiée' }]
 const COPRO = [{ k: 'avec', l: 'En copropriété' }, { k: 'sans', l: 'Hors copropriété' }]
-const VIGILANCES: [string, string][] = [
-  ['pente', 'Pente'], ['bruit_route', 'Bruit routier'], ['sol_pollue', 'SIS / pollution'],
-  ['cavite', 'Cavité'], ['mvt', 'Mouvement de terrain'], ['ravine', 'Ravine'], ['icpe', 'ICPE'],
-]
-// M55-D stage 4 : ÉTAGE① « Contraintes de secteur » = régime foncier (50 pas, Parc) + vigilances
-// (pollution/ICPE/risques) — des FAITS de terrain, valables sans analyse.
-const CONTRAINTES: [string, string][] = ([['cinquante_pas', '50 pas géométriques'],
-  ['parc_national', 'Parc national']] as [string, string][]).concat(VIGILANCES)
 // M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
 // adresses). La chip affiche le CP, le « i » (title) nomme la commune. Rang 1 du panneau.
 const CP_COMMUNES: [string, string][] = [
@@ -59,9 +51,6 @@ const CP_COMMUNES: [string, string][] = [
 const SIGNAUX_KEYS = ['procedure', 'permis_actif', 'permis_caduc', 'defisc',
   'nu_pm', 'friche', 'cession', 'assemblage']
 
-// Facettes du cadrage EN ATTENTE DE DONNÉE (P0) — montrées, désactivées, honnêtes.
-const DROIT_DIFFERES = ['Plancher de densité', 'EBC partiel', 'Emplacement réservé',
-  'Sol naturel / ZAN', 'Fraîcheur PLU (radar M41)']
 
 const nf = new Intl.NumberFormat('fr-FR')
 
@@ -170,8 +159,6 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   const toggleTier = (t: FilterTier) =>
     setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-  const toggleFlag = (k: string) =>
-    setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
@@ -184,6 +171,24 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const parcQ = useQuery({ queryKey: ['filtre-perimetre', filters.communes], queryFn: () =>
     getFiltre({ ...EMPTY_FILTERS, communes: filters.communes, analyseLabuse: false }, 0) })
   const parc = parcQ.data?.compte
+
+  // ═══ M55-D stage 7 · COMPTEUR VIVANT — « N parcelles correspondent », mis à jour à chaque
+  // changement de filtre : debounce 400 ms + AbortController (les appels obsolètes sont annulés).
+  // TOUJOURS la réponse /filtre réelle (état courant de l'interrupteur), jamais une estimation.
+  // Registre DISCRET — le rituel 3 s de la Révélation reste la cérémonie, intacte.
+  const nActifs = countActiveFilters(filters)
+  const [live, setLive] = useState<number | null>(null)
+  const [liveLoading, setLiveLoading] = useState(false)
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setLiveLoading(true)
+    const tmr = window.setTimeout(() => {
+      getFiltreCount(filters, ctrl.signal)
+        .then((r) => { setLive(r.compte); setLiveLoading(false) })
+        .catch(() => { /* abort/réseau : on garde le dernier nombre, l'opacité signale le flottement */ })
+    }, 400)
+    return () => { window.clearTimeout(tmr); ctrl.abort() }
+  }, [filters])
 
   // ═══ M55-D stage 5 · LA RÉVÉLATION — couche de PRÉSENTATION par-dessus l'état stage 4 (al/verdict
   // intouchés jusqu'au geste final). Décompte 3 s CONSTANT (rituel, décision Vic) ; pendant
@@ -305,13 +310,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           <p className="label-caps text-txt-dim">État du sol</p>
           <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
         </div>
-        <div>
-          <p className="label-caps text-txt-dim">Contraintes de secteur <span className="normal-case text-[8.5px] text-txt-dim">Sourcé</span></p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {CONTRAINTES.map(([k, l]) => (<Chip key={k} on={filters.flags.includes(k)} onClick={() => toggleFlag(k)}>{l}</Chip>))}
-          </div>
-        </div>
       </div>
+      {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —
+          les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
+          ignorées proprement à la lecture (filters.ts). */}
 
       {/* ═══════ 3 · SIGNAUX DE VIE (M55-D stage 6) — 8 ÉVÉNEMENTS SOURCÉS, filtrables SANS
           analyse (pas des jugements). OU entre signaux du groupe, ET avec le reste. ═══════ */}
@@ -334,6 +336,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           ))}
         </div>
       </div>
+
+      {/* ═══════ COMPTEUR VIVANT (stage 7) — visible dès qu'un filtre est posé ═══════ */}
+      {nActifs > 0 && (
+        <p data-compteur-vivant aria-live="polite"
+          className={`mt-3 text-[11.5px] tabular-nums transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'} ${live === 0 ? 'text-st-creuser' : 'text-txt-mut'}`}>
+          {live == null ? '…' : live === 0 ? CLIENT.compteur.zero
+            : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent</>}
+        </p>
+      )}
 
       {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════ */}
       <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${
@@ -397,7 +408,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
             <button data-analyser-btn onClick={lancer}
               className="mt-2.5 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-shadow duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)]">
-              {CLIENT.revelation.bouton}
+              {nActifs > 0 && live != null ? CLIENT.revelation.boutonCes(live)
+                : CLIENT.revelation.boutonParc(parc ?? 431_663)}
             </button>
           </div>
         )}
@@ -525,15 +537,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         )}
       </div>
 
-      {/* M55-D stage 6 (ménage acté Vic) : « Vous cherchez ? », pré-réglages et « Mes vues »
-          RETIRÉS de l'UI (les veilles/recherches sauvegardées restent intactes au backend —
-          /events + saved_searches, toujours servies par la cloche de notifications). */}
-      <Tiroir titre="Puis-je construire ?" sous="droit du sol — repères">
-        <p className="text-[11px] leading-snug text-txt-dim">
-          Le zonage (famille + zone exacte) et l’état du sol se règlent dans « Le terrain ».
-          En attente de donnée (M45 v1.1) : {DROIT_DIFFERES.join(' · ')}.
-        </p>
-      </Tiroir>
+      {/* M55-D stage 7 (décision Vic) : plus AUCUNE section pédagogique dans le panneau —
+          « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}
 
       <button onClick={resetTout}
         title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."

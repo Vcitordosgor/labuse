@@ -41,6 +41,12 @@ export const CLIENT = {
       assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
     } as Record<string, string>,
   },
+  // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
+  //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──
+  compteur: {
+    correspondent: (n: number) => `${n.toLocaleString('fr-FR')} parcelles correspondent`,
+    zero: 'Aucune parcelle ne correspond — élargissez vos critères.',
+  },
   // ── M55-D stage 5 · LA RÉVÉLATION — tout le texte du rituel d'analyse. RÈGLE D'HONNÊTETÉ :
   //    le score est PRÉ-CALCULÉ (run servi versionné) ; pendant le décompte on APPLIQUE des
   //    critères, on ne « calcule » aucun score. Aucun mot ne doit prétendre le contraire. ──
@@ -50,6 +56,10 @@ export const CLIENT = {
       (date ? ` — classement du ${date}` : ''),
     contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
     bouton: 'Analyser les parcelles',
+    // M55-D stage 7 : bouton CONTEXTUEL — N = le compteur vivant (réponse /filtre réelle) ;
+    // zéro filtre posé → le parc du périmètre.
+    boutonCes: (n: number) => `Analyser ces ${n.toLocaleString('fr-FR')} parcelles`,
+    boutonParc: (n: number) => `Analyser les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
     decompteFin: 'parcelles analysées',
     phraseIntro: (n: number, perimetre: string) =>
