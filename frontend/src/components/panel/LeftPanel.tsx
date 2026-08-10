@@ -3,6 +3,8 @@ import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
+import { getAccueilChiffres } from '../../lib/api'
+import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
@@ -226,23 +228,67 @@ function VerdictHero() {
   // d'analyse vit dans le panneau Filtres (la Révélation). Ici : ce que LABUSE fait, sobrement,
   // et UN lien « Commencer → » qui ouvre la section Filtres. Disparaît après le premier geste.
   if (accueilVu) return null
+  return <AccueilPreuves onCommencer={() => { setAccueilVu(); openFiltres() }} />
+}
+
+// M55-D stage 9 — L'ACCUEIL QUI PROUVE : trois blocs, trois messages, TOUS les nombres servis
+// par /accueil/chiffres (cache serveur 1 h) — aucun count en dur ici (validation grep). Chaque
+// chiffre porte son « i » sourcé. Un chiffre null est MASQUÉ, jamais inventé.
+function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
+  const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
+  const d = q.data
+  const nf = (n: number) => n.toLocaleString('fr-FR')
+  const A = CLIENT.accueil
+  const Ligne = ({ n, l, src }: { n: number | null | undefined; l: (s: string) => string; src: string }) => (
+    n == null ? null : (
+      <li className="flex items-start gap-1.5 text-[10.5px] leading-snug text-txt">
+        <span className="mt-px shrink-0 text-mint" aria-hidden>·</span>
+        <span className="min-w-0">{l(nf(n))}</span>
+        <Tip side="top" tip={src} className="shrink-0">
+          <span role="button" tabIndex={0} aria-label="Source de ce chiffre"
+            className="flex h-[12px] w-[12px] items-center justify-center rounded-full border border-line-2 text-[7.5px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+        </Tip>
+      </li>
+    )
+  )
+  const Bloc = ({ titre, tagline, children }: { titre: string; tagline: string; children: React.ReactNode }) => (
+    <section className="w-full rounded-lg border border-line-2/60 bg-surface-2/40 px-3 py-2.5 text-left">
+      <h3 className="font-display text-[12.5px] font-bold text-mint">{titre}</h3>
+      <ul className="mt-1.5 flex flex-col gap-1">{children}</ul>
+      <p className="mt-1.5 text-[9.5px] italic leading-snug text-txt-dim">{tagline}</p>
+    </section>
+  )
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pb-6 text-center">
-      <svg viewBox="0 0 240 82" className="h-7 w-20 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-clip px-5 pb-6 pt-2 text-center">
+      <svg viewBox="0 0 240 82" className="h-6 w-16 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
         <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
       </svg>
-      <p className="mt-3 text-xs leading-relaxed text-txt-mut">{CLIENT.accueil.intro}</p>
-      <ul className="mt-3 flex flex-col gap-1 text-left">
-        {CLIENT.accueil.points.map((pt) => (
-          <li key={pt} className="flex items-start gap-1.5 text-[10.5px] leading-snug text-txt-dim">
-            <span className="mt-px shrink-0 text-mint" aria-hidden>·</span>{pt}
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-[10.5px] leading-snug text-txt-dim">{CLIENT.accueil.doctrine}</p>
-      <button data-commencer onClick={() => { setAccueilVu(); openFiltres() }}
-        className="mt-4 w-full rounded-xl border border-mint/50 px-4 py-2.5 font-display text-[13px] font-bold text-mint transition-colors duration-quick hover:bg-mint/10">
-        {CLIENT.accueil.commencer}
+      <p className="mt-2 text-[11px] leading-relaxed text-txt-mut">
+        {A.intro(d?.parcelles != null ? nf(d.parcelles) : '…')}
+      </p>
+      <div className="mt-3 flex w-full flex-col gap-2">
+        <Bloc titre={A.blocs.couvre.titre} tagline={A.blocs.couvre.tagline}>
+          <Ligne n={d?.parcelles} l={A.chiffres.parcelles.l} src={A.chiffres.parcelles.src} />
+          <Ligne n={d?.communes} l={A.chiffres.communes.l} src={A.chiffres.communes.src} />
+          <Ligne n={d?.sources} l={A.chiffres.sources.l} src={A.chiffres.sources.src} />
+        </Bloc>
+        <Bloc titre={A.blocs.devine.titre} tagline={A.blocs.devine.tagline}>
+          <Ligne n={d?.ventes_train} l={A.chiffres.ventes_train.l} src={A.chiffres.ventes_train.src} />
+          <Ligne n={d?.communes_calibrees} l={A.chiffres.communes_calibrees.l} src={A.chiffres.communes_calibrees.src} />
+          <Ligne n={d?.golden_parcelles} l={A.chiffres.golden.l}
+            src={A.chiffres.golden.src(d?.golden_verifs != null ? nf(d.golden_verifs) : '—')} />
+        </Bloc>
+        <Bloc titre={A.blocs.voit.titre} tagline={A.blocs.voit.tagline}>
+          <Ligne n={d?.defisc_actives} l={A.chiffres.defisc.l} src={A.chiffres.defisc.src} />
+          <Ligne n={d?.permis_caducs} l={A.chiffres.caducs.l} src={A.chiffres.caducs.src} />
+          <Ligne n={d?.ensembles_fonciers} l={A.chiffres.ensembles.l} src={A.chiffres.ensembles.src} />
+          <Ligne n={d?.bascules_tiers_hauts} l={A.chiffres.bascules.l} src={A.chiffres.bascules.src} />
+        </Bloc>
+      </div>
+      <p className="mt-2.5 text-[10px] leading-snug text-txt-dim">{A.doctrine}</p>
+      <button data-commencer onClick={onCommencer}
+        className="mt-3 w-full shrink-0 rounded-xl border border-mint/50 px-4 py-2.5 font-display text-[13px] font-bold text-mint transition-colors duration-quick hover:bg-mint/10">
+        {A.commencer}
       </button>
     </div>
   )
