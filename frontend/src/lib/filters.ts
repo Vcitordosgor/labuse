@@ -84,6 +84,24 @@ export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
 // ── Chips actifs (token → suppression ciblée) ──
 export interface Chip { token: string; label: string }
 
+// M55-D (phase 2) : le badge « Filtres (N) » du header compte TOUS les critères actifs, où qu'ils
+// aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
+const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
+  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro']
+const F_NUMS: (keyof Filters)[] = ['scoreMin', 'surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
+  'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
+  'prixMarcheMin', 'prixMarcheMax', 'caMin']
+const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
+  'sousDensite', 'renouvellement', 'divisionOr', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
+
+export function countActiveFilters(f: Filters): number {
+  let n = 0
+  for (const k of F_ARRAYS) if ((f[k] as unknown[]).length) n++
+  for (const k of F_NUMS) if (f[k] != null) n++
+  for (const k of F_BOOLS) if (f[k]) n++
+  return n
+}
+
 export function activeChips(f: Filters): Chip[] {
   const out: Chip[] = []
   for (const t of f.tiers) out.push({ token: `tier:${t}`, label: ALL_TIER_META[t].label })

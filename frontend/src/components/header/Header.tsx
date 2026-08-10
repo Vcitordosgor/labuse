@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
-import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
-import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
+import { activeChips, countActiveFilters, removeToken } from '../../lib/filters'
+import { TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { Loading } from '../Loading'
@@ -121,22 +121,14 @@ function NumField({ label, value, onChange, placeholder }: {
   )
 }
 
-function CheckRow({ label, on, toggle }: { label: string; on: boolean; toggle: () => void }) {
-  return (
-    <button onClick={toggle} className="flex items-center gap-2 text-left">
-      <span className={`flex h-[13px] w-[13px] items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
-        {on && <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" /></svg>}
-      </span>
-      <span className={`text-[11px] ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
-    </button>
-  )
-}
-
-// Popover d'ajout de filtre — filtres MÉTIER combinables (M5.1 : tiers v2 multi, plages,
-// booléens, flags, signaux propriétaire). Le tier v1.3 « 🔥 » et les bandes V ont disparu.
+// M55-D (phase 2) — FUSION des deux banques : le header ne porte plus qu'un accès « Filtres (N) »
+// avec les 3 RAPIDES validés (Verdict + Surface + SDP) et « Tous les filtres → » qui révèle LE
+// panneau unique (tous les critères, une seule fois). Le badge N compte TOUS les filtres actifs,
+// où qu'ils aient été posés. Le MODE d'analyse n'est PAS ici (il vit dans le panneau).
 function AddFilter() {
-  const { filters, setFilter, setFilters } = useApp()
+  const { filters, setFilter, setVerdict } = useApp()
   const [open, setOpen] = useState(false)
+  const n = countActiveFilters(filters)
   const TIERS: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   useEffect(() => {
     if (!open) return
@@ -146,19 +138,23 @@ function AddFilter() {
   }, [open])
   const toggleTier = (t: FilterTier) =>
     setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-  const toggleFlag = (k: string) =>
-    setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
+  const ouvrirTout = () => { setVerdict(true); setOpen(false) }
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)}
-        className={`flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-dashed px-3 text-xs ${
-          open ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>+ Filtre</button>
+      <button data-filtres-btn onClick={() => setOpen((o) => !o)}
+        className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-dashed px-3 text-xs ${
+          open || n > 0 ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        Filtres
+        {n > 0 && <span className="rounded-full bg-mint/15 px-1.5 text-[10px] font-medium text-mint tabular-nums">{n}</span>}
+      </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="floating absolute left-0 top-9 z-20 w-[300px] p-4">
-            <label className="label-caps block">Verdict · Scoring (multi)</label>
-            <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
+          <div className="floating absolute left-0 top-9 z-20 w-[290px] p-4">
+            <p className="label-caps flex items-center gap-1.5">Filtres rapides
+              <span className="text-[9px] font-normal normal-case text-txt-dim">— tout le reste dans le panneau</span></p>
+            <label className="label-caps mt-2.5 block text-txt-dim">Verdict (multi)</label>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
               {TIERS.map((t) => (
                 <button key={t} onClick={() => toggleTier(t)}
                   title={t === 'ecartee' ? 'Exclusions dures de l\'étage 0 (run servi)' : undefined}
@@ -169,52 +165,16 @@ function AddFilter() {
                 </button>
               ))}
             </div>
-            {/* M30 item 3 (« tout montrer ») : les tiers de DÉCLASSEMENT sont atteignables —
-                groupe séparé, rien de coché par défaut (la vue par défaut ne change pas).
-                Chaque libellé porte son MOTIF (jamais un tier caché ni muet). */}
-            <label className="label-caps block">Déclassées · motif (multi)</label>
-            <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
-              {DECLASSE_ORDER.map((t) => (
-                <button key={t} data-tier-declasse={t} onClick={() => toggleTier(t)}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_DECLASSE_META[t].color }} />
-                  {TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
-                </button>
-              ))}
-            </div>
-            {/* E1 (M12) : « Score Q » et « SDP » renommés en langage client (cohérent B1).
-                SDP exclut silencieusement les parcelles sans surface résiduelle mesurée (A5) —
-                dit dans le title. */}
-            <div className="mb-3 flex gap-2">
-              <NumField label="POTENTIEL ≥ /100" value={filters.scoreMin} onChange={(v) => setFilter('scoreMin', v)} placeholder="70" />
-              <NumField label="SURF. CONSTR. ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
-            </div>
-            <div className="mb-3 flex gap-2">
+            <div className="mt-3 flex gap-2">
               <NumField label="SURFACE ≥" value={filters.surfaceMin} onChange={(v) => setFilter('surfaceMin', v)} placeholder="1 000" />
               <NumField label="SURFACE ≤" value={filters.surfaceMax} onChange={(v) => setFilter('surfaceMax', v)} placeholder="20 000" />
             </div>
-            <div className="mb-3 flex flex-col gap-1.5">
-              <CheckRow label="Avec événement (BODACC)" on={filters.evenement} toggle={() => setFilter('evenement', !filters.evenement)} />
-              <CheckRow label="Veille succession" on={filters.veille} toggle={() => setFilter('veille', !filters.veille)} />
-              <CheckRow label="Masquer les copropriétés" on={filters.horsCopro} toggle={() => setFilter('horsCopro', !filters.horsCopro)} />
+            <div className="mt-3">
+              <NumField label="SDP RÉSIDUELLE ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
             </div>
-            <label className="label-caps block">Flags actifs (au moins un)</label>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {FLAG_DEFS.map((d) => (
-                <button key={d.key} onClick={() => toggleFlag(d.key)}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.flags.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}>
-                  ⚑ {d.label}
-                </button>
-              ))}
-            </div>
-            {/* M45 (P1) : bloc « Signaux propriétaire » (filtre Score V) RETIRÉ — anti-filtre acté
-                au cadrage (Score V retiré du scoring RR 0,51 / de l'affichage M35). L'option masquée
-                « Dirigeant 65+ » disparaît avec : un critère personne physique n'a pas sa place (RGPD). */}
-            <button onClick={() => { setFilters(EMPTY_FILTERS); setOpen(false) }}
-              className="mt-3 min-h-7 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt">
-              Réinitialiser tous les filtres
+            <button data-tous-les-filtres onClick={ouvrirTout}
+              className="mt-4 flex min-h-8 w-full items-center justify-center gap-1 rounded-lg bg-mint/10 py-1.5 text-[11.5px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+              Tous les filtres →
             </button>
           </div>
         </>
