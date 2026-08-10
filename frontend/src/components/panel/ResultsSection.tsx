@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getShortlist, getStats, type SortKey } from '../../lib/api'
+import { csvExportUrl, getCommunes, getEntonnoir, getFiltre, getParcelsGeojson, getResults, getShortlist, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -232,23 +232,14 @@ export function ResultsSection() {
   const [showAll, setShowAll] = useState(false)
   // Tri par défaut (M5.1) : RANG P croissant — ×N / surface / commune en options.
   const [sort, setSort] = useState<SortKey>('rang')
-  // compteurs par tier sous filtres de PÉRIMÈTRE (jamais le filtre tier lui-même)
-  const scopeOnly = useMemo(() => ({ ...filters, tiers: [] as TierV2[] }), [filters])
-  const stats = useQuery({
-    queryKey: ['stats', commune, ile ? scopeOnly : null],
-    queryFn: () => getStats(ile ? scopeOnly : undefined),
-  })
-  // M13-B2 : « … au total » de la LISTE doit refléter les MÊMES filtres que la liste (tiers
-  // compris). Les cartouches par tier utilisent `scopeOnly` (tiers retirés) : leur `total` est
-  // le total de périmètre, PAS celui de la liste filtrée. Bug constaté : « 259 affichées /
-  // 51 129 au total » (le total ignorait le filtre Brûlante/Chaude). On requête donc un total
-  // AVEC les filtres complets — uniquement en île et quand un filtre tier est actif (sinon le
-  // total de périmètre suffit et on évite une requête).
-  const tierFiltered = ile && filters.tiers.length > 0
-  const filteredStats = useQuery({
-    queryKey: ['stats-filtered', commune, filters],
-    queryFn: () => getStats(filters),
-    enabled: tierFiltered,
+  // M55-F point 1 — POINT UNIQUE : compteurs (ventilation, total, opportunités) dérivent du
+  // MÊME getFiltre(filters) que la Révélation et le compteur vivant (stage 8) — mêmes critères
+  // (communes, terrain, signaux, tiers, interrupteur), mêmes nombres, fini les trois récits.
+  // Retiré : getStats(scopeOnly) [tiers retirés] et getStats(undefined) [mode commune = aucun
+  // filtre → l'origine du « 431 663 → 98 » décorrélé, mesuré 10/08].
+  const uni = useQuery({
+    queryKey: ['results-unifie', commune, filters],
+    queryFn: () => getFiltre(filters, 0),
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
@@ -282,12 +273,13 @@ export function ResultsSection() {
   // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → île : /stats FILTRÉ
   // (SQL-exact aussi) ; commune : recalcul client marqué *.
   const counts = useMemo(() => {
-    if ((!scoped || ile) && stats.data) {
-      const t = stats.data.tiers
+    if (uni.data) {
+      const t = uni.data.tiers
       return { all: t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser,
                brulante: t.brulante, chaude: t.chaude, reserve_fonciere: t.reserve_fonciere,
                a_creuser: t.a_creuser, ecartee: t.ecartee }
     }
+    // fallback client (mode commune, réponse serveur pas encore là) — jamais un vide
     const c: Record<TierV2 | 'all', number> = { ...TIER_ZERO }
     for (const p of props) {
       if (!matchScope(p, filters, zone)) continue
@@ -297,7 +289,7 @@ export function ResultsSection() {
       c[t] += 1
     }
     return c
-  }, [props, filters, zone, scoped, ile, stats.data])
+  }, [props, filters, zone, uni.data])
 
   const list = useMemo(() => {
     if (ile) {
@@ -326,16 +318,15 @@ export function ResultsSection() {
   const loading = ile ? serverList.isLoading : geo.isLoading
   const error = ile ? serverList.isError : geo.isError
   const refetch = () => (ile ? serverList.refetch() : geo.refetch())
-  // M13-B2 : total de la liste — si un filtre tier est actif, on prend le total FILTRÉ (mêmes
-  // filtres que la liste) ; sinon le total de périmètre (scopeOnly) fait foi.
-  const total = (tierFiltered ? filteredStats.data?.total : stats.data?.total) ?? props.length
+  // Total analysé du périmètre courant (point unique) — retenues + écartées ; fallback client.
+  const total = uni.data?.total ?? props.length
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
   const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
-  const opportunites = ile && stats.data ? stats.data.opportunites : counts.brulante + counts.chaude
+  const opportunites = uni.data?.opportunites ?? counts.brulante + counts.chaude
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -373,7 +364,7 @@ export function ResultsSection() {
         </div>
       )}
       <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
-        title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+        title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
         <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
@@ -381,13 +372,13 @@ export function ResultsSection() {
       </p>
       {/* CRED-3 (revue externe 12/07) : les PARCELLES sont l'unité de la somme — avec dossier +
           personnes physiques = les opportunités affichées juste au-dessus. */}
-      {ile && stats.data != null && stats.data.opportunites > 0 && (
+      {uni.data != null && uni.data.opportunites > 0 && (
         <p data-dossiers-detail className="mt-1 shrink-0 text-[11px] leading-snug text-txt-dim"
           title="Un propriétaire = un dossier, quel que soit son nombre de parcelles (identification par SIREN, personnes morales DGFiP). Les personnes physiques n'ont pas d'identité en open data — doctrine RGPD : jamais de donnée nominative en base.">
-          soit <span className="font-medium text-txt">{fmt(stats.data.opportunites_avec_dossier)}</span> parcelle{stats.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
-          dossier propriétaire ({fmt(stats.data.dossiers_opportunites)} propriétaire{stats.data.dossiers_opportunites > 1 ? 's' : ''} identifié{stats.data.dossiers_opportunites > 1 ? 's' : ''})
-          {stats.data.opportunites_sans_identite > 0 && (
-            <> · <span className="font-medium text-txt">{fmt(stats.data.opportunites_sans_identite)}</span> personnes
+          soit <span className="font-medium text-txt">{fmt(uni.data.opportunites_avec_dossier)}</span> parcelle{uni.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
+          dossier propriétaire ({fmt(uni.data.dossiers_opportunites)} propriétaire{uni.data.dossiers_opportunites > 1 ? 's' : ''} identifié{uni.data.dossiers_opportunites > 1 ? 's' : ''})
+          {uni.data.opportunites_sans_identite > 0 && (
+            <> · <span className="font-medium text-txt">{fmt(uni.data.opportunites_sans_identite)}</span> personnes
             physiques — non couvertes par l'open data</>
           )}
         </p>
