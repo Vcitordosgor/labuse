@@ -13,6 +13,7 @@ import { useState } from 'react'
 
 import { deleteSearch, getFiltre, getSavedSearches, renameSearch, saveSearch } from '../../lib/api'
 import { filtersFromHash, filtersToHash } from '../../lib/filters'
+import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const CONSTRUCTIBILITE = [
@@ -260,8 +261,13 @@ function ProfilSelecteur() {
 }
 
 export function FiltreLabuse() {
-  const { filters, setFilter, setFilters, resetFilters } = useApp()
+  const { filters, setFilter, setFilters } = useApp()
   const [droitOuvert, setDroitOuvert] = useState(true)
+  const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
+  const toggleTier = (t: FilterTier) =>
+    setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
+  // M55-D (phase 2) : « Réinitialiser les FILTRES » ne touche PAS le mode d'analyse — tri ≠ mode.
+  const resetFiltresSeuls = () => setFilters({ ...EMPTY_FILTERS, analyseLabuse: filters.analyseLabuse })
 
   // Compteur SQL des DEUX voies (le « théâtre »). M46 (Lot D) : lever l'ambiguïté du mot « trame »
   // — il désignait 431 663 (barre par défaut) MAIS le sous-ensemble filtré une fois un filtre posé.
@@ -308,11 +314,14 @@ export function FiltreLabuse() {
         </button>
       </div>
 
-      {/* ── VUES PRÉRÉGLÉES (l'anti-60-checkboxes) : les 6 du cadrage ── */}
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      {/* ── PRÉ-RÉGLAGES (l'anti-60-checkboxes) : au clic ils COCHENT des critères VISIBLES
+          ci-dessous (pas de magie opaque), défaisables un par un. M55-D : marqués « pré-réglage ». ── */}
+      <p className="mt-2 label-caps flex items-center gap-1.5">Pré-réglages
+        <span className="text-[9px] font-normal normal-case text-txt-dim">— cochent des filtres visibles, à défaire un par un</span></p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
         {PRESETS.map((p) => (
           <button key={p.nom} onClick={() => setFilters({ ...EMPTY_FILTERS, ...p.f })}
-            className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">
+            className="rounded-full border border-dashed border-line-2 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">
             {p.nom}
           </button>
         ))}
@@ -320,6 +329,39 @@ export function FiltreLabuse() {
 
       {/* ── MES VUES (L5) : combinaisons de filtres nommées, côté compte ── */}
       <MesVues />
+
+      {/* ── VERDICT · POTENTIEL · SIGNAUX (M55-D : rapatriés du header « + Filtre » — un critère,
+          un seul endroit ; les rapides Verdict/Surface/SDP du header pilotent LES MÊMES champs) ── */}
+      <Tiroir titre="Verdict, potentiel & signaux" sous="classement" defaut>
+        <Section title="Verdict · tiers (multi)">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {TIERS_V2.map((t) => (
+              <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
+                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_V2_META[t].color }} />
+                {TIER_V2_META[t].label}
+              </Chip>
+            ))}
+          </div>
+        </Section>
+        <Section title="Déclassées · motif (multi)">
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {DECLASSE_ORDER.map((t) => (
+              <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
+                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_DECLASSE_META[t].color }} />
+                {TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
+              </Chip>
+            ))}
+          </div>
+        </Section>
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-2 py-2">
+          <div><p className="label-caps">Potentiel ≥ /100</p>
+            <div className="mt-1"><NumField field="scoreMin" ph="70" /></div></div>
+          <div className="flex flex-col gap-1.5 pb-1">
+            <BoolChip field="evenement" label="Avec événement (BODACC)" />
+            <BoolChip field="horsCopro" label="Masquer les copropriétés" />
+          </div>
+        </div>
+      </Tiroir>
 
       {/* ── BARRE NIVEAU 1 ── */}
       <div className="mt-2 divide-y divide-line-2/50">
@@ -474,9 +516,10 @@ export function FiltreLabuse() {
         Zone fermée » ci-dessus) pour les consulter — chaque parcelle garde son motif de déclassement.
       </div>
 
-      <button onClick={resetFilters}
+      <button onClick={resetFiltresSeuls}
+        title="Efface les filtres (tri). Le mode d'analyse (Analyse LABUSE, curseur Mode B) n'est pas touché."
         className="mt-2 min-h-7 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt">
-        Réinitialiser les filtres
+        Réinitialiser les filtres <span className="text-txt-dim/70">— le mode d'analyse reste</span>
       </button>
     </div>
   )
