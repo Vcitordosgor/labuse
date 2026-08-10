@@ -114,7 +114,7 @@ function Omnibox() {
 // carte reste où elle est — sens unique). « Toute l'île » dézoome ET décoche. En MULTI (≥2,
 // posé au panneau), le header devient une VUE (« 3 communes ») dont le clic ouvre le panneau.
 function CommuneSelect() {
-  const { filters, setCommune, openFiltres } = useApp()
+  const { filters, setCommune, openFiltres, setContexteCommune } = useApp()
   const [open, setOpen] = useState(false)
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   useEffect(() => {
@@ -154,11 +154,22 @@ function CommuneSelect() {
               Toute l’île
             </button>
             <div className="mx-3 my-1 border-t border-line" />
+            {/* M55-D stage 9 ter point 2 : chaque ligne porte à droite un « ⓘ » — le NOM
+                sélectionne (zoom + pré-coche, bloc 3 inchangé), le « ⓘ » ouvre la fiche de CETTE
+                commune SANS changer le périmètre (stopPropagation, zone de clic 28 px). */}
             {(communes.data ?? []).map((c) => (
-              <button key={c.insee} onClick={() => pick(c.commune)}
-                className={`rounded-md px-3 py-1.5 text-left text-xs hover:bg-surface-3 ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
-              </button>
+              <div key={c.insee} className="flex items-center rounded-md hover:bg-surface-3">
+                <button onClick={() => pick(c.commune)}
+                  className={`min-w-0 flex-1 px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
+                  {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
+                </button>
+                <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
+                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}
+                  aria-label={`Fiche commune de ${c.commune}`}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] text-txt-dim transition-colors duration-quick hover:bg-surface-2 hover:text-mint">
+                  ⓘ
+                </button>
+              </div>
             ))}
           </div>
         </>
