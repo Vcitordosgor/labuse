@@ -29,7 +29,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const v2 = useV2Actif()
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
-  const zonageOn = layers.zonage_parcelle || layers.zonage_colorise
+  const zonageOn = layers.zonage_parcelle // M55-A (fusion A) : couche parcellaire unique
 
   return (
     <div className={`${inline

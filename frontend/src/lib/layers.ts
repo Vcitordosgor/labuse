@@ -58,15 +58,14 @@ export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key
 // JSX. La clé = la clé de `LayerToggles` (store useApp). Une phrase, sans jargon.
 // ─────────────────────────────────────────────────────────────────────────────
 export const LAYER_INFO: Record<string, string> = {
+  // M55-A (fusion A) : DEUX couches de zonage seulement. La couche PARCELLAIRE (calibrée) fait tout —
+  // colorer d'ensemble + code au zoom/clic ; la couche OFFICIELLE montre le document GPU brut.
   zonage:
-    'Les zones du PLU telles que déposées officiellement par la commune sur le Géoportail de l’urbanisme (source GPU) : les grands aplats de couleur, avec leurs contours d’origine — qui ne suivent pas forcément le découpage cadastral. C’est le document opposable de référence. À la différence de « Zonage PLU (par parcelle) » (qui colore chaque parcelle et affiche son code de zone au clic) et de « Colorisation par type de zonage » (qui teinte toutes les parcelles d’un coup), cette couche montre le zonage brut, non rattaché aux parcelles.',
+    'Les zones du PLU telles que déposées par la commune sur le Géoportail de l’urbanisme (flux GPU) : les aplats bruts du document opposable, avec leurs contours d’origine. Non rattachés au cadastre : ils couvrent AUSSI l’espace non parcellaire (voirie, ravines, domaine public), d’où des couleurs là où la couche « par parcelle » n’en montre pas. Couverture : 23 des 24 communes — Saint-Philippe, au RNU, n’a pas de PLU numérisé.',
   zonage_parcelle:
-    'Chaque parcelle prend la couleur de sa zone du PLU. En zoomant, ou en cliquant une parcelle, le code exact de la zone (par ex. U1a, 1AUc) s’affiche.',
-  zonage_colorise:
-    'Colorie d’un coup TOUTES les parcelles selon leur type de zone (urbaine, à urbaniser, agricole, naturelle) — sans avoir à cliquer parcelle par parcelle. Une lecture d’ensemble du potentiel de constructibilité.',
+    'La couche de zonage à utiliser au quotidien : chaque parcelle prend d’emblée la couleur de sa famille de zone (U urbaine, AU à urbaniser, A agricole, N naturelle), calée sur le cadastre par LABUSE — une lecture d’ensemble de la constructibilité, sans cliquer. En zoomant, ou en cliquant une parcelle, le code exact (U1a, 1AUc…) s’affiche. Couverture : 99 % des parcelles ; absente là où la commune est au RNU (Saint-Philippe).',
   // M55-A item 6 : chaque « i » dit désormais CE QUE montre la couche, SA source, et SA
-  // couverture (partielle → dite franchement). Les trois « i » du zonage PLU sont traités à part
-  // (item 1, en attente d'arbitrage Vic sur le renommage) et restés en l'état pour l'instant.
+  // couverture (partielle → dite franchement).
   parcelles:
     'Les 431 663 parcelles cadastrales de l’île (source DGFiP), colorées selon l’avis de LABUSE : les plus prometteuses ressortent. C’est la couche de travail principale — présente sur les 24 communes.',
   ppr:

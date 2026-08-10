@@ -230,7 +230,9 @@ export function MapView() {
   // M12 C5 : DEUX portes vers cette recoloration — « Zonage PLU (par parcelle) » (avec étiquette
   // au zoom + popup au clic) ET la nouvelle « Colorisation par type de zonage » (lecture
   // d'ensemble, sans clic). L'une OU l'autre allume le remplissage par famille.
-  const zonageColor = layers.zonage_parcelle || layers.zonage_colorise
+  // M55-A (fusion A) : une seule couche parcellaire (`zonage_parcelle`) — elle colore d'emblée
+  // toutes les parcelles par famille ET porte l'étiquette (zoom) + le popup (clic).
+  const zonageColor = layers.zonage_parcelle
   const zonageFill = zonageColor && (!ile || tilesMeta.data?.zonage_parcelle === true)
 
   // ───────────────────────── init ─────────────────────────
@@ -537,11 +539,20 @@ export function MapView() {
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
   useEffect(() => {
-    if (ile && (layers.zonage_parcelle || layers.zonage_colorise) && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
+    if (ile && layers.zonage_parcelle && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
       useApp.getState().setToast(
         'Colorisation par zonage en mode île : disponible au prochain build de tuiles — choisissez une commune pour l’utiliser dès maintenant.')
     }
-  }, [ile, layers.zonage_parcelle, layers.zonage_colorise, tilesMeta.data])
+  }, [ile, layers.zonage_parcelle, tilesMeta.data])
+
+  // M55-A (fusion A) : Saint-Philippe n'a PAS de PLU numérisé (0 zone GPU, 9/4162 parcelles calées) —
+  // c'est une commune au RNU. Quand une couche de zonage est active chez elle, le dire franchement
+  // plutôt qu'afficher un fond vide muet (même règle « no-silent » que l'ANRU / les 50 pas).
+  useEffect(() => {
+    if (commune === 'Saint-Philippe' && (layers.zonage_parcelle || layers.zonage)) {
+      useApp.getState().setToast('Saint-Philippe : commune au RNU — pas de zonage PLU.')
+    }
+  }, [commune, layers.zonage_parcelle, layers.zonage])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {

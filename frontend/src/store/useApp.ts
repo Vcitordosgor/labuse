@@ -8,8 +8,9 @@ export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
 
 export interface LayerToggles {
   zonage: boolean
-  zonage_parcelle: boolean // M6.1 : remplissage des PARCELLES par famille PLU (U/AU/A/N)
-  zonage_colorise: boolean // M12 C5 : colorise TOUTES les parcelles par type de zone (famille U/AU/A/N), sans clic
+  zonage_parcelle: boolean // M6.1 / M55-A : couche parcellaire UNIQUE — colore toutes les parcelles
+                           // par famille PLU (U/AU/A/N), + étiquette du code au zoom et popup au clic
+                           // (l'ancienne case « colorisation » y est fusionnée, M55-A fusion A)
   parcelles: boolean
   ppr: boolean
   parc: boolean
@@ -289,8 +290,9 @@ export const useApp = create<AppState>((set) => ({
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
   // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
-  // C (M12) : + zonage_colorise (colorisation d'emblée de toutes les parcelles par famille de zone)
-  layers: { zonage: false, zonage_parcelle: false, zonage_colorise: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, renouv: false },
+  // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
+  // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, renouv: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

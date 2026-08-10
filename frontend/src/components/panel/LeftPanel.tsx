@@ -40,24 +40,24 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
 // M12 C4 — ORDRE des couches, du PLUS UTILISÉ au moins utilisé (justif. au rapport) :
 //  1. parcelles       — la couche de travail (verdict coloré) — vue à chaque session
 //  2. limites         — contour cadastral, référence constante posée sur le fond
-//  3. zonage_colorise — lecture d'ensemble de la constructibilité (nouveau, C5) — geste rapide
-//  4. zonage_parcelle — zone précise à la parcelle (étiquette + clic) — le détail
-//  5. zonage          — zones officielles brutes du GPU — moins fréquent (déjà couvert par 3/4)
-//  6. ppr             — écran risques, filtre d'exclusion précoce fréquent
-//  7. equipements     — contexte de proximité, courant en due diligence
-//  8. communes        — repère communal (défaut ON, rarement basculé)
-//  9. parc            — Parc national, situationnel (relief/mi-pentes)
-// 10. anru            — périmètres de renouvellement, de niche
-// 11. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
+//  3. zonage_parcelle — couche PARCELLAIRE UNIQUE (M55-A fusion A) : colore toutes les parcelles
+//                       par famille + code au zoom/clic — remplace « colorisation » + « par parcelle »
+//  4. zonage          — zones officielles brutes du GPU (document opposable) — moins fréquent
+//  5. ppr             — écran risques, filtre d'exclusion précoce fréquent
+//  6. equipements     — contexte de proximité, courant en due diligence
+//  7. communes        — repère communal (défaut ON, rarement basculé)
+//  8. parc            — Parc national, situationnel (relief/mi-pentes)
+//  9. anru            — périmètres de renouvellement, de niche
+// 10. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'parcelles', label: 'Parcelles' },
   { key: 'limites', label: 'Limites parcelles' },
-  // M12 C5 : colorise TOUTES les parcelles par type de zone, sans clic — à côté (pas à la place)
-  { key: 'zonage_colorise', label: 'Colorisation par type de zonage' },
-  // M6.1 item 1 : recoloration + étiquette de la zone précise au zoom et au clic
-  { key: 'zonage_parcelle', label: 'Zonage PLU (par parcelle)' },
-  // Point 12 : zones OFFICIELLES du GPU (polygones bruts), distinctes du rattachement à la parcelle
-  { key: 'zonage', label: 'Zonage PLU (zones officielles)' },
+  // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
+  // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
+  { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
+  // M55-A : zones OFFICIELLES du GPU (polygones bruts du document opposable) — distinctes du
+  // rattachement calibré à la parcelle ; couvrent aussi l'espace non parcellaire (voirie, domaine public).
+  { key: 'zonage', label: 'Zones du PLU officiel (document brut)' },
   { key: 'ppr', label: 'PPR multirisque' },
   { key: 'equipements', label: 'Équipements' },
   { key: 'communes', label: 'Limites communes' },
