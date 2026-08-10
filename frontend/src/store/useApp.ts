@@ -75,7 +75,7 @@ export const EMPTY_FILTERS: Filters = {
   flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
   sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
-  analyseLabuse: true,
+  analyseLabuse: false,   // M55-D stage 4 : interrupteur « regard LABUSE » ÉTEINT par défaut (tri factuel)
   sousDensite: false, multMin: null, rangMax: null, renouvellement: false, divisionOr: false,
   proprietaireType: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
   budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,

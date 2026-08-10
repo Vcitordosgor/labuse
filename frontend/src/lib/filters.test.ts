@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { filtersFromHash, filtersToHash } from './filters'
+import { filtersFromHash, filtersToHash, hasOpinion } from './filters'
 import { EMPTY_FILTERS, type Filters } from '../store/useApp'
 
-// M55-D phase 2 (Q2) : la persistance doit couvrir TOUS les champs et rester rétro-compatible.
+// M55-D : la persistance couvre TOUS les champs, reste rétro-compatible, et l'interrupteur
+// « analyse » (analyseLabuse) est biunivoque avec la présence de critères d'opinion (stage 4).
 describe('filters URL persistence (M55-D)', () => {
-  it('round-trips EVERY field (tri + mode)', () => {
+  it('round-trips EVERY field (terrain + opinion + interrupteur allumé)', () => {
     const f: Filters = {
       ...EMPTY_FILTERS,
       tiers: ['brulante', 'chaude'],
@@ -17,18 +18,30 @@ describe('filters URL persistence (M55-D)', () => {
       flags: ['pente', 'ravine'], flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
-      analyseLabuse: false,
+      analyseLabuse: true,   // stage 4 : allumé (cohérent avec les critères d'opinion présents)
     }
     const hash = filtersToHash(f, null)
     const back = { ...EMPTY_FILTERS, ...(filtersFromHash(hash)!.filters) }
     expect(back).toEqual(f)
   })
 
-  it('defaults analyseLabuse to true when absent (old link)', () => {
-    // ancien lien : uniquement une surface, pas de clé `al`
+  it('stage 4 : un lien TERRAIN-only laisse l\'interrupteur ÉTEINT', () => {
     const back = filtersFromHash('#f=1&smin=1500')!.filters
-    expect(back.analyseLabuse).toBe(true)
+    expect(back.analyseLabuse).toBe(false)
     expect(back.surfaceMin).toBe(1500)
+  })
+
+  it('stage 4 : un lien portant un tier ALLUME l\'interrupteur (vieux lien)', () => {
+    const back = filtersFromHash('#f=1&tv=chaude&smin=2000')!.filters
+    expect(back.analyseLabuse).toBe(true)
+    expect(back.tiers).toEqual(['chaude'])
+    expect(back.surfaceMin).toBe(2000)
+  })
+
+  it('hasOpinion distingue terrain (faux) et opinion (vrai)', () => {
+    expect(hasOpinion({ ...EMPTY_FILTERS, surfaceMin: 1000, zonagePlu: ['U'], etatSol: ['nu'] })).toBe(false)
+    expect(hasOpinion({ ...EMPTY_FILTERS, tiers: ['chaude'] })).toBe(true)
+    expect(hasOpinion({ ...EMPTY_FILTERS, scoreMin: 70 })).toBe(true)
   })
 
   it('keeps historical keys readable (retro-compat)', () => {

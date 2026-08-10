@@ -5,7 +5,6 @@ import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { getFiltre } from '../../lib/api'
 import { countActiveFilters } from '../../lib/filters'
-import { TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { Tip } from '../Tip'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
@@ -168,22 +167,13 @@ function LayersSection({ open, onToggle }: {
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
 function FiltresSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const { filters, setFilter, commune } = useApp()
-  const [expertOpen, setExpertOpen] = useState(false)
+  const { filters, commune } = useApp()
   const n = countActiveFilters(filters)
-  const TIERS: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
-  const toggleTier = (t: FilterTier) =>
-    setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-  // N = parc du run servi dans le périmètre courant (dynamique) = la TRAME ENTIÈRE (analyse coupée →
-  // toutes les parcelles analysées, retenues + écartées), pas un sous-ensemble. getFiltre lit la
-  // commune active.
+  // N = parc du run servi dans le périmètre courant (trame entière, analyse coupée), dynamique.
   const parc = useQuery({ queryKey: ['filtre-parc', commune], queryFn: () => getFiltre({ ...EMPTY_FILTERS, analyseLabuse: false }, 0) })
   const N = parc.data?.total
-  const Num = ({ field, ph }: { field: 'surfaceMin' | 'surfaceMax' | 'sdpMin'; ph: string }) => (
-    <input type="number" min={0} value={filters[field] ?? ''} placeholder={ph}
-      onChange={(e) => setFilter(field, (e.target.value === '' ? null : Number(e.target.value)) as never)}
-      className="w-[64px] rounded-md border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[11px] text-txt focus:border-mint focus:outline-none" />
-  )
+  const accroche = N == null ? '…'
+    : filters.analyseLabuse ? CLIENT.filtres.accrocheOn(N) : CLIENT.filtres.accrocheOff(N)
   return (
     <div className="shrink-0 px-5 pt-4">
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
@@ -199,37 +189,13 @@ function FiltresSection({ open, onToggle }: { open: boolean; onToggle: () => voi
         </span>
       </button>
       {open && (
-        // plafonné + scrollable (comme le tiroir Couches) : le panneau EXPERT déplié est haut, il
-        // scrolle DANS la section au lieu de casser la colonne flex de l'aside.
-        <div data-filtres-drawer className="mt-3 max-h-[52vh] overflow-y-auto overflow-x-clip">
-          {/* ── 3 RAPIDES ── */}
-          <p className="label-caps text-txt-dim">Verdict</p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {TIERS.map((t) => (
-              <button key={t} onClick={() => toggleTier(t)}
-                className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                  filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_V2_META[t].color }} />
-                {TIER_V2_META[t].label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
-            <div><p className="label-caps text-txt-dim">Surface m²</p>
-              <div className="mt-1 flex items-center gap-1"><Num field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><Num field="surfaceMax" ph="max" /></div></div>
-            <div><p className="label-caps text-txt-dim">SDP résiduelle ≥</p>
-              <div className="mt-1"><Num field="sdpMin" ph="m²" /></div></div>
-          </div>
-          {/* ── TOUS LES FILTRES → (déplie l'expert) + accroche honnête ── */}
-          <button data-tous-les-filtres onClick={() => setExpertOpen((o) => !o)}
-            className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-mint hover:underline">
-            Tous les filtres
-            <span className={`inline-block transition-transform duration-soft ${expertOpen ? 'rotate-90' : ''}`} aria-hidden="true">→</span>
-          </button>
-          <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">
-            {N != null ? CLIENT.filtres.accroche(N) : 'Filtres experts — affinez parmi les parcelles déjà analysées par LABUSE'}
-          </p>
-          {expertOpen && <div className="mt-2"><FiltreLabuse /></div>}
+        // plafonné + scrollable (comme le tiroir Couches) : les deux étages du panneau sont hauts,
+        // ils scrollent DANS la section au lieu de casser la colonne flex de l'aside.
+        <div data-filtres-drawer className="mt-3 max-h-[64vh] overflow-y-auto overflow-x-clip">
+          {/* Accroche HONNÊTE, adaptée à l'interrupteur (stage 4) : les filtres trient, ne recalculent pas. */}
+          <p className="text-[10.5px] leading-snug text-txt-dim">{accroche}</p>
+          {/* Les DEUX étages (① terrain / ② regard LABUSE) + raccourcis — panneau unique. */}
+          <div className="mt-2"><FiltreLabuse /></div>
         </div>
       )}
     </div>
@@ -297,7 +263,9 @@ export function LeftPanel() {
   const [couchesOpen, setCouchesOpen] = useState(true)
   const prevVerdict = useRef(verdict)
   useEffect(() => {
-    if (verdict && !prevVerdict.current) setCouchesOpen(false)
+    // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
+    // se referme pour laisser la carte (accordéon), comme demandé.
+    if (verdict && !prevVerdict.current) { setCouchesOpen(false); setFiltresOpen(false) }
     prevVerdict.current = verdict
   }, [verdict])
   // M55-D stage 3 : la section « Filtres » (repliable, sous « Couches ») remplace le bouton header.
