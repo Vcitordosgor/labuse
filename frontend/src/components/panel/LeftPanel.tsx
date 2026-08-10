@@ -288,7 +288,7 @@ export function LeftPanel() {
           ›
         </button>
       ) : (
-        <aside className="hidden h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">
+        <aside className="hidden h-full w-[clamp(240px,24vw,340px)] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">
           <div className="flex shrink-0 items-center justify-between px-5 pt-4">
             <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
             {/* M55-B point 5 : une FERMETURE, pas un repli → croix (×), cohérent avec la fiche

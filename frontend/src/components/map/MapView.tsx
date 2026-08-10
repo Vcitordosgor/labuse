@@ -203,6 +203,17 @@ export function MapView() {
   const labelMarker = useRef<maplibregl.Marker | null>(null)
   const [tilesLoading, setTilesLoading] = useState(false)   // P5 : chargement des tuiles
 
+  // M55-D stage 9 (responsive) : le CONTENEUR carte change de taille sans resize fenêtre (largeur
+  // du panneau en clamp(), sections qui s'ouvrent) → ResizeObserver recale MapLibre à chaud.
+  useEffect(() => {
+    const el = ref.current
+    const m = map.current
+    if (!el || !m || !ready.current) return
+    const ro = new ResizeObserver(() => m.resize())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [mapReady])
+
   // z<10 : les marqueurs communes règnent (bandeau contextuel + labels du fond retirés — C3)
   const [lowZoom, setLowZoom] = useState(false)
   useEffect(() => {
