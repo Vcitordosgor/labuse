@@ -136,6 +136,12 @@ export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset
   const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
   return j<FiltreReponse>(`/filtre?${q({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
 }
+/** M55-D stage 7 — COMPTE SEUL, annulable (AbortController) : le compteur vivant du panneau
+ *  Filtres. Même construction que getFiltre (limit 0), jamais une estimation locale. */
+export const getFiltreCount = (f: Filters, signal?: AbortSignal) => {
+  const { tiers: _t, ...rest } = filterParams(f)
+  return j<FiltreReponse>(`/filtre?${q({ limit: 0, ...rest, ...tiersParam(f) })}`, { signal })
+}
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'

@@ -15,7 +15,7 @@ describe('filters URL persistence (M55-D)', () => {
       veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
       renouvellement: true, divisionOr: true, npnru: true, adresseAbsente: true,
       marcheFiable: true, modeBRentable: true,
-      flags: ['pente', 'ravine'], flagsExclus: ['icpe'], communes: ['Saint-Paul'],
+      flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
       signaux: ['defisc', 'friche'],   // stage 6 : le groupe Signaux de vie persiste (clé sv)
@@ -52,11 +52,11 @@ describe('filters URL persistence (M55-D)', () => {
     expect(back.surfaceMin).toBe(1000)
   })
 
-  it('keeps historical keys readable (retro-compat)', () => {
+  it('keeps historical keys readable (retro-compat) — fl legacy IGNORÉ sans erreur (stage 7)', () => {
     const back = filtersFromHash('#f=1&tv=chaude&q=70&hc=1&fl=pente,ravine')!.filters
     expect(back.tiers).toEqual(['chaude'])
     expect(back.scoreMin).toBe(70)
     expect(back.horsCopro).toBe(true)
-    expect(back.flags).toEqual(['pente', 'ravine'])
+    expect(back.flags ?? []).toEqual([])   // la clé contraintes est ignorée, le lien s'ouvre
   })
 })

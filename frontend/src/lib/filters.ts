@@ -177,8 +177,11 @@ const BOOL_KEYS: [keyof Filters, string][] = [
   ['sousDensite', 'sd'], ['renouvellement', 'rnv'], ['divisionOr', 'dor'], ['npnru', 'np'],
   ['adresseAbsente', 'aa'], ['marcheFiable', 'mf'], ['modeBRentable', 'mb'],
 ]
+// M55-D stage 7 : la clé legacy `fl` (flags contraintes de secteur) n'est PLUS lue ni écrite —
+// la sous-section a quitté le panneau (les flags restent en fiche/couches). Un vieux lien
+// portant fl=… s'ouvre SANS erreur, la clé est simplement ignorée (aucun état filtre orphelin).
 const CSV_KEYS: [keyof Filters, string][] = [
-  ['flags', 'fl'], ['flagsExclus', 'fx'], ['communes', 'cs'], ['zonagePlu', 'zf'],
+  ['flagsExclus', 'fx'], ['communes', 'cs'], ['zonagePlu', 'zf'],
   ['signaux', 'sv'],
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
   ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'],
