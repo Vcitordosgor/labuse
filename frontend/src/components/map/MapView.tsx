@@ -122,7 +122,11 @@ const OVERLAYS = {
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
   parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
-  anru: { paint: { 'fill-color': '#8FB4F0', 'fill-opacity': 0.16 } },
+  // M55-A-bis : l'ancien bleu pâle (#8FB4F0 @ 0.16) se noyait dans le Carto sombre ET collidait
+  // avec l'icône police (#8FB4F0) et la bande bleue déjà prise (AU #4C7DF0, réserve #6FA8DC,
+  // 50 pas #4CC3E8). Chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
+  // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
+  anru: { paint: { 'fill-color': '#C6E82E', 'fill-opacity': 0.30 } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 

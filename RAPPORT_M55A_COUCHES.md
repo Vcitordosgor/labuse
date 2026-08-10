@@ -41,6 +41,24 @@ UPDATE spatial_layers SET commune=NULL WHERE kind='parc_national';
 
 ---
 
+## MISE À JOUR 10/08 (bis) — deux retouches (commit unique)
+
+1. **Couleur ANRU/NPNRU** — l'ancien bleu pâle `#8FB4F0 @ 0.16` se noyait dans le Carto sombre
+   ET collisionnait (icône police `#8FB4F0`, et la bande bleue déjà prise : AU `#4C7DF0`, réserve
+   foncière `#6FA8DC`, 50 pas `#4CC3E8`). Vérification palette : le violet `#B497F0` est RÉSERVÉ
+   aux résultats de recherche / module actif ; les golds sont à ~45°, les verts « constructibles »
+   à ~148°. Le seul creux franc est la **chartreuse/lime**. **Proposition : `#C6E82E @ 0.30`** —
+   tranche fort sur fond sombre, hors de toutes les teintes prises et du violet réservé. Captures
+   `anru_before.png` (à peine visible) / `anru_after.png` (3 périmètres de Saint-Denis nets).
+   *(Réserve : lime ≠ mint verdict ; sur cette vue ANRU seul, aucune confusion — Vic tranche.)*
+2. **Renommage** — « Zones du PLU officiel (document brut) » → **« Zones du PLU officiel (brut) »**.
+   Le « i » garde l'explication complète (couvre aussi voirie / domaine public). Capture panneau
+   `item5_panel_deplie.png`.
+
+tsc 0, npm run build vert. Commit `<voir git log>`.
+
+---
+
 _Ci-dessous : les mesures et propositions initiales (contexte des décisions ci-dessus)._
 
 | # | Objet | Type | État |

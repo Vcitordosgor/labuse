@@ -57,7 +57,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
   // M55-A : zones OFFICIELLES du GPU (polygones bruts du document opposable) — distinctes du
   // rattachement calibré à la parcelle ; couvrent aussi l'espace non parcellaire (voirie, domaine public).
-  { key: 'zonage', label: 'Zones du PLU officiel (document brut)' },
+  { key: 'zonage', label: 'Zones du PLU officiel (brut)' },
   { key: 'ppr', label: 'PPR multirisque' },
   { key: 'equipements', label: 'Équipements' },
   { key: 'communes', label: 'Limites communes' },
