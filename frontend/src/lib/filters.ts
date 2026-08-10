@@ -114,19 +114,36 @@ export function removeToken(f: Filters, token: string): Filters {
 // ── URL partageable (hash #f=…) : une recherche = un lien ──
 // M5.1 : `tv` (tiers v2) remplace `st` (statuts matrice) — les anciens liens `st=`
 // sont ignorés proprement (périmètre par défaut), consigné au rapport.
+// M55-D (phase 2, Q2 Vic) : persistance COMPLÈTE — CHAQUE champ de `Filters` a une clé courte, si
+// bien que l'URL, « Mes vues » et les veilles (qui appellent tous filtersToHash) capturent enfin
+// tout (avant : 11 champs sur ~35, le reste session-only). Piloté par tables → aucun oubli
+// possible. Clés HISTORIQUES conservées (tv/q/smin/smax/sdp/ev/vs2/hc/fl/fx/cs/z) : un ancien
+// lien s'ouvre à l'identique.
+const NUM_KEYS: [keyof Filters, string][] = [
+  ['scoreMin', 'q'], ['surfaceMin', 'smin'], ['surfaceMax', 'smax'], ['sdpMin', 'sdp'],
+  ['sdpMax', 'sdpx'], ['capaciteMin', 'cap'], ['multMin', 'mm'], ['rangMax', 'rm'],
+  ['budgetMax', 'bud'], ['chargeMin', 'chmin'], ['chargeMax', 'chmax'],
+  ['prixMarcheMin', 'pmin'], ['prixMarcheMax', 'pmax'], ['caMin', 'ca'],
+]
+const BOOL_KEYS: [keyof Filters, string][] = [
+  ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
+  ['sousDensite', 'sd'], ['renouvellement', 'rnv'], ['divisionOr', 'dor'], ['npnru', 'np'],
+  ['adresseAbsente', 'aa'], ['marcheFiable', 'mf'], ['modeBRentable', 'mb'],
+]
+const CSV_KEYS: [keyof Filters, string][] = [
+  ['flags', 'fl'], ['flagsExclus', 'fx'], ['communes', 'cs'], ['zonagePlu', 'zf'],
+  ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
+  ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'],
+]
+
 export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   const p = new URLSearchParams()
   if (f.tiers.length) p.set('tv', f.tiers.join(','))
-  if (f.scoreMin != null) p.set('q', String(f.scoreMin))
-  if (f.surfaceMin != null) p.set('smin', String(f.surfaceMin))
-  if (f.surfaceMax != null) p.set('smax', String(f.surfaceMax))
-  if (f.sdpMin != null) p.set('sdp', String(f.sdpMin))
-  if (f.evenement) p.set('ev', '1')
-  if (f.veille) p.set('vs2', '1')
-  if (f.horsCopro) p.set('hc', '1')
-  if (f.flags.length) p.set('fl', f.flags.join(','))
-  if (f.flagsExclus.length) p.set('fx', f.flagsExclus.join(','))
-  if (f.communes.length) p.set('cs', f.communes.join(','))
+  for (const [k, key] of NUM_KEYS) { const v = f[k] as number | null; if (v != null) p.set(key, String(v)) }
+  for (const [k, key] of BOOL_KEYS) { if (f[k]) p.set(key, '1') }
+  for (const [k, key] of CSV_KEYS) { const a = f[k] as string[]; if (a.length) p.set(key, a.join(',')) }
+  // analyseLabuse est ON par défaut — on n'écrit QUE l'exception (mode de lecture coupé).
+  if (!f.analyseLabuse) p.set('al', '0')
   if (zone) p.set('z', zone.map(([x, y]) => `${x.toFixed(5)}_${y.toFixed(5)}`).join('~'))
   const s = p.toString()
   return s ? `#f=1&${s}` : ''
@@ -140,20 +157,12 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
   const num = (k: string) => (p.get(k) != null && p.get(k) !== '' ? Number(p.get(k)) : null)
   const zone = p.get('z')
     ? (p.get('z')!.split('~').map((s) => s.split('_').map(Number) as LngLat)) : null
-  return {
-    filters: {
-      tiers: (p.get('tv')?.split(',').filter((t) => TIER_KEYS.includes(t)) ?? []) as FilterTier[],
-      scoreMin: num('q'),
-      surfaceMin: num('smin'),
-      surfaceMax: num('smax'),
-      sdpMin: num('sdp'),
-      evenement: p.get('ev') === '1',
-      veille: p.get('vs2') === '1',
-      horsCopro: p.get('hc') === '1',
-      flags: p.get('fl')?.split(',').filter(Boolean) ?? [],
-      flagsExclus: p.get('fx')?.split(',').filter(Boolean) ?? [],
-      communes: p.get('cs')?.split(',').filter(Boolean) ?? [],
-    },
-    zone: zone && zone.length >= 3 ? zone : null,
+  const f: Record<string, unknown> = {
+    tiers: (p.get('tv')?.split(',').filter((t) => TIER_KEYS.includes(t)) ?? []) as FilterTier[],
+    analyseLabuse: p.get('al') !== '0',   // absent (vieux lien) ⇒ true, comme le défaut
   }
+  for (const [k, key] of NUM_KEYS) f[k] = num(key)
+  for (const [k, key] of BOOL_KEYS) f[k] = p.get(key) === '1'
+  for (const [k, key] of CSV_KEYS) f[k] = p.get(key)?.split(',').filter(Boolean) ?? []
+  return { filters: f as Partial<Filters>, zone: zone && zone.length >= 3 ? zone : null }
 }
