@@ -9,6 +9,12 @@
 // -----------------------------------------------------------------------------
 
 export const CLIENT = {
+  // ── M55-D stage 3 · section « Filtres » du panneau gauche. Accroche HONNÊTE : les filtres
+  //    TRIENT (mesuré phase 1), ils ne « génèrent » ni ne recalculent rien. N = parc du run servi. ──
+  filtres: {
+    accroche: (n: number) =>
+      `Filtres experts — affinez parmi les ${n.toLocaleString('fr-FR')} parcelles déjà analysées par LABUSE`,
+  },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
   marche: {
     banner: 'Le marché d’une commune, ligne par ligne — chaque chiffre porte sa source et sa date. '
