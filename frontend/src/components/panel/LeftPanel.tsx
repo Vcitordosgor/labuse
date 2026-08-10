@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { EMPTY_FILTERS, useApp, type LayerToggles } from '../../store/useApp'
+import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
-import { getFiltre } from '../../lib/api'
 import { countActiveFilters } from '../../lib/filters'
 import { Tip } from '../Tip'
 import { ResultsSection } from './ResultsSection'
@@ -167,13 +165,8 @@ function LayersSection({ open, onToggle }: {
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
 function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle: () => void; onRetract?: () => void }) {
-  const { filters, commune } = useApp()
+  const { filters } = useApp()
   const n = countActiveFilters(filters)
-  // N = parc du run servi dans le périmètre courant (trame entière, analyse coupée), dynamique.
-  const parc = useQuery({ queryKey: ['filtre-parc', commune], queryFn: () => getFiltre({ ...EMPTY_FILTERS, analyseLabuse: false }, 0) })
-  const N = parc.data?.total
-  const accroche = N == null ? '…'
-    : filters.analyseLabuse ? CLIENT.filtres.accrocheOn(N) : CLIENT.filtres.accrocheOff(N)
   return (
     <div className="shrink-0 px-5 pt-4">
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
@@ -192,10 +185,9 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
         // plafonné + scrollable (comme le tiroir Couches) : les deux étages du panneau sont hauts,
         // ils scrollent DANS la section au lieu de casser la colonne flex de l'aside.
         <div data-filtres-drawer className="mt-3 max-h-[64vh] overflow-y-auto overflow-x-clip">
-          {/* Accroche HONNÊTE, adaptée à l'interrupteur (stage 4) : les filtres trient, ne recalculent pas. */}
-          <p className="text-[10.5px] leading-snug text-txt-dim">{accroche}</p>
-          {/* Les DEUX étages (① terrain / ② regard LABUSE) + raccourcis — panneau unique. */}
-          <div className="mt-2"><FiltreLabuse onRetract={onRetract} /></div>
+          {/* M55-D stage 8 : l'accroche chiffrée a disparu — UN SEUL nombre à l'écran, porté par
+              le bandeau + compteur de FiltreLabuse (état partagé `live`). */}
+          <FiltreLabuse onRetract={onRetract} />
         </div>
       )}
     </div>
@@ -206,7 +198,7 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
 // votre place. « Afficher l'analyse LABUSE » — rien n'est masqué, le cadastre reste entier,
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
-  const { verdict, setVerdict } = useApp()
+  const { verdict, setVerdict, accueilVu, setAccueilVu, openFiltres } = useApp()
   const [algoOpen, setAlgoOpen] = useState(false)
   if (verdict) {
     return (
@@ -230,23 +222,28 @@ function VerdictHero() {
       </div>
     )
   }
+  // M55-D stage 8 (décision Vic) : l'accueil devient une PAGE DE PRÉSENTATION — l'UNIQUE CTA
+  // d'analyse vit dans le panneau Filtres (la Révélation). Ici : ce que LABUSE fait, sobrement,
+  // et UN lien « Commencer → » qui ouvre la section Filtres. Disparaît après le premier geste.
+  if (accueilVu) return null
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pb-10 text-center">
-      <svg viewBox="0 0 240 82" className="h-7 w-20" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pb-6 text-center">
+      <svg viewBox="0 0 240 82" className="h-7 w-20 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
         <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
       </svg>
-      <p className="mt-4 text-xs leading-relaxed text-txt-mut">
-        Le cadastre entier est sous vos yeux — 431 663 parcelles, toutes cliquables.
-        <br />LABUSE les a analysées et vous propose son avis.
-      </p>
-      <button data-verdict-on onClick={() => setVerdict(true)}
-        className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-shadow duration-soft ease-cockpit hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
-        Afficher l'analyse LABUSE →
+      <p className="mt-3 text-xs leading-relaxed text-txt-mut">{CLIENT.accueil.intro}</p>
+      <ul className="mt-3 flex flex-col gap-1 text-left">
+        {CLIENT.accueil.points.map((pt) => (
+          <li key={pt} className="flex items-start gap-1.5 text-[10.5px] leading-snug text-txt-dim">
+            <span className="mt-px shrink-0 text-mint" aria-hidden>·</span>{pt}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[10.5px] leading-snug text-txt-dim">{CLIENT.accueil.doctrine}</p>
+      <button data-commencer onClick={() => { setAccueilVu(); openFiltres() }}
+        className="mt-4 w-full rounded-xl border border-mint/50 px-4 py-2.5 font-display text-[13px] font-bold text-mint transition-colors duration-quick hover:bg-mint/10">
+        {CLIENT.accueil.commencer}
       </button>
-      <p className="mt-3 text-[11px] leading-snug text-txt-dim">
-        Rien n'est masqué : le cadastre reste entier, chaque parcelle garde son verdict —
-        <br />cliquez-en une pour voir pourquoi. Vous gardez la main.
-      </p>
     </div>
   )
 }
@@ -267,7 +264,7 @@ export function LeftPanel() {
   useEffect(() => {
     // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
     // se referme pour laisser la carte (accordéon), comme demandé.
-    if (verdict && !prevVerdict.current) { setCouchesOpen(false); setFiltresOpen(false) }
+    if (verdict && !prevVerdict.current) { setCouchesOpen(false); setFiltresOpen(false); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
   // M55-D stage 3/6 : la section « Filtres » est pilotée par le STORE — le header-reflet
@@ -276,8 +273,9 @@ export function LeftPanel() {
   const setFiltresOpen = useApp((st) => st.setFiltresOpen)
   // Accordéon : ouvrir une section replie l'autre — la colonne (hauteur fixe) ne déborde jamais,
   // même quand le panneau EXPERT est déplié dans « Filtres ».
-  const toggleCouches = () => { setCouchesOpen((o) => !o); setFiltresOpen(false) }
-  const toggleFiltres = () => { setFiltresOpen(!filtresOpen); setCouchesOpen(false) }
+  const setAccueilVu = useApp((st) => st.setAccueilVu)
+  const toggleCouches = () => { setCouchesOpen((o) => !o); setFiltresOpen(false); setAccueilVu() }
+  const toggleFiltres = () => { setFiltresOpen(!filtresOpen); setCouchesOpen(false); setAccueilVu() }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}

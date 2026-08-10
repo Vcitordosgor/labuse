@@ -166,11 +166,6 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false) }
   // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
-  // parc du PÉRIMÈTRE (communes seules, AUCUN autre critère) — le N de l'appel, du décompte et de
-  // la phrase (« LABUSE a analysé les N parcelles de X ») ; les critères ne réduisent que les retenues.
-  const parcQ = useQuery({ queryKey: ['filtre-perimetre', filters.communes], queryFn: () =>
-    getFiltre({ ...EMPTY_FILTERS, communes: filters.communes, analyseLabuse: false }, 0) })
-  const parc = parcQ.data?.compte
 
   // ═══ M55-D stage 7 · COMPTEUR VIVANT — « N parcelles correspondent », mis à jour à chaque
   // changement de filtre : debounce 400 ms + AbortController (les appels obsolètes sont annulés).
@@ -229,7 +224,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       })
     if (!reduced) {
       const t0 = performance.now()
-      const cible = parc ?? 431_663
+      const cible = live ?? 431_663
       const tick = (now: number) => {
         const p = Math.min(1, (now - t0) / RITUEL_MS)
         setCountVal(Math.round(cible * p * p * p))   // easing cubique : les chiffres ACCÉLÈRENT
@@ -342,7 +337,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         <p data-compteur-vivant aria-live="polite"
           className={`mt-3 text-[11.5px] tabular-nums transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'} ${live === 0 ? 'text-st-creuser' : 'text-txt-mut'}`}>
           {live == null ? '…' : live === 0 ? CLIENT.compteur.zero
-            : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent</>}
+            : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
 
@@ -354,10 +349,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           <div data-decompte className="py-2 text-center" aria-live="polite">
             <p className="font-display text-[24px] font-bold text-mint tabular-nums">
               {reduced ? '…' : nf.format(countVal)}
-              {!reduced && parc != null && countVal >= parc && <span aria-hidden> ✓</span>}
+              {!reduced && live != null && countVal >= live && <span aria-hidden> ✓</span>}
             </p>
             <p className="mt-1 text-[11px] leading-snug text-txt-dim">
-              {CLIENT.revelation.decompte(parc ?? 431_663)}…
+              {CLIENT.revelation.decompte(live ?? 431_663)}…
             </p>
           </div>
         ) : phase === 'error' ? (
@@ -373,7 +368,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier) ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
-              {CLIENT.revelation.phraseIntro(parc ?? 0, perimetre)}{' '}
+              {CLIENT.revelation.phraseIntro(live ?? 0, perimetre)}{' '}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
             {phraseRetenues === 0 ? (
@@ -404,12 +399,16 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         ) : (
           /* ── 1. L'APPEL — contexte sobre + LE bouton chaud du panneau éteint ── */
           <div data-appel>
-            <p className="text-[11.5px] leading-snug text-txt">{CLIENT.revelation.contexte(parc ?? 431_663, runDate)}</p>
+            {/* M55-D stage 8 : UN SEUL NOMBRE — bandeau, compteur et bouton dérivent tous de `live`
+                (le compteur du stage 7). Pendant le fetch, l'opacité baisse PARTOUT en même temps
+                (état de chargement partagé) — jamais un endroit à jour et l'autre en retard.
+                La DATE du classement, elle, ne dépend pas des filtres. */}
+            <p data-bandeau className={`text-[11.5px] leading-snug text-txt transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
+              {CLIENT.revelation.contexte(live ?? 431_663, runDate)}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
             <button data-analyser-btn onClick={lancer}
-              className="mt-2.5 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-shadow duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)]">
-              {nActifs > 0 && live != null ? CLIENT.revelation.boutonCes(live)
-                : CLIENT.revelation.boutonParc(parc ?? 431_663)}
+              className={`mt-2.5 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {nActifs > 0 ? CLIENT.revelation.boutonFaire : CLIENT.revelation.boutonParc(live ?? 431_663)}
             </button>
           </div>
         )}
