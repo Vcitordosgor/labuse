@@ -12,6 +12,9 @@ function Omnibox() {
   const { select, setView, setCommune, commune, setToast } = useApp()
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  // M55-B point 3 : la recherche « lancée » (loupe ou Entrée sans suggestion) doit se VOIR —
+  // spinner sobre dans le bouton pendant la résolution ; l'état vide reste le toast honnête.
+  const [searching, setSearching] = useState(false)
 
   // raccourci « / » → focus de l'omnibox (le kbd a disparu mais le raccourci reste, pratique)
   useEffect(() => {
@@ -42,26 +45,31 @@ function Omnibox() {
   // en dernier ressort, une adresse libre est géocodée via la 1re suggestion interne.
   const onEnterRaw = async (raw: string) => {
     if (!raw) return
-    if (!/\d/.test(raw)) {
-      const low = raw.toLowerCase()
-      const c = (communes.data ?? []).find((x) => x.commune.toLowerCase() === low)
-        ?? (raw.length >= 3 ? (communes.data ?? []).find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
-      if (c) { setCommune(c.commune); setView('cartes'); return }
+    setSearching(true)
+    try {
+      if (!/\d/.test(raw)) {
+        const low = raw.toLowerCase()
+        const c = (communes.data ?? []).find((x) => x.commune.toLowerCase() === low)
+          ?? (raw.length >= 3 ? (communes.data ?? []).find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
+        if (c) { setCommune(c.commune); setView('cartes'); return }
+      }
+      const qn = raw.toUpperCase().replace(/\s+/g, '')
+      const hit = geo.data?.features.find((f) => {
+        const idu = String(f.properties?.idu ?? '').toUpperCase()
+        return idu.includes(qn) || idu.slice(8).includes(qn)
+      })
+      if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
+      const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
+      if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
+      // adresse libre → 1re suggestion interne
+      if (/[a-zA-Zà-ÿ]/.test(raw)) {
+        const feats = await banAutocomplete(raw).catch(() => [])
+        if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
+      }
+      setToast(`Aucune commune, parcelle ni adresse trouvée pour « ${raw} »`)
+    } finally {
+      setSearching(false)
     }
-    const qn = raw.toUpperCase().replace(/\s+/g, '')
-    const hit = geo.data?.features.find((f) => {
-      const idu = String(f.properties?.idu ?? '').toUpperCase()
-      return idu.includes(qn) || idu.slice(8).includes(qn)
-    })
-    if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
-    const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
-    if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
-    // adresse libre → 1re suggestion interne
-    if (/[a-zA-Zà-ÿ]/.test(raw)) {
-      const feats = await banAutocomplete(raw).catch(() => [])
-      if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
-    }
-    setToast(`Aucune commune, parcelle ni adresse trouvée pour « ${raw} »`)
   }
 
   return (
@@ -70,21 +78,31 @@ function Omnibox() {
         data-omnibox
         onSelect={onPickAddress}
         onEnterRaw={onEnterRaw}
-        placeholder="Rechercher : IDU, adresse exacte, commune…"
+        placeholder="Rechercher : IDU, adresse exacte…"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />
-      {/* A5 (post-revue) : la LOUPE cliquable — lance la recherche sur le texte courant */}
+      {/* A5 (post-revue) : la LOUPE cliquable — lance la recherche sur le texte courant.
+          M55-B point 3 : pendant la résolution, la loupe devient un spinner sobre (bouton
+          désactivé + curseur d'attente) — on VOIT que ça cherche. */}
       <button
+        disabled={searching}
         onClick={() => {
           const el = document.querySelector<HTMLInputElement>('[data-omnibox]')
           if (el) onEnterRaw(el.value.trim())
         }}
-        title="Lancer la recherche" aria-label="Lancer la recherche"
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110">
-        <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
-          <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
-          <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
+        title="Lancer la recherche" aria-label="Lancer la recherche" aria-busy={searching}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:cursor-wait disabled:brightness-95">
+        {searching ? (
+          <svg viewBox="0 0 20 20" className="h-[15px] w-[15px] animate-spin" aria-hidden>
+            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
+            <path d="M10 3.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
+            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )}
       </button>
     </div>
   )

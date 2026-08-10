@@ -36,6 +36,9 @@ export function AddressAutocomplete({
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [loading, setLoading] = useState(false)
+  // M55-B point 1 : la source a répondu 0 adresse → on le DIT (état vide honnête) au lieu du
+  // silence d'avant (menu simplement fermé), qui laissait croire à un composant inerte.
+  const [noResults, setNoResults] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -61,12 +64,13 @@ export function AddressAutocomplete({
   // Debounce + annulation : on ne garde que le dernier appel en vol.
   useEffect(() => {
     const needle = text.trim()
-    if (needle.length < 3) { setItems([]); setOpen(false); setLoading(false); return }
+    if (needle.length < 3) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
-    setLoading(true)
+    setLoading(true); setNoResults(false)
     const t = setTimeout(() => {
       banAutocomplete(needle, ctrl.signal)
-        .then((r) => { setItems(r); setOpen(r.length > 0); setActive(-1) })
+        // M55-B point 1 : on OUVRE le menu même à 0 résultat (message « aucune adresse trouvée »).
+        .then((r) => { setItems(r); setNoResults(r.length === 0); setOpen(true); setActive(-1) })
         .catch(() => { /* abort ou réseau : on n'affiche pas d'erreur bloquante */ })
         .finally(() => setLoading(false))
     }, 220)
@@ -136,7 +140,7 @@ export function AddressAutocomplete({
       {loading && (
         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-txt-dim" aria-hidden>…</span>
       )}
-      {open && items.length > 0 && pos && createPortal(
+      {open && pos && (items.length > 0 || noResults) && createPortal(
         <ul
           ref={listRef}
           id={listId}
@@ -144,6 +148,12 @@ export function AddressAutocomplete({
           style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 320) }}
           className="floating z-[1000] max-h-64 w-max overflow-y-auto p-1"
         >
+          {/* M55-B point 1 : état vide explicite — la source ne connaît pas cette adresse. */}
+          {noResults && (
+            <li role="option" aria-disabled className="whitespace-nowrap px-2.5 py-1.5 text-[11.5px] text-txt-dim">
+              Aucune adresse trouvée <span className="text-txt-dim/70">— vérifiez l’orthographe, ou tapez un IDU / une commune.</span>
+            </li>
+          )}
           {items.map((f, i) => (
             <li
               key={`${f.lon},${f.lat},${i}`}

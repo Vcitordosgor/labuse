@@ -63,7 +63,7 @@ export const LAYER_INFO: Record<string, string> = {
   zonage:
     'Les zones du PLU telles que déposées par la commune sur le Géoportail de l’urbanisme (flux GPU) : les aplats bruts du document opposable, avec leurs contours d’origine. Non rattachés au cadastre : ils couvrent AUSSI l’espace non parcellaire (voirie, ravines, domaine public), d’où des couleurs là où la couche « par parcelle » n’en montre pas. Couverture : 23 des 24 communes — Saint-Philippe, au RNU, n’a pas de PLU numérisé.',
   zonage_parcelle:
-    'La couche de zonage à utiliser au quotidien : chaque parcelle prend d’emblée la couleur de sa famille de zone (U urbaine, AU à urbaniser, A agricole, N naturelle), calée sur le cadastre par LABUSE — une lecture d’ensemble de la constructibilité, sans cliquer. En zoomant, ou en cliquant une parcelle, le code exact (U1a, 1AUc…) s’affiche. Couverture : 99 % des parcelles ; absente là où la commune est au RNU (Saint-Philippe).',
+    'La couche de zonage à utiliser au quotidien : chaque parcelle prend d’emblée la couleur de sa famille de zone (U urbaine, AU à urbaniser, A agricole, N naturelle), calée sur le cadastre par LABUSE — une lecture d’ensemble de la constructibilité, sans cliquer. En zoomant, ou en cliquant une parcelle, le code exact (U1a, 1AUc…) s’affiche. Comme elle colore la couche « Parcelles », celle-ci s’active automatiquement avec elle. Couverture : 99 % des parcelles ; absente là où la commune est au RNU (Saint-Philippe).',
   // M55-A item 6 : chaque « i » dit désormais CE QUE montre la couche, SA source, et SA
   // couverture (partielle → dite franchement).
   parcelles:
