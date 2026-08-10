@@ -400,7 +400,18 @@ def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
 
 
 def ingest_parc_national(session, commune, run_id, sids) -> int:
-    """Parc National (Région ODS pnrun_2021) → subtype 'coeur' | 'adhesion'."""
+    """Parc National (Région ODS pnrun_2021) → subtype 'coeur' | 'adhesion'.
+
+    M55-A : la géométrie ODS est ÎLE ENTIÈRE (non découpée par commune). On la stocke UNE seule
+    fois avec `commune=NULL` (servie partout, comme les 50 pas), au lieu de la répliquer 24× (une
+    par commune) comme avant. `ingest_layers` appelle cette fonction dans la boucle par commune :
+    on ne (re)tire donc qu'à la 1re fois de CE run, puis on saute — idempotent, sans réseau inutile."""
+    marker = session.execute(text(
+        "SELECT ingestion_run_id FROM spatial_layers WHERE kind='parc_national' LIMIT 1")).first()
+    if marker is not None and (run_id is None or marker[0] == run_id):
+        return 0  # déjà à jour pour ce run (ou présent et run ad-hoc) — pas de re-tirage
+    # rafraîchir : purge l'ancienne version (tout run confondu), ré-insère île entière
+    session.execute(text("DELETE FROM spatial_layers WHERE kind='parc_national'"))
     with _client() as c:
         recs = _ods_records(c, "pnrun_2021", select="type,code_type,geo_shape", page=50)
     n = 0
@@ -412,7 +423,7 @@ def ingest_parc_national(session, commune, run_id, sids) -> int:
         libelle = (rec.get("type") or "")
         subtype = "coeur" if "coeur" in libelle.lower() or "cœur" in libelle.lower() else "adhesion"
         _insert_layer(session, "parc_national", subtype, libelle, geom,
-                      sids.get(KIND_SOURCE["parc_national"]), commune, run_id,
+                      sids.get(KIND_SOURCE["parc_national"]), None, run_id,
                       {"type": libelle, "code_type": rec.get("code_type")})
         n += 1
     return n
