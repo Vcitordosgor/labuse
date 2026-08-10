@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { csvExportUrl, getCommunes, getEntonnoir, getFiltre, getParcelsGeojson, getResults, getShortlist, type SortKey } from '../../lib/api'
+import { csvExportUrl, getCommunes, getEntonnoir, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -24,45 +24,6 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
 // B2 (M12) : le mini-anneau de complétude (le « 92 » des cartes) a QUITTÉ la liste — il était
 // présent sur toutes les cartes, sans valeur discriminante. Il ne vit plus que sur la fiche
 // parcelle ouverte (Fiche.tsx). La liste garde le seul chiffre qui trie : le ×N.
-
-/** M54-EXPO-2 A7 — « Shortlist du jour » : les sujets à traiter en priorité du run servi
- *  (GET /shortlist). Repliable dans l'en-tête des résultats ; chaque ligne ouvre la fiche. */
-function ShortlistToggle() {
-  const { select, commune } = useApp()
-  const [open, setOpen] = useState(false)
-  const q = useQuery({ queryKey: ['shortlist', commune], queryFn: () => getShortlist(8), enabled: open })
-  const sujets = q.data?.sujets ?? []
-  return (
-    <div className="mt-1.5">
-      <button data-shortlist-toggle onClick={() => setOpen((o) => !o)}
-        className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] transition-colors ${open ? 'border-mint/40 bg-mint/[0.06] text-mint' : 'border-line-2 bg-surface-2 text-txt-mut hover:text-txt'}`}>
-        <span>★ Shortlist du jour</span>
-        <span className="ml-auto text-txt-dim">{open ? '▲' : (q.data ? `${q.data.count} · ▼` : '▼')}</span>
-      </button>
-      {open && (
-        <div data-shortlist className="mt-1 flex flex-col gap-1">
-          {q.isPending && <p className="px-2 py-1 text-[10.5px] text-txt-dim">Chargement…</p>}
-          {q.data && sujets.length === 0 && <p className="px-2 py-1 text-[10.5px] text-txt-dim">Aucun sujet prioritaire pour ce périmètre.</p>}
-          {sujets.map((s, i) => {
-            const meta = verdictMeta((s.status ?? null) as ParcelProps['status'], (s.tier_v2 ?? null) as TierV2 | null, false)
-            return (
-              <div key={s.idu} data-shortlist-item className="flex items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 hover:border-[#2E5A45]">
-                <span className="w-4 shrink-0 text-center font-mono text-[10px] text-txt-dim">{i + 1}</span>
-                <button onClick={() => select(s.idu)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                  <span className="shrink-0 font-mono text-[11px] text-txt-hi">{s.idu.slice(8, 10)} {s.idu.slice(10)}</span>
-                  <span className="shrink-0 rounded-full px-1.5 text-[9.5px]" style={{ color: meta.color, border: `1px solid ${meta.color}55` }}>{meta.label}</span>
-                  {s.surface_m2 != null && <span className="ml-auto shrink-0 text-[10px] text-txt-dim">{fmt(Math.round(s.surface_m2))} m²</span>}
-                </button>
-                {/* M54-EXPO-3 A8 — ajouter au comparateur */}
-                <button data-shortlist-compare onClick={() => useApp.getState().addToCompare(s.idu)} title="Comparer" className="shrink-0 text-[12px] text-txt-dim hover:text-mint">⇄</button>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 
 function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
@@ -355,7 +316,6 @@ export function ResultsSection() {
             ))}
           </div>
         </div>
-        <ShortlistToggle />
       </div>
 
       {communeNote && (
