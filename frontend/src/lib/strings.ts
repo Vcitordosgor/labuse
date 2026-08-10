@@ -50,8 +50,6 @@ export const CLIENT = {
       communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
       sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
     },
-    b2Titre: 'Et c’est un copilote IA qui mâche le travail.',
-    b2Corps: 'Il répond, explique chaque parcelle et vous accompagne partout dans l’app — chiffres sourcés à l’appui.',
     commencer: 'Commencer →',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la

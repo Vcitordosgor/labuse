@@ -242,7 +242,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const Seg = ({ n, l, src }: { n: number | null | undefined; l: (s: string) => string; src: string }) => (
     n == null ? null : (
       <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-        <b className="text-txt-hi tabular-nums">{l(nf(n))}</b>
+        <b className="font-medium text-txt tabular-nums">{l(nf(n))}</b>
         <Tip side="top" tip={src} className="shrink-0">
           <span role="button" tabIndex={0} aria-label="Source de ce chiffre"
             className="inline-flex h-[12px] w-[12px] items-center justify-center rounded-full border border-line-2 text-[7.5px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
@@ -255,21 +255,22 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       <svg viewBox="0 0 240 82" className="h-6 w-16 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
         <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
       </svg>
-      <h3 className="mt-4 font-display text-[13.5px] font-bold leading-snug text-txt-hi">{A.b1Titre}</h3>
-      <p className="mt-2 text-[11px] leading-relaxed text-txt-mut">
+      {/* Ajustement Vic (capture) : le BOUTON d'abord — plein/mint/gros, LE geste de la page ;
+          le texte passe en soutien (titre sobre, chiffres en corps réduit, phrase discrète).
+          Le bloc copilote IA est retiré (chaînes 0-caller). */}
+      <button data-commencer onClick={onCommencer}
+        className="mt-5 w-full shrink-0 rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-shadow duration-soft ease-cockpit hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
+        {A.commencer}
+      </button>
+      <h3 className="mt-5 text-[11.5px] font-medium leading-snug text-txt">{A.b1Titre}</h3>
+      <p className="mt-1.5 text-[10.5px] leading-relaxed text-txt-mut">
         <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
         <span className="mx-1 text-mint">·</span>
         <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
         <span className="mx-1 text-mint">·</span>
         <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
-        {A.b1Suite}
       </p>
-      <h3 className="mt-5 font-display text-[13.5px] font-bold leading-snug text-txt-hi">{A.b2Titre}</h3>
-      <p className="mt-2 text-[11px] leading-relaxed text-txt-mut">{A.b2Corps}</p>
-      <button data-commencer onClick={onCommencer}
-        className="mt-6 w-full shrink-0 rounded-xl border border-mint/50 px-4 py-2.5 font-display text-[13px] font-bold text-mint transition-colors duration-quick hover:bg-mint/10">
-        {A.commencer}
-      </button>
+      <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
     </div>
   )
 }
