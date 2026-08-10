@@ -72,6 +72,12 @@ sans règlement, pas de SDP → LABUSE ne PROMEUT pas (honnête) — il ne les �
 
 **Recommandation** : option 1 (rien) + éventuellement option 2 (bandeau commune) — décision Vic.
 
+> **ARBITRAGE VIC (résolu)** : statu quo scoring + **bandeau RNU générique livré** en tête de la
+> fiche commune (commit `6ba3dbca`). Backend `/communes/{c}/contexte` expose `rnu` (wording
+> doctrinal `LIBELLE_RNU`/`DETAIL_RNU`) pour toute commune sans PLU (source `config/rnu_communes.yaml`) ;
+> le front affiche « ⚑ Commune au règlement national d'urbanisme — pas de PLU local · constructibilité
+> au cas par cas ». Prouvé : Saint-Philippe → bandeau ; Saint-Paul → aucun. Capture `p1_bandeau_rnu`.
+
 ---
 
 ## 2. STOP — deux banques de filtres
@@ -126,6 +132,10 @@ La banque B (panneau) est la banque EXPERTE complète ; la banque A (header) en 
 **Invariant à garantir** : un utilisateur ne doit jamais pouvoir poser deux fois le même filtre à
 deux endroits. (Aujourd'hui l'état est partagé donc pas de conflit de valeur, mais la double saisie
 existe et doit disparaître.)
+
+> **ARBITRAGE VIC** : fusion validée sur le PRINCIPE (header = filtres rapides qui déplient le
+> panneau expert, doublons retirés, un champ = un seul endroit) mais **traitée en M55-D dédié** —
+> **rien changé aux filtres dans ce mandat**.
 
 ---
 
