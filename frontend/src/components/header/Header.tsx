@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
-import { activeChips, countActiveFilters, removeToken } from '../../lib/filters'
-import { TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { Loading } from '../Loading'
@@ -108,80 +106,8 @@ function Omnibox() {
   )
 }
 
-function NumField({ label, value, onChange, placeholder }: {
-  label: string; value: number | null; onChange: (v: number | null) => void; placeholder: string
-}) {
-  return (
-    <div className="min-w-0 flex-1">
-      <label className="label-caps block">{label}</label>
-      <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-        className="mt-1 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
-    </div>
-  )
-}
-
-// M55-D (phase 2) — FUSION des deux banques : le header ne porte plus qu'un accès « Filtres (N) »
-// avec les 3 RAPIDES validés (Verdict + Surface + SDP) et « Tous les filtres → » qui révèle LE
-// panneau unique (tous les critères, une seule fois). Le badge N compte TOUS les filtres actifs,
-// où qu'ils aient été posés. Le MODE d'analyse n'est PAS ici (il vit dans le panneau).
-function AddFilter() {
-  const { filters, setFilter, setVerdict } = useApp()
-  const [open, setOpen] = useState(false)
-  const n = countActiveFilters(filters)
-  const TIERS: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
-  useEffect(() => {
-    if (!open) return
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [open])
-  const toggleTier = (t: FilterTier) =>
-    setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-  const ouvrirTout = () => { setVerdict(true); setOpen(false) }
-  return (
-    <div className="relative">
-      <button data-filtres-btn onClick={() => setOpen((o) => !o)}
-        className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-dashed px-3 text-xs ${
-          open || n > 0 ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-        Filtres
-        {n > 0 && <span className="rounded-full bg-mint/15 px-1.5 text-[10px] font-medium text-mint tabular-nums">{n}</span>}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="floating absolute left-0 top-9 z-20 w-[290px] p-4">
-            <p className="label-caps flex items-center gap-1.5">Filtres rapides
-              <span className="text-[9px] font-normal normal-case text-txt-dim">— tout le reste dans le panneau</span></p>
-            <label className="label-caps mt-2.5 block text-txt-dim">Verdict (multi)</label>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {TIERS.map((t) => (
-                <button key={t} onClick={() => toggleTier(t)}
-                  title={t === 'ecartee' ? 'Exclusions dures de l\'étage 0 (run servi)' : undefined}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_V2_META[t].color }} />
-                  {TIER_V2_META[t].label}
-                </button>
-              ))}
-            </div>
-            <div className="mt-3 flex gap-2">
-              <NumField label="SURFACE ≥" value={filters.surfaceMin} onChange={(v) => setFilter('surfaceMin', v)} placeholder="1 000" />
-              <NumField label="SURFACE ≤" value={filters.surfaceMax} onChange={(v) => setFilter('surfaceMax', v)} placeholder="20 000" />
-            </div>
-            <div className="mt-3">
-              <NumField label="SDP RÉSIDUELLE ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
-            </div>
-            <button data-tous-les-filtres onClick={ouvrirTout}
-              className="mt-4 flex min-h-8 w-full items-center justify-center gap-1 rounded-lg bg-mint/10 py-1.5 text-[11.5px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
-              Tous les filtres →
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
+// M55-D stage 3 : AddFilter (popover « Filtres (N) ») + NumField RETIRÉS du header — les filtres
+// vivent désormais dans la section repliable « Filtres » du panneau gauche (LeftPanel).
 
 // Sélecteur de commune — le périmètre n'est plus fixe : les 24 communes + « Toute l'île ».
 // Pilote carte, compteurs, liste, modules ; l'état vit dans l'URL (App.tsx).
@@ -259,27 +185,14 @@ function ContexteButton() {
   )
 }
 
+// M55-D stage 3 : le header ne porte PLUS aucun filtre — le bouton « Filtres (N) » et les chips
+// ont rejoint la section repliable « Filtres » du panneau gauche. Ne restent que le périmètre
+// (commune) et le contexte commune, qui ne sont pas des filtres.
 function FilterChips() {
-  const { filters, setFilters } = useApp()
-  const chips = activeChips(filters)
   return (
-    // RÈGLE (post-régression P0) : « + Filtre » et son popover vivent HORS du conteneur défilant.
-    // Un popover absolu DANS un overflow-x-auto est rogné (overflow-y calculé auto) : présent au
-    // DOM, invisible à l'utilisateur — le bug exact constaté par Vic. Seuls les chips défilent.
     <div className="flex min-w-0 items-center gap-2">
       <CommuneSelect />
       <ContexteButton />
-      <div className="flex min-w-0 items-center gap-2 overflow-x-auto" data-chips>
-        {chips.map((c) => (
-          <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-line-2 bg-surface-3 pl-3 pr-1 text-xs text-txt">
-            {c.label}
-            <button onClick={() => setFilters(removeToken(filters, c.token))}
-              className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-2 hover:text-txt-hi"
-              title="Retirer ce filtre" aria-label={`Retirer le filtre ${c.label}`}>×</button>
-          </span>
-        ))}
-      </div>
-      <AddFilter />
     </div>
   )
 }
