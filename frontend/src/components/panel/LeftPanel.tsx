@@ -256,7 +256,9 @@ export function LeftPanel() {
   // Item 1 (UX V1, mobile) : sous 640 px le panneau occupait 100 % de l'écran — la carte
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
   // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
-  const [mobileOpen, setMobileOpen] = useState(false)
+  // M55-D stage 6 : tiroir mobile piloté par le store (le header-reflet l'ouvre aussi)
+  const mobileOpen = useApp((st) => st.mobilePanelOpen)
+  const setMobileOpen = useApp((st) => st.setMobilePanelOpen)
   // M14 B3 (QA-64) : « Couches » OUVERT PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée.
   // État partagé desktop/mobile. Plus d'auto-fermeture 10 s : c'est la BASCULE vers l'analyse
   // (`verdict` false→true) qui replie les couches, une seule fois — l'utilisateur peut rouvrir.
@@ -268,13 +270,14 @@ export function LeftPanel() {
     if (verdict && !prevVerdict.current) { setCouchesOpen(false); setFiltresOpen(false) }
     prevVerdict.current = verdict
   }, [verdict])
-  // M55-D stage 3 : la section « Filtres » (repliable, sous « Couches ») remplace le bouton header.
-  // Fermée par défaut (le badge « N actifs » signale l'activité même repliée).
-  const [filtresOpen, setFiltresOpen] = useState(false)
+  // M55-D stage 3/6 : la section « Filtres » est pilotée par le STORE — le header-reflet
+  // (sélecteur de périmètre) l'ouvre au clic. Fermée par défaut (badge N actifs visible).
+  const filtresOpen = useApp((st) => st.filtresOpen)
+  const setFiltresOpen = useApp((st) => st.setFiltresOpen)
   // Accordéon : ouvrir une section replie l'autre — la colonne (hauteur fixe) ne déborde jamais,
   // même quand le panneau EXPERT est déplié dans « Filtres ».
   const toggleCouches = () => { setCouchesOpen((o) => !o); setFiltresOpen(false) }
-  const toggleFiltres = () => { setFiltresOpen((o) => !o); setCouchesOpen(false) }
+  const toggleFiltres = () => { setFiltresOpen(!filtresOpen); setCouchesOpen(false) }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}

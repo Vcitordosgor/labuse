@@ -8,11 +8,11 @@
  * Le compteur est SQL-exact (endpoint unifié /filtre) — jamais un calcul client. Chaque facette
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { deleteSearch, getFiltre, getSavedSearches, getV2Modele, renameSearch, saveSearch } from '../../lib/api'
-import { filtersFromHash, filtersToHash, hasOpinion } from '../../lib/filters'
+import { getFiltre, getV2Modele } from '../../lib/api'
+import { resumeCriteres } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
@@ -43,6 +43,22 @@ const VIGILANCES: [string, string][] = [
 // (pollution/ICPE/risques) — des FAITS de terrain, valables sans analyse.
 const CONTRAINTES: [string, string][] = ([['cinquante_pas', '50 pas géométriques'],
   ['parc_national', 'Parc national']] as [string, string][]).concat(VIGILANCES)
+// M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
+// adresses). La chip affiche le CP, le « i » (title) nomme la commune. Rang 1 du panneau.
+const CP_COMMUNES: [string, string][] = [
+  ['97400', 'Saint-Denis'], ['97410', 'Saint-Pierre'], ['97412', 'Bras-Panon'],
+  ['97413', 'Cilaos'], ['97414', 'Entre-Deux'], ['97419', 'La Possession'],
+  ['97420', 'Le Port'], ['97424', 'Saint-Leu'], ['97425', 'Les Avirons'],
+  ['97426', 'Les Trois-Bassins'], ['97427', "L'Étang-Salé"], ['97429', 'Petite-Île'],
+  ['97430', 'Le Tampon'], ['97431', 'La Plaine-des-Palmistes'], ['97433', 'Salazie'],
+  ['97438', 'Sainte-Marie'], ['97439', 'Sainte-Rose'], ['97440', 'Saint-André'],
+  ['97441', 'Sainte-Suzanne'], ['97442', 'Saint-Philippe'], ['97450', 'Saint-Louis'],
+  ['97460', 'Saint-Paul'], ['97470', 'Saint-Benoît'], ['97480', 'Saint-Joseph'],
+]
+//: clés du groupe Signaux de vie (8 validés Vic) — libellés/« i » dans strings (CLIENT.signaux)
+const SIGNAUX_KEYS = ['procedure', 'permis_actif', 'permis_caduc', 'defisc',
+  'nu_pm', 'friche', 'cession', 'assemblage']
+
 // Facettes du cadrage EN ATTENTE DE DONNÉE (P0) — montrées, désactivées, honnêtes.
 const DROIT_DIFFERES = ['Plancher de densité', 'EBC partiel', 'Emplacement réservé',
   'Sol naturel / ZAN', 'Fraîcheur PLU (radar M41)']
@@ -133,15 +149,6 @@ function ModeBCurseur() {
   )
 }
 
-// Les 6 vues préréglées du cadrage — combinaisons nommées (setFilters). L'anti-60-checkboxes.
-const PRESETS: { nom: string; f: Partial<Filters> }[] = [
-  { nom: 'Terrain nu constructible', f: { constructibilite: ['constructible'], etatSol: ['nu'], sdpMin: 100 } },
-  { nom: 'Prêt à démarcher', f: { tiers: ['brulante', 'chaude'], flags: ['acces'], proprietaireType: ['pm'] } },
-  { nom: 'Division en or', f: { divisionOr: true } },
-  { nom: 'Réhab rentable', f: { etatSol: ['bati_sature', 'bati_revele'], modeBRentable: true } },
-  { nom: 'Veille AU', f: { analyseLabuse: false, constructibilite: ['fermee', 'au_conditionnelle'] } },
-  { nom: 'Mon budget', f: { budgetMax: 200000 } },   // M45-B : preset FONCTIONNEL (charge foncière ≤ budget)
-]
 
 function Section({ title, tag, children }: { title: string; tag?: string; children: React.ReactNode }) {
   return (
@@ -155,122 +162,10 @@ function Section({ title, tag, children }: { title: string; tag?: string; childr
   )
 }
 
-/** M52 L5 — VUES SAUVEGARDÉES (reste M45) : nom + combinaison de filtres courante, stockage CÔTÉ
- *  COMPTE (table `saved_searches`, jamais partagé entre comptes). Appliquer (clic) / renommer /
- *  supprimer. Une vue nommée EST aussi une veille (même objet) — cohérent, pas dupliqué. */
-function MesVues() {
-  const { filters, zone, setFilters, setZone } = useApp()
-  const qc = useQueryClient()
-  const [nom, setNom] = useState('')
-  const [editId, setEditId] = useState<number | null>(null)
-  const [editNom, setEditNom] = useState('')
-  const vues = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches })
-  const inval = () => qc.invalidateQueries({ queryKey: ['searches'] })
-  const add = useMutation({ mutationFn: () => saveSearch(nom.trim(), filtersToHash(filters, zone) || '#f=1'), onSuccess: () => { setNom(''); inval() } })
-  const del = useMutation({ mutationFn: deleteSearch, onSuccess: inval })
-  const ren = useMutation({ mutationFn: ({ id, n }: { id: number; n: string }) => renameSearch(id, n), onSuccess: () => { setEditId(null); inval() } })
-  const appliquer = (hash: string) => {
-    const parsed = filtersFromHash(hash)
-    setFilters({ ...EMPTY_FILTERS, ...(parsed?.filters ?? {}) })
-    setZone(parsed?.zone ?? null)
-  }
-  const liste = vues.data ?? []
-  return (
-    <div data-mes-vues className="mt-2">
-      <div className="flex items-center gap-2">
-        <p className="label-caps">Mes vues</p>
-        <span className="text-[10px] text-txt-dim">enregistrées sur votre compte</span>
-      </div>
-      {liste.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {liste.map((v) => (
-            editId === v.id ? (
-              <input key={v.id} autoFocus value={editNom} onChange={(e) => setEditNom(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && editNom.trim()) ren.mutate({ id: v.id, n: editNom.trim() }); if (e.key === 'Escape') setEditId(null) }}
-                onBlur={() => editNom.trim() && editNom !== v.nom ? ren.mutate({ id: v.id, n: editNom.trim() }) : setEditId(null)}
-                className="rounded-full border border-mint bg-surface-3 px-2 py-0.5 text-[11px] text-txt focus:outline-none" />
-            ) : (
-              <span key={v.id} className="group inline-flex items-center gap-1 rounded-full border border-line-2 py-0.5 pl-2.5 pr-1 text-[11px] text-txt-mut hover:border-mint">
-                <button onClick={() => appliquer(v.hash)} title={`Appliquer « ${v.nom} »`} className="hover:text-mint">{v.nom}</button>
-                <button onClick={() => { setEditId(v.id); setEditNom(v.nom) }} aria-label="Renommer" title="Renommer" className="text-txt-dim hover:text-mint">✎</button>
-                <button onClick={() => del.mutate(v.id)} aria-label="Supprimer" title="Supprimer" className="flex h-4 w-4 items-center justify-center rounded-full text-txt-dim hover:bg-surface-3 hover:text-st-ecartee">×</button>
-              </span>
-            )
-          ))}
-        </div>
-      )}
-      <div className="mt-1.5 flex gap-1.5">
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nommer la combinaison de filtres actuelle…"
-          onKeyDown={(e) => { if (e.key === 'Enter' && nom.trim()) add.mutate() }}
-          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim() || add.isPending}
-          className="shrink-0 rounded border border-mint/50 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
-          Enregistrer la vue</button>
-      </div>
-    </div>
-  )
-}
 
-// M52-B — SÉLECTEUR DE PROFIL « Vous cherchez ? », le DERNIER geste : à l'activation de l'analyse,
-// le promoteur dit s'il veut du terrain nu, du bâti (réhab/démolition) ou les deux. Le choix
-// PRÉ-APPLIQUE des filtres qui EXISTENT DÉJÀ (état du sol + mode B rentable) — zéro calcul nouveau,
-// zéro endpoint. La donnée « année de construction » n'existe pas à l'échelle (BDNB hors 974, DPE
-// non obligatoire avant 2028) : ce sélecteur ne l'invente pas, il ouvre le bâti à celui qui l'accepte.
-// La puce active est DÉRIVÉE de l'état réel des filtres (jamais un état fantôme) → toujours cohérente
-// avec le compteur « Retenues par l'analyse ». Re-cliquable à tout moment (chips visibles, pas un tunnel).
-const BATI_SOLS = ['bati_marginal', 'bati_sature', 'bati_revele']
-type Profil = 'nu' | 'bati' | 'deux'
-const PROFILS: { k: Profil; l: string; sous?: string }[] = [
-  { k: 'nu', l: 'Terrain nu' },
-  { k: 'bati', l: 'Bâti', sous: 'réhab / démolition' },
-  { k: 'deux', l: 'Les deux' },
-]
-const memeSet = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|')
-
-function ProfilSelecteur() {
-  const { filters, setFilters } = useApp()
-  // Dérivation : la puce active REFLÈTE les filtres réels. Hors des 3 combinaisons (l'utilisateur
-  // a affiné l'état du sol à la main), aucune puce n'est allumée — on ne ment pas sur le périmètre.
-  const profil: Profil | null =
-    memeSet(filters.etatSol, ['nu']) && !filters.modeBRentable ? 'nu'
-      : memeSet(filters.etatSol, BATI_SOLS) && filters.modeBRentable ? 'bati'
-        : filters.etatSol.length === 0 && !filters.modeBRentable ? 'deux'
-          : null
-  const appliquer = (k: Profil) => {
-    const patch = k === 'nu' ? { etatSol: ['nu'], modeBRentable: false }
-      : k === 'bati' ? { etatSol: [...BATI_SOLS], modeBRentable: true }
-        : { etatSol: [], modeBRentable: false }
-    setFilters({ ...filters, ...patch })   // ne touche QUE état du sol + mode B — le reste des filtres reste
-  }
-  return (
-    <div data-profil-selecteur className="mb-2 rounded-lg border border-line-2/60 bg-surface-2/40 px-2.5 py-2">
-      <p className="label-caps flex flex-wrap items-center gap-x-1.5">Vous cherchez ?
-        <span className="text-[9px] font-normal normal-case text-txt-dim">— pré-règle l’état du sol + le mode B, rien d’autre</span></p>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {PROFILS.map((p) => (
-          <button key={p.k} data-profil={p.k} onClick={() => appliquer(p.k)}
-            title={p.k === 'nu' ? 'État du sol : Nu' : p.k === 'bati' ? 'État du sol : bâti marginal/saturé/révélé + Mode B rentable en avant' : 'Aucune restriction d’état du sol (défaut)'}
-            className={`rounded-full border px-3 py-0.5 text-[11px] transition-colors duration-quick ${
-              profil === p.k ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-            {p.l}{p.sous && <span className="ml-1 text-[9.5px] opacity-70">{p.sous}</span>}
-          </button>
-        ))}
-      </div>
-      {/* Honnêteté (point 2 + cohérence M48) : le segment bâti est servi par le MÊME tri (signal
-          d'activité), mais le backtest ne mesure QUE le classement principal — on le DIT. */}
-      {profil === 'bati' && (
-        <p data-profil-bati-note className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-          Segment bâti trié par <b className="text-txt-mut">signal d’activité</b> — performance non
-          mesurée séparément (le backtest couvre le classement principal). Cohérent avec le segment
-          Renouvellement : les occupées gardent leur motif, jamais masquées.
-        </p>
-      )}
-    </div>
-  )
-}
 
 export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
-  const { filters, setFilter, setFilters, setVerdict, commune } = useApp()
+  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter } = useApp()
   const analyseOn = filters.analyseLabuse
   const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   const toggleTier = (t: FilterTier) =>
@@ -280,18 +175,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
-  // Un pré-réglage portant un critère d'OPINION ALLUME l'interrupteur (visiblement).
-  const applyPreset = (pf: Partial<Filters>) => {
-    const nf = { ...EMPTY_FILTERS, ...pf }
-    const on = Boolean(nf.analyseLabuse) || hasOpinion(nf)
-    setFilters({ ...nf, analyseLabuse: on }); setVerdict(on)
-  }
   // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge).
   const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false) }
   // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
-  const off = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
-  const parc = off.data?.compte
+  // parc du PÉRIMÈTRE (communes seules, AUCUN autre critère) — le N de l'appel, du décompte et de
+  // la phrase (« LABUSE a analysé les N parcelles de X ») ; les critères ne réduisent que les retenues.
+  const parcQ = useQuery({ queryKey: ['filtre-perimetre', filters.communes], queryFn: () =>
+    getFiltre({ ...EMPTY_FILTERS, communes: filters.communes, analyseLabuse: false }, 0) })
+  const parc = parcQ.data?.compte
 
   // ═══ M55-D stage 5 · LA RÉVÉLATION — couche de PRÉSENTATION par-dessus l'état stage 4 (al/verdict
   // intouchés jusqu'au geste final). Décompte 3 s CONSTANT (rituel, décision Vic) ; pendant
@@ -355,7 +247,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   }, [])
   // geste final : l'analyse s'ALLUME (état stage 4, biunivoque) et la section se rétracte
   const voirParcelles = () => { setPhase('idle'); setAnalyse(true); onRetract?.() }
-  const perimetre = commune ?? 'La Réunion'
+  const nCom = filters.communes.length
+  const perimetre = nCom === 1 ? filters.communes[0] : nCom > 1 ? `${nCom} communes` : (commune ?? 'La Réunion')
+  const recap = resumeCriteres(filters, CLIENT.signaux.labels)
   // la phrase révèle les nombres du RITUEL (réponse fraîche) ; hors rituel, la requête vivante
   const src = phase === 'revealed' && fresh ? fresh : on.data
   const phraseRetenues = src?.compte
@@ -364,8 +258,35 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
 
   return (
     <div className="card-elev px-3 py-2">
-      {/* ═══════ ÉTAGE ① — LE TERRAIN (faits objectifs, toujours actifs, ordonnés par usage) ═══════ */}
-      <p className="label-caps text-txt-mut">① Le terrain
+      {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
+          postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
+      <div data-communes-filtre>
+        <p className="label-caps text-txt-mut">1 · Communes
+          <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">le périmètre — tout coché = toute l’île</span></p>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {CP_COMMUNES.map(([cp, nom]) => (
+            <Tip key={cp} side="top" tip={`${cp} → ${nom}`}>
+              <button onClick={() => setCommunesFilter(
+                  filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
+                className={`rounded-full border px-2 py-0.5 font-mono text-[10.5px] tabular-nums transition-colors duration-quick ${
+                  filters.communes.includes(nom) ? 'border-mint bg-mint/20 font-medium text-txt-hi'
+                    : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
+                {cp}
+              </button>
+            </Tip>
+          ))}
+        </div>
+        <div className="mt-1.5 flex gap-3">
+          <button data-communes-toutes onClick={() => setCommunesFilter(CP_COMMUNES.map(([, n]) => n))}
+            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">tout</button>
+          <button data-communes-aucune onClick={() => setCommunesFilter([])}
+            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">rien (toute l’île)</button>
+          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{nCom === 1 ? filters.communes[0] : `${nCom} communes`}</span>}
+        </div>
+      </div>
+
+      {/* ═══════ 2 · LE TERRAIN (faits objectifs, toujours actifs — contraintes EN DERNIER) ═══════ */}
+      <p className="mt-4 label-caps text-txt-mut">2 · Le terrain
         <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">faits, sans analyse</span></p>
       <div className="mt-1.5 flex flex-col gap-3">
         <div>
@@ -389,6 +310,28 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           <div className="mt-1 flex flex-wrap gap-1.5">
             {CONTRAINTES.map(([k, l]) => (<Chip key={k} on={filters.flags.includes(k)} onClick={() => toggleFlag(k)}>{l}</Chip>))}
           </div>
+        </div>
+      </div>
+
+      {/* ═══════ 3 · SIGNAUX DE VIE (M55-D stage 6) — 8 ÉVÉNEMENTS SOURCÉS, filtrables SANS
+          analyse (pas des jugements). OU entre signaux du groupe, ET avec le reste. ═══════ */}
+      <div data-signaux-vie className="mt-4">
+        <p className="label-caps text-txt-mut">3 · Signaux de vie
+          <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">événements sourcés — cumulables</span></p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {SIGNAUX_KEYS.map((k) => (
+            <span key={k} className="flex items-center gap-1">
+              <Chip on={filters.signaux.includes(k)}
+                onClick={() => setFilter('signaux', (filters.signaux.includes(k)
+                  ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)}>
+                {CLIENT.signaux.labels[k]}
+              </Chip>
+              <Tip side="top" tip={CLIENT.signaux.infos[k]}>
+                <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
+                  className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
+            </span>
+          ))}
         </div>
       </div>
 
@@ -418,7 +361,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         ) : phase === 'revealed' || analyseOn ? (
           /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier) ── */
           <div data-phrase>
-            <p className="text-[11.5px] leading-relaxed text-txt-mut">{CLIENT.revelation.phraseIntro(parc ?? 0, perimetre)}</p>
+            <p className="text-[11.5px] leading-relaxed text-txt-mut">
+              {CLIENT.revelation.phraseIntro(parc ?? 0, perimetre)}{' '}
+              {CLIENT.revelation.phraseSelon(recap)}
+            </p>
             {phraseRetenues === 0 ? (
               <p data-phrase-zero className="mt-1 text-[12.5px] font-medium leading-snug text-st-creuser">{CLIENT.revelation.phraseZero}</p>
             ) : (
@@ -484,8 +430,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               <div><p className="label-caps text-txt-dim">SDP résiduelle</p><div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div></div>
               <div><p className="label-caps flex items-center gap-1 text-txt-dim">Capacité <span className="rounded border border-line-2 px-1 text-[8px] uppercase">Est.</span></p><div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="capaciteMin" ph="N" suffix="log." /></div></div>
             </div>
+            {/* M55-D stage 6 : « Avec événement (BODACC) » REMPLACÉ par le groupe Signaux de vie. */}
             <div className="flex flex-wrap gap-1.5">
-              <BoolChip field="evenement" label="Événement (BODACC)" />
               <BoolChip field="veille" label="Veille succession" />
               <BoolChip field="horsCopro" label="Masquer copropriétés" />
             </div>
@@ -579,25 +525,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         )}
       </div>
 
-      {/* ═══════ ÉTAGE ③ — RACCOURCIS (pré-réglages, vues, pédagogie discrète) ═══════ */}
-      <div className="mt-4">
-        <p className="label-caps flex items-center gap-1.5 text-txt-mut">③ Pré-réglages
-          <span className="text-[9px] font-normal normal-case text-txt-dim">— cochent des filtres visibles, à défaire un par un</span></p>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {PRESETS.map((p) => (
-            <button key={p.nom} onClick={() => applyPreset(p.f)}
-              className="rounded-full border border-dashed border-line-2 bg-surface-3 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">{p.nom}</button>
-          ))}
-        </div>
-        <div className="mt-2"><ProfilSelecteur /></div>
-        <MesVues />
-        <Tiroir titre="Puis-je construire ?" sous="droit du sol — repères">
-          <p className="text-[11px] leading-snug text-txt-dim">
-            Le zonage (famille + zone exacte) et l’état du sol se règlent dans l’étage ① « Le terrain ».
-            En attente de donnée (M45 v1.1) : {DROIT_DIFFERES.join(' · ')}.
-          </p>
-        </Tiroir>
-      </div>
+      {/* M55-D stage 6 (ménage acté Vic) : « Vous cherchez ? », pré-réglages et « Mes vues »
+          RETIRÉS de l'UI (les veilles/recherches sauvegardées restent intactes au backend —
+          /events + saved_searches, toujours servies par la cloche de notifications). */}
+      <Tiroir titre="Puis-je construire ?" sous="droit du sol — repères">
+        <p className="text-[11px] leading-snug text-txt-dim">
+          Le zonage (famille + zone exacte) et l’état du sol se règlent dans « Le terrain ».
+          En attente de donnée (M45 v1.1) : {DROIT_DIFFERES.join(' · ')}.
+        </p>
+      </Tiroir>
 
       <button onClick={resetTout}
         title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."

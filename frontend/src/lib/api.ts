@@ -91,6 +91,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.prixMarcheMin != null ? { prix_marche_min: f.prixMarcheMin } : {}),
   ...(f.prixMarcheMax != null ? { prix_marche_max: f.prixMarcheMax } : {}),
   ...(f.marcheFiable ? { marche_fiable: 'true' } : {}),
+  // M55-D stage 6 — Signaux de vie (OU dans le groupe, ET avec le reste)
+  ...(f.signaux.length ? { signaux: f.signaux.join(',') } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {

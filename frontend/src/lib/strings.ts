@@ -17,6 +17,30 @@ export const CLIENT = {
     accrocheOff: (n: number) => `Filtrez les ${n.toLocaleString('fr-FR')} parcelles de La Réunion`,
     accrocheOn: (n: number) => `Affinez parmi les ${n.toLocaleString('fr-FR')} analysées par LABUSE`,
   },
+  // ── M55-D stage 6 · SIGNAUX DE VIE — 8 signaux validés Vic (phase 1 mesurée). Chaque « i »
+  //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
+  signaux: {
+    labels: {
+      procedure: 'Procédure collective',
+      permis_actif: 'Permis actif',
+      permis_caduc: 'Permis abandonné',
+      defisc: 'Sortie de défisc',
+      nu_pm: 'Nu détenu par société',
+      friche: 'Friche recensée',
+      cession: 'Cession de fonds',
+      assemblage: 'Assemblage même proprio',
+    } as Record<string, string>,
+    infos: {
+      procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
+      permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
+      permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
+      defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE, maj 07/2026).',
+      nu_pm: 'Parcelle quasi nue (emprise bâtie < 5 %) détenue par une société privée (fichiers fonciers MAJIC 2025).',
+      friche: 'La parcelle touche une friche de l’inventaire national Cartofriches (maj 07/2026) — inventaire NON exhaustif : l’absence du signal ne prouve rien.',
+      cession: 'Le propriétaire (société) a vendu ou cédé un fonds dans les 24 derniers mois (BODACC, maj 07/2026). Propriétaires personnes morales identifiés seulement.',
+      assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
+    } as Record<string, string>,
+  },
   // ── M55-D stage 5 · LA RÉVÉLATION — tout le texte du rituel d'analyse. RÈGLE D'HONNÊTETÉ :
   //    le score est PRÉ-CALCULÉ (run servi versionné) ; pendant le décompte on APPLIQUE des
   //    critères, on ne « calcule » aucun score. Aucun mot ne doit prétendre le contraire. ──
@@ -29,7 +53,10 @@ export const CLIENT = {
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
     decompteFin: 'parcelles analysées',
     phraseIntro: (n: number, perimetre: string) =>
-      `LABUSE a analysé les ${n.toLocaleString('fr-FR')} parcelles de ${perimetre}. Selon vos critères :`,
+      `LABUSE a analysé les ${n.toLocaleString('fr-FR')} parcelles de ${perimetre}.`,
+    // le récap des critères s'insère AVANT le deux-points : « Selon vos critères (3 communes, …) : »
+    phraseSelon: (recap: string | null) =>
+      recap ? `Selon vos critères (${recap}) :` : 'Selon vos critères :',
     phraseZero: 'aucune parcelle retenue — élargissez vos critères (surface, zonage, verdict).',
     voir: 'Voir les parcelles',
     relancer: 'Relancer l’analyse',
