@@ -1011,6 +1011,37 @@ def ingest_amenites_cmd(
     typer.echo(f"✓ Aménités île ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-amenites-affichage")
+def ingest_amenites_affichage_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+) -> None:
+    """M55-A — catégories d'AFFICHAGE des aménités OSM (mairie, police, sport, marché forain,
+    crèche, collège/lycée) → spatial_layers kind='amenite'. Affichage seul (le scoring ne les lit
+    pas). Idempotent : ne purge/re-tire QUE ces subtypes, jamais les 4 du signal distance.
+    ⚠ APPELS RÉSEAU Overpass (résumable : une commune en échec est sautée)."""
+    import time
+
+    from .ingestion import amenites
+    from .ingestion.run_all import REUNION_COMMUNES, _commune_bbox
+
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    t0 = time.time()
+    for _insee, nom in targets:
+        with session_scope() as s:
+            bbox = _commune_bbox(s, nom)
+            if bbox is None:
+                typer.echo(f"  ⚠ {nom} : pas de parcelles, sauté.")
+                continue
+            try:
+                counts = amenites.ingest_poi_affichage(s, nom, bbox)
+                s.commit()
+                typer.echo(f"  ✓ {nom} affichage : {counts}")
+            except Exception as exc:  # noqa: BLE001 — Overpass saturé : on saute, reprise au prochain run
+                s.rollback()
+                typer.echo(f"  ⚠ {nom} affichage en échec ({type(exc).__name__}), sauté.")
+    typer.echo(f"✓ Aménités affichage île ({time.time() - t0:.0f}s)")
+
+
 @app.command("ingest-abf")
 def ingest_abf_cmd() -> None:
     """Clôture Vague B — abords ABF (base Mérimée, tampon ~500 m) → spatial_layers kind='abf',

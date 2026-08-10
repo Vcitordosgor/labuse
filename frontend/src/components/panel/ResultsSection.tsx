@@ -166,7 +166,8 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
         <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
         <button data-entonnoir-btn onClick={() => setOpen((o) => !o)}
           className="ml-1.5 text-mint hover:underline" title="L'entonnoir par motif — pourquoi le reste est écarté (SQL-exact)">
-          pourquoi ? {open ? '▴' : '▾'}
+          {/* M55-A point 4 : même patron que « Couches » — fermé → gauche (⌄ pivoté), ouvert → bas. */}
+          pourquoi ? <span className={`inline-block transition-transform duration-quick ${open ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
         </button>
       </p>
       {/* Point 8 : l'explication s'ouvre EN FLUX (plus un popover flottant clippé/modal) → elle est

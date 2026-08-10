@@ -58,30 +58,32 @@ export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key
 // JSX. La clé = la clé de `LayerToggles` (store useApp). Une phrase, sans jargon.
 // ─────────────────────────────────────────────────────────────────────────────
 export const LAYER_INFO: Record<string, string> = {
+  // M55-A (fusion A) : DEUX couches de zonage seulement. La couche PARCELLAIRE (calibrée) fait tout —
+  // colorer d'ensemble + code au zoom/clic ; la couche OFFICIELLE montre le document GPU brut.
   zonage:
-    'Les zones du PLU telles que déposées officiellement par la commune sur le Géoportail de l’urbanisme (source GPU) : les grands aplats de couleur, avec leurs contours d’origine — qui ne suivent pas forcément le découpage cadastral. C’est le document opposable de référence. À la différence de « Zonage PLU (par parcelle) » (qui colore chaque parcelle et affiche son code de zone au clic) et de « Colorisation par type de zonage » (qui teinte toutes les parcelles d’un coup), cette couche montre le zonage brut, non rattaché aux parcelles.',
+    'Les zones du PLU telles que déposées par la commune sur le Géoportail de l’urbanisme (flux GPU) : les aplats bruts du document opposable, avec leurs contours d’origine. Non rattachés au cadastre : ils couvrent AUSSI l’espace non parcellaire (voirie, ravines, domaine public), d’où des couleurs là où la couche « par parcelle » n’en montre pas. Couverture : 23 des 24 communes — Saint-Philippe, au RNU, n’a pas de PLU numérisé.',
   zonage_parcelle:
-    'Chaque parcelle prend la couleur de sa zone du PLU. En zoomant, ou en cliquant une parcelle, le code exact de la zone (par ex. U1a, 1AUc) s’affiche.',
-  zonage_colorise:
-    'Colorie d’un coup TOUTES les parcelles selon leur type de zone (urbaine, à urbaniser, agricole, naturelle) — sans avoir à cliquer parcelle par parcelle. Une lecture d’ensemble du potentiel de constructibilité.',
+    'La couche de zonage à utiliser au quotidien : chaque parcelle prend d’emblée la couleur de sa famille de zone (U urbaine, AU à urbaniser, A agricole, N naturelle), calée sur le cadastre par LABUSE — une lecture d’ensemble de la constructibilité, sans cliquer. En zoomant, ou en cliquant une parcelle, le code exact (U1a, 1AUc…) s’affiche. Couverture : 99 % des parcelles ; absente là où la commune est au RNU (Saint-Philippe).',
+  // M55-A item 6 : chaque « i » dit désormais CE QUE montre la couche, SA source, et SA
+  // couverture (partielle → dite franchement).
   parcelles:
-    'Les parcelles cadastrales, colorées selon l’avis de LABUSE (les plus prometteuses ressortent). C’est la couche de travail principale.',
+    'Les 431 663 parcelles cadastrales de l’île (source DGFiP), colorées selon l’avis de LABUSE : les plus prometteuses ressortent. C’est la couche de travail principale — présente sur les 24 communes.',
   ppr:
-    'Les zones exposées à un risque naturel connu (inondation, mouvement de terrain, littoral…) inscrites dans un Plan de Prévention des Risques — utile pour écarter tôt un terrain contraint.',
+    'Les zones exposées à un risque naturel connu (inondation, mouvement de terrain, littoral…) inscrites dans un Plan de Prévention des Risques. Source : la DEAL (via Géorisques). Couverture : les 24 communes de l’île. Utile pour écarter tôt un terrain contraint.',
   parc:
-    'Le périmètre du Parc national de La Réunion : à l’intérieur, l’urbanisation est très restreinte voire interdite.',
+    'Le périmètre du Parc national de La Réunion (source : l’établissement public du Parc) : à l’intérieur, l’urbanisation est très restreinte voire interdite. Il couvre surtout les Hauts et le centre de l’île — il est donc normalement absent du littoral urbanisé.',
   limites:
-    'Le simple tracé du contour de toutes les parcelles, sans couleur — pour lire le découpage cadastral sur le fond de carte.',
+    'Le simple tracé du contour de toutes les parcelles cadastrales (source DGFiP), sans couleur — pour lire le découpage sur le fond de carte. Toute l’île.',
   communes:
-    'Les frontières officielles entre les communes (le trait vert) — pour se repérer et savoir de quelle mairie dépend un terrain.',
+    'Les frontières officielles entre les 24 communes (le trait vert, source IGN / geo.api.gouv) — pour se repérer et savoir de quelle mairie dépend un terrain.',
   anru:
-    'Les quartiers inscrits dans un programme de renouvellement urbain (ANRU) : secteurs prioritaires où des opérations d’aménagement sont soutenues par l’État.',
+    'Les quartiers inscrits dans un programme de renouvellement urbain (NPNRU, source ANRU) : secteurs prioritaires soutenus par l’État. Dispositif ciblé — présent sur 6 communes seulement (Le Port, Saint-André, Saint-Benoît, Saint-Denis, Saint-Louis, Saint-Pierre) ; ailleurs la couche est vide, et LABUSE vous le signale.',
   cinquante_pas:
-    'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée.',
+    'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée (source : cadastre). Elle ne longe que le rivage — normalement absente des communes sans littoral (les Hauts).',
   equipements:
-    'Les équipements du quotidien à proximité (mairie, écoles, santé, commerces, transport, sport). Sur la fiche d’une parcelle, LABUSE indique la distance en mètres jusqu’à chaque équipement le plus proche.',
+    'Les équipements du quotidien à proximité, relevés dans OpenStreetMap (les 24 communes) : mairie, écoles primaires, collège / lycée, crèche, santé (pharmacie, hôpital, clinique, médecin), commerces — c’est-à-dire supermarché, supérette, boulangerie et centre commercial (pas toutes les boutiques) — marché forain, transport (arrêts de bus), police / gendarmerie et sport (terrains, gymnases, stades, piscines). Sur la fiche d’une parcelle, LABUSE indique la distance jusqu’à chaque équipement le plus proche.',
   renouv:
-    'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
+    'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire). Segment calculé par LABUSE (68 445 parcelles sur l’île) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

@@ -29,7 +29,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const v2 = useV2Actif()
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
-  const zonageOn = layers.zonage_parcelle || layers.zonage_colorise
+  const zonageOn = layers.zonage_parcelle // M55-A (fusion A) : couche parcellaire unique
 
   return (
     <div className={`${inline
@@ -55,7 +55,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             <span className="label-caps">Verdict · Classement historique</span>
           </Tip>
         )}
-        <span className={`text-txt-dim transition-transform duration-quick ${verdictOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>
+        {/* M55-A item 5 : même patron que « Couches » — REPLIÉ → gauche (⌄ pivoté 90°), DÉPLIÉ → bas. */}
+        <span className={`text-txt-dim transition-transform duration-quick ${verdictOpen ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
       </button>
       {verdictOpen && (
         <div className="mt-2 flex flex-col gap-1.5">

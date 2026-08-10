@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
-import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
+import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES } from './basemaps'
 import { Legend } from './Legend'
@@ -122,7 +122,11 @@ const OVERLAYS = {
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
   parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
-  anru: { paint: { 'fill-color': '#8FB4F0', 'fill-opacity': 0.16 } },
+  // M55-A-bis : l'ancien bleu pâle (#8FB4F0 @ 0.16) se noyait dans le Carto sombre ET collidait
+  // avec l'icône police (#8FB4F0) et la bande bleue déjà prise (AU #4C7DF0, réserve #6FA8DC,
+  // 50 pas #4CC3E8). Chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
+  // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
+  anru: { paint: { 'fill-color': '#C6E82E', 'fill-opacity': 0.30 } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
@@ -131,6 +135,21 @@ const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 // même source pour la légende (Legend.tsx) et le rendu carte. Émoji rendu via canvas → addImage
 // (aucune lib ; repli = la pastille colorée + la légende si l'OS n'a pas la police émoji).
 const EQUIP_CATS = EQUIP_META.map((e) => e.key)
+// M55-A item 4 : libellé CLIENT d'une catégorie d'équipement (« École », « Commerce »…) —
+// la même source que la légende (EQUIP_META), pour ne jamais exposer la clé technique au clic.
+const EQUIP_LABEL: Record<string, string> = Object.fromEntries(EQUIP_META.map((e) => [e.key, e.label]))
+
+// M55-A item 4 : centroïde (approx) de la parcelle SÉLECTIONNÉE, si elle est rendue à l'écran —
+// pour afficher « à ~N m de la parcelle sélectionnée » dans la bulle d'un équipement. Renvoie
+// null hors sélection / hors champ : la bulle tombe alors proprement sur nom + catégorie seuls.
+function selectedParcelCentroid(m: maplibregl.Map): LngLat | null {
+  const sel = useApp.getState().selectedIdu
+  if (!sel) return null
+  const lids = ['parcels-fill', 'ile-fill'].filter((l) => m.getLayer(l))
+  if (!lids.length) return null
+  const feats = m.queryRenderedFeatures({ layers: lids, filter: ['==', ['get', 'idu'], sel] as never })
+  return feats[0] ? roughCentroid(feats[0].geometry) : null
+}
 
 function makeEquipIcons(m: maplibregl.Map) {
   const S = 46
@@ -215,7 +234,9 @@ export function MapView() {
   // M12 C5 : DEUX portes vers cette recoloration — « Zonage PLU (par parcelle) » (avec étiquette
   // au zoom + popup au clic) ET la nouvelle « Colorisation par type de zonage » (lecture
   // d'ensemble, sans clic). L'une OU l'autre allume le remplissage par famille.
-  const zonageColor = layers.zonage_parcelle || layers.zonage_colorise
+  // M55-A (fusion A) : une seule couche parcellaire (`zonage_parcelle`) — elle colore d'emblée
+  // toutes les parcelles par famille ET porte l'étiquette (zoom) + le popup (clic).
+  const zonageColor = layers.zonage_parcelle
   const zonageFill = zonageColor && (!ile || tilesMeta.data?.zonage_parcelle === true)
 
   // ───────────────────────── init ─────────────────────────
@@ -386,14 +407,23 @@ export function MapView() {
                   'icon-size': ['interpolate', ['linear'], ['zoom'],
                     12, 0.45, 15, 0.825, 17, 1.275, 20, 1.95] as never,
                   'icon-allow-overlap': true } })
+      // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
+      // et distance à la parcelle sélectionnée si pertinent). `preventDefault()` empêche le clic
+      // d'ouvrir AUSSI la fiche de la parcelle sous l'icône (les handlers parcels-fill / clic
+      // universel testent `defaultPrevented`) — sinon le geste « paraissait » sans effet propre.
       m.on('click', 'ov-equip', (e) => {
-        const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
+        const ev = e as maplibregl.MapLayerMouseEvent
+        const f = ev.features?.[0]
         if (!f) return
-        const cat = String(f.properties?.subtype ?? '')
+        ev.preventDefault()
+        const sub = String(f.properties?.subtype ?? '')
+        const cat = EQUIP_LABEL[sub] ?? sub
         const nom = f.properties?.name && f.properties.name !== 'null' ? String(f.properties.name) : '(sans nom OSM)'
+        const c = selectedParcelCentroid(m)
+        const dist = c ? `<div style="color:#5CE6A1;font-size:10px;margin-top:2px">à ~${fmtDistance(haversine([ev.lngLat.lng, ev.lngLat.lat], c))} de la parcelle sélectionnée</div>` : ''
         new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
-          .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
-          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div></div>`)
+          .setLngLat(ev.lngLat)
+          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div>${dist}</div>`)
           .addTo(m)
       })
       m.on('mouseenter', 'ov-equip', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
@@ -407,6 +437,7 @@ export function MapView() {
       for (const layerId of ['parcels-fill', 'ile-fill']) {
         m.on('click', layerId, (e) => {
           if (toolRef.current) return // un outil actif consomme le clic
+          if ((e as maplibregl.MapLayerMouseEvent).defaultPrevented) return // M55-A : clic équipement déjà traité
           const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
           if (!f) return
           // G1 (M12) : une feature sans `idu` (clic hors-parcelle, tuile en cours de chargement,
@@ -442,6 +473,7 @@ export function MapView() {
       // curseur (trame raster/limites, zoom promues-only…), le serveur résout point→parcelle.
       m.on('click', (e) => {
         if (toolRef.current) return
+        if (e.defaultPrevented) return // M55-A : un équipement a capté ce clic (bulle affichée)
         const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
         if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
         parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
@@ -511,11 +543,20 @@ export function MapView() {
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
   useEffect(() => {
-    if (ile && (layers.zonage_parcelle || layers.zonage_colorise) && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
+    if (ile && layers.zonage_parcelle && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
       useApp.getState().setToast(
         'Colorisation par zonage en mode île : disponible au prochain build de tuiles — choisissez une commune pour l’utiliser dès maintenant.')
     }
-  }, [ile, layers.zonage_parcelle, layers.zonage_colorise, tilesMeta.data])
+  }, [ile, layers.zonage_parcelle, tilesMeta.data])
+
+  // M55-A (fusion A) : Saint-Philippe n'a PAS de PLU numérisé (0 zone GPU, 9/4162 parcelles calées) —
+  // c'est une commune au RNU. Quand une couche de zonage est active chez elle, le dire franchement
+  // plutôt qu'afficher un fond vide muet (même règle « no-silent » que l'ANRU / les 50 pas).
+  useEffect(() => {
+    if (commune === 'Saint-Philippe' && (layers.zonage_parcelle || layers.zonage)) {
+      useApp.getState().setToast('Saint-Philippe : commune au RNU — pas de zonage PLU.')
+    }
+  }, [commune, layers.zonage_parcelle, layers.zonage])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
