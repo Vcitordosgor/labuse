@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
-import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
+import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES } from './basemaps'
 import { Legend } from './Legend'
@@ -131,6 +131,21 @@ const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 // même source pour la légende (Legend.tsx) et le rendu carte. Émoji rendu via canvas → addImage
 // (aucune lib ; repli = la pastille colorée + la légende si l'OS n'a pas la police émoji).
 const EQUIP_CATS = EQUIP_META.map((e) => e.key)
+// M55-A item 4 : libellé CLIENT d'une catégorie d'équipement (« École », « Commerce »…) —
+// la même source que la légende (EQUIP_META), pour ne jamais exposer la clé technique au clic.
+const EQUIP_LABEL: Record<string, string> = Object.fromEntries(EQUIP_META.map((e) => [e.key, e.label]))
+
+// M55-A item 4 : centroïde (approx) de la parcelle SÉLECTIONNÉE, si elle est rendue à l'écran —
+// pour afficher « à ~N m de la parcelle sélectionnée » dans la bulle d'un équipement. Renvoie
+// null hors sélection / hors champ : la bulle tombe alors proprement sur nom + catégorie seuls.
+function selectedParcelCentroid(m: maplibregl.Map): LngLat | null {
+  const sel = useApp.getState().selectedIdu
+  if (!sel) return null
+  const lids = ['parcels-fill', 'ile-fill'].filter((l) => m.getLayer(l))
+  if (!lids.length) return null
+  const feats = m.queryRenderedFeatures({ layers: lids, filter: ['==', ['get', 'idu'], sel] as never })
+  return feats[0] ? roughCentroid(feats[0].geometry) : null
+}
 
 function makeEquipIcons(m: maplibregl.Map) {
   const S = 46
@@ -386,14 +401,23 @@ export function MapView() {
                   'icon-size': ['interpolate', ['linear'], ['zoom'],
                     12, 0.45, 15, 0.825, 17, 1.275, 20, 1.95] as never,
                   'icon-allow-overlap': true } })
+      // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
+      // et distance à la parcelle sélectionnée si pertinent). `preventDefault()` empêche le clic
+      // d'ouvrir AUSSI la fiche de la parcelle sous l'icône (les handlers parcels-fill / clic
+      // universel testent `defaultPrevented`) — sinon le geste « paraissait » sans effet propre.
       m.on('click', 'ov-equip', (e) => {
-        const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
+        const ev = e as maplibregl.MapLayerMouseEvent
+        const f = ev.features?.[0]
         if (!f) return
-        const cat = String(f.properties?.subtype ?? '')
+        ev.preventDefault()
+        const sub = String(f.properties?.subtype ?? '')
+        const cat = EQUIP_LABEL[sub] ?? sub
         const nom = f.properties?.name && f.properties.name !== 'null' ? String(f.properties.name) : '(sans nom OSM)'
+        const c = selectedParcelCentroid(m)
+        const dist = c ? `<div style="color:#5CE6A1;font-size:10px;margin-top:2px">à ~${fmtDistance(haversine([ev.lngLat.lng, ev.lngLat.lat], c))} de la parcelle sélectionnée</div>` : ''
         new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
-          .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
-          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div></div>`)
+          .setLngLat(ev.lngLat)
+          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div>${dist}</div>`)
           .addTo(m)
       })
       m.on('mouseenter', 'ov-equip', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
@@ -407,6 +431,7 @@ export function MapView() {
       for (const layerId of ['parcels-fill', 'ile-fill']) {
         m.on('click', layerId, (e) => {
           if (toolRef.current) return // un outil actif consomme le clic
+          if ((e as maplibregl.MapLayerMouseEvent).defaultPrevented) return // M55-A : clic équipement déjà traité
           const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
           if (!f) return
           // G1 (M12) : une feature sans `idu` (clic hors-parcelle, tuile en cours de chargement,
@@ -442,6 +467,7 @@ export function MapView() {
       // curseur (trame raster/limites, zoom promues-only…), le serveur résout point→parcelle.
       m.on('click', (e) => {
         if (toolRef.current) return
+        if (e.defaultPrevented) return // M55-A : un équipement a capté ce clic (bulle affichée)
         const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
         if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
         parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {

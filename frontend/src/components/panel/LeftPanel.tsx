@@ -111,7 +111,9 @@ function LayersSection({ open, onToggle }: {
           {activeCount > 0 && (
             <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{activeCount} active{activeCount > 1 ? 's' : ''}</span>
           )}
-          <span className={`text-txt-dim transition-transform duration-quick ${open ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>
+          {/* M55-A item 5 : logique de la flèche corrigée — REPLIÉ → chevron vers la GAUCHE
+              (⌄ pivoté 90°), DÉPLIÉ → chevron vers le BAS (⌄ au repos). */}
+          <span className={`text-txt-dim transition-transform duration-quick ${open ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
         </span>
       </button>
       {open && (
