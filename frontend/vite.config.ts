@@ -24,6 +24,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
   '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
                        // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W
                        //  ni de la carte — présentes aussi en vite 5, comblées ici pour un dev honnête)
+  '/adresses',  // M55-B point 1 : autocomplétion de l'omnibox (/adresses/autocomplete) — MANQUAIT
+                // → 404 en dev, la barre de recherche ne suggérait RIEN (silencieusement). Prod OK
+                //   (FastAPI même origine), mais le dev doit être honnête.
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
