@@ -286,9 +286,12 @@ export interface AntiFiche {
 }
 export const getAntiFiche = (idu: string) => j<AntiFiche>(`/anti-fiche/${idu}`)
 
-export const getMapLayer = (kind: string) => {
+// M55-E : `limit` exposé — la couche ÉQUIPEMENTS (15 214 objets) dépassait le LIMIT 6000 par
+// défaut de l'endpoint → 61 % des marqueurs silencieusement absents en mode île (centre de
+// Saint-Denis VIDE alors que la base est pleine). Le payload complet pèse 271 Ko gzippé.
+export const getMapLayer = (kind: string, limit?: number) => {
   const c = commune()
-  return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}`)
+  return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}${limit ? `&limit=${limit}` : ''}`)
 }
 // M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
 // (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
