@@ -102,6 +102,18 @@ export function countActiveFilters(f: Filters): number {
   return n
 }
 
+// M55-D stage 4 : ÉTAGE① « le terrain » = faits objectifs, valables sans aucune analyse. Tout le
+// RESTE = ÉTAGE② « le regard LABUSE » (opinion, issue du scoring). Un critère d'opinion actif
+// ALLUME l'interrupteur (biunivoque) ; le défaut est ÉTEINT (analyse coupée, tri factuel).
+const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
+  'etatSol', 'flags', 'flagsExclus', 'communes'])
+export function hasOpinion(f: Filters): boolean {
+  for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
+  for (const k of F_NUMS) if (!TERRAIN_FIELDS.has(k) && f[k] != null) return true
+  for (const k of F_BOOLS) if (!TERRAIN_FIELDS.has(k) && f[k]) return true
+  return false
+}
+
 export function activeChips(f: Filters): Chip[] {
   const out: Chip[] = []
   for (const t of f.tiers) out.push({ token: `tier:${t}`, label: ALL_TIER_META[t].label })
@@ -160,8 +172,8 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   for (const [k, key] of NUM_KEYS) { const v = f[k] as number | null; if (v != null) p.set(key, String(v)) }
   for (const [k, key] of BOOL_KEYS) { if (f[k]) p.set(key, '1') }
   for (const [k, key] of CSV_KEYS) { const a = f[k] as string[]; if (a.length) p.set(key, a.join(',')) }
-  // analyseLabuse est ON par défaut — on n'écrit QUE l'exception (mode de lecture coupé).
-  if (!f.analyseLabuse) p.set('al', '0')
+  // M55-D stage 4 : l'interrupteur « analyse » est ÉTEINT par défaut — on écrit l'exception (allumé).
+  if (f.analyseLabuse) p.set('al', '1')
   if (zone) p.set('z', zone.map(([x, y]) => `${x.toFixed(5)}_${y.toFixed(5)}`).join('~'))
   const s = p.toString()
   return s ? `#f=1&${s}` : ''
@@ -177,10 +189,12 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
     ? (p.get('z')!.split('~').map((s) => s.split('_').map(Number) as LngLat)) : null
   const f: Record<string, unknown> = {
     tiers: (p.get('tv')?.split(',').filter((t) => TIER_KEYS.includes(t)) ?? []) as FilterTier[],
-    analyseLabuse: p.get('al') !== '0',   // absent (vieux lien) ⇒ true, comme le défaut
   }
   for (const [k, key] of NUM_KEYS) f[k] = num(key)
   for (const [k, key] of BOOL_KEYS) f[k] = p.get(key) === '1'
   for (const [k, key] of CSV_KEYS) f[k] = p.get(key)?.split(',').filter(Boolean) ?? []
+  // M55-D stage 4 : interrupteur ALLUMÉ si `al=1` OU si un critère d'opinion est présent (vieux lien
+  // `tv=chaude` → allumé, « il porte un tier »). Terrain-only (ex. `smin=2000`) → éteint.
+  f.analyseLabuse = p.get('al') === '1' || hasOpinion(f as unknown as Filters)
   return { filters: f as Partial<Filters>, zone: zone && zone.length >= 3 ? zone : null }
 }

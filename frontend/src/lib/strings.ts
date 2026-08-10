@@ -12,8 +12,10 @@ export const CLIENT = {
   // ── M55-D stage 3 · section « Filtres » du panneau gauche. Accroche HONNÊTE : les filtres
   //    TRIENT (mesuré phase 1), ils ne « génèrent » ni ne recalculent rien. N = parc du run servi. ──
   filtres: {
-    accroche: (n: number) =>
-      `Filtres experts — affinez parmi les ${n.toLocaleString('fr-FR')} parcelles déjà analysées par LABUSE`,
+    // M55-D stage 4 : l'accroche s'adapte à l'interrupteur. Éteint = tri factuel sur le parc ;
+    // allumé = affiner parmi les retenues de l'analyse. N = parc du run servi (dynamique).
+    accrocheOff: (n: number) => `Filtrez les ${n.toLocaleString('fr-FR')} parcelles de La Réunion`,
+    accrocheOn: (n: number) => `Affinez parmi les ${n.toLocaleString('fr-FR')} analysées par LABUSE`,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
   marche: {

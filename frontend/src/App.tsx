@@ -267,6 +267,9 @@ export default function App() {
     if (parsed) {
       setFilters({ ...EMPTY_FILTERS, ...parsed.filters })
       if (parsed.zone) setZone(parsed.zone)
+      // M55-D stage 4 : interrupteur allumé (lien portant un critère d'opinion, ex. un tier) ⇒ on
+      // AFFICHE l'analyse (verdict) — l'interrupteur et le regard sur la carte sont la même chose.
+      if (parsed.filters.analyseLabuse) setVerdict(true)
     }
     const p = new URLSearchParams(hash.replace(/^#/, ''))
     const c = p.get('c')

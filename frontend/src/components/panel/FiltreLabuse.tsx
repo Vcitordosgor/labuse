@@ -12,7 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { deleteSearch, getFiltre, getSavedSearches, renameSearch, saveSearch } from '../../lib/api'
-import { filtersFromHash, filtersToHash } from '../../lib/filters'
+import { filtersFromHash, filtersToHash, hasOpinion } from '../../lib/filters'
 import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
@@ -37,17 +37,24 @@ const VIGILANCES: [string, string][] = [
   ['pente', 'Pente'], ['bruit_route', 'Bruit routier'], ['sol_pollue', 'SIS / pollution'],
   ['cavite', 'Cavité'], ['mvt', 'Mouvement de terrain'], ['ravine', 'Ravine'], ['icpe', 'ICPE'],
 ]
+// M55-D stage 4 : ÉTAGE① « Contraintes de secteur » = régime foncier (50 pas, Parc) + vigilances
+// (pollution/ICPE/risques) — des FAITS de terrain, valables sans analyse.
+const CONTRAINTES: [string, string][] = ([['cinquante_pas', '50 pas géométriques'],
+  ['parc_national', 'Parc national']] as [string, string][]).concat(VIGILANCES)
 // Facettes du cadrage EN ATTENTE DE DONNÉE (P0) — montrées, désactivées, honnêtes.
 const DROIT_DIFFERES = ['Plancher de densité', 'EBC partiel', 'Emplacement réservé',
   'Sol naturel / ZAN', 'Fraîcheur PLU (radar M41)']
 
 const nf = new Intl.NumberFormat('fr-FR')
 
+// M55-D stage 4 : différenciation SÉLECTIONNÉ / disponible plus lisible que le tout-gris —
+// disponible = fond léger + survol menthe (ça s'active) ; sélectionné = rempli menthe, texte franc.
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick}
       className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
-        on ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
+          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
       {children}
     </button>
   )
@@ -261,169 +268,115 @@ function ProfilSelecteur() {
 }
 
 export function FiltreLabuse() {
-  const { filters, setFilter, setFilters } = useApp()
-  const [droitOuvert, setDroitOuvert] = useState(true)
+  const { filters, setFilter, setFilters, setVerdict } = useApp()
+  const analyseOn = filters.analyseLabuse
   const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   const toggleTier = (t: FilterTier) =>
     setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-  // M55-D (phase 2) : « Réinitialiser les FILTRES » ne touche PAS le mode d'analyse — tri ≠ mode.
-  const resetFiltresSeuls = () => setFilters({ ...EMPTY_FILTERS, analyseLabuse: filters.analyseLabuse })
-
-  // Compteur SQL des DEUX voies (le « théâtre »). M46 (Lot D) : lever l'ambiguïté du mot « trame »
-  // — il désignait 431 663 (barre par défaut) MAIS le sous-ensemble filtré une fois un filtre posé.
-  // Un mot = un périmètre : on ne dit plus « trame » mais « AVANT analyse » (le sous-ensemble
-  // correspondant AUX FILTRES courants, avant que l'analyse n'en retire les exclusions dures).
-  const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
+  const toggleFlag = (k: string) =>
+    setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
+  // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
+  // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
+  const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
+  // Un pré-réglage portant un critère d'OPINION ALLUME l'interrupteur (visiblement).
+  const applyPreset = (pf: Partial<Filters>) => {
+    const nf = { ...EMPTY_FILTERS, ...pf }
+    const on = Boolean(nf.analyseLabuse) || hasOpinion(nf)
+    setFilters({ ...nf, analyseLabuse: on }); setVerdict(on)
+  }
+  // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge).
+  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false) }
+  // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
   const off = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
-  const compteAnalyse = on.data?.compte             // retenues par l'analyse (déclassements inclus)
-  const compteAvant = off.data?.compte              // mêmes filtres, AVANT analyse (exclusions dures incluses)
-  const compteExclues = (compteAvant != null && compteAnalyse != null) ? compteAvant - compteAnalyse : null
-  const compteActuel = filters.analyseLabuse ? compteAnalyse : compteAvant
+  const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
+  const parc = off.data?.compte
+  const retenues = on.data?.compte
 
   return (
     <div className="card-elev px-3 py-2">
-      {/* ── SÉLECTEUR DE PROFIL (M52-B) : « Vous cherchez ? » en tête — le choix pré-règle les
-          filtres existants, le compteur ci-dessous réagit tout seul (aucun calcul nouveau). ── */}
-      <ProfilSelecteur />
-      {/* En-tête : compteur en direct + interrupteur — chaque nombre DIT son périmètre (réconcilié :
-          « avant analyse » = retenues + exclusions dures ; jamais de soustraction laissée au client). */}
-      <div className="flex items-center justify-between">
+      {/* ═══════ ÉTAGE ① — LE TERRAIN (faits objectifs, toujours actifs, ordonnés par usage) ═══════ */}
+      <p className="label-caps text-txt-mut">① Le terrain
+        <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">faits, sans analyse</span></p>
+      <div className="mt-1.5 flex flex-col gap-3">
         <div>
-          <p className="label-caps">{filters.analyseLabuse ? 'Retenues par l’analyse' : 'Voie manuelle (sans analyse)'}</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-semibold text-txt-hi tabular-nums">
-              {compteActuel == null ? '…' : nf.format(compteActuel)}</span>
-            {filters.analyseLabuse && compteAvant != null && compteExclues != null && (
-              <span className="text-[11px] text-txt-dim">
-                sur <span className="tabular-nums">{nf.format(compteAvant)}</span> avant analyse
-                <span className="mx-1 text-mint">·</span>
-                <span className="tabular-nums text-txt-mut">{nf.format(compteExclues)}</span> exclusions dures écartées
-              </span>
-            )}
-            {!filters.analyseLabuse && compteAnalyse != null && (
-              <span className="text-[11px] text-txt-dim">dont <span className="tabular-nums text-txt-mut">{nf.format(compteAnalyse)}</span> retenues par l’analyse</span>
-            )}
-          </div>
+          <p className="label-caps text-txt-dim">Surface parcelle</p>
+          <div className="mt-1 flex items-center gap-1.5"><NumField field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="surfaceMax" ph="max" suffix="m²" /></div>
         </div>
-        <button onClick={() => setFilter('analyseLabuse', !filters.analyseLabuse)}
-          title="Analyse LABUSE : appliquer le classement (tiers) ou passer en voie manuelle pure"
-          className={`flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] ${
-            filters.analyseLabuse ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut'}`}>
-          <span className={`inline-block h-2 w-2 rounded-full ${filters.analyseLabuse ? 'bg-mint' : 'bg-txt-dim'}`} />
-          Analyse LABUSE {filters.analyseLabuse ? 'active' : 'coupée'}
-        </button>
-      </div>
-
-      {/* ── PRÉ-RÉGLAGES (l'anti-60-checkboxes) : au clic ils COCHENT des critères VISIBLES
-          ci-dessous (pas de magie opaque), défaisables un par un. M55-D : marqués « pré-réglage ». ── */}
-      <p className="mt-2 label-caps flex items-center gap-1.5">Pré-réglages
-        <span className="text-[9px] font-normal normal-case text-txt-dim">— cochent des filtres visibles, à défaire un par un</span></p>
-      <div className="mt-1 flex flex-wrap gap-1.5">
-        {PRESETS.map((p) => (
-          <button key={p.nom} onClick={() => setFilters({ ...EMPTY_FILTERS, ...p.f })}
-            className="rounded-full border border-dashed border-line-2 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">
-            {p.nom}
-          </button>
-        ))}
-      </div>
-
-      {/* ── MES VUES (L5) : combinaisons de filtres nommées, côté compte ── */}
-      <MesVues />
-
-      {/* ── VERDICT · POTENTIEL · SIGNAUX (M55-D : rapatriés du header « + Filtre » — un critère,
-          un seul endroit ; les rapides Verdict/Surface/SDP du header pilotent LES MÊMES champs) ── */}
-      <Tiroir titre="Verdict, potentiel & signaux" sous="classement" defaut>
-        <Section title="Verdict · tiers (multi)">
+        <div>
+          <p className="label-caps text-txt-dim">Zonage <span className="normal-case text-[8.5px] text-txt-dim">— famille U/AU/A/N + zone exacte</span></p>
+          <div className="mt-1"><ChipGroup field="zonagePlu" options={ZONE_FAM} /></div>
+          <input placeholder="zone exacte : UA, UB, 2AU (séparées par des virgules)"
+            value={filters.zonePlu.join(', ')}
+            onChange={(e) => setFilter('zonePlu', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+            className="mt-1.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+        </div>
+        <div>
+          <p className="label-caps text-txt-dim">État du sol</p>
+          <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
+        </div>
+        <div>
+          <p className="label-caps text-txt-dim">Contraintes de secteur <span className="normal-case text-[8.5px] text-txt-dim">Sourcé</span></p>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {TIERS_V2.map((t) => (
-              <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_V2_META[t].color }} />
-                {TIER_V2_META[t].label}
-              </Chip>
-            ))}
-          </div>
-        </Section>
-        <Section title="Déclassées · motif (multi)">
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {DECLASSE_ORDER.map((t) => (
-              <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_DECLASSE_META[t].color }} />
-                {TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
-              </Chip>
-            ))}
-          </div>
-        </Section>
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-2 py-2">
-          <div><p className="label-caps">Potentiel ≥ /100</p>
-            <div className="mt-1"><NumField field="scoreMin" ph="70" /></div></div>
-          <div className="flex flex-col gap-1.5 pb-1">
-            <BoolChip field="evenement" label="Avec événement (BODACC)" />
-            <BoolChip field="horsCopro" label="Masquer les copropriétés" />
+            {CONTRAINTES.map(([k, l]) => (<Chip key={k} on={filters.flags.includes(k)} onClick={() => toggleFlag(k)}>{l}</Chip>))}
           </div>
         </div>
-      </Tiroir>
-
-      {/* ── BARRE NIVEAU 1 ── */}
-      <div className="mt-2 divide-y divide-line-2/50">
-        <Section title="Constructibilité calibrée" tag="Sourcé">
-          <ChipGroup field="constructibilite" options={CONSTRUCTIBILITE} />
-        </Section>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
-          <div>
-            <p className="label-caps">Surface parcelle</p>
-            <div className="mt-1 flex items-center gap-1.5">
-              <NumField field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="surfaceMax" ph="max" suffix="m²" />
-            </div>
-          </div>
-          <div>
-            <p className="label-caps">SDP résiduelle</p>
-            <div className="mt-1 flex items-center gap-1.5">
-              <NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" />
-            </div>
-          </div>
-          <div>
-            <p className="label-caps flex items-center gap-1.5">Capacité logements
-              <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Estimé</span></p>
-            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span>
-              <NumField field="capaciteMin" ph="N" suffix="log." /></div>
-          </div>
-        </div>
-        <Section title="État du sol"><ChipGroup field="etatSol" options={ETAT_SOL} /></Section>
       </div>
 
-      {/* ── TIROIR NIVEAU 2 (témoin) : « Puis-je construire ? » ── */}
-      <div className="mt-1 border-t border-line-2/50 pt-1">
-        <button onClick={() => setDroitOuvert((o) => !o)}
-          className="flex w-full items-center justify-between py-1.5 text-left">
-          <span className="text-xs font-medium text-txt-hi">Puis-je construire ? <span className="text-txt-dim">— droit du sol</span></span>
-          {/* M55-A point 4 : fermé → gauche (⌄ pivoté), ouvert → bas. */}
-          <span className={`text-txt-dim transition-transform duration-quick ${droitOuvert ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
+      {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (interrupteur en vedette, ÉTEINT par défaut) ═══════ */}
+      <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${analyseOn ? 'border-mint/60 bg-mint/[0.07]' : 'border-line-2 bg-surface-2/40'}`}>
+        <button data-analyse-toggle onClick={() => setAnalyse(!analyseOn)} aria-pressed={analyseOn}
+          className="flex w-full items-center gap-2.5 text-left" title="Appliquer le regard LABUSE (classement, potentiel, SDP…) — ou rester au tri factuel.">
+          <span className={`flex h-5 w-9 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick ${analyseOn ? 'bg-mint' : 'bg-line-2'}`}>
+            <span className={`h-4 w-4 rounded-full bg-white shadow transition-transform duration-quick ${analyseOn ? 'translate-x-4' : ''}`} />
+          </span>
+          <span className={`font-display text-[13px] font-bold ${analyseOn ? 'text-mint' : 'text-txt'}`}>② Afficher l’analyse LABUSE</span>
         </button>
-        {droitOuvert && (
-          <div className="pb-1">
-            <Section title="Famille de zonage" tag="Sourcé"><ChipGroup field="zonagePlu" options={ZONE_FAM} /></Section>
-            <Section title="Zone PLU exacte">
-              <input placeholder="ex. UA, UB, 2AU (séparées par des virgules)"
-                value={filters.zonePlu.join(', ')}
-                onChange={(e) => setFilter('zonePlu', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-            </Section>
-            <Section title="Contraintes de secteur" tag="Sourcé">
+        {/* compteur — la transition « parc → retenues » rend visible ce que l'analyse RETIENT. */}
+        <p className="mt-2 text-[11.5px] leading-snug text-txt-dim tabular-nums">
+          {analyseOn ? (
+            <><span className="text-txt-mut">{parc == null ? '…' : nf.format(parc)}</span>
+              <span className="mx-1.5 text-mint">→</span>
+              <span className="text-[15px] font-semibold text-txt-hi">{retenues == null ? '…' : nf.format(retenues)}</span> retenues par l’analyse</>
+          ) : (
+            <><span className="text-txt">{parc == null ? '…' : nf.format(parc)}</span> parcelles · <span className="text-txt-mut">tri factuel</span></>
+          )}
+        </p>
+        {analyseOn && (
+          <div className="mt-3 flex flex-col gap-3">
+            <div>
+              <p className="label-caps text-txt-dim">Verdict · tiers</p>
               <div className="mt-1 flex flex-wrap gap-1.5">
-                {[['cinquante_pas', '50 pas géométriques'], ['parc_national', 'Parc national']].map(([k, l]) => (
-                  <Chip key={k} on={filters.flags.includes(k)}
-                    onClick={() => setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])}>{l}</Chip>
+                {TIERS_V2.map((t) => (
+                  <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_V2_META[t].color }} />{TIER_V2_META[t].label}
+                  </Chip>
                 ))}
               </div>
-            </Section>
-            <div className="pt-1 text-[10px] text-txt-dim">
-              En attente de donnée (M45 v1.1) : {DROIT_DIFFERES.join(' · ')} — listés, pas encore filtrables.
             </div>
-          </div>
-        )}
-      </div>
+            <div>
+              <p className="label-caps text-txt-dim">Déclassées · motif</p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {DECLASSE_ORDER.map((t) => (
+                  <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_DECLASSE_META[t].color }} />{TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
+                  </Chip>
+                ))}
+              </div>
+              <p className="mt-1 text-[10px] leading-snug text-txt-dim">Les écartées ne sont jamais masquées — choisissez un motif pour les consulter, chacune garde son verdict.</p>
+            </div>
+            <Section title="Constructibilité calibrée" tag="Sourcé"><ChipGroup field="constructibilite" options={CONSTRUCTIBILITE} /></Section>
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+              <div><p className="label-caps text-txt-dim">Potentiel ≥ /100</p><div className="mt-1"><NumField field="scoreMin" ph="70" /></div></div>
+              <div><p className="label-caps text-txt-dim">SDP résiduelle</p><div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div></div>
+              <div><p className="label-caps flex items-center gap-1 text-txt-dim">Capacité <span className="rounded border border-line-2 px-1 text-[8px] uppercase">Est.</span></p><div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="capaciteMin" ph="N" suffix="log." /></div></div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <BoolChip field="evenement" label="Événement (BODACC)" />
+              <BoolChip field="veille" label="Veille succession" />
+              <BoolChip field="horsCopro" label="Masquer copropriétés" />
+            </div>
 
-      {/* ── TIROIRS NIVEAU 2 (les autres questions) ── */}
+      {/* ── TIROIRS d'analyse (économie / mutation / propriété / niches) — dans l'étage ② ── */}
       <Tiroir titre="Combien ça coûte, ça rapporte ?" sous="économie">
         <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
           <div><p className="label-caps flex items-center gap-1.5">Prix d’achat max ≤ budget
@@ -483,20 +436,6 @@ export function FiltreLabuse() {
         </div>
       </Tiroir>
 
-      <Tiroir titre="Quels risques, quelles contraintes ?" sous="terrain">
-        <Section title="Vigilances par type" tag="Sourcé">
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {VIGILANCES.map(([k, l]) => (
-              <Chip key={k} on={filters.flags.includes(k)}
-                onClick={() => setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])}>{l}</Chip>
-            ))}
-          </div>
-        </Section>
-        <div className="pt-1 text-[10px] text-txt-dim">
-          Accès voirie : étiquette « limite BD TOPO » (dette #12). Piscine (M39) : indisponible tant que non basculée.
-        </div>
-      </Tiroir>
-
       <Tiroir titre="Veille & niches" sous="les différenciants">
         <Section title="Niches">
           <div className="mt-1 flex flex-wrap gap-1.5">
@@ -510,16 +449,34 @@ export function FiltreLabuse() {
         </div>
       </Tiroir>
 
-      {/* Écartées : jamais masquées — consultables via la voie manuelle, avec leur motif au verdict. */}
-      <div className="mt-1 border-t border-line-2/50 pt-2 text-[10px] text-txt-dim">
-        Les écartées ne sont jamais masquées : coupez l’Analyse LABUSE (ou choisissez « Inconstructible /
-        Zone fermée » ci-dessus) pour les consulter — chaque parcelle garde son motif de déclassement.
+          </div>
+        )}
       </div>
 
-      <button onClick={resetFiltresSeuls}
-        title="Efface les filtres (tri). Le mode d'analyse (Analyse LABUSE, curseur Mode B) n'est pas touché."
-        className="mt-2 min-h-7 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt">
-        Réinitialiser les filtres <span className="text-txt-dim/70">— le mode d'analyse reste</span>
+      {/* ═══════ ÉTAGE ③ — RACCOURCIS (pré-réglages, vues, pédagogie discrète) ═══════ */}
+      <div className="mt-4">
+        <p className="label-caps flex items-center gap-1.5 text-txt-mut">③ Pré-réglages
+          <span className="text-[9px] font-normal normal-case text-txt-dim">— cochent des filtres visibles, à défaire un par un</span></p>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {PRESETS.map((p) => (
+            <button key={p.nom} onClick={() => applyPreset(p.f)}
+              className="rounded-full border border-dashed border-line-2 bg-surface-3 px-2.5 py-0.5 text-[11px] text-txt-mut hover:border-mint hover:text-mint">{p.nom}</button>
+          ))}
+        </div>
+        <div className="mt-2"><ProfilSelecteur /></div>
+        <MesVues />
+        <Tiroir titre="Puis-je construire ?" sous="droit du sol — repères">
+          <p className="text-[11px] leading-snug text-txt-dim">
+            Le zonage (famille + zone exacte) et l’état du sol se règlent dans l’étage ① « Le terrain ».
+            En attente de donnée (M45 v1.1) : {DROIT_DIFFERES.join(' · ')}.
+          </p>
+        </Tiroir>
+      </div>
+
+      <button onClick={resetTout}
+        title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
+        className="mt-3 min-h-8 w-full rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-dim transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt">
+        Réinitialiser — terrain, analyse &amp; interrupteur
       </button>
     </div>
   )
