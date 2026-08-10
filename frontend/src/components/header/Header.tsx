@@ -108,21 +108,62 @@ function Omnibox() {
 // M55-D stage 3 : AddFilter (popover « Filtres (N) ») + NumField RETIRÉS du header — les filtres
 // vivent désormais dans la section repliable « Filtres » du panneau gauche (LeftPanel).
 
-// M55-D stage 6 : le sélecteur de commune du header devient un REFLET du filtre Communes
-// (rang 1 du panneau, le MAÎTRE) — il AFFICHE le périmètre (« Toute l'île » / « Saint-Paul » /
-// « 3 communes ») et OUVRE la section Filtres au clic. Plus aucun état parallèle ici.
+// M55-D stage 9 bloc 3 — « le périmètre PROPOSE, le filtre DISPOSE » : le sélecteur du header
+// est RESTAURÉ (mono-commune) — choisir « Saint-Leu » zoome la carte ET pré-coche son CP dans le
+// filtre Communes (setCommune : vue + pré-coche) ; le client décoche librement au panneau (la
+// carte reste où elle est — sens unique). « Toute l'île » dézoome ET décoche. En MULTI (≥2,
+// posé au panneau), le header devient une VUE (« 3 communes ») dont le clic ouvre le panneau.
 function CommuneSelect() {
-  const { filters, openFiltres } = useApp()
+  const { filters, setCommune, openFiltres } = useApp()
+  const [open, setOpen] = useState(false)
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [open])
   const n = filters.communes.length
   const label = n === 0 ? 'Toute l’île' : n === 1 ? filters.communes[0] : `${n} communes`
+  if (n >= 2) {
+    return (
+      <button onClick={openFiltres} data-commune-select
+        title="Plusieurs communes filtrées — se règle dans Filtres › Communes (ouvre le panneau)"
+        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
+        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+        {label}
+      </button>
+    )
+  }
+  const pick = (c: string | null) => { setCommune(c); setOpen(false) }
   return (
-    <button onClick={openFiltres} data-commune-select
-      title="Périmètre — se règle dans Filtres › Communes (ouvre le panneau)"
-      className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
-      <span className={`h-1.5 w-1.5 rounded-full ${n > 0 ? 'bg-mint' : 'bg-txt-dim'}`} />
-      {label}
-      <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
-    </button>
+    <div className="relative shrink-0">
+      <button onClick={() => setOpen((o) => !o)} data-commune-select
+        title="Périmètre — zoome la carte et pré-coche la commune dans le filtre (vous gardez la main)"
+        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
+        <span className={`h-1.5 w-1.5 rounded-full ${n > 0 ? 'bg-mint' : 'bg-txt-dim'}`} />
+        {label}
+        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[240px] flex-col overflow-y-auto p-1.5">
+            <button onClick={() => pick(null)}
+              className={`rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
+              Toute l’île
+            </button>
+            <div className="mx-3 my-1 border-t border-line" />
+            {(communes.data ?? []).map((c) => (
+              <button key={c.insee} onClick={() => pick(c.commune)}
+                className={`rounded-md px-3 py-1.5 text-left text-xs hover:bg-surface-3 ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
+                {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

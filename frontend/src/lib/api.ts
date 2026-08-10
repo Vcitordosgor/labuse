@@ -43,6 +43,14 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>
 }
 
+// M55-D stage 9 bloc 3 (« le périmètre propose, le filtre dispose ») : les appels /filtre ne
+// portent PLUS la commune-VUE de la carte — le périmètre du compteur est `filters.communes`
+// (décocher au panneau → compteur île, la carte reste où elle est). Les autres endpoints
+// (couches, geojson…) gardent la vue : ils servent CE QUE la carte regarde.
+const qf = (extra: Record<string, string | number> = {}) =>
+  new URLSearchParams({ source: SOURCE,
+    ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])) }).toString()
+
 const q = (extra: Record<string, string | number> = {}) => {
   const c = commune()
   return new URLSearchParams({
@@ -134,13 +142,13 @@ export interface FiltreReponse {
 /** Endpoint UNIFIÉ M45 (« théâtre ») : compte exact + ventilation tier + page en un appel. */
 export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0) => {
   const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
-  return j<FiltreReponse>(`/filtre?${q({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
+  return j<FiltreReponse>(`/filtre?${qf({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
 }
 /** M55-D stage 7 — COMPTE SEUL, annulable (AbortController) : le compteur vivant du panneau
  *  Filtres. Même construction que getFiltre (limit 0), jamais une estimation locale. */
 export const getFiltreCount = (f: Filters, signal?: AbortSignal) => {
   const { tiers: _t, ...rest } = filterParams(f)
-  return j<FiltreReponse>(`/filtre?${q({ limit: 0, ...rest, ...tiersParam(f) })}`, { signal })
+  return j<FiltreReponse>(`/filtre?${qf({ limit: 0, ...rest, ...tiersParam(f) })}`, { signal })
 }
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
@@ -193,7 +201,7 @@ export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', off
 export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
   const ff = f ?? EMPTY_FILTERS
   const { tiers: _t, ...rest } = filterParams(ff)
-  return `/parcels/export.csv?${q({ limit: 5000, sort, ...rest, ...tiersParam(ff) })}`
+  return `/parcels/export.csv?${qf({ limit: 5000, sort, ...rest, ...tiersParam(ff) })}`
 }
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
