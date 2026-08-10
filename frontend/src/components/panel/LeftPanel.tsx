@@ -166,7 +166,7 @@ function LayersSection({ open, onToggle }: {
 // (Verdict / Surface / SDP, mêmes champs du store) + « Tous les filtres → » qui déplie le panneau
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
-function FiltresSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle: () => void; onRetract?: () => void }) {
   const { filters, commune } = useApp()
   const n = countActiveFilters(filters)
   // N = parc du run servi dans le périmètre courant (trame entière, analyse coupée), dynamique.
@@ -195,7 +195,7 @@ function FiltresSection({ open, onToggle }: { open: boolean; onToggle: () => voi
           {/* Accroche HONNÊTE, adaptée à l'interrupteur (stage 4) : les filtres trient, ne recalculent pas. */}
           <p className="text-[10.5px] leading-snug text-txt-dim">{accroche}</p>
           {/* Les DEUX étages (① terrain / ② regard LABUSE) + raccourcis — panneau unique. */}
-          <div className="mt-2"><FiltreLabuse /></div>
+          <div className="mt-2"><FiltreLabuse onRetract={onRetract} /></div>
         </div>
       )}
     </div>
@@ -296,7 +296,7 @@ export function LeftPanel() {
             <button onClick={togglePanel} className="text-txt-dim hover:text-txt-hi" title="Fermer le panneau" aria-label="Fermer le panneau">✕</button>
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} />
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setFiltresOpen(false)} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -329,7 +329,7 @@ export function LeftPanel() {
                 className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
             <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} />
+            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setFiltresOpen(false)} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
