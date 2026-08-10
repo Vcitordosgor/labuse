@@ -27,6 +27,7 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   '/adresses',  // M55-B point 1 : autocomplétion de l'omnibox (/adresses/autocomplete) — MANQUAIT
                 // → 404 en dev, la barre de recherche ne suggérait RIEN (silencieusement). Prod OK
                 //   (FastAPI même origine), mais le dev doit être honnête.
+  '/accueil',   // M55-D stage 9 : /accueil/chiffres (page d'accueil qui prouve)
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

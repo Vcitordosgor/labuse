@@ -299,6 +299,17 @@ export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle:
 // M55-D stage 5 : la DATE du run servi (champ `gel` du modèle épinglé) — pour la ligne de contexte
 // de la Révélation (« classement du … »). Introuvable → null, la ligne s'affiche sans date.
 export const getV2Modele = () => j<{ model_version?: string; gel?: string }>('/v2/modele')
+// M55-D stage 9 — les chiffres PROUVÉS de l'accueil (endpoint agrégé, cache serveur 1 h).
+// null = chiffre indisponible → le front le MASQUE, il ne l'invente pas.
+export interface AccueilChiffres {
+  parcelles: number | null; communes: number | null; sources: number | null
+  ventes_train: number | null; communes_calibrees: number | null
+  golden_parcelles: number | null; golden_verifs: number | null
+  defisc_actives: number | null; permis_caducs: number | null
+  ensembles_fonciers: number | null; bascules_tiers_hauts: number | null
+  run_label: string
+}
+export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {
