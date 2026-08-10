@@ -154,9 +154,10 @@ function CommuneSelect() {
               Toute l’île
             </button>
             <div className="mx-3 my-1 border-t border-line" />
-            {/* M55-D stage 9 ter point 2 : chaque ligne porte à droite un « ⓘ » — le NOM
-                sélectionne (zoom + pré-coche, bloc 3 inchangé), le « ⓘ » ouvre la fiche de CETTE
-                commune SANS changer le périmètre (stopPropagation, zone de clic 28 px). */}
+            {/* M55-D stage 9 ter point 2 (correction Vic) : le LIEN TEXTE d'origine (pattern
+                M55-C) — « voir la fiche → » à droite du nom. Le NOM sélectionne (zoom +
+                pré-coche, bloc 3 inchangé) ; le lien ouvre la fiche de CETTE commune SANS
+                changer le périmètre (stopPropagation). */}
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className="flex items-center rounded-md hover:bg-surface-3">
                 <button onClick={() => pick(c.commune)}
@@ -165,9 +166,8 @@ function CommuneSelect() {
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}
-                  aria-label={`Fiche commune de ${c.commune}`}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] text-txt-dim transition-colors duration-quick hover:bg-surface-2 hover:text-mint">
-                  ⓘ
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim transition-colors duration-quick hover:text-mint">
+                  voir la fiche →
                 </button>
               </div>
             ))}

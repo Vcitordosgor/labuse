@@ -17,6 +17,7 @@ import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
+import { ChevronSection } from './ChevronSection'
 
 const CONSTRUCTIBILITE = [
   { k: 'constructible', l: 'Constructible' },
@@ -104,8 +105,7 @@ function Tiroir({ titre, sous, defaut = false, children }: { titre: string; sous
     <div className="border-t border-line-2/50">
       <button onClick={() => setOuvert((o) => !o)} className="flex w-full items-center justify-between py-1.5 text-left">
         <span className="text-xs font-medium text-txt-hi">{titre}{sous && <span className="text-txt-dim"> — {sous}</span>}</span>
-        {/* M55-A point 4 : même patron que « Couches » — fermé → gauche (⌄ pivoté), ouvert → bas. */}
-        <span className={`text-txt-dim transition-transform duration-quick ${ouvert ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
+        <ChevronSection open={ouvert} petit />
       </button>
       {ouvert && <div className="pb-1">{children}</div>}
     </div>

@@ -4,6 +4,7 @@ import { CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
+import { ChevronSection } from '../panel/ChevronSection'
 
 // Correctif M5 : quand un run scoring v2 existe, la carte colore par le tier v2 — la légende
 // suit (mêmes couleurs que le verdict d'en-tête). Sans run (404/503), légende matrice legacy.
@@ -55,10 +56,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             <span className="label-caps">Verdict · Classement historique</span>
           </Tip>
         )}
-        {/* M55-A item 5 + M55-C point 3 : même patron ET même rendu que « Couches » (boîte h/w 7,
-            poids text-base, survol group-hover, rotation douce) — REPLIÉ → gauche, DÉPLIÉ → bas. */}
-        <span aria-hidden="true"
-          className={`flex h-7 w-7 items-center justify-center text-base leading-none text-txt-dim transition-[transform,color] duration-soft ease-cockpit group-hover:text-txt-hi ${verdictOpen ? '' : 'rotate-90'}`}>⌄</span>
+        <ChevronSection open={verdictOpen} />
       </button>
       {verdictOpen && (
         <div className="mt-2 flex flex-col gap-1.5">

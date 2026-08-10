@@ -32,4 +32,19 @@ ouvre la fiche de cette commune **sans changer le périmètre**. « Contexte » 
 clic nom Saint-Leu → zoom 11,9 + périmètre « Saint-Leu », fiche NON ouverte · capture
 `ter_menu_i`.
 
+## Ajustements Vic (sur captures) — commits suivants
+- **Accueil** : « Commencer → » en PLEIN/mint/gros (style « Analyser les parcelles »), placé en
+  premier — LE geste de la page ; bloc copilote IA RETIRÉ entier (chaînes 0-caller) ; texte
+  restant en soutien (titre sobre, chiffres+« i » en corps réduit, phrase descriptive discrète).
+  Captures `ter_accueil` (avant) / `ter_accueil_apres`.
+- **Menu périmètre** : le « ⓘ » corrigé en **lien texte d'origine** (pattern M55-C) « voir la
+  fiche → » — nom = sélection (zoom + pré-coche) ; lien = fiche SANS changer le périmètre
+  (prouvé : fiche + « Toute l'île » inchangé ; 24 liens, 0 ⓘ). Capture `ter_menu_lien`.
+- **Chevrons de section** : composant UNIQUE `ChevronSection` calibré sur la croix ✕ (même boîte
+  h-7 w-7 rounded-md, même colonne, hover fond léger, glyphe 17 px centré optiquement, rotation
+  douce) — appliqué à Couches, Filtres, tiroirs internes (variante `petit`) et légende Verdict ;
+  la croix desktop boxée pareil. Plus aucun chevron « nu » (seul le « pourquoi ? ⌄ » inline de la
+  liste reste tel quel : dépliant dans une phrase, pas un chevron de section). Captures
+  `chevrons_avant` / `chevrons_apres(+hover)`.
+
 CC ne merge jamais.
