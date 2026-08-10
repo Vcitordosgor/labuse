@@ -6,6 +6,7 @@ import { countActiveFilters } from '../../lib/filters'
 import { getAccueilChiffres } from '../../lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
+import { ChevronSection } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
@@ -117,11 +118,7 @@ function LayersSection({ open, onToggle }: {
           {activeCount > 0 && (
             <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{activeCount} active{activeCount > 1 ? 's' : ''}</span>
           )}
-          {/* M55-A item 5 : REPLIÉ → chevron vers la GAUCHE (⌄ pivoté 90°), DÉPLIÉ → vers le BAS.
-              M55-C point 3 : harmonisé avec la croix du panneau — même boîte (h/w 7), même poids
-              et même survol (group-hover → txt-hi), rotation douce (duration-soft, ease-cockpit). */}
-          <span aria-hidden="true"
-            className={`flex h-7 w-7 items-center justify-center text-base leading-none text-txt-dim transition-[transform,color] duration-soft ease-cockpit group-hover:text-txt-hi ${open ? '' : 'rotate-90'}`}>⌄</span>
+          <ChevronSection open={open} />
         </span>
       </button>
       {open && (
@@ -179,8 +176,7 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
           {n > 0 && (
             <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{n} actif{n > 1 ? 's' : ''}</span>
           )}
-          <span aria-hidden="true"
-            className={`flex h-7 w-7 items-center justify-center text-base leading-none text-txt-dim transition-[transform,color] duration-soft ease-cockpit group-hover:text-txt-hi ${open ? '' : 'rotate-90'}`}>⌄</span>
+          <ChevronSection open={open} />
         </span>
       </button>
       {open && (
@@ -323,7 +319,8 @@ export function LeftPanel() {
             {/* M55-B point 5 : une FERMETURE, pas un repli → croix (×), cohérent avec la fiche
                 parcelle et le contexte commune (croix partout). Le ré-affichage se fait par la
                 languette « › » quand le panneau est masqué. */}
-            <button onClick={togglePanel} className="text-txt-dim hover:text-txt-hi" title="Fermer le panneau" aria-label="Fermer le panneau">✕</button>
+            <button onClick={togglePanel} title="Fermer le panneau" aria-label="Fermer le panneau"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">✕</button>
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} />
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
