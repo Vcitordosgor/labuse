@@ -305,23 +305,25 @@ export function LeftPanel() {
   // M14 B3 (QA-64) : « Couches » OUVERT PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée.
   // État partagé desktop/mobile. Plus d'auto-fermeture 10 s : c'est la BASCULE vers l'analyse
   // (`verdict` false→true) qui replie les couches, une seule fois — l'utilisateur peut rouvrir.
-  const [couchesOpen, setCouchesOpen] = useState(true)
+  // M55-D stage 9 bloc 4 : plus d'état LOCAL couchesOpen — l'exclusivité vit dans le store
+  // (panneauSection), aucun chemin ne peut la contourner (le bug : openFiltres/« Commencer → »
+  // ouvraient Filtres sans replier Couches, restée sur son état local par défaut).
+  const panneauSection = useApp((st) => st.panneauSection)
+  const setPanneauSection = useApp((st) => st.setPanneauSection)
+  const couchesOpen = panneauSection === 'couches'
+  const filtresOpen = panneauSection === 'filtres'
   const prevVerdict = useRef(verdict)
   useEffect(() => {
     // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
     // se referme pour laisser la carte (accordéon), comme demandé.
-    if (verdict && !prevVerdict.current) { setCouchesOpen(false); setFiltresOpen(false); setAccueilVu() }
+    if (verdict && !prevVerdict.current) { setPanneauSection(null); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
-  // M55-D stage 3/6 : la section « Filtres » est pilotée par le STORE — le header-reflet
-  // (sélecteur de périmètre) l'ouvre au clic. Fermée par défaut (badge N actifs visible).
-  const filtresOpen = useApp((st) => st.filtresOpen)
-  const setFiltresOpen = useApp((st) => st.setFiltresOpen)
-  // Accordéon : ouvrir une section replie l'autre — la colonne (hauteur fixe) ne déborde jamais,
-  // même quand le panneau EXPERT est déplié dans « Filtres ».
+  // Accordéon = propriété de l'ÉTAT (panneauSection) : ouvrir une section replie l'autre,
+  // quel que soit le chemin — la colonne (hauteur fixe) ne déborde jamais.
   const setAccueilVu = useApp((st) => st.setAccueilVu)
-  const toggleCouches = () => { setCouchesOpen((o) => !o); setFiltresOpen(false); setAccueilVu() }
-  const toggleFiltres = () => { setFiltresOpen(!filtresOpen); setCouchesOpen(false); setAccueilVu() }
+  const toggleCouches = () => { setPanneauSection(couchesOpen ? null : 'couches'); setAccueilVu() }
+  const toggleFiltres = () => { setPanneauSection(filtresOpen ? null : 'filtres'); setAccueilVu() }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -343,7 +345,7 @@ export function LeftPanel() {
             <button onClick={togglePanel} className="text-txt-dim hover:text-txt-hi" title="Fermer le panneau" aria-label="Fermer le panneau">✕</button>
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setFiltresOpen(false)} />
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -376,7 +378,7 @@ export function LeftPanel() {
                 className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
             <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setFiltresOpen(false)} />
+            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />

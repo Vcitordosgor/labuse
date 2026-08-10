@@ -131,10 +131,11 @@ interface AppState {
   commune: string | null
   setCommune: (c: string | null) => void
   setCommunesFilter: (list: string[]) => void
-  // M55-D stage 6 : ouverture de la SECTION Filtres pilotée par le store (le header-reflet
-  // l'ouvre) + tiroir mobile. UI seulement.
-  filtresOpen: boolean
-  setFiltresOpen: (v: boolean) => void
+  // M55-D stage 9 bloc 4 : l'ACCORDÉON est une propriété de l'ÉTAT — UNE seule section ouverte
+  // à la fois (couches | filtres | aucune), quel que soit le chemin d'ouverture (titre, chevron,
+  // header, « Commencer → », programmatique). Plus jamais deux sections ouvertes.
+  panneauSection: 'couches' | 'filtres' | null
+  setPanneauSection: (s: 'couches' | 'filtres' | null) => void
   // M55-D stage 8 : l'écran d'accueil (présentation) disparaît après le PREMIER geste de la
   // session (Commencer, ouverture d'une section, analyse) — état de session, jamais persisté.
   accueilVu: boolean
@@ -287,13 +288,13 @@ export const useApp = create<AppState>((set) => ({
   focusCommune: (c) => set((s) => ({
     filters: { ...s.filters, communes: [c] }, commune: c, contexteCommune: c, zone: null,
   })),
-  filtresOpen: false,
-  setFiltresOpen: (filtresOpen) => set({ filtresOpen }),
+  panneauSection: 'couches',   // Couches ouverte par défaut (comportement historique M14)
+  setPanneauSection: (panneauSection) => set({ panneauSection }),
   accueilVu: false,
   setAccueilVu: () => set({ accueilVu: true }),
   mobilePanelOpen: false,
   setMobilePanelOpen: (mobilePanelOpen) => set({ mobilePanelOpen }),
-  openFiltres: () => set({ panelOpen: true, filtresOpen: true, mobilePanelOpen: true, accueilVu: true }),
+  openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
   verdict: false,
