@@ -88,6 +88,19 @@ export function ContextePanel() {
         {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
         {d && (
           <>
+            {/* M55-C point 1 (arbitrage Vic) : bandeau RNU générique en TÊTE de fiche — pour toute
+                commune sans PLU opposable (source config/rnu_communes.yaml). Dit franchement pourquoi
+                l'écran n'a pas de zonage : constructibilité au cas par cas (règles nationales). */}
+            {d.rnu && (
+              <div data-rnu-bandeau className="border-b border-line px-5 py-4">
+                <div className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.10] px-3 py-2.5">
+                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-st-creuser">
+                    <span aria-hidden="true">⚑</span>{d.rnu.libelle}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-txt">{d.rnu.detail}</p>
+                </div>
+              </div>
+            )}
             {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de
                 production — parcelles brûlantes/chaudes, propriétaires PM) est RETIRÉ de la fiche
                 de CONTEXTE commune. Le client n'a pas à y voir nos compteurs internes ; cette fiche

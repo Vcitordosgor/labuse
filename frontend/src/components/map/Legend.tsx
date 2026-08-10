@@ -39,7 +39,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       <button
         data-legend-verdict-toggle
         onClick={() => setVerdictOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="group flex w-full items-center justify-between gap-3 text-left"
         aria-expanded={verdictOpen}
         title={verdictOpen ? 'Replier la légende du verdict' : 'Déplier la légende du verdict'}
       >
@@ -55,8 +55,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             <span className="label-caps">Verdict · Classement historique</span>
           </Tip>
         )}
-        {/* M55-A item 5 : même patron que « Couches » — REPLIÉ → gauche (⌄ pivoté 90°), DÉPLIÉ → bas. */}
-        <span className={`text-txt-dim transition-transform duration-quick ${verdictOpen ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
+        {/* M55-A item 5 + M55-C point 3 : même patron ET même rendu que « Couches » (boîte h/w 7,
+            poids text-base, survol group-hover, rotation douce) — REPLIÉ → gauche, DÉPLIÉ → bas. */}
+        <span aria-hidden="true"
+          className={`flex h-7 w-7 items-center justify-center text-base leading-none text-txt-dim transition-[transform,color] duration-soft ease-cockpit group-hover:text-txt-hi ${verdictOpen ? '' : 'rotate-90'}`}>⌄</span>
       </button>
       {verdictOpen && (
         <div className="mt-2 flex flex-col gap-1.5">

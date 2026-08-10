@@ -717,10 +717,11 @@ export function MapView() {
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
         `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
         (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
-      // FIX (POINT 2) : le clic ouvre UNIQUEMENT la FICHE COMMUNE (contexte SRU/ANRU/PLH…), sans
-      // zoomer/entrer dans la commune — le zoom (setCommune) parasitait l'action et masquait la
-      // fiche. Pour entrer dans une commune, le sélecteur du header reste là.
-      el.onclick = (e) => { e.stopPropagation(); useApp.getState().setContexteCommune(c.commune) }
+      // M55-C point 4 (décision Vic 10/08, remplace le comportement « fiche seule ») : cliquer le
+      // nom de commune = TROIS effets en un — ouvrir la fiche, caler le périmètre sur la commune
+      // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
+      // charge). `focusCommune` fait les trois d'un coup.
+      el.onclick = (e) => { e.stopPropagation(); useApp.getState().focusCommune(c.commune) }
       aggMarkers.current.push(new maplibregl.Marker({ element: el, offset: OFFSETS[c.commune] ?? [0, 0] })
         .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
     }

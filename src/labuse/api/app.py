@@ -1318,8 +1318,15 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
         "source": "Classement servi LABUSE (tiers brûlante + chaude) — recalculé à chaque "
                   "bascule, jamais figé",
     } if _cd else None)
+    # M55-C point 1 (arbitrage Vic) : bandeau RNU générique — toute commune SANS document local
+    # (source de vérité config/rnu_communes.yaml via labuse.rnu). Wording DOCTRINAL réutilisé.
+    from .. import rnu as rnu_mod
+    _insee_c = _cd.get("insee") if _cd else None
+    rnu = ({"libelle": rnu_mod.LIBELLE_RNU, "detail": rnu_mod.DETAIL_RNU}
+           if rnu_mod.is_rnu_insee(_insee_c) else None)
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
+            "rnu": rnu,
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
