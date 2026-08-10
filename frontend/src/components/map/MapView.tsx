@@ -558,6 +558,16 @@ export function MapView() {
     }
   }, [commune, layers.zonage_parcelle, layers.zonage])
 
+  // M55-B point 6 : les équipements ne se peignent qu'à partir du zoom 12 (sinon 15 000 icônes
+  // illisibles). Couche active mais vue trop large → le DIRE (« zoomez »), jamais un silence.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current || !layers.equipements) return
+    if (m.getZoom() < 12) {
+      useApp.getState().setToast('Zoomez pour afficher les équipements (visibles au niveau « rue », dès le zoom d’une commune).')
+    }
+  }, [layers.equipements, mapReady])
+
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
     const m = map.current

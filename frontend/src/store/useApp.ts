@@ -293,7 +293,14 @@ export const useApp = create<AppState>((set) => ({
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, renouv: false },
-  toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
+  // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
+  // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
+  // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».
+  toggleLayer: (k) => set((s) => {
+    const next = { ...s.layers, [k]: !s.layers[k] }
+    if (k === 'zonage_parcelle' && next.zonage_parcelle) next.parcelles = true
+    return { layers: next }
+  }),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
   query: '',
