@@ -103,17 +103,21 @@ function LayersSection({ open, onToggle }: {
         data-couches-toggle
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="group flex w-full items-center justify-between gap-2 text-left"
         title={open ? 'Replier les couches' : 'Déplier les couches'}
       >
         <span className="label-caps">Couches</span>
-        <span className="flex items-center gap-2">
+        {/* M55-C point 3bis : le badge « N actives » respire (gap-3 = 12 px) — la zone de clic
+            du chevron n'est plus ambiguë. */}
+        <span className="flex items-center gap-3">
           {activeCount > 0 && (
             <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{activeCount} active{activeCount > 1 ? 's' : ''}</span>
           )}
-          {/* M55-A item 5 : logique de la flèche corrigée — REPLIÉ → chevron vers la GAUCHE
-              (⌄ pivoté 90°), DÉPLIÉ → chevron vers le BAS (⌄ au repos). */}
-          <span className={`text-txt-dim transition-transform duration-quick ${open ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
+          {/* M55-A item 5 : REPLIÉ → chevron vers la GAUCHE (⌄ pivoté 90°), DÉPLIÉ → vers le BAS.
+              M55-C point 3 : harmonisé avec la croix du panneau — même boîte (h/w 7), même poids
+              et même survol (group-hover → txt-hi), rotation douce (duration-soft, ease-cockpit). */}
+          <span aria-hidden="true"
+            className={`flex h-7 w-7 items-center justify-center text-base leading-none text-txt-dim transition-[transform,color] duration-soft ease-cockpit group-hover:text-txt-hi ${open ? '' : 'rotate-90'}`}>⌄</span>
         </span>
       </button>
       {open && (
