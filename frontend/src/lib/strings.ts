@@ -81,6 +81,14 @@ export const CLIENT = {
     phraseSelon: (recap: string | null) =>
       recap ? `Selon vos critères (${recap}) :` : 'Selon vos critères :',
     phraseZero: 'aucune parcelle retenue — élargissez vos critères (surface, zonage, verdict).',
+    // M55-F point 2 — la phrase COMPLÈTE son compte : l'arithmétique boucle (analysé = retenues
+    // + écartées ; retenues = ventilation complète, à-creuser et déclassées inclus).
+    retenuesLbl: (n: number) => `${n.toLocaleString('fr-FR')} retenues`,
+    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} déclassées`,
+    ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
+    ecarteesMotifs: 'domaine public, inconstructibles…',
+    voirPourquoi: 'voir pourquoi',
+    ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
     relancer: 'Relancer l’analyse',
     desactiver: 'désactiver l’analyse',
@@ -91,6 +99,8 @@ export const CLIENT = {
       brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
       chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
+      a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
+      declassees: 'Déclassées — retenues par l’analyse mais rétrogradées pour un motif (bâti saturé, zone fermée…) ; visibles avec leur motif.',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──

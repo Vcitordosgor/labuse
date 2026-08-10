@@ -166,6 +166,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false) }
   // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
+  // M55-F point 2 : la TRAME (analyse coupée) — total analysé du périmètre. écartées (étage 0) =
+  // trame − retenues ; l'arithmétique de la phrase boucle (analysé = retenues + écartées).
+  const trameQ = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
 
   // ═══ M55-D stage 7 · COMPTEUR VIVANT — « N parcelles correspondent », mis à jour à chaque
   // changement de filtre : debounce 400 ms + AbortController (les appels obsolètes sont annulés).
@@ -255,6 +258,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const phraseRetenues = src?.compte
   const t = src?.tiers
   const pl = (n: number, s: string) => `${nf.format(n)} ${s}${n > 1 ? 's' : ''}`
+  // M55-F point 2 — l'arithmétique de la phrase (tout du point unique, mêmes critères) :
+  //  · analysé (trame)     = trameQ.compte
+  //  · retenues            = src.compte  (= ventilation 4 tiers + déclassées)
+  //  · déclassées          = retenues − (brûlante+chaude+réserve+à creuser)   (motif, dans retenues)
+  //  · écartées (étage 0)  = analysé − retenues                               (exclusions dures)
+  const analyseTotal = trameQ.data?.compte
+  const vent4 = t ? t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser : 0
+  const declassees = phraseRetenues != null ? phraseRetenues - vent4 : 0
+  const ecartees = (analyseTotal != null && phraseRetenues != null) ? analyseTotal - phraseRetenues : null
 
   return (
     <div className="card-elev px-3 py-2">
@@ -368,12 +380,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier) ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
-              {CLIENT.revelation.phraseIntro(live ?? 0, perimetre)}{' '}
+              {CLIENT.revelation.phraseIntro(analyseTotal ?? live ?? 0, perimetre)}{' '}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
             {phraseRetenues === 0 ? (
               <p data-phrase-zero className="mt-1 text-[12.5px] font-medium leading-snug text-st-creuser">{CLIENT.revelation.phraseZero}</p>
             ) : (
+              /* Ventilation COMPLÈTE (4 tiers + déclassées = retenues) puis écartées (étage 0) —
+                 l'arithmétique boucle : retenues + écartées = analysé (point 2). */
               <p className="mt-1 text-[13px] leading-relaxed text-txt">
                 <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
                 {t && phraseRetenues != null && (
@@ -383,7 +397,23 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                     <Tip side="top" tip={CLIENT.revelation.defTiers.chaude}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.chaude, 'chaude')}</b></Tip>,{' '}
                     <Tip side="top" tip={CLIENT.revelation.defTiers.reserve_fonciere}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} en potentiel long terme</b></Tip>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} en potentiel long terme</b></Tip>,{' '}
+                    <Tip side="top" tip={CLIENT.revelation.defTiers.a_creuser}>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.a_creuser)} à creuser</b></Tip>
+                    {declassees > 0 && (
+                      <>,{' '}
+                        <Tip side="top" tip={CLIENT.revelation.defTiers.declassees}>
+                          <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{CLIENT.revelation.ventDeclassees(declassees)}</b></Tip>
+                      </>
+                    )}
+                  </>
+                )}
+                {ecartees != null && ecartees > 0 && (
+                  <> — et <b className="tabular-nums text-txt-mut">{CLIENT.revelation.ecarteesLbl(ecartees)}</b>{' '}
+                    <span className="text-txt-dim">({CLIENT.revelation.ecarteesMotifs})</span>{' '}
+                    <Tip side="top" tip={CLIENT.revelation.ecarteesTip}>
+                      <span data-voir-pourquoi role="button" tabIndex={0}
+                        className="cursor-help text-mint underline decoration-dotted underline-offset-2">{CLIENT.revelation.voirPourquoi}</span></Tip>
                   </>
                 )}.
               </p>
