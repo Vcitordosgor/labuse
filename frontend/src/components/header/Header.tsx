@@ -70,7 +70,7 @@ function Omnibox() {
         data-omnibox
         onSelect={onPickAddress}
         onEnterRaw={onEnterRaw}
-        placeholder="Rechercher : IDU, adresse exacte, commune…"
+        placeholder="Rechercher : IDU, adresse exacte…"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />
       {/* A5 (post-revue) : la LOUPE cliquable — lance la recherche sur le texte courant */}
