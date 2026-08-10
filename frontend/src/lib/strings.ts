@@ -9,14 +9,6 @@
 // -----------------------------------------------------------------------------
 
 export const CLIENT = {
-  // ── M55-D stage 3 · section « Filtres » du panneau gauche. Accroche HONNÊTE : les filtres
-  //    TRIENT (mesuré phase 1), ils ne « génèrent » ni ne recalculent rien. N = parc du run servi. ──
-  filtres: {
-    // M55-D stage 4 : l'accroche s'adapte à l'interrupteur. Éteint = tri factuel sur le parc ;
-    // allumé = affiner parmi les retenues de l'analyse. N = parc du run servi (dynamique).
-    accrocheOff: (n: number) => `Filtrez les ${n.toLocaleString('fr-FR')} parcelles de La Réunion`,
-    accrocheOn: (n: number) => `Affinez parmi les ${n.toLocaleString('fr-FR')} analysées par LABUSE`,
-  },
   // ── M55-D stage 6 · SIGNAUX DE VIE — 8 signaux validés Vic (phase 1 mesurée). Chaque « i »
   //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
   signaux: {
@@ -45,41 +37,22 @@ export const CLIENT = {
   //    la doctrine — rien n'est masqué, chaque chiffre a sa source — est elle-même l'argument).
   //    L'UNIQUE CTA d'analyse vit dans le panneau Filtres ; ici, un seul lien : « Commencer → ». ──
   accueil: {
-    // M55-D stage 9 : l'accueil ne DIT plus, il PROUVE — trois blocs, trois messages, tous les
-    // nombres viennent de /accueil/chiffres (AUCUN count en dur ici : les libellés sont des
-    // fonctions du nombre servi). Titres à la première personne = Vic, à conserver.
-    intro: (n: string) =>
-      `Le cadastre entier est sous vos yeux — ${n} parcelles, toutes cliquables. LABUSE les a analysées et vous propose son avis.`,
-    doctrine: 'Rien n’est masqué : chaque parcelle garde son verdict et chaque chiffre porte sa source. Vous gardez la main.',
+    // M55-D stage 9 ter — TEXTE FINAL FIGÉ VIC (10/08) : DEUX blocs et le lien, rien d'autre.
+    // Les chiffres du bloc 1 restent SERVIS par /accueil/chiffres (affichage dynamique, « i »
+    // sourcé sur chacun) — le texte figé donne les valeurs actuelles, jamais des counts en dur.
+    b1Titre: 'LABUSE, c’est tout le foncier de La Réunion. Au même endroit.',
+    segParcelles: (n: string) => `${n} parcelles`,
+    segCommunes: (n: string) => `${n} communes`,
+    segSources: (n: string) => `${n} sources publiques branchées`,
+    b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
+    src: {
+      parcelles: 'Compte exact du classement servi (run versionné), recalculé à chaque mise à jour majeure.',
+      communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
+      sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
+    },
+    b2Titre: 'Et c’est un copilote IA qui mâche le travail.',
+    b2Corps: 'Il répond, explique chaque parcelle et vous accompagne partout dans l’app — chiffres sourcés à l’appui.',
     commencer: 'Commencer →',
-    blocs: {
-      couvre: { titre: 'Je couvre tout', tagline: 'Rien de l’île ne vous échappe.' },
-      devine: { titre: 'Je ne devine pas', tagline: 'Chaque chiffre est traçable à sa source réglementaire.' },
-      voit: { titre: 'Je vois ce que personne ne voit', tagline: 'Des opportunités invisibles ailleurs.' },
-    },
-    // libellé = fn(nombre formaté) ; src = le « i » (la doctrine vaut aussi ici)
-    chiffres: {
-      parcelles: { l: (n: string) => `${n} parcelles notées`,
-        src: 'Compte exact du classement servi (run versionné), recalculé à chaque mise à jour majeure.' },
-      communes: { l: (n: string) => `${n} communes sur ${n}`,
-        src: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.' },
-      sources: { l: (n: string) => `${n} sources publiques branchées`,
-        src: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.' },
-      ventes_train: { l: (n: string) => `appris sur ${n} mutations réelles (2017-2024)`,
-        src: 'Mutations foncières réelles (DVF / fichiers fonciers) ayant entraîné le modèle servi — l’échantillon d’apprentissage, pas le total DVF.' },
-      communes_calibrees: { l: (n: string) => `${n} PLU calibrés article par article`,
-        src: 'Règlements PLU lus article par article, zonage calé au cadastre par LABUSE. Saint-Philippe, au RNU, est traité aux règles nationales.' },
-      golden: { l: (n: string) => `${n} parcelles-témoins re-vérifiées avant chaque mise en ligne`,
-        src: (v: string) => `Golden dataset versionné — ${v} vérifications champ à champ, bloquantes au déploiement.` },
-      defisc: { l: (n: string) => `${n} fenêtres de sortie de défiscalisation ouvertes`,
-        src: 'Fenêtres de revente fiscale ESTIMÉES sur l’année d’achat neuf (mise à jour continue).' },
-      caducs: { l: (n: string) => `${n} permis estimés caducs`,
-        src: 'Croisement Sitadel × bâti — caducité ESTIMÉE par LABUSE, à vérifier en mairie.' },
-      ensembles: { l: (n: string) => `${n} ensembles fonciers reconstitués — même propriétaire, 3 parcelles ou plus`,
-        src: 'Fichiers fonciers MAJIC 2025 — sociétés privées détenant plusieurs parcelles sur l’île.' },
-      bascules: { l: (n: string) => `${n} parcelles devenues brûlantes ou chaudes à la dernière mise à jour`,
-        src: 'Différence de classement entre les deux derniers runs servis (versionnés).' },
-    },
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
   //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──
