@@ -139,6 +139,26 @@ badge.)* Captures `p3_chevron_before` / `after_open` / `after_closed`.
 
 ---
 
+## 4. FIX — clic sur un nom de commune = trois effets (fait)
+Avant : cliquer un nom de commune n'ouvrait que la fiche. Désormais **un geste, trois effets** via
+une action `focusCommune(c)` du store (`commune` + `contexteCommune` + `zone:null`) ; le recadrage
+carte suit l'effet de fit existant sur `commune` :
+(a) fiche ouverte, (b) carte zoomée sur l'emprise de la commune, (c) sélecteur de périmètre calé
+sur la commune (liste/compteurs/filtres se recalent).
+
+**Tous les sites cliquables identifiés** (les 3 seuls) traités pareil : marqueur commune sur la
+carte (« … · Fiche commune »), lien « voir la fiche commune → » du sélecteur, bouton « ⓘ Contexte ».
+*Vérifié : aucun nom de commune cliquable dans la liste de résultats, la fiche parcelle ou le PDF
+projet — donc rien à unifier là.*
+
+**Retour « Toute l'île » propre** (pas de périmètre/fiche fantôme) : périmètre nul + fiche fermée ;
+et si une fiche est ouverte, elle SUIT le périmètre choisi au sélecteur. **Prouvé** : clic marqueur
+Saint-Paul → fiche + périmètre Saint-Paul + zoom 9,8→11,5 ; retour île → périmètre nul, fiche
+fermée, zoom→9,8. Capture `p4_clic_commune`.
+
+---
+
 ## Périmètre
-Points 1 & 2 : mesure et rapport SEULS, aucun code. Point 3 : front seul (`LeftPanel.tsx`,
-`Legend.tsx`). Rien touché au scoring ni aux données. CC ne merge jamais.
+Points 1 & 2 : mesure et rapport SEULS, aucun code. Points 3 & 4 : front seul (`LeftPanel.tsx`,
+`Legend.tsx`, `Header.tsx`, `MapView.tsx`, `store/useApp.ts`). Rien touché au scoring ni aux
+données. CC ne merge jamais.
