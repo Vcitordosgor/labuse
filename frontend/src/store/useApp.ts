@@ -135,6 +135,10 @@ interface AppState {
   // l'ouvre) + tiroir mobile. UI seulement.
   filtresOpen: boolean
   setFiltresOpen: (v: boolean) => void
+  // M55-D stage 8 : l'écran d'accueil (présentation) disparaît après le PREMIER geste de la
+  // session (Commencer, ouverture d'une section, analyse) — état de session, jamais persisté.
+  accueilVu: boolean
+  setAccueilVu: () => void
   mobilePanelOpen: boolean
   setMobilePanelOpen: (v: boolean) => void
   openFiltres: () => void
@@ -283,9 +287,11 @@ export const useApp = create<AppState>((set) => ({
   })),
   filtresOpen: false,
   setFiltresOpen: (filtresOpen) => set({ filtresOpen }),
+  accueilVu: false,
+  setAccueilVu: () => set({ accueilVu: true }),
   mobilePanelOpen: false,
   setMobilePanelOpen: (mobilePanelOpen) => set({ mobilePanelOpen }),
-  openFiltres: () => set({ panelOpen: true, filtresOpen: true, mobilePanelOpen: true }),
+  openFiltres: () => set({ panelOpen: true, filtresOpen: true, mobilePanelOpen: true, accueilVu: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
   verdict: false,

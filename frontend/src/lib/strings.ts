@@ -41,10 +41,26 @@ export const CLIENT = {
       assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
     } as Record<string, string>,
   },
+  // ── M55-D stage 8 · PAGE D'ACCUEIL — présentation SOBRE et FACTUELLE (aucun superlatif :
+  //    la doctrine — rien n'est masqué, chaque chiffre a sa source — est elle-même l'argument).
+  //    L'UNIQUE CTA d'analyse vit dans le panneau Filtres ; ici, un seul lien : « Commencer → ». ──
+  accueil: {
+    intro: 'Le cadastre entier est sous vos yeux — 431 663 parcelles, toutes cliquables. LABUSE les a analysées et vous propose son avis.',
+    points: [
+      '431 663 parcelles, 24 communes — calibrées commune par commune sur les PLU réels.',
+      'Un classement daté et versionné : probabilité de mutation × constructibilité.',
+      '8 signaux de vie : procédure collective, permis, sortie de défiscalisation, friche…',
+      'Les documents en un clic : dossier, note banquier, one-pager, pré-dossier CERFA.',
+      'Le bloc Marché par commune, la veille, le CRM.',
+      'Conçu à La Réunion, pour La Réunion.',
+    ],
+    doctrine: 'Rien n’est masqué : chaque parcelle garde son verdict et chaque chiffre porte sa source. Vous gardez la main.',
+    commencer: 'Commencer →',
+  },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
   //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──
   compteur: {
-    correspondent: (n: number) => `${n.toLocaleString('fr-FR')} parcelles correspondent`,
+    correspondent: (n: number) => `${n.toLocaleString('fr-FR')} parcelles correspondent à vos critères`,
     zero: 'Aucune parcelle ne correspond — élargissez vos critères.',
   },
   // ── M55-D stage 5 · LA RÉVÉLATION — tout le texte du rituel d'analyse. RÈGLE D'HONNÊTETÉ :
@@ -58,7 +74,9 @@ export const CLIENT = {
     bouton: 'Analyser les parcelles',
     // M55-D stage 7 : bouton CONTEXTUEL — N = le compteur vivant (réponse /filtre réelle) ;
     // zéro filtre posé → le parc du périmètre.
-    boutonCes: (n: number) => `Analyser ces ${n.toLocaleString('fr-FR')} parcelles`,
+    // M55-D stage 8 : avec des filtres posés le bouton renvoie au nombre affiché juste au-dessus
+    // (compteur + bandeau, MÊME état) — « les », pas un second chiffre qui pourrait diverger.
+    boutonFaire: 'Les faire analyser par LABUSE →',
     boutonParc: (n: number) => `Analyser les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
     decompteFin: 'parcelles analysées',
