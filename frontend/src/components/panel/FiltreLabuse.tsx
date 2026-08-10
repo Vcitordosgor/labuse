@@ -250,6 +250,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   }, [])
   // geste final : l'analyse s'ALLUME (état stage 4, biunivoque) et la section se rétracte
   const voirParcelles = () => { setPhase('idle'); setAnalyse(true); onRetract?.() }
+  // M55-F point 3 — le tri factuel : montrer la liste + la carte SANS l'opinion LABUSE. verdict
+  // ON (les résultats s'affichent) mais analyseLabuse OFF (tri factuel, toutes les parcelles).
+  // C'est le SEUL geste qui découple verdict de analyseLabuse (le bandeau des résultats le dit).
+  const voirFactuel = () => { setPhase('idle'); setFilter('analyseLabuse', false); setVerdict(true); onRetract?.() }
   const nCom = filters.communes.length
   const perimetre = nCom === 1 ? filters.communes[0] : nCom > 1 ? `${nCom} communes` : (commune ?? 'La Réunion')
   const recap = resumeCriteres(filters, CLIENT.signaux.labels)
@@ -436,9 +440,17 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             <p data-bandeau className={`text-[11.5px] leading-snug text-txt transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
               {CLIENT.revelation.contexte(live ?? 431_663, runDate)}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
+            {/* M55-F point 3 — DEUX choix, la hiérarchie visuelle dit la valeur : le tri factuel
+                (sobre, « je cherche moi-même ») et l'analyse LABUSE (mint dominant, le rituel du
+                stage 5, inchangé). La carte ne bouge QU'AU geste (aucune repeinte pendant le
+                réglage : verdict reste false tant qu'aucun bouton n'est cliqué). */}
             <button data-analyser-btn onClick={lancer}
-              className={`mt-2.5 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
-              {nActifs > 0 ? CLIENT.revelation.boutonFaire : CLIENT.revelation.boutonParc(live ?? 431_663)}
+              className={`mt-2.5 w-full rounded-lg bg-mint py-2.5 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {CLIENT.revelation.boutonFaire}
+            </button>
+            <button data-voir-factuel onClick={voirFactuel}
+              className={`mt-2 w-full rounded-lg border border-line-2 py-1.5 text-[12px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {CLIENT.revelation.voirN(live ?? 431_663)}
             </button>
           </div>
         )}

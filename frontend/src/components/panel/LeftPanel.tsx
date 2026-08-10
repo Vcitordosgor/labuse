@@ -197,23 +197,28 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
   const { verdict, setVerdict, accueilVu, setAccueilVu, openFiltres } = useApp()
+  // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
+  // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
+  const analyse = useApp((s) => s.filters.analyseLabuse)
   const [algoOpen, setAlgoOpen] = useState(false)
   if (verdict) {
     return (
-      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between gap-2 rounded-lg bg-mint/[0.08] px-3 py-2 shadow-elev-1">
+      <div className={`mx-5 mb-1 flex shrink-0 items-center justify-between gap-2 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
         {algoOpen && <AlgoExplainer onClose={() => setAlgoOpen(false)} />}
-        <span className="min-w-0 truncate text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
+        <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
+          {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
         <span className="flex shrink-0 items-center gap-1.5">
-          {/* B8 : « Comprendre le classement » à côté de l'analyse affichée */}
-          <button data-algo-open onClick={() => setAlgoOpen(true)}
-            className="rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
-            title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
-            {CLIENT.algo.bouton}
-          </button>
-          {/* B9 : « masquer » est désormais un vrai bouton affirmé (plus un texte gris) */}
+          {/* « Comprendre le classement » — seulement quand l'analyse est affichée (sinon hors-sujet) */}
+          {analyse && (
+            <button data-algo-open onClick={() => setAlgoOpen(true)}
+              className="rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+              title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
+              {CLIENT.algo.bouton}
+            </button>
+          )}
           <button data-verdict-off onClick={() => setVerdict(false)}
             className="rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-            title="Masquer l'analyse — revenir au cadastre brut">
+            title="Masquer — revenir au cadastre brut">
             Masquer
           </button>
         </span>
