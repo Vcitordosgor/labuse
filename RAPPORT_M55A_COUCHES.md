@@ -2,13 +2,46 @@
 
 Branche `feat/m55-a-couches` (base `main` cb4bf0c5). **CC ne merge jamais — STOP review Vic.**
 Mesures faites en base locale (`labuse`, DB vivante) ; captures via le dev server vite (HMR →
-reflète le working tree). `tsc --noEmit` : 0 erreur. `vitest run` : 26/26.
+reflète le working tree). `tsc --noEmit` : 0 erreur. `vitest run` : 26/26. `npm run build` : vert
+(le fantôme `vite.config.js` local a été supprimé par Vic — le caveat build initial est levé).
 
-> **Caveat environnement (PRÉ-EXISTANT, non lié à M55-A)** : `npm run build` échoue
-> (`manualChunks is not a function` — vite 8 dans `node_modules` vs config `manualChunks`).
-> Prouvé pré-existant : l'échec est identique après `git stash` de mes 4 fichiers. C'est le
-> reliquat de la migration vite 8 (branche `feat/m-w-vite8`) non encore posée dans ce clone.
-> Vérification faite par `tsc` + `vitest`, verts.
+---
+
+## MISE À JOUR 10/08 — décisions Vic implémentées (4 commits, un par point)
+
+Après les mesures ci-dessous, Vic a tranché. Implémenté :
+
+1. **Fusion A** (commit 4763fc1c) — `zonage_colorise` supprimée, fusionnée dans la couche
+   parcellaire unique « Zonage PLU par parcelle (calibré) » ; la GPU brute renommée « Zones du PLU
+   officiel (document brut) » (le « couvre aussi voirie/domaine public » passe dans le « i »).
+   Saint-Philippe : toast « commune au RNU — pas de zonage PLU ». **Panneau : 2 couches zonage.**
+2. **OSM élargi, borné** (commit d0e63008) — +marché forain (`amenity=marketplace`), +crèche
+   (`amenity=childcare`), +collège/lycée (`amenity=school` filtré au nom `coll.ge|lyc.e`). CLI
+   `ingest-amenites-affichage` (ingest_poi_affichage était orpheline). « i » commerce explicité.
+   Prouvé Saint-Pierre (5/10/25) ; ingestion île en local (à rejouer VPS). **Affichage seul.**
+3. **parc_national dédupliqué** (commit d790e274) — 72 → 3 (Cœur/2 adhésions), `commune=NULL`
+   île entière ; ingestion corrigée (stockage 1×, idempotent). Scoring intact (intersection par
+   bbox, pas par commune). **SQL de nettoyage à rejouer sur VPS** (ci-dessous).
+4. **Chevrons uniformisés** (commit 6729843f) — FiltreLabuse + ResultsSection passent au patron
+   fermé→gauche / ouvert→bas, comme Couches/Verdict.
+
+Vérifs : `tsc` 0, `vitest` 26/26, `pytest test_amenites` 5/5, cascade/etage 57/57 (échec
+`test_residuel` = pré-existant, session None, sans lien), `npm run build` vert. Captures
+`item4/item5/point2/point4_*` dans `reports/m55-a-couches/captures/`.
+
+**SQL de nettoyage parc_national à rejouer sur le VPS** (le code empêche la ré-duplication,
+mais les 72 lignes déjà en base doivent être purgées une fois) :
+```sql
+DELETE FROM spatial_layers a USING spatial_layers b
+ WHERE a.kind='parc_national' AND b.kind='parc_national'
+   AND a.subtype=b.subtype AND a.name IS NOT DISTINCT FROM b.name AND a.id > b.id;
+UPDATE spatial_layers SET commune=NULL WHERE kind='parc_national';
+```
+**Ingestion élargissement OSM à rejouer sur le VPS** : `labuse ingest-amenites-affichage`.
+
+---
+
+_Ci-dessous : les mesures et propositions initiales (contexte des décisions ci-dessus)._
 
 | # | Objet | Type | État |
 |---|-------|------|------|
