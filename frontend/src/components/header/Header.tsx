@@ -4,7 +4,6 @@ import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getM
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
-import { Loading } from '../Loading'
 
 function Omnibox() {
   const { select, setView, setCommune, commune, setToast } = useApp()
@@ -109,66 +108,21 @@ function Omnibox() {
 // M55-D stage 3 : AddFilter (popover « Filtres (N) ») + NumField RETIRÉS du header — les filtres
 // vivent désormais dans la section repliable « Filtres » du panneau gauche (LeftPanel).
 
-// Sélecteur de commune — le périmètre n'est plus fixe : les 24 communes + « Toute l'île ».
-// Pilote carte, compteurs, liste, modules ; l'état vit dans l'URL (App.tsx).
+// M55-D stage 6 : le sélecteur de commune du header devient un REFLET du filtre Communes
+// (rang 1 du panneau, le MAÎTRE) — il AFFICHE le périmètre (« Toute l'île » / « Saint-Paul » /
+// « 3 communes ») et OUVRE la section Filtres au clic. Plus aucun état parallèle ici.
 function CommuneSelect() {
-  const { commune, setCommune, setContexteCommune, focusCommune } = useApp()
-  const [open, setOpen] = useState(false)
-  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
-  useEffect(() => {
-    if (!open) return
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [open])
-  // M55-C point 4 : choisir un périmètre cale la commune (comportement d'origine). « Toute l'île »
-  // remet l'état initial (fiche fermée, pas de fantôme) ; et si une fiche est ouverte, elle SUIT le
-  // périmètre choisi plutôt que de rester sur l'ancienne commune.
-  const pick = (c: string | null) => {
-    setCommune(c)
-    if (c == null || useApp.getState().contexteCommune != null) setContexteCommune(c)
-    setOpen(false)
-  }
+  const { filters, openFiltres } = useApp()
+  const n = filters.communes.length
+  const label = n === 0 ? 'Toute l’île' : n === 1 ? filters.communes[0] : `${n} communes`
   return (
-    <div className="relative shrink-0">
-      <button onClick={() => setOpen((o) => !o)} data-commune-select
-        title="Changer de commune (périmètre de la carte, des compteurs et des modules)"
-        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
-        <span className="h-1.5 w-1.5 rounded-full bg-txt-dim" />
-        {commune ?? 'Toute l’île'}
-        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
-            <button onClick={() => pick(null)}
-              className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${commune == null ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
-              <span className="font-medium">Toute l’île</span>
-              <span className="font-mono text-[11px] text-txt-dim">24 communes</span>
-            </button>
-            <div className="mx-3 my-1 border-t border-line" />
-            {/* VUES item 6 (12/07) : les « N chaudes » par ligne disparaissent (bruit de
-                vente dans un simple sélecteur de périmètre) ; le ⓘ devient un lien explicite
-                « voir la fiche commune → » — même action (volet contexte SRU/ANRU/PLH/marché). */}
-            {(communes.data ?? []).map((c) => (
-              <div key={c.insee} className={`flex items-center rounded-md hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3' : ''}`}>
-                <button onClick={() => pick(c.commune)}
-                  className={`min-w-0 flex-1 px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
-                  {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
-                </button>
-                <button data-fiche-commune onClick={() => { focusCommune(c.commune); setOpen(false) }}
-                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim hover:text-mint"
-                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement — cale aussi le périmètre et recadre la carte`}>
-                  voir la fiche commune →
-                </button>
-              </div>
-            ))}
-            {communes.isLoading && <div className="p-3"><Loading label="Chargement des communes" className="text-xs" /></div>}
-          </div>
-        </>
-      )}
-    </div>
+    <button onClick={openFiltres} data-commune-select
+      title="Périmètre — se règle dans Filtres › Communes (ouvre le panneau)"
+      className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
+      <span className={`h-1.5 w-1.5 rounded-full ${n > 0 ? 'bg-mint' : 'bg-txt-dim'}`} />
+      {label}
+      <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+    </button>
   )
 }
 

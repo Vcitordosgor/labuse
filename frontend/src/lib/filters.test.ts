@@ -12,12 +12,13 @@ describe('filters URL persistence (M55-D)', () => {
       scoreMin: 80, surfaceMin: 1000, surfaceMax: 5000, sdpMin: 300, sdpMax: 2000,
       capaciteMin: 10, multMin: 2, rangMax: 100, budgetMax: 200000,
       chargeMin: 1000, chargeMax: 90000, prixMarcheMin: 100, prixMarcheMax: 900, caMin: 1_000_000,
-      evenement: true, veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
+      veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
       renouvellement: true, divisionOr: true, npnru: true, adresseAbsente: true,
       marcheFiable: true, modeBRentable: true,
       flags: ['pente', 'ravine'], flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
+      signaux: ['defisc', 'friche'],   // stage 6 : le groupe Signaux de vie persiste (clé sv)
       analyseLabuse: true,   // stage 4 : allumé (cohérent avec les critères d'opinion présents)
     }
     const hash = filtersToHash(f, null)
@@ -42,6 +43,13 @@ describe('filters URL persistence (M55-D)', () => {
     expect(hasOpinion({ ...EMPTY_FILTERS, surfaceMin: 1000, zonagePlu: ['U'], etatSol: ['nu'] })).toBe(false)
     expect(hasOpinion({ ...EMPTY_FILTERS, tiers: ['chaude'] })).toBe(true)
     expect(hasOpinion({ ...EMPTY_FILTERS, scoreMin: 70 })).toBe(true)
+  })
+
+  it('stage 6 : le legacy ev=1 mappe vers le signal « procédure collective »', () => {
+    const back = filtersFromHash('#f=1&ev=1&smin=1000')!.filters
+    expect(back.evenement).toBe(false)
+    expect(back.signaux).toEqual(['procedure'])
+    expect(back.surfaceMin).toBe(1000)
   })
 
   it('keeps historical keys readable (retro-compat)', () => {

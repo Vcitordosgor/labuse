@@ -1042,6 +1042,20 @@ def ingest_amenites_affichage_cmd(
     typer.echo(f"✓ Aménités affichage île ({time.time() - t0:.0f}s)")
 
 
+@app.command("build-signaux-vie")
+def build_signaux_vie_cmd() -> None:
+    """M55-D stage 6 — pré-calcule les Signaux de vie lourds (permis_actif, friche,
+    assemblage_pm) → table parcel_signaux_vie, interrogée par /filtre en EXISTS indexé.
+    Idempotent (DELETE+INSERT par signal). Les 5 autres signaux restent calculés en direct."""
+    from . import signaux_vie
+
+    with session_scope() as s:
+        counts = signaux_vie.build_signaux_vie(s)
+        s.commit()
+    typer.echo("✓ Signaux de vie pré-calculés : "
+               + " · ".join(f"{k} {v}" for k, v in counts.items()))
+
+
 @app.command("ingest-abf")
 def ingest_abf_cmd() -> None:
     """Clôture Vague B — abords ABF (base Mérimée, tampon ~500 m) → spatial_layers kind='abf',

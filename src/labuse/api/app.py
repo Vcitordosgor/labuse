@@ -816,7 +816,8 @@ def _q_v2_where(run_label: str, score_min: int | None,
                 prix_marche_max: int | None = None, marche_fiable: bool = False,
                 ca_min: int | None = None, mode_b_rentable: bool = False,
                 modeb_travaux_m2: float | None = None, modeb_loyer_m2: float | None = None,
-                modeb_rendement_pct: float | None = None) -> tuple[str, dict]:
+                modeb_rendement_pct: float | None = None,
+                signaux: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -900,6 +901,40 @@ def _q_v2_where(run_label: str, score_min: int | None,
     # ── Phase A cycle 2 : PC caduc probable (badge). Simple test de présence dans pc_caducs.
     if pc_caduc:
         conds.append("EXISTS (SELECT 1 FROM pc_caducs pcz WHERE pcz.idu = p.idu)")
+    # ── M55-D stage 6 : SIGNAUX DE VIE (liste validée Vic phase 2) — événements SOURCÉS, jamais
+    # des jugements : filtrables SANS analyse. Composition = OU entre signaux du groupe, ET avec
+    # le reste des filtres. Les 3 lourds (permis_actif/friche/assemblage_pm) lisent la table
+    # PRÉ-CALCULÉE parcel_signaux_vie (labuse build-signaux-vie) — jamais de jointure lourde ici.
+    if signaux:
+        _SIG_SQL = {
+            # toute procédure collective connue (arbitrage Vic : 658 — le « i » précise en cours ou récente)
+            "procedure": ("EXISTS (SELECT 1 FROM parcelle_personne_morale pms "
+                          "JOIN bodacc_procedures bps ON bps.siren = pms.siren WHERE pms.idu = p.idu)"),
+            "permis_actif": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv1 "
+                             "WHERE sv1.idu = p.idu AND sv1.signal = 'permis_actif')"),
+            "permis_caduc": "EXISTS (SELECT 1 FROM pc_caducs pcv WHERE pcv.idu = p.idu)",
+            "defisc": ("EXISTS (SELECT 1 FROM defisc_fenetres dfv "
+                       "WHERE dfv.idu = p.idu AND dfv.fenetre_active)"),
+            # terrain quasi nu (emprise < 5 %, même seuil que etat_sol=nu) détenu par une société
+            # PRIVÉE (groupe MAJIC 0 — arbitrage Vic : pas les communes/État/HLM)
+            "nu_pm": ("EXISTS (SELECT 1 FROM parcel_residuel rnu JOIN parcelle_personne_morale pmn "
+                      "ON pmn.idu = p.idu AND pmn.groupe = 0 "
+                      "WHERE rnu.parcel_id = p.id AND rnu.taux_emprise_pct < 5)"),
+            "friche": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv2 "
+                       "WHERE sv2.idu = p.idu AND sv2.signal = 'friche')"),
+            # cession de fonds < 24 mois (arbitrage Vic)
+            "cession": ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmc "
+                        "JOIN bodacc_annonces_owner bac ON bac.siren = pmc.siren "
+                        "AND bac.famille = 'vente_cession' "
+                        "AND bac.date_annonce >= now() - interval '24 months' "
+                        "WHERE pmc.idu = p.idu)"),
+            "assemblage": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv3 "
+                           "WHERE sv3.idu = p.idu AND sv3.signal = 'assemblage_pm')"),
+        }
+        picked = [_SIG_SQL[s] for s in
+                  (x.strip() for x in signaux.split(",")) if s in _SIG_SQL]
+        if picked:
+            conds.append("(" + " OR ".join(picked) + ")")
     # ── Nuit N1 : filtre « marge estimée » — parcelles dont la marge € estimable ≥ seuil.
     if marge_min is not None:
         conds.append("EXISTS (SELECT 1 FROM score_e se0 WHERE se0.idu = p.idu"
@@ -1105,6 +1140,9 @@ class FiltreCriteres:
     modeb_travaux_m2: float | None = None
     modeb_loyer_m2: float | None = None
     modeb_rendement_pct: float | None = None
+    # M55-D stage 6 — SIGNAUX DE VIE (CSV parmi : procedure, permis_actif, permis_caduc,
+    # defisc, nu_pm, friche, cession, assemblage). OU dans le groupe, ET avec le reste.
+    signaux: str | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
@@ -1117,7 +1155,8 @@ class FiltreCriteres:
                            self.etat_societe, self.copro, self.npnru, self.adresse_absente,
                            self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
                            self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
-                           self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
+                           self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
+                           signaux=self.signaux)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
@@ -1129,7 +1168,8 @@ class FiltreCriteres:
                 self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente,
                 self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
                 self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
-                self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct)
+                self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
+                self.signaux)
 
 
 @app.get("/parcels")

@@ -87,7 +87,7 @@ export interface Chip { token: string; label: string }
 // M55-D (phase 2) : le badge « Filtres (N) » du header compte TOUS les critères actifs, où qu'ils
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
-  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro']
+  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux']
 const F_NUMS: (keyof Filters)[] = ['scoreMin', 'surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin']
@@ -106,12 +106,29 @@ export function countActiveFilters(f: Filters): number {
 // RESTE = ÉTAGE② « le regard LABUSE » (opinion, issue du scoring). Un critère d'opinion actif
 // ALLUME l'interrupteur (biunivoque) ; le défaut est ÉTEINT (analyse coupée, tri factuel).
 const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
-  'etatSol', 'flags', 'flagsExclus', 'communes'])
+  'etatSol', 'flags', 'flagsExclus', 'communes',
+  'signaux'])   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
 export function hasOpinion(f: Filters): boolean {
   for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
   for (const k of F_NUMS) if (!TERRAIN_FIELDS.has(k) && f[k] != null) return true
   for (const k of F_BOOLS) if (!TERRAIN_FIELDS.has(k) && f[k]) return true
   return false
+}
+
+// M55-D stage 6 : RÉCAP des critères pour la phrase de la Révélation — les plus parlants,
+// plafonné à 4 (sinon « … ») ; vide → null (la phrase dit « Selon vos critères : » tel quel).
+export function resumeCriteres(f: Filters, signalLabels: Record<string, string> = {}): string | null {
+  const parts: string[] = []
+  if (f.communes.length) parts.push(f.communes.length === 1 ? f.communes[0] : `${f.communes.length} communes`)
+  if (f.surfaceMin != null && f.surfaceMax != null) parts.push(`${f.surfaceMin.toLocaleString('fr-FR')}–${f.surfaceMax.toLocaleString('fr-FR')} m²`)
+  else if (f.surfaceMin != null) parts.push(`> ${f.surfaceMin.toLocaleString('fr-FR')} m²`)
+  else if (f.surfaceMax != null) parts.push(`< ${f.surfaceMax.toLocaleString('fr-FR')} m²`)
+  if (f.zonagePlu.length) parts.push(`zone ${f.zonagePlu.join('/')}`)
+  if (f.etatSol.length === 1) parts.push(f.etatSol[0] === 'nu' ? 'terrain nu' : 'bâti')
+  for (const sg of f.signaux) parts.push(signalLabels[sg] ?? sg)
+  if (f.tiers.length) parts.push(`tiers ${f.tiers.length}`)
+  if (!parts.length) return null
+  return parts.length > 4 ? parts.slice(0, 4).join(', ') + ', …' : parts.join(', ')
 }
 
 export function activeChips(f: Filters): Chip[] {
@@ -162,6 +179,7 @@ const BOOL_KEYS: [keyof Filters, string][] = [
 ]
 const CSV_KEYS: [keyof Filters, string][] = [
   ['flags', 'fl'], ['flagsExclus', 'fx'], ['communes', 'cs'], ['zonagePlu', 'zf'],
+  ['signaux', 'sv'],
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
   ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'],
 ]
@@ -193,6 +211,12 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
   for (const [k, key] of NUM_KEYS) f[k] = num(key)
   for (const [k, key] of BOOL_KEYS) f[k] = p.get(key) === '1'
   for (const [k, key] of CSV_KEYS) f[k] = p.get(key)?.split(',').filter(Boolean) ?? []
+  // M55-D stage 6 : le flag binaire « Avec événement (BODACC) » est REMPLACÉ par le groupe
+  // Signaux de vie — un vieux lien `ev=1` mappe vers le signal « procédure collective ».
+  if (p.get('ev') === '1') {
+    f.evenement = false
+    f.signaux = Array.from(new Set([...(f.signaux as string[]), 'procedure']))
+  }
   // M55-D stage 4 : interrupteur ALLUMÉ si `al=1` OU si un critère d'opinion est présent (vieux lien
   // `tv=chaude` → allumé, « il porte un tier »). Terrain-only (ex. `smin=2000`) → éteint.
   f.analyseLabuse = p.get('al') === '1' || hasOpinion(f as unknown as Filters)

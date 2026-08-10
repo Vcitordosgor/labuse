@@ -67,6 +67,10 @@ export interface Filters {
   marcheFiable: boolean              // secteur n≥3 ventes
   caMin: number | null               // bilan CA indicatif ≥ N
   modeBRentable: boolean             // mode B rentable au paramètre courant (curseur session)
+  // M55-D stage 6 — SIGNAUX DE VIE (8 validés Vic) : événements SOURCÉS, filtrables sans analyse.
+  // OU entre signaux du groupe, ET avec le reste. Clés : procedure, permis_actif, permis_caduc,
+  // defisc, nu_pm, friche, cession, assemblage.
+  signaux: string[]
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -80,6 +84,7 @@ export const EMPTY_FILTERS: Filters = {
   proprietaireType: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
   budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,
   marcheFiable: false, caMin: null, modeBRentable: false,
+  signaux: [],
 }
 
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +
@@ -125,6 +130,14 @@ interface AppState {
   // et vit dans l'URL (#…&c=…). Sélecteur dans le header.
   commune: string | null
   setCommune: (c: string | null) => void
+  setCommunesFilter: (list: string[]) => void
+  // M55-D stage 6 : ouverture de la SECTION Filtres pilotée par le store (le header-reflet
+  // l'ouvre) + tiroir mobile. UI seulement.
+  filtresOpen: boolean
+  setFiltresOpen: (v: boolean) => void
+  mobilePanelOpen: boolean
+  setMobilePanelOpen: (v: boolean) => void
+  openFiltres: () => void
   // volet CONTEXTE COMMUNE (SRU/ANRU/PLH/marché) — ouvert depuis le sélecteur ou le header
   contexteCommune: string | null
   setContexteCommune: (c: string | null) => void
@@ -247,11 +260,32 @@ interface AppState {
 export const useApp = create<AppState>((set) => ({
   commune: null,
   // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
-  setCommune: (commune) => set({ commune, zone: null }),
+  // M55-D stage 6 : le MAÎTRE du périmètre est le filtre `filters.communes` (multi). `commune`
+  // (mono) est DÉRIVÉE — elle pilote la carte (fit/mode commune) et les endpoints existants :
+  // 1 commune sélectionnée → mode commune ; 0 ou ≥2 → mode île (le filtre borne les résultats).
+  setCommunesFilter: (list) => set((s) => ({
+    filters: { ...s.filters, communes: list },
+    commune: list.length === 1 ? list[0] : null,
+    zone: null,
+  })),
+  // compat : tous les appelants existants (header-reflet, omnibox, clic-commune M55-C, outils)
+  // passent par ici — un seul état, plus de parallèle.
+  setCommune: (commune) => set((s) => ({
+    filters: { ...s.filters, communes: commune ? [commune] : [] },
+    commune, zone: null,
+  })),
   contexteCommune: null,
   setContexteCommune: (contexteCommune) => set({ contexteCommune }),
   // M55-C point 4 : périmètre + fiche en un geste ; le recadrage carte suit (effet fit sur `commune`).
-  focusCommune: (c) => set({ commune: c, contexteCommune: c, zone: null }),
+  // M55-D stage 6 : écrit dans le filtre communes (maître) — un seul état.
+  focusCommune: (c) => set((s) => ({
+    filters: { ...s.filters, communes: [c] }, commune: c, contexteCommune: c, zone: null,
+  })),
+  filtresOpen: false,
+  setFiltresOpen: (filtresOpen) => set({ filtresOpen }),
+  mobilePanelOpen: false,
+  setMobilePanelOpen: (mobilePanelOpen) => set({ mobilePanelOpen }),
+  openFiltres: () => set({ panelOpen: true, filtresOpen: true, mobilePanelOpen: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
   verdict: false,
