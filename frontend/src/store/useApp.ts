@@ -267,9 +267,11 @@ export const useApp = create<AppState>((set) => ({
   // M55-D stage 6 : le MAÎTRE du périmètre est le filtre `filters.communes` (multi). `commune`
   // (mono) est DÉRIVÉE — elle pilote la carte (fit/mode commune) et les endpoints existants :
   // 1 commune sélectionnée → mode commune ; 0 ou ≥2 → mode île (le filtre borne les résultats).
+  // M55-D stage 9 bloc 3 : le panneau ne touche QUE le filtre — la carte reste où elle est
+  // (décocher ≠ dézoomer). Lien à SENS UNIQUE : setCommune (header/clic-commune) propose
+  // (zoom + pré-coche) ; le filtre dispose. « Toute l'île » au header dézoome ET décoche.
   setCommunesFilter: (list) => set((s) => ({
     filters: { ...s.filters, communes: list },
-    commune: list.length === 1 ? list[0] : null,
     zone: null,
   })),
   // compat : tous les appelants existants (header-reflet, omnibox, clic-commune M55-C, outils)
