@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getShortlist, getStats, type SortKey } from '../../lib/api'
+import { csvExportUrl, getCommunes, getEntonnoir, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -24,45 +24,6 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
 // B2 (M12) : le mini-anneau de complétude (le « 92 » des cartes) a QUITTÉ la liste — il était
 // présent sur toutes les cartes, sans valeur discriminante. Il ne vit plus que sur la fiche
 // parcelle ouverte (Fiche.tsx). La liste garde le seul chiffre qui trie : le ×N.
-
-/** M54-EXPO-2 A7 — « Shortlist du jour » : les sujets à traiter en priorité du run servi
- *  (GET /shortlist). Repliable dans l'en-tête des résultats ; chaque ligne ouvre la fiche. */
-function ShortlistToggle() {
-  const { select, commune } = useApp()
-  const [open, setOpen] = useState(false)
-  const q = useQuery({ queryKey: ['shortlist', commune], queryFn: () => getShortlist(8), enabled: open })
-  const sujets = q.data?.sujets ?? []
-  return (
-    <div className="mt-1.5">
-      <button data-shortlist-toggle onClick={() => setOpen((o) => !o)}
-        className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] transition-colors ${open ? 'border-mint/40 bg-mint/[0.06] text-mint' : 'border-line-2 bg-surface-2 text-txt-mut hover:text-txt'}`}>
-        <span>★ Shortlist du jour</span>
-        <span className="ml-auto text-txt-dim">{open ? '▲' : (q.data ? `${q.data.count} · ▼` : '▼')}</span>
-      </button>
-      {open && (
-        <div data-shortlist className="mt-1 flex flex-col gap-1">
-          {q.isPending && <p className="px-2 py-1 text-[10.5px] text-txt-dim">Chargement…</p>}
-          {q.data && sujets.length === 0 && <p className="px-2 py-1 text-[10.5px] text-txt-dim">Aucun sujet prioritaire pour ce périmètre.</p>}
-          {sujets.map((s, i) => {
-            const meta = verdictMeta((s.status ?? null) as ParcelProps['status'], (s.tier_v2 ?? null) as TierV2 | null, false)
-            return (
-              <div key={s.idu} data-shortlist-item className="flex items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 hover:border-[#2E5A45]">
-                <span className="w-4 shrink-0 text-center font-mono text-[10px] text-txt-dim">{i + 1}</span>
-                <button onClick={() => select(s.idu)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                  <span className="shrink-0 font-mono text-[11px] text-txt-hi">{s.idu.slice(8, 10)} {s.idu.slice(10)}</span>
-                  <span className="shrink-0 rounded-full px-1.5 text-[9.5px]" style={{ color: meta.color, border: `1px solid ${meta.color}55` }}>{meta.label}</span>
-                  {s.surface_m2 != null && <span className="ml-auto shrink-0 text-[10px] text-txt-dim">{fmt(Math.round(s.surface_m2))} m²</span>}
-                </button>
-                {/* M54-EXPO-3 A8 — ajouter au comparateur */}
-                <button data-shortlist-compare onClick={() => useApp.getState().addToCompare(s.idu)} title="Comparer" className="shrink-0 text-[12px] text-txt-dim hover:text-mint">⇄</button>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 
 function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
@@ -128,7 +89,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="ml-2 flex shrink-0 flex-col items-end">
         {/* B2 : ×N (affichage produit du scoring v2). JAMAIS le nombre nu — l'unité de sens
             « plus probable » vit juste dessous, et l'infobulle porte le détail. Calcul inchangé (A3). */}
-        <Tip tip={p.mult_v2 != null ? CLIENT.mult.tip(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
+        <Tip tip={p.mult_v2 != null ? CLIENT.tri.multBadge(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
           <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
             {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
           </span>
@@ -232,23 +193,14 @@ export function ResultsSection() {
   const [showAll, setShowAll] = useState(false)
   // Tri par défaut (M5.1) : RANG P croissant — ×N / surface / commune en options.
   const [sort, setSort] = useState<SortKey>('rang')
-  // compteurs par tier sous filtres de PÉRIMÈTRE (jamais le filtre tier lui-même)
-  const scopeOnly = useMemo(() => ({ ...filters, tiers: [] as TierV2[] }), [filters])
-  const stats = useQuery({
-    queryKey: ['stats', commune, ile ? scopeOnly : null],
-    queryFn: () => getStats(ile ? scopeOnly : undefined),
-  })
-  // M13-B2 : « … au total » de la LISTE doit refléter les MÊMES filtres que la liste (tiers
-  // compris). Les cartouches par tier utilisent `scopeOnly` (tiers retirés) : leur `total` est
-  // le total de périmètre, PAS celui de la liste filtrée. Bug constaté : « 259 affichées /
-  // 51 129 au total » (le total ignorait le filtre Brûlante/Chaude). On requête donc un total
-  // AVEC les filtres complets — uniquement en île et quand un filtre tier est actif (sinon le
-  // total de périmètre suffit et on évite une requête).
-  const tierFiltered = ile && filters.tiers.length > 0
-  const filteredStats = useQuery({
-    queryKey: ['stats-filtered', commune, filters],
-    queryFn: () => getStats(filters),
-    enabled: tierFiltered,
+  // M55-F point 1 — POINT UNIQUE : compteurs (ventilation, total, opportunités) dérivent du
+  // MÊME getFiltre(filters) que la Révélation et le compteur vivant (stage 8) — mêmes critères
+  // (communes, terrain, signaux, tiers, interrupteur), mêmes nombres, fini les trois récits.
+  // Retiré : getStats(scopeOnly) [tiers retirés] et getStats(undefined) [mode commune = aucun
+  // filtre → l'origine du « 431 663 → 98 » décorrélé, mesuré 10/08].
+  const uni = useQuery({
+    queryKey: ['results-unifie', commune, filters],
+    queryFn: () => getFiltre(filters, 0),
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
@@ -282,12 +234,13 @@ export function ResultsSection() {
   // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → île : /stats FILTRÉ
   // (SQL-exact aussi) ; commune : recalcul client marqué *.
   const counts = useMemo(() => {
-    if ((!scoped || ile) && stats.data) {
-      const t = stats.data.tiers
+    if (uni.data) {
+      const t = uni.data.tiers
       return { all: t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser,
                brulante: t.brulante, chaude: t.chaude, reserve_fonciere: t.reserve_fonciere,
                a_creuser: t.a_creuser, ecartee: t.ecartee }
     }
+    // fallback client (mode commune, réponse serveur pas encore là) — jamais un vide
     const c: Record<TierV2 | 'all', number> = { ...TIER_ZERO }
     for (const p of props) {
       if (!matchScope(p, filters, zone)) continue
@@ -297,7 +250,7 @@ export function ResultsSection() {
       c[t] += 1
     }
     return c
-  }, [props, filters, zone, scoped, ile, stats.data])
+  }, [props, filters, zone, uni.data])
 
   const list = useMemo(() => {
     if (ile) {
@@ -326,16 +279,15 @@ export function ResultsSection() {
   const loading = ile ? serverList.isLoading : geo.isLoading
   const error = ile ? serverList.isError : geo.isError
   const refetch = () => (ile ? serverList.refetch() : geo.refetch())
-  // M13-B2 : total de la liste — si un filtre tier est actif, on prend le total FILTRÉ (mêmes
-  // filtres que la liste) ; sinon le total de périmètre (scopeOnly) fait foi.
-  const total = (tierFiltered ? filteredStats.data?.total : stats.data?.total) ?? props.length
+  // Total analysé du périmètre courant (point unique) — retenues + écartées ; fallback client.
+  const total = uni.data?.total ?? props.length
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
   const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
-  const opportunites = ile && stats.data ? stats.data.opportunites : counts.brulante + counts.chaude
+  const opportunites = uni.data?.opportunites ?? counts.brulante + counts.chaude
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -352,7 +304,13 @@ export function ResultsSection() {
             de tri ne tiennent pas sur la largeur du volet (~300 px) et étaient rognées. Le libellé
             « Trier » et le contrôle segmenté passent à la ligne, le pilule wrappe ses boutons. */}
         <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">Trier</span>
+          <span className="flex shrink-0 items-center gap-1 text-[10px] uppercase tracking-wide text-txt-dim">Trier
+            {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
+            <Tip side="top" tip={CLIENT.tri.lunettes}>
+              <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
+                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
+          </span>
           {/* B3 : espacement régulier entre les 4 options (gap-1 + px-2.5 uniformes) */}
           <div className="flex flex-wrap items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
             {SORTS.map((s) => (
@@ -364,7 +322,6 @@ export function ResultsSection() {
             ))}
           </div>
         </div>
-        <ShortlistToggle />
       </div>
 
       {communeNote && (
@@ -373,7 +330,7 @@ export function ResultsSection() {
         </div>
       )}
       <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
-        title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+        title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
         <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
@@ -381,13 +338,13 @@ export function ResultsSection() {
       </p>
       {/* CRED-3 (revue externe 12/07) : les PARCELLES sont l'unité de la somme — avec dossier +
           personnes physiques = les opportunités affichées juste au-dessus. */}
-      {ile && stats.data != null && stats.data.opportunites > 0 && (
+      {uni.data != null && uni.data.opportunites > 0 && (
         <p data-dossiers-detail className="mt-1 shrink-0 text-[11px] leading-snug text-txt-dim"
           title="Un propriétaire = un dossier, quel que soit son nombre de parcelles (identification par SIREN, personnes morales DGFiP). Les personnes physiques n'ont pas d'identité en open data — doctrine RGPD : jamais de donnée nominative en base.">
-          soit <span className="font-medium text-txt">{fmt(stats.data.opportunites_avec_dossier)}</span> parcelle{stats.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
-          dossier propriétaire ({fmt(stats.data.dossiers_opportunites)} propriétaire{stats.data.dossiers_opportunites > 1 ? 's' : ''} identifié{stats.data.dossiers_opportunites > 1 ? 's' : ''})
-          {stats.data.opportunites_sans_identite > 0 && (
-            <> · <span className="font-medium text-txt">{fmt(stats.data.opportunites_sans_identite)}</span> personnes
+          soit <span className="font-medium text-txt">{fmt(uni.data.opportunites_avec_dossier)}</span> parcelle{uni.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
+          dossier propriétaire ({fmt(uni.data.dossiers_opportunites)} propriétaire{uni.data.dossiers_opportunites > 1 ? 's' : ''} identifié{uni.data.dossiers_opportunites > 1 ? 's' : ''})
+          {uni.data.opportunites_sans_identite > 0 && (
+            <> · <span className="font-medium text-txt">{fmt(uni.data.opportunites_sans_identite)}</span> personnes
             physiques — non couvertes par l'open data</>
           )}
         </p>

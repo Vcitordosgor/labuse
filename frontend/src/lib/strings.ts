@@ -73,6 +73,8 @@ export const CLIENT = {
     // (compteur + bandeau, MÊME état) — « les », pas un second chiffre qui pourrait diverger.
     boutonFaire: 'Les faire analyser par LABUSE →',
     boutonParc: (n: number) => `Analyser les ${n.toLocaleString('fr-FR')} parcelles`,
+    // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
+    voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
     decompteFin: 'parcelles analysées',
     phraseIntro: (n: number, perimetre: string) =>
@@ -81,6 +83,14 @@ export const CLIENT = {
     phraseSelon: (recap: string | null) =>
       recap ? `Selon vos critères (${recap}) :` : 'Selon vos critères :',
     phraseZero: 'aucune parcelle retenue — élargissez vos critères (surface, zonage, verdict).',
+    // M55-F point 2 — la phrase COMPLÈTE son compte : l'arithmétique boucle (analysé = retenues
+    // + écartées ; retenues = ventilation complète, à-creuser et déclassées inclus).
+    retenuesLbl: (n: number) => `${n.toLocaleString('fr-FR')} retenues`,
+    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} déclassées`,
+    ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
+    ecarteesMotifs: 'domaine public, inconstructibles…',
+    voirPourquoi: 'voir pourquoi',
+    ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
     relancer: 'Relancer l’analyse',
     desactiver: 'désactiver l’analyse',
@@ -91,6 +101,8 @@ export const CLIENT = {
       brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
       chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
+      a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
+      declassees: 'Déclassées — retenues par l’analyse mais rétrogradées pour un motif (bâti saturé, zone fermée…) ; visibles avec leur motif.',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -139,13 +151,19 @@ export const CLIENT = {
   //      2. « probabilité de mutation »
   //      3. « ×N susceptibilité »
   //    Le title détaille la sémantique complète.
+  // M55-F point 6 — le tri parle CLIENT : les libellés disent la valeur, pas la mécanique.
   tri: {
-    rang: 'classement',
-    mult: 'mutation ×N',
-    surface: 'surface',
+    rang: 'Meilleures opportunités',
+    mult: 'Plus susceptibles de se vendre',
+    surface: 'Surface',
     rangTip: 'Classe les parcelles par ordre de priorité (n°1 = la plus prometteuse) — copropriétés en queue',
     multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
     surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
+    // le « i » de la barre TRIER : les deux lunettes, en deux phrases
+    lunettes: 'Meilleures opportunités = probabilité de vente × qualité du terrain (l’opportunité globale). '
+      + 'Plus susceptibles de se vendre = la probabilité de vente seule (ce qui va bouger bientôt).',
+    // tooltip du badge ×N sur les cartes de résultat (une ligne)
+    multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
   },
 
   // ── B1 · scores ───────────────────────────────────────────────────────────
