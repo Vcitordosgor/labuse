@@ -84,6 +84,10 @@ export const LAYER_INFO: Record<string, string> = {
     'Les équipements du quotidien à proximité, relevés dans OpenStreetMap (les 24 communes) : mairie, écoles primaires, collège / lycée, crèche, santé (pharmacie, hôpital, clinique, médecin), commerces — c’est-à-dire supermarché, supérette, boulangerie et centre commercial (pas toutes les boutiques) — marché forain, transport (arrêts de bus), police / gendarmerie et sport (terrains, gymnases, stades, piscines). Sur la fiche d’une parcelle, LABUSE indique la distance jusqu’à chaque équipement le plus proche.',
   renouv:
     'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire). Segment calculé par LABUSE (68 445 parcelles sur l’île) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
+  // M55-G point 8 : l'avis LABUSE (palette des tiers) devient une COUCHE — affichée d'office en
+  // mode analyse, jamais imposée en tri factuel ; cette case la rallume à la demande.
+  couleurs_verdict:
+    'Les couleurs du classement LABUSE (Brûlante → Écartée) sur les parcelles. En mode analyse elles s’affichent d’office ; en tri factuel rien n’est imposé — cochez cette couche pour voir l’avis LABUSE sans relancer l’analyse.',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

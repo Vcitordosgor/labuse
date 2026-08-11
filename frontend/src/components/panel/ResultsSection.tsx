@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { csvExportUrl, getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
@@ -25,12 +25,30 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
 // parcelle ouverte (Fiche.tsx). La liste garde le seul chiffre qui trie : le ×N.
 
 
-function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
+function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { commune?: string }; communeLabel: string; factual?: boolean }) {
   const { selectedIdu, select } = useApp()
   // M5.1 : le VERDICT v2 pilote la carte de résultat — chip tier EN PREMIER (couleur
   // verdictMeta), rang + ×N ; l'étage 0 du run servi prime.
   const meta = verdictMeta(p.status, p.tier_v2, p.etage0)
   const on = selectedIdu === p.idu
+  // M55-G point 8 — MODE FACTUEL : carte NEUTRE (référence, adresse, surface, commune),
+  // sans badge de tier, sans ×N, sans liseré de couleur d'opinion. La FICHE ouverte au clic
+  // reste complète (verdict inclus) — rien n'est caché, rien n'est imposé.
+  if (factual) {
+    return (
+      <button onClick={() => select(p.idu)}
+        className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
+          on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}>
+        <div className="min-w-0 flex-1">
+          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
+            {p.adresse ?? 'Adresse non disponible'}
+          </div>
+          <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        </div>
+      </button>
+    )
+  }
   return (
     <button
       onClick={() => select(p.idu)}
@@ -146,8 +164,14 @@ export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
-  // Tri par défaut (M5.1) : RANG P croissant — ×N / surface / commune en options.
-  const [sort, setSort] = useState<SortKey>('rang')
+  // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
+  // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
+  const analyse = filters.analyseLabuse
+  // Tri par défaut (M5.1) : RANG P croissant — ×N / surface en options (analyse) ;
+  // factuel : Surface seul (les deux tris d'opinion sont retirés de ce mode).
+  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'surface')
+  const sorts = analyse ? SORTS : SORTS.filter((s) => s.key === 'surface')
+  useEffect(() => { setSort(analyse ? 'rang' : 'surface') }, [analyse])
   // M55-F point 1 — POINT UNIQUE : compteurs (ventilation, total, opportunités) dérivent du
   // MÊME getFiltre(filters) que la Révélation et le compteur vivant (stage 8) — mêmes critères
   // (communes, terrain, signaux, tiers, interrupteur), mêmes nombres, fini les trois récits.
@@ -270,7 +294,7 @@ export function ResultsSection() {
             </Tip>
           </span>
           <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {SORTS.map((s) => (
+            {sorts.map((s) => (
               <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
                 className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
                   sort === s.key ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
@@ -287,23 +311,31 @@ export function ResultsSection() {
           ▲ {communeNote}
         </div>
       )}
-      <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
-        title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-        <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
-        <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
-        <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
-        {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
-      </p>
-      {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
-          N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
-          Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
-      <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-        <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
-        <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
-        <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
-        <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
-      </div>
-      <LigneClassement total={total} opportunites={opportunites} nFilters={nFilters} />
+      {/* M55-G point 8 : la ventilation par tier, la barre et la ligne « analysées →
+          opportunités » sont des affichages d'OPINION — mode analyse seulement. En factuel,
+          seul reste le compte total (pied de liste) ; le bandeau « Tri factuel — sans
+          analyse » (VerdictHero) dit le mode. */}
+      {analyse && (
+        <>
+          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
+            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+            <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
+            {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
+          </p>
+          {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
+              N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
+              Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
+          <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
+            <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
+            <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
+            <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
+            <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
+          </div>
+          <LigneClassement total={total} opportunites={opportunites} nFilters={nFilters} />
+        </>
+      )}
 
       {/* E2 (M12) : les chips de verdict (Tout / Brûlantes / Chaudes / Réserve / À creuser /
           Écartées) ET le toggle « masquer les copropriétés » ont été RETIRÉS d'ici — ils
@@ -351,7 +383,7 @@ export function ResultsSection() {
               } />
           </div>
         )}
-        {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
+        {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={!analyse} />)}
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">

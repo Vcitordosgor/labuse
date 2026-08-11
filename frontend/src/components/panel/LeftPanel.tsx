@@ -56,6 +56,8 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'parcelles', label: 'Parcelles' },
   { key: 'limites', label: 'Limites parcelles' },
+  // M55-G point 8 : l'avis LABUSE en couche — d'office en mode analyse, opt-in en tri factuel
+  { key: 'couleurs_verdict', label: 'Verdict (couleurs du classement)' },
   // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
   // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
