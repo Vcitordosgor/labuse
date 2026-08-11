@@ -176,10 +176,10 @@ def test_rules_summary_ecartee():
 def test_rules_summary_declassee_bati():
     # M34 : le déclassement est celui du RUN SERVI (tier declasse_*), motivé — plus jamais
     # un « faux positif probable » du rail cascade.
-    md = rules_summary(_facts("declasse_bati_sature", label="Déclassée — bâti saturé",
+    md = rules_summary(_facts("declasse_bati_sature", label="Potentiel épuisé · bâti saturé",
                               motif="bâtie saturée — ratio 72 %",
                               bati=("deja_bati", "Parcelle déjà bâtie", 72)))
-    assert "Déclassée — bâti saturé" in md
+    assert "Potentiel épuisé · bâti saturé" in md
     assert "déjà bâtie" in md.lower() or "saturée" in md       # occupation réelle citée
     assert "72 %" in md
 

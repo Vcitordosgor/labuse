@@ -84,7 +84,8 @@ export const CLIENT = {
     // M55-F point 2 — la phrase COMPLÈTE son compte : l'arithmétique boucle (analysé = retenues
     // + écartées ; retenues = ventilation complète, à-creuser et déclassées inclus).
     retenuesLbl: (n: number) => `${n.toLocaleString('fr-FR')} retenues`,
-    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} déclassées`,
+    // M55-H point 10 : « déclassées » → « en potentiel épuisé » (même famille partout)
+    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} en potentiel épuisé`,
     ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
     ecarteesMotifs: 'domaine public, inconstructibles…',
     voirPourquoi: 'voir pourquoi',
@@ -100,7 +101,7 @@ export const CLIENT = {
       chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
       a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
-      declassees: 'Déclassées — retenues par l’analyse mais rétrogradées pour un motif (bâti saturé, zone fermée…) ; visibles avec leur motif.',
+      declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -129,6 +130,13 @@ export const CLIENT = {
   //    (source unique, importé par export.py et banquier.py) — à garder identique au mot
   //    près. Ne jamais recopier ce texte ailleurs. ──
   avisIa: "L'IA ne juge pas le sentiment d'une communauté, n'évalue pas le risque politique d'un processus d'autorisation, et ne remplace pas les éléments relationnels du sourcing.",
+
+  // ── M55-H point 10 · le « i » de la ventilation — les TROIS familles, une phrase chacune ──
+  ventilation: {
+    familles: 'Servables — les 4 tiers d’opportunité (brûlantes, chaudes, potentiel long terme, à creuser). '
+      + 'Potentiel épuisé — analysée, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; les chiffres sont en fiche. '
+      + 'Écartées — jamais analysées : domaine public, forêt, exclusions de fait.',
+  },
 
   // ── B1/B2 · métrique ×N et libellés de liste ──────────────────────────────
   mult: {

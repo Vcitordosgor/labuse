@@ -34,12 +34,14 @@ TIER_LABELS = {
     "reserve_fonciere": "Potentiel long terme",
     "a_creuser": "À creuser",
     "ecartee": "Écartée",
-    "declasse_bati_sature": "Déclassée — bâti saturé",
-    "declasse_non_constructible": "Déclassée — inconstructible (géométrie)",
-    "declasse_bati_revele": "Déclassée — bâti révélé",
-    "declasse_zone_fermee": "Déclassée — fermée à l'urbanisation",
-    "declasse_au_statut_inconnu": "Déclassée — AU à statut inconnu",
-    "declasse_au_fermee": "Déclassée — AU fermée",
+    # M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » (verdict calculé,
+    # pas un retrait). Codes techniques declasse_* INCHANGÉS — libellé client seulement.
+    "declasse_bati_sature": "Potentiel épuisé · bâti saturé",
+    "declasse_non_constructible": "Potentiel épuisé · inconstructible (géométrie)",
+    "declasse_bati_revele": "Potentiel épuisé · bâti révélé",
+    "declasse_zone_fermee": "Potentiel épuisé · fermée à l'urbanisation",
+    "declasse_au_statut_inconnu": "Potentiel épuisé · AU à statut inconnu",
+    "declasse_au_fermee": "Potentiel épuisé · AU fermée",
 }
 
 BADGE_DIVISION = "bâtie + division possible"

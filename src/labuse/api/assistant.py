@@ -193,7 +193,8 @@ _STATUT_PHRASE = {
 
 def _statut_phrase(statut: str | None, libelle: str | None) -> str:
     if statut and statut.startswith("declasse_"):
-        return f"{libelle or 'Déclassée'} (déclassement motivé du run servi)"
+        # M55-H point 10 : « Déclassée » → « Potentiel épuisé » (repli si libellé absent)
+        return f"{libelle or 'Potentiel épuisé'} (verdict motivé du classement)"
     return _STATUT_PHRASE.get(statut, "Statut non évalué")
 
 

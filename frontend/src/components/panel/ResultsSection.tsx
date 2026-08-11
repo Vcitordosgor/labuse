@@ -172,6 +172,10 @@ const GROUPE_ORDER = (p: ParcelProps): number => {
   return 5
 }
 
+// M55-H point 10 : couleur de la famille « potentiel épuisé » — la terre éteinte des
+// verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
+const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
+
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
   all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
 }
@@ -196,6 +200,11 @@ export function ResultsSection() {
   const uni = useQuery({
     queryKey: ['results-unifie', commune, filters],
     queryFn: () => getFiltre(filters, 0),
+  })
+  const trameQ = useQuery({
+    queryKey: ['filtre', filters, false],
+    queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0),
+    enabled: analyse,
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
@@ -292,6 +301,12 @@ export function ResultsSection() {
   const promus = counts.all || 1
   const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
   const opportunites = uni.data?.opportunites ?? counts.brulante + counts.chaude
+  // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
+  // potentiel épuisé = retenues − 4 tiers vivants ; écartées = trame analysée − retenues.
+  // trameQ partage la queryKey de FiltreLabuse (['filtre', filters, false]) → cache commun.
+  const vent4 = counts.brulante + counts.chaude + counts.reserve_fonciere + counts.a_creuser
+  const epuise = uni.data ? Math.max(0, uni.data.compte - vent4) : 0
+  const ecartees = uni.data && trameQ.data ? Math.max(0, trameQ.data.compte - uni.data.compte) : null
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -349,12 +364,25 @@ export function ResultsSection() {
           analyse » (VerdictHero) dit le mode. */}
       {analyse && (
         <>
-          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
+          {/* M55-H point 10 : la ventilation ENTIÈRE — 4 tiers + potentiel épuisé + écartées,
+              MÊMES nombres que la phrase de Révélation (source unique getFiltre :
+              épuisé = retenues − 4 tiers ; écartées = trame analysée − retenues). Le « i »
+              raconte les trois familles. */}
+          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
             title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
             <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
             <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
+            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> à creuser ·{' '}
+            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> potentiel épuisé
+            {ecartees != null && (
+              <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
+            )}
             {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
+            <Tip side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
+              <span data-ventilation-info role="button" tabIndex={0} aria-label="Comprendre les trois familles"
+                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
           </p>
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir

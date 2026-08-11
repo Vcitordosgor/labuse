@@ -340,7 +340,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
              un seul récit, M55-F point 1). ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
-              {CLIENT.revelation.phraseIntro(analyseTotal ?? live ?? 0, perimetre)}{' '}
+              {/* M55-H point 10 : jamais « 0 parcelles » pendant que la trame charge — la
+                  phrase d'intro attend un total connu (le reste s'affiche sans elle). */}
+              {(analyseTotal ?? live) != null && <>{CLIENT.revelation.phraseIntro((analyseTotal ?? live)!, perimetre)}{' '}</>}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
             {phraseRetenues === 0 ? (
