@@ -46,11 +46,8 @@ export const CLIENT = {
     segCommunes: (n: string) => `${n} communes`,
     segSources: (n: string) => `${n} sources publiques branchées`,
     b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
-    src: {
-      parcelles: 'Compte exact du classement servi, recalculé à chaque mise à jour majeure.',
-      communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
-      sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
-    },
+    // M55-J point 3 : les 3 infobulles « i » (accueil.src) sont RETIRÉES — aucune ne portait de
+    // réserve d'honnêteté ; le sourcing détaillé vit sur la page Sources. Chaînes supprimées.
     commencer: 'Commencer →',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
@@ -92,9 +89,14 @@ export const CLIENT = {
     ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
     relancer: 'Relancer l’analyse',
-    desactiver: 'désactiver l’analyse',
+    // M55-J point 2 : « désactiver » devient un vrai bouton (majuscule initiale).
+    desactiver: 'Désactiver l’analyse',
     erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',
     reessayer: 'Réessayer',
+    // M55-J point 1 · FILET : les critères ont bougé sous l'analyse (chemin externe) → la carte
+    // s'invalide plutôt que d'afficher un chiffre périmé.
+    perime: 'Vos critères ont changé depuis cette analyse — les chiffres affichés ne les décrivent plus.',
+    relancerCta: 'Relancer sur les nouveaux critères',
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
     defTiers: {
       brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
@@ -102,6 +104,9 @@ export const CLIENT = {
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
       a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
       declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
+      // M55-J point 5 : le palier écartée manquait à l'échelle verbale (defTiers) — ajouté ici
+      // comme SOURCE UNIQUE (réutilisée par la carte d'analyse ET la modale scoring).
+      ecartee: 'Écartée — jamais analysée : exclusion dure de l’étage 0 (domaine public, forêt, RNU, inconstructible réglementaire…).',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -266,11 +271,10 @@ export const CLIENT = {
   // ── B8 · « Comprendre l'algorithme » ──────────────────────────────────────
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
-    // M55-I point 4 : le bouton du BANDEAU (haut) garde « comprendre le classement ».
+    // M55-J point 5 : DEUX entrées jumelles dans le bandeau — le classement (méthode) et le
+    // scoring (sens des paliers), chacune sa modale. Le lien isolé du bas des résultats disparaît.
     bouton: 'Comprendre le classement',
-    // M55-I point 4 (Vic) — le lien de la ligne résultats (BAS) reprend son libellé d'avant
-    // « comprendre le scoring » (les deux ouvrent la MÊME modale AlgoExplainer, store.algoOpen).
-    lien: 'comprendre le scoring →',
+    boutonScoring: 'Comprendre le scoring',
     // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
     // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
@@ -310,6 +314,11 @@ export const CLIENT = {
           'votre métier.',
       },
     ] as { h: string; p: string }[],
+    // M55-J point 5 · MODALE SCORING — le SENS des paliers (distinct du classement/méthode).
+    // Les définitions elles-mêmes viennent de defTiers (source unique, réutilisée) — ici, juste
+    // le cadre (titre + intro). Ordre des paliers servis par le composant ScoringExplainer.
+    scoringTitre: 'Ce que veulent dire les paliers',
+    scoringIntro: 'Après le classement, chaque parcelle reçoit un palier — du plus prometteur au moins mobilisable.',
   },
 
   // ── M14-F2 (QA-52) · projet — le bouton « + Chercher plus » est retiré ────────

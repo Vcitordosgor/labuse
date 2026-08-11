@@ -158,10 +158,10 @@ interface AppState {
   // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
   toast: string | null
   setToast: (t: string | null) => void
-  // M55-G point 4 : la modale « Comment LABUSE classe » (AlgoExplainer) s'ouvre depuis DEUX
-  // surfaces (bouton du bandeau + lien de la ligne résultats) — état partagé, une seule modale.
-  algoOpen: boolean
-  setAlgoOpen: (v: boolean) => void
+  // M55-J point 5 : DEUX modales distinctes, une seule ouverte à la fois — « classement » (la
+  // méthode : tri, ×N, validation) et « scoring » (le sens des paliers). null = fermée.
+  algoModale: 'classement' | 'scoring' | null
+  setAlgoModale: (v: 'classement' | 'scoring' | null) => void
   // M55-G point 10 : ce que la carte PEINT réellement à l'écran (zoom, mode île/commune,
   // couches) — écrit par MapView, lu par la légende. Règle : une légende n'existe que si
   // ses couleurs sont effectivement à l'écran (jamais de légende orpheline).
@@ -171,6 +171,10 @@ interface AppState {
   // « Afficher l'analyse LABUSE » (P2, revue n°3) allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
   setVerdict: (v: boolean) => void
+  // M55-J point 7 : « Retour » (ex-« Masquer ») — LA destination unique, définie ICI (pas
+  // recopiée dans chaque handler) : sortir de la vue verdict (analyse OU tri factuel) et
+  // atterrir sur Filtres OUVERT et éditable (analyse coupée), jamais sur Couches.
+  retourFiltres: () => void
   // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables).
   // V3 : le top peut porter le « pourquoi » relié au projet ; `projet` active « Enregistrer / PDF ».
   iaRestitution: IaRestitution | null
@@ -310,8 +314,8 @@ export const useApp = create<AppState>((set) => ({
   openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
-  algoOpen: false,
-  setAlgoOpen: (algoOpen) => set({ algoOpen }),
+  algoModale: null,
+  setAlgoModale: (algoModale) => set({ algoModale }),
   mapPeint: { parcelles: false, equipements: false, zonage: false },
   // garde d'égalité : le handler zoom de la carte appelle à chaque frame — pas de re-render inutile
   setMapPeint: (p) => set((s) =>
@@ -319,6 +323,10 @@ export const useApp = create<AppState>((set) => ({
       && s.mapPeint.zonage === p.zonage ? {} : { mapPeint: p }),
   verdict: false,
   setVerdict: (verdict) => set({ verdict }),
+  retourFiltres: () => set((s) => ({
+    verdict: false, panneauSection: 'filtres',
+    filters: { ...s.filters, analyseLabuse: false },
+  })),
   iaRestitution: null,
   setIaRestitution: (iaRestitution) => set({ iaRestitution }),
   projetBrouillon: null,

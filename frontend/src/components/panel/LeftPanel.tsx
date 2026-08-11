@@ -10,36 +10,75 @@ import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
+import { TIER_DECLASSE_META, TIER_V2_META } from '../../lib/status'
 
-// B8 (M12) : « Comprendre le classement » — explication du scoring ÉCRITE POUR UN CLIENT
-// (contenu centralisé dans strings.ts, validé par Vic avant prod). Overlay léger, fermable.
-function AlgoExplainer({ onClose }: { onClose: () => void }) {
+// M55-J point 5 : COQUILLE de modale partagée (overlay + Échap + croix) — deux contenus
+// distincts s'y logent : « classement » (la méthode) et « scoring » (le sens des paliers).
+// data-algo-overlay conservé (hook QA) ; data-modale porte l'identité (classement/scoring).
+function Modale({ id, titre, onClose, children }: { id: string; titre: string; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
-  // M55-H point 11 (décision Vic) : la ligne de pied « Classement servi du … » est RETIRÉE —
-  // la date de bascule du run est un détail technique, réservé à l'admin/interne.
   return (
-    <div data-algo-overlay className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    <div data-algo-overlay data-modale={id} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}>
       <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl border border-line-2 bg-surface-2 p-5 shadow-elev-2"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-display text-sm font-bold text-txt-hi">{CLIENT.algo.titre}</h3>
+          <h3 className="font-display text-sm font-bold text-txt-hi">{titre}</h3>
           <CroixEntete onClick={onClose} title="Fermer" />
         </div>
-        <div className="mt-3 flex flex-col gap-3">
-          {CLIENT.algo.corps.map((s) => (
-            <div key={s.h}>
-              <p className="label-caps text-[9.5px]">{s.h}</p>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-txt-mut">{s.p}</p>
-            </div>
-          ))}
-        </div>
+        {children}
       </div>
     </div>
+  )
+}
+
+// « Comprendre le classement » — la MÉTHODE (ce qui est mesuré, le ×N, l'entraînement). Contenu
+// centralisé dans strings.ts (CLIENT.algo.corps), validé par Vic. M55-H p11 : plus de ligne de date.
+function AlgoExplainer({ onClose }: { onClose: () => void }) {
+  return (
+    <Modale id="classement" titre={CLIENT.algo.titre} onClose={onClose}>
+      <div className="mt-3 flex flex-col gap-3">
+        {CLIENT.algo.corps.map((s) => (
+          <div key={s.h}>
+            <p className="label-caps text-[9.5px]">{s.h}</p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-txt-mut">{s.p}</p>
+          </div>
+        ))}
+      </div>
+    </Modale>
+  )
+}
+
+// M55-J point 5 : « Comprendre le scoring » — le SENS des paliers. Les définitions viennent de
+// l'échelle verbale EXISTANTE (CLIENT.revelation.defTiers, source unique aussi utilisée par les
+// tooltips de la carte d'analyse) : une définition de palier, un seul endroit. Les couleurs
+// viennent de la palette unique (status.ts). Les 6 tiers de déclassement sont regroupés sous
+// « Potentiel épuisé » (comme la ventilation).
+const SCORING_PALIERS: { key: string; color: string }[] = [
+  { key: 'brulante', color: TIER_V2_META.brulante.color },
+  { key: 'chaude', color: TIER_V2_META.chaude.color },
+  { key: 'reserve_fonciere', color: TIER_V2_META.reserve_fonciere.color },
+  { key: 'a_creuser', color: TIER_V2_META.a_creuser.color },
+  { key: 'declassees', color: TIER_DECLASSE_META.declasse_bati_sature.color },
+  { key: 'ecartee', color: TIER_V2_META.ecartee.color },
+]
+function ScoringExplainer({ onClose }: { onClose: () => void }) {
+  return (
+    <Modale id="scoring" titre={CLIENT.algo.scoringTitre} onClose={onClose}>
+      <p className="mt-2 text-[12px] leading-relaxed text-txt-mut">{CLIENT.algo.scoringIntro}</p>
+      <div className="mt-3 flex flex-col gap-2.5">
+        {SCORING_PALIERS.map(({ key, color }) => (
+          <div key={key} className="flex items-start gap-2">
+            <span className="mt-[5px] h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+            <p className="text-[12px] leading-relaxed text-txt-mut">{CLIENT.revelation.defTiers[key]}</p>
+          </div>
+        ))}
+      </div>
+    </Modale>
   )
 }
 
@@ -200,35 +239,45 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
 // votre place. « Afficher l'analyse LABUSE » — rien n'est masqué, le cadastre reste entier,
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
-  const { verdict, setVerdict, accueilVu, setAccueilVu, openFiltres } = useApp()
+  const { verdict, accueilVu, setAccueilVu, openFiltres, retourFiltres } = useApp()
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
-  // M55-G point 4 : état de la modale PARTAGÉ (store) — le lien « comprendre le classement → »
-  // de la ligne résultats ouvre la même modale que le bouton du bandeau.
-  const algoOpen = useApp((s) => s.algoOpen)
-  const setAlgoOpen = useApp((s) => s.setAlgoOpen)
+  // M55-J point 5 : DEUX modales distinctes (classement / scoring), état partagé au store.
+  const algoModale = useApp((s) => s.algoModale)
+  const setAlgoModale = useApp((s) => s.setAlgoModale)
   if (verdict) {
     return (
-      <div className={`mx-5 mb-1 flex shrink-0 items-center justify-between gap-2 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
-        {algoOpen && <AlgoExplainer onClose={() => setAlgoOpen(false)} />}
-        <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
-          {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
-        <span className="flex shrink-0 items-center gap-1.5">
-          {/* « Comprendre le classement » — seulement quand l'analyse est affichée (sinon hors-sujet) */}
-          {analyse && (
-            <button data-algo-open onClick={() => setAlgoOpen(true)}
-              className="rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
-              title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
+      <div className={`mx-5 mb-1 flex shrink-0 flex-col gap-1.5 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
+        {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
+        {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
+            {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
+          {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
+              sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
+          <button data-verdict-off onClick={retourFiltres}
+            className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+            title="Retour — revenir aux filtres">
+            Retour
+          </button>
+        </div>
+        {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions
+            distinctes, deux modales. Seulement en mode analyse (hors-sujet en tri factuel). */}
+        {analyse && (
+          <div className="flex gap-1.5">
+            <button data-algo-open onClick={() => setAlgoModale('classement')}
+              className="flex-1 rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+              title="La méthode : le tri, le « ×N plus probable », la validation">
               {CLIENT.algo.bouton}
             </button>
-          )}
-          <button data-verdict-off onClick={() => setVerdict(false)}
-            className="rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-            title="Masquer — revenir au cadastre brut">
-            Masquer
-          </button>
-        </span>
+            <button data-scoring-open onClick={() => setAlgoModale('scoring')}
+              className="flex-1 rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+              title="Le sens des paliers : brûlante, chaude, potentiel long terme, à creuser, potentiel épuisé, écartée">
+              {CLIENT.algo.boutonScoring}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -253,16 +302,14 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const d = q.data
   const nf = (n: number) => n.toLocaleString('fr-FR')
   const A = CLIENT.accueil
-  const Seg = ({ n, l, src }: { n: number | null | undefined; l: (s: string) => string; src: string }) => (
-    n == null ? null : (
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
-        <span className="font-medium text-txt tabular-nums">{l(nf(n))}</span>
-        <Tip side="top" tip={src} className="shrink-0">
-          <span role="button" tabIndex={0} aria-label="Source de ce chiffre"
-            className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-        </Tip>
-      </span>
-    )
+  // M55-J point 3 (décision Vic) : les trois « i » (parcelles / communes / sources) sont RETIRÉS.
+  // Garde-fou fait : aucune des trois infobulles ne portait de réserve d'honnêteté (millésime,
+  // « partiel », estimation) — c'étaient une paraphrase du chiffre (parcelles), une couverture
+  // POSITIVE + source DGFiP (communes) et un pointeur vers la page Sources (sources). Le sourcing
+  // détaillé (DEAL, DGFiP, INSEE, BODACC, Sitadel…) vit déjà sur la page Sources (accessible au
+  // Rail). Suppression franche ; les chaînes CLIENT.accueil.src deviennent 0-caller.
+  const Seg = ({ n, l }: { n: number | null | undefined; l: (s: string) => string }) => (
+    n == null ? null : <span className="font-medium text-txt tabular-nums whitespace-nowrap">{l(nf(n))}</span>
   )
   // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` +
   // `overflow-y-auto` CLIPPE le haut du contenu qui déborde (bug flexbox connu : le débordement
@@ -271,8 +318,14 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   // (`my-auto`) — elles centrent quand il y a de la place ET se réduisent à 0 quand ça déborde,
   // laissant le logo défiler depuis le haut. `pt-6` garde une respiration au sommet.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-clip px-7 pb-8 pt-6 text-center">
-      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-clip px-7 pb-5 pt-5 text-center">
+      {/* M55-J point 4 : titre ET paragraphe tirent leur largeur maximale d'UNE SEULE valeur
+          partagée (--accueil-w) — plus deux largeurs en dur côte à côte. Le paragraphe, jadis
+          plus étroit (max-w-[32ch]), s'aligne sur le titre → moins de retours à la ligne, moins
+          de hauteur. L'acquis M55-I (justify-start + my-auto) reste : ce point réduit la hauteur
+          du contenu, il ne remet PAS le conteneur en justify-center. */}
+      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
+        style={{ ['--accueil-w' as string]: '240px' }}>
         <svg viewBox="0 0 240 82" className="h-7 w-[72px] shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
           <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
         </svg>
@@ -287,15 +340,15 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
               strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h3 className="mt-8 font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
+        <h3 className="mt-8 max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
         <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
-          <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
+          <Seg n={d?.parcelles} l={A.segParcelles} />
           <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
+          <Seg n={d?.communes} l={A.segCommunes} />
           <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
+          <Seg n={d?.sources} l={A.segSources} />
         </p>
-        <p className="mt-3 max-w-[32ch] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
+        <p className="mt-3 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
       </div>
     </div>
   )
@@ -321,11 +374,12 @@ export function LeftPanel() {
   const filtresOpen = panneauSection === 'filtres'
   const prevVerdict = useRef(verdict)
   useEffect(() => {
-    // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
-    // se referme pour laisser la carte (accordéon), comme demandé.
-    // M55-H point 8 : plus d'état « aucune section » — l'allumage replie Filtres en rendant
-    // la main à Couches (une section reste toujours ouverte).
-    if (verdict && !prevVerdict.current) { setPanneauSection('couches'); setAccueilVu() }
+    // ═══ M55-J point 6 — TRANSITION DE L'AUTOMATE (explicite, à champ unique) ═══
+    // L'ouverture de l'analyse (verdict false→true) est une ENTRÉE de l'automate : Couches se
+    // RÉTRACTE, Filtres devient la section ouverte (elle porte alors le récap du run + Relancer/
+    // Désactiver — compacte, cf. J1) → le listing récupère la hauteur. Corrige la spéc M55-I
+    // (qui rendait la main à Couches). L'invariant « exactement une section ouverte » tient.
+    if (verdict && !prevVerdict.current) { setPanneauSection('filtres'); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
   const setAccueilVu = useApp((st) => st.setAccueilVu)
@@ -362,7 +416,7 @@ export function LeftPanel() {
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
           <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
+          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -394,7 +448,7 @@ export function LeftPanel() {
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
             <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
+            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
