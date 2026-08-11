@@ -163,18 +163,16 @@ export const CLIENT = {
   // M55-G suite point 2 — libellés COURTS (une seule ligne de pills) ; les libellés longs
   // (« Meilleures opportunités », « Plus susceptibles de se vendre ») migrent dans le « i ».
   tri: {
-    rang: 'Opportunités',
-    mult: 'Mutation',
+    // M55-I point 3 (arbitrage Vic, option A) : le tri « Mutation » (×N seul) est RETIRÉ —
+    // doublon prouvé du classement (top-50 identiques, aucune inversion sur 431 663, mesuré
+    // M55-H). Restent deux tris ; « Opportunités » se renomme « Probabilité de vente » : c'est
+    // honnêtement ce qu'il trie (la probabilité apprise, ex æquo départagés par la qualité).
+    rang: 'Probabilité de vente',
     surface: 'Surface',
-    // M55-H point 6 (MESURÉ 12/08, rapport) : le rang n'est PAS un produit « probabilité ×
-    // qualité » — c'est l'ordre du ×N dont les ex æquo (le ×N est arrondi) sont départagés
-    // par la qualité du terrain (D), puis SDP, surface. Les libellés disent désormais le réel.
-    rangTip: 'Le classement LABUSE — la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
-    multTip: 'Le ×N brut, sans départage : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
+    rangTip: 'Le classement LABUSE — la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
-    // le « i » de la barre TRIER : les libellés longs + leur sens, en trois phrases
-    lunettes: 'Opportunités = le classement LABUSE : la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
-      + 'Mutation = le ×N brut, sans départage (ce qui va bouger bientôt). '
+    // le « i » de la barre TRIER : les deux tris + leur sens
+    lunettes: 'Probabilité de vente = le classement LABUSE : la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
       + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
     // tooltip du badge ×N sur les cartes de résultat (une ligne)
     multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,

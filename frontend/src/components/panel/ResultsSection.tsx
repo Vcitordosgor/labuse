@@ -153,9 +153,11 @@ const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset s
 // M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE.
 // M55-H point 4 : le tri Surface a ses DEUX sens — re-clic sur la pill active = inversion
 // (« Surface ↓ » ↔ « Surface ↑ », clé serveur surface / surface_asc), dans les deux modes.
+// M55-I point 3 (arbitrage Vic) : le tri « Mutation » (clé 'mult') est RETIRÉ (doublon prouvé
+// du classement). Restent « Probabilité de vente » (rang) et « Surface » (inversible). La clé
+// serveur 'mult' reste valide côté API mais n'est plus atteignable depuis la barre.
 const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
-  { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip, dir: '↓' },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
