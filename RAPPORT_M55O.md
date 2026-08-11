@@ -4,26 +4,29 @@ Branche `feat/m55-o` (base main après merge `5627ccd4` de `feat/m55-n`). **NON 
 Parcelles de test : brûlante `97408000AP1647` · declasse `97409000AR1260` · ecartee
 `97411000HM0273` · **nue** `97407000AI1821`.
 
-## ⚠ ÉTAT DE LIVRAISON — lecture obligatoire
+## ÉTAT DE LIVRAISON — TOUTES PHASES LIVRÉES
 
-Ce mandat refond ET réorganise une fiche de **2 225 lignes** (Fiche.tsx) en 3 phases.
-Par respect de la doctrine « **ne jamais casser** » (une réorg structurelle laissée à
-mi-chemin = fiche cassée), j'ai livré les étapes **bornées et non régressives**, et je
-documente en blueprint complet le reste (grosse chirurgie JSX) plutôt que de l'entamer à
-demi. Livré vs reste :
+Refonte + réorg complètes d'une fiche de **2 225 lignes** (Fiche.tsx), en 3 phases, par
+étapes atomiques validées sur les 4 parcelles à chaque pas. Aucune donnée inventée, aucun
+calcul modifié — tout ce qui est affiché existait ; on l'a rangé et habillé.
 
-| Étape | État |
-|---|---|
-| **Phase 1** — relevé exhaustif | ✅ **livré** (tableau ci-dessous) |
-| **2.1a** — bandeau 4 chiffres | ✅ **livré** (`5843cc31`) |
-| **2.2** — suppression doublons (jauges Qualité/Accessibilité, Signaux additionnels) | ✅ **livré** (`4e97b261`) |
-| **2.3** — diagnostic des 3 incohérences | ✅ **diagnostiqué** (ci-dessous) ; désambiguïsation liée à la réorg 2.1c |
-| **2.1b** — bloc Analyse (absorbe Pourquoi pas / Renouvellement / ScoreV2 / éligibilité) | ⏳ **blueprint** (non implémenté cette session) |
-| **2.1c** — 10 tiroirs → 7 (déplacements de contenu) | ⏳ **blueprint** |
-| **Phase 3** — habillage (tiroirs→lignes, groupes, couleurs, pied) | ⏳ **blueprint** |
+| Étape | État | Commit |
+|---|---|---|
+| **Phase 1** — relevé exhaustif | ✅ livré | (rapport) |
+| **2.1a** — bandeau 4 chiffres | ✅ livré | `5843cc31` |
+| **2.2** — suppression doublons | ✅ livré | `4e97b261` |
+| **2.1b** — bloc Analyse (P + Pourquoi pas + Renouvellement + éligibilité) | ✅ livré | `e3e711b4` |
+| **2.1c** — 10 tiroirs → 7 (renommages + déplacements) | ✅ livré | `e245ef8f` |
+| **2.3** — diagnostic + labels des 3 incohérences | ✅ livré | `e245ef8f` |
+| **Phase 3** — habillage (lignes, groupes, couleurs) | ✅ livré | `cb7248e6` |
 
 `tsc` 0 · `vitest` 32/32 · `build` vert · console : 0 erreur **nouvelle** (le 404
 `/ortho/equipements` est préexistant — proxy dev `EquipementsBadges`, hors périmètre).
+
+**Résultat** : 7 tiroirs-LIGNES (+ Mode B conditionnel) sous 2 groupes silencieux LE
+TERRAIN / LE CONTEXTE, un bloc Analyse rassemblant tout l'avis, un bandeau de 4 chiffres,
+le vert redevenu un signal. Captures avant/après 4 parcelles : `reports/m55-o/captures/`
+(`AVANT_*`, `APRES_phase3_*`).
 
 ---
 
@@ -148,33 +151,34 @@ suppose la réunion dans des tiroirs voisins (réorg 2.1c) ou toucherait un libe
 
 ---
 
-# BLUEPRINT DU RESTE (2.1b / 2.1c / phase 3) — non implémenté
+# PHASE 2.1b / 2.1c / PHASE 3 — RÉALISÉ
 
-## Bloc Analyse (2.1b)
-Enrichir la carte verdict (gated `verdictRevele`) en y absorbant, à la suite du verdict/×N/
-réglette : (a) **ScoreV2Block** (P + pourquoi + badges copro/succession/événement) déménagé
-de « Les données » ; (b) **PourquoiPasTab** (motifs rédhibitoires) — tiroir `pourquoi`
-absorbé ; (c) le détail **Renouvellement** (4 composantes) — tiroir `renouvellement` absorbé ;
-(d) **« Vérifications d'éligibilité — ✓ N passées »** : synthèse dépliable des lignes de
-cascade `f.lines` en `result==='PASS'` du tiroir Urbanisme (emprise linéaire/routière, surface
-vs seuil, bâti probable…), **repliée par défaut**. Faisabilité : tous ces blocs sont dans le
-scope de la carte verdict (accès à `f`, `idu`, `RENOUV`, `fmtInt`… ✓).
+## Bloc Analyse (2.1b) — `e3e711b4`
+La carte verdict (gated `verdictRevele`) absorbe, à la suite du verdict/×N/réglette : (a)
+**ScoreV2Block** (P + pourquoi) déménagé de « Les données » ; (b) **PourquoiPasTab** (motifs)
+— tiroir `pourquoi` absorbé ; (c) détail **Renouvellement** (4 composantes) — tiroir
+`renouvellement` absorbé (lien « pourquoi ? » retiré) ; (d) **« Vérifications d'éligibilité —
+✓ N passées »** : synthèse dépliable (repliée) des lignes `reglesLines` en `result==='PASS'` ;
+la cascade Urbanisme ne rend plus que les lignes substantielles (non-PASS) → fini le mur de
+« sans objet ». Vérifié E2E (dont une parcelle renouvellement : détail inline OK).
 
-## 10 tiroirs → 7 (2.1c)
-Renommer/fusionner selon la structure cible du mandat (Urbanisme · Constructibilité · Marché
-et secteur · Réseaux et accès · Risques et protections · Propriétaire · Données et méthode) et
-déplacer les blocs par le tableau phase 1. L'accordéon exclusif (`ficheTiroir[idu]`, M55-L P10)
-est conservé — les `id` de tiroir changent, l'automate reste. Risque : blocs conditionnels
-multi-familles (⚑) — la validation 4 parcelles est indispensable.
+## 10 tiroirs → 7 (2.1c) — `e245ef8f`
+Renommages + déplacements (id inchangés → accordéon exclusif M55-L P10 intact) : potentiel de
+transformation Urbanisme→Constructibilité ; « Contexte » (historique + voisinage) ABSORBÉ dans
+« Marché et secteur » ; Mode B unifié (2 rendus→1) rattaché à la Constructibilité. **Signalé** :
+Mode B reste un tiroir DISTINCT (8ᵉ conditionnel) — l'inliner dans Constructibilité casserait
+l'accordéon exclusif (RefDrawer imbriqué). **Signalé aussi** : les déplacements de LIGNES de
+cascade individuelles (foncier public→Propriétaire, forêt/parc/bruit→Risques) ne sont pas faits
+— les lignes sont groupées par `l.onglet` (assigné BACKEND) ; les re-trier par couche côté
+front serait fragile / toucherait la logique → hors doctrine « aucun calcul modifié ».
 
-## Phase 3 — habillage
-En-tête aéré (réf mono grande, commune sur-titre, boutons 30 px grisés) ; bandeau 4 cellules
-(filet 1 px, label 10 px lettré, valeur 15 px) ; **tiroirs → lignes** (filet horizontal, sous-
-titre de contexte, valeur droite + chevron, **pas d'icône**) ; 2 groupes silencieux **LE
-TERRAIN** / **LE CONTEXTE** ; **le vert redevient un signal** (gris=factuel, vert=confirmé,
-ambre=attention, rouge=blocage — pastilles), tokens DS (`TOKENS.mint`/`stCreuser`/`stEcartee`/
-`viab*` couvrent la palette) ; pied 3 boutons + **9 outils tous visibles** sur 2 lignes +
-mention légale 9 px.
+## Phase 3 — habillage — `cb7248e6`
+**Tiroirs → lignes** (filet 1px, sous-titre = micro, valeur droite + chevron, **sans icône**) ;
+2 groupes silencieux **LE TERRAIN** / **LE CONTEXTE** ; **le vert redevient un signal** (valeur
+grise par défaut ; vert=confirmé, ambre=vigilance, rouge=blocage — tokens REF = Tailwind) ;
+en-tête, bandeau 4 cellules et pied (3 boutons + tuiles 2 lignes + légale 9px) déjà en place
+(acquis M55-L P7/P8). **Aucune couleur hors design system introduite** (tokens REF alignés
+Tailwind ; ajout `gris/ok/creuser/ecartee` = valeurs statut existantes).
 
 ---
 
@@ -186,9 +190,19 @@ mention légale 9 px.
 | `build` | vert |
 | Bandeau 4 chiffres (dont valeur absente → « — ») | OK, 4 parcelles |
 | Doublons Qualité/Accessibilité/Signaux | absents, tiroirs rendent, 0 erreur nouvelle |
-| Non-régression accordéon / verdict à la demande / accueil / SPF / traducteur | OK |
+| Bloc Analyse déployé au clic (mémorisé parcelle/session) | OK, 4 parcelles + une renouvellement |
+| 7 tiroirs-lignes (+ Mode B si dispo), groupes LE TERRAIN/LE CONTEXTE | OK, 4 parcelles |
+| Accordéon exclusif (un seul ouvert) | tenu après réorg |
+| Non-régression verdict à la demande / accueil / SPF / traducteur / panneau | OK |
 | Exports PDF | consomment les mêmes données (aucune source déplacée touchée) |
+| Couleurs hors DS introduites | AUCUNE (tokens REF alignés Tailwind) |
 
-**Ne pas merger.** Le socle (bandeau + dedup) est non régressif ; la réorg structurelle
-(2.1b/2.1c) et l'habillage (phase 3) restent à exécuter sur ce blueprint — je peux les
-enchaîner en suite dédiée pour ne pas laisser la fiche à mi-refonte.
+## Récap des doublons
+Supprimés : jauges Qualité + Accessibilité (une seule jauge, ICD) ; « Signaux additionnels »
+(flags) ; ScoreV2 en double (Analyse seulement) ; motifs et renouvellement en tiroirs (absorbés
+dans Analyse) ; SDP en en-tête Règles (M55-N, Faisabilité seule) ; contrôles PASS « sans objet »
+(→ éligibilité repliée). **Non supprimés (raison)** : doublons de LIGNES de cascade (bâti %,
+ABF, PPR entre onglets) — regroupées par `l.onglet` backend, un re-tri front toucherait la
+logique (signalé, hors doctrine).
+
+**Ne pas merger.** Refonte complète livrée et non régressive ; Vic valide et merge.
