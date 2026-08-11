@@ -134,10 +134,12 @@ interface AppState {
   setCommune: (c: string | null) => void
   setCommunesFilter: (list: string[]) => void
   // M55-D stage 9 bloc 4 : l'ACCORDÉON est une propriété de l'ÉTAT — UNE seule section ouverte
-  // à la fois (couches | filtres | aucune), quel que soit le chemin d'ouverture (titre, chevron,
-  // header, « Commencer → », programmatique). Plus jamais deux sections ouvertes.
-  panneauSection: 'couches' | 'filtres' | null
-  setPanneauSection: (s: 'couches' | 'filtres' | null) => void
+  // à la fois, quel que soit le chemin d'ouverture (titre, chevron, header, « Commencer → »,
+  // programmatique). M55-H point 8 (décision Vic) : TOUJOURS une section ouverte — l'état
+  // « aucune » n'existe plus (plus jamais le panneau vide) ; fermer la section ouverte est
+  // impossible, ouvrir l'autre la remplace.
+  panneauSection: 'couches' | 'filtres'
+  setPanneauSection: (s: 'couches' | 'filtres') => void
   // M55-D stage 8 : l'écran d'accueil (présentation) disparaît après le PREMIER geste de la
   // session (Commencer, ouverture d'une section, analyse) — état de session, jamais persisté.
   accueilVu: boolean

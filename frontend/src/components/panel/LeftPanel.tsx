@@ -125,7 +125,7 @@ function LayersSection({ open, onToggle }: {
         onClick={onToggle}
         aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? 'Replier les couches' : 'Déplier les couches'}
+        title={open ? 'Section ouverte (une section reste toujours ouverte)' : 'Ouvrir les couches — replie Filtres'}
       >
         <span className="label-caps">Couches</span>
         {/* M55-C point 3bis : le badge « N actives » respire (gap-3 = 12 px) — la zone de clic
@@ -186,7 +186,7 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
     <div className="shrink-0 px-5 pt-4">
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? 'Replier les filtres' : 'Déplier les filtres'}>
+        title={open ? 'Section ouverte (une section reste toujours ouverte)' : 'Ouvrir les filtres — replie Couches'}>
         <span className="label-caps">Filtres</span>
         <span className="flex items-center gap-3">
           {n > 0 && (
@@ -327,14 +327,18 @@ export function LeftPanel() {
   useEffect(() => {
     // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
     // se referme pour laisser la carte (accordéon), comme demandé.
-    if (verdict && !prevVerdict.current) { setPanneauSection(null); setAccueilVu() }
+    // M55-H point 8 : plus d'état « aucune section » — l'allumage replie Filtres en rendant
+    // la main à Couches (une section reste toujours ouverte).
+    if (verdict && !prevVerdict.current) { setPanneauSection('couches'); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
   // Accordéon = propriété de l'ÉTAT (panneauSection) : ouvrir une section replie l'autre,
   // quel que soit le chemin — la colonne (hauteur fixe) ne déborde jamais.
   const setAccueilVu = useApp((st) => st.setAccueilVu)
-  const toggleCouches = () => { setPanneauSection(couchesOpen ? null : 'couches'); setAccueilVu() }
-  const toggleFiltres = () => { setPanneauSection(filtresOpen ? null : 'filtres'); setAccueilVu() }
+  // M55-H point 8 : cliquer le titre de la section OUVERTE ne la replie pas (l'autre est
+  // fermée) — le clic OUVRE toujours la section visée, l'accordéon fait le reste.
+  const toggleCouches = () => { setPanneauSection('couches'); setAccueilVu() }
+  const toggleFiltres = () => { setPanneauSection('filtres'); setAccueilVu() }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -356,7 +360,7 @@ export function LeftPanel() {
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('couches')} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -388,7 +392,7 @@ export function LeftPanel() {
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
             <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
+            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('couches')} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
