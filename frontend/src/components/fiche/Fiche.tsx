@@ -25,14 +25,18 @@ const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', f
 // ═══════════════════════════════════════════════════════════════════════════
 // M19 · RÉFÉRENCE VISUELLE (qa/m19/reference/REFERENCE_FICHE_PARCELLE.html) — hex/tailles/espacements
 // repris À L'IDENTIQUE de la spec Vic. Ce sont les seules couleurs en dur autorisées (spec).
+// M56-B — table repointée sur les tokens DA v3 (:root, styles/index.css). Les valeurs de
+// CHROME (surfaces, filets, texte, iris) passent par var(--…) : une valeur = un endroit.
+// Les valeurs de SÉMANTIQUE DE VALEUR (gris/ok/creuser/ecartee) restent les tokens de statut
+// Tailwind — elles miroir la palette des tiers, LIÉE aux couches de la carte (intouchable).
 const REF = {
-  bg: '#080b0a', shell: '#1d2521',
-  card: '#0e1311', cardBorder: '#202b26', accent: '#120e1c', accentBorder: '#443563',
-  name: '#eef7f2', mint: '#7de3ab', violet: '#c9b6f2', dim: '#5f7568', dim2: '#7d9488',
-  chev: '#3f5249', chevAccent: '#564a75', barTrack: '#18211d', barFill: '#3aa06e', seg: '#26473a',
-  pastilleTxt: '#8a7ab0', pastilleBg: '#1a1428',
+  bg: 'var(--bg-0)', shell: 'var(--line-2)',
+  card: 'var(--bg-2)', cardBorder: 'var(--line-card)', accent: 'var(--iris-bg)', accentBorder: 'var(--iris-line)',
+  name: 'var(--txt-hi)', mint: 'var(--mint)', violet: 'var(--iris-2)', dim: 'var(--txt-off)', dim2: 'var(--lab)',
+  chev: 'var(--txt-faint)', chevAccent: 'var(--txt-faint)', barTrack: 'var(--line)', barFill: 'var(--mint)', seg: 'var(--mint-bg)',
+  pastilleTxt: 'var(--iris)', pastilleBg: 'var(--iris-bg)',
   // M55-O phase 3.5 — sémantique de valeur (le vert redevient un signal) : gris=factuel neutre,
-  // ok=vert état positif confirmé, creuser=ambre attention, ecartee=rouge blocage. = tokens Tailwind.
+  // ok=vert état positif confirmé, creuser=ambre attention, ecartee=rouge blocage. = tokens statut.
   gris: '#8FA69A', ok: '#5CE6A1', creuser: '#E8B44C', ecartee: '#E8695A',
 } as const
 
@@ -90,11 +94,12 @@ function RefDrawer({ id, name, value, valueColor, accent, micro, children }: {
   const acc = useContext(FicheAccordionCtx)
   const open = !!id && acc.openId === id
   return (
-    <div data-drawer={id} style={{ borderBottom: '1px solid #17211d', scrollMarginTop: 8 }}>
+    <div data-drawer={id} style={{ borderBottom: '0.5px solid var(--line)', scrollMarginTop: 8 }}>
+      {/* DA §4b — en-tête de tiroir OUVERT sur --bg-3 (état ouvert), chevron retourné. */}
       <button onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 0, padding: '11px 2px 10px', cursor: children ? 'pointer' : 'default', textAlign: 'left' }}>
-        <span style={{ flex: 1, fontSize: 14.5, color: accent ? REF.violet : '#dfeee7', minWidth: 80, lineHeight: 1.25 }}>{name}</span>
-        {value != null && <span style={{ fontSize: 13.5, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : '#8FA69A'), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: open ? 'var(--bg-3)' : 'none', border: 0, padding: '11px 8px 10px', cursor: children ? 'pointer' : 'default', textAlign: 'left', transition: 'background var(--dur-fast) var(--ease)', borderRadius: open ? 6 : 0 }}>
+        <span style={{ flex: 1, fontSize: 14.5, color: accent ? REF.violet : 'var(--txt-hi)', minWidth: 80, lineHeight: 1.25 }}>{name}</span>
+        {value != null && <span style={{ fontSize: 13.5, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : 'var(--txt-dim)'), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
         {children && <RefChevron open={open} accent={accent} />}
       </button>
       {/* sous-titre de contexte (la valeur visible sans ouvrir) — masqué quand le tiroir est ouvert. */}
@@ -107,7 +112,7 @@ function RefDrawer({ id, name, value, valueColor, accent, micro, children }: {
 // M55-O phase 3.4 — micro-label d'un GROUPE SILENCIEUX (LE TERRAIN / LE CONTEXTE) : 10 px lettré
 // espacé, gris sourd, au-dessus d'un ensemble de lignes-tiroirs.
 const GroupLabel = ({ children, first }: { children: ReactNode; first?: boolean }) => (
-  <p style={{ margin: `${first ? 2 : 18}px 2px 5px`, fontSize: 10, letterSpacing: 1.4, color: '#5f7568', textTransform: 'uppercase' }}>{children}</p>
+  <p style={{ margin: `${first ? 2 : 18}px 2px 5px`, fontSize: 10, letterSpacing: 1.4, color: 'var(--txt-off)', textTransform: 'uppercase' }}>{children}</p>
 )
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
@@ -411,7 +416,7 @@ function WatchButton({ idu }: { idu: string }) {
   // C4 · cloche = suivi ; style référence (31×31, vert actif quand suivie).
   return (
     <button onClick={() => t.mutate()}
-      style={{ width: 31, height: 31, background: on ? '#101d16' : 'none', border: `1px solid ${on ? '#2f7a54' : '#232e29'}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? '#7de3ab' : '#7d9488', cursor: 'pointer', flexShrink: 0 }}
+      style={{ width: 31, height: 31, background: on ? '#101d16' : 'none', border: `1px solid ${on ? '#2f7a54' : '#232e29'}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? '#7de3ab' : 'var(--lab)', cursor: 'pointer', flexShrink: 0 }}
       title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
     </button>
@@ -431,7 +436,7 @@ function CopyIdu({ value }: { value: string }) {
   }
   return (
     <button onClick={copier} data-fiche-copy-idu aria-label="Copier l’IDU"
-      style={{ width: 26, height: 26, border: `1px solid ${ok ? '#2f7a54' : '#232e29'}`, borderRadius: 8, background: ok ? '#101d16' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? '#7de3ab' : '#7d9488', cursor: 'pointer', flexShrink: 0 }}
+      style={{ width: 26, height: 26, border: `1px solid ${ok ? '#2f7a54' : '#232e29'}`, borderRadius: 8, background: ok ? '#101d16' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? '#7de3ab' : 'var(--lab)', cursor: 'pointer', flexShrink: 0 }}
       title={ok ? 'IDU copié' : 'Copier l’IDU (14 caractères, sans espace)'}>
       {ok
         ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-11" /></svg>
@@ -748,7 +753,7 @@ function EquipementsBadges({ idu }: { idu: string }) {
   if (e['pv_detecte']) b.push([`PV détecté${e['pv_m2'] ? ` ~${e['pv_m2']} m²` : ''}`, '#5CE6A1', 'panneaux photovoltaïques (candidat scoré)'])
   if (e['pv_probable_ces']) b.push(['CES probable', '#e8b84d', 'chauffe-eau solaire probable (4-8 m²)'])
   if (e['pente_moy_deg'] != null) b.push([`Pente ${Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}°`,
-    e['flag_terrassement_lourd'] ? '#e8734d' : '#7d9488',
+    e['flag_terrassement_lourd'] ? '#e8734d' : 'var(--lab)',
     `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}`])
   if (!b.length) return null
   return (
@@ -985,15 +990,15 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
         {mb.negatif ? (
           <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
         ) : (
-          <p style={{ margin: 0, fontSize: 12.5, color: '#f5fbf8' }}>
+          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--txt-hi)' }}>
             Prix d'achat max réhabilitation : <b data-mode-b-achat>~{mb.achat_max_libelle ?? '—'}</b>
             <span style={{ marginLeft: 6, fontSize: 10.5, color: '#8FA69A' }}>(Estimé — jamais un prix Sourcé : l'hypothèse travaux est toujours estimée)</span>
           </p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: '#9db5a8' }}>Surface réhabilitable</span>
-            <span style={{ color: '#f5fbf8' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
+            <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
+            <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
           </div>
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
             emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
@@ -1001,16 +1006,16 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
             {' '}— {c.surface.niveaux_etiquette}
           </p>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: '#9db5a8' }}>Prix de sortie (revente)</span>
-            <span style={{ color: '#f5fbf8' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
+            <span style={{ color: 'var(--txt-dim)' }}>Prix de sortie (revente)</span>
+            <span style={{ color: 'var(--txt-hi)' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
           </div>
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.prix_sortie.libelle}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
-            <span style={{ color: '#9db5a8', flex: 1 }}>Coût travaux <b style={{ color: '#E8B44C', fontSize: 10 }}>ESTIMÉ</b></span>
+            <span style={{ color: 'var(--txt-dim)', flex: 1 }}>Coût travaux <b style={{ color: '#E8B44C', fontSize: 10 }}>ESTIMÉ</b></span>
             <input data-mode-b-travaux type="number" min={bMin} max={bMax} step={50} value={travaux}
               onChange={(e) => setModeB({ travauxM2: Number(e.target.value) })}
-              style={{ width: 80, background: '#0d1512', border: '1px solid #26302B', borderRadius: 6, color: '#f5fbf8', padding: '3px 6px', fontSize: 11 }} />
-            <span style={{ color: '#9db5a8' }}>€/m²</span>
+              style={{ width: 80, background: '#0d1512', border: '1px solid #26302B', borderRadius: 6, color: 'var(--txt-hi)', padding: '3px 6px', fontSize: 11 }} />
+            <span style={{ color: 'var(--txt-dim)' }}>€/m²</span>
           </div>
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.travaux.libelle}</p>
           <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.frais_marge.libelle}</p>
@@ -1019,19 +1024,19 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
             réglementaire Sourcé (ou marché Estimé) ; prix d'achat max à rendement cible. Mention fiscale. */}
         {mb.sortie_locative && (
           <div data-mode-b-locatif style={{ borderTop: '1px solid #24312b', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <p style={{ margin: 0, fontSize: 12, color: '#f5fbf8', fontWeight: 600 }}>Sortie locative</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--txt-hi)', fontWeight: 600 }}>Sortie locative</p>
             {mb.sortie_locative.negatif ? (
               <p style={{ margin: 0, fontSize: 11.5, color: '#E8B44C' }}>{mb.sortie_locative.message_negatif}</p>
             ) : (
-              <p style={{ margin: 0, fontSize: 11.5, color: '#f5fbf8' }}>
+              <p style={{ margin: 0, fontSize: 11.5, color: 'var(--txt-hi)' }}>
                 Prix d'achat max : <b>~{mb.sortie_locative.achat_max_libelle}</b>
                 <span style={{ marginLeft: 4, fontSize: 10, color: '#8FA69A' }}>(Estimé)</span> à rendement cible {mb.sortie_locative.rendement_cible_pct} %
                 <span style={{ marginLeft: 4, fontSize: 10, color: '#8FA69A' }}>(paramètre client)</span>
               </p>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <span style={{ color: '#9db5a8' }}>Loyer retenu</span>
-              <span style={{ color: '#f5fbf8' }}>~{fmtInt(mb.sortie_locative.loyer.annuel_eur)} €/an · {mb.sortie_locative.loyer.m2_mois_effectif} €/m²/mois</span>
+              <span style={{ color: 'var(--txt-dim)' }}>Loyer retenu</span>
+              <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(mb.sortie_locative.loyer.annuel_eur)} €/an · {mb.sortie_locative.loyer.m2_mois_effectif} €/m²/mois</span>
             </div>
             <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
               {mb.sortie_locative.loyer.etiquette}{mb.sortie_locative.loyer.coef_surface ? ` · coefficient de surface ${mb.sortie_locative.loyer.coef_surface}` : ''}
@@ -1255,33 +1260,33 @@ export function Fiche({ idu }: { idu: string }) {
       <div style={{ padding: '20px 16px 16px', flexShrink: 0, borderBottom: `1px solid ${REF.shell}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: '#4a5d53' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
+            <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: 'var(--txt-off)' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
             {/* EXPRESS-01 · IDU COMPLET 14 car. en position primaire (mono) + bouton copier.
                 La forme courte (section+numéro) devient un rappel secondaire, jamais l'inverse. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '5px 0 0' }}>
-              <p data-fiche-idu style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: '#f5fbf8', letterSpacing: .4 }}>{iduComplet(idu) || 'Absent'}</p>
+              <p data-fiche-idu style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: 'var(--txt-hi)', letterSpacing: .4 }}>{iduComplet(idu) || 'Absent'}</p>
               {iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}
             </div>
             {iduComplet(idu) && iduCourt(idu) !== iduComplet(idu) && (
-              <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: '#5f7568' }}>{iduCourt(idu)}</p>
+              <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: 'var(--txt-off)' }}>{iduCourt(idu)}</p>
             )}
             {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
             {/* M55-L point 2 : adresse absente → « i » explicatif (absence réelle dans la source,
                 pas un défaut de l'outil). Contenu depuis la source unique CLIENT.fiche. */}
-            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>
+            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? 'var(--txt-dim)' : 'var(--txt-off)', lineHeight: 1.45, overflowWrap: 'anywhere' }}>
               {f?.adresse ?? CLIENT.fiche.adresseAbsente}
               {!f?.adresse && (
                 <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
                   <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
-                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, marginLeft: 6, borderRadius: 999, border: '1px solid #2f7a54', color: '#7d9488', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, marginLeft: 6, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
                 </Tip>
               )}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#5f7568' }}>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--txt-off)' }}>
               {f?.surface_m2 ? `${fmtM2(f.surface_m2)} · ` : ''}
               {f?.adresse && (
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
-                  target="_blank" rel="noreferrer noopener" style={{ color: '#f4d35e', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
+                  target="_blank" rel="noreferrer noopener" style={{ color: 'var(--lien)', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
                   {CLIENT.fiche.pagesJaunes} ↗
                 </a>
               )}
@@ -1291,12 +1296,12 @@ export function Fiche({ idu }: { idu: string }) {
             {/* C4 : cloche = suivi (état réel via WatchButton, style référence) */}
             <WatchButton idu={idu} />
             <button onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
-              style={{ width: 31, height: 31, border: `1px solid ${ficheSearchOpen ? '#2f7a54' : '#232e29'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? '#7de3ab' : '#7d9488', cursor: 'pointer' }}
+              style={{ width: 31, height: 31, border: `0.5px solid ${ficheSearchOpen ? 'var(--mint)' : 'var(--line-btn)'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? 'var(--mint)' : 'var(--lab)', cursor: 'pointer' }}
               title="Rechercher dans cette fiche">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
             </button>
             <button onClick={() => select(null)}
-              style={{ width: 31, height: 31, border: '1px solid #232e29', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d9488', cursor: 'pointer' }}
+              style={{ width: 31, height: 31, border: '0.5px solid var(--line-btn)', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lab)', cursor: 'pointer' }}
               title="Fermer la fiche">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
             </button>
@@ -1315,11 +1320,11 @@ export function Fiche({ idu }: { idu: string }) {
             { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
           ]
           return (
-            <div data-bandeau-chiffres style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', border: '1px solid #1e2823', borderRadius: 11, overflow: 'hidden', background: '#0e1311' }}>
+            <div data-bandeau-chiffres style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', border: '0.5px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', background: 'var(--bg-stat)' }}>
               {cells.map((c, i) => (
-                <div key={c.l} style={{ padding: '8px 6px', textAlign: 'center', borderLeft: i ? '1px solid #16201c' : 'none' }}>
-                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: '#5f7568', textTransform: 'uppercase' }}>{c.l}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 15, color: '#dfeee7', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.v}</p>
+                <div key={c.l} style={{ padding: '8px 6px', textAlign: 'center', borderLeft: i ? '1px solid var(--line-2)' : 'none' }}>
+                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: 'var(--txt-off)', textTransform: 'uppercase' }}>{c.l}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 15, color: 'var(--txt-hi)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.v}</p>
                 </div>
               ))}
             </div>
@@ -1337,10 +1342,10 @@ export function Fiche({ idu }: { idu: string }) {
           // de width:100%) — le bouton n'occupe plus toute la largeur de la fiche. Libellé « Demander
           // à LABUSE d'analyser la parcelle » (strings) ; sous-titre conservé. Comportement inchangé.
           <button data-demander-analyse onClick={() => revelerVerdict(idu)}
-            style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
+            style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'var(--mint)', color: 'var(--mint-on)', borderRadius: 'var(--r-ctl)', border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left' }}
             title="Déployer le verdict, le score et « pourquoi »">
             <span style={{ fontSize: 14.5, fontWeight: 700 }}>{CLIENT.fiche.demanderAnalyse}</span>
-            <span style={{ fontSize: 11.5, fontWeight: 500, color: '#0a2419', opacity: .85 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
+            <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--mint-sub)', opacity: .95 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
           </button>
         )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
@@ -1348,14 +1353,14 @@ export function Fiche({ idu }: { idu: string }) {
           <div data-verdict-card style={{ background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: '#7d9488' }}>VERDICT LABUSE</p>
+                <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)' }}>VERDICT LABUSE</p>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 5, flexWrap: 'wrap' }}>
                   <span data-badge-verdict style={{ fontSize: 23, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>{verdict.label}</span>
                   {v2Pilote && f.score_v2?.rang != null && (verdict.tier === 'brulante' || verdict.tier === 'chaude') && (
-                    <span style={{ fontSize: 12, color: '#7d9488' }}>rang {f.score_v2.rang}</span>
+                    <span style={{ fontSize: 12, color: 'var(--lab)' }}>rang {f.score_v2.rang}</span>
                   )}
                   {verdictEcartee && (
-                    <span data-ecartee-motif style={{ fontSize: 12, color: '#7d9488' }}>
+                    <span data-ecartee-motif style={{ fontSize: 12, color: 'var(--lab)' }}>
                       · {ecarteeMotif} <button onClick={() => document.querySelector('[data-analyse-motifs]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }} title={CLIENT.fiche.ecarteeVoirTip}>{CLIENT.fiche.ecarteeVoir}</button>
                     </span>
                   )}
@@ -1364,7 +1369,7 @@ export function Fiche({ idu }: { idu: string }) {
               {f.score_v2?.mult_base != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--lab)' }}>
                     {signalEcarte ? 'signal brut' : 'plus probable d’être vendue'}
                     {f.score_v2.verbal?.info && (
                       <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
@@ -1374,7 +1379,7 @@ export function Fiche({ idu }: { idu: string }) {
                       signal fort (le mot ne doit pas faire promesse à côté d'un statut mort). */}
                   {f.score_v2.verbal?.mot && (
                     <p style={{ margin: '2px 0 0', fontSize: 11.5, fontWeight: 600, color: signalEcarte ? '#8C7468' : verdict.color }}>
-                      {signalEcarte ? <>{f.score_v2.verbal.mot} <span style={{ fontWeight: 500, color: '#7d9488' }}>· écartée</span></> : f.score_v2.verbal.mot}
+                      {signalEcarte ? <>{f.score_v2.verbal.mot} <span style={{ fontWeight: 500, color: 'var(--lab)' }}>· écartée</span></> : f.score_v2.verbal.mot}
                     </p>
                   )}
                 </div>
@@ -1387,7 +1392,7 @@ export function Fiche({ idu }: { idu: string }) {
               <div style={{ margin: '12px 0 0' }}>
                 {f.score_v2.verbal?.reglette_pct != null && (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: '#5f7568', marginBottom: 3 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: 'var(--txt-off)', marginBottom: 3 }}>
                       <span>moyenne</span><span>très forte</span>
                     </div>
                     <div style={{ position: 'relative', height: 7, borderRadius: 5, background: 'linear-gradient(90deg,#3a4d44,#6fb3d9 35%,#ffc266 70%,#ff7a59)' }}>
@@ -1404,7 +1409,7 @@ export function Fiche({ idu }: { idu: string }) {
                   </p>
                 )}
                 {f.score_v2.verbal?.frequence && (
-                  <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: '#9db5a8', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
+                  <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: 'var(--txt-dim)', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
                     {f.score_v2.verbal.frequence.sous_moyenne
                       ? <>Fréquence de vente en dessous de la moyenne de l’île (potentiel de plus long terme).</>
                       : <>Parmi les parcelles de ce niveau, environ <b>{f.score_v2.verbal.frequence.sur_100} sur 100</b> ont été vendues en {f.score_v2.verbal.frequence.fenetre}, contre ~{f.score_v2.verbal.frequence.base_sur_100} sur 100 en moyenne.</>}
@@ -1449,7 +1454,7 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px', alignSelf: 'flex-start' }}>
                   Renouvellement — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
                 </span>
-                <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: '#9db5a8' }}>{f.renouvellement.libelle}</p>
+                <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--txt-dim)' }}>{f.renouvellement.libelle}</p>
               </div>
             )}
 
@@ -1463,8 +1468,8 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Renouvellement — pourquoi ce rang (tiroir absorbé). */}
             {f.renouvellement && (
               <div data-analyse-renouv style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: '#7d9488', textTransform: 'uppercase' }}>Renouvellement — pourquoi ce rang</p>
-                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#9db5a8' }}>
+                <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: 'var(--lab)', textTransform: 'uppercase' }}>Renouvellement — pourquoi ce rang</p>
+                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
                   {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
                   mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
                 </p>
@@ -1488,7 +1493,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Motifs rédhibitoires (« Pourquoi pas ? ») — tiroir entier absorbé. */}
             {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
               <div data-analyse-motifs style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-                <p style={{ margin: '0 0 8px', fontSize: 10, letterSpacing: 0.8, color: '#7d9488', textTransform: 'uppercase' }}>Pourquoi pas ?</p>
+                <p style={{ margin: '0 0 8px', fontSize: 10, letterSpacing: 0.8, color: 'var(--lab)', textTransform: 'uppercase' }}>Pourquoi pas ?</p>
                 <PourquoiPasTab idu={idu} />
               </div>
             )}
@@ -1500,7 +1505,7 @@ export function Fiche({ idu }: { idu: string }) {
         {/* M52 L4 — rappel DISCRET quand la mesure de la commune est dégradée (échantillon limité) :
             le classement reste, la fréquence exacte est indicative. Jamais une excuse vague. */}
         {f?.qualite_commune?.degradee && (
-          <p data-qualite-commune-rappel style={{ margin: '9px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#9db5a8' }}>
+          <p data-qualite-commune-rappel style={{ margin: '9px 0 0', fontSize: 10.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
             <span style={{ color: '#e8b84d' }}>◐</span> {f.qualite_commune.libelle}
           </p>
         )}
@@ -1631,12 +1636,12 @@ export function Fiche({ idu }: { idu: string }) {
                 / « Pourquoi ce score »), mis en valeur, visibles sans défilement dès l'ouverture.
                 « Une question ? » (AskBar) + « Synthèse ». Même palette violette qu'avant (aucun
                 nouveau composant), remontée + encadrée. */}
-            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid #2c2348', background: 'rgba(124,92,240,0.05)', borderRadius: 13, padding: 9, marginBottom: 12 }}>
+            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '0.5px solid var(--iris-line)', background: 'var(--iris-bg)', borderRadius: 12, padding: 9, marginBottom: 12 }}>
               <button onClick={() => setAskOpen(true)} data-askbar-open
-                style={{ background: '#140f22', border: '1px solid #3d3163', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: '#c9b6f2', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                style={{ background: 'var(--iris-bg)', border: '0.5px solid var(--iris-line)', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--iris-2)', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
-                <span style={{ flex: 1, fontSize: 13, color: '#d8ccf5', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
-                <span style={{ fontSize: 13, color: '#8a6ff0', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
+                <span style={{ flex: 1, fontSize: 13, color: 'var(--iris-2)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
+                <span style={{ fontSize: 13, color: 'var(--iris)', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
               </button>
               {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
               <SyntheseIA idu={idu} />
@@ -1649,6 +1654,8 @@ export function Fiche({ idu }: { idu: string }) {
                 (+ Mode B) · Risques et protections. */}
             <GroupLabel first>Le terrain</GroupLabel>
 
+            {/* DA §4 — groupe encarté : les tiroirs d'un même thème enfermés dans une .gcard. */}
+            <div className="gcard">
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
@@ -1735,7 +1742,7 @@ export function Fiche({ idu }: { idu: string }) {
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
                 ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+                : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
               <div className="flex flex-col gap-3">
                 {delaisse && (
                   /* M30 item 5 : le bilan n'est pas servi sous 50 m² — on le DIT, on ne le masque pas */
@@ -1767,11 +1774,14 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </RefDrawer>
+            </div>
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
                 accès · Propriétaire · Données et méthode. */}
             <GroupLabel>Le contexte</GroupLabel>
 
+            {/* DA §4 — groupe encarté « LE CONTEXTE ». */}
+            <div className="gcard">
             {/* MARCHÉ — micro : sparkline + volume */}
             {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
                 distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
@@ -1978,6 +1988,7 @@ export function Fiche({ idu }: { idu: string }) {
                 <SignalerErreur idu={idu} />
               </div>
             </RefDrawer>
+            </div>
 
             {/* M55-L point 11 : le bloc IA (« Une question ? » + « Synthèse ») est REMONTÉ en tête
                 de fiche (voir plus haut, data-ia-tete). Il ne vit plus en bas de la pile. */}
@@ -2008,14 +2019,14 @@ export function Fiche({ idu }: { idu: string }) {
               <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
                 <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
-                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>PDF</p>
                 </a>
                 <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
                 {f.coords && (
                   <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
-                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Cadastre</p>
                   </a>
                 )}
               </div>
@@ -2023,13 +2034,13 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.coords && (
                   <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
-                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>1950</p>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>1950</p>
                   </button>
                 )}
                 {f.coords && (
                   <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
-                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Maps</p>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Maps</p>
                   </a>
                 )}
                 {/* Courrier propriétaire → module M09 (setModule) pré-rempli sur la parcelle courante. */}
@@ -2037,11 +2048,11 @@ export function Fiche({ idu }: { idu: string }) {
                   style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
                   title={CLIENT.fiche.export.courrierTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
-                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.courrier}</p>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.courrier}</p>
                 </button>
                 <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
-                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.onepager}</p>
                 </a>
                 <PreDossierTile idu={idu} />
               </div>
@@ -2116,14 +2127,14 @@ function DossierTile({ idu }: { idu: string }) {
   const d = st.data
   if (d && !d.disponible) return (
     <span data-dossier-indispo aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={d.raison ?? 'Générateur de dossier indisponible'}>
-      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier</p>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Dossier</p>
     </span>
   )
   const compteur = d && !d.illimite && d.restants != null
   const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
   return (
     <a data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4', textDecoration: 'none' }} title={tip}>
-      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : '#7de3ab' }}> · {d!.restants}</span> : ''}</p>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : '#7de3ab' }}> · {d!.restants}</span> : ''}</p>
     </a>
   )
 }
@@ -2139,12 +2150,12 @@ function PreDossierTile({ idu }: { idu: string }) {
   const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
   if (!integral) return (
     <span data-predossier-gate aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
-      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.preDossier}</p>
     </span>
   )
   return (
     <a data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4' }} title={CLIENT.fiche.export.preDossierTip}>
-      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.preDossier}</p>
+      {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.preDossier}</p>
     </a>
   )
 }
@@ -2187,13 +2198,13 @@ function BanquierButton({ idu }: { idu: string }) {
   )
   if (etat === 'encours') return (
     <span style={{ ...cellStyle, color: '#8fd8b4', display: 'block' }}>
-      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.banquierEnCours}</p>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.banquierEnCours}</p>
     </span>
   )
   return (
     <button onClick={lancer} data-banquier-btn style={{ ...cellStyle, color: '#8fd8b4' }}
       title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
-      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance}</p>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance}</p>
     </button>
   )
 }

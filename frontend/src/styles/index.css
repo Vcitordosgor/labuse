@@ -60,6 +60,9 @@
   .gcard { background:var(--bg-2); border:0.5px solid var(--line-card); border-radius:var(--r-g); overflow:hidden; }
   .gr { padding:12px 13px; display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:0.5px solid var(--line); }
   .gr:last-child { border-bottom:none; }
+  /* DA §4 — dans un groupe encarté, le dernier tiroir (fiche : [data-drawer]) ne double pas
+     le filet du bas de la carte. */
+  .gcard > [data-drawer]:last-child { border-bottom:none; }
   .gr-t { font-size:var(--fs-row); color:var(--txt-hi); }
   .gr-s { font-size:var(--fs-sub); color:var(--txt-mut); margin-top:2px; }
   .gr-v { font-size:13.5px; color:var(--txt); }
