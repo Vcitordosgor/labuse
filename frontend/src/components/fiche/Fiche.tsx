@@ -1223,8 +1223,10 @@ export function Fiche({ idu }: { idu: string }) {
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
+  // M55-L point 4 : conteneur fiche élargi de 10 % — 400 → 440px (valeur unique ici). `max-w-full`
+  // garde la fiche dans l'écran aux petites largeurs (aucun débordement horizontal).
   return (
-    <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
+    <aside className="absolute right-0 top-0 z-10 flex h-full w-[440px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
           sourcés y restent intégralement (R1 : rien n'est supprimé). */}
