@@ -159,6 +159,19 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
+// M55-H point 5 (décision Vic) — ordre des GROUPES de la liste d'analyse (identique au CASE
+// SQL du serveur) : 4 tiers d'opportunité, puis potentiel épuisé (declasse_*), puis écartées.
+const GROUPE_ORDER = (p: ParcelProps): number => {
+  if (p.etage0) return 6
+  const t = p.tier_v2 ?? ''
+  if (t === 'brulante') return 0
+  if (t === 'chaude') return 1
+  if (t === 'reserve_fonciere') return 2
+  if (t === 'a_creuser') return 3
+  if (t.startsWith('declasse')) return 4
+  return 5
+}
+
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
   all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
 }
@@ -188,9 +201,11 @@ export function ResultsSection() {
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
   // supporte nativement, A2) — pages de 200, « Charger plus » accumule. Tri `rang` = index top-N
   // (quasi-gratuit) ; les autres tris paginent aussi (coût croissant en profondeur, assumé).
+  // M55-H point 5 : en mode ANALYSE la liste se groupe par tier côté serveur (groupes=1) —
+  // le tri choisi s'applique DANS chaque groupe. Le mode factuel reste plat.
   const serverList = useInfiniteQuery({
-    queryKey: ['results', commune, filters, sort],
-    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam),
+    queryKey: ['results', commune, filters, sort, analyse],
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam, analyse),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: ile,
@@ -244,6 +259,12 @@ export function ResultsSection() {
       .filter((p) => matchAll(p, filters, zone))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
+        // M55-H point 5 : GROUPES d'abord (mode analyse), même ordre que le serveur
+        if (analyse) {
+          const ga = GROUPE_ORDER(a)
+          const gb = GROUPE_ORDER(b)
+          if (ga !== gb) return ga - gb
+        }
         // même sémantique que le serveur : rang P (copros/sans rang en queue), ×N, surface, commune
         if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
         if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)

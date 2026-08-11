@@ -140,9 +140,9 @@ export interface FiltreReponse {
   limit: number; offset: number; sort: string
 }
 /** Endpoint UNIFIÉ M45 (« théâtre ») : compte exact + ventilation tier + page en un appel. */
-export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0) => {
+export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0, groupes = false) => {
   const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
-  return j<FiltreReponse>(`/filtre?${qf({ limit, offset, sort, ...rest, ...tiersParam(f) })}`)
+  return j<FiltreReponse>(`/filtre?${qf({ limit, offset, sort, ...(groupes ? { groupes: 1 } : {}), ...rest, ...tiersParam(f) })}`)
 }
 /** M55-D stage 7 — COMPTE SEUL, annulable (AbortController) : le compteur vivant du panneau
  *  Filtres. Même construction que getFiltre (limit 0), jamais une estimation locale. */
@@ -201,8 +201,9 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
 // filtré et une liste qui ignore les filtres. `f` absent = univers par défaut (analyse active).
 export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((r) => r as unknown as Stats)
 // E3 (M12) : `offset` exposé — pagination « Charger plus ». La page vient de /filtre (mêmes facettes).
-export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0) =>
-  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset).then((r) => r.page)
+// M55-H point 5 : `groupes` = liste groupée par tier (mode analyse), tri secondaire dedans
+export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0, groupes = false) =>
+  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes).then((r) => r.page)
 /** Export CSV de la liste courante — M46 (Lot D) : EXACTEMENT les mêmes facettes + interrupteur
  *  que la liste/compteur (même construction que getFiltre : facettes hors tiers + tiersParam).
  *  Plus jamais un export qui ignore un filtre actif. */
