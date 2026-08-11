@@ -63,10 +63,9 @@ export const CLIENT = {
   //    le score est PRÉ-CALCULÉ (run servi versionné) ; pendant le décompte on APPLIQUE des
   //    critères, on ne « calcule » aucun score. Aucun mot ne doit prétendre le contraire. ──
   revelation: {
-    contexte: (n: number, date: string | null) =>
-      `${n.toLocaleString('fr-FR')} parcelles notées par LABUSE` +
-      (date ? ` — classement du ${date}` : ''),
-    contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
+    // M55-G suite point 5 : le bandeau « N parcelles notées par LABUSE — classement du … »
+    // (contexte/contexteSous) est SUPPRIMÉ — la date du classement vit dans la modale
+    // « comprendre le classement » (algo.dateRun).
     bouton: 'Analyser les parcelles',
     // M55-G point 2 (renommage Vic) : le mot reste VRAI — l'analyse RÉVÈLE un classement
     // pré-calculé (run servi versionné), elle ne calcule rien. « Révéler », pas « calculer ».
@@ -261,6 +260,8 @@ export const CLIENT = {
     bouton: 'Comprendre le classement',
     // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
     lien: 'comprendre le classement →',
+    // M55-G suite point 5 — la date du run servi vit ICI (le bandeau du panneau est supprimé)
+    dateRun: (d: string) => `Classement servi du ${d} — versionné, recalculé à chaque mise à jour majeure.`,
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
     // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi

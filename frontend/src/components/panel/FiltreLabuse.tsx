@@ -11,7 +11,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getV2Modele } from '../../lib/api'
+import { getFiltre, getFiltreCount } from '../../lib/api'
 import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
@@ -156,14 +156,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const [fresh, setFresh] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
   const timerRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
-  // date du run servi (champ `gel` du modèle épinglé) — la ligne de contexte de l'appel
-  const modele = useQuery({ queryKey: ['v2-modele'], queryFn: getV2Modele, staleTime: 3_600_000, retry: false })
-  const runDate = (() => {
-    const g = modele.data?.gel
-    if (!g) return null
-    const d = new Date(g.replace(' ', 'T'))
-    return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
-  })()
+  // M55-G suite point 5 : la requête v2-modele (date du run pour le bandeau) est partie avec
+  // le bandeau — la date du classement vit dans la modale « comprendre le classement ».
   // prefers-reduced-motion : décompte remplacé par une transition simple (courte)
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   const RITUEL_MS = reduced ? 400 : 3000
@@ -379,20 +373,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             )}
           </div>
         ) : !analyseOn ? (
-          /* ── 1. L'APPEL — contexte sobre + LE bouton chaud du panneau éteint ── */
+          /* ── 1. L'APPEL — LES deux boutons, sans bandeau (M55-G suite point 5 : le bloc
+             « N parcelles notées par LABUSE — classement du … · Classement versionné… » est
+             SUPPRIMÉ ; la date du classement vit dans la modale « comprendre le classement »). ── */
           <div data-appel>
-            {/* M55-D stage 8 : UN SEUL NOMBRE — bandeau, compteur et bouton dérivent tous de `live`
-                (le compteur du stage 7). Pendant le fetch, l'opacité baisse PARTOUT en même temps
-                (état de chargement partagé) — jamais un endroit à jour et l'autre en retard.
-                La DATE du classement, elle, ne dépend pas des filtres. */}
-            <p data-bandeau className={`text-[11.5px] leading-snug text-txt transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
-              {CLIENT.revelation.contexte(live ?? 431_663, runDate)}</p>
-            <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
             {/* M55-F point 3 / M55-G point 2 — DEUX choix : « Voir les N parcelles » (sobre,
                 « je cherche moi-même ») passe EN PREMIER ; le CTA d'analyse (mint dominant, le
-                rituel du stage 5, inchangé) second, renommé « Révéler les opportunités → ».
-                La carte ne bouge QU'AU geste (aucune repeinte pendant le réglage : verdict
-                reste false tant qu'aucun bouton n'est cliqué). */}
+                rituel du stage 5, inchangé) second. La carte ne bouge QU'AU geste (aucune
+                repeinte pendant le réglage : verdict reste false tant qu'aucun bouton n'est
+                cliqué). */}
             <button data-voir-factuel onClick={voirFactuel}
               className={`mt-2.5 w-full rounded-lg border border-line-2 py-1.5 text-[12px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
               {CLIENT.revelation.voirN(live ?? 431_663)}
