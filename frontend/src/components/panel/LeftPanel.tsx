@@ -139,14 +139,19 @@ function LayerInfoPill({ info }: { info: string }) {
 // PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée. Il se referme quand on clique
 // « Afficher l'analyse LABUSE » (bascule `verdict`), pour libérer la place. Plus d'auto-fermeture
 // 10 s. Ouvert, il POUSSE le contenu du dessous (flux flex : jamais de recouvrement).
-function LayersSection({ open, onToggle }: {
+// M55-K point 5 : `fill` — quand la section ouverte est le DERNIER contenu du panneau (ni accueil
+// ni résultats en dessous), elle occupe la hauteur restante (flex-1) et son tiroir remplit
+// (pas de plafond max-h) → plus de gros gap vide sous le contenu, le fond reste continu jusqu'en
+// bas. Sinon (accueil/résultats présents = eux flex-1), comportement plafonné inchangé.
+function LayersSection({ open, onToggle, fill }: {
   open: boolean
   onToggle: () => void
+  fill?: boolean
 }) {
   const { layers, toggleLayer } = useApp()
   const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
   return (
-    <div className="shrink-0 px-5 pt-4">
+    <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
       <button
         data-couches-toggle
         onClick={onToggle}
@@ -170,7 +175,7 @@ function LayersSection({ open, onToggle }: {
         // que les tooltips absolus (Tip, `w-max`) débordant du volet étroit y déclenchaient une
         // BARRE HORIZONTALE fantôme. `clip` sur x supprime la barre sans créer de conteneur de
         // défilement, le tooltip reste peint. Défaut identique corrigé partout (fiche/CRM/tri).
-        <div data-couches-drawer className="mt-3 max-h-[38vh] overflow-y-auto overflow-x-clip">
+        <div data-couches-drawer className={`mt-3 overflow-y-auto overflow-x-clip ${fill ? 'min-h-0 flex-1' : 'max-h-[38vh]'}`}>
           <div className="flex flex-col gap-0.5">
             {LAYERS.map(({ key, label }) => {
               const on = layers[key]
@@ -206,11 +211,11 @@ function LayersSection({ open, onToggle }: {
 // (Verdict / Surface / SDP, mêmes champs du store) + « Tous les filtres → » qui déplie le panneau
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
-function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle: () => void; onRetract?: () => void }) {
+function FiltresSection({ open, onToggle, onRetract, fill }: { open: boolean; onToggle: () => void; onRetract?: () => void; fill?: boolean }) {
   const { filters } = useApp()
   const n = countActiveFilters(filters)
   return (
-    <div className="shrink-0 px-5 pt-4">
+    <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
         title={open ? 'Section ouverte (une section reste toujours ouverte)' : 'Ouvrir les filtres — replie Couches'}>
@@ -225,7 +230,7 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
       {open && (
         // plafonné + scrollable (comme le tiroir Couches) : les deux étages du panneau sont hauts,
         // ils scrollent DANS la section au lieu de casser la colonne flex de l'aside.
-        <div data-filtres-drawer className="mt-3 max-h-[64vh] overflow-y-auto overflow-x-clip">
+        <div data-filtres-drawer className={`mt-3 overflow-y-auto overflow-x-clip ${fill ? 'min-h-0 flex-1' : 'max-h-[64vh]'}`}>
           {/* M55-D stage 8 : l'accroche chiffrée a disparu — UN SEUL nombre à l'écran, porté par
               le bandeau + compteur de FiltreLabuse (état partagé `live`). */}
           <FiltreLabuse onRetract={onRetract} />
@@ -375,6 +380,11 @@ export function LeftPanel() {
   const setPanneauSection = useApp((st) => st.setPanneauSection)
   const couchesOpen = panneauSection === 'couches'
   const filtresOpen = panneauSection === 'filtres'
+  // M55-K point 5 : `sectionFill` — quand rien ne suit les sections (ni accueil ni résultats),
+  // la section OUVERTE est le dernier contenu → elle remplit la hauteur (et le séparateur
+  // orphelin disparaît), fond continu jusqu'en bas. Sinon accueil/résultats (eux flex-1) filent.
+  const accueilVu = useApp((st) => st.accueilVu)
+  const sectionFill = accueilVu && !verdict
   const prevVerdict = useRef(verdict)
   useEffect(() => {
     // ═══ M55-J point 6 — TRANSITION DE L'AUTOMATE (explicite, à champ unique) ═══
@@ -418,9 +428,9 @@ export function LeftPanel() {
                 languette « › » quand le panneau est masqué. */}
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
-          <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
-          <div className="mx-5 my-3 shrink-0 border-t border-line" />
+          <LayersSection open={couchesOpen} onToggle={ouvrirCouches} fill={sectionFill} />
+          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} fill={sectionFill} />
+          {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
         </aside>
@@ -450,9 +460,9 @@ export function LeftPanel() {
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
-            <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
-            <div className="mx-5 my-3 shrink-0 border-t border-line" />
+            <LayersSection open={couchesOpen} onToggle={ouvrirCouches} fill={sectionFill} />
+            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} fill={sectionFill} />
+            {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
             {verdict && <ResultsSection />}
