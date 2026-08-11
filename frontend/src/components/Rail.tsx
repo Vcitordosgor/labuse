@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query'
+import { getEvents } from '../lib/api'
 import { useApp, type View } from '../store/useApp'
 import { GROUPS, MODULES } from './outils/registry'
 
@@ -94,6 +96,9 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
+  // DA §10 — pastille ambre sur « Veilles » S'IL Y A un événement. Lecture read-only qui
+  // PARTAGE le cache ['events'] de la cloche (aucun appel supplémentaire ; présentation pure).
+  const veilleEvent = (useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 }).data?.unread ?? 0) > 0
   // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
   // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
   // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
@@ -121,8 +126,8 @@ export function Rail() {
               aria-current={on ? 'page' : undefined}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-                  on ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+                className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+                  on ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
                 }`}
               >
                 <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
@@ -136,9 +141,11 @@ export function Rail() {
           {/* M54-EXPO-3 — « Veilles » : panneau des zones de veille géographiques (surimpression carte). */}
           <button data-rail-veilles onClick={() => toggleVeilles()} className="group flex w-full flex-col items-center gap-1"
             title="Mes veilles — zones de surveillance et alertes DVF">
-            <span className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-              veillesOpen ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+            <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+              veillesOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
+              {/* DA §10 — pastille ambre : un événement de veille non lu. */}
+              {veilleEvent && <span data-veille-event className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber ring-2 ring-surface-1" />}
             </span>
             <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Veilles</span>
           </button>
@@ -150,8 +157,8 @@ export function Rail() {
             title="Fraîcheur des données — sources et mises à jour"
           >
             <span
-              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-                view === 'sources' ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+                view === 'sources' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
               }`}
             >
               <svg viewBox="0 0 20 20" className="h-5 w-5">{SOURCES_ICON}</svg>

@@ -46,7 +46,9 @@
   .num-key { @apply font-display font-bold text-txt-hi; font-variant-numeric: tabular-nums; }
   .tnum { font-variant-numeric: tabular-nums; }
   .card-elev { @apply rounded-xl bg-surface-2 shadow-elev-1; }
-  .floating { @apply rounded-xl border border-line bg-surface-2 shadow-elev-2; }
+  /* DA §13/14/15 — flottants (sélecteur, menu compte, notifs) : surface --bg-3 +
+     --ombre-flottante (seule ombre autorisée). Un seul dessin pour tous. */
+  .floating { @apply rounded-xl border border-line-2 bg-bg-3 shadow-flottante; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

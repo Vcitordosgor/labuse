@@ -50,6 +50,8 @@ export function MapToolbar() {
 
   return (
     <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
+      {/* DA §11 — « Sombre » (fond de plan) et « 3D » ALIGNÉS sur une même ligne. */}
+      <div className="flex items-center gap-2">
       {/* fond de plan */}
       <div className="relative">
         <button
@@ -93,18 +95,16 @@ export function MapToolbar() {
         )}
       </div>
 
-      {/* relief 3D */}
+      {/* relief 3D — DA §11 : PAS d'icône sur « 3D » (aligné avec « Sombre »). */}
       <button
         onClick={toggleTerrain}
-        className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
+        className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
           terrain3d ? 'border-mint bg-surface-2 text-mint' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
         title="Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la vue"
       >
-        <svg viewBox="0 0 20 20" className="h-4 w-4">
-          <path d="M2.5 15.5 L8 6 L11.5 12 L14 8.5 L17.5 15.5 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
-        </svg>
         3D
       </button>
+      </div>
 
       {/* outils de mesure */}
       <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
