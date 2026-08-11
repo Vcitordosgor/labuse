@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
-import { SCORE_TIP, verdictMeta } from '../../lib/status'
+import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -208,36 +208,7 @@ function Line({ line }: { line: FicheLine }) {
 
 // Barre de sous-score dépliable (exigence #2 : DEUX barres, Q et A, vers leurs lignes tracées).
 // Item 7 (UX V1) : `tip` = la définition du score au survol (Q et A ne restent jamais des sigles).
-function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
-  label: string; value: number; color: string; lines: FicheLine[]; defaultOpen?: boolean; tip?: string
-}) {
-  const [open, setOpen] = useState(!!defaultOpen)
-  const weighted = lines.filter((l) => l.weight != null && l.weight !== 0).sort((a, b) => Math.abs(b.weight!) - Math.abs(a.weight!))
-  return (
-    <div className="card-elev">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title={`${label} : déplier les signaux`}>
-        {tip ? (
-          <Tip tip={tip} className="w-24 shrink-0">
-            <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">{label}</span>
-          </Tip>
-        ) : (
-          <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
-        )}
-        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
-        </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{value}</span>
-        <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
-      </button>
-      {open && (
-        <div className="border-t border-line-2 px-3 py-1">
-          {weighted.length ? weighted.map((l, i) => <Line key={i} line={l} />) : <p className="py-2 text-[11px] text-txt-dim">Aucun signal chiffré — tout est neutre ou inconnu.</p>}
-        </div>
-      )}
-    </div>
-  )
-}
+// M55-O phase 2.2 : composant ScoreBar retiré (0-caller après retrait des jauges Qualité/Accessibilité).
 
 // ALGO-1 item 2 — le bloc « Signaux vendeur » (Score V agrégé 0-100 + bandes) est RETIRÉ de l'affichage : le backtest M3.6 le mesure CONTRE-prédictif pour la mutation (RR@1158 = 0,51 < 1, SCORING_SPEC §7-D). Le CALCUL reste en base (parcel_v_score, backtest) ; les signaux propriétaires FACTUELS restent servis par le tiroir Propriétaire (lines cascade), les chips verdict et le filtre « signaux propriétaire » du Header.
 const ICD_COLORS: Record<string, string> = { haute: '#4ADE96', partielle: '#9AA6A0', faible: '#F5A524', inconnu: '#9AA6A0' }
@@ -1187,8 +1158,6 @@ export function Fiche({ idu }: { idu: string }) {
     ...(!f.adresse ? [{ quoi: 'Adresse postale', pourquoi: 'parcelle non rattachée à une voie (BAN)' }] : []),
     ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
   ] : []
-  const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
-  const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
   // M19 · valeurs fermées des tiroirs d'onglets (P1.3) — dérivées des données DÉJÀ chargées,
   // aucun nouveau calcul ni requête. Risques : le NÉGATIF est AFFIRMÉ (« ✓ rien à signaler ·
@@ -1671,7 +1640,10 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
-                <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
+                {/* M55-O phase 2.2 — la jauge « Qualité » (q_score) est RETIRÉE de la fiche : mesurée
+                    non discriminante en M55-N (82,5 % à la base neutre 50). Seule « Confiance données »
+                    (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
+                    ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
@@ -1729,7 +1701,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
             <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
               <div className="flex flex-col gap-3">
-                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
+                {/* M55-O phase 2.2 — la jauge « Accessibilité » (a_score) est RETIRÉE de la fiche
+                    (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
+                    a_score intact (consommé ailleurs). */}
                 <EquipementsBadges idu={idu} />
                 {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
                   <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
@@ -1954,7 +1928,9 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* Confiance données (ICD) + score P « pourquoi ». */}
                 {f.icd && <IcdBlockView icd={f.icd} />}
                 <ScoreV2Block idu={idu} />
-                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
+                {/* M55-O phase 2.2 — le bloc « Signaux additionnels » (f.flags) est SUPPRIMÉ : ce sont
+                    des redites des tiroirs dédiés (ABF → Risques, bâti/SDP → Constructibilité, PPR →
+                    Risques). Chaque information n'apparaît qu'une fois. */}
                 <SignalerErreur idu={idu} />
               </div>
             </RefDrawer>
