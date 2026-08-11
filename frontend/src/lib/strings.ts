@@ -13,6 +13,8 @@ export const CLIENT = {
   //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
   signaux: {
     labels: {
+      // M55-G point 11 : nouveau signal LARGE — toutes les parcelles de sociétés privées
+      pm_privee: 'Détenu par une société',
       procedure: 'Procédure collective',
       permis_actif: 'Permis actif',
       permis_caduc: 'Permis abandonné',
@@ -22,7 +24,10 @@ export const CLIENT = {
       cession: 'Cession de fonds',
       assemblage: 'Assemblage même proprio',
     } as Record<string, string>,
+    // M55-G point 11 : le lien qui révèle les signaux de niche (niveau 2)
+    plus: 'Plus de signaux',
     infos: {
+      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
       procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
@@ -67,12 +72,10 @@ export const CLIENT = {
       (date ? ` — classement du ${date}` : ''),
     contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
     bouton: 'Analyser les parcelles',
-    // M55-D stage 7 : bouton CONTEXTUEL — N = le compteur vivant (réponse /filtre réelle) ;
-    // zéro filtre posé → le parc du périmètre.
-    // M55-D stage 8 : avec des filtres posés le bouton renvoie au nombre affiché juste au-dessus
-    // (compteur + bandeau, MÊME état) — « les », pas un second chiffre qui pourrait diverger.
-    boutonFaire: 'Les faire analyser par LABUSE →',
-    boutonParc: (n: number) => `Analyser les ${n.toLocaleString('fr-FR')} parcelles`,
+    // M55-G point 2 (renommage Vic) : le mot reste VRAI — l'analyse RÉVÈLE un classement
+    // pré-calculé (run servi versionné), elle ne calcule rien. « Révéler », pas « calculer ».
+    // (boutonParc retiré : 0-caller depuis le stage 8.)
+    boutonFaire: 'Révéler les opportunités →',
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
@@ -137,9 +140,11 @@ export const CLIENT = {
     // le nombre nu (×13.1) ne s'affiche jamais sans cette unité de sens
     unite: 'plus probable',
     // infobulle carte (le détail, pas le sens de base)
+    // M55-G point 6 : « Plafond ×64 = certitude maximale » était FAUX — aucun plafond codé,
+    // ×64 est le sommet MESURÉ du run servi (3 parcelles). Même correction que la modale.
     tip: (n: string) =>
       `Cette parcelle est classée ${n} fois plus haut que la moyenne du parc analysé. ` +
-      `Plafond ×64 = certitude maximale du modèle.`,
+      `La tête du classement culmine à ×64 — un sommet mesuré, pas un plafond du modèle.`,
     absent: 'Classement non disponible',
   },
 
@@ -255,34 +260,43 @@ export const CLIENT = {
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
     bouton: 'Comprendre le classement',
+    // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
+    lien: 'comprendre le classement →',
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
-    // trame de contenu — écrite pour un client, VALIDÉE par Vic avant prod
+    // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi
+    // q_v8_calibre (12/08/2026, preuves au rapport M55-G) :
+    //  · entraînement : ventes réelles 2023, vérifié sur 2024 (train.py m3-p-model, FREEZE.json) ;
+    //  · signaux appris (features.py) : âge de détention (tenure_bin), permis (permis_bin), état
+    //    du bâti (friche/végétation/emprise), contraintes PLU, marché du secteur (DVF) — les
+    //    anciens « procédures / succession / dirigeant » sont des signaux du Score V, PAS des
+    //    features du modèle P → retirés (« dirigeant » : avis avocat P2-34 en attente, jamais
+    //    dans la liste publique) ; « divisions / changements d'usage » non encodés → retirés ;
+    //  · ×N : AUCUN plafond codé — max MESURÉ ×64,36 (3 parcelles / 431 663), un sommet, pas un cap.
     corps: [
       {
-        h: 'Ce que le classement mesure',
-        p: 'Une seule chose : la probabilité qu’une parcelle CHANGE DE MAIN ou de destination ' +
-          'à court terme. Pas la valeur du terrain, pas la constructibilité — la mutabilité. ' +
-          'Le n°1 est la parcelle la plus susceptible de bouger, pas forcément la plus chère.',
+        h: 'Ce que mesure le classement',
+        p: 'Une seule chose : la probabilité qu’une parcelle change de main à court terme. ' +
+          'Pas sa valeur, pas sa beauté — sa mutabilité.',
       },
       {
-        h: 'Sur quoi il est entraîné',
-        p: 'Sur l’historique réel des mutations foncières de La Réunion (ventes, divisions, ' +
-          'changements d’usage) croisé avec des signaux publics : âge de détention, procédures, ' +
-          'succession, dirigeant, état du bâti, contraintes PLU. Le modèle apprend les motifs ' +
-          'qui ont précédé les mutations passées, puis les cherche sur les parcelles d’aujourd’hui.',
+        h: 'Comment',
+        p: 'Le modèle a appris sur les ventes réelles de La Réunion (année 2023, vérifié sur ' +
+          'les ventes 2024) : il a repéré les motifs qui précèdent une vente (âge de détention, ' +
+          'permis, état du bâti, marché du secteur, règles PLU…) et les cherche sur les ' +
+          'parcelles d’aujourd’hui.',
       },
       {
         h: 'Le « ×N »',
-        p: 'Une parcelle « ×13 » est jugée 13 fois plus susceptible d’être vendue que la moyenne. ' +
-          'Le plafond est ×64 : une poignée de parcelles atteignent la certitude maximale du ' +
-          'modèle et partagent donc ce même score de tête.',
+        p: '×13 = 13 fois plus de chances de se vendre qu’une parcelle moyenne. La tête du ' +
+          'classement culmine à ×64 — trois parcelles sur toute l’île : un sommet mesuré, ' +
+          'pas un plafond fixé par le modèle.',
       },
       {
-        h: 'Ce qu’il ne dit PAS',
-        p: 'Il ne dit pas que le propriétaire VEUT vendre, ni à quel prix, ni si l’opération est ' +
-          'rentable. Il trie 431 663 parcelles pour vous dire lesquelles regarder en premier. ' +
-          'La décision, la négociation et le montage restent votre métier.',
+        h: 'Ce qu’il ne dit pas',
+        p: 'Ni que le propriétaire veut vendre, ni le prix, ni la rentabilité. Il trie ' +
+          '431 663 parcelles pour dire lesquelles regarder en premier — la décision reste ' +
+          'votre métier.',
       },
     ] as { h: string; p: string }[],
   },

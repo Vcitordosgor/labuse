@@ -188,6 +188,28 @@ interface Measure {
   alti: { pt: LngLat; z: number } | null
 }
 
+// M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
+// retour — un feedback d'APPUI, pas un état. Les bascules à état (3D, fond, outils) gardent
+// leur état persistant comme feedback ; ce patron est pour les boutons sans état.
+function BoutonCarte({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
+  const [flash, setFlash] = useState(false)
+  const timer = useRef<number | null>(null)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  const press = () => {
+    onClick()
+    setFlash(true)
+    if (timer.current) window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setFlash(false), 180)
+  }
+  return (
+    <button onClick={press} title={title}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border shadow-elev-1 transition-colors duration-quick ${
+        flash ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}>
+      {children}
+    </button>
+  )
+}
+
 export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
@@ -195,6 +217,11 @@ export function MapView() {
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
   const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module } = useApp()
   const ile = commune == null
+  // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
+  // Les couleurs d'OPINION (palette tiers, lisérés promues/brûlantes, marqueurs « chauds »)
+  // n'apparaissent qu'en mode ANALYSE, ou si la couche « Verdict » est cochée explicitement.
+  // Le tri factuel (verdict=true, analyse OFF) peint une surbrillance NEUTRE.
+  const opinion = (verdict && filters.analyseLabuse) || layers.couleurs_verdict
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
   const [measure, setMeasure] = useState<Measure>({ pts: [], alti: null })
@@ -252,6 +279,28 @@ export function MapView() {
   // toutes les parcelles par famille ET porte l'étiquette (zoom) + le popup (clic).
   const zonageColor = layers.zonage_parcelle
   const zonageFill = zonageColor && (!ile || tilesMeta.data?.zonage_parcelle === true)
+
+  // M55-G point 10 — publier au store ce que la carte PEINT réellement (la légende ne décrit
+  // jamais des couleurs absentes de l'écran) : parcelles = couche active ET zoom où elles se
+  // colorent (île : z ≥ 10, le seuil du bandeau « Zoomez ou cliquez une commune ») ;
+  // équipements = couche active ET z ≥ 12 (leur minzoom de rendu) ; zonage = remplissage
+  // par famille effectivement appliqué (zonageFill).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const upd = () => {
+      const z = m.getZoom()
+      const parcVis = layers.parcelles && (!ile || z >= 10)
+      useApp.getState().setMapPeint({
+        parcelles: parcVis,
+        equipements: layers.equipements && z >= 12,
+        zonage: zonageFill && parcVis,
+      })
+    }
+    upd()
+    m.on('zoom', upd)
+    return () => { m.off('zoom', upd) }
+  }, [ile, layers.parcelles, layers.equipements, zonageFill, mapReady])
 
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
@@ -590,11 +639,12 @@ export function MapView() {
     }
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
-    if (m.getLayer('parcels-fill') && !zonageFill) {
+    // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
+    if (m.getLayer('parcels-fill') && !zonageFill && opinion) {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
       m.setPaintProperty('ile-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, filters.tiers, mapReady, ile, lowZoom, zonageFill])
+  }, [basemap, orthoYear, filters.tiers, mapReady, ile, lowZoom, zonageFill, opinion])
 
   useEffect(() => {
     const m = map.current
@@ -651,23 +701,28 @@ export function MapView() {
       if (zonageFill) {
         m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', ZONE_FAM_OPACITY)
-      } else if (!verdict) {
+      } else if (opinion) {
+        m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
+        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
+      } else if (verdict) {
+        // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
+        // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
+        m.setPaintProperty(fill, 'fill-color', '#8FA69A')
+        m.setPaintProperty(fill, 'fill-opacity', 0.42)
+      } else {
         // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur
         m.setPaintProperty(fill, 'fill-color', '#22302A')
         m.setPaintProperty(fill, 'fill-opacity', 0.28)
-      } else {
-        m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
       }
     }
-    // liseré des promues : uniquement verdict allumé
-    m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile && verdict))
-    m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
+    // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée
+    m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile && opinion))
+    m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && opinion))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    // M5.1 : liseré brûlantes v2 — verdict allumé, mode commune (M55-F : pastille #rang retirée)
-    if (m.getLayer('parcels-brulantes')) m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && verdict))
-  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill, module])
+    // M5.1 : liseré brûlantes v2 — opinion allumée, mode commune (M55-F : pastille #rang retirée)
+    if (m.getLayer('parcels-brulantes')) m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))
+  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
@@ -706,20 +761,20 @@ export function MapView() {
     }
     for (const c of communes.data) {
       if (!c.bbox || c.bbox[0] == null) continue
-      const hot = verdict && c.chaudes > 0   // R1 : sans verdict, les marqueurs restent NEUTRES
+      const hot = opinion && c.chaudes > 0   // R1/M55-G p8 : sans OPINION affichée, marqueurs NEUTRES
       const el = document.createElement('button')
       el.setAttribute('data-commune-marker', c.commune)
       // P8 (dernière passe) : le marqueur mène à la FICHE COMMUNE (contexte), plus « N chaudes »
       // en évidence ; le nombre de chaudes reste en INFO secondaire (survol).
       // M36 Lot A : depuis M35 `c.chaudes` = TIERS du run servi (brûlantes + chaudes) — l'ancienne
       // étiquette « (matrice Q×A) » était devenue FAUSSE. L'échelle thermique est la bonne (R3).
-      el.title = verdict && c.chaudes > 0
+      el.title = hot
         ? `${c.commune} — ${c.chaudes} parcelles brûlantes ou chaudes au classement servi · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
       const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
       // A2 (post-revue) : le libellé renvoie à la FICHE COMMUNE (plus de compteur de chaudes visible)
       el.innerHTML = `<span>${name}</span><span style="opacity:.6;font-size:.82em"> · Fiche commune</span>`
-      const size = Math.min(13, 10 + (verdict ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
+      const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
         `display:inline-flex;align-items:center;gap:4px;` +
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
@@ -736,7 +791,7 @@ export function MapView() {
     updateVis()
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
-  }, [ile, communes.data, mapReady, verdict])
+  }, [ile, communes.data, mapReady, opinion])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {
@@ -930,11 +985,10 @@ export function MapView() {
       <div ref={ref} className="absolute inset-0 h-full w-full" />
       <div className="absolute left-4 top-4 flex flex-col gap-2">
         {(['+', '−'] as const).map((s) => (
-          <button key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 bg-surface-2 text-txt shadow-elev-1 transition-colors duration-quick hover:text-txt-hi"
+          <BoutonCarte key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
             title={s === '+' ? 'Zoomer' : 'Dézoomer'}>
             {s}
-          </button>
+          </BoutonCarte>
         ))}
       </div>
       <MapToolbar />

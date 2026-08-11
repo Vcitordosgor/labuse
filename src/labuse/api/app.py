@@ -920,6 +920,11 @@ def _q_v2_where(run_label: str, score_min: int | None,
             "nu_pm": ("EXISTS (SELECT 1 FROM parcel_residuel rnu JOIN parcelle_personne_morale pmn "
                       "ON pmn.idu = p.idu AND pmn.groupe = 0 "
                       "WHERE rnu.parcel_id = p.id AND rnu.taux_emprise_pct < 5)"),
+            # M55-G point 11 (décision Vic) : signal LARGE — parcelle détenue par une société
+            # PRIVÉE (groupe MAJIC 0, même arbitrage que nu_pm), nu ET bâti confondus.
+            # Volumétrie mesurée 12/08/2026 : 33 622 île / 7 460 servables (< plafond 100k).
+            "pm_privee": ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmt "
+                          "WHERE pmt.idu = p.idu AND pmt.groupe = 0)"),
             "friche": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv2 "
                        "WHERE sv2.idu = p.idu AND sv2.signal = 'friche')"),
             # cession de fonds < 24 mois (arbitrage Vic)
