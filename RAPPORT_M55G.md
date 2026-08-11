@@ -165,3 +165,79 @@ Front + mesures, PLUS l'entrée `_SIG_SQL.pm_privee` dans `src/labuse/api/app.py
 (explicitement demandée par le point 11 — « nouveau signal à créer ») ; aucun nouvel
 endpoint, aucun changement moteur/scoring. CC ne merge jamais — branche `feat/m55-g` en
 attente de Vic.
+
+---
+
+# SUITE — Ajustements Vic (11/08, sur captures) · livrés le 12/08
+
+**Même branche `feat/m55-g`, 8 commits (un par point)** (`5f5cd61a` → `4492a58c`).
+Captures : `reports/m55-g/captures/suite/`.
+
+## 1. Carte raccordée à la liste — MESURÉ puis corrigé
+**Mesure** : le filtre carte n'encodait que le sous-ensemble « client » (communes, tiers,
+surface, SDP min, événement, veille, copro) — signaux de vie, état du sol, constructibilité,
+propriété, économie… étaient IGNORÉS par la carte. Repro : Salazie + Procédure collective →
+liste 1 parcelle, carte = toute la commune en palette (filtre observé : communes seul).
+**Fix** : `/filtre` gagne `idus=1` (les IDU du résultat, mêmes critères, plafond 20 000 +
+drapeau tronqué — pas un nouvel endpoint) ; quand un critère hors-tuiles est actif en mode
+analyse, la carte restreint la palette (remplissage + lisérés promues/brûlantes) aux IDU du
+résultat, le reste passe en TRAME NEUTRE (nouvelles couches base). Au-delà du plafond :
+repli sur l'expression + toast (no-silent-caps). La couche Couches devient « **Verdict —
+toute l'île (indépendant des filtres)** » et peint tout le classement quand cochée.
+**Test exigé** : Salazie + procédure → liste N = 1, parcelles peintes = 1, filtre carte
+`in idu [97421000AV1151]`, trame neutre visible. ✓
+
+## 2. TRIER une ligne
+« Opportunités · Mutation · Surface » — les libellés longs (« Meilleures opportunités »,
+« Plus susceptibles de se vendre ») vivent dans le « i » et les tooltips des pills.
+
+## 3. Post-analyse : les deux boutons, rien d'autre
+Tout le contenu de l'état allumé retiré (chips verdict/tiers, motifs, constructibilité,
+potentiel, SDP, capacité, veille, copros, notes — composants BoolChip/Section et constante
+CONSTRUCTIBILITE devenus 0-caller, supprimés). Restent « Relancer l'analyse » et
+« désactiver l'analyse ». Conséquence actée : le filtrage par tier post-analyse quitte ce
+panneau ; les champs gardent leurs clés URL (vieux liens compatibles). Sonde DOM : Relancer
+présent, chips absentes, phrase absente. ✓
+
+## 4. Signaux : un seul niveau, 7 signaux
+Détenu par une société · Procédure collective · Permis actif · Permis abandonné · Friche
+recensée · Assemblage même proprio · Sortie de défisc. « Plus de signaux » et le niveau 2
+retirés ; « Nu détenu par société » et « Cession de fonds » SUPPRIMÉS de l'UI (labels/infos
+0-caller). Clés URL : `SIGNAUX_VALIDES` dans filters.ts — un vieux lien
+`sv=nu_pm,cession,procedure` s'ouvre sans erreur et compte 207 (= procédure seule dans
+l'univers d'analyse ; si les clés supprimées passaient encore : 2 759). Backend intact
+(`_SIG_SQL` conserve nu_pm/cession).
+
+## 5. Bandeau « notées par LABUSE » supprimé
+Bloc contexte + sous-ligne retirés (chaînes 0-caller supprimées). La date du run servi
+n'était en réalité PAS encore dans la modale — elle y est maintenant (pied de modale :
+« Classement servi du 12/07/2026 — versionné… », champ `gel` du modèle épinglé, ligne
+absente si indisponible) : l'affirmation du mandat est rendue vraie, rien n'est perdu.
+
+## 6. CTA : « Demander à LABUSE → » (remplace « Révéler les opportunités → » du point 2).
+
+## 7. Sous-titres de sections retirés
+Communes, Le terrain, Signaux de vie (+ le sous-texte du label Zonage) — les explications
+vivent dans des « i » au titre (patron TitreSection, mêmes pastilles que les signaux).
+
+## 8. Tri Surface + adresses — MESURÉ
+- Tri Surface : fonctionne (1ʳᵉ = 28 174 868 m², Saint-Philippe). Pas d'inversion au second
+  clic (le serveur sert un sens par clé) → le SENS est affiché sur la pill active
+  (« Surface ↓ », « Mutation ↓ » ; Opportunités = n°1 d'abord, dit par le tip).
+- Adresses : **aucune jointure cassée**. La BAN couvre **227 545 parcelles / 431 663
+  (52,7 %)** — le « 99,99 % » de la page Sources est le taux de rattachement des ADRESSES
+  (339 941 adresses → toutes rattachées), pas la couverture des parcelles : la moitié de
+  l'île (naturel, agricole, ravines) n'a pas d'adresse postale, c'est la réalité BAN.
+  Le tri Surface remonte précisément les grandes parcelles naturelles → 198/200 sans
+  adresse en tête de liste (vérifié en base : 0 adresse BAN pour les 6 premières), contre
+  97/200 au tri rang (≈ la couverture globale). « Adresse non disponible » est donc VRAI.
+- Référence courte conservée en affichage principal ; l'**IDU complet** est au survol de la
+  référence (title) sur les deux variantes de carte, et en fiche.
+
+## Non-régression (suite)
+5 combinaisons /filtre STRICTEMENT identiques (mêmes chiffres qu'au rapport initial) ·
+rituel mesuré 3 332 ms · un seul récit de nombres préservé · mode factuel P8 préservé
+(liste neutre, Surface seul, carte neutre) · vieux liens vérifiés (sv= supprimées ignorées,
+compteur exact) · tsc 0 · vitest 32/32 · build vert · mobile vérifié · les deux « 404 »
+console de la session de capture sont des tuiles océan IGN (déjà avalées par la carte),
+non reproduites au chargement.
