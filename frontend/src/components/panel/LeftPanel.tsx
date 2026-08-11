@@ -253,16 +253,14 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const d = q.data
   const nf = (n: number) => n.toLocaleString('fr-FR')
   const A = CLIENT.accueil
-  const Seg = ({ n, l, src }: { n: number | null | undefined; l: (s: string) => string; src: string }) => (
-    n == null ? null : (
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
-        <span className="font-medium text-txt tabular-nums">{l(nf(n))}</span>
-        <Tip side="top" tip={src} className="shrink-0">
-          <span role="button" tabIndex={0} aria-label="Source de ce chiffre"
-            className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-        </Tip>
-      </span>
-    )
+  // M55-J point 3 (décision Vic) : les trois « i » (parcelles / communes / sources) sont RETIRÉS.
+  // Garde-fou fait : aucune des trois infobulles ne portait de réserve d'honnêteté (millésime,
+  // « partiel », estimation) — c'étaient une paraphrase du chiffre (parcelles), une couverture
+  // POSITIVE + source DGFiP (communes) et un pointeur vers la page Sources (sources). Le sourcing
+  // détaillé (DEAL, DGFiP, INSEE, BODACC, Sitadel…) vit déjà sur la page Sources (accessible au
+  // Rail). Suppression franche ; les chaînes CLIENT.accueil.src deviennent 0-caller.
+  const Seg = ({ n, l }: { n: number | null | undefined; l: (s: string) => string }) => (
+    n == null ? null : <span className="font-medium text-txt tabular-nums whitespace-nowrap">{l(nf(n))}</span>
   )
   // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` +
   // `overflow-y-auto` CLIPPE le haut du contenu qui déborde (bug flexbox connu : le débordement
@@ -289,11 +287,11 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         </button>
         <h3 className="mt-8 font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
         <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
-          <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
+          <Seg n={d?.parcelles} l={A.segParcelles} />
           <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
+          <Seg n={d?.communes} l={A.segCommunes} />
           <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
+          <Seg n={d?.sources} l={A.segSources} />
         </p>
         <p className="mt-3 max-w-[32ch] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
       </div>

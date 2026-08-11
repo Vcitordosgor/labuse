@@ -46,11 +46,8 @@ export const CLIENT = {
     segCommunes: (n: string) => `${n} communes`,
     segSources: (n: string) => `${n} sources publiques branchées`,
     b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
-    src: {
-      parcelles: 'Compte exact du classement servi, recalculé à chaque mise à jour majeure.',
-      communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
-      sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
-    },
+    // M55-J point 3 : les 3 infobulles « i » (accueil.src) sont RETIRÉES — aucune ne portait de
+    // réserve d'honnêteté ; le sourcing détaillé vit sur la page Sources. Chaînes supprimées.
     commencer: 'Commencer →',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
