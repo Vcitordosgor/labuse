@@ -13,6 +13,8 @@ export const CLIENT = {
   //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
   signaux: {
     labels: {
+      // M55-G point 11 : nouveau signal LARGE — toutes les parcelles de sociétés privées
+      pm_privee: 'Détenu par une société',
       procedure: 'Procédure collective',
       permis_actif: 'Permis actif',
       permis_caduc: 'Permis abandonné',
@@ -22,7 +24,10 @@ export const CLIENT = {
       cession: 'Cession de fonds',
       assemblage: 'Assemblage même proprio',
     } as Record<string, string>,
+    // M55-G point 11 : le lien qui révèle les signaux de niche (niveau 2)
+    plus: 'Plus de signaux',
     infos: {
+      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
       procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',

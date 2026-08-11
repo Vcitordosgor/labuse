@@ -46,9 +46,12 @@ const CP_COMMUNES: [string, string][] = [
   ['97441', 'Sainte-Suzanne'], ['97442', 'Saint-Philippe'], ['97450', 'Saint-Louis'],
   ['97460', 'Saint-Paul'], ['97470', 'Saint-Benoît'], ['97480', 'Saint-Joseph'],
 ]
-//: clés du groupe Signaux de vie (8 validés Vic) — libellés/« i » dans strings (CLIENT.signaux)
-const SIGNAUX_KEYS = ['procedure', 'permis_actif', 'permis_caduc', 'defisc',
-  'nu_pm', 'friche', 'cession', 'assemblage']
+// M55-G point 11 (décision Vic) — DEUX niveaux : les signaux LARGES devant (ceux qui parlent
+// à tout le monde — dont le nouveau « Détenu par une société », 33 622 île / 7 460 servables,
+// mesuré 12/08), les NICHES derrière « Plus de signaux ⌄ ». Libellés/« i » : CLIENT.signaux.
+// Le OU de groupe et la persistance URL (sv=) sont inchangés — mêmes clés, même schéma.
+const SIGNAUX_LARGES = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc', 'friche']
+const SIGNAUX_NICHES = ['nu_pm', 'defisc', 'cession', 'assemblage']
 
 
 const nf = new Intl.NumberFormat('fr-FR')
@@ -75,6 +78,24 @@ function ChipGroup({ field, options }: { field: keyof Filters; options: { k: str
     <div className="mt-1 flex flex-wrap gap-1.5">
       {options.map((o) => <Chip key={o.k} on={sel.includes(o.k)} onClick={() => toggle(o.k)}>{o.l}</Chip>)}
     </div>
+  )
+}
+
+// M55-G point 11 : chip + « i » d'un signal de vie — partagé entre larges et niches
+function SignalChip({ k }: { k: string }) {
+  const { filters, setFilter } = useApp()
+  return (
+    <span className="flex items-center gap-1">
+      <Chip on={filters.signaux.includes(k)}
+        onClick={() => setFilter('signaux', (filters.signaux.includes(k)
+          ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)}>
+        {CLIENT.signaux.labels[k]}
+      </Chip>
+      <Tip side="top" tip={CLIENT.signaux.infos[k]}>
+        <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
+          className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+      </Tip>
+    </span>
   )
 }
 
@@ -137,6 +158,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // TOUJOURS la réponse /filtre réelle (état courant de l'interrupteur), jamais une estimation.
   // Registre DISCRET — le rituel 3 s de la Révélation reste la cérémonie, intacte.
   const nActifs = countActiveFilters(filters)
+  // M55-G point 11 : niveau 2 des signaux — replié par défaut, mais OUVERT si une niche est
+  // déjà active (restauration URL : jamais un filtre actif invisible).
+  const [nichesOuvertes, setNichesOuvertes] = useState(
+    () => filters.signaux.some((k) => SIGNAUX_NICHES.includes(k)))
   const [live, setLive] = useState<number | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   useEffect(() => {
@@ -288,26 +313,25 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
           ignorées proprement à la lecture (filters.ts). */}
 
-      {/* ═══════ 3 · SIGNAUX DE VIE (M55-D stage 6) — 8 ÉVÉNEMENTS SOURCÉS, filtrables SANS
-          analyse (pas des jugements). OU entre signaux du groupe, ET avec le reste. ═══════ */}
+      {/* ═══════ 3 · SIGNAUX DE VIE (M55-D stage 6 · M55-G point 11) — ÉVÉNEMENTS SOURCÉS,
+          filtrables SANS analyse (pas des jugements). OU entre signaux du groupe, ET avec le
+          reste. Deux niveaux : LARGES visibles, NICHES derrière « Plus de signaux ⌄ ». ═══════ */}
       <div data-signaux-vie className="mt-4">
         <p className="label-caps text-txt-mut">3 · Signaux de vie
           <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">événements sourcés — cumulables</span></p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {SIGNAUX_KEYS.map((k) => (
-            <span key={k} className="flex items-center gap-1">
-              <Chip on={filters.signaux.includes(k)}
-                onClick={() => setFilter('signaux', (filters.signaux.includes(k)
-                  ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)}>
-                {CLIENT.signaux.labels[k]}
-              </Chip>
-              <Tip side="top" tip={CLIENT.signaux.infos[k]}>
-                <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
-                  className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-              </Tip>
-            </span>
-          ))}
+          {SIGNAUX_LARGES.map((k) => <SignalChip key={k} k={k} />)}
         </div>
+        <button data-signaux-plus onClick={() => setNichesOuvertes((o) => !o)}
+          aria-expanded={nichesOuvertes}
+          className="mt-1.5 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
+          {CLIENT.signaux.plus} <span className={`inline-block transition-transform duration-quick ${nichesOuvertes ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
+        </button>
+        {nichesOuvertes && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {SIGNAUX_NICHES.map((k) => <SignalChip key={k} k={k} />)}
+          </div>
+        )}
       </div>
 
       {/* ═══════ COMPTEUR VIVANT (stage 7) — visible dès qu'un filtre est posé ═══════ */}
