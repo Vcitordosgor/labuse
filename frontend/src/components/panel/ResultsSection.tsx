@@ -303,19 +303,22 @@ export function ResultsSection() {
         {/* QA-46 (M13-C) : la barre de tri S'EMPILE (flex-wrap) au lieu de déborder — les 4 options
             de tri ne tiennent pas sur la largeur du volet (~300 px) et étaient rognées. Le libellé
             « Trier » et le contrôle segmenté passent à la ligne, le pilule wrappe ses boutons. */}
+        {/* M55-G point 3 — segmented control PRO : pills nettes (rayon suivi conteneur/bouton),
+            padding constant px-3/py-1, état actif FRANC (rempli mint, texte encre — plus le
+            mint/15 flottant), « i » aligné sur la ligne de base du libellé TRIER. */}
         <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="flex shrink-0 items-center gap-1 text-[10px] uppercase tracking-wide text-txt-dim">Trier
+          <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
             <Tip side="top" tip={CLIENT.tri.lunettes}>
               <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
-                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
           </span>
-          {/* B3 : espacement régulier entre les 4 options (gap-1 + px-2.5 uniformes) */}
-          <div className="flex flex-wrap items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
+          <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
             {SORTS.map((s) => (
               <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
-                className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
+                className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
+                  sort === s.key ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
                 title={s.tip}>
                 {s.label}
               </button>
