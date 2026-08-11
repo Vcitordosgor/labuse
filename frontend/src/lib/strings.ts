@@ -273,8 +273,10 @@ export const CLIENT = {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
     // M55-J point 5 : DEUX entrées jumelles dans le bandeau — le classement (méthode) et le
     // scoring (sens des paliers), chacune sa modale. Le lien isolé du bas des résultats disparaît.
-    bouton: 'Comprendre le classement',
-    boutonScoring: 'Comprendre le scoring',
+    // M55-K point 2 : libellés COURTS (« Info … ») pour que les deux tiennent côte à côte sur
+    // UNE ligne, même à la largeur de panneau la plus étroite. Destinations inchangées.
+    bouton: 'Info classement',
+    boutonScoring: 'Info scoring',
     // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
     // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],

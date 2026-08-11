@@ -131,19 +131,11 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
 // votre place. L'ancien « pourquoi ? » (entonnoir par motif) est retiré ; les motifs de
 // déclassement restent accessibles par les chips « Potentiel épuisé · motif » et chaque écartée
 // garde son motif en fiche.
-// M55-J point 5 : le lien isolé « comprendre le scoring → » du bas DISPARAÎT — les deux
-// entrées (classement + scoring) vivent désormais côte à côte dans le bandeau de l'analyse
-// (VerdictHero). Constat : cette ligne n'est pas en fin de listing long (elle est en tête du
-// bloc résultats, juste sous la ventilation) — elle ne rendait donc pas le service « visibilité
-// en fin de liste » que le bandeau ne rendrait pas ; le déplacer ne perd rien.
-function LigneClassement({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
-  return (
-    <p className="mt-2 shrink-0 text-[11px] text-txt-dim"
-      title="Opportunités détectées = brûlantes + chaudes (hors exclusions dures)">
-      <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
-    </p>
-  )
-}
+// M55-K point 1 : la ligne de synthèse « N parcelles analysées → M opportunités détectées ·
+// filtres appliqués » (ex-LigneClassement) est RETIRÉE — entièrement dérivable de la ventilation
+// (total = somme des paliers), et la mention du filtrage y faisait doublon avec « (filtres
+// actifs) ». Le concept « opportunités » (brûlantes + chaudes) reste vivant : tooltip de la
+// ventilation (uni.data.opportunites) + champ API /filtre + outil blocB (autre endpoint).
 
 const CAP = 200          // slice client — mode commune uniquement (le GeoJSON est déjà complet)
 const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset serveur)
@@ -303,8 +295,8 @@ export function ResultsSection() {
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
-  const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
-  const opportunites = uni.data?.opportunites ?? counts.brulante + counts.chaude
+  // M55-K point 1 : `nFilters` et la var locale `opportunites` sont retirés avec la ligne de
+  // synthèse (0-caller). Le tooltip de la ventilation lit toujours `uni.data.opportunites`.
   // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
   // potentiel épuisé = retenues − 4 tiers vivants ; écartées = trame analysée − retenues.
   // trameQ partage la queryKey de FiltreLabuse (['filtre', filters, false]) → cache commun.
@@ -382,7 +374,10 @@ export function ResultsSection() {
             {ecartees != null && (
               <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
             )}
-            {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
+            {/* M55-K point 1 : « (filtres actifs) » retiré (la ventilation EST déjà filtrée —
+                mention redondante). « (dans la zone) » conservé : un polygone dessiné n'est
+                pas visible autrement dans le panneau, c'est un signal distinct, non redondant. */}
+            {zone && <span className="text-txt-dim"> (dans la zone)</span>}
             <Tip side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
               <span data-ventilation-info role="button" tabIndex={0} aria-label="Comprendre les trois familles"
                 className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
@@ -397,7 +392,6 @@ export function ResultsSection() {
             <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
             <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
           </div>
-          <LigneClassement total={total} opportunites={opportunites} nFilters={nFilters} />
         </>
       )}
 

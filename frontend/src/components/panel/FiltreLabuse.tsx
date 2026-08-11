@@ -30,19 +30,20 @@ const ETAT_SOL = [
 // (un vide honnête vaut mieux qu'un chiffre périmé).
 const filtersEqual = (a: Filters, b: Filters): boolean => JSON.stringify(a) === JSON.stringify(b)
 
-// M55-J point 2 : LE bouton d'action du panneau (un seul endroit pour la famille) — deux
-// variantes hiérarchisées : `primary` (rempli mint, l'action dominante) et `secondary`
-// (contour, l'action de retrait). Relancer/Désactiver s'y branchent, ils ne se distinguent
-// plus par « bouton vs texte souligné » mais par le TRAITEMENT de la même famille.
+// M55-J point 2 / M55-K point 3 : LE bouton d'action du panneau (un seul endroit pour la
+// famille) — trois variantes : `primary` (rempli mint, l'action dominante), `secondary`
+// (contour neutre) et `danger` (contour ROUGE `st-ecartee`, fond transparent) pour Désactiver.
+const ACTION_STYLES = {
+  primary: 'bg-mint font-semibold text-mint-ink hover:brightness-110',
+  secondary: 'border border-line-2 bg-surface-3/60 text-txt hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi',
+  danger: 'border border-st-ecartee/60 bg-transparent text-st-ecartee hover:bg-st-ecartee/10 hover:border-st-ecartee',
+} as const
 function ActionBtn({ variant, onClick, children, dataAttr }:
-  { variant: 'primary' | 'secondary'; onClick: () => void; children: React.ReactNode; dataAttr?: string }) {
+  { variant: keyof typeof ACTION_STYLES; onClick: () => void; children: React.ReactNode; dataAttr?: string }) {
   const extra = dataAttr ? { [dataAttr]: true } : {}
-  const style = variant === 'primary'
-    ? 'bg-mint font-semibold text-mint-ink hover:brightness-110'
-    : 'border border-line-2 bg-surface-3/60 text-txt hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi'
   return (
     <button {...extra} onClick={onClick}
-      className={`flex-1 rounded-lg py-2 text-[12px] font-medium transition-colors duration-quick ${style}`}>
+      className={`flex-1 rounded-lg py-2 text-[12px] font-medium transition-colors duration-quick ${ACTION_STYLES[variant]}`}>
       {children}
     </button>
   )
@@ -293,11 +294,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           (2) la section Filtres devient COMPACTE → le listing récupère la hauteur quand Couches
           se rétracte (J6). Pour changer de critères : Relancer / Désactiver l'analyse. */}
       {analyseActive ? (
+        /* M55-K point 4 : le récap « ANALYSE EN COURS » DISPARAÎT à la phase REVEALED — là, la
+           phrase « … Selon vos critères (…) » de la carte de révélation porte DÉJÀ les critères
+           (constat obligatoire vérifié : suppression franche, aucun angle mort). Il reste au
+           décompte (filtres juste figés, pas encore de phrase) et à l'état post-analyse
+           (Relancer/Désactiver : pas de phrase → le récap est la SEULE source des critères). */
+        phase === 'revealed' ? null : (
         <div data-analyse-recap className="rounded-lg border border-mint/30 bg-mint/[0.05] px-3 py-2">
           <p className="label-caps text-[9px] text-txt-dim">Analyse en cours</p>
           <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{recap ?? `toutes les parcelles de ${perimetre}`}</p>
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">Filtres figés — Relancer ou Désactiver l’analyse pour les changer.</p>
         </div>
+        )
       ) : (
       <>
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
@@ -376,9 +384,13 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       </>
       )}
 
-      {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════ */}
-      <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${
-        analyseOn || phase === 'counting' || phase === 'revealed' ? 'border-mint/60 bg-mint/[0.07]' : 'border-line-2 bg-surface-2/40'}`}>
+      {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════
+          M55-K point 3 : le CADRE vert n'entoure QUE le rituel (décompte/révélation). À l'état
+          post-analyse (analyseOn + idle : Relancer/Désactiver) le cadre DISPARAÎT — les deux
+          boutons vivent seuls, sans conteneur encadré. L'appel garde son groupe sobre. */}
+      <div className={`mt-4 transition-colors duration-soft ${
+        phase === 'counting' || phase === 'revealed' ? 'rounded-xl border border-mint/60 bg-mint/[0.07] p-3'
+          : analyseOn ? '' : 'rounded-xl border border-line-2 bg-surface-2/40 p-3'}`}>
         {phase === 'counting' ? (
           /* ── 2. LE DÉCOMPTE — 3 s constantes ; texte honnête (on APPLIQUE des critères) ── */
           <div data-decompte className="py-2 text-center" aria-live="polite">
@@ -497,15 +509,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 le filtrage par tier post-analyse quitte ce panneau (les champs gardent leur
                 persistance URL — vieux liens compatibles). */}
 
-            {/* M55-J point 2 : DEUX BOUTONS de même famille (ActionBtn), hiérarchisés —
-                Relancer = action principale (primary, mint), Désactiver = action secondaire
-                (contour). Plus de « lien souligné gris » qui ne se lit ni comme action ni
-                comme état. Marges constantes (gap-2), même largeur (flex-1). */}
+            {/* M55-J point 2 / M55-K point 3 : DEUX BOUTONS (ActionBtn) — Relancer = action
+                principale (primary, mint plein), Désactiver = contour ROUGE (danger). Plus de
+                cadre vert autour (retiré plus haut). Marges constantes (gap-2), même largeur. */}
             <div className="flex gap-2 pt-1">
               <ActionBtn variant="primary" dataAttr="data-relancer" onClick={lancer}>
                 {CLIENT.revelation.relancer}
               </ActionBtn>
-              <ActionBtn variant="secondary" dataAttr="data-desactiver"
+              <ActionBtn variant="danger" dataAttr="data-desactiver"
                 onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}>
                 {CLIENT.revelation.desactiver}
               </ActionBtn>
