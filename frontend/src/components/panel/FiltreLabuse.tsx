@@ -17,7 +17,6 @@ import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
-import { ChevronSection } from './ChevronSection'
 
 const CONSTRUCTIBILITE = [
   { k: 'constructible', l: 'Constructible' },
@@ -33,9 +32,8 @@ const ETAT_SOL = [
   { k: 'bati_revele', l: 'Bâti révélé' },
 ]
 const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, { k: 'N', l: 'N' }]
-const PROPRIO_TYPE = [{ k: 'pm', l: 'PM identifiée (SIREN)' }, { k: 'bailleur', l: 'Bailleur (HLM/SEM)' }, { k: 'pp', l: 'Particulier / non déterminable' }]
-const ETAT_SOCIETE = [{ k: 'procedure', l: 'Procédure collective' }, { k: 'cessee', l: 'Cessée' }, { k: 'radiee', l: 'Radiée' }]
-const COPRO = [{ k: 'avec', l: 'En copropriété' }, { k: 'sans', l: 'Hors copropriété' }]
+// M55-G point 7 : PROPRIO_TYPE / ETAT_SOCIETE / COPRO retirés avec les tiroirs pédagogiques
+// (0-caller) — les champs de filtre restent dans le store + l'URL.
 // M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
 // adresses). La chip affiche le CP, le « i » (title) nomme la commune. Rang 1 du panneau.
 const CP_COMMUNES: [string, string][] = [
@@ -99,45 +97,9 @@ function BoolChip({ field, label }: { field: keyof Filters; label: string }) {
   return <Chip on={on} onClick={() => setFilter(field, !on as never)}>{label}</Chip>
 }
 
-function Tiroir({ titre, sous, defaut = false, children }: { titre: string; sous?: string; defaut?: boolean; children: React.ReactNode }) {
-  const [ouvert, setOuvert] = useState(defaut)
-  return (
-    <div className="border-t border-line-2/50">
-      <button onClick={() => setOuvert((o) => !o)} className="flex w-full items-center justify-between py-1.5 text-left">
-        <span className="text-xs font-medium text-txt-hi">{titre}{sous && <span className="text-txt-dim"> — {sous}</span>}</span>
-        <ChevronSection open={ouvert} />
-      </button>
-      {ouvert && <div className="pb-1">{children}</div>}
-    </div>
-  )
-}
-
-// M45-B (L2) — curseur mode B : une valeur de SESSION unique (travaux + loyer + rendement),
-// partagée fiche ↔ filtre, rien persisté. Pilote le filtre « Mode B rentable » ET le calcul de la fiche.
-function ModeBCurseur() {
-  const modeB = useApp((s) => s.modeB)
-  const setModeB = useApp((s) => s.setModeB)
-  const Champ = ({ k, label, suffix, step }: { k: 'travauxM2' | 'loyerM2' | 'rendementPct'; label: string; suffix: string; step?: number }) => (
-    <label className="flex items-center gap-1 text-[11px] text-txt-mut">
-      {label}
-      <input type="number" step={step ?? 1} value={modeB[k]}
-        onChange={(e) => setModeB({ [k]: Number(e.target.value) })}
-        className="w-[62px] rounded-md border border-line-2 bg-transparent px-1.5 py-0.5 text-[11px] text-txt-hi focus:border-mint focus:outline-none" />
-      <span className="text-[9.5px] text-txt-dim">{suffix}</span>
-    </label>
-  )
-  return (
-    <div className="mt-1 rounded-lg border border-line-2/60 bg-surface-2/40 px-2.5 py-2">
-      <p className="label-caps">Curseur mode B <span className="text-[9px] font-normal normal-case text-txt-dim">— session partagée avec la fiche</span></p>
-      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
-        <Champ k="travauxM2" label="Travaux" suffix="€/m²" step={50} />
-        <Champ k="loyerM2" label="Loyer" suffix="€/m²/mois" step={0.5} />
-        <Champ k="rendementPct" label="Rendement" suffix="%" step={0.5} />
-      </div>
-    </div>
-  )
-}
-
+// M55-G point 7 : les composants Tiroir et ModeBCurseur ont été retirés avec les tiroirs
+// pédagogiques de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par
+// le store — la fiche continue de le lire).
 
 function Section({ title, tag, children }: { title: string; tag?: string; children: React.ReactNode }) {
   return (
@@ -380,8 +342,11 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               {CLIENT.revelation.reessayer}
             </button>
           </div>
-        ) : phase === 'revealed' || analyseOn ? (
-          /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier) ── */
+        ) : phase === 'revealed' ? (
+          /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier).
+             M55-G point 7 : la phrase ne vit QU'AU moment du reveal — le panneau ré-ouvert
+             après analyse ne la répète plus (le récit des nombres vit dans la zone résultats,
+             un seul récit, M55-F point 1). ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
               {CLIENT.revelation.phraseIntro(analyseTotal ?? live ?? 0, perimetre)}{' '}
@@ -430,7 +395,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               </button>
             )}
           </div>
-        ) : (
+        ) : !analyseOn ? (
           /* ── 1. L'APPEL — contexte sobre + LE bouton chaud du panneau éteint ── */
           <div data-appel>
             {/* M55-D stage 8 : UN SEUL NOMBRE — bandeau, compteur et bouton dérivent tous de `live`
@@ -454,7 +419,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               {CLIENT.revelation.boutonFaire}
             </button>
           </div>
-        )}
+        ) : null}
         {analyseOn && phase === 'idle' && (
           <div className="mt-3 flex flex-col gap-3">
             <div>
@@ -490,78 +455,12 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               <BoolChip field="horsCopro" label="Masquer copropriétés" />
             </div>
 
-      {/* ── TIROIRS d'analyse (économie / mutation / propriété / niches) — dans l'étage ② ── */}
-      <Tiroir titre="Combien ça coûte, ça rapporte ?" sous="économie">
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
-          <div><p className="label-caps flex items-center gap-1.5">Prix d’achat max ≤ budget
-            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Estimé</span></p>
-            <div className="mt-1 flex items-center gap-1"><NumField field="budgetMax" ph="€" suffix="€" /></div></div>
-          <div><p className="label-caps">Charge foncière (€)</p>
-            <div className="mt-1 flex items-center gap-1.5"><NumField field="chargeMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="chargeMax" ph="max" /></div></div>
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
-          <div><p className="label-caps flex items-center gap-1.5">Prix marché DVF (€/m²)
-            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Sourcé</span></p>
-            <div className="mt-1 flex items-center gap-1.5"><NumField field="prixMarcheMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="prixMarcheMax" ph="max" suffix="€/m²" /></div></div>
-          <div><p className="label-caps flex items-center gap-1.5">Bilan CA
-            <span className="rounded border border-line-2 px-1 py-px text-[8.5px] uppercase text-txt-dim">Estimé</span></p>
-            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="caMin" ph="€" suffix="€" /></div></div>
-        </div>
-        <Section title="Repères">
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            <BoolChip field="marcheFiable" label="Données marché fiables (n≥3)" />
-            <BoolChip field="sousDensite" label="Bâti en sous-densité" />
-            <BoolChip field="modeBRentable" label="Mode B rentable (au paramètre)" />
-          </div>
-        </Section>
-        <ModeBCurseur />
-      </Tiroir>
-
-      <Tiroir titre="Ça va se vendre ?" sous="le cœur — voie analyse">
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-2">
-          <div><p className="label-caps">Probabilité ×N</p>
-            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="multMin" ph="N" suffix="×" /></div></div>
-          <div><p className="label-caps">Têtes (rang P)</p>
-            <div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≤</span><NumField field="rangMax" ph="N" /></div></div>
-        </div>
-        <Section title="Segments">
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            <BoolChip field="renouvellement" label="Renouvellement" />
-            <BoolChip field="divisionOr" label="Division en or (O12)" />
-          </div>
-          {/* M48 : le segment Renouvellement = des parcelles ÉCARTÉES par conception → 0 retenue par
-              l'analyse. On le DIT quand le filtre est actif, pour lever le « 0 » déroutant du compteur. */}
-          {filters.renouvellement && (
-            <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-              Segment consultable via la <b className="text-txt-mut">voie manuelle</b> — coupez
-              l’Analyse LABUSE pour l’explorer : ces parcelles occupées sont écartées du classement
-              principal par conception (d’où 0 retenue par l’analyse).
-            </p>
-          )}
-        </Section>
-      </Tiroir>
-
-      <Tiroir titre="À qui c’est, puis-je l’acheter ?" sous="propriété">
-        <Section title="Type de propriétaire" tag="Sourcé"><ChipGroup field="proprietaireType" options={PROPRIO_TYPE} /></Section>
-        <Section title="État de la société" tag="Sourcé (M43)"><ChipGroup field="etatSociete" options={ETAT_SOCIETE} /></Section>
-        <Section title="Copropriété (RNIC)"><ChipGroup field="copro" options={COPRO} /></Section>
-        <div className="pt-1 text-[10px] text-txt-dim">
-          Dormance / succession : absent (attend avocat). Gérant âgé : jamais un critère (RGPD).
-        </div>
-      </Tiroir>
-
-      <Tiroir titre="Veille & niches" sous="les différenciants">
-        <Section title="Niches">
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            <BoolChip field="npnru" label="Proximité NPNRU / QPV" />
-            <BoolChip field="adresseAbsente" label="Adresse absente (BAN)" />
-          </div>
-        </Section>
-        <div className="pt-1 text-[10px] text-txt-dim">
-          Motif de déclassement : coupe l’Analyse LABUSE pour explorer les écartées (jamais masquées) ·
-          potentiel solaire APER : M45 v1.1.
-        </div>
-      </Tiroir>
+            {/* M55-G point 7 (décision Vic) : les tiroirs pédagogiques (« Combien ça coûte ? »,
+                « Ça va se vendre ? », « À qui c'est ? », « Veille & niches » — « Quels risques ? »
+                avait déjà disparu au stage 7) SORTENT de l'état allumé : reliquats du stage 7.
+                Restent les chips d'affinage ci-dessus + Relancer / désactiver. Les champs experts
+                de ces tiroirs (budget, ×N, propriété…) gardent leur persistance URL (vieux liens
+                compatibles), sans surface panneau. */}
 
             {/* relance (re-décompte 3 s, décision Vic) + extinction DISCRÈTE (la cérémonie est à
                 l'allumage, pas à l'extinction) */}
