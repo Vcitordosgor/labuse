@@ -40,7 +40,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
           on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}>
         <div className="min-w-0 flex-1">
-          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
             {p.adresse ?? 'Adresse non disponible'}
           </div>
@@ -58,7 +58,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"

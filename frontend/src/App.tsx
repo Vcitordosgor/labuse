@@ -162,7 +162,7 @@ function IaRestitution() {
               {/* en-tête lisible : rang (pastille) · IDU en avant · commune alignée à droite */}
               <div className="flex items-baseline gap-2">
                 <span className="shrink-0 rounded bg-mint/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-mint">#{i + 1}</span>
-                <span className="min-w-0 flex-1 truncate font-mono text-[12px] font-medium text-txt-hi">{t.idu.slice(8)}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{t.idu}</span>
                 <span className="shrink-0 text-[11px] text-txt-dim">{t.commune}</span>
               </div>
               {t.pourquoi && t.pourquoi.length > 0 && (
@@ -186,7 +186,7 @@ function IaRestitution() {
                 title={t.mult_v2 != null ? '×N vs moyenne du parc (scoring)' : SCORE_TIP.q}>
                 #{i + 1}{t.mult_v2 != null ? ` · ×${t.mult_v2.toFixed(1)}` : ` · Q ${t.q_score}`}
               </span>
-              <span className="block truncate font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
+              <span className="block truncate font-mono text-[10.5px] tracking-tight text-txt-hi">{t.idu}</span>
               <span className="block truncate text-[11px] text-txt-dim">{t.commune}</span>
             </button>
           ))}
