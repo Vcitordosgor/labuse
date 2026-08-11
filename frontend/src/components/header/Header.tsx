@@ -4,6 +4,10 @@ import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getM
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'
+
+// M55-H point 7 : CP par nom de commune (source unique = la table mesurée du panneau)
+const CP_PAR_COMMUNE: Record<string, string> = Object.fromEntries(CP_COMMUNES.map(([cp, nom]) => [nom, cp]))
 
 function Omnibox() {
   const { select, setView, setCommune, commune, setToast } = useApp()
@@ -148,7 +152,11 @@ function CommuneSelect() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[240px] flex-col overflow-y-auto p-1.5">
+          {/* M55-H point 7 : menu ÉLARGI (320 px) — nom + code postal + « voir la fiche → »
+              tiennent sur UNE ligne pour les 24 communes (La Plaine-des-Palmistes comprise :
+              nom en nowrap, lien shrink-0). Le CP affiché vient de la table mesurée du
+              panneau (CP_COMMUNES, source unique) — l'INSEE ressemblait à un CP sans l'être. */}
+          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
             <button onClick={() => pick(null)}
               className={`rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               Toute l’île
@@ -161,8 +169,8 @@ function CommuneSelect() {
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className="flex items-center rounded-md hover:bg-surface-3">
                 <button onClick={() => pick(c.commune)}
-                  className={`min-w-0 flex-1 px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                  {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
+                  className={`min-w-0 flex-1 whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
+                  {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}

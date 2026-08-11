@@ -30,7 +30,8 @@ const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, 
 // (0-caller) — les champs de filtre restent dans le store + l'URL.
 // M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
 // adresses). La chip affiche le CP, le « i » (title) nomme la commune. Rang 1 du panneau.
-const CP_COMMUNES: [string, string][] = [
+// M55-H point 7 : EXPORTÉE — le menu périmètre du header affiche le même CP (source unique).
+export const CP_COMMUNES: [string, string][] = [
   ['97400', 'Saint-Denis'], ['97410', 'Saint-Pierre'], ['97412', 'Bras-Panon'],
   ['97413', 'Cilaos'], ['97414', 'Entre-Deux'], ['97419', 'La Possession'],
   ['97420', 'Le Port'], ['97424', 'Saint-Leu'], ['97425', 'Les Avirons'],
