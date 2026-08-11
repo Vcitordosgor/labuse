@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1960,10 +1960,12 @@ export function Fiche({ idu }: { idu: string }) {
                 </a>
                 <PreDossierTile idu={idu} />
               </div>
-              <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
-                Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
+              {/* M55-L point 7 : le widget feedback « Ce lead vous est-il utile ? » est RETIRÉ.
+                  La mention légale est CONSERVÉE, relogée en pied de fiche au plus petit corps
+                  lisible du DS (9px) et couleur discrète — elle reste présente dans les PDF (back). */}
+              <p data-disclaimer-legal style={{ marginTop: 11, fontSize: 9, lineHeight: 1.5, color: '#4d5f57' }}>
+                Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
               </p>
-              <FeedbackStrip idu={idu} />
             </div>
           </div>
           )
@@ -2012,28 +2014,10 @@ function SyntheseIA({ idu }: { idu: string }) {
 }
 
 
-/** M54-EXPO A4 — retour promoteur par parcelle (POST /feedback). Discret : 3 verdicts + un mot
- *  facultatif ; se replie en « merci » après envoi. Le verdict alimente models.ParcelFeedback. */
-function FeedbackStrip({ idu }: { idu: string }) {
-  const [sent, setSent] = useState(false)
-  const [comment, setComment] = useState('')
-  const [open, setOpen] = useState(false)
-  useEffect(() => { setSent(false); setComment(''); setOpen(false) }, [idu])
-  const send = useMutation({ mutationFn: (v: FeedbackVerdict) => postFeedback(idu, v, comment.trim() || undefined), onSuccess: () => setSent(true) })
-  if (sent) return <p data-feedback-merci style={{ marginTop: 8, fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbMerci}</p>
-  const btn = { padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0e1311', color: '#8fd8b4', cursor: 'pointer' } as const
-  return (
-    <div data-feedback style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbAccroche}</span>
-      {open && <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder={CLIENT.fiche.export.fbComment}
-        style={{ flex: 1, minWidth: 120, padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0b0f0d', color: '#c8d6cf' }} />}
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('good_lead')} title={CLIENT.fiche.export.fbGood}>👍 {CLIENT.fiche.export.fbGood}</button>
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('not_interested')}>{CLIENT.fiche.export.fbNot}</button>
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('false_positive')}>{CLIENT.fiche.export.fbFalse}</button>
-      {!open && <button style={{ ...btn, border: 0, background: 'none', color: '#5f7568' }} onClick={() => setOpen(true)}>+ un mot</button>}
-    </div>
-  )
-}
+// M55-L point 7 : le widget feedback `FeedbackStrip` (« Ce lead vous est-il utile ? ») est retiré
+// de la fiche → fonction 0-caller supprimée, imports `postFeedback`/`FeedbackVerdict` retirés.
+// ⚠ BACKEND : le endpoint POST /feedback (M54-EXPO A4, models.ParcelFeedback) n'a plus AUCUN point
+// d'entrée côté front — NON supprimé côté back (décision Vic requise ; peut revenir, p. ex. CRM).
 
 
 /** M54-EXPO-2 Volet C — tuile « Dossier » enrichie du STATUT (GET /dossier/statut) : quota
