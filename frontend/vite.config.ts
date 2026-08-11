@@ -33,6 +33,12 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   //  l'endpoint répond 200 à :8000). Même famille que /moi,/events,/adresses. Prod OK (même origine).
   // /courrier et /dossier-banquier comblés au passage (mêmes 404 dev : module Courrier, tuile Financier).
   '/traducteur-plu', '/courrier', '/dossier-banquier',
+  // M55-N point 1 (diagnostic) : /anti-fiche MANQUAIT → 404 en dev = « Motifs momentanément
+  // indisponibles » sur le tiroir « Pourquoi pas ? ». L'endpoint répond 200 à :8000 (motifs réels
+  // sur declasse_* ET ecartee) ; ce n'est PAS une donnée absente mais un proxy dev manquant. Prod OK
+  // (même origine FastAPI). ⚠ TRAIN 8 : si la prod passe par Caddy, ces mêmes préfixes doivent y être
+  // routés vers l'API (cf. RAPPORT_M55N — liste exhaustive des routes hors-`/parcels`).
+  '/anti-fiche',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

@@ -346,15 +346,16 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           plus étroit (max-w-[32ch]), s'aligne sur le titre → moins de retours à la ligne, moins
           de hauteur. L'acquis M55-I (justify-start + my-auto) reste : ce point réduit la hauteur
           du contenu, il ne remet PAS le conteneur en justify-center. */}
+      {/* M55-N point 3 (décision Vic) : le logo (l'oiseau) est RETIRÉ de l'accueil. `my-auto`
+          CONSERVÉ (il centre désormais le contenu dans le panneau, ne compense plus le logo coupé
+          de M55-I) — jamais de retour à `justify-center` (bug d'origine). Autres emplacements du
+          logo NON touchés (Header, States, page maintenance Caddy) — signalés au rapport. */}
       <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
         style={{ ['--accueil-w' as string]: '240px' }}>
-        <svg viewBox="0 0 240 82" className="h-7 w-[72px] shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
-          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
-        </svg>
         {/* Ajustement Vic (9 ter) : le BOUTON d'abord — LE geste de la page. Contenu exact
             « Commencer → » : le libellé garde sa flèche, rendue en SVG aligné. */}
         <button data-commencer onClick={onCommencer}
-          className="group mt-7 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+          className="group flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
           <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
           <svg viewBox="0 0 16 16" aria-hidden="true"
             className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
@@ -392,12 +393,20 @@ export function LeftPanel() {
   // ouvraient Filtres sans replier Couches, restée sur son état local par défaut).
   const panneauSection = useApp((st) => st.panneauSection)
   const setPanneauSection = useApp((st) => st.setPanneauSection)
-  const couchesOpen = panneauSection === 'couches'
-  const filtresOpen = panneauSection === 'filtres'
+  const accueilVu = useApp((st) => st.accueilVu)
+  // M55-N point 7 (décision Vic) : à l'état ACCUEIL (page de présentation affichée : !accueilVu &&
+  // !verdict), les DEUX sections (Couches et Filtres) sont RÉTRACTÉES → l'accueil prend la pleine
+  // hauteur (fin du clip mesuré M55-L P1). Même esprit que le `listing` de M55-M : « deux sections
+  // fermées » est un état LÉGAL aussi pour l'accueil. `panneauSection` (champ unique) reste
+  // 'couches' par défaut EN COULISSE ; l'accueil est un CONTEXTE d'entrée (dérivé de accueilVu, un
+  // signal déjà existant) qui prime tant qu'il est affiché. Le quitter (Commencer/openFiltres, ou
+  // rouvrir une section à la main → setAccueilVu) lève l'override → la section reprend (défaut Couches).
+  const enAccueil = !accueilVu && !verdict
+  const couchesOpen = !enAccueil && panneauSection === 'couches'
+  const filtresOpen = !enAccueil && panneauSection === 'filtres'
   // M55-K point 5 : `sectionFill` — quand rien ne suit les sections (ni accueil ni résultats),
   // la section OUVERTE est le dernier contenu → elle remplit la hauteur (et le séparateur
   // orphelin disparaît), fond continu jusqu'en bas. Sinon accueil/résultats (eux flex-1) filent.
-  const accueilVu = useApp((st) => st.accueilVu)
   const sectionFill = accueilVu && !verdict
   const prevVerdict = useRef(verdict)
   useEffect(() => {

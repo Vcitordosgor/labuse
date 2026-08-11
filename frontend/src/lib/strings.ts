@@ -362,8 +362,16 @@ export const CLIENT = {
     ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
     // M55-L point 5 — verdict à la demande : à l'ouverture, un bouton remplace le bloc verdict
     // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
-    demanderAnalyse: 'Demander l’analyse LABUSE',
+    demanderAnalyse: 'Demander à LABUSE d’analyser la parcelle',   // M55-N point 4 (libellé Vic)
     demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
+    // M55-N point 5 — libellé honnête du tiroir « Les données » : dit CE QU'IL COMPTE (les sources
+    // qui alimentent CETTE fiche, cf. audit M55-L P13), pas un manque. Chiffre servi (jamais en dur).
+    sourcesUtilisees: (n: number) => `${n} sources utilisées sur cette fiche`,
+    // M55-N point 6 — la jauge du tiroir Règles DIT ce qu'elle mesure : la part de SDP maximale
+    // déjà consommée par le bâti (échelle 0-100 %), + infobulle (sens + source + résiduel).
+    sdpConsommee: (pct: number) => `${pct} % SDP consommée`,
+    sdpConsommeeTip: (resid: number | null) =>
+      `Part de la SDP maximale déjà bâtie sur la parcelle (échelle 0–100 %) — le reste${resid != null ? ` (~${resid.toLocaleString('fr-FR')} m²)` : ''} est le potentiel résiduel constructible. Estimé — potentiel de transformation.`,
     // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
     // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).
     crmAjouter: '+ CRM',

@@ -100,14 +100,19 @@ function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children 
 }
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
-const MicroJauge = ({ pct, label }: { pct: number; label: string }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-    <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
-      <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
+// M55-N point 6 : `tip` optionnel — la jauge DIT ce qu'elle mesure (au survol). Sans tip, une
+// barre nue (fill %) ne disait ni ce qu'elle mesure ni sur quelle échelle (constat Règles).
+const MicroJauge = ({ pct, label, tip }: { pct: number; label: string; tip?: string }) => {
+  const body = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
+      </div>
+      <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap', ...(tip ? { cursor: 'help', borderBottom: '1px dotted #5f7568' } : {}) }}>{label}</span>
     </div>
-    <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap' }}>{label}</span>
-  </div>
-)
+  )
+  return tip ? <Tip tip={tip}>{body}</Tip> : body
+}
 const MicroSegments = ({ n, label }: { n: number; label: string }) => (
   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
     <span style={{ fontSize: 11, color: REF.dim, marginRight: 2, whiteSpace: 'nowrap' }}>{label}</span>
@@ -1216,6 +1221,12 @@ export function Fiche({ idu }: { idu: string }) {
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
   const pctConsomme = f?.potentiel_transformation?.pct_consomme
   const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
+  // M55-N point 8 : l'en-tête « Règles d'urbanisme » porte une CONTRAINTE de gabarit (hauteur max)
+  // — plus la SDP résiduelle, qui vivait AUSSI dans l'en-tête « Faisabilité » (doublon M55-L P14).
+  // Faisabilité garde la SDP ; la SDP reste accessible dans le corps du tiroir (potentiel/faisa).
+  // Hauteur absente (faisabilité non calculée) → pas de valeur d'en-tête (le micro-jauge porte
+  // déjà zone + article), jamais la SDP ni un doublon du zonage.
+  const reglesGabarit = fo?.hauteur_m != null ? `${fo.hauteur_m} m max` : undefined
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
@@ -1309,13 +1320,13 @@ export function Fiche({ idu }: { idu: string }) {
             Vaut aussi en mode factuel (le bouton apparaît pareillement : rien n'est imposé, tout
             est accessible). Les PDF gardent le verdict sans condition (rail back inchangé). */}
         {f && verdict && !verdictRevele && (
+          // M55-N point 4 : étoile retirée ; largeur AJUSTÉE AU CONTENU (alignSelf flex-start, plus
+          // de width:100%) — le bouton n'occupe plus toute la largeur de la fiche. Libellé « Demander
+          // à LABUSE d'analyser la parcelle » (strings) ; sous-titre conservé. Comportement inchangé.
           <button data-demander-analyse onClick={() => revelerVerdict(idu)}
-            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
+            style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
             title="Déployer le verdict, le score et « pourquoi »">
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}>
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2.5 12.2 7 17 7.6 13.5 11 14.4 16 10 13.6 5.6 16 6.5 11 3 7.6 7.8 7Z" /></svg>
-              {CLIENT.fiche.demanderAnalyse}
-            </span>
+            <span style={{ fontSize: 14.5, fontWeight: 700 }}>{CLIENT.fiche.demanderAnalyse}</span>
             <span style={{ fontSize: 11.5, fontWeight: 500, color: '#0a2419', opacity: .85 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
           </button>
         )}
@@ -1582,8 +1593,10 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
             <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
-              value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
-              micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              value={reglesGabarit}
+              micro={pctConsomme != null
+                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
+                : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
                 {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
                     (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
@@ -1852,7 +1865,7 @@ export function Fiche({ idu }: { idu: string }) {
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
             <RefDrawer id="confiance" icon={IC.confiance} name="Les données"
-              value={f.data_sources?.length ? `${f.data_sources.length} sources` : confianceValue}>
+              value={f.data_sources?.length ? CLIENT.fiche.sourcesUtilisees(f.data_sources.length) : confianceValue}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
@@ -2170,7 +2183,10 @@ function TraducteurBloc({ idu }: { idu: string }) {
       </button>
       {open && (
         <div className="mt-2">
-          <AvisIA className="mb-2 border-violet/25 bg-violet/[0.05] text-txt-mut" />
+          {/* M55-N point 9 (décision Vic) : <AvisIA/> RETIRÉ du traducteur — la traduction de règles
+              PLU est une LECTURE FACTUELLE (rien à « juger »), la mise en garde IA y était hors-sujet.
+              Les surfaces IA GÉNÉRATIVES la conservent (Synthèse/explication, « Une question ? »,
+              recherche IA, entretien, copilote, restitution). */}
           {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
           {q.isError && (
             <p className="text-[11px] text-st-ecartee">
