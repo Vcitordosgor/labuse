@@ -280,10 +280,12 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           ))}
         </div>
         <div className="mt-1.5 flex gap-3">
+          {/* M55-G point 12 : libellés d'ACTION (« tout » / « rien (toute l'île) » ne disaient
+              pas le geste) — le sous-titre de la section garde « tout coché = toute l'île ». */}
           <button data-communes-toutes onClick={() => setCommunesFilter(CP_COMMUNES.map(([, n]) => n))}
-            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">tout</button>
+            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Ajouter tout</button>
           <button data-communes-aucune onClick={() => setCommunesFilter([])}
-            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">rien (toute l’île)</button>
+            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Retirer tout</button>
           {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{nCom === 1 ? filters.communes[0] : `${nCom} communes`}</span>}
         </div>
       </div>
