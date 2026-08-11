@@ -28,6 +28,11 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
                 // → 404 en dev, la barre de recherche ne suggérait RIEN (silencieusement). Prod OK
                 //   (FastAPI même origine), mais le dev doit être honnête.
   '/accueil',   // M55-D stage 9 : /accueil/chiffres (page d'accueil qui prouve)
+  // M55-L point 13 (audit traducteur) : /traducteur-plu MANQUAIT → 404 en dev, d'où le message
+  // « Traduction indisponible — réessayer » (le fetch relatif tombait sur vite, pas sur FastAPI ;
+  //  l'endpoint répond 200 à :8000). Même famille que /moi,/events,/adresses. Prod OK (même origine).
+  // /courrier et /dossier-banquier comblés au passage (mêmes 404 dev : module Courrier, tuile Financier).
+  '/traducteur-plu', '/courrier', '/dossier-banquier',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
