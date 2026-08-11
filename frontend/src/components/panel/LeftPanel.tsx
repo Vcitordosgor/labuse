@@ -254,6 +254,12 @@ function VerdictHero() {
 // M55-D stage 9 ter — ACCUEIL FINAL (texte figé Vic 10/08) : DEUX blocs et le lien, rien
 // d'autre. Les chiffres du bloc 1 restent SERVIS par /accueil/chiffres (dynamiques, « i »
 // sourcé chacun) — un chiffre null est masqué, jamais inventé. Aucune chaîne en dur (strings.ts).
+// M55-H point 2 — refonte VISUELLE de l'accueil, contenu EXACT (texte figé Vic 9 ter) :
+// hiérarchie titre → chiffres → ligne descriptive (tailles/graisses/interlignes étagés),
+// « i » centrés sur leur chiffre (items-center, plus de flottement baseline), bouton
+// « Commencer → » en pièce maîtresse : proportions généreuses, texte centré, FLÈCHE
+// DESSINÉE (le caractère → flottait), hover (halo + glissement de flèche) et active
+// (enfoncement) soignés. Tokens LABUSE inchangés (mint / surfaces / display).
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
   const d = q.data
@@ -261,36 +267,40 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const A = CLIENT.accueil
   const Seg = ({ n, l, src }: { n: number | null | undefined; l: (s: string) => string; src: string }) => (
     n == null ? null : (
-      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-        <b className="font-medium text-txt tabular-nums">{l(nf(n))}</b>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+        <span className="font-medium text-txt tabular-nums">{l(nf(n))}</span>
         <Tip side="top" tip={src} className="shrink-0">
           <span role="button" tabIndex={0} aria-label="Source de ce chiffre"
-            className="inline-flex h-[12px] w-[12px] items-center justify-center rounded-full border border-line-2 text-[7.5px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
         </Tip>
       </span>
     )
   )
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overflow-x-clip px-6 pb-6 text-center">
-      <svg viewBox="0 0 240 82" className="h-6 w-16 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overflow-x-clip px-7 pb-8 text-center">
+      <svg viewBox="0 0 240 82" className="h-7 w-[72px] shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
         <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
       </svg>
-      {/* Ajustement Vic (capture) : le BOUTON d'abord — plein/mint/gros, LE geste de la page ;
-          le texte passe en soutien (titre sobre, chiffres en corps réduit, phrase discrète).
-          Le bloc copilote IA est retiré (chaînes 0-caller). */}
+      {/* Ajustement Vic (9 ter) : le BOUTON d'abord — LE geste de la page. Contenu exact
+          « Commencer → » : le libellé garde sa flèche, rendue en SVG aligné. */}
       <button data-commencer onClick={onCommencer}
-        className="mt-5 w-full shrink-0 rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-shadow duration-soft ease-cockpit hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
-        {A.commencer}
+        className="group mt-7 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+        <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true"
+          className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
+          <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
-      <h3 className="mt-5 text-[11.5px] font-medium leading-snug text-txt">{A.b1Titre}</h3>
-      <p className="mt-1.5 text-[10.5px] leading-relaxed text-txt-mut">
+      <h3 className="mt-8 font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
+      <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
         <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
-        <span className="mx-1 text-mint">·</span>
+        <span aria-hidden className="text-mint">·</span>
         <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
-        <span className="mx-1 text-mint">·</span>
+        <span aria-hidden className="text-mint">·</span>
         <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
       </p>
-      <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
+      <p className="mt-3 max-w-[32ch] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
     </div>
   )
 }
