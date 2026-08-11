@@ -294,11 +294,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           (2) la section Filtres devient COMPACTE → le listing récupère la hauteur quand Couches
           se rétracte (J6). Pour changer de critères : Relancer / Désactiver l'analyse. */}
       {analyseActive ? (
+        /* M55-K point 4 : le récap « ANALYSE EN COURS » DISPARAÎT à la phase REVEALED — là, la
+           phrase « … Selon vos critères (…) » de la carte de révélation porte DÉJÀ les critères
+           (constat obligatoire vérifié : suppression franche, aucun angle mort). Il reste au
+           décompte (filtres juste figés, pas encore de phrase) et à l'état post-analyse
+           (Relancer/Désactiver : pas de phrase → le récap est la SEULE source des critères). */
+        phase === 'revealed' ? null : (
         <div data-analyse-recap className="rounded-lg border border-mint/30 bg-mint/[0.05] px-3 py-2">
           <p className="label-caps text-[9px] text-txt-dim">Analyse en cours</p>
           <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{recap ?? `toutes les parcelles de ${perimetre}`}</p>
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">Filtres figés — Relancer ou Désactiver l’analyse pour les changer.</p>
         </div>
+        )
       ) : (
       <>
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
