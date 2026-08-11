@@ -367,6 +367,11 @@ export const CLIENT = {
     // M55-N point 5 — libellé honnête du tiroir « Les données » : dit CE QU'IL COMPTE (les sources
     // qui alimentent CETTE fiche, cf. audit M55-L P13), pas un manque. Chiffre servi (jamais en dur).
     sourcesUtilisees: (n: number) => `${n} sources utilisées sur cette fiche`,
+    // M55-N point 6 — la jauge du tiroir Règles DIT ce qu'elle mesure : la part de SDP maximale
+    // déjà consommée par le bâti (échelle 0-100 %), + infobulle (sens + source + résiduel).
+    sdpConsommee: (pct: number) => `${pct} % SDP consommée`,
+    sdpConsommeeTip: (resid: number | null) =>
+      `Part de la SDP maximale déjà bâtie sur la parcelle (échelle 0–100 %) — le reste${resid != null ? ` (~${resid.toLocaleString('fr-FR')} m²)` : ''} est le potentiel résiduel constructible. Estimé — potentiel de transformation.`,
     // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
     // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).
     crmAjouter: '+ CRM',

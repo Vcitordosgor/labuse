@@ -100,14 +100,19 @@ function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children 
 }
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
-const MicroJauge = ({ pct, label }: { pct: number; label: string }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-    <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
-      <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
+// M55-N point 6 : `tip` optionnel — la jauge DIT ce qu'elle mesure (au survol). Sans tip, une
+// barre nue (fill %) ne disait ni ce qu'elle mesure ni sur quelle échelle (constat Règles).
+const MicroJauge = ({ pct, label, tip }: { pct: number; label: string; tip?: string }) => {
+  const body = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
+      </div>
+      <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap', ...(tip ? { cursor: 'help', borderBottom: '1px dotted #5f7568' } : {}) }}>{label}</span>
     </div>
-    <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap' }}>{label}</span>
-  </div>
-)
+  )
+  return tip ? <Tip tip={tip}>{body}</Tip> : body
+}
 const MicroSegments = ({ n, label }: { n: number; label: string }) => (
   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
     <span style={{ fontSize: 11, color: REF.dim, marginRight: 2, whiteSpace: 'nowrap' }}>{label}</span>
@@ -1589,7 +1594,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
             <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
               value={reglesGabarit}
-              micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              micro={pctConsomme != null
+                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
+                : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
                 {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
                     (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
