@@ -1913,10 +1913,13 @@ export function Fiche({ idu }: { idu: string }) {
                   ⇄ Comparer
                 </button>
               </div>
-              {/* BLOC SEGMENTÉ UNIQUE — 6 tuiles (spec), plus 6 boutons séparés (C5 réglé structurellement). */}
-              {/* M20-B1 : bloc segmenté UNIQUE, 6→7 colonnes (PDF·Dossier·Financier·1950·Cadastre·Maps·Courrier),
-                  un seul rang, pas de menu ni de scroll horizontal (réf. M19 conservée). */}
-              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', overflow: 'hidden' }}>
+              {/* M55-L point 8 — BARRE D'ACTIONS SUR DEUX LIGNES ÉQUILIBRÉES (décision Vic).
+                  Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
+                  One-pager · Pré-dossier PC. `gridAutoFlow:column + gridAutoColumns:1fr` → colonnes
+                  ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
+                  1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
+                  séparateurs qu'avant. */}
+              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
                 <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
@@ -1924,16 +1927,18 @@ export function Fiche({ idu }: { idu: string }) {
                 <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
                 {f.coords && (
+                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
+                  </a>
+                )}
+              </div>
+              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
+                {f.coords && (
                   <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>1950</p>
                   </button>
-                )}
-                {f.coords && (
-                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
-                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
-                  </a>
                 )}
                 {f.coords && (
                   <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
@@ -1941,22 +1946,16 @@ export function Fiche({ idu }: { idu: string }) {
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Maps</p>
                   </a>
                 )}
-                {/* M20-A · 7e tuile : Courrier propriétaire → ouvre le module M09 (setModule) avec la
-                    parcelle courante (selectedIdu) pré-remplie. Même moteur que l'entrée Outils, aucune
-                    divergence. Boussole gérée par M09 (aucune identité de personne physique). */}
+                {/* Courrier propriétaire → module M09 (setModule) pré-rempli sur la parcelle courante. */}
                 <button data-courrier-tile onClick={() => setModule('courriers')}
-                  style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
+                  style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
                   title={CLIENT.fiche.export.courrierTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.courrier}</p>
                 </button>
-              </div>
-              {/* M54-EXPO — rangée « documents » (one-pager comité, pré-dossier PC) SOUS la barre à 7
-                  tuiles, qui n'est PAS réordonnée. */}
-              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'flex', overflow: 'hidden' }}>
-                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: '9px 0 8px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
+                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
-                  <p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
                 </a>
                 <PreDossierTile idu={idu} />
               </div>
