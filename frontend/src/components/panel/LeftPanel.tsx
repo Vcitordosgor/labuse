@@ -372,11 +372,12 @@ export function LeftPanel() {
   const filtresOpen = panneauSection === 'filtres'
   const prevVerdict = useRef(verdict)
   useEffect(() => {
-    // M55-D stage 4 : allumer l'analyse (verdict false→true) REPLIE Couches ET Filtres — la section
-    // se referme pour laisser la carte (accordéon), comme demandé.
-    // M55-H point 8 : plus d'état « aucune section » — l'allumage replie Filtres en rendant
-    // la main à Couches (une section reste toujours ouverte).
-    if (verdict && !prevVerdict.current) { setPanneauSection('couches'); setAccueilVu() }
+    // ═══ M55-J point 6 — TRANSITION DE L'AUTOMATE (explicite, à champ unique) ═══
+    // L'ouverture de l'analyse (verdict false→true) est une ENTRÉE de l'automate : Couches se
+    // RÉTRACTE, Filtres devient la section ouverte (elle porte alors le récap du run + Relancer/
+    // Désactiver — compacte, cf. J1) → le listing récupère la hauteur. Corrige la spéc M55-I
+    // (qui rendait la main à Couches). L'invariant « exactement une section ouverte » tient.
+    if (verdict && !prevVerdict.current) { setPanneauSection('filtres'); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
   const setAccueilVu = useApp((st) => st.setAccueilVu)
@@ -413,7 +414,7 @@ export function LeftPanel() {
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
           <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
+          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -445,7 +446,7 @@ export function LeftPanel() {
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
             <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
-            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
+            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />

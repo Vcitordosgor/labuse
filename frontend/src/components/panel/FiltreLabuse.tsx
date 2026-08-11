@@ -285,18 +285,21 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
 
   return (
     <div className="card-elev px-3 py-2">
-      {/* ═══════ M55-J point 1 — LES FILTRES SONT FIGÉS PENDANT L'ANALYSE ═══════
-          Choix « désactiver » (fieldset natif) plutôt que « faire disparaître » : le rappel de
-          CE QUI a été filtré reste lisible (grisé), et un `<fieldset disabled>` désactive d'un
-          coup TOUS les contrôles descendants (boutons, champs, chips) — un seul point de garde,
-          impossible d'en oublier un. La carte d'analyse (étage ②) reste hors du fieldset : ses
-          gestes (Voir / Relancer / Désactiver) restent cliquables. */}
-      <fieldset disabled={analyseActive} className={`m-0 min-w-0 border-0 p-0 transition-opacity duration-soft ${analyseActive ? 'opacity-45' : 'opacity-100'}`}>
-      {analyseActive && (
-        <p data-filtres-figes className="mb-2 rounded-md border border-line-2/60 bg-surface-2/60 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-dim">
-          Filtres figés — l’analyse porte sur ces critères. <span className="text-txt-mut">Relancer</span> ou <span className="text-txt-mut">Désactiver</span> l’analyse pour les changer.
-        </p>
-      )}
+      {/* ═══════ M55-J points 1 & 6 — LES FILTRES SONT FIGÉS PENDANT L'ANALYSE ═══════
+          Arbitrage « faire DISPARAÎTRE » (et non « désactiver visiblement ») : pendant l'analyse,
+          les contrôles de filtres sont retirés et remplacés par un RÉCAP COMPACT des critères du
+          run (J1 l'autorise : « la liste des critères doit rester lisible dans la carte
+          d'analyse »). Deux bénéfices : (1) impossible d'éditer un filtre → aucun run mixte ;
+          (2) la section Filtres devient COMPACTE → le listing récupère la hauteur quand Couches
+          se rétracte (J6). Pour changer de critères : Relancer / Désactiver l'analyse. */}
+      {analyseActive ? (
+        <div data-analyse-recap className="rounded-lg border border-mint/30 bg-mint/[0.05] px-3 py-2">
+          <p className="label-caps text-[9px] text-txt-dim">Analyse en cours</p>
+          <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{recap ?? `toutes les parcelles de ${perimetre}`}</p>
+          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Filtres figés — Relancer ou Désactiver l’analyse pour les changer.</p>
+        </div>
+      ) : (
+      <>
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
           postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
       <div data-communes-filtre>
@@ -370,7 +373,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
-      </fieldset>
+      </>
+      )}
 
       {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════ */}
       <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${
@@ -514,14 +518,17 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}
 
       {/* M55-G point 9 / M55-H point 3 : danger SOBRE, SÉPARÉ du groupe d'action (filet +
-          respiration — jamais collé aux deux boutons). Geste inchangé, le title le dit. */}
-      <div className="mt-4 border-t border-line-2/50 pt-3">
-        <button onClick={resetTout}
-          title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
-          className="min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
-          Réinitialiser les filtres
-        </button>
-      </div>
+          respiration — jamais collé aux deux boutons). M55-J : masqué pendant l'analyse (les
+          filtres sont figés — Désactiver l'analyse d'abord pour retrouver le reset). */}
+      {!analyseActive && (
+        <div className="mt-4 border-t border-line-2/50 pt-3">
+          <button onClick={resetTout}
+            title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
+            className="min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
+            Réinitialiser les filtres
+          </button>
+        </div>
+      )}
     </div>
   )
 }
