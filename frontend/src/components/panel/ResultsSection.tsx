@@ -59,11 +59,16 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
-          <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
+          {/* M55-I point 5 (décision Vic) : le RANG quitte le badge (« Brûlante · 59 » →
+              « Brûlante ») — les ex æquo massifs du v8 (15 valeurs de ×N distinctes dans le
+              top 500) ne portent pas cette précision, et la liste est déjà ordonnée. Restent
+              le tier + le ×N (colonne droite, son tooltip). Le rang COMPLET avec dénominateur
+              (rang N / total) reste en fiche parcelle et dans les exports (inchangés). */}
+          <Tip tip={`Verdict du classement servi${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>
-              {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
+              {meta.label}
             </span>
           </Tip>
           {p.evenement === 'rouge' && (
