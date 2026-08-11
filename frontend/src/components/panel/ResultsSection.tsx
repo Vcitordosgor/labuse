@@ -150,9 +150,9 @@ const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset s
 // B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
 // M13-F3 (QA-57) : « commune » RETIRÉ (demande Vic) ; ×N → « mutation ×N » ; chaque
 // bouton porte son propre title explicatif.
-// M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE (↓ = décroissant —
-// vérifié : le serveur sert un seul sens par clé ; pas d'inversion au second clic, le sens
-// est donc DIT). Opportunités : n°1 d'abord (le tip le dit), pas de flèche.
+// M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE.
+// M55-H point 4 : le tri Surface a ses DEUX sens — re-clic sur la pill active = inversion
+// (« Surface ↓ » ↔ « Surface ↑ », clé serveur surface / surface_asc), dans les deux modes.
 const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
   { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip, dir: '↓' },
@@ -247,6 +247,7 @@ export function ResultsSection() {
         // même sémantique que le serveur : rang P (copros/sans rang en queue), ×N, surface, commune
         if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
         if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+        if (sort === 'surface_asc') return (a.surface_m2 ?? Infinity) - (b.surface_m2 ?? Infinity)
         if (sort === 'commune') return String((a as { commune?: string }).commune ?? '').localeCompare(String((b as { commune?: string }).commune ?? ''))
         const ra = a.rang_v2 ?? Infinity
         const rb = b.rang_v2 ?? Infinity
@@ -297,14 +298,21 @@ export function ResultsSection() {
             </Tip>
           </span>
           <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {sorts.map((s) => (
-              <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
-                className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
-                  sort === s.key ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
-                title={s.tip}>
-                {s.label}{sort === s.key && s.dir ? ` ${s.dir}` : ''}
-              </button>
-            ))}
+            {sorts.map((s) => {
+              // M55-H point 4 : la pill Surface couvre ses DEUX sens — re-clic = inversion
+              const actif = sort === s.key || (s.key === 'surface' && sort === 'surface_asc')
+              const fleche = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
+                : actif && s.dir ? ` ${s.dir}` : ''
+              return (
+                <button key={s.key} data-sort={s.key}
+                  onClick={() => setSort(s.key === 'surface' && sort === 'surface' ? 'surface_asc' : s.key)}
+                  className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
+                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
+                  title={s.key === 'surface' && actif ? `${s.tip} — re-cliquer pour inverser le sens` : s.tip}>
+                  {s.label}{fleche}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>

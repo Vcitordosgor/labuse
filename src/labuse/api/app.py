@@ -1215,7 +1215,7 @@ def list_parcels(commune: str | None = None,
 
 @app.get("/parcels/export.csv")
 def export_parcels_csv(c: FiltreCriteres = Depends(),
-                       sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
+                       sort: str | None = Query(None, pattern="^(v|rang|mult|surface|surface_asc|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
     """Export CSV de la liste — MÊMES facettes que le compteur et la liste (M46 Lot D : routé
@@ -1555,7 +1555,7 @@ _FILTRE_IDUS_CAP = 20_000
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|commune)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune)$"),
            idus: int = Query(0, ge=0, le=1),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
@@ -1566,7 +1566,9 @@ def filtre(c: FiltreCriteres = Depends(),
     M55-G suite (point 1) : `idus=1` ajoute la liste des IDU du résultat (mêmes critères,
     plafond _FILTRE_IDUS_CAP + drapeau `idus_tronque`) — la CARTE raccorde sa palette au
     résultat exact de la liste, y compris pour les critères non exprimables en tuiles
-    (signaux de vie, état du sol, constructibilité…)."""
+    (signaux de vie, état du sol, constructibilité…).
+
+    M55-H point 4 : `sort=surface_asc` — le sens inverse du tri Surface."""
     if not (c.source and c.source.startswith("q_v")):
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
@@ -1869,6 +1871,9 @@ _Q_V2_ORDERS = {
             "(ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC",
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
     "surface": "p.surface_m2 DESC NULLS LAST, s2.rang ASC NULLS LAST",
+    # M55-H point 4 : le tri Surface gagne son sens INVERSE (re-clic sur la pill) —
+    # même clé, ordre ASC (les slivers < 2 m² restent masqués par MIN_DISPLAY_SURFACE_M2).
+    "surface_asc": "p.surface_m2 ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "(d.q_score + d.a_score) DESC",
@@ -1878,11 +1883,11 @@ _Q_V2_ORDERS_PAGE = {
             "pg.evenement_rouge DESC, (pg.q_score + pg.a_score) DESC",
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
          "(pg.q_score + pg.a_score) DESC",
 }
-
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = Q_A_RUN_LABEL,
                extra_where: str = "", extra_params: dict | None = None,

@@ -159,7 +159,8 @@ export const getFiltreIdus = (f: Filters) => {
 }
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
-export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'
+// M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
