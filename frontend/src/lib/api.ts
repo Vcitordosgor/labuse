@@ -315,7 +315,8 @@ export const getMapLayer = (kind: string, limit?: number) => {
 export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
 // M55-D stage 5 : la DATE du run servi (champ `gel` du modèle épinglé) — pour la ligne de contexte
 // de la Révélation (« classement du … »). Introuvable → null, la ligne s'affiche sans date.
-export const getV2Modele = () => j<{ model_version?: string; gel?: string }>('/v2/modele')
+// M55-H point 11 : getV2Modele retiré (0-caller — la date du run ne s'affiche plus côté client ;
+// la page Sources interroge /v2/modele directement, sans gel ni dernier_run désormais).
 // M55-D stage 9 — les chiffres PROUVÉS de l'accueil (endpoint agrégé, cache serveur 1 h).
 // null = chiffre indisponible → le front le MASQUE, il ne l'invente pas.
 export interface AccueilChiffres {

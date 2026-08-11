@@ -59,7 +59,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
-          <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+          <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>

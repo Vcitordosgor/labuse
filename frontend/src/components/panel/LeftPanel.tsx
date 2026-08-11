@@ -3,7 +3,7 @@ import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
-import { getAccueilChiffres, getV2Modele } from '../../lib/api'
+import { getAccueilChiffres } from '../../lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
@@ -19,15 +19,8 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
-  // M55-G suite point 5 : la DATE du run servi vit ici (le bandeau du panneau est supprimé) —
-  // champ `gel` du modèle épinglé ; indisponible → la ligne est simplement absente.
-  const modele = useQuery({ queryKey: ['v2-modele'], queryFn: getV2Modele, staleTime: 3_600_000, retry: false })
-  const runDate = (() => {
-    const g = modele.data?.gel
-    if (!g) return null
-    const d = new Date(g.replace(' ', 'T'))
-    return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
-  })()
+  // M55-H point 11 (décision Vic) : la ligne de pied « Classement servi du … » est RETIRÉE —
+  // la date de bascule du run est un détail technique, réservé à l'admin/interne.
   return (
     <div data-algo-overlay className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}>
@@ -45,11 +38,6 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        {runDate && (
-          <p data-algo-date className="mt-3 border-t border-line pt-2 text-[10.5px] text-txt-dim">
-            {CLIENT.algo.dateRun(runDate)}
-          </p>
-        )}
       </div>
     </div>
   )

@@ -47,7 +47,7 @@ export const CLIENT = {
     segSources: (n: string) => `${n} sources publiques branchées`,
     b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
     src: {
-      parcelles: 'Compte exact du classement servi (run versionné), recalculé à chaque mise à jour majeure.',
+      parcelles: 'Compte exact du classement servi, recalculé à chaque mise à jour majeure.',
       communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
       sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
     },
@@ -271,8 +271,8 @@ export const CLIENT = {
     bouton: 'Comprendre le classement',
     // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
     lien: 'comprendre le classement →',
-    // M55-G suite point 5 — la date du run servi vit ICI (le bandeau du panneau est supprimé)
-    dateRun: (d: string) => `Classement servi du ${d} — versionné, recalculé à chaque mise à jour majeure.`,
+    // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
+    // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
     // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi

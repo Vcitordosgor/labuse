@@ -199,7 +199,7 @@ export function IAStub() {
             )}
             <div className="mt-2.5 border-t border-line pt-2">
               <span className="inline-flex items-center gap-1 rounded-full border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] text-mint">
-                <b className="font-semibold">Sourcé</b> · comptage SQL du run servi (chiffres vérifiés, non calculés par l'IA)
+                <b className="font-semibold">Sourcé</b> · comptage SQL du classement servi (chiffres vérifiés, non calculés par l'IA)
               </span>
             </div>
           </div>

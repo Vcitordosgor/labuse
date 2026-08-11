@@ -156,17 +156,16 @@ def reserve(commune: str | None = Query(None), limit: int = Query(200, le=1000),
 def modele(db: Session = Depends(get_db)) -> dict:
     """« Sources & fraîcheur » côté modèle : version, sha court, date de gel,
     politique de recalibration, avertissement censure, note deprecated matrice."""
-    run = _served_run(db)
+    _served_run(db)   # 404 explicite si aucun run servi (comportement inchangé)
     freeze = json.loads(Path(MODEL_FREEZE).read_text())
+    # M55-H point 11 (décision Vic) : la DATE de gel (`gel`) et le NOM/date du run
+    # (`dernier_run`) ne sont plus servis à cette surface CLIENTE — détails admin/interne
+    # (ils restent lisibles via les surfaces ops : /readyz, santé, audit, config).
     return {
         "model_version": MODEL_VERSION,
         "sha256_court": freeze["sha256"][:12],
-        "gel": freeze["gel"],
         "provenance": freeze["provenance"],
         "politique_recalibration": freeze["politique"],
-        "dernier_run": {"run_id": run["run_id"],
-                        "computed_at": str(run["computed_at"]),
-                        "snapshot": run["snapshot_label"]},
         "avertissement_censure": AVERTISSEMENT_CENSURE,
         "matrice_legacy": "les champs matrice (statut, q_score, a_score) restent "
                           "servis par les endpoints historiques — DEPRECATED, "

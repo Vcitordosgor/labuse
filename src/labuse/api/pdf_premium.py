@@ -13,7 +13,6 @@ from pathlib import Path
 
 from fpdf import FPDF
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 from ..verdict_servi import TIER_LABELS, DECLASSE_RGB  # source unique des libellés client (écran = papier)
 
 FONTS = Path(__file__).resolve().parent / "fonts"
@@ -63,7 +62,8 @@ class _Pdf(FPDF):
         # M6 2a : pied de page commun (non-garantie + disclaimer CU au mot près +
         # attributions sources + date de génération) — une seule vérité, export_commun.
         from .export_commun import pied_de_page_pdf
-        pied_de_page_pdf(self, f"fiche parcelle (run {RUN})")
+        # M55-H point 11 : le nom technique du run ne parait plus sur le document
+        pied_de_page_pdf(self, "fiche parcelle")
 
 
 #: silhouette officielle (path labuse.immo, échantillonné) — polygone rempli
@@ -126,7 +126,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.cell(0, 6, "LABUSE", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("inter", size=7.5)
     pdf.set_text_color(*TXT_DIM)
-    pdf.cell(0, 4, f"Radar foncier premium — La Réunion · fiche parcelle (run {RUN})",
+    pdf.cell(0, 4, "Radar foncier premium — La Réunion · fiche parcelle",
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 
