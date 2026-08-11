@@ -30,6 +30,24 @@ const ETAT_SOL = [
 // (un vide honnête vaut mieux qu'un chiffre périmé).
 const filtersEqual = (a: Filters, b: Filters): boolean => JSON.stringify(a) === JSON.stringify(b)
 
+// M55-J point 2 : LE bouton d'action du panneau (un seul endroit pour la famille) — deux
+// variantes hiérarchisées : `primary` (rempli mint, l'action dominante) et `secondary`
+// (contour, l'action de retrait). Relancer/Désactiver s'y branchent, ils ne se distinguent
+// plus par « bouton vs texte souligné » mais par le TRAITEMENT de la même famille.
+function ActionBtn({ variant, onClick, children, dataAttr }:
+  { variant: 'primary' | 'secondary'; onClick: () => void; children: React.ReactNode; dataAttr?: string }) {
+  const extra = dataAttr ? { [dataAttr]: true } : {}
+  const style = variant === 'primary'
+    ? 'bg-mint font-semibold text-mint-ink hover:brightness-110'
+    : 'border border-line-2 bg-surface-3/60 text-txt hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi'
+  return (
+    <button {...extra} onClick={onClick}
+      className={`flex-1 rounded-lg py-2 text-[12px] font-medium transition-colors duration-quick ${style}`}>
+      {children}
+    </button>
+  )
+}
+
 const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, { k: 'N', l: 'N' }]
 // M55-G point 7 : PROPRIO_TYPE / ETAT_SOCIETE / COPRO retirés avec les tiroirs pédagogiques
 // (0-caller) — les champs de filtre restent dans le store + l'URL.
@@ -475,17 +493,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 le filtrage par tier post-analyse quitte ce panneau (les champs gardent leur
                 persistance URL — vieux liens compatibles). */}
 
-            {/* relance (re-décompte 3 s, décision Vic) + extinction DISCRÈTE (la cérémonie est à
-                l'allumage, pas à l'extinction) */}
-            <div className="flex items-center justify-between pt-1">
-              <button data-relancer onClick={lancer}
-                className="rounded-lg border border-mint/50 px-3 py-1 text-[11.5px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">
+            {/* M55-J point 2 : DEUX BOUTONS de même famille (ActionBtn), hiérarchisés —
+                Relancer = action principale (primary, mint), Désactiver = action secondaire
+                (contour). Plus de « lien souligné gris » qui ne se lit ni comme action ni
+                comme état. Marges constantes (gap-2), même largeur (flex-1). */}
+            <div className="flex gap-2 pt-1">
+              <ActionBtn variant="primary" dataAttr="data-relancer" onClick={lancer}>
                 {CLIENT.revelation.relancer}
-              </button>
-              <button data-desactiver onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}
-                className="text-[10.5px] text-txt-dim underline decoration-txt-dim/50 underline-offset-2 transition-colors duration-quick hover:text-txt">
+              </ActionBtn>
+              <ActionBtn variant="secondary" dataAttr="data-desactiver"
+                onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}>
                 {CLIENT.revelation.desactiver}
-              </button>
+              </ActionBtn>
             </div>
           </div>
         )}

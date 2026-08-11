@@ -92,7 +92,8 @@ export const CLIENT = {
     ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
     relancer: 'Relancer l’analyse',
-    desactiver: 'désactiver l’analyse',
+    // M55-J point 2 : « désactiver » devient un vrai bouton (majuscule initiale).
+    desactiver: 'Désactiver l’analyse',
     erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',
     reessayer: 'Réessayer',
     // M55-J point 1 · FILET : les critères ont bougé sous l'analyse (chemin externe) → la carte
