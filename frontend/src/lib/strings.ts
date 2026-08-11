@@ -364,6 +364,9 @@ export const CLIENT = {
     // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
     demanderAnalyse: 'Demander à LABUSE d’analyser la parcelle',   // M55-N point 4 (libellé Vic)
     demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
+    // M55-N point 5 — libellé honnête du tiroir « Les données » : dit CE QU'IL COMPTE (les sources
+    // qui alimentent CETTE fiche, cf. audit M55-L P13), pas un manque. Chiffre servi (jamais en dur).
+    sourcesUtilisees: (n: number) => `${n} sources utilisées sur cette fiche`,
     // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
     // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).
     crmAjouter: '+ CRM',

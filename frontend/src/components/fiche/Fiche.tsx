@@ -1852,7 +1852,7 @@ export function Fiche({ idu }: { idu: string }) {
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
             <RefDrawer id="confiance" icon={IC.confiance} name="Les données"
-              value={f.data_sources?.length ? `${f.data_sources.length} sources` : confianceValue}>
+              value={f.data_sources?.length ? CLIENT.fiche.sourcesUtilisees(f.data_sources.length) : confianceValue}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
