@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -448,28 +448,9 @@ function CopyIdu({ value }: { value: string }) {
   )
 }
 
-// M20 — pack apporteur : lien public lecture seule, filigrané + horodaté + compteur de vues.
-function ShareButton({ idu }: { idu: string }) {
-  const share = useMutation({ mutationFn: () => createShare(idu) })
-  return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <button onClick={() => share.mutate()}
-        style={{ width: 31, height: 31, border: '1px solid #232e29', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d9488', cursor: 'pointer' }}
-        title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5" /></svg>
-      </button>
-      {share.data && (
-        <div className="floating absolute bottom-10 right-0 z-20 w-64 p-3 text-[11px]">
-          <p className="label-caps">Lien apporteur</p>
-          <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
-            {window.location.origin}{share.data.url}
-          </a>
-          <p className="mt-1 text-[11px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
-        </div>
-      )}
-    </div>
-  )
-}
+// M55-L point 3 — l'icône « partager » (pack apporteur : lien public filigrané) a été RETIRÉE du
+// header de la fiche (décision Vic). La fonction ShareButton et l'import createShare deviennent
+// 0-caller côté front → retirés aussi (endpoint back /partners/share intact, revient au besoin).
 
 function PipelineButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
@@ -1309,7 +1290,6 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             {/* C4 : cloche = suivi (état réel via WatchButton, style référence) */}
             <WatchButton idu={idu} />
-            <ShareButton idu={idu} />
             <button onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
               style={{ width: 31, height: 31, border: `1px solid ${ficheSearchOpen ? '#2f7a54' : '#232e29'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? '#7de3ab' : '#7d9488', cursor: 'pointer' }}
               title="Rechercher dans cette fiche">

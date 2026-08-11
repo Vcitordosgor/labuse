@@ -576,7 +576,8 @@ export const addProfile = (p: Record<string, unknown>) =>
 // M49 (Lot A, arbitrage Vic) : helpers runMatch/matchCompatibilite/listShares RETIRÉS — 0 importeur
 // (vestiges M19, code mort front). Routes serveur correspondantes listées « douteuses » (non retirées).
 export const promoteursActifs = (commune: string) => j<Record<string, any>>(`/partners/promoteurs-actifs?commune=${encodeURIComponent(commune)}`)
-export const createShare = (idu: string) => j<{ token: string; url: string }>(`/partners/share/${idu}`, { method: 'POST' })
+// M55-L point 3 : `createShare` retiré (0-caller après retrait de l'icône « partager » de la
+// fiche). Endpoint back /partners/share intact — réexposable si le pack apporteur revient.
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
