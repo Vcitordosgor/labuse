@@ -164,6 +164,12 @@ interface AppState {
   // méthode : tri, ×N, validation) et « scoring » (le sens des paliers). null = fermée.
   algoModale: 'classement' | 'scoring' | null
   setAlgoModale: (v: 'classement' | 'scoring' | null) => void
+  // M55-M point 3 : le RÉCAP des critères DU RUN d'analyse (« 2 communes, zone U, terrain nu, … »),
+  // FIGÉ au lancement depuis le SNAPSHOT (jamais l'état courant des filtres — même invariant que la
+  // carte d'analyse M55-J p1). Écrit par FiltreLabuse.lancer(), lu par le bandeau (VerdictHero) qui
+  // porte désormais les critères (le bloc « ANALYSE EN COURS » a disparu). null = pas d'analyse décrite.
+  analyseRecap: string | null
+  setAnalyseRecap: (s: string | null) => void
   // M55-G point 10 : ce que la carte PEINT réellement à l'écran (zoom, mode île/commune,
   // couches) — écrit par MapView, lu par la légende. Règle : une légende n'existe que si
   // ses couleurs sont effectivement à l'écran (jamais de légende orpheline).
@@ -318,6 +324,8 @@ export const useApp = create<AppState>((set) => ({
   setToast: (toast) => set({ toast }),
   algoModale: null,
   setAlgoModale: (algoModale) => set({ algoModale }),
+  analyseRecap: null,
+  setAnalyseRecap: (analyseRecap) => set({ analyseRecap }),
   mapPeint: { parcelles: false, equipements: false, zonage: false },
   // garde d'égalité : le handler zoom de la carte appelle à chaque frame — pas de re-render inutile
   setMapPeint: (p) => set((s) =>
@@ -326,7 +334,7 @@ export const useApp = create<AppState>((set) => ({
   verdict: false,
   setVerdict: (verdict) => set({ verdict }),
   retourFiltres: () => set((s) => ({
-    verdict: false, panneauSection: 'filtres',
+    verdict: false, panneauSection: 'filtres', analyseRecap: null,
     filters: { ...s.filters, analyseLabuse: false },
   })),
   iaRestitution: null,

@@ -116,8 +116,11 @@ export function hasOpinion(f: Filters): boolean {
 }
 
 // M55-D stage 6 : RÉCAP des critères pour la phrase de la Révélation — les plus parlants,
-// plafonné à 4 (sinon « … ») ; vide → null (la phrase dit « Selon vos critères : » tel quel).
-export function resumeCriteres(f: Filters, signalLabels: Record<string, string> = {}): string | null {
+// plafonné à `max` (4 par défaut, sinon « … ») ; vide → null (la phrase dit « Selon vos
+// critères : » tel quel). M55-M point 3 : `max` réglable — le bandeau d'analyse stocke le récap
+// COMPLET (max=Infinity, aucun « … ») pour le title/survol, la troncature d'affichage étant
+// portée par le CSS (truncate). Les appelants historiques gardent le plafond 4.
+export function resumeCriteres(f: Filters, signalLabels: Record<string, string> = {}, max = 4): string | null {
   const parts: string[] = []
   if (f.communes.length) parts.push(f.communes.length === 1 ? f.communes[0] : `${f.communes.length} communes`)
   if (f.surfaceMin != null && f.surfaceMax != null) parts.push(`${f.surfaceMin.toLocaleString('fr-FR')}–${f.surfaceMax.toLocaleString('fr-FR')} m²`)
@@ -128,7 +131,7 @@ export function resumeCriteres(f: Filters, signalLabels: Record<string, string> 
   for (const sg of f.signaux) parts.push(signalLabels[sg] ?? sg)
   if (f.tiers.length) parts.push(`tiers ${f.tiers.length}`)
   if (!parts.length) return null
-  return parts.length > 4 ? parts.slice(0, 4).join(', ') + ', …' : parts.join(', ')
+  return parts.length > max ? parts.slice(0, max).join(', ') + ', …' : parts.join(', ')
 }
 
 export function activeChips(f: Filters): Chip[] {

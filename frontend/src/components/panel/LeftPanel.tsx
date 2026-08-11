@@ -249,6 +249,9 @@ function VerdictHero() {
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
+  // M55-M point 3 : le bandeau porte les CRITÈRES DU RUN (figés au lancement, jamais les filtres
+  // courants) — le bloc « ANALYSE EN COURS » a disparu du panneau Filtres.
+  const analyseRecap = useApp((s) => s.analyseRecap)
   // M55-J point 5 : DEUX modales distinctes (classement / scoring), état partagé au store.
   const algoModale = useApp((s) => s.algoModale)
   const setAlgoModale = useApp((s) => s.setAlgoModale)
@@ -268,6 +271,13 @@ function VerdictHero() {
             Retour
           </button>
         </div>
+        {/* M55-M point 3 : la phrase de critères DU RUN, juste sous le titre. Compacte : tronquée
+            proprement (truncate CSS) avec le détail complet au survol (title = récap complet, sans
+            « … ») — jamais de débordement qui casse le bandeau. Vient de store.analyseRecap (snapshot
+            du lancement), pas des filtres courants. Absente en tri factuel (pas de run décrit). */}
+        {analyse && analyseRecap && (
+          <p data-analyse-criteres className="truncate text-[10px] leading-snug text-txt-mut" title={analyseRecap}>{analyseRecap}</p>
+        )}
         {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions
             distinctes, deux modales. Seulement en mode analyse (hors-sujet en tri factuel). */}
         {/* M55-K point 2 : text-[10px] + px-1.5 + whitespace-nowrap — « Info classement » /

@@ -149,14 +149,14 @@ function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suf
 // store — la fiche continue de le lire).
 
 export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
-  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter } = useApp()
+  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap } = useApp()
   const analyseOn = filters.analyseLabuse
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
   // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge). M55-J : coupe
   // aussi le rituel (phase/snapshot) — jamais une carte-phrase orpheline après un reset.
-  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null) }
+  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null); setAnalyseRecap(null) }
   // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
   // M55-F point 2 : la TRAME (analyse coupée) — total analysé du périmètre. écartées (étage 0) =
@@ -213,6 +213,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
     // live : elle décrit ce run, un point c'est tout.
     const snap = filters
     setSnapFilters(snap)
+    // M55-M point 3 : on FIGE aussi le récap des critères du run (complet, max=∞ → aucun « … » ;
+    // la troncature d'affichage est CSS dans le bandeau). C'est CE snapshot que le bandeau
+    // « ✓ Analyse LABUSE » portera — jamais l'état courant des filtres (même invariant M55-J p1).
+    setAnalyseRecap(resumeCriteres(snap, CLIENT.signaux.labels, Infinity))
     // la VRAIE requête part MAINTENANT (appel direct, SANS retry : un échec interrompt le rituel
     // au lieu d'être masqué par les retries react-query au-delà des 3 s)
     getFiltre({ ...snap, analyseLabuse: true }, 0)
@@ -260,7 +264,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // redevient éditable, `analyseActive` retombe) SANS toucher `verdict` — le listing reste affiché
   // (il passe en tri factuel) pendant qu'on ajuste les critères, puis on relance « Demander à LABUSE ».
   // (≠ « Désactiver l'analyse » qui, lui, quitte la vue résultats : setAnalyse(false) éteint verdict.)
-  const changerFiltres = () => { setFilter('analyseLabuse', false); setPhase('idle'); setSnapFilters(null) }
+  const changerFiltres = () => { setFilter('analyseLabuse', false); setPhase('idle'); setSnapFilters(null); setAnalyseRecap(null) }
   // M55-J point 1 : « analyse active » = le rituel est lancé (décompte/révélation) OU l'analyse
   // est allumée. Dans cet état les FILTRES SONT FIGÉS (fieldset désactivé plus bas) — un seul run
   // décrit, un seul effectif à l'écran.
@@ -293,27 +297,16 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
 
   return (
     <div className="card-elev px-3 py-2">
-      {/* ═══════ M55-J points 1 & 6 — LES FILTRES SONT FIGÉS PENDANT L'ANALYSE ═══════
-          Arbitrage « faire DISPARAÎTRE » (et non « désactiver visiblement ») : pendant l'analyse,
-          les contrôles de filtres sont retirés et remplacés par un RÉCAP COMPACT des critères du
-          run (J1 l'autorise : « la liste des critères doit rester lisible dans la carte
-          d'analyse »). Deux bénéfices : (1) impossible d'éditer un filtre → aucun run mixte ;
-          (2) la section Filtres devient COMPACTE → le listing récupère la hauteur quand Couches
-          se rétracte (J6). Pour changer de critères : Relancer / Désactiver l'analyse. */}
-      {analyseActive ? (
-        /* M55-K point 4 : le récap « ANALYSE EN COURS » DISPARAÎT à la phase REVEALED — là, la
-           phrase « … Selon vos critères (…) » de la carte de révélation porte DÉJÀ les critères
-           (constat obligatoire vérifié : suppression franche, aucun angle mort). Il reste au
-           décompte (filtres juste figés, pas encore de phrase) et à l'état post-analyse
-           (Relancer/Désactiver : pas de phrase → le récap est la SEULE source des critères). */
-        phase === 'revealed' ? null : (
-        <div data-analyse-recap className="rounded-lg border border-mint/30 bg-mint/[0.05] px-3 py-2">
-          <p className="label-caps text-[9px] text-txt-dim">Analyse en cours</p>
-          <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{recap ?? `toutes les parcelles de ${perimetre}`}</p>
-          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Filtres figés — Relancer ou Désactiver l’analyse pour les changer.</p>
-        </div>
-        )
-      ) : (
+      {/* ═══════ M55-J points 1 & 6 / M55-M point 3 — LES FILTRES SONT FIGÉS PENDANT L'ANALYSE ═══════
+          Arbitrage « faire DISPARAÎTRE » : pendant l'analyse (analyseActive), les contrôles de
+          filtres sont retirés → impossible d'éditer un filtre, aucun run mixte, et la section reste
+          compacte pour libérer la hauteur au listing (M55-M point 1).
+          M55-M point 3 : le bloc « ANALYSE EN COURS / Filtres figés — … » est SUPPRIMÉ partout
+          (y compris décompte et post-analyse) — les critères du run vivent désormais dans le
+          bandeau « ✓ Analyse LABUSE » (store.analyseRecap, figé au lancement). Ici, quand l'analyse
+          est active, on ne rend simplement RIEN (le formulaire réapparaît via « Changer les
+          filtres » ou « Désactiver »). */}
+      {!analyseActive && (
       <>
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
           postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
@@ -526,7 +519,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 {CLIENT.revelation.changerFiltres}
               </ActionBtn>
               <ActionBtn variant="danger" dataAttr="data-desactiver"
-                onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}>
+                onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle'); setAnalyseRecap(null) }}>
                 {CLIENT.revelation.desactiver}
               </ActionBtn>
             </div>

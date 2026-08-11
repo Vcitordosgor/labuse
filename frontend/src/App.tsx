@@ -15,7 +15,8 @@ import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { VeillesPanel } from './components/veilles/VeillesPanel'
 import { ComparePanel } from './components/compare/ComparePanel'
-import { filtersFromHash, filtersToHash } from './lib/filters'
+import { filtersFromHash, filtersToHash, resumeCriteres } from './lib/filters'
+import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
 import { CopiloteView } from './components/copilote/CopiloteView'
@@ -265,11 +266,19 @@ export default function App() {
     const hash = window.location.hash          // lu AVANT toute écriture (l'effet d'écriture suit)
     const parsed = filtersFromHash(hash)
     if (parsed) {
-      setFilters({ ...EMPTY_FILTERS, ...parsed.filters })
+      const merged = { ...EMPTY_FILTERS, ...parsed.filters }
+      setFilters(merged)
       if (parsed.zone) setZone(parsed.zone)
       // M55-D stage 4 : interrupteur allumé (lien portant un critère d'opinion, ex. un tier) ⇒ on
       // AFFICHE l'analyse (verdict) — l'interrupteur et le regard sur la carte sont la même chose.
-      if (parsed.filters.analyseLabuse) setVerdict(true)
+      // M55-M point 3 : au rechargement, le snapshot de session est perdu — on RÉAMORCE le récap du
+      // bandeau depuis les filtres RESTAURÉS, qui SONT ceux du run (persistés en URL, aucune
+      // divergence possible à cet instant). L'invariant tient : dès qu'un filtre diverge en session,
+      // analyseRecap reste figé (jamais réécrit hors lancer()).
+      if (merged.analyseLabuse) {
+        setVerdict(true)
+        useApp.getState().setAnalyseRecap(resumeCriteres(merged, CLIENT.signaux.labels, Infinity))
+      }
     }
     const p = new URLSearchParams(hash.replace(/^#/, ''))
     const c = p.get('c')
