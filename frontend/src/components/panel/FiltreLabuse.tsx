@@ -25,6 +25,11 @@ const ETAT_SOL = [
   { k: 'bati_sature', l: 'Bâti saturé' },
   { k: 'bati_revele', l: 'Bâti révélé' },
 ]
+// M55-J point 1 : égalité de filtres pour le FILET d'invalidation — toute différence (y compris
+// un simple réordonnancement) invalide la carte, ce qui est le comportement conservateur voulu
+// (un vide honnête vaut mieux qu'un chiffre périmé).
+const filtersEqual = (a: Filters, b: Filters): boolean => JSON.stringify(a) === JSON.stringify(b)
+
 const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, { k: 'N', l: 'N' }]
 // M55-G point 7 : PROPRIO_TYPE / ETAT_SOCIETE / COPRO retirés avec les tiroirs pédagogiques
 // (0-caller) — les champs de filtre restent dans le store + l'URL.
@@ -130,8 +135,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
-  // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge).
-  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false) }
+  // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge). M55-J : coupe
+  // aussi le rituel (phase/snapshot) — jamais une carte-phrase orpheline après un reset.
+  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null) }
   // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
   const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
   // M55-F point 2 : la TRAME (analyse coupée) — total analysé du périmètre. écartées (étage 0) =
@@ -166,8 +172,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const phaseRef = useRef<Phase>('idle')
   phaseRef.current = phase
   const [countVal, setCountVal] = useState(0)
-  // réponse FRAÎCHE du rituel (appel DIRECT, sans retry) — la phrase révèle CES nombres-là
+  // ═══ M55-J point 1 — INVARIANT : la carte d'analyse ne mélange JAMAIS deux runs. Tout ce
+  // qu'elle affiche (effectif analysé, retenues, ventilation, récap des critères, périmètre)
+  // provient du SNAPSHOT pris au lancement — pas des filtres live. Trois pièces figées à
+  // `lancer()` : `fresh` (retenues + ventilation), `freshTrame` (effectif analysé = trame),
+  // `snapFilters` (les critères du run, pour le récap/périmètre + le filet d'invalidation). ═══
   const [fresh, setFresh] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
+  const [freshTrame, setFreshTrame] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
+  const [snapFilters, setSnapFilters] = useState<Filters | null>(null)
   const timerRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
   // M55-G suite point 5 : la requête v2-modele (date du run pour le bandeau) est partie avec
@@ -176,10 +188,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   const RITUEL_MS = reduced ? 400 : 3000
   const lancer = () => {
-    setPhase('counting'); setCountVal(0); setFresh(null)
+    setPhase('counting'); setCountVal(0); setFresh(null); setFreshTrame(null)
+    // M55-J point 1 : SNAPSHOT du run — on fige les critères et on tire LES DEUX effectifs
+    // (retenues + trame analysée) sur CES critères-là. La carte ne lira plus jamais les filtres
+    // live : elle décrit ce run, un point c'est tout.
+    const snap = filters
+    setSnapFilters(snap)
     // la VRAIE requête part MAINTENANT (appel direct, SANS retry : un échec interrompt le rituel
     // au lieu d'être masqué par les retries react-query au-delà des 3 s)
-    getFiltre({ ...filters, analyseLabuse: true }, 0)
+    getFiltre({ ...snap, analyseLabuse: true }, 0)
       .then((r) => setFresh(r))
       .catch(() => {
         if (phaseRef.current !== 'counting') return
@@ -187,6 +204,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
         setPhase('error')
       })
+    // la trame (effectif ANALYSÉ) du même run — le dénominateur de « retenues / analysées »
+    getFiltre({ ...snap, analyseLabuse: false }, 0).then((r) => setFreshTrame(r)).catch(() => { /* filet plus bas */ })
     if (!reduced) {
       const t0 = performance.now()
       const cible = live ?? 431_663
@@ -216,26 +235,50 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // ON (les résultats s'affichent) mais analyseLabuse OFF (tri factuel, toutes les parcelles).
   // C'est le SEUL geste qui découple verdict de analyseLabuse (le bandeau des résultats le dit).
   const voirFactuel = () => { setPhase('idle'); setFilter('analyseLabuse', false); setVerdict(true); onRetract?.() }
-  const nCom = filters.communes.length
-  const perimetre = nCom === 1 ? filters.communes[0] : nCom > 1 ? `${nCom} communes` : (commune ?? 'La Réunion')
-  const recap = resumeCriteres(filters, CLIENT.signaux.labels)
-  // la phrase révèle les nombres du RITUEL (réponse fraîche) ; hors rituel, la requête vivante
+  // M55-J point 1 : « analyse active » = le rituel est lancé (décompte/révélation) OU l'analyse
+  // est allumée. Dans cet état les FILTRES SONT FIGÉS (fieldset désactivé plus bas) — un seul run
+  // décrit, un seul effectif à l'écran.
+  const analyseActive = analyseOn || phase === 'counting' || phase === 'revealed'
+  // M55-J point 1 : la carte décrit le SNAPSHOT (snapFilters), pas les filtres live. Hors analyse
+  // (état d'appel), il n'y a pas de carte-phrase → on retombe sur les filtres live sans effet.
+  const cardFilters = snapFilters ?? filters
+  const nCom = cardFilters.communes.length
+  const perimetre = nCom === 1 ? cardFilters.communes[0] : nCom > 1 ? `${nCom} communes` : (commune ?? 'La Réunion')
+  const recap = resumeCriteres(cardFilters, CLIENT.signaux.labels)
+  // la phrase révèle les nombres du RITUEL (réponse fraîche du snapshot) ; hors rituel, le live
   const src = phase === 'revealed' && fresh ? fresh : on.data
   const phraseRetenues = src?.compte
   const t = src?.tiers
   const pl = (n: number, s: string) => `${nf.format(n)} ${s}${n > 1 ? 's' : ''}`
-  // M55-F point 2 — l'arithmétique de la phrase (tout du point unique, mêmes critères) :
-  //  · analysé (trame)     = trameQ.compte
-  //  · retenues            = src.compte  (= ventilation 4 tiers + déclassées)
-  //  · déclassées          = retenues − (brûlante+chaude+réserve+à creuser)   (motif, dans retenues)
+  // M55-J point 1 — l'arithmétique de la carte vient d'UN SEUL run (le snapshot) :
+  //  · analysé (trame)     = freshTrame.compte  (snapshot, PAS trameQ live)
+  //  · retenues            = fresh.compte  (snapshot ; = ventilation 4 tiers + potentiel épuisé)
+  //  · potentiel épuisé    = retenues − (brûlante+chaude+réserve+à creuser)
   //  · écartées (étage 0)  = analysé − retenues                               (exclusions dures)
-  const analyseTotal = trameQ.data?.compte
+  // En phase revealed, on lit le snapshot (freshTrame) ; ailleurs (pas de phrase), le live.
+  const analyseTotal = (phase === 'revealed' || phase === 'counting') ? freshTrame?.compte : trameQ.data?.compte
   const vent4 = t ? t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser : 0
   const declassees = phraseRetenues != null ? phraseRetenues - vent4 : 0
   const ecartees = (analyseTotal != null && phraseRetenues != null) ? analyseTotal - phraseRetenues : null
+  // M55-J point 1 · FILET DE SÉCURITÉ : si un chemin EXTERNE (sélecteur commune du header, URL,
+  // retour arrière) déplace les filtres live pendant que le rituel décrit un run, la carte
+  // s'INVALIDE (état neutre invitant à relancer) plutôt que d'afficher un chiffre périmé.
+  const stale = phase === 'revealed' && snapFilters != null && !filtersEqual(filters, snapFilters)
 
   return (
     <div className="card-elev px-3 py-2">
+      {/* ═══════ M55-J point 1 — LES FILTRES SONT FIGÉS PENDANT L'ANALYSE ═══════
+          Choix « désactiver » (fieldset natif) plutôt que « faire disparaître » : le rappel de
+          CE QUI a été filtré reste lisible (grisé), et un `<fieldset disabled>` désactive d'un
+          coup TOUS les contrôles descendants (boutons, champs, chips) — un seul point de garde,
+          impossible d'en oublier un. La carte d'analyse (étage ②) reste hors du fieldset : ses
+          gestes (Voir / Relancer / Désactiver) restent cliquables. */}
+      <fieldset disabled={analyseActive} className={`m-0 min-w-0 border-0 p-0 transition-opacity duration-soft ${analyseActive ? 'opacity-45' : 'opacity-100'}`}>
+      {analyseActive && (
+        <p data-filtres-figes className="mb-2 rounded-md border border-line-2/60 bg-surface-2/60 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-dim">
+          Filtres figés — l’analyse porte sur ces critères. <span className="text-txt-mut">Relancer</span> ou <span className="text-txt-mut">Désactiver</span> l’analyse pour les changer.
+        </p>
+      )}
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
           postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
       <div data-communes-filtre>
@@ -309,6 +352,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
+      </fieldset>
 
       {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════ */}
       <div className={`mt-4 rounded-xl border p-3 transition-colors duration-soft ${
@@ -333,6 +377,17 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               {CLIENT.revelation.reessayer}
             </button>
           </div>
+        ) : phase === 'revealed' && stale ? (
+          /* ── FILET (M55-J point 1) : les filtres ont bougé par un chemin externe → carte
+             invalidée, jamais un chiffre périmé. Un seul geste : relancer sur les nouveaux
+             critères (le rituel repart proprement sur un snapshot frais). ── */
+          <div data-analyse-perimee className="py-1">
+            <p className="text-[12px] leading-snug text-st-creuser">{CLIENT.revelation.perime}</p>
+            <button onClick={lancer}
+              className="mt-2 w-full rounded-lg bg-mint py-2 font-display text-[12.5px] font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+              {CLIENT.revelation.relancerCta}
+            </button>
+          </div>
         ) : phase === 'revealed' ? (
           /* ── 3. LA PHRASE — nombres RÉELS de /filtre (compte + ventilation par tier).
              M55-G point 7 : la phrase ne vit QU'AU moment du reveal — le panneau ré-ouvert
@@ -340,9 +395,11 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
              un seul récit, M55-F point 1). ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
-              {/* M55-H point 10 : jamais « 0 parcelles » pendant que la trame charge — la
-                  phrase d'intro attend un total connu (le reste s'affiche sans elle). */}
-              {(analyseTotal ?? live) != null && <>{CLIENT.revelation.phraseIntro((analyseTotal ?? live)!, perimetre)}{' '}</>}
+              {/* M55-H point 10 : jamais « 0 parcelles » pendant que la trame charge — la phrase
+                  d'intro attend un total connu (le reste s'affiche sans elle). M55-J point 1 :
+                  l'effectif ANALYSÉ vient UNIQUEMENT du snapshot (freshTrame → analyseTotal),
+                  JAMAIS du live — sinon on afficherait brièvement les retenues comme analysées. */}
+              {analyseTotal != null && <>{CLIENT.revelation.phraseIntro(analyseTotal, perimetre)}{' '}</>}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
             {phraseRetenues === 0 ? (
@@ -425,7 +482,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 className="rounded-lg border border-mint/50 px-3 py-1 text-[11.5px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">
                 {CLIENT.revelation.relancer}
               </button>
-              <button data-desactiver onClick={() => setAnalyse(false)}
+              <button data-desactiver onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}
                 className="text-[10.5px] text-txt-dim underline decoration-txt-dim/50 underline-offset-2 transition-colors duration-quick hover:text-txt">
                 {CLIENT.revelation.desactiver}
               </button>

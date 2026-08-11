@@ -95,6 +95,10 @@ export const CLIENT = {
     desactiver: 'désactiver l’analyse',
     erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',
     reessayer: 'Réessayer',
+    // M55-J point 1 · FILET : les critères ont bougé sous l'analyse (chemin externe) → la carte
+    // s'invalide plutôt que d'afficher un chiffre périmé.
+    perime: 'Vos critères ont changé depuis cette analyse — les chiffres affichés ne les décrivent plus.',
+    relancerCta: 'Relancer sur les nouveaux critères',
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
     defTiers: {
       brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
