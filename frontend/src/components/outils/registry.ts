@@ -69,6 +69,12 @@ export const MODULES: ModuleDef[] = [
     label: 'Comparateur de communes', desc: 'Où investir : 24 communes, indicateurs sourcés, composite réglable' },
   { key: 'o5-servitudes', num: 'O5', group: 'analyser',
     label: 'Servitudes invisibles', desc: 'Les contraintes dormantes d’une parcelle — et ce que la base ne couvre pas' },
+  // M55-L point 9 — « Comparer » devient un OUTIL à part entière (M54-EXPO A8). Constat : il ne
+  // vivait que sur la fiche (bouton addToCompare) ; ici son entrée Outils. La fonctionnalité ne
+  // change pas — seul le point d'entrée bouge. Le clic ouvre le comparateur (Rail : cas spécial,
+  // ajoute la parcelle de la fiche ouverte si présente, comme l'ancien bouton).
+  { key: 'comparer', num: 'A8', group: 'analyser',
+    label: 'Comparer des parcelles', desc: 'Mettez 2 à 3 parcelles côte à côte — surface, zonage, capacité, charge foncière, marché' },
   { key: 'assemblage', num: 'M16', group: 'analyser', phare: true,
     label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
   { key: 'barometre', num: 'M18', group: 'analyser',

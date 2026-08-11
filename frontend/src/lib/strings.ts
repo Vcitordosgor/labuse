@@ -349,7 +349,7 @@ export const CLIENT = {
     pagesJaunesTip:
       "Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké.",
     // C4 · l'œil devient cloche (cohérent avec les notifications M16)
-    suivre: 'Suivre cette parcelle (alertes sans pipeline)',
+    suivre: 'Suivre cette parcelle (alertes sans passer par le CRM)',   // M55-L point 9 : plus de « pipeline » à l'écran
     suivreActif: 'Suivie — les événements alimentent la cloche',
     // C1 · le motif d'écartement passe à côté du badge
     ecarteeVoir: 'voir pourquoi →',
@@ -358,6 +358,12 @@ export const CLIENT = {
     // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
     demanderAnalyse: 'Demander l’analyse LABUSE',
     demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
+    // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
+    // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).
+    crmAjouter: '+ CRM',
+    crmDedans: '✓ Dans le CRM',
+    crmAjouterTip: 'Ajouter au CRM (suivi de prospection)',
+    crmDedansTip: 'Déjà dans le CRM — voir la vue CRM',
     // C8 · le bloc IA en une ligne, accroche client
     ia: {
       accroche: 'Une question sur cette parcelle ?',

@@ -97,6 +97,15 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
+  // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
+  // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
+  // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
+  // un outil ne peut pas récupérer la parcelle regardée). Ferme le tiroir Outils.
+  const openOutil = (k: string) => {
+    if (k !== 'comparer') { setModule(k); return }
+    useApp.getState().setCompareOpen(true)
+    toggleOutils()
+  }
 
   return (
     <>
@@ -180,7 +189,7 @@ export function Rail() {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {outils.map((m) => (
-                      <OutilCard key={m.key} m={m} phare={!!m.phare} open={setModule} />
+                      <OutilCard key={m.key} m={m} phare={!!m.phare} open={openOutil} />
                     ))}
                   </div>
                 </section>

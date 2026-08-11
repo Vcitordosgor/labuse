@@ -449,9 +449,9 @@ function PipelineButton({ idu }: { idu: string }) {
       aria-disabled={!!inPipe}
       className={`flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-xs font-medium ${
         inPipe ? 'cursor-default border border-line-2 bg-surface-3 text-txt-mut' : 'bg-mint text-mint-ink hover:brightness-110'}`}
-      title={inPipe ? 'Déjà suivie dans le pipeline (voir CRM)' : 'Ajouter au pipeline de prospection'}
+      title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
     >
-      {add.isPending ? 'Ajout…' : inPipe ? '✓ Dans le pipeline' : '+ Pipeline'}
+      {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
     </button>
   )
 }
@@ -1903,12 +1903,17 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ═══ BARRE D'ACTIONS · 2 niveaux (spec) — DANS le flux (fin du « double écran de vide ») ═══ */}
             <div style={{ marginTop: 7, paddingTop: 14, borderTop: '1px solid #1a2320' }}>
+              {/* M55-L point 9 : « + CRM » (ex-« + Pipeline ») et « + Projet ». Comparer a AUSSI une
+                  entrée Outils (registry « comparer »), qui OUVRE le comparateur (la sélection persiste
+                  en session). Le bouton fiche est CONSERVÉ car il porte l'AJOUT : mesuré, ouvrir le
+                  tiroir Outils remet selectedIdu à null → un outil ne peut pas récupérer « la parcelle
+                  regardée ». Le retirer laisserait le comparateur non peuplable (rapport, Vic tranche). */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
-                {/* M54-EXPO-3 A8 — ajouter cette parcelle au comparateur (jusqu'à 3). */}
+                {/* M54-EXPO A8 — AJOUTER cette parcelle au comparateur (jusqu'à 3), puis ouvre le panneau. */}
                 <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
-                  title="Comparer avec d'autres parcelles"
+                  title="Ajouter au comparateur (Outils → Comparer pour le rouvrir)"
                   style={{ flexShrink: 0, padding: '0 12px', borderRadius: 9, border: '1px solid #2a3a33', background: '#0e1311', color: '#8fd8b4', fontSize: 12, cursor: 'pointer' }}>
                   ⇄ Comparer
                 </button>
