@@ -393,12 +393,20 @@ export function LeftPanel() {
   // ouvraient Filtres sans replier Couches, restée sur son état local par défaut).
   const panneauSection = useApp((st) => st.panneauSection)
   const setPanneauSection = useApp((st) => st.setPanneauSection)
-  const couchesOpen = panneauSection === 'couches'
-  const filtresOpen = panneauSection === 'filtres'
+  const accueilVu = useApp((st) => st.accueilVu)
+  // M55-N point 7 (décision Vic) : à l'état ACCUEIL (page de présentation affichée : !accueilVu &&
+  // !verdict), les DEUX sections (Couches et Filtres) sont RÉTRACTÉES → l'accueil prend la pleine
+  // hauteur (fin du clip mesuré M55-L P1). Même esprit que le `listing` de M55-M : « deux sections
+  // fermées » est un état LÉGAL aussi pour l'accueil. `panneauSection` (champ unique) reste
+  // 'couches' par défaut EN COULISSE ; l'accueil est un CONTEXTE d'entrée (dérivé de accueilVu, un
+  // signal déjà existant) qui prime tant qu'il est affiché. Le quitter (Commencer/openFiltres, ou
+  // rouvrir une section à la main → setAccueilVu) lève l'override → la section reprend (défaut Couches).
+  const enAccueil = !accueilVu && !verdict
+  const couchesOpen = !enAccueil && panneauSection === 'couches'
+  const filtresOpen = !enAccueil && panneauSection === 'filtres'
   // M55-K point 5 : `sectionFill` — quand rien ne suit les sections (ni accueil ni résultats),
   // la section OUVERTE est le dernier contenu → elle remplit la hauteur (et le séparateur
   // orphelin disparaît), fond continu jusqu'en bas. Sinon accueil/résultats (eux flex-1) filent.
-  const accueilVu = useApp((st) => st.accueilVu)
   const sectionFill = accueilVu && !verdict
   const prevVerdict = useRef(verdict)
   useEffect(() => {
