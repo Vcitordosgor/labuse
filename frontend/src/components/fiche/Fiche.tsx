@@ -1313,6 +1313,29 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         </div>
 
+        {/* M55-O phase 2.1 — BANDEAU DE 4 CHIFFRES (toujours visible, factuel, aucun avis) :
+            Surface · Zone · SDP disponible · Prix secteur €/m². Valeurs SERVIES (jamais en dur) ;
+            une valeur absente → « — » (jamais un zéro trompeur ni un blanc muet). Habillage affiné
+            en phase 3. */}
+        {f && (() => {
+          const cells = [
+            { l: 'Surface', v: f.surface_m2 != null ? `${fmtInt(f.surface_m2)} m²` : '—' },
+            { l: 'Zone', v: reglesZone ?? '—' },
+            { l: 'SDP dispo.', v: reglesSdp != null ? `${fmtInt(reglesSdp)} m²` : '—' },
+            { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
+          ]
+          return (
+            <div data-bandeau-chiffres style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', border: '1px solid #1e2823', borderRadius: 11, overflow: 'hidden', background: '#0e1311' }}>
+              {cells.map((c, i) => (
+                <div key={c.l} style={{ padding: '8px 6px', textAlign: 'center', borderLeft: i ? '1px solid #16201c' : 'none' }}>
+                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: '#5f7568', textTransform: 'uppercase' }}>{c.l}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 15, color: '#dfeee7', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.v}</p>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+
         {/* M55-L point 5 — VERDICT À LA DEMANDE. À l'ouverture (verdict non encore demandé pour
             cette parcelle dans la session), un BOUTON vert remplace le bloc verdict — l'avis n'est
             jamais imposé à qui veut d'abord des informations. C'est le SEUL élément vert de ce
