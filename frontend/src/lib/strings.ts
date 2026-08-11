@@ -11,30 +11,26 @@
 export const CLIENT = {
   // ── M55-D stage 6 · SIGNAUX DE VIE — 8 signaux validés Vic (phase 1 mesurée). Chaque « i »
   //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
+  // M55-G suite point 4 (décision Vic) : UN SEUL niveau, 7 signaux — « Nu détenu par société »
+  // (nu_pm) et « Cession de fonds » (cession) SUPPRIMÉS de l'UI (backend intact, clés URL sv=
+  // inconnues ignorées à la lecture, cf. filters.ts SIGNAUX_VALIDES).
   signaux: {
     labels: {
-      // M55-G point 11 : nouveau signal LARGE — toutes les parcelles de sociétés privées
       pm_privee: 'Détenu par une société',
       procedure: 'Procédure collective',
       permis_actif: 'Permis actif',
       permis_caduc: 'Permis abandonné',
-      defisc: 'Sortie de défisc',
-      nu_pm: 'Nu détenu par société',
       friche: 'Friche recensée',
-      cession: 'Cession de fonds',
       assemblage: 'Assemblage même proprio',
+      defisc: 'Sortie de défisc',
     } as Record<string, string>,
-    // M55-G point 11 : le lien qui révèle les signaux de niche (niveau 2)
-    plus: 'Plus de signaux',
     infos: {
       pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
       procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
       defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE, maj 07/2026).',
-      nu_pm: 'Parcelle quasi nue (emprise bâtie < 5 %) détenue par une société privée (fichiers fonciers MAJIC 2025).',
       friche: 'La parcelle touche une friche de l’inventaire national Cartofriches (maj 07/2026) — inventaire NON exhaustif : l’absence du signal ne prouve rien.',
-      cession: 'Le propriétaire (société) a vendu ou cédé un fonds dans les 24 derniers mois (BODACC, maj 07/2026). Propriétaires personnes morales identifiés seulement.',
       assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
     } as Record<string, string>,
   },

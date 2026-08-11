@@ -201,6 +201,10 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
 }
 
 const TIER_KEYS = Object.keys(ALL_TIER_META)   // M30 : liens partagés avec declasse_* valides
+// M55-G suite point 4 : les 7 signaux SERVIS par l'UI (même liste que le panneau Filtres) —
+// toute autre clé sv= est ignorée à la lecture (nu_pm / cession supprimés de l'UI).
+const SIGNAUX_VALIDES = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc',
+  'friche', 'assemblage', 'defisc']
 
 export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone: LngLat[] | null } | null {
   if (!hash.includes('f=1')) return null
@@ -214,6 +218,10 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
   for (const [k, key] of NUM_KEYS) f[k] = num(key)
   for (const [k, key] of BOOL_KEYS) f[k] = p.get(key) === '1'
   for (const [k, key] of CSV_KEYS) f[k] = p.get(key)?.split(',').filter(Boolean) ?? []
+  // M55-G suite point 4 : seules les clés de signaux SERVIES par l'UI passent — un vieux lien
+  // portant `sv=nu_pm` ou `sv=cession` (signaux supprimés) s'ouvre sans erreur, la clé est
+  // ignorée (jamais un filtre actif invisible ; le backend, lui, reste intact).
+  f.signaux = (f.signaux as string[]).filter((s) => SIGNAUX_VALIDES.includes(s))
   // M55-D stage 6 : le flag binaire « Avec événement (BODACC) » est REMPLACÉ par le groupe
   // Signaux de vie — un vieux lien `ev=1` mappe vers le signal « procédure collective ».
   if (p.get('ev') === '1') {
