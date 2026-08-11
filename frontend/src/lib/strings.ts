@@ -158,13 +158,16 @@ export const CLIENT = {
     rang: 'Opportunités',
     mult: 'Mutation',
     surface: 'Surface',
-    rangTip: 'Meilleures opportunités — ordre de priorité (n°1 = la plus prometteuse), copropriétés en queue',
-    multTip: 'Plus susceptibles de se vendre — trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
-    surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
+    // M55-H point 6 (MESURÉ 12/08, rapport) : le rang n'est PAS un produit « probabilité ×
+    // qualité » — c'est l'ordre du ×N dont les ex æquo (le ×N est arrondi) sont départagés
+    // par la qualité du terrain (D), puis SDP, surface. Les libellés disent désormais le réel.
+    rangTip: 'Le classement LABUSE — la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    multTip: 'Le ×N brut, sans départage : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
+    surfaceTip: 'Trie par surface de parcelle',
     // le « i » de la barre TRIER : les libellés longs + leur sens, en trois phrases
-    lunettes: 'Opportunités = les meilleures opportunités d’abord — probabilité de vente × qualité du terrain (l’opportunité globale). '
-      + 'Mutation = les plus susceptibles de se vendre — la probabilité de vente seule (ce qui va bouger bientôt). '
-      + 'Surface = de la plus grande à la plus petite.',
+    lunettes: 'Opportunités = le classement LABUSE : la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
+      + 'Mutation = le ×N brut, sans départage (ce qui va bouger bientôt). '
+      + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
     // tooltip du badge ×N sur les cartes de résultat (une ligne)
     multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
   },

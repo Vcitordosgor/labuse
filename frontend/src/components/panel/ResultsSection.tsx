@@ -59,7 +59,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
-          <Tip tip={`Verdict scoring (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+          <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>
@@ -132,7 +132,7 @@ function LigneClassement({ total, opportunites, nFilters }: { total: number; opp
   const setAlgoOpen = useApp((s) => s.setAlgoOpen)
   return (
     <p className="mt-2 shrink-0 text-[11px] text-txt-dim"
-      title="Opportunités détectées = brûlantes + chaudes (scoring P×C, hors étage 0 du run servi)">
+      title="Opportunités détectées = brûlantes + chaudes (hors exclusions dures)">
       <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
       <button data-comprendre-btn onClick={() => setAlgoOpen(true)}
         className="ml-1.5 text-mint hover:underline"
