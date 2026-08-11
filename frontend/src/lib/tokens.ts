@@ -8,8 +8,23 @@
  *  (#E6B15C ≠ st-creuser #E8B44C, #E68A6B ≠ st-ecartee #E8695A) : tokens créés en O4 pour ne
  *  jamais approximer sur un token de statut. */
 export const TOKENS = {
+  // ═══ DA v3 (docs/DA-LABUSE.html §1) — miroir des tokens, synchronisé avec
+  //     tailwind.config.js et :root (styles/index.css). ═══
+  // surfaces et filets
+  bg0: '#0A0C0B', bg1: '#0C0F0D', bg2: '#111614', bgStat: '#141A17', bg3: '#161C19',
+  line: '#1A211D', line2: '#212A25', line3: '#2C3630', lineCard: '#1E2622', lineBtn: '#263029',
+  // texte — 7 niveaux + labels
+  txtHi: '#E8EFEA', txt: '#B8C4BC', lab: '#7C8A82',
+  txtOff: '#5E6B64', txtFaint: '#4E5A53', txtGhost: '#3E4A44',
+  // sémantique DA
+  mintBg: '#12291D', mintOn: '#06301A', mintSub: '#0B4526',
+  amber: '#E0A94F', amberBg: '#2A2113',
+  coral: '#E2726A', coralBg: '#2B1715',
+  blue: '#8FB4F0', iris: '#8B7BD8', iris2: '#C4B5FD', irisBg: '#16121F', irisLine: '#2E2545',
+  danger: '#8A5A5A', dangerLine: '#3A2626', lien: '#7FA88F',
+
   // — statuts matrice premium v2 (= tailwind theme.colors) —
-  mint: '#5CE6A1',
+  mint: '#4ADE80',
   violet: '#B497F0',
   violetDim: '#8b76c0',
   stChaude: '#5CE6A1',
@@ -17,8 +32,8 @@ export const TOKENS = {
   stCreuser: '#E8B44C',
   stEcartee: '#E8695A',
   stNone: '#39463F',
-  txtMut: '#8FA69A',
-  txtDim: '#5C7268',
+  txtMut: '#6B776F',
+  txtDim: '#8A968F',
 
   // — data-viz de graphe (barres marché/typologie ; hues distinctes, tokens créés O4) —
   vizCyan: '#7DE8E0',

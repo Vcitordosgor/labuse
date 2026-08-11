@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LABUSE — Direction artistique de référence · v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#0A0C0B; --bg-1:#0C0F0D; --bg-2:#111614; --bg-stat:#141A17; --bg-3:#161C19;
+  --line:#1A211D; --line-2:#212A25; --line-3:#2C3630; --line-btn:#263029; --line-card:#1E2622;
+  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#6B776F;
+  --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
+  --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06301A; --mint-sub:#0B4526;
+  --amber:#E0A94F; --amber-bg:#2A2113;
+  --coral:#E2726A; --coral-bg:#2B1715;
+  --blue:#8FB4F0; --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
+  --danger:#8A5A5A; --danger-line:#3A2626;
+  --r-card:12px; --r-g:11px; --r-ctl:10px; --r-sm:8px; --r-pill:20px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --dur-fast:120ms; --dur-base:180ms; --ease:cubic-bezier(.2,0,0,1);
+  --focus:0 0 0 2px rgba(74,222,128,.45); --ombre-flottante:0 8px 24px rgba(0,0,0,.45);
+  --fs-h1:19px; --fs-row:14px; --fs-meta:12px; --fs-sub:11.5px; --fs-micro:10px; --fs-legal:9px;
+  --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-0);color:var(--txt-hi);font-family:var(--sans);padding:40px 24px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto}
+.doc-h{font-size:26px;font-weight:500;margin-bottom:6px}
+.doc-p{font-size:14px;color:var(--txt-mut);margin-bottom:14px;max-width:72ch}
+.doc-s{font-size:13px;color:var(--txt-faint);border-top:0.5px solid var(--line-2);padding-top:26px;margin:44px 0 20px;letter-spacing:.1em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start}
+.spec{background:var(--bg-1);border:0.5px solid var(--line-2);border-radius:var(--r-card);padding:18px}
+.spec h4{font-size:12px;color:var(--txt-dim);font-weight:400;letter-spacing:.06em;margin-bottom:12px}
+code{font-family:var(--mono);font-size:11.5px;color:var(--txt-off)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td{padding:5px 0;color:var(--txt-mut);vertical-align:top}
+td:first-child{color:var(--txt);width:32%}
+th{font-size:10px;letter-spacing:.11em;color:var(--lab);font-weight:400;text-align:left;padding:0 0 8px}
+td.num,th.num{text-align:right}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:7px}
+.panel{width:360px;background:var(--bg-1);border:0.5px solid var(--line-card);border-radius:var(--r-card);overflow:hidden}
+.page{background:var(--bg-1);border:0.5px solid var(--line-card);border-radius:var(--r-card);padding:22px 24px}
+
+/* ── COMPOSANTS ── */
+.micro{font-size:var(--fs-micro);letter-spacing:.11em;color:var(--lab)}
+.gcard{background:var(--bg-2);border:0.5px solid var(--line-card);border-radius:var(--r-g);overflow:hidden}
+.gr{padding:12px 13px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)}
+.gr:last-child{border-bottom:none}
+.gr-t{font-size:var(--fs-row);color:var(--txt-hi)}
+.gr-s{font-size:var(--fs-sub);color:var(--txt-mut);margin-top:2px}
+.gr-v{font-size:13.5px;color:var(--txt)}
+.door{background:var(--bg-2);border:0.5px solid var(--line-2);border-radius:var(--r-g);padding:13px 14px;margin-bottom:8px}
+.door-hot{border-left:2px solid var(--mint);border-top-left-radius:0;border-bottom-left-radius:0}
+.chev{font-size:14px;color:var(--txt-faint);font-family:var(--mono)}
+.pill{font-size:12.5px;padding:3px 9px;border-radius:var(--r-pill)}
+.p-mint{color:var(--mint);background:var(--mint-bg);font-size:12px}
+.p-amber{color:var(--amber);background:var(--amber-bg);font-size:12px}
+.p-off{color:#97A39B;border:0.5px solid var(--line-3)}
+.p-on{color:var(--mint-on);background:var(--mint);padding:5px 12px}
+.btn{border-radius:var(--r-ctl);padding:12px;text-align:center;font-size:14px;font-weight:500}
+.b-pri{background:var(--mint);color:var(--mint-on)}
+.b-sec{border:0.5px solid var(--line-btn);color:var(--txt);font-weight:400;font-size:13px;padding:10px}
+.b-iris{border:0.5px solid var(--iris-line);background:var(--iris-bg);color:var(--iris-2);font-weight:400;font-size:13px;padding:10px}
+.b-danger{font-size:12.5px;color:var(--danger);border-bottom:0.5px solid var(--danger-line)}
+.field{background:var(--bg-2);border:0.5px solid var(--line-2);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;color:var(--txt-off)}
+.stats{display:grid;gap:1px;background:var(--line-2);border:0.5px solid var(--line-2);border-radius:var(--r-ctl);overflow:hidden}
+.stat{background:var(--bg-stat);padding:10px 9px}
+.stat-l{font-size:9.5px;color:var(--txt-off);letter-spacing:.05em}
+.stat-v{font-size:14px;color:var(--txt-hi);margin-top:2px}
+.mono{font-family:var(--mono);letter-spacing:-.01em}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.ico{width:30px;height:30px;border-radius:var(--r-sm);border:0.5px solid var(--line-btn);display:flex;align-items:center;justify-content:center;color:var(--lab);font-size:14px;font-family:var(--mono);flex-shrink:0}
+.empty{border:0.5px dashed var(--line-2);border-radius:var(--r-g);padding:22px 12px;text-align:center;font-size:var(--fs-meta);color:var(--txt-off)}
+.legal{font-size:var(--fs-legal);color:var(--txt-faint);line-height:1.5}
+.cbx{width:17px;height:17px;border-radius:5px;flex-shrink:0}
+.cbx-on{background:var(--mint);color:var(--mint-on);display:flex;align-items:center;justify-content:center;font-size:12px}
+.cbx-off{border:1px solid var(--line-3)}
+.sk{background:var(--bg-2);border-radius:6px}
+.seg{display:inline-flex;background:var(--bg-2);border:0.5px solid var(--line-2);border-radius:10px;padding:3px;gap:3px}
+.seg span{font-size:12.5px;padding:5px 13px;border-radius:8px;color:#97A39B}
+.seg .on{background:var(--mint);color:var(--mint-on)}
+.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tag{font-size:11px;color:#97A39B;border:0.5px solid var(--line-2);padding:3px 9px;border-radius:var(--r-pill)}
+.bar{height:5px;border-radius:3px;overflow:hidden;display:flex;background:var(--line)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i-ia"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></g>
+<g id="i-copilote"><path d="M4 4h16v2.2a2 2 0 0 1-.6 1.4L15 12v7l-6-2v-5L4.6 7.6A2 2 0 0 1 4 6.2z"/></g>
+<g id="i-cartes"><path d="M9 4v13m6-10v13M3 7l6-3l6 3l6-3v13l-6 3l-6-3l-6 3z"/></g>
+<g id="i-outils"><circle cx="12" cy="12" r="9"/><path d="M8 16l2-6l6-2l-2 6z"/></g>
+<g id="i-projets"><path d="M5 4h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></g>
+<g id="i-crm"><path d="M3 20h18M7 20v-7M12 20V6M17 20v-4"/></g>
+<g id="i-veilles"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></g>
+<g id="i-sources"><path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3s-3.6 3-8 3s-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></g>
+<g id="i-bell"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6M9 17v1a3 3 0 0 0 6 0v-1"/></g>
+<g id="i-search"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.4-4.4"/></g>
+<g id="i-chev"><path d="M6 9l6 6l6-6"/></g>
+<g id="i-carto"><path d="M12 4L4 8l8 4l8-4zM4 12l8 4l8-4M4 16l8 4l8-4"/></g>
+<g id="i-mesure"><path d="M4 20L20 4M7 17l2 2M10 14l2 2M13 11l2 2M16 8l2 2"/></g>
+<g id="i-zone"><path d="M4 8l7-4l9 5l-3 8l-9 3z"/></g>
+<g id="i-relief"><path d="M3 20l6-10l4 6l2-3l6 7z"/></g>
+<g id="i-lock"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></g>
+<g id="i-select"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="3 3"/></g>
+<g id="i-x"><path d="M6 6l12 12M18 6L6 18"/></g>
+<g id="i-star"><path d="M12 4l2.1 5.1l5.5.4l-4.2 3.6l1.3 5.4L12 15.6l-4.7 2.9l1.3-5.4L4.4 9.5l5.5-.4z"/></g>
+<g id="i-dots"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></g>
+</defs></svg>
+<div class="wrap">
+
+<div class="doc-h">LABUSE — direction artistique de référence</div>
+<p class="doc-p">Version 3. Ce fichier fait foi : toute valeur employée dans l'application vient d'un token défini ici, et chaque écran assemble la bibliothèque sans introduire de valeur nouvelle. Le principe directeur de cette version : <b style="color:var(--txt)">le relief se mérite</b> — une carte signale une porte ou enferme un groupe cohérent ; le contenu déplié reste plat.</p>
+
+<div class="doc-s">1 · TOKENS</div>
+<div class="grid">
+  <div class="spec"><h4>SURFACES ET FILETS</h4><table>
+    <tr><td><span class="sw" style="background:#0A0C0B"></span>--bg-0</td><td><code>#0A0C0B</code> page</td></tr>
+    <tr><td><span class="sw" style="background:#0C0F0D"></span>--bg-1</td><td><code>#0C0F0D</code> panneau</td></tr>
+    <tr><td><span class="sw" style="background:#111614"></span>--bg-2</td><td><code>#111614</code> carte, porte, champ</td></tr>
+    <tr><td><span class="sw" style="background:#141A17"></span>--bg-stat</td><td><code>#141A17</code> cellule de statistique</td></tr>
+    <tr><td><span class="sw" style="background:#161C19"></span>--bg-3</td><td><code>#161C19</code> surface flottante</td></tr>
+    <tr><td><span class="sw" style="background:#1A211D"></span>--line</td><td><code>#1A211D</code> filet intérieur</td></tr>
+    <tr><td><span class="sw" style="background:#1E2622"></span>--line-card</td><td><code>#1E2622</code> bord de carte</td></tr>
+    <tr><td><span class="sw" style="background:#212A25"></span>--line-2</td><td><code>#212A25</code> bord de porte, séparateur fort</td></tr>
+    <tr><td><span class="sw" style="background:#2C3630"></span>--line-3</td><td><code>#2C3630</code> contour de pastille</td></tr>
+  </table></div>
+  <div class="spec"><h4>TEXTE — 7 NIVEAUX + LABELS</h4><table>
+    <tr><td style="color:#E8EFEA">--txt-hi</td><td><code>#E8EFEA</code> titre</td></tr>
+    <tr><td style="color:#B8C4BC">--txt</td><td><code>#B8C4BC</code> valeur neutre</td></tr>
+    <tr><td style="color:#8A968F">--txt-dim</td><td><code>#8A968F</code> libellé de champ</td></tr>
+    <tr><td style="color:#7C8A82">--lab</td><td><code>#7C8A82</code> micro-label (contraste garanti)</td></tr>
+    <tr><td style="color:#6B776F">--txt-mut</td><td><code>#6B776F</code> sous-titre</td></tr>
+    <tr><td style="color:#5E6B64">--txt-off</td><td><code>#5E6B64</code> compteur, date</td></tr>
+    <tr><td style="color:#4E5A53">--txt-faint</td><td><code>#4E5A53</code> chevron, décor</td></tr>
+    <tr><td style="color:#3E4A44">--txt-ghost</td><td><code>#3E4A44</code> « i », croix</td></tr>
+  </table></div>
+  <div class="spec"><h4>SÉMANTIQUE — LA RÈGLE</h4><table>
+    <tr><td><span class="sw" style="background:#4ADE80"></span>--mint</td><td>action principale, état confirmé, <b>tranche des portes mises en avant</b> — rien d'autre</td></tr>
+    <tr><td><span class="sw" style="background:#E0A94F"></span>--amber</td><td>attention, vigilance, chaude, étoile « plus utilisés »</td></tr>
+    <tr><td><span class="sw" style="background:#E2726A"></span>--coral</td><td>blocage réel, brûlante, erreur</td></tr>
+    <tr><td><span class="sw" style="background:#8FB4F0"></span>--blue</td><td>potentiel long terme</td></tr>
+    <tr><td><span class="sw" style="background:#8B7BD8"></span>--iris</td><td>IA et projets, jamais autre chose</td></tr>
+    <tr><td><span class="sw" style="background:#8A5A5A"></span>--danger</td><td>action destructive, en lien seul</td></tr>
+  </table></div>
+  <div class="spec"><h4>TYPOGRAPHIE ET RAYONS</h4><table>
+    <tr><td>titres</td><td><code>19px</code> page · <code>17px</code> panneau · poids 500</td></tr>
+    <tr><td>ligne</td><td><code>14px</code> titre · <code>11.5px</code> sous-titre · <code>13.5px</code> valeur</td></tr>
+    <tr><td>micro-label</td><td><code>10px</code> + <code>letter-spacing .11em</code>, couleur <code>--lab</code></td></tr>
+    <tr><td>références</td><td><code>--mono</code> toujours, <code>letter-spacing -.01em</code></td></tr>
+    <tr><td>rayons</td><td>carte <code>12</code> · groupe/porte <code>11</code> · contrôle <code>10</code> · champ <code>8</code> · pastille <code>20</code></td></tr>
+    <tr><td>chiffres</td><td><code>tabular-nums</code> partout</td></tr>
+  </table></div>
+  <div class="spec"><h4>ESPACEMENT ET MOUVEMENT</h4><table>
+    <tr><td>--sp-1…6</td><td><code>4 · 8 · 12 · 16 · 24 · 32</code> — toute marge vient de là</td></tr>
+    <tr><td>rangée</td><td><code>12-13px</code> vertical — ~46px de hauteur effective</td></tr>
+    <tr><td>--dur-fast / base</td><td><code>120ms</code> survol · <code>180ms</code> transitions · accordéon <code>200ms</code></td></tr>
+    <tr><td>--ease</td><td><code>cubic-bezier(.2,0,0,1)</code> — jamais de rebond</td></tr>
+    <tr><td>reduced-motion</td><td>toutes les transitions coupées si l'OS le demande</td></tr>
+  </table></div>
+  <div class="spec"><h4>ÉTATS ET LISIBILITÉ</h4><table>
+    <tr><td>survol de porte</td><td>bord <code>--line-3</code>, fond inchangé</td></tr>
+    <tr><td>survol de ligne</td><td>fond <code>--bg-3</code>, rien d'autre ne bouge</td></tr>
+    <tr><td>focus clavier</td><td>liseré <code>2px</code> menthe à 45 %, sur tout élément actionnable</td></tr>
+    <tr><td>désactivé</td><td>opacité <code>45%</code> — jamais un nouveau gris</td></tr>
+    <tr><td>texte coloré</td><td>corail, ambre, menthe : <code>12px</code> minimum</td></tr>
+  </table></div>
+</div>
+
+<div class="doc-s">2 · LES DIX RÈGLES</div>
+<div class="spec" style="max-width:none">
+<table style="font-size:13px">
+<tr><td>Le relief se mérite</td><td>Une carte signale une <b style="color:var(--txt)">porte</b> (un moteur à lancer, un projet à ouvrir) ou enferme un <b style="color:var(--txt)">groupe cohérent</b> (les tiroirs d'un même thème, les couches d'une même famille). Le contenu déjà déplié reste plat : filets, jamais de boîte dans la boîte.</td></tr>
+<tr><td>Titre + contexte</td><td>Chaque ligne porte un titre <code>14px --txt-hi</code> et une ligne de contexte <code>11.5px --txt-mut</code> qui donne la valeur sans ouvrir. Une seule ligne de contexte, jamais trois.</td></tr>
+<tr><td>Groupes silencieux</td><td>Micro-label <code>10px</code> lettré <code>.11em</code> en <code>--lab</code>, au-dessus de la carte de groupe. Jamais de numérotation.</td></tr>
+<tr><td>Le vert est un signal</td><td>Chiffre neutre en <code>--txt</code>. Le vert ne sort que pour l'action principale, l'état confirmé et la tranche des portes mises en avant. Si tout est vert, plus rien ne l'est.</td></tr>
+<tr><td>Actif se lit au texte</td><td>Élément actif en <code>--txt-hi</code>, inactif en <code>#97A39B</code>. L'état ne repose jamais sur la seule case à cocher.</td></tr>
+<tr><td>Icônes rares</td><td>Aucune icône décorative dans les listes. Ailleurs : <code>--lab</code> ou <code>--txt-ghost</code>, tracé 1.7, tailles 15/19.</td></tr>
+<tr><td>Hiérarchie du pied</td><td>Une action principale pleine, une secondaire en contour, le destructif en lien. Jamais trois blocs de poids égal.</td></tr>
+<tr><td>Les états parlent</td><td>Un état vide dit quoi faire. Un chargement montre la forme à venir (squelette). Une erreur locale donne « Réessayer » sans casser l'écran. Jamais de zone muette.</td></tr>
+<tr><td>Ni halo, ni lueur</td><td>Aucune ombre décorative, aucun glow. L'élévation = fond plus clair + bordure. L'ombre <code>--ombre-flottante</code> est réservée aux surfaces qui flottent réellement : menus, notifications, infobulles.</td></tr>
+<tr><td>La couleur n'est jamais seule</td><td>Un statut porte toujours un mot en plus de sa couleur (« 2 vigilances », pas une pastille orpheline).</td></tr>
+</table>
+</div>
+
+<div class="doc-s">3 · BIBLIOTHÈQUE</div>
+<div class="grid">
+
+<div class="spec"><h4>LA PORTE — POINT D'ENTRÉE CLIQUABLE</h4>
+  <div class="door door-hot">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="gr-t">Radar des mutations</div>
+      <svg class="ic" width="11" height="11" viewBox="0 0 24 24" style="color:var(--amber)"><use href="#i-star"/></svg>
+    </div>
+    <div class="gr-s">Probabilité de mutation à 12 mois</div>
+  </div>
+  <div class="door">
+    <div class="gr-t">Renouvellement</div>
+    <div class="gr-s">Parcelles occupées avec capacité restante</div>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Fond <code>--bg-2</code>, bord <code>--line-2</code>, rayon 11. La tranche verte 2px marque les mises en avant (étoilés). Survol : bord <code>--line-3</code>.</p>
+</div>
+
+<div class="spec"><h4>LE GROUPE ENCARTÉ — TIROIRS D'UN THÈME</h4>
+  <div class="micro" style="margin-bottom:7px">LE TERRAIN</div>
+  <div class="gcard">
+    <div class="gr"><div><div class="gr-t">Urbanisme</div><div class="gr-s">zone Ub · PLU 2020</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">6 m max</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Risques et protections</div><div class="gr-s">9 couches vérifiées</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-amber">2 vigilances</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Réseaux et accès</div><div class="gr-s">CIREST · CISE · EDF SEI</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-mint">confirmée</span><span class="chev">›</span></div></div>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Une carte par groupe, filets <code>--line</code> à l'intérieur, micro-label au-dessus. L'intérieur d'un tiroir ouvert reste plat.</p>
+</div>
+
+<div class="spec"><h4>BANDEAU DE STATISTIQUES</h4>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="stat-l">SURFACE</div><div class="stat-v">2 821 m²</div></div>
+    <div class="stat"><div class="stat-l">ZONE</div><div class="stat-v">Ub</div></div>
+    <div class="stat"><div class="stat-l">SDP DISPO</div><div class="stat-v">1 523 m²</div></div>
+    <div class="stat"><div class="stat-l">SECTEUR</div><div class="stat-v">208 €</div></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat"><div class="stat-l">SOURCES</div><div class="stat-v" style="font-size:16px">62</div></div>
+    <div class="stat"><div class="stat-l">VÉRIFIÉES</div><div class="stat-v" style="font-size:16px;color:var(--mint)">8</div></div>
+    <div class="stat"><div class="stat-l">SANS MILLÉSIME</div><div class="stat-v" style="font-size:16px;color:var(--amber)">54</div></div>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Cellules <code>--bg-stat</code> séparées par 1px de <code>--line-2</code>. Valeur absente : « — », jamais un zéro trompeur.</p>
+</div>
+
+<div class="spec"><h4>PASTILLES, CASES, TAGS</h4>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+    <span class="pill p-on">U</span><span class="pill p-off">AU</span><span class="pill p-off">A</span>
+    <span class="pill p-on">Procédure collective</span><span class="pill p-off">Permis actif</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+    <span class="pill p-mint">3 actives</span><span class="pill p-amber">2 vigilances</span>
+    <span style="font-size:12px;color:var(--coral)">Brûlante</span>
+    <span style="font-size:12px;color:var(--amber)">Chaude</span>
+    <span style="font-size:12px;color:var(--blue)">Potentiel long terme</span>
+    <span style="font-size:12px;color:var(--txt)">À creuser</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
+    <span class="tag">80 logements</span><span class="tag">secteur Nord</span><span class="tag">hors PPR</span>
+    <span class="tag" style="border-style:dashed;color:var(--txt-off)">cadrage à compléter</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="cbx cbx-on">✓</span><span style="font-size:14px">Actif</span>
+    <span class="cbx cbx-off" style="margin-left:12px"></span><span style="font-size:14px;color:#97A39B">Inactif</span>
+  </div>
+</div>
+
+<div class="spec"><h4>CHAMPS, BOUTONS, ÉTAT VIDE</h4>
+  <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+    <div class="field" style="flex:1">min</div><span style="color:var(--txt-faint)">—</span>
+    <div class="field" style="flex:1">max</div><span style="color:var(--txt-mut);font-size:12.5px">m²</span>
+  </div>
+  <div class="btn b-pri" style="margin-bottom:8px">Demander à LABUSE →</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div class="btn b-sec" style="flex:1">Voir les parcelles</div>
+    <div class="btn b-iris" style="flex:1">+ Projet</div>
+  </div>
+  <div style="text-align:center;margin:12px 0"><span class="b-danger">Réinitialiser les filtres</span></div>
+  <div class="empty">Aucune parcelle<div style="color:var(--txt-faint);margin-top:4px">glissez-en une ici</div></div>
+</div>
+
+<div class="spec"><h4>ÉTATS D'INTERACTION</h4>
+  <div class="gcard">
+    <div class="gr"><div class="gr-t">Ligne au repos</div><span class="chev">›</span></div>
+    <div class="gr" style="background:var(--bg-3)"><div><div class="gr-t">Ligne survolée</div><div class="gr-s">fond --bg-3, 120ms</div></div><span class="chev">›</span></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <div class="btn b-pri" style="flex:1;font-size:12.5px;padding:9px">Normal</div>
+    <div class="btn b-pri" style="flex:1;font-size:12.5px;padding:9px;background:#5FE494">Survol</div>
+    <div class="btn b-pri" style="flex:1;font-size:12.5px;padding:9px;opacity:.45">Désactivé</div>
+  </div>
+  <div class="field" style="margin-top:10px;border-color:var(--mint);box-shadow:var(--focus);color:var(--txt-hi)">Champ en focus</div>
+  <div class="field" style="margin-top:8px;border-color:var(--coral)">Champ en erreur</div>
+  <div style="font-size:11.5px;color:var(--coral);margin-top:5px">Référence introuvable — 14 caractères attendus.</div>
+</div>
+
+<div class="spec"><h4>INFOBULLE « i » — LE PORTEUR DE BOUSSOLE</h4>
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <span style="color:var(--txt-ghost);font-size:13px;margin-top:2px">ⓘ</span>
+    <div style="background:var(--bg-3);border:0.5px solid var(--line-3);border-radius:8px;padding:10px 12px;max-width:250px;box-shadow:var(--ombre-flottante)">
+      <div style="font-size:12px;color:var(--txt);line-height:1.55">Caducité <b style="font-weight:500;color:var(--txt-hi)">ESTIMÉE</b> par LABUSE (Sitadel × bâti, calcul 08/2026) — à vérifier en mairie.</div>
+    </div>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Déclencheur <code>--txt-ghost</code>, panneau <code>--bg-3</code>, 250px max, texte 12px. C'est ici que vivent les mentions Sourcé / Estimé / date.</p>
+</div>
+
+<div class="spec"><h4>TOAST ET SQUELETTE</h4>
+  <div style="display:inline-flex;align-items:center;gap:9px;background:var(--bg-3);border:0.5px solid var(--line-3);border-radius:10px;padding:10px 14px;box-shadow:var(--ombre-flottante)">
+    <span style="color:var(--mint);font-size:13px">✓</span>
+    <span style="font-size:13px;color:var(--txt)">Parcelle ajoutée au CRM</span>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin:8px 0 14px">En bas de l'écran, disparaît seul en 3 s. Jamais plus d'un à la fois.</p>
+  <div class="sk" style="height:13px;width:62%"></div>
+  <div class="sk" style="height:11px;width:84%;margin-top:8px"></div>
+  <div class="sk" style="height:11px;width:47%;margin-top:8px"></div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:8px">Chargement : la forme du contenu à venir, pulsation d'opacité 0,6→1 sur 1,2 s. Pas de spinner isolé.</p>
+</div>
+
+<div class="spec"><h4>SEGMENTÉ ET TABLEAU</h4>
+  <div class="seg"><span class="on">Actifs 6</span><span>Archivés 4</span></div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin:8px 0 14px">Un seul contrôle pour un choix exclusif — pas deux pastilles indépendantes.</p>
+  <table style="border-collapse:collapse;width:100%">
+    <tr><th>Commune</th><th class="num">Constructible</th><th class="num">Médiane €/m²</th></tr>
+    <tr><td style="font-size:13px;color:var(--txt-hi);padding:9px 0;border-top:0.5px solid var(--line)">Saint-Paul</td><td class="num" style="font-size:13px;color:var(--txt);padding:9px 0;border-top:0.5px solid var(--line)">1 842 ha</td><td class="num" style="font-size:13px;color:var(--txt);padding:9px 0;border-top:0.5px solid var(--line)">286</td></tr>
+    <tr><td style="font-size:13px;color:var(--txt-hi);padding:9px 0;border-top:0.5px solid var(--line)">Saint-Denis</td><td class="num" style="font-size:13px;color:var(--txt);padding:9px 0;border-top:0.5px solid var(--line)">964 ha</td><td class="num" style="font-size:13px;color:var(--txt);padding:9px 0;border-top:0.5px solid var(--line)">412</td></tr>
+  </table>
+</div>
+
+</div>
+
+<div class="doc-s">4 · FICHE PARCELLE</div>
+<div class="panel" style="padding:18px 16px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.08em;color:var(--txt-off)">PARCELLE · BRAS-PANON</div>
+      <div class="mono" style="font-size:19px;font-weight:500;margin-top:5px">97402000AH1915</div>
+      <div style="font-size:12.5px;color:var(--txt-dim);margin-top:4px">1 Rue des Lataniers</div>
+    </div>
+    <div style="display:flex;gap:5px">
+      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-bell"/></svg></div>
+      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-search"/></svg></div>
+      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-x"/></svg></div>
+    </div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:14px">
+    <div class="stat"><div class="stat-l">SURFACE</div><div class="stat-v">2 821 m²</div></div>
+    <div class="stat"><div class="stat-l">ZONE</div><div class="stat-v">Ub</div></div>
+    <div class="stat"><div class="stat-l">SDP DISPO</div><div class="stat-v">1 523 m²</div></div>
+    <div class="stat"><div class="stat-l">SECTEUR</div><div class="stat-v">208 €</div></div>
+  </div>
+  <div style="background:var(--mint);border-radius:var(--r-ctl);padding:12px 15px;margin-top:12px">
+    <div style="font-size:14px;font-weight:500;color:var(--mint-on)">Demander à LABUSE d'analyser la parcelle</div>
+    <div style="font-size:12px;color:var(--mint-sub);margin-top:2px">Le verdict, le score et « pourquoi » — à la demande.</div>
+  </div>
+  <div style="display:flex;gap:7px;margin-top:8px">
+    <div class="btn b-iris" style="flex:1;text-align:left;padding:9px 11px;font-size:12.5px">Poser une question</div>
+    <div class="btn b-iris" style="flex:1;text-align:left;padding:9px 11px;font-size:12.5px">Synthèse IA</div>
+  </div>
+  <div class="micro" style="margin:18px 0 7px;display:block">LE TERRAIN</div>
+  <div class="gcard">
+    <div class="gr"><div><div class="gr-t">Urbanisme</div><div class="gr-s">zone Ub · PLU 2020</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">6 m max</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Constructibilité</div><div class="gr-s">R+1 · calcul tracé</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">15–17 logts</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Risques et protections</div><div class="gr-s">9 couches vérifiées</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-amber">2 vigilances</span><span class="chev">›</span></div></div>
+  </div>
+  <div class="micro" style="margin:16px 0 7px;display:block">LE CONTEXTE</div>
+  <div class="gcard">
+    <div class="gr"><div><div class="gr-t">Marché et secteur</div><div class="gr-s">13 ventes · DVF déc. 2025</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">208 €/m²</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Réseaux et accès</div><div class="gr-s">CIREST · CISE · EDF SEI</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-mint">confirmée</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Propriétaire</div><div class="gr-s">courrier SPF disponible</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">privé</span><span class="chev">›</span></div></div>
+    <div class="gr"><div><div class="gr-t">Données et méthode</div><div class="gr-s">21 sources · maj 29/07/2026</div></div><span class="chev">›</span></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px">
+    <div class="btn b-pri" style="flex:1;font-size:13px;padding:10px">+ CRM</div>
+    <div class="btn b-iris" style="flex:1">+ Projet</div>
+    <div class="btn b-sec" style="flex:1">Comparer</div>
+  </div>
+  <div class="legal" style="margin-top:14px">Estimations indicatives issues de données publiques — ni conseil juridique ou notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.</div>
+</div>
+
+<div class="doc-s">4b · TIROIR OUVERT — L'INTÉRIEUR RESTE PLAT</div>
+<div class="panel" style="padding:16px;width:340px">
+  <div class="micro" style="margin-bottom:7px;display:block">LE TERRAIN</div>
+  <div class="gcard">
+    <div class="gr" style="background:var(--bg-3)"><div><div class="gr-t">Urbanisme</div><div class="gr-s">zone Ub · PLU 2020</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">6 m max</span><span class="chev">⌃</span></div></div>
+    <div style="padding:14px 13px;border-bottom:0.5px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:12px;color:var(--txt-dim)">PLU approuvé</span>
+        <span style="font-size:12.5px;color:var(--txt)">6 février 2020</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:9px">
+        <span style="font-size:12px;color:var(--txt-dim)">Document GPU</span>
+        <span style="font-size:12.5px;color:var(--txt)">à jour <span style="color:var(--txt-ghost);font-size:11px">ⓘ</span></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:9px">
+        <span style="font-size:12px;color:var(--txt-dim)">Hauteur maximale</span>
+        <span style="font-size:12.5px;color:var(--txt)">6 m (R+1)</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:9px">
+        <span style="font-size:12px;color:var(--txt-dim)">Prescriptions</span>
+        <span style="font-size:12.5px;color:var(--txt)">aucune sur la parcelle</span>
+      </div>
+      <div style="margin-top:12px;padding-top:11px;border-top:0.5px solid var(--line)">
+        <div style="font-size:12px;color:var(--iris-2)">✦ Traduire ma zone en français courant</div>
+      </div>
+    </div>
+    <div style="padding:11px 13px;display:flex;gap:14px;border-bottom:0.5px solid var(--line)">
+      <span style="font-size:12px;color:#7FA88F">Annuaire PLU →</span>
+      <span style="font-size:12px;color:#7FA88F">Lettre de zonage (PDF) →</span>
+    </div>
+    <div class="gr"><div><div class="gr-t">Constructibilité</div><div class="gr-s">R+1 · calcul tracé</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">15–17 logts</span><span class="chev">›</span></div></div>
+  </div>
+</div>
+<p class="doc-p" style="margin-top:14px">Le tiroir ouvert : en-tête sur fond <code>--bg-3</code> (état ouvert), chevron retourné, contenu en <b style="color:var(--txt)">paires libellé-valeur</b> — libellé <code>12px --txt-dim</code> à gauche, valeur <code>12.5px --txt</code> à droite. Aucune boîte à l'intérieur : des filets. Les liens sortants en vert d'eau <code>#7FA88F</code>, l'IA en mauve.</p>
+
+<div class="doc-s">4c · BLOC ANALYSE DÉPLOYÉ — L'ÉCRAN SIGNATURE</div>
+<div class="panel" style="padding:16px;width:340px">
+  <div class="gcard" style="border-color:var(--line-3)">
+    <div style="padding:14px 15px;border-bottom:0.5px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:10px;letter-spacing:.11em;color:var(--lab)">VERDICT LABUSE</div>
+          <div style="font-size:19px;font-weight:500;color:var(--amber);margin-top:4px">Chaude</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:17px;color:var(--txt-hi)">×2,4</div>
+          <div style="font-size:10.5px;color:var(--txt-mut);margin-top:1px">plus probable de muter</div>
+        </div>
+      </div>
+      <div style="height:5px;border-radius:3px;background:linear-gradient(90deg,#212A25,#2A2113 55%,#3A2E17);margin-top:12px;position:relative">
+        <span style="position:absolute;left:62%;top:-2px;width:2px;height:9px;background:var(--txt-hi);border-radius:1px"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:10px;color:var(--txt-faint)">moyenne</span>
+        <span style="font-size:10px;color:var(--txt-faint)">très forte</span>
+      </div>
+    </div>
+    <div style="padding:12px 15px;border-bottom:0.5px solid var(--line)">
+      <div style="font-size:10px;letter-spacing:.11em;color:var(--lab);margin-bottom:8px">POURQUOI CE SCORE</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12.5px;color:var(--txt)">Parcelle peu boisée</span><span style="font-size:12.5px;color:var(--mint)">+0,12</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12.5px;color:var(--txt)">En zone urbaine (U)</span><span style="font-size:12.5px;color:var(--mint)">+0,08</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12.5px;color:var(--txt)">Rotation du bâti modérée</span><span style="font-size:12.5px;color:var(--coral)">−0,11</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12.5px;color:var(--txt)">Dernière mutation inconnue</span><span style="font-size:12.5px;color:var(--coral)">−0,07</span></div>
+    </div>
+    <div style="padding:12px 15px;border-bottom:0.5px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--txt)">Vérifications d'éligibilité</span>
+        <span style="display:flex;align-items:center;gap:7px"><span style="font-size:12px;color:var(--mint)">✓ 16 passées</span><span class="chev">›</span></span>
+      </div>
+    </div>
+    <div style="padding:11px 15px;background:var(--bg-1)">
+      <div style="font-size:10.5px;color:var(--txt-off);line-height:1.5">Analyse LABUSE · run q_v8_calibre · maj 08/08/2026 — potentiel physique et réglementaire, ni une mise en vente prévisible ni une garantie de constructibilité.</div>
+    </div>
+  </div>
+</div>
+<p class="doc-p" style="margin-top:14px">Le verdict porte sa couleur de tier (chaude = ambre, brûlante = corail, à creuser = neutre). Les contributions en deux colonnes, signées et colorées — vert apporte, corail retire. Les vérifications en une ligne dépliable. Le pied du bloc cite <b style="color:var(--txt)">toujours</b> le run et la date : une opinion sans source n'existe pas chez LABUSE.</p>
+
+<div class="doc-s">5 · PANNEAU COUCHES</div>
+<div class="panel" style="padding:16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:17px;font-weight:500">Cartes</div><div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-x"/></svg></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:11px;border-bottom:0.5px solid var(--line)">
+    <span class="micro">COUCHES</span>
+    <div style="display:flex;align-items:center;gap:8px"><span class="pill p-mint">3 actives</span><span class="chev">⌃</span></div>
+  </div>
+  <div class="micro" style="margin:16px 0 7px;display:block">LE FOND</div>
+  <div class="gcard">
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-on">✓</span><div><div class="gr-t">Parcelles</div><div class="gr-s">431 663 au cadastre</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-on">✓</span><div><div class="gr-t">Limites communes</div><div class="gr-s">24 communes</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+  </div>
+  <div class="micro" style="margin:14px 0 7px;display:block">L'ANALYSE LABUSE</div>
+  <div class="gcard">
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-off"></span><div><div class="gr-t" style="color:#97A39B">Verdict — toute l'île</div><div class="gr-s" style="color:var(--txt-off)">classement complet, hors filtres</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-off"></span><div><div class="gr-t" style="color:#97A39B">Renouvellement</div><div class="gr-s" style="color:var(--txt-off)">bâti à potentiel restant</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+  </div>
+  <div class="micro" style="margin:14px 0 7px;display:block">LES ZONAGES</div>
+  <div class="gcard">
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-off"></span><div><div class="gr-t" style="color:#97A39B">Zonage PLU par parcelle</div><div class="gr-s" style="color:var(--txt-off)">lecture calibrée LABUSE</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+    <div class="gr"><div style="display:flex;align-items:center;gap:11px"><span class="cbx cbx-off"></span><div><div class="gr-t" style="color:#97A39B">Zones du PLU officiel</div><div class="gr-s" style="color:var(--txt-off)">GPU — source brute</div></div></div><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+  </div>
+</div>
+
+<div class="doc-s">6 · FILTRES</div>
+<div class="panel" style="padding:16px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px">
+    <span class="micro">OÙ</span><span style="font-size:11.5px;color:var(--txt-mut)">3 communes sur 24</span>
+  </div>
+  <div class="gcard" style="padding:12px 13px">
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <span class="pill p-on">Saint-Denis ✕</span><span class="pill p-on">Saint-Paul ✕</span><span class="pill p-on">Le Port ✕</span>
+      <span class="pill p-off">+ ajouter</span>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 7px">
+    <span class="micro">LE TERRAIN</span>
+  </div>
+  <div class="gcard" style="padding:12px 13px">
+    <div style="font-size:12px;color:var(--txt-dim);margin-bottom:7px">Surface</div>
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+      <div class="field" style="flex:1;background:var(--bg-1)">min</div><span style="color:var(--txt-faint)">—</span><div class="field" style="flex:1;background:var(--bg-1)">max</div><span style="color:var(--txt-mut);font-size:12.5px">m²</span>
+    </div>
+    <div style="font-size:12px;color:var(--txt-dim);margin-bottom:7px">Zonage</div>
+    <div style="display:flex;gap:6px">
+      <span class="pill p-on" style="padding:5px 14px">U</span><span class="pill p-off" style="padding:5px 14px">AU</span><span class="pill p-off" style="padding:5px 14px">A</span><span class="pill p-off" style="padding:5px 14px">N</span>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 7px">
+    <span class="micro">SIGNAUX DE VIE</span><span style="font-size:11.5px;color:var(--txt-mut)">1 actif sur 7</span>
+  </div>
+  <div class="gcard" style="padding:12px 13px">
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <span class="pill p-off">Détenu par une société</span><span class="pill p-on">Procédure collective</span>
+      <span class="pill p-off">Permis actif</span><span class="pill p-off">Friche recensée</span>
+    </div>
+  </div>
+  <div style="border-top:0.5px solid var(--line);margin-top:16px;padding-top:14px">
+    <div style="font-size:13px;color:var(--txt-dim);margin-bottom:10px"><span style="color:var(--txt-hi);font-size:15px">1 762</span> parcelles correspondent</div>
+    <div class="btn b-pri">Demander à LABUSE →</div>
+    <div class="btn b-sec" style="margin-top:8px">Voir les 1 762 parcelles</div>
+    <div style="text-align:center;margin-top:12px"><span class="b-danger">Réinitialiser les filtres</span></div>
+  </div>
+</div>
+
+<div class="doc-s">7 · OUTILS</div>
+<div class="panel" style="width:340px;padding:18px">
+  <div style="font-size:17px;font-weight:500">Outils</div>
+  <div style="font-size:12px;color:var(--txt-mut);margin-top:3px">Les moteurs métier de LABUSE.</div>
+  <div class="micro" style="margin:18px 0 8px;display:block">DÉTECTER LE FONCIER</div>
+  <div class="door door-hot">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="gr-t">Radar des mutations</div><svg class="ic" width="11" height="11" viewBox="0 0 24 24" style="color:var(--amber)"><use href="#i-star"/></svg></div>
+    <div class="gr-s">Probabilité de mutation à 12 mois</div>
+  </div>
+  <div class="door door-hot">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="gr-t">Faisabilité</div><svg class="ic" width="11" height="11" viewBox="0 0 24 24" style="color:var(--amber)"><use href="#i-star"/></svg></div>
+    <div class="gr-s">Où poser un programme, ou ce qu'une parcelle accueille</div>
+  </div>
+  <div class="door">
+    <div class="gr-t">Renouvellement</div>
+    <div class="gr-s">Parcelles occupées avec capacité restante</div>
+  </div>
+  <div class="door door-hot" style="margin-bottom:0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="gr-t">Scan patrimoine</div><svg class="ic" width="11" height="11" viewBox="0 0 24 24" style="color:var(--amber)"><use href="#i-star"/></svg></div>
+    <div class="gr-s">Un nom de propriétaire, et tout son foncier ressort</div>
+  </div>
+  <div style="font-size:11px;color:var(--txt-faint);margin-top:12px"><svg class="ic" width="10" height="10" viewBox="0 0 24 24" style="color:var(--amber)"><use href="#i-star"/></svg>&nbsp; les plus utilisés</div>
+</div>
+
+<div class="doc-s">8 · CRM</div>
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:500">CRM</div><div style="font-size:12px;color:var(--txt-mut);margin-top:3px">30 parcelles suivies · glissez une carte pour changer d'étape</div></div>
+    <div class="btn b-sec" style="padding:7px 13px;font-size:12.5px">Personnaliser</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+    <div>
+      <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--line-2);margin-bottom:10px"><span style="font-size:12.5px;color:var(--txt)">Repérée</span><span style="font-size:11.5px;color:var(--txt-off)">24</span></div>
+      <div class="door" style="border-color:var(--line-card)">
+        <div style="display:flex;justify-content:space-between"><span class="mono" style="font-size:12.5px">97415000AX0988</span><svg class="ic" width="12" height="12" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-x"/></svg></div>
+        <div style="font-size:11.5px;color:var(--txt-mut);margin-top:4px">7 430 m² · Saint-Paul</div>
+        <div style="font-size:11.5px;color:var(--txt-dim);margin-top:8px">CBO Territoria</div>
+        <div style="font-size:11px;color:var(--iris);margin-top:5px">Résidence étudiante Saint-Paul</div>
+        <div style="display:flex;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:0.5px solid var(--line)"><span style="font-size:12px;color:var(--txt)">À creuser</span><span style="font-size:13.5px">90</span></div>
+      </div>
+      <div class="door" style="border-color:var(--line-card);margin-bottom:0">
+        <div style="display:flex;justify-content:space-between"><span class="mono" style="font-size:12.5px">97415000CP0226</span><svg class="ic" width="12" height="12" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-x"/></svg></div>
+        <div style="font-size:11.5px;color:var(--txt-mut);margin-top:4px">1,32 ha · Saint-Paul</div>
+        <div style="font-size:11.5px;color:var(--txt-dim);margin-top:8px">Comité de protection tutélaire</div>
+        <div style="display:flex;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:0.5px solid var(--line)"><span style="font-size:12px;color:var(--blue)">Potentiel long terme</span><span style="font-size:13.5px">95</span></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--line-2);margin-bottom:10px"><span style="font-size:12.5px;color:var(--txt)">Contact à préparer</span><span style="font-size:11.5px;color:var(--txt-off)">5</span></div>
+      <div class="door" style="border-color:var(--line-card);margin-bottom:0">
+        <div style="display:flex;justify-content:space-between"><span class="mono" style="font-size:12.5px">97408000AP1610</span><svg class="ic" width="12" height="12" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-x"/></svg></div>
+        <div style="font-size:11.5px;color:var(--txt-mut);margin-top:4px">426 m² · La Possession</div>
+        <div style="font-size:11.5px;color:var(--txt-dim);margin-top:8px">SEM du Département</div>
+        <div style="font-size:11px;color:var(--iris);margin-top:5px">Projet Beta</div>
+        <div style="display:flex;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:0.5px solid var(--line)"><span style="font-size:12px;color:var(--amber)">Chaude</span><span style="font-size:13.5px">57</span></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--line-2);margin-bottom:10px"><span style="font-size:12.5px;color:var(--txt)">Contacté</span><span style="font-size:11.5px;color:var(--txt-off)">0</span></div>
+      <div class="empty">Aucune parcelle<div style="color:var(--txt-faint);margin-top:4px">glissez-en une ici</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="doc-s">9 · SOURCES ET FRAÎCHEUR</div>
+<div class="page">
+  <div style="font-size:19px;font-weight:500">Sources et fraîcheur</div>
+  <div style="font-size:12.5px;color:var(--txt-mut);margin-top:4px">Chaque réponse LABUSE est traçable jusqu'à sa source publique.</div>
+  <div class="stats" style="grid-template-columns:repeat(3,1fr);margin:16px 0 20px;max-width:560px">
+    <div class="stat" style="padding:12px 14px"><div class="stat-l">SOURCES BRANCHÉES</div><div class="stat-v" style="font-size:17px">62</div></div>
+    <div class="stat" style="padding:12px 14px"><div class="stat-l">VÉRIFIÉES AUTO</div><div class="stat-v" style="font-size:17px;color:var(--mint)">8</div></div>
+    <div class="stat" style="padding:12px 14px"><div class="stat-l">MILLÉSIME NON TRACÉ</div><div class="stat-v" style="font-size:17px;color:var(--amber)">54</div></div>
+  </div>
+  <div class="micro" style="margin-bottom:7px;display:block">CADASTRE</div>
+  <div class="gcard" style="max-width:640px">
+    <div class="gr" style="align-items:flex-start;flex-direction:column;gap:4px">
+      <div style="display:flex;align-items:baseline;gap:9px;width:100%">
+        <span class="dot" style="background:var(--amber)"></span>
+        <div style="font-size:14px;flex:1">Cadastre (API Carto PCI)</div>
+        <div style="font-size:12px;color:var(--amber)">millésime non tracé</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;width:100%;padding-left:15px">
+        <div style="font-size:11.5px;color:var(--txt-mut)">IGN / API Carto · Licence Ouverte 2.0 · <span style="color:#7FA88F">source ↗</span></div>
+        <div style="font-size:11.5px;color:var(--txt-off)">grande passe</div>
+      </div>
+    </div>
+    <div class="gr" style="align-items:flex-start;flex-direction:column;gap:4px">
+      <div style="display:flex;align-items:baseline;gap:9px;width:100%">
+        <span class="dot" style="background:var(--mint)"></span>
+        <div style="font-size:14px;flex:1">Cadastre Etalab (bulk DGFiP)</div>
+        <div style="font-size:12px;color:var(--mint)">à jour</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;width:100%;padding-left:15px">
+        <div style="font-size:11.5px;color:var(--txt-mut)">DGFiP / Etalab · Licence Ouverte 2.0 · <span style="color:#7FA88F">source ↗</span></div>
+        <div style="font-size:11.5px;color:var(--txt-dim)">29/06/2026</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="doc-s">10 · RAIL ET BARRE DU HAUT</div>
+<div class="page" style="padding:0;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:0.5px solid var(--line)">
+    <div style="display:flex;align-items:center;gap:9px;flex-shrink:0">
+      <span style="color:var(--mint);font-size:16px">▽</span>
+      <span style="font-size:14px;font-weight:500;letter-spacing:.03em">LABUSE</span>
+    </div>
+    <div class="field" style="flex:1;max-width:360px;display:flex;align-items:center;gap:9px;font-size:13px">
+      <svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--txt-faint)"><use href="#i-search"/></svg>Rechercher : IDU, adresse exacte…
+    </div>
+    <div class="btn b-sec" style="padding:7px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0">Toute l'île <svg class="ic" width="12" height="12" viewBox="0 0 24 24" style="color:var(--txt-faint)"><use href="#i-chev"/></svg></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="position:relative"><div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-bell"/></svg></div>
+        <span style="position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border-radius:20px;background:var(--amber);color:#2A2113;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px">1</span></div>
+      <div class="ico" style="background:var(--bg-3);font-family:var(--sans);font-size:11.5px;color:var(--txt)">VL</div>
+    </div>
+  </div>
+  <div style="display:flex;min-height:280px">
+    <div style="width:92px;border-right:0.5px solid var(--line);padding:12px 8px;flex-shrink:0">
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--iris)"><use href="#i-ia"/></svg><div style="font-size:11px;color:var(--iris);margin-top:5px">IA</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-copilote"/></svg><div style="font-size:11px;color:var(--txt-mut);margin-top:5px">Copilote</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center;background:var(--mint-bg)"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--mint)"><use href="#i-cartes"/></svg><div style="font-size:11px;color:var(--mint);margin-top:5px">Cartes</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-outils"/></svg><div style="font-size:11px;color:var(--txt-mut);margin-top:5px">Outils</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-projets"/></svg><div style="font-size:11px;color:var(--txt-mut);margin-top:5px">Projets</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-crm"/></svg><div style="font-size:11px;color:var(--txt-mut);margin-top:5px">CRM</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center;position:relative"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-veilles"/></svg>
+        <span style="position:absolute;top:10px;right:20px;width:6px;height:6px;border-radius:50%;background:var(--amber)"></span>
+        <div style="font-size:11px;color:var(--txt-mut);margin-top:5px">Veilles</div></div>
+      <div style="padding:11px 6px;border-radius:9px;text-align:center"><svg class="ic" width="19" height="19" viewBox="0 0 24 24" style="color:var(--txt-off)"><use href="#i-sources"/></svg><div style="font-size:11px;color:var(--txt-mut);margin-top:5px">Sources</div></div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--line-3)">zone de contenu</div>
+  </div>
+</div>
+
+<div class="doc-s">11 · HABILLAGE DE CARTE</div>
+<p class="doc-p">La carte elle-même reste inchangée. Seul son habillage est normalisé.</p>
+<div class="page" style="position:relative;height:280px;padding:0;overflow:hidden;background:var(--bg-0)">
+  <div style="position:absolute;top:14px;left:14px;display:flex;flex-direction:column;gap:5px">
+    <div class="ico" style="background:var(--bg-2);color:var(--txt)">+</div>
+    <div class="ico" style="background:var(--bg-2);color:var(--txt)">−</div>
+  </div>
+  <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px">
+    <div class="btn b-sec" style="padding:7px 12px;font-size:12.5px;background:var(--bg-2);display:flex;align-items:center;gap:8px"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--txt-mut)"><use href="#i-carto"/></svg>Sombre</div>
+    <div class="btn b-sec" style="padding:7px 12px;font-size:12.5px;background:var(--bg-2)">3D</div>
+  </div>
+  <div style="position:absolute;top:58px;right:14px;display:flex;flex-direction:column;gap:1px;background:var(--line-btn);border:0.5px solid var(--line-btn);border-radius:var(--r-sm);overflow:hidden">
+    <div style="width:30px;height:30px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--txt-mut)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24"><use href="#i-mesure"/></svg></div>
+    <div style="width:30px;height:30px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--txt-mut)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24"><use href="#i-zone"/></svg></div>
+    <div style="width:30px;height:30px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--txt-mut)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24"><use href="#i-relief"/></svg></div>
+    <div style="width:30px;height:30px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--amber)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24"><use href="#i-lock"/></svg></div>
+    <div style="width:30px;height:30px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--txt-faint)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24"><use href="#i-select"/></svg></div>
+  </div>
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--line-3)">la carte reste en l'état</div>
+  <div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12.5px;color:var(--txt-mut);background:var(--bg-2);border:0.5px solid var(--line-2);border-radius:var(--r-pill);padding:8px 18px">Zoomez ou cliquez une commune pour voir ses parcelles</div>
+  <div style="position:absolute;bottom:12px;right:14px;font-size:10px;color:var(--line-3)">© OSM · CARTO</div>
+</div>
+
+<div class="doc-s">12 · ACCUEIL DU PANNEAU</div>
+<div class="panel" style="padding:0;width:330px">
+  <div style="padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:17px;font-weight:500">Cartes</div><div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-x"/></svg></div>
+  </div>
+  <div style="padding:0 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:0.5px solid var(--line)">
+      <span class="micro">COUCHES</span>
+      <div style="display:flex;align-items:center;gap:8px"><span class="pill p-mint" style="font-size:11.5px">3 actives</span><span class="chev">⌄</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:0.5px solid var(--line);border-bottom:0.5px solid var(--line)">
+      <span class="micro">FILTRES</span><span class="chev">⌄</span>
+    </div>
+  </div>
+  <div style="padding:26px 20px 22px;text-align:center">
+    <div style="font-size:15.5px;font-weight:500;line-height:1.4">LABUSE, c'est tout le foncier de La Réunion. Au même endroit.</div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr);margin:18px 0">
+      <div class="stat" style="padding:11px 6px"><div class="stat-v">431 663</div><div class="stat-l" style="margin-top:2px">PARCELLES</div></div>
+      <div class="stat" style="padding:11px 6px"><div class="stat-v">24</div><div class="stat-l" style="margin-top:2px">COMMUNES</div></div>
+      <div class="stat" style="padding:11px 6px"><div class="stat-v">62</div><div class="stat-l" style="margin-top:2px">SOURCES</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--txt-mut);line-height:1.55">Cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date.</div>
+    <div class="btn b-pri" style="margin-top:18px">Commencer →</div>
+  </div>
+</div>
+
+<div class="doc-s">13 · SÉLECTEUR DE COMMUNE</div>
+<div class="panel" style="width:300px;padding:0;box-shadow:var(--ombre-flottante);background:var(--bg-3)">
+  <div style="padding:13px 15px 11px;border-bottom:0.5px solid var(--line-2)">
+    <div class="field" style="display:flex;align-items:center;gap:8px;font-size:12.5px;background:var(--bg-2)"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" style="color:var(--txt-faint)"><use href="#i-search"/></svg>Filtrer les communes…</div>
+  </div>
+  <div style="padding:5px 15px 12px">
+    <div style="padding:10px 2px;border-bottom:0.5px solid var(--line-2);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13.5px;color:var(--mint)">Toute l'île</span><span style="color:var(--mint);font-size:13px">✓</span>
+    </div>
+    <div style="padding:10px 2px;border-bottom:0.5px solid var(--line-2);display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font-size:13.5px">Saint-Paul</span><span style="font-size:11.5px;color:var(--txt-faint)">97460</span>
+    </div>
+    <div style="padding:10px;border-bottom:0.5px solid var(--line-2);display:flex;justify-content:space-between;align-items:center;background:var(--bg-2);margin:0 -8px;border-radius:6px">
+      <span style="font-size:13.5px">La Possession</span><span style="font-size:11.5px;color:var(--mint)">voir la fiche →</span>
+    </div>
+    <div style="padding:10px 2px;display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font-size:13.5px">Saint-Pierre</span><span style="font-size:11.5px;color:var(--txt-faint)">97410</span>
+    </div>
+  </div>
+</div>
+<p class="doc-p" style="margin-top:14px">Surface flottante : fond <code>--bg-3</code> + <code>--ombre-flottante</code>. « Voir la fiche » au survol seulement. Codes postaux en décor.</p>
+
+<div class="doc-s">14 · MENU COMPTE</div>
+<div class="panel" style="width:250px;padding:0;box-shadow:var(--ombre-flottante);background:var(--bg-3)">
+  <div style="padding:13px 15px 11px;border-bottom:0.5px solid var(--line-2)"><span class="micro">MON COMPTE</span></div>
+  <div style="padding:13px 15px">
+    <div class="stat-l">ABONNEMENT</div>
+    <div style="display:flex;align-items:baseline;gap:7px;margin-top:5px"><span style="font-size:14px">Plan</span><span class="pill p-mint" style="font-size:12px">Intégral</span></div>
+    <div style="font-size:11.5px;color:var(--txt-mut);margin-top:6px;line-height:1.5">Accès pilote — la facturation par compte arrive.</div>
+    <div class="stat-l" style="margin-top:16px">COMPTE</div>
+    <div style="font-size:14px;margin-top:5px">Session pilote</div>
+  </div>
+  <div style="border-top:0.5px solid var(--line-2);padding:6px 8px 8px">
+    <div style="padding:9px 8px;display:flex;align-items:center;gap:10px"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" style="color:var(--iris)"><use href="#i-ia"/></svg><span style="font-size:13px;color:var(--txt)">Proposer une amélioration</span></div>
+    <div style="padding:9px 8px;display:flex;align-items:center;gap:10px"><span style="color:var(--txt-off);font-size:14px">[→</span><span style="font-size:13px;color:#97A39B">Se déconnecter</span></div>
+  </div>
+</div>
+
+<div class="doc-s">15 · NOTIFICATIONS ET VEILLES</div>
+<div class="panel" style="width:352px;padding:0;box-shadow:var(--ombre-flottante);background:var(--bg-3)">
+  <div style="padding:13px 15px 11px;border-bottom:0.5px solid var(--line-2);display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;align-items:center;gap:9px"><span class="micro">NOTIFICATIONS</span><span class="pill p-amber" style="font-size:11px;padding:2px 8px">1</span><span style="color:var(--txt-ghost);font-size:12px">ⓘ</span></div>
+    <span style="font-size:11.5px;color:var(--txt-mut)">tout lire</span>
+  </div>
+  <div style="padding:10px 15px 0">
+    <div class="door" style="border-color:var(--line-2)">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <span class="dot" style="background:var(--amber)"></span>
+        <div style="flex:1">
+          <div style="font-size:13.5px">Reprise de veille</div>
+          <div class="mono" style="font-size:12px;color:var(--txt-dim);margin-top:3px">97415000AC0253</div>
+          <div style="font-size:11.5px;color:var(--txt-mut);margin-top:5px;line-height:1.5">Réalerte à 3 mois — le tier passe de <span style="color:var(--txt)">à creuser</span> à <span style="color:var(--amber)">chaude</span>.</div>
+          <div style="font-size:11px;color:var(--txt-faint);margin-top:6px">27 juillet 2026</div>
+        </div>
+        <span style="color:var(--txt-ghost);font-size:13px">✓</span>
+      </div>
+    </div>
+    <div style="padding:11px 2px;opacity:.55">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <span class="dot" style="background:var(--line-3)"></span>
+        <div style="flex:1">
+          <div style="font-size:13.5px;color:var(--txt)">Nouvelle procédure BODACC</div>
+          <div class="mono" style="font-size:12px;color:var(--txt-mut);margin-top:3px">97415000DK1044</div>
+          <div style="font-size:11px;color:var(--txt-faint);margin-top:5px">19 juillet 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:14px 15px;border-top:0.5px solid var(--line-2)">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="micro">VOS VEILLES</span><span style="font-size:11.5px;color:var(--txt-mut)">3 actives</span></div>
+    <div class="field" style="margin-top:9px;font-size:12.5px;background:var(--bg-2)">Décrivez : « les grandes parcelles à Saint-Paul qui… »</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+      <span class="tag">parcelles qui deviennent chaudes</span>
+      <span class="tag">nouvelle procédure BODACC</span>
+    </div>
+    <div class="btn b-pri" style="margin-top:11px;font-size:13px;padding:10px">Créer la veille</div>
+  </div>
+</div>
+<p class="doc-p" style="margin-top:14px">La non-lue est une <b style="color:var(--txt)">porte</b> (carte) ; les lues redeviennent plates et s'estompent à 55 %. L'explication du système passe derrière le « i ».</p>
+
+<div class="doc-s">16 · MES PROJETS</div>
+<div class="page" style="max-width:720px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+    <div>
+      <div style="font-size:19px;font-weight:500">Mes projets</div>
+      <div style="font-size:12.5px;color:var(--txt-mut);margin-top:4px">Chaque projet garde son cadrage — ouvrez-le pour trier, retenir, écarter.</div>
+    </div>
+    <div class="btn b-pri" style="padding:9px 16px;font-size:13px;flex-shrink:0">+ Décrire un projet</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px">
+    <div class="seg"><span class="on">Actifs 6</span><span>Archivés 4</span></div>
+    <span style="font-size:11.5px;color:var(--txt-off)">193 parcelles à trier au total</span>
+  </div>
+
+  <div class="door" style="border-color:var(--line-card)">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:14.5px;flex:1">Résidence étudiante Nord R+6</div>
+      <span style="font-size:11.5px;color:var(--txt-off)">actif hier</span>
+      <div class="btn b-sec" style="padding:6px 14px;font-size:12.5px">Ouvrir</div>
+      <svg class="ic" width="15" height="15" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-dots"/></svg>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+      <span class="tag">Logement étudiant</span><span class="tag">80 logements</span><span class="tag">secteur Nord</span><span class="tag">hors PPR</span><span class="tag">1,5 M€</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:11px">
+      <div class="bar" style="flex:1"><div style="width:4%;background:var(--mint)"></div><div style="flex:1;background:var(--line-2)"></div></div>
+      <span style="font-size:11.5px;color:var(--txt-mut)"><span style="color:var(--mint)">2 retenues</span> · 50 à trier</span>
+    </div>
+  </div>
+
+  <div class="door" style="border-color:var(--line-card)">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:14.5px;flex:1">Résidence étudiante Saint-Paul</div>
+      <span style="font-size:11.5px;color:var(--txt-off)">rejoué le 20 juillet</span>
+      <div class="btn b-sec" style="padding:6px 14px;font-size:12.5px">Ouvrir</div>
+      <svg class="ic" width="15" height="15" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-dots"/></svg>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+      <span class="tag">Logement étudiant</span><span class="tag">75 logements</span><span class="tag">Saint-Paul</span><span class="tag">hors ABF</span><span class="tag">2 M€</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:11px">
+      <div class="bar" style="flex:1"><div style="width:31%;background:var(--mint)"></div><div style="flex:1;background:var(--line-2)"></div></div>
+      <span style="font-size:11.5px;color:var(--txt-mut)"><span style="color:var(--mint)">15 retenues</span> · 33 à trier</span>
+    </div>
+  </div>
+
+  <div class="door" style="border-color:var(--line-card);margin-bottom:0;opacity:.75">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:14.5px;flex:1">Projet Alpha</div>
+      <span style="font-size:11.5px;color:var(--txt-off)">24 juillet</span>
+      <div class="btn b-sec" style="padding:6px 14px;font-size:12.5px">Ouvrir</div>
+      <svg class="ic" width="15" height="15" viewBox="0 0 24 24" style="color:var(--txt-ghost)"><use href="#i-dots"/></svg>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+      <span class="tag">Saint-Denis</span><span class="tag" style="border-style:dashed;color:var(--txt-off)">cadrage à compléter</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:11px">
+      <div class="bar" style="flex:1"></div>
+      <span style="font-size:11.5px;color:var(--txt-off)">1 à trier · rien de trié</span>
+    </div>
+  </div>
+</div>
+<p class="doc-p" style="margin-top:14px">Chaque projet est une porte : carte, « Ouvrir » en secondaire, Renommer/Archiver sous les trois points. Barre d'avancement du tri, cadrage en tags, tri par activité — les dormants s'estompent.</p>
+
+<div style="height:60px"></div>
+</div>
+</body>
+</html>
