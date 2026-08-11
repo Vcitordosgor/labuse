@@ -31,6 +31,9 @@ const REF = {
   name: '#eef7f2', mint: '#7de3ab', violet: '#c9b6f2', dim: '#5f7568', dim2: '#7d9488',
   chev: '#3f5249', chevAccent: '#564a75', barTrack: '#18211d', barFill: '#3aa06e', seg: '#26473a',
   pastilleTxt: '#8a7ab0', pastilleBg: '#1a1428',
+  // M55-O phase 3.5 — sémantique de valeur (le vert redevient un signal) : gris=factuel neutre,
+  // ok=vert état positif confirmé, creuser=ambre attention, ecartee=rouge blocage. = tokens Tailwind.
+  gris: '#8FA69A', ok: '#5CE6A1', creuser: '#E8B44C', ecartee: '#E8695A',
 } as const
 
 // M-RENOUV : CUIVRE du segment Renouvellement (aligné TOKENS.renouv, lib/tokens.ts) — teinte
@@ -72,32 +75,40 @@ function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
 // éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
 const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
 
-/** M19 · tiroir de la référence : fermé = icône + nom + valeur clé + MICRO-PREUVE (jauge, segments,
- *  sparkline, pastilles, 3 données) ; ouvert = le détail (blocs existants). Une seule carte peut être
- *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié.
- *  M55-L point 10 : l'état `open` est CONTRÔLÉ par l'accordéon (contexte), plus d'état local. */
-function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children }: {
-  id?: string; icon: ReactNode; name: string; value?: ReactNode; valueColor?: string
+/** M19 · tiroir de la fiche. M55-O phase 3.3 : les 10 CARTES deviennent des LIGNES — plus de fond,
+ *  ni bordure, ni coins arrondis ; un filet horizontal fin sépare chaque ligne. Titre (14,5 px,
+ *  texte clair) + sous-titre de contexte (le `micro`, visible sans ouvrir) + valeur à droite +
+ *  chevron. PAS d'icône (10 icônes vertes en colonne = du bruit). M55-O phase 3.5 : la valeur est
+ *  GRISE (factuelle) par défaut — le vert n'est plus le défaut, il redevient un signal (les blocs
+ *  passent une couleur explicite quand c'est un état). `accent` (violet) = signal chaud, conservé.
+ *  M55-L point 10 : l'état `open` est CONTRÔLÉ par l'accordéon (contexte). `icon` ignoré (gardé
+ *  dans le type pour ne pas toucher les call-sites). */
+function RefDrawer({ id, name, value, valueColor, accent, micro, children }: {
+  id?: string; icon?: ReactNode; name: string; value?: ReactNode; valueColor?: string
   accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
   const acc = useContext(FicheAccordionCtx)
   const open = !!id && acc.openId === id
   return (
-    <div data-drawer={id} style={{ background: accent ? REF.accent : REF.card, border: `1px solid ${accent ? REF.accentBorder : REF.cardBorder}`, borderRadius: 12, padding: '13px 15px', scrollMarginTop: 8 }}>
+    <div data-drawer={id} style={{ borderBottom: '1px solid #17211d', scrollMarginTop: 8 }}>
       <button onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
-        style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
-        <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
-        {/* M30-revue A3 : le NOM passe à la ligne au lieu de s'écraser en « V » ou « … » —
-            la valeur garde son ellipse, le titre reste toujours lisible en entier. */}
-        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 90, lineHeight: 1.25 }}>{name}</span>
-        {value != null && <span style={{ fontSize: 15, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : REF.mint), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 0, padding: '11px 2px 10px', cursor: children ? 'pointer' : 'default', textAlign: 'left' }}>
+        <span style={{ flex: 1, fontSize: 14.5, color: accent ? REF.violet : '#dfeee7', minWidth: 80, lineHeight: 1.25 }}>{name}</span>
+        {value != null && <span style={{ fontSize: 13.5, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : '#8FA69A'), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
         {children && <RefChevron open={open} accent={accent} />}
       </button>
-      {micro && <div style={{ marginTop: 10 }}>{micro}</div>}
-      {open && children && <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${accent ? REF.accentBorder : '#1a231e'}` }}>{children}</div>}
+      {/* sous-titre de contexte (la valeur visible sans ouvrir) — masqué quand le tiroir est ouvert. */}
+      {micro && !open && <div style={{ margin: '-3px 2px 9px', opacity: 0.9 }}>{micro}</div>}
+      {open && children && <div style={{ padding: '2px 2px 13px' }}>{children}</div>}
     </div>
   )
 }
+
+// M55-O phase 3.4 — micro-label d'un GROUPE SILENCIEUX (LE TERRAIN / LE CONTEXTE) : 10 px lettré
+// espacé, gris sourd, au-dessus d'un ensemble de lignes-tiroirs.
+const GroupLabel = ({ children, first }: { children: ReactNode; first?: boolean }) => (
+  <p style={{ margin: `${first ? 2 : 18}px 2px 5px`, fontSize: 10, letterSpacing: 1.4, color: '#5f7568', textTransform: 'uppercase' }}>{children}</p>
+)
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
 // M55-N point 6 : `tip` optionnel — la jauge DIT ce qu'elle mesure (au survol). Sans tip, une
@@ -1607,17 +1618,20 @@ export function Fiche({ idu }: { idu: string }) {
           const proprioAccent = !!proprioSignal
           // M30 item 7 : la value dupliquait « Viabilisation » et écrasait le titre du tiroir en « V »
           const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
+          // M55-O phase 3.5 : la valeur « Réseaux et accès » n'est VERTE que si l'état est confirmé
+          // (band confirmee) ; sinon gris (factuel). Le vert redevient un signal.
+          const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
           // M36 Lot B : plus de repli sur la Complétude (quasi-constante) — ICD ou rien.
           const confianceValue = f.icd ? `${f.icd.score} %` : '—'
           return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
             {/* M55-L point 11 — BOUTONS IA EN TÊTE de fiche (mauve = couleur IA LABUSE, cf. « + Projet »
                 / « Pourquoi ce score »), mis en valeur, visibles sans défilement dès l'ouverture.
                 « Une question ? » (AskBar) + « Synthèse ». Même palette violette qu'avant (aucun
                 nouveau composant), remontée + encadrée. */}
-            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid #2c2348', background: 'rgba(124,92,240,0.05)', borderRadius: 13, padding: 9 }}>
+            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid #2c2348', background: 'rgba(124,92,240,0.05)', borderRadius: 13, padding: 9, marginBottom: 12 }}>
               <button onClick={() => setAskOpen(true)} data-askbar-open
                 style={{ background: '#140f22', border: '1px solid #3d3163', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: '#c9b6f2', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
@@ -1630,6 +1644,10 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
                 bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
+
+            {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
+                (+ Mode B) · Risques et protections. */}
+            <GroupLabel first>Le terrain</GroupLabel>
 
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
@@ -1739,6 +1757,21 @@ export function Fiche({ idu }: { idu: string }) {
                 Constructibilité casserait l'accordéon exclusif — signalé au rapport). */}
             {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
+            {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
+                quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
+            <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
+              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
+              valueColor={risquesFlags.length === 0 ? '#8FA69A' : REF.creuser}
+              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
+              {risquesLines.length
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+            </RefDrawer>
+
+            {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
+                accès · Propriétaire · Données et méthode. */}
+            <GroupLabel>Le contexte</GroupLabel>
+
             {/* MARCHÉ — micro : sparkline + volume */}
             {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
                 distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
@@ -1789,7 +1822,7 @@ export function Fiche({ idu }: { idu: string }) {
             </RefDrawer>
 
             {/* RÉSEAUX ET ACCÈS — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" value={viabValue}>
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" value={viabValue} valueColor={viabColor}>
               <div className="flex flex-col gap-3">
                 {/* M55-O phase 2.2 — la jauge « Accessibilité » (a_score) est RETIRÉE de la fiche
                     (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
@@ -1861,14 +1894,8 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* ⑥ RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ). */}
-            <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
-              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
-              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
-              {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
-                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-            </RefDrawer>
+            {/* M55-O phase 3.4 : « Risques et protections » remonte dans le groupe LE TERRAIN
+                (rendu plus haut, après la Constructibilité). */}
 
             {/* M55-O phase 2.1b : les tiroirs « Renouvellement — pourquoi ce rang » et « Pourquoi
                 pas ? » sont ABSORBÉS dans le bloc Analyse (carte verdict, plus haut). Ils ne vivent
