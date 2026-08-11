@@ -254,6 +254,13 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   // ON (les résultats s'affichent) mais analyseLabuse OFF (tri factuel, toutes les parcelles).
   // C'est le SEUL geste qui découple verdict de analyseLabuse (le bandeau des résultats le dit).
   const voirFactuel = () => { setPhase('idle'); setFilter('analyseLabuse', false); setVerdict(true); onRetract?.() }
+  // M55-M point 2 — « Changer les filtres » (ex-« Relancer l'analyse »). CONSTAT : l'ancien bouton
+  // rejouait le rituel sur les filtres FIGÉS (même entrée → même résultat) — il ne changeait rien.
+  // L'action HONNÊTE = DÉFIGER les filtres et rendre la main : on coupe `analyseLabuse` (le formulaire
+  // redevient éditable, `analyseActive` retombe) SANS toucher `verdict` — le listing reste affiché
+  // (il passe en tri factuel) pendant qu'on ajuste les critères, puis on relance « Demander à LABUSE ».
+  // (≠ « Désactiver l'analyse » qui, lui, quitte la vue résultats : setAnalyse(false) éteint verdict.)
+  const changerFiltres = () => { setFilter('analyseLabuse', false); setPhase('idle'); setSnapFilters(null) }
   // M55-J point 1 : « analyse active » = le rituel est lancé (décompte/révélation) OU l'analyse
   // est allumée. Dans cet état les FILTRES SONT FIGÉS (fieldset désactivé plus bas) — un seul run
   // décrit, un seul effectif à l'écran.
@@ -509,12 +516,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 le filtrage par tier post-analyse quitte ce panneau (les champs gardent leur
                 persistance URL — vieux liens compatibles). */}
 
-            {/* M55-J point 2 / M55-K point 3 : DEUX BOUTONS (ActionBtn) — Relancer = action
-                principale (primary, mint plein), Désactiver = contour ROUGE (danger). Plus de
-                cadre vert autour (retiré plus haut). Marges constantes (gap-2), même largeur. */}
+            {/* M55-J point 2 / M55-K point 3 / M55-M point 2 : DEUX BOUTONS (ActionBtn) —
+                « Changer les filtres » = action principale (primary, mint plein) : défige les
+                filtres et rend la main (le listing reste, en tri factuel) ; « Désactiver
+                l'analyse » = contour ROUGE (danger) : quitte la vue résultats. Traitement visuel
+                inchangé (fond vert pour l'action principale). Marges constantes, même largeur. */}
             <div className="flex gap-2 pt-1">
-              <ActionBtn variant="primary" dataAttr="data-relancer" onClick={lancer}>
-                {CLIENT.revelation.relancer}
+              <ActionBtn variant="primary" dataAttr="data-changer-filtres" onClick={changerFiltres}>
+                {CLIENT.revelation.changerFiltres}
               </ActionBtn>
               <ActionBtn variant="danger" dataAttr="data-desactiver"
                 onClick={() => { setAnalyse(false); setSnapFilters(null); setPhase('idle') }}>
