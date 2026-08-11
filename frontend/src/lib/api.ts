@@ -150,6 +150,13 @@ export const getFiltreCount = (f: Filters, signal?: AbortSignal) => {
   const { tiers: _t, ...rest } = filterParams(f)
   return j<FiltreReponse>(`/filtre?${qf({ limit: 0, ...rest, ...tiersParam(f) })}`, { signal })
 }
+/** M55-G suite (point 1) — les IDU du résultat courant (mêmes critères, plafond serveur
+ *  20 000 + drapeau tronqué) : la CARTE raccorde sa palette au résultat exact de la liste. */
+export const getFiltreIdus = (f: Filters) => {
+  const { tiers: _t, ...rest } = filterParams(f)
+  return j<FiltreReponse & { idus: string[] | null; idus_tronque: boolean }>(
+    `/filtre?${qf({ limit: 0, idus: 1, ...rest, ...tiersParam(f) })}`)
+}
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'
