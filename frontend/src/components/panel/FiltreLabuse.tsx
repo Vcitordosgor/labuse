@@ -93,6 +93,19 @@ function SignalChip({ k }: { k: string }) {
   )
 }
 
+// M55-G suite point 7 : les titres de sections n'ont PLUS de sous-texte — l'explication vit
+// dans un « i » (même patron que les signaux), au survol.
+function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; cls?: string }) {
+  return (
+    <p className={`label-caps flex items-center gap-1.5 text-txt-mut ${cls}`}>{titre}
+      <Tip side="top" tip={info}>
+        <span role="button" tabIndex={0} aria-label={`En savoir plus : ${titre}`}
+          className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+      </Tip>
+    </p>
+  )
+}
+
 function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suffix?: string }) {
   const { filters, setFilter } = useApp()
   const v = filters[field] as number | null
@@ -225,8 +238,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
           postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
       <div data-communes-filtre>
-        <p className="label-caps text-txt-mut">1 · Communes
-          <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">le périmètre — tout coché = toute l’île</span></p>
+        <TitreSection titre="1 · Communes"
+          info="Le périmètre des résultats. Tout coché = toute l’île — rien coché aussi (aucune restriction)." />
         <div className="mt-1.5 flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
             <Tip key={cp} side="top" tip={`${cp} → ${nom}`}>
@@ -252,15 +265,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       </div>
 
       {/* ═══════ 2 · LE TERRAIN (faits objectifs, toujours actifs — contraintes EN DERNIER) ═══════ */}
-      <p className="mt-4 label-caps text-txt-mut">2 · Le terrain
-        <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">faits, sans analyse</span></p>
+      <TitreSection cls="mt-4" titre="2 · Le terrain"
+        info="Des faits objectifs (surface, zonage, état du sol) — valables sans aucune analyse." />
       <div className="mt-1.5 flex flex-col gap-3">
         <div>
           <p className="label-caps text-txt-dim">Surface parcelle</p>
           <div className="mt-1 flex items-center gap-1.5"><NumField field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="surfaceMax" ph="max" suffix="m²" /></div>
         </div>
         <div>
-          <p className="label-caps text-txt-dim">Zonage <span className="normal-case text-[8.5px] text-txt-dim">— famille U/AU/A/N + zone exacte</span></p>
+          <p className="label-caps text-txt-dim">Zonage</p>
           <div className="mt-1"><ChipGroup field="zonagePlu" options={ZONE_FAM} /></div>
           <input placeholder="zone exacte : UA, UB, 2AU (séparées par des virgules)"
             value={filters.zonePlu.join(', ')}
@@ -280,8 +293,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           SOURCÉS, filtrables SANS analyse (pas des jugements). OU entre signaux du groupe,
           ET avec le reste. UN SEUL niveau, 7 signaux (décision Vic). ═══════ */}
       <div data-signaux-vie className="mt-4">
-        <p className="label-caps text-txt-mut">3 · Signaux de vie
-          <span className="ml-1.5 text-[9px] font-normal normal-case text-txt-dim">événements sourcés — cumulables</span></p>
+        <TitreSection titre="3 · Signaux de vie"
+          info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source et date)." />
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {SIGNAUX_KEYS.map((k) => <SignalChip key={k} k={k} />)}
         </div>
