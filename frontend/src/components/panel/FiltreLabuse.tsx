@@ -13,18 +13,12 @@ import { useEffect, useRef, useState } from 'react'
 
 import { getFiltre, getFiltreCount, getV2Modele } from '../../lib/api'
 import { countActiveFilters, resumeCriteres } from '../../lib/filters'
-import { DECLASSE_ORDER, TIER_DECLASSE_META, TIER_V2_META, type FilterTier, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
 
-const CONSTRUCTIBILITE = [
-  { k: 'constructible', l: 'Constructible' },
-  { k: 'au_conditionnelle', l: 'AU conditionnelle' },
-  { k: 'fermee', l: 'Zone fermée' },
-  { k: 'inconstructible', l: 'Inconstructible' },
-  { k: 'rnu', l: 'RNU / hors-PLU' },
-]
+// M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
+// post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
 const ETAT_SOL = [
   { k: 'nu', l: 'Nu' },
   { k: 'bati_marginal', l: 'Bâti marginal' },
@@ -112,36 +106,13 @@ function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suf
   )
 }
 
-function BoolChip({ field, label }: { field: keyof Filters; label: string }) {
-  const { filters, setFilter } = useApp()
-  const on = !!filters[field]
-  return <Chip on={on} onClick={() => setFilter(field, !on as never)}>{label}</Chip>
-}
-
-// M55-G point 7 : les composants Tiroir et ModeBCurseur ont été retirés avec les tiroirs
-// pédagogiques de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par
-// le store — la fiche continue de le lire).
-
-function Section({ title, tag, children }: { title: string; tag?: string; children: React.ReactNode }) {
-  return (
-    <div className="py-2">
-      <p className="label-caps flex items-center gap-1.5">
-        {title}
-        {tag && <span className="rounded border border-line-2 px-1 py-px text-[8.5px] font-normal uppercase tracking-wide text-txt-dim">{tag}</span>}
-      </p>
-      {children}
-    </div>
-  )
-}
-
-
+// M55-G point 7 / suite point 3 : Tiroir, ModeBCurseur, BoolChip, Section retirés avec le
+// contenu de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par le
+// store — la fiche continue de le lire).
 
 export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter } = useApp()
   const analyseOn = filters.analyseLabuse
-  const TIERS_V2: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
-  const toggleTier = (t: FilterTier) =>
-    setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
@@ -448,45 +419,12 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         ) : null}
         {analyseOn && phase === 'idle' && (
           <div className="mt-3 flex flex-col gap-3">
-            <div>
-              <p className="label-caps text-txt-dim">Verdict · tiers</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {TIERS_V2.map((t) => (
-                  <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
-                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_V2_META[t].color }} />{TIER_V2_META[t].label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="label-caps text-txt-dim">Déclassées · motif</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {DECLASSE_ORDER.map((t) => (
-                  <Chip key={t} on={filters.tiers.includes(t)} onClick={() => toggleTier(t)}>
-                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: TIER_DECLASSE_META[t].color }} />{TIER_DECLASSE_META[t].label.replace('Déclassée — ', '')}
-                  </Chip>
-                ))}
-              </div>
-              <p className="mt-1 text-[10px] leading-snug text-txt-dim">Les écartées ne sont jamais masquées — choisissez un motif pour les consulter, chacune garde son verdict.</p>
-            </div>
-            <Section title="Constructibilité calibrée" tag="Sourcé"><ChipGroup field="constructibilite" options={CONSTRUCTIBILITE} /></Section>
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-              <div><p className="label-caps text-txt-dim">Potentiel ≥ /100</p><div className="mt-1"><NumField field="scoreMin" ph="70" /></div></div>
-              <div><p className="label-caps text-txt-dim">SDP résiduelle</p><div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div></div>
-              <div><p className="label-caps flex items-center gap-1 text-txt-dim">Capacité <span className="rounded border border-line-2 px-1 text-[8px] uppercase">Est.</span></p><div className="mt-1 flex items-center gap-1"><span className="text-[11px] text-txt-dim">≥</span><NumField field="capaciteMin" ph="N" suffix="log." /></div></div>
-            </div>
-            {/* M55-D stage 6 : « Avec événement (BODACC) » REMPLACÉ par le groupe Signaux de vie. */}
-            <div className="flex flex-wrap gap-1.5">
-              <BoolChip field="veille" label="Veille succession" />
-              <BoolChip field="horsCopro" label="Masquer copropriétés" />
-            </div>
-
-            {/* M55-G point 7 (décision Vic) : les tiroirs pédagogiques (« Combien ça coûte ? »,
-                « Ça va se vendre ? », « À qui c'est ? », « Veille & niches » — « Quels risques ? »
-                avait déjà disparu au stage 7) SORTENT de l'état allumé : reliquats du stage 7.
-                Restent les chips d'affinage ci-dessus + Relancer / désactiver. Les champs experts
-                de ces tiroirs (budget, ×N, propriété…) gardent leur persistance URL (vieux liens
-                compatibles), sans surface panneau. */}
+            {/* M55-G suite point 3 (décision Vic) : l'état post-analyse ne porte PLUS AUCUN
+                contenu — chips verdict/tiers, motifs, constructibilité, potentiel, SDP,
+                capacité, veille, copros et notes RETIRÉS (0-caller). Ne restent que les deux
+                gestes : « Relancer l'analyse » et « désactiver l'analyse ». Conséquence actée :
+                le filtrage par tier post-analyse quitte ce panneau (les champs gardent leur
+                persistance URL — vieux liens compatibles). */}
 
             {/* relance (re-décompte 3 s, décision Vic) + extinction DISCRÈTE (la cérémonie est à
                 l'allumage, pas à l'extinction) */}
