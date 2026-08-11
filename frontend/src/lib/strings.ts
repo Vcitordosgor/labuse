@@ -11,30 +11,26 @@
 export const CLIENT = {
   // ── M55-D stage 6 · SIGNAUX DE VIE — 8 signaux validés Vic (phase 1 mesurée). Chaque « i »
   //    est SOURCÉ, daté, et dit le partiel. Libellés validés au STOP. ──
+  // M55-G suite point 4 (décision Vic) : UN SEUL niveau, 7 signaux — « Nu détenu par société »
+  // (nu_pm) et « Cession de fonds » (cession) SUPPRIMÉS de l'UI (backend intact, clés URL sv=
+  // inconnues ignorées à la lecture, cf. filters.ts SIGNAUX_VALIDES).
   signaux: {
     labels: {
-      // M55-G point 11 : nouveau signal LARGE — toutes les parcelles de sociétés privées
       pm_privee: 'Détenu par une société',
       procedure: 'Procédure collective',
       permis_actif: 'Permis actif',
       permis_caduc: 'Permis abandonné',
-      defisc: 'Sortie de défisc',
-      nu_pm: 'Nu détenu par société',
       friche: 'Friche recensée',
-      cession: 'Cession de fonds',
       assemblage: 'Assemblage même proprio',
+      defisc: 'Sortie de défisc',
     } as Record<string, string>,
-    // M55-G point 11 : le lien qui révèle les signaux de niche (niveau 2)
-    plus: 'Plus de signaux',
     infos: {
       pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
       procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
       defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE, maj 07/2026).',
-      nu_pm: 'Parcelle quasi nue (emprise bâtie < 5 %) détenue par une société privée (fichiers fonciers MAJIC 2025).',
       friche: 'La parcelle touche une friche de l’inventaire national Cartofriches (maj 07/2026) — inventaire NON exhaustif : l’absence du signal ne prouve rien.',
-      cession: 'Le propriétaire (société) a vendu ou cédé un fonds dans les 24 derniers mois (BODACC, maj 07/2026). Propriétaires personnes morales identifiés seulement.',
       assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
     } as Record<string, string>,
   },
@@ -67,15 +63,14 @@ export const CLIENT = {
   //    le score est PRÉ-CALCULÉ (run servi versionné) ; pendant le décompte on APPLIQUE des
   //    critères, on ne « calcule » aucun score. Aucun mot ne doit prétendre le contraire. ──
   revelation: {
-    contexte: (n: number, date: string | null) =>
-      `${n.toLocaleString('fr-FR')} parcelles notées par LABUSE` +
-      (date ? ` — classement du ${date}` : ''),
-    contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
+    // M55-G suite point 5 : le bandeau « N parcelles notées par LABUSE — classement du … »
+    // (contexte/contexteSous) est SUPPRIMÉ — la date du classement vit dans la modale
+    // « comprendre le classement » (algo.dateRun).
     bouton: 'Analyser les parcelles',
-    // M55-G point 2 (renommage Vic) : le mot reste VRAI — l'analyse RÉVÈLE un classement
-    // pré-calculé (run servi versionné), elle ne calcule rien. « Révéler », pas « calculer ».
-    // (boutonParc retiré : 0-caller depuis le stage 8.)
-    boutonFaire: 'Révéler les opportunités →',
+    // M55-G suite point 6 (renommage Vic, remplace « Révéler les opportunités → » du point 2) :
+    // « Demander à LABUSE → » — on demande un AVIS pré-calculé (run servi versionné), le mot
+    // reste vrai. (boutonParc retiré : 0-caller depuis le stage 8.)
+    boutonFaire: 'Demander à LABUSE →',
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
@@ -157,16 +152,19 @@ export const CLIENT = {
   //      3. « ×N susceptibilité »
   //    Le title détaille la sémantique complète.
   // M55-F point 6 — le tri parle CLIENT : les libellés disent la valeur, pas la mécanique.
+  // M55-G suite point 2 — libellés COURTS (une seule ligne de pills) ; les libellés longs
+  // (« Meilleures opportunités », « Plus susceptibles de se vendre ») migrent dans le « i ».
   tri: {
-    rang: 'Meilleures opportunités',
-    mult: 'Plus susceptibles de se vendre',
+    rang: 'Opportunités',
+    mult: 'Mutation',
     surface: 'Surface',
-    rangTip: 'Classe les parcelles par ordre de priorité (n°1 = la plus prometteuse) — copropriétés en queue',
-    multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
+    rangTip: 'Meilleures opportunités — ordre de priorité (n°1 = la plus prometteuse), copropriétés en queue',
+    multTip: 'Plus susceptibles de se vendre — trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
     surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
-    // le « i » de la barre TRIER : les deux lunettes, en deux phrases
-    lunettes: 'Meilleures opportunités = probabilité de vente × qualité du terrain (l’opportunité globale). '
-      + 'Plus susceptibles de se vendre = la probabilité de vente seule (ce qui va bouger bientôt).',
+    // le « i » de la barre TRIER : les libellés longs + leur sens, en trois phrases
+    lunettes: 'Opportunités = les meilleures opportunités d’abord — probabilité de vente × qualité du terrain (l’opportunité globale). '
+      + 'Mutation = les plus susceptibles de se vendre — la probabilité de vente seule (ce qui va bouger bientôt). '
+      + 'Surface = de la plus grande à la plus petite.',
     // tooltip du badge ×N sur les cartes de résultat (une ligne)
     multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
   },
@@ -262,6 +260,8 @@ export const CLIENT = {
     bouton: 'Comprendre le classement',
     // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
     lien: 'comprendre le classement →',
+    // M55-G suite point 5 — la date du run servi vit ICI (le bandeau du panneau est supprimé)
+    dateRun: (d: string) => `Classement servi du ${d} — versionné, recalculé à chaque mise à jour majeure.`,
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
     // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi

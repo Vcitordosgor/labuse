@@ -3,7 +3,7 @@ import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
-import { getAccueilChiffres } from '../../lib/api'
+import { getAccueilChiffres, getV2Modele } from '../../lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
@@ -19,6 +19,15 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
+  // M55-G suite point 5 : la DATE du run servi vit ici (le bandeau du panneau est supprimé) —
+  // champ `gel` du modèle épinglé ; indisponible → la ligne est simplement absente.
+  const modele = useQuery({ queryKey: ['v2-modele'], queryFn: getV2Modele, staleTime: 3_600_000, retry: false })
+  const runDate = (() => {
+    const g = modele.data?.gel
+    if (!g) return null
+    const d = new Date(g.replace(' ', 'T'))
+    return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
+  })()
   return (
     <div data-algo-overlay className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}>
@@ -36,6 +45,11 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
+        {runDate && (
+          <p data-algo-date className="mt-3 border-t border-line pt-2 text-[10.5px] text-txt-dim">
+            {CLIENT.algo.dateRun(runDate)}
+          </p>
+        )}
       </div>
     </div>
   )
@@ -56,8 +70,9 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'parcelles', label: 'Parcelles' },
   { key: 'limites', label: 'Limites parcelles' },
-  // M55-G point 8 : l'avis LABUSE en couche — d'office en mode analyse, opt-in en tri factuel
-  { key: 'couleurs_verdict', label: 'Verdict (couleurs du classement)' },
+  // M55-G point 8 / suite point 1 : l'avis LABUSE en couche — le libellé DIT la portée :
+  // toute l'île, indépendant des filtres (en mode analyse, la palette suit le résultat).
+  { key: 'couleurs_verdict', label: 'Verdict — toute l’île (indépendant des filtres)' },
   // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
   // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },

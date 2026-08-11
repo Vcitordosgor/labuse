@@ -40,7 +40,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
           on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}>
         <div className="min-w-0 flex-1">
-          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
             {p.adresse ?? 'Adresse non disponible'}
           </div>
@@ -58,7 +58,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
           <Tip tip={`Verdict scoring (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
@@ -150,10 +150,13 @@ const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset s
 // B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
 // M13-F3 (QA-57) : « commune » RETIRÉ (demande Vic) ; ×N → « mutation ×N » ; chaque
 // bouton porte son propre title explicatif.
-const SORTS: { key: SortKey; label: string; tip: string }[] = [
+// M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE (↓ = décroissant —
+// vérifié : le serveur sert un seul sens par clé ; pas d'inversion au second clic, le sens
+// est donc DIT). Opportunités : n°1 d'abord (le tip le dit), pas de flèche.
+const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
-  { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip },
-  { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip },
+  { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip, dir: '↓' },
+  { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
@@ -299,7 +302,7 @@ export function ResultsSection() {
                 className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
                   sort === s.key ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
                 title={s.tip}>
-                {s.label}
+                {s.label}{sort === s.key && s.dir ? ` ${s.dir}` : ''}
               </button>
             ))}
           </div>

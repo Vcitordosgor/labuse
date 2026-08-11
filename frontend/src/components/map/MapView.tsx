@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
@@ -98,6 +98,23 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
   if (f.flags.length) c.push(['any', ...f.flags.map((fl) => ['in', fl, ['get', 'flags']] as maplibregl.ExpressionSpecification)])
   if (f.communes.length) c.push(['in', ['get', 'commune'], ['literal', f.communes]])
   return ['all', ...c] as maplibregl.FilterSpecification
+}
+
+// M55-G suite (point 1) — les critères que `toExpr` NE PEUT PAS exprimer (absents des
+// propriétés des tuiles : signaux de vie, état du sol, constructibilité, propriété,
+// économie…). Constat mesuré : avec un de ces critères actif, la carte peignait TOUT ce qui
+// passait le sous-ensemble « client » (liste = 1 parcelle, commune entière colorée). Quand
+// l'un d'eux est actif, la carte demande au serveur les IDU du résultat exact (getFiltreIdus)
+// et restreint la palette à eux — le reste en trame neutre.
+function hasCriteresHorsTuiles(f: Filters): boolean {
+  return !!(f.signaux.length || f.etatSol.length || f.constructibilite.length
+    || f.zonagePlu.length || f.zonePlu.length || f.capaciteMin != null || f.sdpMax != null
+    || f.proprietaireType.length || f.etatSociete.length || f.copro.length
+    || f.npnru || f.adresseAbsente || f.personneMorale || f.sousDensite
+    || f.multMin != null || f.rangMax != null || f.renouvellement || f.divisionOr
+    || f.budgetMax != null || f.chargeMin != null || f.chargeMax != null
+    || f.prixMarcheMin != null || f.prixMarcheMax != null || f.marcheFiable
+    || f.caMin != null || f.modeBRentable)
 }
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
@@ -270,6 +287,26 @@ export function MapView() {
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
   const tilesMeta = useQuery({ queryKey: ['tiles-meta'], queryFn: getTilesMeta, staleTime: 60_000, retry: false })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  // M55-G suite (point 1) — RACCORD carte↔liste : quand un critère hors-tuiles est actif en
+  // mode analyse, la palette ne peut pas être exacte par expression → on demande les IDU du
+  // résultat courant (plafond serveur 20 000, drapeau tronqué). La couche « Verdict — toute
+  // l'île » court-circuite ce raccord (peinture explicite de tout le classement).
+  const besoinIdus = verdict && filters.analyseLabuse && !layers.couleurs_verdict
+    && hasCriteresHorsTuiles(filters)
+  const idusQ = useQuery({
+    queryKey: ['filtre-idus', filters],
+    queryFn: () => getFiltreIdus(filters),
+    enabled: besoinIdus, staleTime: 30_000,
+  })
+  const resultIdus = besoinIdus && idusQ.data && !idusQ.data.idus_tronque ? idusQ.data.idus : null
+  // no-silent-caps : résultat > plafond → la carte replie sur l'approximation, et le DIT
+  useEffect(() => {
+    if (besoinIdus && idusQ.data?.idus_tronque) {
+      useApp.getState().setToast(
+        'Résultat trop large pour peindre parcelle à parcelle (> 20 000) — la carte montre '
+        + 'l’approximation par critères carte ; la liste reste exacte.')
+    }
+  }, [besoinIdus, idusQ.data])
   // le remplissage zonage n'est appliqué que si la source ACTIVE porte zone_fam :
   // geojson commune = toujours (jointure live) ; tuiles île = au prochain build-mvt
   // M12 C5 : DEUX portes vers cette recoloration — « Zonage PLU (par parcelle) » (avec étiquette
@@ -362,6 +399,11 @@ export function MapView() {
       m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
         paint: { 'line-color': '#5CE6A1', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8],
                  'line-opacity': 0.55 } })
+      // M55-G suite (point 1) : TRAME NEUTRE sous la palette — quand la palette est restreinte
+      // au résultat courant (IDU), le reste des parcelles reste visible en trame cadastrale
+      // neutre au lieu de disparaître. Visible seulement dans ce mode (effet plus bas).
+      m.addLayer({ id: 'parcels-base', type: 'fill', source: 'parcels', layout: { visibility: 'none' },
+        paint: { 'fill-color': '#22302A', 'fill-opacity': 0.28 } })
       m.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       // contours : promues (statut) OU toutes (couche « limites parcelles »)
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
@@ -400,6 +442,9 @@ export function MapView() {
       m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
         tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
       const SL = { source: 'parcels-ile', 'source-layer': 'parcels' } as const
+      // M55-G suite (point 1) : trame neutre jumelle côté île (cf. parcels-base)
+      m.addLayer({ id: 'ile-base', type: 'fill', ...SL, layout: { visibility: 'none' },
+        paint: { 'fill-color': '#22302A', 'fill-opacity': 0.28 } })
       m.addLayer({ id: 'ile-fill', type: 'fill', ...SL, layout: { visibility: 'none' },
         paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       m.addLayer({ id: 'ile-limites', type: 'line', ...SL, layout: { visibility: 'none' },
@@ -692,9 +737,23 @@ export function MapView() {
     m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
     m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
     m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
+    // M55-G suite (point 1) — LE FILTRE DE PALETTE :
+    //  · couche « Verdict — toute l'île » cochée → AUCUN filtre (peinture explicite du
+    //    classement entier, indépendante des filtres — le libellé de la couche le dit) ;
+    //  · analyse avec critères hors-tuiles → restriction aux IDU du résultat courant
+    //    (liste N == parcelles peintes N) + trame neutre dessous pour « le reste » ;
+    //  · sinon → l'expression client (exacte dans ce cas).
     const expr = toExpr(filters)
+    const exprPalette: maplibregl.FilterSpecification = layers.couleurs_verdict
+      ? (['all'] as unknown as maplibregl.FilterSpecification)
+      : resultIdus
+        ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
+        : expr
+    const baseVisible = !zonageFill && opinion && !!resultIdus && !layers.couleurs_verdict
+    m.setLayoutProperty('parcels-base', 'visibility', vis(baseVisible && layers.parcelles && !ile))
+    m.setLayoutProperty('ile-base', 'visibility', vis(baseVisible && layers.parcelles && ile))
     for (const fill of ['parcels-fill', 'ile-fill']) {
-      m.setFilter(fill, expr)
+      m.setFilter(fill, exprPalette)
       // M6.1 item 1 : la couche « Zonage PLU (parcelles) » PRIME sur le verdict — le
       // remplissage devient la famille de zone (palette dédiée), verdict rallumé au toggle off.
       // `zonageFill` déjà conditionné : geojson commune toujours, tuiles île si zone_fam servie.
@@ -703,7 +762,7 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-opacity', ZONE_FAM_OPACITY)
       } else if (opinion) {
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
+        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 && !resultIdus ? STATUS_OPACITY : 0.72)
       } else if (verdict) {
         // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
         // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
@@ -715,14 +774,19 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-opacity', 0.28)
       }
     }
-    // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée
+    // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée ;
+    // ils suivent la MÊME restriction que la palette (jamais un liseré hors résultat).
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile && opinion))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && opinion))
-    m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
+    m.setFilter('parcels-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
+    m.setFilter('ile-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
     // M5.1 : liseré brûlantes v2 — opinion allumée, mode commune (M55-F : pastille #rang retirée)
-    if (m.getLayer('parcels-brulantes')) m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))
-  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module])
+    if (m.getLayer('parcels-brulantes')) {
+      m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))
+      m.setFilter('parcels-brulantes', ['all',
+        ['==', TIER_V2, 'brulante'], ['!', ETAGE0], exprPalette] as never)
+    }
+  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, resultIdus])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR

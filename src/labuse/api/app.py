@@ -1546,15 +1546,27 @@ def stats(commune: str | None = None, source: str | None = None,
 
 
 
+#: M55-G suite (point 1) — plafond de la liste d'IDU servie à la carte : au-delà, un filtre
+#: MapLibre « in literal » devient coûteux ; le front replie sur l'expression par critères
+#: carte et le DIT (toast, règle no-silent-caps).
+_FILTRE_IDUS_CAP = 20_000
+
+
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
            sort: str | None = Query(None, pattern="^(rang|mult|surface|commune)$"),
+           idus: int = Query(0, ge=0, le=1),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
     `FiltreCriteres` → `_q_v2_where`. Compteur mémorisé 30 s (SQL exact, index `ix_p_v2_run_rang`).
-    `source` (run q_v*) REQUISE — jamais de repli sur une source morte."""
+    `source` (run q_v*) REQUISE — jamais de repli sur une source morte.
+
+    M55-G suite (point 1) : `idus=1` ajoute la liste des IDU du résultat (mêmes critères,
+    plafond _FILTRE_IDUS_CAP + drapeau `idus_tronque`) — la CARTE raccorde sa palette au
+    résultat exact de la liste, y compris pour les critères non exprimables en tuiles
+    (signaux de vie, état du sol, constructibilité…)."""
     if not (c.source and c.source.startswith("q_v")):
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
@@ -1563,7 +1575,7 @@ def filtre(c: FiltreCriteres = Depends(),
         db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params))
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort) if limit else []
-    return {
+    out = {
         **stats,                                     # total, tiers, opportunites, opportunites_evenement,
                                                      # dossiers_* — la LISTE et les cartouches lisent LE MÊME
                                                      # point (M45-B L3) : plus jamais un compteur et une liste
@@ -1571,6 +1583,21 @@ def filtre(c: FiltreCriteres = Depends(),
         "compte": stats["total"],                    # le compteur (« 3 847 → 47 »)
         "page": page, "limit": limit, "offset": offset, "sort": sort or "rang",
     }
+    if idus:
+        rows = db.execute(text(
+            f"""
+            SELECT p.idu
+            FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {extra}
+            LIMIT {_FILTRE_IDUS_CAP + 1}
+            """), {"c": c.commune, "run": c.source, "v2run": _score_v2_run_id(db),
+                   **extra_params}).scalars().all()
+        tronque = len(rows) > _FILTRE_IDUS_CAP
+        out["idus"] = None if tronque else list(rows)
+        out["idus_tronque"] = tronque
+    return out
 
 
 def _owner_famille(groupe, forme, denom) -> str:
