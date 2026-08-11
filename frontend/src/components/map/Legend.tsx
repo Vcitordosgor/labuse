@@ -27,58 +27,76 @@ export function useV2Actif(): boolean {
  *  Le panneau est borné en hauteur et défile : les sections cohabitent sans déborder l'écran. */
 export function Legend({ inline = false }: { inline?: boolean }) {
   const layers = useApp((s) => s.layers)
+  const verdict = useApp((s) => s.verdict)
+  const analyse = useApp((s) => s.filters.analyseLabuse)
+  const peint = useApp((s) => s.mapPeint)
   const v2 = useV2Actif()
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
-  const zonageOn = layers.zonage_parcelle // M55-A (fusion A) : couche parcellaire unique
+
+  // M55-G point 10 — une légende n'existe que si ses couleurs sont À L'ÉCRAN (mapPeint, écrit
+  // par la carte). Verdict : mode OPINION (analyse active ou couche « Verdict » cochée) ET
+  // parcelles effectivement peintes ET pas recouvertes par le zonage. Mode factuel (P8) :
+  // jamais. Carte île sans parcelles peintes (« Zoomez ou cliquez une commune… ») : jamais.
+  const opinion = (verdict && analyse) || layers.couleurs_verdict
+  const verdictPeint = opinion && peint.parcelles && !peint.zonage
+  const zonagePeint = peint.zonage
+  const equipPeint = peint.equipements
+  // 50 pas / Renouvellement : GeoJSON sans minzoom — peints dès que la couche est active
+  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
+  if (rien) return null
 
   return (
     <div className={`${inline
       ? 'rounded-xl bg-surface-2 px-4 py-3'
       : 'floating absolute bottom-4 right-4 hidden max-h-[60vh] overflow-y-auto px-4 py-3 sm:block'}`}>
-      {/* ── Verdict (repliable, replié par défaut) ── */}
-      <button
-        data-legend-verdict-toggle
-        onClick={() => setVerdictOpen((o) => !o)}
-        className="group flex w-full items-center justify-between gap-3 text-left"
-        aria-expanded={verdictOpen}
-        title={verdictOpen ? 'Replier la légende du verdict' : 'Déplier la légende du verdict'}
-      >
-        {/* M36 Lot A : étiquette de source VRAIE, sans jargon interne. Cas nominal = classement
-            servi (tiers) ; le repli n'apparaît que si le classement servi est INJOIGNABLE
-            (avant M36 il s'affichait aussi en dev à cause du proxy /v2 manquant). */}
-        {v2 ? (
-          <Tip block side="top" tip="Couleurs du classement servi (tiers Brûlante → Écartée).">
-            <span className="label-caps">Verdict · Classement servi</span>
-          </Tip>
-        ) : (
-          <Tip block side="top" tip="Classement historique (repli) — le classement servi n'est pas joignable sur cette vue.">
-            <span className="label-caps">Verdict · Classement historique</span>
-          </Tip>
-        )}
-        <ChevronSection open={verdictOpen} />
-      </button>
-      {verdictOpen && (
-        <div className="mt-2 flex flex-col gap-1.5">
-          {v2
-            ? LEGEND_V2_ORDER.map((t) => (
-                <div key={t} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: TIER_V2_META[t].color }} />
-                  <span className="text-[11px] text-txt">{TIER_V2_META[t].label}</span>
-                </div>
-              ))
-            : LEGEND_ORDER.map((s) => (
-                <div key={s} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: STATUT_META[s].color }} />
-                  <span className="text-[11px] text-txt">{STATUT_META[s].label}</span>
-                </div>
-              ))}
-        </div>
+      {/* ── Verdict (repliable, replié par défaut — discret) ── */}
+      {verdictPeint && (
+        <>
+          <button
+            data-legend-verdict-toggle
+            onClick={() => setVerdictOpen((o) => !o)}
+            className="group flex w-full items-center justify-between gap-3 text-left"
+            aria-expanded={verdictOpen}
+            title={verdictOpen ? 'Replier la légende du verdict' : 'Déplier la légende du verdict'}
+          >
+            {/* M36 Lot A : étiquette de source VRAIE, sans jargon interne. Cas nominal = classement
+                servi (tiers) ; le repli n'apparaît que si le classement servi est INJOIGNABLE
+                (avant M36 il s'affichait aussi en dev à cause du proxy /v2 manquant). */}
+            {v2 ? (
+              <Tip block side="top" tip="Couleurs du classement servi (tiers Brûlante → Écartée).">
+                <span className="label-caps">Verdict · Classement servi</span>
+              </Tip>
+            ) : (
+              <Tip block side="top" tip="Classement historique (repli) — le classement servi n'est pas joignable sur cette vue.">
+                <span className="label-caps">Verdict · Classement historique</span>
+              </Tip>
+            )}
+            <ChevronSection open={verdictOpen} />
+          </button>
+          {verdictOpen && (
+            <div className="mt-2 flex flex-col gap-1.5">
+              {v2
+                ? LEGEND_V2_ORDER.map((t) => (
+                    <div key={t} className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ background: TIER_V2_META[t].color }} />
+                      <span className="text-[11px] text-txt">{TIER_V2_META[t].label}</span>
+                    </div>
+                  ))
+                : LEGEND_ORDER.map((s) => (
+                    <div key={s} className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUT_META[s].color }} />
+                      <span className="text-[11px] text-txt">{STATUT_META[s].label}</span>
+                    </div>
+                  ))}
+            </div>
+          )}
+        </>
       )}
 
-      {/* ── Zonage PLU par famille (C5) — dès que « par parcelle » OU « colorisation » est active ── */}
-      {zonageOn && (
-        <div data-legend-zonage className="mt-3 border-t border-line pt-2.5">
+      {/* ── Zonage PLU par famille (C5) — seulement si le remplissage par famille est PEINT ── */}
+      {zonagePeint && (
+        <div data-legend-zonage className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <p className="label-caps mb-2">Zonage PLU (par type)</p>
           <div className="flex flex-col gap-1.5">
             {ZONE_FAM_ORDER.map((f) => (
@@ -93,7 +111,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
 
       {/* ── 50 pas géométriques ── */}
       {layers.cinquante_pas && (
-        <div className="mt-3 border-t border-line pt-2.5">
+        <div className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <Tip block side="top" tip="Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer)">
             <div data-legend-50pas className="flex items-center gap-2">
               <span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} />
@@ -105,7 +123,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
 
       {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
       {layers.renouv && (
-        <div className="mt-3 border-t border-line pt-2.5">
+        <div className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <Tip block side="top" tip="Parcelles occupées (bâties) en zone U/AU avec capacité restante — potentiel de renouvellement urbain, pas une opportunité qualifiée.">
             <div data-legend-renouv className="flex items-center gap-2">
               <span className="h-2.5 w-4 rounded-sm" style={{ background: TOKENS.renouv, opacity: 0.7 }} />
@@ -116,8 +134,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       )}
 
       {/* ── Équipements (C6 : rapatriée dans le panneau unique, ne recouvre plus le verdict) ── */}
-      {layers.equipements && (
-        <div data-legend-equip className="mt-3 border-t border-line pt-2.5">
+      {equipPeint && (
+        <div data-legend-equip className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <p className="label-caps mb-2">Équipements</p>
           <div className="flex flex-col gap-0.5 text-[11px]">
             {EQUIP_META.map((e) => (

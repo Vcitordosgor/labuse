@@ -258,6 +258,28 @@ export function MapView() {
   const zonageColor = layers.zonage_parcelle
   const zonageFill = zonageColor && (!ile || tilesMeta.data?.zonage_parcelle === true)
 
+  // M55-G point 10 — publier au store ce que la carte PEINT réellement (la légende ne décrit
+  // jamais des couleurs absentes de l'écran) : parcelles = couche active ET zoom où elles se
+  // colorent (île : z ≥ 10, le seuil du bandeau « Zoomez ou cliquez une commune ») ;
+  // équipements = couche active ET z ≥ 12 (leur minzoom de rendu) ; zonage = remplissage
+  // par famille effectivement appliqué (zonageFill).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const upd = () => {
+      const z = m.getZoom()
+      const parcVis = layers.parcelles && (!ile || z >= 10)
+      useApp.getState().setMapPeint({
+        parcelles: parcVis,
+        equipements: layers.equipements && z >= 12,
+        zonage: zonageFill && parcVis,
+      })
+    }
+    upd()
+    m.on('zoom', upd)
+    return () => { m.off('zoom', upd) }
+  }, [ile, layers.parcelles, layers.equipements, zonageFill, mapReady])
+
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
     if (!ref.current || map.current) return

@@ -160,6 +160,11 @@ interface AppState {
   // surfaces (bouton du bandeau + lien de la ligne résultats) — état partagé, une seule modale.
   algoOpen: boolean
   setAlgoOpen: (v: boolean) => void
+  // M55-G point 10 : ce que la carte PEINT réellement à l'écran (zoom, mode île/commune,
+  // couches) — écrit par MapView, lu par la légende. Règle : une légende n'existe que si
+  // ses couleurs sont effectivement à l'écran (jamais de légende orpheline).
+  mapPeint: { parcelles: boolean; equipements: boolean; zonage: boolean }
+  setMapPeint: (p: { parcelles: boolean; equipements: boolean; zonage: boolean }) => void
   // R1 (revue Vic n°2) : le VERDICT est un GESTE — la carte s'ouvre en cadastre neutre,
   // « Afficher l'analyse LABUSE » (P2, revue n°3) allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
@@ -305,6 +310,11 @@ export const useApp = create<AppState>((set) => ({
   setToast: (toast) => set({ toast }),
   algoOpen: false,
   setAlgoOpen: (algoOpen) => set({ algoOpen }),
+  mapPeint: { parcelles: false, equipements: false, zonage: false },
+  // garde d'égalité : le handler zoom de la carte appelle à chaque frame — pas de re-render inutile
+  setMapPeint: (p) => set((s) =>
+    s.mapPeint.parcelles === p.parcelles && s.mapPeint.equipements === p.equipements
+      && s.mapPeint.zonage === p.zonage ? {} : { mapPeint: p }),
   verdict: false,
   setVerdict: (verdict) => set({ verdict }),
   iaRestitution: null,
