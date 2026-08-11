@@ -481,10 +481,12 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       {/* M55-D stage 7 (décision Vic) : plus AUCUNE section pédagogique dans le panneau —
           « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}
 
+      {/* M55-G point 9 : libellé court, danger SOBRE — contour rouge discret, pas un pavé.
+          Le geste reste inchangé (les deux étages + interrupteur), le title le dit. */}
       <button onClick={resetTout}
         title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
-        className="mt-3 min-h-8 w-full rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-dim transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt">
-        Réinitialiser — terrain, analyse &amp; interrupteur
+        className="mt-3 min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
+        Réinitialiser les filtres
       </button>
     </div>
   )
