@@ -266,9 +266,11 @@ export const CLIENT = {
   // ── B8 · « Comprendre l'algorithme » ──────────────────────────────────────
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
+    // M55-I point 4 : le bouton du BANDEAU (haut) garde « comprendre le classement ».
     bouton: 'Comprendre le classement',
-    // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
-    lien: 'comprendre le classement →',
+    // M55-I point 4 (Vic) — le lien de la ligne résultats (BAS) reprend son libellé d'avant
+    // « comprendre le scoring » (les deux ouvrent la MÊME modale AlgoExplainer, store.algoOpen).
+    lien: 'comprendre le scoring →',
     // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
     // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
