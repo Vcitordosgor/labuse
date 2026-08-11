@@ -49,7 +49,7 @@ export function RenouvellementModule() {
         diviser, reconstruire). {data.avertissement}
         {/* M47 : étiquette source · millésime — comme toute couche servie. */}
         <span className="mt-1 block text-[9.5px] text-txt-dim">
-          {data.source} · run servi <span className="font-mono">{data.run_label}</span>
+          {data.source}
           {data.maj ? ` · maj ${data.maj}` : ''}
         </span>
       </div>

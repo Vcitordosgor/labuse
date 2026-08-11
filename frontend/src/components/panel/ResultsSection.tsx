@@ -40,7 +40,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
           on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}>
         <div className="min-w-0 flex-1">
-          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
             {p.adresse ?? 'Adresse non disponible'}
           </div>
@@ -58,8 +58,8 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span title={`Référence complète : ${p.idu}`} className="shrink-0 cursor-help whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
-          <Tip tip={`Verdict scoring (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
+          <Tip tip={`Verdict du classement servi${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>
@@ -132,7 +132,7 @@ function LigneClassement({ total, opportunites, nFilters }: { total: number; opp
   const setAlgoOpen = useApp((s) => s.setAlgoOpen)
   return (
     <p className="mt-2 shrink-0 text-[11px] text-txt-dim"
-      title="Opportunités détectées = brûlantes + chaudes (scoring P×C, hors étage 0 du run servi)">
+      title="Opportunités détectées = brûlantes + chaudes (hors exclusions dures)">
       <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
       <button data-comprendre-btn onClick={() => setAlgoOpen(true)}
         className="ml-1.5 text-mint hover:underline"
@@ -150,14 +150,31 @@ const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset s
 // B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
 // M13-F3 (QA-57) : « commune » RETIRÉ (demande Vic) ; ×N → « mutation ×N » ; chaque
 // bouton porte son propre title explicatif.
-// M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE (↓ = décroissant —
-// vérifié : le serveur sert un seul sens par clé ; pas d'inversion au second clic, le sens
-// est donc DIT). Opportunités : n°1 d'abord (le tip le dit), pas de flèche.
+// M55-G suite point 8 : `dir` = le SENS du tri, affiché sur la pill ACTIVE.
+// M55-H point 4 : le tri Surface a ses DEUX sens — re-clic sur la pill active = inversion
+// (« Surface ↓ » ↔ « Surface ↑ », clé serveur surface / surface_asc), dans les deux modes.
 const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
   { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip, dir: '↓' },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
+
+// M55-H point 5 (décision Vic) — ordre des GROUPES de la liste d'analyse (identique au CASE
+// SQL du serveur) : 4 tiers d'opportunité, puis potentiel épuisé (declasse_*), puis écartées.
+const GROUPE_ORDER = (p: ParcelProps): number => {
+  if (p.etage0) return 6
+  const t = p.tier_v2 ?? ''
+  if (t === 'brulante') return 0
+  if (t === 'chaude') return 1
+  if (t === 'reserve_fonciere') return 2
+  if (t === 'a_creuser') return 3
+  if (t.startsWith('declasse')) return 4
+  return 5
+}
+
+// M55-H point 10 : couleur de la famille « potentiel épuisé » — la terre éteinte des
+// verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
+const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
 
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
   all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
@@ -184,13 +201,20 @@ export function ResultsSection() {
     queryKey: ['results-unifie', commune, filters],
     queryFn: () => getFiltre(filters, 0),
   })
+  const trameQ = useQuery({
+    queryKey: ['filtre', filters, false],
+    queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0),
+    enabled: analyse,
+  })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
   // supporte nativement, A2) — pages de 200, « Charger plus » accumule. Tri `rang` = index top-N
   // (quasi-gratuit) ; les autres tris paginent aussi (coût croissant en profondeur, assumé).
+  // M55-H point 5 : en mode ANALYSE la liste se groupe par tier côté serveur (groupes=1) —
+  // le tri choisi s'applique DANS chaque groupe. Le mode factuel reste plat.
   const serverList = useInfiniteQuery({
-    queryKey: ['results', commune, filters, sort],
-    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam),
+    queryKey: ['results', commune, filters, sort, analyse],
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam, analyse),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: ile,
@@ -244,9 +268,16 @@ export function ResultsSection() {
       .filter((p) => matchAll(p, filters, zone))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
+        // M55-H point 5 : GROUPES d'abord (mode analyse), même ordre que le serveur
+        if (analyse) {
+          const ga = GROUPE_ORDER(a)
+          const gb = GROUPE_ORDER(b)
+          if (ga !== gb) return ga - gb
+        }
         // même sémantique que le serveur : rang P (copros/sans rang en queue), ×N, surface, commune
         if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
         if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+        if (sort === 'surface_asc') return (a.surface_m2 ?? Infinity) - (b.surface_m2 ?? Infinity)
         if (sort === 'commune') return String((a as { commune?: string }).commune ?? '').localeCompare(String((b as { commune?: string }).commune ?? ''))
         const ra = a.rang_v2 ?? Infinity
         const rb = b.rang_v2 ?? Infinity
@@ -270,6 +301,12 @@ export function ResultsSection() {
   const promus = counts.all || 1
   const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
   const opportunites = uni.data?.opportunites ?? counts.brulante + counts.chaude
+  // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
+  // potentiel épuisé = retenues − 4 tiers vivants ; écartées = trame analysée − retenues.
+  // trameQ partage la queryKey de FiltreLabuse (['filtre', filters, false]) → cache commun.
+  const vent4 = counts.brulante + counts.chaude + counts.reserve_fonciere + counts.a_creuser
+  const epuise = uni.data ? Math.max(0, uni.data.compte - vent4) : 0
+  const ecartees = uni.data && trameQ.data ? Math.max(0, trameQ.data.compte - uni.data.compte) : null
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -297,14 +334,21 @@ export function ResultsSection() {
             </Tip>
           </span>
           <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {sorts.map((s) => (
-              <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
-                className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
-                  sort === s.key ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
-                title={s.tip}>
-                {s.label}{sort === s.key && s.dir ? ` ${s.dir}` : ''}
-              </button>
-            ))}
+            {sorts.map((s) => {
+              // M55-H point 4 : la pill Surface couvre ses DEUX sens — re-clic = inversion
+              const actif = sort === s.key || (s.key === 'surface' && sort === 'surface_asc')
+              const fleche = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
+                : actif && s.dir ? ` ${s.dir}` : ''
+              return (
+                <button key={s.key} data-sort={s.key}
+                  onClick={() => setSort(s.key === 'surface' && sort === 'surface' ? 'surface_asc' : s.key)}
+                  className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
+                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
+                  title={s.key === 'surface' && actif ? `${s.tip} — re-cliquer pour inverser le sens` : s.tip}>
+                  {s.label}{fleche}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -320,12 +364,25 @@ export function ResultsSection() {
           analyse » (VerdictHero) dit le mode. */}
       {analyse && (
         <>
-          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
+          {/* M55-H point 10 : la ventilation ENTIÈRE — 4 tiers + potentiel épuisé + écartées,
+              MÊMES nombres que la phrase de Révélation (source unique getFiltre :
+              épuisé = retenues − 4 tiers ; écartées = trame analysée − retenues). Le « i »
+              raconte les trois familles. */}
+          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
             title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
             <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
             <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
+            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> à creuser ·{' '}
+            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> potentiel épuisé
+            {ecartees != null && (
+              <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
+            )}
             {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
+            <Tip side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
+              <span data-ventilation-info role="button" tabIndex={0} aria-label="Comprendre les trois familles"
+                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
           </p>
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir

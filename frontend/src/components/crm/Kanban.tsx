@@ -49,7 +49,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
           className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
           title="Ouvrir la fiche sur la carte"
         >
-          {e.idu.slice(8, 10)} {e.idu.slice(10)}
+          {e.idu}
         </button>
         {newEvents > 0 && (
           <Tip tip="Événements non lus sur cette parcelle (cloche)">

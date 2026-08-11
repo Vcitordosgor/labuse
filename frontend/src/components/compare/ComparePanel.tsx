@@ -51,7 +51,7 @@ export function ComparePanel() {
                     return (
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
                         <div className="flex items-center justify-between gap-2">
-                          <button onClick={() => select(r.idu)} className="font-mono text-[12px] text-txt-hi hover:underline">{r.idu.slice(8, 10)} {r.idu.slice(10)}</button>
+                          <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
                           <button onClick={() => removeFromCompare(r.idu)} title="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                         </div>
                         <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px]" style={{ color: v.color, border: `1px solid ${v.color}55` }}>{v.label}</span>

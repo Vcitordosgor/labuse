@@ -194,7 +194,7 @@ export function SourcesPage() {
     queryFn: async () => {
       const r = await fetch('/v2/modele')
       if (!r.ok) throw new Error(`v2 ${r.status}`)
-      return r.json() as Promise<{ model_version: string; sha256_court: string; gel: string;
+      return r.json() as Promise<{ model_version: string; sha256_court: string;
         avertissement_censure: string; politique_recalibration: string }>
     },
     retry: false, staleTime: 5 * 60_000,
@@ -246,11 +246,11 @@ export function SourcesPage() {
               <summary className="cursor-pointer list-none text-[10.5px] font-medium text-txt-dim hover:text-txt">
                 ▸ {CLIENT.modele.detailToggle}
               </summary>
+              {/* M55-H point 11 : la DATE de gel du run a disparu du rendu client — le sha
+                  court reste (empreinte d'intégrité, pas une date ni un nom de run). */}
               <p className="mt-1 text-[10.5px] font-medium text-txt">
                 Modèle de scoring : <span className="font-mono">{modele.model_version}</span>
-                <span className="ml-1.5 font-mono text-[10px] text-txt-dim">
-                  sha {modele.sha256_court} — gelé le {modele.gel.slice(0, 10)}
-                </span>
+                <span className="ml-1.5 font-mono text-[10px] text-txt-dim">sha {modele.sha256_court}</span>
               </p>
               <p className="mt-1 text-[10.5px] leading-snug text-st-creuser">▲ {modele.avertissement_censure}.</p>
               <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>

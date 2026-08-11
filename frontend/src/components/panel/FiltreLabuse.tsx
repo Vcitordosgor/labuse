@@ -30,7 +30,8 @@ const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, 
 // (0-caller) — les champs de filtre restent dans le store + l'URL.
 // M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
 // adresses). La chip affiche le CP, le « i » (title) nomme la commune. Rang 1 du panneau.
-const CP_COMMUNES: [string, string][] = [
+// M55-H point 7 : EXPORTÉE — le menu périmètre du header affiche le même CP (source unique).
+export const CP_COMMUNES: [string, string][] = [
   ['97400', 'Saint-Denis'], ['97410', 'Saint-Pierre'], ['97412', 'Bras-Panon'],
   ['97413', 'Cilaos'], ['97414', 'Entre-Deux'], ['97419', 'La Possession'],
   ['97420', 'Le Port'], ['97424', 'Saint-Leu'], ['97425', 'Les Avirons'],
@@ -339,7 +340,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
              un seul récit, M55-F point 1). ── */
           <div data-phrase>
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
-              {CLIENT.revelation.phraseIntro(analyseTotal ?? live ?? 0, perimetre)}{' '}
+              {/* M55-H point 10 : jamais « 0 parcelles » pendant que la trame charge — la
+                  phrase d'intro attend un total connu (le reste s'affiche sans elle). */}
+              {(analyseTotal ?? live) != null && <>{CLIENT.revelation.phraseIntro((analyseTotal ?? live)!, perimetre)}{' '}</>}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
             {phraseRetenues === 0 ? (
@@ -386,22 +389,23 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             )}
           </div>
         ) : !analyseOn ? (
-          /* ── 1. L'APPEL — LES deux boutons, sans bandeau (M55-G suite point 5 : le bloc
-             « N parcelles notées par LABUSE — classement du … · Classement versionné… » est
-             SUPPRIMÉ ; la date du classement vit dans la modale « comprendre le classement »). ── */
-          <div data-appel>
-            {/* M55-F point 3 / M55-G point 2 — DEUX choix : « Voir les N parcelles » (sobre,
-                « je cherche moi-même ») passe EN PREMIER ; le CTA d'analyse (mint dominant, le
-                rituel du stage 5, inchangé) second. La carte ne bouge QU'AU geste (aucune
-                repeinte pendant le réglage : verdict reste false tant qu'aucun bouton n'est
-                cliqué). */}
+          /* ── 1. L'APPEL — LES deux boutons, sans bandeau (M55-G suite point 5). M55-H
+             point 3 : GROUPE net — marges constantes (gap-2), même largeur, secondaire
+             franc (fond + bordure visibles) AU-DESSUS, primaire dominant (plus haut, flèche
+             dessinée — même patron que « Commencer »). La carte ne bouge QU'AU geste. ── */
+          <div data-appel className="flex flex-col gap-2">
             <button data-voir-factuel onClick={voirFactuel}
-              className={`mt-2.5 w-full rounded-lg border border-line-2 py-1.5 text-[12px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className={`w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
               {CLIENT.revelation.voirN(live ?? 431_663)}
             </button>
             <button data-analyser-btn onClick={lancer}
-              className={`mt-2 w-full rounded-lg bg-mint py-2.5 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
-              {CLIENT.revelation.boutonFaire}
+              className={`group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[box-shadow,filter,transform,opacity] duration-soft hover:shadow-[0_0_30px_rgba(92,230,161,0.5)] hover:brightness-105 active:translate-y-[1px] active:brightness-95 ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"
+                className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">
+                <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
+                  strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </div>
         ) : null}
@@ -433,13 +437,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       {/* M55-D stage 7 (décision Vic) : plus AUCUNE section pédagogique dans le panneau —
           « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}
 
-      {/* M55-G point 9 : libellé court, danger SOBRE — contour rouge discret, pas un pavé.
-          Le geste reste inchangé (les deux étages + interrupteur), le title le dit. */}
-      <button onClick={resetTout}
-        title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
-        className="mt-3 min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
-        Réinitialiser les filtres
-      </button>
+      {/* M55-G point 9 / M55-H point 3 : danger SOBRE, SÉPARÉ du groupe d'action (filet +
+          respiration — jamais collé aux deux boutons). Geste inchangé, le title le dit. */}
+      <div className="mt-4 border-t border-line-2/50 pt-3">
+        <button onClick={resetTout}
+          title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
+          className="min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
+          Réinitialiser les filtres
+        </button>
+      </div>
     </div>
   )
 }

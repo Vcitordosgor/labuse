@@ -25,7 +25,7 @@ _BASE_FICHE = {"idu": "97400000ZZ0001", "commune": "X", "surface_m2": 500, "line
 
 def test_bati_sature_motif_present(monkeypatch):
     facts = _ctx(monkeypatch, _BASE_FICHE,
-                 {"label": "Déclassée — bâti saturé", "tier": "declasse_bati_sature", "rang": 1,
+                 {"label": "Potentiel épuisé · bâti saturé", "tier": "declasse_bati_sature", "rang": 1,
                   "motif": "bâtie 15-40 %, bâti d'année absente, non divisible", "exception_registre": False})
     assert "non divisible" in facts["motif_classement"].value        # avant M49 : l'IA REFUSAIT
     assert facts["motif_classement"].provenance == "SOURCE"
@@ -33,7 +33,7 @@ def test_bati_sature_motif_present(monkeypatch):
 
 def test_zone_fermee_motif_structurel(monkeypatch):
     facts = _ctx(monkeypatch, _BASE_FICHE,
-                 {"label": "Déclassée — fermée à l'urbanisation", "tier": "declasse_zone_fermee",
+                 {"label": "Potentiel épuisé · fermée à l'urbanisation", "tier": "declasse_zone_fermee",
                   "rang": 1, "motif": None, "exception_registre": False})
     assert "fermée à l'urbanisation" in facts["motif_classement"].value   # avant : « non disponible »
 
@@ -59,7 +59,7 @@ def test_mode_b_expose_quand_disponible(monkeypatch):
     fiche = {**_BASE_FICHE, "mode_b": {"disponible": True, "population_tier": "declasse_bati_sature",
              "sortie_locative": {"loyer": {"mensuel_eur": 592}}}}
     facts = _ctx(monkeypatch, fiche,
-                 {"label": "Déclassée — bâti saturé", "tier": "declasse_bati_sature", "rang": 1,
+                 {"label": "Potentiel épuisé · bâti saturé", "tier": "declasse_bati_sature", "rang": 1,
                   "motif": "x", "exception_registre": False})
     assert "592" in facts["mode_b_rehabilitation"].value
     assert facts["mode_b_rehabilitation"].provenance == "ESTIME"

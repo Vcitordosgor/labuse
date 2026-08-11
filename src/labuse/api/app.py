@@ -1215,7 +1215,7 @@ def list_parcels(commune: str | None = None,
 
 @app.get("/parcels/export.csv")
 def export_parcels_csv(c: FiltreCriteres = Depends(),
-                       sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
+                       sort: str | None = Query(None, pattern="^(v|rang|mult|surface|surface_asc|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
     """Export CSV de la liste — MÊMES facettes que le compteur et la liste (M46 Lot D : routé
@@ -1555,8 +1555,9 @@ _FILTRE_IDUS_CAP = 20_000
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|commune)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune)$"),
            idus: int = Query(0, ge=0, le=1),
+           groupes: int = Query(0, ge=0, le=1),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
@@ -1566,7 +1567,11 @@ def filtre(c: FiltreCriteres = Depends(),
     M55-G suite (point 1) : `idus=1` ajoute la liste des IDU du résultat (mêmes critères,
     plafond _FILTRE_IDUS_CAP + drapeau `idus_tronque`) — la CARTE raccorde sa palette au
     résultat exact de la liste, y compris pour les critères non exprimables en tuiles
-    (signaux de vie, état du sol, constructibilité…)."""
+    (signaux de vie, état du sol, constructibilité…).
+
+    M55-H : `sort=surface_asc` (point 4, sens inverse du tri Surface) ; `groupes=1`
+    (point 5, décision Vic) — la page se groupe par tier (brûlantes → … → potentiel
+    épuisé), le tri choisi s'appliquant DANS chaque groupe."""
     if not (c.source and c.source.startswith("q_v")):
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
@@ -1574,7 +1579,8 @@ def filtre(c: FiltreCriteres = Depends(),
     stats = _mem_cached(c.cache_key(), 30.0, lambda: _q_v2_stats(
         db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params))
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
-                      extra_where=extra, extra_params=extra_params, sort=sort) if limit else []
+                      extra_where=extra, extra_params=extra_params, sort=sort,
+                      groupes=bool(groupes)) if limit else []
     out = {
         **stats,                                     # total, tiers, opportunites, opportunites_evenement,
                                                      # dossiers_* — la LISTE et les cartouches lisent LE MÊME
@@ -1869,6 +1875,9 @@ _Q_V2_ORDERS = {
             "(ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC",
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
     "surface": "p.surface_m2 DESC NULLS LAST, s2.rang ASC NULLS LAST",
+    # M55-H point 4 : le tri Surface gagne son sens INVERSE (re-clic sur la pill) —
+    # même clé, ordre ASC (les slivers < 2 m² restent masqués par MIN_DISPLAY_SURFACE_M2).
+    "surface_asc": "p.surface_m2 ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "(d.q_score + d.a_score) DESC",
@@ -1878,21 +1887,41 @@ _Q_V2_ORDERS_PAGE = {
             "pg.evenement_rouge DESC, (pg.q_score + pg.a_score) DESC",
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
          "(pg.q_score + pg.a_score) DESC",
 }
 
+# M55-H point 5 (décision Vic) — GROUPEMENT PAR TIER : la liste d'analyse se groupe
+# brûlantes → chaudes → potentiel long terme → à creuser → potentiel épuisé (declasse_*) ;
+# le tri choisi s'applique DANS chaque groupe (l'ORDER BY est préfixé par ce CASE).
+_TIER_GROUPE_SQL = (
+    "CASE WHEN (d.status IN ('exclue', 'faux_positif_probable')) THEN 6 "
+    "WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1 "
+    "WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3 "
+    "WHEN s2.tier LIKE 'declasse%' THEN 4 ELSE 5 END")
+_TIER_GROUPE_PAGE_SQL = (
+    "CASE WHEN pg.etage0 THEN 6 "
+    "WHEN pg.tier_v2 = 'brulante' THEN 0 WHEN pg.tier_v2 = 'chaude' THEN 1 "
+    "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 = 'a_creuser' THEN 3 "
+    "WHEN pg.tier_v2 LIKE 'declasse%' THEN 4 ELSE 5 END")
+
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = Q_A_RUN_LABEL,
                extra_where: str = "", extra_params: dict | None = None,
-               sort: str | None = None) -> list[dict]:
+               sort: str | None = None, groupes: bool = False) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
     v2 « écartée matrice » APPARAÎT. Un filtre `tiers` explicite (extra_where) remplace ce
-    périmètre (l'opt-in « ecartee » = étage 0 dur uniquement)."""
+    périmètre (l'opt-in « ecartee » = étage 0 dur uniquement).
+
+    M55-H point 5 : `groupes=True` préfixe l'ORDER BY par l'ordre des tiers (groupement) —
+    le tri choisi devient secondaire, DANS chaque groupe."""
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
+    if groupes:
+        order = f"{_TIER_GROUPE_SQL}, {order}"
     xp = extra_params or {}
     # périmètre par défaut : hors étage 0 servi, sauf filtre tier explicite qui scope déjà
     base = "" if ("f_tiers" in xp
@@ -1932,7 +1961,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     v2run = _score_v2_run_id(db)
     # chemin rapide seulement si un run v2 existe : sans lui, le LEFT JOIN historique
     # sert le repli legacy (colonnes v2 NULL) — le chemin s2-driven renverrait vide.
-    if sort_key == "rang" and v2run is not None:
+    # (groupes : le chemin rapide « index rang » ne sait pas préfixer par tier → requête générale)
+    if sort_key == "rang" and v2run is not None and not groupes:
         _fast_from = f"""
             FROM parcel_p_score_v2 s2
             JOIN parcels p ON p.idu = s2.parcelle_id
@@ -2005,7 +2035,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
         LEFT JOIN cl ON cl.siren = own.siren
-        ORDER BY {_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
+        ORDER BY {(_TIER_GROUPE_PAGE_SQL + ', ') if groupes else ''}{_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
                "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
                "v2run": v2run, **xp}

@@ -47,7 +47,7 @@ export const CLIENT = {
     segSources: (n: string) => `${n} sources publiques branchées`,
     b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
     src: {
-      parcelles: 'Compte exact du classement servi (run versionné), recalculé à chaque mise à jour majeure.',
+      parcelles: 'Compte exact du classement servi, recalculé à chaque mise à jour majeure.',
       communes: 'Cadastre DGFiP — toutes les communes de La Réunion, sans exception.',
       sources: 'Catalogue Sources : connecteurs publics actifs (DEAL, DGFiP, INSEE, BODACC, Sitadel…) — voir l’onglet Sources.',
     },
@@ -84,7 +84,8 @@ export const CLIENT = {
     // M55-F point 2 — la phrase COMPLÈTE son compte : l'arithmétique boucle (analysé = retenues
     // + écartées ; retenues = ventilation complète, à-creuser et déclassées inclus).
     retenuesLbl: (n: number) => `${n.toLocaleString('fr-FR')} retenues`,
-    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} déclassées`,
+    // M55-H point 10 : « déclassées » → « en potentiel épuisé » (même famille partout)
+    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} en potentiel épuisé`,
     ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
     ecarteesMotifs: 'domaine public, inconstructibles…',
     voirPourquoi: 'voir pourquoi',
@@ -100,7 +101,7 @@ export const CLIENT = {
       chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
       a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
-      declassees: 'Déclassées — retenues par l’analyse mais rétrogradées pour un motif (bâti saturé, zone fermée…) ; visibles avec leur motif.',
+      declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -130,6 +131,13 @@ export const CLIENT = {
   //    près. Ne jamais recopier ce texte ailleurs. ──
   avisIa: "L'IA ne juge pas le sentiment d'une communauté, n'évalue pas le risque politique d'un processus d'autorisation, et ne remplace pas les éléments relationnels du sourcing.",
 
+  // ── M55-H point 10 · le « i » de la ventilation — les TROIS familles, une phrase chacune ──
+  ventilation: {
+    familles: 'Servables — les 4 tiers d’opportunité (brûlantes, chaudes, potentiel long terme, à creuser). '
+      + 'Potentiel épuisé — analysée, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; les chiffres sont en fiche. '
+      + 'Écartées — jamais analysées : domaine public, forêt, exclusions de fait.',
+  },
+
   // ── B1/B2 · métrique ×N et libellés de liste ──────────────────────────────
   mult: {
     // le nombre nu (×13.1) ne s'affiche jamais sans cette unité de sens
@@ -158,13 +166,16 @@ export const CLIENT = {
     rang: 'Opportunités',
     mult: 'Mutation',
     surface: 'Surface',
-    rangTip: 'Meilleures opportunités — ordre de priorité (n°1 = la plus prometteuse), copropriétés en queue',
-    multTip: 'Plus susceptibles de se vendre — trie par le ×N : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
-    surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
+    // M55-H point 6 (MESURÉ 12/08, rapport) : le rang n'est PAS un produit « probabilité ×
+    // qualité » — c'est l'ordre du ×N dont les ex æquo (le ×N est arrondi) sont départagés
+    // par la qualité du terrain (D), puis SDP, surface. Les libellés disent désormais le réel.
+    rangTip: 'Le classement LABUSE — la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    multTip: 'Le ×N brut, sans départage : combien de fois la parcelle est plus susceptible d’être vendue que la moyenne de l’île',
+    surfaceTip: 'Trie par surface de parcelle',
     // le « i » de la barre TRIER : les libellés longs + leur sens, en trois phrases
-    lunettes: 'Opportunités = les meilleures opportunités d’abord — probabilité de vente × qualité du terrain (l’opportunité globale). '
-      + 'Mutation = les plus susceptibles de se vendre — la probabilité de vente seule (ce qui va bouger bientôt). '
-      + 'Surface = de la plus grande à la plus petite.',
+    lunettes: 'Opportunités = le classement LABUSE : la probabilité de vente d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
+      + 'Mutation = le ×N brut, sans départage (ce qui va bouger bientôt). '
+      + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
     // tooltip du badge ×N sur les cartes de résultat (une ligne)
     multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
   },
@@ -260,8 +271,8 @@ export const CLIENT = {
     bouton: 'Comprendre le classement',
     // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
     lien: 'comprendre le classement →',
-    // M55-G suite point 5 — la date du run servi vit ICI (le bandeau du panneau est supprimé)
-    dateRun: (d: string) => `Classement servi du ${d} — versionné, recalculé à chaque mise à jour majeure.`,
+    // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
+    // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
     // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi

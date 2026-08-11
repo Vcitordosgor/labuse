@@ -8,11 +8,18 @@ const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md bord
 
 // Chevron de section repliable — seule la FLÈCHE tourne (fermé → gauche, ouvert → bas,
 // patron M55-A/C), la boîte reste stable. Le hover suit l'entête entière (via `group`).
+// M55-H point 1 : le glyphe texte « ⌄ » portait un biais optique (ancré sur la ligne de
+// base, jamais vraiment centré une fois pivoté) → chevron DESSINÉ (SVG symétrique, centré
+// géométriquement = centré optiquement dans les deux états, trait arrondi).
 export function ChevronSection({ open }: { open: boolean }) {
   return (
     <span aria-hidden="true"
       className={`${BOITE} group-hover:bg-surface-3 group-hover:text-txt-hi`}>
-      <span className={`-mt-px text-[15px] leading-none transition-transform duration-soft ease-cockpit ${open ? '' : 'rotate-90'}`}>⌄</span>
+      <svg viewBox="0 0 12 12"
+        className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? '' : 'rotate-90'}`}>
+        <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
+          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </span>
   )
 }

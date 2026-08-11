@@ -42,12 +42,15 @@ const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique,
 export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; color: string }> = {
   // M30-revue (arbitrage Vic) : « fermée à l'urbanisation » (fermée ≠ clôture) et
   // « inconstructible (géométrie) » (physique ≠ réglementaire) — motifs sans ambiguïté.
-  declasse_bati_sature: { label: 'Déclassée — bâti saturé', color: DECLASSE_COLOR },
-  declasse_non_constructible: { label: 'Déclassée — inconstructible (géométrie)', color: DECLASSE_COLOR },
-  declasse_bati_revele: { label: 'Déclassée — bâti révélé', color: DECLASSE_COLOR },
-  declasse_zone_fermee: { label: 'Déclassée — fermée à l\'urbanisation', color: DECLASSE_COLOR },
-  declasse_au_statut_inconnu: { label: 'Déclassée — AU à statut inconnu', color: DECLASSE_COLOR },
-  declasse_au_fermee: { label: 'Déclassée — AU fermée', color: DECLASSE_COLOR },
+  // M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » — « déclassée »
+  // suggérait un retrait ; c'est un VERDICT calculé (le potentiel résiduel ne paie plus
+  // l'opération standard). Codes techniques declasse_* INCHANGÉS.
+  declasse_bati_sature: { label: 'Potentiel épuisé · bâti saturé', color: DECLASSE_COLOR },
+  declasse_non_constructible: { label: 'Potentiel épuisé · inconstructible (géométrie)', color: DECLASSE_COLOR },
+  declasse_bati_revele: { label: 'Potentiel épuisé · bâti révélé', color: DECLASSE_COLOR },
+  declasse_zone_fermee: { label: 'Potentiel épuisé · fermée à l\'urbanisation', color: DECLASSE_COLOR },
+  declasse_au_statut_inconnu: { label: 'Potentiel épuisé · AU à statut inconnu', color: DECLASSE_COLOR },
+  declasse_au_fermee: { label: 'Potentiel épuisé · AU fermée', color: DECLASSE_COLOR },
 }
 export const DECLASSE_ORDER = Object.keys(TIER_DECLASSE_META) as TierDeclasse[]
 export const ALL_TIER_META: Record<string, { label: string; color: string }> =

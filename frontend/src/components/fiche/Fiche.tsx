@@ -1810,7 +1810,7 @@ export function Fiche({ idu }: { idu: string }) {
                   </p>
                   {/* M47 : étiquette source · millésime — comme toute couche servie. */}
                   <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>
-                    {f.renouvellement.source} · run servi {f.renouvellement.run_label}
+                    {f.renouvellement.source}
                     {f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}
                   </p>
                 </div>
