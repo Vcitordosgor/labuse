@@ -294,19 +294,9 @@ export function ResultsSection() {
         <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
-      {/* CRED-3 (revue externe 12/07) : les PARCELLES sont l'unité de la somme — avec dossier +
-          personnes physiques = les opportunités affichées juste au-dessus. */}
-      {uni.data != null && uni.data.opportunites > 0 && (
-        <p data-dossiers-detail className="mt-1 shrink-0 text-[11px] leading-snug text-txt-dim"
-          title="Un propriétaire = un dossier, quel que soit son nombre de parcelles (identification par SIREN, personnes morales DGFiP). Les personnes physiques n'ont pas d'identité en open data — doctrine RGPD : jamais de donnée nominative en base.">
-          soit <span className="font-medium text-txt">{fmt(uni.data.opportunites_avec_dossier)}</span> parcelle{uni.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
-          dossier propriétaire ({fmt(uni.data.dossiers_opportunites)} propriétaire{uni.data.dossiers_opportunites > 1 ? 's' : ''} identifié{uni.data.dossiers_opportunites > 1 ? 's' : ''})
-          {uni.data.opportunites_sans_identite > 0 && (
-            <> · <span className="font-medium text-txt">{fmt(uni.data.opportunites_sans_identite)}</span> personnes
-            physiques — non couvertes par l'open data</>
-          )}
-        </p>
-      )}
+      {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
+          N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
+          Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
         <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
         <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
