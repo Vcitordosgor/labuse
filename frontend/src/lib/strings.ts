@@ -104,6 +104,9 @@ export const CLIENT = {
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
       a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
       declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
+      // M55-J point 5 : le palier écartée manquait à l'échelle verbale (defTiers) — ajouté ici
+      // comme SOURCE UNIQUE (réutilisée par la carte d'analyse ET la modale scoring).
+      ecartee: 'Écartée — jamais analysée : exclusion dure de l’étage 0 (domaine public, forêt, RNU, inconstructible réglementaire…).',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -268,11 +271,10 @@ export const CLIENT = {
   // ── B8 · « Comprendre l'algorithme » ──────────────────────────────────────
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
-    // M55-I point 4 : le bouton du BANDEAU (haut) garde « comprendre le classement ».
+    // M55-J point 5 : DEUX entrées jumelles dans le bandeau — le classement (méthode) et le
+    // scoring (sens des paliers), chacune sa modale. Le lien isolé du bas des résultats disparaît.
     bouton: 'Comprendre le classement',
-    // M55-I point 4 (Vic) — le lien de la ligne résultats (BAS) reprend son libellé d'avant
-    // « comprendre le scoring » (les deux ouvrent la MÊME modale AlgoExplainer, store.algoOpen).
-    lien: 'comprendre le scoring →',
+    boutonScoring: 'Comprendre le scoring',
     // M55-H point 11 : la ligne de date du run (dateRun) est SUPPRIMÉE — détail technique,
     // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
@@ -312,6 +314,11 @@ export const CLIENT = {
           'votre métier.',
       },
     ] as { h: string; p: string }[],
+    // M55-J point 5 · MODALE SCORING — le SENS des paliers (distinct du classement/méthode).
+    // Les définitions elles-mêmes viennent de defTiers (source unique, réutilisée) — ici, juste
+    // le cadre (titre + intro). Ordre des paliers servis par le composant ScoringExplainer.
+    scoringTitre: 'Ce que veulent dire les paliers',
+    scoringIntro: 'Après le classement, chaque parcelle reçoit un palier — du plus prometteur au moins mobilisable.',
   },
 
   // ── M14-F2 (QA-52) · projet — le bouton « + Chercher plus » est retiré ────────

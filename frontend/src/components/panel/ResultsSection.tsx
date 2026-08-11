@@ -128,22 +128,19 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
 // le bloc « Verdict · Scoring v2 (multi) » du panneau « + Filtre » (point d'entrée unique).
 
 // C4 + P2 (revue Vic n°3) : LABUSE MONTRE son analyse (avis argumenté), il ne décide pas à
-// votre place. M55-G point 4 : le lien DIT où il mène — « comprendre le classement → » ouvre
-// la MÊME modale que le bouton du bandeau (AlgoExplainer, état partagé store.algoOpen) : une
-// étiquette, une destination. L'ancien « pourquoi ? » (entonnoir par motif en flux, cible
-// muette) est retiré ; les motifs de déclassement restent accessibles par les chips
-// « Déclassées · motif » du panneau Filtres, et chaque écartée garde son motif en fiche.
+// votre place. L'ancien « pourquoi ? » (entonnoir par motif) est retiré ; les motifs de
+// déclassement restent accessibles par les chips « Potentiel épuisé · motif » et chaque écartée
+// garde son motif en fiche.
+// M55-J point 5 : le lien isolé « comprendre le scoring → » du bas DISPARAÎT — les deux
+// entrées (classement + scoring) vivent désormais côte à côte dans le bandeau de l'analyse
+// (VerdictHero). Constat : cette ligne n'est pas en fin de listing long (elle est en tête du
+// bloc résultats, juste sous la ventilation) — elle ne rendait donc pas le service « visibilité
+// en fin de liste » que le bandeau ne rendrait pas ; le déplacer ne perd rien.
 function LigneClassement({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
-  const setAlgoOpen = useApp((s) => s.setAlgoOpen)
   return (
     <p className="mt-2 shrink-0 text-[11px] text-txt-dim"
       title="Opportunités détectées = brûlantes + chaudes (hors exclusions dures)">
       <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
-      <button data-comprendre-btn onClick={() => setAlgoOpen(true)}
-        className="ml-1.5 text-mint hover:underline"
-        title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
-        {CLIENT.algo.lien}
-      </button>
     </p>
   )
 }
