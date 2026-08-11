@@ -1216,6 +1216,12 @@ export function Fiche({ idu }: { idu: string }) {
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
   const pctConsomme = f?.potentiel_transformation?.pct_consomme
   const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
+  // M55-N point 8 : l'en-tête « Règles d'urbanisme » porte une CONTRAINTE de gabarit (hauteur max)
+  // — plus la SDP résiduelle, qui vivait AUSSI dans l'en-tête « Faisabilité » (doublon M55-L P14).
+  // Faisabilité garde la SDP ; la SDP reste accessible dans le corps du tiroir (potentiel/faisa).
+  // Hauteur absente (faisabilité non calculée) → pas de valeur d'en-tête (le micro-jauge porte
+  // déjà zone + article), jamais la SDP ni un doublon du zonage.
+  const reglesGabarit = fo?.hauteur_m != null ? `${fo.hauteur_m} m max` : undefined
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
@@ -1582,7 +1588,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
             <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
-              value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
+              value={reglesGabarit}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
                 {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
