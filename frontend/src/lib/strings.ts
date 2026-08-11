@@ -354,6 +354,10 @@ export const CLIENT = {
     // C1 · le motif d'écartement passe à côté du badge
     ecarteeVoir: 'voir pourquoi →',
     ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
+    // M55-L point 5 — verdict à la demande : à l'ouverture, un bouton remplace le bloc verdict
+    // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
+    demanderAnalyse: 'Demander l’analyse LABUSE',
+    demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
     // C8 · le bloc IA en une ligne, accroche client
     ia: {
       accroche: 'Une question sur cette parcelle ?',

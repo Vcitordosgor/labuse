@@ -1110,6 +1110,9 @@ function PatrimoineLink({ siren }: { siren: string }) {
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
+  const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
+  const revelerVerdict = useApp((s) => s.revelerVerdict)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
@@ -1305,8 +1308,25 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         </div>
 
+        {/* M55-L point 5 — VERDICT À LA DEMANDE. À l'ouverture (verdict non encore demandé pour
+            cette parcelle dans la session), un BOUTON vert remplace le bloc verdict — l'avis n'est
+            jamais imposé à qui veut d'abord des informations. C'est le SEUL élément vert de ce
+            niveau. Au clic, le bloc verdict complet se déploie (mémorisé par parcelle, session).
+            Vaut aussi en mode factuel (le bouton apparaît pareillement : rien n'est imposé, tout
+            est accessible). Les PDF gardent le verdict sans condition (rail back inchangé). */}
+        {f && verdict && !verdictRevele && (
+          <button data-demander-analyse onClick={() => revelerVerdict(idu)}
+            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
+            title="Déployer le verdict, le score et « pourquoi »">
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}>
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2.5 12.2 7 17 7.6 13.5 11 14.4 16 10 13.6 5.6 16 6.5 11 3 7.6 7.8 7Z" /></svg>
+              {CLIENT.fiche.demanderAnalyse}
+            </span>
+            <span style={{ fontSize: 11.5, fontWeight: 500, color: '#0a2419', opacity: .85 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
+          </button>
+        )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
-        {f && verdict && (
+        {f && verdict && verdictRevele && (
           <div data-verdict-card style={{ background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
