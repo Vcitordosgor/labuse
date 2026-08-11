@@ -1109,11 +1109,12 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.removeEventListener('keydown', h)
   }, [select])
   void sourceLine
-  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'>('synthese')
+  // M55-O phase 2.1c : `setTab` retiré (0-caller après retrait de goDrawer) — `tab` reste figé à
+  // 'synthese' (le seul contenu), gardé pour le garde de rendu.
+  const [tab] = useState<'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'>('synthese')
   // M19 · migration strangler onglets → tiroirs. MIGRATED = onglets déjà fondus dans la pile
   // Synthèse (leur contenu vit en FicheDrawer). Un clic d'onglet migré ouvre + scrolle le tiroir
   // (au lieu de basculer la vue) ; les onglets non migrés gardent l'ancienne bascule `tab`.
-  const [pendingScroll, setPendingScroll] = useState<string | null>(null)
   // M55-L point 10 — accordéon EXCLUSIF des tiroirs (store, par parcelle). openId = tiroir ouvert
   // (null = tout fermé). La valeur du contexte est mémoïsée (identité stable tant que rien ne bouge).
   const tiroirOuvert = useApp((s) => s.ficheTiroir[idu] ?? null)
@@ -1122,19 +1123,9 @@ export function Fiche({ idu }: { idu: string }) {
     () => ({ openId: tiroirOuvert, toggle: (id: string) => setFicheTiroir(idu, tiroirOuvert === id ? null : id) }),
     [tiroirOuvert, idu, setFicheTiroir],
   )
-  useEffect(() => {
-    if (!pendingScroll || tab !== 'synthese') return
-    const t = window.setTimeout(() => {
-      // le tiroir est déjà ouvert par l'état (goDrawer l'a posé) → il ne reste qu'à le faire défiler.
-      const root = document.querySelector(`[data-drawer="${pendingScroll}"]`) as HTMLElement | null
-      if (root) root.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      setPendingScroll(null)
-    }, 60)
-    return () => window.clearTimeout(t)
-  }, [pendingScroll, tab])
-  // M55-L point 10 : goDrawer OUVRE le tiroir cible (accordéon exclusif → ferme les autres) puis
-  // le fait défiler à l'écran (le scroll suit, l'utilisateur n'est jamais perdu).
-  const goDrawer = (key: string) => { setTab('synthese'); setFicheTiroir(idu, key); setPendingScroll(key) }
+  // M55-O phase 2.1c : `goDrawer`/`pendingScroll` retirés — leurs seuls appelants (liens vers les
+  // tiroirs « pourquoi »/« renouvellement ») ont disparu avec l'absorption de ces tiroirs dans le
+  // bloc Analyse. Le lien « voir pourquoi » de l'écartée scrolle désormais vers les motifs inline.
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1354,7 +1345,7 @@ export function Fiche({ idu }: { idu: string }) {
                   )}
                   {verdictEcartee && (
                     <span data-ecartee-motif style={{ fontSize: 12, color: '#7d9488' }}>
-                      · {ecarteeMotif} <button onClick={() => goDrawer('pourquoi')} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }} title={CLIENT.fiche.ecarteeVoirTip}>{CLIENT.fiche.ecarteeVoir}</button>
+                      · {ecarteeMotif} <button onClick={() => document.querySelector('[data-analyse-motifs]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }} title={CLIENT.fiche.ecarteeVoirTip}>{CLIENT.fiche.ecarteeVoir}</button>
                     </span>
                   )}
                 </div>
@@ -1637,12 +1628,11 @@ export function Fiche({ idu }: { idu: string }) {
               <SyntheseIA idu={idu} />
             </div>
 
-            {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
-                juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
-            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+            {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
+                bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
 
-            {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
-            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
+            {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
+            <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
@@ -1704,7 +1694,9 @@ export function Fiche({ idu }: { idu: string }) {
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
-                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
+                    surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas
+                    du droit du sol pur. */}
                 {/* M55-O phase 2.1b : les contrôles PASS (« sans objet ») partent dans
                     « Vérifications d'éligibilité » (bloc Analyse) ; ici, seules les lignes PLU
                     substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
@@ -1720,7 +1712,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
             {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
-            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Constructibilité" value={logementsTxt}
               micro={<MicroTriple items={delaisse
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
@@ -1734,14 +1726,25 @@ export function Fiche({ idu }: { idu: string }) {
                     <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
                   </div>
                 )}
+                {/* M55-O phase 2.1c : potentiel de transformation (SDP consommée/résiduelle/
+                    surélévation) reçu depuis Urbanisme — la Constructibilité porte capacité + SDP. */}
+                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
                 <FaisabiliteTab idu={idu} />
                 {!delaisse && <BilanTab idu={idu} />}
               </div>
             </RefDrawer>
+            {/* M55-O phase 2.1c : Mode B — Réhabilitation, rattaché à la Constructibilité (un seul
+                rendu ; l'ancien dédoublement signalEcarte/servable est unifié). Reste un tiroir
+                distinct (ModeBDrawer = RefDrawer autonome avec son propre fetch ; l'inliner dans
+                Constructibilité casserait l'accordéon exclusif — signalé au rapport). */}
+            {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
             {/* MARCHÉ — micro : sparkline + volume */}
-            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
-              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
+            {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
+                distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
+                confondues (269-286 €/m² terrain vs ~2 000 €/m² bâti). */}
+            <RefDrawer id="marche" icon={IC.marche} name="Marché et secteur" valueColor={REF.name}
+              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m² terrain` : '—'}
               micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
@@ -1758,10 +1761,35 @@ export function Fiche({ idu }: { idu: string }) {
                     <p className="mt-0.5 text-[9px] text-txt-dim">{sig.source} · outil « Marché » pour le détail commune</p>
                   </div>
                 ) : null })()}
+              {/* M55-O phase 2.1c — HYPER-LOCAL absorbé depuis l'ancien tiroir « Contexte » :
+                  historique permis sur la parcelle + voisinage proche (ventes DVF + permis 36 mois). */}
+              {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
+                <div data-historique-site className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                  <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
+                  <ul className="mt-1 list-disc pl-4 text-txt-mut">
+                    {f.historique_site.permis.slice(0, 6).map((pm, i) => (
+                      <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
+                    ))}
+                    {f.historique_site.caducite && (
+                      <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
+                    )}
+                  </ul>
+                  <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
+                </div>
+              )}
+              {f.voisinage_proche && (
+                <div data-voisinage-proche className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
+                  <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
+                  <div className="mt-1 text-txt-mut">
+                    {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(&lt; 100 m, 36 mois)</span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
+                </div>
+              )}
             </RefDrawer>
 
-            {/* VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
+            {/* RÉSEAUX ET ACCÈS — accès, équipements, gestionnaires, permis */}
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" value={viabValue}>
               <div className="flex flex-col gap-3">
                 {/* M55-O phase 2.2 — la jauge « Accessibilité » (a_score) est RETIRÉE de la fiche
                     (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
@@ -1781,44 +1809,10 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* ③ ÉCONOMIE (suite) — Mode B (M44) pour un tier SERVABLE : reste dans l'économie
-                (la déclassée l'a déjà remonté en 2). Lecture complémentaire, subordonnée au verdict. */}
-            {!signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+            {/* M55-O phase 2.1c : Mode B rendu une seule fois, rattaché à la Constructibilité (plus haut). */}
 
-            {/* ④ CONTEXTE — « Sur cette parcelle » (historique permis + caducité) et « Autour »
-                (voisinage proche : ventes DVF + permis 36 mois). M42. Rien si les deux sont vides. */}
-            {((f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite)) || f.voisinage_proche) && (
-              <RefDrawer id="contexte" icon={IC.contexte} name="Contexte"
-                value={f.voisinage_proche ? `${f.voisinage_proche.ventes_dvf} vente(s) · ${f.voisinage_proche.permis} permis` : 'voir'}>
-                <div className="flex flex-col gap-3">
-                  {/* M42 — « Sur cette parcelle » : historique permis + caducité (un caduc DIT caduc). */}
-                  {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-                    <div data-historique-site className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                      <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
-                      <ul className="mt-1 list-disc pl-4 text-txt-mut">
-                        {f.historique_site.permis.slice(0, 6).map((pm, i) => (
-                          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-                        ))}
-                        {f.historique_site.caducite && (
-                          <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
-                        )}
-                      </ul>
-                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
-                    </div>
-                  )}
-                  {/* M42 — « Autour, à moins de N m » : ventes DVF + permis (36 mois). Rien si vide. */}
-                  {f.voisinage_proche && (
-                    <div data-voisinage-proche className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                      <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
-                      <div className="mt-1 text-txt-mut">
-                        {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(36 mois)</span>
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
-                    </div>
-                  )}
-                </div>
-              </RefDrawer>
-            )}
+            {/* M55-O phase 2.1c : le tiroir « Contexte » (historique + voisinage) est ABSORBÉ dans
+                « Marché et secteur » (hyper-local). Il ne vit plus en tiroir séparé. */}
 
             {/* ⑤ PROPRIÉTÉ — société (M43) + signaux vendeur. CARTE ACCENTUÉE VIOLETTE = le signal chaud. */}
             <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
@@ -1868,7 +1862,7 @@ export function Fiche({ idu }: { idu: string }) {
             </RefDrawer>
 
             {/* ⑥ RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ). */}
-            <RefDrawer id="risques" icon={IC.risques} name="Risques"
+            <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
               value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
               micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
               {risquesLines.length
@@ -1883,7 +1877,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
-            <RefDrawer id="confiance" icon={IC.confiance} name="Les données"
+            <RefDrawer id="confiance" icon={IC.confiance} name="Données et méthode"
               value={f.data_sources?.length ? CLIENT.fiche.sourcesUtilisees(f.data_sources.length) : confianceValue}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
