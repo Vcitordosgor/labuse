@@ -2176,7 +2176,10 @@ function TraducteurBloc({ idu }: { idu: string }) {
       </button>
       {open && (
         <div className="mt-2">
-          <AvisIA className="mb-2 border-violet/25 bg-violet/[0.05] text-txt-mut" />
+          {/* M55-N point 9 (décision Vic) : <AvisIA/> RETIRÉ du traducteur — la traduction de règles
+              PLU est une LECTURE FACTUELLE (rien à « juger »), la mise en garde IA y était hors-sujet.
+              Les surfaces IA GÉNÉRATIVES la conservent (Synthèse/explication, « Une question ? »,
+              recherche IA, entretien, copilote, restitution). */}
           {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
           {q.isError && (
             <p className="text-[11px] text-st-ecartee">
