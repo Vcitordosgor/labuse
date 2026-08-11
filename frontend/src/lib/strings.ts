@@ -67,10 +67,10 @@ export const CLIENT = {
     // (contexte/contexteSous) est SUPPRIMÉ — la date du classement vit dans la modale
     // « comprendre le classement » (algo.dateRun).
     bouton: 'Analyser les parcelles',
-    // M55-G point 2 (renommage Vic) : le mot reste VRAI — l'analyse RÉVÈLE un classement
-    // pré-calculé (run servi versionné), elle ne calcule rien. « Révéler », pas « calculer ».
-    // (boutonParc retiré : 0-caller depuis le stage 8.)
-    boutonFaire: 'Révéler les opportunités →',
+    // M55-G suite point 6 (renommage Vic, remplace « Révéler les opportunités → » du point 2) :
+    // « Demander à LABUSE → » — on demande un AVIS pré-calculé (run servi versionné), le mot
+    // reste vrai. (boutonParc retiré : 0-caller depuis le stage 8.)
+    boutonFaire: 'Demander à LABUSE →',
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
