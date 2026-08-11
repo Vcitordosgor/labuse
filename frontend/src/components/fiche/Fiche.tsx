@@ -210,6 +210,25 @@ function Line({ line }: { line: FicheLine }) {
 // Item 7 (UX V1) : `tip` = la définition du score au survol (Q et A ne restent jamais des sigles).
 // M55-O phase 2.2 : composant ScoreBar retiré (0-caller après retrait des jauges Qualité/Accessibilité).
 
+// M55-O phase 2.1b — « Vérifications d'éligibilité — ✓ N passées ». Les contrôles de cascade PASS
+// (emprise, surface vs seuil de valorisation, bâti probable…) qui NOYAIENT le tiroir Urbanisme
+// deviennent UNE ligne de synthèse dépliable dans le bloc Analyse. Repliés par défaut. Aucune
+// donnée nouvelle : ce sont les mêmes lignes `result==='PASS'` (preuve de rigueur, pas un mur).
+function EligibiliteReplie({ lines, color }: { lines: FicheLine[]; color: string }) {
+  const passes = lines.filter((l) => l.result === 'PASS')
+  if (passes.length === 0) return null
+  return (
+    <details data-eligibilite style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${color}33` }}>
+      <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#8fd8b4', listStyle: 'none' }}>
+        Vérifications d'éligibilité — <span style={{ color: '#5CE6A1' }}>✓ {passes.length} passées</span>
+      </summary>
+      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {passes.map((l, i) => <Line key={i} line={l} />)}
+      </div>
+    </details>
+  )
+}
+
 // ALGO-1 item 2 — le bloc « Signaux vendeur » (Score V agrégé 0-100 + bandes) est RETIRÉ de l'affichage : le backtest M3.6 le mesure CONTRE-prédictif pour la mutation (RR@1158 = 0,51 < 1, SCORING_SPEC §7-D). Le CALCUL reste en base (parcel_v_score, backtest) ; les signaux propriétaires FACTUELS restent servis par le tiroir Propriétaire (lines cascade), les chips verdict et le filtre « signaux propriétaire » du Header.
 const ICD_COLORS: Record<string, string> = { haute: '#4ADE96', partielle: '#9AA6A0', faible: '#F5A524', inconnu: '#9AA6A0' }
 const icdColor = (b: string) => ICD_COLORS[b] ?? '#9AA6A0'
@@ -1423,17 +1442,56 @@ export function Fiche({ idu }: { idu: string }) {
                 libellé doctrinal sous le badge, jamais « opportunité ». */}
             {f.renouvellement && (
               <div data-renouv-badge style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px' }}>
-                    Renouvellement — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
-                  </span>
-                  <button onClick={() => goDrawer('renouvellement')}
-                    style={{ background: 'none', border: 0, padding: 0, color: RENOUV.txt, textDecoration: 'underline', cursor: 'pointer', fontSize: 11 }}
-                    title="Voir les composantes du score de renouvellement">pourquoi ?</button>
-                </div>
+                {/* M55-O phase 2.1b : le lien « pourquoi ? » (goDrawer) est retiré — le détail
+                    (composantes) est désormais INLINE dans le bloc Analyse, juste dessous. */}
+                <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px', alignSelf: 'flex-start' }}>
+                  Renouvellement — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
+                </span>
                 <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: '#9db5a8' }}>{f.renouvellement.libelle}</p>
               </div>
             )}
+
+            {/* ═══ M55-O phase 2.1b — BLOC ANALYSE : TOUT l'avis LABUSE rassemblé (déployé au clic) ═══
+                Aujourd'hui éparpillé (P dans « Les données », motifs dans « Pourquoi pas ? »,
+                renouvellement et éligibilité en tiroirs) → réuni ici. Aucune donnée nouvelle. */}
+            {/* P (probabilité de mutation) + « Pourquoi ce score » — déménagé du tiroir Les données. */}
+            <div data-analyse-p style={{ marginTop: 13, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
+              <ScoreV2Block idu={idu} />
+            </div>
+            {/* Renouvellement — pourquoi ce rang (tiroir absorbé). */}
+            {f.renouvellement && (
+              <div data-analyse-renouv style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: '#7d9488', textTransform: 'uppercase' }}>Renouvellement — pourquoi ce rang</p>
+                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#9db5a8' }}>
+                  {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
+                  mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
+                </p>
+                {f.renouvellement.composantes.map((c) => (
+                  <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
+                    <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                      <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
+                  </div>
+                ))}
+                <MicroTriple items={[
+                  f.renouvellement.sdp_residuelle_m2 != null ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                  f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
+                  `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                ]} />
+                <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}{f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}</p>
+              </div>
+            )}
+            {/* Motifs rédhibitoires (« Pourquoi pas ? ») — tiroir entier absorbé. */}
+            {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
+              <div data-analyse-motifs style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
+                <p style={{ margin: '0 0 8px', fontSize: 10, letterSpacing: 0.8, color: '#7d9488', textTransform: 'uppercase' }}>Pourquoi pas ?</p>
+                <PourquoiPasTab idu={idu} />
+              </div>
+            )}
+            {/* Vérifications d'éligibilité — ✓ N passées (contrôles PASS du tiroir Urbanisme, repliés). */}
+            <EligibiliteReplie lines={reglesLines} color={verdict.color} />
           </div>
         )}
 
@@ -1647,7 +1705,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <TraducteurBloc idu={idu} />
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                {reglesLines.length > 0 && <div className="flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M55-O phase 2.1b : les contrôles PASS (« sans objet ») partent dans
+                    « Vérifications d'éligibilité » (bloc Analyse) ; ici, seules les lignes PLU
+                    substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
+                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} />)}</div> : null })()}
                 {/* M22-B : lettre de vérification de zonage — bouton discret (la barre M20 reste à 7 tuiles) */}
                 <a data-lettre-zonage href={`/lettre-zonage/${idu}.pdf`} target="_blank" rel="noreferrer"
                   className="self-start text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
@@ -1814,49 +1876,9 @@ export function Fiche({ idu }: { idu: string }) {
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </RefDrawer>
 
-            {/* M-RENOUV : tiroir « pourquoi » du segment — les 4 composantes du score,
-                sourcées ; wording doctrinal (géométrie favorable, jamais « division »). */}
-            {f.renouvellement && (
-              <RefDrawer id="renouvellement" icon={IC.faisa} name="Renouvellement — pourquoi ce rang"
-                value={`${f.renouvellement.renouv_score}/100`} valueColor={RENOUV.txt}
-                micro={<MicroJauge pct={f.renouvellement.renouv_score} label={`rang ${fmtInt(f.renouvellement.rang_commune)}/${fmtInt(f.renouvellement.total_commune)} commune`} />}>
-                <div data-renouv-pourquoi style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#9db5a8' }}>
-                    {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
-                    mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
-                  </p>
-                  {f.renouvellement.composantes.map((c) => (
-                    <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
-                      <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                        <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
-                      </div>
-                      <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
-                    </div>
-                  ))}
-                  <MicroTriple items={[
-                    f.renouvellement.sdp_residuelle_m2 != null ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
-                    f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                    `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
-                  ]} />
-                  <p style={{ margin: 0, fontSize: 10.5, lineHeight: 1.5, color: REF.dim }}>
-                    Potentiel physique et réglementaire — ni une mise en vente prévisible, ni une garantie de constructibilité.
-                  </p>
-                  {/* M47 : étiquette source · millésime — comme toute couche servie. */}
-                  <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>
-                    {f.renouvellement.source}
-                    {f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}
-                  </p>
-                </div>
-              </RefDrawer>
-            )}
-
-            {/* Pourquoi pas — conditionnel (écartée / flaggée) */}
-            {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
-              <RefDrawer id="pourquoi" icon={IC.risques} name="Pourquoi pas ?" value="motifs">
-                <PourquoiPasTab idu={idu} />
-              </RefDrawer>
-            )}
+            {/* M55-O phase 2.1b : les tiroirs « Renouvellement — pourquoi ce rang » et « Pourquoi
+                pas ? » sont ABSORBÉS dans le bloc Analyse (carte verdict, plus haut). Ils ne vivent
+                plus en tiroirs séparés. */}
 
             {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
@@ -1925,9 +1947,10 @@ export function Fiche({ idu }: { idu: string }) {
                     <p className="mt-1 text-[10px] text-txt-dim">{f.qualite_commune.source}</p>
                   </div>
                 )}
-                {/* Confiance données (ICD) + score P « pourquoi ». */}
+                {/* Confiance données (ICD) — jauge de confiance UNIQUE (M55-O 2.2). */}
                 {f.icd && <IcdBlockView icd={f.icd} />}
-                <ScoreV2Block idu={idu} />
+                {/* M55-O phase 2.1b : ScoreV2Block (P + « pourquoi ce score ») DÉMÉNAGÉ dans le bloc
+                    Analyse (carte verdict) — l'avis LABUSE est rassemblé, plus dans « Les données ». */}
                 {/* M55-O phase 2.2 — le bloc « Signaux additionnels » (f.flags) est SUPPRIMÉ : ce sont
                     des redites des tiroirs dédiés (ABF → Risques, bâti/SDP → Constructibilité, PPR →
                     Risques). Chaque information n'apparaît qu'une fois. */}
