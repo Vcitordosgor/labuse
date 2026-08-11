@@ -78,15 +78,12 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
       data-outil={m.key}
       data-outil-phare={phare ? '1' : undefined}
       onClick={() => open(m.key)}
-      className={`w-full rounded-lg border px-3 text-left transition-colors duration-quick ${
-        phare
-          ? 'border-violet/40 bg-violet/[0.07] py-2.5 hover:border-violet'
-          : 'border-line-2 bg-surface-3 py-2 hover:border-violet/50'
-      }`}
+      className={`door mb-0 w-full text-left transition-colors duration-quick hover:border-line-3 ${phare ? 'door-hot' : ''}`}
     >
-      <div className="flex items-center gap-2">
-        {phare && <span className="text-[10px] text-violet" title="Outil phare">★</span>}
+      {/* DA §7 — porte : les plus utilisés portent la TRANCHE VERTE (door-hot) + ÉTOILE AMBRE. */}
+      <div className="flex items-baseline justify-between gap-2">
         <span className={`text-xs font-medium ${phare ? 'text-txt-hi' : 'text-txt'}`}>{m.label}</span>
+        {phare && <span className="shrink-0 text-[11px] text-amber" title="Parmi les plus utilisés">★</span>}
       </div>
       <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-txt-mut' : 'text-[10.5px] text-txt-dim'}`}>
         {m.desc}
@@ -174,7 +171,7 @@ export function Rail() {
           <div className="shrink-0 px-5 pb-2 pt-5">
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              Les moteurs métier de LABUSE — <span className="text-violet">★</span> = les plus utilisés.
+              Les moteurs métier de LABUSE.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
@@ -187,7 +184,7 @@ export function Rail() {
                     <p className="label-caps">{g.label}</p>
                     <p className="text-[11px] text-txt-dim">{g.hint}</p>
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     {outils.map((m) => (
                       <OutilCard key={m.key} m={m} phare={!!m.phare} open={openOutil} />
                     ))}
@@ -195,6 +192,10 @@ export function Rail() {
                 </section>
               )
             })}
+            {/* DA §7 — légende en PIED (étoile ambre = les plus utilisés). */}
+            <p className="flex items-center gap-1.5 pt-1 text-[11px] text-txt-faint">
+              <span className="text-amber">★</span> les plus utilisés
+            </p>
           </div>
         </aside>
       )}

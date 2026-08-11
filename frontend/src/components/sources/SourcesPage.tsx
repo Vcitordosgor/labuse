@@ -120,8 +120,8 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const lic = licence(s)
   return (
     <div ref={ref} data-source-row
-      className={`flex items-center gap-3 rounded-[10px] border px-4 py-3 ${
-        focused ? 'border-mint bg-mint/[0.06]' : 'border-line-2 bg-surface-3'}`}>
+      className={`flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 ${
+        focused ? 'bg-mint/[0.06]' : ''}`}>
       <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? TOKENS.txtDim }}
         title={`Statut : ${s.status ?? 'inconnu'}`} />
       <div className="min-w-0 flex-1">
@@ -205,6 +205,12 @@ export function SourcesPage() {
     const k = s.category || 'Autres'
     cats.set(k, [...(cats.get(k) ?? []), s])
   }
+  // M56-D · DA §9 — bandeau 3 chiffres depuis les DONNÉES RÉELLES (jamais en dur) :
+  // sources branchées (total) · vérifiées auto (radar sondable, même marqueur que la ligne) ·
+  // millésime non tracé (ni date de donnée, ni millésime publié, ni ingestion tracée → repli).
+  const nTotal = data?.length ?? 0
+  const nVerif = data?.filter((s) => { const st = s.radar?.statut ?? 'non_sondable'; return st === 'a_jour' || st === 'nouvelle_publication' }).length ?? 0
+  const nSansMil = data?.filter((s) => !s.derniere_donnee && !millesimeNote(s) && !majReelle(s)).length ?? 0
   return (
     <div data-sources-page className="sources-print flex min-w-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-3xl px-6 py-6">
@@ -217,6 +223,14 @@ export function SourcesPage() {
             </p>
           </div>
         </div>
+        {/* DA §9 — bandeau 3 chiffres en tête (données réelles, cf. calcul ci-dessus). */}
+        {data && (
+          <div data-sources-bandeau className="stats mt-4" style={{ gridTemplateColumns: 'repeat(3,1fr)', maxWidth: 560 }}>
+            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">SOURCES BRANCHÉES</div><div className="stat-v" style={{ fontSize: 17 }}>{nTotal}</div></div>
+            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">VÉRIFIÉES AUTO</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--mint)' }}>{nVerif}</div></div>
+            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">MILLÉSIME NON TRACÉ</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--amber)' }}>{nSansMil}</div></div>
+          </div>
+        )}
         {/* M15 H1 : ce qui compte = « c'est bien la dernière version qui existe », pas « vérifié
             tel jour ». Statut de fraîcheur à trois états + marqueur sondable/déclaratif. */}
         <p className="mt-1.5 text-[11px] leading-relaxed text-txt-dim">
@@ -283,8 +297,9 @@ export function SourcesPage() {
         {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
         {[...cats.entries()].map(([cat, list]) => (
           <div key={cat} className="mt-6">
-            <p className="mb-2 font-mono text-[11px] tracking-widest text-txt-dim">{cat.toUpperCase()}</p>
-            <div className="flex flex-col gap-2">
+            {/* DA §9 — groupe encarté par catégorie : micro-label + .gcard, deux lignes par source. */}
+            <p className="label-caps mb-2 block">{cat.toUpperCase()}</p>
+            <div className="gcard">
               {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} />)}
             </div>
           </div>

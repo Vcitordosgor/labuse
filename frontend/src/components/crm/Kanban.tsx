@@ -79,9 +79,9 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
       {/* Phase 2 : contact proprio — PRIVACY : personne morale publique OU particulier JAMAIS nommé */}
       {e.proprietaire_public && (
         e.proprietaire_public.type === 'personne_morale' ? (
-          <div className="mt-1 truncate text-[10.5px] text-txt-mut" title={`Personne morale (registre public DGFiP) · SIREN ${e.proprietaire_public.siren ?? '—'}`}>
+          // DA §8 — carte CRM sans SIREN (nom du tiers en casse normale, texte neutre).
+          <div className="mt-1 truncate text-[10.5px] text-txt-mut" title="Personne morale (registre public DGFiP)">
             <span className="text-txt">{e.proprietaire_public.denomination}</span>
-            {e.proprietaire_public.siren ? <span className="text-txt-dim"> · SIREN {e.proprietaire_public.siren}</span> : null}
           </div>
         ) : (
           <div className="mt-1 truncate text-[10.5px] italic text-txt-dim" title="Propriétaire personne physique — jamais nommé (privacy)">
@@ -91,9 +91,8 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
         {meta && (
-          <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
-            <span className="h-1 w-1 rounded-full" style={{ background: meta.color }} />{meta.label}
-          </span>
+          /* DA §8 — tier en TEXTE COLORÉ simple (plus de pastille à fond). */
+          <span className="text-[12px]" style={{ color: meta.color }}>{meta.label}</span>
         )}
         {prem && (
           <>
@@ -384,7 +383,8 @@ export function Kanban() {
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />
                 ))}
                 {items.length === 0 && (
-                  <div className="rounded-lg bg-surface-2/60 py-4 text-center text-[11px] text-txt-dim">vide</div>
+                  /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */
+                  <div className="empty">Aucune parcelle<div className="mt-1 text-txt-faint">glissez-en une ici</div></div>
                 )}
               </div>
             </div>
