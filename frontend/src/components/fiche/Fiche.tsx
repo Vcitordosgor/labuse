@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
@@ -67,17 +67,24 @@ function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
     style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}><path d="m9 6 6 6-6 6" /></svg>
 }
 
+// M55-L point 10 — ACCORDÉON EXCLUSIF des tiroirs de la fiche : un seul ouvert à la fois, zéro
+// ouvert légal (initial). État à champ unique (store.ficheTiroir[idu]), exposé par contexte pour
+// éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
+const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
+
 /** M19 · tiroir de la référence : fermé = icône + nom + valeur clé + MICRO-PREUVE (jauge, segments,
  *  sparkline, pastilles, 3 données) ; ouvert = le détail (blocs existants). Une seule carte peut être
- *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié. */
-function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children, defaultOpen }: {
+ *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié.
+ *  M55-L point 10 : l'état `open` est CONTRÔLÉ par l'accordéon (contexte), plus d'état local. */
+function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children }: {
   id?: string; icon: ReactNode; name: string; value?: ReactNode; valueColor?: string
-  accent?: boolean; micro?: ReactNode; children?: ReactNode; defaultOpen?: boolean
+  accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
-  const [open, setOpen] = useState(!!defaultOpen)
+  const acc = useContext(FicheAccordionCtx)
+  const open = !!id && acc.openId === id
   return (
     <div data-drawer={id} style={{ background: accent ? REF.accent : REF.card, border: `1px solid ${accent ? REF.accentBorder : REF.cardBorder}`, borderRadius: 12, padding: '13px 15px', scrollMarginTop: 8 }}>
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+      <button onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
         style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
         <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
         {/* M30-revue A3 : le NOM passe à la ligne au lieu de s'écraser en « V » ou « … » —
@@ -949,7 +956,7 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: import('../../lib/types').ModeB; defaultOpen?: boolean }) {
+function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -964,7 +971,7 @@ function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: impo
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation" defaultOpen={defaultOpen}
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
       value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
       valueColor={mb.negatif ? '#E8B44C' : undefined}
       micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
@@ -1112,20 +1119,27 @@ export function Fiche({ idu }: { idu: string }) {
   // Synthèse (leur contenu vit en FicheDrawer). Un clic d'onglet migré ouvre + scrolle le tiroir
   // (au lieu de basculer la vue) ; les onglets non migrés gardent l'ancienne bascule `tab`.
   const [pendingScroll, setPendingScroll] = useState<string | null>(null)
+  // M55-L point 10 — accordéon EXCLUSIF des tiroirs (store, par parcelle). openId = tiroir ouvert
+  // (null = tout fermé). La valeur du contexte est mémoïsée (identité stable tant que rien ne bouge).
+  const tiroirOuvert = useApp((s) => s.ficheTiroir[idu] ?? null)
+  const setFicheTiroir = useApp((s) => s.setFicheTiroir)
+  const accValue = useMemo(
+    () => ({ openId: tiroirOuvert, toggle: (id: string) => setFicheTiroir(idu, tiroirOuvert === id ? null : id) }),
+    [tiroirOuvert, idu, setFicheTiroir],
+  )
   useEffect(() => {
     if (!pendingScroll || tab !== 'synthese') return
     const t = window.setTimeout(() => {
+      // le tiroir est déjà ouvert par l'état (goDrawer l'a posé) → il ne reste qu'à le faire défiler.
       const root = document.querySelector(`[data-drawer="${pendingScroll}"]`) as HTMLElement | null
-      if (root) {
-        const btn = root.querySelector('button')
-        if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click()
-        root.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
+      if (root) root.scrollIntoView({ behavior: 'smooth', block: 'start' })
       setPendingScroll(null)
-    }, 40)
+    }, 60)
     return () => window.clearTimeout(t)
   }, [pendingScroll, tab])
-  const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
+  // M55-L point 10 : goDrawer OUVRE le tiroir cible (accordéon exclusif → ferme les autres) puis
+  // le fait défiler à l'écran (le scroll suit, l'utilisateur n'est jamais perdu).
+  const goDrawer = (key: string) => { setTab('synthese'); setFicheTiroir(idu, key); setPendingScroll(key) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1159,8 +1173,8 @@ export function Fiche({ idu }: { idu: string }) {
   const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
   // M52 L2 — hiérarchie : l'essentiel (droit du sol + économie) s'ouvre à l'arrivée pour un tier
   // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
-  // que le verdict. La déclassée à signal fort remonte le Mode B en 2 (ouvert), l'essentiel replié.
-  const servable = !!(verdict && verdict.tier != null)
+  // M55-L point 10 : `servable` (ex-pilote de defaultOpen des tiroirs Règles/Faisabilité) retiré —
+  // l'accordéon est désormais tout fermé à l'ouverture (état initial légal), plus d'auto-ouverture.
   // M52 L3 — données ABSENTES, DITES (jamais approximées) : dérivées de nuls RÉELS du payload +
   // faits open-data connus. Chaque entrée est un fait vérifiable, pas une excuse vague.
   const donneesAbsentes: { quoi: string; pourquoi: string }[] = f ? [
@@ -1208,6 +1222,7 @@ export function Fiche({ idu }: { idu: string }) {
   // M55-L point 4 : conteneur fiche élargi de 10 % — 400 → 440px (valeur unique ici). `max-w-full`
   // garde la fiche dans l'écran aux petites largeurs (aucun débordement horizontal).
   return (
+    <FicheAccordionCtx.Provider value={accValue}>
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[440px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
@@ -1552,10 +1567,10 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
                 juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
-            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} defaultOpen />}
+            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
             {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
-            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme" defaultOpen={servable}
+            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
               value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
@@ -1624,7 +1639,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
             {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
-            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt} defaultOpen={servable}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
               micro={<MicroTriple items={delaisse
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
@@ -1978,6 +1993,7 @@ export function Fiche({ idu }: { idu: string }) {
 
 
     </aside>
+    </FicheAccordionCtx.Provider>
   )
 }
 

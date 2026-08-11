@@ -212,6 +212,11 @@ interface AppState {
   // au bouton. Idu → true = analyse demandée.
   verdictRevele: Record<string, boolean>
   revelerVerdict: (idu: string) => void
+  // M55-L point 10 — TIROIRS de la fiche en accordéon EXCLUSIF : un seul ouvert à la fois, zéro
+  // ouvert légal (état initial). État à champ unique PAR PARCELLE (session) : idu → id du tiroir
+  // ouvert, ou null (tout fermé).
+  ficheTiroir: Record<string, string | null>
+  setFicheTiroir: (idu: string, tiroir: string | null) => void
   layers: LayerToggles
   toggleLayer: (k: keyof LayerToggles) => void
   panelOpen: boolean
@@ -376,6 +381,8 @@ export const useApp = create<AppState>((set) => ({
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
+  ficheTiroir: {},
+  setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, renouv: false, couleurs_verdict: false },
