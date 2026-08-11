@@ -59,29 +59,8 @@ const IC = {
   contexte: drSvg(<><circle cx="12" cy="10" r="3" /><path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" /></>),
 }
 
-/** M52 L2 — théâtre : compteur « N parcelles analysées » qui s'incrémente 0→N en ~700 ms au
- *  chargement puis fige. Sobre, une ligne. N = compte GELÉ du run (`parc_analysees`), jamais
- *  inventé. Présentation seule. */
-function TheatreCompteur({ n }: { n: number }) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    let raf = 0
-    const t0 = performance.now()
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / 700)
-      setV(Math.round(n * (1 - Math.pow(1 - p, 3))))   // easeOutCubic → fige à n
-      if (p < 1) raf = requestAnimationFrame(tick)
-      else setV(n)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [n])
-  return (
-    <p data-theatre style={{ margin: '2px 0 1px', fontSize: 11, color: '#5f7568', letterSpacing: .2 }}>
-      <b style={{ color: '#8FA69A', fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('fr-FR')}</b> parcelles analysées
-    </p>
-  )
-}
+// M55-L point 6 : `TheatreCompteur` (« N parcelles analysées ») retiré de la fiche → 0-caller,
+// fonction supprimée. Le champ back `parc_analysees` reste servi (autres usages / PDF).
 
 function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke={accent ? REF.chevAccent : REF.chev} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
@@ -1567,8 +1546,9 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
-            {/* M52 L2 — théâtre : « N parcelles analysées » (compte gelé du run, jamais inventé). */}
-            {f.parc_analysees != null && <TheatreCompteur n={f.parc_analysees} />}
+            {/* M55-L point 6 : « N parcelles analysées » (TheatreCompteur) RETIRÉ de la fiche
+                (décision Vic). Le périmètre du run reste mentionné où il est requis (PDF, page
+                Sources) — retrait strictement local à la fiche. */}
 
             {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
                 juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
