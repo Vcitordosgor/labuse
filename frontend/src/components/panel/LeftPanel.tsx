@@ -239,7 +239,7 @@ function FiltresSection({ open, onToggle, onRetract }: { open: boolean; onToggle
 // votre place. « Afficher l'analyse LABUSE » — rien n'est masqué, le cadastre reste entier,
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
-  const { verdict, setVerdict, accueilVu, setAccueilVu, openFiltres } = useApp()
+  const { verdict, accueilVu, setAccueilVu, openFiltres, retourFiltres } = useApp()
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
@@ -254,10 +254,12 @@ function VerdictHero() {
         <div className="flex items-center justify-between gap-2">
           <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
             {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
-          <button data-verdict-off onClick={() => setVerdict(false)}
+          {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
+              sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
+          <button data-verdict-off onClick={retourFiltres}
             className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-            title="Retour — revenir au cadastre brut">
-            Masquer
+            title="Retour — revenir aux filtres">
+            Retour
           </button>
         </div>
         {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions

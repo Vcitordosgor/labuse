@@ -171,6 +171,10 @@ interface AppState {
   // « Afficher l'analyse LABUSE » (P2, revue n°3) allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
   setVerdict: (v: boolean) => void
+  // M55-J point 7 : « Retour » (ex-« Masquer ») — LA destination unique, définie ICI (pas
+  // recopiée dans chaque handler) : sortir de la vue verdict (analyse OU tri factuel) et
+  // atterrir sur Filtres OUVERT et éditable (analyse coupée), jamais sur Couches.
+  retourFiltres: () => void
   // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables).
   // V3 : le top peut porter le « pourquoi » relié au projet ; `projet` active « Enregistrer / PDF ».
   iaRestitution: IaRestitution | null
@@ -319,6 +323,10 @@ export const useApp = create<AppState>((set) => ({
       && s.mapPeint.zonage === p.zonage ? {} : { mapPeint: p }),
   verdict: false,
   setVerdict: (verdict) => set({ verdict }),
+  retourFiltres: () => set((s) => ({
+    verdict: false, panneauSection: 'filtres',
+    filters: { ...s.filters, analyseLabuse: false },
+  })),
   iaRestitution: null,
   setIaRestitution: (iaRestitution) => set({ iaRestitution }),
   projetBrouillon: null,
