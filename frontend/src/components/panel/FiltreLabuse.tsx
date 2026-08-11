@@ -440,17 +440,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             <p data-bandeau className={`text-[11.5px] leading-snug text-txt transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
               {CLIENT.revelation.contexte(live ?? 431_663, runDate)}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{CLIENT.revelation.contexteSous}</p>
-            {/* M55-F point 3 — DEUX choix, la hiérarchie visuelle dit la valeur : le tri factuel
-                (sobre, « je cherche moi-même ») et l'analyse LABUSE (mint dominant, le rituel du
-                stage 5, inchangé). La carte ne bouge QU'AU geste (aucune repeinte pendant le
-                réglage : verdict reste false tant qu'aucun bouton n'est cliqué). */}
-            <button data-analyser-btn onClick={lancer}
-              className={`mt-2.5 w-full rounded-lg bg-mint py-2.5 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
-              {CLIENT.revelation.boutonFaire}
-            </button>
+            {/* M55-F point 3 / M55-G point 2 — DEUX choix : « Voir les N parcelles » (sobre,
+                « je cherche moi-même ») passe EN PREMIER ; le CTA d'analyse (mint dominant, le
+                rituel du stage 5, inchangé) second, renommé « Révéler les opportunités → ».
+                La carte ne bouge QU'AU geste (aucune repeinte pendant le réglage : verdict
+                reste false tant qu'aucun bouton n'est cliqué). */}
             <button data-voir-factuel onClick={voirFactuel}
-              className={`mt-2 w-full rounded-lg border border-line-2 py-1.5 text-[12px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className={`mt-2.5 w-full rounded-lg border border-line-2 py-1.5 text-[12px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
               {CLIENT.revelation.voirN(live ?? 431_663)}
+            </button>
+            <button data-analyser-btn onClick={lancer}
+              className={`mt-2 w-full rounded-lg bg-mint py-2.5 font-display text-[13px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[shadow,opacity] duration-soft hover:shadow-[0_0_28px_rgba(92,230,161,0.5)] ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {CLIENT.revelation.boutonFaire}
             </button>
           </div>
         )}

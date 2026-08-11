@@ -67,12 +67,10 @@ export const CLIENT = {
       (date ? ` — classement du ${date}` : ''),
     contexteSous: 'Classement versionné, recalculé à chaque mise à jour majeure.',
     bouton: 'Analyser les parcelles',
-    // M55-D stage 7 : bouton CONTEXTUEL — N = le compteur vivant (réponse /filtre réelle) ;
-    // zéro filtre posé → le parc du périmètre.
-    // M55-D stage 8 : avec des filtres posés le bouton renvoie au nombre affiché juste au-dessus
-    // (compteur + bandeau, MÊME état) — « les », pas un second chiffre qui pourrait diverger.
-    boutonFaire: 'Les faire analyser par LABUSE →',
-    boutonParc: (n: number) => `Analyser les ${n.toLocaleString('fr-FR')} parcelles`,
+    // M55-G point 2 (renommage Vic) : le mot reste VRAI — l'analyse RÉVÈLE un classement
+    // pré-calculé (run servi versionné), elle ne calcule rien. « Révéler », pas « calculer ».
+    // (boutonParc retiré : 0-caller depuis le stage 8.)
+    boutonFaire: 'Révéler les opportunités →',
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
