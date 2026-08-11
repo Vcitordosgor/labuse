@@ -1,12 +1,11 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { csvExportUrl, getCommunes, getEntonnoir, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
+import { useMemo, useState } from 'react'
+import { csvExportUrl, getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
 import { ALL_TIER_META, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
-import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
@@ -106,67 +105,23 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
 // le bloc « Verdict · Scoring v2 (multi) » du panneau « + Filtre » (point d'entrée unique).
 
 // C4 + P2 (revue Vic n°3) : LABUSE MONTRE son analyse (avis argumenté), il ne décide pas à
-// votre place. Le popover expose l'entonnoir PAR MOTIF (SQL-exact) : le reste reste visible et
-// cliquable, chaque écartée motivée — vous pouvez contredire.
-function EntonnoirLine({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
-  const [open, setOpen] = useState(false)
-  const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['entonnoir', commune], queryFn: getEntonnoir, enabled: open })
-  // fermeture au clavier (Échap)
-  useEffect(() => {
-    if (!open) return
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [open])
+// votre place. M55-G point 4 : le lien DIT où il mène — « comprendre le classement → » ouvre
+// la MÊME modale que le bouton du bandeau (AlgoExplainer, état partagé store.algoOpen) : une
+// étiquette, une destination. L'ancien « pourquoi ? » (entonnoir par motif en flux, cible
+// muette) est retiré ; les motifs de déclassement restent accessibles par les chips
+// « Déclassées · motif » du panneau Filtres, et chaque écartée garde son motif en fiche.
+function LigneClassement({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
+  const setAlgoOpen = useApp((s) => s.setAlgoOpen)
   return (
-    <div className="mt-2 shrink-0">
-      <p className="text-[11px] text-txt-dim"
-        title="Opportunités détectées = brûlantes + chaudes (scoring P×C, hors étage 0 du run servi)">
-        <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
-        <button data-entonnoir-btn onClick={() => setOpen((o) => !o)}
-          className="ml-1.5 text-mint hover:underline" title="L'entonnoir par motif — pourquoi le reste est écarté (SQL-exact)">
-          {/* M55-A point 4 : même patron que « Couches » — fermé → gauche (⌄ pivoté), ouvert → bas. */}
-          pourquoi ? <span className={`inline-block transition-transform duration-quick ${open ? '' : 'rotate-90'}`} aria-hidden="true">⌄</span>
-        </button>
-      </p>
-      {/* Point 8 : l'explication s'ouvre EN FLUX (plus un popover flottant clippé/modal) → elle est
-          entièrement lisible ET la liste des parcelles reste scrollable en dessous (la section défile
-          naturellement). Plus de fond modal qui bloquait le scroll vers les parcelles. */}
-      {open && (
-        <div data-entonnoir-panel className="card-elev mt-1.5 p-3">
-          <p className="text-[11px] leading-snug text-txt">
-            LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
-            <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités
-            (brûlantes + chaudes). Le reste reste visible et cliquable — voici pourquoi il est écarté.
-          </p>
-          {q.data?.tiers && (
-            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
-              {(['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee'] as TierV2[]).map((t) => (
-                <span key={t} className="flex items-center gap-1 text-[10px] text-txt-mut">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_V2_META[t].color }} />
-                  {TIER_V2_META[t].label} <span className="font-mono">{fmt(q.data!.tiers![t])}</span>
-                </span>
-              ))}
-            </div>
-          )}
-          <p className="label-caps mt-1.5 text-[9.5px]">Le reste, par motif</p>
-          {q.isLoading && <Loading className="mt-1 text-[11px]" label="Décompte par motif" />}
-          {q.data && (q.data.motifs ?? []).length === 0 && (
-            <p className="mt-1 text-[10.5px] text-txt-dim">Détail par motif non disponible sur ce périmètre.</p>
-          )}
-          <div className="mt-1 flex flex-col gap-0.5">
-            {(q.data?.motifs ?? []).map((m) => (
-              <div key={m.motif} className={`flex justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>
-                <span className="min-w-0">{m.motif}</span>
-                <span className="tnum shrink-0 font-mono">{fmt(m.n)}</span>
-              </div>
-            ))}
-          </div>
-          {q.data && <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">{q.data.note}</p>}
-        </div>
-      )}
-    </div>
+    <p className="mt-2 shrink-0 text-[11px] text-txt-dim"
+      title="Opportunités détectées = brûlantes + chaudes (scoring P×C, hors étage 0 du run servi)">
+      <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
+      <button data-comprendre-btn onClick={() => setAlgoOpen(true)}
+        className="ml-1.5 text-mint hover:underline"
+        title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
+        {CLIENT.algo.lien}
+      </button>
+    </p>
   )
 }
 
@@ -358,7 +313,7 @@ export function ResultsSection() {
         <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
         <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
       </div>
-      <EntonnoirLine total={total} opportunites={opportunites} nFilters={nFilters} />
+      <LigneClassement total={total} opportunites={opportunites} nFilters={nFilters} />
 
       {/* E2 (M12) : les chips de verdict (Tout / Brûlantes / Chaudes / Réserve / À creuser /
           Écartées) ET le toggle « masquer les copropriétés » ont été RETIRÉS d'ici — ils

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
@@ -199,7 +199,10 @@ function VerdictHero() {
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
-  const [algoOpen, setAlgoOpen] = useState(false)
+  // M55-G point 4 : état de la modale PARTAGÉ (store) — le lien « comprendre le classement → »
+  // de la ligne résultats ouvre la même modale que le bouton du bandeau.
+  const algoOpen = useApp((s) => s.algoOpen)
+  const setAlgoOpen = useApp((s) => s.setAlgoOpen)
   if (verdict) {
     return (
       <div className={`mx-5 mb-1 flex shrink-0 items-center justify-between gap-2 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>

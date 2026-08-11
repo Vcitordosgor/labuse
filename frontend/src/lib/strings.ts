@@ -253,6 +253,8 @@ export const CLIENT = {
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
     bouton: 'Comprendre le classement',
+    // M55-G point 4 — le lien de la ligne résultats DIT où il mène (même modale que `bouton`)
+    lien: 'comprendre le classement →',
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
     // trame de contenu — écrite pour un client, VALIDÉE par Vic avant prod

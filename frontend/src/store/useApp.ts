@@ -154,6 +154,10 @@ interface AppState {
   // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
   toast: string | null
   setToast: (t: string | null) => void
+  // M55-G point 4 : la modale « Comment LABUSE classe » (AlgoExplainer) s'ouvre depuis DEUX
+  // surfaces (bouton du bandeau + lien de la ligne résultats) — état partagé, une seule modale.
+  algoOpen: boolean
+  setAlgoOpen: (v: boolean) => void
   // R1 (revue Vic n°2) : le VERDICT est un GESTE — la carte s'ouvre en cadastre neutre,
   // « Afficher l'analyse LABUSE » (P2, revue n°3) allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
@@ -297,6 +301,8 @@ export const useApp = create<AppState>((set) => ({
   openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
+  algoOpen: false,
+  setAlgoOpen: (algoOpen) => set({ algoOpen }),
   verdict: false,
   setVerdict: (verdict) => set({ verdict }),
   iaRestitution: null,
