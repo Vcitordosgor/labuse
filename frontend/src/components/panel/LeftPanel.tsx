@@ -264,31 +264,39 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       </span>
     )
   )
+  // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` +
+  // `overflow-y-auto` CLIPPE le haut du contenu qui déborde (bug flexbox connu : le débordement
+  // par `justify-content:center` n'est pas atteignable au scroll). Correctif structurel : le
+  // conteneur scrolle (`justify-start`), et le CONTENU est centré par marges automatiques
+  // (`my-auto`) — elles centrent quand il y a de la place ET se réduisent à 0 quand ça déborde,
+  // laissant le logo défiler depuis le haut. `pt-6` garde une respiration au sommet.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overflow-x-clip px-7 pb-8 text-center">
-      <svg viewBox="0 0 240 82" className="h-7 w-[72px] shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
-        <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
-      </svg>
-      {/* Ajustement Vic (9 ter) : le BOUTON d'abord — LE geste de la page. Contenu exact
-          « Commencer → » : le libellé garde sa flèche, rendue en SVG aligné. */}
-      <button data-commencer onClick={onCommencer}
-        className="group mt-7 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
-        <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
-        <svg viewBox="0 0 16 16" aria-hidden="true"
-          className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
-          <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
-            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-clip px-7 pb-8 pt-6 text-center">
+      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center">
+        <svg viewBox="0 0 240 82" className="h-7 w-[72px] shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
+          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
         </svg>
-      </button>
-      <h3 className="mt-8 font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
-      <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
-        <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
-        <span aria-hidden className="text-mint">·</span>
-        <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
-        <span aria-hidden className="text-mint">·</span>
-        <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
-      </p>
-      <p className="mt-3 max-w-[32ch] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
+        {/* Ajustement Vic (9 ter) : le BOUTON d'abord — LE geste de la page. Contenu exact
+            « Commencer → » : le libellé garde sa flèche, rendue en SVG aligné. */}
+        <button data-commencer onClick={onCommencer}
+          className="group mt-7 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+          <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"
+            className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
+            <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
+              strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <h3 className="mt-8 font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
+        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
+          <Seg n={d?.parcelles} l={A.segParcelles} src={A.src.parcelles} />
+          <span aria-hidden className="text-mint">·</span>
+          <Seg n={d?.communes} l={A.segCommunes} src={A.src.communes} />
+          <span aria-hidden className="text-mint">·</span>
+          <Seg n={d?.sources} l={A.segSources} src={A.src.sources} />
+        </p>
+        <p className="mt-3 max-w-[32ch] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
+      </div>
     </div>
   )
 }
