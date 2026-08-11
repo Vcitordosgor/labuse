@@ -188,6 +188,28 @@ interface Measure {
   alti: { pt: LngLat; z: number } | null
 }
 
+// M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
+// retour — un feedback d'APPUI, pas un état. Les bascules à état (3D, fond, outils) gardent
+// leur état persistant comme feedback ; ce patron est pour les boutons sans état.
+function BoutonCarte({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
+  const [flash, setFlash] = useState(false)
+  const timer = useRef<number | null>(null)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  const press = () => {
+    onClick()
+    setFlash(true)
+    if (timer.current) window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setFlash(false), 180)
+  }
+  return (
+    <button onClick={press} title={title}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border shadow-elev-1 transition-colors duration-quick ${
+        flash ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}>
+      {children}
+    </button>
+  )
+}
+
 export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
@@ -963,11 +985,10 @@ export function MapView() {
       <div ref={ref} className="absolute inset-0 h-full w-full" />
       <div className="absolute left-4 top-4 flex flex-col gap-2">
         {(['+', '−'] as const).map((s) => (
-          <button key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 bg-surface-2 text-txt shadow-elev-1 transition-colors duration-quick hover:text-txt-hi"
+          <BoutonCarte key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
             title={s === '+' ? 'Zoomer' : 'Dézoomer'}>
             {s}
-          </button>
+          </BoutonCarte>
         ))}
       </div>
       <MapToolbar />
