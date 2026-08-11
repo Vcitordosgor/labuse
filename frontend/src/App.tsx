@@ -253,7 +253,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen, compareIdus } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -316,7 +316,10 @@ export default function App() {
               </Suspense>
               {parcours && <ParcoursTinder />}
               {veillesOpen && <VeillesPanel />}
-              {compareOpen && compareIdus.length > 0 && <ComparePanel />}
+              {/* M55-L point 9 : le comparateur s'ouvre aussi depuis l'outil « Comparer » (Outils),
+                  donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
+                  (ComparePanel gère l'état vide). */}
+              {compareOpen && <ComparePanel />}
             </>
           )}
           {view === 'crm' && <Kanban />}

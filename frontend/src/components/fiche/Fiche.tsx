@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postFeedback, postSignalement, preDossierUrl, projetsPourParcelle, spfLetterUrl, toggleWatch, type CalculetteDefaults, type FeedbackVerdict } from '../../lib/api'
+import { createContext, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
+import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -59,46 +59,32 @@ const IC = {
   contexte: drSvg(<><circle cx="12" cy="10" r="3" /><path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" /></>),
 }
 
-/** M52 L2 — théâtre : compteur « N parcelles analysées » qui s'incrémente 0→N en ~700 ms au
- *  chargement puis fige. Sobre, une ligne. N = compte GELÉ du run (`parc_analysees`), jamais
- *  inventé. Présentation seule. */
-function TheatreCompteur({ n }: { n: number }) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    let raf = 0
-    const t0 = performance.now()
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / 700)
-      setV(Math.round(n * (1 - Math.pow(1 - p, 3))))   // easeOutCubic → fige à n
-      if (p < 1) raf = requestAnimationFrame(tick)
-      else setV(n)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [n])
-  return (
-    <p data-theatre style={{ margin: '2px 0 1px', fontSize: 11, color: '#5f7568', letterSpacing: .2 }}>
-      <b style={{ color: '#8FA69A', fontVariantNumeric: 'tabular-nums' }}>{v.toLocaleString('fr-FR')}</b> parcelles analysées
-    </p>
-  )
-}
+// M55-L point 6 : `TheatreCompteur` (« N parcelles analysées ») retiré de la fiche → 0-caller,
+// fonction supprimée. Le champ back `parc_analysees` reste servi (autres usages / PDF).
 
 function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke={accent ? REF.chevAccent : REF.chev} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
     style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}><path d="m9 6 6 6-6 6" /></svg>
 }
 
+// M55-L point 10 — ACCORDÉON EXCLUSIF des tiroirs de la fiche : un seul ouvert à la fois, zéro
+// ouvert légal (initial). État à champ unique (store.ficheTiroir[idu]), exposé par contexte pour
+// éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
+const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
+
 /** M19 · tiroir de la référence : fermé = icône + nom + valeur clé + MICRO-PREUVE (jauge, segments,
  *  sparkline, pastilles, 3 données) ; ouvert = le détail (blocs existants). Une seule carte peut être
- *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié. */
-function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children, defaultOpen }: {
+ *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié.
+ *  M55-L point 10 : l'état `open` est CONTRÔLÉ par l'accordéon (contexte), plus d'état local. */
+function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children }: {
   id?: string; icon: ReactNode; name: string; value?: ReactNode; valueColor?: string
-  accent?: boolean; micro?: ReactNode; children?: ReactNode; defaultOpen?: boolean
+  accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
-  const [open, setOpen] = useState(!!defaultOpen)
+  const acc = useContext(FicheAccordionCtx)
+  const open = !!id && acc.openId === id
   return (
     <div data-drawer={id} style={{ background: accent ? REF.accent : REF.card, border: `1px solid ${accent ? REF.accentBorder : REF.cardBorder}`, borderRadius: 12, padding: '13px 15px', scrollMarginTop: 8 }}>
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+      <button onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
         style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
         <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
         {/* M30-revue A3 : le NOM passe à la ligne au lieu de s'écraser en « V » ou « … » —
@@ -448,28 +434,9 @@ function CopyIdu({ value }: { value: string }) {
   )
 }
 
-// M20 — pack apporteur : lien public lecture seule, filigrané + horodaté + compteur de vues.
-function ShareButton({ idu }: { idu: string }) {
-  const share = useMutation({ mutationFn: () => createShare(idu) })
-  return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <button onClick={() => share.mutate()}
-        style={{ width: 31, height: 31, border: '1px solid #232e29', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d9488', cursor: 'pointer' }}
-        title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5" /></svg>
-      </button>
-      {share.data && (
-        <div className="floating absolute bottom-10 right-0 z-20 w-64 p-3 text-[11px]">
-          <p className="label-caps">Lien apporteur</p>
-          <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
-            {window.location.origin}{share.data.url}
-          </a>
-          <p className="mt-1 text-[11px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
-        </div>
-      )}
-    </div>
-  )
-}
+// M55-L point 3 — l'icône « partager » (pack apporteur : lien public filigrané) a été RETIRÉE du
+// header de la fiche (décision Vic). La fonction ShareButton et l'import createShare deviennent
+// 0-caller côté front → retirés aussi (endpoint back /partners/share intact, revient au besoin).
 
 function PipelineButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
@@ -489,9 +456,9 @@ function PipelineButton({ idu }: { idu: string }) {
       aria-disabled={!!inPipe}
       className={`flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-xs font-medium ${
         inPipe ? 'cursor-default border border-line-2 bg-surface-3 text-txt-mut' : 'bg-mint text-mint-ink hover:brightness-110'}`}
-      title={inPipe ? 'Déjà suivie dans le pipeline (voir CRM)' : 'Ajouter au pipeline de prospection'}
+      title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
     >
-      {add.isPending ? 'Ajout…' : inPipe ? '✓ Dans le pipeline' : '+ Pipeline'}
+      {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
     </button>
   )
 }
@@ -989,7 +956,7 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: import('../../lib/types').ModeB; defaultOpen?: boolean }) {
+function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -1004,7 +971,7 @@ function ModeBDrawer({ idu, initial, defaultOpen }: { idu: string; initial: impo
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation" defaultOpen={defaultOpen}
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
       value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
       valueColor={mb.negatif ? '#E8B44C' : undefined}
       micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
@@ -1129,6 +1096,9 @@ function PatrimoineLink({ siren }: { siren: string }) {
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
+  const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
+  const revelerVerdict = useApp((s) => s.revelerVerdict)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
@@ -1149,20 +1119,27 @@ export function Fiche({ idu }: { idu: string }) {
   // Synthèse (leur contenu vit en FicheDrawer). Un clic d'onglet migré ouvre + scrolle le tiroir
   // (au lieu de basculer la vue) ; les onglets non migrés gardent l'ancienne bascule `tab`.
   const [pendingScroll, setPendingScroll] = useState<string | null>(null)
+  // M55-L point 10 — accordéon EXCLUSIF des tiroirs (store, par parcelle). openId = tiroir ouvert
+  // (null = tout fermé). La valeur du contexte est mémoïsée (identité stable tant que rien ne bouge).
+  const tiroirOuvert = useApp((s) => s.ficheTiroir[idu] ?? null)
+  const setFicheTiroir = useApp((s) => s.setFicheTiroir)
+  const accValue = useMemo(
+    () => ({ openId: tiroirOuvert, toggle: (id: string) => setFicheTiroir(idu, tiroirOuvert === id ? null : id) }),
+    [tiroirOuvert, idu, setFicheTiroir],
+  )
   useEffect(() => {
     if (!pendingScroll || tab !== 'synthese') return
     const t = window.setTimeout(() => {
+      // le tiroir est déjà ouvert par l'état (goDrawer l'a posé) → il ne reste qu'à le faire défiler.
       const root = document.querySelector(`[data-drawer="${pendingScroll}"]`) as HTMLElement | null
-      if (root) {
-        const btn = root.querySelector('button')
-        if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click()
-        root.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
+      if (root) root.scrollIntoView({ behavior: 'smooth', block: 'start' })
       setPendingScroll(null)
-    }, 40)
+    }, 60)
     return () => window.clearTimeout(t)
   }, [pendingScroll, tab])
-  const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
+  // M55-L point 10 : goDrawer OUVRE le tiroir cible (accordéon exclusif → ferme les autres) puis
+  // le fait défiler à l'écran (le scroll suit, l'utilisateur n'est jamais perdu).
+  const goDrawer = (key: string) => { setTab('synthese'); setFicheTiroir(idu, key); setPendingScroll(key) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1196,8 +1173,8 @@ export function Fiche({ idu }: { idu: string }) {
   const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
   // M52 L2 — hiérarchie : l'essentiel (droit du sol + économie) s'ouvre à l'arrivée pour un tier
   // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
-  // que le verdict. La déclassée à signal fort remonte le Mode B en 2 (ouvert), l'essentiel replié.
-  const servable = !!(verdict && verdict.tier != null)
+  // M55-L point 10 : `servable` (ex-pilote de defaultOpen des tiroirs Règles/Faisabilité) retiré —
+  // l'accordéon est désormais tout fermé à l'ouverture (état initial légal), plus d'auto-ouverture.
   // M52 L3 — données ABSENTES, DITES (jamais approximées) : dérivées de nuls RÉELS du payload +
   // faits open-data connus. Chaque entrée est un fait vérifiable, pas une excuse vague.
   const donneesAbsentes: { quoi: string; pourquoi: string }[] = f ? [
@@ -1242,8 +1219,11 @@ export function Fiche({ idu }: { idu: string }) {
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
+  // M55-L point 4 : conteneur fiche élargi de 10 % — 400 → 440px (valeur unique ici). `max-w-full`
+  // garde la fiche dans l'écran aux petites largeurs (aucun débordement horizontal).
   return (
-    <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
+    <FicheAccordionCtx.Provider value={accValue}>
+    <aside className="absolute right-0 top-0 z-10 flex h-full w-[440px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
           sourcés y restent intégralement (R1 : rien n'est supprimé). */}
@@ -1285,7 +1265,17 @@ export function Fiche({ idu }: { idu: string }) {
               <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: '#5f7568' }}>{iduCourt(idu)}</p>
             )}
             {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
-            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</p>
+            {/* M55-L point 2 : adresse absente → « i » explicatif (absence réelle dans la source,
+                pas un défaut de l'outil). Contenu depuis la source unique CLIENT.fiche. */}
+            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>
+              {f?.adresse ?? CLIENT.fiche.adresseAbsente}
+              {!f?.adresse && (
+                <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
+                  <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, marginLeft: 6, borderRadius: 999, border: '1px solid #2f7a54', color: '#7d9488', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
+                </Tip>
+              )}
+            </p>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#5f7568' }}>
               {f?.surface_m2 ? `${fmtM2(f.surface_m2)} · ` : ''}
               {f?.adresse && (
@@ -1299,7 +1289,6 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             {/* C4 : cloche = suivi (état réel via WatchButton, style référence) */}
             <WatchButton idu={idu} />
-            <ShareButton idu={idu} />
             <button onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
               style={{ width: 31, height: 31, border: `1px solid ${ficheSearchOpen ? '#2f7a54' : '#232e29'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? '#7de3ab' : '#7d9488', cursor: 'pointer' }}
               title="Rechercher dans cette fiche">
@@ -1313,8 +1302,25 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         </div>
 
+        {/* M55-L point 5 — VERDICT À LA DEMANDE. À l'ouverture (verdict non encore demandé pour
+            cette parcelle dans la session), un BOUTON vert remplace le bloc verdict — l'avis n'est
+            jamais imposé à qui veut d'abord des informations. C'est le SEUL élément vert de ce
+            niveau. Au clic, le bloc verdict complet se déploie (mémorisé par parcelle, session).
+            Vaut aussi en mode factuel (le bouton apparaît pareillement : rien n'est imposé, tout
+            est accessible). Les PDF gardent le verdict sans condition (rail back inchangé). */}
+        {f && verdict && !verdictRevele && (
+          <button data-demander-analyse onClick={() => revelerVerdict(idu)}
+            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
+            title="Déployer le verdict, le score et « pourquoi »">
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}>
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2.5 12.2 7 17 7.6 13.5 11 14.4 16 10 13.6 5.6 16 6.5 11 3 7.6 7.8 7Z" /></svg>
+              {CLIENT.fiche.demanderAnalyse}
+            </span>
+            <span style={{ fontSize: 11.5, fontWeight: 500, color: '#0a2419', opacity: .85 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
+          </button>
+        )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
-        {f && verdict && (
+        {f && verdict && verdictRevele && (
           <div data-verdict-card style={{ background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
@@ -1555,15 +1561,27 @@ export function Fiche({ idu }: { idu: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
-            {/* M52 L2 — théâtre : « N parcelles analysées » (compte gelé du run, jamais inventé). */}
-            {f.parc_analysees != null && <TheatreCompteur n={f.parc_analysees} />}
+            {/* M55-L point 11 — BOUTONS IA EN TÊTE de fiche (mauve = couleur IA LABUSE, cf. « + Projet »
+                / « Pourquoi ce score »), mis en valeur, visibles sans défilement dès l'ouverture.
+                « Une question ? » (AskBar) + « Synthèse ». Même palette violette qu'avant (aucun
+                nouveau composant), remontée + encadrée. */}
+            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid #2c2348', background: 'rgba(124,92,240,0.05)', borderRadius: 13, padding: 9 }}>
+              <button onClick={() => setAskOpen(true)} data-askbar-open
+                style={{ background: '#140f22', border: '1px solid #3d3163', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: '#c9b6f2', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
+                <span style={{ flex: 1, fontSize: 13, color: '#d8ccf5', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
+                <span style={{ fontSize: 13, color: '#8a6ff0', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
+              </button>
+              {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
+              <SyntheseIA idu={idu} />
+            </div>
 
             {/* M52 L2 — ADAPTATION déclassée à signal fort : le Mode B (le « et si ») remonte en 2,
                 juste après le verdict, ouvert. Pour un tier servable il reste dans l'ÉCONOMIE (③). */}
-            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} defaultOpen />}
+            {signalEcarte && f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
             {/* ② DROIT DU SOL — Règles d'urbanisme (zonage M40, procédure M41). Ouvert si servable. */}
-            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme" defaultOpen={servable}
+            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
               value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
               micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
@@ -1632,7 +1650,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
             {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
-            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt} defaultOpen={servable}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
               micro={<MicroTriple items={delaisse
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
@@ -1760,11 +1778,17 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                    {/* M54-EXPO A2 — le courrier SPF pré-rempli, branché LÀ où l'UI le promet. */}
-                    <a data-spf-letter href={spfLetterUrl(idu)} target="_blank" rel="noreferrer"
-                      className="mt-1.5 block text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
+                    {/* M55-L point 12 — CONSTAT : le lien ouvrait `/parcels/{idu}/spf-letter` (lettre
+                        TEXTE brute dans un onglet, 200 text/plain), pas un outil. Il OUVRE désormais
+                        l'OUTIL courrier existant (M09, workflow SPF/CERFA) pré-rempli sur la parcelle
+                        courante (M09 lit selectedIdu, préservé par setModule) — même mécanique que la
+                        tuile Courrier. Le contexte parcelle passe (vérifié). Nuance rapportée : M09
+                        n'a pas encore de motif « SPF » dédié (motifs : standard/indivision/succession)
+                        ; l'endpoint /spf-letter reste servi (réactivable). */}
+                    <button data-spf-letter onClick={() => setModule('courriers')}
+                      className="mt-1.5 block text-left text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
                       → {CLIENT.fiche.export.spf} (courrier pré-rempli à envoyer au SPF)
-                    </a>
+                    </button>
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
@@ -1899,32 +1923,33 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* CARTE IA — EN BAS de la pile (jamais en tête), une seule ligne (spec) */}
-            <button onClick={() => setAskOpen(true)} data-askbar-open
-              style={{ background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: '#c9b6f2', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
-              <span style={{ flex: 1, fontSize: 13, color: '#d8ccf5', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
-              <span style={{ fontSize: 13, color: '#8a6ff0', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
-            </button>
-            {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
-            <SyntheseIA idu={idu} />
+            {/* M55-L point 11 : le bloc IA (« Une question ? » + « Synthèse ») est REMONTÉ en tête
+                de fiche (voir plus haut, data-ia-tete). Il ne vit plus en bas de la pile. */}
 
             {/* ═══ BARRE D'ACTIONS · 2 niveaux (spec) — DANS le flux (fin du « double écran de vide ») ═══ */}
             <div style={{ marginTop: 7, paddingTop: 14, borderTop: '1px solid #1a2320' }}>
+              {/* M55-L point 9 : « + CRM » (ex-« + Pipeline ») et « + Projet ». Comparer a AUSSI une
+                  entrée Outils (registry « comparer »), qui OUVRE le comparateur (la sélection persiste
+                  en session). Le bouton fiche est CONSERVÉ car il porte l'AJOUT : mesuré, ouvrir le
+                  tiroir Outils remet selectedIdu à null → un outil ne peut pas récupérer « la parcelle
+                  regardée ». Le retirer laisserait le comparateur non peuplable (rapport, Vic tranche). */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
-                {/* M54-EXPO-3 A8 — ajouter cette parcelle au comparateur (jusqu'à 3). */}
+                {/* M54-EXPO A8 — AJOUTER cette parcelle au comparateur (jusqu'à 3), puis ouvre le panneau. */}
                 <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
-                  title="Comparer avec d'autres parcelles"
+                  title="Ajouter au comparateur (Outils → Comparer pour le rouvrir)"
                   style={{ flexShrink: 0, padding: '0 12px', borderRadius: 9, border: '1px solid #2a3a33', background: '#0e1311', color: '#8fd8b4', fontSize: 12, cursor: 'pointer' }}>
                   ⇄ Comparer
                 </button>
               </div>
-              {/* BLOC SEGMENTÉ UNIQUE — 6 tuiles (spec), plus 6 boutons séparés (C5 réglé structurellement). */}
-              {/* M20-B1 : bloc segmenté UNIQUE, 6→7 colonnes (PDF·Dossier·Financier·1950·Cadastre·Maps·Courrier),
-                  un seul rang, pas de menu ni de scroll horizontal (réf. M19 conservée). */}
-              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', overflow: 'hidden' }}>
+              {/* M55-L point 8 — BARRE D'ACTIONS SUR DEUX LIGNES ÉQUILIBRÉES (décision Vic).
+                  Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
+                  One-pager · Pré-dossier PC. `gridAutoFlow:column + gridAutoColumns:1fr` → colonnes
+                  ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
+                  1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
+                  séparateurs qu'avant. */}
+              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
                 <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
@@ -1932,16 +1957,18 @@ export function Fiche({ idu }: { idu: string }) {
                 <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
                 {f.coords && (
+                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
+                  </a>
+                )}
+              </div>
+              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
+                {f.coords && (
                   <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>1950</p>
                   </button>
-                )}
-                {f.coords && (
-                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
-                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
-                  </a>
                 )}
                 {f.coords && (
                   <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
@@ -1949,29 +1976,25 @@ export function Fiche({ idu }: { idu: string }) {
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Maps</p>
                   </a>
                 )}
-                {/* M20-A · 7e tuile : Courrier propriétaire → ouvre le module M09 (setModule) avec la
-                    parcelle courante (selectedIdu) pré-remplie. Même moteur que l'entrée Outils, aucune
-                    divergence. Boussole gérée par M09 (aucune identité de personne physique). */}
+                {/* Courrier propriétaire → module M09 (setModule) pré-rempli sur la parcelle courante. */}
                 <button data-courrier-tile onClick={() => setModule('courriers')}
-                  style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
+                  style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
                   title={CLIENT.fiche.export.courrierTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.courrier}</p>
                 </button>
-              </div>
-              {/* M54-EXPO — rangée « documents » (one-pager comité, pré-dossier PC) SOUS la barre à 7
-                  tuiles, qui n'est PAS réordonnée. */}
-              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'flex', overflow: 'hidden' }}>
-                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: '9px 0 8px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
+                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
-                  <p style={{ margin: '4px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.onepager}</p>
                 </a>
                 <PreDossierTile idu={idu} />
               </div>
-              <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
-                Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
+              {/* M55-L point 7 : le widget feedback « Ce lead vous est-il utile ? » est RETIRÉ.
+                  La mention légale est CONSERVÉE, relogée en pied de fiche au plus petit corps
+                  lisible du DS (9px) et couleur discrète — elle reste présente dans les PDF (back). */}
+              <p data-disclaimer-legal style={{ marginTop: 11, fontSize: 9, lineHeight: 1.5, color: '#4d5f57' }}>
+                Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
               </p>
-              <FeedbackStrip idu={idu} />
             </div>
           </div>
           )
@@ -1980,6 +2003,7 @@ export function Fiche({ idu }: { idu: string }) {
 
 
     </aside>
+    </FicheAccordionCtx.Provider>
   )
 }
 
@@ -2020,28 +2044,10 @@ function SyntheseIA({ idu }: { idu: string }) {
 }
 
 
-/** M54-EXPO A4 — retour promoteur par parcelle (POST /feedback). Discret : 3 verdicts + un mot
- *  facultatif ; se replie en « merci » après envoi. Le verdict alimente models.ParcelFeedback. */
-function FeedbackStrip({ idu }: { idu: string }) {
-  const [sent, setSent] = useState(false)
-  const [comment, setComment] = useState('')
-  const [open, setOpen] = useState(false)
-  useEffect(() => { setSent(false); setComment(''); setOpen(false) }, [idu])
-  const send = useMutation({ mutationFn: (v: FeedbackVerdict) => postFeedback(idu, v, comment.trim() || undefined), onSuccess: () => setSent(true) })
-  if (sent) return <p data-feedback-merci style={{ marginTop: 8, fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbMerci}</p>
-  const btn = { padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0e1311', color: '#8fd8b4', cursor: 'pointer' } as const
-  return (
-    <div data-feedback style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 10.5, color: '#5f7568' }}>{CLIENT.fiche.export.fbAccroche}</span>
-      {open && <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder={CLIENT.fiche.export.fbComment}
-        style={{ flex: 1, minWidth: 120, padding: '3px 8px', fontSize: 10.5, borderRadius: 6, border: '1px solid #24302a', background: '#0b0f0d', color: '#c8d6cf' }} />}
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('good_lead')} title={CLIENT.fiche.export.fbGood}>👍 {CLIENT.fiche.export.fbGood}</button>
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('not_interested')}>{CLIENT.fiche.export.fbNot}</button>
-      <button style={btn} disabled={send.isPending} onClick={() => send.mutate('false_positive')}>{CLIENT.fiche.export.fbFalse}</button>
-      {!open && <button style={{ ...btn, border: 0, background: 'none', color: '#5f7568' }} onClick={() => setOpen(true)}>+ un mot</button>}
-    </div>
-  )
-}
+// M55-L point 7 : le widget feedback `FeedbackStrip` (« Ce lead vous est-il utile ? ») est retiré
+// de la fiche → fonction 0-caller supprimée, imports `postFeedback`/`FeedbackVerdict` retirés.
+// ⚠ BACKEND : le endpoint POST /feedback (M54-EXPO A4, models.ParcelFeedback) n'a plus AUCUN point
+// d'entrée côté front — NON supprimé côté back (décision Vic requise ; peut revenir, p. ex. CRM).
 
 
 /** M54-EXPO-2 Volet C — tuile « Dossier » enrichie du STATUT (GET /dossier/statut) : quota

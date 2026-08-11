@@ -330,14 +330,17 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const Seg = ({ n, l }: { n: number | null | undefined; l: (s: string) => string }) => (
     n == null ? null : <span className="font-medium text-txt tabular-nums whitespace-nowrap">{l(nf(n))}</span>
   )
-  // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` +
-  // `overflow-y-auto` CLIPPE le haut du contenu qui déborde (bug flexbox connu : le débordement
-  // par `justify-content:center` n'est pas atteignable au scroll). Correctif structurel : le
-  // conteneur scrolle (`justify-start`), et le CONTENU est centré par marges automatiques
-  // (`my-auto`) — elles centrent quand il y a de la place ET se réduisent à 0 quand ça déborde,
-  // laissant le logo défiler depuis le haut. `pt-6` garde une respiration au sommet.
+  // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` clippait
+  // le haut du contenu qui déborde. Correctif conservé : le CONTENU est centré par marges
+  // automatiques (`my-auto`) — elles centrent quand il y a de la place ET se réduisent à 0 quand
+  // ça déborde, laissant le logo (en tête) TOUJOURS visible depuis le haut.
+  // M55-L point 1 (décision Vic) : la section d'accueil est FIXE — pas de défilement, pas de
+  // barre. `overflow-hidden` (au lieu de `overflow-y-auto`) : clip propre, aucune barre. Padding
+  // vertical GÉNÉREUX (py-8, valeur DS) pour que la composition respire. Contrepartie assumée : à
+  // une taille où le contenu dépasserait, le bas se clippe (my-auto garde le haut/logo visible) —
+  // mesuré taille par taille (rapport), jamais de scroll réintroduit.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-clip px-7 pb-5 pt-5 text-center">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
       {/* M55-J point 4 : titre ET paragraphe tirent leur largeur maximale d'UNE SEULE valeur
           partagée (--accueil-w) — plus deux largeurs en dur côte à côte. Le paragraphe, jadis
           plus étroit (max-w-[32ch]), s'aligne sur le titre → moins de retours à la ligne, moins

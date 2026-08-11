@@ -342,16 +342,34 @@ export const CLIENT = {
   // Tout le texte client de la refonte fiche vit ici (R3) : Vic réécrit sans toucher au JSX.
   fiche: {
     adresseAbsente: 'adresse non rattachée (Absent)',   // M30 item 4 — jamais un champ vide, étiquette boussole
+    // M55-L point 2 — le « i » qui dit POURQUOI l'adresse manque : une absence RÉELLE dans la
+    // source, pas un défaut de l'outil. Chiffres = mesure interne M55-G (rattachement BAN, portée
+    // les parcelles), cités avec leur provenance (jamais un count live).
+    adresseAbsenteInfo:
+      'Aucune adresse de la Base Adresse Nationale (BAN) n’est rattachée à cette parcelle. '
+      + 'Ce rattachement couvre environ la moitié des parcelles de l’île (227 545 sur 431 663 — '
+      + 'mesure interne M55-G) : les parcelles naturelles ou sans bâti n’ont le plus souvent pas '
+      + 'd’adresse. C’est une absence réelle dans la source, pas un défaut de l’outil.',
     // C2 · le lien Pages Jaunes, renommé et assumé (jaune côté JSX)
     pagesJaunes: 'Voir sur Pages Jaunes',
     pagesJaunesTip:
       "Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké.",
     // C4 · l'œil devient cloche (cohérent avec les notifications M16)
-    suivre: 'Suivre cette parcelle (alertes sans pipeline)',
+    suivre: 'Suivre cette parcelle (alertes sans passer par le CRM)',   // M55-L point 9 : plus de « pipeline » à l'écran
     suivreActif: 'Suivie — les événements alimentent la cloche',
     // C1 · le motif d'écartement passe à côté du badge
     ecarteeVoir: 'voir pourquoi →',
     ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
+    // M55-L point 5 — verdict à la demande : à l'ouverture, un bouton remplace le bloc verdict
+    // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
+    demanderAnalyse: 'Demander l’analyse LABUSE',
+    demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
+    // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
+    // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).
+    crmAjouter: '+ CRM',
+    crmDedans: '✓ Dans le CRM',
+    crmAjouterTip: 'Ajouter au CRM (suivi de prospection)',
+    crmDedansTip: 'Déjà dans le CRM — voir la vue CRM',
     // C8 · le bloc IA en une ligne, accroche client
     ia: {
       accroche: 'Une question sur cette parcelle ?',

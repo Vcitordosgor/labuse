@@ -40,7 +40,10 @@ export function ComparePanel() {
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-3">
-          {q.isPending && <p className="p-4 text-xs text-txt-dim">Chargement…</p>}
+          {/* M55-L point 9 : le comparateur s'ouvre aussi vide (depuis l'outil Outils) → état vide
+              explicite (la query est désactivée à 0 parcelle, ne jamais afficher « Chargement »). */}
+          {compareIdus.length === 0 && <p data-compare-vide className="p-4 text-xs text-txt-dim">Aucune parcelle à comparer pour l’instant.</p>}
+          {compareIdus.length > 0 && q.isPending && <p className="p-4 text-xs text-txt-dim">Chargement…</p>}
           {parcels.length > 0 && (
             <table className="w-full border-collapse text-[12px]">
               <thead>
@@ -79,7 +82,9 @@ export function ComparePanel() {
               </tbody>
             </table>
           )}
-          <p className="mt-3 text-[10.5px] text-txt-dim">Ajoutez des parcelles depuis une fiche (« Comparer ») ou la Shortlist — jusqu’à 3.</p>
+          {/* M55-L point 9 : le bouton « Comparer » a quitté la fiche → l'ajout se fait en ouvrant
+              une parcelle puis Outils → « Comparer » (elle s'ajoute au comparateur). Jusqu'à 3. */}
+          <p className="mt-3 text-[10.5px] text-txt-dim">Ouvrez une parcelle, puis Outils → « Comparer » pour l’ajouter ici — jusqu’à 3.</p>
         </div>
       </div>
     </div>
