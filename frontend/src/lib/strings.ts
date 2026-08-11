@@ -336,6 +336,14 @@ export const CLIENT = {
   // Tout le texte client de la refonte fiche vit ici (R3) : Vic réécrit sans toucher au JSX.
   fiche: {
     adresseAbsente: 'adresse non rattachée (Absent)',   // M30 item 4 — jamais un champ vide, étiquette boussole
+    // M55-L point 2 — le « i » qui dit POURQUOI l'adresse manque : une absence RÉELLE dans la
+    // source, pas un défaut de l'outil. Chiffres = mesure interne M55-G (rattachement BAN, portée
+    // les parcelles), cités avec leur provenance (jamais un count live).
+    adresseAbsenteInfo:
+      'Aucune adresse de la Base Adresse Nationale (BAN) n’est rattachée à cette parcelle. '
+      + 'Ce rattachement couvre environ la moitié des parcelles de l’île (227 545 sur 431 663 — '
+      + 'mesure interne M55-G) : les parcelles naturelles ou sans bâti n’ont le plus souvent pas '
+      + 'd’adresse. C’est une absence réelle dans la source, pas un défaut de l’outil.',
     // C2 · le lien Pages Jaunes, renommé et assumé (jaune côté JSX)
     pagesJaunes: 'Voir sur Pages Jaunes',
     pagesJaunesTip:

@@ -1285,7 +1285,17 @@ export function Fiche({ idu }: { idu: string }) {
               <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: '#5f7568' }}>{iduCourt(idu)}</p>
             )}
             {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
-            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</p>
+            {/* M55-L point 2 : adresse absente → « i » explicatif (absence réelle dans la source,
+                pas un défaut de l'outil). Contenu depuis la source unique CLIENT.fiche. */}
+            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>
+              {f?.adresse ?? CLIENT.fiche.adresseAbsente}
+              {!f?.adresse && (
+                <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
+                  <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, marginLeft: 6, borderRadius: 999, border: '1px solid #2f7a54', color: '#7d9488', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
+                </Tip>
+              )}
+            </p>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#5f7568' }}>
               {f?.surface_m2 ? `${fmtM2(f.surface_m2)} · ` : ''}
               {f?.adresse && (
