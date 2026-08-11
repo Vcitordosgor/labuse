@@ -313,7 +313,8 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       <div data-communes-filtre>
         <TitreSection titre="1 · Communes"
           info="Le périmètre des résultats. Tout coché = toute l’île — rien coché aussi (aucune restriction)." />
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        <div className="gcard mt-2 p-3">
+        <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
             <Tip key={cp} side="top" tip={`${cp} → ${nom}`}>
               <button onClick={() => setCommunesFilter(
@@ -333,14 +334,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Ajouter tout</button>
           <button data-communes-aucune onClick={() => setCommunesFilter([])}
             className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Retirer tout</button>
-          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{nCom === 1 ? filters.communes[0] : `${nCom} communes`}</span>}
+          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{`${nCom} commune${nCom > 1 ? 's' : ''} sur ${CP_COMMUNES.length}`}</span>}
+        </div>
         </div>
       </div>
 
       {/* ═══════ 2 · LE TERRAIN (faits objectifs, toujours actifs — contraintes EN DERNIER) ═══════ */}
       <TitreSection cls="mt-4" titre="2 · Le terrain"
         info="Des faits objectifs (surface, zonage, état du sol) — valables sans aucune analyse." />
-      <div className="mt-1.5 flex flex-col gap-3">
+      <div className="gcard mt-2 flex flex-col gap-3 p-3">
         <div>
           <p className="label-caps text-txt-dim">Surface parcelle</p>
           <div className="mt-1 flex items-center gap-1.5"><NumField field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="surfaceMax" ph="max" suffix="m²" /></div>
@@ -366,9 +368,12 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           SOURCÉS, filtrables SANS analyse (pas des jugements). OU entre signaux du groupe,
           ET avec le reste. UN SEUL niveau, 7 signaux (décision Vic). ═══════ */}
       <div data-signaux-vie className="mt-4">
-        <TitreSection titre="3 · Signaux de vie"
-          info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source et date)." />
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <TitreSection titre="3 · Signaux de vie"
+            info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source et date)." />
+          {filters.signaux.length > 0 && <span className="shrink-0 text-[10.5px] text-txt-dim">{`${filters.signaux.length} actif${filters.signaux.length > 1 ? 's' : ''} sur ${SIGNAUX_KEYS.length}`}</span>}
+        </div>
+        <div className="gcard mt-2 flex flex-wrap gap-1.5 p-3">
           {SIGNAUX_KEYS.map((k) => <SignalChip key={k} k={k} />)}
         </div>
       </div>
@@ -490,7 +495,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               {CLIENT.revelation.voirN(live ?? 431_663)}
             </button>
             <button data-analyser-btn onClick={lancer}
-              className={`group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink shadow-[0_0_18px_rgba(92,230,161,0.3)] transition-[box-shadow,filter,transform,opacity] duration-soft hover:shadow-[0_0_30px_rgba(92,230,161,0.5)] hover:brightness-105 active:translate-y-[1px] active:brightness-95 ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className={`group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform,opacity] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95 ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"
                 className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">
@@ -534,10 +539,11 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           respiration — jamais collé aux deux boutons). M55-J : masqué pendant l'analyse (les
           filtres sont figés — Désactiver l'analyse d'abord pour retrouver le reset). */}
       {!analyseActive && (
-        <div className="mt-4 border-t border-line-2/50 pt-3">
+        <div className="mt-4 border-t border-line-2/50 pt-3 text-center">
+          {/* DA §6 — le destructif en LIEN (b-danger), jamais un bloc de poids égal aux gestes. */}
           <button onClick={resetTout}
             title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
-            className="min-h-8 w-full rounded-lg border border-st-ecartee/40 py-1.5 text-[11px] text-st-ecartee/80 transition-colors duration-quick hover:border-st-ecartee/70 hover:bg-st-ecartee/10 hover:text-st-ecartee">
+            className="mx-auto min-h-8 border-b border-danger-line py-0.5 text-[12px] text-danger transition-colors duration-quick hover:text-txt-hi">
             Réinitialiser les filtres
           </button>
         </div>

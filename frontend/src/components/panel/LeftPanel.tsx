@@ -117,6 +117,17 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'renouv', label: 'Renouvellement' },
 ]
 
+// M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
+// micro-label au-dessus). L'ordre des couches et les libellés sont INCHANGÉS ; seul le
+// regroupement visuel est ajouté. Les 12 clés sont couvertes une et une seule fois.
+const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
+  { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
+  { famille: 'L’analyse LABUSE', keys: ['couleurs_verdict', 'renouv'] },
+  { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
+  { famille: 'Risques et protections', keys: ['ppr', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
+]
+const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
+
 // M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,
 // centralisée) apparaît. Le clic sur la pastille NE bascule PAS la couche (stopPropagation dans Tip).
 function LayerInfoPill({ info }: { info: string }) {
@@ -177,29 +188,37 @@ function LayersSection({ open, onToggle, fill, closable }: {
         // BARRE HORIZONTALE fantôme. `clip` sur x supprime la barre sans créer de conteneur de
         // défilement, le tooltip reste peint. Défaut identique corrigé partout (fiche/CRM/tri).
         <div data-couches-drawer className={`mt-3 overflow-y-auto overflow-x-clip ${fill ? 'min-h-0 flex-1' : 'max-h-[38vh]'}`}>
-          <div className="flex flex-col gap-0.5">
-            {LAYERS.map(({ key, label }) => {
-              const on = layers[key]
-              const info = LAYER_INFO[key] ?? ''
-              return (
-                <div key={key} className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleLayer(key)}
-                    className="flex min-h-[28px] flex-1 items-center gap-3 rounded-md py-1 text-left transition-colors duration-quick"
-                  >
-                    <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
-                      {on && (
-                        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-                          <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
-                  </button>
-                  <LayerInfoPill info={info} />
+          <div className="flex flex-col gap-3.5">
+            {LAYER_FAMILIES.map(({ famille, keys }) => (
+              <div key={famille}>
+                <p className="label-caps mb-1.5 block">{famille}</p>
+                <div className="gcard">
+                  {keys.map((key) => {
+                    const on = layers[key]
+                    const info = LAYER_INFO[key] ?? ''
+                    const label = LAYER_LABEL[key] ?? key
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
+                        <button
+                          onClick={() => toggleLayer(key)}
+                          className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
+                        >
+                          <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
+                            {on && (
+                              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
+                                <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
+                              </svg>
+                            )}
+                          </span>
+                          <span className={`text-xs ${on ? 'text-txt-hi' : 'text-[#97A39B]'}`}>{label}</span>
+                        </button>
+                        <LayerInfoPill info={info} />
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -352,10 +371,20 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           logo NON touchés (Header, States, page maintenance Caddy) — signalés au rapport. */}
       <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
         style={{ ['--accueil-w' as string]: '240px' }}>
-        {/* Ajustement Vic (9 ter) : le BOUTON d'abord — LE geste de la page. Contenu exact
-            « Commencer → » : le libellé garde sa flèche, rendue en SVG aligné. */}
+        {/* M56-C · DA §12 — ordre : TITRE → bandeau 3 chiffres → ligne descriptive → bouton.
+            Le bouton passe APRÈS le texte (le texte pose, le geste conclut) ; halo retiré
+            (règle « ni halo ni lueur »). Remplace l'agencement M55 « bouton d'abord + glow ». */}
+        <h3 className="max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
+        {/* bandeau 3 chiffres (.stats) — chaque cellule porte le chiffre servi ; masqué si null. */}
+        <div className="stats mt-4 w-full" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.parcelles} l={A.segParcelles} /></div>
+          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.communes} l={A.segCommunes} /></div>
+          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.sources} l={A.segSources} /></div>
+        </div>
+        <p className="mt-4 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
+        {/* « Commencer → » : aplat menthe, sans halo. Flèche dessinée, léger glissement au survol. */}
         <button data-commencer onClick={onCommencer}
-          className="group flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-[box-shadow,filter,transform] duration-soft ease-cockpit hover:shadow-[0_0_38px_rgba(92,230,161,0.55)] hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+          className="group mt-6 flex w-full shrink-0 items-center justify-center gap-2 rounded-ctl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
           <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
           <svg viewBox="0 0 16 16" aria-hidden="true"
             className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
@@ -363,15 +392,6 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
               strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h3 className="mt-8 max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
-        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-[11px] leading-relaxed text-txt-mut">
-          <Seg n={d?.parcelles} l={A.segParcelles} />
-          <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.communes} l={A.segCommunes} />
-          <span aria-hidden className="text-mint">·</span>
-          <Seg n={d?.sources} l={A.segSources} />
-        </p>
-        <p className="mt-3 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
       </div>
     </div>
   )
