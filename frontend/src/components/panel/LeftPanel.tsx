@@ -328,13 +328,19 @@ export function LeftPanel() {
     if (verdict && !prevVerdict.current) { setPanneauSection('couches'); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
-  // Accordéon = propriété de l'ÉTAT (panneauSection) : ouvrir une section replie l'autre,
-  // quel que soit le chemin — la colonne (hauteur fixe) ne déborde jamais.
   const setAccueilVu = useApp((st) => st.setAccueilVu)
-  // M55-H point 8 : cliquer le titre de la section OUVERTE ne la replie pas (l'autre est
-  // fermée) — le clic OUVRE toujours la section visée, l'accordéon fait le reste.
-  const toggleCouches = () => { setPanneauSection('couches'); setAccueilVu() }
-  const toggleFiltres = () => { setPanneauSection('filtres'); setAccueilVu() }
+  // ═══ M55-I point 2 — ACCORDÉON = AUTOMATE À DEUX ÉTATS (règle Vic, définitive) ═══
+  // L'état `panneauSection` ('couches' | 'filtres' — JAMAIS null, garanti par le type) n'a
+  // que DEUX valeurs : A = Couches ouverte / Filtres fermée (défaut), B = Filtres ouverte /
+  // Couches fermée. `couchesOpen`/`filtresOpen` en DÉRIVENT (mutuellement exclusifs) : il est
+  // STRUCTURELLEMENT impossible d'avoir les deux ouvertes OU les deux fermées — ce n'est plus
+  // une règle de garde, c'est le type. Les DEUX seuls gestes qui basculent A↔B sont ci-dessous ;
+  // cliquer le titre de la section DÉJÀ ouverte réécrit la même valeur = no-op (nulle part où
+  // aller). Tous les autres chemins (« Commencer → » et header → `openFiltres` = B ; allumage
+  // analyse et retour post-analyse = A ; rechargement/lien partagé = défaut A) écrivent dans ce
+  // même état unique — chasse M55-I : 8 chemins testés, tous conformes.
+  const ouvrirCouches = () => { setPanneauSection('couches'); setAccueilVu() }
+  const ouvrirFiltres = () => { setPanneauSection('filtres'); setAccueilVu() }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -355,8 +361,8 @@ export function LeftPanel() {
                 languette « › » quand le panneau est masqué. */}
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
-          <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('couches')} />
+          <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
+          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -387,8 +393,8 @@ export function LeftPanel() {
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
-            <LayersSection open={couchesOpen} onToggle={toggleCouches} />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('couches')} />
+            <LayersSection open={couchesOpen} onToggle={ouvrirCouches} />
+            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} onRetract={() => setPanneauSection('couches')} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
