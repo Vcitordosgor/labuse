@@ -362,7 +362,7 @@ export const CLIENT = {
     ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
     // M55-L point 5 — verdict à la demande : à l'ouverture, un bouton remplace le bloc verdict
     // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
-    demanderAnalyse: 'Demander l’analyse LABUSE',
+    demanderAnalyse: 'Demander à LABUSE d’analyser la parcelle',   // M55-N point 4 (libellé Vic)
     demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
     // M55-L point 9 — « + Pipeline » → « + CRM » (source unique). Plus aucun « Pipeline » sur le
     // bouton ni ses infobulles (la vue CRM garde son vocabulaire propre en interne).

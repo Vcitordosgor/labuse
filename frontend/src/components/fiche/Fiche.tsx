@@ -1309,13 +1309,13 @@ export function Fiche({ idu }: { idu: string }) {
             Vaut aussi en mode factuel (le bouton apparaît pareillement : rien n'est imposé, tout
             est accessible). Les PDF gardent le verdict sans condition (rail back inchangé). */}
         {f && verdict && !verdictRevele && (
+          // M55-N point 4 : étoile retirée ; largeur AJUSTÉE AU CONTENU (alignSelf flex-start, plus
+          // de width:100%) — le bouton n'occupe plus toute la largeur de la fiche. Libellé « Demander
+          // à LABUSE d'analyser la parcelle » (strings) ; sous-titre conservé. Comportement inchangé.
           <button data-demander-analyse onClick={() => revelerVerdict(idu)}
-            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
+            style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'linear-gradient(180deg,#2FE0A0,#22c48b)', color: '#06130C', borderRadius: 13, border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 0 22px rgba(47,224,160,0.28)' }}
             title="Déployer le verdict, le score et « pourquoi »">
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}>
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2.5 12.2 7 17 7.6 13.5 11 14.4 16 10 13.6 5.6 16 6.5 11 3 7.6 7.8 7Z" /></svg>
-              {CLIENT.fiche.demanderAnalyse}
-            </span>
+            <span style={{ fontSize: 14.5, fontWeight: 700 }}>{CLIENT.fiche.demanderAnalyse}</span>
             <span style={{ fontSize: 11.5, fontWeight: 500, color: '#0a2419', opacity: .85 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
           </button>
         )}
