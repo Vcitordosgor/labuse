@@ -88,7 +88,13 @@ export const CLIENT = {
     voirPourquoi: 'voir pourquoi',
     ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
-    relancer: 'Relancer l’analyse',
+    // M55-M point 2 (décision Vic) : « Relancer l’analyse » → « Changer les filtres ». CONSTAT
+    // documenté (rapport) : l'ancien bouton relançait le rituel sur des filtres FIGÉS (même
+    // entrée → même résultat), il ne CHANGEAIT rien. Le libellé promettait faux. L'action est
+    // rendue honnête (défiger les filtres et rendre la main sur le panneau — cf. changerFiltres()
+    // dans FiltreLabuse) et le libellé dit désormais vrai. Clé renommée (l'ancienne `relancer`
+    // n'existe plus).
+    changerFiltres: 'Changer les filtres',
     // M55-J point 2 : « désactiver » devient un vrai bouton (majuscule initiale).
     desactiver: 'Désactiver l’analyse',
     erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',

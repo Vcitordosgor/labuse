@@ -143,10 +143,11 @@ function LayerInfoPill({ info }: { info: string }) {
 // ni résultats en dessous), elle occupe la hauteur restante (flex-1) et son tiroir remplit
 // (pas de plafond max-h) → plus de gros gap vide sous le contenu, le fond reste continu jusqu'en
 // bas. Sinon (accueil/résultats présents = eux flex-1), comportement plafonné inchangé.
-function LayersSection({ open, onToggle, fill }: {
+function LayersSection({ open, onToggle, fill, closable }: {
   open: boolean
   onToggle: () => void
   fill?: boolean
+  closable?: boolean   // M55-M point 1 : un listing existe → la section ouverte peut se refermer (→ listing)
 }) {
   const { layers, toggleLayer } = useApp()
   const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
@@ -157,7 +158,7 @@ function LayersSection({ open, onToggle, fill }: {
         onClick={onToggle}
         aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? 'Section ouverte (une section reste toujours ouverte)' : 'Ouvrir les couches — replie Filtres'}
+        title={open ? (closable ? 'Refermer — rendre la place au listing' : 'Section ouverte (une section reste toujours ouverte)') : 'Ouvrir les couches — replie Filtres'}
       >
         <span className="label-caps">Couches</span>
         {/* M55-C point 3bis : le badge « N actives » respire (gap-3 = 12 px) — la zone de clic
@@ -211,14 +212,14 @@ function LayersSection({ open, onToggle, fill }: {
 // (Verdict / Surface / SDP, mêmes champs du store) + « Tous les filtres → » qui déplie le panneau
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
-function FiltresSection({ open, onToggle, onRetract, fill }: { open: boolean; onToggle: () => void; onRetract?: () => void; fill?: boolean }) {
+function FiltresSection({ open, onToggle, onRetract, fill, closable }: { open: boolean; onToggle: () => void; onRetract?: () => void; fill?: boolean; closable?: boolean }) {
   const { filters } = useApp()
   const n = countActiveFilters(filters)
   return (
     <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? 'Section ouverte (une section reste toujours ouverte)' : 'Ouvrir les filtres — replie Couches'}>
+        title={open ? (closable ? 'Refermer — rendre la place au listing' : 'Section ouverte (une section reste toujours ouverte)') : 'Ouvrir les filtres — replie Couches'}>
         <span className="label-caps">Filtres</span>
         <span className="flex items-center gap-3">
           {n > 0 && (
@@ -248,6 +249,9 @@ function VerdictHero() {
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
+  // M55-M point 3 : le bandeau porte les CRITÈRES DU RUN (figés au lancement, jamais les filtres
+  // courants) — le bloc « ANALYSE EN COURS » a disparu du panneau Filtres.
+  const analyseRecap = useApp((s) => s.analyseRecap)
   // M55-J point 5 : DEUX modales distinctes (classement / scoring), état partagé au store.
   const algoModale = useApp((s) => s.algoModale)
   const setAlgoModale = useApp((s) => s.setAlgoModale)
@@ -267,6 +271,13 @@ function VerdictHero() {
             Retour
           </button>
         </div>
+        {/* M55-M point 3 : la phrase de critères DU RUN, juste sous le titre. Compacte : tronquée
+            proprement (truncate CSS) avec le détail complet au survol (title = récap complet, sans
+            « … ») — jamais de débordement qui casse le bandeau. Vient de store.analyseRecap (snapshot
+            du lancement), pas des filtres courants. Absente en tri factuel (pas de run décrit). */}
+        {analyse && analyseRecap && (
+          <p data-analyse-criteres className="truncate text-[10px] leading-snug text-txt-mut" title={analyseRecap}>{analyseRecap}</p>
+        )}
         {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions
             distinctes, deux modales. Seulement en mode analyse (hors-sujet en tri factuel). */}
         {/* M55-K point 2 : text-[10px] + px-1.5 + whitespace-nowrap — « Info classement » /
@@ -387,27 +398,26 @@ export function LeftPanel() {
   const sectionFill = accueilVu && !verdict
   const prevVerdict = useRef(verdict)
   useEffect(() => {
-    // ═══ M55-J point 6 — TRANSITION DE L'AUTOMATE (explicite, à champ unique) ═══
-    // L'ouverture de l'analyse (verdict false→true) est une ENTRÉE de l'automate : Couches se
-    // RÉTRACTE, Filtres devient la section ouverte (elle porte alors le récap du run + Relancer/
-    // Désactiver — compacte, cf. J1) → le listing récupère la hauteur. Corrige la spéc M55-I
-    // (qui rendait la main à Couches). L'invariant « exactement une section ouverte » tient.
-    if (verdict && !prevVerdict.current) { setPanneauSection('filtres'); setAccueilVu() }
+    // ═══ M55-M point 1 — TRANSITION DE L'AUTOMATE (explicite, à champ unique) ═══
+    // L'affichage d'un listing (verdict false→true, tri factuel OU analyse révélée) est une ENTRÉE
+    // de l'automate : Couches ET Filtres se RÉTRACTENT (`'listing'`) → le listing prend toute la
+    // hauteur. Remplace la cible M55-J (« analyse ⇒ Filtres ouverte ») : la cible a évolué, c'est
+    // le LISTING qui prime. Couvre aussi le RECHARGEMENT (al=1 / v=1) : le store boote verdict=false
+    // puis l'effet de boot (App.tsx) l'allume → cette transition restaure l'état listing (pas Couches).
+    if (verdict && !prevVerdict.current) { setPanneauSection('listing'); setAccueilVu() }
     prevVerdict.current = verdict
   }, [verdict])
   const setAccueilVu = useApp((st) => st.setAccueilVu)
-  // ═══ M55-I point 2 — ACCORDÉON = AUTOMATE À DEUX ÉTATS (règle Vic, définitive) ═══
-  // L'état `panneauSection` ('couches' | 'filtres' — JAMAIS null, garanti par le type) n'a
-  // que DEUX valeurs : A = Couches ouverte / Filtres fermée (défaut), B = Filtres ouverte /
-  // Couches fermée. `couchesOpen`/`filtresOpen` en DÉRIVENT (mutuellement exclusifs) : il est
-  // STRUCTURELLEMENT impossible d'avoir les deux ouvertes OU les deux fermées — ce n'est plus
-  // une règle de garde, c'est le type. Les DEUX seuls gestes qui basculent A↔B sont ci-dessous ;
-  // cliquer le titre de la section DÉJÀ ouverte réécrit la même valeur = no-op (nulle part où
-  // aller). Tous les autres chemins (« Commencer → » et header → `openFiltres` = B ; allumage
-  // analyse et retour post-analyse = A ; rechargement/lien partagé = défaut A) écrivent dans ce
-  // même état unique — chasse M55-I : 8 chemins testés, tous conformes.
-  const ouvrirCouches = () => { setPanneauSection('couches'); setAccueilVu() }
-  const ouvrirFiltres = () => { setPanneauSection('filtres'); setAccueilVu() }
+  // ═══ M55-I point 2 / M55-M point 1 — ACCORDÉON = AUTOMATE À TROIS ÉTATS (règle Vic) ═══
+  // `panneauSection` ('couches' | 'filtres' | 'listing' — JAMAIS null) : A = Couches ouverte, B =
+  // Filtres ouverte, C = LISTING (les deux rétractées, uniquement quand `verdict` — un listing est
+  // affiché). `couchesOpen`/`filtresOpen` DÉRIVENT (=== 'couches'/'filtres') ; en C les deux sont
+  // false. Il reste STRUCTURELLEMENT impossible d'avoir deux sections ouvertes (le type l'interdit).
+  // Les toggles ci-dessous : cliquer une section FERMÉE l'ouvre (exclusivité) ; cliquer la section
+  // OUVERTE la REFERME vers le listing (C) — mais SEULEMENT si un listing existe (`verdict`) ; hors
+  // listing, refermer est impossible (invariant M55-I : exactement une ouverte) → no-op.
+  const toggleCouches = () => { setAccueilVu(); setPanneauSection(couchesOpen ? (verdict ? 'listing' : 'couches') : 'couches') }
+  const toggleFiltres = () => { setAccueilVu(); setPanneauSection(filtresOpen ? (verdict ? 'listing' : 'filtres') : 'filtres') }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -428,8 +438,8 @@ export function LeftPanel() {
                 languette « › » quand le panneau est masqué. */}
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
-          <LayersSection open={couchesOpen} onToggle={ouvrirCouches} fill={sectionFill} />
-          <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} fill={sectionFill} />
+          <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable={verdict} />
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable={verdict} />
           {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -460,8 +470,8 @@ export function LeftPanel() {
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
-            <LayersSection open={couchesOpen} onToggle={ouvrirCouches} fill={sectionFill} />
-            <FiltresSection open={filtresOpen} onToggle={ouvrirFiltres} fill={sectionFill} />
+            <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable={verdict} />
+            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable={verdict} />
             {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
