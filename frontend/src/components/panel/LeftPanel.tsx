@@ -6,7 +6,7 @@ import { countActiveFilters } from '../../lib/filters'
 import { getAccueilChiffres } from '../../lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { ChevronSection } from './ChevronSection'
+import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
@@ -26,8 +26,7 @@ function AlgoExplainer({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-display text-sm font-bold text-txt-hi">{CLIENT.algo.titre}</h3>
-          <button onClick={onClose} className="shrink-0 rounded-md px-2 py-0.5 text-txt-dim hover:text-txt"
-            aria-label="Fermer">✕</button>
+          <CroixEntete onClick={onClose} title="Fermer" />
         </div>
         <div className="mt-3 flex flex-col gap-3">
           {CLIENT.algo.corps.map((s) => (
@@ -324,8 +323,7 @@ export function LeftPanel() {
             {/* M55-B point 5 : une FERMETURE, pas un repli → croix (×), cohérent avec la fiche
                 parcelle et le contexte commune (croix partout). Le ré-affichage se fait par la
                 languette « › » quand le panneau est masqué. */}
-            <button onClick={togglePanel} title="Fermer le panneau" aria-label="Fermer le panneau"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">✕</button>
+            <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} />
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />
@@ -357,8 +355,7 @@ export function LeftPanel() {
           <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-elev-3">
             <div className="flex shrink-0 items-center justify-between px-5 pt-4">
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
-              <button data-couches-fermer onClick={() => setMobileOpen(false)} aria-label="Fermer"
-                className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
+              <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
             <LayersSection open={couchesOpen} onToggle={toggleCouches} />
             <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection(null)} />

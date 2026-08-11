@@ -105,7 +105,7 @@ function Tiroir({ titre, sous, defaut = false, children }: { titre: string; sous
     <div className="border-t border-line-2/50">
       <button onClick={() => setOuvert((o) => !o)} className="flex w-full items-center justify-between py-1.5 text-left">
         <span className="text-xs font-medium text-txt-hi">{titre}{sous && <span className="text-txt-dim"> — {sous}</span>}</span>
-        <ChevronSection open={ouvert} petit />
+        <ChevronSection open={ouvert} />
       </button>
       {ouvert && <div className="pb-1">{children}</div>}
     </div>
