@@ -264,15 +264,18 @@ function VerdictHero() {
         </div>
         {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions
             distinctes, deux modales. Seulement en mode analyse (hors-sujet en tri factuel). */}
+        {/* M55-K point 2 : text-[10px] + px-1.5 + whitespace-nowrap — « Info classement » /
+            « Info scoring » tiennent côte à côte sur UNE ligne même au panneau le plus étroit
+            (240 px). flex-1 = deux moitiés égales, texte centré, jamais coupé. */}
         {analyse && (
           <div className="flex gap-1.5">
             <button data-algo-open onClick={() => setAlgoModale('classement')}
-              className="flex-1 rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="La méthode : le tri, le « ×N plus probable », la validation">
               {CLIENT.algo.bouton}
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}
-              className="flex-1 rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="Le sens des paliers : brûlante, chaude, potentiel long terme, à creuser, potentiel épuisé, écartée">
               {CLIENT.algo.boutonScoring}
             </button>
