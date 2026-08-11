@@ -135,9 +135,11 @@ export const CLIENT = {
     // le nombre nu (×13.1) ne s'affiche jamais sans cette unité de sens
     unite: 'plus probable',
     // infobulle carte (le détail, pas le sens de base)
+    // M55-G point 6 : « Plafond ×64 = certitude maximale » était FAUX — aucun plafond codé,
+    // ×64 est le sommet MESURÉ du run servi (3 parcelles). Même correction que la modale.
     tip: (n: string) =>
       `Cette parcelle est classée ${n} fois plus haut que la moyenne du parc analysé. ` +
-      `Plafond ×64 = certitude maximale du modèle.`,
+      `La tête du classement culmine à ×64 — un sommet mesuré, pas un plafond du modèle.`,
     absent: 'Classement non disponible',
   },
 
@@ -257,32 +259,39 @@ export const CLIENT = {
     lien: 'comprendre le classement →',
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
-    // trame de contenu — écrite pour un client, VALIDÉE par Vic avant prod
+    // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi
+    // q_v8_calibre (12/08/2026, preuves au rapport M55-G) :
+    //  · entraînement : ventes réelles 2023, vérifié sur 2024 (train.py m3-p-model, FREEZE.json) ;
+    //  · signaux appris (features.py) : âge de détention (tenure_bin), permis (permis_bin), état
+    //    du bâti (friche/végétation/emprise), contraintes PLU, marché du secteur (DVF) — les
+    //    anciens « procédures / succession / dirigeant » sont des signaux du Score V, PAS des
+    //    features du modèle P → retirés (« dirigeant » : avis avocat P2-34 en attente, jamais
+    //    dans la liste publique) ; « divisions / changements d'usage » non encodés → retirés ;
+    //  · ×N : AUCUN plafond codé — max MESURÉ ×64,36 (3 parcelles / 431 663), un sommet, pas un cap.
     corps: [
       {
-        h: 'Ce que le classement mesure',
-        p: 'Une seule chose : la probabilité qu’une parcelle CHANGE DE MAIN ou de destination ' +
-          'à court terme. Pas la valeur du terrain, pas la constructibilité — la mutabilité. ' +
-          'Le n°1 est la parcelle la plus susceptible de bouger, pas forcément la plus chère.',
+        h: 'Ce que mesure le classement',
+        p: 'Une seule chose : la probabilité qu’une parcelle change de main à court terme. ' +
+          'Pas sa valeur, pas sa beauté — sa mutabilité.',
       },
       {
-        h: 'Sur quoi il est entraîné',
-        p: 'Sur l’historique réel des mutations foncières de La Réunion (ventes, divisions, ' +
-          'changements d’usage) croisé avec des signaux publics : âge de détention, procédures, ' +
-          'succession, dirigeant, état du bâti, contraintes PLU. Le modèle apprend les motifs ' +
-          'qui ont précédé les mutations passées, puis les cherche sur les parcelles d’aujourd’hui.',
+        h: 'Comment',
+        p: 'Le modèle a appris sur les ventes réelles de La Réunion (année 2023, vérifié sur ' +
+          'les ventes 2024) : il a repéré les motifs qui précèdent une vente (âge de détention, ' +
+          'permis, état du bâti, marché du secteur, règles PLU…) et les cherche sur les ' +
+          'parcelles d’aujourd’hui.',
       },
       {
         h: 'Le « ×N »',
-        p: 'Une parcelle « ×13 » est jugée 13 fois plus susceptible d’être vendue que la moyenne. ' +
-          'Le plafond est ×64 : une poignée de parcelles atteignent la certitude maximale du ' +
-          'modèle et partagent donc ce même score de tête.',
+        p: '×13 = 13 fois plus de chances de se vendre qu’une parcelle moyenne. La tête du ' +
+          'classement culmine à ×64 — trois parcelles sur toute l’île : un sommet mesuré, ' +
+          'pas un plafond fixé par le modèle.',
       },
       {
-        h: 'Ce qu’il ne dit PAS',
-        p: 'Il ne dit pas que le propriétaire VEUT vendre, ni à quel prix, ni si l’opération est ' +
-          'rentable. Il trie 431 663 parcelles pour vous dire lesquelles regarder en premier. ' +
-          'La décision, la négociation et le montage restent votre métier.',
+        h: 'Ce qu’il ne dit pas',
+        p: 'Ni que le propriétaire veut vendre, ni le prix, ni la rentabilité. Il trie ' +
+          '431 663 parcelles pour dire lesquelles regarder en premier — la décision reste ' +
+          'votre métier.',
       },
     ] as { h: string; p: string }[],
   },
