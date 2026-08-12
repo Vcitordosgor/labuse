@@ -37,7 +37,11 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune, selectedIdu, view } = useApp()
+  // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
+  // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
+  // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
+  const ficheOuverte = selectedIdu != null && view !== 'sources'
   const [bmOpen, setBmOpen] = useState(false)
   const ile = commune == null
   // R5 : hint ancré à l'outil (pas un toast lointain), auto-éteint
@@ -49,7 +53,8 @@ export function MapToolbar() {
   }, [zoneHint])
 
   return (
-    <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
+    <div className="absolute top-4 flex flex-col items-end gap-2"
+      style={{ right: ficheOuverte ? 416 : 16, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
       {/* DA §11 — « Sombre » (fond de plan) et « 3D » ALIGNÉS sur une même ligne. */}
       <div className="flex items-center gap-2">
       {/* fond de plan */}

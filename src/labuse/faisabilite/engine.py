@@ -180,8 +180,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         steps.append(Step("Zone (renvoi AU→U)", rules.via_renvoi, rules.code, "Règlement, caractère de zone"))
 
     if not rules.constructible_neuf:
-        return fini(False, "Construction neuve non autorisée — secteur de transition "
-                    "(AU*st) : travaux mineurs de mise aux normes, H max 4 m.",
+        # M58-P1 (Q2) : NE PLUS hardcoder « secteur de transition (AU*st), H max 4 m » pour TOUT
+        # cas non constructible — c'était un faux positif (affiché même en zone A/N). Le verdict
+        # cite la ZONE RÉELLE lue sur la parcelle (rules.code), sans inventer de code de secteur
+        # ni de hauteur. Une valeur servie ne s'invente pas.
+        return fini(False, f"Construction neuve non autorisée en zone {rules.code}.",
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                     cause="zone_transition")
 
@@ -300,26 +303,31 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     hypotheses.append(f"Coefficient de rendement SDP→habitable supposé {hyp.coef_rendement:.0%}.")
 
     floor_lo, floor_hi = shab / hyp.logement_m2_haut, shab / hyp.logement_m2_bas
-    steps.append(Step("Logements (avant plafonds)",
+    # M58-P1 (Q1) : libellé — l'étape dit clairement qu'elle est AVANT le plafond de densité.
+    steps.append(Step("Logements — avant plafond de densité",
                       f"{shab:.0f} m² ÷ {hyp.logement_m2_haut:g} à {hyp.logement_m2_bas:g} m²/logt",
                       f"~{floor_lo:.0f} à {floor_hi:.0f}", "hypothèse surface logement"))
     hypotheses.append(f"Surface moyenne par logement supposée {hyp.logement_m2_bas:g}–{hyp.logement_m2_haut:g} m².")
 
     # ---- Plafond de DENSITÉ (filet de sécurité, remplace le COS) ----
+    # M58-P1 (Q1) : CALCUL INCHANGÉ (le cap = min(fourchette, densite_cap), assigné plus bas). Seul
+    # l'AFFICHAGE change : l'étape « après plafond » cite la fourchette RETENUE (capée), pas seulement
+    # le seuil « ≤ N » — pour lever l'apparente contradiction avant/après plafond.
     surface_ha = surface_m2 / 10000.0
     cap_logts_ha = hyp.densite_logts_ha_par_niveau * niveaux
     densite_cap = surface_ha * cap_logts_ha
-    steps.append(Step("Plafond de densité (filet de sécurité)",
+    capped_lo, capped_hi = min(floor_lo, densite_cap), min(floor_hi, densite_cap)
+    steps.append(Step(f"Logements — après plafond (≤ {densite_cap:.0f} logts)",
                       f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
                       f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
-                      f"≤ {densite_cap:.0f} logts", "hypothèse densité (ex-COS)"))
+                      f"~{capped_lo:.0f} à {capped_hi:.0f}", "hypothèse densité (ex-COS)"))
     hypotheses.append(f"Plafond de densité {hyp.densite_logts_ha_par_niveau:g} logts/ha par niveau "
                       "(filet de sécurité remplaçant le COS).")
     if densite_cap < floor_hi:
         modul.append(f"Plafond de densité {cap_logts_ha:.0f} logts/ha appliqué : le calcul détaillé "
                      f"donnait ~{math.floor(floor_lo)}-{math.ceil(floor_hi)} → borné à "
                      f"~{round(densite_cap)} logts (enveloppe théorique trop optimiste).")
-    floor_lo, floor_hi = min(floor_lo, densite_cap), min(floor_hi, densite_cap)
+    floor_lo, floor_hi = capped_lo, capped_hi
 
     # ---- Stationnement : 2 scénarios ----
     ppl = rules.places_par_logement()

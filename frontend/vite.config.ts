@@ -19,7 +19,10 @@ const API = 'http://127.0.0.1:8000'
 const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre', '/discover',
   '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
-  '/faisabilite', '/charge', '/signalement', '/guide',
+  '/faisabilite', '/charge', '/bilan', '/signalement', '/guide',
+  // '/bilan' (M58-P1) : la calculette de charge foncière charge /bilan/calculette-defaults —
+  // MANQUAIT au proxy dev → 404 rouge en `npm run dev` (la calculette tombait sur son état
+  // d'erreur Q5). Prod OK (même origine, FastAPI sert dist/). Comblé pour un dev honnête.
   '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
   '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
                        // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W
