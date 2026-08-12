@@ -69,7 +69,11 @@ SOURCES: list[dict] = [
          documentation_url="https://www.georisques.gouv.fr/doc-api",
          endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) ».",
-         technical_notes="✓ live 05/07/2026 (INSEE 97415) : /ssp → casias (ex-BASIAS) + instructions (ex-BASOL), géolocalisés + fiche BRGM. spatial_layers kind='sol_pollue'. Vague B (# TODO étage 1). last_sync_at à l'ingestion."),
+         technical_notes="PÉRIMÈTRE TRANCHÉ (M74 B) : /ssp expose 4 sous-collections, LABUSE ingère les 3 "
+                         "site-centrées — casias (ex-BASIAS, inventaire) + instructions (ex-BASOL, gestion) + "
+                         "conclusions_sis (SIS, périmètres réglementaires L.125-6 CE) — et EXCLUT conclusions_sup "
+                         "(servitude déjà portée par la couche SUP id 44, éviter le doublon). spatial_layers "
+                         "kind='sol_pollue'. Vague B. last_sync_at à l'ingestion."),
     dict(name="Géorisques — cavités souterraines", category="risques", provider="BRGM / Géorisques",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~1000 req/min/IP",
          documentation_url="https://www.georisques.gouv.fr/doc-api",
