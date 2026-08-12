@@ -9,13 +9,15 @@
 <style>
 :root{
   --bg-0:#0A0C0B; --bg-1:#0C0F0D; --bg-2:#111614; --bg-stat:#141A17; --bg-3:#161C19;
-  /* M64-P1 — CARTE, mode « Clair » : le rendu SOMBRE avec le seul fond du canvas passé au blanc.
-     Fond de carte (calque `bg`) et zones sans parcelles : #060A08 (sombre) → #FFFFFF (clair).
-     Toutes les autres couches (parcelles, limites, communes, zonages, risques) gardent leur teinte
-     sombre. Seules exceptions de lisibilité : pastilles de libellés de commune (fond clair, texte
-     sombre) et traits ACHROMATIQUES quasi-blancs (sélection/pulse/étiquette de zone) → #ECF5EF
-     devient #14181A sur blanc (contraste, jamais de teinte). L'UI hors carte reste sombre. */
-  --map-bg-sombre:#060A08; --map-bg-clair:#FFFFFF;
+  /* M65 P8 — CARTE, mode « Clair » = INVERSION FIGURE/FOND (redéfinit le Clair M64). La MER
+     (calque `bg`) reste NOIRE dans les DEUX modes (#060A08) — le Clair ne touche pas au fond de
+     carte. Ce qui change, c'est la TERRE : masse île grise + parcelles blanc cassé + trait de côte
+     vert. Sombre = défaut au boot ET au reload ; Clair = bascule manuelle, jamais persistée.
+     Cf. tableau « COUCHES CARTE — SOMBRE / CLAIR » ci-dessous. */
+  --map-bg:#060A08;                 /* la mer — noire dans les deux modes */
+  --map-ile-clair:#C9C4B8;          /* masse terrestre (terre sans parcelle) en Clair */
+  --map-parcelle-clair:#F4F2EC;     /* parcelles (blanc cassé, jamais blanc pur) en Clair */
+  --map-cote-clair:#4ADE80;         /* trait de côte 2,2px — seul vert de marque autorisé sur carte */
   --line:#1A211D; --line-2:#212A25; --line-3:#2C3630; --line-btn:#263029; --line-card:#1E2622;
   --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#6B776F;
   --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
@@ -177,6 +179,45 @@ td.num,th.num{text-align:right}
   </table></div>
 </div>
 
+<!-- ═══ M65 — PASSE VISUELLE : carte Sombre/Clair + accueil ═══ -->
+<div class="doc-s">1 bis · CARTE — SOMBRE / CLAIR (M65 P8)</div>
+<p style="max-width:none;font-size:12px;color:var(--txt-mut);margin:0 0 10px">
+  Le <b style="color:var(--txt)">Sombre est le défaut</b> (boot ET reload) ; le <b style="color:var(--txt)">Clair</b> est une bascule manuelle, jamais persistée.
+  Le Clair est une <b style="color:var(--txt)">inversion figure/fond</b> : la mer reste noire, la terre s'éclaire. Couche par couche :</p>
+<div class="spec" style="max-width:none"><table>
+  <tr><th style="text-align:left">Couche</th><th style="text-align:left">Sombre</th><th style="text-align:left">Clair</th></tr>
+  <tr><td>Mer (fond hors terre, <code>bg</code>)</td><td><span class="sw" style="background:#060A08"></span><code>#060A08</code></td><td><span class="sw" style="background:#060A08"></span><code>#060A08</code> — inchangé (mer noire)</td></tr>
+  <tr><td>Terre / masse île (<code>ile-mass</code>)</td><td>— (portée par le raster CARTO)</td><td><span class="sw" style="background:#C9C4B8"></span><code>#C9C4B8</code> gris — terre sans parcelle</td></tr>
+  <tr><td>Parcelles (trame neutre)</td><td><span class="sw" style="background:#22302A"></span><code>#22302A</code> / 0,28</td><td><span class="sw" style="background:#F4F2EC"></span><code>#F4F2EC</code> blanc cassé / 1</td></tr>
+  <tr><td>Limites de parcelles</td><td><span class="sw" style="background:#8FA69A"></span><code>#8FA69A</code> / 0,3px</td><td><span class="sw" style="background:#B9B3A6"></span><code>#B9B3A6</code> / 0,5px</td></tr>
+  <tr><td>Limites de communes</td><td><span class="sw" style="background:#5CE6A1"></span><code>#5CE6A1</code> / 1,1–1,8px</td><td><span class="sw" style="background:#2E7D52"></span><code>#2E7D52</code> / 1,6px (≈3× parcelles)</td></tr>
+  <tr><td>Trait de côte (<code>ile-cote</code>)</td><td>— (raster)</td><td><span class="sw" style="background:#4ADE80"></span><code>#4ADE80</code> / 2,2px — seul vert de marque sur carte</td></tr>
+  <tr><td>Sélection / pulse (achromatique)</td><td><span class="sw" style="background:#ECF5EF"></span><code>#ECF5EF</code></td><td><span class="sw" style="background:#14181A"></span><code>#14181A</code> (bascule M64 gardée)</td></tr>
+  <tr><td>Étiquette de zone (texte / halo)</td><td><code>#ECF5EF</code> / <code>#06130C</code></td><td><code>#14181A</code> / <code>#FFFFFF</code></td></tr>
+  <tr><td>Pastilles de commune</td><td>fond sombre + texte clair (<code>#5CE6A1</code>/<code>#8FA69A</code>)</td><td><b>identiques au Sombre</b> (revert M64 : ancres fortes sur terre claire)</td></tr>
+</table></div>
+
+<div class="doc-s">1 ter · ACCUEIL + CHROME (M65 P2/P3/P5/P6)</div>
+<div class="grid">
+  <div class="spec"><h4>ACCUEIL — BANDEAU 3 CASES (P2a)</h4><table>
+    <tr><td><span class="sw" style="background:#1E2622"></span>séparateurs</td><td><code>#1E2622</code>, gap <code>1px</code></td></tr>
+    <tr><td><span class="sw" style="background:#121815"></span>cases</td><td><code>#121815</code>, rayon <code>10px</code></td></tr>
+    <tr><td><span class="sw" style="background:#F4F6F5"></span>chiffre</td><td><code>19px</code> poids <code>500</code> <code>#F4F6F5</code></td></tr>
+    <tr><td>libellé</td><td><code>11px</code> <code>#7C8A83</code>, <code>4px</code> sous le chiffre</td></tr>
+    <tr><td>compteur</td><td><code>431 663</code> anime 0→valeur, <code>1,2s</code> sortie cubique, 1×/session (reduced-motion → direct)</td></tr>
+  </table></div>
+  <div class="spec"><h4>ACCUEIL — HALO + BOUTONS (P2b/c)</h4><table>
+    <tr><td><span class="sw" style="background:#4ADE80"></span>halo</td><td>cercle <code>520×520</code>, <code>#4ADE80</code>, opacité <code>0,023↔0,067</code>, échelle <code>0,945↔1,055</code>, <code>~8s</code> (reduced-motion → fixe 0,045). <i>Exception mandatée à « ni halo ni lueur ».</i></td></tr>
+    <tr><td>bouton vert</td><td><span class="sw" style="background:#4ADE80"></span><code>#4ADE80</code> / texte <code>#06180E</code>, rayon <code>9px</code>, padding <code>13px</code> → Filtres</td></tr>
+    <tr><td>bouton mauve</td><td><span class="sw" style="background:#1A1430"></span><code>#1A1430</code> / texte <code>#B9AEF2</code> / bord <code>#2E2552</code>, étincelles → Copilote</td></tr>
+  </table></div>
+  <div class="spec"><h4>CHROME (P3 / P5 / P6)</h4><table>
+    <tr><td>titres de catégories de couches</td><td><code>10px</code>, ls <code>0,08em</code>, <span class="sw" style="background:#7C8A83"></span><code>#7C8A83</code>, poids <code>400</code> (étiquettes, pas titres)</td></tr>
+    <tr><td>boutons de carte (zoom)</td><td><code>42px</code> (70% de 60), glyphe <code>17px</code>, rayon <code>8px</code>, gap <code>6px</code></td></tr>
+    <tr><td>focus au clic</td><td><code>:focus:not(:focus-visible){outline:none}</code> — liseré vert au clavier seulement</td></tr>
+  </table></div>
+</div>
+
 <div class="doc-s">2 · LES DIX RÈGLES</div>
 <div class="spec" style="max-width:none">
 <table style="font-size:13px">
@@ -311,12 +352,8 @@ td.num,th.num{text-align:right}
   <p style="font-size:11.5px;color:var(--txt-mut);margin-top:8px">Chargement : la forme du contenu à venir, pulsation d'opacité 0,6→1 sur 1,2 s. Pas de spinner isolé.</p>
 </div>
 
-<div class="spec"><h4>BANDEAU D'ATTENTION</h4>
-  <div style="display:flex;align-items:center;gap:8px;background:var(--amber-bg);border-left:2px solid var(--amber);border-radius:0 var(--r-g) var(--r-g) 0;padding:10px 13px">
-    <span style="flex:1;font-size:12px;color:var(--amber)">Marché peu actif à Bras-Panon</span>
-    <span style="color:var(--txt-ghost);font-size:12px;cursor:help">ⓘ</span>
-  </div>
-  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Une vigilance de contexte (marché peu actif, mesure dégradée…). Fond <code>--amber-bg</code>, filet gauche <code>2px --amber</code>, rayon 0 à gauche / <code>--r-g</code> à droite, padding <code>10px 13px</code>. REPLIÉ sur UNE ligne ; le texte intégral (chiffres, base, avertissement d'échantillon) vit dans l'infobulle « i » — aucun mot supprimé, la mention reste sourcée.</p>
+<div class="spec"><h4>BANDEAU D'ATTENTION — RETIRÉ (M65 P1)</h4>
+  <p style="font-size:11.5px;color:var(--txt-mut)">Le bandeau ambre « Marché peu actif à … » (composant <code>.band</code> replié sur <code>qualite_commune.degradee</code>) est <b style="color:var(--txt)">supprimé</b> de la fiche parcelle. La donnée n'est pas perdue : le tiroir « Qualité de la mesure · &lt;commune&gt; » porte le détail complet (RR intra, échantillon, base %, libellé, source). Tokens <code>--f-amberband/txt/ico</code> retirés (plus aucun usage).</p>
 </div>
 
 <div class="spec"><h4>SEGMENTÉ ET TABLEAU</h4>

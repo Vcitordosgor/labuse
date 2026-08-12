@@ -1626,20 +1626,10 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         )}
 
-        {/* M52 L4 / M56-B4 point 1 — mesure de commune dégradée : BANDEAU D'ATTENTION (DA §3)
-            replié sur UNE ligne (fond --amber-bg, filet gauche 2px --amber, rayon 0 à gauche /
-            --r-g à droite, padding 10px 13px). Le texte intégral (chiffres, base, avertissement
-            d'échantillon) vit dans l'infobulle « i » — aucun mot supprimé, la mention reste sourcée. */}
-        {f?.qualite_commune?.degradee && (
-          /* M56-B6 · DA-FICHE-v6 — bandeau d'attention .band (fond --amber-band, filet gauche
-             2px --amber, texte --amber-txt). Replié UNE ligne + « i » portant le texte intégral. */
-          <div data-qualite-commune-rappel className="band">
-            <span>Marché peu actif à {f.qualite_commune.commune}</span>
-            <Tip side="top" tip={f.qualite_commune.libelle}>
-              <i role="button" tabIndex={0} aria-label="Détail : marché peu actif">ⓘ</i>
-            </Tip>
-          </div>
-        )}
+        {/* M65 P1 — le BANDEAU D'ATTENTION ambre « Marché peu actif à … » (ancien .band replié
+            sur f.qualite_commune.degradee) est SUPPRIMÉ. La donnée n'est pas perdue : le tiroir
+            « Qualité de la mesure · <commune> » (data-qualite-commune, plus bas) porte le détail
+            complet (RR intra, échantillon, base %, libellé, source) dès que qualite_commune existe. */}
 
         {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
             flag général (config/rnu_communes.yaml). Jamais une affirmation de constructibilité ;

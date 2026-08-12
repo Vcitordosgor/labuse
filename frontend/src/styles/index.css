@@ -43,6 +43,10 @@
 /* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
 @layer components {
   .label-caps { @apply text-[11px] font-medium uppercase tracking-[0.12em] text-lab; }
+  /* M65 P3 — titres de CATÉGORIES de couches (Le fond / Les zonages / Risques et protections) :
+     étiquettes discrètes (10px, ls 0.08em, #7C8A83, poids 400), PAS des titres de section.
+     « COUCHES » reste en .label-caps. */
+  .layer-cat { @apply text-[10px] font-normal uppercase tracking-[0.08em] text-[#7C8A83]; }
   .num-key { @apply font-display font-bold text-txt-hi; font-variant-numeric: tabular-nums; }
   .tnum { font-variant-numeric: tabular-nums; }
   .card-elev { @apply rounded-xl bg-surface-2 shadow-elev-1; }
@@ -171,6 +175,10 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* Focus clavier visible (DA §1 : liseré 2px menthe à 45%) — jamais sur clic souris. */
 :focus-visible { outline: 2px solid rgba(74,222,128,.45); outline-offset: 1px; border-radius: 4px; }
+/* M65 P6 — le liseré vert n'apparaît QUE pour un focus clavier. Tout focus reçu au pointeur
+   (clic sur en-tête COUCHES, sections, cases, pastilles « i ») n'affiche aucun contour.
+   :focus-visible reste intact = exigence d'accessibilité clavier. */
+:focus:not(:focus-visible) { outline: none; }
 
 /* UX V1 — page « Sources & fraîcheur » IMPRIMABLE. */
 @media print {
@@ -195,6 +203,24 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 @keyframes labuse-sk { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 .sk { animation: labuse-sk 1.2s ease-in-out infinite; }
 
+/* M65 P2b — HALO RESPIRANT de l'accueil : cercle 520×520 centré derrière le bloc, vert de marque,
+   opacité 0,023→0,067 et échelle 0,945→1,055 sur ~8 s en boucle. Position absolue, sous le contenu
+   (z), le conteneur .data-accueil est overflow-hidden. */
+@keyframes accueil-halo {
+  0%, 100% { opacity: .023; transform: translate(-50%, -50%) scale(.945); }
+  50%      { opacity: .067; transform: translate(-50%, -50%) scale(1.055); }
+}
+.accueil-halo {
+  position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; border-radius: 9999px;
+  background: #4ADE80; pointer-events: none; z-index: 0;
+  transform: translate(-50%, -50%) scale(1); opacity: .045;
+  animation: accueil-halo 8s ease-in-out infinite;
+}
+/* prefers-reduced-motion : halo FIXE à 0,045, aucune animation. */
+@media (prefers-reduced-motion: reduce) {
+  .accueil-halo { animation: none; opacity: .045; transform: translate(-50%, -50%) scale(1); }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    M56-B6 · FICHE v6 — TIROIRS EN CARTES AUTONOMES (docs/DA-FICHE-v6.html)
    Chaque tiroir est une carte posée sur un fond de panneau plus sombre ; le
@@ -204,7 +230,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   --f-card:#121815; --f-linecard:#253029; --f-linehead:#232C27; --f-icotxt:#97A39B;
-  --f-amberband:#1C1509; --f-ambertxt:#D9AE68; --f-amberico:#8A7040;
+  /* M65 P1 — tokens --f-amber* retirés avec le bandeau d'attention .band (plus aucun usage). */
 }
 .fiche-v6 { background:var(--bg-0); }
 
@@ -228,10 +254,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .cta { background:var(--mint); border:none; border-radius:10px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
 .fiche-v6 .cta-sub { font-size:10.5px; color:var(--txt-off); text-align:center; margin-top:6px; }
 
-/* bandeau d'attention */
-.fiche-v6 .band { background:var(--f-amberband); border-left:2px solid var(--amber); border-radius:0 9px 9px 0; padding:9px 12px; margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.fiche-v6 .band > span { font-size:12px; color:var(--f-ambertxt); }
-.fiche-v6 .band i { font-size:13px; color:var(--f-amberico); font-style:normal; cursor:help; }
+/* M65 P1 — bandeau d'attention .band (« Marché peu actif à … ») supprimé (voir Fiche.tsx). */
 
 /* boutons IA */
 .fiche-v6 .ia { display:flex; gap:7px; margin-top:10px; }
