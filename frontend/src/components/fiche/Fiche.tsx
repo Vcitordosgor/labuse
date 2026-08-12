@@ -465,7 +465,10 @@ function WatchButton({ idu }: { idu: string }) {
 
 // EXPRESS-01 · bouton « copier l'IDU » — copie la chaîne BRUTE 14 car. (sans espace),
 // celle qu'on colle dans GPU/DVF/SIG. Style référence (bouton 31×31, retour visuel vert).
-function CopyIdu({ value }: { value: string }) {
+// M61 P5 — bouton « copier » discret, réutilisable (IDU + adresse). Libellés paramétrables.
+function CopyIdu({ value, aria = 'Copier l’IDU', titre = 'Copier l’IDU (14 caractères, sans espace)', okTitre = 'IDU copié', dataAttr = 'idu' }: {
+  value: string; aria?: string; titre?: string; okTitre?: string; dataAttr?: string
+}) {
   const [ok, setOk] = useState(false)
   const copier = async () => {
     try {
@@ -475,9 +478,9 @@ function CopyIdu({ value }: { value: string }) {
     } catch { /* presse-papier indisponible : on ne fait rien de destructeur */ }
   }
   return (
-    <button onClick={copier} data-fiche-copy-idu aria-label="Copier l’IDU"
+    <button onClick={copier} data-fiche-copy={dataAttr} aria-label={aria}
       style={{ border: 'none', background: 'none', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? 'var(--mint)' : 'var(--txt-ghost)', cursor: 'pointer', flexShrink: 0 }}
-      title={ok ? 'IDU copié' : 'Copier l’IDU (14 caractères, sans espace)'}>
+      title={ok ? okTitre : titre}>
       {ok
         ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-11" /></svg>
         : <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h9" /></svg>}
@@ -1204,6 +1207,9 @@ export function Fiche({ idu }: { idu: string }) {
   // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
   const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
   const revelerVerdict = useApp((s) => s.revelerVerdict)
+  // M61 P2 — bloc Analyse repliable : déplié par défaut (absent du map), état par parcelle/session.
+  const analyseReplie = useApp((s) => !!s.analyseReplie[idu])
+  const toggleAnalyseReplie = useApp((s) => s.toggleAnalyseReplie)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
@@ -1240,8 +1246,13 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
-  const [askOpen, setAskOpen] = useState(false)   // M19 : la carte IA (bas de pile) ouvre l'AskBar
-  useEffect(() => { setAskOpen(false) }, [idu])
+  // M61 P1 — panneau IA unifié : 'aucun' = les deux boutons ; 'question' = AskBar pleine largeur ;
+  // 'synthese' = panneau Synthèse pleine largeur. Le panneau actif REMPLACE la rangée de boutons
+  // (ne se pose plus À CÔTÉ). Synthèse : la mutation vit ICI (persiste au repli) → replier puis
+  // rouvrir ne relance AUCUN appel IA. Réinitialisée seulement au changement de parcelle.
+  const [iaOuvert, setIaOuvert] = useState<'aucun' | 'question' | 'synthese'>('aucun')
+  const syntheseM = useMutation({ mutationFn: () => getExplain(idu) })
+  useEffect(() => { setIaOuvert('aucun'); syntheseM.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
@@ -1399,12 +1410,15 @@ export function Fiche({ idu }: { idu: string }) {
               {/* IDU complet (mono) + copier sans cadre, collé à la référence. */}
               <div className="ref" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
               {/* adresse ; absente → « i » explicatif. */}
+              {/* M61 P5 — adresse COPIABLE : sélectionnable (aucun user-select:none) + icône copier
+                  discrète (comme l'IDU). `.addr` passe en flex pour aligner texte + icône. */}
               <div className="addr" data-fiche-adresse>
-                {f?.adresse ?? CLIENT.fiche.adresseAbsente}
+                <span style={{ userSelect: 'text', minWidth: 0 }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
+                {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
                 {!f?.adresse && (
                   <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
                     <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
-                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, marginLeft: 6, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
                   </Tip>
                 )}
               </div>
@@ -1474,7 +1488,20 @@ export function Fiche({ idu }: { idu: string }) {
         )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
         {f && verdict && verdictRevele && (
-          <div data-verdict-card style={{ marginTop: 8, background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
+          // M61 P2 — le bloc Analyse est un TIROIR : en-tête cliquable (Analyse LABUSE + verdict au
+          // repli + chevron), corps repliable. État par parcelle (analyseReplie), déplié par défaut,
+          // INDÉPENDANT de l'accordéon exclusif des 7 tiroirs (aucun autre tiroir ne se ferme).
+          <div data-verdict-card style={{ marginTop: 8, background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, overflow: 'hidden' }}>
+            <button data-analyse-toggle onClick={() => toggleAnalyseReplie(idu)} aria-expanded={!analyseReplie}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'none', border: 0, cursor: 'pointer', padding: '13px 16px', textAlign: 'left' }}>
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 9, minWidth: 0, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</span>
+                {analyseReplie && <span data-analyse-verdict style={{ fontSize: 14, fontWeight: 600, color: verdict.color }}>{verdict.label}</span>}
+              </span>
+              <span className="chev" style={{ color: 'var(--txt-faint)', flexShrink: 0, fontSize: 14, lineHeight: 1 }}>{analyseReplie ? '›' : '⌃'}</span>
+            </button>
+            {!analyseReplie && (
+            <div data-analyse-corps style={{ padding: '0 16px 15px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)' }}>VERDICT LABUSE</p>
@@ -1555,30 +1582,49 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
               </div>
             )}
-            {/* chips d'arguments : 1 seul violet = le signal chaud (spec) ; le reste vert. */}
-            {(proprioSignal || reglesZone || risquesLines.length > 0) && (
+            {/* chips d'arguments — M61 P3 : les pastilles « constructible {zone} » et « N vigilance(s) »
+                sont RETIRÉES (doublon au mot près des tiroirs Urbanisme et Risques). Reste le seul
+                signal qui n'existe nulle part ailleurs à ce niveau : le signal propriétaire (violet). */}
+            {proprioSignal && (
               <div style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {proprioSignal && (
-                  <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
-                )}
-                {reglesZone && (
-                  <span style={{ fontSize: 11, background: '#14251c', color: 'var(--lab)', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>constructible {reglesZone}</span>
-                )}
-                {risquesLines.length > 0 && (
-                  <span style={{ fontSize: 11, background: '#14251c', color: 'var(--lab)', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>{risquesFlags.length === 0 ? '✓ rien à signaler' : `${risquesFlags.length} vigilance`}</span>
-                )}
+                <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
               </div>
             )}
             {/* M-RENOUV : badge segment Renouvellement (CUIVRE) — le verdict reste « Écartée » ;
                 libellé doctrinal sous le badge, jamais « opportunité ». */}
             {f.renouvellement && (
               <div data-renouv-badge style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-                {/* M55-O phase 2.1b : le lien « pourquoi ? » (goDrawer) est retiré — le détail
-                    (composantes) est désormais INLINE dans le bloc Analyse, juste dessous. */}
                 <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px', alignSelf: 'flex-start' }}>
                   Renouvellement — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
                 </span>
                 <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--txt-dim)' }}>{f.renouvellement.libelle}</p>
+                {/* M61 P4 — « Pourquoi ce rang » dépliable JUSTE À CÔTÉ du rang (comme « Pourquoi ce
+                    score » sous le verdict) ; l'ancienne section basse « RENOUVELLEMENT — POURQUOI CE
+                    RANG » est absorbée ici (aucune donnée nouvelle). */}
+                <details data-renouv-pourquoi style={{ marginTop: 8 }}>
+                  <summary style={{ cursor: 'pointer', fontSize: 11.5, color: RENOUV.txt, fontWeight: 600 }}>Pourquoi ce rang</summary>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                    <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
+                      {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
+                      mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
+                    </p>
+                    {f.renouvellement.composantes.map((c) => (
+                      <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
+                        <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                          <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
+                        </div>
+                        <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
+                      </div>
+                    ))}
+                    <MicroTriple items={[
+                      f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                      f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
+                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                    ]} />
+                    <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}{f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}</p>
+                  </div>
+                </details>
               </div>
             )}
 
@@ -1589,31 +1635,8 @@ export function Fiche({ idu }: { idu: string }) {
             <div data-analyse-p style={{ marginTop: 13, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
               <ScoreV2Block idu={idu} />
             </div>
-            {/* Renouvellement — pourquoi ce rang (tiroir absorbé). */}
-            {f.renouvellement && (
-              <div data-analyse-renouv style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ margin: 0, fontSize: 10, letterSpacing: 0.8, color: 'var(--lab)', textTransform: 'uppercase' }}>Renouvellement — pourquoi ce rang</p>
-                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
-                  {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
-                  mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
-                </p>
-                {f.renouvellement.composantes.map((c) => (
-                  <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
-                    <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                      <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
-                    </div>
-                    <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
-                  </div>
-                ))}
-                <MicroTriple items={[
-                  f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
-                  f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                  `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
-                ]} />
-                <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}{f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}</p>
-              </div>
-            )}
+            {/* M61 P4 — la section « RENOUVELLEMENT — POURQUOI CE RANG » a été REGROUPÉE dans le
+                dépliant « Pourquoi ce rang » juste sous le rang (voir data-renouv-pourquoi ci-dessus). */}
             {/* Motifs rédhibitoires (« Pourquoi pas ? ») — tiroir entier absorbé. */}
             {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
               <div data-analyse-motifs style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
@@ -1623,6 +1646,8 @@ export function Fiche({ idu }: { idu: string }) {
             )}
             {/* Vérifications d'éligibilité — ✓ N passées (contrôles PASS du tiroir Urbanisme, repliés). */}
             <EligibiliteReplie lines={reglesLines} color={verdict.color} />
+            </div>
+            )}
           </div>
         )}
 
@@ -1751,15 +1776,25 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M56-B3 fix 5 — DEUX .b-iris LÉGERS (moins que le bouton d'analyse) : hauteur réduite
                 (padding 8px 11px), contenu aligné à GAUCHE, icône mauve 13px + libellé 12.5px. */}
             {/* M56-B6 · DA-FICHE-v6 — deux .ia-btn (34px) côte à côte ; icônes SVG conservées. */}
+            {/* M61 P1 — le panneau actif (question ou synthèse) REMPLACE la rangée des deux boutons,
+                pleine largeur ; « Replier » y ramène les boutons. Repli/réouverture de la synthèse
+                ne relance aucun appel (mutation portée par la fiche, cf. syntheseM). */}
             <div data-ia-tete>
-              <div className="ia">
-                <button onClick={() => setAskOpen(true)} data-askbar-open className="ia-btn">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
-                  Poser une question
-                </button>
-                <SyntheseIA idu={idu} />
-              </div>
-              {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
+              {iaOuvert === 'aucun' && (
+                <div className="ia">
+                  <button onClick={() => setIaOuvert('question')} data-askbar-open className="ia-btn">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
+                    Poser une question
+                  </button>
+                  <button onClick={() => { setIaOuvert('synthese'); if (!syntheseM.data && !syntheseM.isPending) syntheseM.mutate() }}
+                    data-synthese-ia className="ia-btn" title={CLIENT.fiche.ia.syntheseTip}>
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
+                    Synthèse IA
+                  </button>
+                </div>
+              )}
+              {iaOuvert === 'question' && <AskBar idu={idu} zone={null} startOpen onClose={() => setIaOuvert('aucun')} />}
+              {iaOuvert === 'synthese' && <SyntheseIAPanel data={syntheseM.data} pending={syntheseM.isPending} error={syntheseM.isError} onReplier={() => setIaOuvert('aucun')} />}
             </div>
 
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
@@ -2230,33 +2265,37 @@ export function Fiche({ idu }: { idu: string }) {
  *  couche 2 M-T garantit une sortie soit VALIDÉE (available) soit un repli STUB déterministe
  *  (available=false, stub=true) — on affiche le libellé de repli quand c'est un stub. Le quota IA
  *  existant s'applique au niveau du socle IA ; un 429 tombe dans le message d'erreur. */
-function SyntheseIA({ idu }: { idu: string }) {
-  const q = useMutation({ mutationFn: () => getExplain(idu) })
-  useEffect(() => { q.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
-  const d = q.data
-  // M56-B2 · DA §4 — bouton IA en .b-iris (idle) ; le résultat garde son cadre mauve, en pleine
-  // largeur sous la rangée de boutons.
+// M61 P1 — PANNEAU synthèse (plus un bouton) : pleine largeur, markdown rendu (renderRich), bouton
+// « Replier ». La mutation est portée par la fiche (SyntheseIAPanel ne fait AUCUN appel) → replier
+// puis rouvrir n'exécute rien. Les états en cours / erreur s'affichent aussi pleine largeur.
+function SyntheseIAPanel({ data: d, pending, error, onReplier }: {
+  data?: Awaited<ReturnType<typeof getExplain>>; pending: boolean; error: boolean; onReplier: () => void
+}) {
   const box = { marginTop: 8, background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '11px 14px' } as const
-  if (!d && !q.isPending) return (
-    <button onClick={() => q.mutate()} data-synthese-ia className="ia-btn" title={CLIENT.fiche.ia.syntheseTip}>
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
-      Synthèse IA
-    </button>
-  )
-  if (q.isPending) return <p style={{ ...box, color: '#c9b6f2', fontSize: 12 }}><span style={{ display: 'inline-block', width: 6, height: 6, marginRight: 8, borderRadius: 9, background: '#8a6ff0' }} className="animate-pulse" />{CLIENT.fiche.ia.syntheseEnCours}</p>
-  if (q.isError) return <p style={{ ...box, color: '#E8695A', fontSize: 12 }}>{CLIENT.fiche.ia.syntheseErreur}</p>
   const stub = d && !d.available
   const rs = d?.rules_summary
   return (
     <div data-synthese-ia-result style={box}>
-      <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#c9b6f2', display: 'flex', alignItems: 'center', gap: 6 }}>
-        {CLIENT.fiche.ia.synthese}
-        {stub && <span data-synthese-stub style={{ fontSize: 9.5, fontWeight: 500, color: '#b7a3e6', border: '1px solid #47386e', borderRadius: 5, padding: '1px 5px' }}>repli</span>}
-      </p>
-      <p style={{ margin: '7px 0 0', fontSize: 12, lineHeight: 1.5, color: '#d8ccf5', whiteSpace: 'pre-wrap' }}>{d?.available ? d.explanation : d?.message}</p>
-      {stub && Array.isArray(rs) && rs.length > 0 && <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{rs.map((r, i) => <li key={i}>{r}</li>)}</ul>}
-      {stub && typeof rs === 'string' && rs && <p style={{ margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2', whiteSpace: 'pre-wrap' }}>{rs}</p>}
-      {stub && <p style={{ margin: '7px 0 0', fontSize: 10, color: '#8f80b8' }}>{CLIENT.fiche.ia.syntheseStub}</p>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#c9b6f2', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {CLIENT.fiche.ia.synthese}
+          {stub && <span data-synthese-stub style={{ fontSize: 9.5, fontWeight: 500, color: '#b7a3e6', border: '1px solid #47386e', borderRadius: 5, padding: '1px 5px' }}>repli</span>}
+        </p>
+        <button data-synthese-replier onClick={onReplier} title="Replier — revenir aux boutons"
+          style={{ background: 'none', border: '1px solid #372c58', borderRadius: 7, color: '#b7a3e6', fontSize: 11, padding: '2px 9px', cursor: 'pointer', flexShrink: 0 }}>Replier</button>
+      </div>
+      {pending ? (
+        <p style={{ margin: '8px 0 0', color: '#c9b6f2', fontSize: 12 }}><span style={{ display: 'inline-block', width: 6, height: 6, marginRight: 8, borderRadius: 9, background: '#8a6ff0' }} className="animate-pulse" />{CLIENT.fiche.ia.syntheseEnCours}</p>
+      ) : error ? (
+        <p style={{ margin: '8px 0 0', color: '#E8695A', fontSize: 12 }}>{CLIENT.fiche.ia.syntheseErreur}</p>
+      ) : (
+        <>
+          <div style={{ margin: '7px 0 0', fontSize: 12, lineHeight: 1.5, color: '#d8ccf5' }}>{renderRich((d?.available ? d.explanation : d?.message) ?? '')}</div>
+          {stub && Array.isArray(rs) && rs.length > 0 && <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{rs.map((r, i) => <li key={i}>{r}</li>)}</ul>}
+          {stub && typeof rs === 'string' && rs && <div style={{ margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{renderRich(rs)}</div>}
+          {stub && <p style={{ margin: '7px 0 0', fontSize: 10, color: '#8f80b8' }}>{CLIENT.fiche.ia.syntheseStub}</p>}
+        </>
+      )}
     </div>
   )
 }
