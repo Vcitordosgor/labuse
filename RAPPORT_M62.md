@@ -138,3 +138,77 @@ Diagnostic terminé, aucun correctif. Points d'arbitrage ouverts :
   « Décrire un projet » vivant) ? Le quick-search `/ia/search` est-il assumé retiré de la nav ?
 - **P1-g** : confirmé sûr — retrait des 2 toggles seulement.
 NE PAS MERGER.
+
+---
+
+# PHASE 1 — correctifs (arbitrage mandant)
+
+Présentation uniquement, aucun flux/route touché. Vérifié : tsc 0 · vitest 32/32 · build OK ·
+console 0 erreur (4 parcelles) · 5 exports PDF → 200 (aucun back modifié) · automate accordéon
+non régressé.
+
+## Rail / IA (a/b) — sans rien perdre (arbitrage : garder les deux entrées)
+Le diagnostic P0 le confirmait : le Copilote NE couvre pas encore la recherche `/ia/search` +
+l'entretien projet d'IAStub. Donc :
+- Entrée rail **« Copilote » → « IA »** avec l'**icône étincelles** (`Rail.tsx` ICONS `copilote`),
+  placée **en tête** du rail.
+- Ancienne entrée **« IA » (IAStub) CONSERVÉE**, renommée **« Recherche »** (ce qu'elle fait :
+  `/ia/search` + montage projet), **icône loupe**.
+- **Aucune route morte, aucune fonction perdue** : les vues `'ia'` et `'copilote'` répondent
+  toutes deux (App.tsx inchangé), `ouvrirEntretien`→view:'ia'→IAStub→ProjetEntretien intact, les
+  ~15 QA `setView('ia')` fonctionnent. **Inscrit au `docs/BACKLOG.md`** : « câbler l'amorce
+  `entretienDirect` dans CopiloteView puis retirer IAStub » = **mandat séparé** (touche un flux).
+
+## Carte
+- **(c)** infobulles barre d'outils verticale : `Tip` doté d'un `hoverDelayMs` **opt-in** (défaut 0
+  → aucun usage existant changé) ; les 4 outils passent à **150 ms au survol, immédiat au
+  focus/clic** (le `title` natif ~500 ms est retiré).
+- **(d)** boutons zoom **30→60 px** (`BoutonCarte` `h-[60px] w-[60px]`, `rounded-xl` proportionné,
+  bordure 1 px, `+`/`−` en `text-2xl`).
+- **(e)** libellés de commune : **« · Fiche commune » retiré** des 24 (`MapView.tsx` — nom seul) ;
+  le clic ouvre toujours la fiche commune (inchangé), l'affordance reste dans le `title`.
+
+## Panneau
+- **(f)** accordéon Couches/Filtres : la fermeture n'est plus conditionnée à `verdict`
+  (`toggleCouches`/`toggleFiltres` → `'listing'` inconditionnel ; `closable` toujours vrai) — le
+  chevron **bascule dans les deux sens**. Les **3 états M55-M** (couches/filtres/listing) restent ;
+  'listing' pré-verdict = les deux sections rétractées (vérifié : ouvre puis ferme, 0 régression).
+- **(g)** toggles **« Verdict — toute l'île »** + **« Renouvellement »** retirés de la famille
+  « L'analyse LABUSE » (famille supprimée). **Clés de store conservées** (défaut false) → MapView/
+  Legend lisent false. Filtre `renouvellement`, module, bloc fiche **intacts** (indépendants).
+- **(h)** accueil : le bandeau **3 cellules** (parcelles·communes·**sources 52**, donnée réelle
+  `/accueil/chiffres`) + le centrage `my-auto` + le **sans-halo** étaient DÉJÀ en place (M56-C).
+  Seul ajustement : **bouton à 40 px** (`h-10`, au lieu de `py-4 ≈ 50`), resserré.
+- **(i)** phrase **« Le verdict, le score et "pourquoi" — à la demande »** supprimée sous le
+  bouton (`cta-sub` retiré) ; `demanderAnalyseSous` (strings.ts) devient 0-caller.
+
+## Tiroir Urbanisme (j)
+- Règlement PLU **réaligné à gauche** : une ligne par zone (pastille + zone + liens Voir l'article ↗ /
+  Annuaire PLU → sur la même ligne, `flex-wrap`) ; la **phrase d'explication dédupliquée** (rendue
+  **une seule fois** si identique pour les deux zones, sinon par zone).
+- Bouton **« Demander à l'IA de traduire le PLU »** en **casse normale** (`label-caps` retiré →
+  `normal-case`).
+
+## Sélecteur de commune (k)
+- Largeur **resserrée** (320→**272 px**). **« voir la fiche → » FIXE et VERT** sur chaque ligne
+  (plus `opacity-0`/survol) — `text-mint`.
+
+## Cohérence du vert (l) — aligné vs laissé (arbitrage corrigé : marque/action seulement)
+**Canonique = `--mint` #4ADE80** (bouton « Chercher », déjà dans DA-LABUSE.html:15 + DA-FICHE-v6.html:12
+→ **aucune modif docs nécessaire**, la valeur y est déjà).
+
+**ALIGNÉ sur #4ADE80** :
+- `bg-mint`/`text-mint` (bouton principal, +CRM, tranche d'outil, état confirmé, liens d'action,
+  cases à cocher…) — **déjà** le token #4ADE80, rien à changer (vérifié).
+- **`#7de3ab` en dur** (2 liens d'action fiche : compteur Dossier, lien PDF banquier) →
+  **`var(--mint)`** (`Fiche.tsx`). Plus de vert d'action en dur.
+
+**LAISSÉ (avec raison)** :
+- **`cp-mint #63F2B8`** (Copilote, 23 usages + glows) : **environnement visuel scopé** (préfixe `cp-`,
+  maquette M26-B — gradients, halos, ink dédiés). C'est l'**identité d'une surface immersive**, pas du
+  chrome d'application partagé → laissé (aligner flatirait un design délibéré + cascade de glows). Signalé.
+- **Verts SÉMANTIQUES** (échelle verdict `st-chaude`/`st-surveiller`, viabilité, zonages U/AU/A/N,
+  équipements) : **portent une information, pas une identité** → intouchés (arbitrage explicite).
+
+## STOP — PHASE 1
+Tout M62-P1 livré. Commit « M62-P1 passe transverse ». **NE PAS MERGER.**

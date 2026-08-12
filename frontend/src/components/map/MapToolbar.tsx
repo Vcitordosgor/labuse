@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp, type Basemap, type MapTool, type OrthoYear } from '../../store/useApp'
+import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
 
 const BASEMAPS: { key: Basemap; label: string }[] = [
   { key: 'dark', label: 'Sombre (Carto)' },
@@ -119,15 +120,15 @@ export function MapToolbar() {
           const off = t.key === 'zone' && ile
           return (
             <div key={t.key} className="relative">
+              {/* M62-P1 (c) : infobulle DA (Tip) à ~150 ms au survol, IMMÉDIATE au focus/clic —
+                  remplace le `title` natif (délai navigateur ~500 ms, jugé trop long). */}
+              <Tip side="top" hoverDelayMs={150}
+                tip={off ? 'Zone — disponible après avoir choisi une commune (sélecteur en haut)' : `${t.label} — ${t.hint}`}>
               <button
                 onClick={() => (off ? setZoneHint(true) : setTool(tool === t.key ? null : t.key))}
                 className={`relative flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
                   off ? 'cursor-help text-st-none/60 hover:text-st-creuser'
                     : tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
-                // G2 (M12) : l'outil Zone RESTE (intentionnellement désactivé en vue « Toute l'île »).
-                // On rend l'état inactif plus lisible : tooltip explicite au survol (plus de title vide),
-                // curseur d'aide, et une petite pastille « verrou » qui guide vers le sélecteur de commune.
-                title={off ? 'Zone — disponible après avoir choisi une commune (sélecteur en haut)' : `${t.label} — ${t.hint}`}
                 aria-label={off ? `${t.label} (disponible après avoir choisi une commune)` : t.label}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>
@@ -135,6 +136,7 @@ export function MapToolbar() {
                   <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-surface-1 text-[7px] leading-none text-st-creuser ring-1 ring-line-2">🔒</span>
                 )}
               </button>
+              </Tip>
               {off && zoneHint && (
                 <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-surface-2 px-2 py-1 text-[11px] text-st-creuser shadow-elev-2">
                   Choisissez d'abord une commune (sélecteur en haut) pour dessiner une zone

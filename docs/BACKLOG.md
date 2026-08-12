@@ -239,3 +239,14 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 - **« Une détection d'indice ne prouve pas l'absence d'indice. »** (Vic 04/08 — le filet
   piscine/PV/DVF a ses propres trous, cas #079.) Ne jamais conclure « pas d'indice donc
   pas de bâti ».
+
+## Mandat séparé — flux IA (issu de M62-P1, arbitrage rail)
+- **Câbler l'amorce `entretienDirect` dans `CopiloteView`, puis RETIRER `IAStub`.** M62-P1 a
+  renommé l'entrée rail « Copilote »→« IA » (étincelles) et laissé l'entrée `IAStub` sous le nom
+  « Recherche », car le Copilote NE couvre PAS encore ce que fait IAStub : la recherche
+  `/ia/search` (NL→filtres) ET l'entretien projet (`ProjetEntretien`, armé par `ouvrirEntretien`
+  → view:'ia'). `CopiloteView` a un `brief` local vide et ne lit pas `entretienDirect`. Étapes du
+  mandat : (1) faire lire `entretienDirect` par CopiloteView (préremplir le brief) ; (2) porter la
+  recherche `/ia/search` dans le Copilote (ou l'assumer retirée) ; (3) retirer l'entrée rail
+  « Recherche » + la vue `ia`/`IAStub` + rerouter `ouvrirEntretien` vers 'copilote' + les ~15 QA
+  `setView('ia')`. C'est un flux, pas de la présentation → hors M62.

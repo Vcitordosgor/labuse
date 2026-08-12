@@ -13,14 +13,19 @@ import type { ReactNode } from 'react'
  *  bord de l'écran (bascule haut↔bas, recentrage horizontal borné). Largeur max 260 px.
  *  Elle N'EST montée QUE lorsqu'elle est ouverte ET hors du flux parent (portal) → elle ne gonfle
  *  plus le scrollWidth d'aucun conteneur (le bug de scroll horizontal M13-C reste corrigé). */
-export function Tip({ tip, children, side = 'top', className = '', block = false }: {
+export function Tip({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0 }: {
   tip: ReactNode
   children: ReactNode
   side?: 'top' | 'bottom'
   className?: string
   block?: boolean                       // true = wrapper display:flex (lignes entières)
+  hoverDelayMs?: number                 // M62-P1 (c) : délai d'apparition AU SURVOL (0 = immédiat, défaut) ;
+                                        // le focus clavier et le tap/clic restent IMMÉDIATS (jamais retardés).
 }) {
   const [open, setOpen] = useState(false)
+  const hoverTimer = useRef<number | null>(null)
+  const clearHover = () => { if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null } }
+  useEffect(() => () => clearHover(), [])
   const ref = useRef<HTMLSpanElement>(null)
   const bubbleRef = useRef<HTMLSpanElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number; place: 'top' | 'bottom' } | null>(null)
@@ -73,11 +78,13 @@ export function Tip({ tip, children, side = 'top', className = '', block = false
   return (
     <span ref={ref}
       className={`${block ? 'flex' : 'inline-flex'} ${className}`}
-      onPointerEnter={(e) => { if (e.pointerType !== 'touch') setOpen(true) }}
-      onPointerLeave={(e) => { if (e.pointerType !== 'touch') setOpen(false) }}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
-      onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
+      // M62-P1 (c) : survol = délai `hoverDelayMs` (0 par défaut → inchangé pour tous les usages
+      // existants) ; focus clavier et clic/tap = IMMÉDIATS (on annule tout délai en cours).
+      onPointerEnter={(e) => { if (e.pointerType === 'touch') return; if (hoverDelayMs > 0) { clearHover(); hoverTimer.current = window.setTimeout(() => setOpen(true), hoverDelayMs) } else setOpen(true) }}
+      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { clearHover(); setOpen(false) } }}
+      onFocus={() => { clearHover(); setOpen(true) }}
+      onBlur={() => { clearHover(); setOpen(false) }}
+      onClick={(e) => { e.stopPropagation(); clearHover(); setOpen((o) => !o) }}>
       {children}
       {open && createPortal(
         <span role="tooltip" ref={bubbleRef}

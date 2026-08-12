@@ -155,7 +155,8 @@ function CommuneSelect() {
               tiennent sur UNE ligne pour les 24 communes (La Plaine-des-Palmistes comprise :
               nom en nowrap, lien shrink-0). Le CP affiché vient de la table mesurée du
               panneau (CP_COMMUNES, source unique) — l'INSEE ressemblait à un CP sans l'être. */}
-          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
+          {/* M62-P1 (k) : largeur resserrée au minimum nécessaire (nom + CP + « voir la fiche → » fixe). */}
+          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[272px] flex-col overflow-y-auto p-1.5">
             <button onClick={() => pick(null)}
               className={`rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               Toute l’île
@@ -171,10 +172,10 @@ function CommuneSelect() {
                   className={`min-w-0 flex-1 whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
-                {/* DA §13 — « voir la fiche » AU SURVOL seulement (codes postaux restent en décor). */}
+                {/* M62-P1 (k) : « voir la fiche → » FIXE et VERT sur chaque ligne (plus au survol seul). */}
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}
-                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim opacity-0 transition-opacity duration-quick focus:opacity-100 group-hover:opacity-100 hover:text-mint">
+                  className="shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] text-mint transition-opacity duration-quick hover:underline">
                   voir la fiche →
                 </button>
               </div>

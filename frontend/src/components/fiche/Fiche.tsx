@@ -343,13 +343,21 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   const setModule = useApp((s) => s.setModule)
   const setPluPrefill = useApp((s) => s.setPluPrefill)
+  // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
+  // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
+  // on reste par zone (repli honnête).
+  const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
+  const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
   return (
     <div data-reglement-plu className="card-elev px-3 py-2.5">
       <p className="label-caps">Règlement PLU</p>
-      <div className="mt-1.5 flex flex-col gap-2">
+      {/* M62-P1 (j) : tout aligné à gauche, UNE ligne par zone — pastille + zone + liens
+          (Voir l'article ↗ · Annuaire PLU →) sur la même ligne ; la phrase d'explication dessous,
+          en gris, une seule fois si elle est identique pour les deux zones. */}
+      <div className="mt-1.5 flex flex-col gap-1.5">
         {rp.zones.map((z, i) => (
           <div key={i}>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
               <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-txt">{z.zone}</span>
               {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
                 {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
@@ -371,10 +379,12 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
                 ))}
               </ul>
             )}
-            {z.note && <p className="mt-0.5 text-[10px] text-txt-dim">{z.note}</p>}
+            {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
+            {z.note && !noteCommune && <p className="mt-0.5 text-[10px] text-txt-dim">{z.note}</p>}
           </div>
         ))}
       </div>
+      {noteCommune && <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{noteCommune}</p>}
       <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{rp.disclaimer}</p>
     </div>
   )
@@ -1458,7 +1468,8 @@ export function Fiche({ idu }: { idu: string }) {
               title="Déployer le verdict, le score et « pourquoi »">
               {CLIENT.fiche.demanderAnalyse} →
             </button>
-            <div className="cta-sub">{CLIENT.fiche.demanderAnalyseSous}</div>
+            {/* M62-P1 (i) : sous-titre « Le verdict, le score et "pourquoi" — à la demande » RETIRÉ,
+                le bouton se suffit (P2). `demanderAnalyseSous` (strings.ts) devient 0-caller. */}
           </>
         )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
@@ -2283,7 +2294,8 @@ function DossierTile({ idu }: { idu: string }) {
   const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
   return (
     <a className="exp" data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" title={tip}>
-      {icon}<span>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : '#7de3ab' }}> · {d!.restants}</span> : ''}</span>
+      {/* M62-P1 (l) : vert d'action aligné sur le token unique `--mint` (#4ADE80), plus de `#7de3ab` en dur. */}
+      {icon}<span>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : 'var(--mint)' }}> · {d!.restants}</span> : ''}</span>
     </a>
   )
 }
@@ -2339,8 +2351,8 @@ function BanquierButton({ idu }: { idu: string }) {
   // C6 · « Financier » (ex-Banquier) — rendu en tuile .exp (DA-FICHE-v6).
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
   if (etat === 'pret') return (
-    <a className="exp" href={url} target="_blank" rel="noreferrer" style={{ color: '#7de3ab' }} title="Note de financement prête — ouvrir le PDF">
-      {icon}<span style={{ color: '#7de3ab' }}>{CLIENT.fiche.export.banquierPret}</span>
+    <a className="exp" href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--mint)' }} title="Note de financement prête — ouvrir le PDF">
+      {icon}<span style={{ color: 'var(--mint)' }}>{CLIENT.fiche.export.banquierPret}</span>
     </a>
   )
   if (etat === 'encours') return (
@@ -2379,7 +2391,8 @@ function TraducteurBloc({ idu }: { idu: string }) {
     <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
       <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
         className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
-        <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA de traduire le PLU</span>
+        {/* M62-P1 (j) : casse NORMALE (plus de capitales `label-caps`) — « Demander à l'IA de traduire le PLU ». */}
+        <span className="text-[11px] font-medium tracking-normal normal-case text-violet">✦ Demander à l'IA de traduire le PLU</span>
         <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
       </button>
       {open && (

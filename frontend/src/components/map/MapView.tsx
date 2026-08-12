@@ -220,7 +220,8 @@ function BoutonCarte({ onClick, title, children }: { onClick: () => void; title:
   }
   return (
     <button onClick={press} title={title}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg border shadow-elev-1 transition-colors duration-quick ${
+      /* M62-P1 (d) : boutons zoom doublés 30→60 px (rayon rounded-xl proportionné, bordure 1 px, +/− agrandis). */
+      className={`flex h-[60px] w-[60px] items-center justify-center rounded-xl border text-2xl leading-none shadow-elev-1 transition-colors duration-quick ${
         flash ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}>
       {children}
     </button>
@@ -836,8 +837,9 @@ export function MapView() {
         ? `${c.commune} — ${c.chaudes} parcelles brûlantes ou chaudes au classement servi · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
       const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
-      // A2 (post-revue) : le libellé renvoie à la FICHE COMMUNE (plus de compteur de chaudes visible)
-      el.innerHTML = `<span>${name}</span><span style="opacity:.6;font-size:.82em"> · Fiche commune</span>`
+      // M62-P1 (e) : le libellé = le NOM SEUL (« · Fiche commune » retiré des 24). Le clic ouvre
+      // toujours la fiche commune (inchangé) ; l'affordance reste dans le `title` au survol.
+      el.innerHTML = `<span>${name}</span>`
       const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
         `display:inline-flex;align-items:center;gap:4px;` +

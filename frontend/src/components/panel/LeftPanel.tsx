@@ -97,9 +97,11 @@ function ScoringExplainer({ onClose }: { onClose: () => void }) {
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'parcelles', label: 'Parcelles' },
   { key: 'limites', label: 'Limites parcelles' },
-  // M55-G point 8 / suite point 1 : l'avis LABUSE en couche — le libellé DIT la portée :
-  // toute l'île, indépendant des filtres (en mode analyse, la palette suit le résultat).
-  { key: 'couleurs_verdict', label: 'Verdict — toute l’île (indépendant des filtres)' },
+  // M62-P1 (g) : les toggles « Verdict — toute l'île » (couleurs_verdict) et « Renouvellement »
+  // (renouv) sont RETIRÉS du panneau (P5, diagnostic P0-3 : sûr — OFF par défaut, seuls setters =
+  // ce panneau ; le filtre `renouvellement`, le module et le bloc fiche sont indépendants). Les clés
+  // de store `layers.couleurs_verdict`/`layers.renouv` sont CONSERVÉES (défaut false) → MapView/Legend
+  // compilent et lisent false (mode opinion reste accessible par verdict && analyseLabuse).
   // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
   // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
@@ -113,16 +115,15 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'anru', label: 'ANRU (NPNRU)' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
-  // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, teinte cuivre
-  { key: 'renouv', label: 'Renouvellement' },
+  // M62-P1 (g) : entrée « Renouvellement » (renouv) retirée du panneau (cf. note plus haut).
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
 // micro-label au-dessus). L'ordre des couches et les libellés sont INCHANGÉS ; seul le
-// regroupement visuel est ajouté. Les 12 clés sont couvertes une et une seule fois.
+// regroupement visuel est ajouté. M62-P1 (g) : la famille « L'analyse LABUSE » (couleurs_verdict +
+// renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
-  { famille: 'L’analyse LABUSE', keys: ['couleurs_verdict', 'renouv'] },
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
   { famille: 'Risques et protections', keys: ['ppr', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
 ]
@@ -382,9 +383,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.sources} l={A.segSources} /></div>
         </div>
         <p className="mt-4 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
-        {/* « Commencer → » : aplat menthe, sans halo. Flèche dessinée, léger glissement au survol. */}
+        {/* « Commencer → » : aplat menthe, sans halo. M62-P1 (h) : hauteur STANDARD 40 px (h-10, au
+            lieu de py-4 ≈ 50), texte+bouton resserrés au centre (my-auto conservé). Flèche dessinée. */}
         <button data-commencer onClick={onCommencer}
-          className="group mt-6 flex w-full shrink-0 items-center justify-center gap-2 rounded-ctl bg-mint px-5 py-4 font-display text-[15px] font-bold text-mint-ink transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+          className="group mt-5 flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-ctl bg-mint px-5 font-display text-[14px] font-bold text-mint-ink transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
           <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
           <svg viewBox="0 0 16 16" aria-hidden="true"
             className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
@@ -445,11 +447,13 @@ export function LeftPanel() {
   // Filtres ouverte, C = LISTING (les deux rétractées, uniquement quand `verdict` — un listing est
   // affiché). `couchesOpen`/`filtresOpen` DÉRIVENT (=== 'couches'/'filtres') ; en C les deux sont
   // false. Il reste STRUCTURELLEMENT impossible d'avoir deux sections ouvertes (le type l'interdit).
-  // Les toggles ci-dessous : cliquer une section FERMÉE l'ouvre (exclusivité) ; cliquer la section
-  // OUVERTE la REFERME vers le listing (C) — mais SEULEMENT si un listing existe (`verdict`) ; hors
-  // listing, refermer est impossible (invariant M55-I : exactement une ouverte) → no-op.
-  const toggleCouches = () => { setAccueilVu(); setPanneauSection(couchesOpen ? (verdict ? 'listing' : 'couches') : 'couches') }
-  const toggleFiltres = () => { setAccueilVu(); setPanneauSection(filtresOpen ? (verdict ? 'listing' : 'filtres') : 'filtres') }
+  // Les toggles : cliquer une section FERMÉE l'ouvre (exclusivité) ; cliquer la section OUVERTE la
+  // REFERME (→ 'listing', état C). M62-P1 (f) : la fermeture n'est PLUS conditionnée à `verdict` —
+  // le chevron bascule dans les DEUX sens même sans listing (le bug « ouvre mais ne ferme pas » venait
+  // du no-op pré-verdict). Les 3 états M55-M restent (couches / filtres / listing) ; 'listing'
+  // pré-verdict = les deux sections rétractées (le VerdictHero prend la place, aucun résultat encore).
+  const toggleCouches = () => { setAccueilVu(); setPanneauSection(couchesOpen ? 'listing' : 'couches') }
+  const toggleFiltres = () => { setAccueilVu(); setPanneauSection(filtresOpen ? 'listing' : 'filtres') }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -470,8 +474,8 @@ export function LeftPanel() {
                 languette « › » quand le panneau est masqué. */}
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
-          <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable={verdict} />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable={verdict} />
+          <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable />
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable />
           {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -502,8 +506,8 @@ export function LeftPanel() {
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
-            <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable={verdict} />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable={verdict} />
+            <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable />
+            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable />
             {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
