@@ -1,8 +1,9 @@
 """Couches ÉTAGE 2 (dry-run) — âge dirigeant (courbe + UNKNOWN si absent), BODACC (machine à états
-sur libellés réels + bascule rouge), DPE passoire. Tests unitaires via ctx factice."""
+sur libellés réels + bascule rouge). Tests unitaires via ctx factice.
+M71 B1 : DpePassoireLayer retirée du scoring (audits M66/M66-B) — tests supprimés avec elle."""
 from __future__ import annotations
 
-from labuse.cascade.layers.etage2 import AgeDirigeantLayer, BodaccLayer, DpePassoireLayer
+from labuse.cascade.layers.etage2 import AgeDirigeantLayer, BodaccLayer
 from labuse.enums import CascadeVerdict, Severity
 
 AGE_P = {"bonus_key": "age_dirigeant", "courbe": {55: 4, 65: 8, 75: 12, 85: 14}, "age_min_valide": 18}
@@ -17,16 +18,13 @@ BODACC_P = {
 
 class _Ctx:
     def __init__(self, prop=None, bod=None, pas=None):
-        self._p, self._b, self._pa = prop, bod, pas
+        self._p, self._b = prop, bod
 
     def propension(self, pid):
         return self._p
 
     def bodacc(self, pid):
         return self._b
-
-    def passoire(self, pid):
-        return self._pa
 
 
 class _P:
@@ -88,14 +86,3 @@ def test_bodacc_mojibake_normalise():
 def test_bodacc_absent_pass():
     assert BodaccLayer().evaluate(_P(), _Ctx(bod=None), BODACC_P).result == CascadeVerdict.PASS
 
-
-# ── DPE passoire ──
-
-def test_dpe_passoire_flag():
-    v = DpePassoireLayer().evaluate(_P(), _Ctx(pas={"etiquette_dpe": "G"}), {})
-    assert v.result == CascadeVerdict.SOFT_FLAG and v.severity == Severity.INFO
-    assert "2028" in v.detail and v.extra["source_table"] == "v_passoire_thermique"
-
-
-def test_dpe_absent_pass():
-    assert DpePassoireLayer().evaluate(_P(), _Ctx(pas=None), {}).result == CascadeVerdict.PASS

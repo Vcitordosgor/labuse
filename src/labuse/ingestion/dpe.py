@@ -78,10 +78,24 @@ def is_reunion_authentic(rec: dict) -> bool:
 
 
 def parse_record(rec: dict) -> dict | None:
-    """Enregistrement /lines → dict DPE normalisé. None si pas de `numero_dpe` (dédup impossible)."""
+    """Enregistrement /lines → dict DPE normalisé. None si pas de `numero_dpe` (dédup impossible).
+
+    M71 B1 — TROU DU FILTRE corrigé (audit M66-B : 2 lignes code_insee 34172/59350 en base).
+    Cas orphelin (inverse de la contamination documentée en tête de module) : CP BRUT réunionnais
+    mais géocodage BAN MÉTROPOLITAIN. Le logement est réunionnais authentique, mais TOUTE son
+    identité BAN (code_insee_ban, code_postal_ban, identifiant_ban, x/y, score) est un mensonge :
+    on la PURGE au parse — sinon dpe_records stocke un code_insee hors département et les passes
+    1-2 du rattachement peuvent épingler une fausse parcelle via le faux id_ban.
+    """
     numero = rec.get("numero_dpe")
     if not numero:
         return None
+    ban_ment = (_cp_reunion(rec.get("code_postal_brut"))
+                and not str(rec.get("code_insee_ban") or "").startswith("974"))
+
+    def _cp_str(v) -> str | None:  # le CP brut ADEME arrive parfois en ENTIER (97490)
+        return str(v) if v not in (None, "") else None
+
     return {
         "numero_dpe": str(numero),
         "etiquette_dpe": rec.get("etiquette_dpe"),
@@ -89,15 +103,17 @@ def parse_record(rec: dict) -> dict | None:
         "type_batiment": rec.get("type_batiment"),
         "surface_habitable": _to_float(rec.get("surface_habitable_logement")),
         "annee_construction": _to_int(rec.get("annee_construction")),
-        "adresse": rec.get("adresse_ban") or rec.get("adresse_brut"),
+        "adresse": (rec.get("adresse_brut") if ban_ment else
+                    rec.get("adresse_ban") or rec.get("adresse_brut")),
         "adresse_brut": rec.get("adresse_brut"),
-        "code_insee": rec.get("code_insee_ban"),
-        "code_postal": rec.get("code_postal_ban") or rec.get("code_postal_brut"),
+        "code_insee": None if ban_ment else rec.get("code_insee_ban"),
+        "code_postal": _cp_str(rec.get("code_postal_brut") if ban_ment else
+                               rec.get("code_postal_ban") or rec.get("code_postal_brut")),
         "date_etablissement": _to_date(rec.get("date_etablissement_dpe")),
-        "id_ban": rec.get("identifiant_ban"),
-        "score_ban": _to_float(rec.get("score_ban")),
-        "x_ban": _to_float(rec.get("coordonnee_cartographique_x_ban")),
-        "y_ban": _to_float(rec.get("coordonnee_cartographique_y_ban")),
+        "id_ban": None if ban_ment else rec.get("identifiant_ban"),
+        "score_ban": None if ban_ment else _to_float(rec.get("score_ban")),
+        "x_ban": None if ban_ment else _to_float(rec.get("coordonnee_cartographique_x_ban")),
+        "y_ban": None if ban_ment else _to_float(rec.get("coordonnee_cartographique_y_ban")),
     }
 
 

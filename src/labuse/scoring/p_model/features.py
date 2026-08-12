@@ -151,6 +151,47 @@ FEATURES_RETIREES = [f.name for f in FEATURES if f.retired]
 FEATURE_NAMES_ACTIFS = [f.name for f in FEATURES if not f.retired]
 
 
+# ── M71 B3 — garde de NON-CONSTANCE (règle des trois fois) ────────────────────────────
+# Trois signaux morts découverts silencieux : Renouvellement constant, entonnoir_motifs
+# constant, pv_candidat (23 529 candidats PV tous `validation NULL` → false partout,
+# audit M66-B). Un signal constant sur tout le parc ne discrimine rien : il est MORT, et
+# le silence est interdit — la garde REFUSE le build et NOMME la feature.
+#
+# Exemptions : signaux morts CONNUS, datés, en attente d'arbitrage — jamais un silence.
+# Retirer l'exemption dès l'arbitrage rendu (le build re-casse si le signal reste mort).
+NON_CONSTANCE_EXEMPTIONS: dict[str, str] = {
+    "pv_candidat": "M71 B2 — mort mesuré (0 validé sur 23 529 candidats PV, validation NULL) ; "
+                   "arbitrage Vic en cours : passe de validation vs alignement critère piscine.",
+}
+
+
+class SignalConstantError(RuntimeError):
+    """Un signal du scoring est constant sur tout le parc — build refusé (M71 B3)."""
+
+
+def check_non_constance(df: pd.DataFrame,
+                        exemptions: dict[str, str] | None = None) -> list[str]:
+    """Échoue (SignalConstantError) si une feature ACTIVE est constante sur `df` (le parc).
+
+    Tourne sur la matrice de features au BUILD (p_v2.pipeline, après derive) — même
+    philosophie que la garde de câblage M-B : un signal mort n'est pas un état de donnée
+    légitime, il ne sert pas. Renvoie la liste des morts EXEMPTÉS (à journaliser au
+    rapport de run, jamais avalée).
+    """
+    exemptions = NON_CONSTANCE_EXEMPTIONS if exemptions is None else exemptions
+    morts = [f.name for f in FEATURES
+             if not f.retired and f.name in df.columns
+             and df[f.name].nunique(dropna=False) <= 1]
+    fautifs = [m for m in morts if m not in exemptions]
+    if fautifs:
+        raise SignalConstantError(
+            "Signal(s) du scoring CONSTANT(S) sur tout le parc — build refusé (M71 B3, "
+            f"règle des trois fois) : {', '.join(sorted(fautifs))}. Un signal constant ne "
+            "discrimine rien : corriger la donnée amont, retirer la feature, ou consigner "
+            "une exemption DATÉE dans NON_CONSTANCE_EXEMPTIONS (jamais un silence).")
+    return sorted(morts)
+
+
 def load_dataset(engine, years: tuple[int, ...]) -> pd.DataFrame:
     """Charge p_model_dataset pour les années demandées et dérive les features
     Python (shrinkage, composite équipements, renommages)."""

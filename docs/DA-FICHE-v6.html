@@ -6,13 +6,11 @@
 <style>
 :root{
   --bg-panel:#0A0C0B; --bg-card:#121815; --bg-header:#111614; --bg-ico:#1A211D;
-  /* M60 P1 — 3 tokens resynchronisés sur le VIF (app + DA-LABUSE), MORTS depuis M65 :
-     --line-card #253029→#1E2622 · --txt-dim #97A39B→#8A968F · --lab #8A968F→#7C8A82. */
-  --line:#1A211D; --line-card:#1E2622; --line-head:#232C27; --line-btn:#263029;
-  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --lab:#7C8A82;
+  --line:#1A211D; --line-card:#253029; --line-head:#232C27; --line-btn:#263029;
+  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#97A39B; --lab:#8A968F;
   --txt-mut:#6B776F; --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44;
   --mint:#4ADE80; --mint-on:#06301A;
-  --amber:#E0A94F; --amber-bg:#2A2113; /* M68 P1c — tokens --amber-band/txt/ico retirés avec .band */
+  --amber:#E0A94F; --amber-bg:#2A2113; --amber-band:#1C1509; --amber-txt:#D9AE68; --amber-ico:#8A7040;
   --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
   --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,monospace;
@@ -39,9 +37,7 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
 .eyebrow{font-size:9.5px;letter-spacing:.11em;color:var(--txt-off)}
 .ref{font-size:17px;font-weight:500;font-family:var(--mono);letter-spacing:-.02em;margin-top:5px}
 .addr{font-size:11.5px;color:var(--lab);margin-top:4px}
-/* M61 P5 — « Voir sur Pages Jaunes » en JAUNE de marque (seul endroit autorisé), cliquable. */
-.addr-link{font-size:11px;color:#F5C518;margin-top:3px;cursor:pointer}
-.addr-link:hover{text-decoration:underline}
+.addr-link{font-size:11px;color:var(--txt-mut);margin-top:3px}
 .hbtns{display:flex;gap:4px;flex-shrink:0}
 .hbtn{width:26px;height:26px;border-radius:7px;border:0.5px solid var(--line-btn);
   display:flex;align-items:center;justify-content:center;color:#7C8A82;font-size:12px}
@@ -56,7 +52,10 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
   justify-content:center;gap:8px;margin-top:10px;font-size:13.5px;font-weight:500;color:var(--mint-on)}
 .cta-sub{font-size:10.5px;color:var(--txt-off);text-align:center;margin-top:6px}
 
-/* M68 P1c — styles .band (bandeau d'attention « Marché peu actif ») retirés avec le composant. */
+.band{background:var(--amber-band);border-left:2px solid var(--amber);border-radius:0 9px 9px 0;
+  padding:9px 12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.band span{font-size:12px;color:var(--amber-txt)}
+.band i{font-size:13px;color:var(--amber-ico);font-style:normal}
 
 .ia{display:flex;gap:7px;margin-top:10px}
 .ia-btn{flex:1;height:34px;border:0.5px solid var(--iris-line);background:var(--iris-bg);
@@ -101,16 +100,6 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
 .exp-wide{height:42px;display:flex;align-items:center;justify-content:center;gap:7px;
   border-top:0.5px solid var(--line);font-size:12px;color:var(--txt)}
 .legal{font-size:9px;color:var(--txt-faint);line-height:1.5;margin-top:14px}
-.porte-outil{background:var(--bg-header);border:0.5px solid #212A25;border-left:2px solid var(--mint);
-  border-radius:0 10px 10px 0;padding:11px 13px;display:flex;align-items:center;gap:11px;margin-top:7px}
-.po-ico{width:30px;height:30px;border-radius:8px;background:#12291D;display:flex;
-  align-items:center;justify-content:center;flex-shrink:0;color:var(--mint);font-size:15px}
-.po-t{font-size:13px;color:var(--txt-hi)}
-.po-s{font-size:11px;color:var(--txt-mut);margin-top:1px}
-.po-arrow{font-size:14px;color:var(--mint);flex-shrink:0}
-.porte-outil.compacte{padding:10px 12px;gap:10px}
-.porte-outil.compacte .po-t{font-size:12.5px}
-.porte-outil.compacte .po-s{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -144,8 +133,7 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
   <div class="cta">Demander à LABUSE d'analyser →</div>
   <div class="cta-sub">Le verdict, le score et « pourquoi » — à la demande.</div>
 
-  <!-- M68 P1c — le bandeau d'attention .band « Marché peu actif » a été retiré (composant supprimé
-       en M65 P1) : ce résidu de maquette est enlevé, la maquette suit l'app. -->
+  <div class="band"><span>Marché peu actif à Sainte-Marie</span><i>ⓘ</i></div>
 
   <div class="ia">
     <div class="ia-btn">◇ Poser une question</div>
@@ -236,12 +224,6 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
     <tr><td>Écart avant un groupe</td><td><code>20px</code> · après le libellé <code>9px</code></td></tr>
     <tr><td>Padding tiroir</td><td><code>12px 13px</code> · gap interne <code>12px</code></td></tr>
     <tr><td>Largeur de la fiche</td><td><code>400px</code>, padding <code>14px</code></td></tr>
-    <tr><td><b style="color:var(--txt)">M61 — Pages Jaunes</b></td><td>lien JAUNE <code>--pj-jaune #F5C518</code> (seul jaune autorisé de l'app), pointeur + soulignement au survol.</td></tr>
-    <tr><td>M61 — Adresse copiable</td><td>sélectionnable (aucun <code>user-select:none</code>) + icône « copier » discrète (même bouton que l'IDU).</td></tr>
-    <tr><td>M61 — Bloc Analyse</td><td>TIROIR repliable : en-tête <code>Analyse LABUSE</code> + verdict (au repli) + chevron ; état par parcelle/session, <b style="color:var(--txt)">hors accordéon exclusif</b> des 7 tiroirs.</td></tr>
-    <tr><td>M61 — Synthèse IA</td><td>PANNEAU pleine largeur qui REMPLACE la rangée des 2 boutons IA (+ « Replier ») ; markdown rendu (gras, pas d'astérisques) ; repli/réouverture sans nouvel appel IA.</td></tr>
-    <tr><td>M61 — Renouvellement</td><td>rang + <code>▶ Pourquoi ce rang</code> dépliable regroupés (comme « Pourquoi ce score ») ; ancienne section basse absorbée.</td></tr>
-    <tr><td>M61 — Doublon PLU</td><td>pastilles « constructible {zone} » et « N vigilances » RETIRÉES du bloc Analyse (déjà dans Urbanisme / Risques).</td></tr>
   </table>
 
   <h2>HAUTEURS — UNE SEULE ÉCHELLE</h2>
@@ -275,27 +257,10 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
     <tr><td>Ni halo ni ombre</td><td>l'élévation vient du contraste fond/carte uniquement.</td></tr>
   </table>
 
-  <h2>LA PORTE D'OUTIL — LES MOTEURS EN AVANT</h2>
-  <div class="porte-outil" style="max-width:340px">
-    <div class="po-ico">▦</div>
-    <div style="flex:1;min-width:0">
-      <div class="po-t">Calculette foncière</div>
-      <div class="po-s">Combien payer ce terrain ? — pré-remplie avec cette parcelle</div>
-    </div>
-    <div class="po-arrow">→</div>
-  </div>
-  <p style="font-size:12px;margin-top:10px">Tranche verte 2px = un moteur LABUSE (même langage que la page
-  Outils). Icône verte sur pastille <code>#12291D</code>. L'accroche est CONTEXTUALISÉE avec les données de
-  la parcelle (« sur ces 2 821 m² »), jamais générique. Deux emplacements : pleine largeur en
-  <b style="color:var(--txt)">pied de tiroir ouvert</b> (après les données, jamais dans le corps),
-  et compacte (2 colonnes) dans la grille « OUTILS SUR CETTE PARCELLE ». Règle : au plus UNE porte
-  contextuelle par outil ; le tiroir informe d'abord, propose ensuite. Chaque porte ouvre l'outil
-  PRÉ-REMPLI avec l'IDU, sans perdre la fiche.</p>
-
   <h2>ORDRE DES BLOCS</h2>
   <p style="font-size:12px">En-tête (identité + 4 chiffres) → bouton d'analyse + légende → bandeau
   d'attention si présent → actions IA → LE TERRAIN (3 tiroirs) → LE CONTEXTE (4 tiroirs) →
-  actions (+ CRM · + Projet · Comparer) → EXPORTS → OUTILS SUR CETTE PARCELLE (portes compactes) → mention légale.
+  actions (+ CRM · + Projet · Comparer) → EXPORTS ET OUTILS → mention légale.
   Le bloc Analyse s'insère après le bouton d'analyse, une fois le verdict demandé.</p>
 </div>
 

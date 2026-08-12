@@ -34,17 +34,53 @@ def distinct_sirens(session: Session, insee: str | None = None) -> list[str]:
     return [r[0] for r in session.execute(text(sql), params).all()]
 
 
+# M71 BLOC D — JOURNAL DU SONDAGE par siren : « 662 procédures / 191 sirens » ne prouvait pas
+# que les 12 605 sirens propriétaires avaient été interrogés (audit M66-B). Chaque appel
+# journalise désormais QUI a été sondé, QUAND, et le résultat (procedure/rien) — un « rien »
+# daté vaut mieux qu'un silence. Entretenu par le cron J+1 (Train 8) au fil des nouveaux SIREN.
+_JOURNAL_DDL = text("""
+    CREATE TABLE IF NOT EXISTS bodacc_sondages (
+        siren varchar(9) PRIMARY KEY,
+        sonde_le timestamptz NOT NULL,
+        resultat varchar(16) NOT NULL,          -- 'procedure' | 'rien'
+        n_procedures integer NOT NULL DEFAULT 0
+    )""")
+
+
+def _journaliser_sondage(session: Session, sirens: list[str], hits: dict[str, int]) -> None:
+    session.execute(_JOURNAL_DDL)
+    for s in sorted(set(sirens)):
+        n = hits.get(s, 0)
+        session.execute(text(
+            "INSERT INTO bodacc_sondages (siren, sonde_le, resultat, n_procedures) "
+            "VALUES (:s, now(), :r, :n) "
+            "ON CONFLICT (siren) DO UPDATE SET sonde_le = now(), "
+            "  resultat = EXCLUDED.resultat, n_procedures = EXCLUDED.n_procedures"),
+            {"s": s, "r": "procedure" if n else "rien", "n": n})
+
+
+def sirens_jamais_sondes(session: Session) -> list[str]:
+    """SIREN propriétaires (parcelle_personne_morale) absents du journal bodacc_sondages."""
+    session.execute(_JOURNAL_DDL)
+    return [r[0] for r in session.execute(text(
+        "SELECT DISTINCT pm.siren FROM parcelle_personne_morale pm "
+        "WHERE pm.siren ~ '^[0-9]{9}$' "
+        "  AND NOT EXISTS (SELECT 1 FROM bodacc_sondages b WHERE b.siren = pm.siren) "
+        "ORDER BY 1")).all()]
+
+
 def ingest_bodacc(session: Session, sirens: list[str], connector: BodaccConnector | None = None,
                   batch_size: int = 40) -> dict:
     """Récupère et UPSERT les procédures collectives des SIREN dans `bodacc_procedures`.
 
     Idempotent (conflit sur `annonce_id`). Met à jour `data_sources.last_sync_at` (fraîcheur,
-    cohérent Vague D). ⚠ ÉCRIT en base — ne pas lancer sur l'île entière sans le feu vert de Vic
-    (cf. brief). Retourne des compteurs.
+    cohérent Vague D) et JOURNALISE le sondage par siren (bodacc_sondages, M71 BLOC D).
+    ⚠ ÉCRIT en base — ne pas lancer sur l'île entière sans le feu vert de Vic (cf. brief).
+    Retourne des compteurs.
     """
     connector = connector or BodaccConnector()
     n_proc = 0
-    sirens_hit: set[str] = set()
+    hits: dict[str, int] = {}
     for p in connector.fetch_collective_by_sirens(sirens, batch_size=batch_size):
         session.execute(text(
             "INSERT INTO bodacc_procedures "
@@ -60,11 +96,12 @@ def ingest_bodacc(session: Session, sirens: list[str], connector: BodaccConnecto
              "tr": p["tribunal"], "na": p["numero_annonce"], "pub": p["publication"],
              "url": p["url_source"], "raw": json.dumps(p["raw"], ensure_ascii=False)})
         n_proc += 1
-        sirens_hit.add(p["siren"])
+        hits[p["siren"]] = hits.get(p["siren"], 0) + 1
+    _journaliser_sondage(session, sirens, hits)
     _touch_source(session)
     session.flush()
     return {"sirens_queried": len(set(sirens)), "procedures": n_proc,
-            "sirens_with_procedure": len(sirens_hit)}
+            "sirens_with_procedure": len(hits)}
 
 
 def _touch_source(session: Session) -> None:

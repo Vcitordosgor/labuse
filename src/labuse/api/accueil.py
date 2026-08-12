@@ -71,7 +71,11 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
         # ── bloc 1 · « Je couvre tout » ──
         "parcelles": one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": Q_A_RUN_LABEL}),
         "communes": one("SELECT count(DISTINCT commune) FROM parcels"),
-        "sources": one("SELECT count(*) FROM data_sources WHERE status = 'connecte'"),
+        # M71 F (arbitrage Vic) : UN SEUL chiffre partout — même règle que le bandeau Sources :
+        # connecte HORS doublons (lignes marquées « DOUBLON de … » au catalogue). Dynamique,
+        # aucun chiffre en dur.
+        "sources": one("SELECT count(*) FROM data_sources WHERE status = 'connecte' "
+                       "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%'"),
         # ── bloc 2 · « Je ne devine pas » ──
         "ventes_train": one(
             "SELECT count(*) FROM p_model_ext_dataset WHERE label_l2 = 1 AND annee BETWEEN :a AND :b",

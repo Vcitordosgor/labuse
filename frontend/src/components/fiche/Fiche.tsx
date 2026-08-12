@@ -1492,7 +1492,9 @@ export function Fiche({ idu }: { idu: string }) {
         {f && (() => {
           const cells = [
             { l: 'Surface', v: fmtM2(f.surface_m2) },
-            { l: 'Zone', v: reglesZone ?? '—' },
+            // M71 BLOC C — l'aveuglement se dit : zone absente = « Non publié au GPU » (jamais
+            // un « — » muet). Saint-Philippe (RNU, bandeau f.rnu déjà affiché) + 91 rés. Saint-Leu.
+            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU' },
             // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
             // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
             { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
@@ -1886,7 +1888,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'PLU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
+              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
@@ -2154,6 +2156,17 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
+                    « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
+                {(() => {
+                  const dpe = (f as unknown as { dpe_connu?: { etiquette: string; annee: number | null } }).dpe_connu
+                  return dpe ? (
+                    <div data-dpe-connu className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                      DPE connu : <b className="text-txt-hi">{dpe.etiquette}</b>{dpe.annee ? `, ${dpe.annee}` : ''}
+                      <span className="ml-1 text-[10px] text-txt-dim">(Sourcé ADEME — information, sans effet sur le classement)</span>
+                    </div>
+                  ) : null
+                })()}
                 {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
                     propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
                 {f.proprietaire_moral?.siren && (

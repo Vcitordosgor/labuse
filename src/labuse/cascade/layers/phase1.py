@@ -231,7 +231,17 @@ class ZonagePluGpuLayer(Layer):
             )]
         inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
         if not inter:
-            return [passed(self.name, "Hors zonage PLU connu.", source=SRC_GPU)]
+            # M71 BLOC C (audit M66-B) : AUCUNE zone PLU sur la parcelle = trou de donnée
+            # (Saint-Philippe : 0 couche au GPU, commune RNU — 4 153 parcelles ; Saint-Leu :
+            # 91 résiduelles ; 0 ailleurs, mesuré). Un trou de donnée n'est PAS un verdict :
+            # NON ÉVALUABLE (unknown, impacte la complétude comme ABF) — plus jamais un
+            # PASS silencieux « Hors zonage PLU connu ».
+            return [unknown(
+                self.name,
+                "Zonage PLU non publié au GPU pour cette parcelle — constructibilité non "
+                "évaluable sur ce critère (trou de donnée, pas un verdict).",
+                source=SRC_GPU,
+            )]
         for i in inter:
             lib = (i.subtype or "").strip()
             if lib in set(params.get("exclude_zones", [])):

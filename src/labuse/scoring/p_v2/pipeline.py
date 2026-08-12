@@ -36,7 +36,7 @@ from sqlalchemy.orm import Session
 from .. import score_v  # mécanisme snapshot M1 (lecture seule, réutilisé)
 from ..score_v_constants import Q_A_RUN_LABEL  # source unique du run SERVI (bascule centralisée)
 from ..p_model import ext_sql
-from ..p_model.features import derive
+from ..p_model.features import check_non_constance, derive
 from ..p_model.model import PModel
 from . import MODEL_ARTIFACT, MODEL_FREEZE, MODEL_VERSION, SEED
 from .statuts import TierParams, assign_tiers, calibre_brulante, calibre_n_entree
@@ -247,6 +247,13 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df = pd.read_sql(text("SELECT * FROM p_model_ext_dataset WHERE annee = :a"),
                      session.connection(), params={"a": annee})
     df = derive(df).reset_index(drop=True)
+
+    # M71 B3 — garde de NON-CONSTANCE (règle des trois fois) : un signal constant sur tout
+    # le parc REFUSE le build (SignalConstantError) ; les morts exemptés (arbitrage en
+    # cours) sont journalisés bruyamment, jamais avalés.
+    morts_exemptes = check_non_constance(df)
+    if morts_exemptes:
+        print(f"  ⚠ signaux constants EXEMPTÉS (arbitrage en cours) : {', '.join(morts_exemptes)}")
 
     # recalage d'intercept sur la dernière année labellisée (politique 1.3)
     last_labeled = int(pd.read_sql(text(
@@ -508,7 +515,9 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd,
             "icd_error": icd_error,   # M-E (P1-5) : None si OK, sinon la cause — signalé, pas comblé
             # M-F (P1-6) : compteur de permis intégrés + fraîcheur — lu pour valider une bascule.
-            "permits": feat_stats}
+            "permits": feat_stats,
+            # M71 B3 : signaux constants EXEMPTÉS (arbitrage daté) — [] attendu ; jamais avalé.
+            "signaux_constants_exemptes": morts_exemptes}
 
 
 def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame) -> None:

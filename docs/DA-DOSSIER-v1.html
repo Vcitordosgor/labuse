@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DA-DOSSIER v1 — LABUSE · dossier parcelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#12291D; --mint:#4ADE80; --mint-fonce:#1B5E3C; --mint-voile:#EDF9F1;
+  --papier:#FBFCFB; --carte-fond:#F3F6F4; --encre:#0E1512; --encre-2:#48544E; --encre-3:#7C8A82;
+  --filet:#DCE3DE; --rouge:#A33A2A; --ambre:#8A6414;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:40px 20px;background:#7E857F;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.page{width:820px;min-height:1160px;margin:0 auto 40px;background:var(--papier);color:var(--encre);
+  position:relative;box-shadow:0 2px 24px rgba(0,0,0,.3);padding-bottom:62px}
+
+/* en-tête : le noir de l'app */
+.tete{background:var(--noir);color:#F2F5F3;padding:20px 44px 22px;display:flex;justify-content:space-between;align-items:flex-end}
+.marque{font-weight:700;font-size:19px;letter-spacing:.18em}
+.marque span{color:var(--mint)}
+.tete .doc{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8A968F;text-align:right}
+.tete .ref{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;margin-top:4px}
+.filet-mint{height:2px;background:var(--mint)}
+.corps{padding:30px 44px 0}
+
+/* — couverture — */
+.couv{padding:44px 44px 0}
+.couv h1{font-size:42px;font-weight:700;letter-spacing:-1.4px;margin:0 0 6px;line-height:1}
+.couv .st{font-size:13px;color:var(--encre-2);margin-bottom:26px}
+.couv .adr{font-size:17px;font-weight:500}
+.couv .par{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--encre-2);margin-top:5px}
+.plan{margin:24px 0 9px;border-radius:9px;overflow:hidden;height:330px;
+  background:repeating-linear-gradient(45deg,#EEF2EF 0 10px,#E6ECE8 10px 20px);
+  display:flex;align-items:flex-end;padding:12px;position:relative}
+.plan .att{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--encre-3);background:var(--papier);padding:3px 7px;border-radius:5px}
+.plan .lg2{position:absolute;top:12px;left:12px;background:var(--papier);border-left:2px solid var(--mint);
+  padding:7px 10px;font-size:9.5px;line-height:1.5;color:var(--encre-2)}
+
+/* cartes autonomes */
+.carte{background:var(--carte-fond);border-radius:9px;padding:18px 20px;margin-bottom:9px}
+.carte.porte{background:var(--mint-voile);border-left:2px solid var(--mint);border-radius:0 9px 9px 0}
+.chef{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.past{width:32px;height:32px;border-radius:8px;background:var(--carte);color:var(--mint);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+  font-family:'JetBrains Mono',monospace;font-weight:600}
+.chef h2{margin:0;font-size:13.5px;font-weight:600}
+.chef .sous{font-size:10px;color:var(--encre-3);margin-top:1px}
+.chef .fin{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--encre-2)}
+
+/* lignes plates */
+.lg{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--filet);font-size:11.5px;line-height:1.5}
+.lg:last-child{border-bottom:0}
+.lg .k{width:142px;font-weight:600;flex-shrink:0}
+.lg .v{flex:1;color:var(--encre-2)}
+.lg .s{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--encre-3);width:112px;flex-shrink:0;text-align:right;line-height:1.4}
+.lg .e{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;width:76px;flex-shrink:0;text-align:right}
+.e.ok{color:var(--mint-fonce)} .e.att{color:var(--ambre)} .e.non{color:var(--rouge)}
+.e.abs{color:var(--encre-3);font-style:italic;text-transform:none;letter-spacing:0}
+
+/* verdict */
+.verdict{display:flex;gap:24px;align-items:flex-start;padding:22px 20px}
+.verdict .mot{font-size:44px;font-weight:700;line-height:.92;letter-spacing:-1.4px;color:var(--rouge)}
+.verdict .dr{flex:1;padding-top:4px}
+.verdict .ratio{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600}
+.verdict .ratio em{font-style:normal;font-size:10.5px;color:var(--encre-2);margin-left:7px;font-family:'Archivo',sans-serif}
+.verdict p{margin:9px 0 0;font-size:12px;line-height:1.55;color:var(--encre-2);max-width:46ch}
+
+/* chiffres */
+.chiffres{display:grid;gap:1px;background:var(--filet);border-radius:9px;overflow:hidden;margin-bottom:9px}
+.c2{grid-template-columns:repeat(2,1fr)} .c3{grid-template-columns:repeat(3,1fr)} .c4{grid-template-columns:repeat(4,1fr)}
+.chiffres div{background:var(--carte-fond);padding:13px 16px}
+.chiffres .lab{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--encre-3)}
+.chiffres .val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;margin-top:5px}
+.chiffres .prec{font-size:9.5px;color:var(--encre-3);margin-top:3px}
+
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--encre-3);font-weight:500;padding:0 8px 8px 0;border-bottom:1px solid var(--filet)}
+td{padding:9px 8px 9px 0;border-bottom:1px solid var(--filet);color:var(--encre-2)}
+td.n{font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--encre)}
+tr.total td{border-bottom:0;padding-top:12px;font-weight:600;color:var(--encre)}
+tr:last-child td{border-bottom:0}
+
+.porte .pt{font-size:12px;font-weight:600}
+.porte .ps{font-size:10.5px;color:var(--encre-2);margin-top:2px;line-height:1.45}
+.porte .flx{display:flex;align-items:center;gap:11px}
+
+.reserve{font-size:10px;line-height:1.55;color:var(--encre-2);margin:12px 0 0;
+  padding-left:11px;border-left:1px solid var(--filet-fort,#B8C2BC)}
+.legal{font-size:8.5px;line-height:1.55;color:var(--encre-3);max-width:72ch;margin:14px 0 0}
+.pied{position:absolute;left:44px;right:44px;bottom:24px;display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--encre-3);border-top:1px solid var(--filet);padding-top:9px}
+.abs-l{list-style:none;margin:0;padding:0}
+.abs-l li{font-size:11px;line-height:1.55;color:var(--encre-2);padding:8px 0;border-bottom:1px solid var(--filet)}
+.abs-l li:last-child{border-bottom:0}
+.abs-l b{color:var(--encre)}
+
+.note{width:820px;margin:0 auto 10px;color:#F0F4F1;font-size:12px;line-height:1.6;border-left:2px solid #4ADE80;padding:6px 0 6px 14px}
+.note b{color:#4ADE80}
+@media print{.note{display:none}body{background:#fff;padding:0}.page{box-shadow:none;margin:0}}
+</style>
+</head>
+<body>
+
+<div class="note"><b>Couverture.</b> La carte devient l'objet principal et porte sa légende. L'identité du rapport passe en pied, discrète : un numéro de rapport et une version de modèle n'intéressent personne avant d'avoir vu la parcelle. « Usage interne » et « Pilote LABUSE » disparaissent.</div>
+
+<!-- ═══════ COUVERTURE ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div class="marque">LA<span>B</span>USE</div>
+    <div class="doc">Dossier parcelle<div class="ref">DP-XXXXXXXX-XXXX</div></div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="couv">
+    <h1>Dossier parcelle</h1>
+    <div class="st">Étude de faisabilité indicative — La Réunion</div>
+    <div class="adr">XX rue XXXXXXXXXXXX, XXXXX Saint-XXXXXXX</div>
+    <div class="par">XXXXXXXXXXXXXX · Saint-XXXXXXX · section XX n° XXX · XX XXX m²</div>
+
+    <div class="plan">
+      <div class="lg2"><b>Emprise de la parcelle</b><br>fond cadastral + limites</div>
+      <div class="att">plan de situation</div>
+    </div>
+
+    <div class="chiffres c4">
+      <div><div class="lab">Contenance</div><div class="val">XX XXX m²</div></div>
+      <div><div class="lab">Zonage PLU</div><div class="val">XX</div></div>
+      <div><div class="lab">SDP dispo.</div><div class="val">—</div></div>
+      <div><div class="lab">Secteur</div><div class="val">X XXX €/m²</div></div>
+    </div>
+
+    <div class="carte" style="margin-top:9px">
+      <div class="lg"><div class="k">Établi le</div><div class="v">XX XXXXXXX XXXX</div><div class="s"></div><div class="e"></div></div>
+      <div class="lg"><div class="k">Références</div><div class="v">XXXXX XX XXX — document d'urbanisme XXXXX_PLU_XXXXXXXX</div><div class="s"></div><div class="e"></div></div>
+      <div class="lg"><div class="k">Établi pour</div><div class="v">XXXXXXXXXXXXXXXX</div><div class="s"></div><div class="e"></div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX</span><span>1 / 6</span></div>
+</div>
+
+<div class="note"><b>Pages 02–03 — la décision.</b> Le verdict cesse d'être générique : aujourd'hui il dit « exclusion dure (risques, zonage, foncier public…) » sans nommer laquelle. Ici, le motif exact, et la section Constructibilité porte enfin des droits à construire au lieu du seul verdict.</div>
+
+<!-- ═══════ PAGE 2 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Identité · Constructibilité</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">01</div>
+        <div><h2>Identité parcellaire</h2><div class="sous">cadastre et document d'urbanisme</div></div>
+        <div class="fin">Zone XX · 100 %</div></div>
+      <div class="lg"><div class="k">Contenance</div><div class="v">XX XXX m² — contenance cadastrale</div>
+        <div class="s">XXXXXXXX XXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Zonage</div><div class="v">XX — XXXXXXXXXXXXXXXX · 100 % de la parcelle</div>
+        <div class="s">XXX / XXX<br>XXXXX_PLU_XXXXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Article applicable</div><div class="v">XX.X — XXXXXXXXXXX XXXXXXXX XXXXXX</div>
+        <div class="s">XXXXXXXXX XXX</div><div class="e ok">Sourcé</div></div>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">02</div>
+        <div><h2>Constructibilité</h2><div class="sous">verdict et droits à construire</div></div></div>
+
+      <div style="display:flex;gap:24px;align-items:flex-start;padding:6px 0 18px">
+        <div style="font-size:44px;font-weight:700;line-height:.92;letter-spacing:-1.4px;color:var(--rouge)">Écartée</div>
+        <div style="flex:1;padding-top:4px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600">×X,X
+            <em style="font-style:normal;font-size:10.5px;color:var(--encre-2);margin-left:7px;font-family:'Archivo',sans-serif">plus probable d'être vendue que la moyenne du parc</em></div>
+          <p style="margin:9px 0 0;font-size:12px;line-height:1.55;color:var(--encre-2);max-width:46ch">
+            <b>Motif exact :</b> XXXXXXXXXXXX XXXXXX XXXXXXXXXXX XXXX XXXXXXXX. Un seul motif nommé,
+            jamais une liste de causes possibles entre parenthèses.</p>
+        </div>
+      </div>
+
+      <div class="lg"><div class="k">Emprise utile</div><div class="v">XX XXX m² — plafond retenu X XXX m²</div>
+        <div class="s">XXXXXXXX</div><div class="e ok">Calculé</div></div>
+      <div class="lg"><div class="k">SDP résiduelle</div><div class="v">non calculée sur cette parcelle — les droits à construire ne sont pas établis</div>
+        <div class="s">—</div><div class="e abs">absent</div></div>
+      <div class="lg"><div class="k">Bâti existant</div><div class="v">aucun bâti significatif détecté</div>
+        <div class="s">XX XXXX · XXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Pente</div><div class="v">X,X° ≈ XX % · maximum XX,X° ≈ XX % — non éliminatoire</div>
+        <div class="s">XXX XXXX X X</div><div class="e ok">Calculé</div></div>
+    </div>
+
+    <div class="carte porte">
+      <div class="flx"><div class="past">▦</div>
+        <div><div class="pt">Calculette de charge foncière</div>
+        <div class="ps">Combien payer ce terrain à vos hypothèses de programme, sur ces XX XXX m².</div></div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX</span><span>2 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 03 — risques.</b> Aujourd'hui le tableau liste trois niveaux contradictoires du même aléa (faible, moyen, élevé) et deux régimes PPR incompatibles. Ici, un aléa = une ligne = un niveau retenu, et la règle qui s'applique est nommée. Les distances ABF à 0 m sont à instruire avant d'être affirmées.</div>
+
+<!-- ═══════ PAGE 3 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Risques · Patrimoine</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">03</div>
+        <div><h2>Risques</h2><div class="sous">XX couches instruites · un aléa, un niveau</div></div>
+        <div class="fin">X vigilances</div></div>
+      <table>
+        <thead><tr><th style="width:170px">Aléa</th><th>Ce qui s'applique sur la parcelle</th>
+          <th style="width:88px">Niveau</th><th style="width:104px">Source</th></tr></thead>
+        <tr><td style="color:var(--encre);font-weight:600">Inondation</td>
+            <td>XXXXXXXXXXX XXXXXX XXXXXXXXXXXX</td><td><span class="e non" style="width:auto;text-align:left">Fort</span></td>
+            <td class="n" style="font-size:8.5px;color:var(--encre-3)">XXXXXXXXXX</td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Mouvement de terrain</td>
+            <td>niveau retenu sur l'emprise — XXXXXXXXXX XXXXX</td><td><span class="e att" style="width:auto;text-align:left">Moyen</span></td>
+            <td class="n" style="font-size:8.5px;color:var(--encre-3)">XXXXXXXXXX</td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Règlement PPR</td>
+            <td>zone XX — XXXXXXXXXXXX. Le régime le plus contraignant s'applique.</td>
+            <td><span class="e non" style="width:auto;text-align:left">Interdiction</span></td>
+            <td class="n" style="font-size:8.5px;color:var(--encre-3)">XXX XXXXXXX</td></tr>
+        <tr><td colspan="4" style="padding-top:12px;font-size:10.5px;color:var(--encre-3)">
+          <b style="color:var(--encre-2)">Sans emprise sur cette parcelle :</b> cavités · ICPE · sites et sols pollués ·
+          classement sonore · recul du trait de côte · 50 pas géométriques · espace naturel sensible · parc national.</td></tr>
+      </table>
+      <p class="reserve">Quand plusieurs niveaux d'un même aléa se recouvrent sur l'emprise, le dossier retient
+        le plus contraignant et le dit. Il n'en liste jamais plusieurs côte à côte.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">04</div>
+        <div><h2>Patrimoine et environnement</h2><div class="sous">abords, protections</div></div></div>
+      <table>
+        <thead><tr><th style="width:230px">Protection</th><th>Constat</th><th style="width:104px">Distance</th><th style="width:96px">État</th></tr></thead>
+        <tr><td style="color:var(--encre);font-weight:600">Abords monument historique</td>
+            <td>XXXXXXXXXXXXXXXX — covisibilité à instruire</td><td class="n">~XXX m</td>
+            <td><span class="e att" style="width:auto;text-align:left">À instruire</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXX</td>
+            <td>XXXXXXXXXXXXXXXXXXXXXX</td><td class="n">XXX m</td>
+            <td><span class="e ok" style="width:auto;text-align:left">Hors périmètre</span></td></tr>
+      </table>
+      <p class="reserve">Le périmètre d'abords est un rayon théorique de 500 m, pas une servitude constatée.
+        L'avis de l'Architecte des Bâtiments de France dépend de la covisibilité réelle, qui s'instruit sur place.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX</span><span>3 / 6</span></div>
+</div>
+
+<div class="note"><b>Pages 04–05 — marché et dynamique.</b> Deux prix médians circulent aujourd'hui sans qu'on sache lequel compte quoi. Ici, un chiffre principal, les autres en second rang avec leur périmètre écrit à côté.</div>
+
+<!-- ═══════ PAGE 4 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Marché · Dynamique</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">05</div>
+        <div><h2>Marché</h2><div class="sous">commune et comparables de proximité</div></div></div>
+      <div class="chiffres c3" style="margin-bottom:16px">
+        <div><div class="lab">Médiane commune</div><div class="val">X XXX €/m²</div><div class="prec">tous biens · XX ventes · XXXX</div></div>
+        <div><div class="lab">Tendance 12 mois</div><div class="val">+XX,X %</div><div class="prec">X XXX vs X XXX €/m²</div></div>
+        <div><div class="lab">Liquidité</div><div class="val">XX ventes</div><div class="prec">dernier trimestre · +XX %</div></div>
+      </div>
+      <table>
+        <thead><tr><th style="width:118px">Type</th><th style="width:110px">Surface bâtie</th><th style="width:104px">Terrain</th>
+          <th style="width:110px">Prix</th><th style="width:90px">€/m²</th><th>Mois</th></tr></thead>
+        <tr><td class="n">XXXXXX</td><td class="n">XX m²</td><td class="n">XXX m²</td><td class="n">XX XXX €</td><td class="n">X XXX</td><td class="n">XX/XXXX</td></tr>
+        <tr><td class="n">XXXXXX</td><td class="n">XXX m²</td><td class="n">XXX m²</td><td class="n">XXX XXX €</td><td class="n">X XXX</td><td class="n">XX/XXXX</td></tr>
+        <tr class="total"><td colspan="4">Médiane des comparables — rayon XXX m · X ans</td><td class="n">X XXX</td><td></td></tr>
+      </table>
+      <p class="reserve">X ventes seulement dans le rayon retenu : la médiane des comparables est indicative
+        et ne peut pas fonder un prix. La médiane communale, calculée sur XX ventes, est plus robuste.
+        Adresses jamais communiquées.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">06</div>
+        <div><h2>Dynamique locale</h2><div class="sous">autorisations d'urbanisme · rayon XXX m · XX mois</div></div></div>
+      <div class="chiffres c2" style="margin-bottom:16px">
+        <div><div class="lab">Autorisations</div><div class="val">X</div><div class="prec">délivrées sur la période</div></div>
+        <div><div class="lab">Logements autorisés</div><div class="val">X</div><div class="prec">toutes autorisations confondues</div></div>
+      </div>
+      <table>
+        <thead><tr><th style="width:230px">Type d'autorisation</th><th>Mois</th><th style="width:120px">Logements</th></tr></thead>
+        <tr><td class="n">XXXXXXXXXXXXXXXX</td><td class="n">XX/XXXX</td><td class="n">X</td></tr>
+        <tr><td class="n">XXXXXXXXXXXXXXXX</td><td class="n">XX/XXXX</td><td class="n">X</td></tr>
+      </table>
+    </div>
+
+    <div class="carte porte">
+      <div class="flx"><div class="past">⇄</div>
+        <div><div class="pt">Comparer les parcelles du secteur</div>
+        <div class="ps">Mettre cette parcelle en regard des XX autres du même secteur.</div></div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX</span><span>4 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 05 — commune et terrain.</b> La section « Terrain &amp; réseaux » actuelle ne contient aucun réseau. Ou elle les porte, ou elle change de nom. Les réserves méthodologiques du dossier actuel sont excellentes : elles sont conservées telles quelles.</div>
+
+<!-- ═══════ PAGE 5 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Commune · Terrain et réseaux</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">07</div>
+        <div><h2>Contexte communal</h2><div class="sous">Saint-XXXXXXX · agrégats publics, aucune donnée nominative</div></div></div>
+      <div class="lg"><div class="k">Délai d'instruction</div><div class="v">X mois en médiane · fourchette X–XX mois sur X XXX dossiers</div>
+        <div class="s">XXXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Logement social</div><div class="v">XX,X % du parc — objectif XX % · commune conforme</div>
+        <div class="s">XXXX · XXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Consommation d'espace</div><div class="v">XX XXX m²/an récemment · XXX XXX m²/an sur la décennie précédente</div>
+        <div class="s">XXXXXX XXXX</div><div class="e ok">Sourcé</div></div>
+      <p class="reserve">Le délai d'instruction est calculé sur les seuls permis accordés : les dossiers refusés
+        ou encore en cours ne sont pas comptés, ce qui raccourcit mécaniquement la médiane. C'est un minimum
+        optimiste, pas un délai garanti.</p>
+      <p class="reserve">Le budget ZAN et son horizon ne sont pas indiqués : l'enveloppe n'est pas encore
+        territorialisée. À confirmer auprès des documents d'urbanisme locaux.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">08</div>
+        <div><h2>Terrain et réseaux</h2><div class="sous">relief, gisement solaire, viabilisation</div></div>
+        <div class="fin">Viabilisation confirmée</div></div>
+      <div class="lg"><div class="k">Relief</div><div class="v">pente moyenne X,X° ≈ XX % · maximum XX,X° ≈ XX %</div>
+        <div class="s">XXX XXXX X X</div><div class="e ok">Calculé</div></div>
+      <div class="lg"><div class="k">Gisement solaire</div><div class="v">X XXX kWh/kWc/an — productible pour une installation optimisée</div>
+        <div class="s">XXXXX</div><div class="e att">Estimé</div></div>
+      <div class="lg"><div class="k">Accès voirie</div><div class="v">tronçon au contact de la parcelle</div>
+        <div class="s">XX XXXX XXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Eau potable</div><div class="v">XXXXXXXXXXXXXXXXXXXX</div>
+        <div class="s">XXX XXXXXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Assainissement</div><div class="v">XXXXXXXXXXXXXXXXXXXX</div>
+        <div class="s">XXX XXXXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Électricité</div><div class="v">XXXXXXXXXXXXXXXXXXXX</div>
+        <div class="s">XXX XXX</div><div class="e att">Estimé</div></div>
+      <p class="reserve">Le gradient côtier local n'est pas capturé par le modèle solaire : ordre de grandeur,
+        à affiner par une étude sur site.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX</span><span>5 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 06 — sources.</b> Le tableau actuel affiche « synchronisé le 2026-07-10 » — une date d'ingestion, que la doctrine interdit de présenter comme fraîcheur. Ici, deux colonnes distinctes : le millésime de la source, et à part, la date où LABUSE l'a récupérée. Et une section neuve : ce que le dossier ne peut pas dire.</div>
+
+<!-- ═══════ PAGE 6 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Sources et millésimes</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">09</div>
+        <div><h2>Sources et millésimes</h2><div class="sous">seules celles qui ont produit un constat ici</div></div>
+        <div class="fin">XX sources</div></div>
+      <table>
+        <thead><tr><th style="width:158px">Section</th><th>Source</th>
+          <th style="width:112px">Millésime source</th><th style="width:96px">Récupérée le</th></tr></thead>
+        <tr><td class="n" style="color:var(--encre-3)">Identité</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Identité</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Risques</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Risques</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXX</td><td class="n"><span style="color:var(--ambre)">non publié</span></td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Marché</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXX</td><td class="n">XXXX–XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Terrain</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+      </table>
+      <p class="reserve">Le millésime est la date de la donnée chez son producteur. La colonne de droite indique
+        seulement quand LABUSE l'a récupérée — elle ne dit rien de la fraîcheur du contenu. Quand le producteur
+        ne publie pas de millésime, le dossier l'écrit plutôt que de présenter une date d'ingestion à sa place.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">○</div>
+        <div><h2>Ce que ce dossier ne peut pas dire</h2><div class="sous">dit pour que vous sachiez où chercher</div></div></div>
+      <ul class="abs-l">
+        <li><b>Droits à construire résiduels</b> — non calculés sur cette parcelle.</li>
+        <li><b>Identité du propriétaire</b> — personne physique : la donnée n'est pas ouverte, elle s'obtient par demande au service de publicité foncière.</li>
+        <li><b>Covisibilité avec le monument voisin</b> — s'instruit sur place, aucune donnée ne la détermine.</li>
+        <li><b>XXXXXXXXXXXXXXXXXX</b> — XXXXXXXXXXXXX XXXXXXXX XXXXXXXXXX.</li>
+      </ul>
+    </div>
+
+    <div class="carte" style="background:var(--papier);padding:0">
+      <p class="legal">Document d'information établi à partir de données publiques. Ne constitue ni un document
+        d'urbanisme opposable, ni une étude de faisabilité réglementaire, ni un conseil juridique. Ces informations
+        ne remplacent pas un certificat d'urbanisme. Les règles complètes du PLU peuvent modifier les potentiels indiqués.</p>
+      <p class="legal">Sources : XXXXXXXXXXXXX · XXXXXXXXXXXXXX · XXXXXXXXXX · XXXXXXXXXXXXXXXX · XXXXXXXXX ·
+        XXXXXXXXXXXX · XXXXXXXXXXXXXXXXXX. Seules les sources ayant produit un constat dans ce dossier sont citées.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier parcelle · DP-XXXXXXXX-XXXX · modèle vX.X</span><span>6 / 6</span></div>
+</div>
+
+</body>
+</html>

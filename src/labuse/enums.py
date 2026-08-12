@@ -61,6 +61,7 @@ class DataSourceStatus(StrEnum):
     MOCK = "mock"             # fixture / réponse simulée
     MANUEL = "manuel"         # fallback champ manuel
     A_FAIRE = "a_faire"       # à connecter plus tard
+    HUB = "hub"               # portail/agrégateur : pas une source de données en soi (M71 A2)
 
 
 class ReliabilityLevel(StrEnum):

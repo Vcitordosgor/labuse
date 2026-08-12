@@ -163,6 +163,9 @@ export interface SourceInfo {
     statut: 'a_jour' | 'nouvelle_publication' | 'non_sondable' | 'erreur'
     detail: string | null
   } | null
+  // M71 BLOC A : ligne marquée DOUBLON au catalogue (même donnée qu'une autre ligne) —
+  // listée pour la traçabilité mais EXCLUE du comptage du bandeau.
+  doublon?: boolean
 }
 
 // M33 — mode B (réhabilitation) : lecture de fiche, TOUJOURS Estimé, jamais persisté.
