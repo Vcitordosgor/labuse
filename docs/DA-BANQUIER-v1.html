@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DA-BANQUIER v1 — LABUSE · dossier financeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#12291D; --mint:#4ADE80; --mint-fonce:#1B5E3C; --mint-voile:#EDF9F1;
+  --papier:#FBFCFB; --carte-fond:#F3F6F4; --encre:#0E1512; --encre-2:#48544E; --encre-3:#7C8A82;
+  --filet:#DCE3DE; --filet-fort:#B8C2BC; --rouge:#A33A2A; --rouge-voile:#FAF0EE; --ambre:#8A6414;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:40px 20px;background:#7E857F;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.page{width:820px;min-height:1160px;margin:0 auto 40px;background:var(--papier);color:var(--encre);
+  position:relative;box-shadow:0 2px 24px rgba(0,0,0,.3);padding-bottom:62px}
+
+.tete{background:var(--noir);color:#F2F5F3;padding:20px 44px 22px;display:flex;justify-content:space-between;align-items:flex-end}
+.marque{font-weight:700;font-size:19px;letter-spacing:.18em}
+.marque span{color:var(--mint)}
+.tete .doc{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8A968F;text-align:right}
+.tete .ref{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;margin-top:4px;color:#F2F5F3}
+.filet-mint{height:2px;background:var(--mint)}
+.corps{padding:30px 44px 0}
+.couv{padding:40px 44px 0}
+.couv h1{font-size:40px;font-weight:700;letter-spacing:-1.3px;margin:0 0 6px;line-height:1}
+.couv .st{font-size:13px;color:var(--encre-2);margin-bottom:24px}
+.couv .adr{font-size:16px;font-weight:500}
+.couv .par{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--encre-2);margin-top:5px}
+
+.carte{background:var(--carte-fond);border-radius:9px;padding:18px 20px;margin-bottom:9px}
+.carte.porte{background:var(--mint-voile);border-left:2px solid var(--mint);border-radius:0 9px 9px 0}
+.carte.alerte{background:var(--rouge-voile);border-left:2px solid var(--rouge);border-radius:0 9px 9px 0}
+.chef{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.past{width:32px;height:32px;border-radius:8px;background:var(--carte);color:var(--mint);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+  font-family:'JetBrains Mono',monospace;font-weight:600}
+.past.rg{background:#2B1512;color:#E8A99C}
+.chef h2{margin:0;font-size:13.5px;font-weight:600}
+.chef .sous{font-size:10px;color:var(--encre-3);margin-top:1px}
+.chef .fin{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--encre-2)}
+
+.lg{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--filet);font-size:11.5px;line-height:1.5}
+.lg:last-child{border-bottom:0}
+.lg .k{width:150px;font-weight:600;flex-shrink:0}
+.lg .v{flex:1;color:var(--encre-2)}
+.lg .s{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--encre-3);width:104px;flex-shrink:0;text-align:right;line-height:1.4}
+.lg .e{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;width:76px;flex-shrink:0;text-align:right}
+.e.ok{color:var(--mint-fonce)} .e.att{color:var(--ambre)} .e.non{color:var(--rouge)}
+.e.abs{color:var(--encre-3);font-style:italic;text-transform:none;letter-spacing:0}
+
+.chiffres{display:grid;gap:1px;background:var(--filet);border-radius:9px;overflow:hidden;margin-bottom:9px}
+.c2{grid-template-columns:repeat(2,1fr)} .c3{grid-template-columns:repeat(3,1fr)} .c4{grid-template-columns:repeat(4,1fr)}
+.chiffres div{background:var(--carte-fond);padding:13px 16px}
+.chiffres .lab{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--encre-3)}
+.chiffres .val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;margin-top:5px}
+.chiffres .prec{font-size:9.5px;color:var(--encre-3);margin-top:3px}
+
+.plan{margin:0 0 9px;border-radius:9px;overflow:hidden;height:290px;
+  background:repeating-linear-gradient(45deg,#EEF2EF 0 10px,#E6ECE8 10px 20px);
+  display:flex;align-items:flex-end;padding:12px;position:relative}
+.plan .att{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--encre-3);background:var(--papier);padding:3px 7px;border-radius:5px}
+.plan .lg2{position:absolute;top:12px;left:12px;background:var(--papier);border-left:2px solid var(--mint);
+  padding:7px 10px;font-size:9.5px;line-height:1.5;color:var(--encre-2)}
+
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--encre-3);font-weight:500;padding:0 8px 8px 0;border-bottom:1px solid var(--filet)}
+td{padding:9px 8px 9px 0;border-bottom:1px solid var(--filet);color:var(--encre-2)}
+td.n{font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--encre)}
+tr.total td{border-bottom:0;padding-top:12px;font-weight:600;color:var(--encre);border-top:1px solid var(--filet-fort)}
+tr:last-child td{border-bottom:0}
+
+.porte .pt,.alerte .pt{font-size:12px;font-weight:600}
+.porte .ps,.alerte .ps{font-size:10.5px;color:var(--encre-2);margin-top:2px;line-height:1.5}
+.porte .flx,.alerte .flx{display:flex;align-items:flex-start;gap:11px}
+
+.synth{font-size:12.5px;line-height:1.65;color:var(--encre-2);margin:0;max-width:70ch}
+.synth b{color:var(--encre)}
+.synth+.synth{margin-top:11px}
+
+.reserve{font-size:10px;line-height:1.55;color:var(--encre-2);margin:12px 0 0;padding-left:11px;border-left:1px solid var(--filet-fort)}
+.legal{font-size:8.5px;line-height:1.55;color:var(--encre-3);max-width:72ch;margin:14px 0 0}
+.pied{position:absolute;left:44px;right:44px;bottom:24px;display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--encre-3);border-top:1px solid var(--filet);padding-top:9px}
+.abs-l{list-style:none;margin:0;padding:0}
+.abs-l li{font-size:11px;line-height:1.55;color:var(--encre-2);padding:8px 0;border-bottom:1px solid var(--filet)}
+.abs-l li:last-child{border-bottom:0}
+.abs-l b{color:var(--encre)}
+
+.note{width:820px;margin:0 auto 10px;color:#F0F4F1;font-size:12px;line-height:1.6;border-left:2px solid #4ADE80;padding:6px 0 6px 14px}
+.note b{color:#4ADE80}
+@media print{.note{display:none}body{background:#fff;padding:0}.page{box-shadow:none;margin:0}}
+</style>
+</head>
+<body>
+
+<div class="note"><b>Page 1 — la conclusion, tout de suite.</b> Un financeur lit la première page et décide s'il lit la suite. Le rang interne (384 467 / 428 239) disparaît : on ne présente pas un classement de base de données à une banque. À la place, la conclusion écrite en une phrase, et ce qui la conditionne.</div>
+
+<!-- ═══════ PAGE 1 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div class="marque">LA<span>B</span>USE</div>
+    <div class="doc">Dossier financeur<div class="ref">DB-XXXXXXXX-XXXX</div></div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="couv">
+    <h1>Dossier financeur</h1>
+    <div class="st">Présentation d'une opération foncière — La Réunion</div>
+    <div class="adr">XX rue XXXXXXXXXXXX, XXXXX Saint-XXXXXXX</div>
+    <div class="par">XXXXXXXXXXXXXX · section XX n° XXX · XX XXX m² · zone XX</div>
+
+    <div class="carte alerte" style="margin-top:26px">
+      <div class="flx"><div class="past rg">!</div>
+        <div><div class="pt">En l'état, ce dossier ne peut pas conclure</div>
+        <div class="ps">Le potentiel constructible est nul aux données disponibles : ni charge foncière,
+        ni comparaison de marché ne peuvent être établies. Trois contraintes réglementaires doivent
+        être levées avant tout engagement. Elles sont détaillées page X.</div></div></div>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">§</div>
+        <div><h2>Synthèse</h2><div class="sous">établie à partir de données publiques</div></div></div>
+      <p class="synth">La parcelle développe <b>XX XXX m²</b> à Saint-XXXXXXX, en zone <b>XX</b> du plan local
+        d'urbanisme. Le potentiel de développement résidentiel est estimé à <b>zéro logement</b> à ce stade.</p>
+      <p class="synth">Trois contraintes conditionnent toute valorisation : un aléa naturel de niveau
+        <b>XXXX</b>, un plan de prévention des risques en régime d'<b>XXXXXXXXXXXX</b>, et une situation
+        dans les abords d'un monument historique rendant probable l'intervention de l'Architecte des
+        Bâtiments de France.</p>
+      <p class="synth">Toute décision d'engagement devra être précédée d'une levée de ces contraintes
+        et d'une étude de faisabilité réglementaire.</p>
+    </div>
+
+    <div class="chiffres c4">
+      <div><div class="lab">Terrain</div><div class="val">XX XXX m²</div><div class="prec">contenance cadastrale</div></div>
+      <div><div class="lab">Zone PLU</div><div class="val">XX</div><div class="prec">100 % de l'emprise</div></div>
+      <div><div class="lab">Potentiel</div><div class="val">~X lgts</div><div class="prec">estimé, table rase</div></div>
+      <div><div class="lab">Charge foncière</div><div class="val">—</div><div class="prec">non établissable</div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>1 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 2 — la parcelle.</b> Aujourd'hui la carte occupe une page entière dont deux tiers restent blancs. Ici elle partage sa page avec l'identité : un financeur veut voir où c'est et ce que c'est d'un seul regard.</div>
+
+<!-- ═══════ PAGE 2 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">La parcelle</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="plan">
+      <div class="lg2"><b>Emprise de la parcelle</b><br>fond cadastral · limites relevées</div>
+      <div class="att">plan de situation</div>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">◈</div>
+        <div><h2>Identité</h2><div class="sous">cadastre, adresse, document d'urbanisme</div></div>
+        <div class="fin">Zone XX · 100 %</div></div>
+      <div class="lg"><div class="k">Références</div><div class="v">XXXXXXXXXXXXXX · section XX n° XXX</div>
+        <div class="s">XXXXXXXX XXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Commune</div><div class="v">Saint-XXXXXXX (XXXXX)</div>
+        <div class="s">XXXXXXXX XXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Adresse</div><div class="v">XX rue XXXXXXXXXXXX, XXXXX Saint-XXXXXXX</div>
+        <div class="s">XXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Surface du terrain</div><div class="v">XX XXX m²</div>
+        <div class="s">XXXXXXXX XXXXXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Zonage</div><div class="v">XX — XXXXXXXXXXXXXX · document XXXXX_PLU_XXXXXXXX</div>
+        <div class="s">XXX / XXX</div><div class="e ok">Sourcé</div></div>
+      <div class="lg"><div class="k">Propriétaire</div><div class="v">personne physique — identité non ouverte, s'obtient par demande au service de publicité foncière</div>
+        <div class="s">—</div><div class="e abs">absent</div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>2 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 3 — la faisabilité.</b> C'est la page que le banquier attend, et c'est aujourd'hui la plus faible : un tableau à quatre en-têtes, zéro ligne, imprimé vide. Ici, chaque étape du calcul est posée, même quand elle aboutit à zéro — un zéro expliqué vaut mieux qu'un tableau vide.</div>
+
+<!-- ═══════ PAGE 3 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Faisabilité</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">⬒</div>
+        <div><h2>Capacité constructible</h2><div class="sous">scénario table rase — bâti existant supposé démoli</div></div>
+        <div class="fin">~X logements</div></div>
+      <table>
+        <thead><tr><th style="width:210px">Étape</th><th>Règle appliquée</th><th style="width:118px">Valeur</th><th style="width:90px">Nature</th></tr></thead>
+        <tr><td style="color:var(--encre);font-weight:600">Emprise de départ</td><td>contenance cadastrale</td>
+          <td class="n">XX XXX m²</td><td><span class="e ok" style="width:auto;text-align:left">Sourcé</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Reculs réglementaires</td><td>article XX.X — XXXXXXXXXXXX</td>
+          <td class="n">− X XXX m²</td><td><span class="e ok" style="width:auto;text-align:left">Sourcé</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Emprise inconstructible</td><td>XXXXXXXXXXXXXXXX</td>
+          <td class="n">− XX XXX m²</td><td><span class="e non" style="width:auto;text-align:left">Sourcé</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Emprise nette</td><td>après retraits</td>
+          <td class="n">X m²</td><td><span class="e ok" style="width:auto;text-align:left">Calculé</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Surface de plancher</td><td>coefficient XX.X du règlement</td>
+          <td class="n">X m²</td><td><span class="e att" style="width:auto;text-align:left">Estimé</span></td></tr>
+        <tr class="total"><td>Potentiel indicatif</td><td>à raison de XX m² par logement</td>
+          <td class="n">~X logements</td><td><span class="e att" style="width:auto;text-align:left">Estimé</span></td></tr>
+      </table>
+      <p class="reserve">Le potentiel nul ne vient pas d'une absence de donnée mais d'une contrainte
+        réglementaire identifiée : XXXXXXXXXXXXXXXXXX. La ligne qui l'établit est signalée ci-dessus.</p>
+      <p class="reserve">Pré-faisabilité indicative établie sur le règlement PLU public. Ne remplace pas
+        une étude de faisabilité réglementaire par un professionnel. La démolition du bâti existant,
+        si elle était retenue, reste à chiffrer et n'entre pas dans ce calcul.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">€</div>
+        <div><h2>Charge foncière</h2><div class="sous">ce que l'opération permettrait de payer le terrain</div></div></div>
+      <div class="lg"><div class="k">Prix de sortie retenu</div><div class="v">non établi — le potentiel nul ne permet aucune hypothèse de programme</div>
+        <div class="s">—</div><div class="e abs">absent</div></div>
+      <div class="lg"><div class="k">Coût de construction</div><div class="v">non applicable en l'absence de programme</div>
+        <div class="s">—</div><div class="e abs">absent</div></div>
+      <div class="lg"><div class="k">Charge foncière</div><div class="v">non établissable à ce stade</div>
+        <div class="s">—</div><div class="e abs">absent</div></div>
+      <p class="reserve">Cette page redevient chiffrable dès que les contraintes de la page X sont levées
+        et qu'un potentiel constructible non nul est établi.</p>
+    </div>
+
+    <div class="carte porte">
+      <div class="flx"><div class="past">▦</div>
+        <div><div class="pt">Reprendre le calcul à vos hypothèses</div>
+        <div class="ps">Prix de sortie, coût de construction, prix demandé — la calculette de charge foncière
+        recalcule le dossier avec vos propres paramètres.</div></div></div>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>3 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 4 — le marché.</b> Le dossier actuel donne une tendance et une liquidité, mais aucun prix médian : le chiffre que le financeur cherche en premier est absent. Et sur dix permis listés, huit datent de 2015-2016, travaux achevés. Ici : le prix d'abord, et seulement les permis récents.</div>
+
+<!-- ═══════ PAGE 4 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Marché de comparaison</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">↗</div>
+        <div><h2>Marché de la commune</h2><div class="sous">Saint-XXXXXXX · transactions publiées</div></div></div>
+      <div class="chiffres c4" style="margin-bottom:16px">
+        <div><div class="lab">Prix médian</div><div class="val">X XXX €/m²</div><div class="prec">tous biens · XX ventes</div></div>
+        <div><div class="lab">Tendance 12 mois</div><div class="val">+XX,X %</div><div class="prec">X XXX vs X XXX €/m²</div></div>
+        <div><div class="lab">Liquidité</div><div class="val">XX ventes</div><div class="prec">dernier trimestre</div></div>
+        <div><div class="lab">Offre engagée</div><div class="val">XXX lgts</div><div class="prec">autorisés sur 12 mois</div></div>
+      </div>
+      <p class="reserve">Le prix médian et la tendance sont calculés sur deux périmètres distincts :
+        la médiane porte sur tous les biens de la commune, la tendance sur les seuls XXXXXXXXXX.
+        Les deux chiffres ne sont pas comparables entre eux.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">⌂</div>
+        <div><h2>Ventes comparables</h2><div class="sous">rayon XXX m · XX derniers mois · adresses jamais communiquées</div></div>
+        <div class="fin">médiane X XXX €/m²</div></div>
+      <table>
+        <thead><tr><th style="width:104px">Type</th><th style="width:110px">Surface bâtie</th><th style="width:100px">Terrain</th>
+          <th style="width:108px">Prix</th><th style="width:86px">€/m²</th><th>Mois</th></tr></thead>
+        <tr><td class="n">XXXXXX</td><td class="n">XX m²</td><td class="n">XXX m²</td><td class="n">XX XXX €</td><td class="n">X XXX</td><td class="n">XX/XXXX</td></tr>
+        <tr><td class="n">XXXXXX</td><td class="n">XXX m²</td><td class="n">XXX m²</td><td class="n">XXX XXX €</td><td class="n">X XXX</td><td class="n">XX/XXXX</td></tr>
+        <tr class="total"><td colspan="4">Médiane — X ventes retenues</td><td class="n">X XXX</td><td></td></tr>
+      </table>
+      <p class="reserve">X ventes seulement dans le rayon : cette médiane est indicative et ne peut pas
+        fonder un prix. La médiane communale, établie sur XX ventes, est plus robuste.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">▤</div>
+        <div><h2>Autorisations voisines</h2><div class="sous">permis délivrés dans les XX derniers mois · rayon XXX m</div></div>
+        <div class="fin">X permis · X logements</div></div>
+      <table>
+        <thead><tr><th style="width:120px">Délivré le</th><th>Nature</th><th style="width:110px">Distance</th><th style="width:130px">État des travaux</th></tr></thead>
+        <tr><td class="n">XX/XX/XXXX</td><td>XXXXXXXXXXXXXXXXXX</td><td class="n">XXX m</td><td>XXXXXXXXXXXX</td></tr>
+        <tr><td class="n">XX/XX/XXXX</td><td>XXXXXXXXXXXXXXXXXX</td><td class="n">XXX m</td><td>XXXXXXXXXXXX</td></tr>
+      </table>
+      <p class="reserve">Seules les autorisations des XX derniers mois sont retenues : un permis délivré
+        il y a dix ans et achevé depuis ne renseigne pas sur la dynamique actuelle du secteur.
+        L'historique complet figure au dossier parcelle.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>4 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 5 — ce qu'il faut lever.</b> Un financeur ne veut pas une liste de risques, il veut savoir ce qui bloque et auprès de qui ça se lève. Chaque contrainte porte donc son interlocuteur et sa nature d'obstacle. Les trois niveaux d'aléa contradictoires deviennent un niveau retenu.</div>
+
+<!-- ═══════ PAGE 5 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Contraintes à lever</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past rg">!</div>
+        <div><h2>Ce qui conditionne l'opération</h2><div class="sous">par ordre de blocage</div></div>
+        <div class="fin">X contraintes</div></div>
+      <table>
+        <thead><tr><th style="width:186px">Contrainte</th><th>Ce qu'elle impose</th>
+          <th style="width:112px">Se lève auprès de</th><th style="width:86px">Nature</th></tr></thead>
+        <tr><td style="color:var(--encre);font-weight:600">Règlement PPR</td>
+          <td>zone XX — XXXXXXXXXXXX. Le régime le plus contraignant s'applique sur l'emprise.</td>
+          <td class="n" style="font-size:10px">XXXX XXXXXXX</td>
+          <td><span class="e non" style="width:auto;text-align:left">Bloquant</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Aléa inondation</td>
+          <td>niveau retenu sur l'emprise — XXXXXXXXXXXXXXXX</td>
+          <td class="n" style="font-size:10px">XXXXXXXXXX</td>
+          <td><span class="e non" style="width:auto;text-align:left">Bloquant</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Aléa mouvement de terrain</td>
+          <td>niveau retenu sur l'emprise — XXXXXXXXXXXXXXXX</td>
+          <td class="n" style="font-size:10px">XXXXXXXXXX</td>
+          <td><span class="e att" style="width:auto;text-align:left">À instruire</span></td></tr>
+        <tr><td style="color:var(--encre);font-weight:600">Abords monument</td>
+          <td>covisibilité à instruire — l'avis de l'Architecte des Bâtiments de France peut être requis</td>
+          <td class="n" style="font-size:10px">XXX / XXXXXXX</td>
+          <td><span class="e att" style="width:auto;text-align:left">À instruire</span></td></tr>
+        <tr><td colspan="4" style="padding-top:12px;font-size:10.5px;color:var(--encre-3)">
+          <b style="color:var(--encre-2)">Sans emprise sur cette parcelle :</b> cavités · ICPE · sites et sols pollués ·
+          classement sonore · recul du trait de côte · 50 pas géométriques · espace naturel sensible · parc national.</td></tr>
+      </table>
+      <p class="reserve">Quand plusieurs niveaux d'un même aléa se recouvrent sur l'emprise, le dossier
+        retient le plus contraignant et le dit. Il n'en liste jamais plusieurs côte à côte.</p>
+      <p class="reserve">Le périmètre d'abords est un rayon théorique de 500 m, pas une servitude constatée :
+        l'avis de l'Architecte des Bâtiments de France dépend de la covisibilité réelle, qui s'instruit sur place.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">◷</div>
+        <div><h2>Sobriété foncière</h2><div class="sous">consommation d'espaces naturels et agricoles — échelle commune</div></div></div>
+      <div class="chiffres c2" style="margin-bottom:14px">
+        <div><div class="lab">Rythme récent</div><div class="val">X,X ha/an</div><div class="prec">XXXX–XXXX</div></div>
+        <div><div class="lab">Décennie précédente</div><div class="val">XX,X ha/an</div><div class="prec">XXXX–XXXX</div></div>
+      </div>
+      <p class="reserve">Les deux périodes sont ramenées au même rythme annuel pour être comparables.
+        Le budget et l'horizon de sobriété foncière ne sont pas indiqués : l'enveloppe n'est pas encore
+        territorialisée. À confirmer auprès des documents d'urbanisme locaux.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>5 / 6</span></div>
+</div>
+
+<div class="note"><b>Page 6 — sources et limites.</b> Le millésime de la source et la date de récupération sont deux colonnes distinctes : une date d'ingestion n'est pas une fraîcheur. Et la page se termine par ce que le dossier ne peut pas dire — devant un financeur, c'est ce qui rend le reste crédible.</div>
+
+<!-- ═══════ PAGE 6 ═══════ -->
+<div class="page">
+  <div class="tete">
+    <div><div class="marque">LA<span>B</span>USE</div><div class="ref">XXXXXXXXXXXXXX</div></div>
+    <div class="doc">Sources et limites</div>
+  </div>
+  <div class="filet-mint"></div>
+
+  <div class="corps">
+    <div class="carte">
+      <div class="chef"><div class="past">▣</div>
+        <div><h2>Sources de ce dossier</h2><div class="sous">seules celles qui ont produit un constat ici</div></div>
+        <div class="fin">XX sources</div></div>
+      <table>
+        <thead><tr><th style="width:150px">Section</th><th>Source</th>
+          <th style="width:112px">Millésime source</th><th style="width:96px">Récupérée le</th></tr></thead>
+        <tr><td class="n" style="color:var(--encre-3)">Identité</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Faisabilité</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Marché</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXX</td><td class="n">XXXX–XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Marché</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Contraintes</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXXXXXXXX</td><td class="n"><span style="color:var(--ambre)">non publié</span></td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+        <tr><td class="n" style="color:var(--encre-3)">Contraintes</td><td style="color:var(--encre);font-weight:600">XXXXXXXXXXXXXX</td><td class="n">XXXX</td><td class="n" style="color:var(--encre-3)">XX/XX/XXXX</td></tr>
+      </table>
+      <p class="reserve">Le millésime est la date de la donnée chez son producteur. La colonne de droite
+        indique quand LABUSE l'a récupérée — elle ne dit rien de la fraîcheur du contenu. Quand le
+        producteur ne publie pas de millésime, le dossier l'écrit plutôt que d'afficher une date
+        d'ingestion à sa place.</p>
+    </div>
+
+    <div class="carte">
+      <div class="chef"><div class="past">○</div>
+        <div><h2>Ce que ce dossier ne peut pas dire</h2><div class="sous">dit pour que vous sachiez où chercher</div></div></div>
+      <ul class="abs-l">
+        <li><b>Charge foncière supportable</b> — non établissable tant que le potentiel constructible est nul.</li>
+        <li><b>Identité du propriétaire</b> — personne physique : la donnée n'est pas ouverte, elle s'obtient par demande au service de publicité foncière.</li>
+        <li><b>Covisibilité avec le monument voisin</b> — s'instruit sur place, aucune donnée ne la détermine.</li>
+        <li><b>Coût de démolition du bâti existant</b> — hors périmètre du calcul, à chiffrer par le porteur.</li>
+        <li><b>Faisabilité technique et sentiment local</b> — LABUSE n'évalue ni le risque politique d'une instruction, ni les éléments relationnels du montage.</li>
+      </ul>
+    </div>
+
+    <div class="carte" style="background:var(--papier);padding:0">
+      <p class="legal">Dossier de présentation établi à partir de données publiques (cadastre, valeurs
+        foncières, autorisations d'urbanisme, plan local d'urbanisme). Estimations indicatives : ni un prix,
+        ni une promesse. Ne remplace ni une étude de faisabilité, ni une expertise, ni un conseil juridique.
+        À vérifier par le porteur et ses conseils.</p>
+      <p class="legal">Sources : XXXXXXXXXXXXX · XXXXXXXXXXXXXX · XXXXXXXXXX · XXXXXXXXXXXXXXXX ·
+        XXXXXXXXX · XXXXXXXXXXXX. Seules les sources ayant produit un constat dans ce dossier sont citées.</p>
+    </div>
+  </div>
+
+  <div class="pied"><span>LABUSE · dossier financeur · DB-XXXXXXXX-XXXX · XX/XX/XXXX</span><span>6 / 6</span></div>
+</div>
+
+</body>
+</html>
