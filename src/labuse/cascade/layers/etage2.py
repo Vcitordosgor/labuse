@@ -5,7 +5,6 @@
 - bodacc (procédures collectives) : FLAG 0 point, machine à états sur les LIBELLÉS RÉELS
   (config, pas de valeur devinée). Seul l'état ROUGE (procédure ouverte/aggravée) pose
   evenement='rouge' → bascule « chaude » (étape 3), indépendamment des scores.
-- dpe_passoire (DPE F/G maison) : FLAG 0 point « pression réglementaire datée ».
 
 Tous les verdicts portent source_table/source_id (cliquable). Poids/seuils/mapping en config.
 """
@@ -18,7 +17,6 @@ from ..context import EvalContext, ParcelRef
 
 SRC_INPI = "INPI RNE (dirigeants)"
 SRC_BODACC = "BODACC (procédures collectives)"
-SRC_DPE = "DPE ADEME (logements existants)"
 
 
 def _trace(v: Verdict, table: str, source_id, evenement: str | None = None) -> Verdict:
@@ -79,20 +77,7 @@ class BodaccLayer(Layer):
                       evenement="rouge" if etat == "rouge" else None)
 
 
-@register
-class DpePassoireLayer(Layer):
-    name = "dpe_passoire"
-
-    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
-        p = ctx.passoire(parcel.id)
-        if not p:
-            return passed(self.name, "Pas de passoire thermique F/G recensée.", source=SRC_DPE)
-        et = p.get("etiquette_dpe")
-        # M-G (P2-36) : échéance LUE de la source unique DPE_DOM_INTERDICTION_LOCATION — plus le
-        # calendrier MÉTROPOLE servi en DOM ; le vrai calendrier outre-mer est G au 01/01/2028, F au 01/01/2031.
-        from ...scoring.score_v_constants import DPE_DOM_INTERDICTION_LOCATION as _DPE
-        detail = (f"Passoire thermique (maison {et}) — pression réglementaire datée (calendrier DOM) : "
-                  f"gel des loyers depuis 07/2024, location interdite G en {_DPE['G'][-4:]} "
-                  f"/ F en {_DPE['F'][-4:]}.")
-        return _trace(soft_flag(self.name, detail, Severity.INFO, source=SRC_DPE),  # ×0 : flag d'accessibilité
-                      "v_passoire_thermique", parcel.idu)
+# M71 B1 (audits M66/M66-B) : DpePassoireLayer RETIRÉE du scoring — 13 DPE utiles pour
+# 431 663 parcelles ne portent pas un signal (l'amont réunionnais authentique ≈ 17 DPE,
+# le DPE réglementaire étant neuf en DROM). La donnée reste servie en INFO FICHE seule
+# (« DPE connu : … ») depuis dpe_records — jamais en signal de scoring.

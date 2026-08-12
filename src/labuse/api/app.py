@@ -2146,7 +2146,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
 
 
 #: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
-_A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire"}
+_A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc"}  # M71 B1 : dpe_passoire retiré du scoring
 #: rattachement couche → onglet de la fiche (Synthèse/Bilan sont des vues, pas des groupes de lignes).
 _ONGLET = {
     "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
@@ -2155,7 +2155,7 @@ _ONGLET = {
                 "trait_de_cote", "abf", "ens", "eau"},
     "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region", "ocs_ge",
                "friche", "acces"},
-    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire", "assemblage"},
+    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
 }
 _LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
 
@@ -3329,6 +3329,26 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         score_e_block = None
 
+    # M71 B1 (audits M66/M66-B) — DPE en INFO FICHE uniquement : le signal scoring
+    # dpe_passoire a été retiré (13 DPE utiles pour 431 663 parcelles — l'amont réunionnais
+    # authentique ≈ 17, le DPE réglementaire est neuf en DROM). « DPE connu : G, 2023 » si un
+    # DPE est rattaché à la parcelle, rien sinon. SAVEPOINT : jamais bloquant pour la fiche.
+    dpe_connu_block = None
+    try:
+        with db.begin_nested():
+            _dpe = db.execute(text(
+                "SELECT etiquette_dpe, date_etablissement, type_batiment FROM dpe_records "
+                "WHERE parcelle_idu = :i AND etiquette_dpe IS NOT NULL "
+                "ORDER BY date_etablissement DESC NULLS LAST LIMIT 1"), {"i": idu}).mappings().first()
+        if _dpe:
+            dpe_connu_block = {
+                "etiquette": _dpe["etiquette_dpe"],
+                "annee": _dpe["date_etablissement"].year if _dpe["date_etablissement"] else None,
+                "type_batiment": _dpe["type_batiment"],
+            }
+    except Exception:  # noqa: BLE001 - bloc additif, jamais bloquant pour la fiche
+        dpe_connu_block = None
+
     fiche = {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -3353,6 +3373,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "defisc_fenetres": defisc_block,  # Phase A-1 — fenêtre de sortie de défisc (badge, mono, Estimé)
         "pc_caduc": pc_caduc_block,       # Phase A cycle 2 — PC caduc probable (badge, greffé bloc permis)
         "score_e": score_e_block,         # Nuit N1 — marge estimée € (Estimé, jamais un prix)
+        "dpe_connu": dpe_connu_block,     # M71 B1 — DPE en info fiche SEULE (plus jamais un signal)
         "permits": permits,
         "depots": depots,   # M38 — activité de dépôt (permis aboutis, datés au dépôt) ; informatif
         "prospection": prosp_block,

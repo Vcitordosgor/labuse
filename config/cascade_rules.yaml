@@ -441,10 +441,6 @@ layers:
       bonus_key: age_dirigeant
       courbe: { 55: 4, 65: 8, 75: 12, 85: 14 }   # <55→0 · 55-64→+4 · 65-74→+8 · 75-84→+12 · ≥85→+14
       age_min_valide: 18                          # <18 = fiche RNE incohérente → UNKNOWN (invalide)
-  - name: dpe_passoire           # DPE F/G maison : FLAG « pression réglementaire datée » (0 point)
-    phase: 2
-    enabled: true
-    params: {}
   - name: bodacc                 # procédures collectives : FLAG 0 point + bascule « chaude » si ROUGE
     phase: 2
     enabled: true

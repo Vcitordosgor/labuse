@@ -42,8 +42,9 @@ def test_fiche_dispatch_q_v2(monkeypatch):
 
 
 def test_fiche_axe_qa_et_onglets():
-    # axe A = pur vendeur (proprietaire/age/bodacc/dpe) ; le reste = Q. Chaque couche a un onglet.
-    assert m._A_LAYERS == {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire"}
+    # axe A = pur vendeur (proprietaire/age/bodacc) ; le reste = Q. Chaque couche a un onglet.
+    # M71 B1 : dpe_passoire retiré du scoring (audits M66/M66-B).
+    assert m._A_LAYERS == {"proprietaire", "age_dirigeant", "bodacc"}
     assert m._LAYER_ONGLET["residuel_socle"] == "regles"
     assert m._LAYER_ONGLET["dvf"] == "marche"
     assert m._LAYER_ONGLET["bodacc"] == "proprio"

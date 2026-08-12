@@ -2154,6 +2154,17 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
+                    « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
+                {(() => {
+                  const dpe = (f as unknown as { dpe_connu?: { etiquette: string; annee: number | null } }).dpe_connu
+                  return dpe ? (
+                    <div data-dpe-connu className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                      DPE connu : <b className="text-txt-hi">{dpe.etiquette}</b>{dpe.annee ? `, ${dpe.annee}` : ''}
+                      <span className="ml-1 text-[10px] text-txt-dim">(Sourcé ADEME — information, sans effet sur le classement)</span>
+                    </div>
+                  ) : null
+                })()}
                 {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
                     propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
                 {f.proprietaire_moral?.siren && (

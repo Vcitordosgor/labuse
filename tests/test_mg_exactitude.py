@@ -22,9 +22,10 @@ def test_dpe_dom_source_unique():
 
 
 def test_dpe_surfaces_lisent_la_constante():
-    # etage2 (cascade flag) et models (vue passoire) NE recopient plus 2034
-    et2 = inspect.getsource(__import__("labuse.cascade.layers.etage2", fromlist=["DpePassoireLayer"]))
-    assert "DPE_DOM_INTERDICTION_LOCATION" in et2 and "2034" not in et2
+    # M71 B1 : la couche DPE a quitté la cascade — il reste à garantir qu'AUCUN module
+    # etage2 ne réintroduit le calendrier métropole 2034.
+    et2 = inspect.getsource(__import__("labuse.cascade.layers.etage2", fromlist=["BodaccLayer"]))
+    assert "2034" not in et2
     models = Path(C.__file__).resolve().parents[1].joinpath("models.py").read_text(encoding="utf-8")
     # la docstring de la vue passoire cite la source unique et l'échéance F correcte (2031, pas 2034)
     idx = models.find("Calendrier réglementaire DOM")
