@@ -100,6 +100,16 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
 .exp-wide{height:42px;display:flex;align-items:center;justify-content:center;gap:7px;
   border-top:0.5px solid var(--line);font-size:12px;color:var(--txt)}
 .legal{font-size:9px;color:var(--txt-faint);line-height:1.5;margin-top:14px}
+.porte-outil{background:var(--bg-header);border:0.5px solid #212A25;border-left:2px solid var(--mint);
+  border-radius:0 10px 10px 0;padding:11px 13px;display:flex;align-items:center;gap:11px;margin-top:7px}
+.po-ico{width:30px;height:30px;border-radius:8px;background:#12291D;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;color:var(--mint);font-size:15px}
+.po-t{font-size:13px;color:var(--txt-hi)}
+.po-s{font-size:11px;color:var(--txt-mut);margin-top:1px}
+.po-arrow{font-size:14px;color:var(--mint);flex-shrink:0}
+.porte-outil.compacte{padding:10px 12px;gap:10px}
+.porte-outil.compacte .po-t{font-size:12.5px}
+.porte-outil.compacte .po-s{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -257,10 +267,27 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
     <tr><td>Ni halo ni ombre</td><td>l'élévation vient du contraste fond/carte uniquement.</td></tr>
   </table>
 
+  <h2>LA PORTE D'OUTIL — LES MOTEURS EN AVANT</h2>
+  <div class="porte-outil" style="max-width:340px">
+    <div class="po-ico">▦</div>
+    <div style="flex:1;min-width:0">
+      <div class="po-t">Calculette foncière</div>
+      <div class="po-s">Combien payer ce terrain ? — pré-remplie avec cette parcelle</div>
+    </div>
+    <div class="po-arrow">→</div>
+  </div>
+  <p style="font-size:12px;margin-top:10px">Tranche verte 2px = un moteur LABUSE (même langage que la page
+  Outils). Icône verte sur pastille <code>#12291D</code>. L'accroche est CONTEXTUALISÉE avec les données de
+  la parcelle (« sur ces 2 821 m² »), jamais générique. Deux emplacements : pleine largeur en
+  <b style="color:var(--txt)">pied de tiroir ouvert</b> (après les données, jamais dans le corps),
+  et compacte (2 colonnes) dans la grille « OUTILS SUR CETTE PARCELLE ». Règle : au plus UNE porte
+  contextuelle par outil ; le tiroir informe d'abord, propose ensuite. Chaque porte ouvre l'outil
+  PRÉ-REMPLI avec l'IDU, sans perdre la fiche.</p>
+
   <h2>ORDRE DES BLOCS</h2>
   <p style="font-size:12px">En-tête (identité + 4 chiffres) → bouton d'analyse + légende → bandeau
   d'attention si présent → actions IA → LE TERRAIN (3 tiroirs) → LE CONTEXTE (4 tiroirs) →
-  actions (+ CRM · + Projet · Comparer) → EXPORTS ET OUTILS → mention légale.
+  actions (+ CRM · + Projet · Comparer) → EXPORTS → OUTILS SUR CETTE PARCELLE (portes compactes) → mention légale.
   Le bloc Analyse s'insère après le bouton d'analyse, une fois le verdict demandé.</p>
 </div>
 
