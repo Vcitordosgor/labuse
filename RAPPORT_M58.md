@@ -150,8 +150,95 @@ grounding (rien à sourcer).
 d'ordre visuel, Phase 1). Constaté : la fiche (`<aside>` à droite, 400px) recouvre la
 `MapToolbar` (Sombre/3D/outils, `absolute right-4 top-4`). Décalage à prévoir en Phase 1.
 
-## STOP
+## STOP — PHASE 0
 Phase 0 terminée. **Aucun correctif.** En attente d'arbitrage sur la Phase 1 (a→h) +
 le point carte. Points ouverts pour le mandant : Q8 (numéros d'articles à confirmer —
 R.192 servi vs R.182/R.162 de l'énoncé) ; Q5 (la calculette n'est pas bloquée ici — si
 le mandant la revoit bloquée, l'IDU + la console aideraient). NE PAS MERGER.
+
+---
+
+# PHASE 1 — correctifs (arbitrage mandant)
+
+Présentation + libellés (Q1/Q2/f = back, aucun **calcul** ni **route** modifiés — seules
+des **chaînes servies** et le **rendu**). Témoins : **AI1821** (constructible, Le Port),
+**BM0950** (non constructible, zone A, Saint-Benoît).
+
+## Q1 — trois chiffres = un calcul avec plafond (libellés, PAS le calcul)
+`engine.py` — steps reformulés, arithmétique **inchangée** :
+- « Logements — **avant plafond de densité** » = `~13 à 16` (surface/logt).
+- « Logements — **après plafond (≤ N logts)** » = valeur capée (AI1821 : `~11 à 11`).
+- Tête (`verdict`) et récit final (`/explain`) citent **la même** valeur capée (la seule
+  servie). Phrase ajoutée côté fiche : « **La fourchette retenue est celle après plafond
+  de densité.** » → l'intermédiaire ne lit plus comme une contradiction.
+
+## Q2 — verdict non-constructible : zone RÉELLE, plus d'« AU*st » inventé
+`engine.py:187` — le verdict `not constructible_neuf` ne hardcode plus « secteur de
+transition (AU*st), H max 4 m ». Il cite la **zone réellement lue** :
+`f"Construction neuve non autorisée en zone {rules.code}."` (BM0950 → « …zone **A**. »,
+cohérent avec le bandeau). **Aucun code secteur affiché s'il n'est pas lu sur la parcelle.**
+
+**Autres chaînes `fini(False, …)` de `engine.py` — revues (aucune n'invente de zonage)** :
+- `:194` « Habitat interdit au règlement — zone à vocation économique/activités… » —
+  émis sur `habitat == "interdit"` : décrit **la règle** (fait), pas un code secteur inventé. Conservé.
+- `:219` « Terrain trop exigu compte tenu des reculs (**{recul_used} m**)… » — **dynamique** (valeur lue). OK.
+- `:282` « Hauteur non disponible (à_vérifier) — capacité non calculable. » — repli **honnête**. OK.
+- `:404` « Non constructible en l'état malgré le zonage (**{rp} théorique**)… » — **dynamique**. OK.
+→ La seule chaîne fautive (AU*st générique) est corrigée ; les autres sont factuelles ou paramétrées.
+
+## Q5 — calculette : fragile, PAS morte → retry + état d'erreur (jamais de zone muette)
+`Fiche.tsx` (CalculetteBody) — `useQuery('calculette-defaults', retry: 2)` ; si `isError`,
+plus de « Chargement » perpétuel mais un **état explicite** : « Chargement de la calculette
+impossible. » + bouton « **Réessayer** » (`refetch`). DA règle 8 respectée. Calculette **conservée**.
+**Bonus dev/prod** : `/bilan` MANQUAIT au proxy Vite (`vite.config.ts`) → `calculette-defaults`
+tombait en **404 rouge en `npm run dev`** (200 en prod, même origine). Ajouté au proxy — le
+404 rouge (et l'état d'erreur Q5 déclenché par cet artefact dev) disparaît en dev.
+
+## Q8 — RTAA : **NE RIEN MODIFIER** (consigne). Les articles servis (R.192-1/R.192-2) restent.
+## Q9 — provenance unifiée : `steps.prov` **et** `/explain` dérivent tous deux de
+`_faisa_step_prov(s.source, s.prov)` (`modules.py`) — **une source, un endroit**. Déjà unifié
+(vérifié en P0) ; aucun code à changer, consigné ici.
+
+## b — doublon capacité supprimé (un seul rendu)
+`BilanTab` ne rend plus la section « Capacité (…) » (verdict/SHAB/stationnement dupliqués) :
+la capacité vit **uniquement** dans `FaisabiliteTab`. BilanTab garde Marché → Fiscal → RTAA.
+
+## c — zéros / « ( m) » / « ~— » → « — » ou « non calculable »
+`FaisabiliteTab` : garde `capaciteReelle = logMax > 0`. Si faux → « Capacité logements non
+calculable pour cette parcelle. » ; sinon grille avec repli **par champ** « — » (fini « 0–0 »,
+« ( m) », « ~— »). Vérifié sur BM0950.
+
+## e — bouton IA seulement si `steps > 0`
+`{cap && steps.length > 0 && …}` — plus de bouton « Expliquer ce calcul » quand il n'y a
+**aucune** étape à expliquer (BM0950 : 0 step).
+
+## f — taxe d'aménagement : plus de taux inventé
+`modules.py` `ta_note` : « **taux communal non ingéré — à confirmer en mairie** (part
+communale + part départementale). » Le « 5 % » hardcodé (hors calcul) est retiré.
+
+## g — pas de fausse précision quand ≥4 hypothèses empilées
+`CalculetteBody` : les écarts % (`ecart_pct`, `demande_moins_max_pct`) sont **arrondis au
+point** (`Math.round`, plus de décimale). Note explicite : « le résultat empile **4
+hypothèses** (coût, marge, prix de sortie DVF, prix demandé) — les écarts sont arrondis au
+point de %. »
+
+## h — ordre : capacité → calcul replié + IA → marché → fiscal → RTAA replié
+`FaisabiliteTab` : « Le calcul, étape par étape » **replié par défaut** (`showSteps=false`).
+RTAA déjà repliable (RtaaBlock). Ordre du tiroir : capacité (FaisabiliteTab) → BilanTab
+(Marché → Fiscal → RTAA).
+
+## Point carte — MapToolbar décalée à l'ouverture de la fiche
+`MapToolbar.tsx` : conteneur `right` piloté par `ficheOuverte = selectedIdu != null && view
+!== 'sources'` → **16px → 416px** (largeur fiche 400 + marge 16), `transition: right 180ms`,
+retour à la fermeture. Vérifié (style calculé : `16px` fermé / `416px` ouvert). Aucun
+contrôle inaccessible.
+
+## Guard-rails (tous verts)
+`tsc -b --force` = **0** · `vitest run` = **32/32** · `vite build` OK · **5 exports PDF →
+200** (parcels/export, dossier, dossier-banquier, lettre-zonage, argumentaire) · **console
+0 erreur** sur AI1821 + BM0950 (tiroir Constructibilité déplié, calculette, calcul). Valeurs
+Q1/Q2/f servies identiques en API et à l'écran (revérifiées après redémarrage backend).
+
+## STOP — PHASE 1
+Correctifs a→h + Q1/Q2/Q5/f/g + point carte livrés. **Q8 intouché** (consigne). **Q9**
+déjà unifié. Commit « M58-P1 constructibilité ». **NE PAS MERGER.**

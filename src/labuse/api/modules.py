@@ -880,8 +880,10 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         "qpv": qpv,
         "tva": ("2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM" if qpv
                 else "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"),
-        "ta_note": "Taxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — "
-                   "hypothèse indicative 5 % + part départementale.",
+        # M58-P1 (f) : le taux communal n'est PAS ingéré — on ne l'INVENTE pas (l'ancien
+        # « hypothèse indicative 5 % » était un taux fictif, non utilisé dans aucun calcul servi).
+        "ta_note": "Taxe d'aménagement : taux communal non ingéré — à confirmer en mairie "
+                   "(part communale + part départementale).",
     }
     # RTAA DOM (mandat contexte-commune, 5bis) — rappel réglementaire de conception,
     # vérifié sur Légifrance (config/rtaa_dom.yaml), hors scoring

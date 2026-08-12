@@ -634,7 +634,21 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
  *  de financement »). On seed les champs une fois les défauts connus : calculette et PDF portent le
  *  même coût par défaut sur la même parcelle. */
 export function Calculette({ idu }: { idu: string }) {
-  const defs = useQuery({ queryKey: ['calculette-defaults'], queryFn: getCalculetteDefaults, staleTime: Infinity })
+  // M58-P1 (Q5) : `staleTime:Infinity` SANS retry laissait la calculette en « Chargement »
+  // DÉFINITIF si /bilan/calculette-defaults échouait une fois. On ajoute un retry et surtout un
+  // ÉTAT D'ERREUR explicite avec « Réessayer » (règle DA « les états parlent » — jamais de zone muette).
+  const defs = useQuery({ queryKey: ['calculette-defaults'], queryFn: getCalculetteDefaults, staleTime: Infinity, retry: 2 })
+  if (defs.isError) {
+    return (
+      <div data-calculette>
+        <p className="label-caps mb-1">Calculette de charge foncière</p>
+        <div data-calc-erreur className="card-elev px-3 py-2.5 text-[11px] text-txt">
+          <p className="text-st-creuser">Chargement de la calculette impossible.</p>
+          <button onClick={() => defs.refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
+        </div>
+      </div>
+    )
+  }
   if (!defs.data) {
     return (
       <div data-calculette>
@@ -734,7 +748,7 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
             {mode === 'achat_max' && d.ecart_negociation && (
               <div data-calc-ecart className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${d.ecart_negociation.sens === 'marge' ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {d.ecart_negociation.sens === 'surcout'
-                  ? <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} − prix d'achat max {fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)} = <b>surcoût de {fmtEurCompact(d.ecart_negociation.demande_moins_max_eur)}</b> (+{d.ecart_negociation.demande_moins_max_pct} % au-dessus du max admissible).</>
+                  ? <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} − prix d'achat max {fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)} = <b>surcoût de {fmtEurCompact(d.ecart_negociation.demande_moins_max_eur)}</b> (+{Math.round(d.ecart_negociation.demande_moins_max_pct)} % au-dessus du max admissible).</>
                   : <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} est <b>sous votre prix d'achat max</b> ({fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)}) — marge de {fmtEurCompact(Math.abs(d.ecart_negociation.demande_moins_max_eur))}.</>}
               </div>
             )}
@@ -749,8 +763,8 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
             {mode === 'charge' && achat && (
               <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
-                  ? <>✓ Supportable — le terrain peut valoir {fmtEurCompact(achat.prix_demande_eur)} ; marge de {fmtEurCompact(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
-                  : <>✗ Trop cher — à {fmtEurCompact(achat.prix_demande_eur)}, l'opération dépasse de {fmtEurCompact(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
+                  ? <>✓ Supportable — le terrain peut valoir {fmtEurCompact(achat.prix_demande_eur)} ; marge de {fmtEurCompact(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{Math.round(achat.ecart_pct)} %) sous votre charge foncière.</>
+                  : <>✗ Trop cher — à {fmtEurCompact(achat.prix_demande_eur)}, l'opération dépasse de {fmtEurCompact(Math.abs(achat.ecart_eur))} ({Math.round(achat.ecart_pct)} %) ce que vos hypothèses supportent.</>}
               </div>
             )}
             {(d.avertissements ?? []).length > 0 && (
@@ -760,7 +774,9 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
             )}
             <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
               Le coût de construction et la marge sont VOS hypothèses (LABUSE ne les estime pas). Le
-              résultat est un calcul à partir de celles-ci — estimation indicative, ne vaut pas conseil.
+              résultat empile 4 hypothèses (coût, marge, prix de sortie DVF, prix demandé) — les écarts
+              sont arrondis au point de % (pas de fausse précision décimale). Estimation indicative, ne
+              vaut pas conseil.
             </p>
           </>
         )}
@@ -839,7 +855,7 @@ function StepProv({ prov }: { prov?: string }) {
  *  calculette de charge foncière rapatriée (financier au même endroit). L'IA explique, ne recalcule pas. */
 export function FaisabiliteTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  const [showSteps, setShowSteps] = useState(true)
+  const [showSteps, setShowSteps] = useState(false)  // M58-P1 (h) : le calcul étape par étape est REPLIÉ par défaut
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
@@ -848,19 +864,33 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
   const fo = cap?.fourchette ?? {}
   const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
   const ex = explain.data
+  // M58-P1 (c) : « un zéro n'est pas une absence ». Capacité réelle = fourchette logements > 0.
+  const logAuSol = Array.isArray(fo.logements_au_sol) ? fo.logements_au_sol : null
+  const logMax = logAuSol ? Math.max(logAuSol[0] ?? 0, logAuSol[1] ?? 0) : null
+  const capaciteReelle = logMax != null && logMax > 0
   return (
     <div className="flex flex-col gap-3">
-      {/* ── LE RÉSULTAT ── */}
+      {/* ── LE RÉSULTAT (bloc capacité UNIQUE — M58-P1 b) ── */}
       {cap ? (
         <div className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
           <p className="label-caps mb-1">Capacité constructible</p>
           <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
-          <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
-            <div>Gabarit : <b className="text-txt">{fo.niveaux}</b> ({fo.hauteur_m} m)</div>
-            <div>SDP : <b className="text-txt">{fmtM2(fo.surface_plancher_m2)}</b></div>
-            <div>Logements : <b className="text-txt">{Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}` : '—'}</b></div>
-            <div>SHAB vendable : <b className="text-txt">~{fmtM2(fo.shab_vendable_m2)}</b></div>
-          </div>
+          {/* M58-P1 (c) : jamais « 0–0 » / « ( m) » / « ~— » — on n'affiche la grille que si la
+              capacité est réelle ; chaque champ retombe sur « — » plutôt qu'un zéro/vide trompeur. */}
+          {capaciteReelle ? (
+            <>
+              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
+                <div>Gabarit : <b className="text-txt">{fo.niveaux && fo.hauteur_m != null ? `${fo.niveaux} (${fo.hauteur_m} m)` : '—'}</b></div>
+                <div>SDP : <b className="text-txt">{fo.surface_plancher_m2 ? fmtM2(fo.surface_plancher_m2) : '—'}</b></div>
+                <div>Logements : <b className="text-txt">{`${logAuSol![0]}–${logAuSol![1]}`}</b></div>
+                <div>SHAB vendable : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
+              </div>
+              {/* M58-P1 (Q1) : lever l'apparente contradiction avant/après plafond. */}
+              <div className="mt-1 text-[10.5px] text-txt-dim">La fourchette retenue est celle après plafond de densité.</div>
+            </>
+          ) : (
+            <div className="mt-1.5 text-[11px] text-txt-faint">Capacité logements non calculable pour cette parcelle.</div>
+          )}
           {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </div>
@@ -899,8 +929,9 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* ── EXPLIQUER CE CALCUL EN CLAIR (IA, sur clic, premium violet) ── */}
-      {cap && (
+      {/* ── EXPLIQUER CE CALCUL EN CLAIR (IA, sur clic) — M58-P1 (e) : SEULEMENT s'il y a un
+          calcul à expliquer (steps > 0). Sur une parcelle non calculable (0 step), pas de bouton. ── */}
+      {cap && steps.length > 0 && (
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
             <button onClick={() => explain.mutate()} data-faisa-explain-btn
@@ -934,8 +965,6 @@ function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
-  const cap = b.capacite
-  const fo = cap?.fourchette ?? {}
   const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
     <div>
       <p className="label-caps mb-1">{t}</p>
@@ -944,19 +973,9 @@ function BilanTab({ idu }: { idu: string }) {
   )
   return (
     <div className="flex flex-col gap-3">
-      {cap ? (
-        <Sec t="Capacité (que peut accueillir ce terrain ?)">
-          <div className="font-medium text-txt-hi">{cap.verdict}</div>
-          <div className="mt-1 text-txt-mut">
-            {fo.niveaux} · emprise bâtie max {fmtM2(fo.emprise_batie_max_m2)} · SDP {fmtM2(fo.surface_plancher_m2)} ·
-            SHAB vendable ~{fmtM2(fo.shab_vendable_m2)} · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
-          </div>
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
-          <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
-        </Sec>
-      ) : (
-        <Sec t="Capacité">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
-      )}
+      {/* M58-P1 (b) : le bloc « Capacité » vivait ICI ET dans FaisabiliteTab (même b.capacite) —
+          DOUBLON supprimé. La capacité est rendue UNE seule fois, en tête de FaisabiliteTab.
+          BilanTab ne porte plus que Marché → Fiscal → RTAA (ordre M58-P1 h). */}
       {b.marche?.median != null && (
         /* CRED-2 : cette médiane est un prix BÂTI (par type de bien) — la nommer, pour qu'elle
            coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
@@ -975,12 +994,8 @@ function BilanTab({ idu }: { idu: string }) {
           )}
         </Sec>
       )}
-      {/* M11 Surface C : la calculette de charge foncière est RAPATRIÉE dans l'onglet Faisabilité
-          (le financier au même endroit que la capacité et son explication). */}
-      <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
-        La <b className="text-txt">charge foncière</b> (« combien puis-je payer ce terrain ? ») est
-        désormais dans l'onglet <b className="text-violet">Faisabilité</b>, avec le calcul détaillé.
-      </div>
+      {/* M58-P1 : note « la charge foncière est dans Faisabilité » RETIRÉE — elle pointait vers la
+          calculette rendue juste au-dessus (FaisabiliteTab), dans le MÊME tiroir : redondante. */}
       <Sec t="Fiscal & leviers">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         <div className="mt-1 text-[11px] text-txt-dim">{b.fiscal.ta_note}</div>
