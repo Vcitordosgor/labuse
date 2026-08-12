@@ -9,6 +9,13 @@
 <style>
 :root{
   --bg-0:#0A0C0B; --bg-1:#0C0F0D; --bg-2:#111614; --bg-stat:#141A17; --bg-3:#161C19;
+  /* M64-P1 — CARTE, mode « Clair » : le rendu SOMBRE avec le seul fond du canvas passé au blanc.
+     Fond de carte (calque `bg`) et zones sans parcelles : #060A08 (sombre) → #FFFFFF (clair).
+     Toutes les autres couches (parcelles, limites, communes, zonages, risques) gardent leur teinte
+     sombre. Seules exceptions de lisibilité : pastilles de libellés de commune (fond clair, texte
+     sombre) et traits ACHROMATIQUES quasi-blancs (sélection/pulse/étiquette de zone) → #ECF5EF
+     devient #14181A sur blanc (contraste, jamais de teinte). L'UI hors carte reste sombre. */
+  --map-bg-sombre:#060A08; --map-bg-clair:#FFFFFF;
   --line:#1A211D; --line-2:#212A25; --line-3:#2C3630; --line-btn:#263029; --line-card:#1E2622;
   --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#6B776F;
   --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
