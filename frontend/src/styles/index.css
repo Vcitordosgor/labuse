@@ -2,39 +2,158 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══ LOI-0 — les tokens d'écriture (revue UI/UX). Aucune valeur magique locale :
-   chaque surface se réfère à CES classes. Espacement = échelle 4/8 de Tailwind
-   (p-1/2/3/4/6/8 uniquement — jamais de p-[13px]). ═══ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DA v3 — docs/DA-LABUSE.html fait foi. Ce bloc :root est le MIROIR des tokens
+   (identique à tailwind.config.js et lib/tokens.ts) : il sert les classes-
+   composants ci-dessous et les rares styles inline. Une valeur = ces trois
+   miroirs synchronisés, jamais de valeur locale.
+   §1 · TOKENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* surfaces et filets */
+  --bg-0:#0A0C0B; --bg-1:#0C0F0D; --bg-2:#111614; --bg-stat:#141A17; --bg-3:#161C19;
+  --line:#1A211D; --line-2:#212A25; --line-3:#2C3630; --line-btn:#263029; --line-card:#1E2622;
+  /* texte — 7 niveaux + labels */
+  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#6B776F;
+  --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
+  /* sémantique */
+  --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06301A; --mint-sub:#0B4526;
+  --amber:#E0A94F; --amber-bg:#2A2113;
+  --coral:#E2726A; --coral-bg:#2B1715;
+  --blue:#8FB4F0; --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
+  --danger:#8A5A5A; --danger-line:#3A2626;
+  /* lien sortant en vert d'eau (DA §4b) */
+  --lien:#7FA88F;
+  /* rayons */
+  --r-card:12px; --r-g:11px; --r-ctl:10px; --r-sm:8px; --r-pill:20px;
+  /* espacement */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  /* mouvement */
+  --dur-fast:120ms; --dur-base:180ms; --ease:cubic-bezier(.2,0,0,1);
+  --focus:0 0 0 2px rgba(74,222,128,.45); --ombre-flottante:0 8px 24px rgba(0,0,0,.45);
+  /* tailles typographiques */
+  --fs-h1:19px; --fs-row:14px; --fs-meta:12px; --fs-sub:11.5px; --fs-micro:10px; --fs-legal:9px;
+  /* familles — POLICE CONSTATÉE : le design system actuel utilise Inter (corps),
+     Space Grotesk (display/titres) et JetBrains Mono. La DA prescrit Space Grotesk
+     partout ; on GARDE l'existante (cf. RAPPORT_M56). --sans hérite du corps. */
+  --sans:inherit;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+
+/* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
 @layer components {
-  /* typographie comme instrument : label en petites capitales espacées */
-  .label-caps {
-    @apply text-[11px] font-medium uppercase tracking-[0.12em] text-txt-mut;
-  }
-  /* chiffre-clé : grand, tabulaire, display — le même dessin partout */
-  .num-key {
-    @apply font-display font-bold text-txt-hi;
-    font-variant-numeric: tabular-nums;
-  }
-  /* chiffres alignés dans les tables/listes sans changer la taille */
+  .label-caps { @apply text-[11px] font-medium uppercase tracking-[0.12em] text-lab; }
+  .num-key { @apply font-display font-bold text-txt-hi; font-variant-numeric: tabular-nums; }
   .tnum { font-variant-numeric: tabular-nums; }
-  /* élévation : carte posée (remplace border + bg à la main) */
   .card-elev { @apply rounded-xl bg-surface-2 shadow-elev-1; }
-  /* élévation : élément FLOTTANT (popover, menu) — un seul dessin pour tous */
-  .floating { @apply rounded-xl border border-line bg-surface-2 shadow-elev-2; }
+  /* DA §13/14/15 — flottants (sélecteur, menu compte, notifs) : surface --bg-3 +
+     --ombre-flottante (seule ombre autorisée). Un seul dessin pour tous. */
+  .floating { @apply rounded-xl border border-line-2 bg-bg-3 shadow-flottante; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3 · BIBLIOTHÈQUE DE COMPOSANTS (transcription fidèle de DA-LABUSE.html)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* micro-label silencieux */
+  .micro { font-size:var(--fs-micro); letter-spacing:.11em; color:var(--lab); }
+
+  /* groupe encarté — tiroirs d'un thème */
+  .gcard { background:var(--bg-2); border:0.5px solid var(--line-card); border-radius:var(--r-g); overflow:hidden; }
+  /* M56-B3 fix 7 (densité) — padding vertical 12→10px (plancher : ne pas descendre plus bas). */
+  .gr { padding:10px 13px; display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:0.5px solid var(--line); }
+  .gr:last-child { border-bottom:none; }
+  /* DA §4 — dans un groupe encarté, le dernier tiroir (fiche : [data-drawer]) ne double pas
+     le filet du bas de la carte. */
+  .gcard > [data-drawer]:last-child { border-bottom:none; }
+  .gr-t { font-size:var(--fs-row); color:var(--txt-hi); }
+  .gr-s { font-size:var(--fs-sub); color:var(--txt-mut); margin-top:2px; }
+  .gr-v { font-size:13.5px; color:var(--txt); }
+
+  /* la porte — point d'entrée cliquable */
+  .door { background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-g); padding:13px 14px; margin-bottom:8px; }
+  .door-hot { border-left:2px solid var(--mint); border-top-left-radius:0; border-bottom-left-radius:0; }
+
+  .chev { font-size:14px; color:var(--txt-faint); font-family:var(--mono); }
+
+  /* pastilles */
+  .pill { font-size:12.5px; padding:3px 9px; border-radius:var(--r-pill); }
+  .p-mint { color:var(--mint); background:var(--mint-bg); font-size:12px; }
+  .p-amber { color:var(--amber); background:var(--amber-bg); font-size:12px; }
+  .p-off { color:#97A39B; border:0.5px solid var(--line-3); }
+  .p-on { color:var(--mint-on); background:var(--mint); padding:5px 12px; }
+
+  /* boutons */
+  .btn { border-radius:var(--r-ctl); padding:12px; text-align:center; font-size:14px; font-weight:500; }
+  .b-pri { background:var(--mint); color:var(--mint-on); }
+  .b-sec { border:0.5px solid var(--line-btn); color:var(--txt); font-weight:400; font-size:13px; padding:10px; }
+  .b-iris { border:0.5px solid var(--iris-line); background:var(--iris-bg); color:var(--iris-2); font-weight:400; font-size:13px; padding:10px; }
+  .b-danger { font-size:12.5px; color:var(--danger); border-bottom:0.5px solid var(--danger-line); }
+
+  /* champ */
+  .field { background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:9px 12px; font-size:13px; color:var(--txt-off); }
+
+  /* bandeau de statistiques */
+  .stats { display:grid; gap:1px; background:var(--line-2); border:0.5px solid var(--line-2); border-radius:var(--r-ctl); overflow:hidden; }
+  .stat { background:var(--bg-stat); padding:10px 9px; }
+  .stat-l { font-size:9.5px; color:var(--txt-off); letter-spacing:.05em; }
+  .stat-v { font-size:14px; color:var(--txt-hi); margin-top:2px; }
+
+  .mono { font-family:var(--mono); letter-spacing:-.01em; }
+  .dot { width:6px; height:6px; border-radius:50%; display:inline-block; flex-shrink:0; }
+
+  /* pastille-icône (habillage) */
+  .ico { width:30px; height:30px; border-radius:var(--r-sm); border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:14px; font-family:var(--mono); flex-shrink:0; }
+
+  .empty { border:0.5px dashed var(--line-2); border-radius:var(--r-g); padding:22px 12px; text-align:center; font-size:var(--fs-meta); color:var(--txt-off); }
+  .legal { font-size:var(--fs-legal); color:var(--txt-faint); line-height:1.5; }
+
+  /* cases */
+  .cbx { width:17px; height:17px; border-radius:5px; flex-shrink:0; }
+  .cbx-on { background:var(--mint); color:var(--mint-on); display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .cbx-off { border:1px solid var(--line-3); }
+
+  /* squelette */
+  .sk { background:var(--bg-2); border-radius:6px; }
+
+  /* segmenté */
+  .seg { display:inline-flex; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:10px; padding:3px; gap:3px; }
+  .seg > span, .seg > button { font-size:12.5px; padding:5px 13px; border-radius:8px; color:#97A39B; cursor:pointer; border:none; background:none; }
+  .seg > span.on, .seg > button.on { background:var(--mint); color:var(--mint-on); }
+
+  /* icône SVG (tracé fin) */
+  .ic { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* tag */
+  .tag { font-size:11px; color:#97A39B; border:0.5px solid var(--line-2); padding:3px 9px; border-radius:var(--r-pill); }
+
+  /* barre d'avancement */
+  .bar { height:5px; border-radius:3px; overflow:hidden; display:flex; background:var(--line); }
+}
+
+/* ═══ §2 — états et lisibilité ═══ */
+@layer components {
+  /* survol de porte : bord --line-3, fond inchangé */
+  .door.is-interactive:hover, a.door:hover, button.door:hover { border-color:var(--line-3); }
+  .door-hot.is-interactive:hover, a.door-hot:hover, button.door-hot:hover { border-left-color:var(--mint); }
+  /* survol de ligne : fond --bg-3 */
+  .gr.is-interactive:hover, a.gr:hover, button.gr:hover { background:var(--bg-3); }
+}
+
+/* transitions coupées si l'OS le demande (DA §1 reduced-motion) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 html, body, #root { height: 100%; margin: 0; }
-body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
 * { box-sizing: border-box; }
 
 /* MapLibre : fond sombre, pas de halo blanc */
-.maplibregl-map { background: #060A08; }
+.maplibregl-map { background: var(--bg-0); }
 .maplibregl-ctrl-attrib { display: none; }
 
-/* M12 C8 — infobulle de zonage/équipement : le conteneur par défaut de MapLibre est un carré
-   BLANC à angles droits qui encadrait notre bloc sombre arrondi (double épaisseur disgracieuse).
-   On rend le conteneur TRANSPARENT et arrondi, et on aligne la pointe sur notre fond sombre :
-   un seul bloc net, arrondi, sans liseré blanc. */
+/* M12 C8 — infobulle de zonage/équipement : conteneur MapLibre transparent+arrondi. */
 .labuse-popup .maplibregl-popup-content {
   background: transparent;
   padding: 0;
@@ -47,16 +166,13 @@ body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased;
 }
 .labuse-popup .maplibregl-popup-close-button { display: none; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: #1E2A23; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Focus clavier visible (accessibilité, item 9 UX V1) — anneau menthe 2 px sur TOUT le
-   parcours clavier (Rail, chips, toggles de couches, boutons), jamais sur clic souris.
-   Les inputs qui posent outline-none compensent par focus:border-mint / focus-within. */
-:focus-visible { outline: 2px solid #5CE6A1; outline-offset: 1px; border-radius: 4px; }
+/* Focus clavier visible (DA §1 : liseré 2px menthe à 45%) — jamais sur clic souris. */
+:focus-visible { outline: 2px solid rgba(74,222,128,.45); outline-offset: 1px; border-radius: 4px; }
 
-/* UX V1 (ajout A) — page « Sources & fraîcheur » IMPRIMABLE : seule la page s'imprime,
-   fond clair sobre, couleurs d'accent rabattues sur un gris lisible. */
+/* UX V1 — page « Sources & fraîcheur » IMPRIMABLE. */
 @media print {
   body * { visibility: hidden; }
   .sources-print, .sources-print * { visibility: visible; }
@@ -68,10 +184,13 @@ body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased;
   .sources-print a { text-decoration: none; }
 }
 
-/* A4 (ajustements post-revue) — animation de chargement VISIBLE : gros points menthe qui
-   ondulent en séquence (« ça charge, ce n'est pas cassé » — impossible à rater). */
+/* A4 — animation de chargement (gros points menthe qui ondulent). */
 @keyframes labuse-load {
   0%, 80%, 100% { transform: scale(0.5); opacity: 0.35; }
   40%           { transform: scale(1);   opacity: 1; }
 }
 .labuse-dot { animation: labuse-load 1.1s ease-in-out infinite; }
+
+/* DA §3 — squelette : pulsation d'opacité 0,6→1 sur 1,2 s (pas de spinner isolé). */
+@keyframes labuse-sk { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+.sk { animation: labuse-sk 1.2s ease-in-out infinite; }

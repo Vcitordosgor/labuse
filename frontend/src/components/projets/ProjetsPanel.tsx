@@ -54,9 +54,18 @@ function ProjetCard({ p }: { p: Projet }) {
   const archived = p.statut === 'archive'
   const c = p.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
   const fiche = ficheLignes(p.fiche)
+  // DA §16 — cadrage éclaté en TAGS (depuis les mêmes chaînes que la ligne de cadrage) ;
+  // dormant = plus d'activité depuis 3 semaines → estompé ; barre d'avancement retenues/à trier.
+  const cadrageTags = [...(fiche.titre ? fiche.titre.split(' · ') : []), ...fiche.reste.split(' · ')].map((t) => t.trim()).filter(Boolean)
+  const cadrageIncomplet = !p.fiche.type_programme
+  const lastActIso = p.derniere_execution_at ?? p.updated_at ?? p.created_at
+  const dormant = !archived && !!lastActIso && (Date.now() - new Date(lastActIso).getTime()) > 21 * 864e5
+  const triTotal = c.proposee + c.retenue
+  const pctRetenu = triTotal > 0 ? Math.round((c.retenue / triTotal) * 100) : 0
   return (
-    <div data-projet-card className={`card-elev p-4 ${archived ? 'opacity-60' : ''}`}>
-      <div className="flex items-start justify-between gap-3">
+    <div data-projet-card className={`door mb-0 ${archived ? 'opacity-60' : dormant ? 'opacity-[0.68]' : ''}`}>
+      {/* DA §16 — projet en PORTE : titre + activité + Ouvrir (sec) + ⋯ (Renommer/Archiver). */}
+      <div className="flex items-baseline gap-3">
         {editing ? (
           <input
             data-projet-nom-input autoFocus value={nom}
@@ -74,40 +83,41 @@ function ProjetCard({ p }: { p: Projet }) {
             {p.nom}
           </button>
         )}
-        {archived && <span className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-dim">archivé</span>}
+        <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-txt-off">
+          {archived ? 'archivé' : p.derniere_execution_at ? `rejoué ${fmtDate(p.derniere_execution_at)}` : `créé ${fmtDate(p.created_at)}`}
+        </span>
+        <button data-projet-ouvrir onClick={() => setOpenProjet({ id: p.id, nom: p.nom })}
+          className="b-sec shrink-0 !px-3 !py-1 !text-[12px]"
+          title="Ouvrir le projet (kanban : à trier / retenues / écartées)">Ouvrir</button>
+        <details data-projet-menu className="relative shrink-0">
+          <summary className="cursor-pointer list-none px-1 text-txt-ghost transition-colors duration-quick hover:text-txt" title="Plus d’actions">⋯</summary>
+          <div className="absolute right-0 z-20 mt-1 flex flex-col gap-0.5 rounded-lg border border-line-3 bg-bg-3 p-1 shadow-flottante" style={{ minWidth: 128 }}>
+            <button data-projet-editer onClick={() => setEditing(true)}
+              className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">Renommer</button>
+            <button data-projet-archiver onClick={() => patch.mutate({ statut: archived ? 'actif' : 'archive' })}
+              className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">{archived ? 'Réactiver' : 'Archiver'}</button>
+          </div>
+        </details>
       </div>
 
-      <div className="mt-2 space-y-1 text-[11px]">
-        {fiche.titre && <p className="text-txt">{fiche.titre}</p>}
-        <p className="text-txt-mut">{fiche.reste}</p>
+      {/* cadrage en TAGS (dashed « cadrage à compléter » si le programme n'est pas défini). */}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {cadrageTags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+        {cadrageIncomplet && <span className="tag" style={{ borderStyle: 'dashed', color: 'var(--txt-off)' }}>cadrage à compléter</span>}
       </div>
       {p.fiche.criteres_libres && (
         <p className="mt-2 border-l-2 border-line-2 pl-2 text-[11px] italic text-txt-dim">« {p.fiche.criteres_libres} »</p>
       )}
 
-      {/* mini-compteurs de tri (source unique : projet_parcelles) — la couleur est un
-          signal : elle ne s'allume que si le compte existe. */}
-      <div data-projet-compteurs className="tnum mt-3 flex items-center gap-3 text-[11px]">
-        <span className="text-txt-mut"><b className={c.proposee ? 'text-txt-hi' : 'text-txt-dim'}>{c.proposee}</b> à trier</span>
-        <span className={c.retenue ? 'text-mint' : 'text-txt-dim'}><b>{c.retenue}</b> retenue{c.retenue > 1 ? 's' : ''}</span>
-        <span className={c.ecartee ? 'text-st-ecartee' : 'text-txt-dim'}><b>{c.ecartee}</b> écartée{c.ecartee > 1 ? 's' : ''}</span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="whitespace-nowrap font-mono text-[11px] text-txt-dim">
-          {p.derniere_execution_at ? `rejoué ${fmtDate(p.derniere_execution_at)}` : `créé ${fmtDate(p.created_at)}`}
-        </span>
-        <div className="flex items-center gap-1.5">
-          <button data-projet-editer onClick={() => setEditing(true)}
-            className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
-            title="Renommer">Renommer</button>
-          <button data-projet-archiver onClick={() => patch.mutate({ statut: archived ? 'actif' : 'archive' })}
-            className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
-            title={archived ? 'Réactiver le projet' : 'Archiver le projet'}>{archived ? 'Réactiver' : 'Archiver'}</button>
-          <button data-projet-ouvrir onClick={() => setOpenProjet({ id: p.id, nom: p.nom })}
-            className="min-h-7 rounded-md border border-mint/50 px-3 py-1 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10"
-            title="Ouvrir le projet (kanban : à trier / retenues / écartées)">Ouvrir</button>
+      {/* barre d'avancement du tri : part RETENUE en menthe, reste à trier. */}
+      <div data-projet-compteurs className="mt-3 flex items-center gap-3">
+        <div className="bar flex-1">
+          <div style={{ width: `${pctRetenu}%`, background: 'var(--mint)' }} />
+          <div className="flex-1" style={{ background: 'var(--line-2)' }} />
         </div>
+        <span className="tnum shrink-0 text-[11px] text-txt-mut">
+          <span className={c.retenue ? 'text-mint' : 'text-txt-dim'}>{c.retenue} retenue{c.retenue > 1 ? 's' : ''}</span> · {c.proposee} à trier
+        </span>
       </div>
     </div>
   )
@@ -168,7 +178,11 @@ export function ProjetsPanel() {
   const all = projetsQ.data ?? []
   const actifs = all.filter((p) => p.statut === 'actif')
   const archives = all.filter((p) => p.statut === 'archive')
-  const visibles = showArchived ? archives : actifs
+  // DA §16 — tri par ACTIVITÉ (rejoué/maj/créé le plus récent d'abord) ; présentation pure.
+  const parActivite = (a: Projet, b: Projet) =>
+    new Date(b.derniere_execution_at ?? b.updated_at ?? b.created_at ?? 0).getTime()
+    - new Date(a.derniere_execution_at ?? a.updated_at ?? a.created_at ?? 0).getTime()
+  const visibles = (showArchived ? archives : actifs).slice().sort(parActivite)
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-bg">
@@ -186,11 +200,10 @@ export function ProjetsPanel() {
         </div>
 
         {archives.length > 0 && (
-          <div className="mt-6 flex gap-1.5 text-[11px]">
-            <button onClick={() => setShowArchived(false)}
-              className={`min-h-7 rounded-full px-3 py-1 transition-colors duration-quick ${!showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>Actifs ({actifs.length})</button>
-            <button onClick={() => setShowArchived(true)}
-              className={`min-h-7 rounded-full px-3 py-1 transition-colors duration-quick ${showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>Archivés ({archives.length})</button>
+          /* DA §16 — contrôle SEGMENTÉ (un choix exclusif, pas deux pastilles). */
+          <div className="seg mt-6">
+            <button className={!showArchived ? 'on' : ''} onClick={() => setShowArchived(false)}>Actifs {actifs.length}</button>
+            <button className={showArchived ? 'on' : ''} onClick={() => setShowArchived(true)}>Archivés {archives.length}</button>
           </div>
         )}
 

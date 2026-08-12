@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query'
+import { getEvents } from '../lib/api'
 import { useApp, type View } from '../store/useApp'
 import { GROUPS, MODULES } from './outils/registry'
 
@@ -78,15 +80,12 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
       data-outil={m.key}
       data-outil-phare={phare ? '1' : undefined}
       onClick={() => open(m.key)}
-      className={`w-full rounded-lg border px-3 text-left transition-colors duration-quick ${
-        phare
-          ? 'border-violet/40 bg-violet/[0.07] py-2.5 hover:border-violet'
-          : 'border-line-2 bg-surface-3 py-2 hover:border-violet/50'
-      }`}
+      className={`door mb-0 w-full text-left transition-colors duration-quick hover:border-line-3 ${phare ? 'door-hot' : ''}`}
     >
-      <div className="flex items-center gap-2">
-        {phare && <span className="text-[10px] text-violet" title="Outil phare">★</span>}
+      {/* DA §7 — porte : les plus utilisés portent la TRANCHE VERTE (door-hot) + ÉTOILE AMBRE. */}
+      <div className="flex items-baseline justify-between gap-2">
         <span className={`text-xs font-medium ${phare ? 'text-txt-hi' : 'text-txt'}`}>{m.label}</span>
+        {phare && <span className="shrink-0 text-[11px] text-amber" title="Parmi les plus utilisés">★</span>}
       </div>
       <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-txt-mut' : 'text-[10.5px] text-txt-dim'}`}>
         {m.desc}
@@ -97,6 +96,9 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
+  // DA §10 — pastille ambre sur « Veilles » S'IL Y A un événement. Lecture read-only qui
+  // PARTAGE le cache ['events'] de la cloche (aucun appel supplémentaire ; présentation pure).
+  const veilleEvent = (useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 }).data?.unread ?? 0) > 0
   // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
   // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
   // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
@@ -124,8 +126,8 @@ export function Rail() {
               aria-current={on ? 'page' : undefined}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-                  on ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+                className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+                  on ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
                 }`}
               >
                 <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
@@ -139,9 +141,11 @@ export function Rail() {
           {/* M54-EXPO-3 — « Veilles » : panneau des zones de veille géographiques (surimpression carte). */}
           <button data-rail-veilles onClick={() => toggleVeilles()} className="group flex w-full flex-col items-center gap-1"
             title="Mes veilles — zones de surveillance et alertes DVF">
-            <span className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-              veillesOpen ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+            <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+              veillesOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
+              {/* DA §10 — pastille ambre : un événement de veille non lu. */}
+              {veilleEvent && <span data-veille-event className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber ring-2 ring-surface-1" />}
             </span>
             <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Veilles</span>
           </button>
@@ -153,8 +157,8 @@ export function Rail() {
             title="Fraîcheur des données — sources et mises à jour"
           >
             <span
-              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
-                view === 'sources' ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+                view === 'sources' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
               }`}
             >
               <svg viewBox="0 0 20 20" className="h-5 w-5">{SOURCES_ICON}</svg>
@@ -174,7 +178,7 @@ export function Rail() {
           <div className="shrink-0 px-5 pb-2 pt-5">
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              Les moteurs métier de LABUSE — <span className="text-violet">★</span> = les plus utilisés.
+              Les moteurs métier de LABUSE.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
@@ -187,7 +191,7 @@ export function Rail() {
                     <p className="label-caps">{g.label}</p>
                     <p className="text-[11px] text-txt-dim">{g.hint}</p>
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     {outils.map((m) => (
                       <OutilCard key={m.key} m={m} phare={!!m.phare} open={openOutil} />
                     ))}
@@ -195,6 +199,10 @@ export function Rail() {
                 </section>
               )
             })}
+            {/* DA §7 — légende en PIED (étoile ambre = les plus utilisés). */}
+            <p className="flex items-center gap-1.5 pt-1 text-[11px] text-txt-faint">
+              <span className="text-amber">★</span> les plus utilisés
+            </p>
           </div>
         </aside>
       )}

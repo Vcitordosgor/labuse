@@ -74,17 +74,9 @@ function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-0.5 transition-colors duration-quick focus-within:border-mint">
-      <AddressAutocomplete
-        data-omnibox
-        onSelect={onPickAddress}
-        onEnterRaw={onEnterRaw}
-        placeholder="Rechercher : IDU, adresse exacte…"
-        className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
-      />
-      {/* A5 (post-revue) : la LOUPE cliquable — lance la recherche sur le texte courant.
-          M55-B point 3 : pendant la résolution, la loupe devient un spinner sobre (bouton
-          désactivé + curseur d'attente) — on VOIT que ça cherche. */}
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+      {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
+          sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
         disabled={searching}
         onClick={() => {
@@ -92,7 +84,7 @@ function Omnibox() {
           if (el) onEnterRaw(el.value.trim())
         }}
         title="Lancer la recherche" aria-label="Lancer la recherche" aria-busy={searching}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:cursor-wait disabled:brightness-95">
+        className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px] animate-spin" aria-hidden>
             <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
@@ -100,11 +92,18 @@ function Omnibox() {
           </svg>
         ) : (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
-            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
-            <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+            <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           </svg>
         )}
       </button>
+      <AddressAutocomplete
+        data-omnibox
+        onSelect={onPickAddress}
+        onEnterRaw={onEnterRaw}
+        placeholder="Rechercher : IDU, adresse exacte…"
+        className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
+      />
     </div>
   )
 }
@@ -167,14 +166,15 @@ function CommuneSelect() {
                 pré-coche, bloc 3 inchangé) ; le lien ouvre la fiche de CETTE commune SANS
                 changer le périmètre (stopPropagation). */}
             {(communes.data ?? []).map((c) => (
-              <div key={c.insee} className="flex items-center rounded-md hover:bg-surface-3">
+              <div key={c.insee} className="group flex items-center rounded-md hover:bg-surface-3">
                 <button onClick={() => pick(c.commune)}
                   className={`min-w-0 flex-1 whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
+                {/* DA §13 — « voir la fiche » AU SURVOL seulement (codes postaux restent en décor). */}
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}
-                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim transition-colors duration-quick hover:text-mint">
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim opacity-0 transition-opacity duration-quick focus:opacity-100 group-hover:opacity-100 hover:text-mint">
                   voir la fiche →
                 </button>
               </div>
@@ -255,7 +255,7 @@ function NotifBell() {
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-st-ecartee px-1 font-mono text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-[#2A2113]">
             {unread}
           </span>
         )}
@@ -282,8 +282,10 @@ function NotifBell() {
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {(ev.data?.items ?? []).map((e) => (
-                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-violet/30 bg-violet/[0.07]'}`}>
+                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
+                  {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
                   <div className="flex items-center gap-2">
+                    <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
                     {e.demo && <span className="rounded-full bg-violet/15 px-1.5 py-0.5 text-[8.5px] font-medium text-violet" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
                     <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
                       className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
