@@ -721,6 +721,10 @@ MODE_B_TRAVAUX_M2_MIN = 500.0
 MODE_B_TRAVAUX_M2_MAX = 4000.0
 #: tiers de la population mode B (arbitrage Vic 06/08) — zone PLU INFORMATIVE, jamais ABSENT.
 MODE_B_TIERS = ("declasse_bati_sature", "declasse_bati_revele")
+#: M59-P1 (Q4) — seuil de pertinence : sous cette SHAB, une thèse de réhabilitation n'a pas
+#: de sens (bilan travaux/revente sur trop peu de surface). La section ne montre PAS le calcul,
+#: elle DIT « bâti trop petit » (mesure P0 : 1 851 parcelles / 5,5 % sous ce seuil).
+MODE_B_SHAB_MIN = 50.0
 
 
 def _prix_bati_local(session: Session, idu: str) -> dict | None:
@@ -743,6 +747,29 @@ def _prix_bati_local(session: Session, idu: str) -> dict | None:
         return {"prix_m2": float(r["prix"]), "niveau": "commune",
                 "libelle": "médiane DVF maison/appartement de la commune (repli — pas assez "
                            "de ventes au secteur)"}
+    return None
+
+
+def _prix_terrain_local(session: Session, idu: str) -> dict | None:
+    """M59-P1 (Q1) — prix du TERRAIN NU (€/m²) du secteur, MÊME logique de préséance que le bâti
+    (secteur n≥3 → repli commune) mais type_bien='terrain'. Sert UNIQUEMENT la comparaison
+    « terrain nu au prix du secteur » (jamais le calcul réhab, qui reste sur la SHAB). None si
+    aucune médiane terrain locale."""
+    r = session.execute(text(
+        "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
+        "WHERE secteur = :s AND type_bien = 'terrain' AND n_ventes >= 3"),
+        {"s": idu[:10]}).mappings().first()
+    if r and r["prix"]:
+        return {"prix_m2": float(r["prix"]), "niveau": "secteur",
+                "libelle": "médiane DVF terrain du secteur (n ≥ 3)"}
+    r = session.execute(text(
+        "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
+        "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
+        "AND type_bien = 'terrain' AND n_ventes >= 3"),
+        {"c": idu[:5]}).mappings().first()
+    if r and r["prix"]:
+        return {"prix_m2": float(r["prix"]), "niveau": "commune",
+                "libelle": "médiane DVF terrain de la commune (repli)"}
     return None
 
 
@@ -789,9 +816,34 @@ def compute_mode_b(session: Session, idu: str, *,
     emprise = float(emprise)
     sdp_exist = emprise * niveaux
     shab = sdp_exist / hyp.coef_plancher_habitable
+
+    # M59-P1 (Q4) — seuil de pertinence : sous MODE_B_SHAB_MIN, on NE sert PAS le calcul
+    # (thèse de réhabilitation non pertinente) mais on le DIT (jamais un tiroir muet).
+    if shab < MODE_B_SHAB_MIN:
+        return {"disponible": True, "trop_petit": True,
+                "shab_rehabilitable_m2": round(shab),
+                "motif": f"Bâti trop petit (SHAB ~{round(shab)} m²) pour une thèse de réhabilitation."}
+
     ca = shab * px["prix_m2"] * coef_ca
     cout_travaux = shab * travaux
     achat_max = ca - cout_travaux
+
+    # M59-P1 (Q1) — COMPARAISON terrain nu (calcul existant : DVF terrain secteur × surface,
+    # Estimé). N'entre PAS dans achat_max (la formule réhab reste sur la SHAB) : c'est un
+    # repère affiché. `porte_par_terrain` = le foncier vaut plus que ce que le bâti justifie.
+    surface_parcelle = session.execute(text(
+        "SELECT surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    px_terrain = _prix_terrain_local(session, idu)
+    terrain_nu = None
+    if px_terrain and surface_parcelle:
+        valeur_terrain = round(float(surface_parcelle) * px_terrain["prix_m2"])
+        terrain_nu = {
+            "valeur_eur": valeur_terrain, "valeur_libelle": _eur(valeur_terrain),
+            "prix_m2": round(px_terrain["prix_m2"]), "surface_m2": round(float(surface_parcelle)),
+            "niveau": px_terrain["niveau"], "libelle": px_terrain["libelle"],
+            "etiquette": "Estimé",
+        }
+    porte_par_terrain = bool(terrain_nu and terrain_nu["valeur_eur"] > achat_max)
 
     # M44 — SORTIE LOCATIVE, côte à côte avec la revente, JAMAIS fusionnée (point de calcul unique
     # labuse.faisabilite.defisc). Bilan au plafond réglementaire Sourcé (défaut) ou loyer marché Estimé.
@@ -805,7 +857,14 @@ def compute_mode_b(session: Session, idu: str, *,
 
     return {
         "disponible": True,
+        "trop_petit": False,
         "population_tier": tier,
+        # M59-P1 (Q1) — surface du foncier (toujours servie, pour la ligne « hors valeur du
+        # terrain »), repère « terrain nu au prix du secteur » (Estimé) + drapeau « valeur portée
+        # par le terrain » (le foncier vaut plus que ce que le bâti justifie).
+        "surface_parcelle_m2": round(float(surface_parcelle)) if surface_parcelle else None,
+        "terrain_nu": terrain_nu,
+        "porte_par_terrain": porte_par_terrain,
         # M44 — sortie LOCATIVE (plafond Sourcé / marché Estimé). None si indisponible. La revente
         # reste au niveau ci-dessous (achat_max_eur) : les deux sorties côte à côte, jamais fusionnées.
         "sortie_locative": sortie_locative,
@@ -839,6 +898,10 @@ def compute_mode_b(session: Session, idu: str, *,
                 "prix_m2": round(px["prix_m2"]),
                 "niveau": px["niveau"], "libelle": px["libelle"],
                 "etiquette": "Sourcé (DVF)",
+                # M59-P1 (Q3) — périmètre DIT (pas d'harmonisation des moteurs, juste l'honnêteté) :
+                # le mode B lit des médianes sectorielles pré-agrégées, SANS rayon adaptatif (≠ le
+                # tiroir Marché qui, lui, élargit 500→1500 m).
+                "perimetre": "médiane secteur→commune, sans rayon adaptatif",
             },
             "travaux": {
                 "hypothese_m2": round(travaux),

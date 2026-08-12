@@ -92,7 +92,11 @@ export const EMPTY_FILTERS: Filters = {
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +
 // rendement, lus par la fiche ET le filtre (mode_b_rentable). Défauts = plafond BOFiP base + repères.
 export interface ModeBParams { travauxM2: number; loyerM2: number; rendementPct: number }
-export const MODE_B_DEFAUT: ModeBParams = { travauxM2: 1200, loyerM2: 12.21, rendementPct: 6 }
+// M59-P1 (bug défaut travaux) : SOURCE UNIQUE = le back (bilan.py MODE_B_TRAVAUX_M2_DEFAUT = 1500,
+// ce qui a servi à la mesure P0 : fiche initiale = compute_mode_b sans paramètre). Ce miroir front
+// DOIT suivre cette valeur — sinon le montant initial (1500) et le montant après premier mouvement
+// de curseur (ex-1200) divergeaient. Toute évolution se fait côté back.
+export const MODE_B_DEFAUT: ModeBParams = { travauxM2: 1500, loyerM2: 12.21, rendementPct: 6 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP
 // besoin) — porté jusqu'à la restitution où « Enregistrer ce projet » le persiste (V3).

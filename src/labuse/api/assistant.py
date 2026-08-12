@@ -284,15 +284,16 @@ def rules_summary(facts: dict) -> str:
     if mb:
         rev = mb.get("sortie_revente") or {}
         if rev.get("negatif"):
-            lignes.append(f"**Réhabilitation (mode B) · revente** — {rev.get('message_negatif')} (ESTIMÉ).")
+            # M59-P1 (Q5) « mode B » retiré de l'affichage · (Q1) plus de « prix d'achat max » seul.
+            lignes.append(f"**Réhabilitation · revente** — {rev.get('message_negatif')} (ESTIMÉ).")
         else:
-            lignes.append(f"**Réhabilitation (mode B) · revente** — prix d'achat max ESTIMÉ "
-                          f"~{rev.get('prix_achat_max_rehab_libelle')} "
-                          f"(hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster).")
+            lignes.append(f"**Réhabilitation · revente** — ce que la réhabilitation du bâti justifie "
+                          f"~{rev.get('prix_achat_max_rehab_libelle')} (ESTIMÉ, hors valeur du terrain) "
+                          f"— hypothèse travaux ~{mb.get('travaux_hypothese_m2')} €/m², à ajuster.")
         # M44 — sortie LOCATIVE, côte à côte, jamais fusionnée ; mention conseil-fiscal.
         sl = mb.get("sortie_locative") or {}
         if sl:
-            lignes.append(f"**Réhabilitation (mode B) · locatif** — loyer ~{sl.get('loyer_annuel_eur')} €/an "
+            lignes.append(f"**Réhabilitation · locatif** — loyer ~{sl.get('loyer_annuel_eur')} €/an "
                           f"[{sl.get('loyer_etiquette')}], prix d'achat max ~{sl.get('prix_achat_max_libelle')} "
                           f"(ESTIMÉ) à rendement cible {sl.get('rendement_cible_pct')} %. "
                           "Hypothèses fiscales indicatives — à valider avec un conseil fiscal.")

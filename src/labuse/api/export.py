@@ -73,18 +73,34 @@ def fiche_markdown(fiche: dict) -> str:
             lines += [f"**Prochaine action :** {rv['prochaine_action']}", ""]
 
     mb = fiche.get("mode_b") or {}
-    if mb.get("disponible"):
+    if mb.get("disponible") and mb.get("trop_petit"):   # M59-P1 (Q4) — DIT, jamais un calcul muet
+        lines += ["## Réhabilitation", "",
+                  f"_{mb.get('motif', 'Bâti trop petit pour une thèse de réhabilitation.')}_", ""]
+    elif mb.get("disponible"):
         c = mb["composantes"]
-        lines += ["## Mode B — Réhabilitation (Estimé)", ""]
+        lines += ["## Réhabilitation (Estimé)", ""]   # M59-P1 (Q5) — « Mode B » retiré de l'affichage
+        # M59-P1 (Q1) — plus de « prix d'achat max » global ; hors valeur du terrain + comparaison
+        # (la comparaison terrain + la phrase « portée par le terrain » DANS LES DEUX cas).
         if mb.get("negatif"):
-            lines += [f"**{mb['message_negatif']}**", ""]
+            lines += [f"**{mb['message_negatif']}**"]
         else:
-            lines += [f"- **Prix d'achat max réhab (Estimé) :** ~{mb['achat_max_libelle']}", ""]
+            _fonc = f" ({mb['surface_parcelle_m2']} m²)" if mb.get("surface_parcelle_m2") else ""
+            lines += [f"- **Ce que la réhabilitation du bâti justifie (Estimé) :** ~{mb['achat_max_libelle']}",
+                      f"- hors valeur du terrain — le foncier{_fonc} s'ajoute à ce montant"]
+        tn = mb.get("terrain_nu")
+        if tn:
+            lines += [f"- terrain nu au prix du secteur : ~{tn['valeur_libelle']} "
+                      f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m² · Estimé)"]
+        if mb.get("porte_par_terrain"):
+            lines += ["- **À ces hypothèses, la valeur de cette parcelle est portée par le "
+                      "terrain, pas par le bâti.**"]
+        lines += [""]
         lines += [
             f"- Surface réhabilitable : ~{c['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {c['surface']['emprise_bati_m2']} m² [Sourcé] × {c['surface']['niveaux']} niveau(x) "
             f"[{'Sourcé' if c['surface']['niveaux_reels'] else 'Estimé'}] ÷ 1,15)",
-            f"- Prix de sortie : {c['prix_sortie']['prix_m2']} €/m² — {c['prix_sortie']['libelle']} [Sourcé DVF]",
+            f"- Prix de sortie : {c['prix_sortie']['prix_m2']} €/m² — {c['prix_sortie']['libelle']} "
+            f"({c['prix_sortie'].get('perimetre', 'médiane secteur→commune, sans rayon adaptatif')}) [Sourcé DVF]",
             f"- {c['travaux']['libelle']}",
             f"- Frais & marge : {c['frais_marge']['libelle']}",
             "", f"_{mb['avertissement']}_", ""]
@@ -193,16 +209,35 @@ def fiche_html(fiche: dict) -> str:
             f"<p><strong>Prochaine action :</strong> {html.escape(rv.get('prochaine_action', ''))}</p>")
     mb = fiche.get("mode_b") or {}
     mode_b_html = ""
-    if mb.get("disponible"):
+    if mb.get("disponible") and mb.get("trop_petit"):   # M59-P1 (Q4)
+        mode_b_html = ("<h2>Réhabilitation</h2><p class='disc'>"
+                       + html.escape(mb.get("motif", "Bâti trop petit pour une thèse de réhabilitation."))
+                       + "</p>")
+    elif mb.get("disponible"):
         cmb = mb["composantes"]
-        tete = (f"<p><strong>{html.escape(mb['message_negatif'])}</strong></p>" if mb.get("negatif")
-                else f"<p><strong>Prix d'achat max réhab (Estimé) :</strong> ~{html.escape(mb['achat_max_libelle'])}</p>")
+        # M59-P1 (Q1) — plus « prix d'achat max » global ; comparaison terrain + phrase « portée par
+        # le terrain » DANS LES DEUX cas (positif ou négatif).
+        if mb.get("negatif"):
+            tete = f"<p><strong>{html.escape(mb['message_negatif'])}</strong></p>"
+        else:
+            _fonc = f" ({mb['surface_parcelle_m2']} m²)" if mb.get("surface_parcelle_m2") else ""
+            tete = (f"<p><strong>Ce que la réhabilitation du bâti justifie (Estimé) :</strong> "
+                    f"~{html.escape(mb['achat_max_libelle'])}</p>"
+                    f"<p class='disc'>hors valeur du terrain — le foncier{_fonc} s'ajoute à ce montant</p>")
+        tn = mb.get("terrain_nu")
+        if tn:
+            tete += (f"<p class='disc'>terrain nu au prix du secteur : ~{html.escape(tn['valeur_libelle'])} "
+                     f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m² · Estimé)</p>")
+        if mb.get("porte_par_terrain"):
+            tete += ("<p><strong>À ces hypothèses, la valeur de cette parcelle est portée par le "
+                     "terrain, pas par le bâti.</strong></p>")
         mode_b_html = (
-            "<h2>Mode B — Réhabilitation (Estimé)</h2>" + tete + "<ul>"
+            "<h2>Réhabilitation (Estimé)</h2>" + tete + "<ul>"
             f"<li>Surface réhabilitable : ~{cmb['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {cmb['surface']['emprise_bati_m2']} m² [Sourcé] × {cmb['surface']['niveaux']} niveau(x) "
             f"[{'Sourcé' if cmb['surface']['niveaux_reels'] else 'Estimé'}])</li>"
-            f"<li>Prix de sortie : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} [Sourcé DVF]</li>"
+            f"<li>Prix de sortie : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} "
+            f"({html.escape(cmb['prix_sortie'].get('perimetre', 'médiane secteur→commune, sans rayon adaptatif'))}) [Sourcé DVF]</li>"
             f"<li>{html.escape(cmb['travaux']['libelle'])}</li>"
             f"<li>Frais &amp; marge : {html.escape(cmb['frais_marge']['libelle'])}</li></ul>"
             f"<p class='disc'>{html.escape(mb['avertissement'])}</p>")
@@ -470,14 +505,27 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                       f"CA {_eur_fourchette(ca.get('bas'), ca.get('haut'))} · charge foncière médiane ~{_eur(cf.get('central'))}"
                       + (f" (~{cf.get('par_m2_terrain')} €/m² terrain)" if cf.get("par_m2_terrain") else ""))
 
-    # M33 — mode B (réhabilitation) : une ligne kv, TOUJOURS avec son étiquette.
+    # M33 — réhabilitation : une ligne kv, TOUJOURS avec son étiquette. M59-P1 (Q5) : « Mode B » retiré.
     mb = fiche.get("mode_b") or {}
     mode_b_kv = ""
-    if mb.get("disponible"):
+    if mb.get("disponible") and mb.get("trop_petit"):   # M59-P1 (Q4)
+        mode_b_kv = kv("Réhabilitation",
+                       html.escape(mb.get("motif", "Bâti trop petit pour une thèse de réhabilitation.")))
+    elif mb.get("disponible"):
         cmb = mb["composantes"]
-        val = (html.escape(mb["message_negatif"]) if mb.get("negatif")
-               else f"prix d'achat max ~{mb['achat_max_libelle']} <b>(Estimé)</b>")
-        mode_b_kv = kv("Mode B — Réhab · REVENTE",
+        # M59-P1 (Q1) — plus « prix d'achat max » global ; « ce que le bâti justifie · hors terrain ».
+        if mb.get("negatif"):
+            val = html.escape(mb["message_negatif"])
+        else:
+            _fonc = f" ({mb['surface_parcelle_m2']} m²)" if mb.get("surface_parcelle_m2") else ""
+            val = (f"le bâti justifie ~{mb['achat_max_libelle']} <b>(Estimé)</b> · hors valeur du "
+                   f"terrain{_fonc}")
+            tn = mb.get("terrain_nu")
+            if tn:
+                val += f" · terrain nu secteur ~{html.escape(tn['valeur_libelle'])} (Estimé)"
+            if mb.get("porte_par_terrain"):
+                val += " · <b>valeur portée par le terrain, pas le bâti</b>"
+        mode_b_kv = kv("Réhabilitation · REVENTE",
                        f"{val} · travaux ~{cmb['travaux']['hypothese_m2']} €/m² (ESTIMÉ, à ajuster)")
         # M44 — SORTIE LOCATIVE, côte à côte, jamais fusionnée avec la revente.
         sl = mb.get("sortie_locative")
@@ -486,8 +534,9 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
             vl = (html.escape(sl["message_negatif"]) if sl.get("negatif")
                   else f"prix d'achat max ~{html.escape(sl['achat_max_libelle'])} <b>(Estimé)</b> "
                        f"à rendement cible {sl['rendement_cible_pct']} % (paramètre client)")
-            mode_b_kv += kv("Mode B — Réhab · LOCATIF",
-                            f"loyer ~{lo['annuel_eur']} €/an [{html.escape(lo['etiquette'])}] · {vl}")
+            # M59-P1 (Q2) — l'avertissement plafond passe AVANT le chiffre locatif.
+            mode_b_kv += kv("Réhabilitation · LOCATIF",
+                            f"loyer retenu : {html.escape(lo['etiquette'])} · ~{lo['annuel_eur']} €/an · {vl}")
             mode_b_kv += (f"<div class='foot' style='margin-top:2px'>"
                           f"{html.escape(sl.get('mention_fiscale') or '')}</div>")
 

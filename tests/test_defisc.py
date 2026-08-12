@@ -30,7 +30,12 @@ def test_coef_surface_cap_petites_surfaces():
 
 def test_plafond_source_marche_estime():
     r = D.sortie_locative(120, 180000)                       # plafond base par défaut
-    assert r["loyer"]["etiquette"].startswith("Sourcé")
+    # M59-P1 (Q2) : le plafond N'EST PLUS étiqueté « Sourcé » comme hypothèse de revenu — il DIT
+    # sa nature ; la référence BOFiP reste portée par `source` (vraie pour la VALEUR du plafond).
+    assert "Sourcé" not in r["loyer"]["etiquette"]
+    assert "plafond réglementaire" in r["loyer"]["etiquette"]
+    assert "loyer de marché observé" in r["loyer"]["etiquette"]
+    assert (r["loyer"]["source"] or "").startswith("BOFiP")
     assert r["loyer"]["regime"] == "base"
     assert r["etiquette"] == "Estimé"                        # héritage : contient les travaux Estimé
     m = D.sortie_locative(120, 180000, loyer_marche_m2=14.0)  # marché → Estimé, pas de coef
