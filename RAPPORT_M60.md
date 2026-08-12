@@ -103,3 +103,47 @@ fermer un outil ouvert depuis la fiche RAMÈNE à la fiche (état intact) · dé
 3. Confirmer le périmètre PHASE 1 (a→e) et l'ordre des commits par phase.
 
 **STOP — en attente d'arbitrage.**
+
+---
+
+# PHASE 1 (après arbitrage Vic)
+
+Arbitrages : DA resynchronisée ; `toggleOutils` garde la parcelle (vestige retiré) ; a→e dans l'ordre ;
+**Division parcellaire HORS portes** (outil commune, coût moyen — fausse promesse évitée).
+
+## Commits par phase
+- **[M60-P1e]** `cb4d4a87` — `toggleOutils` ne remet plus `selectedIdu` à null (le rationale nav-exclusive
+  vise les VUES, pas la fiche ; vestige du reset large M55-L). + DA-FICHE-v6 resynchronisé sur le vif
+  (3 tokens morts corrigés). Vérifié : la fiche persiste à l'ouverture/fermeture d'un outil.
+- **[M60-P1a]** `8b26beca` — calculette autonome : store `calcPrefill` (IDU), `CalculetteFonciere` saute le
+  ParcelPicker si pré-rempli (IDU EN TÊTE). Calculette interactive RETIRÉE de la fiche → outil unique ;
+  Faisabilité garde le bilan en LECTURE (capacité/gabarit/SDP) + PORTE en pied de Constructibilité.
+  CSS `.porte-outil` recopiée TEL QUEL de DA-FICHE-v6 (scopée .fiche-v6, `--bg-header`→`--bg-2`).
+- **[M60-P1b]** `656a327d` — calculette : résultat NÉGATIF → verdict en clair (détail chiffré secondaire,
+  ne mène plus) ; fourchette ordonnée bas→haut, principal borné à 0 ; garde-fou coût > sortie DVF.
+  **À signaler** : « défaut par typologie locale » demande une donnée typologie backend (absente) —
+  défaut global conservé + labellisé hypothèse + garde-fou (à arbitrer si on ajoute la typologie).
+- **[M60-P1c]** `67629a52` — portes contextuelles : Scan patrimoine (pied Propriétaire, SIREN, lien inline
+  PatrimoineLink retiré) ; Annuaire PLU + Lettre de zonage (pied Urbanisme, repris en forme porte).
+  Accroches contextualisées (zone PLU réelle). Division HORS portes (arbitrage).
+- **[M60-P1d]** `af8c73f7` — grille du bas scindée : EXPORTS (inchangés) + OUTILS SUR CETTE PARCELLE
+  (6 portes .compacte 2 col : Comparer pré-chargée, Assemblage amorce msel, Remonter le temps, Contrôle
+  avant achat, Vérif procédure PLU — `VerifProcedure` amorce l'IDU de `selectedIdu`, Faisabilité).
+  « Comparer » déplacé de .actions vers OUTILS.
+
+## Report DA
+DA-FICHE-v6 documentait DÉJÀ le gabarit `.porte-outil` (pied de tiroir + grille OUTILS 2 col + une porte
+par outil + pré-rempli + sans perdre la fiche) — l'app y CONFORME désormais. Seule correction DA : les
+3 tokens morts resynchronisés (P1e). Aucune valeur morte ne subsiste.
+
+## Garde-fous (tous verts)
+tsc 0 · vitest 37 · build vert · **console 0** sur les 4 parcelles M55-O (tiroirs ouverts, portes rendues)
+· exports PDF premium + onepager = **200** · calculette : source UNIQUE (l'outil) → fiche/Outils identiques
+par construction · fermer un outil ouvert depuis la fiche RAMÈNE à la fiche (setModule garde selectedIdu) ·
+**défilement fiche (M68) non régressé** (mention légale atteignable, mesuré 4 parcelles).
+
+## Captures
+`reports/m60/captures/` : `porte-calculette.png`, `porte-annuaire.png`, `porte-lettre-zonage.png`,
+`porte-patrimoine.png`, `outils-sur-parcelle.png` — toutes conformes au gabarit `.porte-outil(.compacte)`.
+
+**Livré en 6 commits (P0 + P1 e/a/b/c/d). NON mergé.**
