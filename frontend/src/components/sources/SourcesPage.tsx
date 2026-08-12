@@ -10,7 +10,7 @@ import { Loading } from '../Loading'
 const STATUS_DOT: Record<string, string> = {
   active: TOKENS.mint, ok: TOKENS.mint, connecte: TOKENS.mint, partial: TOKENS.stCreuser, partiel: TOKENS.stCreuser,
   degraded: TOKENS.stCreuser, manuel: TOKENS.stCreuser, planned: TOKENS.txtDim, todo: TOKENS.txtDim, a_faire: TOKENS.txtDim,
-  error: TOKENS.stEcartee, down: TOKENS.stEcartee,
+  error: TOKENS.stEcartee, down: TOKENS.stEcartee, hub: TOKENS.txtDim,
 }
 
 // P4.2 (dernière passe) — « version la plus récente publiée » : rassure que LABUSE n'est pas
@@ -128,6 +128,13 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {/* Ligne 1 : le nom de la source + marqueur sondable/déclaratif + producteur + licence + lien. */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-xs font-medium text-txt">{s.name}</span>
+          {/* M71 BLOC A : doublon listé pour la traçabilité, exclu du comptage du bandeau. */}
+          {s.doublon && (
+            <span data-source-doublon className="shrink-0 rounded-full bg-surface-2 px-1.5 py-px text-[8.5px] text-txt-dim"
+              title="Même donnée qu'une autre source du catalogue — non comptée dans le bandeau.">
+              doublon
+            </span>
+          )}
           {/* M15 H2 : marqueur DISCRET — vérifiée automatiquement (radar) vs déclarative. Non
               anxiogène : une source déclarative N'EST PAS douteuse, son producteur n'expose
               simplement pas de date interrogeable. */}
@@ -205,12 +212,14 @@ export function SourcesPage() {
     const k = s.category || 'Autres'
     cats.set(k, [...(cats.get(k) ?? []), s])
   }
-  // M56-D · DA §9 — bandeau 3 chiffres depuis les DONNÉES RÉELLES (jamais en dur) :
-  // sources branchées (total) · vérifiées auto (radar sondable, même marqueur que la ligne) ·
-  // millésime non tracé (ni date de donnée, ni millésime publié, ni ingestion tracée → repli).
-  const nTotal = data?.length ?? 0
-  const nVerif = data?.filter((s) => { const st = s.radar?.statut ?? 'non_sondable'; return st === 'a_jour' || st === 'nouvelle_publication' }).length ?? 0
-  const nSansMil = data?.filter((s) => !s.derniere_donnee && !millesimeNote(s) && !majReelle(s)).length ?? 0
+  // M56-D · DA §9 — bandeau 3 chiffres depuis les DONNÉES RÉELLES (jamais en dur).
+  // M71 BLOC A (audits M66/M66-B) : l'API ne sert plus que les sources status='connecte',
+  // et les lignes marquées DOUBLON au catalogue sont listées mais EXCLUES des comptages —
+  // « SOURCES BRANCHÉES » redevient un chiffre mesuré, pas un inventaire de catalogue.
+  const comptees = (data ?? []).filter((s) => !s.doublon)
+  const nTotal = comptees.length
+  const nVerif = comptees.filter((s) => { const st = s.radar?.statut ?? 'non_sondable'; return st === 'a_jour' || st === 'nouvelle_publication' }).length
+  const nSansMil = comptees.filter((s) => !s.derniere_donnee && !millesimeNote(s) && !majReelle(s)).length
   return (
     <div data-sources-page className="sources-print flex min-w-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-3xl px-6 py-6">

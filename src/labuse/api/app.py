@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 from .. import config, models, prospection
 from .. import rnu as _rnu
 from ..db import session_scope
-from ..enums import FeedbackVerdict
+from ..enums import DataSourceStatus, FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
 
 # Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
@@ -574,7 +574,16 @@ def _source_pour_run(commune: str | None) -> str | None:
 
 @app.get("/sources")
 def list_sources(db: Session = Depends(get_db)) -> list[dict]:
-    rows = db.execute(select(models.DataSource).order_by(models.DataSource.category, models.DataSource.name)).scalars().all()
+    # M71 BLOC A (audits M66/M66-B) : la page Sources ne sert QUE les sources réellement
+    # branchées (status='connecte'). Hubs, a_faire, partiel, manuel n'y figurent plus —
+    # le catalogue complet reste en base, seule la VITRINE est filtrée. Comptage 100 %
+    # dynamique côté front ; les DOUBLONS (technical_notes commençant par « DOUBLON de »)
+    # restent listés mais sont exclus du comptage du bandeau (champ `doublon` ci-dessous).
+    rows = db.execute(
+        select(models.DataSource)
+        .where(models.DataSource.status == DataSourceStatus.CONNECTE)
+        .order_by(models.DataSource.category, models.DataSource.name)
+    ).scalars().all()
     # UX V1 ajout A (page « Sources & fraîcheur ») : la date affichée est LUE dans
     # ingestion_runs (jamais codée en dur) — max(finished_at|started_at) des runs ok par source.
     runs = db.execute(text(
@@ -623,6 +632,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
+            "doublon": bool((s.technical_notes or "").startswith("DOUBLON de")),
             "testable": s.name in _connector_names(),
             "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
             "derniere_donnee": donnees.get(s.name),

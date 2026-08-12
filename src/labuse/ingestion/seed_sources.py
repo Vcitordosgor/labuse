@@ -33,7 +33,9 @@ SOURCES: list[dict] = [
          documentation_url="https://cadastre.data.gouv.fr/datasets/cadastre-etalab",
          endpoint_url="https://cadastre.data.gouv.fr/data/etalab-cadastre/latest/geojson/communes/974/97415/cadastre-97415-parcelles.json.gz",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP/Etalab — Plan Cadastral Informatisé ».",
-         technical_notes="✓ live : parcelles 97415 = 5,36 Mo (.json.gz) ; dépt 974 = 54 Mo. Source d'ingestion EN MASSE des parcelles."),
+         technical_notes="DOUBLON de « Cadastre (API Carto PCI) » (M71 : même donnée, canal bulk — ne compte "
+                         "pas dans le bandeau Sources). ✓ live : parcelles 97415 = 5,36 Mo (.json.gz) ; "
+                         "dépt 974 = 54 Mo. Source d'ingestion EN MASSE des parcelles."),
     dict(name="Urbanisme PLU/GPU (API Carto)", category="urbanisme", provider="IGN / API Carto GPU",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://apicarto.ign.fr/api/doc/gpu",
@@ -128,7 +130,7 @@ SOURCES: list[dict] = [
          technical_notes="Zonage SAFER/DAAF propre INTROUVABLE en public. ✓ proxy intégré : RPG.LATEST (parcelles agricoles déclarées, Géoplateforme) en flag agricole."),
     # ── Hubs ──
     dict(name="Région Réunion Open Data (Opendatasoft)", category="hub", provider="Région Réunion (Opendatasoft)",
-         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="REST/GeoJSON", status=S.HUB, reliability_level=R.VERIFIE,
          documentation_url="https://data.regionreunion.com",
          endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets",
          legal_notes="Licence à confirmer PAR JEU de données (portail Région Réunion ODS — audit M6 §1.11 R8).",
@@ -144,7 +146,7 @@ SOURCES: list[dict] = [
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion ». Licence à consigner couche par couche (audit M6 §1.11 R8).",
          technical_notes="⚠ carto.reunion.developpement-durable.gouv.fr injoignable (HTTP 000). Risques via Géorisques en proxy ; sinon import."),
     dict(name="Géoplateforme IGN", category="hub", provider="IGN",
-         access_type="WFS/WMS/téléchargement", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="WFS/WMS/téléchargement", status=S.HUB, reliability_level=R.VERIFIE,
          rate_limit="10 req/s (téléchargement)",
          documentation_url="https://geoservices.ign.fr", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — ouverture totale des données publiques IGN au 01/01/2021 (hors SCAN) ; attribution : « © IGN ».",
@@ -255,11 +257,12 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD CARTO (proxy OCS GE) ».",
          technical_notes="OCS GE 974 non exposé en WFS geopf (OCSGE:occupation_du_sol → 400). Proxy actuel : BDCARTO_V5:occupation_du_sol (naturel/agricole/artificialisé). Signal non juridique."),
     dict(name="ZNIEFF (INPN / Région)", category="environnement", provider="INPN/MNHN · Région ODS",
-         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="REST/GeoJSON", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://data.regionreunion.com/explore/dataset/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/",
          endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/records",
          legal_notes="Licence à confirmer (jeu servi par la Région Réunion ODS — audit M6 §1.11 R8) ; producteur : INPN/MNHN.",
-         technical_notes="✓ live : ZNIEFF I/II. Signal environnemental (non éliminatoire)."),
+         technical_notes="M71 (audit M66/M66-B) : endpoint vivant mais 0 donnée ingérée, 0 usage — "
+                         "repassé a_faire. Signal environnemental (non éliminatoire) à ingérer."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -305,7 +308,8 @@ SOURCES: list[dict] = [
          documentation_url="https://geoservices.ign.fr/rgealti",
          endpoint_url=None,
          legal_notes="Licence Ouverte Etalab.",
-         technical_notes="Déjà ingéré au data-gap : raster de PENTE dérivé conservé "
+         technical_notes="DOUBLON de « RGE ALTI (altimétrie) » (M71 : même référentiel IGN, résolution 5 m — "
+                         "ne compte pas dans le bandeau Sources). Déjà ingéré au data-gap : raster de PENTE dérivé conservé "
                          "(rgealti_pente_5m, PostGIS raster SRID 2975, 2 793 dalles) — réutilisé "
                          "tel quel par wave-ortho Lot 1 (pente non bâtie), aucun re-téléchargement."),
     # ── Mandat Wave ANC & Végétation ──
@@ -325,7 +329,8 @@ SOURCES: list[dict] = [
          documentation_url="https://apicarto.ign.fr/api/doc/gpu",
          endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), zonages d'assainissement des collectivités ».",
-         technical_notes="Constat 11/07/2026 : 4 communes/24 en SIG (L'Étang-Salé, Le Port, "
+         technical_notes="DOUBLON de « GPU — zonages d'assainissement » (M71 : même couche GPU, canal info-surf — "
+                         "ne compte pas dans le bandeau Sources). Constat 11/07/2026 : 4 communes/24 en SIG (L'Étang-Salé, Le Port, "
                          "Saint-Denis, Saint-Paul) → spatial_layers kind='zonage_assainissement'. "
                          "Les 20 autres : PDF d'enquête publique au mieux (intercos) — noté, passé. "
                          "Classification des libellés en config (anc_vegetation.yaml)."),
@@ -336,7 +341,8 @@ SOURCES: list[dict] = [
                            "25.12.17_CHRONIQUES_de_L_EAU_149.pdf",
          endpoint_url=None,
          legal_notes="Licence à confirmer (publication Office de l'eau Réunion — non tranché à l'audit M6 §1.11) ; utilisée en calage/contrôle croisé uniquement.",
-         technical_notes="Chronique n°149 (déc. 2025, données 2023) : ~189 000 installations ANC "
+         technical_notes="M71 (nuance M66-B) : usage RÉEL en seed versionné (calage ANC) — pas un faux positif, "
+                         "pas de table dédiée par conception. Chronique n°149 (déc. 2025, données 2023) : ~189 000 installations ANC "
                          "= 46 % des foyers. Chiffres par commune du texte p. 13 → seed versionné "
                          "data/anc/office_eau_chronique_149_2023.csv (pas de scraping du PDF)."),
     dict(name="BD ORTHO IRC (IGN)", category="imagerie", provider="IGN / Géoplateforme",
@@ -359,12 +365,14 @@ SOURCES: list[dict] = [
                          "en GeoTIFF float32, jamais stocké. MNH inclut le sursol bâti → croisé "
                          "NDVI. Fallbacks MNS Corrélé/texture du mandat : non nécessaires."),
     dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
-         access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         access_type="Overpass/GeoJSON", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
          documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",
          endpoint_url="https://overpass-api.de/api/interpreter",
          legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap — données disponibles sous ODbL (openstreetmap.org/copyright) ». parkings_aper = base dérivée d'OSM : disponible sous ODbL sur demande (share-alike).",
-         technical_notes="amenity=parking (polygones) → parkings_aper, seuils loi APER n° 2023-175 "
-                         "art. 40 en config. Complétude déclarative OSM : volumétrie = plancher, pas un recensement."),
+         technical_notes="M71 : ingéré, NON EXPLOITÉ (parkings_aper 901 lignes, aucune lecture applicative "
+                         "— audit M66-B) → partiel jusqu'au branchement d'un usage. amenity=parking (polygones) "
+                         "→ parkings_aper, seuils loi APER n° 2023-175 art. 40 en config. Complétude déclarative "
+                         "OSM : volumétrie = plancher, pas un recensement."),
 ]
 
 
