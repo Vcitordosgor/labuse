@@ -15,13 +15,8 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
     tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
-  // M63-P1 : fond CLAIR — CARTO Positron (light_nolabels), MIROIR EXACT du sombre (même CDN, même
-  // licence). Libre, sans clé ; attribution identique « © OSM · CARTO » (déjà servie). nolabels pour
-  // cohérence avec le sombre (la fiche porte l'adresse ; le Plan IGN reste dispo pour les labels).
-  'bm-clair': {
-    tiles: ['https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'],
-    attribution: '© OSM · CARTO',
-  },
+  // M64-P1 : le fond « Clair » n'est PLUS un raster (Positron retiré) — c'est le rendu SOMBRE avec le
+  // fond du canvas passé au blanc (cf. MapView.applyClairMode). Aucune tuile claire à charger.
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
   'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
   'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
@@ -35,7 +30,6 @@ export const BASEMAP_CHOICES: { key: keyof typeof BASEMAP_SOURCES; label: string
   { key: 'bm-ortho-2000', label: 'Ortho 2000-2005' },
   { key: 'bm-ortho-1950', label: 'Ortho 1950-1965' },
   { key: 'bm-plan', label: 'Plan IGN' },
-  { key: 'bm-clair', label: 'Clair' },        // M63-P1
   { key: 'bm-carto', label: 'Fond sombre' },
 ]
 
