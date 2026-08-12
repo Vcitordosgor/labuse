@@ -194,3 +194,81 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* DA §3 — squelette : pulsation d'opacité 0,6→1 sur 1,2 s (pas de spinner isolé). */
 @keyframes labuse-sk { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 .sk { animation: labuse-sk 1.2s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   M56-B6 · FICHE v6 — TIROIRS EN CARTES AUTONOMES (docs/DA-FICHE-v6.html)
+   Chaque tiroir est une carte posée sur un fond de panneau plus sombre ; le
+   contraste fond/carte donne le relief (pas de bordure épaisse, ni ombre).
+   Classes transcrites du fichier de référence, SCOPÉES sous .fiche-v6 pour ne
+   pas entrer en collision avec les .stats/.stat/.legal globales.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --f-card:#121815; --f-linecard:#253029; --f-linehead:#232C27; --f-icotxt:#97A39B;
+  --f-amberband:#1C1509; --f-ambertxt:#D9AE68; --f-amberico:#8A7040;
+}
+.fiche-v6 { background:var(--bg-0); }
+
+/* en-tête en carte */
+.fiche-v6 .head { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:11px; overflow:hidden; }
+.fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
+.fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
+.fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; }
+.fiche-v6 .addr-link { font-size:11px; color:var(--txt-mut); margin-top:3px; text-decoration:none; display:inline-block; }
+.fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }
+.fiche-v6 .hbtn { width:26px; height:26px; border-radius:7px; border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:12px; background:none; cursor:pointer; flex-shrink:0; }
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(4,1fr); border-top:0.5px solid var(--line); }
+.fiche-v6 .stat { padding:9px 10px; border-right:0.5px solid var(--line); min-width:0; }
+.fiche-v6 .stat:last-child { border-right:none; }
+.fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; }
+.fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fiche-v6 .stat-v.vide { color:var(--txt-faint); }
+
+/* bouton d'analyse + légende */
+.fiche-v6 .cta { background:var(--mint); border:none; border-radius:10px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
+.fiche-v6 .cta-sub { font-size:10.5px; color:var(--txt-off); text-align:center; margin-top:6px; }
+
+/* bandeau d'attention */
+.fiche-v6 .band { background:var(--f-amberband); border-left:2px solid var(--amber); border-radius:0 9px 9px 0; padding:9px 12px; margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.fiche-v6 .band > span { font-size:12px; color:var(--f-ambertxt); }
+.fiche-v6 .band i { font-size:13px; color:var(--f-amberico); font-style:normal; cursor:help; }
+
+/* boutons IA */
+.fiche-v6 .ia { display:flex; gap:7px; margin-top:10px; }
+.fiche-v6 .ia-btn { flex:1; min-height:34px; border:0.5px solid var(--iris-line); background:var(--iris-bg); border-radius:9px; display:flex; align-items:center; justify-content:center; gap:7px; font-size:12px; color:var(--iris-2); cursor:pointer; padding:0 10px; }
+
+/* libellé de groupe : texte + filet, sans conteneur */
+.fiche-v6 .sec { display:flex; align-items:center; gap:9px; margin:20px 0 9px; }
+.fiche-v6 .sec > span { font-size:10px; letter-spacing:.13em; color:var(--txt-dim); font-weight:500; text-transform:uppercase; }
+.fiche-v6 .sec > i { flex:1; height:0.5px; background:var(--line); }
+
+/* tiroir = carte autonome. Fermé : carte + rangée à plat. Ouvert : la carte
+   s'ouvre (coins bas carrés) et son corps (.t-open) prolonge la carte. */
+.fiche-v6 .tiroir { width:100%; text-align:left; background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; padding:12px 13px; display:flex; align-items:center; gap:12px; margin-bottom:9px; cursor:pointer; transition:background var(--dur-fast) var(--ease); }
+.fiche-v6 .tiroir.is-open { margin-bottom:0; border-bottom:none; border-bottom-left-radius:0; border-bottom-right-radius:0; }
+.fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; }
+.fiche-v6 .t-ico { width:32px; height:32px; border-radius:9px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
+.fiche-v6 .t-body { flex:1; min-width:0; }
+.fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
+.fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }
+.fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.fiche-v6 .t-val.absent { color:var(--txt-faint); }
+.fiche-v6 .pill-amber { font-size:11.5px; color:var(--amber); background:var(--amber-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
+.fiche-v6 .pill-mint { font-size:11.5px; color:var(--mint); background:var(--mint-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
+
+/* actions de pied */
+.fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
+.fiche-v6 .act { flex:1; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
+.fiche-v6 .act-crm { background:var(--mint); color:var(--mint-on); font-weight:500; border:none; }
+.fiche-v6 .act-proj { border:0.5px solid var(--iris-line); background:var(--iris-bg); color:var(--iris-2); }
+.fiche-v6 .act-cmp { border:0.5px solid var(--line-btn); background:none; color:var(--txt); }
+
+/* exports en carte : grille 4 colonnes + bandeau large */
+.fiche-v6 .exports { background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; overflow:hidden; }
+.fiche-v6 .exp-grid { display:grid; grid-template-columns:repeat(4,1fr); }
+.fiche-v6 .exp { min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-right:0.5px solid var(--line); border-bottom:0.5px solid var(--line); color:var(--f-icotxt); cursor:pointer; text-decoration:none; }
+.fiche-v6 .exp:nth-child(4n) { border-right:none; }
+.fiche-v6 .exp > span { font-size:10.5px; color:var(--txt-dim); }
+.fiche-v6 .exp-wide { min-height:42px; display:flex; align-items:center; justify-content:center; gap:7px; border-top:0.5px solid var(--line); font-size:12px; color:var(--txt); cursor:pointer; text-decoration:none; }
+.fiche-v6 .legal { font-size:9px; color:var(--txt-faint); line-height:1.5; margin-top:14px; }

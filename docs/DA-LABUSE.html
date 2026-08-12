@@ -173,7 +173,7 @@ td.num,th.num{text-align:right}
 <div class="doc-s">2 · LES DIX RÈGLES</div>
 <div class="spec" style="max-width:none">
 <table style="font-size:13px">
-<tr><td>Le relief se mérite</td><td>Une carte signale une <b style="color:var(--txt)">porte</b> (un moteur à lancer, un projet à ouvrir) ou enferme un <b style="color:var(--txt)">groupe cohérent</b> (les tiroirs d'un même thème, les couches d'une même famille). Le contenu déjà déplié reste plat : filets, jamais de boîte dans la boîte.</td></tr>
+<tr><td>Le relief se mérite</td><td>Une carte signale une <b style="color:var(--txt)">porte</b> (un moteur à lancer, un projet à ouvrir) ou <b style="color:var(--txt)">une unité autonome</b>. M56-B6 : sur la FICHE, chaque tiroir est une <b style="color:var(--txt)">carte autonome</b> posée sur un fond de panneau plus sombre — le relief vient du contraste fond/carte, PAS d'un groupe encarté ; le libellé de groupe + un filet suffisent à séparer les thèmes. Ailleurs, une carte peut encore enfermer un groupe cohérent (les couches d'une même famille). Le contenu déjà déplié reste plat : filets, jamais de boîte dans la boîte.</td></tr>
 <tr><td>Titre + contexte</td><td>Chaque ligne porte un titre <code>14px --txt-hi</code> et une ligne de contexte <code>11.5px --txt-mut</code> qui donne la valeur sans ouvrir. Une seule ligne de contexte, jamais trois.</td></tr>
 <tr><td>Groupes silencieux</td><td>Micro-label <code>10px</code> lettré <code>.11em</code> en <code>--lab</code>, au-dessus de la carte de groupe. Jamais de numérotation.</td></tr>
 <tr><td>Le vert est un signal</td><td>Chiffre neutre en <code>--txt</code>. Le vert ne sort que pour l'action principale, l'état confirmé et la tranche des portes mises en avant. Si tout est vert, plus rien ne l'est.</td></tr>
@@ -325,6 +325,14 @@ td.num,th.num{text-align:right}
 </div>
 
 <div class="doc-s">4 · FICHE PARCELLE</div>
+<p class="doc-p" style="border:0.5px solid var(--amber);background:var(--amber-bg);border-radius:8px;padding:12px 14px;color:var(--txt)">
+  <b style="color:var(--amber)">SECTION REMPLACÉE (M56-B6).</b> La référence visuelle de la fiche parcelle est
+  désormais <b><code>docs/DA-FICHE-v6.html</code></b> : chaque tiroir y est une <b>carte autonome</b>
+  (plus de groupe encarté), l'en-tête est une carte <code>.head</code>, les libellés de groupe sont
+  un texte + un filet <code>.sec</code>. Les sous-sections 4, 4b et 4c ci-dessous sont conservées
+  pour mémoire (structure <code>.gcard</code>/<code>.gr</code> antérieure) mais NE font plus foi pour
+  la fiche — voir v6. La règle 1 (§2) est mise à jour en conséquence.
+</p>
 <!-- M56-B3 fix 3 : le panneau est un SEUL fond continu --bg-1 (aucun filet ni fond distinct
      sous l'en-tête). fix 7 (densité) : padding panneau 16→14. -->
 <div class="panel" style="padding:14px">
