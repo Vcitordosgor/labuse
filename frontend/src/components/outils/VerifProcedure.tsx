@@ -1,12 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
+import { useApp } from '../../store/useApp'
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
 // cours ? L'outil LIT le radar (point de calcul unique, mêmes libellés que la fiche) — il ne calcule
 // rien. L'absence est DATÉE elle aussi. Jamais d'affirmation sur l'issue de la procédure.
+// M60 P1d — PORTE depuis la fiche : le champ IDU s'AMORCE de selectedIdu (préservé par setModule).
 export function VerifProcedure() {
-  const [idu, setIdu] = useState('')
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const [idu, setIdu] = useState(selectedIdu ?? '')
+  useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
   const m = useMutation({ mutationFn: () => verifProcedure(idu.trim()) })
   const d: VP | undefined = m.data
   const run = () => { if (idu.trim().length >= 10) m.mutate() }

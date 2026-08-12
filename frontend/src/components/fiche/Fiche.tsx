@@ -1253,6 +1253,8 @@ export function Fiche({ idu }: { idu: string }) {
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
+  const setMsel = useApp((s) => s.setMsel)                 // M60 P1d — porte Assemblage (amorce l'assiette)
+  const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -2255,15 +2257,11 @@ export function Fiche({ idu }: { idu: string }) {
             <div>
               {/* M56-B6 · DA-FICHE-v6 — actions de pied en .actions (+ CRM · + Projet · Comparer),
                   sans filet séparateur (le relief vient du contraste fond/carte). */}
+              {/* M60 P1d — « Comparer » DÉPLACÉ dans le groupe « OUTILS SUR CETTE PARCELLE » (portes,
+                  plus bas). La barre d'actions garde + CRM · + Projet (actions de suivi, pas des outils). */}
               <div className="actions">
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
-                {/* M54-EXPO A8 — AJOUTER cette parcelle au comparateur (jusqu'à 3), puis ouvre le panneau. */}
-                <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
-                  className="act act-cmp whitespace-nowrap"
-                  title="Ajouter au comparateur (Outils → Comparer pour le rouvrir)">
-                  ⇄ Comparer
-                </button>
               </div>
               {/* M55-L point 8 — BARRE D'ACTIONS SUR DEUX LIGNES ÉQUILIBRÉES (décision Vic).
                   Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
@@ -2271,9 +2269,9 @@ export function Fiche({ idu }: { idu: string }) {
                   ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
                   1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
                   séparateurs qu'avant. */}
-              {/* M56-B6 · DA-FICHE-v6 — EXPORTS ET OUTILS : label .sec + carte .exports (grille
-                  4 colonnes .exp + bandeau large .exp-wide pour le Pré-dossier). Icônes 15px grises. */}
-              <div className="sec"><span>EXPORTS ET OUTILS</span><i /></div>
+              {/* M60 P1d — « EXPORTS ET OUTILS » SCINDÉ en deux groupes : EXPORTS (documents,
+                  inchangés) puis « OUTILS SUR CETTE PARCELLE » (portes compactes, plus bas). */}
+              <div className="sec"><span>EXPORTS</span><i /></div>
               <div className="exports">
                 <div className="exp-grid">
                   <a className="exp" href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
@@ -2310,6 +2308,31 @@ export function Fiche({ idu }: { idu: string }) {
                   </a>
                 </div>
                 <PreDossierTile idu={idu} />
+              </div>
+              {/* M60 P1d — OUTILS SUR CETTE PARCELLE : portes compactes 2 colonnes ; chaque porte ouvre
+                  l'outil PRÉ-REMPLI avec cette parcelle (setModule garde selectedIdu → retour intact). */}
+              <div className="sec"><span>OUTILS SUR CETTE PARCELLE</span><i /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <PorteOutil compacte ico="⇄" data="comparer" titre="Comparer"
+                  sous="Cette parcelle chargée · ajoutez-en d'autres"
+                  onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
+                <PorteOutil compacte ico="⬡" data="assemblage" titre="Assemblage"
+                  sous="Amorcer l'assiette avec cette parcelle"
+                  onClick={() => { setMsel([idu]); setModule('assemblage') }} />
+                {f.coords && (
+                  <PorteOutil compacte ico="◷" data="temps" titre="Remonter le temps"
+                    sous="Ce terrain de 1950 à aujourd'hui"
+                    onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
+                )}
+                <PorteOutil compacte ico="✓" data="duediligence" titre="Contrôle avant achat"
+                  sous="La check-list, cette parcelle en tête"
+                  onClick={() => setModule('duediligence')} />
+                <PorteOutil compacte ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
+                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
+                  onClick={() => setModule('verif-procedure')} />
+                <PorteOutil compacte ico="▤" data="programme" titre="Faisabilité"
+                  sous="Monter un programme sur cette parcelle"
+                  onClick={() => setModule('programme')} />
               </div>
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
