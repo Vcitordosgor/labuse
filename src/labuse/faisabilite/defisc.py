@@ -101,7 +101,10 @@ def sortie_locative(shab_m2: float, cout_travaux_eur: float, *,
         plafond_brut = float(p.get("valeur_eur_m2_mois", 0))
         loyer_m2_eff = round(plafond_brut * coef, 2)
         loyer_regime = regime
-        loyer_etiquette = f"Sourcé ({p.get('source')} · {p.get('date')})"
+        # M59-P1 (Q2) — le plafond N'EST PAS un loyer de marché observé : on retire « Sourcé »
+        # comme étiquette de l'hypothèse de REVENU. La référence BOFiP reste (elle est vraie pour
+        # la VALEUR du plafond, portée par `source`/`date`), mais l'étiquette dit sa nature.
+        loyer_etiquette = "plafond réglementaire du dispositif — n'est pas un loyer de marché observé"
         loyer_source, loyer_date = p.get("source"), p.get("date")
 
     rc = rendement_cible_pct if rendement_cible_pct is not None else _rendement_defaut(cfg)

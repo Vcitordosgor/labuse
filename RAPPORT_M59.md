@@ -167,3 +167,79 @@ la Phase 1 (a→f). Points ouverts pour le mandant :
 - **Q5** : renommer « Mode B » → « Réhabilitation » côté affichage seulement (option a).
 
 NE PAS MERGER.
+
+---
+
+# PHASE 1 — correctifs (arbitrage mandant)
+
+Cadrage + libellés, **AUCUNE formule modifiée** (achat_max réhab reste `SHAB × prix ×
+coef_CA − SHAB × travaux`). Le repère terrain nu (Q1) et le seuil (Q4) sont des ajouts de
+cadrage, pas des changements de calcul. Témoins : **97414000DI0751** (SHAB>50, bilan +90 k€),
+**97414000CH1156** (négatif + terrain>bâti), **97413000CS0864** (SHAB ~26 → trop petit).
+
+## Bug prioritaire — défaut travaux front 1200 ≠ back 1500 : CORRIGÉ
+**Source unique = le back** (`bilan.py MODE_B_TRAVAUX_M2_DEFAUT = 1500`) ; le front le lit.
+**Valeur retenue : 1 500 €/m²** — c'est **ce qui a servi à la mesure P0** (la fiche initiale
+appelle `compute_mode_b` sans paramètre → 1 500 ; ligne d'en-tête « 64,4 % »). Le miroir front
+`MODE_B_DEFAUT.travauxM2` passe 1200 → **1500** (`useApp.ts`), documenté « doit suivre le back ».
+Vérifié à l'écran : l'`input` travaux affiche **1500**, et le montant est **stable** entre le
+rendu initial et le premier recalcul (plus de saut 1500→1200).
+
+## Q1 — cadrage (le calcul ne bouge pas)
+- **Titre** (`Fiche.tsx`, export md/html/onepager, assistant IA) : « **Ce que la réhabilitation
+  du bâti justifie : ~N** » — plus jamais « Prix d'achat max » seul.
+- **Ligne obligatoire** sous le résultat : « **hors valeur du terrain — le foncier (N m²)
+  s'ajoute à ce montant** » (surface servie au niveau racine du payload).
+- **Comparaison** : « **terrain nu au prix du secteur : ~X €** » — `bilan._prix_terrain_local`
+  (DVF `type_bien='terrain'`, secteur→commune, **Estimé**) × surface. N'entre **PAS** dans
+  `achat_max`, c'est un repère.
+- **Phrase** quand terrain nu > réhab (`porte_par_terrain`) : « **À ces hypothèses, la valeur de
+  cette parcelle est portée par le terrain, pas par le bâti.** » **Affichée dans les DEUX cas
+  (positif ET négatif)** — mesure : `porte_par_terrain` coïncide presque toujours avec un bilan
+  bâti négatif, or c'est **là** que l'info compte (~50-64 % du stock). Ne la mettre que dans la
+  branche positive l'aurait quasi masquée.
+- **Résultat négatif** : verdict en clair (`message_negatif`), **jamais un nombre négatif en
+  tête** — la comparaison terrain + la phrase « portée par le terrain » restent affichées.
+
+## Q2 — loyer plafond
+- `defisc.py` : l'étiquette du loyer plafond n'est **plus « Sourcé »** ; elle devient
+  « **plafond réglementaire du dispositif — n'est pas un loyer de marché observé** ». La
+  **référence BOFiP** (BOI-BAREME-000017) reste dans `loyer.source` (vraie pour la VALEUR du
+  plafond) et est rappelée « réf. plafond … ».
+- **Avertissement AVANT le chiffre** du prix d'achat locatif (fiche + onepager) : le loyer retenu
+  et sa nature sont énoncés avant le montant qui en découle.
+- La **saisie client** d'un loyer de marché reste possible, étiquetée **Estimé** (voie b inchangée).
+- Test `test_defisc.py::test_plafond_source_marche_estime` **mis en cohérence** avec la nouvelle
+  étiquette (n'affirme plus « Sourcé » ; vérifie que la réf BOFiP reste dans `source`).
+
+## Q3 — périmètres dits (pas d'harmonisation des moteurs)
+- **Réhabilitation** : `prix_sortie.perimetre = "médiane secteur→commune, sans rayon adaptatif"`
+  (`bilan.py`), affiché sous le prix de sortie.
+- **Tiroir Marché** : la médiane bâti affiche déjà son rayon (« ≤ N m ») → ajout « , **rayon
+  adaptatif** » pour rendre le contraste explicite.
+
+## Q4 — seuil 50 m² SHAB
+`MODE_B_SHAB_MIN = 50.0` (`bilan.py`). Sous le seuil : `compute_mode_b` retourne
+`{disponible: True, trop_petit: True, shab_rehabilitable_m2, motif}` **sans calcul** ; la fiche
+et les PDF affichent « **Bâti trop petit (SHAB ~N m²) pour une thèse de réhabilitation.** ». Le
+gating existant (tier + emprise ≥ 20 + prix DVF) est **conservé**, le seuil s'y ajoute.
+
+## Q5 — renommage affichage seul
+« Mode B — Réhabilitation » → « **Réhabilitation** » : fiche (`Fiche.tsx` tiroir), export md/html
+(`export.py`), onepager REVENTE + LOCATIF, **et l'assistant IA** (`assistant.py`, user-facing —
+**non repéré au P0**, aligné ici : drop « (mode B) » + Q1). **Routes, champs (`mode_b`,
+`/mode-b`), params (`modeb_*`), clés de filtre, tiers, `compute_mode_b`, tests : INTOUCHÉS.**
+
+## Garde-fous (tous verts)
+`tsc -b` = **0** · `vitest` = **32/32** · `vite build` OK · **pytest** touché = **68/68**
+(mode_b, defisc, bilan, export, assistant) · **console 0 erreur** (2 témoins M58 + DI0751
+SHAB>50 + CH1156 négatif+porte + CS0864 trop petit) · **5 exports PDF → 200** (parcels/export,
+dossier, dossier-banquier, lettre-zonage, argumentaire). **Montant réhab identique fiche/export/
+API** (~90 k€ sur DI0751, champ unique `achat_max_libelle`) et **stable avant/après curseur**.
+*Note : la section Réhabilitation vit dans les sorties `export.py` (md/html/onepager, via
+`/parcels/{idu}/export`) — les PDF weasyprint (premium/dossier/banquier) ne la portent pas ;
+aucune chaîne « Mode B » n'y subsiste.*
+
+## STOP — PHASE 1
+Correctifs Q1/Q2/Q3/Q4/Q5 + bug défaut travaux livrés. Aucune formule modifiée.
+Commit « M59-P1 réhabilitation ». **NE PAS MERGER.**

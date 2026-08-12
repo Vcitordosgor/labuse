@@ -981,7 +981,7 @@ function BilanTab({ idu }: { idu: string }) {
            coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
         <Sec t="Marché — prix de sortie bâti (secteur)">
           médiane bâti <b className="tnum text-mint">{fmtInt(Number(b.marche.median))} €/m²</b> ({b.marche.type_prix},
-          {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
+          {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m, rayon adaptatif) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 / M32 §2 : fraîcheur DVF — l'HORIZON (de quand datent les prix) + le millésime amont,
               servis structurés dans `marche.fraicheur` (point de vérité data_sources). Repli sur le
@@ -1022,22 +1022,55 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
     placeholderData: (prev) => prev,
   })
   const mb = q.data ?? initial
-  if (!mb.disponible || !mb.composantes) return null
+  if (!mb.disponible) return null
+  // M59-P1 (Q4) — sous le seuil de SHAB : la section ne montre PAS le calcul, elle DIT pourquoi.
+  if (mb.trop_petit) return (
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation" context="bâti trop petit"
+      value={<span className="pill-amber">non pertinent</span>}>
+      <p data-mode-b-trop-petit style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
+        {mb.motif ?? `Bâti trop petit (SHAB ~${mb.shab_rehabilitable_m2 ?? '—'} m²) pour une thèse de réhabilitation.`}
+      </p>
+    </RefDrawer>
+  )
+  if (!mb.composantes) return null
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
+  const foncierM2 = mb.surface_parcelle_m2 ?? mb.terrain_nu?.surface_m2 ?? null
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
+    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation"
       context="Estimé — hypothèse travaux à ajuster"
       value={mb.negatif ? <span className="pill-amber">bilan négatif</span> : `~${mb.achat_max_libelle ?? ''}`}>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {mb.negatif ? (
-          <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
-        ) : (
-          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--txt-hi)' }}>
-            Prix d'achat max réhabilitation : <b data-mode-b-achat>~{mb.achat_max_libelle ?? '—'}</b>
-            <span style={{ marginLeft: 6, fontSize: 10.5, color: '#8FA69A' }}>(Estimé — jamais un prix Sourcé : l'hypothèse travaux est toujours estimée)</span>
-          </p>
-        )}
+        {/* M59-P1 (Q1) — tête + comparaison terrain. La comparaison terrain nu ET la phrase
+            « portée par le terrain » s'affichent dans LES DEUX cas (positif ou négatif) : c'est la
+            vraie information sur ~50-64 % du stock, souvent des bilans bâti négatifs. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {mb.negatif ? (
+            /* résultat négatif : verdict en clair, JAMAIS un nombre négatif en tête. */
+            <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
+          ) : (
+            <>
+              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--txt-hi)' }}>
+                Ce que la réhabilitation du bâti justifie : <b data-mode-b-achat>~{mb.achat_max_libelle ?? '—'}</b>
+                <span style={{ marginLeft: 6, fontSize: 10.5, color: '#8FA69A' }}>(Estimé — l'hypothèse travaux l'est toujours)</span>
+              </p>
+              <p data-mode-b-hors-terrain style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }}>
+                hors valeur du terrain — le foncier{foncierM2 != null ? ` (${fmtInt(foncierM2)} m²)` : ''} s'ajoute à ce montant
+              </p>
+            </>
+          )}
+          {mb.terrain_nu && (
+            <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }}>
+              terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_libelle}</b>{' '}
+              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé)</span>
+            </p>
+          )}
+          {mb.porte_par_terrain && (
+            <p data-mode-b-porte-terrain style={{ margin: '2px 0 0', fontSize: 11, lineHeight: 1.45, color: '#E8B44C' }}>
+              À ces hypothèses, la valeur de cette parcelle est portée par le terrain, pas par le bâti.
+            </p>
+          )}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
             <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
@@ -1052,7 +1085,9 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
             <span style={{ color: 'var(--txt-dim)' }}>Prix de sortie (revente)</span>
             <span style={{ color: 'var(--txt-hi)' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
           </div>
-          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>{c.prix_sortie.libelle}</p>
+          <p data-mode-b-perimetre style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
+            {c.prix_sortie.libelle}{c.prix_sortie.perimetre ? ` · ${c.prix_sortie.perimetre}` : ''}
+          </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
             <span style={{ color: 'var(--txt-dim)', flex: 1 }}>Coût travaux <b style={{ color: '#E8B44C', fontSize: 10 }}>ESTIMÉ</b></span>
             <input data-mode-b-travaux type="number" min={bMin} max={bMax} step={50} value={travaux}
@@ -1068,6 +1103,12 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
         {mb.sortie_locative && (
           <div data-mode-b-locatif style={{ borderTop: '1px solid #24312b', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--txt-hi)', fontWeight: 600 }}>Sortie locative</p>
+            {/* M59-P1 (Q2) — l'avertissement sur le loyer retenu passe AVANT le chiffre du prix
+                d'achat locatif : le plafond réglementaire n'est pas un loyer de marché observé. */}
+            <p data-mode-b-loyer-avert style={{ margin: 0, fontSize: 10, lineHeight: 1.4, color: '#E8B44C' }}>
+              Loyer retenu : {mb.sortie_locative.loyer.etiquette}
+              {mb.sortie_locative.loyer.source ? ` (réf. plafond ${mb.sortie_locative.loyer.source})` : ''}.
+            </p>
             {mb.sortie_locative.negatif ? (
               <p style={{ margin: 0, fontSize: 11.5, color: '#E8B44C' }}>{mb.sortie_locative.message_negatif}</p>
             ) : (
@@ -1078,12 +1119,12 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
               </p>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <span style={{ color: 'var(--txt-dim)' }}>Loyer retenu</span>
+              <span style={{ color: 'var(--txt-dim)' }}>Loyer</span>
               <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(mb.sortie_locative.loyer.annuel_eur)} €/an · {mb.sortie_locative.loyer.m2_mois_effectif} €/m²/mois</span>
             </div>
-            <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
-              {mb.sortie_locative.loyer.etiquette}{mb.sortie_locative.loyer.coef_surface ? ` · coefficient de surface ${mb.sortie_locative.loyer.coef_surface}` : ''}
-            </p>
+            {mb.sortie_locative.loyer.coef_surface != null && (
+              <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>coefficient de surface {mb.sortie_locative.loyer.coef_surface}</p>
+            )}
             <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#E8B44C' }}>{mb.sortie_locative.mention_fiscale}</p>
           </div>
         )}

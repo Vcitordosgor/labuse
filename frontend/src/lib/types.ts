@@ -169,17 +169,25 @@ export interface SourceInfo {
 export interface ModeB {
   disponible: boolean
   motif?: string
+  trop_petit?: boolean   // M59-P1 (Q4) : SHAB < 50 m² → thèse non pertinente, on le DIT
+  shab_rehabilitable_m2?: number   // servi au niveau racine quand trop_petit (message)
   population_tier?: string
   etiquette?: string
   achat_max_eur?: number
   achat_max_libelle?: string   // M37 Lot 0.1 : formaté k€ côté serveur (point unique)
   negatif?: boolean
   message_negatif?: string | null
+  surface_parcelle_m2?: number | null   // M59-P1 (Q1) : foncier, pour « hors valeur du terrain »
+  // M59-P1 (Q1) : repère « terrain nu au prix du secteur » (Estimé, hors formule réhab) + drapeau
+  // « valeur portée par le terrain » (le foncier vaut plus que ce que le bâti justifie).
+  terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
+    niveau: string; libelle: string; etiquette: string } | null
+  porte_par_terrain?: boolean
   composantes?: {
     surface: { emprise_bati_m2: number; niveaux: number; niveaux_reels: boolean
       niveaux_etiquette: string; sdp_existante_m2: number; shab_rehabilitable_m2: number
       source_emprise: string; etiquette_emprise: string }
-    prix_sortie: { prix_m2: number; niveau: string; libelle: string; etiquette: string }
+    prix_sortie: { prix_m2: number; niveau: string; libelle: string; etiquette: string; perimetre?: string }
     travaux: { hypothese_m2: number; defaut_m2: number; bornes: [number, number]
       etiquette: string; libelle: string }
     frais_marge: { coef_ca: number; libelle: string; etiquette: string }
