@@ -157,7 +157,56 @@ limitée » + « i » citant les exceptions, SANS toucher le calcul.
 | Q4 | fond | Points signés = **cascade legacy** ; **dévoilent le score avant la demande** ; rôle redondant avec « Pourquoi ce score » (features distinctes). |
 | Q5 | fond | « non constructible » = **préfixe zone brut** ; **STECAL/extension/agricole non traités** (back différés, front absents) — libellé trop absolu. |
 
+---
+
+# PHASE 1 — correctifs (après feu vert du mandant)
+
+Commit `M57-P1 tiroir urbanisme`. Arbitrages appliqués :
+
+**a) Scroll à l'ouverture d'un tiroir** — `RefDrawer` : à l'ouverture, l'en-tête du
+tiroir remonte en HAUT de la zone visible (`scrollIntoView({block:'start'})`) après
+l'animation (~220 ms), `behavior:'smooth'` ; `'auto'` (immédiat) si
+`prefers-reduced-motion`. Porté par RefDrawer → vaut pour les 7 tiroirs. `scrollMarginTop:8`.
+
+**b) Libellé traduction** — `✦ Traduire ma zone en français courant` →
+`✦ Demander à l'IA de traduire le PLU` (mauve, inchangé par ailleurs).
+
+**d) Mention « En cours » (générique)** — le diagnostic a tranché : générique.
+- Back (`app.py:2538`, statut `a_jour`) : la chaîne devient
+  « Des modifications postérieures au document peuvent exister — à confirmer en
+  mairie. » (+ `action=None`). Une note de config = assertion d'agent, pas une source.
+- Front : pour `statut === 'a_jour'`, rendu NEUTRE (txt-dim), **sans sablier ni
+  « En cours (non servi) »**. Les statuts porteurs d'une procédure RÉELLE
+  (`annule_partiel`, `opposabilite_en_attente`) GARDENT le cadre « En cours (non
+  servi) ». Vérifié : 97414 (a_jour) → neutre ; AI1821/Le Port (annule_partiel) →
+  cadre conservé.
+
+**Q3) Repli A/N** — condition INCHANGÉE (calibration par type de zone, légitime).
+Seul le libellé (`plu_reglement.py:81`) : « Le règlement des zones agricoles et
+naturelles n'est pas indexé article par article dans LABUSE. Consultez le document
+complet. » Vérifié servi sur zones A/N de Sainte-Marie.
+
+**Q4) Points de cascade** — `Line` reçoit `hideWeight` ; utilisé dans le tiroir
+Urbanisme → la colonne `line.weight` (points signés) n'est plus affichée. Le fait,
+la source et la date restent ; le calcul et la donnée en base sont intacts. Vérifié :
+« Pourquoi ce score » (bloc Analyse, `score_v2`) affiche toujours ses contributions
+(features distinctes, non touchées).
+
+**Q5) « non constructible »** — → « constructibilité très limitée » + « i » :
+« Les zones A et N interdisent la construction neuve à usage d'habitation, sauf
+exceptions non évaluées par LABUSE : STECAL, extension d'un bâtiment existant,
+construction agricole. À vérifier au règlement. » Calcul et règle de zone inchangés.
+
+**Q1 / point (e) — SUSPENDU** : rien à réparer côté serveur (200 partout). Bouton
+NON retiré. Point inscrit au **registre `BUGS.md`** (« [M57-Q1] un export peut
+échouer sans message ») pour un mandat ultérieur : tout export doit s'ouvrir ou
+afficher une erreur explicite (pop-up bloquée / quota).
+
+**Garde-fous P1** : tsc 0 · vitest 32/32 · build OK · console 0 erreur sur les 4
+parcelles M55-O + BE0256 · exports générés (premium export.pdf 200 · lettre-zonage
+200 · dossier 200 · one-pager 200). Backend redémarré pour servir app.py +
+plu_reglement.py.
+
 ## STOP
-Phase 0 terminée. **Aucun correctif entamé.** En attente de l'arbitrage du mandant
-sur la Phase 1 (a→f). Point ouvert nécessitant le mandant : l'IDU + l'erreur
-exacte pour Q1 (lettre de zonage), non reproductible ici. NE PAS MERGER.
+M57 P0 (diagnostic) + P1 (correctifs a/b/d/Q3/Q4/Q5 ; e suspendu au registre)
+livrés. **Branche `feat/m57-urbanisme` (de `feat/m56-b6`) NON mergée.**

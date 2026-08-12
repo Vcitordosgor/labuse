@@ -77,9 +77,12 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
         "articles": articles,
         # M51 — lien contextuel vers l'annuaire PLU (O13) : le verbatim de la zone servie.
         "annuaire": {"insee": (idurba or "")[:5] or None, "zone": zone_code},
+        # M57-P1 (Q3) : le repli est LÉGITIME (calibration par TYPE de zone ; A/N n'ont pas
+        # d'articles indexés dans le corpus M51). Condition INCHANGÉE ; seul le libellé est
+        # reformulé — il ne doit pas laisser croire à un manque de couverture de la commune.
         "note": None if calibree else
-                "Zone hors périmètre calibré du règlement — lien vers le document complet ; "
-                "référez-vous à l'article de la zone.",
+                "Le règlement des zones agricoles et naturelles n'est pas indexé article "
+                "par article dans LABUSE. Consultez le document complet.",
     }
 
 
