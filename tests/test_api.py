@@ -41,9 +41,13 @@ def test_sources_page(client):
 
 
 def test_source_test_sans_connecteur(client):
-    """Une source sans connecteur live répond proprement (sans réseau)."""
+    """Une source sans connecteur live répond proprement (sans réseau).
+
+    M71 BLOC A : /sources ne sert plus que status='connecte' — « Fichiers fonciers (Cerema) »
+    (manuel) n'y figure plus. On prend n'importe quelle source SERVIE non testable : même
+    intention, sans épingler un nom."""
     srcs = client.get("/sources").json()
-    ff = next(s for s in srcs if s["name"] == "Fichiers fonciers (Cerema)")
+    ff = next(s for s in srcs if not s["testable"])
     res = client.post(f"/sources/{ff['id']}/test").json()
     assert res["ok"] is False and "connecteur" in res["message"].lower()
 
