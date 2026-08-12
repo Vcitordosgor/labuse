@@ -198,3 +198,58 @@ Aucun changement fait à l'accueil — j'attends l'arbitrage.
 
 **STOP — arbitrages attendus : B2 (pv_candidat : (a) validation vs (b) alignement piscine) et
 F (vitrine : 42 vs 45). NE PAS MERGER.**
+
+---
+
+# ADDENDUM — Arbitrages Vic (13/08)
+
+## F — TRANCHÉ : vitrine = 42 partout
+`/accueil/chiffres` compte désormais `connecte` **hors doublons** (même règle que le bandeau
+Sources), dynamique, aucun chiffre en dur. Vérifié live : accueil **42** = bandeau **42**.
+
+## B2 — TRANCHÉ : option (a), session de jugement. CHIFFRAGE (session NON lancée)
+
+**Rappel de la règle déjà actée dans le code** : `ortho_equipements.materialiser_pv()` ne
+matérialise QUE si `precision_validee('pv') ≥ 75 %` (config `precision_min_pv`), puis prend
+`validation='ok' OU (non-examinée ET confiance ≥ seuil)` — exactement « non-infirmé = pris »
+après session, auto-appliqué. Il n'y a RIEN à coder pour l'après-session.
+
+### Combien de vignettes : **300**
+- Population : 23 529 candidats PV / 19 990 parcelles / 52 strates commune×confiance
+  (terciles) / **3 202 tuiles**.
+- Un tirage stratifié de 300 (simulé, seed fixe) touche **269 tuiles distinctes**.
+- Précision statistique à n=300 : IC95 ±4,9 pts si la précision observée est ~75 % (le seuil),
+  ±3,4 pts si ~90 %. (L'historique du code disait 150 — IC ±6,9 pts : trop lâche autour du
+  seuil de décision 75 % ; 300 est le bon chiffre, conforme à ton arbitrage et au précédent
+  piscines : 300 sanctuarisés.)
+- Mode de tirage : l'outil tire ALÉATOIREMENT côté serveur dans la file non validée (uniforme
+  = mesure de précision non biaisée). Le tirage STRATIFIÉ exigerait un petit profil config sur
+  la branche spin-off — disponible si tu le veux, pas nécessaire pour la mesure.
+
+### Outillage : l'outil n'est PLUS sur main
+`/ortho/validation` est parti au spin-off « Vues » (M12 Lot C-bis) — il vit sur
+`origin/spinoff/vues-solaire` (endpoints suivante / vignette.jpg / valider + page HTML,
+**`?type=pv` déjà supporté**, quota CÔTÉ SERVEUR paramétrable `?quota=300`, arrêt auto).
+Plan d'exécution sans merge ni code : **worktree éphémère sur la branche spin-off**, `labuse
+api` (port 8003), MÊME base PostgreSQL — l'outil lit/écrit `ortho_detections.validation`.
+
+### Préparation (moi, avant ta session) : ~30-45 min
+1. Re-télécharger les tuiles RVB des vignettes : le cache est purgé (20 tuiles / 23 Mo
+   restantes ; l'endpoint vignette renvoie 410 si tuile absente). Volume : ~269-300 tuiles ×
+   1,2 Mo ≈ **320-360 Mo** WMS Géoplateforme (le motif de re-téléchargement ciblé existe déjà,
+   cf. vegetation.preparer_validation — je le réutilise pour type='pv').
+2. Monter le worktree spin-off + API 8003 + fumée sur 3 vignettes.
+
+### Ta session : **~20-30 min, en une seule fois : OUI**
+- Jugement binaire (panneau PV réel / faux positif), 300 vignettes à 3-5 s pièce.
+  Précédent mesuré : ta session initiale piscines = **966 verdicts en une séance**.
+- Quota serveur à 300 → l'outil s'arrête seul, stats live pendant la session.
+
+### Après ta session (automatique + un build)
+- `materialiser_pv()` applique la règle 75 % (matérialise ou refuse, avec le chiffre).
+- Si matérialisé : je retire l'exemption `NON_CONSTANCE_EXEMPTIONS['pv_candidat']` (la garde
+  B3 re-surveille), et la feature revit au prochain build P.
+- Si < 75 % : plan B documenté au rapport juges piscines — probe DINOv2 + tes 300 labels =
+  étage 1 PV local (~20 min de calcul), même recette que les piscines (90,7 %).
+
+**En attente de ton GO pour lancer la préparation (rien n'est lancé).**
