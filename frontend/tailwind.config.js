@@ -35,7 +35,8 @@ export default {
         'cp-bg': '#070A09',
         'cp-card': '#0D1211',
         'cp-card2': '#111716',
-        'cp-mint': '#63F2B8',
+        // M69 B — le vert Copilote `cp-mint #63F2B8` est SUPPRIMÉ : aligné sur le vert de marque
+        // unique `mint` #4ADE80 (les classes cp-mint sont devenues mint dans components/copilote/).
         'cp-violet': '#B497F0',
         'cp-amber': '#F0C97A',
         'cp-red': '#F08A8A',

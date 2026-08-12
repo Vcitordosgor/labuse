@@ -10,7 +10,7 @@ const S = CLIENT.copilote.fil
 
 function Point({ etat }: { etat: EtapeVue['etat'] | 'pause' }) {
   const [cls, glyphe] = {
-    faite: ['border-cp-mint/45 text-cp-mint', '✓'],
+    faite: ['border-mint/45 text-mint', '✓'],
     echouee: ['border-cp-red/50 text-cp-red', '!'],
     active: ['animate-pulse border-cp-violet text-cp-violet', '◌'],
     attente: ['border-dashed border-cp-line2 text-cp-faint', '·'],
@@ -40,7 +40,7 @@ function Ligne({ e }: { e: EtapeVue }) {
       {e.fait && <Etiquette v={e.fait.etiquette} />}
       {compteur && (
         <div className="ml-auto font-display text-[11.5px] tabular-nums text-cp-faint">
-          {fmtInt(compteur.avant)} → <b className="font-bold text-cp-mint">{fmtInt(compteur.apres)}</b>
+          {fmtInt(compteur.avant)} → <b className="font-bold text-mint">{fmtInt(compteur.apres)}</b>
         </div>
       )}
     </div>

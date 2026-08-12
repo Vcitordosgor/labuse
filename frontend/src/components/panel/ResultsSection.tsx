@@ -38,7 +38,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
     return (
       <button onClick={() => select(p.idu)}
         className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
-          on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}>
+          on ? 'border-mint' : 'border-line-2 hover:border-mint/60'}`}>
         <div className="min-w-0 flex-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
@@ -53,7 +53,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
     <button
       onClick={() => select(p.idu)}
       className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${
-        on ? 'border-mint' : 'border-line-2 hover:border-[#2E5A45]'}`}
+        on ? 'border-mint' : 'border-line-2 hover:border-mint/60'}`}
     >
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
 
 // M55-H point 5 (décision Vic) — ordre des GROUPES de la liste d'analyse (identique au CASE
 // SQL du serveur) : 4 tiers d'opportunité, puis potentiel épuisé (declasse_*), puis écartées.
-const GROUPE_ORDER = (p: ParcelProps): number => {
+const GROUPE_ORDER = (p: Pick<ParcelProps, 'etage0' | 'tier_v2'>): number => {
   if (p.etage0) return 6
   const t = p.tier_v2 ?? ''
   if (t === 'brulante') return 0
@@ -166,6 +166,29 @@ const GROUPE_ORDER = (p: ParcelProps): number => {
   if (t === 'a_creuser') return 3
   if (t.startsWith('declasse')) return 4
   return 5
+}
+
+// M69 A — comparateur de la liste EXTRAIT en fonction pure (testable). Le GROUPEMENT par tier
+// n'est appliqué QUE si `groupes` (tri « Probabilité de vente »/rang en mode analyse) ; les tris
+// de COLONNE (Surface ↓/↑) s'appliquent GLOBALEMENT → ordre monotone garanti sur tout le jeu.
+// Même sémantique que le serveur (_q_v2_list) : un seul comportement de tri, client et serveur.
+export type SortableRow = Pick<ParcelProps, 'etage0' | 'tier_v2' | 'mult_v2' | 'surface_m2' | 'rang_v2'> & { commune?: string }
+export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupes: boolean): T[] {
+  return rows.slice().sort((a, b) => {
+    if (groupes) {
+      const ga = GROUPE_ORDER(a)
+      const gb = GROUPE_ORDER(b)
+      if (ga !== gb) return ga - gb
+    }
+    if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
+    if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+    if (sort === 'surface_asc') return (a.surface_m2 ?? Infinity) - (b.surface_m2 ?? Infinity)
+    if (sort === 'commune') return String(a.commune ?? '').localeCompare(String(b.commune ?? ''))
+    const ra = a.rang_v2 ?? Infinity
+    const rb = b.rang_v2 ?? Infinity
+    if (ra !== rb) return ra - rb
+    return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
+  })
 }
 
 // M55-H point 10 : couleur de la famille « potentiel épuisé » — la terre éteinte des
@@ -188,6 +211,10 @@ export function ResultsSection() {
   const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'surface')
   const sorts = analyse ? SORTS : SORTS.filter((s) => s.key === 'surface')
   useEffect(() => { setSort(analyse ? 'rang' : 'surface') }, [analyse])
+  // M69 A — GROUPEMENT PAR TIER : appliqué UNIQUEMENT pour le tri par défaut « Probabilité de
+  // vente » (rang) en mode analyse (M55-H p5). Un tri de COLONNE (Surface) doit produire un ordre
+  // GLOBAL monotone → on lève le groupement. Ce booléen pilote client ET serveur (un seul point).
+  const groupes = analyse && sort === 'rang'
   // M55-F point 1 — POINT UNIQUE : compteurs (ventilation, total, opportunités) dérivent du
   // MÊME getFiltre(filters) que la Révélation et le compteur vivant (stage 8) — mêmes critères
   // (communes, terrain, signaux, tiers, interrupteur), mêmes nombres, fini les trois récits.
@@ -209,8 +236,8 @@ export function ResultsSection() {
   // M55-H point 5 : en mode ANALYSE la liste se groupe par tier côté serveur (groupes=1) —
   // le tri choisi s'applique DANS chaque groupe. Le mode factuel reste plat.
   const serverList = useInfiniteQuery({
-    queryKey: ['results', commune, filters, sort, analyse],
-    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam, analyse),
+    queryKey: ['results', commune, filters, sort, groupes],
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam, groupes),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: ile,
@@ -260,27 +287,13 @@ export function ResultsSection() {
       return serverRows
         .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
     }
-    return props
+    // M69 A — tri client (mode commune) via la fonction pure `sortRows` : GLOBAL pour Surface,
+    // groupé par tier seulement pour rang (cf. `groupes`). Même comportement que le serveur.
+    const filtered = props
       .filter((p) => matchAll(p, filters, zone))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
-      .sort((a, b) => {
-        // M55-H point 5 : GROUPES d'abord (mode analyse), même ordre que le serveur
-        if (analyse) {
-          const ga = GROUPE_ORDER(a)
-          const gb = GROUPE_ORDER(b)
-          if (ga !== gb) return ga - gb
-        }
-        // même sémantique que le serveur : rang P (copros/sans rang en queue), ×N, surface, commune
-        if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
-        if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
-        if (sort === 'surface_asc') return (a.surface_m2 ?? Infinity) - (b.surface_m2 ?? Infinity)
-        if (sort === 'commune') return String((a as { commune?: string }).commune ?? '').localeCompare(String((b as { commune?: string }).commune ?? ''))
-        const ra = a.rang_v2 ?? Infinity
-        const rb = b.rang_v2 ?? Infinity
-        if (ra !== rb) return ra - rb
-        return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
-      })
-  }, [ile, serverRows, props, filters, zone, qNorm, sort])
+    return sortRows(filtered, sort, groupes)
+  }, [ile, serverRows, props, filters, zone, qNorm, sort, groupes])
   // E3 : en mode île, la liste paginée est déjà bornée par ce qui a été chargé → tout afficher.
   // En mode commune, le GeoJSON est complet → on garde le slice client + « Tout voir ».
   const shown = ile || showAll ? list : list.slice(0, CAP)
@@ -346,6 +359,11 @@ export function ResultsSection() {
               )
             })}
           </div>
+          {/* M69 A — état du groupement : dit que la liste est groupée par tier quand le tri par
+              défaut (Probabilité de vente) est actif (lève le malentendu « pourquoi non monotone »). */}
+          {groupes && (
+            <span data-tri-groupe className="basis-full text-[10px] leading-tight text-txt-dim">Liste {CLIENT.tri.groupe}</span>
+          )}
         </div>
       </div>
 
