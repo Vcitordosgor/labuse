@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LABUSE — Fiche parcelle · référence visuelle v6</title>
+<style>
+:root{
+  --bg-panel:#0A0C0B; --bg-card:#121815; --bg-header:#111614; --bg-ico:#1A211D;
+  --line:#1A211D; --line-card:#253029; --line-head:#232C27; --line-btn:#263029;
+  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#97A39B; --lab:#8A968F;
+  --txt-mut:#6B776F; --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44;
+  --mint:#4ADE80; --mint-on:#06301A;
+  --amber:#E0A94F; --amber-bg:#2A2113; --amber-band:#1C1509; --amber-txt:#D9AE68; --amber-ico:#8A7040;
+  --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
+  --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06080700;background-color:#050706;color:var(--txt-hi);
+  font-family:var(--sans);line-height:1.5;font-variant-numeric:tabular-nums;padding:26px}
+.doc h1{font-size:20px;font-weight:500;margin-bottom:4px}
+.doc p{font-size:12.5px;color:var(--txt-mut);max-width:74ch;margin-bottom:16px}
+.split{display:flex;gap:26px;align-items:flex-start}
+.notes{flex:1;min-width:300px}
+.notes h2{font-size:11px;letter-spacing:.11em;color:var(--lab);margin:18px 0 8px;font-weight:500}
+.notes table{width:100%;border-collapse:collapse;font-size:11.5px}
+.notes td{padding:4px 0;color:var(--txt-mut);vertical-align:top;border-bottom:0.5px solid var(--line)}
+.notes td:first-child{color:var(--txt);width:44%;padding-right:10px}
+code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
+
+/* ══ FICHE — GABARIT DE RÉFÉRENCE ══ */
+.fiche{width:400px;flex-shrink:0;background:var(--bg-panel);border:0.5px solid #1E2622;
+  border-radius:12px;padding:14px}
+
+.head{background:var(--bg-header);border:0.5px solid var(--line-head);border-radius:11px;overflow:hidden}
+.head-top{padding:13px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{font-size:9.5px;letter-spacing:.11em;color:var(--txt-off)}
+.ref{font-size:17px;font-weight:500;font-family:var(--mono);letter-spacing:-.02em;margin-top:5px}
+.addr{font-size:11.5px;color:var(--lab);margin-top:4px}
+.addr-link{font-size:11px;color:var(--txt-mut);margin-top:3px}
+.hbtns{display:flex;gap:4px;flex-shrink:0}
+.hbtn{width:26px;height:26px;border-radius:7px;border:0.5px solid var(--line-btn);
+  display:flex;align-items:center;justify-content:center;color:#7C8A82;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:0.5px solid var(--line)}
+.stat{padding:9px 10px;border-right:0.5px solid var(--line)}
+.stat:last-child{border-right:none}
+.stat-l{font-size:9px;color:var(--txt-off);letter-spacing:.06em}
+.stat-v{font-size:13px;color:var(--txt-hi);margin-top:3px}
+.stat-v.vide{color:var(--txt-faint)}
+
+.cta{background:var(--mint);border-radius:10px;height:40px;display:flex;align-items:center;
+  justify-content:center;gap:8px;margin-top:10px;font-size:13.5px;font-weight:500;color:var(--mint-on)}
+.cta-sub{font-size:10.5px;color:var(--txt-off);text-align:center;margin-top:6px}
+
+.band{background:var(--amber-band);border-left:2px solid var(--amber);border-radius:0 9px 9px 0;
+  padding:9px 12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.band span{font-size:12px;color:var(--amber-txt)}
+.band i{font-size:13px;color:var(--amber-ico);font-style:normal}
+
+.ia{display:flex;gap:7px;margin-top:10px}
+.ia-btn{flex:1;height:34px;border:0.5px solid var(--iris-line);background:var(--iris-bg);
+  border-radius:9px;display:flex;align-items:center;justify-content:center;gap:7px;
+  font-size:12px;color:var(--iris-2)}
+
+.sec{display:flex;align-items:center;gap:9px;margin:20px 0 9px}
+.sec span{font-size:10px;letter-spacing:.13em;color:var(--lab);font-weight:500}
+.sec i{flex:1;height:0.5px;background:var(--line)}
+
+.tiroir{background:var(--bg-card);border:0.5px solid var(--line-card);border-radius:12px;
+  padding:12px 13px;display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.tiroir:last-of-type{margin-bottom:0}
+.t-ico{width:32px;height:32px;border-radius:9px;background:var(--bg-ico);display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;color:var(--txt-dim);font-size:15px}
+.t-body{flex:1;min-width:0}
+.t-title{font-size:14px;color:var(--txt-hi)}
+.t-sub{font-size:11px;color:var(--txt-mut);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-right{display:flex;align-items:center;gap:9px;flex-shrink:0;min-width:0}
+.t-val{font-size:12.5px;color:var(--txt)}
+.t-val.absent{color:var(--txt-faint)}
+.t-val.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.pill-amber{font-size:11.5px;color:var(--amber);background:var(--amber-bg);padding:3px 8px;border-radius:20px}
+.pill-mint{font-size:11.5px;color:var(--mint);background:#12291D;padding:3px 8px;border-radius:20px}
+.chev{font-size:14px;color:var(--txt-faint);font-family:var(--mono)}
+
+.actions{display:flex;gap:7px;margin-top:20px}
+.act{flex:1;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12.5px}
+.act-crm{background:var(--mint);color:var(--mint-on);font-weight:500}
+.act-proj{border:0.5px solid var(--iris-line);background:var(--iris-bg);color:var(--iris-2)}
+.act-cmp{border:0.5px solid var(--line-btn);color:var(--txt)}
+
+.exports{background:var(--bg-card);border:0.5px solid var(--line-card);border-radius:12px;overflow:hidden}
+.exp-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.exp{height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  border-right:0.5px solid var(--line);border-bottom:0.5px solid var(--line)}
+.exp:nth-child(4n){border-right:none}
+.exp:nth-child(n+5){border-bottom:none}
+.exp em{font-size:15px;color:#7C8A82;font-style:normal}
+.exp span{font-size:10.5px;color:var(--txt-dim)}
+.exp-wide{height:42px;display:flex;align-items:center;justify-content:center;gap:7px;
+  border-top:0.5px solid var(--line);font-size:12px;color:var(--txt)}
+.legal{font-size:9px;color:var(--txt-faint);line-height:1.5;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>LABUSE — fiche parcelle · référence visuelle v6</h1>
+<p>Gabarit validé. Chaque tiroir est une carte autonome. Les valeurs exactes (couleurs, tailles, rayons,
+espacements, hauteurs) sont dans le CSS de ce fichier — les classes sont à reprendre telles quelles.
+Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
+
+<div class="split">
+
+<div class="fiche">
+  <div class="head">
+    <div class="head-top">
+      <div style="min-width:0">
+        <div class="eyebrow">PARCELLE · SAINTE-MARIE</div>
+        <div class="ref">97418000BE0256 <span style="font-size:12px;color:var(--txt-ghost)">⧉</span></div>
+        <div class="addr">5 Rue de la Mer, Sainte-Marie</div>
+        <div class="addr-link">Voir sur Pages Jaunes ↗</div>
+      </div>
+      <div class="hbtns"><div class="hbtn">◔</div><div class="hbtn">⌕</div><div class="hbtn">✕</div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-l">SURFACE</div><div class="stat-v">1 171 m²</div></div>
+      <div class="stat"><div class="stat-l">ZONE</div><div class="stat-v">N</div></div>
+      <div class="stat"><div class="stat-l">SDP DISPO.</div><div class="stat-v">647 m²</div></div>
+      <div class="stat"><div class="stat-l">SECTEUR</div><div class="stat-v">301 €/m²</div></div>
+    </div>
+  </div>
+
+  <div class="cta">Demander à LABUSE d'analyser →</div>
+  <div class="cta-sub">Le verdict, le score et « pourquoi » — à la demande.</div>
+
+  <div class="band"><span>Marché peu actif à Sainte-Marie</span><i>ⓘ</i></div>
+
+  <div class="ia">
+    <div class="ia-btn">◇ Poser une question</div>
+    <div class="ia-btn">✦ Synthèse IA</div>
+  </div>
+
+  <div class="sec"><span>LE TERRAIN</span><i></i></div>
+
+  <div class="tiroir">
+    <div class="t-ico">◱</div>
+    <div class="t-body"><div class="t-title">Urbanisme</div><div class="t-sub">zone N · 32 % SDP consommée</div></div>
+    <div class="t-right"><span class="t-val">9 m max</span><span class="chev">›</span></div>
+  </div>
+  <div class="tiroir">
+    <div class="t-ico">▣</div>
+    <div class="t-body"><div class="t-title">Constructibilité</div><div class="t-sub">zone N · sans objet</div></div>
+    <div class="t-right"><span class="t-val absent">non calculable</span><span class="chev">›</span></div>
+  </div>
+  <div class="tiroir">
+    <div class="t-ico">△</div>
+    <div class="t-body"><div class="t-title">Risques et protections</div><div class="t-sub">10 couches vérifiées</div></div>
+    <div class="t-right"><span class="pill-amber">3 vigilances</span><span class="chev">›</span></div>
+  </div>
+
+  <div class="sec"><span>LE CONTEXTE</span><i></i></div>
+
+  <div class="tiroir">
+    <div class="t-ico">◹</div>
+    <div class="t-body"><div class="t-title">Marché et secteur</div><div class="t-sub">3 ventes · DVF déc. 2025</div></div>
+    <div class="t-right"><span class="t-val">301 €/m²</span><span class="chev">›</span></div>
+  </div>
+  <div class="tiroir">
+    <div class="t-ico">⌁</div>
+    <div class="t-body"><div class="t-title">Réseaux et accès</div><div class="t-sub">CISE Réunion · STEP Grand Prado · EDF SEI</div></div>
+    <div class="t-right"><span class="pill-amber">probable</span><span class="chev">›</span></div>
+  </div>
+  <div class="tiroir">
+    <div class="t-ico">◐</div>
+    <div class="t-body"><div class="t-title">Propriétaire</div><div class="t-sub">courrier SPF disponible</div></div>
+    <div class="t-right"><span class="t-val">privé</span><span class="chev">›</span></div>
+  </div>
+  <div class="tiroir">
+    <div class="t-ico">▤</div>
+    <div class="t-body"><div class="t-title">Données et méthode</div><div class="t-sub">21 sources · couverture 90 %</div></div>
+    <div class="t-right"><span class="chev">›</span></div>
+  </div>
+
+  <div class="actions">
+    <div class="act act-crm">+ CRM</div>
+    <div class="act act-proj">+ Projet</div>
+    <div class="act act-cmp">Comparer</div>
+  </div>
+
+  <div class="sec"><span>EXPORTS ET OUTILS</span><i></i></div>
+
+  <div class="exports">
+    <div class="exp-grid">
+      <div class="exp"><em>▤</em><span>PDF</span></div>
+      <div class="exp"><em>▢</em><span>Dossier</span></div>
+      <div class="exp"><em>◎</em><span>Finance</span></div>
+      <div class="exp"><em>◫</em><span>Cadastre</span></div>
+      <div class="exp"><em>◷</em><span>1950</span></div>
+      <div class="exp"><em>◉</em><span>Maps</span></div>
+      <div class="exp"><em>✉</em><span>Courrier</span></div>
+      <div class="exp"><em>▭</em><span>One-pager</span></div>
+    </div>
+    <div class="exp-wide">▣ Pré-dossier permis de construire</div>
+  </div>
+
+  <div class="legal">Estimations indicatives issues de données publiques — ni conseil juridique ou notarial
+  ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.</div>
+</div>
+
+<div class="notes">
+  <h2>PRINCIPE</h2>
+  <p style="font-size:12px">Chaque tiroir est une <b style="color:var(--txt)">carte autonome</b> posée sur un
+  fond de panneau plus sombre. C'est ce contraste fond/carte qui donne le relief — pas une bordure épaisse.
+  Les tiroirs ne sont plus enfermés dans un conteneur commun : le libellé de groupe + un filet suffisent
+  à séparer LE TERRAIN de LE CONTEXTE.</p>
+
+  <h2>VALEURS CLÉS</h2>
+  <table>
+    <tr><td>Fond du panneau</td><td><code>#0A0C0B</code> — plus sombre que les cartes</td></tr>
+    <tr><td>Fond de carte tiroir</td><td><code>#121815</code>, bord <code>#253029</code>, rayon <code>12px</code></td></tr>
+    <tr><td>Fond d'en-tête</td><td><code>#111614</code>, bord <code>#232C27</code>, rayon <code>11px</code></td></tr>
+    <tr><td>Pastille d'icône</td><td><code>32×32</code>, rayon <code>9px</code>, fond <code>#1A211D</code>, icône <code>15px #97A39B</code></td></tr>
+    <tr><td>Écart entre tiroirs</td><td><code>9px</code></td></tr>
+    <tr><td>Écart avant un groupe</td><td><code>20px</code> · après le libellé <code>9px</code></td></tr>
+    <tr><td>Padding tiroir</td><td><code>12px 13px</code> · gap interne <code>12px</code></td></tr>
+    <tr><td>Largeur de la fiche</td><td><code>400px</code>, padding <code>14px</code></td></tr>
+  </table>
+
+  <h2>HAUTEURS — UNE SEULE ÉCHELLE</h2>
+  <table>
+    <tr><td>Bouton secondaire / IA</td><td><code>34px</code></td></tr>
+    <tr><td>Actions (+ CRM, + Projet…)</td><td><code>36px</code></td></tr>
+    <tr><td>Bouton principal</td><td><code>40px</code></td></tr>
+    <tr><td>Bandeau large exports</td><td><code>42px</code></td></tr>
+    <tr><td>Tuile d'export</td><td><code>54px</code></td></tr>
+  </table>
+
+  <h2>TYPOGRAPHIE</h2>
+  <table>
+    <tr><td>Titre de tiroir</td><td><code>14px</code> <code>#E8EFEA</code></td></tr>
+    <tr><td>Sous-titre</td><td><code>11px</code> <code>#6B776F</code>, tronqué en ellipse</td></tr>
+    <tr><td>Valeur droite</td><td><code>12.5px</code> <code>#B8C4BC</code> · absente <code>#4E5A53</code></td></tr>
+    <tr><td>Libellé de groupe</td><td><code>10px</code>, <code>letter-spacing .13em</code>, <code>#8A968F</code>, poids 500</td></tr>
+    <tr><td>Référence</td><td><code>17px</code> mono, <code>letter-spacing -.02em</code></td></tr>
+    <tr><td>Chiffres du bandeau</td><td>libellé <code>9px</code> · valeur <code>13px</code></td></tr>
+  </table>
+
+  <h2>RÈGLES</h2>
+  <table>
+    <tr><td>Un sous-titre = une ligne</td><td>tronqué en ellipse, jamais deux lignes : sinon la carte se déforme et la colonne perd son rythme. Le détail vit dans le tiroir ouvert.</td></tr>
+    <tr><td>Statut = pastille</td><td>« 3 vigilances », « probable » — jamais du texte coloré sans fond.</td></tr>
+    <tr><td>Valeur = gris neutre</td><td>le vert reste réservé à l'action principale et à + CRM.</td></tr>
+    <tr><td>Un zéro n'est pas une absence</td><td>donnée absente → « — » ou « non calculable » en <code>#4E5A53</code>. Jamais « 0 » ni « 0–0 ».</td></tr>
+    <tr><td>Pas de pourcentage nu</td><td>« couverture 90 % » dans le sous-titre, pas « 90 % » seul à droite.</td></tr>
+    <tr><td>Icône = identité</td><td>une par tiroir, grise, jamais colorée, jamais décorative ailleurs.</td></tr>
+    <tr><td>Nom long</td><td>tronqué à <code>110px</code> — le chevron ne doit jamais sortir de l'alignement.</td></tr>
+    <tr><td>Ni halo ni ombre</td><td>l'élévation vient du contraste fond/carte uniquement.</td></tr>
+  </table>
+
+  <h2>ORDRE DES BLOCS</h2>
+  <p style="font-size:12px">En-tête (identité + 4 chiffres) → bouton d'analyse + légende → bandeau
+  d'attention si présent → actions IA → LE TERRAIN (3 tiroirs) → LE CONTEXTE (4 tiroirs) →
+  actions (+ CRM · + Projet · Comparer) → EXPORTS ET OUTILS → mention légale.
+  Le bloc Analyse s'insère après le bouton d'analyse, une fois le verdict demandé.</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>
