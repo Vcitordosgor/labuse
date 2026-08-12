@@ -43,7 +43,8 @@ function millesimeNote(s: SourceInfo): string | null {
 const LICENCE_PAR_SOURCE: Record<string, string> = {
   'DVF / valeurs foncières': 'Licence Ouverte — usage encadré (art. L.112 A LPF)',
   'INPI RNE (dirigeants)': 'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)',
-  'Fichiers fonciers (Cerema)': 'Convention Cerema — non intégré',
+  // M74 C bis : « Fichiers fonciers (Cerema) » retiré de cette table — plus servi par /sources
+  // (statut manuel, cf. M74 A : la vraie source PM = « DGFiP — parcelles des personnes morales »).
   'PLH des 5 EPCI (extraction documentaire)': 'Documents publics — licence à confirmer',
   'RTAA DOM (textes réglementaires)': 'Textes officiels (Légifrance) — réutilisation libre',
   'DEAL Réunion (WMS/WFS)': 'Licence Ouverte (données État)',
@@ -128,11 +129,12 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {/* Ligne 1 : le nom de la source + marqueur sondable/déclaratif + producteur + licence + lien. */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-xs font-medium text-txt">{s.name}</span>
-          {/* M71 BLOC A : doublon listé pour la traçabilité, exclu du comptage du bandeau. */}
-          {s.doublon && (
-            <span data-source-doublon className="shrink-0 rounded-full bg-surface-2 px-1.5 py-px text-[8.5px] text-txt-dim"
-              title="Même donnée qu'une autre source du catalogue — non comptée dans le bandeau.">
-              doublon
+          {/* M74 C bis : NATURE (proxy / servi par proxys) — chip VISIBLE (jamais replié) : une
+              source proxy n'est jamais présentée comme la source officielle (doctrine anti-faux-positif). */}
+          {s.nature && (
+            <span data-source-nature className="shrink-0 rounded-full bg-amber/15 px-1.5 py-px text-[8.5px] font-medium text-amber"
+              title={s.nature.detail}>
+              {s.nature.label}
             </span>
           )}
           {/* M15 H2 : marqueur DISCRET — vérifiée automatiquement (radar) vs déclarative. Non
@@ -186,6 +188,14 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             </span>
           ) : null}
         </div>
+        {/* M74 C bis — Ligne 3 : la NATURE dite en clair, non repliée (proxy / servi par proxys).
+            Le client sait qu'il regarde un proxy, jamais la source officielle. */}
+        {s.nature && (
+          <p data-source-nature-detail className="mt-1 text-[10.5px] leading-snug text-amber/90">
+            <span className="font-medium">{s.nature.label === 'proxy' ? 'Proxy' : 'Servi par proxys'} :</span>{' '}
+            {s.nature.detail}
+          </p>
+        )}
       </div>
     </div>
   )
@@ -213,9 +223,14 @@ export function SourcesPage() {
     cats.set(k, [...(cats.get(k) ?? []), s])
   }
   // M56-D · DA §9 — bandeau 3 chiffres depuis les DONNÉES RÉELLES (jamais en dur).
-  // M71 BLOC A (audits M66/M66-B) : l'API ne sert plus que les sources status='connecte',
-  // et les lignes marquées DOUBLON au catalogue sont listées mais EXCLUES des comptages —
-  // « SOURCES BRANCHÉES » redevient un chiffre mesuré, pas un inventaire de catalogue.
+  // M74 C bis (audits M66/M66-B/M74) — ce que compte chaque nombre, mesuré sur les sources SERVIES :
+  //  • SOURCES BRANCHÉES = sources réellement branchées (status='connecte' hors doublons de catalogue).
+  //  • VÉRIFIÉES AUTO = sources dont le RADAR (source_radar, table peuplée — PAS source_checks qui est
+  //    vide) confirme la dernière version publiée amont. Faible car peu de producteurs exposent une
+  //    date interrogeable (les proxys/imports sont « cadence producteur », comptés ici comme non).
+  //  • MILLÉSIME NON TRACÉ = sources sans aucune date de version (ni donnée, ni millésime, ni ingestion)
+  //    — inhérent aux proxys sans amont daté ; c'est une limite dite, pas un défaut caché.
+  // L'API ne sert déjà que connecte-hors-doublons ; le filtre reste défensif.
   const comptees = (data ?? []).filter((s) => !s.doublon)
   const nTotal = comptees.length
   const nVerif = comptees.filter((s) => { const st = s.radar?.statut ?? 'non_sondable'; return st === 'a_jour' || st === 'nouvelle_publication' }).length
@@ -235,9 +250,9 @@ export function SourcesPage() {
         {/* DA §9 — bandeau 3 chiffres en tête (données réelles, cf. calcul ci-dessus). */}
         {data && (
           <div data-sources-bandeau className="stats mt-4" style={{ gridTemplateColumns: 'repeat(3,1fr)', maxWidth: 560 }}>
-            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">SOURCES BRANCHÉES</div><div className="stat-v" style={{ fontSize: 17 }}>{nTotal}</div></div>
-            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">VÉRIFIÉES AUTO</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--mint)' }}>{nVerif}</div></div>
-            <div className="stat" style={{ padding: '12px 14px' }}><div className="stat-l">MILLÉSIME NON TRACÉ</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--amber)' }}>{nSansMil}</div></div>
+            <div className="stat" style={{ padding: '12px 14px' }} title="Sources réellement branchées : status connecté, hors doublons de catalogue. Mesuré dynamiquement."><div className="stat-l">SOURCES BRANCHÉES</div><div className="stat-v" style={{ fontSize: 17 }}>{nTotal}</div></div>
+            <div className="stat" style={{ padding: '12px 14px' }} title="Sources dont notre radar (métadonnées amont) confirme la dernière version publiée. Peu nombreuses : la plupart des producteurs (et tous les proxys/imports) n'exposent pas de date interrogeable."><div className="stat-l">VÉRIFIÉES AUTO</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--mint)' }}>{nVerif}</div></div>
+            <div className="stat" style={{ padding: '12px 14px' }} title="Sources sans aucune date de version en base (ni donnée datée, ni millésime, ni ingestion tracée). Inhérent aux proxys sans amont daté — une limite dite, pas un défaut caché."><div className="stat-l">MILLÉSIME NON TRACÉ</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--amber)' }}>{nSansMil}</div></div>
           </div>
         )}
         {/* M15 H1 : ce qui compte = « c'est bien la dernière version qui existe », pas « vérifié

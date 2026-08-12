@@ -166,6 +166,9 @@ export interface SourceInfo {
   // M71 BLOC A : ligne marquée DOUBLON au catalogue (même donnée qu'une autre ligne) —
   // listée pour la traçabilité mais EXCLUE du comptage du bandeau.
   doublon?: boolean
+  // M74 C bis : NATURE de la source (proxy / servi par proxys) — visible, jamais repliée :
+  // une source proxy ne doit pas être présentée comme la source officielle.
+  nature?: { label: string; detail: string } | null
 }
 
 // M33 — mode B (réhabilitation) : lecture de fiche, TOUJOURS Estimé, jamais persisté.
