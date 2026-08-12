@@ -231,6 +231,11 @@ interface AppState {
   // au bouton. Idu → true = analyse demandée.
   verdictRevele: Record<string, boolean>
   revelerVerdict: (idu: string) => void
+  // M61 P2 — le bloc Analyse est un TIROIR repliable : déplié par défaut à la première demande,
+  // l'état de repli est mémorisé PAR PARCELLE pour la session (idu → true = replié). INDÉPENDANT
+  // de l'accordéon exclusif des 7 tiroirs (le replier/déplier ne ferme aucun autre tiroir).
+  analyseReplie: Record<string, boolean>
+  toggleAnalyseReplie: (idu: string) => void
   // M55-L point 10 — TIROIRS de la fiche en accordéon EXCLUSIF : un seul ouvert à la fois, zéro
   // ouvert légal (état initial). État à champ unique PAR PARCELLE (session) : idu → id du tiroir
   // ouvert, ou null (tout fermé).
@@ -404,6 +409,8 @@ export const useApp = create<AppState>((set) => ({
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
+  analyseReplie: {},
+  toggleAnalyseReplie: (idu) => set((s) => ({ analyseReplie: { ...s.analyseReplie, [idu]: !s.analyseReplie[idu] } })),
   ficheTiroir: {},
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`

@@ -37,7 +37,9 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
 .eyebrow{font-size:9.5px;letter-spacing:.11em;color:var(--txt-off)}
 .ref{font-size:17px;font-weight:500;font-family:var(--mono);letter-spacing:-.02em;margin-top:5px}
 .addr{font-size:11.5px;color:var(--lab);margin-top:4px}
-.addr-link{font-size:11px;color:var(--txt-mut);margin-top:3px}
+/* M61 P5 — « Voir sur Pages Jaunes » en JAUNE de marque (seul endroit autorisé), cliquable. */
+.addr-link{font-size:11px;color:#F5C518;margin-top:3px;cursor:pointer}
+.addr-link:hover{text-decoration:underline}
 .hbtns{display:flex;gap:4px;flex-shrink:0}
 .hbtn{width:26px;height:26px;border-radius:7px;border:0.5px solid var(--line-btn);
   display:flex;align-items:center;justify-content:center;color:#7C8A82;font-size:12px}
@@ -234,6 +236,12 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
     <tr><td>Écart avant un groupe</td><td><code>20px</code> · après le libellé <code>9px</code></td></tr>
     <tr><td>Padding tiroir</td><td><code>12px 13px</code> · gap interne <code>12px</code></td></tr>
     <tr><td>Largeur de la fiche</td><td><code>400px</code>, padding <code>14px</code></td></tr>
+    <tr><td><b style="color:var(--txt)">M61 — Pages Jaunes</b></td><td>lien JAUNE <code>--pj-jaune #F5C518</code> (seul jaune autorisé de l'app), pointeur + soulignement au survol.</td></tr>
+    <tr><td>M61 — Adresse copiable</td><td>sélectionnable (aucun <code>user-select:none</code>) + icône « copier » discrète (même bouton que l'IDU).</td></tr>
+    <tr><td>M61 — Bloc Analyse</td><td>TIROIR repliable : en-tête <code>Analyse LABUSE</code> + verdict (au repli) + chevron ; état par parcelle/session, <b style="color:var(--txt)">hors accordéon exclusif</b> des 7 tiroirs.</td></tr>
+    <tr><td>M61 — Synthèse IA</td><td>PANNEAU pleine largeur qui REMPLACE la rangée des 2 boutons IA (+ « Replier ») ; markdown rendu (gras, pas d'astérisques) ; repli/réouverture sans nouvel appel IA.</td></tr>
+    <tr><td>M61 — Renouvellement</td><td>rang + <code>▶ Pourquoi ce rang</code> dépliable regroupés (comme « Pourquoi ce score ») ; ancienne section basse absorbée.</td></tr>
+    <tr><td>M61 — Doublon PLU</td><td>pastilles « constructible {zone} » et « N vigilances » RETIRÉES du bloc Analyse (déjà dans Urbanisme / Risques).</td></tr>
   </table>
 
   <h2>HAUTEURS — UNE SEULE ÉCHELLE</h2>

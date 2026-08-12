@@ -53,7 +53,8 @@ export const CLIENT = {
     // réserve d'honnêteté ; le sourcing détaillé vit sur la page Sources. Chaînes supprimées.
     commencer: 'Commencer →',
     // M65 P2c — second bouton (mauve) : ouvre l'onglet Copilote (« IA »).
-    decouvrir: 'Découvrir LABUSE IA',
+    // M61 P6b : verbe retiré → « LABUSE IA » (tient sur une ligne à côté de « Commencer »).
+    decouvrir: 'LABUSE IA',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
   //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──

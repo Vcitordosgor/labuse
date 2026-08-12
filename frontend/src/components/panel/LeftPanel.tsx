@@ -383,13 +383,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const A = CLIENT.accueil
   const { setView } = useApp()   // M65 P2c — le bouton mauve ouvre l'onglet Copilote (« IA »).
   // M55-L point 1 (décision Vic) : la section d'accueil est FIXE (overflow-hidden, pas de scroll).
-  // M65 P2b : `overflow-hidden` sert aussi de masque au halo respirant (positionné en absolu,
-  // z-index sous le contenu). Le contenu est en `relative z-10` pour rester au-dessus du halo.
+  // M61 P6a : le halo respirant M65 est RETIRÉ — le bloc reste sur fond plat #0A0C0B.
   return (
-    <div data-accueil className="relative flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
-      {/* M65 P2b — halo respirant (vert de marque), sous le contenu. */}
-      <div className="accueil-halo" aria-hidden="true" />
-      <div data-accueil-contenu className="relative z-10 my-auto flex w-full flex-col items-center"
+    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
+      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
         style={{ ['--accueil-w' as string]: '240px' }}>
         <h3 className="max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
         {/* M65 P2a — bandeau 3 cases : chiffre 19px/500 #F4F6F5, libellé 11px #7C8A83 (4px dessous),
@@ -400,11 +397,12 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           <CaseChiffre n={d?.sources} label={A.labelSources} />
         </div>
         <p className="mt-4 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
-        {/* M65 P2c — DEUX boutons sur une ligne, largeurs égales, gap 9px. Vert = « Commencer → »
-            (ouvre les Filtres) ; Mauve = « Découvrir LABUSE IA » (ouvre le Copilote), étincelles. */}
+        {/* M65 P2c / M61 P6b — DEUX boutons sur UNE ligne, largeurs égales, gap 9px, sans retour à la
+            ligne du texte (whitespace-nowrap). Vert = « Commencer → » (Filtres) ; Mauve = « LABUSE IA »
+            (Copilote), étincelles. Vérifié à 400px de large. */}
         <div className="mt-5 flex w-full gap-[9px]">
           <button data-commencer onClick={onCommencer}
-            className="group flex flex-1 items-center justify-center gap-2 rounded-[9px] bg-[#4ADE80] p-[13px] font-display text-[14px] font-bold text-[#06180E] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] bg-[#4ADE80] p-[13px] font-display text-[14px] font-bold text-[#06180E] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
             <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
             <svg viewBox="0 0 16 16" aria-hidden="true"
               className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
@@ -413,7 +411,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
             </svg>
           </button>
           <button data-decouvrir onClick={() => setView('copilote')}
-            className="group flex flex-1 items-center justify-center gap-2 rounded-[9px] border border-[#2E2552] bg-[#1A1430] p-[13px] font-display text-[14px] font-bold text-[#B9AEF2] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-110 active:translate-y-[1px]">
+            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] border border-[#2E2552] bg-[#1A1430] p-[13px] font-display text-[14px] font-bold text-[#B9AEF2] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-110 active:translate-y-[1px]">
             <svg viewBox="0 0 20 20" aria-hidden="true" className="h-[15px] w-[15px] shrink-0">
               <path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z"
                 fill="currentColor" />

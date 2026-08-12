@@ -24,6 +24,8 @@
   --danger:#8A5A5A; --danger-line:#3A2626;
   /* lien sortant en vert d'eau (DA §4b) */
   --lien:#7FA88F;
+  /* M61 P5 — jaune « Pages Jaunes » : autorisé UNIQUEMENT sur le lien « Voir sur Pages Jaunes ». */
+  --pj-jaune:#F5C518;
   /* rayons */
   --r-card:12px; --r-g:11px; --r-ctl:10px; --r-sm:8px; --r-pill:20px;
   /* espacement */
@@ -203,23 +205,8 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 @keyframes labuse-sk { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 .sk { animation: labuse-sk 1.2s ease-in-out infinite; }
 
-/* M65 P2b — HALO RESPIRANT de l'accueil : cercle 520×520 centré derrière le bloc, vert de marque,
-   opacité 0,023→0,067 et échelle 0,945→1,055 sur ~8 s en boucle. Position absolue, sous le contenu
-   (z), le conteneur .data-accueil est overflow-hidden. */
-@keyframes accueil-halo {
-  0%, 100% { opacity: .023; transform: translate(-50%, -50%) scale(.945); }
-  50%      { opacity: .067; transform: translate(-50%, -50%) scale(1.055); }
-}
-.accueil-halo {
-  position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; border-radius: 9999px;
-  background: #4ADE80; pointer-events: none; z-index: 0;
-  transform: translate(-50%, -50%) scale(1); opacity: .045;
-  animation: accueil-halo 8s ease-in-out infinite;
-}
-/* prefers-reduced-motion : halo FIXE à 0,045, aucune animation. */
-@media (prefers-reduced-motion: reduce) {
-  .accueil-halo { animation: none; opacity: .045; transform: translate(-50%, -50%) scale(1); }
-}
+/* M61 P6a — halo respirant de l'accueil (M65) RETIRÉ : calque .accueil-halo, keyframes et règle
+   prefers-reduced-motion supprimés. Le bloc d'accueil reste sur fond plat #0A0C0B. */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    M56-B6 · FICHE v6 — TIROIRS EN CARTES AUTONOMES (docs/DA-FICHE-v6.html)
@@ -239,8 +226,12 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
 .fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
-.fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; }
-.fiche-v6 .addr-link { font-size:11px; color:var(--txt-mut); margin-top:3px; text-decoration:none; display:inline-block; }
+/* M61 P5 — .addr en flex (texte adresse + icône copier alignés) ; texte sélectionnable. */
+.fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; user-select:text; }
+/* M61 P5 — « Voir sur Pages Jaunes » : JAUNE de marque (--pj-jaune), visiblement cliquable
+   (pointeur + soulignement au survol). Seul endroit de l'app où ce jaune est autorisé. */
+.fiche-v6 .addr-link { font-size:11px; color:var(--pj-jaune); margin-top:3px; text-decoration:none; display:inline-block; cursor:pointer; }
+.fiche-v6 .addr-link:hover { text-decoration:underline; }
 .fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }
 .fiche-v6 .hbtn { width:26px; height:26px; border-radius:7px; border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:12px; background:none; cursor:pointer; flex-shrink:0; }
 .fiche-v6 .stats { display:grid; grid-template-columns:repeat(4,1fr); border-top:0.5px solid var(--line); }
