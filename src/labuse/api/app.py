@@ -2535,9 +2535,12 @@ def _plu_fraicheur(idu: str) -> dict | None:
     doc = f"PLU approuvé le {horizon}" if horizon else "PLU"
     if statut == "a_jour":
         document_servi, fait_foi = doc, "Document à jour du GPU — c'est celui qui fait foi."
-        en_cours = ("Modifications postérieures éventuelles non intégrées au GPU — à confirmer en mairie."
+        # M57-P1 (d) : ce libellé est GÉNÉRIQUE (gated sur `note` config = assertion d'agent, PAS
+        # une source ni une procédure détectée). Reformulé en avertissement NEUTRE, sans « en cours »
+        # ni sablier (cf. rendu front qui n'applique plus le cadre « En cours (non servi) » à a_jour).
+        en_cours = ("Des modifications postérieures au document peuvent exister — à confirmer en mairie."
                     if note else None)
-        action = "Confirmer en mairie d'éventuelles modifications postérieures." if note else None
+        action = None  # l'avertissement neutre porte déjà « à confirmer en mairie »
     elif statut == "annule_partiel":
         document_servi = doc
         fait_foi = "Document opposable servi — l'annulation partielle ne touche pas le zonage servi."

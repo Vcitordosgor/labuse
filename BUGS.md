@@ -123,3 +123,22 @@ P1 ambigus, P2, P3 = backlog, non touchés.**
 - **Drag & drop Kanban à la souris** : le déplacement a été exercé par l'API PATCH (même
   code serveur) sur une entrée TEST créée puis supprimée ; le geste DnD navigateur reste
   à couvrir (Playwright dragTo sur objet TEST) — friction non bloquante.
+
+---
+
+## Backlog M57 (inscrit en diagnostic P0, hors périmètre du mandat en cours)
+
+### [M57-Q1] Un export peut échouer SANS message — à traiter dans un autre mandat
+- **Constat** : la lettre de zonage (`GET /lettre-zonage/{idu}.pdf`) renvoie **200 PDF
+  sur les 9 parcelles testées** (aucune régression). Mais le bouton front est un
+  `<a target="_blank">` : si le navigateur **bloque la pop-up**, ou si la **porte de
+  quota** (`porte_export`, 30/j Intégral · 200/j Illimité) rend un **429**, l'export
+  « échoue » SANS aucun message à l'utilisateur.
+- **Doctrine (mandant)** : un bouton qui échoue en silence est pire qu'un bouton absent.
+  Tout export doit soit s'OUVRIR, soit afficher une **erreur explicite** (« Autorisez
+  les pop-ups pour cet export » / « Quota d'exports atteint — réessayez demain »).
+- **Portée** : générique à TOUS les exports/tuiles de la fiche (PDF, Dossier, Financier,
+  Cadastre, 1950, Maps, Courrier, One-pager, Pré-dossier, lettre de zonage), pas seulement
+  la lettre. Le point (e) du mandat M57 initial (« retirer le bouton ») est SUSPENDU :
+  ne pas retirer, gérer l'échec.
+- **Statut** : backlog — non traité en M57-P1.

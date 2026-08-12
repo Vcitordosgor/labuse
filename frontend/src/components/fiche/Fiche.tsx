@@ -89,8 +89,18 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
   const acc = useContext(FicheAccordionCtx)
   const open = !!id && acc.openId === id
   const absent = valueColor === 'var(--txt-faint)'
+  // M57-P1 (a) : à l'ouverture, l'en-tête du tiroir remonte en HAUT de la zone visible — après
+  // l'animation d'ouverture (~200ms), en 'smooth' ; 'auto' (immédiat) si l'OS demande moins de
+  // mouvement. Vaut pour les 7 tiroirs (comportement porté par RefDrawer). scrollMarginTop garde 8px.
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open || !ref.current) return
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }), reduced ? 0 : 220)
+    return () => clearTimeout(t)
+  }, [open])
   return (
-    <div data-drawer={id} style={{ scrollMarginTop: 8 }}>
+    <div ref={ref} data-drawer={id} style={{ scrollMarginTop: 8 }}>
       {/* M56-B6 · DA-FICHE-v6 — le tiroir est une CARTE AUTONOME : pastille d'icône 32×32 à
           gauche, corps (titre + sous-titre une ligne), valeur/pastille + chevron à droite.
           Ouvert : la carte s'ouvre (coins bas carrés) et .t-open prolonge la carte. */}
@@ -214,10 +224,14 @@ function SourceRef({ line }: { line: FicheLine }) {
   )
 }
 
-function Line({ line }: { line: FicheLine }) {
+// M57-P1 (Q4) : `hideWeight` — masque les points signés (line.weight) de l'AFFICHAGE. Le fait,
+// la source et la date restent. Utilisé dans le tiroir Urbanisme : les points dévoilaient le
+// score avant la demande de verdict (doctrine M55-L) et faisaient doublon de rôle avec « Pourquoi
+// ce score ». La donnée en base et le calcul sont intacts.
+function Line({ line, hideWeight }: { line: FicheLine; hideWeight?: boolean }) {
   return (
     <div className="flex gap-3 border-b border-line/60 py-2 last:border-0">
-      <Weight w={line.weight} result={line.result} />
+      {!hideWeight && <Weight w={line.weight} result={line.result} />}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {/* S03-S05 : libellé français à l'écran, clé technique de la couche au survol/tap (audit) */}
@@ -1257,9 +1271,18 @@ export function Fiche({ idu }: { idu: string }) {
   // M56-B3 fix 6 : la colonne droite d'Urbanisme n'est JAMAIS vide. Hauteur connue → « N m max » ;
   // sinon l'ÉTAT de constructibilité de la zone (A/N = non constructible) ; à défaut, le RefDrawer
   // affiche « — » (--txt-faint). Zone A (agricole) et N (naturelle) = inconstructibles par principe.
-  const reglesGabarit = fo?.hauteur_m != null
+  // M57-P1 (Q5) : « non constructible » affirmait plus que ce que le code sait (préfixe de zone
+  // seul ; STECAL différé, extensions non traitées). Reformulé « constructibilité très limitée »
+  // + « i » citant les exceptions non évaluées. Le CALCUL et la règle de zone sont inchangés.
+  const reglesGabarit: ReactNode = fo?.hauteur_m != null
     ? `${fo.hauteur_m} m max`
-    : nonConstructible ? 'non constructible'
+    : nonConstructible
+      ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          constructibilité très limitée
+          <Tip side="top" tip="Les zones A et N interdisent la construction neuve à usage d'habitation, sauf exceptions non évaluées par LABUSE : STECAL, extension d'un bâtiment existant, construction agricole. À vérifier au règlement.">
+            <span role="button" tabIndex={0} aria-label="Exceptions à la constructibilité" style={{ color: 'var(--txt-ghost)', fontSize: 11, cursor: 'help', flexShrink: 0 }}>ⓘ</span>
+          </Tip>
+        </span>
       : undefined
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
@@ -1740,7 +1763,13 @@ export function Fiche({ idu }: { idu: string }) {
                           <span className="block text-[10px] text-txt-dim mt-0.5">✓ {f.plu_fraicheur.fait_foi}</span>
                         )}
                         {f.plu_fraicheur.en_cours && (
-                          <span className="block text-[10px] text-st-creuser mt-0.5">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
+                          /* M57-P1 (d) : a_jour → avertissement NEUTRE (générique : assertion de config,
+                             pas une procédure), sans sablier ni « En cours (non servi) ». Les autres
+                             statuts (annule_partiel / opposabilite_en_attente) portent une procédure
+                             RÉELLE → cadre « En cours (non servi) » conservé. */
+                          f.plu_fraicheur.statut === 'a_jour'
+                            ? <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.en_cours}</span>
+                            : <span className="block text-[10px] text-st-creuser mt-0.5">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
                         )}
                         {f.plu_fraicheur.action && (
                           <span className="block text-[10px] text-txt-mut mt-0.5">→ {f.plu_fraicheur.action}</span>
@@ -1785,8 +1814,10 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M55-O phase 2.1b : les contrôles PASS (« sans objet ») partent dans
                     « Vérifications d'éligibilité » (bloc Analyse) ; ici, seules les lignes PLU
                     substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
+                {/* M57-P1 (Q4) : points signés RETIRÉS ici (hideWeight) — le fait, la source et la
+                    date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
-                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} />)}</div> : null })()}
+                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight />)}</div> : null })()}
                 {/* M22-B : lettre de vérification de zonage — bouton discret (la barre M20 reste à 7 tuiles) */}
                 <a data-lettre-zonage href={`/lettre-zonage/${idu}.pdf`} target="_blank" rel="noreferrer"
                   className="self-start text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
@@ -2292,7 +2323,7 @@ function TraducteurBloc({ idu }: { idu: string }) {
     <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
       <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
         className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
-        <span className="label-caps text-[10px] text-violet">✦ Traduire ma zone en français courant</span>
+        <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA de traduire le PLU</span>
         <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
       </button>
       {open && (
