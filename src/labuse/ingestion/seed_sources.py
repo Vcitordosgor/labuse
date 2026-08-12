@@ -121,7 +121,11 @@ SOURCES: list[dict] = [
          access_type="WFS", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/bdtopo", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO, forêt publique ».",
-         technical_notes="✓ intégré auto : BDTOPO_V3:foret_publique (Géoplateforme, régime forestier). toponyme « domaniale » → HARD_EXCLUDE, sinon flag fort."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) : 65 géométries distinctes en base = 65 emprises au WFS "
+                         "BDTOPO_V3:foret_publique sur l'emprise 974 (numberMatched=65). ⚠ 227 LIGNES en base = "
+                         "162 doublons d'ingestion par bbox commune (features à cheval sur 2 communes comptés 2×) — "
+                         "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
+                         "→ HARD_EXCLUDE, sinon flag fort."),
     dict(name="SAR Réunion (PEIGEO)", category="urbanisme", provider="Région Réunion / AGORAH",
          access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
@@ -169,7 +173,9 @@ SOURCES: list[dict] = [
          documentation_url="https://data.regionreunion.com/explore/dataset/potentiel-foncier/",
          endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/potentiel-foncier/records",
          legal_notes="Licence à confirmer (jeu potentiel-foncier, Région Réunion ODS — audit M6 §1.11 R8).",
-         technical_notes="✓ live : grain PARCELLE (section/parcelle/espacesar/zpu). Îlots > 500 m² (bâti) / 200 m² (vierge). BONUS (§1) + proxy SAR."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) : base 2 453 ≈ amont 2 458 (ODS total_count, 99,8 %) — écart de "
+                         "5 = filtrage géométrie. ✓ live : grain PARCELLE (section/parcelle/espacesar/zpu). Îlots "
+                         "> 500 m² (bâti) / 200 m² (vierge). BONUS (§1) + porte le proxy SAR (2 453 emprises kind='sar')."),
     # ── Enrichissement ──
     dict(name="SITADEL (autorisations d'urbanisme)", category="dynamique", provider="SDES (Dido)",
          access_type="REST/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="4 exports CSV/run",
@@ -268,10 +274,12 @@ SOURCES: list[dict] = [
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/ocsge", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD CARTO (proxy OCS GE) ».",
-         technical_notes="PROXY : OCS GE 974 non exposé en WFS geopf (OCSGE:occupation_du_sol → 400). Proxy intégré : "
-                         "BDCARTO_V5:occupation_du_sol (3 250 emprises naturel/agricole/artificialisé), lu par le scoring. "
-                         "Signal non juridique. M74 A : requalifiée connecte ; couverture amont NON MESURÉE (cf. M74 bloc C) — "
-                         "un partiel non établi valait moins qu'un connecte mesuré à la couverture documentée."),
+         technical_notes="PROXY : OCS GE 974 natif non exposé en WFS geopf (OCSGE:occupation_du_sol → 400). Proxy "
+                         "intégré : BDCARTO_V5:occupation_du_sol (naturel/agricole/artificialisé), lu par le scoring. "
+                         "Signal non juridique. MESURÉ MAXIMUM vs proxy (M74 C) : 1 643 géométries distinctes en base = "
+                         "1 643 au WFS BDCARTO 974 (numberMatched). ⚠ 3 250 LIGNES = 1 607 doublons d'ingestion par bbox "
+                         "commune (dedup à passer, dette BACKLOG). Le proxy BDCARTO n'est PAS le plafond de l'OCS GE natif "
+                         "(plus fin) — la couverture OCS GE réelle reste non mesurable sans exposition WFS. M74 A : connecte."),
     dict(name="ZNIEFF (INPN / Région)", category="environnement", provider="INPN/MNHN · Région ODS",
          access_type="REST/GeoJSON", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://data.regionreunion.com/explore/dataset/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/",
@@ -285,7 +293,12 @@ SOURCES: list[dict] = [
          documentation_url="https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/",
          endpoint_url="https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/records",
          legal_notes="Licence Ouverte (POP open data) — attribution : « Source : Ministère de la Culture, base Mérimée ».",
-         technical_notes="✓ live 05/07/2026 : base Mérimée, region='La Réunion' = 204 MH (coords WGS84 propres). Abords = TAMPON ~500 m (spatial_layers kind='abf') → intersection parcelles. ⚠ FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; tampon SUR-COUVRE vs régime réel (PDA ou 500 m avec covisibilité) → « covisibilité à instruire ». Rattachement 100% géométrique (pas cog_insee d'époque). Remplace l'ancien GPU AC1 (6 objets, communes dématérialisées seulement). # TODO étage 1."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) sur les MONUMENTS : 200 tampons en base ≈ 200 immeubles MH 974 "
+                         "(amont data.gouv, dataset national). ⚠ la couche 'abf' compte des TAMPONS ~500 m autour des "
+                         "MH, PAS les périmètres ABF/SPR réglementaires (PDA + covisibilité) qui sont un objet distinct "
+                         "non mesuré. ⚠ ENDPOINT MORT : data.culture.gouv.fr (ODS) décommissionné (301→SPA, plus d'API) "
+                         "— re-ingestion à re-sourcer via le dump data.gouv ; les 200 en base datent du dernier run "
+                         "OK (05/07/2026). FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; « covisibilité à instruire »."),
     dict(name="ENS (Département)", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://inpn.mnhn.fr/", endpoint_url="https://data.geopf.fr/wfs/ows",
