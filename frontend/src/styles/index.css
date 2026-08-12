@@ -245,6 +245,19 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .cta { background:var(--mint); border:none; border-radius:10px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
 .fiche-v6 .cta-sub { font-size:10.5px; color:var(--txt-off); text-align:center; margin-top:6px; }
 
+/* M60 P1c — LA PORTE D'OUTIL — recopiée TEL QUEL de docs/DA-FICHE-v6.html (« LA PORTE D'OUTIL »),
+   scopée .fiche-v6 ; seule adaptation : var(--bg-header)→var(--bg-2) (même valeur #111614, le token
+   --bg-header n'existe pas dans l'app). Ajouts pour l'usage <button> : width/text-align/cursor/hover. */
+.fiche-v6 .porte-outil { background:var(--bg-2); border:0.5px solid #212A25; border-left:2px solid var(--mint); border-radius:0 10px 10px 0; padding:11px 13px; display:flex; align-items:center; gap:11px; margin-top:7px; width:100%; text-align:left; cursor:pointer; }
+.fiche-v6 .porte-outil:hover { border-color:#2C3630; }
+.fiche-v6 .po-ico { width:30px; height:30px; border-radius:8px; background:#12291D; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mint); font-size:15px; }
+.fiche-v6 .po-t { font-size:13px; color:var(--txt-hi); }
+.fiche-v6 .po-s { font-size:11px; color:var(--txt-mut); margin-top:1px; }
+.fiche-v6 .po-arrow { font-size:14px; color:var(--mint); flex-shrink:0; margin-left:auto; }
+.fiche-v6 .porte-outil.compacte { padding:10px 12px; gap:10px; }
+.fiche-v6 .porte-outil.compacte .po-t { font-size:12.5px; }
+.fiche-v6 .porte-outil.compacte .po-s { font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
 /* M65 P1 — bandeau d'attention .band (« Marché peu actif à … ») supprimé (voir Fiche.tsx). */
 
 /* boutons IA */

@@ -308,6 +308,9 @@ interface AppState {
   setM02Prefill: (s: string | null) => void
   pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
   setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
+  // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
+  calcPrefill: string | null
+  setCalcPrefill: (s: string | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
   calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
@@ -487,6 +490,8 @@ export const useApp = create<AppState>((set) => ({
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
   pluPrefill: null,
   setPluPrefill: (pluPrefill) => set({ pluPrefill }),
+  calcPrefill: null,
+  setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   calculette: null,
   setCalculette: (calculette) => set({ calculette }),
 }))

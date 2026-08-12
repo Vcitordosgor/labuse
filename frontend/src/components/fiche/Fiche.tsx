@@ -863,9 +863,28 @@ function StepProv({ prov }: { prov?: string }) {
   return <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${cls}`}>{label}</span>
 }
 
+/** M60 P1c — LA PORTE D'OUTIL (gabarit .porte-outil de docs/DA-FICHE-v6.html, recopié TEL QUEL).
+ *  En PIED de tiroir ouvert (après les données), pleine largeur ; accroche CONTEXTUALISÉE (jamais
+ *  générique). Ouvre l'outil PRÉ-REMPLI via setModule (la fiche reste montée → retour intact). */
+function PorteOutil({ ico, titre, sous, onClick, data, compacte }: {
+  ico: ReactNode; titre: string; sous: string; onClick: () => void; data: string; compacte?: boolean
+}) {
+  return (
+    <button type="button" data-porte={data} onClick={onClick} className={`porte-outil${compacte ? ' compacte' : ''}`}>
+      <span className="po-ico">{ico}</span>
+      <span style={{ minWidth: 0 }}>
+        <span className="po-t block">{titre}</span>
+        <span className="po-s block">{sous}</span>
+      </span>
+      <span className="po-arrow">→</span>
+    </button>
+  )
+}
+
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
- *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps), et la
- *  calculette de charge foncière rapatriée (financier au même endroit). L'IA explique, ne recalcule pas. */
+ *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps). M60 P1a : la
+ *  calculette interactive DÉMÉNAGE dans l'outil « Calculette foncière » (moteur unique) ; la fiche garde
+ *  le bilan en LECTURE (capacité, gabarit, SDP) + une PORTE pré-remplie (rendue au pied du tiroir). */
 export function FaisabiliteTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   const [showSteps, setShowSteps] = useState(false)  // M58-P1 (h) : le calcul étape par étape est REPLIÉ par défaut
@@ -968,8 +987,9 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* ── CHARGE FONCIÈRE rapatriée (le financier au même endroit) ── */}
-      <Calculette idu={idu} />
+      {/* M60 P1a — la CALCULETTE interactive a quitté la fiche : elle vit dans l'outil « Calculette
+          foncière » (moteur unique). La fiche garde le bilan en LECTURE (capacité/gabarit/SDP ci-dessus)
+          + une PORTE pré-remplie posée au pied du tiroir Constructibilité (voir Fiche, RefDrawer faisabilite). */}
     </div>
   )
 }
@@ -1212,6 +1232,7 @@ export function Fiche({ idu }: { idu: string }) {
   const toggleAnalyseReplie = useApp((s) => s.toggleAnalyseReplie)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
+  const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -1954,6 +1975,11 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
                 <FaisabiliteTab idu={idu} />
                 {!delaisse && <BilanTab idu={idu} />}
+                {/* M60 P1a/c — PORTE en pied de Constructibilité (après les données) : ouvre l'outil
+                    Calculette foncière PRÉ-REMPLI (moteur unique). Accroche contextualisée (surface). */}
+                <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
+                  sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
+                  onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
               </div>
             </RefDrawer>
             {/* M55-O phase 2.1c : Mode B — Réhabilitation, rattaché à la Constructibilité (un seul
