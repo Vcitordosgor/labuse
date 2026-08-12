@@ -277,6 +277,52 @@ tiroir ouvert. `value` : chaîne → `.gr-v` ; élément React (une `.pill`) →
 parcelles M55-O ET sur 97415000CI0051 · **export PDF fiche premium 97415000CT1389 :
 HTTP 200 `application/pdf` 67 Ko (`%PDF-`)** — l'habillage n'a rien cassé.
 
+---
+
+## Phase B3 — fiche : composition (en-tête, actions, densité) (commit `M56-B3 fiche composition`)
+
+Sept correctifs de composition constatés sur 97415000CO0032 (zone A, SDP absente).
+Présentation uniquement ; aucune logique, aucune donnée supprimée. `Fiche.tsx` +
+`styles/index.css`. **La référence `docs/DA-LABUSE.html` §4 est mise à jour** (les
+sept correctifs reportés en commentaires + valeurs) — fichier et app restent
+superposables.
+
+**Fait** :
+1. **Référence redondante** → la ligne courte `iduCourt` (« CO 0032 », fin de l'IDU
+   complet) est retirée ; import `iduCourt` nettoyé.
+2. **Surface écrite deux fois** → la surface quitte l'en-tête ; le bandeau la porte
+   via `fmtM2` (ha dès 10 000 m² « 3,19 ha », m² en dessous, « — » si absente). Le
+   lien « Voir sur Pages Jaunes » reste seul sur sa ligne.
+3. **Rupture de fond** → `borderBottom` du bloc en-tête supprimé : un seul fond
+   continu --bg-1 du haut au pied (l'aside est déjà `bg-surface-1`).
+4. **Icône copier** → sortie de son cadre : icône seule 13px --txt-ghost collée à la
+   référence (retour vert au copié). Les trois boutons d'en-tête
+   (cloche/loupe/croix) passent à 27px, icônes 13px.
+5. **Boutons IA trop lourds** → deux `.b-iris` allégés (padding 8px 11px), contenu
+   aligné à GAUCHE, icône mauve 13px + libellé 12.5px --iris-2 : bulle de message
+   pour « Poser une question », étincelles (`#i-ia`) pour « Synthèse IA ».
+6. **Rangée sans valeur** → `RefDrawer` n'affiche JAMAIS une colonne droite vide :
+   valeur, pastille, ou « — » (--txt-faint). Urbanisme renseigne `.gr-v` avec l'état
+   de constructibilité (zone A/N → « non constructible » ; zone U → « N m max » si la
+   hauteur est connue ; sinon « — »).
+7. **Densité (~10 % de hauteur en moins, jamais les tailles de texte)** — via les
+   espacements : padding panneau 16→14 ; `.gr` vertical 12→10 (plancher : pas plus
+   bas) ; micro-label→carte 7→6 ; entre deux groupes 18→12 ; bandeau/bouton/IA 10→8.
+
+**Écarté / constaté** :
+- `.gr` (padding 12→10) est la classe DA PARTAGÉE (fiche, panneau, sources) : la
+  densité s'applique donc à toutes les rangées `.gr` — cohérent, reporté au §<style>
+  de la référence. Plancher 10px respecté (consigne : ne pas tasser sous 10px).
+- Le bloc en-tête est en flux BLOC (pas flex) ; les écarts bandeau→bouton/verdict
+  sont rendus explicites par `marginTop:8`.
+- Zone A/N = inconstructible par principe (`/^[AN]/`) ; les autres zones sans hauteur
+  calculée retombent sur « — » plutôt qu'un état inventé.
+
+**Garde-fous B3** : tsc 0 · vitest 32/32 · build OK · console 0 erreur sur les 4
+parcelles M55-O **+ 97415000CO0032** (zone A, SDP absente → « — » et « 3,19 ha »
+vérifiés ; cas AVEC SDP + m² validé sur 97408000AP1647 : 382 m² / SDP 234 m²) ·
+**export PDF premium 97415000CT1389 : HTTP 200 `application/pdf` 67 Ko**.
+
 ## STOP
-Mandat terminé (M56 A→E + B2), garde-fous verts partout. **Branche non mergée**
-(`feat/m56-da`). Fin.
+Mandat terminé (M56 A→E + B2 + B3), garde-fous verts partout. Référence
+`docs/DA-LABUSE.html` §4 tenue à jour. **Branche non mergée** (`feat/m56-da`). Fin.

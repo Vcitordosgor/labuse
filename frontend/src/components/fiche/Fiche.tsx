@@ -3,7 +3,7 @@ import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
-import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
+import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -98,9 +98,12 @@ function RefDrawer({ id, name, context, value, valueColor, accent, micro, childr
           {context != null && <div className="gr-s">{context}</div>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, minWidth: 0 }}>
-          {value != null && (isValidElement(value)
-            ? value
-            : <span className="gr-v" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...(valueColor ? { color: valueColor } : {}) }}>{value}</span>)}
+          {/* M56-B3 fix 6 — jamais une colonne droite VIDE : valeur, pastille, ou « — » (--txt-faint). */}
+          {value != null
+            ? (isValidElement(value)
+              ? value
+              : <span className="gr-v" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...(valueColor ? { color: valueColor } : {}) }}>{value}</span>)
+            : <span className="gr-v" style={{ color: 'var(--txt-faint)' }}>—</span>}
           {children && <span className="chev">{open ? '⌃' : '›'}</span>}
         </div>
       </button>
@@ -118,8 +121,9 @@ function RefDrawer({ id, name, context, value, valueColor, accent, micro, childr
 
 // M55-O phase 3.4 — micro-label d'un GROUPE SILENCIEUX (LE TERRAIN / LE CONTEXTE) : 10 px lettré
 // espacé, gris sourd, au-dessus d'un ensemble de lignes-tiroirs.
+// M56-B3 fix 7 (densité) — écart entre deux groupes 18→12px ; micro-label→carte 7→6px.
 const GroupLabel = ({ children, first }: { children: ReactNode; first?: boolean }) => (
-  <p style={{ margin: `${first ? 2 : 18}px 2px 5px`, fontSize: 10, letterSpacing: 1.4, color: 'var(--txt-off)', textTransform: 'uppercase' }}>{children}</p>
+  <p style={{ margin: `${first ? 2 : 12}px 2px 6px`, fontSize: 10, letterSpacing: 1.4, color: 'var(--txt-off)', textTransform: 'uppercase' }}>{children}</p>
 )
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
@@ -425,9 +429,9 @@ function WatchButton({ idu }: { idu: string }) {
   // C4 · cloche = suivi ; style référence (31×31, vert actif quand suivie).
   return (
     <button onClick={() => t.mutate()}
-      style={{ width: 31, height: 31, background: on ? '#101d16' : 'none', border: `1px solid ${on ? '#2f7a54' : '#232e29'}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? '#7de3ab' : 'var(--lab)', cursor: 'pointer', flexShrink: 0 }}
+      style={{ width: 27, height: 27, background: on ? 'var(--mint-bg)' : 'none', border: `0.5px solid ${on ? 'var(--mint)' : 'var(--line-btn)'}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? 'var(--mint)' : 'var(--lab)', cursor: 'pointer', flexShrink: 0 }}
       title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
     </button>
   )
 }
@@ -445,7 +449,7 @@ function CopyIdu({ value }: { value: string }) {
   }
   return (
     <button onClick={copier} data-fiche-copy-idu aria-label="Copier l’IDU"
-      style={{ width: 26, height: 26, border: `1px solid ${ok ? '#2f7a54' : '#232e29'}`, borderRadius: 8, background: ok ? '#101d16' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? '#7de3ab' : 'var(--lab)', cursor: 'pointer', flexShrink: 0 }}
+      style={{ border: 'none', background: 'none', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? 'var(--mint)' : 'var(--txt-ghost)', cursor: 'pointer', flexShrink: 0 }}
       title={ok ? 'IDU copié' : 'Copier l’IDU (14 caractères, sans espace)'}>
       {ok
         ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-11" /></svg>
@@ -1229,7 +1233,13 @@ export function Fiche({ idu }: { idu: string }) {
   // Faisabilité garde la SDP ; la SDP reste accessible dans le corps du tiroir (potentiel/faisa).
   // Hauteur absente (faisabilité non calculée) → pas de valeur d'en-tête (le micro-jauge porte
   // déjà zone + article), jamais la SDP ni un doublon du zonage.
-  const reglesGabarit = fo?.hauteur_m != null ? `${fo.hauteur_m} m max` : undefined
+  // M56-B3 fix 6 : la colonne droite d'Urbanisme n'est JAMAIS vide. Hauteur connue → « N m max » ;
+  // sinon l'ÉTAT de constructibilité de la zone (A/N = non constructible) ; à défaut, le RefDrawer
+  // affiche « — » (--txt-faint). Zone A (agricole) et N (naturelle) = inconstructibles par principe.
+  const reglesGabarit = fo?.hauteur_m != null
+    ? `${fo.hauteur_m} m max`
+    : (reglesZone && /^[AN]/i.test(reglesZone)) ? 'non constructible'
+      : undefined
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
@@ -1264,20 +1274,22 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* ═══ M19 · EN-TÊTE + CARTE VERDICT — spec qa/m19/reference (hex/tailles à l'identique) ═══ */}
-      <div style={{ padding: '20px 16px 16px', flexShrink: 0, borderBottom: `1px solid ${REF.shell}` }}>
+      {/* ═══ EN-TÊTE + CARTE VERDICT (DA §4). M56-B3 fix 3 : plus de filet ni de fond distinct
+          sous l'en-tête — le panneau est un seul fond continu --bg-1 du haut au pied.
+          M56-B3 fix 7 : padding panneau 16→14 (densité). ═══ */}
+      <div style={{ padding: '18px 14px 14px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: 'var(--txt-off)' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
             {/* EXPRESS-01 · IDU COMPLET 14 car. en position primaire (mono) + bouton copier.
                 La forme courte (section+numéro) devient un rappel secondaire, jamais l'inverse. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '5px 0 0' }}>
+            {/* M56-B3 fix 1 : la référence courte (fin de l'IDU complet) est redondante — retirée.
+                M56-B3 fix 4 : le bouton COPIER n'a plus de cadre — icône seule 13px --txt-ghost,
+                collée à la référence. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '5px 0 0' }}>
               <p data-fiche-idu style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: 'var(--txt-hi)', letterSpacing: .4 }}>{iduComplet(idu) || 'Absent'}</p>
               {iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}
             </div>
-            {iduComplet(idu) && iduCourt(idu) !== iduComplet(idu) && (
-              <p data-fiche-idu-court style={{ margin: '3px 0 0', fontSize: 11, letterSpacing: .3, color: 'var(--txt-off)' }}>{iduCourt(idu)}</p>
-            )}
             {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
             {/* M55-L point 2 : adresse absente → « i » explicatif (absence réelle dans la source,
                 pas un défaut de l'outil). Contenu depuis la source unique CLIENT.fiche. */}
@@ -1290,28 +1302,29 @@ export function Fiche({ idu }: { idu: string }) {
                 </Tip>
               )}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--txt-off)' }}>
-              {f?.surface_m2 ? `${fmtM2(f.surface_m2)} · ` : ''}
-              {f?.adresse && (
+            {/* M56-B3 fix 2 : la surface quitte l'en-tête (le bandeau la porte, en ha dès 10 000 m²) ;
+                le lien Pages Jaunes reste SEUL sur sa ligne. */}
+            {f?.adresse && (
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--txt-off)' }}>
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
                   target="_blank" rel="noreferrer noopener" style={{ color: 'var(--lien)', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
                   {CLIENT.fiche.pagesJaunes} ↗
                 </a>
-              )}
-            </p>
+              </p>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             {/* C4 : cloche = suivi (état réel via WatchButton, style référence) */}
             <WatchButton idu={idu} />
             <button onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
-              style={{ width: 31, height: 31, border: `0.5px solid ${ficheSearchOpen ? 'var(--mint)' : 'var(--line-btn)'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? 'var(--mint)' : 'var(--lab)', cursor: 'pointer' }}
+              style={{ width: 27, height: 27, border: `0.5px solid ${ficheSearchOpen ? 'var(--mint)' : 'var(--line-btn)'}`, borderRadius: 8, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? 'var(--mint)' : 'var(--lab)', cursor: 'pointer' }}
               title="Rechercher dans cette fiche">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
             </button>
             <button onClick={() => select(null)}
-              style={{ width: 31, height: 31, border: '0.5px solid var(--line-btn)', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lab)', cursor: 'pointer' }}
+              style={{ width: 27, height: 27, border: '0.5px solid var(--line-btn)', borderRadius: 8, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lab)', cursor: 'pointer' }}
               title="Fermer la fiche">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
             </button>
           </div>
         </div>
@@ -1322,7 +1335,7 @@ export function Fiche({ idu }: { idu: string }) {
             en phase 3. */}
         {f && (() => {
           const cells = [
-            { l: 'Surface', v: f.surface_m2 != null ? `${fmtInt(f.surface_m2)} m²` : '—' },
+            { l: 'Surface', v: fmtM2(f.surface_m2) },
             { l: 'Zone', v: reglesZone ?? '—' },
             { l: 'SDP dispo.', v: reglesSdp != null ? `${fmtInt(reglesSdp)} m²` : '—' },
             { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
@@ -1350,7 +1363,7 @@ export function Fiche({ idu }: { idu: string }) {
           // de width:100%) — le bouton n'occupe plus toute la largeur de la fiche. Libellé « Demander
           // à LABUSE d'analyser la parcelle » (strings) ; sous-titre conservé. Comportement inchangé.
           <button data-demander-analyse onClick={() => revelerVerdict(idu)}
-            style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'var(--mint)', color: 'var(--mint-on)', borderRadius: 'var(--r-ctl)', border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left' }}
+            style={{ marginTop: 8, alignSelf: 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, background: 'var(--mint)', color: 'var(--mint-on)', borderRadius: 'var(--r-ctl)', border: 'none', padding: '13px 18px', cursor: 'pointer', textAlign: 'left' }}
             title="Déployer le verdict, le score et « pourquoi »">
             <span style={{ fontSize: 14.5, fontWeight: 700 }}>{CLIENT.fiche.demanderAnalyse}</span>
             <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--mint-sub)', opacity: .95 }}>{CLIENT.fiche.demanderAnalyseSous}</span>
@@ -1358,7 +1371,7 @@ export function Fiche({ idu }: { idu: string }) {
         )}
         {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
         {f && verdict && verdictRevele && (
-          <div data-verdict-card style={{ background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
+          <div data-verdict-card style={{ marginTop: 8, background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)' }}>VERDICT LABUSE</p>
@@ -1584,7 +1597,7 @@ export function Fiche({ idu }: { idu: string }) {
       {/* M19 (réf. ordre) : la barre d'onglets est RETIRÉE — la fiche est une pile de tiroirs
           empilés, navigable au scroll ; plus de navigation par onglets. */}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] py-4">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
@@ -1651,10 +1664,13 @@ export function Fiche({ idu }: { idu: string }) {
                 nouveau composant), remontée + encadrée. */}
             {/* DA §4 — DEUX boutons .b-iris côte à côte, un libellé chacun. Les résultats
                 (réponse AskBar, synthèse) se déploient en dessous. */}
-            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-              <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+            {/* M56-B3 fix 5 — DEUX .b-iris LÉGERS (moins que le bouton d'analyse) : hauteur réduite
+                (padding 8px 11px), contenu aligné à GAUCHE, icône mauve 13px + libellé 12.5px. */}
+            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 7, alignItems: 'stretch' }}>
                 <button onClick={() => setAskOpen(true)} data-askbar-open
-                  className="b-iris" style={{ flex: 1, cursor: 'pointer', textAlign: 'center' }}>
+                  className="b-iris" style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 11px', textAlign: 'left', fontSize: 12.5 }}>
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
                   Poser une question
                 </button>
                 <SyntheseIA idu={idu} />
@@ -2117,7 +2133,8 @@ function SyntheseIA({ idu }: { idu: string }) {
   const box = { marginTop: 8, background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '11px 14px' } as const
   if (!d && !q.isPending) return (
     <button onClick={() => q.mutate()} data-synthese-ia
-      className="b-iris" style={{ flex: 1, cursor: 'pointer', textAlign: 'center' }} title={CLIENT.fiche.ia.syntheseTip}>
+      className="b-iris" style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 11px', textAlign: 'left', fontSize: 12.5 }} title={CLIENT.fiche.ia.syntheseTip}>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
       Synthèse IA
     </button>
   )

@@ -60,7 +60,8 @@
 
   /* groupe encarté — tiroirs d'un thème */
   .gcard { background:var(--bg-2); border:0.5px solid var(--line-card); border-radius:var(--r-g); overflow:hidden; }
-  .gr { padding:12px 13px; display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:0.5px solid var(--line); }
+  /* M56-B3 fix 7 (densité) — padding vertical 12→10px (plancher : ne pas descendre plus bas). */
+  .gr { padding:10px 13px; display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:0.5px solid var(--line); }
   .gr:last-child { border-bottom:none; }
   /* DA §4 — dans un groupe encarté, le dernier tiroir (fiche : [data-drawer]) ne double pas
      le filet du bas de la carte. */

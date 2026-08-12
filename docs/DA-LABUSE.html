@@ -47,7 +47,7 @@ td.num,th.num{text-align:right}
 /* ── COMPOSANTS ── */
 .micro{font-size:var(--fs-micro);letter-spacing:.11em;color:var(--lab)}
 .gcard{background:var(--bg-2);border:0.5px solid var(--line-card);border-radius:var(--r-g);overflow:hidden}
-.gr{padding:12px 13px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)}
+.gr{padding:10px 13px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)}
 .gr:last-child{border-bottom:none}
 .gr-t{font-size:var(--fs-row);color:var(--txt-hi)}
 .gr-s{font-size:var(--fs-sub);color:var(--txt-mut);margin-top:2px}
@@ -316,45 +316,62 @@ td.num,th.num{text-align:right}
 </div>
 
 <div class="doc-s">4 · FICHE PARCELLE</div>
-<div class="panel" style="padding:18px 16px">
+<!-- M56-B3 fix 3 : le panneau est un SEUL fond continu --bg-1 (aucun filet ni fond distinct
+     sous l'en-tête). fix 7 (densité) : padding panneau 16→14. -->
+<div class="panel" style="padding:14px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start">
     <div>
       <div style="font-size:10.5px;letter-spacing:.08em;color:var(--txt-off)">PARCELLE · BRAS-PANON</div>
-      <div class="mono" style="font-size:19px;font-weight:500;margin-top:5px">97402000AH1915</div>
+      <!-- M56-B3 fix 1 : IDU complet SEUL (pas de référence courte redondante « AH 1915 »).
+           fix 4 : bouton COPIER sans cadre — icône seule 13px --txt-ghost, collée à la référence. -->
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+        <div class="mono" style="font-size:19px;font-weight:500">97402000AH1915</div>
+        <svg class="ic" width="13" height="13" viewBox="0 0 24 24" style="color:var(--txt-ghost);cursor:pointer"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h9"/></svg>
+      </div>
       <div style="font-size:12.5px;color:var(--txt-dim);margin-top:4px">1 Rue des Lataniers</div>
+      <!-- M56-B3 fix 2 : la surface ne vit QU'AU bandeau ; ce lien reste SEUL sur sa ligne. -->
+      <div style="font-size:12px;color:var(--lien);margin-top:4px">Voir sur Pages Jaunes ↗</div>
     </div>
+    <!-- M56-B3 fix 4 : boutons d'en-tête 27px, icônes 13px (même poids entre eux ; le copier n'y est plus). -->
     <div style="display:flex;gap:5px">
-      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-bell"/></svg></div>
-      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-search"/></svg></div>
-      <div class="ico"><svg class="ic" width="14" height="14" viewBox="0 0 24 24"><use href="#i-x"/></svg></div>
+      <div class="ico" style="width:27px;height:27px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24"><use href="#i-bell"/></svg></div>
+      <div class="ico" style="width:27px;height:27px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24"><use href="#i-search"/></svg></div>
+      <div class="ico" style="width:27px;height:27px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24"><use href="#i-x"/></svg></div>
     </div>
   </div>
-  <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:14px">
+  <!-- M56-B3 fix 2 : SURFACE en ha dès 10 000 m² (« 3,19 ha »), en m² en dessous (« 2 821 m² ») ;
+       une valeur absente (SDP en zone A) → « — ». fix 7 : écart bandeau 14→12. -->
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
     <div class="stat"><div class="stat-l">SURFACE</div><div class="stat-v">2 821 m²</div></div>
     <div class="stat"><div class="stat-l">ZONE</div><div class="stat-v">Ub</div></div>
     <div class="stat"><div class="stat-l">SDP DISPO</div><div class="stat-v">1 523 m²</div></div>
     <div class="stat"><div class="stat-l">SECTEUR</div><div class="stat-v">208 €</div></div>
   </div>
-  <div style="background:var(--mint);border-radius:var(--r-ctl);padding:12px 15px;margin-top:12px">
+  <!-- M56-B3 fix 7 : écart bandeau → bouton 10→8. -->
+  <div style="background:var(--mint);border-radius:var(--r-ctl);padding:12px 15px;margin-top:8px">
     <div style="font-size:14px;font-weight:500;color:var(--mint-on)">Demander à LABUSE d'analyser la parcelle</div>
     <div style="font-size:12px;color:var(--mint-sub);margin-top:2px">Le verdict, le score et « pourquoi » — à la demande.</div>
   </div>
+  <!-- M56-B3 fix 5 : deux b-iris LÉGERS (padding 8px 11px < bouton d'analyse), icône mauve 13px
+       à GAUCHE + libellé 12.5px --iris-2 (bulle pour la question, étincelles pour la synthèse). -->
   <div style="display:flex;gap:7px;margin-top:8px">
-    <div class="btn b-iris" style="flex:1;text-align:left;padding:9px 11px;font-size:12.5px">Poser une question</div>
-    <div class="btn b-iris" style="flex:1;text-align:left;padding:9px 11px;font-size:12.5px">Synthèse IA</div>
+    <div class="btn b-iris" style="flex:1;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 11px;font-size:12.5px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24"><path d="M20 4H4v13h5l3 3 3-3h2z"/></svg>Poser une question</div>
+    <div class="btn b-iris" style="flex:1;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 11px;font-size:12.5px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24"><use href="#i-ia"/></svg>Synthèse IA</div>
   </div>
-  <div class="micro" style="margin:18px 0 7px;display:block">LE TERRAIN</div>
+  <!-- M56-B3 fix 7 (densité) : micro-label → carte 7→6 ; écart entre groupes 18/16→12. -->
+  <div class="micro" style="margin:12px 0 6px;display:block">LE TERRAIN</div>
   <div class="gcard">
     <div class="gr"><div><div class="gr-t">Urbanisme</div><div class="gr-s">zone Ub · PLU 2020</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">6 m max</span><span class="chev">›</span></div></div>
     <div class="gr"><div><div class="gr-t">Constructibilité</div><div class="gr-s">R+1 · calcul tracé</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">15–17 logts</span><span class="chev">›</span></div></div>
     <div class="gr"><div><div class="gr-t">Risques et protections</div><div class="gr-s">9 couches vérifiées</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-amber">2 vigilances</span><span class="chev">›</span></div></div>
   </div>
-  <div class="micro" style="margin:16px 0 7px;display:block">LE CONTEXTE</div>
+  <div class="micro" style="margin:12px 0 6px;display:block">LE CONTEXTE</div>
   <div class="gcard">
     <div class="gr"><div><div class="gr-t">Marché et secteur</div><div class="gr-s">13 ventes · DVF déc. 2025</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">208 €/m²</span><span class="chev">›</span></div></div>
     <div class="gr"><div><div class="gr-t">Réseaux et accès</div><div class="gr-s">CIREST · CISE · EDF SEI</div></div><div style="display:flex;align-items:center;gap:9px"><span class="pill p-mint">confirmée</span><span class="chev">›</span></div></div>
     <div class="gr"><div><div class="gr-t">Propriétaire</div><div class="gr-s">courrier SPF disponible</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">privé</span><span class="chev">›</span></div></div>
-    <div class="gr"><div><div class="gr-t">Données et méthode</div><div class="gr-s">21 sources · maj 29/07/2026</div></div><span class="chev">›</span></div>
+    <!-- M56-B3 fix 6 : jamais de colonne droite vide — valeur, pastille, ou « — » (--txt-faint). -->
+    <div class="gr"><div><div class="gr-t">Données et méthode</div><div class="gr-s">21 sources · maj 29/07/2026</div></div><div style="display:flex;align-items:center;gap:9px"><span class="gr-v">85 %</span><span class="chev">›</span></div></div>
   </div>
   <div style="display:flex;gap:8px;margin-top:16px">
     <div class="btn b-pri" style="flex:1;font-size:13px;padding:10px">+ CRM</div>
