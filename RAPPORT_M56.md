@@ -323,6 +323,50 @@ parcelles M55-O **+ 97415000CO0032** (zone A, SDP absente → « — » et « 3,
 vérifiés ; cas AVEC SDP + m² validé sur 97408000AP1647 : 382 m² / SDP 234 m²) ·
 **export PDF premium 97415000CT1389 : HTTP 200 `application/pdf` 67 Ko**.
 
+---
+
+## Phase B4 — bandeau d'attention, signaux, zéros trompeurs (commit `M56-B4 bandeau, signaux, zéros`)
+
+Constaté sur 97402000AI0030 (Bras-Panon, zone Acu, non constructible). Présentation
+uniquement ; aucun calcul back touché, aucun mot supprimé. `Fiche.tsx` + référence
+`docs/DA-LABUSE.html` (§2 nouvelle règle, §3 nouveau composant).
+
+**Fait** :
+1. **Bandeau d'attention** (marché peu actif) → composant DA : fond --amber-bg, filet
+   gauche 2px --amber, rayon 0 à gauche / --r-g à droite, padding 10px 13px, replié
+   sur UNE ligne « Marché peu actif à {commune} » + « i » ; le texte intégral
+   (chiffres, base, avertissement d'échantillon) passe dans l'infobulle — rien
+   supprimé, mention sourcée.
+2. **Pastille « emplacement réservé »** → ne flotte plus dans le flux d'actions :
+   regroupée sous un micro-label « SIGNAUX », juste avant LE TERRAIN (drapeaux EBC /
+   ER). Si aucun autre signal, la pastille reste seule mais à cette place.
+3. **« 0–0 logts » (PRIORITÉ)** → jamais un intervalle nul présenté comme un
+   résultat. Zone inconstructible → « non calculable » (--txt-faint) ; zone
+   constructible mais capacité servie [0,0] → « — » (--txt-faint) ; capacité réelle
+   (même « 0–1 logts », borne haute 1) → affichée normalement. **Bug corrigé au
+   passage** : la détection « non constructible » captait à tort les zones **AU**
+   (à urbaniser = constructible) ; regex resserrée `/^(A(?!U)|N)/i` (la brûlante zone
+   AU repassait « non calculable » → de nouveau « 2–3 logts »). Contrôle constructible
+   OK : brûlante 2–3, nue 10–11, déclassée 2–4, écartée 0–1 s'affichent.
+4. **Vide résiduel** → gap header → boutons IA ramené de ~30px à **8px** (bloc
+   en-tête padding-bottom 14→4 + corps padding-top 16→4).
+
+**Audit « un zéro n'est pas une absence »** (cas trouvés et traités) :
+- Bandeau **SDP dispo.** : `reglesSdp > 0` sinon « — » (était « 0 m² » en zone A).
+- Bandeau **Prix secteur** : `> 0` sinon « — ».
+- **Constructibilité** : voir point 3.
+- Renouvellement **SDP résiduelle** : `> 0` sinon « — » (cohérence).
+- **Conservés (zéros légitimes, pas des absences)** : « 0 % SDP consommée » (0 %
+  consommé = plein potentiel) ; score de confiance ICD à 0 (métrique réelle, non
+  masquée).
+
+**Référence** : §2 nouvelle règle « Un zéro n'est pas une absence » ; §3 nouveau
+composant « BANDEAU D'ATTENTION ».
+
+**Garde-fous B4** : tsc 0 · vitest 32/32 · build OK · console 0 erreur sur les 4
+parcelles M55-O **+ 97402000AI0030** · export PDF premium CT1389 = HTTP 200
+`application/pdf` 67 Ko · parcelle constructible : capacité réelle toujours affichée.
+
 ## STOP
-Mandat terminé (M56 A→E + B2 + B3), garde-fous verts partout. Référence
-`docs/DA-LABUSE.html` §4 tenue à jour. **Branche non mergée** (`feat/m56-da`). Fin.
+Mandat terminé (M56 A→E + B2 + B3 + B4), garde-fous verts partout. Référence
+`docs/DA-LABUSE.html` tenue à jour. **Branche non mergée** (`feat/m56-da`). Fin.

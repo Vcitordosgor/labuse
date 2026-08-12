@@ -183,6 +183,7 @@ td.num,th.num{text-align:right}
 <tr><td>Les états parlent</td><td>Un état vide dit quoi faire. Un chargement montre la forme à venir (squelette). Une erreur locale donne « Réessayer » sans casser l'écran. Jamais de zone muette.</td></tr>
 <tr><td>Ni halo, ni lueur</td><td>Aucune ombre décorative, aucun glow. L'élévation = fond plus clair + bordure. L'ombre <code>--ombre-flottante</code> est réservée aux surfaces qui flottent réellement : menus, notifications, infobulles.</td></tr>
 <tr><td>La couleur n'est jamais seule</td><td>Un statut porte toujours un mot en plus de sa couleur (« 2 vigilances », pas une pastille orpheline).</td></tr>
+<tr><td>Un zéro n'est pas une absence</td><td>Une donnée absente ou sans objet s'écrit <b style="color:var(--txt)">« — »</b> (<code>--txt-faint</code>), jamais « 0 », « 0–0 » ou « 0 % » : un intervalle nul (« 0–0 logts » en zone inconstructible) laisse croire à un calcul abouti à zéro. Quand le calcul n'a pas lieu d'être → « non calculable » ou « — », jamais un faux résultat.</td></tr>
 </table>
 </div>
 
@@ -301,6 +302,14 @@ td.num,th.num{text-align:right}
   <div class="sk" style="height:11px;width:84%;margin-top:8px"></div>
   <div class="sk" style="height:11px;width:47%;margin-top:8px"></div>
   <p style="font-size:11.5px;color:var(--txt-mut);margin-top:8px">Chargement : la forme du contenu à venir, pulsation d'opacité 0,6→1 sur 1,2 s. Pas de spinner isolé.</p>
+</div>
+
+<div class="spec"><h4>BANDEAU D'ATTENTION</h4>
+  <div style="display:flex;align-items:center;gap:8px;background:var(--amber-bg);border-left:2px solid var(--amber);border-radius:0 var(--r-g) var(--r-g) 0;padding:10px 13px">
+    <span style="flex:1;font-size:12px;color:var(--amber)">Marché peu actif à Bras-Panon</span>
+    <span style="color:var(--txt-ghost);font-size:12px;cursor:help">ⓘ</span>
+  </div>
+  <p style="font-size:11.5px;color:var(--txt-mut);margin-top:10px">Une vigilance de contexte (marché peu actif, mesure dégradée…). Fond <code>--amber-bg</code>, filet gauche <code>2px --amber</code>, rayon 0 à gauche / <code>--r-g</code> à droite, padding <code>10px 13px</code>. REPLIÉ sur UNE ligne ; le texte intégral (chiffres, base, avertissement d'échantillon) vit dans l'infobulle « i » — aucun mot supprimé, la mention reste sourcée.</p>
 </div>
 
 <div class="spec"><h4>SEGMENTÉ ET TABLEAU</h4>

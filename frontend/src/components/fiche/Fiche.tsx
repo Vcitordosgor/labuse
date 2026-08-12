@@ -1223,8 +1223,27 @@ export function Fiche({ idu }: { idu: string }) {
   // M30 item 5 (AI1886) : délaissé (< 50 m², seuil unique côté API) → le tiroir DIT
   // « délaissé (N m²) » au lieu d'une promesse de logements sur 9 m².
   const delaisse = faisa.data?.delaisse
+  // M56-B3/B4 : zone A (agricole) et N (naturelle) = inconstructibles par principe. ATTENTION :
+  // « AU » (à urbaniser) EST constructible → on exclut AU (« A » non suivi de « U »). Les zones
+  // numérotées (1AU/2AU) commencent par un chiffre → non captées. U reste constructible.
+  const nonConstructible = !!(reglesZone && /^(A(?!U)|N)/i.test(reglesZone))
+  // M56-B4 point 3 (PRIORITÉ) — ne JAMAIS afficher un intervalle NUL (« 0–0 logts ») comme un
+  // résultat : en non-constructible ou capacité nulle/absente, la colonne dit « non calculable »
+  // (--txt-faint), pas un faux zéro. PRÉSENTATION seule — le calcul back n'est pas touché.
+  const logMax = Array.isArray(fo?.logements_au_sol)
+    ? Math.max(fo.logements_au_sol[0] ?? 0, fo.logements_au_sol[1] ?? 0)
+    : (typeof fo?.logements_au_sol === 'number' ? fo.logements_au_sol : null)
+  const capaciteNulle = logMax != null && logMax <= 0   // intervalle servi [0,0] / 0 = pas de résultat
+  const logementsNonCalculable = nonConstructible || capaciteNulle  // pour le ton --txt-faint + contexte
   const logementsTxt = delaisse ? `délaissé (${delaisse.surface_m2} m²)`
-    : fo?.logements_au_sol ? (Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]} logts` : `${fo.logements_au_sol} logts`) : (reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
+    // Zone inconstructible → le calcul n'a pas d'objet : « non calculable ».
+    : nonConstructible ? 'non calculable'
+      // Zone constructible mais capacité servie nulle ([0,0]) → « — » (RefDrawer, --txt-faint) :
+      // jamais « 0–0 logts » présenté comme un résultat.
+      : capaciteNulle ? undefined
+        : (logMax != null && logMax > 0)
+          ? (Array.isArray(fo!.logements_au_sol) ? `${fo!.logements_au_sol[0]}–${fo!.logements_au_sol[1]} logts` : `${fo!.logements_au_sol} logts`)
+          : (reglesSdp != null && reglesSdp > 0 ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
   const pctConsomme = f?.potentiel_transformation?.pct_consomme
   const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
@@ -1238,7 +1257,7 @@ export function Fiche({ idu }: { idu: string }) {
   // affiche « — » (--txt-faint). Zone A (agricole) et N (naturelle) = inconstructibles par principe.
   const reglesGabarit = fo?.hauteur_m != null
     ? `${fo.hauteur_m} m max`
-    : (reglesZone && /^[AN]/i.test(reglesZone)) ? 'non constructible'
+    : nonConstructible ? 'non constructible'
       : undefined
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
@@ -1277,7 +1296,7 @@ export function Fiche({ idu }: { idu: string }) {
       {/* ═══ EN-TÊTE + CARTE VERDICT (DA §4). M56-B3 fix 3 : plus de filet ni de fond distinct
           sous l'en-tête — le panneau est un seul fond continu --bg-1 du haut au pied.
           M56-B3 fix 7 : padding panneau 16→14 (densité). ═══ */}
-      <div style={{ padding: '18px 14px 14px', flexShrink: 0 }}>
+      <div style={{ padding: '18px 14px 4px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: 'var(--txt-off)' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
@@ -1337,8 +1356,10 @@ export function Fiche({ idu }: { idu: string }) {
           const cells = [
             { l: 'Surface', v: fmtM2(f.surface_m2) },
             { l: 'Zone', v: reglesZone ?? '—' },
-            { l: 'SDP dispo.', v: reglesSdp != null ? `${fmtInt(reglesSdp)} m²` : '—' },
-            { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
+            // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
+            // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
+            { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
+            { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
           ]
           return (
             <div data-bandeau-chiffres style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', border: '0.5px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', background: 'var(--bg-stat)' }}>
@@ -1504,7 +1525,7 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 ))}
                 <MicroTriple items={[
-                  f.renouvellement.sdp_residuelle_m2 != null ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                  f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
                   f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
                   `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
                 ]} />
@@ -1523,12 +1544,17 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         )}
 
-        {/* M52 L4 — rappel DISCRET quand la mesure de la commune est dégradée (échantillon limité) :
-            le classement reste, la fréquence exacte est indicative. Jamais une excuse vague. */}
+        {/* M52 L4 / M56-B4 point 1 — mesure de commune dégradée : BANDEAU D'ATTENTION (DA §3)
+            replié sur UNE ligne (fond --amber-bg, filet gauche 2px --amber, rayon 0 à gauche /
+            --r-g à droite, padding 10px 13px). Le texte intégral (chiffres, base, avertissement
+            d'échantillon) vit dans l'infobulle « i » — aucun mot supprimé, la mention reste sourcée. */}
         {f?.qualite_commune?.degradee && (
-          <p data-qualite-commune-rappel style={{ margin: '9px 0 0', fontSize: 10.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
-            <span style={{ color: '#e8b84d' }}>◐</span> {f.qualite_commune.libelle}
-          </p>
+          <div data-qualite-commune-rappel style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--amber-bg)', borderLeft: '2px solid var(--amber)', borderRadius: '0 var(--r-g) var(--r-g) 0', padding: '10px 13px' }}>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--amber)', lineHeight: 1.4 }}>Marché peu actif à {f.qualite_commune.commune}</span>
+            <Tip side="top" tip={f.qualite_commune.libelle}>
+              <span role="button" tabIndex={0} aria-label="Détail : marché peu actif" style={{ color: 'var(--txt-ghost)', fontSize: 12, cursor: 'help', flexShrink: 0 }}>ⓘ</span>
+            </Tip>
+          </div>
         )}
 
         {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
@@ -1562,26 +1588,9 @@ export function Fiche({ idu }: { idu: string }) {
           </p>
         )}
 
-        {/* Dette #10 — drapeaux EBC / ER : INFORMATION seule, jamais une exclusion. Dérivés des
-            prescriptions PLU déjà servies par la cascade ; aucun impact sur le verdict ni le score. */}
-        {presc && (presc.ebc || presc.ers.length > 0) && (
-          <div data-prescriptions-badges style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {presc.ebc && (
-              <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
-                <span data-badge-ebc className="pill p-mint">
-                  partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
-                </span>
-              </Tip>
-            )}
-            {presc.ers.map((er, i) => (
-              <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
-                <span data-badge-er className="pill p-amber">
-                  emplacement réservé{er.num ? ` n°${er.num}` : ''}
-                </span>
-              </Tip>
-            ))}
-          </div>
-        )}
+        {/* M56-B4 point 2 — les drapeaux EBC / ER (prescriptions PLU, information seule) ne
+            flottent plus dans le flux d'ACTIONS : ils descendent sous un micro-label « SIGNAUX »,
+            juste avant LE TERRAIN (rendu plus bas). */}
       </div>
 
       {ficheSearchOpen && (
@@ -1597,7 +1606,8 @@ export function Fiche({ idu }: { idu: string }) {
       {/* M19 (réf. ordre) : la barre d'onglets est RETIRÉE — la fiche est une pile de tiroirs
           empilés, navigable au scroll ; plus de navigation par onglets. */}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] py-4">
+      {/* M56-B4 point 4 — gap header → boutons IA ramené à 8px (header pb 4 + body pt 4). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
@@ -1681,9 +1691,35 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
                 bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
 
+            {/* M56-B4 point 2 — SIGNAUX de la parcelle (drapeaux EBC / ER, information seule),
+                regroupés ici juste avant LE TERRAIN, jamais au milieu des actions. Micro-label
+                « SIGNAUX » ; si un seul signal, la pastille reste seule mais à cette place. */}
+            {presc && (presc.ebc || presc.ers.length > 0) && (
+              <div data-signaux-parcelle>
+                <GroupLabel first>Signaux</GroupLabel>
+                <div data-prescriptions-badges style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {presc.ebc && (
+                    <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
+                      <span data-badge-ebc className="pill p-mint">
+                        partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
+                      </span>
+                    </Tip>
+                  )}
+                  {presc.ers.map((er, i) => (
+                    <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
+                      <span data-badge-er className="pill p-amber">
+                        emplacement réservé{er.num ? ` n°${er.num}` : ''}
+                      </span>
+                    </Tip>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
-            <GroupLabel first>Le terrain</GroupLabel>
+            {/* M56-B4 : `first` — LE TERRAIN garde l'écart resserré même si SIGNAUX le précède. */}
+            <GroupLabel first={!(presc && (presc.ebc || presc.ers.length > 0))}>Le terrain</GroupLabel>
 
             {/* DA §4 — groupe encarté : les tiroirs d'un même thème enfermés dans une .gcard. */}
             <div className="gcard">
@@ -1770,9 +1806,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
             {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
             <RefDrawer id="faisabilite" icon={IC.faisa} name="Constructibilité" value={logementsTxt}
+              valueColor={logementsNonCalculable ? 'var(--txt-faint)' : undefined}
               context={delaisse
                 ? `surface ${delaisse.surface_m2} m² · seuil ${delaisse.seuil_m2} m²`
-                : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
+                : logementsNonCalculable ? (reglesZone ? `zone ${reglesZone} · sans objet` : 'sans objet')
+                  : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
               micro={<MicroTriple items={delaisse
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
