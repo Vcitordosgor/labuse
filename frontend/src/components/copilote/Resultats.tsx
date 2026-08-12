@@ -60,13 +60,13 @@ function Lead({ p, et }: { p: Restituee; et: EtiquettesMoteurs }) {
     <div data-restituee={p.idu} className="grid grid-cols-1 gap-4 border-b border-cp-line px-5 py-4 md:grid-cols-[1fr_230px]">
       <div>
         <div>
-          <span className="rounded-md bg-cp-mint px-2 py-0.5 font-display text-[10px] font-bold tracking-wide text-[#08130E]">#01</span>
+          <span className="rounded-md bg-mint px-2 py-0.5 font-display text-[10px] font-bold tracking-wide text-mint-on">#01</span>
           <span className="ml-2.5 font-display text-lg font-bold text-cp-txt">{p.idu}</span>
         </div>
         <div className="mt-1 text-[11.5px] text-cp-faint">{p.commune}</div>
         {p.zone && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-lg border border-cp-mint/25 bg-cp-mint/10 px-2.5 py-1 font-display text-[11px] font-semibold text-cp-mint">
+            <span className="rounded-lg border border-mint/25 bg-mint/10 px-2.5 py-1 font-display text-[11px] font-semibold text-mint">
               Zone {p.zone}
             </span>
           </div>

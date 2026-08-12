@@ -402,7 +402,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
             (Copilote), étincelles. Vérifié à 400px de large. */}
         <div className="mt-5 flex w-full gap-[9px]">
           <button data-commencer onClick={onCommencer}
-            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] bg-[#4ADE80] p-[13px] font-display text-[14px] font-bold text-[#06180E] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] bg-mint p-[13px] font-display text-[14px] font-bold text-mint-on transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
             <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
             <svg viewBox="0 0 16 16" aria-hidden="true"
               className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">

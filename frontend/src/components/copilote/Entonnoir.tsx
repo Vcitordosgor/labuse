@@ -48,13 +48,13 @@ export function Entonnoir({ etages, communes, dureeMs, exhaustif, calibrage, req
         </p>
       )}
       <div className="relative mx-[5%] mb-4 h-0.5 rounded bg-cp-line2">
-        <div className="absolute inset-0 rounded bg-gradient-to-r from-cp-faint to-cp-mint" />
+        <div className="absolute inset-0 rounded bg-gradient-to-r from-cp-faint to-mint" />
         {etages.map((e, i) => (
           <i key={e.etape}
             className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
               e.n == null || i === 0 ? 'h-2 w-2 bg-cp-faint'
-              : i === etages.length - 1 ? 'h-[11px] w-[11px] bg-cp-mint shadow-[0_0_10px_rgba(99,242,184,.35)]'
-              : 'h-2 w-2 bg-cp-mint shadow-[0_0_10px_rgba(99,242,184,.35)]'}`}
+              : i === etages.length - 1 ? 'h-[11px] w-[11px] bg-mint shadow-[0_0_10px_rgba(74,222,128,.35)]'
+              : 'h-2 w-2 bg-mint shadow-[0_0_10px_rgba(74,222,128,.35)]'}`}
             style={{ left: `${(i / (etages.length - 1)) * 100}%` }} />
         ))}
       </div>
@@ -65,11 +65,11 @@ export function Entonnoir({ etages, communes, dureeMs, exhaustif, calibrage, req
             className={e.n == null ? 'opacity-40' : ''}>
             <div className={`font-display text-[25px] font-bold tabular-nums tracking-tight ${
               e.n == null ? 'text-cp-faint'
-              : i === etages.length - 1 ? 'text-cp-mint' : 'text-cp-txt'}`}>
+              : i === etages.length - 1 ? 'text-mint' : 'text-cp-txt'}`}>
               {e.n == null ? S.enAttenteEtage : fmtInt(e.n)}
             </div>
             <div className={`mt-0.5 text-[10px] leading-tight ${
-              e.n != null && i === etages.length - 1 ? 'text-cp-mint/75' : 'text-cp-faint'}`}>
+              e.n != null && i === etages.length - 1 ? 'text-mint/75' : 'text-cp-faint'}`}>
               {S.etages[e.etape] ?? e.etape}
             </div>
             {/* l'étiquette de l'étage, telle que fournie (règle 1 — chaîne libre du back) */}

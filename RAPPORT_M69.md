@@ -124,5 +124,41 @@ sémantique) dans `docs/DA-LABUSE.html`. Captures avant/après Copilote + 2 écr
 tsc 0 · vitest vert · build vert · console 0 · **test auto qui échoue si le tri redevient non monotone**
 (assertion croissant/décroissant) · **aucune valeur verte marque/action en dur** restante.
 
-**STOP — en attente d'arbitrage : (A) lever le groupement pour les tris colonne ? (B) les 3 cas douteux +
-confirmation cp-mint→#4ADE80.**
+---
+
+# CORRECTIONS (après arbitrage Vic)
+
+## PART A — tri Surface global (commit `b3e4097f`)
+Arbitrage : lever le groupement par tier pour les tris colonne (surface/surface_asc), le garder pour rang ;
+ajouter un libellé d'état.
+- Booléen unique **`groupes = analyse && sort === 'rang'`** (`ResultsSection.tsx`) pilote **client** (mode
+  commune) ET **serveur** (`getResults`, mode île) → un seul comportement, plus deux qui se contredisent.
+  Un tri Surface n'est plus groupé → **ordre global monotone** ; le groupement reste pour « Probabilité de
+  vente » (rang, défaut).
+- Comparateur extrait en fonction pure **`sortRows(rows, sort, groupes)`** (exportée, testée).
+- **Libellé sous TRIER** quand le tri rang est actif : « Liste groupée par tier (brûlantes → épuisées) ·
+  trier par Surface pour un ordre global » (`data-tri-groupe`) — lève le malentendu.
+- **Test de non-régression** `sortRows.test.ts` (159 lignes) : Surface ↓ décroissant, Surface ↑ croissant,
+  inversion exacte, groupé = tiers ordonnés + surface desc intra-groupe, pas de mutation. **Échoue si le
+  tri redevient non monotone.** (vitest 37, dont 5 nouveaux.)
+
+## PART B — un seul vert de marque (commit à suivre)
+- **Copilote** : `cp-mint #63F2B8` **supprimé** et aligné sur `--mint #4ADE80` — 22 classes `cp-mint`→`mint`,
+  ombres `rgba(99,242,184,…)`→`rgba(74,222,128,…)`, textes sur vert `#08130E`→`text-mint-on`, token
+  `cp-mint` retiré de `tailwind.config.js`. Mesuré : INSTRUIRE/titre `rgb(99,242,184)` → **`rgb(74,222,128)`**.
+- **Cas douteux (arbitrés)** : `#5fd0a8` (fréquence, fiche) = **sémantique, conservé** ; `hover:border-[#2E5A45]`
+  (ResultsSection ×2) → **`hover:border-mint/60`** ; textes sur vert → **`--mint-on`**.
+- **Valeurs en dur** : bouton accueil `bg-[#4ADE80] text-[#06180E]` → `bg-mint text-mint-on` (via token).
+- Sémantiques **conservés** : `#5CE6A1`, `#4ADE96`, `#3FB56A`, `#2E7D52`, trait de côte `#4ADE80`.
+- **Vérifié** : `grep` = **0** vert de marque/action en dur restant, **0** `cp-mint` restant. `#4ADE80` ne
+  subsiste que dans les définitions de tokens (index.css, tokens.ts) + la côte carte (style MapLibre).
+- Report DA : `docs/DA-LABUSE.html` §1 quater — tableau valeur/usage/statut (marque-action vs sémantique).
+
+## Garde-fous (livraison)
+tsc 0 · vitest 37 · build vert · console 0 (5 écrans) · test de monotonie · 0 vert marque/action en dur.
+
+## Captures
+`reports/m69/captures/` : `copilote-AVANT.png`, `copilote-APRES.png`, `copilote-avant-vs-apres.png`
+(côte-à-côte : #63F2B8 → #4ADE80), `accueil-APRES.png` (Commencer en #4ADE80 via token).
+
+**Livré en deux commits (A puis B). NON mergé.**

@@ -23,7 +23,7 @@ const S = CLIENT.copilote
 // halo discret de la maquette (radial mint en haut à droite, violet en bas à gauche)
 const FOND = {
   backgroundImage:
-    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(99,242,184,.06), transparent 62%), ' +
+    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(74,222,128,.06), transparent 62%), ' +
     'radial-gradient(ellipse 700px 460px at 5% 105%, rgba(180,151,240,.05), transparent 62%)',
 }
 
@@ -44,8 +44,8 @@ function Missions({ mission, setMission, verrouille }: {
           onClick={() => setMission(m.key as MissionActive)}
           className={`rounded-lg border px-3 py-1.5 font-display text-[11px] font-semibold transition-colors duration-quick ${
             mission === m.key
-              ? 'border-cp-mint/50 bg-cp-mint/10 text-cp-mint'
-              : 'border-cp-line2 bg-cp-card2 text-cp-muted hover:border-cp-mint/40'} ${
+              ? 'border-mint/50 bg-mint/10 text-mint'
+              : 'border-cp-line2 bg-cp-card2 text-cp-muted hover:border-mint/40'} ${
             verrouille ? 'cursor-default opacity-60' : ''}`}>
           {m.label}
         </button>
@@ -177,7 +177,7 @@ export function CopiloteView() {
         </div>
 
         <h1 className="font-display text-[clamp(30px,5vw,44px)] font-bold leading-[1.05] tracking-tight text-cp-txt">
-          {S.h1Ligne1}<br />{S.h1Ligne2Avant}<em className="not-italic text-cp-mint">{S.h1Ligne2Em}</em>{S.h1Ligne2Apres}
+          {S.h1Ligne1}<br />{S.h1Ligne2Avant}<em className="not-italic text-mint">{S.h1Ligne2Em}</em>{S.h1Ligne2Apres}
         </h1>
         <p className="mb-6 mt-3 max-w-[600px] text-[13.5px] text-cp-muted">
           {S.lede}<b className="font-medium text-cp-txt">{S.ledeFort}</b>
@@ -185,9 +185,9 @@ export function CopiloteView() {
 
         <AvisIA className="mb-5 border-cp-faint/40 bg-white/[0.02] text-cp-muted" />
 
-        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-cp-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(99,242,184,.06)] ${
+        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)] ${
           run.quota != null ? 'border-cp-red/30 opacity-50'
-          : enInstruction || enAttente ? 'border-cp-mint/35 opacity-65' : 'border-cp-mint/35'}`}>
+          : enInstruction || enAttente ? 'border-mint/35 opacity-65' : 'border-mint/35'}`}>
           <div className="min-w-[250px] flex-1">
             <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
               readOnly={enInstruction || enAttente} placeholder={S.placeholder} rows={2}
@@ -207,12 +207,12 @@ export function CopiloteView() {
             ) : (
               <button data-instruire onClick={lancer}
                 disabled={!brief.trim() || run.enCreation || run.quota != null}
-                className="rounded-[13px] bg-cp-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-[#08130E] shadow-[0_0_36px_rgba(99,242,184,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
+                className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
                 {S.instruire} →
               </button>
             )}
             <div className={`flex items-center gap-2 text-[10.5px] ${run.quota != null ? 'text-cp-red' : 'text-cp-faint'}`}>
-              <i className={`h-1 w-1 rounded-full ${run.quota != null ? 'bg-cp-red' : 'bg-cp-mint'}`} />
+              <i className={`h-1 w-1 rounded-full ${run.quota != null ? 'bg-cp-red' : 'bg-mint'}`} />
               {run.quota != null ? S.quota.pill
                 : enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6)
                 : enAttente ? S.suspendue
@@ -255,7 +255,7 @@ export function CopiloteView() {
               <div className="mb-3.5 mt-4 flex flex-wrap gap-2">
                 {(vue.clarification.options ?? []).map((o) => (
                   <button key={o} data-clarif-option onClick={() => void run.repondre(o)}
-                    className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-cp-mint hover:text-cp-mint">
+                    className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-mint hover:text-mint">
                     {o}
                   </button>
                 ))}
@@ -337,7 +337,7 @@ export function CopiloteView() {
                 <p className="mx-auto mt-2 max-w-[62ch] text-[13px] text-cp-muted">{S.resultats.zeroNote}</p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2.5">
                   <button data-relance onClick={relancer}
-                    className="rounded-xl bg-cp-mint px-5 py-3 font-display text-[12px] font-bold text-[#08130E]">
+                    className="rounded-xl bg-mint px-5 py-3 font-display text-[12px] font-bold text-mint-on">
                     {S.resultats.relanceBudget}
                   </button>
                   <button data-relance onClick={relancer}
