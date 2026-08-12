@@ -1492,7 +1492,9 @@ export function Fiche({ idu }: { idu: string }) {
         {f && (() => {
           const cells = [
             { l: 'Surface', v: fmtM2(f.surface_m2) },
-            { l: 'Zone', v: reglesZone ?? '—' },
+            // M71 BLOC C — l'aveuglement se dit : zone absente = « Non publié au GPU » (jamais
+            // un « — » muet). Saint-Philippe (RNU, bandeau f.rnu déjà affiché) + 91 rés. Saint-Leu.
+            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU' },
             // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
             // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
             { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
@@ -1886,7 +1888,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'PLU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
+              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
