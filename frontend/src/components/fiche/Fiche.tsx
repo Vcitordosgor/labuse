@@ -1234,18 +1234,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
 }
 
 // M-B (passe directeur) : « qu'a-t-il d'autre ? » → scan patrimoine en un clic depuis la fiche.
-function PatrimoineLink({ siren }: { siren: string }) {
-  const { setModule, setM02Prefill } = useApp()
-  return (
-    <button
-      onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
-      className="mt-1.5 text-[11px] text-violet hover:underline"
-      title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
-    >
-      → tout son patrimoine (M02)
-    </button>
-  )
-}
+// M60 P1c — PatrimoineLink (lien inline « tout son patrimoine ») RETIRÉ : remplacé par la PORTE
+// Scan patrimoine en pied du tiroir Propriétaire (une seule entrée par outil).
 
 // M19 : la barre d'onglets a été retirée (fiche = pile de tiroirs) ; `tab` subsiste comme
 // état interne toujours à 'synthese' (le contenu unique), gardé pour un diff minimal.
@@ -1261,6 +1251,8 @@ export function Fiche({ idu }: { idu: string }) {
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
+  const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
+  const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -1969,11 +1961,14 @@ export function Fiche({ idu }: { idu: string }) {
                     date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
                   ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight />)}</div> : null })()}
-                {/* M22-B : lettre de vérification de zonage — bouton discret (la barre M20 reste à 7 tuiles) */}
-                <a data-lettre-zonage href={`/lettre-zonage/${idu}.pdf`} target="_blank" rel="noreferrer"
-                  className="self-start text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
-                  Éditer la lettre de vérification de zonage (PDF)
-                </a>
+                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
+                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
+                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
+                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
+                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu-annuaire') }} />
+                <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
+                  sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
+                  onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
               </div>
             </RefDrawer>
 
@@ -2136,7 +2131,8 @@ export function Fiche({ idu }: { idu: string }) {
                         <div className="mt-0.5 text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.etat_societe.note}</div>
                       </div>
                     )}
-                    {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                    {/* M60 P1c — lien inline « voir le patrimoine » retiré : une seule entrée par outil,
+                        la PORTE Scan patrimoine est au pied du tiroir (voir plus bas). */}
                   </div>
                 ) : (
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
@@ -2156,6 +2152,13 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
+                    propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
+                {f.proprietaire_moral?.siren && (
+                  <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
+                    sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
+                    onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
+                )}
               </div>
             </RefDrawer>
 
