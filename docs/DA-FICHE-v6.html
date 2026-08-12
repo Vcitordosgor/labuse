@@ -10,7 +10,7 @@
   --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#97A39B; --lab:#8A968F;
   --txt-mut:#6B776F; --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44;
   --mint:#4ADE80; --mint-on:#06301A;
-  --amber:#E0A94F; --amber-bg:#2A2113; --amber-band:#1C1509; --amber-txt:#D9AE68; --amber-ico:#8A7040;
+  --amber:#E0A94F; --amber-bg:#2A2113; /* M68 P1c — tokens --amber-band/txt/ico retirés avec .band */
   --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
   --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,monospace;
@@ -54,10 +54,7 @@ code{font-family:var(--mono);font-size:10.5px;color:var(--txt-off)}
   justify-content:center;gap:8px;margin-top:10px;font-size:13.5px;font-weight:500;color:var(--mint-on)}
 .cta-sub{font-size:10.5px;color:var(--txt-off);text-align:center;margin-top:6px}
 
-.band{background:var(--amber-band);border-left:2px solid var(--amber);border-radius:0 9px 9px 0;
-  padding:9px 12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.band span{font-size:12px;color:var(--amber-txt)}
-.band i{font-size:13px;color:var(--amber-ico);font-style:normal}
+/* M68 P1c — styles .band (bandeau d'attention « Marché peu actif ») retirés avec le composant. */
 
 .ia{display:flex;gap:7px;margin-top:10px}
 .ia-btn{flex:1;height:34px;border:0.5px solid var(--iris-line);background:var(--iris-bg);
@@ -145,7 +142,8 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
   <div class="cta">Demander à LABUSE d'analyser →</div>
   <div class="cta-sub">Le verdict, le score et « pourquoi » — à la demande.</div>
 
-  <div class="band"><span>Marché peu actif à Sainte-Marie</span><i>ⓘ</i></div>
+  <!-- M68 P1c — le bandeau d'attention .band « Marché peu actif » a été retiré (composant supprimé
+       en M65 P1) : ce résidu de maquette est enlevé, la maquette suit l'app. -->
 
   <div class="ia">
     <div class="ia-btn">◇ Poser une question</div>

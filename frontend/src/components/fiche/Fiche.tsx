@@ -1467,7 +1467,17 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           )
         })()}
-        </div>{/* /.head — la carte d'en-tête se ferme ici ; CTA/bandeau/IA suivent sous elle. */}
+        </div>{/* /.head — la carte d'en-tête (identité + 4 chiffres) est le SEUL bloc FIXE. */}
+      </div>{/* M68 P1a — fin du wrapper FIXE (en-tête seul) : tout le reste défile. */}
+
+      {/* M68 P1a — DÉFILEMENT UNIQUE : le bloc Analyse (CTA + carte verdict), la bannière RNU, les
+          signaux, puis les tiroirs / actions / exports / mention légale vivent tous DANS ce conteneur
+          `overflow-y-auto flex-1`. La fiche défile donc jusqu'au pied EN TOUTE circonstance (bloc
+          Analyse absent / déplié / replié, synthèse ouverte, n'importe quel tiroir ouvert). Avant M68,
+          le bloc Analyse était dans le wrapper flex-shrink:0 et affamait ce conteneur (cf. RAPPORT_M68). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+        {/* wrapper NON-flex : conserve l'espacement interne d'origine du bloc Analyse (marges inline). */}
+        <div>
 
         {/* M55-L point 5 — VERDICT À LA DEMANDE. À l'ouverture (verdict non encore demandé pour
             cette parcelle dans la session), un BOUTON vert remplace le bloc verdict — l'avis n'est
@@ -1690,7 +1700,7 @@ export function Fiche({ idu }: { idu: string }) {
         {/* M56-B4 point 2 — les drapeaux EBC / ER (prescriptions PLU, information seule) ne
             flottent plus dans le flux d'ACTIONS : ils descendent sous un micro-label « SIGNAUX »,
             juste avant LE TERRAIN (rendu plus bas). */}
-      </div>
+        </div>{/* /wrapper non-flex du bloc Analyse (M68 P1a) — la suite défile aussi */}
 
       {ficheSearchOpen && (
         <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
@@ -1705,8 +1715,8 @@ export function Fiche({ idu }: { idu: string }) {
       {/* M19 (réf. ordre) : la barre d'onglets est RETIRÉE — la fiche est une pile de tiroirs
           empilés, navigable au scroll ; plus de navigation par onglets. */}
 
-      {/* M56-B4 point 4 — gap header → boutons IA ramené à 8px (header pb 4 + body pt 4). */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      {/* M68 P1a — l'ancien conteneur de défilement est FUSIONNÉ dans celui ouvert après l'en-tête
+          (plus haut) : un seul conteneur `overflow-y-auto flex-1` pour tout le corps de la fiche. */}
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
