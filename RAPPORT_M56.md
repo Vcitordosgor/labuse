@@ -367,6 +367,41 @@ composant « BANDEAU D'ATTENTION ».
 parcelles M55-O **+ 97402000AI0030** · export PDF premium CT1389 = HTTP 200
 `application/pdf` 67 Ko · parcelle constructible : capacité réelle toujours affichée.
 
+---
+
+## Phase B5 — largeur fiche −10 % (commit `M56-B5 largeur fiche`)
+
+La fiche (élargie de +10 % à 440px en M55-L) est ramenée à **400px** — sa largeur
+d'avant. `Fiche.tsx` + référence §4.
+
+**Fait** :
+- **Une seule valeur** changée : `w-[440px]` → `w-[400px]` sur le conteneur `<aside>`
+  de la fiche (déjà « valeur unique ici », rien à centraliser). `max-w-full` en garde
+  aux petites largeurs. Aucune taille de texte ni padding touché (calés en M56-B3).
+- Bandeau : le libellé « Prix secteur » devient **« Secteur »** — tient sur une ligne
+  à 400px (la DA §4 emploie déjà « SECTEUR »).
+- **Correctif joint** : l'adresse et le lien « Voir sur Pages Jaunes » étaient collés
+  et de poids proches → +2px d'écart (marge 4→6) et lien en **--txt-mut 11.5px**
+  (vérifié : `rgb(107,119,111)` = #6B776F, 11.5px, marginTop 6px).
+
+**Contrôles à 400px (tous OK, capturés sur 97402000AI0030 + 4 parcelles M55-O)** :
+1. Bandeau 4 chiffres : « SURFACE / ZONE / SDP DISPO. / SECTEUR » tiennent chacun sur
+   UNE ligne (« SECTEUR » ne déborde plus).
+2. Rangées `.gr` : titre + valeur/pastille sur la même ligne, sans troncature
+   (« non constructible », « non calculable », « 1 vigilance », « 275 €/m² » tiennent).
+3. Boutons IA : les deux libellés + icône tiennent côte à côte.
+4. Pied : « + CRM · + Projet · Comparer » sur une ligne.
+5. Grille EXPORTS ET OUTILS : les 9 outils restent lisibles et cliquables.
+Aucun contrôle n'a échoué à 400px — pas de troncature, pas de texte réduit.
+
+**Référence** : §4 — largeur 400px documentée, « SECTEUR » confirmé (la maquette du
+doc reste rendue à 360px, largeur du document ; composants identiques).
+
+**Garde-fous B5** : tsc 0 · vitest 32/32 · build OK · console 0 erreur (4 parcelles
+M55-O + 97402000AI0030) · **export PDF premium CT1389 = HTTP 200 `application/pdf`,
+taille IDENTIQUE (67 163 o) avant/après** → le gabarit d'export n'hérite pas de la
+largeur d'écran.
+
 ## STOP
-Mandat terminé (M56 A→E + B2 + B3 + B4), garde-fous verts partout. Référence
+Mandat terminé (M56 A→E + B2 + B3 + B4 + B5), garde-fous verts partout. Référence
 `docs/DA-LABUSE.html` tenue à jour. **Branche non mergée** (`feat/m56-da`). Fin.

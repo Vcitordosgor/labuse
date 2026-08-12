@@ -1262,11 +1262,13 @@ export function Fiche({ idu }: { idu: string }) {
   // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
   const presc = f ? prescriptionsInfo(f.lines) : null
 
-  // M55-L point 4 : conteneur fiche élargi de 10 % — 400 → 440px (valeur unique ici). `max-w-full`
-  // garde la fiche dans l'écran aux petites largeurs (aucun débordement horizontal).
+  // M56-B5 : conteneur fiche ramené de 440px (M55-L, +10 %) à 400px — sa largeur d'avant.
+  // VALEUR UNIQUE ici (un critère, un seul endroit). `max-w-full` garde la fiche dans l'écran
+  // aux petites largeurs (aucun débordement horizontal). Ne PAS toucher les tailles de texte
+  // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
   return (
     <FicheAccordionCtx.Provider value={accValue}>
-    <aside className="absolute right-0 top-0 z-10 flex h-full w-[440px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
+    <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
           sourcés y restent intégralement (R1 : rien n'est supprimé). */}
@@ -1322,11 +1324,13 @@ export function Fiche({ idu }: { idu: string }) {
               )}
             </p>
             {/* M56-B3 fix 2 : la surface quitte l'en-tête (le bandeau la porte, en ha dès 10 000 m²) ;
-                le lien Pages Jaunes reste SEUL sur sa ligne. */}
+                le lien Pages Jaunes reste SEUL sur sa ligne.
+                M56-B5 correctif joint : +2px d'écart avec l'adresse (4→6), lien en --txt-mut 11.5px
+                (l'adresse et le lien étaient collés et de poids proches). */}
             {f?.adresse && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--txt-off)' }}>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5 }}>
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
-                  target="_blank" rel="noreferrer noopener" style={{ color: 'var(--lien)', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
+                  target="_blank" rel="noreferrer noopener" style={{ color: 'var(--txt-mut)', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
                   {CLIENT.fiche.pagesJaunes} ↗
                 </a>
               </p>
@@ -1359,7 +1363,8 @@ export function Fiche({ idu }: { idu: string }) {
             // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
             // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
             { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
-            { l: 'Prix secteur', v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
+            // M56-B5 : « Secteur » (et non « Prix secteur ») — tient sur UNE ligne à 400px ; la DA §4 emploie déjà « SECTEUR ».
+            { l: 'Secteur', v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
           ]
           return (
             <div data-bandeau-chiffres style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', border: '0.5px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', background: 'var(--bg-stat)' }}>
