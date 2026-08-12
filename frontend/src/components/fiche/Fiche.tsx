@@ -699,6 +699,15 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
   }, [d?.calculable, deb.cout, deb.marge, deb.prix, setCalculette])
   const cf = d?.charge_fonciere
   const achat = d?.achat
+  // M60 P1b — présentation : (1) résultat NÉGATIF → verdict en clair, le détail chiffré ne mène plus ;
+  // (2) fourchette ORDONNÉE bas→haut, principal BORNÉ à 0 ; (3) garde-fou coût > prix de sortie DVF.
+  const sortie = d?.prix_sortie_median != null ? Number(d.prix_sortie_median) : null
+  const coutSaisi = cout ?? defauts.cout_construction_m2
+  const coutDepasse = sortie != null && coutSaisi > sortie          // garde-fou immédiat
+  const central = cf != null ? Number(cf.central) : 0
+  const negatif = cf != null && central <= 0                        // l'opération ne dégage aucune valeur
+  const principal = Math.max(0, central)                           // borné à 0 en principal
+  const [bornBas, bornHaut] = cf != null ? [Number(cf.bas), Number(cf.haut)].sort((a, b) => a - b) : [0, 0]
   return (
     <div data-calculette>
       <p className="label-caps mb-1 flex items-center gap-2">
@@ -728,6 +737,12 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
               <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
             </div>
+            {/* M60 P1b — garde-fou IMMÉDIAT : coût de construction > prix de sortie DVF du secteur. */}
+            {coutDepasse && (
+              <p data-calc-gardefou className="mt-2 rounded-lg bg-st-ecartee/10 px-3 py-2 text-[11px] font-medium leading-snug text-st-ecartee">
+                ⚠ Coût de construction ({fmtInt(coutSaisi)} €/m²) au-dessus du prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²) — à ces hypothèses, l'opération ne peut pas dégager de valeur pour le terrain.
+              </p>
+            )}
             {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte) */}
             <div className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
               {([['charge', 'Charge supportable'], ['achat_max', "Prix d'achat max"]] as const).map(([m, l]) => (
@@ -737,21 +752,34 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
                 </button>
               ))}
             </div>
-            {/* le RÉSULTAT — calcul de VOS hypothèses (mêmes totaux dans les deux lectures) */}
-            <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
-              <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
-              <p className="mt-0.5">
-                <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(cf.central)}</b>
-                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
-              </p>
-              {/* M36 Lot C (Q2) : bornes identiques à l'affichage → valeur unique « ~X » */}
-              <p className="text-[11px] text-txt-dim">{fmtEurCompact(cf.bas) === fmtEurCompact(cf.haut) ? `~${fmtEurCompact(cf.bas)}` : `fourchette ${fmtEurCompact(cf.bas)} – ${fmtEurCompact(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
-              {mode === 'achat_max' && (
-                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
-                  = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
-                  échéant) — les trois scénarios suivent la fourchette de prix de sortie DVF (même équation que la
-                  charge supportable, lue à l'envers).
-                </p>
+            {/* le RÉSULTAT — M60 P1b : NÉGATIF → verdict en clair (le détail chiffré reste accessible,
+                il ne mène plus) ; sinon principal BORNÉ à 0, fourchette ORDONNÉE bas→haut. */}
+            <div data-calc-resultat className={`mt-2.5 rounded-lg border px-3 py-2 ${negatif ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
+              {negatif ? (
+                <>
+                  <p data-calc-verdict-neg className="text-[11.5px] font-medium leading-snug text-st-ecartee">
+                    À ces hypothèses, l'opération ne dégage aucune valeur pour le terrain. Le coût de construction
+                    ({fmtInt(coutSaisi)} €/m²) dépasse le prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²).
+                  </p>
+                  <p className="mt-1 text-[10px] text-txt-dim">Détail — {mode === 'achat_max' ? "prix d'achat max" : 'charge foncière'} calculé : <b data-calc-cf className="tnum text-txt-mut">{fmtEurCompact(central)}</b> · fourchette {fmtEurCompact(bornBas)} – {fmtEurCompact(bornHaut)}.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
+                  <p className="mt-0.5">
+                    <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(principal)}</b>
+                    <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
+                  </p>
+                  {/* fourchette ORDONNÉE bas→haut (bornée à l'affichage) */}
+                  <p className="text-[11px] text-txt-dim">{fmtEurCompact(bornBas) === fmtEurCompact(bornHaut) ? `~${fmtEurCompact(bornBas)}` : `fourchette ${fmtEurCompact(bornBas)} – ${fmtEurCompact(bornHaut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+                  {mode === 'achat_max' && (
+                    <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+                      = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
+                      échéant) — les trois scénarios suivent la fourchette de prix de sortie DVF (même équation que la
+                      charge supportable, lue à l'envers).
+                    </p>
+                  )}
+                </>
               )}
             </div>
             {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
