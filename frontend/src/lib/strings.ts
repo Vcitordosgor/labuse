@@ -188,6 +188,10 @@ export const CLIENT = {
     surface: 'Surface',
     rangTip: 'Le classement LABUSE — la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
+    // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
+    // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
+    // malentendu (« pourquoi ce n'est pas monotone ? » = parce que c'est groupé par tier).
+    groupe: 'groupée par tier (brûlantes → épuisées) · trier par Surface pour un ordre global',
     // le « i » de la barre TRIER : les deux tris + leur sens
     lunettes: 'Probabilité de vente = le classement LABUSE : la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
       + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
