@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
@@ -192,7 +192,7 @@ function LayersSection({ open, onToggle, fill, closable }: {
           <div className="flex flex-col gap-3.5">
             {LAYER_FAMILIES.map(({ famille, keys }) => (
               <div key={famille}>
-                <p className="label-caps mb-1.5 block">{famille}</p>
+                <p className="layer-cat mb-1.5 block">{famille}</p>
                 <div className="gcard">
                   {keys.map((key) => {
                     const on = layers[key]
@@ -336,64 +336,91 @@ function VerdictHero() {
 // « Commencer → » en pièce maîtresse : proportions généreuses, texte centré, FLÈCHE
 // DESSINÉE (le caractère → flottait), hover (halo + glissement de flèche) et active
 // (enfoncement) soignés. Tokens LABUSE inchangés (mint / surfaces / display).
+const nfFr = (n: number) => n.toLocaleString('fr-FR')   // séparateur = espace fine (U+202F)
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+// M65 P2c — COMPTEUR : la valeur monte de 0 à sa cible en 1,2 s (sortie cubique) AU MONTAGE, une
+// seule fois par session (drapeau sessionStorage). Sous prefers-reduced-motion → valeur directe.
+function Compteur({ value }: { value: number }) {
+  const CLE = 'labuse.accueil.compteur'
+  const dejaVu = () => { try { return sessionStorage.getItem(CLE) === '1' } catch { return false } }
+  const [n, setN] = useState(() => (dejaVu() || prefersReducedMotion() ? value : 0))
+  useEffect(() => {
+    if (dejaVu() || prefersReducedMotion()) { setN(value); return }
+    try { sessionStorage.setItem(CLE, '1') } catch { /* mode privé : on anime quand même */ }
+    let raf = 0
+    const t0 = performance.now(), dur = 1200
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / dur)
+      setN(Math.round(easeOutCubic(p) * value))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  return <>{nfFr(n)}</>
+}
+
+// M65 P2a — une CASE du bandeau : chiffre (servi) au-dessus, libellé court en dessous. Masquée
+// (cellule vide) si le chiffre est null — jamais inventé.
+function CaseChiffre({ n, label, anime }: { n: number | null | undefined; label: string; anime?: boolean }) {
+  if (n == null) return <div className="bg-[#121815]" />
+  return (
+    <div className="flex flex-col items-center justify-center bg-[#121815] py-3">
+      <span className="text-[19px] font-medium tabular-nums text-[#F4F6F5]">
+        {anime ? <Compteur value={n} /> : nfFr(n)}
+      </span>
+      <span className="mt-1 text-[11px] text-[#7C8A83]">{label}</span>
+    </div>
+  )
+}
+
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
   const d = q.data
-  const nf = (n: number) => n.toLocaleString('fr-FR')
   const A = CLIENT.accueil
-  // M55-J point 3 (décision Vic) : les trois « i » (parcelles / communes / sources) sont RETIRÉS.
-  // Garde-fou fait : aucune des trois infobulles ne portait de réserve d'honnêteté (millésime,
-  // « partiel », estimation) — c'étaient une paraphrase du chiffre (parcelles), une couverture
-  // POSITIVE + source DGFiP (communes) et un pointeur vers la page Sources (sources). Le sourcing
-  // détaillé (DEAL, DGFiP, INSEE, BODACC, Sitadel…) vit déjà sur la page Sources (accessible au
-  // Rail). Suppression franche ; les chaînes CLIENT.accueil.src deviennent 0-caller.
-  const Seg = ({ n, l }: { n: number | null | undefined; l: (s: string) => string }) => (
-    n == null ? null : <span className="font-medium text-txt tabular-nums whitespace-nowrap">{l(nf(n))}</span>
-  )
-  // M55-I point 1 — CAUSE de la troncature du logo : un conteneur `flex justify-center` clippait
-  // le haut du contenu qui déborde. Correctif conservé : le CONTENU est centré par marges
-  // automatiques (`my-auto`) — elles centrent quand il y a de la place ET se réduisent à 0 quand
-  // ça déborde, laissant le logo (en tête) TOUJOURS visible depuis le haut.
-  // M55-L point 1 (décision Vic) : la section d'accueil est FIXE — pas de défilement, pas de
-  // barre. `overflow-hidden` (au lieu de `overflow-y-auto`) : clip propre, aucune barre. Padding
-  // vertical GÉNÉREUX (py-8, valeur DS) pour que la composition respire. Contrepartie assumée : à
-  // une taille où le contenu dépasserait, le bas se clippe (my-auto garde le haut/logo visible) —
-  // mesuré taille par taille (rapport), jamais de scroll réintroduit.
+  const { setView } = useApp()   // M65 P2c — le bouton mauve ouvre l'onglet Copilote (« IA »).
+  // M55-L point 1 (décision Vic) : la section d'accueil est FIXE (overflow-hidden, pas de scroll).
+  // M65 P2b : `overflow-hidden` sert aussi de masque au halo respirant (positionné en absolu,
+  // z-index sous le contenu). Le contenu est en `relative z-10` pour rester au-dessus du halo.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
-      {/* M55-J point 4 : titre ET paragraphe tirent leur largeur maximale d'UNE SEULE valeur
-          partagée (--accueil-w) — plus deux largeurs en dur côte à côte. Le paragraphe, jadis
-          plus étroit (max-w-[32ch]), s'aligne sur le titre → moins de retours à la ligne, moins
-          de hauteur. L'acquis M55-I (justify-start + my-auto) reste : ce point réduit la hauteur
-          du contenu, il ne remet PAS le conteneur en justify-center. */}
-      {/* M55-N point 3 (décision Vic) : le logo (l'oiseau) est RETIRÉ de l'accueil. `my-auto`
-          CONSERVÉ (il centre désormais le contenu dans le panneau, ne compense plus le logo coupé
-          de M55-I) — jamais de retour à `justify-center` (bug d'origine). Autres emplacements du
-          logo NON touchés (Header, States, page maintenance Caddy) — signalés au rapport. */}
-      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
+    <div data-accueil className="relative flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
+      {/* M65 P2b — halo respirant (vert de marque), sous le contenu. */}
+      <div className="accueil-halo" aria-hidden="true" />
+      <div data-accueil-contenu className="relative z-10 my-auto flex w-full flex-col items-center"
         style={{ ['--accueil-w' as string]: '240px' }}>
-        {/* M56-C · DA §12 — ordre : TITRE → bandeau 3 chiffres → ligne descriptive → bouton.
-            Le bouton passe APRÈS le texte (le texte pose, le geste conclut) ; halo retiré
-            (règle « ni halo ni lueur »). Remplace l'agencement M55 « bouton d'abord + glow ». */}
         <h3 className="max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
-        {/* bandeau 3 chiffres (.stats) — chaque cellule porte le chiffre servi ; masqué si null. */}
-        <div className="stats mt-4 w-full" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
-          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.parcelles} l={A.segParcelles} /></div>
-          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.communes} l={A.segCommunes} /></div>
-          <div className="stat flex items-center justify-center py-3 text-center"><Seg n={d?.sources} l={A.segSources} /></div>
+        {/* M65 P2a — bandeau 3 cases : chiffre 19px/500 #F4F6F5, libellé 11px #7C8A83 (4px dessous),
+            grille 3 col gap 1px sur fond #1E2622, cases #121815, rayon 10px. Valeurs servies. */}
+        <div className="mt-4 grid w-full grid-cols-3 gap-px overflow-hidden rounded-[10px] bg-[#1E2622]">
+          <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime />
+          <CaseChiffre n={d?.communes} label={A.labelCommunes} />
+          <CaseChiffre n={d?.sources} label={A.labelSources} />
         </div>
         <p className="mt-4 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
-        {/* « Commencer → » : aplat menthe, sans halo. M62-P1 (h) : hauteur STANDARD 40 px (h-10, au
-            lieu de py-4 ≈ 50), texte+bouton resserrés au centre (my-auto conservé). Flèche dessinée. */}
-        <button data-commencer onClick={onCommencer}
-          className="group mt-5 flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-ctl bg-mint px-5 font-display text-[14px] font-bold text-mint-ink transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
-          <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
-          <svg viewBox="0 0 16 16" aria-hidden="true"
-            className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
-            <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
-              strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        {/* M65 P2c — DEUX boutons sur une ligne, largeurs égales, gap 9px. Vert = « Commencer → »
+            (ouvre les Filtres) ; Mauve = « Découvrir LABUSE IA » (ouvre le Copilote), étincelles. */}
+        <div className="mt-5 flex w-full gap-[9px]">
+          <button data-commencer onClick={onCommencer}
+            className="group flex flex-1 items-center justify-center gap-2 rounded-[9px] bg-[#4ADE80] p-[13px] font-display text-[14px] font-bold text-[#06180E] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+            <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true"
+              className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
+              <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
+                strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button data-decouvrir onClick={() => setView('copilote')}
+            className="group flex flex-1 items-center justify-center gap-2 rounded-[9px] border border-[#2E2552] bg-[#1A1430] p-[13px] font-display text-[14px] font-bold text-[#B9AEF2] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-110 active:translate-y-[1px]">
+            <svg viewBox="0 0 20 20" aria-hidden="true" className="h-[15px] w-[15px] shrink-0">
+              <path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z"
+                fill="currentColor" />
+            </svg>
+            <span>{A.decouvrir}</span>
+          </button>
+        </div>
       </div>
     </div>
   )

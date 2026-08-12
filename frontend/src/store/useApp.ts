@@ -4,7 +4,9 @@ import type { FilterTier } from '../lib/status'
 
 // M26-B : 'copilote' = l'écran Copilote (instruction de dossier, event log SSE) — vue de
 // premier niveau, la maquette B4 est pleine largeur (pas un module du panneau 320 px).
-export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
+// M65 P4 : la vue 'ia' (IAStub « Recherche ») est retirée du rail et de l'app — la recherche NL
+// vit dans l'omnibox du header, le montage de projet dans le Copilote.
+export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
 
 export interface LayerToggles {
   zonage: boolean
@@ -128,13 +130,11 @@ export interface IaRestitution {
 }
 
 export type Basemap = 'dark' | 'clair' | 'plan' | 'ortho'   // M63-P1 : + fond clair
-// M63-P1 (e) : le choix de fond PERSISTE entre sessions (localStorage). Seul 'dark'/'clair' est
-// mémorisé (ortho/plan restent contextuels) ; défaut 'dark' — le SOMBRE reste le fond par défaut.
-const BASEMAP_LS_KEY = 'labuse.basemap'
-const readBasemap = (): Basemap => {
-  try { const v = localStorage.getItem(BASEMAP_LS_KEY); return v === 'clair' || v === 'dark' ? v : 'dark' }
-  catch { return 'dark' }
-}
+// M65 P8 (précision Vic) : le SOMBRE est le fond par défaut — au chargement à froid COMME après un
+// rechargement. « Clair » est une BASCULE MANUELLE, jamais l'état initial → on NE restaure PLUS le
+// choix depuis localStorage (la persistance M63 aurait rouvert la carte en Clair après un reload).
+// Le choix vit dans le store le temps de la session ; un reload repart toujours en Sombre.
+const readBasemap = (): Basemap => 'dark'
 export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
@@ -372,9 +372,11 @@ export const useApp = create<AppState>((set) => ({
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
     entretienDirect: null }),
-  // F2 (M12) : bascule sur la vue copilote ET arme l'entretien direct (même nettoyage exclusif que setView).
+  // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
+  // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
+  // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
   entretienDirect: null,
-  ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'ia', outilsOpen: false,
+  ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'copilote', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
     parcours: null, openProjet: null }),
   clearEntretienDirect: () => set({ entretienDirect: null }),
@@ -444,8 +446,8 @@ export const useApp = create<AppState>((set) => ({
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
-  basemap: readBasemap(),   // M63-P1 (e) : restauré du localStorage (défaut 'dark')
-  setBasemap: (basemap) => { try { if (basemap === 'clair' || basemap === 'dark') localStorage.setItem(BASEMAP_LS_KEY, basemap) } catch { /* ignore */ } set({ basemap }) },
+  basemap: readBasemap(),   // M65 P8 : toujours 'dark' au boot/reload (Sombre = défaut).
+  setBasemap: (basemap) => set({ basemap }),   // M65 P8 : bascule de session, non persistée.
   orthoYear: 'now',
   setOrthoYear: (orthoYear) => set({ orthoYear, basemap: 'ortho' }),
   terrain3d: false,

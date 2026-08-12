@@ -5,7 +5,6 @@ import { AvisIA } from './components/AvisIA'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
-import { IAStub } from './components/ia/IAStub'
 import { Kanban } from './components/crm/Kanban'
 import { LeftPanel } from './components/panel/LeftPanel'
 import { Rail } from './components/Rail'
@@ -325,7 +324,6 @@ export default function App() {
           {view === 'crm' && <Kanban />}
           {view === 'sources' && <SourcesPage />}
           {view === 'projets' && <ProjetsPanel />}
-          {view === 'ia' && <IAStub />}
           {view === 'copilote' && <CopiloteView />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
           <ContextePanel />

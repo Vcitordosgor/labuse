@@ -4,10 +4,9 @@ import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getM
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
-import { CP_COMMUNES } from '../panel/FiltreLabuse'
 
-// M55-H point 7 : CP par nom de commune (source unique = la table mesurée du panneau)
-const CP_PAR_COMMUNE: Record<string, string> = Object.fromEntries(CP_COMMUNES.map(([cp, nom]) => [nom, cp]))
+// M65 P7 — le CP n'est plus affiché dans le sélecteur de communes ; le lookup CP_PAR_COMMUNE
+// (et l'import CP_COMMUNES qui ne servait qu'à lui) sont retirés.
 
 function Omnibox() {
   const { select, setView, setCommune, commune, setToast } = useApp()
@@ -170,7 +169,9 @@ function CommuneSelect() {
               <div key={c.insee} className="group flex items-center rounded-md hover:bg-surface-3">
                 <button onClick={() => pick(c.commune)}
                   className={`min-w-0 flex-1 whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                  {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+                  {/* M65 P7 — code postal retiré de l'affichage. Identité inchangée : clé = c.insee,
+                      sélection = c.commune (le CP n'était qu'une décoration). */}
+                  {c.commune}
                 </button>
                 {/* M62-P1 (k) : « voir la fiche → » FIXE et VERT sur chaque ligne (plus au survol seul). */}
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}

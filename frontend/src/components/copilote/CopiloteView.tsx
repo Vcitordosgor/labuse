@@ -16,6 +16,7 @@ import { PillStatut, SecHead } from './ui'
 import { runEpingle, useCopiloteRun } from './useCopiloteRun'
 import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
 import { AvisIA } from '../AvisIA'
+import { useApp } from '../../store/useApp'
 
 const S = CLIENT.copilote
 
@@ -120,6 +121,17 @@ export function CopiloteView() {
     if (id) charger(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // M65 P4 — « Décrire un projet » (liste Projets) arme `entretienDirect` puis navigue ici :
+  // l'amorce prend place dans le brief (ancien flux IAStub → ProjetEntretien, désormais absorbé
+  // par le Copilote). Consommée une fois, puis effacée. Ne pas écraser un brief déjà saisi.
+  const { entretienDirect, clearEntretienDirect } = useApp()
+  useEffect(() => {
+    if (entretienDirect === null) return
+    setBrief((b) => b.trim() ? b : (entretienDirect || 'je veux monter une opération immobilière'))
+    briefRef.current?.focus()
+    clearEntretienDirect()
+  }, [entretienDirect, clearEntretienDirect])
 
   const actif = run.runId != null
   const terminal = vue.statut === 'done' || vue.statut === 'failed' || vue.statut === 'cancelled'

@@ -147,24 +147,41 @@ const OVERLAYS = {
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
-// ═══ M64-P1 — MODE CLAIR = le rendu SOMBRE, fond NOIR remplacé par du BLANC ═══
-// (arbitrage Vic : PAS de basemap clair, PAS de palette recolorée — chaque couche garde EXACTEMENT
-// sa couleur sombre : parcelles, limites, communes, zonages, risques). Seules adaptations permises :
-//  1. le fond du canvas (`bg`) : #060A08 → #FFFFFF (les zones sans parcelles deviennent blanches) ;
-//  2. les pastilles de libellés de commune (fond clair + texte sombre) — dans leur propre effet ;
-//  3. les rares traits ACHROMATIQUES quasi-blancs (sélection, pulse, étiquette de zone) qui
-//     disparaîtraient sur blanc → on ne bouge que leur clair/foncé (CONTRASTE), jamais leur teinte.
-// Remplace l'`applyTheme`/palette de M63 (supprimée avec lib/mapPalette).
-const CLAIR_BG = '#FFFFFF'
-const SOMBRE_BG = '#060A08'   // valeur d'origine du calque `bg` — le sombre ne bouge pas
+// ═══ M65 P8 — MODE CLAIR = INVERSION FIGURE/FOND (redéfinit le Clair M64) ═══
+// La MER (fond hors terre = `bg`) reste NOIRE, exactement comme en Sombre (le Clair ne touche PAS
+// au fond de carte). Ce qui change, c'est la TERRE :
+//  · masse terrestre (île dissoute) = GRIS #C9C4B8 (couche `ile-mass`) → la terre sans parcelle
+//    (cirques, forêt, volcan) est grise ; la mer, non couverte, reste le `bg` noir ;
+//  · parcelles = BLANC CASSÉ #F4F2EC (jamais blanc pur : les traits fins de 0,5 px doivent tenir) —
+//    posé dans l'effet palette (branche neutre), qui a `basemap` en deps ;
+//  · trait de côte = vert de marque #4ADE80 2,2 px (couche `ile-cote`, contour dissous seulement) ;
+//  · limites parcelles #B9B3A6 0,5 px · limites communes #2E7D52 1,6 px (≈3× les parcelles).
+// Bascules M64 CONSERVÉES (elles se posent maintenant sur de la terre claire) : traits achromatiques
+// (sélection/pulse/étiquette de zone) → valeur sombre. Pastilles de commune : INCHANGÉES (revert de
+// l'adaptation « pastille claire » M64, cf. leur effet) — un seul token diffère entre les modes.
+const SOMBRE_BG = '#060A08'   // le `bg` (la mer) ne bouge JAMAIS — noir dans les deux modes.
+// largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
+const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyClairMode(m: maplibregl.Map, clair: boolean) {
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
-  set('bg', 'background-color', clair ? CLAIR_BG : SOMBRE_BG)
-  // sélection + pulse : #ECF5EF (quasi-blanc, achromatique) invisible sur blanc → foncé sur clair.
+  const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
+  set('bg', 'background-color', SOMBRE_BG)   // mer noire, toujours.
+  // TERRE claire : masse île grise + trait de côte vert — Clair seulement.
+  vis('ile-mass', clair)
+  vis('ile-cote', clair)
+  // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
   const selLine = clair ? '#14181A' : '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
-  // étiquette de zone PLU (texte quasi-blanc + halo sombre) : inversion de contraste sur blanc.
   for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C') }
+  // limites parcelles : #B9B3A6 / 0,5 px sur terre claire ; sinon valeur sombre d'origine.
+  for (const id of ['parcels-limites', 'ile-limites']) {
+    set(id, 'line-color', clair ? '#B9B3A6' : '#8FA69A')
+    set(id, 'line-width', clair ? 0.5 : 0.3)
+  }
+  // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
+  // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
+  set('communes-bounds', 'line-color', clair ? '#2E7D52' : '#5CE6A1')
+  set('communes-bounds', 'line-width', clair ? 1.6 : COMMUNES_W_SOMBRE)
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -240,8 +257,9 @@ function BoutonCarte({ onClick, title, children }: { onClick: () => void; title:
   }
   return (
     <button onClick={press} title={title}
-      /* M62-P1 (d) : boutons zoom doublés 30→60 px (rayon rounded-xl proportionné, bordure 1 px, +/− agrandis). */
-      className={`flex h-[60px] w-[60px] items-center justify-center rounded-xl border text-2xl leading-none shadow-elev-1 transition-colors duration-quick ${
+      /* M65 P5 : dimensions réduites à 70 % de l'état M62-P1 (60→42 px, glyphe 24→17 px,
+         rayon 12→8 px). Le gap entre les deux boutons est réduit au prorata côté conteneur. */
+      className={`flex h-[42px] w-[42px] items-center justify-center rounded-[8px] border text-[17px] leading-none shadow-elev-1 transition-colors duration-quick ${
         flash ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}>
       {children}
     </button>
@@ -389,6 +407,14 @@ export function MapView() {
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: id === 'bm-carto' ? 'visible' : 'none' },
           paint: { 'raster-opacity': id === 'bm-carto' ? 0.55 : 1 } })
       }
+      // M65 P8 — MASSE TERRESTRE (île dissoute) : en mode CLAIR, la terre est un aplat GRIS #C9C4B8
+      // et la mer reste le `bg` NOIR ; la terre sans parcelle (cirques, forêt, volcan) prend ce gris.
+      // Posée TOUT EN BAS de la pile vectorielle (juste au-dessus du raster) → sous TOUS les overlays
+      // (risques, zonages) et les parcelles, qui restent lisibles par-dessus. Masquée en Sombre (le
+      // raster CARTO porte alors terre/mer/côte). Source ile974.geojson = 24 communes DISSOUES.
+      m.addSource('ile-mass', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}ile974.geojson` })
+      m.addLayer({ id: 'ile-mass', type: 'fill', source: 'ile-mass', layout: { visibility: 'none' },
+        paint: { 'fill-color': '#C9C4B8', 'fill-opacity': 1 } })
       // MNT (relief 3D) — terrarium AWS (libre)
       m.addSource('dem', { type: 'raster-dem', encoding: 'terrarium', tileSize: 256, maxzoom: 13,
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] })
@@ -487,6 +513,13 @@ export function MapView() {
           'text-size': 11, 'text-optional': true },
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
+
+      // M65 P8 — TRAIT DE CÔTE : le SEUL endroit de la carte où le vert de marque #4ADE80 est
+      // autorisé — il sépare le noir de la mer et le clair de la terre. Posé au-dessus des
+      // remplissages (parcelles/île). Sur le contour DISSOUS uniquement (jamais les limites
+      // internes des communes). Masqué en Sombre. 2,2 px.
+      m.addLayer({ id: 'ile-cote', type: 'line', source: 'ile-mass', layout: { visibility: 'none' },
+        paint: { 'line-color': '#4ADE80', 'line-width': 2.2, 'line-opacity': 0.95 } })
 
       // mesure (ligne + polygone + points + étiquette)
       m.addSource('measure', { type: 'geojson', data: EMPTY_FC as never })
@@ -796,9 +829,12 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-color', '#8FA69A')
         m.setPaintProperty(fill, 'fill-opacity', 0.42)
       } else {
-        // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur
-        m.setPaintProperty(fill, 'fill-color', '#22302A')
-        m.setPaintProperty(fill, 'fill-opacity', 0.28)
+        // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur.
+        // M65 P8 : en mode CLAIR, cette trame neutre = les PARCELLES en BLANC CASSÉ #F4F2EC (opaques)
+        // qui se détachent sur la terre grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
+        const clair = basemap === 'clair'
+        m.setPaintProperty(fill, 'fill-color', clair ? '#F4F2EC' : '#22302A')
+        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0.28)
       }
     }
     // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée ;
@@ -844,13 +880,14 @@ export function MapView() {
     aggMarkers.current.forEach((mk) => mk.remove())
     aggMarkers.current = []
     if (!ile || !communes.data) return
-    // M64-P1 (B) : les pastilles de libellés de commune adaptent leur FOND pour rester lisibles sur
-    // blanc (fond clair + texte sombre) — SEULE adaptation autorisée. En sombre, valeurs D'ORIGINE.
-    const isLight = basemap === 'clair'
+    // M65 P8 — pastilles de libellés de commune : INCHANGÉES entre les modes (annule l'adaptation
+    // « pastille claire à texte sombre » livrée en M64). Fond sombre + texte clair dans les DEUX
+    // modes → sur la terre claire elles deviennent des ancres fortes. Valeurs Sombre d'origine
+    // conservées (le hot/cold sémantique — menthe pour une commune à chaudes — est préservé).
     const lab = {
-      borderHot: isLight ? '#B9C6BE' : '#2E6B4F', borderCold: isLight ? '#D4DAD6' : '#26302B',
-      bgHot: isLight ? 'rgba(255,255,255,.94)' : 'rgba(9,26,18,.92)', bgCold: isLight ? 'rgba(250,250,250,.9)' : 'rgba(10,14,12,.85)',
-      textHot: isLight ? '#0F6E3E' : '#5CE6A1', textCold: isLight ? '#3F524A' : '#8FA69A',
+      borderHot: '#2E6B4F', borderCold: '#26302B',
+      bgHot: 'rgba(9,26,18,.92)', bgCold: 'rgba(10,14,12,.85)',
+      textHot: '#5CE6A1', textCold: '#8FA69A',
     }
     const updateVis = () => {
       const show = m.getZoom() < 10
@@ -882,7 +919,9 @@ export function MapView() {
         `display:inline-flex;align-items:center;gap:4px;` +
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? lab.borderHot : lab.borderCold};` +
         `background:${hot ? lab.bgHot : lab.bgCold};color:${hot ? lab.textHot : lab.textCold};` +
-        (hot && !isLight ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+        // M65 P8 — pastilles identiques au Sombre dans les deux modes : l'ombre menthe s'applique
+        // dès qu'une commune est « hot » (opinion + chaudes), quel que soit le fond.
+        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
       // M55-C point 4 (décision Vic 10/08, remplace le comportement « fiche seule ») : cliquer le
       // nom de commune = TROIS effets en un — ouvrir la fiche, caler le périmètre sur la commune
       // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
@@ -894,7 +933,7 @@ export function MapView() {
     updateVis()
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
-  }, [ile, communes.data, mapReady, opinion, basemap])
+  }, [ile, communes.data, mapReady, opinion])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {
@@ -1086,7 +1125,8 @@ export function MapView() {
           l'étire plus, ses enfants sont absolus → hauteur 0 → carte clippée (noir). Les dimensions
           explicites survivent quel que soit le `position` gagnant. Cf. RAPPORT_M_W_CARTE_NOIRE.md. */}
       <div ref={ref} className="absolute inset-0 h-full w-full" />
-      <div className="absolute left-4 top-4 flex flex-col gap-2">
+      {/* M65 P5 : gap entre les deux boutons réduit au prorata (8→6 px). */}
+      <div className="absolute left-4 top-4 flex flex-col gap-1.5">
         {(['+', '−'] as const).map((s) => (
           <BoutonCarte key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
             title={s === '+' ? 'Zoomer' : 'Dézoomer'}>

@@ -42,13 +42,18 @@ export const CLIENT = {
     // Les chiffres du bloc 1 restent SERVIS par /accueil/chiffres (affichage dynamique, « i »
     // sourcé sur chacun) — le texte figé donne les valeurs actuelles, jamais des counts en dur.
     b1Titre: 'LABUSE, c’est tout le foncier de La Réunion. Au même endroit.',
-    segParcelles: (n: string) => `${n} parcelles`,
-    segCommunes: (n: string) => `${n} communes`,
-    segSources: (n: string) => `${n} sources publiques branchées`,
+    // M65 P2a — bandeau 3 cases : le CHIFFRE (servi, dynamique) au-dessus, le LIBELLÉ court en
+    // dessous. Les valeurs restent servies par /accueil/chiffres (jamais en dur). « sources » = le
+    // comptage réel des sources BRANCHÉES (data_sources status='connecte') — cf. rapport M65.
+    labelParcelles: 'parcelles',
+    labelCommunes: 'communes',
+    labelSources: 'sources',
     b1Suite: ' — cadastre, PLU, permis, ventes, risques, procédures BODACC. Chaque donnée porte sa date — toujours la plus fraîche disponible.',
     // M55-J point 3 : les 3 infobulles « i » (accueil.src) sont RETIRÉES — aucune ne portait de
     // réserve d'honnêteté ; le sourcing détaillé vit sur la page Sources. Chaînes supprimées.
     commencer: 'Commencer →',
+    // M65 P2c — second bouton (mauve) : ouvre l'onglet Copilote (« IA »).
+    decouvrir: 'Découvrir LABUSE IA',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
   //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──

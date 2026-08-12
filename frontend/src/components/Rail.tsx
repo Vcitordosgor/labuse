@@ -8,19 +8,13 @@ import { GROUPS, MODULES } from './outils/registry'
 type Zone = Exclude<View, 'sources'> | 'outils'
 
 const ICONS: Record<Zone, JSX.Element> = {
-  // M62-P1 (a/b) : l'entrée « IA » du rail = le Copilote (view 'copilote') → ÉTINCELLES (icône de
-  // l'ancienne entrée IA). IAStub (view 'ia') reste, renommé « Recherche » → loupe, le temps que le
-  // Copilote absorbe /ia/search + l'entretien (mandat séparé au BACKLOG). Aucune route morte.
+  // M62-P1 (a/b) : l'entrée « IA » du rail = le Copilote (view 'copilote') → ÉTINCELLES.
+  // M65 P4 : l'entrée « Recherche » (IAStub, view 'ia') est RETIRÉE — le Copilote absorbe le
+  // montage de projet (entretienDirect) et la recherche NL reste dans l'omnibox du header.
   copilote: (
     <>
       <path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z"
         fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </>
-  ),
-  ia: (
-    <>
-      <circle cx="8.6" cy="8.6" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="12" x2="16.5" y2="16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </>
   ),
   cartes: (
@@ -56,11 +50,10 @@ const ICONS: Record<Zone, JSX.Element> = {
 }
 
 const ZONES: { key: Zone; label: string }[] = [
-  // M62-P1 (a/b) : « Copilote » → « IA » (étincelles), en tête. L'ancienne entrée « IA » (IAStub)
-  // est renommée « Recherche » (ce qu'elle fait : /ia/search + entretien) et CONSERVÉE tant que le
-  // Copilote ne couvre pas ces deux flux (diagnostic P0 ; retrait = mandat séparé au BACKLOG).
+  // M62-P1 (a/b) : « Copilote » → « IA » (étincelles), en tête.
+  // M65 P4 : l'entrée « Recherche » (IAStub) est retirée — le Copilote absorbe l'entretien de
+  // montage (entretienDirect) et la recherche NL reste dans l'omnibox du header. Rail → 7 entrées.
   { key: 'copilote', label: 'IA' },
-  { key: 'ia', label: 'Recherche' },
   { key: 'cartes', label: 'Cartes' },
   { key: 'outils', label: 'Outils' },
   { key: 'projets', label: 'Projets' },
