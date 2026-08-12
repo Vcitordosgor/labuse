@@ -82,4 +82,51 @@ dans les 4 états, sur AK0043 + les 4 parcelles M55-O.
 `reports/m68/captures/` : `phase0-deplie.png`, `phase0-replie.png` (en-tête seul, 49 px),
 `phase0-fiche-deplie-768.png` (la carte remplit le visible, scroll comprimé dessous).
 
-**STOP — en attente d'arbitrage avant PHASE 1.**
+---
+
+# PHASE 1 (après arbitrage Vic)
+
+Arbitrage : (a) correctif recommandé retenu ; (b) sans objet (ne pas toucher au repli) ; ajouter à la
+recette la mesure de la hauteur utile du scroll aux 4 viewports (déplié) ; garder (c) retrait du résidu
+`.band` de `docs/DA-FICHE-v6.html`.
+
+## (a) Défilement rétabli
+`Fiche.tsx` : **seul l'en-tête `.head` (identité + 4 chiffres) reste fixe** ; tout le reste — bloc Analyse
+(CTA + `data-verdict-card`), bannière RNU, signaux, tiroirs, actions, exports, mention légale — vit
+désormais **dans le conteneur `overflow-y-auto flex-1`**. Réalisé par 3 édits de frontières (bilan des
+`<div>` équilibré, tsc/build verts) : fermeture du wrapper fixe juste après l'en-tête, ouverture du
+conteneur de défilement à sa suite (bloc Analyse enveloppé d'un `<div>` non-flex pour préserver son
+espacement interne), fusion de l'ancien conteneur. `verdictCard.dansScroll = true` (mesuré).
+
+**Recette — hauteur utile du conteneur de scroll (bloc Analyse DÉPLIÉ), AK0043 :**
+
+| Viewport | AVANT (PHASE 0) | APRÈS (PHASE 1) | mention légale atteignable |
+|---|---|---|---|
+| 900 | 277 px | **616 px** | oui |
+| 768 | 145 px | **484 px** | oui |
+| 700 | 77 px | **416 px** | oui |
+| 640 | **20 px** | **356 px** | oui |
+
+Aucune hauteur ne tombe sous un seuil empêchant d'atteindre la mention légale (min = 356 px @640).
+
+**Recette — mention légale atteignable dans les 4 états × 5 parcelles** (AK0043 + les 4 M55-O
+97408000AP1647, 97409000AR1260, 97411000HM0273, 97407000AI1821), viewport 768 :
+absent / déplié / replié / synthèse ouverte → **visible = true partout**, **console 0 erreur** (mesuré).
+
+## (b) Repli — non touché
+Conformément à l'arbitrage, aucun changement au repli. Vérifié inchangé : replié = « Analyse LABUSE ·
+Écartée · › » sur une ligne (`phase1-bloc-replie.png`).
+
+## (c) Résidu `.band` retiré
+`docs/DA-FICHE-v6.html` : mockup `.band` « Marché peu actif à Sainte-Marie » supprimé, règles CSS `.band`
+retirées, tokens `--amber-band/--amber-txt/--amber-ico` retirés (0 autre usage ; `--amber`/`--amber-bg`
+conservés). La maquette suit l'app (composant retiré en M65 P1).
+
+## Garde-fous PHASE 1
+tsc 0 · vitest 32/32 · build vert · console 0 erreur (5 parcelles) · recette scroll ci-dessus.
+
+## Captures PHASE 1
+`reports/m68/captures/` : `phase1-bas-fiche-atteint-768.png` (en-tête fixe + scroll jusqu'à la mention
+légale, exports visibles), `phase1-bloc-replie.png` (bloc replié une ligne, inchangé).
+
+**Commits** : PHASE 0 = `633847a7` (diagnostic). PHASE 1 = ce commit. **NON mergé.**
