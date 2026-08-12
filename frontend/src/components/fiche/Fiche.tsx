@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { createContext, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
+import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, onePagerUrl, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet, iduCourt } from '../../lib/format'
@@ -69,42 +69,49 @@ const IC = {
 // M55-L point 6 : `TheatreCompteur` (« N parcelles analysées ») retiré de la fiche → 0-caller,
 // fonction supprimée. Le champ back `parc_analysees` reste servi (autres usages / PDF).
 
-function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
-  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke={accent ? REF.chevAccent : REF.chev} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-    style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}><path d="m9 6 6 6-6 6" /></svg>
-}
-
 // M55-L point 10 — ACCORDÉON EXCLUSIF des tiroirs de la fiche : un seul ouvert à la fois, zéro
 // ouvert légal (initial). État à champ unique (store.ficheTiroir[idu]), exposé par contexte pour
 // éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
 const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
 
-/** M19 · tiroir de la fiche. M55-O phase 3.3 : les 10 CARTES deviennent des LIGNES — plus de fond,
- *  ni bordure, ni coins arrondis ; un filet horizontal fin sépare chaque ligne. Titre (14,5 px,
- *  texte clair) + sous-titre de contexte (le `micro`, visible sans ouvrir) + valeur à droite +
- *  chevron. PAS d'icône (10 icônes vertes en colonne = du bruit). M55-O phase 3.5 : la valeur est
- *  GRISE (factuelle) par défaut — le vert n'est plus le défaut, il redevient un signal (les blocs
- *  passent une couleur explicite quand c'est un état). `accent` (violet) = signal chaud, conservé.
- *  M55-L point 10 : l'état `open` est CONTRÔLÉ par l'accordéon (contexte). `icon` ignoré (gardé
- *  dans le type pour ne pas toucher les call-sites). */
-function RefDrawer({ id, name, value, valueColor, accent, micro, children }: {
-  id?: string; icon?: ReactNode; name: string; value?: ReactNode; valueColor?: string
+/** M56-B2 · tiroir de la fiche — GABARIT STRICT de la DA §4/4b (docs/DA-LABUSE.html) : la rangée
+ *  fermée EST une `.gr` (colonne gauche `.gr-t` titre + `.gr-s` UNE ligne de contexte grise ;
+ *  colonne droite `.gr-v` valeur neutre OU `.pill` de statut, puis `.chev`). Le filet --line entre
+ *  rangées vient du wrapper (l'en-tête n'a de filet qu'à l'état OUVERT, pour séparer de son corps).
+ *  Le `micro` riche (jauge, sparkline, segments) ne vit PLUS sur la rangée fermée : il descend EN
+ *  TÊTE du tiroir ouvert (règle §4 : une seule ligne de contexte sur la rangée fermée).
+ *  `value` : chaîne → enveloppée en `.gr-v` ; élément React (une `.pill`) → rendu tel quel.
+ *  `icon` ignoré (gardé au type pour ne pas toucher les call-sites). */
+function RefDrawer({ id, name, context, value, valueColor, accent, micro, children }: {
+  id?: string; icon?: ReactNode; name: string; context?: ReactNode; value?: ReactNode; valueColor?: string
   accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
   const acc = useContext(FicheAccordionCtx)
   const open = !!id && acc.openId === id
   return (
     <div data-drawer={id} style={{ borderBottom: '0.5px solid var(--line)', scrollMarginTop: 8 }}>
-      {/* DA §4b — en-tête de tiroir OUVERT sur --bg-3 (état ouvert), chevron retourné. */}
-      <button onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: open ? 'var(--bg-3)' : 'none', border: 0, padding: '11px 8px 10px', cursor: children ? 'pointer' : 'default', textAlign: 'left', transition: 'background var(--dur-fast) var(--ease)', borderRadius: open ? 6 : 0 }}>
-        <span style={{ flex: 1, fontSize: 14.5, color: accent ? REF.violet : 'var(--txt-hi)', minWidth: 80, lineHeight: 1.25 }}>{name}</span>
-        {value != null && <span style={{ fontSize: 13.5, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : 'var(--txt-dim)'), whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>}
-        {children && <RefChevron open={open} accent={accent} />}
+      {/* DA §4/4b — la rangée fermée est une .gr ; en-tête ouvert sur --bg-3, chevron retourné (⌃). */}
+      <button className="gr" onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
+        style={{ width: '100%', textAlign: 'left', background: open ? 'var(--bg-3)' : 'transparent', cursor: children ? 'pointer' : 'default', transition: 'background var(--dur-fast) var(--ease)', borderBottom: open ? '0.5px solid var(--line)' : 'none' }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="gr-t" style={accent ? { color: 'var(--iris-2)' } : undefined}>{name}</div>
+          {context != null && <div className="gr-s">{context}</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, minWidth: 0 }}>
+          {value != null && (isValidElement(value)
+            ? value
+            : <span className="gr-v" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...(valueColor ? { color: valueColor } : {}) }}>{value}</span>)}
+          {children && <span className="chev">{open ? '⌃' : '›'}</span>}
+        </div>
       </button>
-      {/* sous-titre de contexte (la valeur visible sans ouvrir) — masqué quand le tiroir est ouvert. */}
-      {micro && !open && <div style={{ margin: '-3px 2px 9px', opacity: 0.9 }}>{micro}</div>}
-      {open && children && <div style={{ padding: '2px 2px 13px' }}>{children}</div>}
+      {/* DA §4b — l'intérieur reste plat : paires libellé-valeur (children). Le micro riche
+          (jauge/sparkline/segments) descend EN TÊTE du tiroir, jamais sur la rangée fermée. */}
+      {open && (children || micro) && (
+        <div style={{ padding: '14px 13px', borderBottom: '0.5px solid var(--line)' }}>
+          {micro && <div style={{ marginBottom: children ? 12 : 0 }}>{micro}</div>}
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -143,9 +150,11 @@ const MicroSpark = ({ label }: { label: string }) => (
     <span style={{ fontSize: 11, color: REF.dim }}>{label}</span>
   </div>
 )
+// M56-B2 · DA §3 — les signaux propriétaire sont des PASTILLES standard p-amber (attention),
+// jamais des puces violettes locales.
 const MicroPastilles = ({ items }: { items: string[] }) => (
   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-    {items.map((t, i) => <span key={i} style={{ fontSize: 11, color: REF.pastilleTxt, background: REF.pastilleBg, borderRadius: 5, padding: '2px 8px' }}>{t}</span>)}
+    {items.map((t, i) => <span key={i} className="pill p-amber">{t}</span>)}
   </div>
 )
 const MicroTriple = ({ items }: { items: ReactNode[] }) => (
@@ -235,7 +244,7 @@ function EligibiliteReplie({ lines, color }: { lines: FicheLine[]; color: string
   if (passes.length === 0) return null
   return (
     <details data-eligibilite style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${color}33` }}>
-      <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#8fd8b4', listStyle: 'none' }}>
+      <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--lab)', listStyle: 'none' }}>
         Vérifications d'éligibilité — <span style={{ color: '#5CE6A1' }}>✓ {passes.length} passées</span>
       </summary>
       <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -983,9 +992,8 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
   const [bMin, bMax] = c.travaux.bornes
   return (
     <RefDrawer id="mode-b" icon={IC.faisa} name="Mode B — Réhabilitation"
-      value={mb.negatif ? 'bilan négatif' : `~${mb.achat_max_libelle ?? ''}`}
-      valueColor={mb.negatif ? '#E8B44C' : undefined}
-      micro={<span style={{ fontSize: 10, color: '#8FA69A' }}>Estimé — hypothèse travaux à ajuster</span>}>
+      context="Estimé — hypothèse travaux à ajuster"
+      value={mb.negatif ? <span className="pill p-amber">bilan négatif</span> : `~${mb.achat_max_libelle ?? ''}`}>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {mb.negatif ? (
           <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#E8B44C' }}>{mb.message_negatif}</p>
@@ -1438,10 +1446,10 @@ export function Fiche({ idu }: { idu: string }) {
                   <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
                 )}
                 {reglesZone && (
-                  <span style={{ fontSize: 11, background: '#14251c', color: '#8fd8b4', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>constructible {reglesZone}</span>
+                  <span style={{ fontSize: 11, background: '#14251c', color: 'var(--lab)', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>constructible {reglesZone}</span>
                 )}
                 {risquesLines.length > 0 && (
-                  <span style={{ fontSize: 11, background: '#14251c', color: '#8fd8b4', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>{risquesFlags.length === 0 ? '✓ rien à signaler' : `${risquesFlags.length} vigilance`}</span>
+                  <span style={{ fontSize: 11, background: '#14251c', color: 'var(--lab)', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>{risquesFlags.length === 0 ? '✓ rien à signaler' : `${risquesFlags.length} vigilance`}</span>
                 )}
               </div>
             )}
@@ -1547,14 +1555,14 @@ export function Fiche({ idu }: { idu: string }) {
           <div data-prescriptions-badges style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {presc.ebc && (
               <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
-                <span data-badge-ebc className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#5CE6A122', color: '#5CE6A1' }}>
+                <span data-badge-ebc className="pill p-mint">
                   partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
                 </span>
               </Tip>
             )}
             {presc.ers.map((er, i) => (
               <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
-                <span data-badge-er className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#e8b84d22', color: '#e8b84d' }}>
+                <span data-badge-er className="pill p-amber">
                   emplacement réservé{er.num ? ` n°${er.num}` : ''}
                 </span>
               </Tip>
@@ -1626,6 +1634,11 @@ export function Fiche({ idu }: { idu: string }) {
           // M55-O phase 3.5 : la valeur « Réseaux et accès » n'est VERTE que si l'état est confirmé
           // (band confirmee) ; sinon gris (factuel). Le vert redevient un signal.
           const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
+          const viabConfirmee = f.viabilisation?.band === 'confirmee'
+          // M56-B2 · DA §4 — contexte Réseaux : les OPÉRATEURS (eau · assainissement · électricité).
+          const viabContext = f.gestionnaires
+            ? [f.gestionnaires.eau?.operateur, f.gestionnaires.assainissement?.operateur, f.gestionnaires.electricite?.gestionnaire].filter(Boolean).join(' · ') || null
+            : null
           // M36 Lot B : plus de repli sur la Complétude (quasi-constante) — ICD ou rien.
           const confianceValue = f.icd ? `${f.icd.score} %` : '—'
           return (
@@ -1636,15 +1649,17 @@ export function Fiche({ idu }: { idu: string }) {
                 / « Pourquoi ce score »), mis en valeur, visibles sans défilement dès l'ouverture.
                 « Une question ? » (AskBar) + « Synthèse ». Même palette violette qu'avant (aucun
                 nouveau composant), remontée + encadrée. */}
-            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '0.5px solid var(--iris-line)', background: 'var(--iris-bg)', borderRadius: 12, padding: 9, marginBottom: 12 }}>
-              <button onClick={() => setAskOpen(true)} data-askbar-open
-                style={{ background: 'var(--iris-bg)', border: '0.5px solid var(--iris-line)', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--iris-2)', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
-                <span style={{ flex: 1, fontSize: 13, color: 'var(--iris-2)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
-                <span style={{ fontSize: 13, color: 'var(--iris)', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
-              </button>
+            {/* DA §4 — DEUX boutons .b-iris côte à côte, un libellé chacun. Les résultats
+                (réponse AskBar, synthèse) se déploient en dessous. */}
+            <div data-ia-tete style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+                <button onClick={() => setAskOpen(true)} data-askbar-open
+                  className="b-iris" style={{ flex: 1, cursor: 'pointer', textAlign: 'center' }}>
+                  Poser une question
+                </button>
+                <SyntheseIA idu={idu} />
+              </div>
               {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
-              <SyntheseIA idu={idu} />
             </div>
 
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
@@ -1659,6 +1674,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
+              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'PLU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
@@ -1738,6 +1754,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ③ ÉCONOMIE — capacité/bilan, marché, réseaux, mode B (M44). Ordre : capacité d'abord. */}
             {/* FAISABILITÉ ET BILAN — micro : 3 données sur une ligne. Ouvert si servable. */}
             <RefDrawer id="faisabilite" icon={IC.faisa} name="Constructibilité" value={logementsTxt}
+              context={delaisse
+                ? `surface ${delaisse.surface_m2} m² · seuil ${delaisse.seuil_m2} m²`
+                : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
               micro={<MicroTriple items={delaisse
                 /* M30-revue A2 : le guard délaissé couvre la tuile ENTIÈRE — la sous-ligne ne
                    promet plus un gabarit/SDP sur une parcelle sous le seuil. */
@@ -1767,8 +1786,10 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
                 quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
             <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
-              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
-              valueColor={risquesFlags.length === 0 ? '#8FA69A' : REF.creuser}
+              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`}
+              value={risquesFlags.length === 0
+                ? <span className="pill p-mint">rien à signaler</span>
+                : <span className="pill p-amber">{risquesFlags.length} vigilance{risquesFlags.length > 1 ? 's' : ''}</span>}
               micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
               {risquesLines.length
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
@@ -1786,8 +1807,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
                 distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
                 confondues (269-286 €/m² terrain vs ~2 000 €/m² bâti). */}
-            <RefDrawer id="marche" icon={IC.marche} name="Marché et secteur" valueColor={REF.name}
-              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m² terrain` : '—'}
+            <RefDrawer id="marche" icon={IC.marche} name="Marché et secteur"
+              context={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')}
+              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
               micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
@@ -1832,7 +1854,9 @@ export function Fiche({ idu }: { idu: string }) {
             </RefDrawer>
 
             {/* RÉSEAUX ET ACCÈS — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" value={viabValue} valueColor={viabColor}>
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" context={viabContext}
+              value={viabConfirmee ? <span className="pill p-mint">confirmée</span> : viabValue}
+              valueColor={viabConfirmee ? undefined : viabColor}>
               <div className="flex flex-col gap-3">
                 {/* M55-O phase 2.2 — la jauge « Accessibilité » (a_score) est RETIRÉE de la fiche
                     (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
@@ -1859,6 +1883,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ⑤ PROPRIÉTÉ — société (M43) + signaux vendeur. CARTE ACCENTUÉE VIOLETTE = le signal chaud. */}
             <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
+              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'privé')}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-2">
@@ -1915,7 +1940,8 @@ export function Fiche({ idu }: { idu: string }) {
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
             <RefDrawer id="confiance" icon={IC.confiance} name="Données et méthode"
-              value={f.data_sources?.length ? CLIENT.fiche.sourcesUtilisees(f.data_sources.length) : confianceValue}>
+              context={f.data_sources?.length ? CLIENT.fiche.sourcesUtilisees(f.data_sources.length) : undefined}
+              value={f.icd ? confianceValue : undefined}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
@@ -2006,7 +2032,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M54-EXPO A8 — AJOUTER cette parcelle au comparateur (jusqu'à 3), puis ouvre le panneau. */}
                 <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
                   title="Ajouter au comparateur (Outils → Comparer pour le rouvrir)"
-                  style={{ flexShrink: 0, padding: '0 12px', borderRadius: 9, border: '1px solid #2a3a33', background: '#0e1311', color: '#8fd8b4', fontSize: 12, cursor: 'pointer' }}>
+                  style={{ flexShrink: 0, padding: '0 12px', borderRadius: 9, border: '1px solid #2a3a33', background: '#0e1311', color: 'var(--lab)', fontSize: 12, cursor: 'pointer' }}>
                   ⇄ Comparer
                 </button>
               </div>
@@ -2016,41 +2042,44 @@ export function Fiche({ idu }: { idu: string }) {
                   ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
                   1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
                   séparateurs qu'avant. */}
-              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
-                <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+              {/* DA §3/§7 — EXPORTS ET OUTILS : micro-label + grilles compactes, icônes --lab
+                  (jamais colorées), mêmes rayons/filets que partout. */}
+              <div className="micro" style={{ display: 'block', margin: '0 0 7px' }}>EXPORTS ET OUTILS</div>
+              <div style={{ background: 'var(--bg-2)', border: '0.5px solid var(--line-card)', borderRadius: 'var(--r-g)', display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
+                <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid var(--line)', color: 'var(--lab)', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>PDF</p>
                 </a>
                 <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
                 {f.coords && (
-                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
+                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', color: 'var(--lab)', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Cadastre</p>
                   </a>
                 )}
               </div>
-              <div style={{ marginTop: 8, background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
+              <div style={{ marginTop: 8, background: 'var(--bg-2)', border: '0.5px solid var(--line-card)', borderRadius: 'var(--r-g)', display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', overflow: 'hidden' }}>
                 {f.coords && (
-                  <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
+                  <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid var(--line)', color: 'var(--lab)', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>1950</p>
                   </button>
                 )}
                 {f.coords && (
-                  <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
+                  <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid var(--line)', color: 'var(--lab)', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Maps</p>
                   </a>
                 )}
                 {/* Courrier propriétaire → module M09 (setModule) pré-rempli sur la parcelle courante. */}
                 <button data-courrier-tile onClick={() => setModule('courriers')}
-                  style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
+                  style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid var(--line)', color: 'var(--lab)', background: 'none', border: 0, cursor: 'pointer' }}
                   title={CLIENT.fiche.export.courrierTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.courrier}</p>
                 </button>
-                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
+                <a data-onepager href={onePagerUrl(idu)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid var(--line)', color: 'var(--lab)', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.onepagerTip}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.onepager}</p>
                 </a>
@@ -2083,13 +2112,13 @@ function SyntheseIA({ idu }: { idu: string }) {
   const q = useMutation({ mutationFn: () => getExplain(idu) })
   useEffect(() => { q.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const d = q.data
+  // M56-B2 · DA §4 — bouton IA en .b-iris (idle) ; le résultat garde son cadre mauve, en pleine
+  // largeur sous la rangée de boutons.
   const box = { marginTop: 8, background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '11px 14px' } as const
   if (!d && !q.isPending) return (
     <button onClick={() => q.mutate()} data-synthese-ia
-      style={{ ...box, display: 'flex', alignItems: 'center', gap: 9, width: '100%', textAlign: 'left', color: '#c9b6f2', cursor: 'pointer' }} title={CLIENT.fiche.ia.syntheseTip}>
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
-      <span style={{ flex: 1, fontSize: 13 }}>{CLIENT.fiche.ia.synthese}</span>
-      <span style={{ fontSize: 12, color: '#8a6ff0' }}>rédiger →</span>
+      className="b-iris" style={{ flex: 1, cursor: 'pointer', textAlign: 'center' }} title={CLIENT.fiche.ia.syntheseTip}>
+      Synthèse IA
     </button>
   )
   if (q.isPending) return <p style={{ ...box, color: '#c9b6f2', fontSize: 12 }}><span style={{ display: 'inline-block', width: 6, height: 6, marginRight: 8, borderRadius: 9, background: '#8a6ff0' }} className="animate-pulse" />{CLIENT.fiche.ia.syntheseEnCours}</p>
@@ -2122,18 +2151,18 @@ function SyntheseIA({ idu }: { idu: string }) {
  *  à 7 tuiles n'est PAS réordonnée : c'est la même cellule, avec l'état en plus. */
 function DossierTile({ idu }: { idu: string }) {
   const st = useQuery({ queryKey: ['dossier-statut'], queryFn: getDossierStatut })
-  const cell = { padding: '10px 0 9px', textAlign: 'center' as const, borderRight: '1px solid #16201c', display: 'block' }
+  const cell = { padding: '10px 0 9px', textAlign: 'center' as const, borderRight: '1px solid var(--line)', display: 'block' }
   const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
   const d = st.data
   if (d && !d.disponible) return (
-    <span data-dossier-indispo aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={d.raison ?? 'Générateur de dossier indisponible'}>
+    <span data-dossier-indispo aria-disabled style={{ ...cell, color: 'var(--lab)', opacity: 0.4, cursor: 'not-allowed' }} title={d.raison ?? 'Générateur de dossier indisponible'}>
       {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Dossier</p>
     </span>
   )
   const compteur = d && !d.illimite && d.restants != null
   const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
   return (
-    <a data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4', textDecoration: 'none' }} title={tip}>
+    <a data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ ...cell, color: 'var(--lab)', textDecoration: 'none' }} title={tip}>
       {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : '#7de3ab' }}> · {d!.restants}</span> : ''}</p>
     </a>
   )
@@ -2149,12 +2178,12 @@ function PreDossierTile({ idu }: { idu: string }) {
   const cell = { flex: 1, padding: '9px 0 8px', textAlign: 'center' as const, display: 'block', textDecoration: 'none' }
   const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
   if (!integral) return (
-    <span data-predossier-gate aria-disabled style={{ ...cell, color: '#8fd8b4', opacity: 0.4, cursor: 'not-allowed' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
+    <span data-predossier-gate aria-disabled style={{ ...cell, color: 'var(--lab)', opacity: 0.4, cursor: 'not-allowed' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
       {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.preDossier}</p>
     </span>
   )
   return (
-    <a data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" style={{ ...cell, color: '#8fd8b4' }} title={CLIENT.fiche.export.preDossierTip}>
+    <a data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" style={{ ...cell, color: 'var(--lab)' }} title={CLIENT.fiche.export.preDossierTip}>
       {icon}<p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.preDossier}</p>
     </a>
   )
@@ -2189,7 +2218,7 @@ function BanquierButton({ idu }: { idu: string }) {
     } catch { setEtat('erreur') }
   }
   // C6 · « Financier » (ex-Banquier) — rendu en CELLULE du bloc segmenté (spec référence).
-  const cellStyle = { padding: '10px 0 9px', textAlign: 'center' as const, background: 'none', border: 0, borderRight: '1px solid #16201c', cursor: 'pointer', width: '100%' }
+  const cellStyle = { padding: '10px 0 9px', textAlign: 'center' as const, background: 'none', border: 0, borderRight: '1px solid var(--line)', cursor: 'pointer', width: '100%' }
   const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
   if (etat === 'pret') return (
     <a href={url} target="_blank" rel="noreferrer" style={{ ...cellStyle, color: '#7de3ab', textDecoration: 'none', display: 'block' }} title="Note de financement prête — ouvrir le PDF">
@@ -2197,12 +2226,12 @@ function BanquierButton({ idu }: { idu: string }) {
     </a>
   )
   if (etat === 'encours') return (
-    <span style={{ ...cellStyle, color: '#8fd8b4', display: 'block' }}>
+    <span style={{ ...cellStyle, color: 'var(--lab)', display: 'block' }}>
       {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{CLIENT.fiche.export.banquierEnCours}</p>
     </span>
   )
   return (
-    <button onClick={lancer} data-banquier-btn style={{ ...cellStyle, color: '#8fd8b4' }}
+    <button onClick={lancer} data-banquier-btn style={{ ...cellStyle, color: 'var(--lab)' }}
       title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
       {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--lab)' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance}</p>
     </button>

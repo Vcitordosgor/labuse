@@ -218,6 +218,65 @@ un « i ».
    ce sont les couleurs des couches de la carte (intouchables) — et déjà
    DA-conformes.
 
+---
+
+## Phase B2 — fiche conforme DA (correctif, commit `M56-B2 fiche conforme DA`)
+
+Suite à la passe visuelle du mandant (parcelle 97415000CI0051, Saint-Paul) : six
+écarts entre le rendu et la DA §4/4b/4c/§3. **Méthode appliquée** : relecture du
+CODE SOURCE de la DA (§3 groupe encarté ligne 207-215, §4 ligne 318-365, §4b ligne
+367-400) ; le gabarit `.gr` de la §3/§4 a été RECOPIÉ (pas réinventé) ; les vraies
+données branchées dedans ; comparaison de la fiche 97415000CI0051 à la §4 jusqu'à
+superposition (aux données près). Tout dans `Fiche.tsx` (présentation ; accordéon,
+`verdictRevele`, calculs, exports — intouchés).
+
+**Refactor du gabarit** : `RefDrawer` réécrit sur la `.gr` DA — la rangée fermée
+porte `className="gr"` (colonne gauche `.gr-t` titre + `.gr-s` UNE ligne de contexte
+grise ; colonne droite `.gr-v` valeur neutre OU `.pill` de statut, puis `.chev` avec
+`›`/`⌃`). Le filet --line entre rangées vient du wrapper. `RefChevron` (SVG) supprimé
+au profit de `.chev`. Nouveau prop `context` (le gr-s) ; le `micro` riche (jauge,
+sparkline, segments) ne s'affiche PLUS sur la rangée fermée — il descend EN TÊTE du
+tiroir ouvert. `value` : chaîne → `.gr-v` ; élément React (une `.pill`) → tel quel
+(via `isValidElement`).
+
+**Fait, écart par écart** :
+1. **Tiroirs sans conteneur** → les 7 tiroirs sont des `.gr` DANS les `.gcard`
+   LE TERRAIN / LE CONTEXTE (déjà encartées en M56-B, désormais avec la vraie
+   structure `.gr`/`.gr-t`/`.gr-s`/`.gr-v` à l'intérieur). Vérifié : superposable.
+2. **Valeurs / couleur orpheline** → statuts en PASTILLES : Risques
+   `.pill p-amber` « N vigilances » (pluriel corrigé) / `.pill p-mint` « rien à
+   signaler » ; Réseaux `.pill p-mint` « confirmée » (au lieu de « confirmée par les
+   faits ») ; Marché `.gr-v` « 206 €/m² » (le « terrain » retiré, contexte en gr-s) ;
+   Urbanisme/Constructibilité/Propriétaire/Données en `.gr-v` neutres.
+3. **Sous-titres surchargés** → UNE ligne grise (`.gr-s`) par rangée fermée :
+   Urbanisme « zone U6c · 28 % SDP consommée », Constructibilité « R+1 · calcul
+   tracé », Marché « N ventes secteur · DVF — … ». Les jauges/sparklines/segments
+   descendent DANS le tiroir ouvert (aucune donnée supprimée).
+4. **Boutons IA** → DEUX `.b-iris` côte à côte : « Poser une question » ·
+   « Synthèse IA » ; les résultats (réponse, synthèse) se déploient dessous.
+5. **Grille d'outils du bas** → micro-label « EXPORTS ET OUTILS » + `.gcard`
+   (fond --bg-2, bord --line-card, filets --line) ; les 9 outils CONSERVÉS ; icônes
+   passées de teal `#8fd8b4` à `--lab` (plus d'icônes colorées).
+6. **Pastille « emplacement réservé n°73 »** → `.pill p-amber` standard (au lieu du
+   badge local teinté à la main), avec le badge EBC voisin passé `.pill p-mint`.
+
+**Écarté / constaté** :
+- MicroPastilles (signaux propriétaire) normalisées en `.pill p-amber` (plus de
+  puces violettes locales) — cohérent avec la bibliothèque §3.
+- La pastille « emplacement réservé » reste rendue dans son bloc de prescriptions
+  d'origine (sous le bouton vert) : il n'existe pas de groupe « signaux » distinct
+  dans cette fiche où la déplacer ; seul le STYLE a été normalisé (l'ask concret).
+- Mode B (tiroir imbriqué dans Constructibilité) aligné au passage (contexte +
+  valeur en `.pill p-amber` si bilan négatif), bien que hors des 6 écarts.
+- Résultats IA : quand la synthèse est déclenchée, son cadre se rend dans la cellule
+  du bouton (flex) plutôt qu'en pleine largeur — séparer trigger/résultat aurait
+  touché l'état du composant (hors périmètre présentation). L'état par défaut (deux
+  boutons `.b-iris`) est conforme.
+
+**Garde-fous B2** : tsc 0 · vitest 32/32 · build OK · console 0 erreur sur les 4
+parcelles M55-O ET sur 97415000CI0051 · **export PDF fiche premium 97415000CT1389 :
+HTTP 200 `application/pdf` 67 Ko (`%PDF-`)** — l'habillage n'a rien cassé.
+
 ## STOP
-Mandat terminé, 5 phases livrées, garde-fous verts partout. **Branche non mergée**
+Mandat terminé (M56 A→E + B2), garde-fous verts partout. **Branche non mergée**
 (`feat/m56-da`). Fin.
