@@ -699,6 +699,15 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
   }, [d?.calculable, deb.cout, deb.marge, deb.prix, setCalculette])
   const cf = d?.charge_fonciere
   const achat = d?.achat
+  // M60 P1b — présentation : (1) résultat NÉGATIF → verdict en clair, le détail chiffré ne mène plus ;
+  // (2) fourchette ORDONNÉE bas→haut, principal BORNÉ à 0 ; (3) garde-fou coût > prix de sortie DVF.
+  const sortie = d?.prix_sortie_median != null ? Number(d.prix_sortie_median) : null
+  const coutSaisi = cout ?? defauts.cout_construction_m2
+  const coutDepasse = sortie != null && coutSaisi > sortie          // garde-fou immédiat
+  const central = cf != null ? Number(cf.central) : 0
+  const negatif = cf != null && central <= 0                        // l'opération ne dégage aucune valeur
+  const principal = Math.max(0, central)                           // borné à 0 en principal
+  const [bornBas, bornHaut] = cf != null ? [Number(cf.bas), Number(cf.haut)].sort((a, b) => a - b) : [0, 0]
   return (
     <div data-calculette>
       <p className="label-caps mb-1 flex items-center gap-2">
@@ -728,6 +737,12 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
               <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
             </div>
+            {/* M60 P1b — garde-fou IMMÉDIAT : coût de construction > prix de sortie DVF du secteur. */}
+            {coutDepasse && (
+              <p data-calc-gardefou className="mt-2 rounded-lg bg-st-ecartee/10 px-3 py-2 text-[11px] font-medium leading-snug text-st-ecartee">
+                ⚠ Coût de construction ({fmtInt(coutSaisi)} €/m²) au-dessus du prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²) — à ces hypothèses, l'opération ne peut pas dégager de valeur pour le terrain.
+              </p>
+            )}
             {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte) */}
             <div className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
               {([['charge', 'Charge supportable'], ['achat_max', "Prix d'achat max"]] as const).map(([m, l]) => (
@@ -737,21 +752,34 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
                 </button>
               ))}
             </div>
-            {/* le RÉSULTAT — calcul de VOS hypothèses (mêmes totaux dans les deux lectures) */}
-            <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
-              <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
-              <p className="mt-0.5">
-                <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(cf.central)}</b>
-                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
-              </p>
-              {/* M36 Lot C (Q2) : bornes identiques à l'affichage → valeur unique « ~X » */}
-              <p className="text-[11px] text-txt-dim">{fmtEurCompact(cf.bas) === fmtEurCompact(cf.haut) ? `~${fmtEurCompact(cf.bas)}` : `fourchette ${fmtEurCompact(cf.bas)} – ${fmtEurCompact(cf.haut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
-              {mode === 'achat_max' && (
-                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
-                  = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
-                  échéant) — les trois scénarios suivent la fourchette de prix de sortie DVF (même équation que la
-                  charge supportable, lue à l'envers).
-                </p>
+            {/* le RÉSULTAT — M60 P1b : NÉGATIF → verdict en clair (le détail chiffré reste accessible,
+                il ne mène plus) ; sinon principal BORNÉ à 0, fourchette ORDONNÉE bas→haut. */}
+            <div data-calc-resultat className={`mt-2.5 rounded-lg border px-3 py-2 ${negatif ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
+              {negatif ? (
+                <>
+                  <p data-calc-verdict-neg className="text-[11.5px] font-medium leading-snug text-st-ecartee">
+                    À ces hypothèses, l'opération ne dégage aucune valeur pour le terrain. Le coût de construction
+                    ({fmtInt(coutSaisi)} €/m²) dépasse le prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²).
+                  </p>
+                  <p className="mt-1 text-[10px] text-txt-dim">Détail — {mode === 'achat_max' ? "prix d'achat max" : 'charge foncière'} calculé : <b data-calc-cf className="tnum text-txt-mut">{fmtEurCompact(central)}</b> · fourchette {fmtEurCompact(bornBas)} – {fmtEurCompact(bornHaut)}.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
+                  <p className="mt-0.5">
+                    <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(principal)}</b>
+                    <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
+                  </p>
+                  {/* fourchette ORDONNÉE bas→haut (bornée à l'affichage) */}
+                  <p className="text-[11px] text-txt-dim">{fmtEurCompact(bornBas) === fmtEurCompact(bornHaut) ? `~${fmtEurCompact(bornBas)}` : `fourchette ${fmtEurCompact(bornBas)} – ${fmtEurCompact(bornHaut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+                  {mode === 'achat_max' && (
+                    <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+                      = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
+                      échéant) — les trois scénarios suivent la fourchette de prix de sortie DVF (même équation que la
+                      charge supportable, lue à l'envers).
+                    </p>
+                  )}
+                </>
               )}
             </div>
             {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
@@ -863,9 +891,28 @@ function StepProv({ prov }: { prov?: string }) {
   return <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${cls}`}>{label}</span>
 }
 
+/** M60 P1c — LA PORTE D'OUTIL (gabarit .porte-outil de docs/DA-FICHE-v6.html, recopié TEL QUEL).
+ *  En PIED de tiroir ouvert (après les données), pleine largeur ; accroche CONTEXTUALISÉE (jamais
+ *  générique). Ouvre l'outil PRÉ-REMPLI via setModule (la fiche reste montée → retour intact). */
+function PorteOutil({ ico, titre, sous, onClick, data, compacte }: {
+  ico: ReactNode; titre: string; sous: string; onClick: () => void; data: string; compacte?: boolean
+}) {
+  return (
+    <button type="button" data-porte={data} onClick={onClick} className={`porte-outil${compacte ? ' compacte' : ''}`}>
+      <span className="po-ico">{ico}</span>
+      <span style={{ minWidth: 0 }}>
+        <span className="po-t block">{titre}</span>
+        <span className="po-s block">{sous}</span>
+      </span>
+      <span className="po-arrow">→</span>
+    </button>
+  )
+}
+
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
- *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps), et la
- *  calculette de charge foncière rapatriée (financier au même endroit). L'IA explique, ne recalcule pas. */
+ *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps). M60 P1a : la
+ *  calculette interactive DÉMÉNAGE dans l'outil « Calculette foncière » (moteur unique) ; la fiche garde
+ *  le bilan en LECTURE (capacité, gabarit, SDP) + une PORTE pré-remplie (rendue au pied du tiroir). */
 export function FaisabiliteTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   const [showSteps, setShowSteps] = useState(false)  // M58-P1 (h) : le calcul étape par étape est REPLIÉ par défaut
@@ -968,8 +1015,9 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* ── CHARGE FONCIÈRE rapatriée (le financier au même endroit) ── */}
-      <Calculette idu={idu} />
+      {/* M60 P1a — la CALCULETTE interactive a quitté la fiche : elle vit dans l'outil « Calculette
+          foncière » (moteur unique). La fiche garde le bilan en LECTURE (capacité/gabarit/SDP ci-dessus)
+          + une PORTE pré-remplie posée au pied du tiroir Constructibilité (voir Fiche, RefDrawer faisabilite). */}
     </div>
   )
 }
@@ -1186,18 +1234,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
 }
 
 // M-B (passe directeur) : « qu'a-t-il d'autre ? » → scan patrimoine en un clic depuis la fiche.
-function PatrimoineLink({ siren }: { siren: string }) {
-  const { setModule, setM02Prefill } = useApp()
-  return (
-    <button
-      onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
-      className="mt-1.5 text-[11px] text-violet hover:underline"
-      title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
-    >
-      → tout son patrimoine (M02)
-    </button>
-  )
-}
+// M60 P1c — PatrimoineLink (lien inline « tout son patrimoine ») RETIRÉ : remplacé par la PORTE
+// Scan patrimoine en pied du tiroir Propriétaire (une seule entrée par outil).
 
 // M19 : la barre d'onglets a été retirée (fiche = pile de tiroirs) ; `tab` subsiste comme
 // état interne toujours à 'synthese' (le contenu unique), gardé pour un diff minimal.
@@ -1212,6 +1250,11 @@ export function Fiche({ idu }: { idu: string }) {
   const toggleAnalyseReplie = useApp((s) => s.toggleAnalyseReplie)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
+  const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
+  const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
+  const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
+  const setMsel = useApp((s) => s.setMsel)                 // M60 P1d — porte Assemblage (amorce l'assiette)
+  const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -1920,11 +1963,14 @@ export function Fiche({ idu }: { idu: string }) {
                     date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
                   ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight />)}</div> : null })()}
-                {/* M22-B : lettre de vérification de zonage — bouton discret (la barre M20 reste à 7 tuiles) */}
-                <a data-lettre-zonage href={`/lettre-zonage/${idu}.pdf`} target="_blank" rel="noreferrer"
-                  className="self-start text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
-                  Éditer la lettre de vérification de zonage (PDF)
-                </a>
+                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
+                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
+                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
+                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
+                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu-annuaire') }} />
+                <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
+                  sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
+                  onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
               </div>
             </RefDrawer>
 
@@ -1954,6 +2000,11 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
                 <FaisabiliteTab idu={idu} />
                 {!delaisse && <BilanTab idu={idu} />}
+                {/* M60 P1a/c — PORTE en pied de Constructibilité (après les données) : ouvre l'outil
+                    Calculette foncière PRÉ-REMPLI (moteur unique). Accroche contextualisée (surface). */}
+                <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
+                  sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
+                  onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
               </div>
             </RefDrawer>
             {/* M55-O phase 2.1c : Mode B — Réhabilitation, rattaché à la Constructibilité (un seul
@@ -2082,7 +2133,8 @@ export function Fiche({ idu }: { idu: string }) {
                         <div className="mt-0.5 text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.etat_societe.note}</div>
                       </div>
                     )}
-                    {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                    {/* M60 P1c — lien inline « voir le patrimoine » retiré : une seule entrée par outil,
+                        la PORTE Scan patrimoine est au pied du tiroir (voir plus bas). */}
                   </div>
                 ) : (
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
@@ -2102,6 +2154,13 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
+                    propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
+                {f.proprietaire_moral?.siren && (
+                  <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
+                    sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
+                    onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
+                )}
               </div>
             </RefDrawer>
 
@@ -2198,15 +2257,11 @@ export function Fiche({ idu }: { idu: string }) {
             <div>
               {/* M56-B6 · DA-FICHE-v6 — actions de pied en .actions (+ CRM · + Projet · Comparer),
                   sans filet séparateur (le relief vient du contraste fond/carte). */}
+              {/* M60 P1d — « Comparer » DÉPLACÉ dans le groupe « OUTILS SUR CETTE PARCELLE » (portes,
+                  plus bas). La barre d'actions garde + CRM · + Projet (actions de suivi, pas des outils). */}
               <div className="actions">
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
-                {/* M54-EXPO A8 — AJOUTER cette parcelle au comparateur (jusqu'à 3), puis ouvre le panneau. */}
-                <button data-compare-add onClick={() => useApp.getState().addToCompare(idu)}
-                  className="act act-cmp whitespace-nowrap"
-                  title="Ajouter au comparateur (Outils → Comparer pour le rouvrir)">
-                  ⇄ Comparer
-                </button>
               </div>
               {/* M55-L point 8 — BARRE D'ACTIONS SUR DEUX LIGNES ÉQUILIBRÉES (décision Vic).
                   Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
@@ -2214,9 +2269,9 @@ export function Fiche({ idu }: { idu: string }) {
                   ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
                   1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
                   séparateurs qu'avant. */}
-              {/* M56-B6 · DA-FICHE-v6 — EXPORTS ET OUTILS : label .sec + carte .exports (grille
-                  4 colonnes .exp + bandeau large .exp-wide pour le Pré-dossier). Icônes 15px grises. */}
-              <div className="sec"><span>EXPORTS ET OUTILS</span><i /></div>
+              {/* M60 P1d — « EXPORTS ET OUTILS » SCINDÉ en deux groupes : EXPORTS (documents,
+                  inchangés) puis « OUTILS SUR CETTE PARCELLE » (portes compactes, plus bas). */}
+              <div className="sec"><span>EXPORTS</span><i /></div>
               <div className="exports">
                 <div className="exp-grid">
                   <a className="exp" href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
@@ -2253,6 +2308,31 @@ export function Fiche({ idu }: { idu: string }) {
                   </a>
                 </div>
                 <PreDossierTile idu={idu} />
+              </div>
+              {/* M60 P1d — OUTILS SUR CETTE PARCELLE : portes compactes 2 colonnes ; chaque porte ouvre
+                  l'outil PRÉ-REMPLI avec cette parcelle (setModule garde selectedIdu → retour intact). */}
+              <div className="sec"><span>OUTILS SUR CETTE PARCELLE</span><i /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <PorteOutil compacte ico="⇄" data="comparer" titre="Comparer"
+                  sous="Cette parcelle chargée · ajoutez-en d'autres"
+                  onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
+                <PorteOutil compacte ico="⬡" data="assemblage" titre="Assemblage"
+                  sous="Amorcer l'assiette avec cette parcelle"
+                  onClick={() => { setMsel([idu]); setModule('assemblage') }} />
+                {f.coords && (
+                  <PorteOutil compacte ico="◷" data="temps" titre="Remonter le temps"
+                    sous="Ce terrain de 1950 à aujourd'hui"
+                    onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
+                )}
+                <PorteOutil compacte ico="✓" data="duediligence" titre="Contrôle avant achat"
+                  sous="La check-list, cette parcelle en tête"
+                  onClick={() => setModule('duediligence')} />
+                <PorteOutil compacte ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
+                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
+                  onClick={() => setModule('verif-procedure')} />
+                <PorteOutil compacte ico="▤" data="programme" titre="Faisabilité"
+                  sous="Monter un programme sur cette parcelle"
+                  onClick={() => setModule('programme')} />
               </div>
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">

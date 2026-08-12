@@ -308,6 +308,9 @@ interface AppState {
   setM02Prefill: (s: string | null) => void
   pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
   setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
+  // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
+  calcPrefill: string | null
+  setCalcPrefill: (s: string | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
   calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
@@ -398,9 +401,13 @@ export const useApp = create<AppState>((set) => ({
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
   // Sans ça, ouvrir Outils depuis Projets laissait « Mes projets » en fond derrière le tiroir.
+  // M60 P1e — `selectedIdu:null` RETIRÉ : la fiche (carte-overlay) n'est PAS une « vue » ; le rationale
+  // nav-exclusive vise view/module/parcours/openProjet/iaRestitution. Effacer la parcelle en ouvrant le
+  // tiroir Outils était un vestige du reset large (dette M55-L) — un outil doit pouvoir lire la parcelle
+  // regardée (M09/M10 la pré-remplissent), et la fiche doit se retrouver à la fermeture de l'outil.
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
-    : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
+    : { outilsOpen: true, view: 'cartes', module: null,
         contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
@@ -483,6 +490,8 @@ export const useApp = create<AppState>((set) => ({
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
   pluPrefill: null,
   setPluPrefill: (pluPrefill) => set({ pluPrefill }),
+  calcPrefill: null,
+  setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   calculette: null,
   setCalculette: (calculette) => set({ calculette }),
 }))
