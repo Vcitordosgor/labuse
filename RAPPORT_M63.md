@@ -92,3 +92,49 @@ Constat terminé, aucun correctif. Points d'arbitrage P1 :
 - **P1-c** : labels commune — 2 jeux de couleurs (le crème/vert actuel invisible sur clair).
 - Le fond **SOMBRE reste le défaut, inchangé** (garde-fou).
 NE PAS MERGER.
+
+---
+
+# PHASE 1 — correctifs (arbitrage mandant)
+
+Fond clair CARTO Positron retenu. Le vrai travail = les couches, tokenisées en paires sombre/clair.
+Vérifié : tsc 0 · vitest 32/32 · build OK · console 0 erreur · **fond SOMBRE inchangé (mesuré)**.
+
+## (a/e) Fond clair au sélecteur existant, persistant
+- `basemaps.ts` : `bm-clair` = CARTO Positron `light_nolabels` (miroir exact du sombre, attribution
+  **« © OSM · CARTO » — déjà servie**). Ajouté à `BASEMAP_CHOICES`.
+- `MapToolbar` : le sélecteur existant liste **« Clair » · « Sombre » · Plan IGN · Ortho IGN** (pas
+  de nouveau bouton ; « Sombre (Carto) » simplifié en « Sombre »).
+- **Persistance** (`useApp.ts`) : le choix `dark`/`clair` est mémorisé en `localStorage`
+  (`labuse.basemap`), restauré au boot. Défaut **`dark`** (le sombre reste le fond par défaut).
+- (d) Attribution : `bm-clair` porte « © OSM · CARTO » ; maplibre affiche celle du fond actif.
+
+## (a/b/c) Tokenisation sombre/clair — aucune couleur de couche en dur
+- Nouveau point de vérité `lib/mapPalette.ts` : chaque couleur = paire **[sombre, clair]**. **Sombre
+  = valeur historique EXACTE** (garde-fou). **Clair = contraste MESURÉ ≥ 3:1** sur land Positron
+  (~#F5F5F3), toutes vérifiées via `contrast.py` (ex. limites 6.3:1, sélection 6.0:1, communes 4.6:1,
+  verdict chaude 4.3:1, zone A 4.3:1 — les cas invisibles du P0 corrigés).
+- `MapView` : l'**init garde les constantes SOMBRES d'origine** (dark non touché) ; une fonction
+  `applyTheme(m, C)` **additive** réapplique la palette (sombre OU claire) quand le fond bascule.
+  Les expressions sémantiques (verdict `statusColorFor`, zonages `zoneFamColorFor`, overlay zonage
+  `zonageOverlayFillFor`) sont reconstruites depuis la palette → **le RÔLE ne change pas** (le verdict
+  garde son échelle, les zonages leur code) ; en mode zonage, `parcels-fill` suit la couleur par
+  famille (préservé).
+- **Vérif directe des paint-properties** (garde-fou absolu) :
+  - SOMBRE : `limites #8FA69A · sélection #ECF5EF · communes #5CE6A1 · ppr #E8695A · renouv #C9834E ·
+    bg #060A08` — **identiques à l'avant-M63 (pas un pixel)**.
+  - CLAIR : `limites #4A5F54 · sélection #0A6B3F · communes #2E7D52 · ppr #C4402F · renouv #9A5A28 ·
+    bg #EDEDEA` — sélection ≠ survol (violet #6A4FB0) ≠ communes, verdict lisible sur les 4 tiers.
+
+## (c/d) Libellés de commune lisibles sur les deux fonds
+- `MapView` (markers DOM) thématisés : texte/bordure/fond par thème (le crème/mint invisible sur clair
+  → vert foncé `#1F7A46`/`#4A5F54` + fond blanc translucide + halo clair). Vérifié à l'écran : texte
+  **foncé** (lisible) sur fond clair ; l'effet dépend de `basemap` (rebâti au switch).
+
+## Contrôle final (fond clair)
+Parcelles visibles (limites 6.3:1) · commune sélectionnée distinguable (sélection 6.0:1) · survolée
+(violet) ≠ sélectionnée (vert foncé) · verdict lisible sur les 4 tiers (brûlante 4.7 / chaude 4.3 /
+réserve 4.9 / écartée 6.7) · zonages distinguables (U magenta, AU bleu, A ocre, N vert foncé).
+
+## STOP — PHASE 1
+Tout M63-P1 livré. Fond sombre inchangé (mesuré). Commit « M63-P1 fond clair ». **NE PAS MERGER.**

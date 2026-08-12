@@ -127,7 +127,14 @@ export interface IaRestitution {
   relance?: { label: string; raw: Record<string, unknown> } | null
 }
 
-export type Basemap = 'dark' | 'plan' | 'ortho'
+export type Basemap = 'dark' | 'clair' | 'plan' | 'ortho'   // M63-P1 : + fond clair
+// M63-P1 (e) : le choix de fond PERSISTE entre sessions (localStorage). Seul 'dark'/'clair' est
+// mémorisé (ortho/plan restent contextuels) ; défaut 'dark' — le SOMBRE reste le fond par défaut.
+const BASEMAP_LS_KEY = 'labuse.basemap'
+const readBasemap = (): Basemap => {
+  try { const v = localStorage.getItem(BASEMAP_LS_KEY); return v === 'clair' || v === 'dark' ? v : 'dark' }
+  catch { return 'dark' }
+}
 export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
@@ -437,8 +444,8 @@ export const useApp = create<AppState>((set) => ({
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
-  basemap: 'dark',
-  setBasemap: (basemap) => set({ basemap }),
+  basemap: readBasemap(),   // M63-P1 (e) : restauré du localStorage (défaut 'dark')
+  setBasemap: (basemap) => { try { if (basemap === 'clair' || basemap === 'dark') localStorage.setItem(BASEMAP_LS_KEY, basemap) } catch { /* ignore */ } set({ basemap }) },
   orthoYear: 'now',
   setOrthoYear: (orthoYear) => set({ orthoYear, basemap: 'ortho' }),
   terrain3d: false,

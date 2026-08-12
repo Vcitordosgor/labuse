@@ -8,6 +8,7 @@ import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES } from './basemaps'
+import { mapColors, type MapColors, type MapTheme } from '../../lib/mapPalette'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
@@ -146,6 +147,53 @@ const OVERLAYS = {
   anru: { paint: { 'fill-color': '#C6E82E', 'fill-opacity': 0.30 } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
+
+// ═══ M63-P1 — THÉMATISATION DU FOND (sombre / clair) ═══
+// L'init (plus bas) conserve les valeurs SOMBRES d'origine → le fond sombre ne bouge PAS d'un pixel.
+// `applyTheme` réapplique la palette (sombre OU claire) quand le fond bascule : MÊME rôle pour chaque
+// couleur (verdict garde son échelle, sélection ≠ survol, zonages gardent leur code), seule la valeur
+// s'adapte. Valeurs claires au contraste MESURÉ ≥ 3:1 sur Positron (cf. lib/mapPalette + RAPPORT_M63).
+const statusColorFor = (C: MapColors): maplibregl.ExpressionSpecification => [
+  'case', ETAGE0, C.ecartee,
+  ['match', TIER_V2,
+    ...Object.keys(ALL_TIER_META).flatMap((k) => [k, k === 'ecartee' ? C.ecartee : C.tier(k)]),
+    C.none],
+] as unknown as maplibregl.ExpressionSpecification
+const zoneFamColorFor = (C: MapColors): maplibregl.ExpressionSpecification => [
+  'match', ['coalesce', ['get', 'zone_fam'], ''],
+  ...ZONE_FAM_ORDER.flatMap((f) => [f as string, C.zoneFam(f)]),
+  C.none,
+] as unknown as maplibregl.ExpressionSpecification
+const zonageOverlayFillFor = (C: MapColors): maplibregl.ExpressionSpecification => ['case',
+  ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
+  C.zonageUFill, C.zonageNonUFill] as unknown as maplibregl.ExpressionSpecification
+
+function applyTheme(m: maplibregl.Map, C: MapColors) {
+  const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
+  if (m.getLayer('bg')) m.setPaintProperty('bg', 'background-color', C.bgCanvas as never)
+  const status = statusColorFor(C)
+  for (const id of ['parcels-fill', 'ile-fill']) set(id, 'fill-color', status)
+  for (const id of ['parcels-line', 'ile-line']) set(id, 'line-color', status)
+  for (const id of ['parcels-base', 'ile-base']) set(id, 'fill-color', C.baseFill)
+  for (const id of ['parcels-limites', 'ile-limites']) set(id, 'line-color', C.limites)
+  for (const id of ['parcels-sel', 'ile-sel']) set(id, 'line-color', C.selection)
+  for (const id of ['parcels-ping', 'ile-ping']) set(id, 'line-color', C.ping)
+  set('parcels-brulantes', 'line-color', C.brulanteOutline)
+  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', C.labelText); set(id, 'text-halo-color', C.labelHalo) }
+  set('communes-bounds', 'line-color', C.communes)
+  const zfill = zonageOverlayFillFor(C)
+  for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-color', zfill)
+  for (const id of ['ov-ppr', 'ovmvt-ppr']) set(id, 'fill-color', C.ppr)
+  set('ov-parc', 'fill-color', C.parc); set('ov-parc-line', 'line-color', C.parcLine)
+  set('ov-anru', 'fill-color', C.anru)
+  set('ov-50pas', 'fill-color', C.cinquantePas); set('ov-50pas-line', 'line-color', C.cinquantePas)
+  set('ov-renouv', 'fill-color', C.renouv); set('ov-renouv-line', 'line-color', C.renouv)
+  set('measure-fill', 'fill-color', C.measure); set('measure-line', 'line-color', C.measure)
+  set('measure-pts', 'circle-color', C.measure); set('measure-pts', 'circle-stroke-color', C.measureStroke)
+  for (const id of ['module-hl', 'ile-hl', 'module-lot', 'module-pts', 'ile-pick']) set(id, id === 'module-pts' ? 'circle-color' : 'line-color', C.search)
+  set('module-pts', 'circle-stroke-color', C.moduleStroke)
+  set('zone-fill', 'fill-color', C.zoneDraw); set('zone-line', 'line-color', C.zoneDraw)
+}
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
 // Point 13 : un SYMBOLE parlant par type d'équipement. La META est partagée (lib/status.ts) :
@@ -677,10 +725,24 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const active = basemap === 'dark' ? 'bm-carto'
+      : basemap === 'clair' ? 'bm-clair'
       : basemap === 'plan' ? 'bm-plan'
       : orthoYear === '2000' ? 'bm-ortho-2000' : orthoYear === '1950' ? 'bm-ortho-1950' : 'bm-ortho-now'
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
+    }
+    // M63-P1 : le fond clair rend à pleine opacité (le sombre est voilé à 0.55 pour laisser respirer
+    // les couches ; le clair n'a pas besoin de voile). Le sombre reste inchangé.
+    if (m.getLayer('bm-clair')) m.setPaintProperty('bm-clair', 'raster-opacity', 1)
+    // M63-P1 — THÈME : 'light' UNIQUEMENT sur le fond « Clair » ; ortho/plan/sombre gardent la palette
+    // sombre d'origine (inchangés). On réapplique la palette (couleurs de couches adaptées, rôles
+    // identiques). En mode zonage, `parcels-fill`/`ile-fill` suivent la couleur PAR FAMILLE, pas le verdict.
+    const theme: MapTheme = basemap === 'clair' ? 'light' : 'dark'
+    const C = mapColors(theme)
+    applyTheme(m, C)
+    if (zonageFill) {
+      const zf = zoneFamColorFor(C)
+      for (const id of ['parcels-fill', 'ile-fill']) if (m.getLayer(id)) m.setPaintProperty(id, 'fill-color', zf as never)
     }
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
@@ -814,6 +876,10 @@ export function MapView() {
     aggMarkers.current.forEach((mk) => mk.remove())
     aggMarkers.current = []
     if (!ile || !communes.data) return
+    // M63-P1 (c/d) : les libellés de commune sont lisibles sur les DEUX fonds (le crème/mint actuel
+    // devient invisible sur clair). Couleurs par thème.
+    const isLight = basemap === 'clair'
+    const CL = mapColors(isLight ? 'light' : 'dark')
     const updateVis = () => {
       const show = m.getZoom() < 10
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
@@ -841,9 +907,10 @@ export function MapView() {
       const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
         `display:inline-flex;align-items:center;gap:4px;` +
-        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
-        `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
-        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? CL.communeBorderHot : CL.communeBorderCold};` +
+        `background:${hot ? (isLight ? 'rgba(255,255,255,.92)' : 'rgba(9,26,18,.92)') : (isLight ? 'rgba(245,245,243,.9)' : 'rgba(10,14,12,.85)')};` +
+        `color:${hot ? CL.communeTextHot : CL.communeTextCold};` +
+        (hot && !isLight ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
       // M55-C point 4 (décision Vic 10/08, remplace le comportement « fiche seule ») : cliquer le
       // nom de commune = TROIS effets en un — ouvrir la fiche, caler le périmètre sur la commune
       // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
@@ -855,7 +922,7 @@ export function MapView() {
     updateVis()
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
-  }, [ile, communes.data, mapReady, opinion])
+  }, [ile, communes.data, mapReady, opinion, basemap])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {
