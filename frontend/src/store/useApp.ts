@@ -398,9 +398,13 @@ export const useApp = create<AppState>((set) => ({
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
   // Sans ça, ouvrir Outils depuis Projets laissait « Mes projets » en fond derrière le tiroir.
+  // M60 P1e — `selectedIdu:null` RETIRÉ : la fiche (carte-overlay) n'est PAS une « vue » ; le rationale
+  // nav-exclusive vise view/module/parcours/openProjet/iaRestitution. Effacer la parcelle en ouvrant le
+  // tiroir Outils était un vestige du reset large (dette M55-L) — un outil doit pouvoir lire la parcelle
+  // regardée (M09/M10 la pré-remplissent), et la fiche doit se retrouver à la fermeture de l'outil.
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
-    : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
+    : { outilsOpen: true, view: 'cartes', module: null,
         contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
