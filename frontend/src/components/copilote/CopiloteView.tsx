@@ -169,6 +169,10 @@ export function CopiloteView() {
   // l'amorce prend place dans le brief (ancien flux IAStub → ProjetEntretien, désormais absorbé
   // par le Copilote). Consommée une fois, puis effacée. Ne pas écraser un brief déjà saisi.
   const { entretienDirect, clearEntretienDirect } = useApp()
+  const selectParcelle = useApp((s) => s.select)
+  const setView = useApp((s) => s.setView)
+  // M78-bis — ouvrir la fiche existante d'une parcelle restituée (setView PUIS select, ordre respecté).
+  const ouvrirFiche = (idu: string) => { setView('cartes'); selectParcelle(idu) }
   useEffect(() => {
     if (entretienDirect === null) return
     setBrief((b) => b.trim() ? b : (entretienDirect || 'je veux monter une opération immobilière'))
@@ -367,7 +371,7 @@ export function CopiloteView() {
               </div>
             )}
             {vue.recap.n_restituees > 0 ? (
-              <Resultats recap={vue.recap} etiquettes={etiquettesDe(vue)}
+              <Resultats recap={vue.recap} etiquettes={etiquettesDe(vue)} onOuvrirFiche={ouvrirFiche}
                 budgetMax={(vue.briefJson?.budget_max_eur as number | undefined) ?? null}
                 titre={[communes?.join(', '), nLogements != null ? `${nLogements} logements` : null]
                   .filter(Boolean).join(' · ')} />

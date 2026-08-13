@@ -366,6 +366,28 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   cascade risques, graduation PPR M-I — elle n'est pas filtrable). La télémétrie Copilote (§1e) confirmera
   la demande. En attendant (M78) : le Copilote le DIT au client, ne le promet pas.
 
+## Mandat candidat — « VOIR SUR LA CARTE » : shortlist Copilote → socle (issu de M78-bis §4, validé Vic)
+- **Le besoin** : sur l'écran de résultats du Copilote, un bouton « Voir ces parcelles sur la carte » qui
+  charge EXACTEMENT les N parcelles restituées dans le panneau-liste de gauche du socle (clic→fiche, tri,
+  couches), carte cadrée sur leur emprise. Transforme un résultat éphémère en gestes du socle.
+- **Pourquoi c'est un chantier** (constaté M78-bis) : le panneau-liste du socle est FILTRE-DRIVEN
+  (`/filtre` + `FiltreCriteres` + `useApplySearch`) ; il n'existe AUCUN mécanisme pour y injecter une
+  **liste d'IDU arbitraire** (la shortlist exacte). Les surlignages carte (`iaRestitution`, `moduleMap`)
+  sont des overlays, pas une source de liste.
+- **Exigence Vic 1 — source de liste par IDU explicite, COEXISTANT** avec le filtre-driven sans le
+  remplacer : le socle doit pouvoir afficher SOIT un filtre, SOIT une liste d'IDU arbitraire, sans que
+  l'un casse l'autre (p. ex. `setListeIdus(idus)` lue par ResultsSection en priorité sur les filtres, +
+  cadrage bbox de l'union ; retour au filtre quand la liste est vidée).
+- **Exigence Vic 2 — recherche NOMMÉE durable** (« Recherche terrain nu Saint-Paul — 13/08 »).
+  **CONSTAT CORRIGÉ** : « Mes vues » (M52-L5) **EXISTE** — table `saved_searches` (events.py), endpoints
+  `/events/searches` (`getSavedSearches`/`saveSearch`/`deleteSearch`), barre de filtres (Header.tsx). MAIS
+  elle stocke un **`filtersToHash`** (un filtre nommé), PAS une liste d'IDU. Le chantier = ÉTENDRE « Mes
+  vues » pour sauver AUSSI une liste d'IDU explicite (la shortlist Copilote nommée), coexistant avec la
+  forme filtre-hash. (Mon rapport M78-bis disait « Mes vues introuvable » — FAUX, mauvais termes de
+  recherche ; elle existe et n'a jamais géré les listes d'IDU.)
+- **En attendant (M78-bis)** : PAS de bouton carte mort sur les résultats. À la place, action LIVE
+  « Ouvrir la fiche » sur le héros (ouvre la fiche de la 1ʳᵉ parcelle) — rien qui promette la carte.
+
 ## Mandat candidat — FACETTE SPATIALE (« proche de la mer / distance à un point ») (issu de M78 Phase 2)
 - Aucune facette spatiale géométrique en recherche (« proche de la mer », « à moins de X m de [lieu] »,
   distance à un point). Chantier réel (calcul de distance / buffer / intersection). Mandat futur. En attendant

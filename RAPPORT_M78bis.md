@@ -50,14 +50,16 @@ le cas.** Constat technique :
 - Les surlignages carte (`iaRestitution`, `moduleMap.idus`) sont des overlays ; leur calque `module-hl`
   est vraisemblablement masqué hors contexte module (`setView` remet `module=null`). Pas un pont propre
   vers le panneau-liste.
-- **« Mes vues » (M52) sauvegardable** : introuvable dans le code — pas de recherche nommée durable à
-  brancher.
+- **« Mes vues » (M52) — CONSTAT CORRIGÉ (validé Vic)** : elle **EXISTE** (table `saved_searches`,
+  endpoints `/events/searches`, barre de filtres, [M52-L5] mergé). Mon premier constat « introuvable »
+  était FAUX (mauvais termes de recherche). MAIS elle stocke un `filtersToHash` (un FILTRE nommé), pas
+  une liste d'IDU → à ÉTENDRE pour une shortlist d'IDU nommée.
 
-**Mandat candidat (au BACKLOG)** : un mécanisme d'injection d'une **liste d'IDU explicite** dans le
-panneau-liste du socle (source de liste alternative aux filtres : `setListeIdus(idus)` lue par
-ResultsSection + cadrage bbox de l'union), PLUS une recherche NOMMÉE durable (« Recherche terrain nu
-Saint-Paul — 13/08 »). Tant que ce socle n'existe pas, un bouton « Voir sur la carte » ne tiendrait pas
-la promesse « exactement les N, clic → fiche, tri, couches ». **Non livré, à décider.**
+**Mandat candidat écrit au BACKLOG (validé Vic, PAS lancé)** avec ses 2 exigences : (1) source de liste
+par IDU explicite **coexistant** avec le filtre-driven (le socle affiche SOIT un filtre SOIT une liste
+arbitraire, sans que l'un casse l'autre) ; (2) recherche NOMMÉE durable = étendre « Mes vues » aux listes
+d'IDU. **En attendant : PAS de bouton carte mort** — action LIVE « Ouvrir la fiche » sur le héros (ouvre
+la fiche de la 1ʳᵉ parcelle) + lignes cliquables. Rien qui promette la carte.
 
 ## Tests
 - Routeur : QUESTION/OUTIL ne déclenchent JAMAIS le récap (vérifié backend).

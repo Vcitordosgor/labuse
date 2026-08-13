@@ -71,7 +71,9 @@ function HerosPhrase({ p, budgetMax }: { p: Restituee; budgetMax: number | null 
   return <p data-heros className="mt-2.5 max-w-[52ch] text-[13px] leading-relaxed text-cp-txt">{phrase}</p>
 }
 
-function Lead({ p, et, budgetMax }: { p: Restituee; et: EtiquettesMoteurs; budgetMax?: number | null }) {
+function Lead({ p, et, budgetMax, onOuvrirFiche }: {
+  p: Restituee; et: EtiquettesMoteurs; budgetMax?: number | null; onOuvrirFiche?: (idu: string) => void
+}) {
   return (
     <div data-restituee={p.idu} className="grid grid-cols-1 gap-4 border-b border-cp-line px-5 py-4 md:grid-cols-[1fr_230px]">
       <div>
@@ -81,6 +83,13 @@ function Lead({ p, et, budgetMax }: { p: Restituee; et: EtiquettesMoteurs; budge
         </div>
         <div className="mt-1 text-[11.5px] text-cp-faint">{p.commune}</div>
         <HerosPhrase p={p} budgetMax={budgetMax} />
+        {/* M78-bis — action LIVE (pas de bouton mort) : ouvrir la fiche existante de la 1ʳᵉ parcelle. */}
+        {onOuvrirFiche && (
+          <button data-ouvrir-fiche onClick={() => onOuvrirFiche(p.idu)}
+            className="mt-3 rounded-lg border border-mint/40 bg-mint/10 px-4 py-2 font-display text-[12px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">
+            Ouvrir la fiche →
+          </button>
+        )}
         {p.zone && (
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-lg border border-mint/25 bg-mint/10 px-2.5 py-1 font-display text-[11px] font-semibold text-mint">
@@ -140,10 +149,13 @@ function Lead({ p, et, budgetMax }: { p: Restituee; et: EtiquettesMoteurs; budge
   )
 }
 
-function Ligne({ p, i, et }: { p: Restituee; i: number; et: EtiquettesMoteurs }) {
+function Ligne({ p, i, et, onOuvrirFiche }: {
+  p: Restituee; i: number; et: EtiquettesMoteurs; onOuvrirFiche?: (idu: string) => void
+}) {
   return (
-    <div data-restituee={p.idu}
-      className="grid grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-3 border-b border-cp-line px-5 py-3 last:border-none md:grid-cols-[52px_150px_minmax(0,1fr)_auto]">
+    <div data-restituee={p.idu} onClick={() => onOuvrirFiche?.(p.idu)}
+      className={`grid grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-3 border-b border-cp-line px-5 py-3 last:border-none md:grid-cols-[52px_150px_minmax(0,1fr)_auto] ${
+        onOuvrirFiche ? 'cursor-pointer transition-colors duration-quick hover:bg-white/[0.02]' : ''}`}>
       <div className="rounded-md border border-cp-line2 bg-cp-card2 py-0.5 text-center font-display text-[10px] font-bold text-cp-muted">
         #{String(i + 1).padStart(2, '0')}
       </div>
@@ -190,11 +202,12 @@ function Ligne({ p, i, et }: { p: Restituee; i: number; et: EtiquettesMoteurs })
   )
 }
 
-export function Resultats({ recap, titre, etiquettes, budgetMax }: {
+export function Resultats({ recap, titre, etiquettes, budgetMax, onOuvrirFiche }: {
   recap: RecapAssemblage
   titre: string
   etiquettes: EtiquettesMoteurs
   budgetMax?: number | null              // §2e — pour dire « au-dessus de votre budget » sans inventer
+  onOuvrirFiche?: (idu: string) => void  // M78-bis — ouvrir la fiche existante (action live)
 }) {
   const liste = recap.restituees ?? []
   const idus = recap.restituees_idu ?? []
@@ -211,8 +224,8 @@ export function Resultats({ recap, titre, etiquettes, budgetMax }: {
           {' '}— les autres sont classées derrière le rang {recap.n_restituees}.
         </p>
       )}
-      {liste.length > 0 && <Lead p={liste[0]} et={etiquettes} budgetMax={budgetMax} />}
-      {liste.slice(1).map((p, i) => <Ligne key={p.idu} p={p} i={i + 1} et={etiquettes} />)}
+      {liste.length > 0 && <Lead p={liste[0]} et={etiquettes} budgetMax={budgetMax} onOuvrirFiche={onOuvrirFiche} />}
+      {liste.slice(1).map((p, i) => <Ligne key={p.idu} p={p} i={i + 1} et={etiquettes} onOuvrirFiche={onOuvrirFiche} />)}
       {/* mission shortlist (assemblage_court) : le payload ne porte que les IDU */}
       {liste.length === 0 && idus.map((idu, i) => (
         <div key={idu} data-restituee={idu}
