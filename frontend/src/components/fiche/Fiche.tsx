@@ -2030,7 +2030,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
                 quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
             <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
-              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`}
+              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} évaluée${risquesClean > 1 ? 's' : ''}`}
               value={risquesFlags.length === 0
                 ? <span className="pill-mint">rien à signaler</span>
                 : <span className="pill-amber">{risquesFlags.length} vigilance{risquesFlags.length > 1 ? 's' : ''}</span>}
