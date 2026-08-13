@@ -79,6 +79,8 @@ _NEEDED_TABLES = {
     "parcel_vegetation", "parcel_anc",
     # M75 — obligation APER (grand parking) : section omise si la table est absente.
     "parkings_aper",
+    # M73 §F — faisceau de viabilisation (réseaux) dans « Terrain & réseaux ».
+    "parcel_viabilisation",
 }
 
 
@@ -497,6 +499,24 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
         sol = solaire_note(db, idu)
         if sol:
             out["solaire"] = sol
+    # M73 §F — faisceau de VIABILISATION (réseaux) : la section « Terrain & réseaux » portait pente/
+    # assainissement/solaire mais AUCUN réseau (le titre mentait). On branche le faisceau de preuves
+    # servi (permis + DAACT « raccordements réalisés », façade sur voirie urbanisée), MÊME point de
+    # calcul que la fiche (V.build_indicateur) — aucun tracé réseau fabriqué, jamais une certitude.
+    if "parcel_viabilisation" in avail:
+        from ..faisabilite import viabilisation as V
+        from ..faisabilite.viabilisation_build import ilot_s3renr_note
+        vr = db.execute(text(
+            "SELECT zone_fam, c100, c200, c100_recent, c100_acheve, voie10, voie75, "
+            "bati10, bati30, bati75, assainissement_zonage "
+            "FROM parcel_viabilisation WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        if vr:
+            ind = V.build_indicateur(dict(vr), elec_pv=ilot_s3renr_note(db), solaire=None)
+            if ind:
+                out["viabilisation"] = {
+                    "libelle": ind.get("libelle"),
+                    "preuves": [{"libelle": c.get("libelle"), "detail": c.get("detail")}
+                                for c in (ind.get("contributions") or []) if c.get("signe") == "+"][:3]}
     return out or None
 
 

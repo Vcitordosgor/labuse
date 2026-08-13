@@ -436,7 +436,7 @@
 {% set t = data.terrain %}
 {% if t %}
 <section>
-  <h2><span class="num">08</span>Terrain{% if t.anc or t.solaire %} &amp; réseaux{% endif %}</h2>
+  <h2><span class="num">08</span>Terrain{% if t.anc or t.solaire or t.viabilisation %} &amp; réseaux{% endif %}</h2>
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
@@ -460,6 +460,20 @@
   {# M75 — libellé IDENTIQUE à la fiche (point de calcul unique solaire_note) ; plus de score /100. #}
   <p>☀ {{ t.solaire.note }} <span style="color:var(--txt-mut)">{{ t.solaire.etat }}.</span></p>
   <p style="font-size:8pt;color:var(--txt-mut);margin-top:1mm">Source : PVGIS (Commission européenne).</p>
+  {% endif %}
+  {% if t.viabilisation %}
+  {# M73 §F — faisceau de VIABILISATION (réseaux) : le titre ne ment plus. Faisceau de preuves,
+     jamais un tracé réseau ni une certitude (mêmes libellés que la fiche). #}
+  <h3>Réseaux — faisceau de preuves</h3>
+  <p><b>{{ t.viabilisation.libelle }}</b> <span style="color:var(--txt-mut)">— probabilité par
+     faisceau d'indices, jamais une certitude ; aucun tracé réseau relevé.</span></p>
+  {% if t.viabilisation.preuves %}
+  <ul>
+    {% for pr in t.viabilisation.preuves %}
+    <li>{{ pr.libelle }}{% if pr.detail %} <span style="color:var(--txt-mut)">— {{ pr.detail }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
   {% endif %}
 </section>
 {% endif %}
