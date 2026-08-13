@@ -96,7 +96,13 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
            (le CANAL qui la pousse au client — cloche/digest — est au BACKLOG, dit au rapport). */}
       {(veilles?.length ?? 0) > 0 && (
         <div data-accueil-veilles className="mb-8">
-          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">VEILLES</p>
+          <p className="mb-1 font-mono text-[10px] tracking-[.16em] text-cp-muted">VEILLES</p>
+          {/* §4 (arbitrage Vic) : ne PAS taire que l'alerte n'est pas encore proactive — le client ne
+               doit pas rater un permis en croyant être prévenu. */}
+          <p data-veilles-note className="mb-2 text-[10.5px] leading-snug text-cp-faint">
+            Vos veilles sont enregistrées — les nouvelles alertes apparaîtront ici à chaque mise à jour
+            des données. L'envoi par e-mail n'est pas encore actif.
+          </p>
           <div className="flex flex-col gap-1.5">
             {veilles!.map((v) => (
               <div key={v.id} data-veille className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2">

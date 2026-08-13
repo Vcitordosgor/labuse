@@ -42,15 +42,23 @@ def preparer_projet(params: dict, message: str) -> dict:
 
 
 # ───────────────────────── 4 — VEILLE (préparation) ─────────────────────────
-def preparer_veille(params: dict) -> dict:
-    """Parse la demande de veille (type + commune). Type non couvert → DIT, avec les types disponibles.
-    L'écriture réelle (+ plafond) est faite par l'endpoint. Le modèle ne sert QU'ICI (à la création)."""
-    from .veilles import TYPES
+def preparer_veille(db: Session, params: dict, message: str = "") -> dict:
+    """Parse la demande de veille (type + commune). ARBITRAGE Vic : on ne POSE que les types BRANCHÉS
+    (une veille qui ne se déclencherait jamais est pire qu'un refus honnête). Un type connu mais non
+    branché → refus honnête + demande MESURÉE en télémétrie (on capte le signal sans fausse veille).
+    Type inconnu → DIT. Le modèle ne sert QU'ICI (à la création)."""
+    from . import telemetrie
+    from .veilles import TYPES, EVALUABLES
     vt = params.get("veille_type")
     commune = params.get("commune") or (params.get("perimetre") if isinstance(params.get("perimetre"), str) else None)
+    actifs = " · ".join(TYPES[t] for t in EVALUABLES)
+    if vt in TYPES and vt not in EVALUABLES:
+        telemetrie.critere_non_traduisible(db, f"veille:{vt}", message)   # mesurer la demande, sans poser
+        return {"text": f"La veille « {TYPES[vt]} » n'est pas encore active : sa source n'est pas branchée, "
+                f"et je ne pose pas une veille qui ne se déclencherait jamais. Pour l'instant je pose : "
+                f"{actifs}. Ce type suivra.", "intent": "VEILLE", "refus": "type_pas_encore_actif"}
     if vt not in TYPES:
-        dispo = " · ".join(TYPES.values())
-        return {"text": f"Je ne sais pas encore poser ce type de veille. Types disponibles : {dispo}.",
+        return {"text": f"Je ne sais pas poser ce type de veille. Types actifs : {actifs}.",
                 "intent": "VEILLE", "refus": "type_non_couvert"}
     if not commune:
         return {"text": f"Sur quelle commune veiller les {TYPES[vt]} ?", "intent": "VEILLE",

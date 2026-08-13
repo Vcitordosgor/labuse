@@ -13,15 +13,16 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# Types v1 (label client). permis = évaluable maintenant ; les autres : veille POSABLE, requête
-# d'évaluation à brancher sur leur source (documenté — honnête, jamais une évaluation qui ment).
+# Types v1 (label client). ARBITRAGE Vic : on ne POSE que les types dont la source est BRANCHÉE
+# (EVALUABLES) — une veille qui ne se déclencherait jamais est pire qu'un refus honnête. Les autres
+# types sont CONNUS (pour un refus honnête « pas encore actif » + mesure de la demande), pas posables.
 TYPES = {
     "permis": "permis de construire (Sitadel)",
     "ventes": "ventes (DVF)",
     "procedure_plu": "procédures PLU (Sudocuh/annuaire)",
     "bodacc": "BODACC sur un propriétaire suivi",
 }
-_EVALUABLES = {"permis"}   # branchés sur leur source ; le reste attend son mandat de source
+EVALUABLES = {"permis"}   # SEULS types posés (source branchée) ; le reste = refus honnête + télémétrie
 
 DDL = """
 CREATE TABLE IF NOT EXISTS veilles (
@@ -49,7 +50,7 @@ def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None
     vid = db.execute(text(
         "INSERT INTO veilles (compte_id, type, commune, criteres) VALUES (:c, :t, :co, :cr) RETURNING id"),
         {"c": compte_id, "t": type_, "co": commune, "cr": __import__("json").dumps(criteres or {})}).scalar()
-    return {"id": vid, "type": type_, "commune": commune, "evaluable": type_ in _EVALUABLES}
+    return {"id": vid, "type": type_, "commune": commune, "evaluable": type_ in EVALUABLES}
 
 
 def lister(db: Session, compte_id: int | None) -> list[dict]:
@@ -110,7 +111,7 @@ def evaluer_toutes(db: Session) -> dict:
     sur le pipeline d'ingestion (labuse detect-events / cron) — livré ici, prêt à être déclenché."""
     veilles = db.execute(text(
         "SELECT id, compte_id, type, commune, last_evaluated_at FROM veilles WHERE actif AND type = ANY(:t)"),
-        {"t": list(_EVALUABLES)}).mappings().all()
+        {"t": list(EVALUABLES)}).mappings().all()
     total = sum(evaluer(db, dict(v)) for v in veilles)
     return {"veilles_evaluees": len(veilles), "notifications_creees": total}
 

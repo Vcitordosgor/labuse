@@ -250,7 +250,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
 
     if intent == "VEILLE":
         from .missions_lourdes import preparer_veille
-        return preparer_veille(params)
+        return preparer_veille(db, params, message)
 
     # RECHERCHE → intercepté par le dispatch frontend (run M26-A)
     return _reply(f"(Mission {intent} — construite dans une phase ultérieure de M78.)", intent,
