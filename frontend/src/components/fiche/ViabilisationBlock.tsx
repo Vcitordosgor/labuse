@@ -30,15 +30,12 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
           style={{ backgroundColor: m.bg, color: m.color }}>{via.libelle.replace(/^Viabilisation\s+/i, '')}</span>
       </div>
 
-      <div className="mt-2 flex items-baseline gap-3">
-        <span className="font-mono text-xl font-semibold" style={{ color: m.color }}>{via.score}</span>
-        <span className="text-[11px] text-txt-dim">/ 100 — probabilité de viabilisation (faisceau de preuves)</span>
-      </div>
-
-      {/* Barre du score */}
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line-2">
-        <div className="h-full rounded-full" style={{ width: `${via.score}%`, background: m.color }} />
-      </div>
+      {/* M70 décision 5 — plus de score /100 ni de jauge (une seule jauge dans la fiche = ICD, et
+          elle-même n'est plus chiffrée). Le verdict qualitatif (pastille en-tête) porte l'info ;
+          les preuves restent listées sous « Pourquoi cet indicateur », sans pondération affichée. */}
+      <p className="mt-2 text-[11px] leading-snug text-txt-dim">
+        Probabilité de viabilisation par faisceau de preuves (jamais une certitude).
+      </p>
 
       <p className="label-caps mt-2">Pourquoi cet indicateur</p>
       <ul className="mt-1 flex flex-col gap-0.5">

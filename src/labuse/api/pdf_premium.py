@@ -362,6 +362,24 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # + PLAFOND 2 PAGES : au-delà, on n'imprime plus (compteur honnête, fiche écran complète).
     TITRES_M19 = {"regles": "Règles d'urbanisme", "risques": "Risques",
                   "marche": "Marché", "proprio": "Propriétaire"}
+    # M70 décision 6 — libellés FR des couches (miroir de frontend/src/lib/layers.ts LAYER_LABEL,
+    # source canonique) : le PDF ne montre plus la clé technique brute de couche au client.
+    _LAYER_LABEL = {
+        "zonage_plu_gpu": "Zonage PLU", "prescription_plu": "Prescriptions PLU",
+        "foncier_public": "Foncier public", "emprise_lineaire": "Emprise linéaire",
+        "emprise_routiere": "Emprise routière", "residuel_socle": "SDP résiduelle",
+        "safer": "SAFER", "sar": "SAR (aménagement régional)", "surface": "Surface parcelle",
+        "parc_national": "Parc national", "foret_publique": "Forêt publique",
+        "cinquante_pas": "50 pas géométriques", "sup": "Servitudes (SUP)",
+        "risques": "Risques PPR", "sol_pollue": "Sols pollués", "cavite": "Cavités",
+        "icpe": "ICPE", "mvt": "Mouvement de terrain", "pente": "Pente", "ravine": "Ravines",
+        "trait_de_cote": "Trait de côte", "abf": "ABF / Monuments",
+        "ens": "Espace naturel sensible", "eau": "Eau", "bruit_route": "Bruit routier",
+        "dvf": "Marché DVF", "sitadel": "Permis SITADEL", "amenites": "Aménités",
+        "potentiel_foncier_region": "Potentiel foncier Région", "ocs_ge": "Occupation du sol",
+        "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
+        "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",
+    }
     omises = 0
     sections_omises: list[str] = []   # M-P (P2-64) : NOMMER la section tronquée, pas juste compter
     for key, titre in ONGLETS:
@@ -375,8 +393,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             continue
         pdf.ln(1.5)
         # en-tête de section en CARTOUCHE (comme un tiroir M19) + résumé à droite
-        poids = sum(ln.get("weight") or 0 for ln in lines)
-        resume = f"{len(lines)} signal(aux) · somme {'+' if poids > 0 else ''}{poids}"
+        # M70 décision 5 — plus de « somme +{poids} » (score brut) au client ; juste le compte.
+        resume = f"{len(lines)} signal(aux)"
         y = pdf.get_y()
         pdf.set_fill_color(*SURFACE)
         pdf.rect(14, y, pdf.w - 28, 7, style="F", round_corners=True, corner_radius=2)
@@ -398,16 +416,11 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                 continue
             if pdf.get_y() > pdf.h - 34:
                 pdf.add_page()
-            w0 = ln.get("weight")
-            wtxt = ("+" + str(w0) if (w0 or 0) > 0 else str(w0)) if w0 is not None else \
-                ("?" if ln["result"] == "UNKNOWN" else "·")
-            wcol = MINT if (w0 or 0) > 0 else (RED if (w0 or 0) < 0 else TXT_DIM)
-            pdf.set_font("mono", size=8)
-            pdf.set_text_color(*wcol)
-            pdf.cell(11, 4.4, wtxt, align="R")
+            # M70 décisions 5+6 — plus de préfixe de poids signé, plus de clé technique de couche :
+            # libellé FR ferré à gauche (comme la fiche), le « pourquoi » chiffré vit ailleurs.
             pdf.set_font("inter", size=8)
             pdf.set_text_color(*TXT)
-            pdf.cell(40, 4.4, ln["layer"][:26])
+            pdf.cell(51, 4.4, _LAYER_LABEL.get(ln["layer"], ln["layer"])[:34])
             pdf.set_font("inter", size=7.2)
             pdf.set_text_color(*TXT_MUT)
             x = pdf.get_x()
@@ -417,13 +430,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             if ln["layer"] == "pente" and fiche.get("pente_terrain"):
                 detail = f"Pente {fiche['pente_terrain']} — RGE ALTI 5 m, non éliminatoire."
             pdf.multi_cell(pdf.w - 14 - x, 3.6, detail, new_x="LMARGIN", new_y="NEXT")
-            # traçabilité : source + référence + date (exigence fraîcheur par ligne)
+            # traçabilité : source + date (exigence fraîcheur par ligne). M70 décision 6 — la clé
+            # technique source_table#source_id ne figure PLUS (nom de source + date suffisent).
             src = ln.get("source") or ""
-            ref = f"{ln['source_table']}#{ln['source_id']}" if ln.get("source_id") is not None else ""
             pdf.set_x(65)
             pdf.set_font("mono", size=6)
             pdf.set_text_color(*TXT_DIM)
-            pdf.cell(0, 3.4, "  ".join(x for x in (src, ref, ln.get("date") or "") if x),
+            pdf.cell(0, 3.4, "  ".join(x for x in (src, ln.get("date") or "") if x),
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
 

@@ -1749,7 +1749,10 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY ds.category, ds.name"""),
             {"run": run_label, "pid": parcel_id}).mappings().all()
-    _FIAB = {"verifie": "vérifiée", "estime": "estimée", "declaratif": "déclarative",
+    # M70 décision 4 — « vérifiée » MENTAIT : source_checks est VIDE, aucune vérification amont ne
+    # l'adosse (reliability_level = déclaration de catalogue). Libellé honnête = « suivie » (la
+    # source est cataloguée + suivie par le radar, jamais « vérifiée à la dernière version »).
+    _FIAB = {"verifie": "suivie", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
     for r in rows:

@@ -211,7 +211,8 @@ function Weight({ w, result }: { w: number | null; result: string }) {
 // le millésime reste en base, dans les exports PDF et l'écran Sources).
 function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) {
   const openSourceDrawer = useApp((s) => s.openSourceDrawer)
-  const trace = line.source_table && line.source_id != null ? `${line.source_table}#${line.source_id}` : null
+  // M70 décision 6 — la clé technique `source_table#source_id` (ex. « parcel_amenites#56909 ») ne
+  // s'affiche PLUS au client (violation libellés_client). Le nom de source reste cliquable (drawer).
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
@@ -220,7 +221,6 @@ function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) 
           {line.source}
         </button>
       )}
-      {trace && <span className="shrink-0 font-mono text-txt-dim/70">{trace}</span>}
       {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
@@ -286,20 +286,21 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
   const color = icdColor(icd.bande)
   return (
     <div data-icd className="card-elev">
+      {/* M70 décision 5 — plus de jauge ni de score chiffré (une seule jauge dans la fiche = l'ICD
+          n'en est plus une : verdict qualitatif). La barre et le nombre {icd.score} sont retirés ;
+          reste le verdict `icd.libelle` (« confiance haute »). Le détail (couches manquantes) déplie. */}
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
         title="Confiance données : déplier le détail">
-        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="w-24 shrink-0">
+        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="shrink-0">
           <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Confiance données</span>
         </Tip>
-        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${icd.score}%`, background: color }} />
-        </span>
-        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{icd.score}</span>
+        <span data-icd-verdict className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+          style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
         <div className="border-t border-line-2 px-3 py-2">
-          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
+          {/* M70 : le verdict `icd.libelle` est déjà dans l'en-tête — plus de doublon ici. */}
           {icd.manquants.length > 0 ? (
             <>
               <p className="label-caps mt-2 pb-1">Ce qui manque</p>
@@ -2197,9 +2198,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
+            {/* M70 décision 5 — plus de « couverture {icd.score} % » (score nu) dans le sous-titre :
+                la confiance est portée par le verdict qualitatif de l'ICD (bloc plus bas). */}
             <RefDrawer id="confiance" icon={IC.confiance} name="Données et méthode"
-              context={[f.data_sources?.length ? `${f.data_sources.length} sources` : null, f.icd ? `couverture ${f.icd.score} %` : null].filter(Boolean).join(' · ') || undefined}
-              value={<></>/* DA-FICHE-v6 « pas de % nu » : la couverture est dans le sous-titre ; à droite, juste le chevron. */}>
+              context={f.data_sources?.length ? `${f.data_sources.length} sources` : undefined}
+              value={<></>/* DA-FICHE-v6 « pas de % nu » : à droite, juste le chevron. */}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
@@ -2218,19 +2221,28 @@ export function Fiche({ idu }: { idu: string }) {
                           </div>
                           <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
                             {mill && <span className="tnum">{mill}</span>}
-                            {s.fiabilite && <span className="rounded-full px-1.5" style={{ background: s.fiabilite === 'vérifiée' ? '#5CE6A122' : '#e8b84d22', color: s.fiabilite === 'vérifiée' ? '#5CE6A1' : '#e8b84d' }}>{s.fiabilite}</span>}
+                            {/* M70 décision 4 — couleurs honnêtes : « suivie » (cataloguée + radar) en
+                                mint calme, « à confirmer » en ambre, le reste (estimée/déclarative) neutre. */}
+                            {s.fiabilite && (() => {
+                              const bg = s.fiabilite === 'suivie' ? '#5CE6A122' : s.fiabilite === 'à confirmer' ? '#e8b84d22' : '#8A968F22'
+                              const fg = s.fiabilite === 'suivie' ? '#5CE6A1' : s.fiabilite === 'à confirmer' ? '#e8b84d' : '#8A968F'
+                              return <span className="rounded-full px-1.5" style={{ background: bg, color: fg }}>{s.fiabilite}</span>
+                            })()}
                           </div>
                         </div>
                       )})}
                     </div>
                   </div>
                 )}
-                {/* Données ABSENTES — dites, jamais approximées (doctrine M52). Dérivées de nuls RÉELS
-                    du payload + faits open-data connus. Chaque absence est un fait, pas une excuse. */}
+                {/* M70 décision 8 — le bloc du 3ᵉ terme de la doctrine (Sourcé/Estimé/ABSENT) est
+                    CONSERVÉ (le retirer laisserait croire la fiche complète) mais REPLIÉ par défaut
+                    et reformulé « Ce que LABUSE ne peut pas savoir sur cette parcelle ». */}
                 {donneesAbsentes.length > 0 && (
-                  <div data-donnees-absentes>
-                    <p className="label-caps mb-1.5">Données absentes</p>
-                    <ul className="flex flex-col gap-1">
+                  <details data-donnees-absentes>
+                    <summary className="label-caps cursor-pointer list-none select-none">
+                      Ce que LABUSE ne peut pas savoir sur cette parcelle <span className="text-txt-dim">({donneesAbsentes.length})</span>
+                    </summary>
+                    <ul className="mt-1.5 flex flex-col gap-1">
                       {donneesAbsentes.map((a, i) => (
                         <li key={i} className="flex gap-2 text-[11px] leading-snug text-txt-mut">
                           <span aria-hidden className="text-txt-dim">○</span>
@@ -2238,7 +2250,7 @@ export function Fiche({ idu }: { idu: string }) {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </details>
                 )}
                 {/* M52 L4 — Qualité de la mesure PAR COMMUNE, DITE (audit RR fold 2025 OOS). RR intra
                     = pouvoir discriminant dans la commune ; « fragile » = <5 ventes en tête → fréquence
