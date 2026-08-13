@@ -518,5 +518,28 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
 
+    # ── M73 §5 — « Ce que ce document ne peut pas dire » : matérialisation du 3e terme de la
+    # doctrine (ce qui est absent + où le chercher). Source unique export_commun.limites_document.
+    from .export_commun import LIMITES_TITRE, limites_document
+    limites = limites_document("premium")
+    if limites:
+        if pdf.get_y() > pdf.h - 46:
+            pdf.add_page()
+        pdf.ln(2.5)
+        pdf.set_font("mono", size=7.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 5, LIMITES_TITRE.upper(), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_draw_color(*LINE)
+        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+        pdf.ln(1.4)
+        for absence, ou in limites:
+            pdf.set_font("inter", size=7.6)
+            pdf.set_text_color(*TXT)
+            pdf.cell(72, 4, f"{absence}", new_x="RIGHT", new_y="TOP")
+            pdf.set_font("inter", size=7.6)
+            pdf.set_text_color(*TXT_MUT)
+            pdf.set_x(88)
+            pdf.multi_cell(pdf.w - 14 - 88, 4, f"→ {ou}", new_x="LMARGIN", new_y="NEXT")
+
     out = pdf.output()
     return bytes(out)

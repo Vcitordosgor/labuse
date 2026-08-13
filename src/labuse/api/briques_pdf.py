@@ -612,6 +612,17 @@ def risques(out: dict) -> str:
     return body
 
 
+def limites_section(doc: str) -> str:
+    """M73 §5 — « Ce que ce document ne peut pas dire » : absences + où le destinataire peut les
+    chercher (matérialise le 3e terme de la doctrine). Contenu = source unique export_commun."""
+    from .export_commun import LIMITES_TITRE, limites_document
+    rows = "".join(f"<tr><td>{esc(a)}</td><td class='note'>→ {esc(o)}</td></tr>"
+                   for a, o in limites_document(doc))
+    return (f"<div class='pb'></div><h2>{esc(LIMITES_TITRE)}</h2>"
+            f"<table><tr><th>Ce que le dossier n'établit pas</th><th>Où le vérifier</th></tr>"
+            f"{rows}</table>")
+
+
 # ───────────────────────── rendu ─────────────────────────
 
 def render_pdf(sections: list[str], libelle: str, *, produit: str = "",

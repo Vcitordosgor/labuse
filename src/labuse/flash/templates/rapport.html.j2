@@ -488,6 +488,17 @@
        modèle v{{ template_version }} · LABUSE — radar foncier de La Réunion ·
        labuse.immo</p>
   </div>
+
+  {# ══ M73 §5 — Ce que ce document ne peut pas dire ══ #}
+  {% if limites %}
+  <h2 style="margin-top:7mm"><span class="num">10</span>{{ limites_titre }}</h2>
+  <table class="donnees">
+    <tr><th>Ce que le dossier n'établit pas</th><th>Où le vérifier</th></tr>
+    {% for absence, ou in limites %}
+    <tr><td>{{ absence }}</td><td>→ {{ ou }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
 </section>
 </body>
 </html>

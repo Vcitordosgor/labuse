@@ -64,6 +64,38 @@ def pied_de_page_pdf(pdf, doc_label: str, *, dpe: bool = False, inpi: bool = Fal
              align="C")
 
 
+#: Titre unique de la section « limites » — au mot près dans les 4 documents (M73 §5).
+LIMITES_TITRE = "Ce que ce document ne peut pas dire"
+
+#: Limites COMMUNES à tous les documents : (ABSENCE, OÙ CHERCHER). Matérialise le 3e terme de la
+#: doctrine (ce qui est absent + où le destinataire peut le chercher) — devant un financeur, c'est
+#: ce qui rend le reste crédible.
+_LIMITES_COMMUN: list[tuple[str, str]] = [
+    ("Constructibilité définitive", "certificat d'urbanisme (mairie / service instructeur)"),
+    ("Valeur vénale exacte", "avis de valeur notarial / expert"),
+    ("État réel du bâti et servitudes privées", "visite + acte notarié"),
+    ("Prix de marché fin", "DVF détaillé + agent local"),
+]
+
+#: Ajouts SPÉCIFIQUES par document (concaténés au commun ; one-pager = version courte).
+_LIMITES_SPECIFIQUE: dict[str, list[tuple[str, str]]] = {
+    "premium": [("Comparables de vente détaillés", "dossier parcelle / banquier")],
+    "banquier": [("Plan de financement et LTV", "établissement prêteur"),
+                 ("Coût de démolition / dépollution", "devis entreprise")],
+    "dossier": [("Réseaux et raccordements chiffrés", "concessionnaires (eau / électricité)")],
+    "onepager": [],
+}
+
+
+def limites_document(doc: str) -> list[tuple[str, str]]:
+    """M73 §5 — source de contenu PARTAGÉE (doctrine « un seul endroit ») de la section
+    « Ce que ce document ne peut pas dire ». Renvoie une liste de (ABSENCE, OÙ CHERCHER).
+    `doc` ∈ {"premium", "banquier", "dossier", "onepager"} ; one-pager = version courte (3 items)."""
+    if doc == "onepager":
+        return _LIMITES_COMMUN[:3]
+    return _LIMITES_COMMUN + _LIMITES_SPECIFIQUE.get(doc, [])
+
+
 def adresses_ban(db: Session, idus: list[str]) -> dict[str, dict]:
     """Adresse postale BAN par parcelle : {idu: {adresse, code_postal, ville}}.
     Une seule requête (page d'export) ; adresse « principal » prioritaire ; dict vide si
