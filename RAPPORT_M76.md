@@ -20,9 +20,9 @@ Balayage de TOUS les blocs. Aucun littéral `30/07/2026` en dur : les dates tran
 **Exception conservée (l'écran qui documente les sources)** : tiroir « Données et méthode »
 (`Fiche.tsx:2237-2296`, pastilles `mill`/`tnum` par source). **Pied légal** (`Fiche.tsx:2377`) : sans date.
 **Non touché** (dates FACTUELLES de contenu, pas des millésimes de source) : dates de permis « déposé/
-autorisé » (`Fiche.tsx:2089`), dates de mutation DVF. **`SourceDrawer.tsx:45/57`** (« Date du fait » +
-« Synchronisée le ») : c'est un drawer de source détaillée (équivalent per-source de « Données et méthode »)
-— **laissé, à ton arbitrage** : si tu le veux nettoyé aussi, dis-le.
+autorisé » (`Fiche.tsx:2089`), dates de mutation DVF. **`SourceDrawer.tsx` — NETTOYÉ (arbitrage Vic,
+commit `6fded0ec`)** : « Date du fait » de l'extrait + ligne « Synchronisée le … » retirées ; le nom de la
+source reste (en-tête + fournisseur). L'exception « Données et méthode » ne couvre pas le drawer.
 
 ## Point 2 — Scores bruts retirés (le qualitatif reste)
 
@@ -71,13 +71,18 @@ qui s'affiche pour annoncer son vide (« Aucune règle traduite » + pastille «
 au jaune **lui ferait perdre son exclusivité** — le lien Pages Jaunes ne serait plus le seul jaune de la
 fiche. La DA prescrit le vert ; **je n'ai rien changé.**
 
-**Lien vers un outil PAS en forme `.porte-outil` (signalé)** : `Fiche.tsx:369-374` — bouton **« Annuaire
-PLU → » violet** (`data-plu-annuaire-link`, `setModule('plu-annuaire')`) dans le bloc Règlement PLU. **C'est
-un doublon** : le MÊME outil est déjà une **porte** « Annuaire PLU de la commune » (`Fiche.tsx:1981`, forme
-`.porte-outil`) dans le même tiroir Urbanisme. → **même outil, deux formes.** À trancher : soit le lien
-violet devient une porte (et disparaît comme lien), soit il assume d'être un lien et la porte est retirée —
-mais pas les deux. **Je n'ai rien changé** (hors périmètre « ne rien changer » du point 5). Les autres liens
-`↗` (Voir l'article, l'ouvrir) sont des liens DOCUMENTAIRES externes légitimes, pas des outils.
+**Doublon Annuaire PLU — TRANCHÉ (arbitrage Vic, commit `6fded0ec`)** : le lien-texte **violet « Annuaire
+PLU → »** (bloc Règlement PLU) est **retiré** ; la **porte** « Annuaire PLU de la commune » (forme
+`.porte-outil`, grammaire officielle M60) **reste**. Une action, une seule forme. `setModule`/`setPluPrefill`
+orphelins du bloc `ReglementPluBlock` supprimés. Les autres liens `↗` (Voir l'article, Voir le règlement)
+sont des liens DOCUMENTAIRES externes légitimes, pas des outils.
+
+**Chasse aux autres doublons (demande Vic) — aucun autre lien-texte ne double une porte.** Tous les
+`setModule(...)` restants sont des `onClick` de `PorteOutil`. Seules deux **tuiles-icônes** de la bande
+**EXPORTS** atteignent un module aussi servi par une porte : `1950`→`temps` (porte « Remonter le temps ») et
+`Courrier`→`courriers` (porte SPF). C'est une **forme distincte** (tuile-icône dans la bande EXPORTS, scindée
+des portes par M60 P1d), **pas « du même genre »** que le lien violet — **signalé, non touché** (si tu veux
+les dédoublonner aussi, dis-le).
 
 ## Garde-fous
 tsc 0 · vitest 37/37 · build vert · **golden 119/119 (diff 0, passe visuelle)** · une seule jauge (ICD) ·
