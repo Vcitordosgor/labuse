@@ -2243,7 +2243,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
 
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
-                  cr.source_table, cr.source_id, cr.evenement, cr.created_at, ds.name AS source
+                  cr.source_table, cr.source_id, cr.evenement, cr.created_at,
+                  ds.name AS source, ds.source_millesime
            FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
            WHERE cr.run_label = :run AND cr.parcel_id = :pid
            ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""),
@@ -2273,6 +2274,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "source_table": r["source_table"],
             "source_id": r["source_id"],
             "date": r["created_at"].date().isoformat() if r["created_at"] else None,
+            # M73 E : millésime AMONT réel de la source (data_sources.source_millesime) — c'est LUI
+            # la fraîcheur par ligne, pas la date de run (uniforme = date pipeline, trompeuse).
+            "millesime_amont": r["source_millesime"],
         }
         lines.append(line)
         if r["evenement"] == "rouge":

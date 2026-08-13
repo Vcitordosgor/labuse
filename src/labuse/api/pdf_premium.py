@@ -430,13 +430,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             if ln["layer"] == "pente" and fiche.get("pente_terrain"):
                 detail = f"Pente {fiche['pente_terrain']} — RGE ALTI 5 m, non éliminatoire."
             pdf.multi_cell(pdf.w - 14 - x, 3.6, detail, new_x="LMARGIN", new_y="NEXT")
-            # traçabilité : source + date (exigence fraîcheur par ligne). M70 décision 6 — la clé
-            # technique source_table#source_id ne figure PLUS (nom de source + date suffisent).
+            # traçabilité : source + MILLÉSIME AMONT. M70 décision 6 — plus de clé technique.
+            # M73 E : on n'affiche PLUS la date de run (uniforme = date pipeline, pas une fraîcheur
+            # par ligne) ; on montre le millésime amont réel de la source quand il est renseigné.
             src = ln.get("source") or ""
             pdf.set_x(65)
             pdf.set_font("mono", size=6)
             pdf.set_text_color(*TXT_DIM)
-            pdf.cell(0, 3.4, "  ".join(x for x in (src, ln.get("date") or "") if x),
+            pdf.cell(0, 3.4, "  ".join(x for x in (src, ln.get("millesime_amont") or "") if x),
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
 
