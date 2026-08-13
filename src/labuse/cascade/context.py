@@ -38,6 +38,7 @@ class EvalContext:
         self.rules = rules or config.cascade_rules()
         self._source_ids: dict[str, int | None] = {}
         self._kind_present: dict[str, bool] = {}
+        self._kind_present_commune: dict[tuple[str, str], bool] = {}   # M70 déc. 2 (présence par commune)
         # Caches batch (remplis par prime()) : évitent une requête par parcelle×couche.
         self._primed_ids: set[int] = set()
         self._inter: dict[tuple[int, str], list[Intersection]] = {}
@@ -57,6 +58,7 @@ class EvalContext:
         self._amenites: dict[int, dict] = {}
         # Étage 2 (dry-run) : signaux d'accessibilité par parcelle (vues INPI/BODACC).
         self._bodacc: dict[int, dict] = {}
+        self._bodacc_sondage: dict[int, dict] = {}   # M70 déc. 3 (journal bodacc_sondages par parcelle)
         self._propension: dict[int, dict] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
@@ -276,10 +278,25 @@ class EvalContext:
                  "FROM parcels p JOIN v_foncier_propension_vendre v ON v.idu = p.idu WHERE p.id = ANY(:ids)"),
             {"ids": ids}).mappings().all():
             self._propension[r["pid"]] = dict(r)
+        # M70 décision 3 — journal de sondage BODACC par PROPRIÉTAIRE (M71-D) : dit si le siren du
+        # propriétaire a été sondé et le résultat, pour ne plus affirmer « aucune procédure » à nu.
+        # Table optionnelle (créée par ingest_bodacc) → garde to_regclass.
+        if self.session.execute(text("SELECT to_regclass('bodacc_sondages')")).scalar() is not None:
+            for r in self.session.execute(
+                text("SELECT p.id AS pid, pm.siren, bs.sonde_le, bs.resultat "
+                     "FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu = p.idu "
+                     "LEFT JOIN bodacc_sondages bs ON bs.siren = pm.siren WHERE p.id = ANY(:ids)"),
+                {"ids": ids}).mappings().all():
+                self._bodacc_sondage[r["pid"]] = dict(r)
 
     def bodacc(self, parcel_id: int) -> dict | None:
         """Procédure collective la plus récente sur la parcelle (v_foncier_sous_pression). None sinon."""
         return self._bodacc.get(parcel_id)
+
+    def bodacc_sondage(self, parcel_id: int) -> dict | None:
+        """M70 déc. 3 — {siren, sonde_le, resultat} du propriétaire PM (journal bodacc_sondages).
+        None si la parcelle n'a pas de propriétaire personne morale (rien à sonder)."""
+        return self._bodacc_sondage.get(parcel_id)
 
     def propension(self, parcel_id: int) -> dict | None:
         """Signal âge dirigeant (v_foncier_propension_vendre). None si pas de PM/âge connu."""
@@ -370,6 +387,20 @@ class EvalContext:
                 ).scalar()
             )
         return self._kind_present[kind]
+
+    def kind_present_commune(self, kind: str, commune: str | None) -> bool:
+        """M70 décision 2 — une couche `spatial_layers` de ce `kind` est-elle ingérée POUR CETTE
+        COMMUNE ? Une couche à couverture partielle (ENS : 21/24 communes) ne doit jamais produire
+        un « hors périmètre » (faux négatif) là où la commune n'a AUCUNE donnée → UNKNOWN. Cache par
+        (kind, commune). `spatial_layers.commune` = nom de commune (idem ParcelRef.commune)."""
+        if commune is None:
+            return self.kind_present(kind)
+        key = (kind, commune)
+        if key not in self._kind_present_commune:
+            self._kind_present_commune[key] = bool(self.session.execute(
+                text("SELECT EXISTS(SELECT 1 FROM spatial_layers WHERE kind = :k AND commune = :c)"),
+                {"k": kind, "c": commune}).scalar())
+        return self._kind_present_commune[key]
 
     def table_has_commune(self, table: str, commune: str | None) -> bool:
         """Y a-t-il des lignes ingérées pour la commune dans dvf_mutations/sitadel_permits."""

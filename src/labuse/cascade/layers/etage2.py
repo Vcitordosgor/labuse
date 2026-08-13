@@ -37,8 +37,11 @@ class AgeDirigeantLayer(Layer):
         if age is None:
             return unknown(self.name, "Âge dirigeant inconnu (PM sans dirigeant physique daté).", source=SRC_INPI)
         age = int(age)
+        # M70 décision 7 (réserve RGPD P2-34) — le stockage garde l'âge, mais l'AFFICHAGE n'expose
+        # plus le nombre exact d'un dirigeant nommé-adjacent : le signal qualitatif suffit. Le score
+        # (pts, magnitude) reste calculé sur l'âge réel — seul le libellé change.
         if age < int(params.get("age_min_valide", 18)):
-            return unknown(self.name, f"Âge dirigeant {age} ans — fiche RNE incohérente, invalide.", source=SRC_INPI)
+            return unknown(self.name, "Âge dirigeant hors plage plausible — fiche RNE incohérente, invalide.", source=SRC_INPI)
         courbe = params["courbe"]                          # {55:4, 65:8, 75:12, 85:14}
         pts = 0
         for seuil in sorted((int(k) for k in courbe), reverse=True):
@@ -46,10 +49,10 @@ class AgeDirigeantLayer(Layer):
                 pts = courbe[seuil] if seuil in courbe else courbe[str(seuil)]
                 break
         if pts == 0:
-            return passed(self.name, f"Gérant {age} ans — pas de signal de transmission.", source=SRC_INPI)
+            return passed(self.name, "Gérant en activité — pas de signal de transmission.", source=SRC_INPI)
         plafond = float(opportunity_weights()["bonuses"][params["bonus_key"]])
         mag = pts / plafond
-        return _trace(positive(self.name, f"Gérant âgé ({age} ans) — horizon de transmission.",
+        return _trace(positive(self.name, "Gérant proche de la retraite — horizon de transmission.",
                                params["bonus_key"], magnitude=mag, source=SRC_INPI),
                       "v_foncier_propension_vendre", pr.get("siren"))
 
@@ -61,7 +64,17 @@ class BodaccLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         b = ctx.bodacc(parcel.id)
         if not b or not b.get("type_procedure"):
-            return passed(self.name, "Aucune procédure collective recensée.", source=SRC_BODACC)
+            # M70 décision 3 — plus d'affirmation nue « aucune procédure ». On consulte le journal
+            # de sondage (M71-D) : « sondé le X → rien » (fait), sinon « sondage non concluant »
+            # (jamais présumer l'absence quand le siren n'a pas été sondé / n'est pas sondable).
+            s = ctx.bodacc_sondage(parcel.id)
+            if not s or not s.get("siren"):
+                return passed(self.name, "BODACC sans objet — propriétaire non personne morale.", source=SRC_BODACC)
+            res = s.get("resultat")
+            if res == "rien":
+                d = s["sonde_le"].strftime("%d/%m/%Y") if s.get("sonde_le") else "récemment"
+                return passed(self.name, f"Aucune procédure collective — propriétaire sondé le {d}.", source=SRC_BODACC)
+            return unknown(self.name, "Sondage BODACC non concluant (propriétaire non sondé ou non sondable).", source=SRC_BODACC)
         # Normalisation mojibake (double-encodage UTF-8) vers le libellé propre, PUIS classement.
         libelle = params.get("mojibake", {}).get(b["type_procedure"], b["type_procedure"])
         etat = "neutre"

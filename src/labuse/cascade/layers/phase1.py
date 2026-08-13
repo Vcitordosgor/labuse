@@ -708,6 +708,11 @@ class EnsLayer(Layer):
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
             return unknown(self.name, "Espaces Naturels Sensibles non ingérés.", source=SRC_ENS)
+        # M70 décision 2 — ENS ne couvre que 21/24 communes (proxy INPN ; couche ENS départementale
+        # non publiée). Sur une commune SANS aucune donnée ENS, « Hors ENS » (PASS) serait un FAUX
+        # NÉGATIF : on ne conclut pas l'absence à partir d'une couche vide → UNKNOWN.
+        if not ctx.kind_present_commune(kind, parcel.commune):
+            return unknown(self.name, "Donnée ENS non disponible sur cette commune.", source=SRC_ENS)
         if any(i.coverage > 0 for i in ctx.intersections(parcel.id, kind)):
             return soft_flag(self.name, params["detail"], Severity(params.get("severity", "moyen")), source=SRC_ENS)
         return passed(self.name, "Hors ENS.", source=SRC_ENS)
@@ -724,11 +729,20 @@ class OcsGeLayer(Layer):
         dom = _dominant(ctx.intersections(parcel.id, kind))
         if dom is None or dom.coverage <= 0:
             return passed(self.name, "Occupation du sol non couverte ici.", source=SRC_OCSGE)
+        # M70 décision 2 — OCS GE est un PROXY (BDCARTO, précision commune, pas la parcelle). Le
+        # verdict reste, mais la réserve devient VISIBLE : jamais un constat définitif sur un proxy.
         if dom.subtype in set(params.get("naturel_subtypes", [])):
             return soft_flag(
-                self.name, f"Sol {dom.subtype} (logique ZAN — artificialisation à justifier).", Severity(params.get("severity", "faible")), source=SRC_OCSGE
+                self.name,
+                f"Sol classé {dom.subtype} — logique ZAN, artificialisation à justifier "
+                "(source d'occupation du sol, précision limitée à la parcelle).",
+                Severity(params.get("severity", "faible")), source=SRC_OCSGE,
             )
-        return passed(self.name, f"Sol déjà {dom.subtype or 'artificialisé'}.", source=SRC_OCSGE)
+        return passed(
+            self.name,
+            f"Sol classé {dom.subtype or 'artificialisé'} (source d'occupation du sol, "
+            "précision limitée à la parcelle).",
+            source=SRC_OCSGE)
 
 
 @register

@@ -17,14 +17,17 @@ BODACC_P = {
 
 
 class _Ctx:
-    def __init__(self, prop=None, bod=None, pas=None):
-        self._p, self._b = prop, bod
+    def __init__(self, prop=None, bod=None, pas=None, sondage=None):
+        self._p, self._b, self._s = prop, bod, sondage
 
     def propension(self, pid):
         return self._p
 
     def bodacc(self, pid):
         return self._b
+
+    def bodacc_sondage(self, pid):   # M70 déc. 3 — journal de sondage BODACC par propriétaire
+        return self._s
 
 
 class _P:
@@ -84,5 +87,20 @@ def test_bodacc_mojibake_normalise():
 
 
 def test_bodacc_absent_pass():
-    assert BodaccLayer().evaluate(_P(), _Ctx(bod=None), BODACC_P).result == CascadeVerdict.PASS
+    # M70 déc. 3 — pas de procédure ET pas de propriétaire PM → « sans objet » (PASS honnête).
+    v = BodaccLayer().evaluate(_P(), _Ctx(bod=None, sondage=None), BODACC_P)
+    assert v.result == CascadeVerdict.PASS and "sans objet" in v.detail
+
+
+def test_bodacc_sonde_rien_pass_date():
+    # M70 déc. 3 — propriétaire sondé, rien trouvé → PASS avec la date (jamais l'affirmation nue).
+    from datetime import date
+    v = BodaccLayer().evaluate(_P(), _Ctx(bod=None, sondage={"siren": "123456789", "resultat": "rien", "sonde_le": date(2026, 8, 6)}), BODACC_P)
+    assert v.result == CascadeVerdict.PASS and "sondé le 06/08/2026" in v.detail
+
+
+def test_bodacc_non_sondable_unknown():
+    # M70 déc. 3 — siren non sondable / jamais sondé → UNKNOWN « non concluant », pas PASS.
+    v = BodaccLayer().evaluate(_P(), _Ctx(bod=None, sondage={"siren": "U12345", "resultat": "non_sondable", "sonde_le": None}), BODACC_P)
+    assert v.result == CascadeVerdict.UNKNOWN and "non concluant" in v.detail
 
