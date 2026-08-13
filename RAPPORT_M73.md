@@ -208,3 +208,78 @@ pas de réseaux, pas de CTA) sont **structurels**, pas un défaut d'adaptation.
 ### Garde-fous Phase 0
 Aucune écriture de code (mesure pure). API servie, 5 documents × 3 parcelles générés en HTTP 200. Pièces jointes
 dans `docs/mandats/m73_pieces/`. **NE PAS MERGER — STOP arbitrage.**
+
+---
+
+## PHASE 1 — CORRECTION (addendum, après arbitrages Vic) — **10 commits, NON mergé**
+
+Branche `feat/m73-exports` (Phase 0 `cf49113e` + 10 commits Phase 1). Pièces `docs/mandats/m73_pieces/`
+**régénérées** (versions corrigées). Arbitrages appliqués : rail dryrun servi fait foi ; DEAL > GPU
+(réglementaire > géométrique) ; DVF séparé (M73 unifie l'appel, `MANDAT_DVF` le calcul) ; F partiel dans M73.
+
+### FAIT (cause racine + libellés + fraîcheur + §5)
+
+**§1 — Source unique (cause racine éliminée).** Les 5 documents lisent la MÊME cascade servie
+(`dryrun_cascade_results`) via le helper unique `served_cascade.served_cascade_lines` + le formateur
+`risques_arbitrage.arbitrer_risques` :
+- un seul niveau par aléa (le plus contraignant, nommé — fini « faible + moyen + eleve » côte à côte) ;
+- **régime PPR réglementaire (DEAL, HARD_EXCLUDE) prime sur le géométrique** — « intersection marginale <10 % »
+  supprimée ; « zone rouge inconstructible » seul, sans R1/B2u juxtaposés (règle gravée : réglementaire > géométrique) ;
+- one-pager/md/html basculés (`_build_fiche` → dryrun) ; dossier + banquier basculés (`flash/data.py`) ;
+- **`cascade_results` (rail legacy) n'alimente plus AUCUN document** (grep-vérifié). Résiduels `spatial_layers`
+  RAPPORTÉS pour arbitrage (détail, pas contradiction) : plu_gpu zone/prescription (libellés de zone),
+  ICPE top-5 (proximité), patrimoine (noms ENS/QPV/friche), qpv commune. `_ONGLET` dédupliqué (source unique).
+
+**§2 — Test de non-contradiction (exigence centrale, VERT).** `tests/test_non_contradiction.py` génère les 5
+documents sur les 3 parcelles de recette et échoue si : un jeton technique/contradiction atteint un document
+(INONDATION_MOUVEMENT, mouvement_terrain, niveau eleve, intersection marginale, parcel_residuel, _ass, table#id,
+osm_faux_positif, config/plu, (Mxx)) ; un aléa listé à plusieurs niveaux ou divergent entre docs ; « PPR zone rouge »
+présent dans certains docs seulement. **Il a capturé un leak réel** (`osm_faux_positif` imprimé dans le premium → corrigé).
+
+**§3 — Libellés client / faux positifs (C + D).** ABF « 0 m » (distance-à-tampon) → ligne servie « ~500 m
+covisibilité » (C1, cause ABF signalée au BACKLOG) ; message `config/plu_<commune>.yaml`/« non outillé » →
+« zone non calibrée finement » (C2) ; markdown `**…**` de la synthèse banquier strippé (C3) ; tableau faisabilité
+vide → phrase (C4) ; `(M38)` retiré (C5) ; « Généré via LABUSE pour Pilote LABUSE » masqué (C6) ; « usage interne »
+retiré (C7) ; « LA BUSE » → « LABUSE » (C8) ; **DPE/INPI cités en pied conditionnés** à présence d'un constat (C9,
+retirés des 5 docs — aucun ne rend DPE ni dirigeant) ; libellés bruts PPR/aléa/`_ass`/`parcel_residuel`/scores
+nettoyés à la source servie ; fallback de libellé de couche humanisé (plus de clé brute).
+
+**E — Fraîcheur.** `_sources()` n'affiche plus `last_sync_at` (date d'ingestion) comme millésime → millésime amont
+réel ou « horizon amont non publié » ; le premium ne montre plus la date de run uniforme (`source_millesime` par ligne).
+
+**§5 — « Ce que ce document ne peut pas dire » (4 documents générés).** Source unique
+`export_commun.limites_document(doc)` ; rendu dans chaque format (premium fpdf, one-pager/dossier/banquier HTML).
+Fiche écran non touchée (déjà « Données absentes », M70).
+
+**§F partiel — dossier « Terrain & réseaux ».** Le titre ne ment plus : faisceau de VIABILISATION servi
+(permis + DAACT « raccordements réalisés », façade sur voirie urbanisée), même point de calcul que la fiche,
+honnêtement labellisé « jamais une certitude ; aucun tracé réseau relevé ».
+
+**ABF signalé (pas corrigé).** Tampons 500 m + endpoint décommissionné M74 → note de re-sourcing au BACKLOG (arbitrage Vic).
+
+### RESTANT — arbitrage attendu (non traité, volume/visuel)
+
+Vu le budget (alourdi par un incident git — voir plus bas), trois volets restent et méritent un traitement dédié :
+
+1. **§4 — Direction artistique (recopie des maquettes `DA-BANQUIER/DOSSIER/PDF`).** Chantier visuel mandat-sized
+   exigeant la **comparaison côte à côte** avant tout commit (impossible à mener en aveugle headless avec la
+   fiabilité requise). Le banquier/dossier portent déjà une DA print cohérente (Space Grotesk/Inter/Mono, palette
+   menthe, cartouches) ; premium (fpdf) et one-pager (HTML basique) sont les plus éloignés des maquettes.
+2. **#40 — Premium : comparables DVF listés + plan cadastral/ortho** (aujourd'hui 0 image). Nécessite le service
+   DVF unique (ci-dessous) + rendu d'image en fpdf.
+3. **#37 — DVF : point de lecture unique** (Vic déc. 3 : M73 unifie l'APPEL, `MANDAT_DVF` le CALCUL). Les 3 requêtes
+   DVF et 3 SITADEL redondantes restent ; à router vers un service d'appel unique. Interagit avec `MANDAT_DVF.md`.
+
+Recommandation : un mandat de suite **« M73-B — DA + comparables + DVF-appel »**, à traiter avec les maquettes ouvertes.
+
+### Incident git (transparence)
+En cours de Phase 1, un `checkout main` accidentel a fait atterrir les commits sur `main` au lieu de la branche ;
+détecté au reflog, **entièrement récupéré** (cherry-pick des 10 commits sur `feat/m73-exports`, `main` remis à
+`cab243f3`, arbre vérifié). Aucune perte. Seul le §5 (non commité au moment de l'incident) a été refait à l'identique.
+
+### Garde-fous Phase 1
+`test_non_contradiction` VERT (15 assertions) ; `test_risques_arbitrage` 6/6 ; banquier/flash/faisabilité verts ;
+**golden 33 FAIL = baseline (0 régression)** ; les 5 documents HTTP 200 sur les 3 parcelles ; 0 clé technique /
+score brut / contradiction dans les documents générés (test automatisé). `test_faisabilite::test_au_st_non_
+constructible_neuf` FAIL **préexistant** (verdict AU*st dé-hardcodé M58, hors M73, vérifié à la base de branche).
+**NE PAS MERGER.**
