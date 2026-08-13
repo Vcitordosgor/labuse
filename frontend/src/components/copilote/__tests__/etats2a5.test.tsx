@@ -8,7 +8,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CopiloteEvent } from '../../../lib/copilote'
 import { CopiloteView } from '../CopiloteView'
-import { etat1Calibre, etat2EnCours, etat3Clarification, etat4Zero } from './fixtures'
+import { etat1Calibre, etat2EnCours, etat4Zero } from './fixtures'
 
 class FauxEventSource {
   static instances: FauxEventSource[] = []
@@ -119,51 +119,6 @@ describe('état 2 — instruction en cours', () => {
     expect(document.querySelector('[data-fil-etape="faisabilite"][data-etat="active"]')).toBeInTheDocument()
     expect(normalise(document.querySelector('[data-etage="pool"]')!.textContent)).toContain('13 155')
     expect(document.querySelector('[data-restituee]')).toBeNull()
-  })
-})
-
-describe('état 3 — demande de précision', () => {
-  async function enPause() {
-    const { es } = await lancerRun()
-    act(() => { for (const e of etat3Clarification()) es.emet(e); es.fin('awaiting_user') })
-    await waitFor(() => expect(document.querySelector('[data-clarification]')).toBeInTheDocument())
-    return es
-  }
-
-  it('question + options + champ libre, fil en pause', async () => {
-    await enPause()
-    expect(normalise(document.querySelector('[data-clarification]')!.textContent))
-      .toContain('Sur quelle commune dois-je instruire ce dossier ?')
-    expect(document.querySelectorAll('[data-clarif-option]')).toHaveLength(4)
-    expect(document.querySelector('[data-clarif-libre]')).toBeInTheDocument()
-    expect(document.querySelector('[data-fil-etape="interpretation"][data-etat="pause"]')).toBeInTheDocument()
-    expect(document.querySelector('[data-fil-etape="criblage"][data-etat="attente"]')).toBeInTheDocument()
-    // console suspendue : pas de bouton Instruire pendant la pause
-    expect(document.querySelector('[data-instruire]')).toBeNull()
-    expect(document.querySelector('[data-en-attente]')).toBeDisabled()
-  })
-
-  it('répondre → POST /answer, le run REPREND au même after_seq (jamais redémarré)', async () => {
-    await enPause()
-    fireEvent.click(document.querySelectorAll('[data-clarif-option]')[0])
-    await waitFor(() => expect(fetchMock.mock.calls.some(
-      (c) => String(c[0]).includes('/answer'))).toBe(true))
-    const appelAnswer = fetchMock.mock.calls.find((c) => String(c[0]).includes('/answer'))!
-    expect(String(appelAnswer[1]?.body)).toContain('Saint-Paul')
-    // le flux est rouvert sur LE MÊME run, à la suite du fil — pas un nouveau run
-    await waitFor(() => expect(FauxEventSource.instances.length).toBe(2))
-    expect(FauxEventSource.instances[1].url).toContain('/runs/run-test/')
-    expect(FauxEventSource.instances[1].url).toContain('after_seq=2')
-    expect(fetchMock.mock.calls.filter(
-      (c) => String(c[0]).endsWith('/api/copilote/runs') ).length).toBe(1)
-    // la suite du fil arrive : l'interprétation redevient active puis le criblage démarre
-    const es1 = FauxEventSource.instances[1]
-    act(() => {
-      es1.emet({ seq: 3, kind: 'clarification_answered', payload: { reponse: 'Saint-Paul' },
-                 created_at: '2026-07-27T12:00:00Z' })
-    })
-    expect(document.querySelector('[data-clarification]')).toBeNull()
-    expect(document.querySelector('[data-fil-etape="interpretation"][data-etat="active"]')).toBeInTheDocument()
   })
 })
 

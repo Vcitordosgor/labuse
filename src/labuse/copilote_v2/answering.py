@@ -200,8 +200,9 @@ def _formuler(db: Session, message: str, res) -> str:
 
 
 def answer(db: Session, message: str, history: list[dict] | None = None,
-           contexte: dict | None = None) -> dict:
-    """Point d'entrée unique du Copilote v2 (API brute Phase 1). Retourne un dict prêt à rendre."""
+           contexte: dict | None = None, confirme: bool = False) -> dict:
+    """Point d'entrée unique du Copilote v2. Retourne un dict prêt à rendre. `confirme=True` : le client
+    a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap."""
     route = classify(db, message, history=history, contexte=contexte)
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
@@ -215,7 +216,9 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         if contexte.get("selection") and not params.get("selection"):
             params["selection"] = contexte["selection"]
 
-    if route.clarification and intent not in ("HORS_SUJET",):
+    # §M78-bis 2d : RECHERCHE/VERIFICATION ne court-circuitent PAS sur la clarification du routeur — elle
+    # ALIMENTE leur récap (qui pose une clarification COURTE, ≤ 4 options). Pas de double question.
+    if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION"):
         return _reply(route.clarification, intent, clarification=True)
 
     if intent == "HORS_SUJET":
@@ -246,8 +249,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         return _outil(db, message, params)
 
     if intent == "VERIFICATION":
-        from .missions_lourdes import verification
-        return verification(db, params)
+        # §M78-bis : PÉAGE de confirmation (avis d'achat = coût élevé d'une mauvaise interprétation).
+        # Récap d'abord ; l'avis n'est produit qu'après validation du client (confirme).
+        if confirme:
+            from .missions_lourdes import verification
+            return verification(db, params)
+        from .recap import recap_verification
+        return recap_verification(params)
 
     if intent == "PROJET":
         # la fiche est préparée ici ; l'ÉCRITURE RÉELLE (API projets) est faite par l'endpoint /ask
@@ -259,9 +267,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         from .missions_lourdes import preparer_veille
         return preparer_veille(db, params, message)
 
-    # RECHERCHE → intercepté par le dispatch frontend (run M26-A)
-    return _reply(f"(Mission {intent} — construite dans une phase ultérieure de M78.)", intent,
-                  en_construction=True)
+    if intent == "RECHERCHE":
+        # §M78-bis : on n'instruit PAS tout de suite — récap (interprétation sans lancer) + suggestions.
+        # Le front lance le run M26-A sur « Lancer ». Une clarification alimente le récap (≤ 3-4 options).
+        from .recap import recap_recherche
+        return recap_recherche(db, message)
+
+    return _reply(f"(Mission {intent} — inconnue.)", intent, en_construction=True)
 
 
 # ───────────────────────── Aiguillage OUTIL (1c) ─────────────────────────

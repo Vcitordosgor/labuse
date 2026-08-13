@@ -30,6 +30,7 @@ class AskIn(BaseModel):
     history: list[dict] | None = None
     contexte: dict | None = None       # {idu} | {selection} des surfaces embarquées (Phase 5)
     conversation_id: int | None = None  # §2b — reprendre une conversation existante
+    confirme: bool = False             # §M78-bis — le client a validé le récap → produire la mission
 
 
 def _executer_projet(act: dict, request: Request, db: Session, rep: dict) -> dict:
@@ -68,7 +69,7 @@ def _executer_veille(act: dict, request: Request, db: Session, rep: dict) -> dic
 @router.post("/ask")
 def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté)."""
-    rep = answer(db, body.message, history=body.history, contexte=body.contexte)
+    rep = answer(db, body.message, history=body.history, contexte=body.contexte, confirme=body.confirme)
     act = rep.pop("_action", None)                    # écriture réelle demandée → API existante
     if act and act.get("type") == "projet":
         rep = _executer_projet(act, request, db, rep)

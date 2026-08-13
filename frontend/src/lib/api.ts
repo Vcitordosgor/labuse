@@ -346,10 +346,17 @@ export interface CopiloteV2Reponse {
   degraded?: boolean
   en_construction?: boolean
   conversation_id?: number | null       // §2b — la conversation persistée (reprise)
+  // §M78-bis — récap-confirmation avant mission lourde (RECHERCHE/VERIFICATION)
+  needs_confirmation?: boolean
+  recap?: string
+  brief_json?: Record<string, unknown>
+  chips?: string[]
+  suggestions?: { label: string; ajout: string | null }[]
+  clarification_recap?: { question: string; options: string[]; champ: string | null }
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
-  conversation_id?: number | null }) =>
+  conversation_id?: number | null; confirme?: boolean }) =>
   j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, ...opts }) })
