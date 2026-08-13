@@ -1247,6 +1247,7 @@ export function Fiche({ idu }: { idu: string }) {
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
+  const setParcelPrefill = useApp((s) => s.setParcelPrefill) // M-ENTREE — portes Faisabilité + Assemblage (IDU)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
@@ -2007,6 +2008,11 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
                 <FaisabiliteTab idu={idu} />
                 {!delaisse && <BilanTab idu={idu} />}
+                {/* M-ENTREE — PORTE Faisabilité (M22) en tête des portes Constructibilité : ouvre l'outil
+                    en mode « par parcelle » PRÉ-REMPLI (motif parcelPrefill partagé). */}
+                <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
+                  sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
+                  onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
                 {/* M60 P1a/c — PORTE en pied de Constructibilité (après les données) : ouvre l'outil
                     Calculette foncière PRÉ-REMPLI (moteur unique). Accroche contextualisée (surface). */}
                 <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
@@ -2360,8 +2366,10 @@ export function Fiche({ idu }: { idu: string }) {
                   contextuelle en pied du tiroir où il a un rapport étroit avec les données :
                   Comparer + Remonter le temps → Marché ; Vérif procédure PLU → Urbanisme ;
                   Contrôle avant achat + Servitudes invisibles → Risques ; Courrier SPF + Scan
-                  patrimoine → Propriétaire ; Calculette → Constructibilité. Assemblage/Division/
-                  Faisabilité : PAS de porte (n'acceptent pas un IDU pré-rempli — fausse promesse). */}
+                  patrimoine → Propriétaire ; Calculette + Faisabilité → Constructibilité (M-ENTREE :
+                  Faisabilité accepte un IDU en mode « par parcelle »). Division : PAS de porte (outil de
+                  découverte à l'échelle commune, aucune entrée parcelle — BACKLOG produit « cette parcelle
+                  est-elle divisible ? »). */}
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>

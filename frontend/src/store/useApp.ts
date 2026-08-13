@@ -311,6 +311,14 @@ interface AppState {
   // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
   calcPrefill: string | null
   setCalcPrefill: (s: string | null) => void
+  // M-ENTREE — amorçage parcelle PARTAGÉ (un seul motif, plusieurs consommateurs) : Faisabilité
+  // (M22, mode « par parcelle ») et Assemblage (M16, 1ʳᵉ du lot). Consommation-puis-reset : la porte
+  // fait setParcelPrefill(idu)+setModule(clé) ; l'outil lit parcelPrefill AU MONTAGE, l'amorce à sa
+  // façon, puis setParcelPrefill(null). Ouvert sans porte (page Outils) → reste null → inchangé.
+  // BACKLOG : à terme calcPrefill (M23) devrait rejoindre ce champ — pas dans ce mandat (on ne
+  // refactore pas ce qui marche pendant qu'on ajoute).
+  parcelPrefill: string | null
+  setParcelPrefill: (s: string | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
   calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
@@ -492,6 +500,8 @@ export const useApp = create<AppState>((set) => ({
   setPluPrefill: (pluPrefill) => set({ pluPrefill }),
   calcPrefill: null,
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
+  parcelPrefill: null,
+  setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
   calculette: null,
   setCalculette: (calculette) => set({ calculette }),
 }))
