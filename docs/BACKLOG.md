@@ -55,6 +55,14 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
   de terrain nu, secteur cadastral). Règle Vic : ce qui compte du bâti au m²/terrain est à SUPPRIMER,
   pas à réconcilier. À trancher (mandat DVF) : retirer/restreindre le €/m² cascade au terrain nu, garder
   le signal de liquidité (N mutations) ; le scoring utilise aussi ce €/m² inflaté (magnitude prix) → à revoir.
+- [ ] **MANDAT « ENTRÉE PARCELLE » (3 outils, ensemble) — pré-remplissage IDU.** Trois outils
+  n'acceptent pas un IDU pré-rempli depuis la fiche → PAS de porte contextuelle (M70 : une porte qui
+  ouvre un outil vide est une fausse promesse) : (1) **Faisabilité** (`M22Programme` : `picked` jamais
+  amorcé depuis `selectedIdu`, s'ouvre en mode commune) ; (2) **Division parcellaire** (n'accepte pas
+  d'IDU, M60) ; (3) **Assemblage** (multi-parcelles, pas d'amorce mono-IDU). Un seul mandat plus tard :
+  leur donner une entrée parcelle (lire `selectedIdu`/prefill) → alors chacun gagne sa porte
+  (Faisabilité + Division → Constructibilité ; Assemblage → à situer). Tant que non fait, ils restent
+  accessibles depuis la page Outils, sans porte.
 - [ ] **Tuilage ortho — végétation manquante** : 5 556 parcelles (1,3 %) hors emprise du tuilage
   IRC/MNH (Sainte-Rose 9,5 % — le pire taux). Neutralisées documentées (motif_absence). Levée =
   étendre `ortho_tiles` sur ces zones puis `labuse vegetation-irc` + `labuse vegetation`.
