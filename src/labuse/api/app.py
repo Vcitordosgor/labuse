@@ -2284,8 +2284,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         lines.append(line)
         if r["evenement"] == "rouge":
             evenement_detail = r["detail"]
-        if (w is None or w == 0) and r["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN"):
-            flags.append(line)
+
+    # M73 §1 — arbitrage & libellés client des lignes de risque (POINT DE CALCUL UNIQUE) : un seul
+    # niveau par aléa (le plus contraignant, nommé), régime PPR réglementaire > intersection
+    # géométrique marginale, aucun libellé technique brut. Consommé par les 5 documents via la
+    # fiche servie (premium/dossier/banquier/one-pager/fiche écran lisent ces lignes arbitrées).
+    from .risques_arbitrage import arbitrer_risques
+    lines = arbitrer_risques(lines)
+    flags = [l for l in lines
+             if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
