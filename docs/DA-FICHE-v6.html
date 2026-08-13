@@ -274,6 +274,29 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
   Constructibilité → Calculette ; Risques → Contrôle avant achat · Servitudes invisibles. Un outil
   qui n'accepte pas un IDU pré-rempli (Division, Assemblage, Faisabilité) n'a PAS de porte — il reste
   accessible depuis la page Outils. Une porte qui ouvrirait un outil vide est une fausse promesse.</p>
+
+  <h2>PASSE GLOBALE M76 — RÈGLES QUI VALENT POUR TOUS LES BLOCS</h2>
+  <p style="font-size:12px">Ces règles ne s'appliquent pas à quatre tiroirs mais à la fiche ENTIÈRE
+  (en-tête, bandeau, bloc Analyse, 7 tiroirs, sous-blocs, encarts, infobulles) :</p>
+  <ul style="font-size:12px">
+    <li><b>Aucune date de millésime</b> en bout de ligne ni à côté d'un libellé de source. Le nom de la
+    source amont reste. <b>Exception unique</b> : le tiroir « Données et méthode » (pastilles de millésime
+    par source — c'est l'écran qui documente les sources). Le pied légal garde run + date. Les dates
+    FACTUELLES de contenu (dépôt de permis, date de mutation) ne sont pas des millésimes → conservées.</li>
+    <li><b>Aucun score brut</b> (poids, contribution, indice, log_hazard, <code>+N</code>, <code>/100</code>)
+    où que ce soit. Les explications vivent dans « Pourquoi ce score / cet indicateur / ce rang » sous forme
+    <b>qualitative</b> (▲/▽ + phrase), jamais un nombre en préfixe ni en colonne. Seuls tolérés : le
+    multiplicateur <code>×N</code>, le percentile, le rang, la pastille verdict ICD. <b>Une seule jauge</b>
+    dans toute la fiche : l'ICD, qualitative (M55-O + M70).</li>
+    <li><b>Tout est ferré à gauche</b> : aucun bloc ne porte de colonne résiduelle de puce/score/icône qui
+    décale les libellés. Libellés, valeurs et sources alignés sur la verticale du titre du bloc.</li>
+    <li><b>Un bloc ne s'affiche que s'il a quelque chose à dire</b> : « Demander à l'IA de traduire le PLU »
+    est masqué ENTIÈREMENT quand aucune règle n'est traduisible (zones A/N, non constructibles). Plus de
+    bloc qui s'affiche pour annoncer son propre vide.</li>
+    <li><b>La porte d'outil reste VERTE</b> (M76 pt5, confirmé) : tranche <code>2px var(--mint)</code>
+    (#4ADE80), icône verte sur pastille <code>#12291D</code>. Le jaune <code>#F5C518</code> (<code>--pj-jaune</code>)
+    demeure RÉSERVÉ au seul lien « Voir sur Pages Jaunes » (M61) — ne jamais l'étendre aux portes.</li>
+  </ul>
 </div>
 
 </div>
