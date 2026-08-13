@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-SOCLE-ACCUEIL — LABUSE · panneau d'accueil de la carte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --past:#12291D; --past-ia:#1A1730;
+  --mint:#4ADE80; --mauve:#7F77DD; --mauve-clair:#AFA9EC;
+  --texte:#F4F6F5; --texte-2:#B8C4BD; --texte-3:#8B9990; --texte-4:#7C8A83; --texte-5:#5C6A63;
+  --filet:#1E2622; --bord-neutre:#2A362F; --fond-neutre:#141B17;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#2A2E2B;padding:40px 20px;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.panneau{background:var(--noir);border-radius:12px;max-width:340px;margin:0 auto;overflow:hidden}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.tete{padding:18px 20px 0}
+.tete-ligne{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.tete-titre{font-size:15px;color:var(--texte);font-weight:500}
+.tete-x{width:26px;height:26px;border-radius:7px;background:var(--fond-neutre);color:var(--texte-3);
+  display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer}
+
+.rail{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:.5px solid var(--filet);cursor:pointer}
+.rail:last-of-type{border-bottom:.5px solid var(--filet)}
+.rail-lab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--texte-4)}
+.rail-droite{display:flex;align-items:center;gap:8px}
+.pastille-actives{font-size:11px;background:var(--past);color:var(--mint);border-radius:5px;padding:3px 8px}
+.chevron{font-size:14px;color:var(--texte-5)}
+
+.corps{padding:22px 20px 20px}
+.promesse{font-size:17px;line-height:1.35;color:var(--texte);margin:0 0 4px;font-weight:500}
+.promesse-2{font-size:17px;line-height:1.35;color:var(--mint);margin:0 0 18px;font-weight:500}
+
+.chiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--filet);
+  border-radius:9px;overflow:hidden;margin-bottom:20px}
+.chiffres>div{background:var(--carte);padding:12px 10px;text-align:center}
+.chiffres .v{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--texte);font-weight:500}
+.chiffres .k{font-size:10px;color:var(--texte-4);margin-top:3px}
+
+.section-lab{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;
+  color:var(--texte-5);margin-bottom:9px}
+
+.porte{background:var(--carte);padding:13px 14px;margin-bottom:6px;display:flex;
+  align-items:center;gap:12px;cursor:pointer;border-radius:0 9px 9px 0}
+.porte.verte{border-left:2px solid var(--mint)}
+.porte.ia{border-left:2px solid var(--mauve)}
+.porte.neutre{border-left:2px solid var(--bord-neutre);margin-bottom:20px}
+.porte .icone{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:15px}
+.porte.verte .icone{background:var(--past);color:var(--mint)}
+.porte.ia .icone{background:var(--past-ia);color:var(--mauve-clair)}
+.porte.neutre .icone{background:var(--fond-neutre);color:var(--texte-3)}
+.porte .corps-p{flex:1}
+.porte .t{font-size:13px;color:var(--texte);font-weight:500}
+.porte .s{font-size:10.5px;color:var(--texte-3);margin-top:1px}
+.porte .fleche{font-size:14px}
+.porte.verte .fleche{color:var(--mint)}
+.porte.ia .fleche{color:var(--mauve-clair)}
+.porte.neutre .fleche{color:var(--texte-3)}
+
+.activite{background:var(--carte);border-radius:9px;padding:12px 14px;margin-bottom:18px}
+.activite-l{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:.5px solid var(--filet)}
+.activite-l:first-child{padding-top:0;border-top:0}
+.activite-l:last-child{padding-bottom:0}
+.activite-l .n{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--texte)}
+.activite-l .n.mint{color:var(--mint)}
+.activite-l .txt{font-size:11px;color:var(--texte-2)}
+
+.fraicheur{display:flex;align-items:center;gap:7px;padding-top:14px;border-top:.5px solid var(--filet)}
+.point{width:5px;height:5px;border-radius:50%;background:var(--mint);flex-shrink:0}
+.fraicheur span{font-size:10.5px;color:var(--texte-4)}
+</style>
+</head>
+<body>
+<div class="panneau">
+
+  <div class="tete">
+    <div class="tete-ligne">
+      <span class="tete-titre">Cartes</span>
+      <span class="tete-x">✕</span>
+    </div>
+    <div class="rail">
+      <span class="rail-lab">COUCHES</span>
+      <span class="rail-droite"><span class="pastille-actives">3 actives</span><span class="chevron">⌄</span></span>
+    </div>
+    <div class="rail">
+      <span class="rail-lab">FILTRES</span>
+      <span class="chevron">⌄</span>
+    </div>
+  </div>
+
+  <div class="corps">
+
+    <p class="promesse">Tout le foncier de La Réunion.</p>
+    <p class="promesse-2">Au même endroit.</p>
+
+    <div class="chiffres">
+      <div><div class="v">[parc]</div><div class="k">parcelles</div></div>
+      <div><div class="v">[communes]</div><div class="k">communes</div></div>
+      <div><div class="v">[sources]</div><div class="k">sources</div></div>
+    </div>
+
+    <div class="section-lab">PAR OÙ COMMENCER</div>
+
+    <div class="porte verte">
+      <div class="icone">⌕</div>
+      <div class="corps-p">
+        <div class="t">Explorer la carte</div>
+        <div class="s">activez une couche, cliquez une parcelle</div>
+      </div>
+      <span class="fleche">→</span>
+    </div>
+
+    <div class="porte ia">
+      <div class="icone">✦</div>
+      <div class="corps-p">
+        <div class="t">Demander au Copilote</div>
+        <div class="s">« terrain 1 000 m² à Saint-Paul »</div>
+      </div>
+      <span class="fleche">→</span>
+    </div>
+
+    <div class="porte neutre">
+      <div class="icone">⚙</div>
+      <div class="corps-p">
+        <div class="t">Ouvrir un outil</div>
+        <div class="s">[N] outils — trouver, instruire, contacter</div>
+      </div>
+      <span class="fleche">→</span>
+    </div>
+
+    <div class="section-lab">CETTE SEMAINE</div>
+
+    <div class="activite">
+      <div class="activite-l">
+        <span class="n mint">[N]</span><span class="txt">nouveaux permis déposés</span>
+      </div>
+      <div class="activite-l">
+        <span class="n">[N]</span><span class="txt">ventes publiées au cadastre</span>
+      </div>
+      <div class="activite-l">
+        <span class="n">[N]</span><span class="txt">communes en procédure PLU</span>
+      </div>
+    </div>
+
+    <div class="fraicheur">
+      <span class="point"></span>
+      <span>Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</span>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
