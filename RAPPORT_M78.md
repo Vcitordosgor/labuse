@@ -89,6 +89,19 @@ déclenchement (cron simulé) → 6 notifications réelles stockées.
 précisément le **déclencheur de prod** + le **canal** (cloche + e-mail). Le mécanisme est livré, prêt à
 être branché — la promesse ne sera ENTIÈRE qu'avec le chantier notifications.
 
+## PHASE 5 — Le Copilote embarqué (LIVRÉE — STOP FINAL)
+
+**Aucun nouveau moteur** : `answer()` reçoit un `contexte` (idu | selection) que la surface remplit —
+le contexte VISIBLE est le contexte du Copilote. Merge serveur `contexte.idu → params.idu` (testé :
+« ce prix est-il correct ? » + contexte idu → VERIFICATION sur la bonne parcelle, sans retaper la réf).
+- `CopiloteEmbarque.tsx` (réutilisable) : barre + réponse inline (`ReponseInline` extrait, partagé) +
+  « Ouvrir dans le Copilote » (`ouvrirEntretien`, conversation transférée). La réponse RESTE dans la vue.
+- **Surface 1 — fiche parcelle** (contexte `{idu}`) : « Demander au Copilote sur cette parcelle… »,
+  exemples « Ce prix est-il correct ? » / « Quelles contraintes avant de signer ? ». Capture
+  `qa/m78/captures/embarque-fiche.png`. **Placement (avant les tiroirs) = proposition, arbitrage Vic.**
+- **Surface 2 — shortlist résultats** (contexte `{selection}`) : « Affiner par le Copilote… ».
+- Gardes : tsc 0 · vitest 38 · build vert.
+
 ## PHASE 2 (détail initial) — Accueil + mission RECHERCHE
 
 - **Endpoint** `/api/copilote-v2` (POST /ask, GET /telemetrie) monté (`6f2c56cf`), testé TestClient.
