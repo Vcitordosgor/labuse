@@ -41,6 +41,20 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
   documenté. M74-C bis.
 
 **Dettes OUVERTES (inscrites) :**
+- [ ] **MANDAT REJEU (dédié, après golden-rebase) — M70 a POSÉ les correctifs cascade, pas rejoué.**
+  Rejouer `q_v8_calibre` avec les fixes M70 (ENS per-commune, BODACC sondages, OCS GE réserve, âge
+  sans nombre) → régénère lines + 431 663 scores + golden. Séquence : golden-rebase (éteindre les
+  33 FAIL préexistants) → rejeu → mesure. **EXIGENCE VIC** : les **~45 000 parcelles** ENS PASS→UNKNOWN
+  (Le Port, Saint-André, Sainte-Suzanne) **ne doivent PAS devenir « écartées » ni perdre leur rang** —
+  UNKNOWN = non évaluable, pas défavorable. **Mesurer l'effet sur le classement avant/après et le
+  rapporter.** Durée ~15-45 min.
+- [ ] **DVF — le « prix au m² terrain » cascade est FAUX (bâti compté au m² de terrain).** MESURÉ (M70) :
+  la ligne cascade `dvf` = `valeur_fonciere ÷ surface_terrain`, **TOUS types de biens, aucun filtre
+  aberrant** (dvf_stats, rayon 250 m, 5 ans) → sur le canari 379 €/m² vient d'**1 vente AVEC bâti**
+  (maison ÷ terrain). Le vrai prix terrain = `dvf_secteur_medianes` type=terrain (**173 €/m²**, 3 ventes
+  de terrain nu, secteur cadastral). Règle Vic : ce qui compte du bâti au m²/terrain est à SUPPRIMER,
+  pas à réconcilier. À trancher (mandat DVF) : retirer/restreindre le €/m² cascade au terrain nu, garder
+  le signal de liquidité (N mutations) ; le scoring utilise aussi ce €/m² inflaté (magnitude prix) → à revoir.
 - [ ] **Tuilage ortho — végétation manquante** : 5 556 parcelles (1,3 %) hors emprise du tuilage
   IRC/MNH (Sainte-Rose 9,5 % — le pire taux). Neutralisées documentées (motif_absence). Levée =
   étendre `ortho_tiles` sur ces zones puis `labuse vegetation-irc` + `labuse vegetation`.
