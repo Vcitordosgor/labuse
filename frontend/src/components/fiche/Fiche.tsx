@@ -207,7 +207,9 @@ function Weight({ w, result }: { w: number | null; result: string }) {
 }
 
 // Source cliquable → DRAWER latéral (jamais un cul-de-sac : la fiche reste ouverte) + référence + date.
-function SourceRef({ line }: { line: FicheLine }) {
+// M70 point 4 : `hideDate` retire la date de millésime en bout de ligne (bruit : toutes identiques ;
+// le millésime reste en base, dans les exports PDF et l'écran Sources).
+function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) {
   const openSourceDrawer = useApp((s) => s.openSourceDrawer)
   const trace = line.source_table && line.source_id != null ? `${line.source_table}#${line.source_id}` : null
   return (
@@ -219,7 +221,7 @@ function SourceRef({ line }: { line: FicheLine }) {
         </button>
       )}
       {trace && <span className="shrink-0 font-mono text-txt-dim/70">{trace}</span>}
-      {line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
+      {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
 }
@@ -228,7 +230,7 @@ function SourceRef({ line }: { line: FicheLine }) {
 // la source et la date restent. Utilisé dans le tiroir Urbanisme : les points dévoilaient le
 // score avant la demande de verdict (doctrine M55-L) et faisaient doublon de rôle avec « Pourquoi
 // ce score ». La donnée en base et le calcul sont intacts.
-function Line({ line, hideWeight }: { line: FicheLine; hideWeight?: boolean }) {
+function Line({ line, hideWeight, hideDate }: { line: FicheLine; hideWeight?: boolean; hideDate?: boolean }) {
   return (
     <div className="flex gap-3 border-b border-line/60 py-2 last:border-0">
       {!hideWeight && <Weight w={line.weight} result={line.result} />}
@@ -246,7 +248,7 @@ function Line({ line, hideWeight }: { line: FicheLine; hideWeight?: boolean }) {
           {line.result === 'UNKNOWN' && <span className="text-[9px] text-txt-dim">inconnu</span>}
         </div>
         <div className="text-[11px] leading-snug text-txt-mut">{fmtLibelleBrut(line.detail)}</div>
-        <SourceRef line={line} />
+        <SourceRef line={line} hideDate={hideDate} />
       </div>
     </div>
   )
@@ -2033,7 +2035,7 @@ export function Fiche({ idu }: { idu: string }) {
                 : <span className="pill-amber">{risquesFlags.length} vigilance{risquesFlags.length > 1 ? 's' : ''}</span>}
               micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
               {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </RefDrawer>
 
@@ -2050,7 +2052,7 @@ export function Fiche({ idu }: { idu: string }) {
               value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
               micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
-                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
               {/* M-U — signal de marché condensé (DVF actes + Sitadel), jamais un mot nu : les 2
                   composantes sont affichées ; l'outil « Marché » donne le bloc commune complet (9 lignes). */}
@@ -2151,20 +2153,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                    {/* M55-L point 12 — CONSTAT : le lien ouvrait `/parcels/{idu}/spf-letter` (lettre
-                        TEXTE brute dans un onglet, 200 text/plain), pas un outil. Il OUVRE désormais
-                        l'OUTIL courrier existant (M09, workflow SPF/CERFA) pré-rempli sur la parcelle
-                        courante (M09 lit selectedIdu, préservé par setModule) — même mécanique que la
-                        tuile Courrier. Le contexte parcelle passe (vérifié). Nuance rapportée : M09
-                        n'a pas encore de motif « SPF » dédié (motifs : standard/indivision/succession)
-                        ; l'endpoint /spf-letter reste servi (réactivable). */}
-                    <button data-spf-letter onClick={() => setModule('courriers')}
-                      className="mt-1.5 block text-left text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
-                      → {CLIENT.fiche.export.spf} (courrier pré-rempli à envoyer au SPF)
-                    </button>
+                    {/* M70 point 7a — le lien texte SPF devient une PORTE-OUTIL en pied de tiroir
+                        (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
                   </div>
                 )}
-                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
                 {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
                     « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
                 {(() => {
@@ -2182,6 +2175,14 @@ export function Fiche({ idu }: { idu: string }) {
                   <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
                     sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
                     onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
+                )}
+                {/* M70 point 7a — PORTE en pied de Propriétaire : Courrier SPF (personne physique /
+                    non recensée). L'outil courrier (M09) s'ouvre pré-rempli sur la parcelle courante.
+                    Une seule porte par outil (M60) : le courrier n'a de porte QUE dans ce tiroir. */}
+                {!f.proprietaire_moral && (
+                  <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
+                    sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
+                    onClick={() => setModule('courriers')} />
                 )}
               </div>
             </RefDrawer>

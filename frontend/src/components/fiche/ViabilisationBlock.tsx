@@ -22,10 +22,12 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
   const m = BAND_META[via.band] ?? BAND_META.incertaine
   return (
     <div data-viabilisation className="card-elev px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-txt-hi">Viabilisation (eau · assainissement · élec)</span>
-        <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-          style={{ backgroundColor: m.bg, color: m.color }}>{via.libelle}</span>
+      {/* M70 point 6a : en-tête sur UNE ligne à 400px — libellé tronquable, verdict à droite,
+          pastille raccourcie (le « Viabilisation » redondant est retiré, le sens reste). */}
+      <div className="flex flex-nowrap items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-txt-hi">Viabilisation (eau · assainissement · élec)</span>
+        <span className="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+          style={{ backgroundColor: m.bg, color: m.color }}>{via.libelle.replace(/^Viabilisation\s+/i, '')}</span>
       </div>
 
       <div className="mt-2 flex items-baseline gap-3">
