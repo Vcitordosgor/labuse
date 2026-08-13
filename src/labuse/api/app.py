@@ -2413,6 +2413,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires.
         "viabilisation": _viabilisation_block(db, idu),
         "gestionnaires": _gestionnaires_block(head["commune"]),
+        # M75 — obligation APER (ombrières PV) portant sur la parcelle → tiroir Urbanisme. Information.
+        "aper": _aper_block(db, idu),
         # M-RENOUV : segment Renouvellement (table additive, lecture seule) — le verdict
         # d'en-tête reste « Écartée » ; ce bloc n'ajoute qu'un badge + un « pourquoi ».
         "renouvellement": _renouvellement_block(db, idu),
@@ -2495,14 +2497,23 @@ def _viabilisation_block(db: Session, idu: str) -> dict | None:
     """M-VIA lot 2 — indicateur de viabilisation de la parcelle (None si non calculé).
     Aucun tracé réseau : uniquement le faisceau de preuves stocké dans parcel_viabilisation."""
     from ..faisabilite import viabilisation as V
-    from ..faisabilite.viabilisation_build import ilot_s3renr_note
+    from ..faisabilite.viabilisation_build import ilot_s3renr_note, solaire_note
     row = db.execute(text(
         "SELECT zone_fam, c100, c200, c100_recent, c100_acheve, voie10, voie75, "
         "       bati10, bati30, bati75, assainissement_zonage "
         "FROM parcel_viabilisation WHERE idu = :idu"), {"idu": idu}).mappings().first()
     if not row:
         return None
-    return V.build_indicateur(dict(row), elec_pv=ilot_s3renr_note(db))
+    # M75 — PVGIS branché ici (volet PV, à côté du S3REnR) en INFORMATION seule.
+    return V.build_indicateur(dict(row), elec_pv=ilot_s3renr_note(db),
+                              solaire=solaire_note(db, idu))
+
+
+def _aper_block(db: Session, idu: str) -> dict | None:
+    """M75 — obligation APER portant sur la parcelle → tiroir Urbanisme. INFORMATION.
+    Délègue au point de calcul unique (viabilisation_build.aper_note) partagé avec les exports."""
+    from ..faisabilite.viabilisation_build import aper_note
+    return aper_note(db, idu)
 
 
 def _gestionnaires_block(commune: str) -> dict | None:

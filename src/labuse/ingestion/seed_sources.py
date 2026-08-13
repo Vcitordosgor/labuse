@@ -413,14 +413,16 @@ SOURCES: list[dict] = [
                          "en GeoTIFF float32, jamais stocké. MNH inclut le sursol bâti → croisé "
                          "NDVI. Fallbacks MNS Corrélé/texture du mandat : non nécessaires."),
     dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
-         access_type="Overpass/GeoJSON", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
+         access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",
          endpoint_url="https://overpass-api.de/api/interpreter",
          legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap — données disponibles sous ODbL (openstreetmap.org/copyright) ». parkings_aper = base dérivée d'OSM : disponible sous ODbL sur demande (share-alike).",
-         technical_notes="M71 : ingéré, NON EXPLOITÉ (parkings_aper 901 lignes, aucune lecture applicative "
-                         "— audit M66-B) → partiel jusqu'au branchement d'un usage. amenity=parking (polygones) "
-                         "→ parkings_aper, seuils loi APER n° 2023-175 art. 40 en config. Complétude déclarative "
-                         "OSM : volumétrie = plancher, pas un recensement."),
+         technical_notes="M75 : EXPLOITÉ — obligation APER en information sur la fiche (tiroir Urbanisme) + "
+                         "exports. Donnée refiltrée au SEUIL LÉGAL 1 500 m² (loi 2023-175 art. 40, décret "
+                         "2024-1023 ; scripts/m75_refiltre_parkings_aper_1500.sql) : 450 parkings soumis "
+                         "(426 en 1 500-10 000 m² éch. 2028, 24 > 10 000 m² éch. 2026), 451 sous le seuil. "
+                         "amenity=parking (polygones) → parkings_aper, surface = ST_Area OSM. Complétude "
+                         "déclarative OSM : volumétrie = plancher, pas un recensement (« potentiellement concerné »)."),
 ]
 
 

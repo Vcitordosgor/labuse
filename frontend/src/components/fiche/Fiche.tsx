@@ -1893,6 +1893,15 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
+                {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
+                    réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
+                    que les exports). « potentiellement concerné », jamais « soumis à ». */}
+                {f.aper && (
+                  <div data-aper className="rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-txt">
+                    <span className="mr-1" aria-hidden>🅿</span>{f.aper.note}
+                    <span className="ml-1 text-[10px] text-txt-dim">{f.aper.etat}.</span>
+                  </div>
+                )}
                 {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
                     (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
                     cours et non servi. + action « vérifier en mairie ». Couleur d'alerte hors « à jour ». */}

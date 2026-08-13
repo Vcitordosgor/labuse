@@ -298,6 +298,9 @@ export interface Fiche {
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
   gestionnaires?: Gestionnaires | null
+  // M75 : obligation APER (ombrières PV, grand parking > 1 500 m²) — tiroir Urbanisme, information.
+  // `note` = libellé client (point de calcul unique = mêmes mots que les exports).
+  aper?: { surface_m2: number; echeance: string | null; equipe: boolean; note: string; etat: string } | null
   // M19 : marché DVF de la parcelle (présent dans le payload) — typé pour la valeur fermée du
   // tiroir Marché (médiane €/m² structurée = donnée propre, ≠ nombre brut de la ligne dvf).
   dvf_parcelle?: DvfParcelle | null
@@ -396,6 +399,9 @@ export interface Viabilisation {
   cout_raccordement: { niveau: string; assainissement: string; disclaimer: string }
   disclaimer: string
   elec_pv?: { statut: string; note: string; source?: string; disclaimer: string } | null
+  // M75 — gisement solaire PVGIS (INFORMATION seule) : le libellé client `note` est le point de
+  // calcul unique (fiche + exports au mot près). `prod_kwh_kwc` sourcé PVGIS, jamais de score /100.
+  solaire?: { prod_kwh_kwc: number; qualite: string; ombrage: boolean; note: string; etat: string } | null
 }
 export interface GestOperateur { operateur: string; type?: string; confidence?: 'high' | 'med' | 'low' }
 export interface Gestionnaires {

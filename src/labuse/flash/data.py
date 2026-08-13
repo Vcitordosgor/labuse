@@ -79,6 +79,8 @@ _NEEDED_TABLES = {
     "m10_permit_delais", "commune_contexte_sru", "commune_conso_enaf", "parcel_solar",
     # Mandats pas encore mergés — le jour où ils atterrissent, la section apparaît seule.
     "parcel_vegetation", "parcel_anc",
+    # M75 — obligation APER (grand parking) : section omise si la table est absente.
+    "parkings_aper",
 }
 
 
@@ -475,17 +477,24 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
                        {"idu": idu}).mappings().first()
         if r and r["ombrage_pct"] is not None:
             out["canopee"] = {"ombrage_pct": _i(r["ombrage_pct"])}
-    # M18 — gisement solaire PVGIS (prod. spécifique = valeur SOURCÉE ; score = lecture LABUSE).
-    # Donnée fiable (ingestion PVGIS fidèle) MAIS caveat honnête : le gradient côtier E/O local n'est
-    # pas capturé par le modèle SARAH3 → ordre de grandeur, pas une garantie de production.
+    # M18 → M75 — gisement solaire PVGIS. POINT DE CALCUL UNIQUE partagé avec la fiche
+    # (viabilisation_build.solaire_note) : le PDF affiche EXACTEMENT le même libellé que la fiche
+    # (exigence Vic — une donnée, un libellé). Le score_solaire /100 (score LABUSE opaque) N'EST
+    # PLUS exposé ; on garde le productible SOURCÉ (kWh/kWc/an, réserve SARAH3 dans la note).
     if "parcel_solar" in avail:
-        r = db.execute(text(
-            "SELECT prod_spec_kwh_kwc, score_solaire FROM parcel_solar WHERE idu = :idu"),
-            {"idu": idu}).mappings().first()
-        if r and r["prod_spec_kwh_kwc"] is not None:
-            out["solaire"] = {"prod_kwh_kwc": round(float(r["prod_spec_kwh_kwc"])),
-                              "score": _i(r["score_solaire"])}
+        from ..faisabilite.viabilisation_build import solaire_note
+        sol = solaire_note(db, idu)
+        if sol:
+            out["solaire"] = sol
     return out or None
+
+
+def _aper(db: Session, idu: str, avail: set[str]) -> dict | None:
+    """M75 — obligation APER (grand parking > 1 500 m²). Point de calcul unique = fiche."""
+    if "parkings_aper" not in avail:
+        return None
+    from ..faisabilite.viabilisation_build import aper_note
+    return aper_note(db, idu)
 
 
 # ── Sources & millésimes (page argument de vente, pas une annexe — mandat §3.9) ──────────
@@ -669,6 +678,8 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "dynamique": _dynamique(db, idu, avail),
         "terrain": _terrain(db, idu, avail),
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
+        # M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique).
+        "aper": _aper(db, idu, avail),
         "date_generation": date.today().isoformat(),
         # MANDAT RNU : flag top-level — le template remplace les règles de capacité par
         # « non applicable — RNU » (jamais un tableau vide qui laisserait croire à une
