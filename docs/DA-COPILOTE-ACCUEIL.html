@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-COPILOTE-ACCUEIL — LABUSE · page d'accueil du Copilote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --carte-past:#12291D; --mint:#4ADE80;
+  --texte:#F4F6F5; --texte-2:#8B9990; --texte-3:#5C6A63; --filet:#1E2622;
+  --bordure:#24302A; --chip-bord:#2A362F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--noir);font-family:'Archivo',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;padding:56px 24px 40px}
+.page{max-width:640px;margin:0 auto}
+
+.sur{text-align:center;margin-bottom:8px}
+.sur span{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8A83}
+h1{text-align:center;font-size:30px;line-height:1.2;color:var(--texte);font-weight:600;
+  margin:0 0 10px;letter-spacing:-.5px}
+h1 .accent{color:var(--mint)}
+.tagline{text-align:center;font-size:13px;color:var(--texte-2);margin:0 0 30px}
+
+.barre{background:#10161288;border:1px solid var(--bordure);border-radius:12px;
+  padding:8px 8px 8px 18px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.barre .ph{flex:1;font-size:14px;color:var(--texte-3)}
+.barre button{background:var(--mint);color:#06180E;border:none;border-radius:8px;
+  padding:11px 20px;font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0}
+.sous-barre{text-align:center;font-size:11px;color:var(--texte-3);margin:0 0 36px}
+
+.missions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:30px}
+.mission{background:var(--carte);border-radius:9px;padding:16px}
+.mission .chef{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.mission .past{width:28px;height:28px;border-radius:7px;background:var(--carte-past);
+  color:var(--mint);display:flex;align-items:center;justify-content:center;font-size:14px}
+.mission .titre{font-size:13.5px;color:var(--texte);font-weight:500}
+.mission .desc{font-size:11px;line-height:1.5;color:var(--texte-2);margin:0 0 12px}
+.mission .exemples{border-top:.5px solid var(--filet);padding-top:10px}
+.mission .ex{font-size:10.5px;line-height:1.5;color:var(--texte-3);margin:0 0 6px;
+  font-style:italic;cursor:pointer}
+.mission .ex:hover{color:var(--texte-2)}
+.mission .ex:last-child{margin-bottom:0}
+
+.garanties{display:flex;align-items:center;justify-content:center;gap:20px;
+  padding-top:18px;border-top:.5px solid var(--filet)}
+.garanties span{font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="sur"><span>COPILOTE</span></div>
+  <h1>Dites ce que vous cherchez.<br>Le Copilote <span class="accent">instruit</span>.</h1>
+  <p class="tagline">Une parcelle instruite en une minute — <b>[N dynamique]</b> sources, chaque chiffre daté.</p>
+
+  <div class="barre">
+    <span class="ph">15 logements à Saint-Denis, budget foncier 800 k€…</span>
+    <button>Envoyer</button>
+  </div>
+  <p class="sous-barre">Écrivez librement — le Copilote comprend s'il faut chercher, vérifier ou veiller.</p>
+
+  <div class="missions">
+    <div class="mission">
+      <div class="chef"><div class="past">⌕</div><span class="titre">Chercher</span></div>
+      <p class="desc">Décrivez le terrain ou le programme. Les moteurs passent les [parc dynamique] parcelles au crible.</p>
+      <div class="exemples">
+        <p class="ex">« Terrain de 1 200 m² constructible à Saint-André »</p>
+        <p class="ex">« 15 logements, budget 800 k€, hors zone inondable »</p>
+      </div>
+    </div>
+    <div class="mission">
+      <div class="chef"><div class="past">⚖</div><span class="titre">Vérifier</span></div>
+      <p class="desc">Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé.</p>
+      <div class="exemples">
+        <p class="ex">« On me propose 97411000AK0043 à 340 000 € — je me fais avoir ? »</p>
+        <p class="ex">« Quelles contraintes sur cette parcelle avant de signer ? »</p>
+      </div>
+    </div>
+    <div class="mission">
+      <div class="chef"><div class="past">🔔</div><span class="titre">Veiller</span></div>
+      <p class="desc">Votre secteur sous surveillance. Alerte dès qu'une vente, un permis ou une procédure PLU bouge.</p>
+      <div class="exemples">
+        <p class="ex">« Préviens-moi de tout nouveau permis à Saint-Paul »</p>
+        <p class="ex">« Alerte-moi si la zone AU de Cambaie change au PLU »</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="garanties">
+    <span>✓ Chaque étape journalisée</span>
+    <span>◆ Sourcé, estimé ou absent — jamais autre chose</span>
+    <span>◉ La Réunion uniquement</span>
+  </div>
+
+</div>
+</body>
+</html>

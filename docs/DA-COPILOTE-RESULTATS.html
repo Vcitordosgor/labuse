@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-COPILOTE-RESULTATS — LABUSE · écran de résultats RECHERCHE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --carte-heros:#121815; --carte-past:#12291D;
+  --mint:#4ADE80; --mint-texte:#9CE8BC; --mint-bord:#1F4630;
+  --texte:#F4F6F5; --texte-2:#B8C4BD; --texte-3:#8B9990; --texte-4:#5C6A63;
+  --filet:#1E2622; --chip-bord:#2A362F; --source:#3E8455; --estime:#8A6414;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--noir);font-family:'Archivo',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;padding:40px 24px}
+.page{max-width:640px;margin:0 auto}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.demande{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.demande p{flex:1;font-size:13px;color:var(--texte-2);margin:0;font-style:italic}
+.demande .action{font-size:10.5px;color:var(--texte-4);flex-shrink:0;cursor:pointer}
+
+.compris{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.compris .lab{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;
+  color:#7C8A83;align-self:center;margin-right:4px}
+.chip{background:var(--carte-past);color:var(--mint-texte);border-radius:6px;
+  padding:4px 9px;font-size:11px;cursor:pointer}
+.chip.plus{background:transparent;color:var(--texte-4);border:.5px dashed var(--chip-bord)}
+
+.entonnoir{background:var(--carte);border-radius:9px;padding:16px 18px;margin-bottom:9px}
+.entonnoir .chef{display:flex;align-items:center;margin-bottom:11px}
+.entonnoir .statut{font-size:11px;color:var(--texte-3)}
+.entonnoir .journal{margin-left:auto;font-size:10.5px;color:#7C8A83;cursor:pointer}
+.entonnoir .flux{display:flex;align-items:center}
+.etape{flex:1}
+.etape .n{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600}
+.etape .l{font-size:9.5px;color:var(--texte-4);margin-top:2px}
+.etape.debut .n{color:var(--texte-4)}
+.etape.milieu{text-align:center}.etape.milieu .n{color:var(--texte-3)}
+.etape.fin{text-align:right}.etape.fin .n{color:var(--mint)}
+.trait{flex:2;height:2px;border-radius:1px;margin:0 4px 14px}
+.trait.t1{background:linear-gradient(90deg,#2A362F,#1F4630)}
+.trait.t2{background:linear-gradient(90deg,#1F4630,#4ADE80)}
+
+.heros{background:var(--carte-heros);border-radius:9px;padding:20px;margin-bottom:6px}
+.heros .chef{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}
+.heros .idu{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--texte);font-weight:600}
+.heros .commune{font-size:11px;color:var(--texte-3)}
+.heros .badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;
+  background:var(--carte-past);color:var(--mint);border-radius:5px;padding:3px 8px}
+.heros .phrase{font-size:12px;line-height:1.55;color:var(--texte-2);margin:8px 0 14px}
+.heros .chiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--filet);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.heros .chiffres>div{background:var(--carte);padding:10px 12px}
+.heros .chiffres .v{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--texte);font-weight:500}
+.heros .chiffres .k{font-size:9px;color:#7C8A83;margin-top:2px}
+.heros .chiffres .k .src{color:var(--source)}
+.heros .chiffres .k .est{color:var(--estime)}
+.heros .actions{display:flex;gap:8px}
+.heros .cta{flex:1;background:var(--mint);color:#06180E;border:none;border-radius:8px;
+  padding:10px;font-size:12px;font-weight:500;cursor:pointer}
+.heros .sec{background:transparent;color:var(--texte-3);border:.5px solid var(--chip-bord);
+  border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer}
+
+.suivante{background:var(--carte-heros);border-radius:9px;padding:12px 20px;margin-bottom:6px;
+  display:flex;align-items:center;gap:10px}
+.suivante .idu{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--texte-2)}
+.suivante .raison{font-size:10.5px;color:#7C8A83}
+.suivante .lien{margin-left:auto;font-size:10.5px;color:var(--mint);cursor:pointer;white-space:nowrap}
+
+.campagne{background:var(--carte);border-left:2px solid var(--mint);border-radius:0 9px 9px 0;
+  padding:14px 18px;margin:14px 0 16px;display:flex;align-items:center;gap:12px}
+.campagne .past{width:30px;height:30px;border-radius:7px;background:var(--carte-past);
+  color:var(--mint);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.campagne .corps{flex:1}
+.campagne .t{font-size:12.5px;color:var(--texte);font-weight:500;margin:0}
+.campagne .s{font-size:10.5px;line-height:1.5;color:var(--texte-3);margin:2px 0 0}
+.campagne button{background:transparent;color:var(--mint);border:.5px solid var(--mint-bord);
+  border-radius:8px;padding:8px 14px;font-size:11.5px;cursor:pointer;flex-shrink:0}
+
+.pied{display:flex;justify-content:center;gap:22px}
+.pied span{font-size:10.5px;color:var(--texte-4);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="demande">
+    <p>« 15 logements à Saint-André, budget foncier 800 k€, hors zone inondable »</p>
+    <span class="action">reformuler</span>
+  </div>
+
+  <div class="compris">
+    <span class="lab">COMPRIS :</span>
+    <span class="chip">Saint-André</span>
+    <span class="chip">≥ 1 000 m²</span>
+    <span class="chip">≈ 15 logements</span>
+    <span class="chip">foncier ≤ 800 k€</span>
+    <span class="chip">hors PPR inondation</span>
+    <span class="chip plus">+</span>
+  </div>
+
+  <div class="entonnoir">
+    <div class="chef">
+      <span class="statut">Instruction terminée · 8 moteurs · 58 s</span>
+      <span class="journal">journal complet ▾</span>
+    </div>
+    <div class="flux">
+      <div class="etape debut"><div class="n">4 801</div><div class="l">pool Saint-André</div></div>
+      <div class="trait t1"></div>
+      <div class="etape milieu"><div class="n">110</div><div class="l">après géométrie</div></div>
+      <div class="trait t2"></div>
+      <div class="etape fin"><div class="n">3</div><div class="l">restituées</div></div>
+    </div>
+  </div>
+
+  <div class="heros">
+    <div class="chef">
+      <span class="idu">97411000BP0968</span>
+      <span class="commune">Saint-André</span>
+      <span class="badge">MEILLEURE RÉPONSE</span>
+    </div>
+    <p class="phrase">9 760 m² en zone Uac, SDP résiduelle de 6,2 ha, viabilisation confirmée
+      par les faits. Charge foncière supportable estimée à 21 M€ — au-dessus de votre budget,
+      mais divisible. <i>[Phrase générée depuis le JSON du verdict — verrou anti-invention]</i></p>
+    <div class="chiffres">
+      <div><div class="v">9 760 m²</div><div class="k">SURFACE <span class="src">SOURCÉ</span></div></div>
+      <div><div class="v">6,2 ha</div><div class="k">SDP RÉSID. <span class="src">SOURCÉ</span></div></div>
+      <div><div class="v">3</div><div class="k">SIGNAUX RISQUE <span class="src">SOURCÉ</span></div></div>
+    </div>
+    <div class="actions">
+      <button class="cta">Ouvrir la fiche →</button>
+      <button class="sec">Exporter</button>
+    </div>
+  </div>
+
+  <div class="suivante">
+    <span class="idu">97411000AL0217</span>
+    <span class="raison">2 140 m² · zone Uac · écartée du podium : accès voirie à confirmer</span>
+    <span class="lien">fiche →</span>
+  </div>
+  <div class="suivante">
+    <span class="idu">97411000AT0089</span>
+    <span class="raison">1 460 m² · zone Uab · plus petite, charge foncière dans le budget</span>
+    <span class="lien">fiche →</span>
+  </div>
+
+  <div class="campagne">
+    <div class="past">✉</div>
+    <div class="corps">
+      <p class="t">Et maintenant : écrire aux 3 propriétaires</p>
+      <p class="s">Courriers pré-remplis, relances à J+15 et J+30, réponses suivies au CRM.
+        [v1 : « bientôt » ou retiré — arbitrage Vic au STOP Phase 2]</p>
+    </div>
+    <button>Préparer la campagne</button>
+  </div>
+
+  <div class="pied">
+    <span>🔔 Veiller ce secteur</span>
+    <span>⟳ Élargir aux communes voisines</span>
+  </div>
+
+</div>
+</body>
+</html>

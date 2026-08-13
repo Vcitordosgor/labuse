@@ -291,6 +291,20 @@ def _get_json(url: str) -> tuple[dict | None, str | None]:
         return None, str(e)
 
 
+def _api_reachable() -> tuple[bool, str]:
+    """M81 — l'API répond-elle du tout ? Distingue une CONNEXION échouée (injoignable → erreur
+    d'ENVIRONNEMENT) d'une erreur HTTP (l'API est là). Un garde-fou qui échoue faute d'API ne doit
+    JAMAIS se confondre avec un écart métier (piège : API sur :8000, golden_check ciblait :8010 →
+    33 faux FAIL pris pour une baseline pendant six jours)."""
+    try:
+        with _http_opener().open(f"{API_BASE}/healthz", timeout=10) as r:
+            return (getattr(r, "status", 200) < 500), ""
+    except urllib.error.HTTPError as e:
+        return (e.code < 500), f"HTTP {e.code}"          # 4xx/erreur endpoint = l'API RÉPOND
+    except Exception as e:                                # refus de connexion / DNS / timeout = injoignable
+        return False, str(e)
+
+
 def collect_api(idu: str) -> dict:
     """Fiche de référence côté API — GET uniquement (fiche premium + score v2)."""
     fiche, err_f = _get_json(f"{API_BASE}/parcels/{idu}?source={RUN_LABEL}")
@@ -463,6 +477,15 @@ def main() -> int:
     if not args.dump and os.path.exists(args.golden):
         with open(args.golden, encoding="utf-8") as f:
             golden = json.load(f)
+
+    # M81 — PRÉFLIGHT : si l'API est injoignable, le DIRE explicitement et sortir en ERREUR (code 2),
+    # jamais laisser 33 « Connection refused » se comptabiliser comme des FAIL métier.
+    _ok, _err = _api_reachable()
+    if not _ok:
+        print(f"ERREUR: API INJOIGNABLE à {API_BASE} ({_err}). Démarrer l'API (uvicorn :8000) ou fixer "
+              f"LABUSE_API_BASE / --base-url. ⚠ Ce n'est PAS un écart métier — golden non évaluable.",
+              file=sys.stderr)
+        return 2
 
     idus = args.idu or (list(golden["parcelles"]) if golden else GOLDEN_IDUS)
     anchors = {i for i, e in (golden or {}).get("parcelles", {}).items() if e.get("anchor")}

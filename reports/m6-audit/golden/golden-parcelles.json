@@ -1,23 +1,23 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8000",
-  "genere_le": "2026-08-07T23:52:41",
+  "genere_le": "2026-08-13T18:20:57",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
-  "n_parcelles": 118,
-  "run_cascade": "q_v8_calibre",
-  "run_v2_servi": "q_v8_calibre",
+  "n_parcelles": 119,
+  "run_cascade": "q_v9_m81",
+  "run_v2_servi": "q_v9_m81",
   "tiers_effectifs": {
-   "a_creuser": 29978,
-   "brulante": 118,
-   "chaude": 1038,
+   "a_creuser": 29915,
+   "brulante": 120,
+   "chaude": 1033,
    "declasse_au_fermee": 70,
-   "declasse_au_statut_inconnu": 210,
-   "declasse_bati_revele": 4051,
-   "declasse_bati_sature": 29907,
+   "declasse_au_statut_inconnu": 363,
+   "declasse_bati_revele": 4014,
+   "declasse_bati_sature": 29883,
    "declasse_non_constructible": 6168,
    "declasse_zone_fermee": 2804,
    "ecartee": 354355,
-   "reserve_fonciere": 2964
+   "reserve_fonciere": 2938
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -154,7 +154,7 @@
   },
   "97401000AM0380": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Les Avirons",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -215,7 +215,7 @@
   "97402000AK1725": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 64,
      "commune": "Bras-Panon",
      "completeness_score": 92,
@@ -223,7 +223,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 37,
      "renouvellement": null,
@@ -234,6 +234,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 1.32,
       "percentile": 86.94,
       "pourquoi": [
@@ -279,6 +284,7 @@
        }
       ],
       "rang": 55950,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -296,13 +302,13 @@
      "mult_base": 1.32,
      "percentile": 86.94,
      "rang": 55950,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 64,
     "adresse_ban": {
      "code_postal": "97412",
@@ -401,15 +407,15 @@
   "97403000AR1423": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 61,
+     "a_completude": 60,
+     "a_score": 62,
      "commune": "Entre-Deux",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 46,
      "renouvellement": null,
@@ -420,6 +426,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 7.13,
       "percentile": 99.97,
       "pourquoi": [
@@ -465,6 +476,7 @@
        }
       ],
       "rang": 135,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "forte",
@@ -489,14 +501,14 @@
      "mult_base": 7.13,
      "percentile": 99.97,
      "rang": 135,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 61,
+    "a_completude": 60,
+    "a_score": 62,
     "adresse_ban": null,
     "cascade_status": "a_creuser",
     "commune": "Entre-Deux",
@@ -605,7 +617,7 @@
   },
   "97405000AB0001": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Petite-Île",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -635,6 +647,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.7,
       "percentile": 25.77,
       "pourquoi": [
@@ -680,6 +697,7 @@
        }
       ],
       "rang": 317899,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -697,7 +715,7 @@
      "mult_base": 0.7,
      "percentile": 25.77,
      "rang": 317899,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -735,8 +753,8 @@
      "Aléa mouvement_terrain — niveau faible.",
      "Aléa mouvement_terrain — niveau moyen.",
      "Aléa mouvement_terrain — niveau moyen.",
-     "Exclue : PPR zone rouge (inconstructible).",
-     "Exclue : PPR zone rouge (inconstructible)."
+     "Exclue : PPR zone rouge (inconstructible) — 79 % de la surface.",
+     "PPR zone rouge sur 8 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique)."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -855,15 +873,15 @@
   "97407000BI0350": {
    "api": {
     "fiche": {
-     "a_completude": 83,
-     "a_score": 72,
+     "a_completude": 80,
+     "a_score": 76,
      "commune": "Le Port",
      "completeness_score": 92,
      "dvf_derniere_mutation": "2025-04-16",
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": "820238707",
      "q_score": 53,
      "renouvellement": null,
@@ -874,6 +892,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · inconstructible (géométrie)",
+      "motif": null,
       "mult_base": 5.88,
       "percentile": 99.83,
       "pourquoi": [
@@ -919,6 +942,7 @@
        }
       ],
       "rang": 750,
+      "rang_total": 428239,
       "tier": "declasse_non_constructible",
       "verbal": {
        "cle": "forte",
@@ -936,14 +960,14 @@
      "mult_base": 5.88,
      "percentile": 99.83,
      "rang": 750,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_non_constructible"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
-    "a_score": 72,
+    "a_completude": 80,
+    "a_score": 76,
     "adresse_ban": null,
     "cascade_status": "opportunite",
     "commune": "Le Port",
@@ -1001,7 +1025,7 @@
      "ndvi_moyen": 0.0
     },
     "veille_succession": {
-     "dirigeant_age": 74,
+     "dirigeant_age": 75,
      "sci_dormante": false
     },
     "vue_mer": null,
@@ -1024,7 +1048,7 @@
   },
   "97408000AB0157": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "La Possession",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -1035,7 +1059,7 @@
   "97408000AC1870": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 64,
      "commune": "La Possession",
      "completeness_score": 92,
@@ -1043,7 +1067,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 77,
      "renouvellement": null,
@@ -1054,6 +1078,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Potentiel long terme",
+      "motif": null,
       "mult_base": 0.92,
       "percentile": 45.46,
       "pourquoi": [
@@ -1099,6 +1128,7 @@
        }
       ],
       "rang": 233570,
+      "rang_total": 428239,
       "tier": "reserve_fonciere",
       "verbal": {
        "cle": "en_dessous",
@@ -1123,13 +1153,13 @@
      "mult_base": 0.92,
      "percentile": 45.46,
      "rang": 233570,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "reserve_fonciere"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 64,
     "adresse_ban": null,
     "cascade_status": "opportunite",
@@ -1205,13 +1235,13 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "brulante",
    "validation": "coherence"
   },
   "97408000AP1647": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 66,
      "commune": "La Possession",
      "completeness_score": 92,
@@ -1219,7 +1249,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 60,
      "renouvellement": null,
@@ -1230,6 +1260,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 64.36,
       "percentile": 100.0,
       "pourquoi": [
@@ -1275,6 +1310,7 @@
        }
       ],
       "rang": 1,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -1299,13 +1335,13 @@
      "mult_base": 64.36,
      "percentile": 100.0,
      "rang": 1,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 66,
     "adresse_ban": {
      "code_postal": "97419",
@@ -1389,7 +1425,7 @@
   },
   "97409000AB0119": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Saint-André",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -1410,15 +1446,15 @@
   "97409000AX0289": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 57,
+     "a_completude": 60,
+     "a_score": 61,
      "commune": "Saint-André",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 65,
      "renouvellement": null,
@@ -1429,6 +1465,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.85,
       "percentile": 38.02,
       "pourquoi": [
@@ -1474,6 +1515,7 @@
        }
       ],
       "rang": 265435,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "en_dessous",
@@ -1491,14 +1533,14 @@
      "mult_base": 0.85,
      "percentile": 38.02,
      "rang": 265435,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 57,
+    "a_completude": 60,
+    "a_score": 61,
     "adresse_ban": {
      "code_postal": "97440",
      "numero": "230",
@@ -1535,7 +1577,7 @@
     "risques": [
      "Aléa inondation — niveau faible.",
      "Aléa mouvement_terrain — niveau faible.",
-     "Périmètre PPR INONDATION+MOUVEMENTS_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+     "Zone bleue PPR INONDATION+MOUVEMENTS_DE_TERRAIN — constructible SOUS PRESCRIPTIONS (règlement DEAL)."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -1598,15 +1640,15 @@
   "97410000AS1425": {
    "api": {
     "fiche": {
-     "a_completude": 83,
-     "a_score": 67,
+     "a_completude": 80,
+     "a_score": 74,
      "commune": "Saint-Benoît",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
      "renouvellement": null,
@@ -1617,6 +1659,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · AU à statut inconnu",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -1662,16 +1709,10 @@
        }
       ],
       "rang": 10,
-      "tier": "brulante",
+      "rang_total": 428239,
+      "tier": "declasse_au_statut_inconnu",
       "verbal": {
        "cle": "tres_forte",
-       "frequence": {
-        "base_sur_100": 1.5,
-        "fenetre": "2 ans",
-        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
-        "sous_moyenne": false,
-        "sur_100": 20
-       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
        "reglette_pct": 96.2
@@ -1686,20 +1727,20 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 10,
-     "run_id": "q_v8_calibre",
-     "tier": "brulante"
+     "run_id": "q_v9_m81",
+     "tier": "declasse_au_statut_inconnu"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
-    "a_score": 67,
+    "a_completude": 80,
+    "a_score": 74,
     "adresse_ban": {
      "code_postal": "97470",
      "numero": "20",
      "voie": "Rue des Eaux Vives"
     },
-    "cascade_status": "a_creuser",
+    "cascade_status": "opportunite",
     "commune": "Saint-Benoît",
     "completeness_score": 92,
     "copro_rnic": {
@@ -1745,7 +1786,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 10,
-     "tier": "brulante"
+     "tier": "declasse_au_statut_inconnu"
     },
     "section": "AS",
     "solaire": {
@@ -1777,15 +1818,15 @@
   "97410000AS1450": {
    "api": {
     "fiche": {
-     "a_completude": 83,
-     "a_score": 67,
+     "a_completude": 80,
+     "a_score": 74,
      "commune": "Saint-Benoît",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
      "renouvellement": null,
@@ -1796,6 +1837,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · AU à statut inconnu",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.98,
       "pourquoi": [
@@ -1841,16 +1887,10 @@
        }
       ],
       "rang": 73,
-      "tier": "chaude",
+      "rang_total": 428239,
+      "tier": "declasse_au_statut_inconnu",
       "verbal": {
        "cle": "tres_forte",
-       "frequence": {
-        "base_sur_100": 1.5,
-        "fenetre": "2 ans",
-        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
-        "sous_moyenne": false,
-        "sur_100": 9
-       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
        "reglette_pct": 80.0
@@ -1865,20 +1905,20 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 73,
-     "run_id": "q_v8_calibre",
-     "tier": "chaude"
+     "run_id": "q_v9_m81",
+     "tier": "declasse_au_statut_inconnu"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
-    "a_score": 67,
+    "a_completude": 80,
+    "a_score": 74,
     "adresse_ban": {
      "code_postal": "97470",
      "numero": "2",
      "voie": "Rue des Eaux Vives"
     },
-    "cascade_status": "a_creuser",
+    "cascade_status": "opportunite",
     "commune": "Saint-Benoît",
     "completeness_score": 92,
     "copro_rnic": {
@@ -1924,7 +1964,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 73,
-     "tier": "chaude"
+     "tier": "declasse_au_statut_inconnu"
     },
     "section": "AS",
     "solaire": {
@@ -1956,15 +1996,15 @@
   "97410000CD0905": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 60,
+     "a_completude": 60,
+     "a_score": 58,
      "commune": "Saint-Benoît",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 41,
      "renouvellement": null,
@@ -1975,6 +2015,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · AU à statut inconnu",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -2020,16 +2065,10 @@
        }
       ],
       "rang": 6,
-      "tier": "brulante",
+      "rang_total": 428239,
+      "tier": "declasse_au_statut_inconnu",
       "verbal": {
        "cle": "tres_forte",
-       "frequence": {
-        "base_sur_100": 1.5,
-        "fenetre": "2 ans",
-        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
-        "sous_moyenne": false,
-        "sur_100": 20
-       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
        "reglette_pct": 96.2
@@ -2044,14 +2083,14 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 6,
-     "run_id": "q_v8_calibre",
-     "tier": "brulante"
+     "run_id": "q_v9_m81",
+     "tier": "declasse_au_statut_inconnu"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 60,
+    "a_completude": 60,
+    "a_score": 58,
     "adresse_ban": {
      "code_postal": "97470",
      "numero": "16",
@@ -2100,7 +2139,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 6,
-     "tier": "brulante"
+     "tier": "declasse_au_statut_inconnu"
     },
     "section": "CD",
     "solaire": {
@@ -2129,7 +2168,7 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "chaude",
+   "tier_v2": "declasse_au_statut_inconnu",
    "validation": "coherence"
   },
   "97411000AB0006": {
@@ -2155,15 +2194,15 @@
   "97411000AL0360": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 66,
+     "a_completude": 60,
+     "a_score": 64,
      "commune": "Saint-Denis",
      "completeness_score": 92,
      "dvf_derniere_mutation": "2024-12-10",
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 1,
-     "n_lignes_cascade": 41,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 1,
      "renouvellement": null,
@@ -2174,6 +2213,11 @@
      },
      "score_v2": {
       "copro": true,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 1.66,
       "percentile": null,
       "pourquoi": [
@@ -2219,6 +2263,7 @@
        }
       ],
       "rang": null,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -2236,14 +2281,14 @@
      "mult_base": 1.66,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 66,
+    "a_completude": 60,
+    "a_score": 64,
     "adresse_ban": null,
     "cascade_status": "a_creuser",
     "commune": "Saint-Denis",
@@ -2339,6 +2384,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.85,
       "percentile": 39.87,
       "pourquoi": [
@@ -2384,6 +2434,7 @@
        }
       ],
       "rang": 257513,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -2401,7 +2452,7 @@
      "mult_base": 0.85,
      "percentile": 39.87,
      "rang": 257513,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -2495,7 +2546,7 @@
   "97411000KA0296": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 66,
      "commune": "Saint-Denis",
      "completeness_score": 92,
@@ -2503,7 +2554,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 19,
      "renouvellement": null,
@@ -2514,6 +2565,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -2559,6 +2615,7 @@
        }
       ],
       "rang": 5,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -2583,13 +2640,13 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 5,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 66,
     "adresse_ban": {
      "code_postal": "97400",
@@ -2625,7 +2682,7 @@
      "taux_emprise_pct": 0
     },
     "risques": [
-     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+     "Zone bleue PPR INONDATION_MOUVEMENT_DE_TERRAIN — constructible SOUS PRESCRIPTIONS (règlement DEAL)."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -2733,6 +2790,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 7.13,
       "percentile": 99.97,
       "pourquoi": [
@@ -2778,6 +2840,7 @@
        }
       ],
       "rang": 134,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "forte",
@@ -2795,7 +2858,7 @@
      "mult_base": 7.13,
      "percentile": 99.97,
      "rang": 134,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -2891,7 +2954,7 @@
   "97413000CS0160": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 65,
      "commune": "Saint-Leu",
      "completeness_score": 92,
@@ -2899,7 +2962,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 41,
      "renouvellement": null,
@@ -2910,6 +2973,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie saturée — ratio 55 % (emprise 320 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 2.65,
       "percentile": 98.84,
       "pourquoi": [
@@ -2955,6 +3023,7 @@
        }
       ],
       "rang": 4956,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "au_dessus",
@@ -2972,13 +3041,13 @@
      "mult_base": 2.65,
      "percentile": 98.84,
      "rang": 4956,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 65,
     "adresse_ban": {
      "code_postal": "97436",
@@ -2992,11 +3061,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2023-07-27",
-     "n": 1,
-     "pire_etiquette": "G"
-    },
+    "dpe": null,
     "dvf": {
      "derniere": "2025-08-28",
      "n_mutations": 2
@@ -3083,6 +3148,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.32,
       "percentile": 87.37,
       "pourquoi": [
@@ -3128,6 +3198,7 @@
        }
       ],
       "rang": 54095,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -3145,7 +3216,7 @@
      "mult_base": 1.32,
      "percentile": 87.37,
      "rang": 54095,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -3165,11 +3236,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2021-08-26",
-     "n": 2,
-     "pire_etiquette": "F"
-    },
+    "dpe": null,
     "dvf": null,
     "etage0": true,
     "etage0_motifs": [
@@ -3242,7 +3309,7 @@
   },
   "97414000CI0800": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Saint-Louis",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -3259,6 +3326,22 @@
    "motif": null,
    "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
+  },
+  "97414000CV0907": {
+   "anchor": true,
+   "validation": "coherence",
+   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable). NOUVEAU canari (M81, remplace 97415000AC0253) : SIREN 540092202, « conversion en liquidation judiciaire » 2025-06-12 (état terminal stable), 2 signaux concordants (BODACC rouge + gérant proche de la retraite), Saint-Louis. NB : ancre sur procédure collective = durée de vie limitée (péremption prévisible ~2027-2028 si clôture) — re-valider au prochain rejeu (cf. BACKLOG).",
+   "cascade_status": "a_creuser",
+   "matrice_statut": "chaude",
+   "tier_v2": "declasse_non_constructible"
+  },
+  "97415000AC0253": {
+   "anchor": true,
+   "validation": "coherence",
+   "motif": "EX-canari évènement rouge BODACC (M81) — chaude dans le run servi q_v8_calibre (donnée gelée), mais sa procédure a CLÔTURÉ au rejeu q_v9 (extinction du passif, annonce postérieure au 29/07) : donnée fraîche, PAS un bug. Remplacé comme canari-événement par 97414000CV0907. À la bascule vers q_v9, cette ancre devient a_creuser (non-forcée).",
+   "cascade_status": "opportunite",
+   "matrice_statut": "a_creuser",
+   "tier_v2": "chaude"
   },
   "97415000AH0410": {
    "anchor": true,
@@ -3293,15 +3376,15 @@
   "97415000CW1056": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 64,
+     "a_completude": 60,
+     "a_score": 66,
      "commune": "Saint-Paul",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 41,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 43,
      "renouvellement": null,
@@ -3312,6 +3395,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · inconstructible (géométrie)",
+      "motif": null,
       "mult_base": 15.55,
       "percentile": 100.0,
       "pourquoi": [
@@ -3357,6 +3445,7 @@
        }
       ],
       "rang": 17,
+      "rang_total": 428239,
       "tier": "declasse_non_constructible",
       "verbal": {
        "cle": "tres_forte",
@@ -3374,14 +3463,14 @@
      "mult_base": 15.55,
      "percentile": 100.0,
      "rang": 17,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_non_constructible"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 64,
+    "a_completude": 60,
+    "a_score": 66,
     "adresse_ban": null,
     "cascade_status": "a_creuser",
     "commune": "Saint-Paul",
@@ -3451,15 +3540,15 @@
   "97415000CX1395": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 64,
+     "a_completude": 60,
+     "a_score": 66,
      "commune": "Saint-Paul",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 55,
      "renouvellement": null,
@@ -3470,6 +3559,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie saturée — ratio 42 % (emprise 254 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 13.15,
       "percentile": 99.99,
       "pourquoi": [
@@ -3515,6 +3609,7 @@
        }
       ],
       "rang": 57,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "tres_forte",
@@ -3532,14 +3627,14 @@
      "mult_base": 13.15,
      "percentile": 99.99,
      "rang": 57,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 64,
+    "a_completude": 60,
+    "a_score": 66,
     "adresse_ban": {
      "code_postal": "97435",
      "numero": "33",
@@ -3613,7 +3708,7 @@
   "97415000CY0104": {
    "api": {
     "fiche": {
-     "a_completude": 83,
+     "a_completude": 80,
      "a_score": 70,
      "commune": "Saint-Paul",
      "completeness_score": 92,
@@ -3621,7 +3716,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 41,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": "449565118",
      "q_score": 5,
      "renouvellement": null,
@@ -3632,6 +3727,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 3.25,
       "percentile": 99.14,
       "pourquoi": [
@@ -3677,6 +3777,7 @@
        }
       ],
       "rang": 3694,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "au_dessus",
@@ -3694,13 +3795,13 @@
      "mult_base": 3.25,
      "percentile": 99.14,
      "rang": 3694,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
+    "a_completude": 80,
     "a_score": 70,
     "adresse_ban": null,
     "cascade_status": "a_creuser",
@@ -3739,7 +3840,7 @@
     },
     "risques": [
      "Aléa inondation — niveau moyen.",
-     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN (~4% de la parcelle) — intersection marginale (< 10 %) : à vérifier au règlement, sans présomption de contrainte forte."
+     "Zone bleue PPR INONDATION_MOUVEMENT_DE_TERRAIN (~4% de la parcelle), intersection marginale (< 10 %) — constructible SOUS PRESCRIPTIONS (règlement DEAL), à confirmer sur l'intersection marginale."
     ],
     "score_v": {
      "owner_type": "pm",
@@ -3782,15 +3883,15 @@
   "97415000EY1509": {
    "api": {
     "fiche": {
-     "a_completude": 83,
-     "a_score": 61,
+     "a_completude": 80,
+     "a_score": 62,
      "commune": "Saint-Paul",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": "310863378",
      "q_score": 71,
      "renouvellement": null,
@@ -3801,6 +3902,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Potentiel long terme",
+      "motif": null,
       "mult_base": 0.92,
       "percentile": 45.92,
       "pourquoi": [
@@ -3846,6 +3952,7 @@
        }
       ],
       "rang": 231579,
+      "rang_total": 428239,
       "tier": "reserve_fonciere",
       "verbal": {
        "cle": "en_dessous",
@@ -3870,14 +3977,14 @@
      "mult_base": 0.92,
      "percentile": 45.92,
      "rang": 231579,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "reserve_fonciere"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
-    "a_score": 61,
+    "a_completude": 80,
+    "a_score": 62,
     "adresse_ban": {
      "code_postal": "97460",
      "numero": "140",
@@ -3964,7 +4071,7 @@
   },
   "97416000CD0011": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Saint-Pierre",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -3994,6 +4101,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.17,
       "percentile": 73.14,
       "pourquoi": [
@@ -4039,6 +4151,7 @@
        }
       ],
       "rang": 115024,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -4056,7 +4169,7 @@
      "mult_base": 1.17,
      "percentile": 73.14,
      "rang": 115024,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -4148,6 +4261,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.81,
       "percentile": 34.39,
       "pourquoi": [
@@ -4193,6 +4311,7 @@
        }
       ],
       "rang": 280960,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -4210,7 +4329,7 @@
      "mult_base": 0.81,
      "percentile": 34.39,
      "rang": 280960,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -4338,7 +4457,7 @@
   },
   "97418000AC0149": {
    "anchor": true,
-   "cascade_status": "exclue",
+   "cascade_status": "faux_positif_probable",
    "commune": "Sainte-Marie",
    "etage0": true,
    "matrice_statut": "ecartee",
@@ -4349,7 +4468,7 @@
   "97418000AT2379": {
    "api": {
     "fiche": {
-     "a_completude": 83,
+     "a_completude": 80,
      "a_score": 78,
      "commune": "Sainte-Marie",
      "completeness_score": 92,
@@ -4357,7 +4476,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "452038805",
      "q_score": 41,
      "renouvellement": null,
@@ -4368,6 +4487,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -4413,6 +4537,7 @@
        }
       ],
       "rang": 7,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -4437,13 +4562,13 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 7,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
+    "a_completude": 80,
     "a_score": 78,
     "adresse_ban": {
      "code_postal": "97438",
@@ -4560,6 +4685,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.81,
       "percentile": 31.23,
       "pourquoi": [
@@ -4605,6 +4735,7 @@
        }
       ],
       "rang": 294509,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -4622,7 +4753,7 @@
      "mult_base": 0.81,
      "percentile": 31.23,
      "rang": 294509,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -4739,15 +4870,15 @@
   "97420000AO0654": {
    "api": {
     "fiche": {
-     "a_completude": 83,
-     "a_score": 70,
+     "a_completude": 80,
+     "a_score": 74,
      "commune": "Sainte-Suzanne",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "444841241",
      "q_score": 44,
      "renouvellement": null,
@@ -4758,6 +4889,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.99,
       "pourquoi": [
@@ -4803,6 +4939,7 @@
        }
       ],
       "rang": 59,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -4827,20 +4964,20 @@
      "mult_base": 13.15,
      "percentile": 99.99,
      "rang": 59,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "brulante"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 83,
-    "a_score": 70,
+    "a_completude": 80,
+    "a_score": 74,
     "adresse_ban": {
      "code_postal": "97441",
      "numero": "11",
      "voie": "Rue RAPHAEL HAGEN"
     },
-    "cascade_status": "a_creuser",
+    "cascade_status": "opportunite",
     "commune": "Sainte-Suzanne",
     "completeness_score": 92,
     "copro_rnic": {
@@ -4964,6 +5101,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.52,
       "percentile": 11.43,
       "pourquoi": [
@@ -5009,6 +5151,7 @@
        }
       ],
       "rang": 379309,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -5026,7 +5169,7 @@
      "mult_base": 0.52,
      "percentile": 11.43,
      "rang": 379309,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -5039,7 +5182,7 @@
      "numero": "12",
      "voie": "Allée des Pensées"
     },
-    "cascade_status": "exclue",
+    "cascade_status": "faux_positif_probable",
     "commune": "Salazie",
     "completeness_score": 74,
     "copro_rnic": {
@@ -5050,8 +5193,7 @@
     "dvf": null,
     "etage0": true,
     "etage0_motifs": [
-     "pente",
-     "risques"
+     "pente"
     ],
     "matrice_statut": "ecartee",
     "numero": "156",
@@ -5068,8 +5210,8 @@
      "Aléa mouvement_terrain — niveau moyen.",
      "Aléa mouvement_terrain — niveau moyen.",
      "Aléa mouvement_terrain — niveau moyen.",
-     "Exclue : PPR zone rouge (inconstructible).",
-     "Exclue : PPR zone rouge (inconstructible)."
+     "PPR zone rouge sur 18 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+     "PPR zone rouge sur 30 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique)."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -5138,15 +5280,15 @@
   "97422000AD1237": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 61,
+     "a_completude": 60,
+     "a_score": 62,
      "commune": "Le Tampon",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 58,
      "renouvellement": null,
@@ -5157,6 +5299,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · fermée à l'urbanisation",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -5202,6 +5349,7 @@
        }
       ],
       "rang": 4,
+      "rang_total": 428239,
       "tier": "declasse_zone_fermee",
       "verbal": {
        "cle": "tres_forte",
@@ -5219,14 +5367,14 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 4,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_zone_fermee"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 61,
+    "a_completude": 60,
+    "a_score": 62,
     "adresse_ban": {
      "code_postal": "97418",
      "numero": "11",
@@ -5306,15 +5454,15 @@
   "97422000AX1253": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 57,
+     "a_completude": 60,
+     "a_score": 59,
      "commune": "Le Tampon",
      "completeness_score": 92,
      "dvf_derniere_mutation": "2025-09-05",
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 31,
      "renouvellement": null,
@@ -5325,6 +5473,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · fermée à l'urbanisation",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.98,
       "pourquoi": [
@@ -5370,6 +5523,7 @@
        }
       ],
       "rang": 107,
+      "rang_total": 428239,
       "tier": "declasse_zone_fermee",
       "verbal": {
        "cle": "tres_forte",
@@ -5387,14 +5541,14 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 107,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_zone_fermee"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 57,
+    "a_completude": 60,
+    "a_score": 59,
     "adresse_ban": {
      "code_postal": "97418",
      "numero": "5",
@@ -5483,6 +5637,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 2.13,
       "percentile": 98.14,
       "pourquoi": [
@@ -5528,6 +5687,7 @@
        }
       ],
       "rang": 7967,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "au_dessus",
@@ -5545,7 +5705,7 @@
      "mult_base": 2.13,
      "percentile": 98.14,
      "rang": 7967,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -5561,11 +5721,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2024-10-21",
-     "n": 13,
-     "pire_etiquette": "F"
-    },
+    "dpe": null,
     "dvf": {
      "derniere": "2025-03-11",
      "n_mutations": 2
@@ -5647,17 +5803,17 @@
   "97423000AB1341": {
    "api": {
     "fiche": {
-     "a_completude": null,
-     "a_score": 50,
+     "a_completude": 80,
+     "a_score": 70,
      "commune": "Les Trois-Bassins",
-     "completeness_score": 74,
+     "completeness_score": 92,
      "dvf_derniere_mutation": null,
-     "etage0": true,
+     "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 36,
+     "n_lignes_cascade": 42,
      "proprietaire_moral_siren": "807931308",
-     "q_score": 50,
+     "q_score": 1,
      "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
@@ -5666,6 +5822,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 2.8,
       "percentile": 99.04,
       "pourquoi": [
@@ -5711,6 +5872,7 @@
        }
       ],
       "rang": 4131,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "au_dessus",
@@ -5720,7 +5882,7 @@
       }
      },
      "surface_m2": 355,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible sur ~53 % de la parcelle)."
+     "zonage_detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~47 % ; emprise clippée en pré-faisabilité)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -5728,32 +5890,30 @@
      "mult_base": 2.8,
      "percentile": 99.04,
      "rang": 4131,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": null,
-    "a_score": 50,
+    "a_completude": 80,
+    "a_score": 70,
     "adresse_ban": {
      "code_postal": "97426",
      "numero": "24",
      "voie": "Chemin Bellevue"
     },
-    "cascade_status": "exclue",
+    "cascade_status": "a_creuser",
     "commune": "Les Trois-Bassins",
-    "completeness_score": 74,
+    "completeness_score": 92,
     "copro_rnic": {
      "lots_total": 0,
      "n": 0
     },
     "dpe": null,
     "dvf": null,
-    "etage0": true,
-    "etage0_motifs": [
-     "risques"
-    ],
+    "etage0": false,
+    "etage0_motifs": [],
     "matrice_statut": "ecartee",
     "numero": "1341",
     "permis_sitadel": {
@@ -5768,7 +5928,7 @@
      "denomination": "SCCV URANTIA",
      "siren": "807931308"
     },
-    "q_score": 50,
+    "q_score": 1,
     "residuel": {
      "sdp_residuelle_m2": 133,
      "sous_densite": true,
@@ -5778,9 +5938,9 @@
      "Aléa inondation — niveau fort.",
      "Aléa mouvement_terrain — niveau faible.",
      "Aléa mouvement_terrain — niveau moyen.",
-     "Exclue : PPR zone rouge (inconstructible).",
-     "Exclue : PPR zone rouge (inconstructible).",
-     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN (~52% de la parcelle) — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+     "PPR rouge marginal : 3 m² (0.9 %), hors emprise probable.",
+     "PPR zone rouge sur 47 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+     "Zone bleue PPR INONDATION_MOUVEMENT_DE_TERRAIN (~52% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL)."
     ],
     "score_v": {
      "owner_type": "pm",
@@ -5823,17 +5983,17 @@
   "97423000AB1908": {
    "api": {
     "fiche": {
-     "a_completude": 67,
-     "a_score": 64,
+     "a_completude": 60,
+     "a_score": 66,
      "commune": "Les Trois-Bassins",
      "completeness_score": 92,
      "dvf_derniere_mutation": null,
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
-     "q_score": 44,
+     "q_score": 29,
      "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
@@ -5842,6 +6002,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti révélé",
+      "motif": null,
       "mult_base": 4.16,
       "percentile": 99.51,
       "pourquoi": [
@@ -5887,6 +6052,7 @@
        }
       ],
       "rang": 2080,
+      "rang_total": 428239,
       "tier": "declasse_bati_revele",
       "verbal": {
        "cle": "forte",
@@ -5904,14 +6070,14 @@
      "mult_base": 4.16,
      "percentile": 99.51,
      "rang": 2080,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_revele"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
-    "a_score": 64,
+    "a_completude": 60,
+    "a_score": 66,
     "adresse_ban": {
      "code_postal": "97426",
      "numero": "27",
@@ -5939,7 +6105,7 @@
      "validees": 0
     },
     "proprietaire_moral": null,
-    "q_score": 44,
+    "q_score": 29,
     "residuel": {
      "sdp_residuelle_m2": 0,
      "sous_densite": false,
@@ -5947,7 +6113,7 @@
     },
     "risques": [
      "Aléa mouvement_terrain — niveau faible.",
-     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+     "Zone bleue PPR INONDATION_MOUVEMENT_DE_TERRAIN — constructible SOUS PRESCRIPTIONS (règlement DEAL)."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -6039,6 +6205,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.17,
       "percentile": 73.95,
       "pourquoi": [
@@ -6084,6 +6255,7 @@
        }
       ],
       "rang": 111563,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -6101,7 +6273,7 @@
      "mult_base": 1.17,
      "percentile": 73.95,
      "rang": 111563,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "ecartee"
     }
    },
@@ -6138,7 +6310,7 @@
     "residuel": null,
     "risques": [
      "Aléa mouvement_terrain — niveau moyen.",
-     "Exclue : PPR zone rouge (inconstructible)."
+     "Exclue : PPR zone rouge (inconstructible) — 100 % de la surface."
     ],
     "score_v": {
      "owner_type": "pp",
@@ -6187,7 +6359,7 @@
   "97424000AI0355": {
    "api": {
     "fiche": {
-     "a_completude": 67,
+     "a_completude": 60,
      "a_score": 57,
      "commune": "Cilaos",
      "completeness_score": 92,
@@ -6195,7 +6367,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 43,
      "renouvellement": null,
@@ -6206,6 +6378,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 1.06,
       "percentile": 66.83,
       "pourquoi": [
@@ -6251,6 +6428,7 @@
        }
       ],
       "rang": 142045,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -6268,13 +6446,13 @@
      "mult_base": 1.06,
      "percentile": 66.83,
      "rang": 142045,
-     "run_id": "q_v8_calibre",
+     "run_id": "q_v9_m81",
      "tier": "declasse_bati_sature"
     }
    },
    "coherence_db_api": [],
    "db": {
-    "a_completude": 67,
+    "a_completude": 60,
     "a_score": 57,
     "adresse_ban": {
      "code_postal": "97413",
@@ -6342,14 +6520,6 @@
      "zone": "U"
     }
    }
-  },
-  "97415000AC0253": {
-   "anchor": true,
-   "validation": "coherence",
-   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable)",
-   "cascade_status": "opportunite",
-   "matrice_statut": "chaude",
-   "tier_v2": "chaude"
   }
  }
 }
