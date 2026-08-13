@@ -8,9 +8,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
-import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission, copiloteV2Veilles,
-  copiloteV2VeilleSupprimer, getAccueilChiffres, type AccueilChiffres, type CopiloteMission,
-  type CopiloteV2Reponse, type CopiloteVeille } from '../../lib/api'
+import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
+  getAccueilChiffres, type AccueilChiffres, type CopiloteMission,
+  type CopiloteV2Reponse } from '../../lib/api'
 import { ReponseInline } from './ReponseInline'
 import { RecapConfirmation } from './RecapConfirmation'
 import { CopiloteEmbarque } from './CopiloteEmbarque'
@@ -97,15 +97,14 @@ export function CopiloteView() {
   const [recapConfirme, setRecapConfirme] = useState<string | null>(null)  // reste en tête pendant l'instruction
   const [dispatching, setDispatching] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
-  const [veilles, setVeilles] = useState<CopiloteVeille[]>([])       // §4 — écran minimal
   const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
   const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
-  const rafraichirVeilles = () => copiloteV2Veilles().then((d) => setVeilles(d.veilles)).catch(() => {})
-  useEffect(() => { void rafraichirMissions(); void rafraichirVeilles() }, [])
-  const supprimerVeille = (id: number) => void copiloteV2VeilleSupprimer(id).then(rafraichirVeilles).catch(() => {})
+  useEffect(() => { void rafraichirMissions() }, [])
+  // M78-quater #3 — la veille n'est plus exposée sur cet écran (bloc retiré) ; le mécanisme (intention
+  // VEILLE, stockage, évaluation) reste branché côté serveur. Écran veilles dédié = BACKLOG.
 
   // M78 · 2a / M78-bis — dispatch : le routeur décide. RECHERCHE/VERIFICATION passent par un RÉCAP de
   // confirmation (péage §5 : le coût d'une mauvaise interprétation est élevé) AVANT d'instruire ;
@@ -125,7 +124,7 @@ export function CopiloteView() {
       } else if (r.intent === 'RECHERCHE') {           // confirmé → on lance le run M26-A
         setRecapConfirme(r.recap ?? m); void run.instruire(mission, m)
       } else {
-        setV2(r); if (r.intent === 'VEILLE') void rafraichirVeilles()
+        setV2(r)
       }
     } catch (e) {
       setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
@@ -241,7 +240,6 @@ export function CopiloteView() {
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             missions={missions} onReprendre={rouvrir}
-            veilles={veilles} onSupprimerVeille={supprimerVeille}
             reponse={recap
               ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
                   onLancer={lancerRecap} onCorriger={corrigerRecap} />

@@ -117,7 +117,7 @@ def verification(db: Session, params: dict) -> dict:
             lignes.append(f"Le prix demandé est {ecart:.1f}× {sens} cette projection.")
             if ecart >= 2:
                 lignes.append("L'écart est important — il tient peut-être à des caractéristiques que "
-                              "LABUSE ne mesure pas (un prix très inférieur au marché a généralement une "
+                              "ce calcul ne mesure pas (un prix très inférieur au marché a généralement une "
                               "raison). À vérifier sur place.")
     elif insuffisant:
         lignes.append(f"Échantillon DVF insuffisant en zone {fam} ({n_ventes} vente(s)) : pas de repère "
@@ -128,6 +128,6 @@ def verification(db: Session, params: dict) -> dict:
                   "de son accès, ni de la topographie, ni de l'état du sol ou du bâti — tout ce qui fait "
                   "qu'une parcelle vaut moins que la médiane de sa zone.")
     return {"text": " ".join(lignes), "intent": "VERIFICATION", "tool": "verification", "idu": idu,
-            "sources": [f.source, "DVF terrains (marché commune)"],
+            "sources": [f.source, "DVF (prix terrain nu par zone)"],
             # sorties : ouvrir la fiche, exporter le dossier, écrire au propriétaire (PM → sinon SPF)
             "actions": ["ouvrir_fiche", "exporter_dossier", "ecrire_proprietaire"]}

@@ -24,6 +24,9 @@ BRIEF = {"communes": ["Saint-Paul"], "programme": {"logements": 6, "sdp_cible_m2
          "contraintes": {"exclure_ppr_rouge": True, "exclure_abf": False, "zones": None},
          "surface_min_m2": None}
 
+# M78-quater #1 — recherche SANS programme (le programme n'est jamais bloquant) : programme nul.
+BRIEF_SANS_PROG = dict(BRIEF, programme={"logements": None, "sdp_cible_m2": None})
+
 
 def _seed_parcelle(s, idu, *, commune="Saint-Paul", surface=1000, tier="chaude", rang=1,
                    zone_lib="U", zone_fam="U", ppr_rouge=False, abf=False, wkt=_WKT):
@@ -157,6 +160,21 @@ def test_filtre_geometrique_calibre_ecarte_selon_article(db_session):
 
 
 @pytest.mark.db
+def test_filtre_geometrique_sans_programme_n_ecarte_personne(db_session):
+    # M78-quater #1 — sans programme (cible None), pas de filtre de capacité : la parcelle minuscule
+    # qui SERAIT écartée avec un programme est CONSERVÉE, et le moteur ne plante pas.
+    _seed_parcelle(db_session, "97499000FN0001", commune="X-Generique", wkt=_WKT)
+    _seed_parcelle(db_session, "97499000FN0002", commune="X-Generique", wkt=_WKT_PETITE)
+    brief = dict(BRIEF_SANS_PROG, communes=["X-Generique"])
+    dossier = moteurs.Dossier()
+    moteurs.criblage(db_session, brief, dossier)
+    res = moteurs.filtre_geometrique(db_session, brief, dossier)
+    assert sorted(c["idu"] for c in dossier.retenus()) == ["97499000FN0001", "97499000FN0002"]
+    assert res.resultat["cible_sdp_m2"] is None
+    assert res.resultat["n_ecartees_geometrie"] == 0
+
+
+@pytest.mark.db
 def test_garde_fou_requalifie_jamais_exhaustif(db_session, monkeypatch):
     monkeypatch.setattr(config.get_settings(), "copilote_max_candidats", 2)
     for i in range(5):
@@ -208,6 +226,24 @@ def test_faisabilite_entonnoir_motifs_traces(db_session, monkeypatch):
     assert res.etiquette == "estimé"                 # pré-faisabilité = hypothèses
     assert res.resultat["calibrage"] == {"Saint-Paul": "article_plu"}
     assert res.resultat["mention_sdp"] == moteurs.MENTION_SDP_CALIBREE
+
+
+@pytest.mark.db
+def test_faisabilite_sans_programme_calcule_sans_ecarter_sur_cible(db_session, monkeypatch):
+    # M78-quater #1 — sans cible : on calcule la SDP mais on n'écarte QUE le non-constructible et le
+    # non-vérifiable. La parcelle à petite SDP (300) qui serait écartée avec une cible est CONSERVÉE.
+    dossier = moteurs.Dossier()
+    dossier.calibrage = {"Saint-Paul": "article_plu"}
+    dossier.candidats = [
+        {"idu": "A", "parcel_id": 1, "surface_m2": 1000, "retenu": True},
+        {"idu": "B", "parcel_id": 2, "surface_m2": 900, "retenu": True},
+        {"idu": "C", "parcel_id": 3, "surface_m2": 800, "retenu": True},
+    ]
+    faisas = {1: (None, _faisa(True, 800)), 2: (None, _faisa(True, 300)), 3: (None, _faisa(False, 0))}
+    monkeypatch.setattr("labuse.faisabilite.db.parcel_faisabilite", lambda db, pid: faisas[pid])
+    moteurs.faisabilite(db_session, BRIEF_SANS_PROG, dossier)
+    assert sorted(c["idu"] for c in dossier.retenus()) == ["A", "B"]   # C non constructible seul écarté
+    assert "cible" not in (dossier.candidats[1].get("motif_ecarte") or "")
 
 
 @pytest.mark.db

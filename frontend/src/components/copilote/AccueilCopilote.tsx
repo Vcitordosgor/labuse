@@ -3,19 +3,22 @@
 // cartes Chercher/Vérifier/Veiller à deux exemples cliquables (le clic REMPLIT la barre, ne lance
 // rien), pied de garanties. Retirés (mandat) : onglets « BIENTÔT », paragraphe défensif, pitch « il
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
-import { fmtInt } from '../../lib/format'
-import type { AccueilChiffres, CopiloteMission, CopiloteVeille } from '../../lib/api'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { fmtInt, ilYA } from '../../lib/format'
+import type { AccueilChiffres, CopiloteMission } from '../../lib/api'
 
 type Carte = { past: string; titre: string; desc: (parc: string) => string }
 
+// M78-quater #3 — la carte « Veiller » est retirée (la veille n'est pas exposée sur cet écran ; le
+// mécanisme reste en code, écran dédié au BACKLOG). Remplacée par « Demander » = le parcours des
+// QUESTIONS DIRECTES (maquette PARCOURS B), qui fonctionne aujourd'hui (base + web, sinon refus honnête).
 const CARTES: Carte[] = [
   { past: '⌕', titre: 'Chercher',
     desc: (parc) => `Décrivez le terrain ou le programme. Les moteurs passent les ${parc} parcelles au crible.` },
+  { past: '?', titre: 'Demander',
+    desc: () => "Une question directe — PLU, propriétaire, délais, marché. Le Copilote répond avec sa source, ou le dit s'il ne sait pas." },
   { past: '⚖', titre: 'Vérifier',
     desc: () => "Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé." },
-  { past: '🔔', titre: 'Veiller',
-    desc: () => "Votre secteur sous surveillance. Alerte dès qu'une vente, un permis ou une procédure PLU bouge." },
 ]
 
 // M78-bis §1 — POOL d'exemples VARIÉS couvrant les 7 intentions (le client comprend en un regard qu'il
@@ -50,7 +53,7 @@ function sixAuHasard(): string[] {
 }
 
 export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
-  missions, onReprendre, veilles, onSupprimerVeille }: {
+  missions, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -58,14 +61,26 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   chiffres: AccueilChiffres | null
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
-  missions?: CopiloteMission[]           // §2b — historique
+  missions?: CopiloteMission[]           // §2b — historique (« Vos dernières questions »)
   onReprendre?: (m: CopiloteMission) => void
-  veilles?: CopiloteVeille[]             // §4 — écran minimal des veilles
-  onSupprimerVeille?: (id: number) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
   const exemples6 = useMemo(sixAuHasard, [])   // §1 — 6 exemples variés, tirés à cette visite
+  const [toutHisto, setToutHisto] = useState(false)   // #2 — « voir tout » au-delà de 4
+
+  // #2 — DÉDOUBLONNER par question (missions déjà triées updated_at DESC → 1re occurrence = plus récente).
+  const questions = useMemo(() => {
+    const vu = new Set<string>()
+    const out: CopiloteMission[] = []
+    for (const m of missions ?? []) {
+      const cle = (m.titre || '').trim().toLowerCase()
+      if (!cle || vu.has(cle)) continue
+      vu.add(cle); out.push(m)
+    }
+    return out
+  }, [missions])
+  const questionsVisibles = toutHisto ? questions : questions.slice(0, 4)
 
   // [N] et [parc] DYNAMIQUES — masqués (pas inventés) si le bandeau ne les a pas encore.
   const nSources = chiffres?.sources != null ? String(chiffres.sources) : null
@@ -114,49 +129,27 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
 
-      {/* §2b — reprendre là où on s'est arrêté : les missions passées du compte */}
-      {(missions?.length ?? 0) > 0 && (
+      {/* #2 — VOS DERNIÈRES QUESTIONS : conversations passées, dédoublonnées, datées en relatif, 4 max
+           puis « voir tout ». Rouvrir en restaure le fil. Masqué si l'historique est vide. */}
+      {questions.length > 0 && (
         <div data-accueil-historique className="mb-8">
-          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">REPRENDRE</p>
+          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">VOS DERNIÈRES QUESTIONS</p>
           <div className="flex flex-col gap-1.5">
-            {missions!.slice(0, 6).map((m) => (
+            {questionsVisibles.map((m) => (
               <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
                 className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2 text-left transition-colors duration-quick hover:border-mint/30">
                 <span className="min-w-0 flex-1 truncate text-[12px] text-cp-txt">{m.titre}</span>
                 {m.run_id && <span className="shrink-0 rounded border border-mint/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-mint">recherche</span>}
-                <span className="shrink-0 font-mono text-[10px] text-cp-faint">{m.n_messages} msg</span>
+                <span className="shrink-0 font-mono text-[10px] text-cp-faint">{ilYA(m.updated_at)}</span>
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* §4 — écran minimal des veilles : listées, supprimables. La notification stockée est signalée
-           (le CANAL qui la pousse au client — cloche/digest — est au BACKLOG, dit au rapport). */}
-      {(veilles?.length ?? 0) > 0 && (
-        <div data-accueil-veilles className="mb-8">
-          <p className="mb-1 font-mono text-[10px] tracking-[.16em] text-cp-muted">VEILLES</p>
-          {/* §4 (arbitrage Vic) : ne PAS taire que l'alerte n'est pas encore proactive — le client ne
-               doit pas rater un permis en croyant être prévenu. */}
-          <p data-veilles-note className="mb-2 text-[10.5px] leading-snug text-cp-faint">
-            Vos veilles sont enregistrées — les nouvelles alertes apparaîtront ici à chaque mise à jour
-            des données. L'envoi par e-mail n'est pas encore actif.
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {veilles!.map((v) => (
-              <div key={v.id} data-veille className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2">
-                <span className="text-[13px] text-mint">🔔</span>
-                <span className="min-w-0 flex-1 truncate text-[12px] text-cp-txt">{v.type} · {v.commune}</span>
-                {v.non_vues > 0 && (
-                  <span data-veille-notif className="shrink-0 rounded-full bg-mint/15 px-2 py-px text-[10px] font-semibold text-mint">
-                    {v.non_vues} nouvelle{v.non_vues > 1 ? 's' : ''}
-                  </span>
-                )}
-                <button data-veille-supprimer aria-label="Supprimer la veille" onClick={() => onSupprimerVeille?.(v.id)}
-                  className="shrink-0 text-cp-faint opacity-60 hover:text-cp-txt hover:opacity-100">✕</button>
-              </div>
-            ))}
-          </div>
+          {questions.length > 4 && (
+            <button data-histo-tout onClick={() => setToutHisto((v) => !v)}
+              className="mt-2 text-[11px] text-cp-muted hover:text-cp-txt">
+              {toutHisto ? 'Réduire' : `Voir tout (${questions.length})`}
+            </button>
+          )}
         </div>
       )}
 

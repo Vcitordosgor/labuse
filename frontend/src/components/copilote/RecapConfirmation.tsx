@@ -15,8 +15,8 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }
 }) {
   const [etape, setEtape] = useState<'recap' | 'corriger' | 'affiner'>('recap')
   const [ajouts, setAjouts] = useState<string[]>([])
+  const [libre, setLibre] = useState('')     // champ libre d'affinage (maquette : « … ou écrivez »)
   const mission = data.intent === 'VERIFICATION' ? 'vérification' : 'recherche'
-  const finalBrief = [brief, ...ajouts].join(', ')
 
   // ── clarification COURTE (≤ 4 options) — la barre reste utilisable (non verrouillée) ──
   if (data.clarification_recap) {
@@ -86,8 +86,18 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }
             ))}
           </div>
         )}
-        <button data-recap-lancer onClick={() => onLancer(finalBrief)}
-          className="mt-4 rounded-[13px] bg-mint px-7 py-3 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110">
+        {/* champ libre OBLIGATOIRE (maquette étape 3) : 5 boutons ne couvrent pas tous les besoins.
+             Entrée → ajoute une chip et reste ici. */}
+        <input data-recap-libre value={libre} onChange={(e) => setLibre(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && libre.trim()) {
+              e.preventDefault(); setAjouts([...ajouts, libre.trim()]); setLibre('')
+            }
+          }}
+          placeholder="… ou écrivez ce que vous voulez ajouter"
+          className="mt-3 w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2.5 text-[12.5px] text-cp-txt outline-none placeholder:text-cp-faint" />
+        <button data-recap-lancer onClick={() => onLancer([brief, ...ajouts, libre.trim()].filter(Boolean).join(', '))}
+          className="mt-4 w-full rounded-[13px] bg-mint px-7 py-3 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110">
           Lancer la {mission} →
         </button>
       </div>

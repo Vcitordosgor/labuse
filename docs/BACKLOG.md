@@ -366,6 +366,20 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   cascade risques, graduation PPR M-I — elle n'est pas filtrable). La télémétrie Copilote (§1e) confirmera
   la demande. En attendant (M78) : le Copilote le DIT au client, ne le promet pas.
 
+## Renvois M78-quater (recette Vic — mécanismes conservés, non exposés)
+- **Feedback Copilote en LIEN TEXTE discret (issu de #5).** Les pouces 👍/👎 de `ReponseInline` ont été
+  RETIRÉS (ne faisaient rien de visible au clic, pas le sérieux du produit). L'endpoint serveur
+  `/api/copilote-v2/feedback` + `copiloteV2Feedback` (front) restent en place. **Mandat futur** : réintroduire
+  le feedback sous forme d'un lien texte discret (« Signaler un problème avec cette réponse »), pas deux
+  émojis — quand le canal de traitement du feedback sera défini.
+- **Écran Veilles dédié (issu de #3, dépend du chantier notifications).** Le bloc VEILLES et la carte
+  « Veiller » ont été retirés de l'accueil Copilote (la veille n'alerte pas encore → ne pas la promettre sur
+  l'écran d'entrée). Le mécanisme reste branché côté serveur (intention VEILLE, stockage `copilote_veilles`,
+  évaluation, endpoints `/veilles`). **Mandat futur** : un écran Veilles dédié (liste, gestion, alertes)
+  quand le canal de notification (cron J+1 Train 8 + cloche in-app + digest e-mail) existera. Carte de
+  mission « Veiller » réexposée à ce moment-là. (En M78-quater : 3 cartes = Chercher · Demander · Vérifier,
+  la 3ᵉ remplace Veiller par le parcours des questions directes, qui fonctionne.)
+
 ## Mandat candidat — « VOIR SUR LA CARTE » : shortlist Copilote → socle (issu de M78-bis §4, validé Vic)
 - **Le besoin** : sur l'écran de résultats du Copilote, un bouton « Voir ces parcelles sur la carte » qui
   charge EXACTEMENT les N parcelles restituées dans le panneau-liste de gauche du socle (clic→fiche, tri,

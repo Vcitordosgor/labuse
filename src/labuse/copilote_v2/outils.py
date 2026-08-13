@@ -18,6 +18,12 @@ from sqlalchemy.orm import Session
 
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN
 
+# M78-quater #4 — la SOURCE affichée au client ne cite JAMAIS un nom de moteur, de table ou de run
+# (« run servi », « recherche à facettes »… = interne). Les parcelles viennent du cadastre ; son
+# millésime réel est celui de l'ingestion (cf. api.app — « cadastre Etalab 2026-06 »). Le run interne
+# (RUN) reste l'argument des points de calcul, il n'apparaît pas dans la source.
+CADASTRE_MILLESIME = "Etalab 2026-06"
+
 
 @dataclass
 class ToolResult:
@@ -55,7 +61,7 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
             "surface_max": surface_max, "tier": tiers, "personne_morale": personne_morale or None}.items()
             if v is not None}
     return ToolResult("compter_parcelles", valeur=n, data={"compte": n, "criteres": crit},
-                      source="Recherche à facettes LABUSE (run servi)", millesime=RUN)
+                      source="cadastre", millesime=CADASTRE_MILLESIME)
 
 
 # ───────────────────────── parcelles_par_entreprise ─────────────────────────
@@ -116,7 +122,7 @@ def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
             "verdict": sv2.get("verdict") or sv2.get("libelle") or sv2.get("tier"),
             "etage0": f.get("etage0")}
     return ToolResult("fiche_parcelle", valeur=f.get("surface_m2"), data=data,
-                      source="Fiche parcelle LABUSE (run servi)", millesime=RUN)
+                      source="cadastre", millesime=CADASTRE_MILLESIME)
 
 
 # ───────────────────────── stats_commune ─────────────────────────
@@ -165,7 +171,7 @@ def marche(db: Session, *, commune: str) -> ToolResult:
                "source": l.get("source"), "millesime": l.get("millesime")}
               for l in (m.get("lignes") or []) if isinstance(l, dict)]
     return ToolResult("marche", data={"commune": commune, "lignes": lignes},
-                      source="Marché commune LABUSE (DVF, Sitadel, DHUP — terrain nu M79)",
+                      source="DVF, Sitadel, DHUP (terrain nu)",
                       millesime="par ligne (fraîcheur = source amont)")
 
 

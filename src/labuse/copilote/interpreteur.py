@@ -131,17 +131,19 @@ def _valider_brief(b: dict) -> Interpretation:
     prog = b.get("programme") or {}
     logements = prog.get("logements")
     sdp = prog.get("sdp_cible_m2")
-    if logements is None and sdp is None:
-        return _clarif("Quel programme visez-vous : combien de logements, ou quelle "
-                       "surface de plancher (m²) ?", "programme")
-    if sdp is None:
+    # M78-quater #1 — le PROGRAMME n'est JAMAIS une question bloquante : chercher un terrain sans
+    # programme est légitime (le programme est une suggestion d'affinage, pas un prérequis). Absent →
+    # programme nul, le moteur cherche par commune/surface/zone/budget SANS filtre de capacité
+    # (cf. filtre_geometrique / faisabilite qui tolèrent sdp_cible_m2 = None).
+    if sdp is None and logements is not None:
         # Règle déterministe CODE (jamais le LLM) — cf. SDP_PAR_LOGEMENT_M2.
         sdp = logements * SDP_PAR_LOGEMENT_M2
 
     contraintes = b.get("contraintes") or {}
     brief = {
         "communes": communes,
-        "programme": {"logements": logements, "sdp_cible_m2": float(sdp)},
+        "programme": {"logements": logements,
+                      "sdp_cible_m2": float(sdp) if sdp is not None else None},
         "budget_max_eur": b.get("budget_max_eur"),
         "contraintes": {
             "exclure_ppr_rouge": (True if contraintes.get("exclure_ppr_rouge") is None
