@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-COPILOTE-PARCOURS — LABUSE · les trois parcours du Copilote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --carte-2:#121815; --bulle:#141B17;
+  --past:#12291D; --past-ia:#1A1730;
+  --mint:#4ADE80; --mint-on:#06180E; --mauve:#7F77DD; --mauve-clair:#AFA9EC;
+  --ambre:#BA7517; --ambre-fond:#1F1A0E; --ambre-txt:#FAC775;
+  --texte:#F4F6F5; --texte-2:#B8C4BD; --texte-3:#8B9990; --texte-4:#7C8A83; --texte-5:#5C6A63;
+  --filet:#1E2622; --bord:#2A362F; --source:#3E8455;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#2A2E2B;padding:40px 20px;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.ecran{background:var(--noir);border-radius:12px;padding:26px 28px;max-width:600px;margin:0 auto 30px}
+.lab{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--texte-5);margin-bottom:14px}
+.titre-parcours{max-width:600px;margin:0 auto 10px;color:#F4F6F5;font-size:15px;font-weight:500}
+
+.barre{background:#10161288;border:1px solid #24302A;border-radius:12px;padding:8px 8px 8px 16px;
+  display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.barre span{flex:1;font-size:14px;color:var(--texte)}
+.btn-mint{background:var(--mint);color:var(--mint-on);border:none;border-radius:8px;
+  padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-neutre{background:transparent;color:var(--texte-3);border:.5px solid var(--bord);
+  border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer}
+
+.recap{background:var(--carte);border-left:2px solid var(--mauve);border-radius:0 10px 10px 0;
+  padding:16px 18px;margin-bottom:22px}
+.recap .lab-ia{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;
+  color:var(--mauve-clair);margin-bottom:9px}
+.recap p{font-size:14px;line-height:1.5;color:var(--texte);margin:0 0 14px}
+.recap .boutons{display:flex;gap:8px}
+
+.affinage{background:var(--carte);border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.affinage .t{font-size:13.5px;color:var(--texte);margin:0 0 4px}
+.affinage .s{font-size:11.5px;color:var(--texte-3);margin:0 0 13px}
+.suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px}
+.sugg{background:var(--bulle);color:var(--texte-2);border:.5px solid var(--bord);
+  border-radius:7px;padding:6px 11px;font-size:11.5px;cursor:pointer}
+.champ-libre{background:#0D1310;border:.5px solid var(--bord);border-radius:8px;
+  padding:10px 13px;font-size:12.5px;color:var(--texte-5);margin-bottom:13px}
+.btn-large{width:100%;padding:11px 22px}
+
+.entonnoir{background:var(--carte);border-radius:10px;padding:15px 18px;margin-bottom:9px}
+.entonnoir .brief{font-size:11.5px;color:var(--texte-3);margin:0 0 11px;font-style:italic}
+.flux{display:flex;align-items:center;margin-bottom:11px}
+.etape{flex:1}
+.etape .n{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:600}
+.etape .l{font-size:9.5px;color:var(--texte-5);margin-top:2px}
+.etape.a .n{color:var(--texte-5)} .etape.b{text-align:center} .etape.b .n{color:var(--texte-3)}
+.etape.c{text-align:right} .etape.c .n{color:var(--mint)}
+.trait{flex:2;height:2px;border-radius:1px;margin:0 6px 14px}
+.trait.t1{background:linear-gradient(90deg,#2A362F,#1F4630)}
+.trait.t2{background:linear-gradient(90deg,#1F4630,#4ADE80)}
+.entonnoir .pied{display:flex;align-items:center;gap:10px;padding-top:11px;border-top:.5px solid var(--filet)}
+.entonnoir .pied span{font-size:11px;color:var(--texte-3);flex:1}
+.btn-petit{background:transparent;color:var(--texte-3);border:.5px solid var(--bord);
+  border-radius:7px;padding:6px 13px;font-size:11.5px;cursor:pointer}
+
+.q{display:flex;justify-content:flex-end;margin-bottom:9px}
+.q div{background:var(--bulle);border-radius:12px 12px 4px 12px;padding:10px 15px;max-width:78%}
+.q span{font-size:13.5px;color:var(--texte)}
+.r{background:var(--carte);border-radius:12px 12px 12px 4px;padding:14px 16px;margin-bottom:24px}
+.r p{font-size:13.5px;line-height:1.55;color:var(--texte);margin:0 0 9px}
+.r p:last-child{margin-bottom:0}
+.r .source{font-size:10.5px;color:var(--texte-4);padding-top:9px;border-top:.5px solid var(--filet)}
+.r .source.web{display:flex;align-items:center;gap:7px}
+.r .reserve{font-size:12px;line-height:1.5;color:var(--texte-3);margin:0 0 9px;
+  padding-left:11px;border-left:1px solid var(--bord)}
+
+.porte{background:var(--carte);border-left:2px solid var(--mint);border-radius:0 9px 9px 0;
+  padding:13px 15px;margin-bottom:24px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.porte .ic{width:30px;height:30px;border-radius:7px;background:var(--past);color:var(--mint);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.porte .c{flex:1}
+.porte .t{font-size:12.5px;color:var(--texte);font-weight:500}
+.porte .s{font-size:10.5px;color:var(--texte-3);margin-top:1px}
+
+.avis{background:var(--carte-2);border-radius:10px;padding:18px;margin-bottom:9px}
+.avis .chef{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.avis .idu{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--texte);font-weight:600}
+.avis .meta{font-size:11px;color:var(--texte-3)}
+.trois{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--filet);
+  border-radius:8px;overflow:hidden;margin-bottom:14px}
+.trois>div{background:var(--carte);padding:11px 12px}
+.trois .v{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--texte);font-weight:500}
+.trois .k{font-size:9px;color:var(--texte-4);margin-top:2px}
+.trois .k .src{color:var(--source)}
+.alerte{background:var(--ambre-fond);border-left:2px solid var(--ambre);border-radius:0 8px 8px 0;
+  padding:12px 14px;margin-bottom:12px}
+.alerte p{font-size:12.5px;line-height:1.55;color:var(--ambre-txt);margin:0}
+.suites{display:flex;gap:7px}
+</style>
+</head>
+<body>
+
+<div class="titre-parcours">PARCOURS A — la recherche</div>
+<div class="ecran">
+  <div class="lab">ÉTAPE 1 — LE CLIENT ÉCRIT</div>
+  <div class="barre"><span>je cherche un terrain de 1000m2 à saint paul</span><button class="btn-mint">Envoyer</button></div>
+
+  <div class="lab">ÉTAPE 2 — LE COPILOTE RÉCAPITULE</div>
+  <div class="recap">
+    <div class="lab-ia">J'AI COMPRIS</div>
+    <p>Vous cherchez un <b>terrain d'au moins 1 000 m²</b> à <b>Saint-Paul</b>.</p>
+    <div class="boutons">
+      <button class="btn-mint">Oui, c'est ça</button>
+      <button class="btn-neutre">Corriger</button>
+    </div>
+  </div>
+
+  <div class="lab">ÉTAPE 3 — L'AFFINAGE, OPTIONNEL</div>
+  <div class="affinage">
+    <p class="t">Envie d'affiner ?</p>
+    <p class="s">Facultatif — vous pouvez lancer tout de suite.</p>
+    <div class="suggestions">
+      <span class="sugg">+ un budget foncier</span>
+      <span class="sugg">+ un nombre de logements</span>
+      <span class="sugg">+ hors zone à risque</span>
+      <span class="sugg">+ terrain nu seulement</span>
+      <span class="sugg">+ zone constructible</span>
+    </div>
+    <div class="champ-libre">… ou écrivez ce que vous voulez ajouter</div>
+    <button class="btn-mint btn-large">Lancer la recherche →</button>
+  </div>
+
+  <div class="lab">ÉTAPE 4 — L'INSTRUCTION TOURNE</div>
+  <div class="entonnoir">
+    <p class="brief">terrain ≥ 1 000 m² · Saint-Paul · terrain nu</p>
+    <div class="flux">
+      <div class="etape a"><div class="n">5 219</div><div class="l">pool Saint-Paul</div></div>
+      <div class="trait t1"></div>
+      <div class="etape b"><div class="n">1 774</div><div class="l">après surface</div></div>
+      <div class="trait t2"></div>
+      <div class="etape c"><div class="n">20</div><div class="l">restituées</div></div>
+    </div>
+    <div class="pied">
+      <span>Vous pouvez quitter — notification à la fin.</span>
+      <button class="btn-petit">Arrêter</button>
+    </div>
+  </div>
+</div>
+
+<div class="titre-parcours">PARCOURS B — les questions directes (aucun récap)</div>
+<div class="ecran">
+  <div class="lab">CAS 1 — LA BASE RÉPOND</div>
+  <div class="q"><div><span>Combien de parcelles à Saint-Paul ?</span></div></div>
+  <div class="r">
+    <p>Saint-Paul compte <b>[N] parcelles</b> cadastrées, pour [N] hectares.</p>
+    <div class="source">Source : cadastre · millésime [année]</div>
+  </div>
+
+  <div class="lab">CAS 2 — LE WEB RÉPOND · MARQUAGE DISTINCT</div>
+  <div class="q"><div><span>Qui est le maire de Saint-Denis ?</span></div></div>
+  <div class="r">
+    <p>D'après le site de la commune, le maire de Saint-Denis est <b>[nom]</b>, élu en [année].</p>
+    <div class="source web">◍ Source : web · [domaine] · consulté le [date] — hors base LABUSE</div>
+  </div>
+
+  <div class="lab">CAS 3 — PARTIELLEMENT COUVERT</div>
+  <div class="q"><div><span>Combien de temps met un permis à Saint-Benoît ?</span></div></div>
+  <div class="r">
+    <p>Délai médian constaté : <b>[N] mois</b>, sur [N] dossiers accordés.</p>
+    <p class="reserve">Réserve : ce chiffre ne porte que sur les dossiers accordés — les refus et les abandons ne sont pas publiés. Je n'ai pas le détail par type de dossier.</p>
+    <div class="source">Source : autorisations d'urbanisme · [période]</div>
+  </div>
+
+  <div class="lab">CAS 4 — REFUS + PORTE VERS L'OUTIL</div>
+  <div class="q"><div><span>Qui est le propriétaire de la parcelle [IDU] ?</span></div></div>
+  <div class="r" style="margin-bottom:6px">
+    <p>Cette parcelle appartient à une personne physique. L'identité des propriétaires particuliers n'est pas une donnée ouverte en France — elle s'obtient par demande au service de la publicité foncière.</p>
+  </div>
+  <div class="porte">
+    <div class="ic">✉</div>
+    <div class="c"><div class="t">Préparer la demande au SPF</div><div class="s">courrier pré-rempli pour cette parcelle</div></div>
+    <span style="color:#4ADE80">→</span>
+  </div>
+
+  <div class="lab">CAS 5 — AUCUN OUTIL · ON RÉPOND ET ON SE TAIT</div>
+  <div class="q"><div><span>Cette parcelle est-elle divisible ?</span></div></div>
+  <div class="r">
+    <p>Je n'ai pas d'analyse de divisibilité par parcelle. Ce que je sais de ce terrain : <b>[N] m²</b>, en zone [X] à [commune].</p>
+    <p class="reserve" style="border:0;padding:0;color:var(--texte-3)">La divisibilité dépend du règlement de la zone — surface minimale, accès, emprise. Le règlement fait foi.</p>
+  </div>
+</div>
+
+<div class="titre-parcours">PARCOURS C — la vérification d'un prix</div>
+<div class="ecran">
+  <div class="q"><div><span>On me propose la parcelle [IDU] à [prix] €, c'est un bon prix ?</span></div></div>
+
+  <div class="recap">
+    <div class="lab-ia">J'AI COMPRIS</div>
+    <p>Vous voulez une vérification de la parcelle <b>[IDU]</b> à [commune], au prix demandé de <b>[prix] €</b>.</p>
+    <div class="boutons">
+      <button class="btn-mint">Oui, instruire</button>
+      <button class="btn-neutre">Corriger</button>
+    </div>
+  </div>
+
+  <div class="lab">L'AVIS</div>
+  <div class="avis">
+    <div class="chef">
+      <span class="idu">[IDU]</span>
+      <span class="meta">[commune] · [N] m² · zone [X]</span>
+    </div>
+    <div class="trois">
+      <div><div class="v">[prix] €</div><div class="k">PRIX DEMANDÉ</div></div>
+      <div><div class="v">[N] €/m²</div><div class="k">SOIT <span class="src">CALCULÉ</span></div></div>
+      <div><div class="v">[N] €/m²</div><div class="k">MÉDIANE ZONE <span class="src">SOURCÉ</span></div></div>
+    </div>
+    <p style="font-size:13.5px;line-height:1.6;color:var(--texte);margin:0 0 12px">
+      Au prix médian de la zone, [N] m² représenteraient <b>[N] €</b> — une projection arithmétique,
+      <b>pas une valeur vénale</b>. Le prix demandé est <b>[N]× sous cette projection</b>.</p>
+    <div class="alerte"><p>L'écart est important. Un prix très inférieur au marché a généralement une raison — à vérifier sur place.</p></div>
+    <p class="reserve" style="margin-bottom:14px">Réserve de méthode : ce calcul ne tient compte ni de la configuration du terrain, ni de son accès, ni de la topographie, ni de l'état du sol ou du bâti — tout ce qui fait qu'une parcelle vaut moins que la médiane de sa zone.</p>
+    <div class="suites">
+      <button class="btn-mint" style="flex:1;padding:10px;font-size:12px">Ouvrir la fiche</button>
+      <button class="btn-neutre" style="padding:10px 14px;font-size:12px">Exporter le dossier</button>
+      <button class="btn-neutre" style="padding:10px 14px;font-size:12px">Écrire au propriétaire</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
