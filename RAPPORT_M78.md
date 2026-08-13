@@ -75,3 +75,46 @@ HORS_SUJET                                                 4
   « ajoute une parcelle à ce projet » = gestion de PROJET (flux Phase 3b réel), pas OUTIL générique.
 - **Coût mesuré** : ~0,006 €/appel de routage (Sonnet, ~1500 tok in / ~90 tok out) ; journalisé dans
   `ia_log` (kind `copilote-route`). Une passe complète des 45 messages ≈ 0,27 €.
+
+### 1b — Boîte à outils QUESTION : point de calcul EXISTANT par outil (doctrine « un seul endroit »)
+
+Chaque outil **appelle** la fonction/endpoint qui produit déjà la donnée pour la fiche/les moteurs.
+Il n'en RECRÉE aucun : pas de SQL de scoring/marché réécrit, `requete_libre(sql)` interdit. La preuve
+de non-recréation = l'outil importe et invoque ce point, et le test 1b confronte sa sortie à ce même
+point (égalité fiche↔Copilote) ; les comptages/stats sont en plus confrontés à l'oracle hand-SQL (1d).
+
+| Outil QUESTION | Point de calcul EXISTANT réutilisé | Fichier:ligne | Preuve de non-recréation |
+|---|---|---|---|
+| `marche(commune)` | `build_marche_commune(db, commune)` (9 lignes DVF/Sitadel/DHUP, terrain nu M79) | `faisabilite/marche_commune.py:318` | import direct ; test d'ÉGALITÉ Copilote==build_marche_commune (mêmes chiffres que la fiche) |
+| `fiche_parcelle(idu)` | `_q_v2_fiche(db, idu, run_label)` (verdict via `verdict_servi`, ICD, risques arbitrés, zonage) | `api/app.py:2191` | import lazy ; verdict/risques lus, jamais recalculés — test d'égalité au verdict servi |
+| `delais_instruction(commune)` | `velocite(nature, db)` + réserve rédigée | `api/modules.py:457` (réserve `:523-528`) | la réserve Sitadel est CITÉE mot pour mot (champ `censure`), pas reformulée |
+| `parcelles_par_entreprise(q)` | `patrimoine_search(q)` / `patrimoine(siren)` (DGFiP PM) | `api/modules.py:190-235` | import direct ; comptage confronté à l'oracle 1d (SIDR=4241) |
+| `stats_commune(commune)` | `commune_contexte(commune, db)` (SRU, QPV, INSEE logement, PLH) | `api/app.py:1361` | import lazy ; chaque bloc garde son `source_nom`+`millesime` d'origine |
+| `compter_parcelles(...)` | `_q_v2_where(...)` (fragment WHERE des 20 facettes M55) + COUNT sur le run servi | `api/app.py:827` | réutilise le fragment WHERE canonique (mêmes facettes que la recherche), jamais un WHERE maison |
+
+Note doctrine : le **verdict client** (fiche) et le **marché/M79** ne sont PAS dans le hand-SQL de 1d
+(ce sont des sorties de FONCTIONS, pas des colonnes brutes ; les re-dériver forkerait le point unique).
+Ils sont prouvés par **égalité au point de calcul canonique** — ce qui EST la garantie « le Copilote dit
+la même chose que la fiche ».
+
+### 1c — Aiguillage OUTIL : table demande-type → outil (registre RÉEL de la page Outils)
+
+Construite depuis `frontend/src/components/outils/registry.ts`. « Un outil existe » → réponse sur le
+fond PUIS porte `.porte-outil` ; si l'outil accepte un IDU et qu'une parcelle est citée, la porte
+pré-remplit via **`parcelPrefill`** (motif M-ENTREE) ou le prefill dédié existant.
+
+| Demande-type du client | Outil (clé registre) | Pré-remplissage IDU |
+|---|---|---|
+| assembler des parcelles | Assemblage (`assemblage`) | `parcelPrefill` (M-ENTREE) |
+| faisabilité / capacité d'un terrain | Faisabilité (`programme`) | `parcelPrefill` (M-ENTREE) |
+| charge foncière / ce que je peux payer | Calculette foncière (`calculette-fonciere`) | `calcPrefill` (M60) |
+| écrire au propriétaire | Courrier SPF (`courriers`) | via IDU (M60) |
+| patrimoine d'une société | Scan patrimoine (`patrimoine`) | `m02Prefill` (SIREN) |
+| comparer des parcelles | Comparateur (`comparer`) | sélection |
+| règlement d'une zone | Annuaire PLU (`plu-annuaire`) | `pluPrefill` (insee+zone) |
+| lettre de vérification de zonage | Lettre de zonage (`lettre-zonage`) | via IDU |
+| procédure PLU en cours | Vérif procédure (`verif-procedure`) | via IDU |
+| due diligence / contrôle avant achat | Contrôle avant achat (`duediligence`) | via IDU |
+| servitudes invisibles | Servitudes (`o5-servitudes`) | via IDU |
+| évolution dans le temps | Remonter le temps (`temps`) | via IDU |
+| **diviser une parcelle** | **AUCUN** (découverte commune, décision M-ENTREE) | — → issue 4 (refus honnête, télémétrie) |
