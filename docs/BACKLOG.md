@@ -374,3 +374,11 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   Hypothèse à vérifier : copropriétés exclues du classement (la doctrine dit « hors copropriétés »), ou une
   autre exclusion. **Mesurer d'où vient l'exclusion et la documenter (ou la corriger)** — Vic M81, hors ce
   mandat.
+- **Ancres golden sur état TRANSITOIRE : porter une date de péremption prévisible (Vic M81).** Une ancre
+  qui dépend d'un état qui bouge — procédure collective en cours, permis récent, dirigeant proche de la
+  retraite — a une espérance de vie. Le canari M70 (97415000AC0253) est tombé au rejeu M81 parce que sa
+  procédure BODACC a clôturé (extinction du passif) : la garde a bien fait son travail, mais la surprise
+  était évitable. **Règle** : au moment de CHOISIR une ancre sur état transitoire, écrire sa date de
+  péremption prévisible dans son motif (fait pour le nouveau canari 97414000CV0907 : « ~2027-2028 si
+  clôture »). Idéalement, un contrôle qui LISTE les ancres dont l'état sous-jacent a changé au dernier
+  rejeu, plutôt que de laisser la garde lever à froid.

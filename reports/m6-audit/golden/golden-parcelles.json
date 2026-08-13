@@ -3351,10 +3351,18 @@
   "97415000AC0253": {
    "anchor": true,
    "validation": "coherence",
-   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable)",
+   "motif": "EX-canari évènement rouge BODACC (M81) — chaude dans le run servi q_v8_calibre (donnée gelée), mais sa procédure a CLÔTURÉ au rejeu q_v9 (extinction du passif, annonce postérieure au 29/07) : donnée fraîche, PAS un bug. Remplacé comme canari-événement par 97414000CV0907. À la bascule vers q_v9, cette ancre devient a_creuser (non-forcée).",
    "cascade_status": "opportunite",
    "matrice_statut": "chaude",
    "tier_v2": "chaude"
+  },
+  "97414000CV0907": {
+   "anchor": true,
+   "validation": "coherence",
+   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable). NOUVEAU canari (M81, remplace 97415000AC0253) : SIREN 540092202, « conversion en liquidation judiciaire » 2025-06-12 (état terminal stable), 2 signaux concordants (BODACC rouge + gérant proche de la retraite), Saint-Louis. NB : ancre sur procédure collective = durée de vie limitée (péremption prévisible ~2027-2028 si clôture) — re-valider au prochain rejeu (cf. BACKLOG).",
+   "cascade_status": "a_creuser",
+   "matrice_statut": "chaude",
+   "tier_v2": "declasse_non_constructible"
   },
   "97415000AH0410": {
    "anchor": true,

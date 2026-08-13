@@ -252,12 +252,21 @@ def simulate_matrice(session: Session, run_label: str, candidates: list[dict]) -
 def apply_convention(session: Session, run_label: str | None = None) -> dict:
     """UN point d'entrée : rejoue la matrice ×24 depuis le YAML versionné + reconstruit les
     tuiles MVT. Idempotent (deux passes = même état). Les tops HTML sont régénérés par le CLI
-    (script séparé). CANARI : 97415000AC0253 doit rester chaude (par ÉVÉNEMENT) — si elle
-    tombe, la bascule est cassée : on lève, on n'applique pas silencieusement."""
+    (script séparé). CANARI : doit rester chaude (par ÉVÉNEMENT BODACC rouge) — si elle tombe,
+    la bascule est cassée : on lève, on n'applique pas silencieusement.
+
+    M81 — l'ancien canari 97415000AC0253 (Saint-Paul) est SORTI : sa procédure BODACC a clôturé
+    (« extinction du passif », annonce postérieure au run gelé du 29/07) → plus d'événement rouge,
+    donnée fraîche, PAS un bug (le mécanisme BODACC rouge reste sain, 41 événements au parc). Nouveau
+    canari : 97414000CV0907 (Saint-Louis, SIREN 540092202, « conversion en liquidation judiciaire »
+    2025-06-12) — liquidation = état terminal stable, 2 signaux concordants (BODACC rouge + gérant
+    proche de la retraite), commune différente. NB : une ancre sur procédure collective a une durée
+    de vie (cf. BACKLOG) — à re-valider au prochain rejeu."""
     from ..api.tiles import build_mvt_table
     from .score_v_constants import Q_A_RUN_LABEL
 
     run_label = run_label or Q_A_RUN_LABEL   # ANO-1 : défaut = run SERVI (source unique), jamais « q_v2 » gelé
+    CANARI_IDU = "97414000CV0907"            # M81 — canari « chaude par événement BODACC rouge »
 
     cfg = load_yaml_config("scoring_matrice")
     communes = [r[0] for r in session.execute(text("SELECT DISTINCT commune FROM parcels ORDER BY 1")).all()]
@@ -267,15 +276,15 @@ def apply_convention(session: Session, run_label: str | None = None) -> dict:
     session.commit()
     canari = session.execute(text(
         "SELECT d.matrice_statut FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id"
-        " WHERE d.run_label = :r AND p.idu = '97415000AC0253'"), {"r": run_label}).scalar()
+        " WHERE d.run_label = :r AND p.idu = :idu"), {"r": run_label, "idu": CANARI_IDU}).scalar()
     if canari != "chaude":
         raise RuntimeError(
-            f"CANARI 97415000AC0253 = {canari!r} (attendu chaude PAR ÉVÉNEMENT) — la bascule "
-            "BODACC est cassée, pas un seuil. Application stoppée, tuiles NON reconstruites.")
+            f"CANARI {CANARI_IDU} = {canari!r} (attendu chaude PAR ÉVÉNEMENT BODACC rouge) — la "
+            "bascule est cassée, pas un seuil. Application stoppée, tuiles NON reconstruites.")
     n_mvt = build_mvt_table(session, run_label)
     build_entonnoir(session, run_label)   # le popover entonnoir suit toujours la matrice
     return {"convention": cfg.get("convention"), "seuils": cfg["seuils"],
-            "communes": len(communes), "mvt_parcelles": n_mvt, "canari_AC0253": canari,
+            "communes": len(communes), "mvt_parcelles": n_mvt, "canari": canari,
             "statuts": {k: sum(s.get(k, 0) for s in stats.values())
                         for k in ("chaude", "a_surveiller", "a_creuser", "ecartee")}}
 
