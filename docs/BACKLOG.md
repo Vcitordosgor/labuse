@@ -409,6 +409,14 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   « API INJOIGNABLE »**, jamais en FAIL. **Enseignement à généraliser** : tout garde-fou qui échoue pour
   une raison d'ENVIRONNEMENT doit le DIRE explicitement et ne jamais se confondre avec un écart de données
   (auditer les autres gardes — non-constance, câblage, funnel — pour le même piège).
+- **golden_check : quota d'usage dépassé pris pour 33 incohérences métier (constaté M78 — MÊME FAMILLE que
+  le port 8010).** En enchaînant golden + démos contre `:8000`, la charge a dépassé `quota_fiches_jour=300`
+  (mesuré `fiche=596/jour` pour l'IP) → l'API a servi des fiches VIDES (429) → golden a affiché « 86/119,
+  33 incohérences base↔API » alors que la BASE ÉTAIT INTACTE (score_v2 présent en SQL) et le code sain.
+  Un garde-fou qui échoue pour un plafond d'usage doit le DIRE (« quota dépassé »), jamais se présenter comme
+  un écart de données. **Mandat futur, 3 voies** : (a) exempter le harnais des quotas (`LABUSE_DEV_MODE=1`
+  documenté dans golden_check) ; (b) lui donner un sujet dédié (hors compteur IP partagé) ; (c) détecter le
+  **429** au préflight et sortir en **code 2 « QUOTA DÉPASSÉ »**, comme le code 2 « API INJOIGNABLE » de M81.
 - **`rang_total` = 428 239 vs parc 431 663 : écart de 3 424 jamais expliqué (à mesurer, mandat dédié).**
   Ce chiffre sort dans le dossier BANQUIER (« rang X / 428 239 »). `rang_total` = `count(*) parcel_p_score_v2
   WHERE rang IS NOT NULL` (verdict_servi.py) — donc **3 424 parcelles ont un rang NULL** (non classées).

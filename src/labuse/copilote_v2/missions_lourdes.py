@@ -13,9 +13,16 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from .heros import _phrase_ok, _valeurs
 from . import outils
-from ..ai import core
+
+
+def _eur(n: float | int) -> str:
+    return f"{round(n):,}".replace(",", " ") + " €"
+
+
+def _m2(n: float | int | None) -> str:
+    return (f"{round(n):,}".replace(",", " ") + " m²") if n is not None else "surface inconnue"
+
 
 # ───────────────────────── 3b — PROJET (préparation de la fiche) ─────────────────────────
 def preparer_projet(params: dict, message: str) -> dict:
@@ -35,32 +42,6 @@ def preparer_projet(params: dict, message: str) -> dict:
 
 
 # ───────────────────────── 3a — VÉRIFICATION ─────────────────────────
-AVIS_SYSTEM = """Tu es le copilote foncier de LABUSE. En UNE phrase française (30 mots max), donne un AVIS à
-charge et à décharge sur l'achat de cette parcelle au prix demandé, à partir du JSON fourni UNIQUEMENT.
-Dis l'essentiel (le prix demandé face au prix probable, la contrainte majeure), Y COMPRIS la réserve.
-N'invente AUCUN chiffre : tout nombre vient du JSON. Pas de conseil juridique. Réponds la phrase seule."""
-
-
-def _avis(db: Session | None, ctx: dict) -> str:
-    autor = _valeurs({k: v for k, v in ctx.items() if isinstance(v, (int, float))}, None)
-    for _ in range(2):
-        r = core.complete(db, kind="copilote-avis", model=core.MODEL_REASONING, max_tokens=120,
-                          system=AVIS_SYSTEM, context=ctx)
-        if r.degraded:
-            break
-        p = (r.text or "").strip().strip('"').strip()
-        if p and _phrase_ok(p, autor):
-            return p
-    # gabarit déterministe
-    g = f"Parcelle {ctx.get('idu')} à {ctx.get('commune')}"
-    if ctx.get("prix_demande_eur") and ctx.get("prix_probable_eur"):
-        ecart = "au-dessus" if ctx["prix_demande_eur"] > ctx["prix_probable_eur"] else "sous"
-        g += f" : demandé {ctx['prix_demande_eur']} €, prix probable {ctx['prix_probable_eur']} € ({ecart})."
-    else:
-        g += " : instruite (voir la fiche pour le détail sourcé)."
-    return g
-
-
 def verification(db: Session, params: dict) -> dict:
     """IDU + prix demandé → avis instruit. Une seule question si l'un manque (le Copilote demande)."""
     idu = params.get("idu")
@@ -92,16 +73,35 @@ def verification(db: Session, params: dict) -> dict:
                     terrain_m2, n_ventes = pz.get("median_eur_m2"), pz.get("n")
                     insuffisant = n_ventes is not None and n_ventes < 5   # seuil M79
                 break
-    prix_probable = round(terrain_m2 * surface) if (terrain_m2 and surface and not insuffisant) else None
-    ctx = {"idu": idu, "commune": commune, "surface_m2": surface, "zone": d.get("zone"),
-           "verdict": d.get("verdict"), "prix_demande_eur": float(prix),
-           "prix_probable_eur": prix_probable, "terrain_eur_m2": None if insuffisant else terrain_m2,
-           "n_ventes": n_ventes,
-           "reserve": (f"Échantillon insuffisant ({n_ventes} vente(s)) : pas de prix terrain fiable."
-                       if insuffisant else None)}
-    avis = _avis(db, ctx)
-    sources = [f.source, "DVF terrains (marché commune)"]
-    return {"text": avis, "intent": "VERIFICATION", "tool": "verification",
-            "idu": idu, "sources": sources,
+    # AVIS DÉTERMINISTE (arbitrage Vic) — la mission la plus exposée : on ne laisse PAS le modèle
+    # s'enthousiasmer sur une parcelle qui a peut-être un défaut invisible. Trois règles gravées :
+    #  1. JAMAIS « estimée à X € » pour une médiane × surface — c'est une PROJECTION arithmétique.
+    #  2. La réserve de MÉTHODE est TOUJOURS dite (le calcul ignore config/accès/topo/état/bâti).
+    #  3. Écart > 2× → mention explicite « l'écart est important, à vérifier sur place ».
+    lignes: list[str] = [f"Parcelle {idu} à {commune}, {_m2(surface)} en zone "
+                         f"{d.get('zone') or fam or '?'}, proposée à {_eur(prix)}."]
+    if terrain_m2 and surface and not insuffisant:
+        projection = round(terrain_m2 * surface)
+        lignes.append(f"À ce prix médian de zone ({_eur(terrain_m2)}/m², {n_ventes} ventes DVF), "
+                      f"{_m2(surface)} représenteraient {_eur(projection)} — une projection arithmétique, "
+                      f"PAS une valeur vénale.")
+        ecart = projection / prix if prix and prix < projection else (prix / projection if prix else None)
+        sens = "sous" if prix < projection else "au-dessus de"
+        if ecart:
+            lignes.append(f"Le prix demandé est {ecart:.1f}× {sens} cette projection.")
+            if ecart >= 2:
+                lignes.append("L'écart est important — il tient peut-être à des caractéristiques que "
+                              "LABUSE ne mesure pas (un prix très inférieur au marché a généralement une "
+                              "raison). À vérifier sur place.")
+    elif insuffisant:
+        lignes.append(f"Échantillon DVF insuffisant en zone {fam} ({n_ventes} vente(s)) : pas de repère "
+                      f"de prix terrain fiable — jamais une médiane sur si peu.")
+    else:
+        lignes.append("Pas de repère de prix terrain DVF pour cette zone.")
+    lignes.append("Réserve de méthode : ce calcul ne tient compte ni de la configuration du terrain, ni "
+                  "de son accès, ni de la topographie, ni de l'état du sol ou du bâti — tout ce qui fait "
+                  "qu'une parcelle vaut moins que la médiane de sa zone.")
+    return {"text": " ".join(lignes), "intent": "VERIFICATION", "tool": "verification", "idu": idu,
+            "sources": [f.source, "DVF terrains (marché commune)"],
             # sorties : ouvrir la fiche, exporter le dossier, écrire au propriétaire (PM → sinon SPF)
             "actions": ["ouvrir_fiche", "exporter_dossier", "ecrire_proprietaire"]}
