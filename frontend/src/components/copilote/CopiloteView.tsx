@@ -8,7 +8,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
-import { copiloteV2Ask, getAccueilChiffres, type AccueilChiffres, type CopiloteV2Reponse } from '../../lib/api'
+import { copiloteV2Ask, copiloteV2Feedback, copiloteV2Missions, copiloteV2Mission, getAccueilChiffres,
+  type AccueilChiffres, type CopiloteMission, type CopiloteV2Reponse } from '../../lib/api'
 import { AccueilCopilote } from './AccueilCopilote'
 import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
@@ -78,16 +79,23 @@ function useChrono(depuis: string | null, actif: boolean): number | null {
   return Number.isFinite(s) ? s : null
 }
 
-/** M78 · 2a — réponse inline QUESTION/OUTIL/refus (le routeur n'a pas lancé de mission lourde). Le
- *  bouton de porte ouvre l'outil PRÉ-REMPLI (motif parcelPrefill/calcPrefill/pluPrefill, M-ENTREE/M60). */
+/** M78 · 2a/2f — réponse inline QUESTION/OUTIL/refus (le routeur n'a pas lancé de mission lourde). Le
+ *  bouton de porte ouvre l'outil PRÉ-REMPLI (parcelPrefill/calcPrefill/pluPrefill). 👍/👎 = feedback (§2f). */
 function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill } = useApp()
+  const [pouce, setPouce] = useState<'haut' | 'bas' | null>(null)
+  const [comm, setComm] = useState('')
+  const [envoye, setEnvoye] = useState(false)
   const ouvrir = () => {
     if (!v2.porte) return
     if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
     else if (v2.prefill === 'calcPrefill' && v2.prefill_idu) setCalcPrefill(v2.prefill_idu)
     else if (v2.prefill_idu) setParcelPrefill(v2.prefill_idu)
     setModule(v2.porte)
+  }
+  const noter = (p: 'haut' | 'bas') => {
+    setPouce(p)
+    if (p === 'haut') void copiloteV2Feedback(v2.conversation_id ?? null, 'haut')
   }
   const ton = v2.refus && v2.refus !== 'hors_sujet' ? 'border-cp-amber/30'
     : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : 'border-mint/25'
@@ -100,9 +108,30 @@ function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
           Ouvrir l'outil →
         </button>
       )}
-      {(v2.sources?.length ?? 0) > 0 && (
-        <p className="mt-2.5 font-mono text-[10px] text-cp-faint">{v2.sources!.join(' · ')}</p>
+      <div className="mt-2.5 flex items-center gap-3">
+        {(v2.sources?.length ?? 0) > 0 && (
+          <p className="flex-1 font-mono text-[10px] text-cp-faint">{v2.sources!.join(' · ')}</p>
+        )}
+        {/* §2f — 👍/👎 discret */}
+        <div className="ml-auto flex items-center gap-1.5">
+          <button data-feedback-haut onClick={() => noter('haut')}
+            className={`text-[13px] transition-opacity ${pouce === 'haut' ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
+            title="Utile">👍</button>
+          <button data-feedback-bas onClick={() => noter('bas')}
+            className={`text-[13px] transition-opacity ${pouce === 'bas' ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
+            title="À améliorer">👎</button>
+        </div>
+      </div>
+      {pouce === 'bas' && !envoye && (
+        <div className="mt-2 flex gap-1.5">
+          <input data-feedback-comm value={comm} onChange={(e) => setComm(e.target.value)}
+            placeholder="Qu'est-ce qui n'allait pas ? (optionnel)"
+            className="flex-1 rounded-lg border border-cp-line2 bg-cp-card2 px-3 py-1.5 text-[12px] text-cp-txt outline-none placeholder:text-cp-faint" />
+          <button data-feedback-envoyer onClick={() => { void copiloteV2Feedback(v2.conversation_id ?? null, 'bas', comm); setEnvoye(true) }}
+            className="rounded-lg border border-cp-line2 px-3 py-1.5 text-[12px] text-cp-muted hover:text-cp-txt">Envoyer</button>
+        </div>
       )}
+      {envoye && <p className="mt-2 text-[11px] text-cp-faint">Merci — c'est noté.</p>}
     </div>
   )
 }
@@ -117,9 +146,13 @@ export function CopiloteView() {
   const [chiffres, setChiffres] = useState<AccueilChiffres | null>(null)
   const [v2, setV2] = useState<CopiloteV2Reponse | null>(null)
   const [dispatching, setDispatching] = useState(false)
+  const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
+  const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
+  const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
+  useEffect(() => { void rafraichirMissions() }, [])
 
   // M78 · 2a — dispatch : le client écrit, le routeur décide. RECHERCHE → mission lourde (run M26-A) ;
   // QUESTION/OUTIL/refus/hors-sujet → réponse inline instruite ; VERIFICATION/PROJET/VEILLE → phases 3/4.
@@ -128,12 +161,26 @@ export function CopiloteView() {
     if (!msg || dispatching) return
     setDispatching(true); setV2(null)
     try {
-      const r = await copiloteV2Ask(msg)
+      const r = await copiloteV2Ask(msg, { conversation_id: convId })
+      if (r.conversation_id != null) setConvId(r.conversation_id)
+      void rafraichirMissions()                        // §2b — l'historique se met à jour
       if (r.intent === 'RECHERCHE') void run.instruire(mission, msg)
       else setV2(r)
     } catch (e) {
       setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
     } finally { setDispatching(false) }
+  }
+
+  // §2b — rouvrir une mission passée : RECHERCHE (run_id) rejoue le run ; sinon restaure la dernière
+  // réponse Copilote de la conversation (inline). On reprend là où on s'est arrêté.
+  const rouvrir = async (m: CopiloteMission) => {
+    if (m.run_id) { charger(m.run_id); return }
+    try {
+      const conv = await copiloteV2Mission(m.id)
+      setConvId(conv.id)
+      const dernier = [...conv.messages].reverse().find((x) => x.role === 'copilote')
+      if (dernier) setV2({ text: dernier.texte, intent: (dernier.intent as CopiloteV2Reponse['intent']) ?? null })
+    } catch { /* silencieux — l'historique ne casse pas l'écran */ }
   }
 
   // rafraîchissement en plein run : on recharge le run épinglé, le SSE rejoue le fil
@@ -191,6 +238,7 @@ export function CopiloteView() {
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
+            missions={missions} onReprendre={rouvrir}
             reponse={v2 ? <ReponseInline v2={v2} /> : null} />
         ) : (
           <>

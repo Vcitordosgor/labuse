@@ -345,12 +345,32 @@ export interface CopiloteV2Reponse {
   clarification?: boolean
   degraded?: boolean
   en_construction?: boolean
+  conversation_id?: number | null       // §2b — la conversation persistée (reprise)
 }
-export const copiloteV2Ask = (message: string, history?: { role: string; content: string }[],
-                              contexte?: Record<string, unknown>) =>
+export const copiloteV2Ask = (message: string, opts?: {
+  history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
+  conversation_id?: number | null }) =>
   j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, history, contexte }) })
+    body: JSON.stringify({ message, ...opts }) })
+
+// §2b — l'historique : missions passées du compte + reprise d'une conversation.
+export interface CopiloteMission {
+  id: number; titre: string; statut: string; run_id: string | null
+  updated_at: string; n_messages: number
+}
+export interface CopiloteConversation extends CopiloteMission {
+  created_at: string
+  messages: { role: 'client' | 'copilote'; texte: string; intent: string | null; ts: string }[]
+}
+export const copiloteV2Missions = () => j<{ missions: CopiloteMission[] }>('/api/copilote-v2/missions')
+export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
+
+// §2f — feedback 👍/👎 (le 👎 ouvre un champ libre optionnel).
+export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut' | 'bas', commentaire?: string) =>
+  j<{ ok: boolean }>('/api/copilote-v2/feedback', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id, pouce, commentaire }) })
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {

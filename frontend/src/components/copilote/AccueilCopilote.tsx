@@ -5,7 +5,7 @@
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
 import { useEffect, useRef, type ReactNode } from 'react'
 import { fmtInt } from '../../lib/format'
-import type { AccueilChiffres } from '../../lib/api'
+import type { AccueilChiffres, CopiloteMission } from '../../lib/api'
 
 type Carte = { past: string; titre: string; desc: (parc: string) => string; ex: [string, string] }
 
@@ -24,7 +24,8 @@ const CARTES: Carte[] = [
          'Alerte-moi si la zone AU de Cambaie change au PLU'] },
 ]
 
-export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse }: {
+export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
+  missions, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -32,6 +33,8 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   chiffres: AccueilChiffres | null
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
+  missions?: CopiloteMission[]           // §2b — historique
+  onReprendre?: (m: CopiloteMission) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
@@ -69,6 +72,23 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
       </p>
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
+
+      {/* §2b — reprendre là où on s'est arrêté : les missions passées du compte */}
+      {(missions?.length ?? 0) > 0 && (
+        <div data-accueil-historique className="mb-8">
+          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">REPRENDRE</p>
+          <div className="flex flex-col gap-1.5">
+            {missions!.slice(0, 6).map((m) => (
+              <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
+                className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2 text-left transition-colors duration-quick hover:border-mint/30">
+                <span className="min-w-0 flex-1 truncate text-[12px] text-cp-txt">{m.titre}</span>
+                {m.run_id && <span className="shrink-0 rounded border border-mint/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-mint">recherche</span>}
+                <span className="shrink-0 font-mono text-[10px] text-cp-faint">{m.n_messages} msg</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* trois missions — exemples cliquables : REMPLISSENT la barre, ne lancent rien */}
       <div className="mb-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
