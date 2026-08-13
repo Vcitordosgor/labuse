@@ -122,8 +122,35 @@ Runs restants dans parcel_p_score_v2 : q_v8_calibre (servi) + pre_m28/m39/pond/r
 · `served_run.txt` inchangé (q_v8_calibre). *Réserve : le set exact « M55-O » n'a pas été localisé dans le
 dépôt ; vérifié sur le canari + 3 parcelles M73 de 3 communes + l'invariant golden.*
 
-### Défaut d'architecture #1 (à imposer en Phase 2)
+### Défaut d'architecture #1 (imposé en Phase 2)
 Les runs existaient « à moitié » : jeux différents selon les tables (8 dans parcel_p_score_v2, 2 dans
 dryrun_cascade_results, 5 dans dryrun_parcel_evaluations). **Le cycle de vie d'un run doit être ATOMIQUE :
-créé ensemble, purgé ensemble.** La règle de rétention (Phase 2) doit l'imposer, sinon on repurgera dans
-six mois.
+créé ensemble, purgé ensemble.**
+
+---
+
+## PHASE 2 — Règle de rétention (écrite ET appliquée)
+
+**Règle** : garder le **SERVI** + le **PRÉCÉDENT** (les deux points de vérité versionnés,
+`config/served_run.txt` + `config/run_precedent.txt`) + **tout run encore RÉFÉRENCÉ** (lignée
+`lignee_tete`, `served_run_exceptions`, démo `q_v2_demo`). Purger le reste, **de façon ATOMIQUE** (un run
+retiré de TOUTES les tables run-scoped ensemble). Déclenchée **À LA BASCULE**, jamais par un cron.
+
+**Commande** `labuse purge-runs-morts` (`cli.py`) — dry-run par défaut, `--apply` (app arrêtée, VACUUM
+FULL). Elle découvre les tables run-scoped (colonnes texte `run_id`/`run_label`), calcule l'ensemble « à
+garder » depuis les points de vérité + les références RÉELLES en base (ne devine rien), purge le reste,
+VACUUM. Runbook : `docs/BASCULE_RUN_RUNBOOK.md` ; règle inscrite `docs/BACKLOG.md`.
+
+**Pourquoi « servi + précédent »** : le précédent mesure le diff d'une bascule (accueil) ; au-delà, un
+dérivé matérialisé (ex. `parcel_entree_tete`) porte déjà l'histoire. **Un run référencé n'est jamais
+purgé** (la commande le garantit par construction).
+
+**Appliquée** : la règle a découvert **5 runs ORPHELINS** (le défaut #1) présents dans de petites tables
+mais absents de parcel_p_score_v2 — `m36-l2f-2026-07-12/14`, `q_v2`, `q_v3_datagap`, `q_v6_m8` (vérifiés
+non référencés en code vif ; docstring périmée « run servi q_v6_m8 » corrigée au passage). Purgés
+atomiquement (entonnoir_motifs 634, ia_cache 13, p_score_v2_runs 3, score_snapshots 4) + VACUUM. Dry-run
+de contrôle : **« Aucun run à purger »**. Golden inchangé, fiche/app 200.
+
+### Garde-fous Phase 2
+Règle testée (dry-run puis apply, VACUUM), golden 33=baseline (diff 0), app+fiche 200, garde-fou de branche
+vérifié avant chaque commit. Base finale ~20 Go (−7 Go vs départ). **NE PAS MERGER.**

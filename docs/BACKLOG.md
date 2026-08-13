@@ -347,3 +347,15 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   - **À réévaluer** : si l'audit M6 n'est plus une référence vivante, ces 694 Mo peuvent partir (mandat de purge d'audit).
 - **`backup_*_avant_littoral` (2 tables, 21 Mo)** : état PPR Saint-Paul AVANT la correction littoral (trait de
   côte, irréversible) — gardées M80. À purger seulement si la correction littoral est elle-même rejouable.
+
+## Règle de rétention des runs (M80 — appliquée)
+- **On garde : SERVI + PRÉCÉDENT + tout run RÉFÉRENCÉ** (lignée `lignee_tete`, `served_run_exceptions`,
+  démo `q_v2_demo`). On purge le reste, **de façon ATOMIQUE** (un run se crée et se purge dans TOUTES les
+  tables run-scoped ensemble — plus jamais « à moitié », défaut #1 RAPPORT_M80). Le SERVI et le PRÉCÉDENT
+  sont les deux points de vérité versionnés (`config/served_run.txt` + `config/run_precedent.txt`), jamais
+  un nom de run figé dans le code.
+- **Commande** : `labuse purge-runs-morts` (dry-run) / `--apply` (app arrêtée, VACUUM FULL). **Déclenchée
+  À LA BASCULE** de run, jamais un cron indépendant. Runbook : `docs/BASCULE_RUN_RUNBOOK.md`.
+- **Dette résiduelle signalée** : les hypothèses de calcul PLU globales lues depuis `plu_saint_paul.yaml`
+  (12 communes) restent un « nom de référence figé » du même type que RUN_PRECEDENT l'était — cf. mandat
+  `docs/mandats/MANDAT_PLU_REFERENCE.md`.
