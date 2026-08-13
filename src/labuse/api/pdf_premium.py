@@ -379,7 +379,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         "potentiel_foncier_region": "Potentiel foncier Région", "ocs_ge": "Occupation du sol",
         "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
         "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",
+        "osm_faux_positif": "Contrôle géométrique OSM",     # M73 D — clé brute rendue avant
     }
+
+    def _layer_label(key: str) -> str:
+        # M73 D — jamais la clé technique brute : à défaut de libellé mappé, on humanise
+        # (underscores → espaces, capitale) plutôt que d'imprimer « osm_faux_positif ».
+        return _LAYER_LABEL.get(key) or key.replace("_", " ").capitalize()
     omises = 0
     sections_omises: list[str] = []   # M-P (P2-64) : NOMMER la section tronquée, pas juste compter
     for key, titre in ONGLETS:
@@ -420,7 +426,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             # libellé FR ferré à gauche (comme la fiche), le « pourquoi » chiffré vit ailleurs.
             pdf.set_font("inter", size=8)
             pdf.set_text_color(*TXT)
-            pdf.cell(51, 4.4, _LAYER_LABEL.get(ln["layer"], ln["layer"])[:34])
+            pdf.cell(51, 4.4, _layer_label(ln["layer"])[:34])
             pdf.set_font("inter", size=7.2)
             pdf.set_text_color(*TXT_MUT)
             x = pdf.get_x()
