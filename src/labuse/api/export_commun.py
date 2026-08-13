@@ -21,16 +21,29 @@ DISCLAIMER_CU = "Ces informations ne remplacent pas un certificat d'urbanisme."
 NON_GARANTIE = ("Estimations indicatives issues de données publiques — ne valent ni conseil "
                 "juridique/notarial ni garantie de constructibilité.")
 
-#: Attributions des sources principales — textes exacts consignés à l'audit §1.11 (licences).
-SOURCES_ATTRIBUTION = (
-    "Sources : DGFiP/Etalab — Plan Cadastral Informatisé · DGFiP — Demandes de valeurs "
-    "foncières (DVF) · © IGN — BD TOPO, BD ORTHO, RGE ALTI (Licence Ouverte 2.0) · "
-    "ADEME, base DPE · SDES, Sitadel · Géorisques (BRGM/MTE) · Insee · INPI — RNE · "
-    "Base Adresse Nationale (DINUM/IGN) · © les contributeurs d'OpenStreetMap — ODbL "
-    "(openstreetmap.org/copyright)")
+#: Attributions des sources — textes exacts consignés à l'audit §1.11 (licences).
+#: M73 C9 : une source n'est citée que si elle a PRODUIT un constat dans le document (interdit du
+#: mandat). ADEME/DPE (squelette M66-B) et INPI/RNE (dirigeant) sont donc CONDITIONNELS — jamais
+#: cités par défaut dans un document qui n'affiche ni DPE ni dirigeant.
+def sources_attribution(*, dpe: bool = False, inpi: bool = False) -> str:
+    parts = ["DGFiP/Etalab — Plan Cadastral Informatisé",
+             "DGFiP — Demandes de valeurs foncières (DVF)",
+             "© IGN — BD TOPO, BD ORTHO, RGE ALTI (Licence Ouverte 2.0)"]
+    if dpe:
+        parts.append("ADEME, base DPE")
+    parts += ["SDES, Sitadel", "Géorisques (BRGM/MTE)", "Insee"]
+    if inpi:
+        parts.append("INPI — RNE")
+    parts += ["Base Adresse Nationale (DINUM/IGN)",
+              "© les contributeurs d'OpenStreetMap — ODbL (openstreetmap.org/copyright)"]
+    return "Sources : " + " · ".join(parts)
 
 
-def pied_de_page_pdf(pdf, doc_label: str) -> None:
+#: rétro-compat (rares appelants sans drapeau) — base sans DPE ni INPI (les deux faux positifs).
+SOURCES_ATTRIBUTION = sources_attribution()
+
+
+def pied_de_page_pdf(pdf, doc_label: str, *, dpe: bool = False, inpi: bool = False) -> None:
     """Pied de page commun des PDF fpdf2 : non-garantie + disclaimer CU (au mot près),
     attributions sources, date de génération et pagination. Utilise « inter » si enregistrée
     (render_*_pdf le fait avant add_page), sinon repli sur une police cœur."""
@@ -43,7 +56,8 @@ def pied_de_page_pdf(pdf, doc_label: str) -> None:
     pdf.multi_cell(0, 2.9, f"{NON_GARANTIE} {DISCLAIMER_CU} À vérifier au règlement et "
                            "auprès des services.", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(fam, size=5.4)
-    pdf.multi_cell(0, 2.6, SOURCES_ATTRIBUTION, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.multi_cell(0, 2.6, sources_attribution(dpe=dpe, inpi=inpi), align="C",
+                   new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(fam, size=6)
     pdf.cell(0, 3.2, f"LABUSE · radar foncier La Réunion · {doc_label} · "
                      f"généré le {date.today().isoformat()} · page {pdf.page_no()}/{{nb}}",
