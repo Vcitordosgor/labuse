@@ -213,3 +213,56 @@ calcul corrigé ici (dépendance à sens unique).
 
 ### Garde-fous Phase 0 bis
 Mesure pure, 0 écriture, garde-fou de branche vérifié. **STOP — Vic tranche `plo`/`phi` (A/B/C) avant Phase 1.**
+
+---
+
+## PHASE 1 — Correction (arbitrage Vic : **Option C**, `plo=150 / phi=325`) — **CODE fait, BASCULE bloquée**
+
+Commit `f3d4c1ec`. Vic a tranché : secteur cadastral, seuil n≥5, plancher n≥3, échelle recalée île C.
+
+### FAIT — le calcul juste (code + test + doc)
+- **Bascule de source** : `DvfLayer` (`phase2.py`) lit désormais le prix médian de **TERRAIN NU du
+  SECTEUR cadastral** via `ctx.dvf_sector_terrain(idu)` (`dvf_secteur_medianes` type='terrain') — plus de
+  médiane « rayon, tous biens » sur `dvf_mutations` (bâti-only). Un seul point de calcul, un seul périmètre.
+- **Échelle recalée** `plo=150 / phi=325` (config `cascade_rules.yaml`), **règle d'origine p25/p75 refaite
+  explicitement** sur la distribution terrain île (676 secteurs n≥3) et **documentée dans `PRE_VOL_ILE.md`**
+  à côté de la règle d'origine (grandeur, percentiles, périmètre, valeurs, date).
+- **Seuils** : < 3 → « échantillon insuffisant (n ventes) », aucun chiffre ; [3,5) → prix **AVEC** mention
+  de fragilité (~28 % d'erreur) ; ≥ 5 → fiable. **Libellé nommé** « Prix médian terrain X €/m² — N ventes,
+  secteur cadastral, période ».
+- **Test de non-régression** `tests/test_dvf_terrain.py` (6/6) : échoue si un prix inclut du bâti / est
+  affiché sous le plancher / si l'échelle 150/325 n'est pas appliquée.
+- **Vérif d'intégration** (requête légère, sans rejeu) : `dvf_sector_terrain('97415000AC0253')` →
+  `{median 173, n_ventes 3, '2021-2025'}`. **Le canari passe de 379 (bâti-étalé, n=1) à 173 (terrain, n=3,
+  affiché fragile)** — exactement le « 173 » attendu.
+
+### BLOQUÉ — la bascule (rejeu) ne peut PAS tourner proprement ici
+La bascule exige de **régénérer le run servi** (`labuse dryrun-evaluate`, cascade sur 431 663 parcelles)
+puis de rebaser le golden. **Tentée sur Saint-Paul (51 129 parcelles) → échec `psycopg DiskFull` : le disque
+de la base est plein (`/System/Volumes/Data` à 98 %, 4,6 Gi libres)** ; Postgres ne peut plus écrire ses
+fichiers temporaires (gros tris du priming SITADEL — bloc IDENTIQUE au parent, **rien à voir avec M79**).
+Données de test partielles nettoyées. Par la règle Vic (« si le rebase ne passe pas net, STOP »), **je ne
+force pas le rejeu** et je ne touche pas à la donnée de la base pour libérer de l'espace (ce n'est pas mon geste).
+
+### Reste à faire (bascule, quand l'espace disque est rétabli) — dans l'ordre
+1. **Libérer l'espace disque** de la base (geste opérateur — hors mandat).
+2. **Rebaser le golden PROPREMENT** (`qa/golden_regen.py`, API up) sur l'état courant (pré-effet M79), le
+   diff git = la revue ; comprendre/assumer les 33 FAIL préexistants.
+3. **Rejeu** : régénérer le run servi avec le `DvfLayer` corrigé, puis basculer `config/served_run.txt`
+   + `npm run build` + `labuse build-mvt` (procédure served_run.txt).
+4. **Recoller le delta** mesuré en Phase 0 : rang servi **0** (modèle P immunisé), **~170 chaude** en retrait
+   (resserrement). Si le delta diverge → STOP.
+5. **Mesurer la répartition des ~17 % à composante prix nulle** (exigence Vic) : bien répartis, ou une
+   commune entière en bloc ? Si une commune y passe en bloc = trou de couverture → le DIRE au client
+   (« marché terrain non établi sur la commune »), pas un zéro muet.
+
+### Dette de méthode signalée (Vic M79)
+La référence **Saint-Paul figée** servait AUSSI aux **hypothèses de calcul PLU globales** : ~13 communes
+lisent `plu_saint_paul.yaml` en repli (« le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml »).
+Même biais que le DVF (référence figée alors que 23/24 communes sont couvertes) → **mandat PLU dédié** à
+prévoir. Consigné aussi dans `PRE_VOL_ILE.md`.
+
+### Garde-fous Phase 1
+Test non-régression 6/6, tests cascade verts, vérif d'intégration canari OK, garde-fou de branche vérifié
+avant chaque commit. Golden **non rebasé** (bascule bloquée disque). **NE PAS MERGER — STOP : la bascule
+attend l'espace disque + ta recette du code.**
