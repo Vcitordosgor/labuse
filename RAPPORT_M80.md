@@ -88,3 +88,42 @@ BACKLOG + BASCULE_LIVE_CHECKLIST.
 ### Garde-fous Phase 0
 Lecture seule, 0 écriture, garde-fou de branche vérifié. **NE PAS PURGER — STOP. Vic arbitre les runs
 (points 1-5) avant toute suppression.**
+
+---
+
+## PHASE 1 — Purge (arbitrage Vic : GO 1, 2, 4 ; pre_* HELD ; m6_ gardés) — **FAITE**
+
+Ordre strict respecté : (2a) RUN_PRECEDENT versionné + repointé sur q_v8_calibre_pre_m28, (2b) accueil
+vérifié (bascules_tiers_hauts=306), (2c) **commité SEUL** (`29af7e78`), (2d) purge ensuite.
+
+**Mesures pre_* (point 3) — NON purgés** : `lignee_tete.build_parcel_entree_tete` **lit la DONNÉE** de
+pre_pond/pre_regle/pre_m28 (JOINs `parcel_p_score_v2`) pour bâtir `parcel_entree_tete` (servi, matérialisé
+514 lignes). Par la règle Vic « s'il lit les lignes, le run n'est pas mort » → **gardés**. (pre_m39 hors
+chaîne de lignée, seulement dans served_run_exceptions ; gardé avec le set pour cohérence.)
+
+**Backups** : 91 tables `backup_*` (223 Mo) droppées ; **2 `*_avant_littoral` gardées** (état avant une
+correction irréversible, règle Vic). **`m6_*` (694 Mo) gardés** (reproductibilité d'audit — inscrits au
+BACKLOG avec leur date et ce qu'ils rejouent).
+
+**Purge exécutée** (app arrêtée, 0 connexion, VACUUM FULL — petites tables d'abord puis grosses) :
+| Table | Action | Lignes |
+|---|---|---|
+| dryrun_parcel_evaluations | DELETE q_v7_defisc + Vdefisc + Vcaduc | 1 294 989 |
+| division_or_candidates / ia_cache / p_score_v2_runs | DELETE 5 runs morts | 27 / 6 / 4 |
+| 91 × backup_* | DROP TABLE | — |
+| dryrun_cascade_results | DELETE q_v7_defisc | 14 652 811 |
+| parcel_p_score_v2 | DELETE q_v12_m28 + q_v13_m32_mesure + q_v7_defisc | 1 294 989 |
+
+**Taille base : 27 Go → (vague 1) → 20 Go APRÈS** ; disque libre 21 Gi → 28 Gi. **~7 Go rendus au disque.**
+Runs restants dans parcel_p_score_v2 : q_v8_calibre (servi) + pre_m28/m39/pond/regle (lignée) = 5.
+
+**Vérification** (app redémarrée) : healthz/accueil 200 · fiche 200 (canari 97415000AC0253 + 97410000BV0120
++ 97417000AE0003, 3 communes) · exports premium/dossier/one-pager 200 · **golden 33 FAIL = baseline (diff 0)**
+· `served_run.txt` inchangé (q_v8_calibre). *Réserve : le set exact « M55-O » n'a pas été localisé dans le
+dépôt ; vérifié sur le canari + 3 parcelles M73 de 3 communes + l'invariant golden.*
+
+### Défaut d'architecture #1 (à imposer en Phase 2)
+Les runs existaient « à moitié » : jeux différents selon les tables (8 dans parcel_p_score_v2, 2 dans
+dryrun_cascade_results, 5 dans dryrun_parcel_evaluations). **Le cycle de vie d'un run doit être ATOMIQUE :
+créé ensemble, purgé ensemble.** La règle de rétention (Phase 2) doit l'imposer, sinon on repurgera dans
+six mois.
