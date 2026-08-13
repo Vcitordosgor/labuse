@@ -1875,13 +1875,13 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
-            {/* §5 surface 1 — le Copilote EMBARQUÉ : pré-contextualisé par l'IDU. « ce prix est-il
-                correct ? » part en VERIFICATION sans retaper la référence. Placement proposé (avant
-                les tiroirs) — arbitrage Vic au STOP final. */}
-            <div className="mt-2">
-              <CopiloteEmbarque contexte={{ idu }}
-                placeholder="Demander au Copilote sur cette parcelle…"
-                exemples={['Ce prix est-il correct ?', 'Quelles contraintes avant de signer ?']} />
+            {/* §5 surface 1 — le Copilote EMBARQUÉ, AVANT les tiroirs (arbitrage Vic) : après le verdict
+                et l'Analyse, c'est le moment où naît la question « et maintenant ? ». Pré-contextualisé
+                par l'IDU (« ce prix est-il correct ? » → VERIFICATION sans retaper la réf). DISCRET (une
+                ligne, pas un encart) et en MAUVE — le seul endroit de la fiche où l'IA parle. */}
+            <div className="mb-1 mt-3">
+              <CopiloteEmbarque contexte={{ idu }} ton="violet" compact
+                placeholder="Demander au Copilote sur cette parcelle…" />
             </div>
 
             <GroupLabel>Le terrain</GroupLabel>

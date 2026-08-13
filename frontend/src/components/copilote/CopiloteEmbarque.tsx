@@ -1,16 +1,21 @@
 // M78 · 5 — LE COPILOTE EMBARQUÉ. Les copilotes adoptés vivent DANS les vues de travail, pas sur une
 // page à part. Même API (copiloteV2Ask), AUCUN nouveau moteur : le routeur reçoit un `contexte`
-// (idu | selection) que la surface remplit. La réponse RESTE dans la vue (panneau) ; « ouvrir dans le
-// Copilote » continue en plein écran, conversation transférée (ouvrirEntretien).
+// (idu | selection) que la surface remplit. La réponse RESTE dans la vue ; « ouvrir dans le Copilote »
+// continue en plein écran, conversation transférée (ouvrirEntretien).
+//
+// Deux déclinaisons (arbitrage Vic) : `compact` + `ton='violet'` sur la FICHE — une LIGNE discrète, en
+// MAUVE (le seul endroit de la fiche où l'IA parle) ; plein + mint dans le Copilote (shortlist).
 import { useState } from 'react'
 import { copiloteV2Ask, type CopiloteV2Reponse } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { ReponseInline } from './ReponseInline'
 
-export function CopiloteEmbarque({ contexte, placeholder, exemples }: {
+export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint', compact = false }: {
   contexte: Record<string, unknown>            // {idu} sur la fiche · {selection} sur une shortlist
   placeholder?: string
   exemples?: string[]                          // clics qui remplissent la barre (ne lancent pas)
+  ton?: 'mint' | 'violet'
+  compact?: boolean                            // fiche : une ligne discrète, pas un encart
 }) {
   const [q, setQ] = useState('')
   const [rep, setRep] = useState<CopiloteV2Reponse | null>(null)
@@ -26,6 +31,37 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples }: {
     finally { setBusy(false) }
   }
 
+  const suite = rep && (
+    <>
+      <div className="mt-3"><ReponseInline v2={rep} ton={ton} /></div>
+      <button data-embarque-plein onClick={() => ouvrirEntretien(q)}
+        className={`mt-2 text-[11px] font-medium hover:underline ${ton === 'violet' ? 'text-violet' : 'text-mint'}`}>
+        Ouvrir dans le Copilote →
+      </button>
+    </>
+  )
+
+  // ── FICHE : une LIGNE discrète, mauve (pas un encart qui casse la lecture) ──
+  if (compact) {
+    return (
+      <div data-copilote-embarque>
+        <div className="flex items-center gap-2 border-b border-violet/20 pb-1.5">
+          <span aria-hidden className="shrink-0 text-[12px] text-violet">✦</span>
+          <input data-embarque-bar value={q} onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void soumettre() }}
+            placeholder={placeholder ?? 'Demander au Copilote…'}
+            className="min-w-0 flex-1 bg-transparent text-[12.5px] text-txt outline-none placeholder:text-txt-faint" />
+          <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
+            className="shrink-0 text-[11px] font-medium text-violet transition-opacity duration-quick hover:underline disabled:opacity-30">
+            {busy ? '…' : 'demander →'}
+          </button>
+        </div>
+        {suite}
+      </div>
+    )
+  }
+
+  // ── SHORTLIST / plein : panneau mint (idiome du Copilote) ──
   return (
     <div data-copilote-embarque className="rounded-xl border border-mint/25 bg-mint/[0.04] p-3">
       <div className="flex items-center gap-2">
@@ -47,13 +83,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples }: {
           ))}
         </div>
       )}
-      {rep && <div className="mt-3"><ReponseInline v2={rep} /></div>}
-      {rep && (
-        <button data-embarque-plein onClick={() => ouvrirEntretien(q)}
-          className="mt-2 pl-6 text-[11px] font-medium text-mint hover:underline">
-          Ouvrir dans le Copilote →
-        </button>
-      )}
+      {suite}
     </div>
   )
 }

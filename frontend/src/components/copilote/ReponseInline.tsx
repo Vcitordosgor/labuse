@@ -5,8 +5,9 @@ import { useState } from 'react'
 import { copiloteV2Feedback, type CopiloteV2Reponse } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 
-export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
+export function ReponseInline({ v2, ton = 'mint' }: { v2: CopiloteV2Reponse; ton?: 'mint' | 'violet' }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill } = useApp()
+  const mauve = ton === 'violet'
   const [pouce, setPouce] = useState<'haut' | 'bas' | null>(null)
   const [comm, setComm] = useState('')
   const [envoye, setEnvoye] = useState(false)
@@ -21,14 +22,16 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
     setPouce(p)
     if (p === 'haut') void copiloteV2Feedback(v2.conversation_id ?? null, 'haut')
   }
-  const ton = v2.refus && v2.refus !== 'hors_sujet' ? 'border-cp-amber/30'
-    : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : 'border-mint/25'
+  const bord = v2.refus && v2.refus !== 'hors_sujet' ? 'border-cp-amber/30'
+    : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : mauve ? 'border-violet/30' : 'border-mint/25'
   return (
-    <div data-reponse className={`rounded-2xl border ${ton} bg-cp-card px-5 py-4 text-left`}>
+    <div data-reponse className={`rounded-2xl border ${bord} bg-cp-card px-5 py-4 text-left`}>
       <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-cp-txt">{v2.text}</p>
       {v2.porte && (
         <button data-reponse-porte onClick={ouvrir}
-          className="mt-3 rounded-lg border border-mint/40 bg-mint/10 px-4 py-2 font-display text-[12px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">
+          className={`mt-3 rounded-lg border px-4 py-2 font-display text-[12px] font-semibold transition-colors duration-quick ${
+            mauve ? 'border-violet/40 bg-violet/10 text-violet hover:bg-violet/15'
+                  : 'border-mint/40 bg-mint/10 text-mint hover:bg-mint/15'}`}>
           Ouvrir l'outil →
         </button>
       )}
