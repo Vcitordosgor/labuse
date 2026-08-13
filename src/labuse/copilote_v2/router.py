@@ -92,7 +92,10 @@ LES SEPT INTENTIONS :
 - HORS_SUJET : rien à voir avec l'immobilier/foncier de La Réunion (météo, cuisine, poésie, bavardage).
   ATTENTION : une question sur la VALEUR ou l'ÉVOLUTION FUTURE d'un bien/terrain/marché réunionnais
   (« combien vaudra… dans 10 ans », « le marché va-t-il monter… ») N'EST PAS hors-sujet — c'est du
-  foncier → classe QUESTION (le refus « projection » se décide en aval, pas ici).
+  foncier → classe QUESTION (le refus « projection » se décide en aval, pas ici). De même, les
+  SERVICES et la FISCALITÉ du foncier/immobilier réunionnais (notaire, géomètre, avocat foncier,
+  fiscalité immobilière, financement d'un projet) ne sont PAS hors-sujet → QUESTION (le refus honnête
+  « pas d'outil » se décide en aval). Réserve HORS_SUJET au vraiment étranger au foncier réunionnais.
 
 RÈGLES :
 - RÈGLE DURE : tout message qui commence par « Combien » attend un NOMBRE → QUESTION, quel que soit le

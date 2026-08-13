@@ -57,7 +57,11 @@ def juger(item: dict, rep: dict, oracle) -> tuple[bool, str]:
         return (rep.get("porte") == item["porte"], f"porte {item['porte']} attendue, obtenu {rep.get('porte')}")
 
     if cat == "outil_sans":
-        ok = rep.get("porte") is None and rep.get("refus") == "aucun_outil"
-        return (ok, f"aucune porte attendue, obtenu porte={rep.get('porte')} refus={rep.get('refus')}")
+        # ne tranche pas la divisibilité, mais renvoie au RÈGLEMENT / à la zone (arbitrage Vic) —
+        # jamais le mur « rien de plus ». Zone A/N → pas de porte ; zone constructible → Annuaire PLU.
+        ok = (rep.get("refus") == "aucun_outil"
+              and ("zone" in ft or "reglement" in ft or "regle" in ft)
+              and rep.get("porte") in (None, "plu-annuaire"))
+        return (ok, f"division: refus={rep.get('refus')} porte={rep.get('porte')} texte={text[:90]}")
 
     return (False, f"catégorie inconnue {cat}")

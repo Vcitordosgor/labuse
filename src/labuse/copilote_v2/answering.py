@@ -30,8 +30,8 @@ ERREUR_INFRA = ("Je ne peux pas instruire votre demande pour le moment (service 
 REFUS_PP = ("L'identité des propriétaires personnes physiques n'est pas une donnée ouverte en France. "
             "Elle s'obtient par une demande au service de la publicité foncière (SPF) — je peux vous "
             "préparer le courrier.")
-REFUS_PROJECTION = ("LABUSE ne fait pas de projection : je ne devine pas une valeur future. Je peux "
-                    "vous donner le marché CONSTATÉ — médiane, tendance sur 12 mois, volume de ventes.")
+REFUS_PROJECTION = ("LABUSE ne projette pas de valeur future. Je peux vous donner le marché CONSTATÉ "
+                    "— médiane, tendance sur 12 mois, volume de ventes.")
 
 # ───────────────────────── Catalogue des outils QUESTION (pour la sélection) ─────────────────────────
 CATALOGUE = [
@@ -288,21 +288,51 @@ def _substance(db: Session, idu: str | None) -> str:
     return " · ".join(x for x in bout if x)
 
 
+_COUVRE = ("LABUSE couvre les données foncières et de marché : parcelles (comptage, surface, zonage, "
+           "verdict), prix et délais d'instruction par commune, patrimoine des sociétés.")
+
+
 def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str | None = None) -> dict:
-    """Issue 4 : aucun outil ne correspond. Refus honnête, JAMAIS une réponse plausible. Si une
-    parcelle est citée (ex. divisibilité), on répond sur le FOND avec ce qu'on a, et RIEN d'autre."""
+    """Issue 4 : aucun outil ne correspond. Refus honnête, JAMAIS une réponse plausible. La division
+    est traitée à part (dire le règlement, pas trancher). Sinon : dire ce que LABUSE COUVRE (pas un mur)."""
     telemetrie.refus(db, "aucun_outil", message, intent)
-    fond = _substance(db, params.get("idu"))
-    if "divis" in _fold_py(message.lower()) or "decoup" in _fold_py(message.lower()):
-        txt = ("LABUSE n'a pas d'outil de divisibilité par parcelle : la divisibilité fine (accès, "
-               "recul, découpe) n'est pas calculée à l'échelle d'une parcelle donnée.")
-        if fond:
-            txt += f" Ce que je sais de ce terrain : {fond}. Je ne peux rien vous proposer de plus pour l'instant."
-        return _reply(txt, intent, refus="aucun_outil", porte=None)
-    txt = "Je n'ai pas d'outil pour répondre précisément à cette demande."
+    m = _fold_py(message.lower())
+    idu = params.get("idu")
+    if "divis" in m or "decoup" in m or "detacher un lot" in m or "lotir" in m:
+        return _division(db, idu, intent)
+    txt = "Je n'ai pas d'outil dédié pour cette demande. " + _COUVRE
+    fond = _substance(db, idu)
     if fond:
-        txt += f" Ce que je sais du terrain cité : {fond}."
+        txt += f" Sur le terrain cité : {fond}."
     return _reply(txt, intent, refus="aucun_outil", porte=None)
+
+
+def _division(db: Session, idu: str | None, intent: str) -> dict:
+    """Division : ne JAMAIS trancher la divisibilité (arbitrage Vic). Dire ce que le RÈGLEMENT impose
+    (surface minimale, accès, emprise) et ce que la parcelle mesure ; laisser le client conclure.
+    Zone A/N → la construction nouvelle n'est pas autorisée : le dire. Sinon → porte Annuaire PLU."""
+    from .outils import fiche_parcelle
+    zone = surface = commune = None
+    if idu:
+        r = fiche_parcelle(db, idu=idu)
+        if r.ok:
+            zone, surface, commune = r.data.get("zone"), r.data.get("surface_m2"), r.data.get("commune")
+    z = (zone or "").upper()
+    non_constructible = z.startswith("N") or (z.startswith("A") and not z.startswith("AU"))
+    if idu and non_constructible:
+        voc = "agricole" if z.startswith("A") else "naturelle"
+        txt = (f"En zone {zone} (à vocation {voc}), la construction nouvelle n'est en principe pas "
+               f"autorisée : détacher un lot à bâtir n'a pas d'objet ici. Cette parcelle mesure "
+               f"{surface} m² à {commune}.")
+        return _reply(txt, intent, refus="aucun_outil", porte=None)
+    txt = ("Je ne tranche pas la divisibilité d'une parcelle : elle dépend d'abord du règlement de la "
+           "zone — surface minimale de terrain, accès, emprise au sol.")
+    if idu and surface:
+        txt += (f" Cette parcelle mesure {surface} m²" + (f" en zone {zone}" if zone else "")
+                + (f" à {commune}" if commune else "") + ".")
+    txt += " Je peux ouvrir l'Annuaire PLU pour le règlement applicable — à vous de conclure."
+    return _reply(txt, intent, refus="aucun_outil", porte="plu-annuaire", prefill="pluPrefill",
+                  prefill_plu=({"insee": idu[:5], "zone": zone} if idu else None))
 
 
 def _outil(db: Session, message: str, params: dict) -> dict:
