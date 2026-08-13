@@ -421,6 +421,11 @@ def identite(out: dict) -> str:
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td><td>{s(prov)}</td></tr>" for k, v, prov in rows) + "</table>"
         f"<h3>Zonage du document d'urbanisme</h3>"
         f"<table><tr><th>Zone</th><th class='n'>Part</th><th>Document</th></tr>{zonage}</table>")
+    # M73 « le dryrun servi fait foi » : verdict de constructibilité du zonage SERVI (arbitré/
+    # libellé) — même énoncé que la fiche écran & le dossier, jamais recalculé au fil des documents.
+    zv = ident.get("zonage_verdict")
+    if zv and zv.get("detail"):
+        body += f"<p class='note'>{esc(zv['detail'])}</p>"
     if regles:
         body += (f"<h3>Règles calibrées</h3><table><tr><th>Règle</th><th class='n'>Valeur</th><th>Nature</th></tr>"
                  f"{regles}</table><p class='note'>Règles calibrées LABUSE (Estimé) — le règlement complet "
@@ -471,7 +476,11 @@ def faisabilite(out: dict) -> str:
             f"existant supposé démoli (reculs réglementaires appliqués). La démolition est à "
             f"chiffrer — <b>non incluse</b> dans le bilan. Le potentiel « bâti conservé » figure "
             f"au dossier parcelle.</p>{synth}"
-            f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
+            # M73 C4 : jamais un tableau à en-têtes seuls. Sans étape (zone inconstructible), une phrase.
+            + (f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
+               if fais.steps else
+               "<p class='note'>Aucune étape de capacité — la construction neuve n'est pas autorisée "
+               "sur cette parcelle (zonage/PPR excluant le neuf).</p>")
             + (f"<p class='note'>Avertissements : <ul>{avert}</ul></p>" if avert else "")
             + f"<p class='note'>{esc(fais.bandeau)}</p>")
 
@@ -579,8 +588,9 @@ def risques(out: dict) -> str:
         items.append(("Risque", it["label"], it.get("detail")))
     for it in pat.get("couches", []):
         items.append(("Servitude", it["label"], it.get("detail")))
-    for m in pat.get("abf", []):
-        items.append(("Patrimoine", "Abords de monument historique (~500 m)", m.get("name")))
+    # M73 : ABF issu de la LIGNE SERVIE (arbitrée) — plus de « 0 m » distance-à-tampon.
+    if pat.get("abf_note"):
+        items.append(("Patrimoine", "Abords de monument historique", pat["abf_note"]))
     zan = out.get("zan")
     body = "<div class='pb'></div><h2>Risques, servitudes & sobriété foncière</h2>"
     if items:
@@ -600,6 +610,17 @@ def risques(out: dict) -> str:
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "
                  f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Voir la fiche commune pour budget/reste.</p>")
     return body
+
+
+def limites_section(doc: str) -> str:
+    """M73 §5 — « Ce que ce document ne peut pas dire » : absences + où le destinataire peut les
+    chercher (matérialise le 3e terme de la doctrine). Contenu = source unique export_commun."""
+    from .export_commun import LIMITES_TITRE, limites_document
+    rows = "".join(f"<tr><td>{esc(a)}</td><td class='note'>→ {esc(o)}</td></tr>"
+                   for a, o in limites_document(doc))
+    return (f"<div class='pb'></div><h2>{esc(LIMITES_TITRE)}</h2>"
+            f"<table><tr><th>Ce que le dossier n'établit pas</th><th>Où le vérifier</th></tr>"
+            f"{rows}</table>")
 
 
 # ───────────────────────── rendu ─────────────────────────

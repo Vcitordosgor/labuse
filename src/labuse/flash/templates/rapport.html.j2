@@ -90,6 +90,14 @@
   </table>
   {% endif %}
 
+  {# M73 « le dryrun servi fait foi » : le verdict de constructibilité du zonage vient de la ligne
+     servie (arbitrée/libellée), jamais recalculé — cohérent à l'écran, au dossier et au banquier. #}
+  {% if ident.zonage_verdict %}
+  <p{% if ident.zonage_verdict.result == 'HARD_EXCLUDE' %} class="note"{% endif %}>
+    {% if ident.zonage_verdict.result == 'HARD_EXCLUDE' %}<span class="chip alerte">{{ ident.zonage_verdict.detail }}</span>
+    {% else %}{{ ident.zonage_verdict.detail }}{% endif %}</p>
+  {% endif %}
+
   {% if ident.regles %}
   <h3>Règles calibrées LABUSE (zone {{ ident.regles.zone or "—" }})</h3>
   <table class="donnees">
@@ -282,14 +290,9 @@
     {% endfor %}
   </table>
   {% endif %}
-  {% if pat.abf %}
-  <h3>Monuments historiques à proximité (abords ABF ~500 m)</h3>
-  <table class="donnees">
-    <tr><th>Monument (Base Mérimée)</th><th>Distance</th></tr>
-    {% for m in pat.abf %}
-    <tr><td>{{ m.name or "—" }}</td><td class="num-cell">{{ m.dist_m }} m</td></tr>
-    {% endfor %}
-  </table>
+  {% if pat.abf_note %}
+  <h3>Abords de monument historique (ABF)</h3>
+  <p><span class="chip alerte">{{ pat.abf_note }}</span></p>
   <p class="note">Dans les abords d'un monument historique, l'avis de l'Architecte des
      Bâtiments de France peut être requis.</p>
   {% endif %}
@@ -433,7 +436,7 @@
 {% set t = data.terrain %}
 {% if t %}
 <section>
-  <h2><span class="num">08</span>Terrain{% if t.anc or t.solaire %} &amp; réseaux{% endif %}</h2>
+  <h2><span class="num">08</span>Terrain{% if t.anc or t.solaire or t.viabilisation %} &amp; réseaux{% endif %}</h2>
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
@@ -457,6 +460,20 @@
   {# M75 — libellé IDENTIQUE à la fiche (point de calcul unique solaire_note) ; plus de score /100. #}
   <p>☀ {{ t.solaire.note }} <span style="color:var(--txt-mut)">{{ t.solaire.etat }}.</span></p>
   <p style="font-size:8pt;color:var(--txt-mut);margin-top:1mm">Source : PVGIS (Commission européenne).</p>
+  {% endif %}
+  {% if t.viabilisation %}
+  {# M73 §F — faisceau de VIABILISATION (réseaux) : le titre ne ment plus. Faisceau de preuves,
+     jamais un tracé réseau ni une certitude (mêmes libellés que la fiche). #}
+  <h3>Réseaux — faisceau de preuves</h3>
+  <p><b>{{ t.viabilisation.libelle }}</b> <span style="color:var(--txt-mut)">— probabilité par
+     faisceau d'indices, jamais une certitude ; aucun tracé réseau relevé.</span></p>
+  {% if t.viabilisation.preuves %}
+  <ul>
+    {% for pr in t.viabilisation.preuves %}
+    <li>{{ pr.libelle }}{% if pr.detail %} <span style="color:var(--txt-mut)">— {{ pr.detail }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
   {% endif %}
 </section>
 {% endif %}
@@ -485,6 +502,17 @@
        modèle v{{ template_version }} · LABUSE — radar foncier de La Réunion ·
        labuse.immo</p>
   </div>
+
+  {# ══ M73 §5 — Ce que ce document ne peut pas dire ══ #}
+  {% if limites %}
+  <h2 style="margin-top:7mm"><span class="num">10</span>{{ limites_titre }}</h2>
+  <table class="donnees">
+    <tr><th>Ce que le dossier n'établit pas</th><th>Où le vérifier</th></tr>
+    {% for absence, ou in limites %}
+    <tr><td>{{ absence }}</td><td>→ {{ ou }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
 </section>
 </body>
 </html>

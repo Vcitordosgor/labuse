@@ -84,11 +84,13 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     css = _env.get_template("rapport.css").render(
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
         date_generation=data["date_generation"], watermark=watermark)
+    from ..api.export_commun import LIMITES_TITRE, limites_document   # M73 §5 (source unique)
     return _env.get_template("rapport.html.j2").render(
         data=data, carte=carte, css=Markup(css), order_ref=order_ref,
         produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
-        logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION)
+        logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION,
+        limites=limites_document("dossier"), limites_titre=LIMITES_TITRE)
 
 
 def generate_flash_report(idu: str, *, order_ref: str = "DEMO", adresse: str | None = None,

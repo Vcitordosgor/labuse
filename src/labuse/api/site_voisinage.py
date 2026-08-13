@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 RAYON_M = 100           # maille FIXE (constat P0 : libellé exact, contraste dense/rural = info vraie)
 FENETRE_MOIS = 36       # ventes/permis « récents »
-SRC_SITADEL = "Sitadel (autorisations d'urbanisme, dépôts datés M38)"
+SRC_SITADEL = "Sitadel (autorisations d'urbanisme, dépôts datés)"
 SRC_DVF = "DVF / valeurs foncières (Etalab)"
 
 
@@ -76,5 +76,5 @@ def voisinage_proche(db: Session, idu: str) -> dict | None:
         "prix_note": (None if prix is not None else "échantillon insuffisant (< 3 ventes)"),
         "permis": row["n_permis"] or 0,
         "source": f"{SRC_DVF} · {SRC_SITADEL}",
-        "honnetete": "Ventes et autorisations publiées uniquement ; dossiers en cours non publiés (M38).",
+        "honnetete": "Ventes et autorisations publiées uniquement ; dossiers en cours non publiés.",
     }

@@ -325,3 +325,13 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   recherche `/ia/search` dans le Copilote (ou l'assumer retirée) ; (3) retirer l'entrée rail
   « Recherche » + la vue `ia`/`IAStub` + rerouter `ouvrirEntretien` vers 'copilote' + les ~15 QA
   `setView('ia')`. C'est un flux, pas de la présentation → hors M62.
+
+## Mandat séparé — re-sourcing de la couche ABF (issu de M73, arbitrage Vic)
+- **La couche `spatial_layers.kind='abf'` stocke des TAMPONS de 500 m (polygones), pas les points
+  des monuments historiques, et son endpoint amont est DÉCOMMISSIONNÉ (constaté M74).** C'est la
+  cause racine du « usine 0 m » / « temple hindouiste 0 m » du dossier (distance d'une parcelle
+  intérieure au tampon = 0). M73 a cessé d'afficher une distance-à-tampon (les 5 documents lisent
+  désormais la ligne servie « Abords MH ~500 m (tampon) — covisibilité à instruire »), mais la
+  DONNÉE reste fausse en tant que « distance ». Vic 08/2026 : « signale-le, ne le corrige pas ici —
+  ça mérite un re-sourcing ». Mandat futur : re-sourcer les monuments historiques (Mérimée/points
+  réels + covisibilité ABF), recalculer une vraie distance/covisibilité, et rebrancher la cascade.

@@ -616,6 +616,12 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
            f"{html.escape(p.get('numero') or '')} · {_m2(p.get('surface_m2'))}")
     cen = p.get("centroid") or {}
     today = _today()
+    # M73 §5 — « Ce que ce document ne peut pas dire » (version courte), source unique export_commun.
+    from .export_commun import LIMITES_TITRE, limites_document
+    _lim_items = "".join(f"<li>{html.escape(a)} <span style='color:#aaa'>→ {html.escape(o)}</span></li>"
+                         for a, o in limites_document("onepager"))
+    _limites_op = (f"<div class='limites'><b>{html.escape(LIMITES_TITRE)}</b>"
+                   f"<ul style='margin:2px 0 0'>{_lim_items}</ul></div>")
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
 <title>LABUSE — {html.escape(p['idu'])}</title>
 <style>
@@ -647,7 +653,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
  .action {{ margin-top:6px; padding:6px 9px; background:#faf6ec; border-left:3px solid #c9a86a; }}
 </style>
 <div class="head">
-  <div><div class="brand">LA&nbsp;BUSE <small>· radar foncier La Réunion</small></div>
+  <div><div class="brand">LABUSE <small>· radar foncier La Réunion</small></div>
        <div class="idu">{html.escape(p['idu'])}</div><div class="loc">{loc}</div></div>
   <div class="date">Fiche de pré-qualification<br>{today}</div>
 </div>
@@ -678,6 +684,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {_rlt_link(cen.get('lon'), cen.get('lat'))}
   </div>
 </div>
+{_limites_op}
 <div class="foot">{html.escape(fiche.get('disclaimer') or '')} Document indicatif sur données publiques — pré-faisabilité et bilan ne valent pas étude réglementaire ni engagement.</div>
 </html>"""
 

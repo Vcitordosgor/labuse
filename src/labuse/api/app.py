@@ -2171,16 +2171,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
 #: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
 _A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc"}  # M71 B1 : dpe_passoire retiré du scoring
 #: rattachement couche → onglet de la fiche (Synthèse/Bilan sont des vues, pas des groupes de lignes).
-_ONGLET = {
-    "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
-               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
-    "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
-                "trait_de_cote", "abf", "ens", "eau"},
-    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region", "ocs_ge",
-               "friche", "acces"},
-    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
-}
-_LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
+#: SOURCE UNIQUE dans served_cascade (M73 §1) — importé ici pour que fiche et documents partagent
+#: le même rattachement (bruit_route/cinquante_pas classés en 'risques', pas en 'regles').
+from .served_cascade import _ONGLET, _LAYER_ONGLET  # noqa: E402
 
 
 #: CRED-2 (revue externe 12/07) — les lignes DVF STOCKÉES des runs antérieurs disent
@@ -2250,7 +2243,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
 
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
-                  cr.source_table, cr.source_id, cr.evenement, cr.created_at, ds.name AS source
+                  cr.source_table, cr.source_id, cr.evenement, cr.created_at,
+                  ds.name AS source, ds.source_millesime
            FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
            WHERE cr.run_label = :run AND cr.parcel_id = :pid
            ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""),
@@ -2280,12 +2274,22 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "source_table": r["source_table"],
             "source_id": r["source_id"],
             "date": r["created_at"].date().isoformat() if r["created_at"] else None,
+            # M73 E : millésime AMONT réel de la source (data_sources.source_millesime) — c'est LUI
+            # la fraîcheur par ligne, pas la date de run (uniforme = date pipeline, trompeuse).
+            "millesime_amont": r["source_millesime"],
         }
         lines.append(line)
         if r["evenement"] == "rouge":
             evenement_detail = r["detail"]
-        if (w is None or w == 0) and r["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN"):
-            flags.append(line)
+
+    # M73 §1 — arbitrage & libellés client des lignes de risque (POINT DE CALCUL UNIQUE) : un seul
+    # niveau par aléa (le plus contraignant, nommé), régime PPR réglementaire > intersection
+    # géométrique marginale, aucun libellé technique brut. Consommé par les 5 documents via la
+    # fiche servie (premium/dossier/banquier/one-pager/fiche écran lisent ces lignes arbitrées).
+    from .risques_arbitrage import arbitrer_risques
+    lines = arbitrer_risques(lines)
+    flags = [l for l in lines
+             if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
@@ -3154,15 +3158,30 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         select(func.ST_X(p.__class__.centroid), func.ST_Y(p.__class__.centroid)).where(models.Parcel.id == p.id)
     ).one()
 
-    # Cascade (avec nom de source) — la traçabilité EST le produit.
+    # M73 §1 (bascule de rail) — md/html/one-pager lisaient le rail LEGACY `cascade_results`,
+    # divergent de la fiche écran (dryrun servi) : d'où « intersection marginale < 10 % » et les
+    # niveaux d'aléa côte à côte. Doctrine « le dryrun servi fait foi » : on lit désormais la MÊME
+    # cascade servie que _q_v2_fiche, dédupliquée (M46) et arbitrée/libellée (risques_arbitrage).
+    # Le rail cascade_results n'alimente plus AUCUN document (déclaré mort, cf. RAPPORT_M73).
     cascade_rows = db.execute(
         text(
-            """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail, ds.name AS source
-               FROM cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
-               WHERE cr.parcel_id = :pid ORDER BY cr.id"""
-        ), {"pid": p.id}
+            """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
+                      ds.name AS source
+               FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
+               WHERE cr.run_label = :run AND cr.parcel_id = :pid
+               ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""
+        ), {"pid": p.id, "run": Q_A_RUN_LABEL}
     ).mappings().all()
-    cascade = [dict(r) for r in cascade_rows]
+    from .risques_arbitrage import arbitrer_risques
+    _seen: set = set()
+    cascade = []
+    for r in cascade_rows:
+        k = (r["layer_name"], r["result"], r["detail"])
+        if k in _seen:
+            continue
+        _seen.add(k)
+        cascade.append(dict(r))
+    cascade = arbitrer_risques(cascade)
     reasons = [r for r in cascade if r["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
 
     sources_responded = sorted({r["source"] for r in cascade if r["source"] and r["result"] != "UNKNOWN"})

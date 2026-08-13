@@ -379,7 +379,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         "potentiel_foncier_region": "Potentiel foncier Région", "ocs_ge": "Occupation du sol",
         "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
         "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",
+        "osm_faux_positif": "Contrôle géométrique OSM",     # M73 D — clé brute rendue avant
     }
+
+    def _layer_label(key: str) -> str:
+        # M73 D — jamais la clé technique brute : à défaut de libellé mappé, on humanise
+        # (underscores → espaces, capitale) plutôt que d'imprimer « osm_faux_positif ».
+        return _LAYER_LABEL.get(key) or key.replace("_", " ").capitalize()
     omises = 0
     sections_omises: list[str] = []   # M-P (P2-64) : NOMMER la section tronquée, pas juste compter
     for key, titre in ONGLETS:
@@ -420,7 +426,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             # libellé FR ferré à gauche (comme la fiche), le « pourquoi » chiffré vit ailleurs.
             pdf.set_font("inter", size=8)
             pdf.set_text_color(*TXT)
-            pdf.cell(51, 4.4, _LAYER_LABEL.get(ln["layer"], ln["layer"])[:34])
+            pdf.cell(51, 4.4, _layer_label(ln["layer"])[:34])
             pdf.set_font("inter", size=7.2)
             pdf.set_text_color(*TXT_MUT)
             x = pdf.get_x()
@@ -430,13 +436,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             if ln["layer"] == "pente" and fiche.get("pente_terrain"):
                 detail = f"Pente {fiche['pente_terrain']} — RGE ALTI 5 m, non éliminatoire."
             pdf.multi_cell(pdf.w - 14 - x, 3.6, detail, new_x="LMARGIN", new_y="NEXT")
-            # traçabilité : source + date (exigence fraîcheur par ligne). M70 décision 6 — la clé
-            # technique source_table#source_id ne figure PLUS (nom de source + date suffisent).
+            # traçabilité : source + MILLÉSIME AMONT. M70 décision 6 — plus de clé technique.
+            # M73 E : on n'affiche PLUS la date de run (uniforme = date pipeline, pas une fraîcheur
+            # par ligne) ; on montre le millésime amont réel de la source quand il est renseigné.
             src = ln.get("source") or ""
             pdf.set_x(65)
             pdf.set_font("mono", size=6)
             pdf.set_text_color(*TXT_DIM)
-            pdf.cell(0, 3.4, "  ".join(x for x in (src, ln.get("date") or "") if x),
+            pdf.cell(0, 3.4, "  ".join(x for x in (src, ln.get("millesime_amont") or "") if x),
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
 
@@ -510,6 +517,29 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
+
+    # ── M73 §5 — « Ce que ce document ne peut pas dire » : matérialisation du 3e terme de la
+    # doctrine (ce qui est absent + où le chercher). Source unique export_commun.limites_document.
+    from .export_commun import LIMITES_TITRE, limites_document
+    limites = limites_document("premium")
+    if limites:
+        if pdf.get_y() > pdf.h - 46:
+            pdf.add_page()
+        pdf.ln(2.5)
+        pdf.set_font("mono", size=7.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 5, LIMITES_TITRE.upper(), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_draw_color(*LINE)
+        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+        pdf.ln(1.4)
+        for absence, ou in limites:
+            pdf.set_font("inter", size=7.6)
+            pdf.set_text_color(*TXT)
+            pdf.cell(72, 4, f"{absence}", new_x="RIGHT", new_y="TOP")
+            pdf.set_font("inter", size=7.6)
+            pdf.set_text_color(*TXT_MUT)
+            pdf.set_x(88)
+            pdf.multi_cell(pdf.w - 14 - 88, 4, f"→ {ou}", new_x="LMARGIN", new_y="NEXT")
 
     out = pdf.output()
     return bytes(out)

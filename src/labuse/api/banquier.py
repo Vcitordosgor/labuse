@@ -36,6 +36,18 @@ LIBELLE = ("Dossier de présentation établi à partir de données publiques (ca
            "ni une expertise. À vérifier par le porteur et ses conseils.")
 
 
+def _strip_md(t: str) -> str:
+    """M73 C3 — retire le markdown d'une sortie LLM avant impression PDF (gras, titres, puces),
+    et un titre « SYNTHÈSE EXÉCUTIVE » redondant en tête (le <h2> du bloc existe déjà)."""
+    import re
+    t = re.sub(r"\*\*(.+?)\*\*", r"\1", t)          # **gras**
+    t = re.sub(r"\*(.+?)\*", r"\1", t)              # *italique*
+    t = re.sub(r"(?m)^#{1,6}\s*", "", t)            # # titres
+    t = re.sub(r"(?m)^\s*[-*]\s+", "• ", t)         # - puces → •
+    t = re.sub(r"(?i)^\s*synth[èe]se\s+ex[ée]cutive\s*:?\s*", "", t.strip())
+    return t.strip()
+
+
 def get_db():
     from .app import get_db as _g
     yield from _g()
@@ -139,7 +151,10 @@ def _synthese_html(db: Session, out: dict) -> str:
     # M54-AB F10 : le cartouche « L'IA ne juge pas… » passe APRÈS la synthèse (il la commente,
     # il ne l'introduit pas).
     avis = f"<div class='avis-ia'>{_esc(AVIS_IA)}</div>" if ai_used else ""
-    return f"<div class='exec'>{_esc(txt) if txt else '—'}</div>{avis}"
+    # M73 C3 : le LLM renvoie du markdown (**gras**, titres, puces) — jamais imprimé tel quel dans
+    # un PDF client. On dé-markdownise + on retire un titre « SYNTHÈSE EXÉCUTIVE » redondant (le <h2>
+    # existe déjà). Défaut corrigé à l'écran en M61, il subsistait dans le banquier.
+    return f"<div class='exec'>{_esc(_strip_md(txt)) if txt else '—'}</div>{avis}"
 
 
 # ───────────────────────── endpoints ─────────────────────────
@@ -168,7 +183,8 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     sections = [bq.cover(out, marque=marque, titre="Dossier banquier", bandeau=LIBELLE,
                          produit_sous_titre="DOSSIER BANQUIER · présentation financeur"),
                 bq.identite(out), bq.faisabilite(out),
-                bq.bilan(out), bq.comparables(out), bq.risques(out)]
+                bq.bilan(out), bq.comparables(out), bq.risques(out),
+                bq.limites_section("banquier")]      # M73 §5 — « Ce que ce document ne peut pas dire »
     # C7 : bandeau de contexte sur chaque page (produit · IDU — commune)
     pdf = bq.render_pdf(sections, LIBELLE, produit="Dossier banquier",
                         idu=idu, commune=out["parcelle"].get("commune") or "")
