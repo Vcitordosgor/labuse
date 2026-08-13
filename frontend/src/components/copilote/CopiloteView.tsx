@@ -185,6 +185,14 @@ export function CopiloteView() {
   const enAttente = vue.statut === 'awaiting_user'
   const enInstruction = actif && !terminal && !enAttente
   const fini = vue.statut === 'done' && vue.recap != null
+  // M78-bis — un run rejoué au boot en PAUSE (awaiting_user) est un RÉSIDU d'avant le récap : la
+  // confirmation-récap a REMPLACÉ la pause, et son UI (clarification pleine page + bouton « répondre »)
+  // n'existe plus. Un tel run court-circuiterait l'accueil et resterait bloqué sur « EN PAUSE » sans
+  // moyen d'avancer. On le dépingle → l'accueil (2a) reprend la main. Ne touche pas au run serveur.
+  const { reinitialiser } = run
+  useEffect(() => {
+    if (enAttente) reinitialiser()
+  }, [enAttente, reinitialiser])
   const communes = (vue.briefJson?.communes as string[] | undefined) ?? null
   const nLogements = (vue.briefJson?.programme as { logements?: number } | undefined)?.logements
   const nFaits = vue.etapes.filter((e) => e.etat === 'faite' || e.etat === 'echouee').length
