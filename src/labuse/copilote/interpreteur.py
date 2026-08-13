@@ -150,6 +150,9 @@ def _valider_brief(b: dict) -> Interpretation:
             "zones": contraintes.get("zones"),
         },
         "surface_min_m2": b.get("surface_min_m2"),
+        # M78 · 2c — critères que le moteur ne sait PAS appliquer (proximité spatiale, risque en
+        # recherche, « déjà en vente ») : DITS au client, jamais ignorés en silence (§1e télémétrie).
+        "criteres_non_appliques": [str(x)[:60] for x in (b.get("criteres_non_appliques") or [])][:5],
     }
     return Interpretation(brief=brief)
 
