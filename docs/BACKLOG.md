@@ -47,9 +47,15 @@ Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
 - [ ] **Gisements dormants** : PVGIS (`parcel_solar` 431 663, table riche score_solaire/prod/facture)
   et Parkings APER (`parkings_aper` 901 ≥500 m²) matérialisés, JAMAIS lus. Statut `partiel — ingéré
   non exploité`. Proposition d'usage fiche au RAPPORT_M74 bloc D — arbitrage Vic.
-- [ ] **Session de jugement PV** (M71-B2, GO Vic donné, montage EN PAUSE) : 300 vignettes,
-  worktree spin-off, ~320 Mo tuiles. Tant qu'elle n'a pas eu lieu, `pv_candidat` reste hors scoring
-  sous exemption datée `NON_CONSTANCE_EXEMPTIONS`.
+- [!] **Session de jugement PV (M71-B2) — TENTÉE puis ABANDONNÉE le 13/08/2026.** Montée
+  intégralement (worktree spin-off, échantillon aléatoire 300, 268 tuiles re-téléchargées, API
+  :8003, vignettes rendues) mais **ABANDONNÉE par Vic : vignettes illisibles à la résolution de
+  l'ortho servie** — impossible de juger honnêtement. Base et cache restaurés à l'état exact
+  d'avant (0 jugement conservé). `pv_candidat` **reste hors scoring** sous exemption datée
+  `NON_CONSTANCE_EXEMPTIONS`. **À NE PAS relancer en l'état.** Deux pistes pour plus tard :
+  (a) servir des vignettes **plus grandes ou plus zoomées** (revoir CONTEXTE_M / la cible px de
+  l'endpoint `vignette` sur le spin-off) ; (b) **plan B** = probe DINOv2 + labels (recette qui a
+  porté les piscines à 90,7 %, cf. RAPPORT_CASCADE_JUGES.md dans labuse-express01).
 - [ ] **Doublons bbox spatial_layers** : `foret_publique` 227 lignes = 65 distinctes ; `ocs_ge`
   3 250 = 1 643 distinctes (features à cheval sur 2 communes comptées 2×). Dedup + re-score requis.
 - [ ] **ABF endpoint mort** : data.culture.gouv.fr ODS décommissionné (301) → re-sourcer via dump
