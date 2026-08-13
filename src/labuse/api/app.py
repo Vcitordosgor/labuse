@@ -2171,16 +2171,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
 #: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
 _A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc"}  # M71 B1 : dpe_passoire retiré du scoring
 #: rattachement couche → onglet de la fiche (Synthèse/Bilan sont des vues, pas des groupes de lignes).
-_ONGLET = {
-    "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
-               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
-    "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
-                "trait_de_cote", "abf", "ens", "eau"},
-    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region", "ocs_ge",
-               "friche", "acces"},
-    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
-}
-_LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
+#: SOURCE UNIQUE dans served_cascade (M73 §1) — importé ici pour que fiche et documents partagent
+#: le même rattachement (bruit_route/cinquante_pas classés en 'risques', pas en 'regles').
+from .served_cascade import _ONGLET, _LAYER_ONGLET  # noqa: E402
 
 
 #: CRED-2 (revue externe 12/07) — les lignes DVF STOCKÉES des runs antérieurs disent

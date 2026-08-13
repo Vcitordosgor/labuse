@@ -421,6 +421,11 @@ def identite(out: dict) -> str:
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td><td>{s(prov)}</td></tr>" for k, v, prov in rows) + "</table>"
         f"<h3>Zonage du document d'urbanisme</h3>"
         f"<table><tr><th>Zone</th><th class='n'>Part</th><th>Document</th></tr>{zonage}</table>")
+    # M73 « le dryrun servi fait foi » : verdict de constructibilité du zonage SERVI (arbitré/
+    # libellé) — même énoncé que la fiche écran & le dossier, jamais recalculé au fil des documents.
+    zv = ident.get("zonage_verdict")
+    if zv and zv.get("detail"):
+        body += f"<p class='note'>{esc(zv['detail'])}</p>"
     if regles:
         body += (f"<h3>Règles calibrées</h3><table><tr><th>Règle</th><th class='n'>Valeur</th><th>Nature</th></tr>"
                  f"{regles}</table><p class='note'>Règles calibrées LABUSE (Estimé) — le règlement complet "
@@ -579,8 +584,9 @@ def risques(out: dict) -> str:
         items.append(("Risque", it["label"], it.get("detail")))
     for it in pat.get("couches", []):
         items.append(("Servitude", it["label"], it.get("detail")))
-    for m in pat.get("abf", []):
-        items.append(("Patrimoine", "Abords de monument historique (~500 m)", m.get("name")))
+    # M73 : ABF issu de la LIGNE SERVIE (arbitrée) — plus de « 0 m » distance-à-tampon.
+    if pat.get("abf_note"):
+        items.append(("Patrimoine", "Abords de monument historique", pat["abf_note"]))
     zan = out.get("zan")
     body = "<div class='pb'></div><h2>Risques, servitudes & sobriété foncière</h2>"
     if items:

@@ -24,20 +24,22 @@ log = logging.getLogger("labuse.flash")
 RAYON_MARCHE_M = 500
 RAYON_PERMIS_M = 500
 RAYON_ICPE_M = 500
-RAYON_ABF_M = 500          # abords Monuments historiques — même convention que la cascade
 FENETRE_MARCHE_ANNEES = 3
 FENETRE_PERMIS_MOIS = 24
 
-# Libellés lisibles des kinds spatial_layers utilisés par le rapport.
-_KIND_LABELS = {
-    "georisque_alea": "Aléa Géorisques",
-    "ppr": "Plan de Prévention des Risques (DEAL)",
-    "mvt": "Mouvement de terrain (BRGM)",
-    "cavite": "Cavité souterraine (BRGM)",
+# M73 — libellés client des COUCHES de la cascade servie (par layer_name). Le DÉTAIL de chaque
+# ligne est déjà arbitré/libellé par served_cascade ; seul le libellé de couche est dérivé ici.
+_LAYER_LABELS = {
+    "risques": "Aléa / PPR (Géorisques · DEAL)",
     "sol_pollue": "Sites et sols pollués",
-    "bruit_route": "Classement sonore routier",
-    "peb": "Plan d'Exposition au Bruit",
+    "cavite": "Cavité souterraine (BRGM)",
+    "icpe": "Installation classée (ICPE)",
+    "mvt": "Mouvement de terrain (BRGM)",
+    "pente": "Pente du terrain",
+    "ravine": "Voisinage de ravine",
     "trait_de_cote": "Recul du trait de côte",
+    "eau": "Hydrographie",
+    "bruit_route": "Classement sonore routier",
     "cinquante_pas": "50 pas géométriques",
     "abf": "Monument historique / ABF",
     "ens": "Espace Naturel Sensible",
@@ -46,10 +48,6 @@ _KIND_LABELS = {
     "parc_national": "Parc National de La Réunion",
     "foret_publique": "Forêt publique (ONF)",
 }
-
-_SOL_POLLUE_LABELS = {"sis": "Secteur d'Information sur les Sols (SIS)",
-                      "casias": "Ancien site industriel (CASIAS)",
-                      "instruction": "Site en cours d'instruction"}
 
 
 # ── Disponibilité (pattern segments/registry : information_schema, jamais d'exception) ──
@@ -118,7 +116,17 @@ def _parcelle(db: Session, idu: str) -> dict | None:
 
 def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     """Zonage PLU + règles calibrées (LA valeur différenciante : calibrage premium fin)."""
-    out: dict[str, Any] = {"zones": [], "prescriptions": [], "regles": None}
+    out: dict[str, Any] = {"zones": [], "prescriptions": [], "regles": None,
+                           "zonage_verdict": None}
+    # M73 « le dryrun servi fait foi » : le VERDICT de constructibilité du zonage vient de la ligne
+    # SERVIE 'zonage_plu_gpu' (onglet 'regles'), arbitrée et libellée — jamais recalculé ici. Le
+    # libellé de zone (A/U/RNU…) et la part de recouvrement restent lus en direct dans spatial_layers
+    # (détail d'affichage non porté par le servi).
+    from ..api.served_cascade import served_cascade_lines, served_group
+    zline = next((l for l in served_group(served_cascade_lines(db, idu), "regles")
+                  if l["layer_name"] == "zonage_plu_gpu"), None)
+    if zline:
+        out["zonage_verdict"] = {"result": zline["result"], "detail": zline["detail"]}
     if "spatial_layers" in avail:
         zones = db.execute(text(
             """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
@@ -278,30 +286,32 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
     return out or None
 
 
+# M73 — layers de l'onglet 'risques' présentés en section Risques (aléas/PPR/mvt/cavité/sol
+# pollué/ICPE/pente/ravine/trait de côte/eau). ABF & ENS sont traités par _patrimoine.
+_RISQUE_LAYERS = {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
+                  "trait_de_cote", "eau", "bruit_route", "cinquante_pas"}
+
+
 def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "spatial_layers" not in avail:
         return None
-    kinds = ["georisque_alea", "ppr", "mvt", "cavite", "sol_pollue", "bruit_route",
-             "peb", "trait_de_cote", "cinquante_pas"]
-    rows = db.execute(text(
-        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
-           SELECT DISTINCT sl.kind, sl.subtype, sl.name
-           FROM spatial_layers sl, p
-           WHERE sl.kind = ANY(:kinds) AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
-        {"idu": idu, "kinds": kinds}).mappings().all()
+    # M73 « le dryrun servi fait foi » : les couches de risque viennent des lignes SERVIES
+    # (dédupliquées + arbitrées + libellées) — un seul niveau d'aléa (le plus contraignant),
+    # PPR réglementaire sans « intersection marginale < 10 % », libellés FR propres. Fini les
+    # 3 niveaux d'aléa côte à côte lus en direct dans spatial_layers.
+    from ..api.served_cascade import served_cascade_lines, served_group
+    lines = served_group(served_cascade_lines(db, idu), "risques")
     items = []
-    for r in rows:
-        detail = r["name"] or r["subtype"] or ""
-        if r["kind"] == "sol_pollue":
-            detail = _SOL_POLLUE_LABELS.get((r["subtype"] or "").lower(), detail)
-        elif r["kind"] == "bruit_route":
-            detail = f"catégorie {r['subtype'].removeprefix('cat')}" if r["subtype"] else detail
-        elif r["kind"] == "ppr":
-            detail = f"{(r['subtype'] or '').capitalize()} — {r['name']}" if r["name"] else (r["subtype"] or "")
-        elif r["name"]:
-            detail = r["name"]          # le libellé porte déjà l'aléa — pas de doublon subtype
-        items.append({"kind": r["kind"], "label": _KIND_LABELS.get(r["kind"], r["kind"]),
-                      "detail": detail})
+    for l in lines:
+        if l["layer_name"] not in _RISQUE_LAYERS:
+            continue
+        if l["result"] not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        items.append({"kind": l["layer_name"],
+                      "label": _LAYER_LABELS.get(l["layer_name"], l["layer_name"]),
+                      "detail": l["detail"]})
+    # Liste ICPE-proximité (5 plus proches, ST_Distance) : DÉTAIL non porté par le servi (une seule
+    # ligne ICPE arbitrée) — conservée telle quelle (spatial_layers), pas une contradiction.
     icpe = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT sl.name, sl.subtype AS regime,
@@ -318,24 +328,25 @@ def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
 def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "spatial_layers" not in avail:
         return None
+    # ENS/QPV/friche/parc_national/foret_publique : DÉTAIL (nom de périmètre) non porté par le servi
+    # → conservés en lecture directe spatial_layers.
     rows = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT DISTINCT sl.kind, sl.subtype, sl.name
            FROM spatial_layers sl, p
            WHERE sl.kind = ANY(ARRAY['ens', 'qpv', 'friche', 'parc_national', 'foret_publique'])
              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""), {"idu": idu}).mappings().all()
-    items = [{"kind": r["kind"], "label": _KIND_LABELS.get(r["kind"], r["kind"]),
+    items = [{"kind": r["kind"], "label": _LAYER_LABELS.get(r["kind"], r["kind"]),
               "detail": r["name"] or r["subtype"] or ""} for r in rows]
-    # ABF : abords Monuments historiques ~500 m (même convention que la cascade).
-    abf = db.execute(text(
-        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
-           SELECT sl.name, round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS dist_m
-           FROM spatial_layers sl, p
-           WHERE sl.kind = 'abf' AND ST_DWithin(sl.geom_2975, p.geom_2975, :r)
-           ORDER BY dist_m LIMIT 3"""),
-        {"idu": idu, "r": RAYON_ABF_M}).mappings().all()
-    return {"couches": sorted(items, key=lambda x: x["label"]), "abf": [dict(r) for r in abf],
-            "rien": not (items or abf)}
+    # M73 « le dryrun servi fait foi » : l'ABF vient de la LIGNE SERVIE (result/detail), plus de
+    # ST_Distance à un tampon 500 m → fini le « 0 m » (distance-à-tampon). La couche ABF = tampons
+    # + endpoint décommissionné M74 : on ne re-source pas, on cesse d'afficher une distance-à-tampon.
+    from ..api.served_cascade import served_cascade_lines, served_group
+    abf_note = next((l["detail"] for l in served_group(served_cascade_lines(db, idu), "risques")
+                     if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
+                                                                      "UNKNOWN")), None)
+    return {"couches": sorted(items, key=lambda x: x["label"]), "abf_note": abf_note,
+            "rien": not (items or abf_note)}
 
 
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:

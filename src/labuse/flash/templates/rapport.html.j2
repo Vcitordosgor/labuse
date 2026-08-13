@@ -90,6 +90,14 @@
   </table>
   {% endif %}
 
+  {# M73 « le dryrun servi fait foi » : le verdict de constructibilité du zonage vient de la ligne
+     servie (arbitrée/libellée), jamais recalculé — cohérent à l'écran, au dossier et au banquier. #}
+  {% if ident.zonage_verdict %}
+  <p{% if ident.zonage_verdict.result == 'HARD_EXCLUDE' %} class="note"{% endif %}>
+    {% if ident.zonage_verdict.result == 'HARD_EXCLUDE' %}<span class="chip alerte">{{ ident.zonage_verdict.detail }}</span>
+    {% else %}{{ ident.zonage_verdict.detail }}{% endif %}</p>
+  {% endif %}
+
   {% if ident.regles %}
   <h3>Règles calibrées LABUSE (zone {{ ident.regles.zone or "—" }})</h3>
   <table class="donnees">
@@ -282,14 +290,9 @@
     {% endfor %}
   </table>
   {% endif %}
-  {% if pat.abf %}
-  <h3>Monuments historiques à proximité (abords ABF ~500 m)</h3>
-  <table class="donnees">
-    <tr><th>Monument (Base Mérimée)</th><th>Distance</th></tr>
-    {% for m in pat.abf %}
-    <tr><td>{{ m.name or "—" }}</td><td class="num-cell">{{ m.dist_m }} m</td></tr>
-    {% endfor %}
-  </table>
+  {% if pat.abf_note %}
+  <h3>Abords de monument historique (ABF)</h3>
+  <p><span class="chip alerte">{{ pat.abf_note }}</span></p>
   <p class="note">Dans les abords d'un monument historique, l'avis de l'Architecte des
      Bâtiments de France peut être requis.</p>
   {% endif %}
