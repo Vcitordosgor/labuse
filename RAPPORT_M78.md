@@ -36,7 +36,24 @@ modèle journalisé (prompt, outils appelés, réponse, tokens) — c'est l'audi
 
 ---
 
-## PHASE 2 — Accueil + mission RECHERCHE _(en cours)_
+## PHASE 2 — Accueil + mission RECHERCHE _(LIVRÉE — STOP)_
+
+**2a→2f livrés + testés.** Démo `qa/m78/demo_phase2.py` : 3 recherches → RECHERCHE avec chips COMPRIS
+(traduction visible « 15 logements → SDP ≥ 1050 m² », « budget ≤ 800 k€ ») · 1 critère non traduisible
+DIT (« proche de la mer », « déjà en vente » en amber ; « hors inondable » correctement APPLIQUÉ, pas
+listé) · héros à verrou (dit la faiblesse, gabarit=False) · modif-chip + arrêt propre (tests).
+- **2c** : `ChipsCompris.tsx` (chips éditables, traduction visible, ✕ relance) + l'interpréteur M26-A
+  émet `criteres_non_appliques` (proximité, « en vente » ; PAS le risque/PPR — appliqué par le moteur).
+- **2d** : retirer/corriger une chip EN COURS = annuler propre (cancel M26-A sans zombie) + relancer.
+  Testé vitest 38 ; arrêt propre testé + exécuteur vérifie le statut à chaque étape.
+- **2e** : `heros.py` (phrase + verrou anti-invention, 2 essais puis gabarit) ; endpoint /heros ;
+  pytest 3/3 (rejette un nombre inventé, gabarit dit la réserve) ; affiché sur la parcelle #01.
+- **2f** : 👍/👎 sur chaque réponse → /feedback (canal télémétrie, mission_id).
+- **2b** : conversations/missions persistées (compte_id, 90j) ; « REPRENDRE » sur l'accueil.
+- Gardes : tsc 0 · vitest 38 · build vert · pytest copilote 93 · golden 119/119. **Encart campagne
+  propriétaires LAISSÉ INACTIF** (arbitrage Vic au STOP).
+
+## PHASE 2 (détail initial) — Accueil + mission RECHERCHE
 
 - **Endpoint** `/api/copilote-v2` (POST /ask, GET /telemetrie) monté (`6f2c56cf`), testé TestClient.
 - **Audit entonnoir (2d)** : Arrêter propre EXISTE (POST /cancel → run_cancelled persisté, exécuteur
