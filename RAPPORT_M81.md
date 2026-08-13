@@ -101,3 +101,59 @@ figent CE parcelle** qui sont périmées.
 ### Garde-fous Phase 2
 Rejeu 431 663 (cascade), run servi intact, aucune écriture hors `dryrun_* q_v9_m81`. ENS/Saint-Philippe/
 prix-nuls mesurés et conformes. **STOP — Vic tranche PPR + canari avant matrice/score-v2/bascule. NE PAS MERGER.**
+
+---
+
+## PHASE 2 (suite) — arbitrages appliqués, run complet, delta mesuré — **STOP, GO bascule attendu**
+
+Vic a tranché : **graduation PPR OUI** (faux négatifs réparés) ; **nouveau canari** (pas de relaxe). Run
+`q_v9_m81` désormais COMPLET (cascade + matrice + modèle P), run servi `q_v8_calibre` intact.
+
+### Les DEUX effets, séparés (exigence Vic — 2 phrases pour le client)
+1. **Graduation PPR rouge (M-I)** — « ~14 000 parcelles injustement exclues par un chevauchement PPR rouge
+   MARGINAL (souvent en zone bleue dominante) sont réévaluées ; **362** entrent dans le classement matrice
+   (dont **14 chaude**), le reste reste servi-mais-bas. » C'est le péché mortel inversé réparé.
+2. **DVF terrain + ENS + DPE (M70/M71/M79)** — « le prix affiché devient un prix de TERRAIN, l'ENS ne dit
+   plus "Hors ENS" sur les communes non couvertes, le DPE sort du scoring : ces corrections ajustent les
+   SCORES (127 parcelles perdent "chaude" par le prix corrigé, 81 en gagnent), **sans changer une seule
+   exclusion ni le rang**. »
+
+### Delta de classement — le RANG NE BOUGE PAS
+- **Tier modèle P** : **431 483 identiques / 180 changent** (0,04 %) — surtout → `declasse_au_statut_inconnu`
+  (~153 : AU en attente d'ouverture, effet de fraîcheur, cf. 1 862 déclassées AU en attente au run).
+- **Déplacement de rang : médian 0, p90 0, max 0.** Le classement P servi ne bouge PAS d'une ligne (confirme
+  M79 : le modèle P calcule déjà son prix terrain, indépendant des corrections cascade).
+- **Chaude matrice** : 960 → **928** (−32 net) = −127 (prix DVF corrigé, ordre du −170 prévu M79) +81 (autres)
+  +14 (PPR). **Brûlantes** : 120.
+
+### 10 échantillons nouvellement servies (exigence Vic — vérif à l'œil)
+Toutes « Exclue : PPR zone rouge (inconstructible) » en q_v8 → en q_v9 :
+
+| Commune | Parcelle | q_v9 (graduation) |
+|---|---|---|
+| La Plaine-des-Palmistes | 97406000AV1267 | Zone bleue PPR (~54 %) — constructible sous conditions |
+| Saint-Denis | 97411000HD0281 | Zone bleue PPR (~70 %) |
+| Saint-Denis | 97411000DZ0053 | PPR rouge marginal : 15 m² (1,6 %), hors emprise |
+| Saint-Joseph | 97412000CX0763 | Zone bleue PPR (~88 %) |
+| Entre-Deux | 97403000AS0866 | Zone bleue PPR (~20 %) |
+| Saint-Paul | 97415000EW0824 | Zone bleue PPR (~12 %) |
+| Saint-Leu | 97413000CC0216 | rouge gradué (part marginale) |
+| Saint-Joseph / Saint-Paul / Saint-Benoît | 97412000BP0325 / CL0642 / 97410000AT0367 | rouge gradué sous seuil |
+
+Le motif est constant : **la parcelle est majoritairement en zone BLEUE (constructible sous conditions)
+mais un chevauchement ROUGE marginal l'excluait entièrement en q_v8**. La graduation dit vrai.
+
+### Exigences RESPECTÉES (rappel + garde)
+- **ENS** 45 322 flips, **0** devenue exclue ; **Saint-Philippe** 4 153 UNKNOWN, 0 HARD_EXCLUDE ; **prix nuls**
+  aucune commune en bloc (max Saint-Philippe 19,3 %) ; **rang** inchangé.
+- **Garde de non-constance (M71-B3) : PASSÉE** — `score-v2` a scoré 431 663 sans lever (un signal constant
+  aurait stoppé le pipeline).
+- **Canari** résolu : ancien 97415000AC0253 sorti (procédure clôturée, donnée fraîche), nouveau
+  97414000CV0907 (Saint-Louis, liquidation stable, 2 signaux) — garde + golden + BACKLOG à jour.
+
+### Ce qui reste (Phase 3 — bascule, sur ton GO)
+`served_run.txt` → q_v9_m81 · `run_precedent.txt` → q_v8_calibre · `npm run build` + `matrice-apply`
+(tuiles, garde canari passe maintenant) · purge de rétention (M80) · rebase golden sur q_v9_m81 (bascule
+l'ancre canari) · vérifs écran (ENS/BODACC/prix terrain/Saint-Philippe) + non-contradiction M73.
+
+**STOP — le rang ne bouge pas, les exigences sont tenues, les deux effets sont séparés. GO bascule ? NE PAS MERGER.**
