@@ -30,6 +30,7 @@ class ToolResult:
     partiel: bool = False                     # couverture partielle → la réserve DOIT être dite
     reserve: str | None = None                # texte de réserve (cité mot pour mot depuis le point de calcul)
     refus: str | None = None                  # motif de refus si l'outil ne peut pas répondre
+    web: bool = False                         # M78-ter — réponse issue du WEB (marquage distinct, jamais Sourcé/Estimé)
 
 
 # ───────────────────────── compter_parcelles ─────────────────────────
@@ -168,6 +169,55 @@ def marche(db: Session, *, commune: str) -> ToolResult:
                       millesime="par ligne (fraîcheur = source amont)")
 
 
+# ───────────────────────── recherche_web (M78-ter) ─────────────────────────
+WEB_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). Réponds à la question EN FRANÇAIS, brièvement,
+en t'appuyant sur la recherche web. N'invente RIEN : chaque fait vient d'une source web trouvée. Si les
+sources DIVERGENT ou sont faibles, dis-le (« Les sources divergent — à vérifier »). Tu ne réponds QUE sur
+l'immobilier, le foncier, l'urbanisme, les collectivités et leurs acteurs à La Réunion. Réponds le fait
+seul, sans citer d'URL (le serveur ajoute la source)."""
+
+
+def recherche_web(db: Session, *, question: str) -> ToolResult:
+    """M78-ter — répondre au-delà de la base pour du PUBLIC hors base (élus, organigrammes, actualité
+    réglementaire…) via la recherche web NATIVE de l'API Anthropic (pas de scraping maison). Marqué web,
+    jamais Sourcé/Estimé. La hiérarchie (base d'abord) est gérée par l'aiguillage en amont."""
+    import urllib.parse as up
+    from datetime import date
+
+    from ..ai import core
+    if not core.has_key():
+        return ToolResult("recherche_web", ok=False, refus="recherche web indisponible")
+    import anthropic
+    client = anthropic.Anthropic(timeout=45, max_retries=1)
+    try:
+        msg = client.messages.create(
+            model=core.MODEL_REASONING, max_tokens=700, system=WEB_SYSTEM,
+            tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+            messages=[{"role": "user", "content": question}])
+    except Exception:
+        return ToolResult("recherche_web", ok=False, refus="recherche web échouée")
+    texte, domaines = "", []
+    for b in msg.content:
+        if getattr(b, "type", None) == "text":
+            texte += b.text
+            for cit in (getattr(b, "citations", None) or []):
+                u = getattr(cit, "url", "") or ""
+                if u:
+                    d = up.urlparse(u).netloc.replace("www.", "")
+                    if d and d not in domaines:
+                        domaines.append(d)
+    try:
+        core._log_cost(db, "copilote-web", core.MODEL_REASONING, False,
+                       msg.usage.input_tokens, msg.usage.output_tokens)
+    except Exception:
+        pass
+    if not texte.strip() or not domaines:
+        return ToolResult("recherche_web", ok=False, refus="rien trouvé sur le web")
+    return ToolResult("recherche_web", ok=True, web=True, valeur=None,
+                      data={"reponse": texte.strip(), "domaines": domaines[:3], "date": date.today().isoformat()},
+                      source="web")
+
+
 # Registre nom → fonction (l'exécuteur du serveur ; le modèle choisit le NOM, jamais le SQL).
 OUTILS = {
     "compter_parcelles": compter_parcelles,
@@ -176,4 +226,5 @@ OUTILS = {
     "stats_commune": stats_commune,
     "delais_instruction": delais_instruction,
     "marche": marche,
+    "recherche_web": recherche_web,
 }

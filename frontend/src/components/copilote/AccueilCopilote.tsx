@@ -38,6 +38,10 @@ const POOL: string[] = [
   'Quel est le taux de logement social à Saint-Benoît ?',
   'Cette parcelle 97414000CV0907 est-elle divisible ?',
   'Assemble des parcelles contiguës',
+  // M78-ter — questions servies par le web (public hors base)
+  'Qui est le maire de Saint-Denis ?',
+  'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?',
+  'Y a-t-il un appel à projets logement en cours à La Réunion ?',
 ]
 
 /** 6 exemples tirés au hasard (à chaque montage = à chaque visite). */

@@ -49,6 +49,10 @@ CATALOGUE = [
      "d'une commune (Sitadel).", "params": {"commune": "str"}},
     {"nom": "marche", "desc": "Marché immobilier d'une commune : prix ancien, terrain nu, neuf, tendance, "
      "loyer.", "params": {"commune": "str"}},
+    {"nom": "recherche_web", "desc": "DERNIER RECOURS (M78-ter) — un fait PUBLIC de La Réunion sur le "
+     "foncier/immobilier/urbanisme/collectivités et leurs acteurs (élu, organigramme d'une collectivité, "
+     "actualité réglementaire, appel à projets, coordonnées d'un service) que AUCUN autre outil ne couvre.",
+     "params": {"question": "la question du client, verbatim"}},
 ]
 
 SELECT_SYSTEM = """Tu aiguilles une QUESTION du client LABUSE (foncier de La Réunion) vers UN outil, ou vers un refus.
@@ -71,6 +75,11 @@ RÈGLES :
   · "projection" : on demande une valeur/évolution FUTURE (« dans 10 ans », « l'an prochain », « va
     monter »). LABUSE ne projette pas.
   · "aucun_outil" : aucun outil ci-dessus ne couvre la demande (ex. divisibilité d'UNE parcelle).
+- HIÉRARCHIE DES SOURCES (M78-ter) : la BASE LABUSE prime TOUJOURS. `recherche_web` est le DERNIER
+  recours — ne le choisis QUE si (a) aucun outil interne ne couvre, ET (b) ce n'est PAS une action
+  couverte par un outil LABUSE (une procédure PLU, un règlement de zone, un prix/délai/marché, des
+  parcelles… restent des outils internes, JAMAIS le web), ET (c) le sujet reste dans la barrière :
+  foncier/immobilier/urbanisme/collectivités et acteurs de LA RÉUNION. Hors barrière → pas le web.
 SORTIE : {{"tool": <nom|null>, "args": {{...}}, "refus": <"proprietaire_pp"|"projection"|"aucun_outil"|null>}}"""
 
 FORMULE_SYSTEM = """Tu es le copilote foncier de LABUSE. Formule une réponse en français, brève et claire, à la
@@ -164,6 +173,7 @@ _ARG_SPEC = {
     "stats_commune": {"commune": str},
     "delais_instruction": {"commune": str},
     "marche": {"commune": str},
+    "recherche_web": {"question": str},
 }
 
 
@@ -238,6 +248,18 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         tool = sel["tool"]
         if tool not in OUTILS:
             return _sans_outil(db, message, params, intent)
+        # M78-ter — recherche_web : DERNIER recours, la question verbatim ; marquage web distinct.
+        if tool == "recherche_web":
+            res = OUTILS["recherche_web"](db, question=message)
+            if not res.ok:                                 # rien trouvé → refus honnête + télémétrie
+                telemetrie.refus(db, "web_rien_trouve", message, intent)
+                return _sans_outil(db, message, params, intent)
+            telemetrie.web(db, message, res.data.get("domaines", []))
+            d = res.data
+            # marquage NON négociable : « Source : web · domaine · consulté le date » (jamais Sourcé/Estimé)
+            marque = f"Source : web · {d['domaines'][0]} · consulté le {d['date']}"
+            return _reply(f"{d['reponse']}\n\n{marque}", intent, tool="recherche_web", web=True,
+                          sources=d["domaines"])
         res = OUTILS[tool](db, **_clean_args(tool, sel.get("args") or {}))
         if not res.ok:
             return _sans_outil(db, message, params, intent, motif=res.refus)
@@ -287,7 +309,8 @@ _OUTIL_MAP = [
     (("comparer", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
     (("reglement", "annuaire plu"), ("plu-annuaire", "Annuaire PLU", "pluPrefill")),
     (("lettre de zonage", "verification de zonage"), ("lettre-zonage", "Lettre de vérification de zonage", "idu")),
-    (("procedure plu", "revision plu", "sursis a statuer"), ("verif-procedure", "Vérif procédure PLU", "idu")),
+    (("procedure plu", "revision plu", "sursis a statuer", "nouveau plu", "plu disponible", "plu a jour",
+      "plu en cours", "nouveau document d'urbanisme"), ("verif-procedure", "Vérif procédure PLU", "idu")),
     (("due diligence", "controle avant achat", "avant d'acheter"), ("duediligence", "Contrôle avant achat", "idu")),
     (("servitude",), ("o5-servitudes", "Servitudes invisibles", "idu")),
     (("remonter le temps", "evolution dans le temps", "en 1950", "historique du site"),

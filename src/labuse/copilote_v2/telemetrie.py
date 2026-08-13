@@ -53,6 +53,12 @@ def critere_non_traduisible(db: Session, critere: str, demande: str = "") -> Non
     _insert(db, genre="critere_non_traduisible", sous_type=None, demande=demande, detail=critere)
 
 
+def web(db: Session, demande: str, domaines: list[str] | None = None) -> None:
+    """M78-ter — question servie par le web, journalisée À PART. Un motif qui revient chaque semaine
+    (organigrammes, contacts de services) = signal qu'un annuaire local structuré mérite son mandat."""
+    _insert(db, genre="web_servi", sous_type=None, demande=demande, detail=", ".join(domaines or [])[:200])
+
+
 def feedback(db: Session, mission_id: str, pouce: str, commentaire: str = "") -> None:
     """👍/👎 (§2f) — rejoint la télémétrie : ce qu'on obtient sans en être satisfait."""
     _insert(db, genre="feedback", sous_type=f"pouce_{pouce}", mission_id=mission_id, detail=commentaire)

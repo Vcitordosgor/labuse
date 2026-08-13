@@ -80,8 +80,10 @@ LES SEPT INTENTIONS :
   le prix de 974... ». Signal : un IDU (14 caractères) ou « cette parcelle » + une notion de prix/valeur/juste.
 - OUTIL : le client décrit une ACTION qui correspond à un outil métier (assembler des parcelles, écrire au
   propriétaire, calculer la charge foncière, comparer des parcelles, diviser/découper un terrain, remonter le
-  temps…). Signal : un verbe d'action sur un outil. Même si aucun outil n'existe pour l'action (ex. diviser
-  une parcelle précise), l'intention reste OUTIL — l'aiguillage en aval décidera.
+  temps…) OU une question qu'un outil LABUSE couvre : « un nouveau PLU / une révision PLU / une procédure PLU
+  à X ? » (Vérif procédure), « le règlement de la zone X » (Annuaire PLU). Signal : une action, ou un sujet
+  qu'un outil interne traite. Même si aucun outil n'existe pour l'action (ex. diviser une parcelle précise),
+  l'intention reste OUTIL — l'aiguillage en aval décidera.
 - VEILLE : le client veut être PRÉVENU/ALERTÉ dans le futur d'un événement (nouveau permis, vente, procédure
   PLU, BODACC sur une société). Signal : « préviens-moi », « alerte-moi », « surveille », « tiens-moi au
   courant », « quand… ».
@@ -94,8 +96,11 @@ LES SEPT INTENTIONS :
   (« combien vaudra… dans 10 ans », « le marché va-t-il monter… ») N'EST PAS hors-sujet — c'est du
   foncier → classe QUESTION (le refus « projection » se décide en aval, pas ici). De même, les
   SERVICES et la FISCALITÉ du foncier/immobilier réunionnais (notaire, géomètre, avocat foncier,
-  fiscalité immobilière, financement d'un projet) ne sont PAS hors-sujet → QUESTION (le refus honnête
-  « pas d'outil » se décide en aval). Réserve HORS_SUJET au vraiment étranger au foncier réunionnais.
+  fiscalité immobilière, financement d'un projet), ainsi que les COLLECTIVITÉS et leurs ACTEURS à La
+  Réunion (maire, élu, commune, EPCI, Région, Département, organigramme d'un service, actualité
+  réglementaire, appel à projets logement) ne sont PAS hors-sujet → QUESTION (l'aiguillage en aval
+  décide : outil interne, recherche web, ou refus). Réserve HORS_SUJET au vraiment étranger au foncier
+  réunionnais (météo, cuisine, sport, bavardage).
 
 RÈGLES :
 - RÈGLE DURE : tout message qui commence par « Combien » attend un NOMBRE → QUESTION, quel que soit le

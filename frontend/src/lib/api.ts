@@ -345,6 +345,7 @@ export interface CopiloteV2Reponse {
   clarification?: boolean
   degraded?: boolean
   en_construction?: boolean
+  web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
   conversation_id?: number | null       // §2b — la conversation persistée (reprise)
   // §M78-bis — récap-confirmation avant mission lourde (RECHERCHE/VERIFICATION)
   needs_confirmation?: boolean
