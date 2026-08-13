@@ -20,6 +20,10 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/bilan', '/signalement', '/guide',
+  // M70 décision 11 (bug 11) : '/pre-dossier' MANQUAIT au proxy dev → le lien /pre-dossier/{idu}.zip
+  // sortait de la base '/socle/' et Vite renvoyait « did you mean /socle/pre-dossier… ». Même
+  // famille que '/bilan' (M58). En prod (FastAPI même origine) le lien fonctionnait déjà.
+  '/pre-dossier',
   // '/bilan' (M58-P1) : la calculette de charge foncière charge /bilan/calculette-defaults —
   // MANQUAIT au proxy dev → 404 rouge en `npm run dev` (la calculette tombait sur son état
   // d'erreur Q5). Prod OK (même origine, FastAPI sert dist/). Comblé pour un dev honnête.
