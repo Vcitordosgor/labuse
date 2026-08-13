@@ -336,6 +336,26 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   ça mérite un re-sourcing ». Mandat futur : re-sourcer les monuments historiques (Mérimée/points
   réels + covisibilité ABF), recalculer une vraie distance/covisibilité, et rebrancher la cascade.
 
+## Mandat séparé — « cette parcelle est-elle divisible ? » (issu de M-ENTREE, arbitrage Vic)
+- **Besoin PRODUIT, pas besoin de porte.** L'outil Division (M01, `/modules/division`) est un outil de
+  DÉCOUVERTE à l'échelle commune (liste des candidats dont le score de divisibilité ≥ seuil) — il n'a
+  aucune entrée parcelle unique, et LABUSE ne calcule nulle part le score de divisibilité d'UNE parcelle
+  donnée (ni à la fiche, ni ailleurs). Conséquence M-ENTREE : Division n'a **pas** de porte sur la fiche
+  (une liste commune pré-remplie par une parcelle serait une demi-promesse ; règle M60). Le vrai manque :
+  à la question « puis-je diviser CE terrain ? » le produit n'a pas de réponse. Mandat futur (le « (b) »
+  de M-ENTREE) : exposer une divisibilité PAR PARCELLE (score + lot détachable estimé sur l'IDU demandé,
+  pas seulement dans la liste top-300 commune) → alors seulement une porte Division devient honnête.
+- **Note M78 (Copilote)** : à l'intention OUTIL « diviser ce terrain », le Copilote n'a **aucun outil
+  parcellaire** à proposer — il répond sur le fond avec ce qu'il a (surface, zonage, règlement) et ne
+  propose rien. C'est le cas « aucun outil ne correspond » de la doctrine, appliqué proprement.
+
+## Mandat séparé — unifier calcPrefill → parcelPrefill (issu de M-ENTREE)
+- **M-ENTREE a introduit `parcelPrefill` (store)** : motif partagé d'amorçage parcelle (un champ, plusieurs
+  consommateurs — Faisabilité M22, Assemblage M16), consommation-puis-reset, documenté DA-FICHE-v6.html.
+  La Calculette (M23) garde son `calcPrefill` historique (M60). À terme `calcPrefill` devrait rejoindre
+  `parcelPrefill` (un seul champ pour les 4). **Pas fait dans M-ENTREE** : on ne refactore pas ce qui marche
+  pendant qu'on ajoute (arbitrage Vic). Petit mandat de fusion quand l'occasion se présente.
+
 ## Artefacts d'audit conservés (M80 — ne pas purger sans savoir ce qu'ils rejouent)
 - **Tables `m6_*` (694 Mo, audit M6, juin-juillet 2026) — GARDÉES pour reproductibilité d'audit** (arbitrage
   Vic M80). Un artefact gardé sans justification devient un déchet ; voici ce que chacune rejoue :
