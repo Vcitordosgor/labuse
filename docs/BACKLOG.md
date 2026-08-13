@@ -359,3 +359,18 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 - **Dette résiduelle signalée** : les hypothèses de calcul PLU globales lues depuis `plu_saint_paul.yaml`
   (12 communes) restent un « nom de référence figé » du même type que RUN_PRECEDENT l'était — cf. mandat
   `docs/mandats/MANDAT_PLU_REFERENCE.md`.
+
+## Garde-fous & écarts non expliqués (M81)
+- **golden_check : garde-fou d'environnement vs écart métier (CORRIGÉ M81).** `golden_check.py` ciblait
+  le port **8010** par défaut alors que l'API tourne sur **8000** → 33 « Connection refused » comptés comme
+  des FAIL métier, **pris pour une baseline pendant six jours** (M73→M80). Correctif M81 : préflight
+  `_api_reachable()` (probe `/healthz`) — si l'API est injoignable, `golden_check` sort en **code 2
+  « API INJOIGNABLE »**, jamais en FAIL. **Enseignement à généraliser** : tout garde-fou qui échoue pour
+  une raison d'ENVIRONNEMENT doit le DIRE explicitement et ne jamais se confondre avec un écart de données
+  (auditer les autres gardes — non-constance, câblage, funnel — pour le même piège).
+- **`rang_total` = 428 239 vs parc 431 663 : écart de 3 424 jamais expliqué (à mesurer, mandat dédié).**
+  Ce chiffre sort dans le dossier BANQUIER (« rang X / 428 239 »). `rang_total` = `count(*) parcel_p_score_v2
+  WHERE rang IS NOT NULL` (verdict_servi.py) — donc **3 424 parcelles ont un rang NULL** (non classées).
+  Hypothèse à vérifier : copropriétés exclues du classement (la doctrine dit « hors copropriétés »), ou une
+  autre exclusion. **Mesurer d'où vient l'exclusion et la documenter (ou la corriger)** — Vic M81, hors ce
+  mandat.
