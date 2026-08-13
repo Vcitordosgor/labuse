@@ -204,6 +204,13 @@ export function Resultats({ recap, titre, etiquettes, budgetMax }: {
       <div className="flex flex-wrap items-center gap-3 border-b border-cp-line px-5 py-3.5">
         <h3 className="font-display text-[13.5px] font-semibold text-cp-txt">{titre}</h3>
       </div>
+      {/* §M78-bis 3 — l'information principale (le COMPTE) vit EN TÊTE, avant le héros. */}
+      {nAutres > 0 && (
+        <p data-resultats-compte className="border-b border-cp-line px-5 py-2.5 text-[12px] leading-snug text-cp-muted">
+          <b className="text-cp-txt">{fmtInt(recap.n_restituees)} restituées</b> sur {fmtInt(recap.n_retenues)} retenues
+          {' '}— les autres sont classées derrière le rang {recap.n_restituees}.
+        </p>
+      )}
       {liste.length > 0 && <Lead p={liste[0]} et={etiquettes} budgetMax={budgetMax} />}
       {liste.slice(1).map((p, i) => <Ligne key={p.idu} p={p} i={i + 1} et={etiquettes} />)}
       {/* mission shortlist (assemblage_court) : le payload ne porte que les IDU */}
