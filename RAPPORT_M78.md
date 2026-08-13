@@ -118,3 +118,38 @@ pré-remplit via **`parcelPrefill`** (motif M-ENTREE) ou le prefill dédié exis
 | servitudes invisibles | Servitudes (`o5-servitudes`) | via IDU |
 | évolution dans le temps | Remonter le temps (`temps`) | via IDU |
 | **diviser une parcelle** | **AUCUN** (découverte commune, décision M-ENTREE) | — → issue 4 (refus honnête, télémétrie) |
+
+### 1b/1c code + 1d test de véracité (LIVRÉ, gate bloquant VERT)
+
+- **6 outils** (`copilote_v2/outils.py`) : chacun appelle son point de calcul par IMPORT PARESSEUX
+  (motif `ia.py`, zéro cycle). Correction/preuve trouvées en construisant : `patrimoine` compte les
+  parcelles RÉELLES (jointure `parcels`) = 4183 pour la SIDR (l'oracle naïf comptait 4241 enregistrements
+  PM, dont 58 idus absents de `parcels` → l'outil a raison) ; la zone d'une parcelle est une sortie de
+  fonction (facette GPU ≠ `zone_fam`) → sortie du hand-SQL, comme le verdict. Résolution nom→SIREN
+  accent-insensible par tokens (le client tape « Société », la base stocke « SOCIETE »).
+- **Couche de réponse** (`answering.py`) : routeur → sélection d'outil (le modèle choisit un NOM + args
+  typés, jamais du SQL) → exécution serveur → formulation. **Verrou anti-invention** : tout nombre de la
+  prose doit exister dans le résultat d'outil (+ source/millésime cités), sinon prose rejetée → gabarit
+  sourcé. **Refus = TEMPLATES déterministes** (le ton d'un refus ne s'improvise pas).
+- **1d — VÉRACITÉ 32/32 VERT** (`qa/m78/veracite.py`, modèle réel). 18 exactes (chiffre == oracle
+  hand-SQL), 6 partielles (réserve DITE), 6 refus (2 PP→SPF, 2 projections, 2 hors-sujet), 2 outil
+  (porte calculette / division sans porte). 5 ratés corrigés en cours (routeur « Combien »→QUESTION,
+  mapping « opportunités », `delais_instruction` porte aussi le nb de permis, 2 attentes de test fausses).
+
+### 1e télémétrie · 1f plafonds/coûts
+
+- **1e** (`telemetrie.py`) : table `copilote_telemetrie` (DDL inline). Journalise refus « pas d'outil »
+  (anonymisé), critères non traduisibles, 👍/👎 (avec mission_id, §2f). `resume()` trie par fréquence
+  = la feuille de route MESURÉE. La télémétrie ne casse jamais une réponse (try/except + rollback).
+- **1f** : plafonds EN CONFIG (`config.py`) — `copilote_v2_missions_jour=40`, `copilote_v2_tokens_mission
+  =40 000`, `copilote_v2_instructions_lourdes_max=1` (le reste en file). Sonnet partout (Opus interdit).
+  Chaque appel journalisé `ia_log` (kind `copilote-route|select|formule`). Coût mesuré : routage
+  ~0,006 € ; une QUESTION complète (routage+sélection+formulation) ~0,015-0,02 €.
+
+### Démo 10 messages (STOP Phase 1) — 5 réponses · 5 refus
+
+`qa/m78/demo.py`. Réponses : comptage (5 301 parcelles ≥ 5000 m² Saint-Paul, sourcé) · patrimoine SIDR
+(4 183 parcelles + SDP) · délais Saint-Benoît (9 mois + réserve Sitadel intégrale) · SRU Saint-Benoît
+(34,49 % conforme) · porte Calculette pré-remplie. Refus : propriétaire PP → SPF (courrier proposé) ·
+projection → marché constaté proposé · divisibilité → fond (194 m² zone A Saint-Louis) + AUCUN outil ·
+2× hors-sujet (réponse fixe). Ton sobre, honnête, l'alternative offerte quand elle existe.

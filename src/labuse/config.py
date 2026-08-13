@@ -177,6 +177,12 @@ class Settings(BaseSettings):
     copilote_max_candidats: int = 5000
     copilote_top_restitution: int = 20     # top-N restitué (toutes missions M26-A)
     copilote_sessions_paralleles: int = 4  # faisabilité/charge : pool borné (arbitrage Vic)
+    # M78 · 1f — plafonds Copilote v2 (VALEURS EN CONFIG, jamais en dur ; au plafond : message clair,
+    # jamais un échec silencieux). Sonnet partout (Opus interdit sans justification). Chaque appel
+    # modèle est déjà journalisé dans ia_log (kind copilote-route|select|formule). Valeurs proposées :
+    copilote_v2_missions_jour: int = 40        # missions Copilote v2 / jour / compte
+    copilote_v2_tokens_mission: int = 40_000   # plafond de tokens par mission (routage+outils+formulation)
+    copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
 
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":

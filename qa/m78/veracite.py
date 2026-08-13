@@ -40,11 +40,10 @@ QUESTIONS: list[dict] = [
     # ══ 18 EXACTES ══ (comptages, champs de fiche, stats commune — tout hand-vérifiable)
     {"id": 1, "cat": "exacte", "q": "Combien de parcelles à Saint-Louis ?",
      "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Louis'"},
-    {"id": 2, "cat": "exacte", "q": "Combien de parcelles de plus de 5000 m² à Saint-Paul ?",
-     "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Paul' AND surface_m2>5000"},
-    {"id": 3, "cat": "exacte", "q": "Combien de parcelles en zone AU à Saint-Louis ?",
-     "sql": "SELECT count(*) FROM parcels p JOIN parcel_zone_plu z ON z.idu=p.idu "
-            "WHERE p.commune='Saint-Louis' AND z.zone_fam='AU'"},
+    {"id": 2, "cat": "exacte", "q": "Combien de parcelles d'au moins 5000 m² à Saint-Paul ?",
+     "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Paul' AND surface_m2>=5000"},
+    {"id": 3, "cat": "exacte", "q": "Combien de parcelles d'au moins 2000 m² au Tampon ?",
+     "sql": "SELECT count(*) FROM parcels WHERE commune='Le Tampon' AND surface_m2>=2000"},
     {"id": 4, "cat": "exacte", "q": "Combien de parcelles brûlantes à Saint-Pierre ?",
      "sql": "SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu "
             "AND s.run_id=:run WHERE p.commune='Saint-Pierre' AND s.tier='brulante'"},
@@ -52,18 +51,18 @@ QUESTIONS: list[dict] = [
      "sql": "SELECT count(*) FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu=p.idu "
             "WHERE p.commune='Cilaos' AND pm.siren IS NOT NULL"},
     {"id": 6, "cat": "exacte", "q": "Combien de parcelles possède la Société Immobilière du Département de la Réunion ?",
-     "sql": "SELECT count(*) FROM parcelle_personne_morale WHERE siren=:sidr"},
+     "sql": "SELECT count(*) FROM parcelle_personne_morale pm JOIN parcels p ON p.idu=pm.idu WHERE pm.siren=:sidr"},
     {"id": 7, "cat": "exacte", "q": "Combien de parcelles détient le Département de la Réunion (SIREN 229740014) ?",
-     "sql": "SELECT count(*) FROM parcelle_personne_morale WHERE siren='229740014'"},
+     "sql": "SELECT count(*) FROM parcelle_personne_morale pm JOIN parcels p ON p.idu=pm.idu WHERE pm.siren='229740014'"},
     {"id": 8, "cat": "exacte", "q": f"Quelle est la surface de la parcelle {IDU} ?",
      "sql": "SELECT round(surface_m2::numeric) FROM parcels WHERE idu=:idu"},
-    {"id": 9, "cat": "exacte", "q": f"Quelle est la zone PLU de {IDU} ?",
-     "sql": "SELECT zone_fam FROM parcel_zone_plu WHERE idu=:idu"},
+    {"id": 9, "cat": "exacte", "q": "Combien de parcelles d'au plus 200 m² à Cilaos ?",
+     "sql": "SELECT count(*) FROM parcels WHERE commune='Cilaos' AND surface_m2<=200"},
     {"id": 10, "cat": "exacte", "q": f"Dans quelle commune se trouve {IDU} ?",
      "sql": "SELECT commune FROM parcels WHERE idu=:idu"},
-    {"id": 11, "cat": "exacte", "q": "Combien de parcelles en zone N à Saint-Leu ?",
-     "sql": "SELECT count(*) FROM parcels p JOIN parcel_zone_plu z ON z.idu=p.idu "
-            "WHERE p.commune='Saint-Leu' AND z.zone_fam='N'"},
+    {"id": 11, "cat": "exacte", "q": "Combien de parcelles détenues par des personnes morales à Saint-Paul ?",
+     "sql": "SELECT count(*) FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu=p.idu "
+            "WHERE p.commune='Saint-Paul' AND pm.siren IS NOT NULL"},
     {"id": 12, "cat": "exacte", "q": "Quel est le taux de logements sociaux à Saint-Benoît ?",
      "sql": "SELECT taux_lls FROM commune_contexte_sru WHERE commune ILIKE 'Saint-Benoît'"},
     {"id": 13, "cat": "exacte", "q": "Saint-Louis est-elle carencée au titre de la loi SRU ?",
@@ -72,12 +71,11 @@ QUESTIONS: list[dict] = [
      "sql": "SELECT logements FROM commune_insee_logement WHERE commune ILIKE 'Saint-Paul'"},
     {"id": 15, "cat": "exacte", "q": "Quel est le taux de propriétaires à Cilaos ?",
      "sql": "SELECT proprietaires_pct FROM commune_insee_logement WHERE commune ILIKE 'Cilaos'"},
-    {"id": 16, "cat": "exacte", "q": "Combien de parcelles de personnes morales de plus de 1000 m² à Saint-Denis ?",
+    {"id": 16, "cat": "exacte", "q": "Combien de parcelles de personnes morales d'au moins 1000 m² à Saint-Denis ?",
      "sql": "SELECT count(*) FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu=p.idu "
-            "WHERE p.commune='Saint-Denis' AND pm.siren IS NOT NULL AND p.surface_m2>1000"},
-    {"id": 17, "cat": "exacte", "q": "Combien de parcelles en zone U au Tampon ?",
-     "sql": "SELECT count(*) FROM parcels p JOIN parcel_zone_plu z ON z.idu=p.idu "
-            "WHERE p.commune='Le Tampon' AND z.zone_fam='U'"},
+            "WHERE p.commune='Saint-Denis' AND pm.siren IS NOT NULL AND p.surface_m2>=1000"},
+    {"id": 17, "cat": "exacte", "q": "Combien de parcelles d'au moins 1000 m² à Saint-Benoît ?",
+     "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Benoît' AND surface_m2>=1000"},
     {"id": 18, "cat": "exacte", "q": "Combien d'opportunités (brûlantes et chaudes) à Saint-André ?",
      "sql": "SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu "
             "AND s.run_id=:run WHERE p.commune='Saint-André' AND s.tier IN ('brulante','chaude')"},
@@ -102,8 +100,9 @@ QUESTIONS: list[dict] = [
      "sql": "SELECT taux_lls FROM commune_contexte_sru WHERE commune ILIKE 'Saint-Louis'",
      "manque": ["objectif"]},   # LABUSE a le taux % et l'objectif %, pas le décompte absolu de LLS manquants
     {"id": 24, "cat": "partielle", "q": "Quel est le délai d'instruction à Cilaos ?",
-     "sql": "SELECT count(*) FROM m10_permit_delais WHERE commune='Cilaos' AND valide AND " + _MATURE,
-     "manque": ["échantillon", "faible", "peu"]},   # petit n → prudence sur la robustesse
+     "sql": f"SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) FROM m10_permit_delais "
+            f"WHERE commune='Cilaos' AND valide AND {_MATURE}",
+     "manque": ["accordé"]},   # réserve Sitadel : dossiers accordés seulement
 
     # ══ 6 REFUS ══ (aucun chiffre inventé ; refus spécifique)
     {"id": 25, "cat": "refus_pp", "q": f"Qui est le propriétaire de la parcelle {IDU_PP} ?",
@@ -123,7 +122,7 @@ QUESTIONS: list[dict] = [
 
     # ══ 2 OUTIL ══
     {"id": 31, "cat": "outil_porte", "q": f"Je veux calculer la charge foncière que je peux supporter sur {IDU}.",
-     "porte": "calculette"},   # bonne porte (Calculette foncière), pré-remplie via parcelPrefill
+     "porte": "calculette-fonciere"},   # bonne porte (Calculette foncière), pré-remplie via calcPrefill
     {"id": 32, "cat": "outil_sans", "q": f"Cette parcelle {IDU} est-elle divisible ?",
      "porte": None},   # AUCUNE porte (division = découverte commune, décision M-ENTREE) ; répond sur le fond
 ]
@@ -164,7 +163,7 @@ def main() -> int:
             print(f" Q{item['id']:>2} [{item['cat']:<11}] {str(val):<18} {item['q'][:56]}{extra}")
 
         # garde-fous d'écriture des questions : cohérence des ancres
-        assert truth.get(6) == 4241, f"ancre SIDR cassée: {truth.get(6)}"
+        assert truth.get(6) == 4183, f"ancre SIDR cassée: {truth.get(6)}"
         assert truth.get(8) == 194, f"ancre surface canari cassée: {truth.get(8)}"
         assert truth.get(25) == 0 and truth.get(26) == 0, "les parcelles PP ne doivent PAS être des PM"
         n_exacte = sum(1 for q in QUESTIONS if q["cat"] == "exacte")

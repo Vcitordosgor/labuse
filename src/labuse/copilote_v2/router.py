@@ -90,8 +90,13 @@ LES SEPT INTENTIONS :
   logements à Saint-André », « ajoute/attache cette parcelle à ce projet ». Signal : « nouveau projet »,
   « crée un projet », « enregistre », « ajoute … au projet ».
 - HORS_SUJET : rien à voir avec l'immobilier/foncier de La Réunion (météo, cuisine, poésie, bavardage).
+  ATTENTION : une question sur la VALEUR ou l'ÉVOLUTION FUTURE d'un bien/terrain/marché réunionnais
+  (« combien vaudra… dans 10 ans », « le marché va-t-il monter… ») N'EST PAS hors-sujet — c'est du
+  foncier → classe QUESTION (le refus « projection » se décide en aval, pas ici).
 
 RÈGLES :
+- RÈGLE DURE : tout message qui commence par « Combien » attend un NOMBRE → QUESTION, quel que soit le
+  sujet (« combien de parcelles brûlantes à X » = QUESTION, jamais RECHERCHE).
 - Frontière QUESTION vs RECHERCHE : une réponse BRÈVE et chiffrée (un compte, un prix, un délai) = QUESTION ;
   sortir un ENSEMBLE de parcelles à instruire = RECHERCHE. Une tournure « des parcelles [caractéristique]
   à [commune] », « des terrains [critère] », « donne/sors-moi des parcelles… » désigne un ENSEMBLE à lister
