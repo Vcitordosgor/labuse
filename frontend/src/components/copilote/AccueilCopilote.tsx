@@ -3,26 +3,47 @@
 // cartes Chercher/Vérifier/Veiller à deux exemples cliquables (le clic REMPLIT la barre, ne lance
 // rien), pied de garanties. Retirés (mandat) : onglets « BIENTÔT », paragraphe défensif, pitch « il
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { fmtInt } from '../../lib/format'
 import type { AccueilChiffres, CopiloteMission, CopiloteVeille } from '../../lib/api'
 
-type Carte = { past: string; titre: string; desc: (parc: string) => string; ex: [string, string] }
+type Carte = { past: string; titre: string; desc: (parc: string) => string }
 
 const CARTES: Carte[] = [
   { past: '⌕', titre: 'Chercher',
-    desc: (parc) => `Décrivez le terrain ou le programme. Les moteurs passent les ${parc} parcelles au crible.`,
-    ex: ['Terrain de 1 200 m² constructible à Saint-André',
-         '15 logements, budget 800 k€, hors zone inondable'] },
+    desc: (parc) => `Décrivez le terrain ou le programme. Les moteurs passent les ${parc} parcelles au crible.` },
   { past: '⚖', titre: 'Vérifier',
-    desc: () => "Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé.",
-    ex: ['On me propose 97411000AK0043 à 340 000 € — je me fais avoir ?',
-         'Quelles contraintes sur cette parcelle avant de signer ?'] },
+    desc: () => "Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé." },
   { past: '🔔', titre: 'Veiller',
-    desc: () => "Votre secteur sous surveillance. Alerte dès qu'une vente, un permis ou une procédure PLU bouge.",
-    ex: ['Préviens-moi de tout nouveau permis à Saint-Paul',
-         'Alerte-moi si la zone AU de Cambaie change au PLU'] },
+    desc: () => "Votre secteur sous surveillance. Alerte dès qu'une vente, un permis ou une procédure PLU bouge." },
 ]
+
+// M78-bis §1 — POOL d'exemples VARIÉS couvrant les 7 intentions (le client comprend en un regard qu'il
+// peut TOUT écrire). Beaucoup viennent du test de véracité (vérifiés → démontrables sans risque). 6 en
+// rotation aléatoire à chaque visite. Un clic remplit la barre, ne lance rien.
+const POOL: string[] = [
+  'Combien de parcelles à Saint-Paul ?',
+  'Quel est le PLU en vigueur à Saint-Denis ?',
+  'Quelles parcelles appartiennent à la SIDR ?',
+  'Combien de temps met un permis à Saint-Benoît ?',
+  'Je cherche un terrain de 1 000 m² à La Possession, budget 300 k€',
+  'Un projet de lotissement étudiant à Sainte-Marie : 6 bâtiments de 4 appartements',
+  'On me propose 97411000AK0043 à 340 000 € — bon prix ?',
+  'Préviens-moi de tout nouveau permis à Saint-Paul',
+  'Crée un projet : résidence 12 logements à Bras-Panon',
+  'Je veux écrire au propriétaire de cette parcelle',
+  'Quelles communes manquent de logements sociaux ?',
+  'Le marché de Saint-Pierre est-il actif en ce moment ?',
+  "Combien de parcelles d'au moins 5 000 m² à Saint-Paul ?",
+  'Quel est le taux de logement social à Saint-Benoît ?',
+  'Cette parcelle 97414000CV0907 est-elle divisible ?',
+  'Assemble des parcelles contiguës',
+]
+
+/** 6 exemples tirés au hasard (à chaque montage = à chaque visite). */
+function sixAuHasard(): string[] {
+  return [...POOL].sort(() => Math.random() - 0.5).slice(0, 6)
+}
 
 export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
   missions, onReprendre, veilles, onSupprimerVeille }: {
@@ -40,6 +61,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
+  const exemples6 = useMemo(sixAuHasard, [])   // §1 — 6 exemples variés, tirés à cette visite
 
   // [N] et [parc] DYNAMIQUES — masqués (pas inventés) si le bandeau ne les a pas encore.
   const nSources = chiffres?.sources != null ? String(chiffres.sources) : null
@@ -69,9 +91,22 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
-      <p className="mb-6 text-center text-[11px] text-cp-faint">
+      <p className="mb-4 text-center text-[11px] text-cp-faint">
         Écrivez librement — le Copilote comprend s'il faut chercher, vérifier ou veiller.
       </p>
+
+      {/* §1 — le client voit d'un regard qu'il peut TOUT écrire : 6 exemples variés (7 intentions),
+           tirés au hasard. Un clic REMPLIT la barre, ne lance rien. */}
+      {!reponse && (
+        <div data-accueil-exemples className="mb-8 flex flex-wrap justify-center gap-2">
+          {exemples6.map((e) => (
+            <button key={e} data-accueil-ex onClick={() => onPick(e)}
+              className="rounded-lg border border-cp-line bg-cp-card/40 px-3 py-1.5 text-left text-[11px] italic text-cp-muted transition-colors duration-quick hover:border-mint/30 hover:text-cp-txt">
+              « {e} »
+            </button>
+          ))}
+        </div>
+      )}
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
 
@@ -121,7 +156,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         </div>
       )}
 
-      {/* trois missions — exemples cliquables : REMPLISSENT la barre, ne lancent rien */}
+      {/* trois missions — les archétypes (les exemples VARIÉS vivent en pool sous la barre, §1) */}
       <div className="mb-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         {CARTES.map((c) => (
           <div key={c.titre} data-mission-carte className="rounded-[9px] bg-cp-card p-4">
@@ -129,15 +164,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
               <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#12291D] text-[14px] text-mint">{c.past}</div>
               <span className="font-display text-[13.5px] font-medium text-cp-txt">{c.titre}</span>
             </div>
-            <p className="mb-3 text-[11px] leading-[1.5] text-cp-muted">{c.desc(parc)}</p>
-            <div className="border-t border-cp-line pt-2.5">
-              {c.ex.map((e) => (
-                <p key={e} data-accueil-ex onClick={() => onPick(e)}
-                  className="mb-1.5 cursor-pointer text-[10.5px] italic leading-[1.5] text-cp-faint last:mb-0 hover:text-cp-muted">
-                  « {e} »
-                </p>
-              ))}
-            </div>
+            <p className="text-[11px] leading-[1.5] text-cp-muted">{c.desc(parc)}</p>
           </div>
         ))}
       </div>
