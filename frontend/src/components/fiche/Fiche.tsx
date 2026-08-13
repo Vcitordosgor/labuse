@@ -1256,7 +1256,6 @@ export function Fiche({ idu }: { idu: string }) {
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
-  const setMsel = useApp((s) => s.setMsel)                 // M60 P1d — porte Assemblage (amorce l'assiette)
   const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
@@ -1985,6 +1984,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
                   sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
                   onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
+                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
+                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
+                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
+                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
+                  onClick={() => setModule('verif-procedure')} />
               </div>
             </RefDrawer>
 
@@ -2038,6 +2042,14 @@ export function Fiche({ idu }: { idu: string }) {
               {risquesLines.length
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+              {/* M70 déc. 9 — PORTES Risques (grille terminale supprimée) : Contrôle avant achat
+                  (due diligence) + Servitudes invisibles. Les deux lisent selectedIdu → pré-remplis. */}
+              <PorteOutil ico="✓" data="duediligence" titre="Contrôle avant achat"
+                sous="La check-list de due diligence, cette parcelle en tête"
+                onClick={() => setModule('duediligence')} />
+              <PorteOutil ico="⚑" data="o5-servitudes" titre="Servitudes invisibles"
+                sous="Les contraintes dormantes qui ne se voient pas sur la carte"
+                onClick={() => setModule('o5-servitudes')} />
             </RefDrawer>
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
@@ -2091,6 +2103,16 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                   <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
                 </div>
+              )}
+              {/* M70 déc. 9 — PORTES Marché (grille terminale supprimée) : Comparer (cette parcelle
+                  chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
+              <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
+                sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"
+                onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
+              {f.coords && (
+                <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
+                  sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"
+                  onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
               )}
             </RefDrawer>
 
@@ -2344,31 +2366,13 @@ export function Fiche({ idu }: { idu: string }) {
                 </div>
                 <PreDossierTile idu={idu} />
               </div>
-              {/* M60 P1d — OUTILS SUR CETTE PARCELLE : portes compactes 2 colonnes ; chaque porte ouvre
-                  l'outil PRÉ-REMPLI avec cette parcelle (setModule garde selectedIdu → retour intact). */}
-              <div className="sec"><span>OUTILS SUR CETTE PARCELLE</span><i /></div>
-              <div className="grid grid-cols-2 gap-2">
-                <PorteOutil compacte ico="⇄" data="comparer" titre="Comparer"
-                  sous="Cette parcelle chargée · ajoutez-en d'autres"
-                  onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
-                <PorteOutil compacte ico="⬡" data="assemblage" titre="Assemblage"
-                  sous="Amorcer l'assiette avec cette parcelle"
-                  onClick={() => { setMsel([idu]); setModule('assemblage') }} />
-                {f.coords && (
-                  <PorteOutil compacte ico="◷" data="temps" titre="Remonter le temps"
-                    sous="Ce terrain de 1950 à aujourd'hui"
-                    onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
-                )}
-                <PorteOutil compacte ico="✓" data="duediligence" titre="Contrôle avant achat"
-                  sous="La check-list, cette parcelle en tête"
-                  onClick={() => setModule('duediligence')} />
-                <PorteOutil compacte ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
-                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => setModule('verif-procedure')} />
-                <PorteOutil compacte ico="▤" data="programme" titre="Faisabilité"
-                  sous="Monter un programme sur cette parcelle"
-                  onClick={() => setModule('programme')} />
-              </div>
+              {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
+                  (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
+                  contextuelle en pied du tiroir où il a un rapport étroit avec les données :
+                  Comparer + Remonter le temps → Marché ; Vérif procédure PLU → Urbanisme ;
+                  Contrôle avant achat + Servitudes invisibles → Risques ; Courrier SPF + Scan
+                  patrimoine → Propriétaire ; Calculette → Constructibilité. Assemblage/Division/
+                  Faisabilité : PAS de porte (n'acceptent pas un IDU pré-rempli — fausse promesse). */}
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
