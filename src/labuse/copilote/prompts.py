@@ -45,6 +45,7 @@ SORTIE_SCHEMA: dict = {
                     },
                 },
                 "surface_min_m2": {"type": ["number", "null"], "exclusiveMinimum": 0},
+                "criteres_non_appliques": {"type": ["array", "null"], "items": {"type": "string"}},
             },
         },
         "clarification": {
@@ -73,7 +74,8 @@ SORTIE : UNIQUEMENT un objet JSON (aucun texte autour), de l'une des deux formes
              "budget_max_eur": N | null,
              "contraintes": {"exclure_ppr_rouge": bool | null, "exclure_abf": bool | null,
                              "zones": ["U","AU","A","N"] | null},
-             "surface_min_m2": N | null}}
+             "surface_min_m2": N | null,
+             "criteres_non_appliques": ["proche de la mer", ...] | null}}
 ou
   {"clarification": {"question": "...", "champ_manquant": "...", "options": [...] | null}}
 
@@ -92,6 +94,12 @@ RÈGLES ABSOLUES :
 6. Phrase hors-sujet (pas un besoin foncier) → clarification honnête, champ_manquant
    "besoin", question expliquant ce que le Copilote sait instruire.
 7. contraintes/budget/surface_min non évoqués → null (les défauts sont posés par le code).
+8. criteres_non_appliques : liste les critères que tu COMPRENDS mais que LABUSE ne sait PAS
+   filtrer en recherche — la PROXIMITÉ spatiale (« proche de la mer », « à moins de X m de… »)
+   et « déjà en vente / sur le marché » (LABUSE n'a pas d'annonces). NE liste PAS le risque/PPR/
+   zone inondable (le moteur risques SAIT l'appliquer via exclure_ppr_rouge), ni rien de déjà
+   couvert par les autres champs. Rien à signaler → [] ou null. Ces critères sont DITS au client,
+   jamais ignorés en silence.
 """
 
 SYSTEM_EXTRACTION_REFS = """Tu extrais des références de parcelles ou des adresses d'un texte libre

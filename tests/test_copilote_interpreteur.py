@@ -79,10 +79,15 @@ def test_commune_absente_clarification():
     assert r.clarification["champ_manquant"] == "communes"
 
 
-def test_programme_absent_clarification():
+def test_programme_absent_non_bloquant():
+    # M78-quater #1 — le PROGRAMME n'est JAMAIS bloquant : chercher un terrain sans programme est
+    # légitime. Absent → brief valide avec programme nul (le moteur cherche sans filtre de capacité).
     r = it.interpreter_brief("un terrain à Saint-Paul", "instruire",
                              llm=_llm(_brief_modele(programme={})))
-    assert r.brief is None and r.clarification["champ_manquant"] == "programme"
+    assert r.clarification is None
+    assert r.brief is not None
+    assert r.brief["communes"] == ["Saint-Paul"]
+    assert r.brief["programme"] == {"logements": None, "sdp_cible_m2": None}
 
 
 def test_pas_cher_sans_montant_clarification():

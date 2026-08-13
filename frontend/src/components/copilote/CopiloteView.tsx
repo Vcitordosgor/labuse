@@ -8,6 +8,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
+import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
+  getAccueilChiffres, type AccueilChiffres, type CopiloteMission,
+  type CopiloteV2Reponse } from '../../lib/api'
+import { ReponseInline } from './ReponseInline'
+import { RecapConfirmation } from './RecapConfirmation'
+import { CopiloteEmbarque } from './CopiloteEmbarque'
+import { AccueilCopilote } from './AccueilCopilote'
+import { ChipsCompris } from './ChipsCompris'
 import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
 import { FilInstruction } from './FilInstruction'
@@ -15,7 +23,6 @@ import { Resultats, type EtiquettesMoteurs } from './Resultats'
 import { PillStatut, SecHead } from './ui'
 import { runEpingle, useCopiloteRun } from './useCopiloteRun'
 import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
-import { AvisIA } from '../AvisIA'
 import { useApp } from '../../store/useApp'
 
 const S = CLIENT.copilote
@@ -30,34 +37,6 @@ const FOND = {
 const TON_STATUT: Record<string, 'mint' | 'violet' | 'ambre' | 'rouge'> = {
   interpreting: 'violet', running: 'violet', awaiting_user: 'ambre', paused: 'ambre',
   done: 'mint', failed: 'rouge', cancelled: 'rouge',
-}
-
-function Missions({ mission, setMission, verrouille }: {
-  mission: MissionActive
-  setMission: (m: MissionActive) => void
-  verrouille: boolean
-}) {
-  return (
-    <div data-missions className="mt-3 flex flex-wrap items-center gap-2">
-      {S.missions.map((m) => m.actif ? (
-        <button key={m.key} data-mission={m.key} disabled={verrouille}
-          onClick={() => setMission(m.key as MissionActive)}
-          className={`rounded-lg border px-3 py-1.5 font-display text-[11px] font-semibold transition-colors duration-quick ${
-            mission === m.key
-              ? 'border-mint/50 bg-mint/10 text-mint'
-              : 'border-cp-line2 bg-cp-card2 text-cp-muted hover:border-mint/40'} ${
-            verrouille ? 'cursor-default opacity-60' : ''}`}>
-          {m.label}
-        </button>
-      ) : (
-        <span key={m.key} data-mission={m.key} data-mission-bientot
-          className="flex items-center gap-1.5 rounded-lg border border-cp-line px-3 py-1.5 font-display text-[11px] font-semibold text-cp-faint opacity-60">
-          {m.label}
-          <span className="rounded border border-cp-line2 px-1 py-px text-[8.5px] uppercase tracking-[.1em]">{S.bientot}</span>
-        </span>
-      ))}
-    </div>
-  )
 }
 
 /** Étiquette produite par chaque moteur, lue dans le fil (payload, jamais inventée). */
@@ -105,14 +84,77 @@ function useChrono(depuis: string | null, actif: boolean): number | null {
   return Number.isFinite(s) ? s : null
 }
 
+
 export function CopiloteView() {
   const run = useCopiloteRun()
   const { vue } = run
   const [brief, setBrief] = useState('')
-  const [mission, setMission] = useState<MissionActive>('instruire')
-  const [reponse, setReponse] = useState('')
+  const [mission] = useState<MissionActive>('instruire')   // v2 : le routeur décide, plus d'onglets
   const [journalOuvert, setJournalOuvert] = useState(false)
+  const [chiffres, setChiffres] = useState<AccueilChiffres | null>(null)
+  const [v2, setV2] = useState<CopiloteV2Reponse | null>(null)
+  const [recap, setRecap] = useState<CopiloteV2Reponse | null>(null)      // §M78-bis — péage de confirmation
+  const [recapConfirme, setRecapConfirme] = useState<string | null>(null)  // reste en tête pendant l'instruction
+  const [dispatching, setDispatching] = useState(false)
+  const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
+  const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
+  const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
+  useEffect(() => { void rafraichirMissions() }, [])
+  // M78-quater #3 — la veille n'est plus exposée sur cet écran (bloc retiré) ; le mécanisme (intention
+  // VEILLE, stockage, évaluation) reste branché côté serveur. Écran veilles dédié = BACKLOG.
+
+  // M78 · 2a / M78-bis — dispatch : le routeur décide. RECHERCHE/VERIFICATION passent par un RÉCAP de
+  // confirmation (péage §5 : le coût d'une mauvaise interprétation est élevé) AVANT d'instruire ;
+  // QUESTION/OUTIL/PROJET/VEILLE/refus répondent immédiatement (la réponse inline).
+  const interroger = async (msg: string, opts?: { confirme?: boolean }) => {
+    const m = msg.trim()
+    if (!m || dispatching) return
+    setDispatching(true); setV2(null); setRecap(null)
+    if (!opts?.confirme) setRecapConfirme(null)        // nouveau brief = nouveau contexte
+    try {
+      const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme })
+      if (r.conversation_id != null) setConvId(r.conversation_id)
+      void rafraichirMissions()
+      const lourde = r.intent === 'RECHERCHE' || r.intent === 'VERIFICATION'
+      if (lourde && !opts?.confirme && (r.needs_confirmation || r.clarification_recap)) {
+        setRecap(r)                                    // PÉAGE : on montre le récap, on n'instruit pas
+      } else if (r.intent === 'RECHERCHE') {           // confirmé → on lance le run M26-A
+        setRecapConfirme(r.recap ?? m); void run.instruire(mission, m)
+      } else {
+        setV2(r)
+      }
+    } catch (e) {
+      setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
+    } finally { setDispatching(false) }
+  }
+  const soumettre = () => void interroger(brief)
+
+  // §M78-bis — callbacks du récap. reask : ré-interprète (option/chip) → nouveau récap. lancer :
+  // valide → RECHERCHE lance le run avec le brief final, VERIFICATION produit l'avis (confirme).
+  // corriger : remet le brief dans la barre (jamais verrouillée) pour réécrire.
+  const reask = (nouveauBrief: string) => { setBrief(nouveauBrief); void interroger(nouveauBrief) }
+  const lancerRecap = (finalBrief: string) => {
+    const intent = recap?.intent
+    setRecap(null); setBrief(finalBrief)
+    if (intent === 'VERIFICATION') { void interroger(finalBrief, { confirme: true }) }
+    else { setRecapConfirme(recap?.recap ?? finalBrief); void run.instruire(mission, finalBrief) }
+  }
+  const corrigerRecap = (b: string) => { setRecap(null); setBrief(b); setTimeout(() => briefRef.current?.focus(), 0) }
+
+  // §2b — rouvrir une mission passée : RECHERCHE (run_id) rejoue le run ; sinon restaure la dernière
+  // réponse Copilote de la conversation (inline). On reprend là où on s'est arrêté.
+  const rouvrir = async (m: CopiloteMission) => {
+    if (m.run_id) { charger(m.run_id); return }
+    try {
+      const conv = await copiloteV2Mission(m.id)
+      setConvId(conv.id)
+      const dernier = [...conv.messages].reverse().find((x) => x.role === 'copilote')
+      if (dernier) setV2({ text: dernier.texte, intent: (dernier.intent as CopiloteV2Reponse['intent']) ?? null })
+    } catch { /* silencieux — l'historique ne casse pas l'écran */ }
+  }
 
   // rafraîchissement en plein run : on recharge le run épinglé, le SSE rejoue le fil
   const { charger } = run
@@ -126,6 +168,10 @@ export function CopiloteView() {
   // l'amorce prend place dans le brief (ancien flux IAStub → ProjetEntretien, désormais absorbé
   // par le Copilote). Consommée une fois, puis effacée. Ne pas écraser un brief déjà saisi.
   const { entretienDirect, clearEntretienDirect } = useApp()
+  const selectParcelle = useApp((s) => s.select)
+  const setView = useApp((s) => s.setView)
+  // M78-bis — ouvrir la fiche existante d'une parcelle restituée (setView PUIS select, ordre respecté).
+  const ouvrirFiche = (idu: string) => { setView('cartes'); selectParcelle(idu) }
   useEffect(() => {
     if (entretienDirect === null) return
     setBrief((b) => b.trim() ? b : (entretienDirect || 'je veux monter une opération immobilière'))
@@ -138,21 +184,41 @@ export function CopiloteView() {
   const enAttente = vue.statut === 'awaiting_user'
   const enInstruction = actif && !terminal && !enAttente
   const fini = vue.statut === 'done' && vue.recap != null
+  // M78-bis — un run rejoué au boot en PAUSE (awaiting_user) est un RÉSIDU d'avant le récap : la
+  // confirmation-récap a REMPLACÉ la pause, et son UI (clarification pleine page + bouton « répondre »)
+  // n'existe plus. Un tel run court-circuiterait l'accueil et resterait bloqué sur « EN PAUSE » sans
+  // moyen d'avancer. On le dépingle → l'accueil (2a) reprend la main. Ne touche pas au run serveur.
+  const { reinitialiser } = run
+  useEffect(() => {
+    if (enAttente) reinitialiser()
+  }, [enAttente, reinitialiser])
   const communes = (vue.briefJson?.communes as string[] | undefined) ?? null
   const nLogements = (vue.briefJson?.programme as { logements?: number } | undefined)?.logements
   const nFaits = vue.etapes.filter((e) => e.etat === 'faite' || e.etat === 'echouee').length
   const chrono = useChrono(run.evenements[0]?.created_at ?? null, enInstruction)
 
-  const lancer = () => {
-    if (brief.trim() && !enInstruction && !enAttente && !run.enCreation)
-      void run.instruire(mission, brief)
-  }
   // relances de l'état 4 — NON CHIFFRÉES : le brief d'origine revient en console,
   // l'utilisateur ajuste lui-même (aucun chiffre inventé par l'écran)
   const relancer = () => {
     setBrief(vue.briefRaw ?? brief)
     briefRef.current?.focus()
     briefRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }
+
+  // §2c/2d — modifier un critère (chip) : si une instruction tourne, on l'ANNULE proprement (le
+  // client pilote, il ne subit pas) puis on relance avec les critères corrigés. Aucun job zombie.
+  const relancerAvec = async (nouveauBrief: string) => {
+    if (!nouveauBrief.trim()) return
+    setBrief(nouveauBrief)
+    if (enInstruction || enAttente) await run.annuler()
+    void run.instruire(mission, nouveauBrief)
+  }
+  // « + corriger » : ramène le brief dans la barre d'accueil (édition libre), instruction annulée.
+  const corrigerDansBarre = (b: string) => {
+    setBrief(b); setV2(null)
+    if (enInstruction || enAttente) void run.annuler()
+    run.reinitialiser()
+    setTimeout(() => briefRef.current?.focus(), 0)
   }
 
   const pill = run.quota != null
@@ -168,59 +234,67 @@ export function CopiloteView() {
   return (
     <div data-copilote className="min-h-0 flex-1 overflow-y-auto bg-cp-bg font-sans text-[13px] text-cp-txt" style={FOND}>
       <div className="mx-auto max-w-[1000px] px-6 pb-12 pt-9">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="font-display text-[10.5px] uppercase tracking-[.24em] text-cp-muted">{S.crumb}</span>
-          {pill}
-          {run.fluxInterrompu && (
-            <span data-flux-interrompu className="text-[10.5px] text-cp-amber">{S.fluxInterrompu}</span>
-          )}
-        </div>
-
-        <h1 className="font-display text-[clamp(30px,5vw,44px)] font-bold leading-[1.05] tracking-tight text-cp-txt">
-          {S.h1Ligne1}<br />{S.h1Ligne2Avant}<em className="not-italic text-mint">{S.h1Ligne2Em}</em>{S.h1Ligne2Apres}
-        </h1>
-        <p className="mb-6 mt-3 max-w-[600px] text-[13.5px] text-cp-muted">
-          {S.lede}<b className="font-medium text-cp-txt">{S.ledeFort}</b>
-        </p>
-
-        <AvisIA className="mb-5 border-cp-faint/40 bg-white/[0.02] text-cp-muted" />
-
-        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)] ${
-          run.quota != null ? 'border-cp-red/30 opacity-50'
-          : enInstruction || enAttente ? 'border-mint/35 opacity-65' : 'border-mint/35'}`}>
-          <div className="min-w-[250px] flex-1">
-            <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
-              readOnly={enInstruction || enAttente} placeholder={S.placeholder} rows={2}
-              className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            {enInstruction ? (
-              <button data-annuler onClick={() => void run.annuler()}
-                className="rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
-                {S.annuler}
-              </button>
-            ) : enAttente ? (
-              <button data-en-attente disabled
-                className="cursor-default rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
-                {S.enAttenteBouton}
-              </button>
-            ) : (
-              <button data-instruire onClick={lancer}
-                disabled={!brief.trim() || run.enCreation || run.quota != null}
-                className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
-                {S.instruire} →
-              </button>
-            )}
-            <div className={`flex items-center gap-2 text-[10.5px] ${run.quota != null ? 'text-cp-red' : 'text-cp-faint'}`}>
-              <i className={`h-1 w-1 rounded-full ${run.quota != null ? 'bg-cp-red' : 'bg-mint'}`} />
-              {run.quota != null ? S.quota.pill
-                : enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6)
-                : enAttente ? S.suspendue
-                : S.serment}
+        {!actif ? (
+          /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
+          <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
+            onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
+            chiffres={chiffres} occupe={dispatching}
+            missions={missions} onReprendre={rouvrir}
+            reponse={recap
+              ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
+                  onLancer={lancerRecap} onCorriger={corrigerRecap} />
+              : v2 ? <ReponseInline v2={v2} /> : null} />
+        ) : (
+          <>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="font-display text-[10.5px] uppercase tracking-[.24em] text-cp-muted">{S.crumb}</span>
+              {pill}
+              {run.fluxInterrompu && (
+                <span data-flux-interrompu className="text-[10.5px] text-cp-amber">{S.fluxInterrompu}</span>
+              )}
             </div>
-          </div>
-        </div>
-        <Missions mission={mission} setMission={setMission} verrouille={enInstruction || enAttente} />
+            {/* §M78-bis 2 — le récap validé RESTE en tête pendant l'instruction et sur les résultats :
+                le client qui revient (notification) relit son brief en une ligne. */}
+            {recapConfirme && (
+              <div data-recap-confirme className="mb-4 rounded-xl border border-mint/20 bg-mint/[0.04] px-4 py-2 text-[12.5px] leading-snug text-cp-muted">
+                <span className="text-mint">✦</span> {recapConfirme}
+              </div>
+            )}
+            {/* barre principale — JAMAIS verrouillée (§complément) : le client peut toujours écrire. */}
+            <div className="flex flex-wrap items-start gap-5 rounded-[18px] border border-mint/35 bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)]">
+              <div className="min-w-[250px] flex-1">
+                <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
+                  placeholder={S.placeholder} rows={2}
+                  className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                {enInstruction ? (
+                  <button data-annuler onClick={() => void run.annuler()}
+                    className="rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
+                    {S.annuler}
+                  </button>
+                ) : (
+                  <button data-instruire onClick={soumettre}
+                    disabled={!brief.trim() || run.enCreation || dispatching}
+                    className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
+                    {S.instruire} →
+                  </button>
+                )}
+                <div className="flex items-center gap-2 text-[10.5px] text-cp-faint">
+                  <i className="h-1 w-1 rounded-full bg-mint" />
+                  {enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6) : S.serment}
+                </div>
+              </div>
+            </div>
+            {/* §2c — « COMPRIS : » chips éditables des critères déduits (dès brief_parsed) */}
+            {vue.briefJson && (
+              <div className="mt-4">
+                <ChipsCompris briefJson={vue.briefJson} enCours={enInstruction}
+                  onRelancer={relancerAvec} onCorriger={corrigerDansBarre} />
+              </div>
+            )}
+          </>
+        )}
 
         {/* ── état 5 · quota atteint AVANT création — aucun run, aucun moteur ── */}
         {run.quota && (
@@ -246,39 +320,10 @@ export function CopiloteView() {
           </p>
         )}
 
-        {/* ── état 3 · demande de précision — le run REPREND, il ne redémarre pas ── */}
-        {enAttente && vue.clarification && (
-          <div data-clarification className="mt-9 rounded-2xl border border-cp-violet/35 bg-cp-card px-6 py-5">
-            <div className="mb-2.5 font-display text-[9.5px] uppercase tracking-[.2em] text-cp-violet">{S.precisionTitre}</div>
-            <h3 className="font-display text-lg font-semibold tracking-tight text-cp-txt">{vue.clarification.question}</h3>
-            {(vue.clarification.options?.length ?? 0) > 0 && (
-              <div className="mb-3.5 mt-4 flex flex-wrap gap-2">
-                {(vue.clarification.options ?? []).map((o) => (
-                  <button key={o} data-clarif-option onClick={() => void run.repondre(o)}
-                    className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-mint hover:text-mint">
-                    {o}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="mt-3.5 flex gap-1.5 rounded-[13px] border border-cp-line2 bg-cp-card2 p-1.5">
-              <input data-clarif-libre value={reponse} onChange={(e) => setReponse(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void run.repondre(reponse) }}
-                placeholder={S.precisionPlaceholder}
-                className="flex-1 bg-transparent px-3 py-2.5 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
-              <button data-clarif-reprendre disabled={!reponse.trim()} onClick={() => void run.repondre(reponse)}
-                className="rounded-[10px] bg-cp-violet px-5 py-2.5 font-display text-[12px] font-bold text-[#150E22] disabled:opacity-40">
-                {S.precisionReprendre}
-              </button>
-            </div>
-          </div>
-        )}
-        {enAttente && vue.plan.length > 0 && (
-          <>
-            <SecHead titre={S.fil.titre} meta={S.fil.metaPause} />
-            <FilInstruction etapes={vue.etapes} interpretation={etatInterpretation(vue)} />
-          </>
-        )}
+        {/* §M78-bis complément — l'écran « PRÉCISION NÉCESSAIRE » (clarification pleine page + 24 chips
+            + barre verrouillée « EN ATTENTE ») est RETIRÉ : la clarification est désormais une bulle du
+            récap (≤ 4 options, barre jamais verrouillée), AVANT l'instruction. De même, plus aucune étape
+            « en attente » n'est affichée tant que l'instruction n'est pas lancée. */}
 
         {/* ── état 2 · instruction en cours — AUCUN résultat partiel (règle 5) ── */}
         {enInstruction && vue.plan.length > 0 && (
@@ -322,8 +367,18 @@ export function CopiloteView() {
 
             <SecHead titre={S.resultats.titre(vue.recap.n_restituees)}
               meta={S.resultats.meta(vue.recap.n_retenues)} />
+            {/* §5 surface 2 — affiner par le Copilote : la shortlist courante devient le contexte */}
+            {vue.recap.n_restituees > 0 && (
+              <div className="mb-3">
+                <CopiloteEmbarque contexte={{ selection: vue.recap.restituees_idu
+                    ?? (vue.recap.restituees ?? []).map((p) => p.idu) }}
+                  placeholder="Affiner par le Copilote sur cette shortlist…"
+                  exemples={['Laquelle est la moins risquée ?', 'Compare les deux premières']} />
+              </div>
+            )}
             {vue.recap.n_restituees > 0 ? (
-              <Resultats recap={vue.recap} etiquettes={etiquettesDe(vue)}
+              <Resultats recap={vue.recap} etiquettes={etiquettesDe(vue)} onOuvrirFiche={ouvrirFiche}
+                budgetMax={(vue.briefJson?.budget_max_eur as number | undefined) ?? null}
                 titre={[communes?.join(', '), nLogements != null ? `${nLogements} logements` : null]
                   .filter(Boolean).join(' · ')} />
             ) : (

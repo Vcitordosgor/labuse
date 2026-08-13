@@ -8,7 +8,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CopiloteEvent } from '../../../lib/copilote'
 import { CopiloteView } from '../CopiloteView'
-import { etat1Calibre, etat2EnCours, etat3Clarification, etat4Zero } from './fixtures'
+import { etat1Calibre, etat2EnCours, etat4Zero } from './fixtures'
 
 class FauxEventSource {
   static instances: FauxEventSource[] = []
@@ -40,16 +40,21 @@ let fetchMock: ReturnType<typeof vi.fn>
 async function lancerRun() {
   const rendu = render(<CopiloteView />)
   fireEvent.change(document.querySelector('[data-brief]')!, { target: { value: 'brief de test' } })
-  fireEvent.click(document.querySelector('[data-instruire]')!)
+  // M78 · 2a — la barre d'accueil dispatche par le routeur (mocké → RECHERCHE) puis lance le run.
+  fireEvent.click(document.querySelector('[data-accueil-envoyer]')!)
   await waitFor(() => expect(FauxEventSource.instances.length).toBeGreaterThan(0))
   return { es: FauxEventSource.instances[0], rendu }
 }
+
+// routeur v2 mocké : /ask → RECHERCHE (mission lourde) ; le reste → run_id.
+const reponse = (url: unknown) => String(url).includes('/copilote-v2/ask')
+  ? { intent: 'RECHERCHE' } : { run_id: 'run-test' }
 
 beforeEach(() => {
   localStorage.clear()
   FauxEventSource.instances = []
   vi.stubGlobal('EventSource', FauxEventSource as unknown as typeof EventSource)
-  fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ run_id: 'run-test' }) }))
+  fetchMock = vi.fn(async (url: unknown) => ({ ok: true, json: async () => reponse(url) }))
   vi.stubGlobal('fetch', fetchMock)
 })
 afterEach(() => vi.unstubAllGlobals())
@@ -85,6 +90,20 @@ describe('état 2 — instruction en cours', () => {
       (c) => String(c[0]).includes('/cancel'))).toBe(true))
   })
 
+  it('§2c/2d — chips COMPRIS visibles ; retirer une chip EN COURS annule proprement puis relance', async () => {
+    const { es } = await lancerRun()
+    act(() => { for (const e of etat2EnCours()) es.emet(e) })
+    // les critères déduits sont montrés en chips (brief_json), avec la traduction visible
+    expect(document.querySelector('[data-chips-compris]')).toBeInTheDocument()
+    expect(document.querySelector('[data-chip="programme"] [data-chip-traduction]')).toBeInTheDocument()
+    const nRunsAvant = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/copilote/runs')).length
+    // retirer une chip pendant l'instruction : annulation PROPRE (POST /cancel) puis relance (nouveau run)
+    fireEvent.click(document.querySelector('[data-chip="ppr"] [data-chip-retirer]')!)
+    await waitFor(() => expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/cancel'))).toBe(true))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(
+      (c) => String(c[0]).endsWith('/api/copilote/runs')).length).toBe(nRunsAvant + 1))
+  })
+
   it('rafraîchissement en plein run : le même fil revient, sans doublon ni trou', async () => {
     const { es, rendu } = await lancerRun()
     act(() => { for (const e of etat2EnCours()) es.emet(e) })
@@ -100,51 +119,6 @@ describe('état 2 — instruction en cours', () => {
     expect(document.querySelector('[data-fil-etape="faisabilite"][data-etat="active"]')).toBeInTheDocument()
     expect(normalise(document.querySelector('[data-etage="pool"]')!.textContent)).toContain('13 155')
     expect(document.querySelector('[data-restituee]')).toBeNull()
-  })
-})
-
-describe('état 3 — demande de précision', () => {
-  async function enPause() {
-    const { es } = await lancerRun()
-    act(() => { for (const e of etat3Clarification()) es.emet(e); es.fin('awaiting_user') })
-    await waitFor(() => expect(document.querySelector('[data-clarification]')).toBeInTheDocument())
-    return es
-  }
-
-  it('question + options + champ libre, fil en pause', async () => {
-    await enPause()
-    expect(normalise(document.querySelector('[data-clarification]')!.textContent))
-      .toContain('Sur quelle commune dois-je instruire ce dossier ?')
-    expect(document.querySelectorAll('[data-clarif-option]')).toHaveLength(4)
-    expect(document.querySelector('[data-clarif-libre]')).toBeInTheDocument()
-    expect(document.querySelector('[data-fil-etape="interpretation"][data-etat="pause"]')).toBeInTheDocument()
-    expect(document.querySelector('[data-fil-etape="criblage"][data-etat="attente"]')).toBeInTheDocument()
-    // console suspendue : pas de bouton Instruire pendant la pause
-    expect(document.querySelector('[data-instruire]')).toBeNull()
-    expect(document.querySelector('[data-en-attente]')).toBeDisabled()
-  })
-
-  it('répondre → POST /answer, le run REPREND au même after_seq (jamais redémarré)', async () => {
-    await enPause()
-    fireEvent.click(document.querySelectorAll('[data-clarif-option]')[0])
-    await waitFor(() => expect(fetchMock.mock.calls.some(
-      (c) => String(c[0]).includes('/answer'))).toBe(true))
-    const appelAnswer = fetchMock.mock.calls.find((c) => String(c[0]).includes('/answer'))!
-    expect(String(appelAnswer[1]?.body)).toContain('Saint-Paul')
-    // le flux est rouvert sur LE MÊME run, à la suite du fil — pas un nouveau run
-    await waitFor(() => expect(FauxEventSource.instances.length).toBe(2))
-    expect(FauxEventSource.instances[1].url).toContain('/runs/run-test/')
-    expect(FauxEventSource.instances[1].url).toContain('after_seq=2')
-    expect(fetchMock.mock.calls.filter(
-      (c) => String(c[0]).endsWith('/api/copilote/runs') ).length).toBe(1)
-    // la suite du fil arrive : l'interprétation redevient active puis le criblage démarre
-    const es1 = FauxEventSource.instances[1]
-    act(() => {
-      es1.emet({ seq: 3, kind: 'clarification_answered', payload: { reponse: 'Saint-Paul' },
-                 created_at: '2026-07-27T12:00:00Z' })
-    })
-    expect(document.querySelector('[data-clarification]')).toBeNull()
-    expect(document.querySelector('[data-fil-etape="interpretation"][data-etat="active"]')).toBeInTheDocument()
   })
 })
 
@@ -178,21 +152,23 @@ describe('état 4 — zéro retenue (jamais une erreur)', () => {
 
 describe('état 5 — quota atteint (429 avant création)', () => {
   it('aucun run créé, aucun flux ouvert, message honnête du 429 verbatim', async () => {
-    fetchMock.mockImplementation(async () => ({
-      ok: false, status: 429,
-      json: async () => ({ detail: 'Quota Copilote atteint (10 runs/jour). Reprend à minuit.',
-                           quota: 10, gel_jusqua: 'minuit' }),
-    }))
+    // le routeur /ask réussit (RECHERCHE) ; la création de run /runs bute sur le 429.
+    fetchMock.mockImplementation(async (url: unknown) => String(url).includes('/copilote-v2/ask')
+      ? { ok: true, json: async () => ({ intent: 'RECHERCHE' }) }
+      : { ok: false, status: 429,
+          json: async () => ({ detail: 'Quota Copilote atteint (10 runs/jour). Reprend à minuit.',
+                               quota: 10, gel_jusqua: 'minuit' }) })
     render(<CopiloteView />)
     fireEvent.change(document.querySelector('[data-brief]')!, { target: { value: 'brief de test' } })
-    fireEvent.click(document.querySelector('[data-instruire]')!)
+    fireEvent.click(document.querySelector('[data-accueil-envoyer]')!)
     await waitFor(() => expect(document.querySelector('[data-quota-panel]')).toBeInTheDocument())
     expect(FauxEventSource.instances).toHaveLength(0)             // aucun moteur appelé
     const panel = normalise(document.querySelector('[data-quota-panel]')!.textContent)
     expect(panel).toContain('Vos 10 instructions du jour sont utilisées.')
     expect(panel).toContain('Reprend à minuit.')                  // le corps du 429, verbatim
     expect(document.querySelector('[data-en-cours]')).toBeNull()
-    expect(document.querySelector('[data-instruire]')).toBeDisabled()
+    // v2 : aucun run créé → retour à l'accueil (plus de bouton Instruire actif)
+    expect(document.querySelector('[data-accueil]')).toBeInTheDocument()
   })
 })
 

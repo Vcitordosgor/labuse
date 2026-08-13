@@ -328,6 +328,73 @@ export interface AccueilChiffres {
   run_label: string
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
+
+// M78 — Copilote v2 : le client écrit, le routeur décide. Réponse instruite (QUESTION/OUTIL/refus)
+// OU aiguillage vers une mission (RECHERCHE → run M26-A ; VERIFICATION/PROJET/VEILLE → phases 3/4).
+export interface CopiloteV2Reponse {
+  text: string
+  intent: 'QUESTION' | 'OUTIL' | 'RECHERCHE' | 'VERIFICATION' | 'VEILLE' | 'PROJET' | 'HORS_SUJET' | null
+  tool?: string | null
+  refus?: string | null
+  porte?: string | null
+  prefill?: string | null
+  prefill_idu?: string | null
+  prefill_plu?: { insee: string; zone: string | null } | null
+  partiel?: boolean
+  sources?: string[]
+  clarification?: boolean
+  degraded?: boolean
+  en_construction?: boolean
+  web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
+  conversation_id?: number | null       // §2b — la conversation persistée (reprise)
+  // §M78-bis — récap-confirmation avant mission lourde (RECHERCHE/VERIFICATION)
+  needs_confirmation?: boolean
+  recap?: string
+  brief_json?: Record<string, unknown>
+  chips?: string[]
+  suggestions?: { label: string; ajout: string | null }[]
+  clarification_recap?: { question: string; options: string[]; champ: string | null }
+}
+export const copiloteV2Ask = (message: string, opts?: {
+  history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
+  conversation_id?: number | null; confirme?: boolean }) =>
+  j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, ...opts }) })
+
+// §2b — l'historique : missions passées du compte + reprise d'une conversation.
+export interface CopiloteMission {
+  id: number; titre: string; statut: string; run_id: string | null
+  updated_at: string; n_messages: number
+}
+export interface CopiloteConversation extends CopiloteMission {
+  created_at: string
+  messages: { role: 'client' | 'copilote'; texte: string; intent: string | null; ts: string }[]
+}
+export const copiloteV2Missions = () => j<{ missions: CopiloteMission[] }>('/api/copilote-v2/missions')
+export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
+
+// §2e — le héros : phrase (pourquoi cette parcelle gagne, faiblesses comprises) avec verrou
+// anti-invention côté serveur (tout nombre ∈ JSON parcelle, sinon gabarit).
+export const copiloteV2Heros = (parcelle: Record<string, unknown>, budget_max_eur?: number | null) =>
+  j<{ phrase: string; gabarit: boolean }>('/api/copilote-v2/heros', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parcelle, budget_max_eur }) })
+
+// §2f — feedback 👍/👎 (le 👎 ouvre un champ libre optionnel).
+export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut' | 'bas', commentaire?: string) =>
+  j<{ ok: boolean }>('/api/copilote-v2/feedback', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id, pouce, commentaire }) })
+
+// §4 — veilles : l'écran minimal (liste + suppression) + les notifications stockées.
+export interface CopiloteVeille { id: number; type: string; commune: string | null; non_vues: number }
+export const copiloteV2Veilles = () => j<{ veilles: CopiloteVeille[] }>('/api/copilote-v2/veilles')
+export const copiloteV2VeilleSupprimer = (id: number) =>
+  j<{ ok: boolean }>(`/api/copilote-v2/veilles/${id}`, { method: 'DELETE' })
+export const copiloteV2Notifications = () =>
+  j<{ notifications: { id: number; titre: string; detail: string; vu: boolean; created_at: string }[] }>(
+    '/api/copilote-v2/notifications')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {

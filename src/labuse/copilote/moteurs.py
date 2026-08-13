@@ -213,38 +213,42 @@ def filtre_geometrique(db: Session, brief: dict, dossier: Dossier) -> StepResult
 
     hyp = Hypotheses.charger()
     occ = float(hyp.coef_occupation)                     # même source que le moteur, jamais dupliqué
-    cible = float(brief["programme"]["sdp_cible_m2"])
+    # M78-quater #1 — recherche SANS programme : pas de cible de capacité → aucun filtre géométrique
+    # (on n'écarte personne pour capacité), on garde le tri championnat P et le seul garde-fou de plafond.
+    cible_raw = (brief.get("programme") or {}).get("sdp_cible_m2")
+    cible = float(cible_raw) if cible_raw is not None else None
     avant = len(dossier.retenus())
 
-    par_commune: dict[str, set] = {}
-    for c in dossier.candidats:
-        par_commune.setdefault(c["commune"], set()).add(c["zone_lib"])
-    regles_par_commune: dict[str, dict] = {}
-    for commune, libs in par_commune.items():
-        regles, mode = _regles_filtre(commune, {x for x in libs if x})
-        regles_par_commune[commune] = regles
-        dossier.calibrage[commune] = mode
+    if cible is not None:
+        par_commune: dict[str, set] = {}
+        for c in dossier.candidats:
+            par_commune.setdefault(c["commune"], set()).add(c["zone_lib"])
+        regles_par_commune: dict[str, dict] = {}
+        for commune, libs in par_commune.items():
+            regles, mode = _regles_filtre(commune, {x for x in libs if x})
+            regles_par_commune[commune] = regles
+            dossier.calibrage[commune] = mode
 
-    # Emprises insetées par groupe de recul distinct (une requête SQL par valeur).
-    a_inspecter: dict[float, list[dict]] = {}
-    for c in dossier.candidats:
-        r = regles_par_commune[c["commune"]].get(c["zone_lib"] or "")
-        if r is None:
-            continue                                     # zone sans plafond exploitable → non filtrée
-        c["_niveaux_majorant"], recul = r
-        a_inspecter.setdefault(recul, []).append(c)
-    for recul, cs in a_inspecter.items():
-        insets = dict(db.execute(text(
-            "SELECT id, ST_Area(ST_Buffer(geom_2975, -:d)) FROM parcels WHERE id = ANY(:ids)"),
-            {"d": recul, "ids": [c["parcel_id"] for c in cs]}).all())
-        for c in cs:
-            majorant = (insets.get(c["parcel_id"]) or 0.0) * c["_niveaux_majorant"] * occ
-            if majorant < cible - MARGE_ARRONDI_M2:
-                mode = dossier.calibrage[c["commune"]]
-                src = ("Sourcé, article PLU" if mode == "article_plu"
-                       else "Estimé, règle générique (hé 9 m ≈ 3 niveaux)")
-                dossier.ecarter(c, f"capacité géométrique insuffisante "
-                                   f"(majorant {majorant:.0f} m² < cible {cible:.0f} m²) — {src}")
+        # Emprises insetées par groupe de recul distinct (une requête SQL par valeur).
+        a_inspecter: dict[float, list[dict]] = {}
+        for c in dossier.candidats:
+            r = regles_par_commune[c["commune"]].get(c["zone_lib"] or "")
+            if r is None:
+                continue                                 # zone sans plafond exploitable → non filtrée
+            c["_niveaux_majorant"], recul = r
+            a_inspecter.setdefault(recul, []).append(c)
+        for recul, cs in a_inspecter.items():
+            insets = dict(db.execute(text(
+                "SELECT id, ST_Area(ST_Buffer(geom_2975, -:d)) FROM parcels WHERE id = ANY(:ids)"),
+                {"d": recul, "ids": [c["parcel_id"] for c in cs]}).all())
+            for c in cs:
+                majorant = (insets.get(c["parcel_id"]) or 0.0) * c["_niveaux_majorant"] * occ
+                if majorant < cible - MARGE_ARRONDI_M2:
+                    mode = dossier.calibrage[c["commune"]]
+                    src = ("Sourcé, article PLU" if mode == "article_plu"
+                           else "Estimé, règle générique (hé 9 m ≈ 3 niveaux)")
+                    dossier.ecarter(c, f"capacité géométrique insuffisante "
+                                       f"(majorant {majorant:.0f} m² < cible {cible:.0f} m²) — {src}")
 
     survivants = dossier.retenus()
     dossier._n_apres_geo = len(survivants)             # étage « filtre_geometrique » du récap
@@ -259,7 +263,8 @@ def filtre_geometrique(db: Session, brief: dict, dossier: Dossier) -> StepResult
             c["motif_ecarte"] = (f"non examinée — garde-fou {plafond} parcelles atteint "
                                  "(résultat NON exhaustif, voir récapitulatif)")
     apres = min(len(survivants), plafond)
-    etiquette = ("sourcé" if all(m == "article_plu" for m in dossier.calibrage.values())
+    etiquette = ("sourcé" if cible is not None and dossier.calibrage
+                 and all(m == "article_plu" for m in dossier.calibrage.values())
                  else "estimé")
     return StepResult(
         resultat={"cible_sdp_m2": cible, "coef_occupation": occ,
@@ -280,7 +285,10 @@ def faisabilite(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> S
     (article PLU / règle générique) est porté explicitement (exigence Vic, revue M26-A)."""
     from ..faisabilite.db import parcel_faisabilite
 
-    cible = float(brief["programme"]["sdp_cible_m2"])
+    # M78-quater #1 — SANS programme (cible None) : on calcule quand même la SDP de chaque parcelle
+    # (information restituée) mais on ne l'écarte PAS sur une cible inexistante.
+    cible_raw = (brief.get("programme") or {}).get("sdp_cible_m2")
+    cible = float(cible_raw) if cible_raw is not None else None
     a_examiner = dossier.retenus()
     avant = len(a_examiner)
     lock = threading.Lock()
@@ -302,7 +310,7 @@ def faisabilite(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> S
             }
             if not fai.constructible:
                 dossier.ecarter(c, f"non constructible en l'état ({fai.verdict})")
-            elif (f.get("surface_plancher_m2") or 0) < cible:
+            elif cible is not None and (f.get("surface_plancher_m2") or 0) < cible:
                 dossier.ecarter(c, f"SDP estimée insuffisante "
                                    f"({f.get('surface_plancher_m2', 0):.0f} m² < cible {cible:.0f} m²)")
 

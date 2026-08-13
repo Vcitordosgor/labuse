@@ -45,6 +45,23 @@ export const fmtDateNum = (d: string | Date | null | undefined): string => {
   return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR')
 }
 
+/** Date relative FR courte : « à l'instant », « il y a 5 min », « il y a 2 h », « il y a 3 j »,
+ *  au-delà d'une semaine la date. Pour l'historique du Copilote (M78-quater #2). */
+export const ilYA = (d: string | Date | null | undefined): string => {
+  if (!d) return ''
+  const t = new Date(d).getTime()
+  if (Number.isNaN(t)) return ''
+  const s = Math.max(0, Math.floor((Date.now() - t) / 1000))
+  if (s < 60) return "à l'instant"
+  const m = Math.floor(s / 60)
+  if (m < 60) return `il y a ${m} min`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `il y a ${h} h`
+  const j = Math.floor(h / 24)
+  if (j < 7) return `il y a ${j} j`
+  return fmtDate(d)
+}
+
 /** IDU cadastral = code INSEE(5) + préfixe de section(3) + section(2) + numéro(4) = 14 car.
  *  LE SEUL formateur d'IDU de l'app (LOI-3 : un dessin, un seul endroit). Deux formes :
  *  - `iduComplet` : la chaîne BRUTE 14 car., sans espace ni séparateur. C'est elle qu'on

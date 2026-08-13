@@ -41,16 +41,21 @@ const normalise = (s: string | null) => (s ?? '').replace(/[\u202f\u00a0\u2009]/
 async function lancerRun(): Promise<FauxEventSource> {
   render(<CopiloteView />)
   fireEvent.change(document.querySelector('[data-brief]')!, { target: { value: 'brief de test' } })
-  fireEvent.click(document.querySelector('[data-instruire]')!)
+  // M78 · 2a — la barre d'accueil dispatche par le routeur (mocké → RECHERCHE) puis lance le run.
+  fireEvent.click(document.querySelector('[data-accueil-envoyer]')!)
   await waitFor(() => expect(FauxEventSource.instances.length).toBeGreaterThan(0))
   return FauxEventSource.instances[0]
 }
+
+// routeur v2 mocké : /ask → RECHERCHE (mission lourde) ; le reste → run_id.
+const reponse = (url: unknown) => String(url).includes('/copilote-v2/ask')
+  ? { intent: 'RECHERCHE' } : { run_id: 'run-test' }
 
 beforeEach(() => {
   localStorage.clear()
   FauxEventSource.instances = []
   vi.stubGlobal('EventSource', FauxEventSource as unknown as typeof EventSource)
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ run_id: 'run-test' }) })))
+  vi.stubGlobal('fetch', vi.fn(async (url: unknown) => ({ ok: true, json: async () => reponse(url) })))
 })
 afterEach(() => vi.unstubAllGlobals())
 

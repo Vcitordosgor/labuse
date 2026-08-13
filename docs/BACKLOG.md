@@ -356,6 +356,63 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   `parcelPrefill` (un seul champ pour les 4). **Pas fait dans M-ENTREE** : on ne refactore pas ce qui marche
   pendant qu'on ajoute (arbitrage Vic). Petit mandat de fusion quand l'occasion se présente.
 
+## Mandat candidat — FACETTE RISQUE EN RECHERCHE (anomalie produit, issu de M78 Phase 2)
+- **ANOMALIE PRODUIT, pas une facette manquante.** LABUSE vend un radar foncier qui affiche le risque sur
+  CHAQUE fiche (cascade risques arbitrés, graduation PPR M-I sur ~14 000 parcelles), mais **on ne peut pas
+  chercher « hors zone inondable » / « hors PPR »**. C'est probablement le PREMIER filtre qu'un promoteur
+  veut, et la donnée est fraîche et fiable (le PPR vient de la corriger sur 14 000 parcelles) — elle mérite
+  d'être cherchable. Constat M78 : 42 facettes `FiltreCriteres`, aucune sur le risque en recherche (seul
+  `evenement=rouge` existe, insuffisant). **Mandat futur** : facette risque en recherche (la donnée EXISTE —
+  cascade risques, graduation PPR M-I — elle n'est pas filtrable). La télémétrie Copilote (§1e) confirmera
+  la demande. En attendant (M78) : le Copilote le DIT au client, ne le promet pas.
+
+## Renvois M78-quater (recette Vic — mécanismes conservés, non exposés)
+- **Feedback Copilote en LIEN TEXTE discret (issu de #5).** Les pouces 👍/👎 de `ReponseInline` ont été
+  RETIRÉS (ne faisaient rien de visible au clic, pas le sérieux du produit). L'endpoint serveur
+  `/api/copilote-v2/feedback` + `copiloteV2Feedback` (front) restent en place. **Mandat futur** : réintroduire
+  le feedback sous forme d'un lien texte discret (« Signaler un problème avec cette réponse »), pas deux
+  émojis — quand le canal de traitement du feedback sera défini.
+- **Écran Veilles dédié (issu de #3, dépend du chantier notifications).** Le bloc VEILLES et la carte
+  « Veiller » ont été retirés de l'accueil Copilote (la veille n'alerte pas encore → ne pas la promettre sur
+  l'écran d'entrée). Le mécanisme reste branché côté serveur (intention VEILLE, stockage `copilote_veilles`,
+  évaluation, endpoints `/veilles`). **Mandat futur** : un écran Veilles dédié (liste, gestion, alertes)
+  quand le canal de notification (cron J+1 Train 8 + cloche in-app + digest e-mail) existera. Carte de
+  mission « Veiller » réexposée à ce moment-là. (En M78-quater : 3 cartes = Chercher · Demander · Vérifier,
+  la 3ᵉ remplace Veiller par le parcours des questions directes, qui fonctionne.)
+
+## Mandat candidat — « VOIR SUR LA CARTE » : shortlist Copilote → socle (issu de M78-bis §4, validé Vic)
+- **Le besoin** : sur l'écran de résultats du Copilote, un bouton « Voir ces parcelles sur la carte » qui
+  charge EXACTEMENT les N parcelles restituées dans le panneau-liste de gauche du socle (clic→fiche, tri,
+  couches), carte cadrée sur leur emprise. Transforme un résultat éphémère en gestes du socle.
+- **Pourquoi c'est un chantier** (constaté M78-bis) : le panneau-liste du socle est FILTRE-DRIVEN
+  (`/filtre` + `FiltreCriteres` + `useApplySearch`) ; il n'existe AUCUN mécanisme pour y injecter une
+  **liste d'IDU arbitraire** (la shortlist exacte). Les surlignages carte (`iaRestitution`, `moduleMap`)
+  sont des overlays, pas une source de liste.
+- **Exigence Vic 1 — source de liste par IDU explicite, COEXISTANT** avec le filtre-driven sans le
+  remplacer : le socle doit pouvoir afficher SOIT un filtre, SOIT une liste d'IDU arbitraire, sans que
+  l'un casse l'autre (p. ex. `setListeIdus(idus)` lue par ResultsSection en priorité sur les filtres, +
+  cadrage bbox de l'union ; retour au filtre quand la liste est vidée).
+- **Exigence Vic 2 — recherche NOMMÉE durable** (« Recherche terrain nu Saint-Paul — 13/08 »).
+  **CONSTAT CORRIGÉ** : « Mes vues » (M52-L5) **EXISTE** — table `saved_searches` (events.py), endpoints
+  `/events/searches` (`getSavedSearches`/`saveSearch`/`deleteSearch`), barre de filtres (Header.tsx). MAIS
+  elle stocke un **`filtersToHash`** (un filtre nommé), PAS une liste d'IDU. Le chantier = ÉTENDRE « Mes
+  vues » pour sauver AUSSI une liste d'IDU explicite (la shortlist Copilote nommée), coexistant avec la
+  forme filtre-hash. (Mon rapport M78-bis disait « Mes vues introuvable » — FAUX, mauvais termes de
+  recherche ; elle existe et n'a jamais géré les listes d'IDU.)
+- **En attendant (M78-bis)** : PAS de bouton carte mort sur les résultats. À la place, action LIVE
+  « Ouvrir la fiche » sur le héros (ouvre la fiche de la 1ʳᵉ parcelle) — rien qui promette la carte.
+
+## Mandat candidat — FACETTE SPATIALE (« proche de la mer / distance à un point ») (issu de M78 Phase 2)
+- Aucune facette spatiale géométrique en recherche (« proche de la mer », « à moins de X m de [lieu] »,
+  distance à un point). Chantier réel (calcul de distance / buffer / intersection). Mandat futur. En attendant
+  (M78) : le Copilote DIT que ce n'est pas un critère applicable + télémétrie.
+
+## Donnée absente (PAS un mandat) — « déjà en vente / sur le marché » (M78 Phase 2)
+- LABUSE n'a **aucune source d'annonces actives**. Ce n'est pas une facette manquante ni un chantier — c'est
+  une donnée qu'on **n'a pas**. Le Copilote doit le dire AINSI (« LABUSE n'a pas de source d'annonces »),
+  jamais comme une limite temporaire (pas de « bientôt »). Réévaluer seulement si une source d'annonces
+  entre un jour au catalogue.
+
 ## Artefacts d'audit conservés (M80 — ne pas purger sans savoir ce qu'ils rejouent)
 - **Tables `m6_*` (694 Mo, audit M6, juin-juillet 2026) — GARDÉES pour reproductibilité d'audit** (arbitrage
   Vic M80). Un artefact gardé sans justification devient un déchet ; voici ce que chacune rejoue :
@@ -388,6 +445,14 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   « API INJOIGNABLE »**, jamais en FAIL. **Enseignement à généraliser** : tout garde-fou qui échoue pour
   une raison d'ENVIRONNEMENT doit le DIRE explicitement et ne jamais se confondre avec un écart de données
   (auditer les autres gardes — non-constance, câblage, funnel — pour le même piège).
+- **golden_check : quota d'usage dépassé pris pour 33 incohérences métier (constaté M78 — MÊME FAMILLE que
+  le port 8010).** En enchaînant golden + démos contre `:8000`, la charge a dépassé `quota_fiches_jour=300`
+  (mesuré `fiche=596/jour` pour l'IP) → l'API a servi des fiches VIDES (429) → golden a affiché « 86/119,
+  33 incohérences base↔API » alors que la BASE ÉTAIT INTACTE (score_v2 présent en SQL) et le code sain.
+  Un garde-fou qui échoue pour un plafond d'usage doit le DIRE (« quota dépassé »), jamais se présenter comme
+  un écart de données. **Mandat futur, 3 voies** : (a) exempter le harnais des quotas (`LABUSE_DEV_MODE=1`
+  documenté dans golden_check) ; (b) lui donner un sujet dédié (hors compteur IP partagé) ; (c) détecter le
+  **429** au préflight et sortir en **code 2 « QUOTA DÉPASSÉ »**, comme le code 2 « API INJOIGNABLE » de M81.
 - **`rang_total` = 428 239 vs parc 431 663 : écart de 3 424 jamais expliqué (à mesurer, mandat dédié).**
   Ce chiffre sort dans le dossier BANQUIER (« rang X / 428 239 »). `rang_total` = `count(*) parcel_p_score_v2
   WHERE rang IS NOT NULL` (verdict_servi.py) — donc **3 424 parcelles ont un rang NULL** (non classées).
