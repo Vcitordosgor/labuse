@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
+import { copiloteV2Ask, getAccueilChiffres, type AccueilChiffres, type CopiloteV2Reponse } from '../../lib/api'
+import { AccueilCopilote } from './AccueilCopilote'
 import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
 import { FilInstruction } from './FilInstruction'
@@ -15,7 +17,6 @@ import { Resultats, type EtiquettesMoteurs } from './Resultats'
 import { PillStatut, SecHead } from './ui'
 import { runEpingle, useCopiloteRun } from './useCopiloteRun'
 import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
-import { AvisIA } from '../AvisIA'
 import { useApp } from '../../store/useApp'
 
 const S = CLIENT.copilote
@@ -30,34 +31,6 @@ const FOND = {
 const TON_STATUT: Record<string, 'mint' | 'violet' | 'ambre' | 'rouge'> = {
   interpreting: 'violet', running: 'violet', awaiting_user: 'ambre', paused: 'ambre',
   done: 'mint', failed: 'rouge', cancelled: 'rouge',
-}
-
-function Missions({ mission, setMission, verrouille }: {
-  mission: MissionActive
-  setMission: (m: MissionActive) => void
-  verrouille: boolean
-}) {
-  return (
-    <div data-missions className="mt-3 flex flex-wrap items-center gap-2">
-      {S.missions.map((m) => m.actif ? (
-        <button key={m.key} data-mission={m.key} disabled={verrouille}
-          onClick={() => setMission(m.key as MissionActive)}
-          className={`rounded-lg border px-3 py-1.5 font-display text-[11px] font-semibold transition-colors duration-quick ${
-            mission === m.key
-              ? 'border-mint/50 bg-mint/10 text-mint'
-              : 'border-cp-line2 bg-cp-card2 text-cp-muted hover:border-mint/40'} ${
-            verrouille ? 'cursor-default opacity-60' : ''}`}>
-          {m.label}
-        </button>
-      ) : (
-        <span key={m.key} data-mission={m.key} data-mission-bientot
-          className="flex items-center gap-1.5 rounded-lg border border-cp-line px-3 py-1.5 font-display text-[11px] font-semibold text-cp-faint opacity-60">
-          {m.label}
-          <span className="rounded border border-cp-line2 px-1 py-px text-[8.5px] uppercase tracking-[.1em]">{S.bientot}</span>
-        </span>
-      ))}
-    </div>
-  )
 }
 
 /** Étiquette produite par chaque moteur, lue dans le fil (payload, jamais inventée). */
@@ -105,14 +78,63 @@ function useChrono(depuis: string | null, actif: boolean): number | null {
   return Number.isFinite(s) ? s : null
 }
 
+/** M78 · 2a — réponse inline QUESTION/OUTIL/refus (le routeur n'a pas lancé de mission lourde). Le
+ *  bouton de porte ouvre l'outil PRÉ-REMPLI (motif parcelPrefill/calcPrefill/pluPrefill, M-ENTREE/M60). */
+function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
+  const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill } = useApp()
+  const ouvrir = () => {
+    if (!v2.porte) return
+    if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
+    else if (v2.prefill === 'calcPrefill' && v2.prefill_idu) setCalcPrefill(v2.prefill_idu)
+    else if (v2.prefill_idu) setParcelPrefill(v2.prefill_idu)
+    setModule(v2.porte)
+  }
+  const ton = v2.refus && v2.refus !== 'hors_sujet' ? 'border-cp-amber/30'
+    : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : 'border-mint/25'
+  return (
+    <div data-reponse className={`rounded-2xl border ${ton} bg-cp-card px-5 py-4 text-left`}>
+      <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-cp-txt">{v2.text}</p>
+      {v2.porte && (
+        <button data-reponse-porte onClick={ouvrir}
+          className="mt-3 rounded-lg border border-mint/40 bg-mint/10 px-4 py-2 font-display text-[12px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">
+          Ouvrir l'outil →
+        </button>
+      )}
+      {(v2.sources?.length ?? 0) > 0 && (
+        <p className="mt-2.5 font-mono text-[10px] text-cp-faint">{v2.sources!.join(' · ')}</p>
+      )}
+    </div>
+  )
+}
+
 export function CopiloteView() {
   const run = useCopiloteRun()
   const { vue } = run
   const [brief, setBrief] = useState('')
-  const [mission, setMission] = useState<MissionActive>('instruire')
+  const [mission] = useState<MissionActive>('instruire')   // v2 : le routeur décide, plus d'onglets
   const [reponse, setReponse] = useState('')
   const [journalOuvert, setJournalOuvert] = useState(false)
+  const [chiffres, setChiffres] = useState<AccueilChiffres | null>(null)
+  const [v2, setV2] = useState<CopiloteV2Reponse | null>(null)
+  const [dispatching, setDispatching] = useState(false)
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
+
+  // M78 · 2a — dispatch : le client écrit, le routeur décide. RECHERCHE → mission lourde (run M26-A) ;
+  // QUESTION/OUTIL/refus/hors-sujet → réponse inline instruite ; VERIFICATION/PROJET/VEILLE → phases 3/4.
+  const soumettre = async () => {
+    const msg = brief.trim()
+    if (!msg || dispatching) return
+    setDispatching(true); setV2(null)
+    try {
+      const r = await copiloteV2Ask(msg)
+      if (r.intent === 'RECHERCHE') void run.instruire(mission, msg)
+      else setV2(r)
+    } catch (e) {
+      setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
+    } finally { setDispatching(false) }
+  }
 
   // rafraîchissement en plein run : on recharge le run épinglé, le SSE rejoue le fil
   const { charger } = run
@@ -143,10 +165,6 @@ export function CopiloteView() {
   const nFaits = vue.etapes.filter((e) => e.etat === 'faite' || e.etat === 'echouee').length
   const chrono = useChrono(run.evenements[0]?.created_at ?? null, enInstruction)
 
-  const lancer = () => {
-    if (brief.trim() && !enInstruction && !enAttente && !run.enCreation)
-      void run.instruire(mission, brief)
-  }
   // relances de l'état 4 — NON CHIFFRÉES : le brief d'origine revient en console,
   // l'utilisateur ajuste lui-même (aucun chiffre inventé par l'écran)
   const relancer = () => {
@@ -168,59 +186,55 @@ export function CopiloteView() {
   return (
     <div data-copilote className="min-h-0 flex-1 overflow-y-auto bg-cp-bg font-sans text-[13px] text-cp-txt" style={FOND}>
       <div className="mx-auto max-w-[1000px] px-6 pb-12 pt-9">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="font-display text-[10.5px] uppercase tracking-[.24em] text-cp-muted">{S.crumb}</span>
-          {pill}
-          {run.fluxInterrompu && (
-            <span data-flux-interrompu className="text-[10.5px] text-cp-amber">{S.fluxInterrompu}</span>
-          )}
-        </div>
-
-        <h1 className="font-display text-[clamp(30px,5vw,44px)] font-bold leading-[1.05] tracking-tight text-cp-txt">
-          {S.h1Ligne1}<br />{S.h1Ligne2Avant}<em className="not-italic text-mint">{S.h1Ligne2Em}</em>{S.h1Ligne2Apres}
-        </h1>
-        <p className="mb-6 mt-3 max-w-[600px] text-[13.5px] text-cp-muted">
-          {S.lede}<b className="font-medium text-cp-txt">{S.ledeFort}</b>
-        </p>
-
-        <AvisIA className="mb-5 border-cp-faint/40 bg-white/[0.02] text-cp-muted" />
-
-        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)] ${
-          run.quota != null ? 'border-cp-red/30 opacity-50'
-          : enInstruction || enAttente ? 'border-mint/35 opacity-65' : 'border-mint/35'}`}>
-          <div className="min-w-[250px] flex-1">
-            <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
-              readOnly={enInstruction || enAttente} placeholder={S.placeholder} rows={2}
-              className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            {enInstruction ? (
-              <button data-annuler onClick={() => void run.annuler()}
-                className="rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
-                {S.annuler}
-              </button>
-            ) : enAttente ? (
-              <button data-en-attente disabled
-                className="cursor-default rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
-                {S.enAttenteBouton}
-              </button>
-            ) : (
-              <button data-instruire onClick={lancer}
-                disabled={!brief.trim() || run.enCreation || run.quota != null}
-                className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
-                {S.instruire} →
-              </button>
-            )}
-            <div className={`flex items-center gap-2 text-[10.5px] ${run.quota != null ? 'text-cp-red' : 'text-cp-faint'}`}>
-              <i className={`h-1 w-1 rounded-full ${run.quota != null ? 'bg-cp-red' : 'bg-mint'}`} />
-              {run.quota != null ? S.quota.pill
-                : enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6)
-                : enAttente ? S.suspendue
-                : S.serment}
+        {!actif ? (
+          /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
+          <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
+            onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
+            chiffres={chiffres} occupe={dispatching}
+            reponse={v2 ? <ReponseInline v2={v2} /> : null} />
+        ) : (
+          <>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="font-display text-[10.5px] uppercase tracking-[.24em] text-cp-muted">{S.crumb}</span>
+              {pill}
+              {run.fluxInterrompu && (
+                <span data-flux-interrompu className="text-[10.5px] text-cp-amber">{S.fluxInterrompu}</span>
+              )}
             </div>
-          </div>
-        </div>
-        <Missions mission={mission} setMission={setMission} verrouille={enInstruction || enAttente} />
+            <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)] ${
+              enInstruction || enAttente ? 'border-mint/35 opacity-65' : 'border-mint/35'}`}>
+              <div className="min-w-[250px] flex-1">
+                <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
+                  readOnly={enInstruction || enAttente} placeholder={S.placeholder} rows={2}
+                  className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                {enInstruction ? (
+                  <button data-annuler onClick={() => void run.annuler()}
+                    className="rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
+                    {S.annuler}
+                  </button>
+                ) : enAttente ? (
+                  <button data-en-attente disabled
+                    className="cursor-default rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
+                    {S.enAttenteBouton}
+                  </button>
+                ) : (
+                  <button data-instruire onClick={soumettre}
+                    disabled={!brief.trim() || run.enCreation || dispatching}
+                    className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
+                    {S.instruire} →
+                  </button>
+                )}
+                <div className="flex items-center gap-2 text-[10.5px] text-cp-faint">
+                  <i className="h-1 w-1 rounded-full bg-mint" />
+                  {enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6)
+                    : enAttente ? S.suspendue : S.serment}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* ── état 5 · quota atteint AVANT création — aucun run, aucun moteur ── */}
         {run.quota && (

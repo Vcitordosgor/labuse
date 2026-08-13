@@ -48,6 +48,14 @@ modèle journalisé (prompt, outils appelés, réponse, tokens) — c'est l'audi
   cascade risques, PPR M-I 14 000 parcelles — pas filtrable) ; (2) facette spatiale (« proche de la mer ») ;
   (3) « déjà en vente » = donnée absente (pas de source d'annonces — à dire ainsi, jamais « bientôt »).
   Les chips ne promettront jamais ces trois ; le Copilote les DIT + télémétrie.
+- **2a accueil LIVRÉ** (`AccueilCopilote.tsx`) : recopié de la maquette (classes .page/.sur/h1.accent/
+  .tagline/.barre/.missions/.garanties). Bandeau **[N] et [parc] DYNAMIQUES** (`/accueil/chiffres` :
+  51 sources, 431 663 parcelles — jamais en dur). 3 cartes Chercher/Vérifier/Veiller, exemples
+  cliquables (remplissent la barre, ne lancent pas). Retirés : onglets BIENTÔT, paragraphe défensif,
+  pitch « il ne calcule rien ». **Dispatch** (`CopiloteView`) : le client écrit → routeur v2 →
+  RECHERCHE lance le run M26-A, QUESTION/OUTIL/refus → réponse inline (bouton porte → outil pré-rempli).
+  tsc 0 · vitest 37/37 (helpers de run mis à jour : démarrage via routeur mocké) · build vert · capture
+  `qa/m78/captures/accueil.png` fidèle à la maquette.
 
 ## PHASE 1 — Routeur et boîte à outils
 _(en cours — 1a LIVRÉ ci-dessous ; restent : 1b outils+SQL · 1c table demande→outil · 1d test

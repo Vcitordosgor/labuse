@@ -40,16 +40,21 @@ let fetchMock: ReturnType<typeof vi.fn>
 async function lancerRun() {
   const rendu = render(<CopiloteView />)
   fireEvent.change(document.querySelector('[data-brief]')!, { target: { value: 'brief de test' } })
-  fireEvent.click(document.querySelector('[data-instruire]')!)
+  // M78 · 2a — la barre d'accueil dispatche par le routeur (mocké → RECHERCHE) puis lance le run.
+  fireEvent.click(document.querySelector('[data-accueil-envoyer]')!)
   await waitFor(() => expect(FauxEventSource.instances.length).toBeGreaterThan(0))
   return { es: FauxEventSource.instances[0], rendu }
 }
+
+// routeur v2 mocké : /ask → RECHERCHE (mission lourde) ; le reste → run_id.
+const reponse = (url: unknown) => String(url).includes('/copilote-v2/ask')
+  ? { intent: 'RECHERCHE' } : { run_id: 'run-test' }
 
 beforeEach(() => {
   localStorage.clear()
   FauxEventSource.instances = []
   vi.stubGlobal('EventSource', FauxEventSource as unknown as typeof EventSource)
-  fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ run_id: 'run-test' }) }))
+  fetchMock = vi.fn(async (url: unknown) => ({ ok: true, json: async () => reponse(url) }))
   vi.stubGlobal('fetch', fetchMock)
 })
 afterEach(() => vi.unstubAllGlobals())
@@ -178,21 +183,23 @@ describe('état 4 — zéro retenue (jamais une erreur)', () => {
 
 describe('état 5 — quota atteint (429 avant création)', () => {
   it('aucun run créé, aucun flux ouvert, message honnête du 429 verbatim', async () => {
-    fetchMock.mockImplementation(async () => ({
-      ok: false, status: 429,
-      json: async () => ({ detail: 'Quota Copilote atteint (10 runs/jour). Reprend à minuit.',
-                           quota: 10, gel_jusqua: 'minuit' }),
-    }))
+    // le routeur /ask réussit (RECHERCHE) ; la création de run /runs bute sur le 429.
+    fetchMock.mockImplementation(async (url: unknown) => String(url).includes('/copilote-v2/ask')
+      ? { ok: true, json: async () => ({ intent: 'RECHERCHE' }) }
+      : { ok: false, status: 429,
+          json: async () => ({ detail: 'Quota Copilote atteint (10 runs/jour). Reprend à minuit.',
+                               quota: 10, gel_jusqua: 'minuit' }) })
     render(<CopiloteView />)
     fireEvent.change(document.querySelector('[data-brief]')!, { target: { value: 'brief de test' } })
-    fireEvent.click(document.querySelector('[data-instruire]')!)
+    fireEvent.click(document.querySelector('[data-accueil-envoyer]')!)
     await waitFor(() => expect(document.querySelector('[data-quota-panel]')).toBeInTheDocument())
     expect(FauxEventSource.instances).toHaveLength(0)             // aucun moteur appelé
     const panel = normalise(document.querySelector('[data-quota-panel]')!.textContent)
     expect(panel).toContain('Vos 10 instructions du jour sont utilisées.')
     expect(panel).toContain('Reprend à minuit.')                  // le corps du 429, verbatim
     expect(document.querySelector('[data-en-cours]')).toBeNull()
-    expect(document.querySelector('[data-instruire]')).toBeDisabled()
+    // v2 : aucun run créé → retour à l'accueil (plus de bouton Instruire actif)
+    expect(document.querySelector('[data-accueil]')).toBeInTheDocument()
   })
 })
 

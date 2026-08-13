@@ -328,6 +328,29 @@ export interface AccueilChiffres {
   run_label: string
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
+
+// M78 — Copilote v2 : le client écrit, le routeur décide. Réponse instruite (QUESTION/OUTIL/refus)
+// OU aiguillage vers une mission (RECHERCHE → run M26-A ; VERIFICATION/PROJET/VEILLE → phases 3/4).
+export interface CopiloteV2Reponse {
+  text: string
+  intent: 'QUESTION' | 'OUTIL' | 'RECHERCHE' | 'VERIFICATION' | 'VEILLE' | 'PROJET' | 'HORS_SUJET' | null
+  tool?: string | null
+  refus?: string | null
+  porte?: string | null
+  prefill?: string | null
+  prefill_idu?: string | null
+  prefill_plu?: { insee: string; zone: string | null } | null
+  partiel?: boolean
+  sources?: string[]
+  clarification?: boolean
+  degraded?: boolean
+  en_construction?: boolean
+}
+export const copiloteV2Ask = (message: string, history?: { role: string; content: string }[],
+                              contexte?: Record<string, unknown>) =>
+  j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history, contexte }) })
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {
