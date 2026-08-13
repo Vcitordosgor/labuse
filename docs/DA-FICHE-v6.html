@@ -255,14 +255,25 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
     <tr><td>Icône = identité</td><td>une par tiroir, grise, jamais colorée, jamais décorative ailleurs.</td></tr>
     <tr><td>Nom long</td><td>tronqué à <code>110px</code> — le chevron ne doit jamais sortir de l'alignement.</td></tr>
     <tr><td>Ni halo ni ombre</td><td>l'élévation vient du contraste fond/carte uniquement.</td></tr>
+    <tr><td>Lignes de tiroir ferrées à gauche (M70 pt 2)</td><td>Risques, Marché, Réseaux, Propriétaire, Données : PAS de colonne de puce/score à gauche (« · », « ? », « ○ », « ±N ») — libellés, sous-titres et noms de source alignés sur la même verticale. Le poids/score vit dans « Pourquoi ce score », jamais en préfixe de ligne.</td></tr>
+    <tr><td>Pas de date de millésime en bout de ligne (M70 pt 4)</td><td>La date de source amont est retirée des lignes des tiroirs Risques/Marché/Réseaux/Propriétaire (bruit : toutes identiques). EXCEPTION : le tiroir Données et méthode conserve ses millésimes EN PASTILLE (c'est l'écran qui documente les sources). La donnée reste en base, dans les exports PDF et l'écran Sources.</td></tr>
     <tr><td>Ligne d'information « données dormantes » (M75)</td><td>une donnée servie en INFORMATION (jamais dans le score) est une ligne à <b>puce d'unité</b> (☀ ensoleillement dans <i>Réseaux et accès</i>, sous la note PV S3REnR ; 🅿 obligation APER dans <i>Urbanisme</i>), suivie de son <b>état</b> en <code>#4E5A53</code> — <code>Estimé</code> (PVGIS, réserve SARAH3 dans le texte) ou <code>Sourcé</code> (parking OSM). Une obligation légale se dit « <b>potentiellement concerné</b> », jamais « soumis à » ; aucun score sur 100.</td></tr>
   </table>
 
   <h2>ORDRE DES BLOCS</h2>
   <p style="font-size:12px">En-tête (identité + 4 chiffres) → bouton d'analyse + légende → bandeau
   d'attention si présent → actions IA → LE TERRAIN (3 tiroirs) → LE CONTEXTE (4 tiroirs) →
-  actions (+ CRM · + Projet · Comparer) → EXPORTS ET OUTILS → mention légale.
+  actions (+ CRM · + Projet · Comparer) → <b>EXPORTS</b> → mention légale.
   Le bloc Analyse s'insère après le bouton d'analyse, une fois le verdict demandé.</p>
+  <h2>OUTILS — PORTES DANS LES TIROIRS (M70 pt 9/12)</h2>
+  <p style="font-size:12px">La grille terminale « OUTILS SUR CETTE PARCELLE » est <b>SUPPRIMÉE</b>
+  (elle recréait une page Outils bis en pied de fiche). Chaque outil devient une <b>porte
+  contextuelle</b> (<code>.porte-outil</code>) en PIED du tiroir où il a un rapport étroit avec les
+  données, <b>au plus une porte par outil</b> : Marché → Comparer · Remonter le temps ; Urbanisme →
+  Annuaire PLU · Vérif procédure PLU ; Propriétaire → Courrier SPF · Scan patrimoine ;
+  Constructibilité → Calculette ; Risques → Contrôle avant achat · Servitudes invisibles. Un outil
+  qui n'accepte pas un IDU pré-rempli (Division, Assemblage, Faisabilité) n'a PAS de porte — il reste
+  accessible depuis la page Outils. Une porte qui ouvrirait un outil vide est une fausse promesse.</p>
 </div>
 
 </div>

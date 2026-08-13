@@ -252,7 +252,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -311,7 +311,10 @@ export default function App() {
                   résultats) — la carte reste derrière. Un seul panneau gauche à la fois. */}
               {outilsOpen ? null : module ? <ModulePanel /> : parcours ? null : <LeftPanel />}
               <Suspense fallback={<MapLoading />}>
-                {module === 'temps' ? <TimeMachine /> : <MapView />}
+                {/* M70 décision 11 (bug 10) — TimeMachine centrée sur LA parcelle : le bouton
+                    « 1950 » de la fiche pose flyTo{center: coords} avant setModule('temps') ; on le
+                    transmet (MapView n'est pas monté ici, flyTo persiste). Sans parcelle → vue large. */}
+                {module === 'temps' ? <TimeMachine center={flyTo?.center ?? null} /> : <MapView />}
               </Suspense>
               {parcours && <ParcoursTinder />}
               {veillesOpen && <VeillesPanel />}

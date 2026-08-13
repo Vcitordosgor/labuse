@@ -207,9 +207,12 @@ function Weight({ w, result }: { w: number | null; result: string }) {
 }
 
 // Source cliquable → DRAWER latéral (jamais un cul-de-sac : la fiche reste ouverte) + référence + date.
-function SourceRef({ line }: { line: FicheLine }) {
+// M70 point 4 : `hideDate` retire la date de millésime en bout de ligne (bruit : toutes identiques ;
+// le millésime reste en base, dans les exports PDF et l'écran Sources).
+function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) {
   const openSourceDrawer = useApp((s) => s.openSourceDrawer)
-  const trace = line.source_table && line.source_id != null ? `${line.source_table}#${line.source_id}` : null
+  // M70 décision 6 — la clé technique `source_table#source_id` (ex. « parcel_amenites#56909 ») ne
+  // s'affiche PLUS au client (violation libellés_client). Le nom de source reste cliquable (drawer).
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
@@ -218,8 +221,7 @@ function SourceRef({ line }: { line: FicheLine }) {
           {line.source}
         </button>
       )}
-      {trace && <span className="shrink-0 font-mono text-txt-dim/70">{trace}</span>}
-      {line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
+      {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
 }
@@ -228,7 +230,7 @@ function SourceRef({ line }: { line: FicheLine }) {
 // la source et la date restent. Utilisé dans le tiroir Urbanisme : les points dévoilaient le
 // score avant la demande de verdict (doctrine M55-L) et faisaient doublon de rôle avec « Pourquoi
 // ce score ». La donnée en base et le calcul sont intacts.
-function Line({ line, hideWeight }: { line: FicheLine; hideWeight?: boolean }) {
+function Line({ line, hideWeight, hideDate }: { line: FicheLine; hideWeight?: boolean; hideDate?: boolean }) {
   return (
     <div className="flex gap-3 border-b border-line/60 py-2 last:border-0">
       {!hideWeight && <Weight w={line.weight} result={line.result} />}
@@ -246,7 +248,7 @@ function Line({ line, hideWeight }: { line: FicheLine; hideWeight?: boolean }) {
           {line.result === 'UNKNOWN' && <span className="text-[9px] text-txt-dim">inconnu</span>}
         </div>
         <div className="text-[11px] leading-snug text-txt-mut">{fmtLibelleBrut(line.detail)}</div>
-        <SourceRef line={line} />
+        <SourceRef line={line} hideDate={hideDate} />
       </div>
     </div>
   )
@@ -284,20 +286,21 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
   const color = icdColor(icd.bande)
   return (
     <div data-icd className="card-elev">
+      {/* M70 décision 5 — plus de jauge ni de score chiffré (une seule jauge dans la fiche = l'ICD
+          n'en est plus une : verdict qualitatif). La barre et le nombre {icd.score} sont retirés ;
+          reste le verdict `icd.libelle` (« confiance haute »). Le détail (couches manquantes) déplie. */}
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
         title="Confiance données : déplier le détail">
-        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="w-24 shrink-0">
+        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="shrink-0">
           <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Confiance données</span>
         </Tip>
-        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${icd.score}%`, background: color }} />
-        </span>
-        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{icd.score}</span>
+        <span data-icd-verdict className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+          style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
         <div className="border-t border-line-2 px-3 py-2">
-          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
+          {/* M70 : le verdict `icd.libelle` est déjà dans l'en-tête — plus de doublon ici. */}
           {icd.manquants.length > 0 ? (
             <>
               <p className="label-caps mt-2 pb-1">Ce qui manque</p>
@@ -1253,7 +1256,6 @@ export function Fiche({ idu }: { idu: string }) {
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
-  const setMsel = useApp((s) => s.setMsel)                 // M60 P1d — porte Assemblage (amorce l'assiette)
   const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
@@ -1982,6 +1984,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
                   sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
                   onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
+                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
+                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
+                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
+                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
+                  onClick={() => setModule('verif-procedure')} />
               </div>
             </RefDrawer>
 
@@ -2027,14 +2034,22 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
                 quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
             <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
-              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`}
+              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} évaluée${risquesClean > 1 ? 's' : ''}`}
               value={risquesFlags.length === 0
                 ? <span className="pill-mint">rien à signaler</span>
                 : <span className="pill-amber">{risquesFlags.length} vigilance{risquesFlags.length > 1 ? 's' : ''}</span>}
               micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
               {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+              {/* M70 déc. 9 — PORTES Risques (grille terminale supprimée) : Contrôle avant achat
+                  (due diligence) + Servitudes invisibles. Les deux lisent selectedIdu → pré-remplis. */}
+              <PorteOutil ico="✓" data="duediligence" titre="Contrôle avant achat"
+                sous="La check-list de due diligence, cette parcelle en tête"
+                onClick={() => setModule('duediligence')} />
+              <PorteOutil ico="⚑" data="o5-servitudes" titre="Servitudes invisibles"
+                sous="Les contraintes dormantes qui ne se voient pas sur la carte"
+                onClick={() => setModule('o5-servitudes')} />
             </RefDrawer>
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
@@ -2050,7 +2065,7 @@ export function Fiche({ idu }: { idu: string }) {
               value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
               micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
               {marcheLines.length
-                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
               {/* M-U — signal de marché condensé (DVF actes + Sitadel), jamais un mot nu : les 2
                   composantes sont affichées ; l'outil « Marché » donne le bloc commune complet (9 lignes). */}
@@ -2088,6 +2103,16 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                   <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
                 </div>
+              )}
+              {/* M70 déc. 9 — PORTES Marché (grille terminale supprimée) : Comparer (cette parcelle
+                  chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
+              <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
+                sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"
+                onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
+              {f.coords && (
+                <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
+                  sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"
+                  onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
               )}
             </RefDrawer>
 
@@ -2151,20 +2176,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                    {/* M55-L point 12 — CONSTAT : le lien ouvrait `/parcels/{idu}/spf-letter` (lettre
-                        TEXTE brute dans un onglet, 200 text/plain), pas un outil. Il OUVRE désormais
-                        l'OUTIL courrier existant (M09, workflow SPF/CERFA) pré-rempli sur la parcelle
-                        courante (M09 lit selectedIdu, préservé par setModule) — même mécanique que la
-                        tuile Courrier. Le contexte parcelle passe (vérifié). Nuance rapportée : M09
-                        n'a pas encore de motif « SPF » dédié (motifs : standard/indivision/succession)
-                        ; l'endpoint /spf-letter reste servi (réactivable). */}
-                    <button data-spf-letter onClick={() => setModule('courriers')}
-                      className="mt-1.5 block text-left text-mint hover:underline" title={CLIENT.fiche.export.spfTip}>
-                      → {CLIENT.fiche.export.spf} (courrier pré-rempli à envoyer au SPF)
-                    </button>
+                    {/* M70 point 7a — le lien texte SPF devient une PORTE-OUTIL en pied de tiroir
+                        (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
                   </div>
                 )}
-                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
                 {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
                     « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
                 {(() => {
@@ -2183,6 +2199,14 @@ export function Fiche({ idu }: { idu: string }) {
                     sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
                     onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
                 )}
+                {/* M70 point 7a — PORTE en pied de Propriétaire : Courrier SPF (personne physique /
+                    non recensée). L'outil courrier (M09) s'ouvre pré-rempli sur la parcelle courante.
+                    Une seule porte par outil (M60) : le courrier n'a de porte QUE dans ce tiroir. */}
+                {!f.proprietaire_moral && (
+                  <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
+                    sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
+                    onClick={() => setModule('courriers')} />
+                )}
               </div>
             </RefDrawer>
 
@@ -2196,9 +2220,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
                 cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
                 signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
+            {/* M70 décision 5 — plus de « couverture {icd.score} % » (score nu) dans le sous-titre :
+                la confiance est portée par le verdict qualitatif de l'ICD (bloc plus bas). */}
             <RefDrawer id="confiance" icon={IC.confiance} name="Données et méthode"
-              context={[f.data_sources?.length ? `${f.data_sources.length} sources` : null, f.icd ? `couverture ${f.icd.score} %` : null].filter(Boolean).join(' · ') || undefined}
-              value={<></>/* DA-FICHE-v6 « pas de % nu » : la couverture est dans le sous-titre ; à droite, juste le chevron. */}>
+              context={f.data_sources?.length ? `${f.data_sources.length} sources` : undefined}
+              value={<></>/* DA-FICHE-v6 « pas de % nu » : à droite, juste le chevron. */}>
               <div className="flex flex-col gap-3">
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
@@ -2217,19 +2243,28 @@ export function Fiche({ idu }: { idu: string }) {
                           </div>
                           <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
                             {mill && <span className="tnum">{mill}</span>}
-                            {s.fiabilite && <span className="rounded-full px-1.5" style={{ background: s.fiabilite === 'vérifiée' ? '#5CE6A122' : '#e8b84d22', color: s.fiabilite === 'vérifiée' ? '#5CE6A1' : '#e8b84d' }}>{s.fiabilite}</span>}
+                            {/* M70 décision 4 — couleurs honnêtes : « suivie » (cataloguée + radar) en
+                                mint calme, « à confirmer » en ambre, le reste (estimée/déclarative) neutre. */}
+                            {s.fiabilite && (() => {
+                              const bg = s.fiabilite === 'suivie' ? '#5CE6A122' : s.fiabilite === 'à confirmer' ? '#e8b84d22' : '#8A968F22'
+                              const fg = s.fiabilite === 'suivie' ? '#5CE6A1' : s.fiabilite === 'à confirmer' ? '#e8b84d' : '#8A968F'
+                              return <span className="rounded-full px-1.5" style={{ background: bg, color: fg }}>{s.fiabilite}</span>
+                            })()}
                           </div>
                         </div>
                       )})}
                     </div>
                   </div>
                 )}
-                {/* Données ABSENTES — dites, jamais approximées (doctrine M52). Dérivées de nuls RÉELS
-                    du payload + faits open-data connus. Chaque absence est un fait, pas une excuse. */}
+                {/* M70 décision 8 — le bloc du 3ᵉ terme de la doctrine (Sourcé/Estimé/ABSENT) est
+                    CONSERVÉ (le retirer laisserait croire la fiche complète) mais REPLIÉ par défaut
+                    et reformulé « Ce que LABUSE ne peut pas savoir sur cette parcelle ». */}
                 {donneesAbsentes.length > 0 && (
-                  <div data-donnees-absentes>
-                    <p className="label-caps mb-1.5">Données absentes</p>
-                    <ul className="flex flex-col gap-1">
+                  <details data-donnees-absentes>
+                    <summary className="label-caps cursor-pointer list-none select-none">
+                      Ce que LABUSE ne peut pas savoir sur cette parcelle <span className="text-txt-dim">({donneesAbsentes.length})</span>
+                    </summary>
+                    <ul className="mt-1.5 flex flex-col gap-1">
                       {donneesAbsentes.map((a, i) => (
                         <li key={i} className="flex gap-2 text-[11px] leading-snug text-txt-mut">
                           <span aria-hidden className="text-txt-dim">○</span>
@@ -2237,7 +2272,7 @@ export function Fiche({ idu }: { idu: string }) {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </details>
                 )}
                 {/* M52 L4 — Qualité de la mesure PAR COMMUNE, DITE (audit RR fold 2025 OOS). RR intra
                     = pouvoir discriminant dans la commune ; « fragile » = <5 ventes en tête → fréquence
@@ -2331,31 +2366,13 @@ export function Fiche({ idu }: { idu: string }) {
                 </div>
                 <PreDossierTile idu={idu} />
               </div>
-              {/* M60 P1d — OUTILS SUR CETTE PARCELLE : portes compactes 2 colonnes ; chaque porte ouvre
-                  l'outil PRÉ-REMPLI avec cette parcelle (setModule garde selectedIdu → retour intact). */}
-              <div className="sec"><span>OUTILS SUR CETTE PARCELLE</span><i /></div>
-              <div className="grid grid-cols-2 gap-2">
-                <PorteOutil compacte ico="⇄" data="comparer" titre="Comparer"
-                  sous="Cette parcelle chargée · ajoutez-en d'autres"
-                  onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
-                <PorteOutil compacte ico="⬡" data="assemblage" titre="Assemblage"
-                  sous="Amorcer l'assiette avec cette parcelle"
-                  onClick={() => { setMsel([idu]); setModule('assemblage') }} />
-                {f.coords && (
-                  <PorteOutil compacte ico="◷" data="temps" titre="Remonter le temps"
-                    sous="Ce terrain de 1950 à aujourd'hui"
-                    onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
-                )}
-                <PorteOutil compacte ico="✓" data="duediligence" titre="Contrôle avant achat"
-                  sous="La check-list, cette parcelle en tête"
-                  onClick={() => setModule('duediligence')} />
-                <PorteOutil compacte ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
-                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => setModule('verif-procedure')} />
-                <PorteOutil compacte ico="▤" data="programme" titre="Faisabilité"
-                  sous="Monter un programme sur cette parcelle"
-                  onClick={() => setModule('programme')} />
-              </div>
+              {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
+                  (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
+                  contextuelle en pied du tiroir où il a un rapport étroit avec les données :
+                  Comparer + Remonter le temps → Marché ; Vérif procédure PLU → Urbanisme ;
+                  Contrôle avant achat + Servitudes invisibles → Risques ; Courrier SPF + Scan
+                  patrimoine → Propriétaire ; Calculette → Constructibilité. Assemblage/Division/
+                  Faisabilité : PAS de porte (n'acceptent pas un IDU pré-rempli — fausse promesse). */}
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>

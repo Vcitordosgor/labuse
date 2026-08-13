@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { getSources } from '../../lib/api'
+import { layerLabel } from '../../lib/layers'
 import { useApp } from '../../store/useApp'
 
 /** Drawer « source » (exigence : jamais un cul-de-sac). S'ouvre PAR-DESSUS la fiche, qui reste
@@ -19,8 +20,7 @@ export function SourceDrawer() {
 
   if (!sourceLine) return null
   const meta = sources.data?.find((s) => s.name === sourceLine.source)
-  const trace = sourceLine.source_table && sourceLine.source_id != null
-    ? `${sourceLine.source_table}#${sourceLine.source_id}` : null
+  // M70 décision 6 — la clé technique source_table#source_id ne s'affiche plus au client.
 
   return (
     <>
@@ -38,12 +38,13 @@ export function SourceDrawer() {
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
           {/* l'extrait : ce que cette source dit de CETTE parcelle */}
           <div className="rounded-lg border border-line-2 bg-surface-3 p-3">
-            <p className="font-mono text-[10px] tracking-widest text-txt-dim">EXTRAIT — {sourceLine.layer}</p>
+            <p className="font-mono text-[10px] tracking-widest text-txt-dim">EXTRAIT — {layerLabel(sourceLine.layer)}</p>
             <p className="mt-1.5 text-xs leading-relaxed text-txt">{sourceLine.detail}</p>
-            <div className="mt-2 flex items-center gap-3 text-[11px] text-txt-dim">
-              {trace && <span className="font-mono" title="Référence de l'enregistrement source">{trace}</span>}
-              {sourceLine.date && <span className="ml-auto font-mono" title="Date du fait">{sourceLine.date}</span>}
-            </div>
+            {sourceLine.date && (
+              <div className="mt-2 flex items-center gap-3 text-[11px] text-txt-dim">
+                <span className="ml-auto font-mono" title="Date du fait">{sourceLine.date}</span>
+              </div>
+            )}
           </div>
 
           {/* carte d'identité de la source */}

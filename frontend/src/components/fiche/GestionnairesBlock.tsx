@@ -9,7 +9,6 @@
  */
 import { TOKENS } from '../../lib/tokens'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
-import { Tip } from '../Tip'
 
 function Conf({ c }: { c?: GestOperateur['confidence'] }) {
   if (!c) return null
@@ -36,15 +35,11 @@ function Row({ icon, label, op, extra }: { icon: string; label: string; op: Gest
 export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
   return (
     <div data-gestionnaires className="card-elev px-3 py-2.5">
+      {/* M70 point 4 — la date « à jour {millésime} » est retirée du bloc (bruit ; la donnée reste
+          en base, dans les exports et l'écran Sources). Le disclaimer « à revérifier annuellement »
+          reste porté par le pied du bloc. */}
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-txt-hi">Gestionnaires (raccordement)</span>
-        {g.a_jour_au && (
-          <Tip tip="Les délégations changent aux renouvellements de contrat — à revérifier annuellement" className="ml-auto">
-            <span className="rounded-full bg-line-2 px-2 py-0.5 text-[10px] text-txt-dim">
-              à jour {g.a_jour_au}
-            </span>
-          </Tip>
-        )}
       </div>
 
       <div className="mt-2 flex flex-col gap-1">

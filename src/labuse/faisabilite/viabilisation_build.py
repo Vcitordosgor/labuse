@@ -104,10 +104,16 @@ def ilot_s3renr_note(session: Session) -> dict | None:
     base : pas d'attribution par parcelle → message honnête d'îlot). Volet PV, hors 0-100."""
     row = session.execute(text(
         "SELECT count(*) n, count(*) FILTER (WHERE capa_dispo_mw<=0) sat, "
+        "count(*) FILTER (WHERE capa_dispo_mw>0) dispo, count(geom) with_geom, "
         "max(source) src FROM grid_capacity")).mappings().first()
     if not row or not row["n"]:
         return None
     n, sat = row["n"], row["sat"]
+    # M70 décision 2 — grid_capacity est actuellement un STUB (24 postes, capa_dispo_mw=0 fabriqué,
+    # geom NULL). Affirmer « capacité NULLE » sur un 0 non mesuré est un FAUX POSITIF. Tant qu'aucune
+    # vraie donnée n'existe (aucune capa positive ET aucune géométrie), on ne dit RIEN sur le PV.
+    if row["dispo"] == 0 and row["with_geom"] == 0:
+        return None
     if sat >= n:
         note = (f"Capacité d'accueil PV NULLE sur les {n} postes sources de La Réunion "
                 "(S3REnR) → toute injection photovoltaïque est en file d'attente réseau.")
