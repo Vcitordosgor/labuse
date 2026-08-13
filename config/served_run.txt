@@ -6,4 +6,4 @@
 # Le test tests/test_run_serving_coherence.py vérifie que les trois == cette valeur.
 # Pour BASCULER le run servi : changer CETTE ligne, puis `npm run build` + `labuse build-mvt`.
 # (Première ligne non-commentée = la valeur. LABUSE_SERVED_RUN reste un override de DEV, loggé WARNING.)
-q_v8_calibre
+q_v9_m81

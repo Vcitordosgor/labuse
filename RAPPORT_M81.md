@@ -157,3 +157,32 @@ mais un chevauchement ROUGE marginal l'excluait entièrement en q_v8**. La gradu
 l'ancre canari) · vérifs écran (ENS/BODACC/prix terrain/Saint-Philippe) + non-contradiction M73.
 
 **STOP — le rang ne bouge pas, les exigences sont tenues, les deux effets sont séparés. GO bascule ? NE PAS MERGER.**
+
+---
+
+## PHASE 3 — Bascule (GO Vic) — **FAITE, recette visuelle attendue**
+
+Ordre exécuté : `matrice-apply q_v9_m81` (canari **chaude** ✓, tuiles 431 663) → `served_run.txt` → q_v9_m81 +
+`run_precedent.txt` → q_v8_calibre → `build-mvt` (mvt_parcels 431 663) + `npm run build` (bundle q_v9_m81) →
+purge rétention (**rien à purger**, servi+précédent+lignée+démo gardés) → **golden rebasé sur q_v9_m81**
+(119/119 PASS ; ancre canari basculée : ancien 97415000AC0253 chaude→a_creuser, nouveau 97414000CV0907 chaude).
+
+**Correctif de bascule** : la graduation PPR fait apparaître « intersection marginale » comme verdict à part
+entière (plus une contradiction) → relibellé côté client « recouvrement marginal » (`risques_arbitrage`,
+read-time, 5 docs) — le test de non-contradiction M73 repasse.
+
+### VÉRIFS ÉCRAN (run servi q_v9_m81) — pour ta recette
+| Attendu | Parcelle | Rendu réel |
+|---|---|---|
+| ENS « non disponible » sur commune vide (pas « Hors ENS ») | 97407000AK1345 (Le Port) | « **Donnée ENS non disponible sur cette commune.** » ✓ |
+| BODACC « sondé le [date] » | 97415000BK0023 | « Aucune procédure collective — **propriétaire sondé le 13/08/2026.** » ✓ |
+| Prix TERRAIN + seuils (plus le 379) | 97415000AC0253 (canari) | « **Prix médian terrain 173 €/m²** — 3 ventes, secteur cadastral, 2021-2025 — **échantillon fragile (~28 %)**. » ✓ |
+| Saint-Philippe « non publié au GPU » | 97417000AE0003 | « **Zonage PLU non publié au GPU** … trou de donnée, pas un verdict. » ✓ |
+
+### Garde-fous Phase 3 — TOUS VERTS
+`golden_check` **119/119 PASS** · **non-contradiction M73 9/9** · cohérence run servi 4/4 (bundle reconstruit) ·
+`test_risques_arbitrage` 6/6 · exports premium/dossier **200** (canari + Saint-Philippe) · garde canari
+**passe** (nouveau canari chaude) · garde non-constance passée · run précédent q_v8_calibre conservé (rétention).
+
+**Le run servi est désormais q_v9_m81.** Toutes les corrections M70/M71/M79 + graduation PPR sont visibles au
+client, le rang n'a pas bougé. **NE PAS MERGER avant ta recette visuelle.**

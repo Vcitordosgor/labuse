@@ -61,6 +61,10 @@ def libelle_client_detail(detail: str | None) -> str | None:
     # noms de tables internes.
     d = d.replace("hors couverture parcel_residuel", "droits résiduels non couverts")
     d = d.replace("parcel_residuel", "droits résiduels")
+    # M81 — « intersection marginale » (terme géométrique) → « recouvrement marginal » côté client.
+    # Depuis la graduation PPR (M-I), une part rouge marginale n'est plus une CONTRADICTION (elle ne
+    # coexiste plus avec une exclusion) mais un verdict à part entière ; on la NOMME proprement.
+    d = d.replace("intersection marginale", "recouvrement marginal")
     return d
 
 
