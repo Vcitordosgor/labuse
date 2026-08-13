@@ -271,9 +271,29 @@ Données d'exemple : 97418000BE0256, Sainte-Marie.</p>
   contextuelle</b> (<code>.porte-outil</code>) en PIED du tiroir où il a un rapport étroit avec les
   données, <b>au plus une porte par outil</b> : Marché → Comparer · Remonter le temps ; Urbanisme →
   Annuaire PLU · Vérif procédure PLU ; Propriétaire → Courrier SPF · Scan patrimoine ;
-  Constructibilité → Calculette ; Risques → Contrôle avant achat · Servitudes invisibles. Un outil
-  qui n'accepte pas un IDU pré-rempli (Division, Assemblage, Faisabilité) n'a PAS de porte — il reste
-  accessible depuis la page Outils. Une porte qui ouvrirait un outil vide est une fausse promesse.</p>
+  <b>Constructibilité → Faisabilité · Calculette · Assemblage</b> (dans cet ordre) ; Risques →
+  Contrôle avant achat · Servitudes invisibles. Une porte qui ouvrirait un outil vide est une fausse
+  promesse : un outil n'a de porte que s'il accepte l'IDU de la fiche <b>pré-rempli</b>.</p>
+
+  <h2>M-ENTREE — MOTIF D'AMORÇAGE PARCELLE (à suivre pour toute nouvelle porte)</h2>
+  <p style="font-size:12px">Une porte qui pré-remplit un outil avec la parcelle de la fiche suit
+  <b>un seul motif</b>, <b>consommation-puis-reset</b> (le prochain outil à entrée parcelle le reprend
+  tel quel, sans le redécouvrir) :</p>
+  <ul style="font-size:12px">
+    <li><b>Store</b> : un champ partagé <code>parcelPrefill: string|null</code> + setter (<code>useApp</code>).
+    <i>Un seul champ, plusieurs consommateurs</i> (Faisabilité M22, Assemblage M16). BACKLOG :
+    <code>calcPrefill</code> (Calculette M23) devra le rejoindre — pas tant que la calculette marche.</li>
+    <li><b>Porte</b> (fiche) : <code>onClick={() =&gt; { setParcelPrefill(idu); setModule(clé) }}</code>.</li>
+    <li><b>Outil</b> (au montage) : <code>useEffect([parcelPrefill]) → </code> amorce à SA façon puis
+    <code>setParcelPrefill(null)</code>. Faisabilité : <code>setMode('parcelle'); setPicked(idu)</code>.
+    Assemblage : <code>setMsel([idu])</code> (1ʳᵉ du lot, on agrège les contiguës ensuite).</li>
+    <li><b>Ouvert sans porte</b> (page Outils) : <code>parcelPrefill</code> reste <code>null</code> →
+    comportement de l'outil <b>inchangé</b>. L'entrée parcelle est un plus, jamais une contrainte.</li>
+    <li><b>Division (M01) : PAS de porte.</b> C'est un outil de découverte à l'échelle commune (liste de
+    candidats ≥ seuil), sans entrée parcelle unique et sans score de divisibilité par parcelle. Une liste
+    commune pré-remplie par une parcelle serait une demi-promesse. BACKLOG produit : « cette parcelle
+    est-elle divisible ? » n'a aujourd'hui aucune réponse dans LABUSE.</li>
+  </ul>
 
   <h2>PASSE GLOBALE M76 — RÈGLES QUI VALENT POUR TOUS LES BLOCS</h2>
   <p style="font-size:12px">Ces règles ne s'appliquent pas à quatre tiroirs mais à la fiche ENTIÈRE

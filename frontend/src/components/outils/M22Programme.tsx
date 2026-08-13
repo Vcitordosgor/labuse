@@ -15,7 +15,7 @@ import { TierBadge } from './TierBadge'
  *  · « Par parcelle » (SENS 1) : on désigne UNE parcelle (IDU / adresse / clic carte) et on voit sa
  *    faisabilité — exactement l'onglet Faisabilité des fiches, porté dans l'outil (aucune divergence). */
 export function M22() {
-  const { m22Prefill, setM22Prefill, setModuleMap, select } = useApp()
+  const { m22Prefill, setM22Prefill, parcelPrefill, setParcelPrefill, setModuleMap, select } = useApp()
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
@@ -33,6 +33,17 @@ export function M22() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m22Prefill])
+
+  // M-ENTREE — porte fiche → Faisabilité : la parcelle amorce le mode « par parcelle » (motif
+  // parcelPrefill partagé, consommation-puis-reset). Indépendant du m22Prefill critères (copilote).
+  useEffect(() => {
+    if (parcelPrefill) {
+      setMode('parcelle')
+      setPicked(parcelPrefill)
+      setParcelPrefill(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parcelPrefill])
 
   const d = run.data
   // carte : résultats en mode critères, parcelle désignée en mode parcelle
