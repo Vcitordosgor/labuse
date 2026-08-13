@@ -96,13 +96,15 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
         from ..marque import charger as _charger_marque
         html = render_report_html(db, idu, order_ref=ref, with_map=carte, marque=_charger_marque(db, request),
                                   produit="Dossier parcelle",
-                                  produit_sous_titre="DOSSIER PARCELLE · usage interne")
+                                  produit_sous_titre="DOSSIER PARCELLE")   # M73 C7 : « usage interne » retiré (doc client)
     except ValueError as exc:                    # parcelle inconnue
         raise HTTPException(404, str(exc))
     # Mention d'attribution imprimée sur CHAQUE page (position:fixed en WeasyPrint).
+    # M73 C6 : marque blanche non résolue → ne pas imprimer « pour Pilote LABUSE » (valeur par défaut).
+    _pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
     mention = (f'<div style="position:fixed; bottom:2mm; right:0; font-size:7pt;'
                f' color:#5F6C65; font-family: Inter, sans-serif;">'
-               f'Généré via LABUSE pour {s.raison_sociale}</div>')
+               f'Généré via LABUSE{_pour}</div>')
     html = html.replace("</body>", mention + "</body>")
 
     from weasyprint import HTML

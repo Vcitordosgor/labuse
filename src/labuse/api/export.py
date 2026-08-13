@@ -647,7 +647,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
  .action {{ margin-top:6px; padding:6px 9px; background:#faf6ec; border-left:3px solid #c9a86a; }}
 </style>
 <div class="head">
-  <div><div class="brand">LA&nbsp;BUSE <small>· radar foncier La Réunion</small></div>
+  <div><div class="brand">LABUSE <small>· radar foncier La Réunion</small></div>
        <div class="idu">{html.escape(p['idu'])}</div><div class="loc">{loc}</div></div>
   <div class="date">Fiche de pré-qualification<br>{today}</div>
 </div>
