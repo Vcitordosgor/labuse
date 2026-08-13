@@ -1,7 +1,7 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8000",
-  "genere_le": "2026-08-07T23:52:41",
+  "genere_le": "2026-08-13T14:45:25",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 118,
   "run_cascade": "q_v8_calibre",
@@ -234,6 +234,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 1.32,
       "percentile": 86.94,
       "pourquoi": [
@@ -279,6 +284,7 @@
        }
       ],
       "rang": 55950,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -420,6 +426,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 7.13,
       "percentile": 99.97,
       "pourquoi": [
@@ -465,6 +476,7 @@
        }
       ],
       "rang": 135,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "forte",
@@ -624,7 +636,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 33,
+     "n_lignes_cascade": 32,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "renouvellement": null,
@@ -635,6 +647,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.7,
       "percentile": 25.77,
       "pourquoi": [
@@ -680,6 +697,7 @@
        }
       ],
       "rang": 317899,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -874,6 +892,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · inconstructible (géométrie)",
+      "motif": null,
       "mult_base": 5.88,
       "percentile": 99.83,
       "pourquoi": [
@@ -919,6 +942,7 @@
        }
       ],
       "rang": 750,
+      "rang_total": 428239,
       "tier": "declasse_non_constructible",
       "verbal": {
        "cle": "forte",
@@ -1001,7 +1025,7 @@
      "ndvi_moyen": 0.0
     },
     "veille_succession": {
-     "dirigeant_age": 74,
+     "dirigeant_age": 75,
      "sci_dormante": false
     },
     "vue_mer": null,
@@ -1054,6 +1078,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Potentiel long terme",
+      "motif": null,
       "mult_base": 0.92,
       "percentile": 45.46,
       "pourquoi": [
@@ -1099,6 +1128,7 @@
        }
       ],
       "rang": 233570,
+      "rang_total": 428239,
       "tier": "reserve_fonciere",
       "verbal": {
        "cle": "en_dessous",
@@ -1230,6 +1260,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 64.36,
       "percentile": 100.0,
       "pourquoi": [
@@ -1275,6 +1310,7 @@
        }
       ],
       "rang": 1,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -1429,6 +1465,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.85,
       "percentile": 38.02,
       "pourquoi": [
@@ -1474,6 +1515,7 @@
        }
       ],
       "rang": 265435,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "en_dessous",
@@ -1617,6 +1659,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -1662,6 +1709,7 @@
        }
       ],
       "rang": 10,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -1796,6 +1844,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Chaude",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.98,
       "pourquoi": [
@@ -1841,6 +1894,7 @@
        }
       ],
       "rang": 73,
+      "rang_total": 428239,
       "tier": "chaude",
       "verbal": {
        "cle": "tres_forte",
@@ -1975,6 +2029,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -2020,6 +2079,7 @@
        }
       ],
       "rang": 6,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -2174,6 +2234,11 @@
      },
      "score_v2": {
       "copro": true,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 1.66,
       "percentile": null,
       "pourquoi": [
@@ -2219,6 +2284,7 @@
        }
       ],
       "rang": null,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -2339,6 +2405,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.85,
       "percentile": 39.87,
       "pourquoi": [
@@ -2384,6 +2455,7 @@
        }
       ],
       "rang": 257513,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -2514,6 +2586,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -2559,6 +2636,7 @@
        }
       ],
       "rang": 5,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -2733,6 +2811,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 7.13,
       "percentile": 99.97,
       "pourquoi": [
@@ -2778,6 +2861,7 @@
        }
       ],
       "rang": 134,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "forte",
@@ -2910,6 +2994,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie saturée — ratio 55 % (emprise 320 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 2.65,
       "percentile": 98.84,
       "pourquoi": [
@@ -2955,6 +3044,7 @@
        }
       ],
       "rang": 4956,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "au_dessus",
@@ -2992,11 +3082,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2023-07-27",
-     "n": 1,
-     "pire_etiquette": "G"
-    },
+    "dpe": null,
     "dvf": {
      "derniere": "2025-08-28",
      "n_mutations": 2
@@ -3083,6 +3169,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.32,
       "percentile": 87.37,
       "pourquoi": [
@@ -3128,6 +3219,7 @@
        }
       ],
       "rang": 54095,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -3165,11 +3257,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2021-08-26",
-     "n": 2,
-     "pire_etiquette": "F"
-    },
+    "dpe": null,
     "dvf": null,
     "etage0": true,
     "etage0_motifs": [
@@ -3260,6 +3348,14 @@
    "tier_v2": "declasse_bati_revele",
    "validation": "coherence"
   },
+  "97415000AC0253": {
+   "anchor": true,
+   "validation": "coherence",
+   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable)",
+   "cascade_status": "opportunite",
+   "matrice_statut": "chaude",
+   "tier_v2": "chaude"
+  },
   "97415000AH0410": {
    "anchor": true,
    "cascade_status": "exclue",
@@ -3312,6 +3408,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · inconstructible (géométrie)",
+      "motif": null,
       "mult_base": 15.55,
       "percentile": 100.0,
       "pourquoi": [
@@ -3357,6 +3458,7 @@
        }
       ],
       "rang": 17,
+      "rang_total": 428239,
       "tier": "declasse_non_constructible",
       "verbal": {
        "cle": "tres_forte",
@@ -3470,6 +3572,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie saturée — ratio 42 % (emprise 254 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 13.15,
       "percentile": 99.99,
       "pourquoi": [
@@ -3515,6 +3622,7 @@
        }
       ],
       "rang": 57,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "tres_forte",
@@ -3632,6 +3740,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 3.25,
       "percentile": 99.14,
       "pourquoi": [
@@ -3677,6 +3790,7 @@
        }
       ],
       "rang": 3694,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "au_dessus",
@@ -3801,6 +3915,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Potentiel long terme",
+      "motif": null,
       "mult_base": 0.92,
       "percentile": 45.92,
       "pourquoi": [
@@ -3846,6 +3965,7 @@
        }
       ],
       "rang": 231579,
+      "rang_total": 428239,
       "tier": "reserve_fonciere",
       "verbal": {
        "cle": "en_dessous",
@@ -3994,6 +4114,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.17,
       "percentile": 73.14,
       "pourquoi": [
@@ -4039,6 +4164,7 @@
        }
       ],
       "rang": 115024,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -4148,6 +4274,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.81,
       "percentile": 34.39,
       "pourquoi": [
@@ -4193,6 +4324,7 @@
        }
       ],
       "rang": 280960,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -4368,6 +4500,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -4413,6 +4550,7 @@
        }
       ],
       "rang": 7,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -4560,6 +4698,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.81,
       "percentile": 31.23,
       "pourquoi": [
@@ -4605,6 +4748,7 @@
        }
       ],
       "rang": 294509,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -4758,6 +4902,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Brûlante",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.99,
       "pourquoi": [
@@ -4803,6 +4952,7 @@
        }
       ],
       "rang": 59,
+      "rang_total": 428239,
       "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
@@ -4953,7 +5103,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 34,
+     "n_lignes_cascade": 33,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "renouvellement": null,
@@ -4964,6 +5114,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 0.52,
       "percentile": 11.43,
       "pourquoi": [
@@ -5009,6 +5164,7 @@
        }
       ],
       "rang": 379309,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "en_dessous",
@@ -5157,6 +5313,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · fermée à l'urbanisation",
+      "motif": null,
       "mult_base": 22.12,
       "percentile": 100.0,
       "pourquoi": [
@@ -5202,6 +5363,7 @@
        }
       ],
       "rang": 4,
+      "rang_total": 428239,
       "tier": "declasse_zone_fermee",
       "verbal": {
        "cle": "tres_forte",
@@ -5325,6 +5487,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · fermée à l'urbanisation",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.98,
       "pourquoi": [
@@ -5370,6 +5537,7 @@
        }
       ],
       "rang": 107,
+      "rang_total": 428239,
       "tier": "declasse_zone_fermee",
       "verbal": {
        "cle": "tres_forte",
@@ -5483,6 +5651,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 2.13,
       "percentile": 98.14,
       "pourquoi": [
@@ -5528,6 +5701,7 @@
        }
       ],
       "rang": 7967,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "au_dessus",
@@ -5561,11 +5735,7 @@
      "lots_total": 0,
      "n": 0
     },
-    "dpe": {
-     "derniere_date": "2024-10-21",
-     "n": 13,
-     "pire_etiquette": "F"
-    },
+    "dpe": null,
     "dvf": {
      "derniere": "2025-03-11",
      "n_mutations": 2
@@ -5655,7 +5825,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 36,
+     "n_lignes_cascade": 35,
      "proprietaire_moral_siren": "807931308",
      "q_score": 50,
      "renouvellement": null,
@@ -5666,6 +5836,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 2.8,
       "percentile": 99.04,
       "pourquoi": [
@@ -5711,6 +5886,7 @@
        }
       ],
       "rang": 4131,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "au_dessus",
@@ -5842,6 +6018,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti révélé",
+      "motif": null,
       "mult_base": 4.16,
       "percentile": 99.51,
       "pourquoi": [
@@ -5887,6 +6068,7 @@
        }
       ],
       "rang": 2080,
+      "rang_total": 428239,
       "tier": "declasse_bati_revele",
       "verbal": {
        "cle": "forte",
@@ -6039,6 +6221,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": null,
+      "declasse": false,
+      "exception_registre": false,
+      "label": "Écartée",
+      "motif": null,
       "mult_base": 1.17,
       "percentile": 73.95,
       "pourquoi": [
@@ -6084,6 +6271,7 @@
        }
       ],
       "rang": 111563,
+      "rang_total": 428239,
       "tier": "ecartee",
       "verbal": {
        "cle": "proche",
@@ -6206,6 +6394,11 @@
      },
      "score_v2": {
       "copro": false,
+      "couleur_hex": "#8C7468",
+      "declasse": true,
+      "exception_registre": false,
+      "label": "Potentiel épuisé · bâti saturé",
+      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 1.06,
       "percentile": 66.83,
       "pourquoi": [
@@ -6251,6 +6444,7 @@
        }
       ],
       "rang": 142045,
+      "rang_total": 428239,
       "tier": "declasse_bati_sature",
       "verbal": {
        "cle": "proche",
@@ -6342,14 +6536,6 @@
      "zone": "U"
     }
    }
-  },
-  "97415000AC0253": {
-   "anchor": true,
-   "validation": "coherence",
-   "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable)",
-   "cascade_status": "opportunite",
-   "matrice_statut": "chaude",
-   "tier_v2": "chaude"
   }
  }
 }
