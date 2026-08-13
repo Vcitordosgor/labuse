@@ -43,11 +43,29 @@
   **9 parcelles / 4 162**, toutes en zonage N (excluant de toute façon). Négligeable,
   laissé tel quel. La commune sera servie avec le bandeau honnête « RNU — capacité non
   calculable » (Phase 2).
-- **Échelle DVF** : vérifiée — le calcul utilise UNE échelle fixe île entière
+- **Échelle DVF** : ~~vérifiée — le calcul utilise UNE échelle fixe île entière
   (`price_lo=250 / price_hi=900 €/m²`, cascade_rules.yaml, calée sur la distribution
-  Saint-Paul p25≈312/p75≈821) + liquidité par rayon local. **Pas de quantiles par
-  commune** ✓. Nuance consignée : c'est une échelle FIGÉE commune à toute l'île, pas des
-  quintiles recalculés île — même barème partout, donc comparable inter-communes.
+  Saint-Paul p25≈312/p75≈821) + liquidité par rayon local.~~ **REVU en M79 (voir ci-dessous).**
+  Nuance historique consignée : c'était une échelle FIGÉE calée sur UNE commune de référence
+  (Saint-Paul), sur une grandeur BÂTI-étalée (`dvf_mutations` bâti-only).
+
+  **M79 (2026-08-13) — recalage DVF, règle refaite explicitement :**
+  - **grandeur** : prix de **TERRAIN NU** (avant : ratio valeur_bien ÷ surface_terrain, tous biens
+    → comptait du bâti au m² de terrain, facteur ~2 ; RAPPORT_M79) ;
+  - **source / point de calcul unique** : `dvf_secteur_medianes` type='terrain' (secteur cadastral),
+    plus de rayon (le rayon lisait `dvf_mutations`, bâti-only → 0 % du parc à ≥3 ventes terrain) ;
+  - **percentiles** : **p25 / p75** (même règle qu'à l'origine) ;
+  - **périmètre** : **île entière**, 676 secteurs à **n≥3** (et non plus une commune de référence —
+    Saint-Paul est cher, ce n'était pas un miroir de l'île ; arbitrage Vic M79) ;
+  - **valeurs retenues** : distribution terrain île p25=**158** / p75=**323** → `price_lo=150` /
+    `price_hi=325` (arrondi) ;
+  - **seuils** : plancher n≥3 (< 3 → « échantillon insuffisant »), fiable n≥5 (3–4 → prix + mention
+    de fragilité ~28 % d'erreur médiane). Couverture : 93,8 % du parc à n≥3, 87,6 % à n≥5.
+  - **effet** : le rang/tier SERVI (modèle P) ne bouge pas (il consommait déjà `med_pm2_terrain_36m`) ;
+    seul l'axe opportunity bouge (~170 chaude en retrait). Détail : `RAPPORT_M79.md`.
+  - **dette de méthode signalée** (Vic M79) : la référence Saint-Paul figée servait aussi aux
+    **hypothèses de calcul PLU globales** (~13 communes lisent `plu_saint_paul.yaml` en repli) —
+    même biais « référence figée alors que 23/24 communes sont couvertes », à traiter dans un mandat PLU dédié.
 
 ## c. Signalements AVANT calcul (décisions consignées)
 1. **Calibrages PLU premium absents du dépôt** : `config/plu_*.yaml` n'existe que pour

@@ -23,35 +23,47 @@ class DvfLayer(Layer):
     name = "dvf"
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
-        if not ctx.table_has_commune("dvf_mutations", parcel.commune):
-            return unknown(self.name, "DVF non ingéré pour la commune.", source=SRC_DVF)
-        years = params.get("lookback_years", 5)
+        # M79 — POINT DE CALCUL UNIQUE : prix médian de TERRAIN NU du SECTEUR cadastral
+        # (dvf_secteur_medianes type='terrain'), JAMAIS un ratio bâti/foncier ni un rayon.
+        # L'ancien €/m² « rayon, tous biens » comptait du bâti au m² de terrain (facteur ~2) —
+        # supprimé (RAPPORT_M79). Échelle recalée sur la distribution TERRAIN île entière
+        # (676 secteurs n≥3, p25=158/p75=323 → plo/phi = 150/325 ; PRE_VOL_ILE.md).
         liq_ref = float(params.get("liquidity_ref", 8))
-        plo = float(params.get("price_lo_eur_m2", 250))
-        phi = float(params.get("price_hi_eur_m2", 900))
+        plo = float(params.get("price_lo_eur_m2", 150))
+        phi = float(params.get("price_hi_eur_m2", 325))
         wl = float(params.get("w_liquidity", 0.5))
         wp = float(params.get("w_price", 0.5))
-        for radius in params.get("radii_m", [250, 500, 1000]):
-            stats = ctx.dvf_stats(parcel.id, radius, years)
-            if stats["count"] > 0:
-                count = stats["count"]
-                em2 = stats.get("median_eur_m2")
-                # CRED-2 (revue externe 12/07) : cette médiane est un prix au m² de TERRAIN
-                # (valeur ÷ surface terrain, tous types de biens) — la NOMMER, sinon elle se
-                # lit comme un prix bâti (699 vs 2 745 €/m² sur la même fiche, incompréhensible).
-                em2_txt = (f"terrain {em2:,.0f} €/m² (valeur ÷ surface terrain, tous biens)".replace(",", " ")
-                           if em2 else "prix/m² n/d")
-                detail = f"Marché : {count} mutation(s) ≤ {radius} m / {years} ans, médiane {em2_txt}."
-                # magnitude = mélange borné liquidité + niveau de prix (terrain).
-                liq = max(0.0, min(1.0, count / liq_ref)) if liq_ref > 0 else 0.0
-                price = max(0.0, min(1.0, (em2 - plo) / (phi - plo))) if (em2 and phi > plo) else 0.0
-                mag = (wl * liq + wp * price) if em2 else liq   # sans prix/m² → liquidité seule
-                mag = max(0.0, min(1.0, mag))
-                if mag > 0:
-                    return positive(self.name, detail + " Contexte de marché favorable.",
-                                    params.get("bonus_key", "contexte_dvf_favorable"), magnitude=mag, source=SRC_DVF)
-                return passed(self.name, detail, source=SRC_DVF)
-        return passed(self.name, "Aucune mutation DVF dans le rayon max.", source=SRC_DVF)
+        n_floor = int(params.get("min_ventes_plancher", 3))    # < plancher → aucun prix affiché
+        n_fiable = int(params.get("min_ventes_fiable", 5))     # [plancher, fiable) → prix + fragilité
+
+        sec = ctx.dvf_sector_terrain(parcel.idu)
+        if not sec or not sec.get("median_eur_m2"):
+            return passed(self.name, "Prix terrain : aucune vente de terrain dans le secteur.", source=SRC_DVF)
+        n = sec["n_ventes"]
+        em2 = sec["median_eur_m2"]
+        fen = sec.get("fenetre") or "période n/d"
+
+        # Plancher dur : une médiane sur < 3 ventes n'est pas une médiane (RAPPORT_M79 Q6 : erreur
+        # médiane > 55 % à n≤2). On DIT « échantillon insuffisant », jamais un chiffre présenté robuste.
+        if n < n_floor:
+            return passed(self.name,
+                          f"Prix médian terrain : échantillon insuffisant ({n} vente(s) dans le secteur).",
+                          source=SRC_DVF)
+
+        # Libellé nommé : le client sait sur quoi porte la médiane sans ouvrir la doc. Entre plancher
+        # et seuil fiable, le chiffre s'affiche AVEC sa mention de fragilité (jamais caché — Vic).
+        fragile = "" if n >= n_fiable else " — échantillon fragile (~28 % d'erreur médiane)"
+        detail = (f"Prix médian terrain {em2:,.0f} €/m² — {n} ventes, secteur cadastral, {fen}{fragile}."
+                  .replace(",", " "))
+
+        # magnitude = mélange borné liquidité (n ventes du secteur) + niveau de prix TERRAIN.
+        liq = max(0.0, min(1.0, n / liq_ref)) if liq_ref > 0 else 0.0
+        price = max(0.0, min(1.0, (em2 - plo) / (phi - plo))) if phi > plo else 0.0
+        mag = max(0.0, min(1.0, wl * liq + wp * price))
+        if mag > 0:
+            return positive(self.name, detail + " Contexte de marché favorable.",
+                            params.get("bonus_key", "contexte_dvf_favorable"), magnitude=mag, source=SRC_DVF)
+        return passed(self.name, detail, source=SRC_DVF)
 
 
 @register
