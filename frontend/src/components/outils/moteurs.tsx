@@ -75,8 +75,14 @@ export function M15() {
 /* ───────────── M16 — ASSEMBLAGE ───────────── */
 
 export function M16() {
-  const { msel, setMsel, setModuleMap } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill } = useApp()
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
+  // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
+  // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
+  useEffect(() => {
+    if (parcelPrefill) { setMsel([parcelPrefill]); setParcelPrefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parcelPrefill])
   useEffect(() => {
     setModuleMap({ idus: msel, extra: null })
     return () => setModuleMap({ idus: [], extra: null })

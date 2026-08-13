@@ -2018,6 +2018,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
                   sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
                   onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
+                {/* M-ENTREE — PORTE Assemblage (M16) : la parcelle devient la 1ʳᵉ du lot, l'utilisateur
+                    agrège les contiguës au clic-carte (motif parcelPrefill partagé). */}
+                <PorteOutil ico="⧉" data="assemblage-outil" titre="Assemblage"
+                  sous={`Partir de ces ${fmtM2(f.surface_m2)} et agréger les parcelles contiguës`}
+                  onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
               </div>
             </RefDrawer>
             {/* M55-O phase 2.1c : Mode B — Réhabilitation, rattaché à la Constructibilité (un seul
@@ -2366,10 +2371,10 @@ export function Fiche({ idu }: { idu: string }) {
                   contextuelle en pied du tiroir où il a un rapport étroit avec les données :
                   Comparer + Remonter le temps → Marché ; Vérif procédure PLU → Urbanisme ;
                   Contrôle avant achat + Servitudes invisibles → Risques ; Courrier SPF + Scan
-                  patrimoine → Propriétaire ; Calculette + Faisabilité → Constructibilité (M-ENTREE :
-                  Faisabilité accepte un IDU en mode « par parcelle »). Division : PAS de porte (outil de
-                  découverte à l'échelle commune, aucune entrée parcelle — BACKLOG produit « cette parcelle
-                  est-elle divisible ? »). */}
+                  patrimoine → Propriétaire ; Faisabilité + Calculette + Assemblage → Constructibilité
+                  (M-ENTREE : Faisabilité accepte un IDU en mode « par parcelle » ; Assemblage l'ajoute en
+                  1ʳᵉ du lot). Division : PAS de porte (outil de découverte à l'échelle commune, aucune
+                  entrée parcelle — BACKLOG produit « cette parcelle est-elle divisible ? »). */}
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
