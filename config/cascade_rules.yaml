@@ -391,18 +391,24 @@ layers:
     phase: 2
     enabled: true
     params:
-      radii_m: [250, 500, 1000]    # rayons d'agrégation autour du centroïde
-      lookback_years: 5
       bonus_key: contexte_dvf_favorable
+      # M79 — POINT DE CALCUL UNIQUE : prix médian de TERRAIN NU par SECTEUR cadastral
+      # (dvf_secteur_medianes type='terrain'). L'ancien calcul « rayon, tous biens » comptait du
+      # bâti au m² de terrain (facteur ~2, RAPPORT_M79) — supprimé.
       # MARCHÉ CONTINU (magnitude 0..1) = mélange liquidité + niveau de prix, borné.
-      #   liquidité : nb de mutations / liquidity_ref, plafonné à 1
-      #   prix      : médiane €/m² de TERRAIN, normalisée sur [price_lo, price_hi] €/m²
-      #               (calé sur Saint-Paul : p25≈312, médiane≈503, p75≈821 €/m²)
+      #   liquidité : n ventes du secteur / liquidity_ref, plafonné à 1
+      #   prix      : médiane €/m² de TERRAIN, normalisée sur [price_lo, price_hi]
+      #               ÉCHELLE RECALÉE sur la distribution TERRAIN île entière (676 secteurs n≥3,
+      #               p25=158 / p75=323 → 150/325 ; règle d'origine p25/p75, cf. PRE_VOL_ILE.md).
       liquidity_ref: 8
-      price_lo_eur_m2: 250
-      price_hi_eur_m2: 900
+      price_lo_eur_m2: 150
+      price_hi_eur_m2: 325
       w_liquidity: 0.5
       w_price: 0.5
+      # Seuils de fiabilité (RAPPORT_M79 Q6) : < 3 ventes → « échantillon insuffisant » (aucun prix) ;
+      # [3, 5) → prix affiché AVEC mention de fragilité (~28 % d'erreur médiane) ; ≥ 5 → fiable.
+      min_ventes_plancher: 3
+      min_ventes_fiable: 5
 
   - name: sitadel
     phase: 2

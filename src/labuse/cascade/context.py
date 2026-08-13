@@ -450,6 +450,26 @@ class EvalContext:
                 "median_value": float(r["median_value"]) if r["median_value"] else None,
                 "median_eur_m2": float(r["median_eur_m2"]) if r["median_eur_m2"] else None}
 
+    def dvf_sector_terrain(self, idu: str) -> dict[str, Any] | None:
+        """M79 — prix médian de TERRAIN NU du SECTEUR cadastral (insee+000+section), depuis
+        `dvf_secteur_medianes` (type_bien='terrain'). C'est le POINT DE CALCUL UNIQUE du €/m²
+        marché : jamais un ratio bâti/foncier, jamais un rayon. None si le secteur n'a aucune
+        vente de terrain. Le seuil de fiabilité (n≥3 plancher, n≥5 fiable) est décidé par la couche.
+        """
+        if not hasattr(self, "_dvf_sector"):
+            self._dvf_sector: dict[str, Any] = {}
+        secteur = idu[:10]
+        if secteur in self._dvf_sector:
+            return self._dvf_sector[secteur]
+        r = self.session.execute(text(
+            "SELECT mediane_prix_m2, n_ventes, fenetre FROM dvf_secteur_medianes "
+            "WHERE secteur = :s AND type_bien = 'terrain'"), {"s": secteur}).mappings().first()
+        out = ({"median_eur_m2": float(r["mediane_prix_m2"]) if r["mediane_prix_m2"] is not None else None,
+                "n_ventes": int(r["n_ventes"] or 0), "fenetre": r["fenetre"]}
+               if r else None)
+        self._dvf_sector[secteur] = out
+        return out
+
     def sitadel_near(self, parcel_id: int, radius_m: float, months: int,
                      types: list[str] | None = None) -> dict[str, Any]:
         """Permis SITADEL rattachés (IDU) ou à proximité (rayon = signal de zone, §7bis).
