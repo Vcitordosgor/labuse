@@ -40,10 +40,10 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
       <p className="label-caps mt-2">Pourquoi cet indicateur</p>
       <ul className="mt-1 flex flex-col gap-0.5">
         {via.contributions.map((c, i) => (
-          <li key={i} className="flex items-baseline gap-2 text-[11.5px]">
-            <span className={`w-9 shrink-0 text-right font-mono font-semibold ${
-              c.signe === '+' ? 'text-st-chaude' : c.signe === '−' ? 'text-st-ecartee' : 'text-txt-mut'}`}>
-              {c.points > 0 ? `+${c.points}` : c.signe}
+          <li key={i} className="flex items-baseline gap-1.5 text-[11.5px]">
+            <span aria-hidden className={`shrink-0 ${
+              c.points > 0 ? 'text-st-chaude' : c.signe === '−' ? 'text-st-ecartee' : 'text-txt-mut'}`}>
+              {c.points > 0 ? '▲' : c.signe === '−' ? '▽' : '·'}
             </span>
             <span className="text-txt">
               <b className="font-medium text-txt-hi">{c.libelle}</b>

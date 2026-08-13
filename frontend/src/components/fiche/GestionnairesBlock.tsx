@@ -20,8 +20,8 @@ function Conf({ c }: { c?: GestOperateur['confidence'] }) {
 
 function Row({ icon, label, op, extra }: { icon: string; label: string; op: GestOperateur | null; extra?: string | null }) {
   return (
-    <div className="flex items-baseline gap-2 text-[11.5px]">
-      <span aria-hidden className="w-4 shrink-0 text-center text-txt-mut">{icon}</span>
+    <div className="flex items-baseline gap-1.5 text-[11.5px]">
+      <span aria-hidden className="shrink-0 text-txt-mut">{icon}</span>
       <span className="w-24 shrink-0 text-txt-dim">{label}</span>
       <span className="text-txt">
         {op ? (<><b className="font-medium text-txt-hi">{op.operateur}</b><Conf c={op.confidence} />
