@@ -156,3 +156,60 @@ condition de trancher la recalibration plo/phi (point 5), qui est le vrai choix 
 Mesure pure, 0 écriture. Deux agents de mesure (Q3/Q5/Q6 distribution ; Q2/Q4 scoring), architecture
 vérifiée. **NE PAS CORRIGER — STOP. Vic arbitre au vu du delta de classement (rang 0 · ~170 chaude) avant
 toute bascule.**
+
+---
+
+## PHASE 0 bis — Mesure `plo`/`phi` (demandée par Vic) — **STOP, arbitrage**
+
+Vic a confirmé : secteur cadastral, **seuil n≥5**, **plancher dur n≥3** (< 3 → « échantillon insuffisant
+(n ventes) » ; entre 3 et 5 → chiffre affiché AVEC sa mention de fragilité, l'erreur médiane 27,6 % dite).
+Marché dossier/banquier/one-pager = passe dédiée (M73-B partie D, qui se branche sur CE point de calcul,
+jamais l'inverse). Et : **ne pas recalibrer `plo`/`phi` à l'aveugle — mesurer d'abord.**
+
+### 1. La règle d'origine — TROUVÉE et documentée
+`docs/communes/PRE_VOL_ILE.md:46-50` : « `price_lo=250 / price_hi=900 €/m²` … calée sur la distribution
+**Saint-Paul p25≈312 / p75≈821** … échelle FIGÉE commune à toute l'île, pas des quantiles recalculés ».
+Commit d'origine `bc2a8548c` (2026-06-08). **Règle = p25/p75 de la distribution DVF d'une commune de
+référence (Saint-Paul), arrondie vers l'extérieur** (312→250, 821→900). MAIS calculée sur la grandeur
+**bâti-étalée** (`dvf_mutations` bâti-only). Vérif : sur la distribution em2 actuelle (île), **250 ≈ p10,
+900 ≈ p85**. La règle est donc traçable — il faut la RÉAPPLIQUER à la grandeur terrain.
+
+### 2. Distribution réelle des prix TERRAIN par secteur (déciles, `dvf_secteur_medianes` type='terrain', n≥3)
+676 secteurs. d1=114, d2=142, d3=174, d4=201, **d5(médiane)=231**, d6=267, d7=302, d8=359, d9=483 €/m².
+p25=**158**, p75=**323** (île). Saint-Paul terrain (miroir de la règle d'origine, 83 secteurs) : p25=**209**,
+p50=274, p75=**432**.
+
+### 3. Où tombent `plo`/`phi` recalés au même percentile (p25/p75, arrondi extérieur)
+| Base de référence | p25 / p75 terrain | `plo` / `phi` recalé |
+|---|---|---|
+| **Île entière** (le plus représentatif) | 158 / 323 | **≈ 150 / 325** |
+| **Saint-Paul** (miroir exact de l'origine) | 209 / 432 | **≈ 200 / 450** |
+
+### 4. Effet des deux options (parcelle-pondéré, 72 331 parcelles dvf à secteur terrain n≥3 = 93,8 % ; n≥5 = 87,6 %)
+Médiane terrain assignée par parcelle = **243 €/m²**. Part des parcelles dont la composante prix tomberait à **0** :
+
+| Option | `plo` | % parcelles composante prix = 0 | Lecture |
+|---|---|---|---|
+| **A — garder** | **250** | **51,8 %** | zéro-ARTEFACT (échelle bâti sur grandeur terrain) — la moitié du parc perd le signal. Interdit par la doctrine |
+| **B — recaler Saint-Paul** | 200 | 34,1 % | fidèle à la règle d'origine, mais Saint-Paul est cher → plancher encore haut |
+| **C — recaler île** | 150 | **17,2 %** | les 17 % sont les secteurs réellement les moins chers (sous p15-20 île) : un vrai bas, pas un artefact |
+
+**Effet sur le CLASSEMENT** : dans les trois cas, le rang/tier SERVI (modèle P) **ne bouge pas** (immunité
+établie en Phase 0). La recalibration ne joue que sur l'axe **opportunity** (magnitude du bonus A → matrice
+`chaude`) : garder 250 y éteint le signal prix pour 51,8 % des parcelles (bonus quasi liquidité-seule),
+le recaler île le préserve pour 82,8 %.
+
+### Recommandation (Vic tranche)
+**Option C — recaler île entière : `plo≈150 / phi≈325`** (règle d'origine p25/p75, appliquée à la vraie
+distribution terrain de tout le parc, pas d'une seule commune). C'est le choix qui respecte la doctrine
+(« un zéro qui EST une absence » : seuls les 17 % réellement les moins chers tombent à 0) et qui refait la
+règle EXPLICITEMENT sur la bonne grandeur, au lieu d'hériter d'une échelle bâti. Garder 250/900 (option A)
+est exclu (51,8 % de zéros-artefact). **Aucune bascule avant ton tranché sur A/B/C.**
+
+### Séquence Phase 1 (rappel Vic, à respecter)
+Golden gelé 07/08 avec 33 FAIL préexistants → **le rebaser PROPREMENT AVANT toute bascule** (sinon on compare
+à une référence dérivée). **Si le rebase n'est pas propre → STOP.** M73-B partie D se branche sur le point de
+calcul corrigé ici (dépendance à sens unique).
+
+### Garde-fous Phase 0 bis
+Mesure pure, 0 écriture, garde-fou de branche vérifié. **STOP — Vic tranche `plo`/`phi` (A/B/C) avant Phase 1.**
