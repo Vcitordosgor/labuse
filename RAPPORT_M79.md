@@ -244,17 +244,24 @@ fichiers temporaires (gros tris du priming SITADEL — bloc IDENTIQUE au parent,
 Données de test partielles nettoyées. Par la règle Vic (« si le rebase ne passe pas net, STOP »), **je ne
 force pas le rejeu** et je ne touche pas à la donnée de la base pour libérer de l'espace (ce n'est pas mon geste).
 
-### Reste à faire (bascule, quand l'espace disque est rétabli) — dans l'ordre
-1. **Libérer l'espace disque** de la base (geste opérateur — hors mandat).
-2. **Rebaser le golden PROPREMENT** (`qa/golden_regen.py`, API up) sur l'état courant (pré-effet M79), le
-   diff git = la revue ; comprendre/assumer les 33 FAIL préexistants.
-3. **Rejeu** : régénérer le run servi avec le `DvfLayer` corrigé, puis basculer `config/served_run.txt`
-   + `npm run build` + `labuse build-mvt` (procédure served_run.txt).
+### SÉQUENCE DE BASCULE (à NE PAS PERDRE — ordre strict, dépendances)
+> Le CODE M79 est prêt et validé. La bascule est une chaîne d'étapes verrouillées ; sauter ou inverser
+> une étape casse la revue. Le geste #1 (purge base) appartient à Vic — **mandat M80 dédié, écrit, en file.**
+
+1. **M80 — purge des runs morts** (libère l'espace disque base). Geste Vic, mandat séparé. **CC ne touche
+   pas à la base.**
+2. **Golden rebasé PROPREMENT** (`qa/golden_regen.py`, API up) sur l'état COURANT (pré-effet M79) — le diff
+   git EST la revue ; comprendre/assumer les 33 FAIL préexistants. *Si le rebase n'est pas net → STOP.*
+3. **Rejeu** : régénérer le run servi avec le `DvfLayer` corrigé (`labuse dryrun-evaluate`), puis basculer
+   `config/served_run.txt` + `npm run build` + `labuse build-mvt` (procédure served_run.txt).
 4. **Recoller le delta** mesuré en Phase 0 : rang servi **0** (modèle P immunisé), **~170 chaude** en retrait
-   (resserrement). Si le delta diverge → STOP.
+   (resserrement). *Si le delta diverge → STOP.*
 5. **Mesurer la répartition des ~17 % à composante prix nulle** (exigence Vic) : bien répartis, ou une
    commune entière en bloc ? Si une commune y passe en bloc = trou de couverture → le DIRE au client
    (« marché terrain non établi sur la commune »), pas un zéro muet.
+
+Dépendance aval : **M73-B partie D** (point de lecture DVF unique des documents) se branche sur CE calcul
+corrigé — jamais l'inverse.
 
 ### Dette de méthode signalée (Vic M79)
 La référence **Saint-Paul figée** servait AUSSI aux **hypothèses de calcul PLU globales** : ~13 communes
