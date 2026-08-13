@@ -238,7 +238,17 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     if intent == "OUTIL":
         return _outil(db, message, params)
 
-    # RECHERCHE / VERIFICATION / VEILLE / PROJET → Phases 2-4 (hors Phase 1)
+    if intent == "VERIFICATION":
+        from .missions_lourdes import verification
+        return verification(db, params)
+
+    if intent == "PROJET":
+        # la fiche est préparée ici ; l'ÉCRITURE RÉELLE (API projets) est faite par l'endpoint /ask
+        # (il a le compte). Doctrine : quand le Copilote dit « c'est fait », la chose EST faite.
+        from .missions_lourdes import preparer_projet
+        return _reply("Création du projet…", intent, _action={"type": "projet", **preparer_projet(params, message)})
+
+    # RECHERCHE → intercepté par le dispatch frontend (run M26-A) ; VEILLE → Phase 4
     return _reply(f"(Mission {intent} — construite dans une phase ultérieure de M78.)", intent,
                   en_construction=True)
 

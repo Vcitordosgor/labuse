@@ -32,10 +32,30 @@ class AskIn(BaseModel):
     conversation_id: int | None = None  # §2b — reprendre une conversation existante
 
 
+def _executer_projet(act: dict, request: Request, db: Session, rep: dict) -> dict:
+    """§3b — CRÉATION RÉELLE via l'API projets existante (jamais d'écriture directe en base). Quand le
+    Copilote dit « c'est fait », la chose EST faite et visible dans Projets. Parcelle citée → attachée."""
+    from .projets import ProjetIn, projet_create
+    res = projet_create(ProjetIn(fiche=act.get("fiche") or {}, nom=act.get("nom")), request, db)
+    p = res["projet"]
+    if act.get("idu"):
+        try:
+            from .app import PipelineAddIn, pipeline_add
+            pipeline_add(PipelineAddIn(idu=act["idu"], projet_id=p["id"]), request, db)
+        except Exception:   # l'attache ne doit pas faire échouer la création
+            pass
+    deja = " (il existait déjà)" if res.get("existing") else ""
+    return {**rep, "text": f"Projet créé : {p['nom']}{deja} — le voir dans Projets.",
+            "intent": "PROJET", "projet_id": p["id"]}   # navigation vers Projets = surface embarquée (Phase 5)
+
+
 @router.post("/ask")
 def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté)."""
     rep = answer(db, body.message, history=body.history, contexte=body.contexte)
+    act = rep.pop("_action", None)                    # écriture réelle demandée (PROJET) → API existante
+    if act and act.get("type") == "projet":
+        rep = _executer_projet(act, request, db, rep)
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message, reponse=rep)
     return {**rep, "conversation_id": cid}
