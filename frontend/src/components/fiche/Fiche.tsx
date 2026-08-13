@@ -10,6 +10,7 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { AvisIA } from '../AvisIA'
+import { CopiloteEmbarque } from '../copilote/CopiloteEmbarque'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
@@ -1874,6 +1875,15 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
+            {/* §5 surface 1 — le Copilote EMBARQUÉ : pré-contextualisé par l'IDU. « ce prix est-il
+                correct ? » part en VERIFICATION sans retaper la référence. Placement proposé (avant
+                les tiroirs) — arbitrage Vic au STOP final. */}
+            <div className="mt-2">
+              <CopiloteEmbarque contexte={{ idu }}
+                placeholder="Demander au Copilote sur cette parcelle…"
+                exemples={['Ce prix est-il correct ?', 'Quelles contraintes avant de signer ?']} />
+            </div>
+
             <GroupLabel>Le terrain</GroupLabel>
 
             {/* M56-B6 · DA-FICHE-v6 — plus de conteneur .gcard : chaque tiroir est une carte autonome. */}

@@ -207,6 +207,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         return _reply(ERREUR_INFRA, None, degraded=True)
     intent = route.intent
     params = route.params
+    # §5 Copilote EMBARQUÉ : le contexte visible (la parcelle / la sélection) EST le contexte du
+    # Copilote. « ce prix est-il correct ? » sur une fiche part en VERIFICATION sans retaper l'IDU.
+    if contexte:
+        if contexte.get("idu") and not params.get("idu"):
+            params["idu"] = contexte["idu"]
+        if contexte.get("selection") and not params.get("selection"):
+            params["selection"] = contexte["selection"]
 
     if route.clarification and intent not in ("HORS_SUJET",):
         return _reply(route.clarification, intent, clarification=True)
