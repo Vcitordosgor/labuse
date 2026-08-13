@@ -9,12 +9,13 @@ existant (à brancher au test de charge ; ici la couche métier est câblée et 
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..copilote_v2.answering import answer
-from ..copilote_v2 import telemetrie
+from ..copilote_v2 import historique, telemetrie
+from .tenant import current_compte
 
 router = APIRouter(prefix="/api/copilote-v2", tags=["copilote-v2"])
 
@@ -28,12 +29,47 @@ class AskIn(BaseModel):
     message: str
     history: list[dict] | None = None
     contexte: dict | None = None       # {idu} | {selection} des surfaces embarquées (Phase 5)
+    conversation_id: int | None = None  # §2b — reprendre une conversation existante
 
 
 @router.post("/ask")
-def ask(body: AskIn, db: Session = Depends(get_db)) -> dict:
-    """Le client écrit, LABUSE instruit. Retourne {text, intent, tool?, refus?, porte?, partiel?, …}."""
-    return answer(db, body.message, history=body.history, contexte=body.contexte)
+def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté)."""
+    rep = answer(db, body.message, history=body.history, contexte=body.contexte)
+    cid = historique.enregistrer(db, compte_id=current_compte(request),
+                                 conversation_id=body.conversation_id, message=body.message, reponse=rep)
+    return {**rep, "conversation_id": cid}
+
+
+@router.get("/missions")
+def missions(request: Request, db: Session = Depends(get_db)) -> dict:
+    """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir."""
+    return {"missions": historique.lister(db, current_compte(request))}
+
+
+@router.get("/missions/{conversation_id}")
+def mission(conversation_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """§2b — restaure une conversation et ses messages."""
+    conv = historique.charger(db, current_compte(request), conversation_id)
+    if conv is None:
+        from fastapi import HTTPException
+        raise HTTPException(404, "conversation introuvable")
+    return conv
+
+
+class FeedbackIn(BaseModel):
+    conversation_id: int | None = None
+    pouce: str                          # 'haut' | 'bas'
+    commentaire: str | None = None      # le 👎 ouvre un champ libre optionnel
+
+
+@router.post("/feedback")
+def feedback(body: FeedbackIn, db: Session = Depends(get_db)) -> dict:
+    """§2f — 👍/👎 sur une réponse. Rejoint la télémétrie (§1e). NB : canal télémétrie dédié
+    (mission_id), pas /signalements (spécifique aux erreurs de DONNÉE parcelle) — écart consigné."""
+    telemetrie.feedback(db, mission_id=str(body.conversation_id or ""),
+                        pouce=body.pouce, commentaire=body.commentaire or "")
+    return {"ok": True}
 
 
 @router.get("/telemetrie")
