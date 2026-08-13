@@ -224,6 +224,11 @@
 </section>
 {% endif %}
 
+{# ══ M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique) ══ #}
+{% if data.aper %}
+<p class="note">🅿 {{ data.aper.note }} <span style="color:var(--txt-mut)">{{ data.aper.etat }}.</span></p>
+{% endif %}
+
 {# ══ Risques ══ #}
 {% set r = data.risques %}
 {% if r %}
@@ -436,10 +441,6 @@
         {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}° ≈ {{ t.pente.max_pct }} %</small>{% endif %}
       </div></div>
     {% endif %}
-    {% if t.solaire %}
-    <div class="cartouche"><div class="titre">Gisement solaire (PVGIS)</div>
-      <div class="valeur">{{ "{:,}".format(t.solaire.prod_kwh_kwc).replace(",", " ") }}<small> kWh/kWc/an{% if t.solaire.score is not none %} · indice {{ t.solaire.score }}/100{% endif %}</small></div></div>
-    {% endif %}
     {% if t.canopee %}
     <div class="cartouche"><div class="titre">Couverture canopée</div>
       <div class="valeur">{{ t.canopee.ombrage_pct }} <small>%</small></div></div>
@@ -453,10 +454,9 @@
      probable){% else %}hors zonage d'assainissement non collectif connu{% endif %}.</p>
   {% endif %}
   {% if t.solaire %}
-  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Solaire — Sourcé PVGIS (Commission
-     européenne, modèle SARAH3). Productible spécifique estimé pour une installation optimisée ;
-     <b>le gradient côtier est/ouest local n'est pas capturé</b> par le modèle → ordre de grandeur, à
-     affiner par une étude sur site.</p>
+  {# M75 — libellé IDENTIQUE à la fiche (point de calcul unique solaire_note) ; plus de score /100. #}
+  <p>☀ {{ t.solaire.note }} <span style="color:var(--txt-mut)">{{ t.solaire.etat }}.</span></p>
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1mm">Source : PVGIS (Commission européenne).</p>
   {% endif %}
 </section>
 {% endif %}

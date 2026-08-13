@@ -121,6 +121,59 @@ def ilot_s3renr_note(session: Session) -> dict | None:
                           "par parcelle). À confirmer auprès d'EDF SEI."}
 
 
+def solaire_note(session: Session, idu: str) -> dict | None:
+    """M75 — gisement solaire PVGIS d'une parcelle, en INFORMATION (jamais un signal de scoring).
+
+    POINT DE CALCUL UNIQUE du libellé client (`note`) : la fiche ET les exports affichent CE texte,
+    au mot près (exigence Vic — une donnée, un libellé). Le productible (kWh/kWc/an) est SOURCÉ PVGIS
+    (modèle SARAH3, Commission européenne) donc affiché en Estimé avec sa réserve ; le `score_solaire`
+    /100 (score LABUSE opaque) N'EST JAMAIS exposé. None si pas de donnée.
+    """
+    r = session.execute(text(
+        "SELECT prod_spec_kwh_kwc, flag_topo_ombrage, flag_ombrage_vegetal "
+        "FROM parcel_solar WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    if not r or r["prod_spec_kwh_kwc"] is None:
+        return None
+    prod = round(float(r["prod_spec_kwh_kwc"]))
+    prod_approx = round(prod / 10) * 10           # « ~1 430 » : ordre de grandeur, pas une garantie
+    # bornes qualitatives mesurées sur le parc (q25 1 329 · médiane 1 399 · q75 1 501 kWh/kWc/an) :
+    # l'île entière est un bon gisement → 2 mots seulement, jamais de jauge ni de note sur 100.
+    qualite = "très favorable" if prod >= 1500 else "favorable"
+    ombrage = bool(r["flag_topo_ombrage"] or r["flag_ombrage_vegetal"])
+    note = (f"Ensoleillement {qualite} à une installation solaire — productible estimé "
+            f"~{prod_approx:,} kWh/kWc/an".replace(",", " ")
+            + (" ; ombrage local à vérifier sur place" if ombrage else "")
+            + " (modèle SARAH3, hors gradient côtier local).")
+    return {"prod_kwh_kwc": prod, "qualite": qualite, "ombrage": ombrage,
+            "note": note, "etat": "Estimé"}
+
+
+def aper_note(session: Session, idu: str) -> dict | None:
+    """M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) sur la parcelle. INFORMATION.
+
+    POINT DE CALCUL UNIQUE du libellé client (`note`) : la fiche ET les exports affichent CE texte,
+    au mot près. Loi 2023-175 art. 40 + décret 2024-1023 ; donnée refiltrée au seuil légal 1 500 m²
+    (scripts/m75_refiltre_parkings_aper_1500.sql). On dit « POTENTIELLEMENT concerné », JAMAIS
+    « soumis à » (exemptions possibles) ; `equipe` OSM incomplet → jamais « à équiper ». None sinon.
+    """
+    r = session.execute(text(
+        "SELECT max(surface_m2) surf, min(echeance) ech, bool_or(equipe) eq "
+        "FROM parkings_aper WHERE idus @> to_jsonb(CAST(:idu AS text)) AND tranche IS NOT NULL"),
+        {"idu": idu}).mappings().first()
+    if not r or r["surf"] is None:
+        return None
+    surf = int(round(float(r["surf"]) / 100) * 100)
+    ech = r["ech"].strftime("%d/%m/%Y") if r["ech"] else None
+    note = (f"Grand parking (~{surf:,} m²) sur cette parcelle".replace(",", " ")
+            + " — potentiellement concerné par l'obligation d'ombrières photovoltaïques (loi APER, "
+            + "décret 2024-1023 ; obligation au-delà de 1 500 m²)"
+            + (f", échéance {ech}" if ech else "")
+            + ". Surface mesurée (OpenStreetMap)."
+            + (" Une installation d'ombrières est déjà cartographiée (OSM)." if r["eq"] else ""))
+    return {"surface_m2": surf, "echeance": ech, "equipe": bool(r["eq"]),
+            "note": note, "etat": "Sourcé"}
+
+
 def build_viabilisation(session: Session, communes: list[str] | None = None) -> dict:
     """Construit/rafraîchit parcel_viabilisation. `communes=None` → les 24."""
     t0 = time.time()

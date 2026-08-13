@@ -209,7 +209,8 @@ def cout_raccordement(sig: dict[str, Any], code_band: str) -> dict[str, str]:
 
 
 # ─────────────────────────── Assemblage de l'indicateur (fiche) ───────────────────────────
-def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None,
+                     solaire: dict[str, Any] | None = None) -> dict[str, Any]:
     score = compute_score(sig)
     code, libelle = band(score)
     contribs = contributions(sig)
@@ -226,6 +227,10 @@ def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None)
     # note d'îlot honnête (pas d'attribution par parcelle fabriquée). Fournie par l'API.
     if elec_pv is not None:
         out["elec_pv"] = elec_pv
+    # M75 — gisement solaire PVGIS, INFORMATION seule (jamais dans le score). Volet PV complémentaire
+    # du S3REnR : le S3REnR dit si le réseau accepte l'injection, le solaire dit si le soleil est bon.
+    if solaire is not None:
+        out["solaire"] = solaire
     return out
 
 

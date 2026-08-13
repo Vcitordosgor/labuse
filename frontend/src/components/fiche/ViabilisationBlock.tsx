@@ -71,6 +71,16 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
         </p>
       )}
 
+      {/* M75 — gisement solaire PVGIS : INFORMATION seule, à côté du S3REnR (soleil vs réseau).
+          Le libellé `note` vient du backend (point de calcul unique = mêmes mots que les exports).
+          Productible SOURCÉ PVGIS → état Estimé affiché ; jamais de score /100. */}
+      {via.solaire && (
+        <p data-solaire className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-txt-dim">
+          <span aria-hidden className="text-amber">☀</span>
+          <span>{via.solaire.note} <span className="text-txt-mut">{via.solaire.etat}.</span></span>
+        </p>
+      )}
+
       <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{via.disclaimer}</p>
     </div>
   )

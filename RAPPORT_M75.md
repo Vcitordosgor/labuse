@@ -130,3 +130,81 @@ Parkings = Sourcé, requalifier `partiel → connecte` (bandeau 49 → **51**, d
 (DA-FICHE-v6.html), golden diff 0. **NE PAS MERGER.**
 
 **STOP.**
+
+---
+
+# PHASE 1 — implémentation (après arbitrage Vic)
+
+Arbitrages appliqués : (1) parkings → Urbanisme ; (2) /100 supprimé partout ; (3) seuil mesuré
+d'abord ; (4) exports oui, mêmes libellés au mot près ; (5) information seule.
+
+## Le seuil APER, mesuré dans le texte (point 3, avant toute décision)
+
+**Seuil légal = plus de 1 500 m²** (parkings extérieurs non intégrés à un bâtiment).
+- **Loi n° 2023-175 du 10/03/2023, art. 40** + **décret n° 2024-1023 du 13/11/2024**.
+- Calendrier (parcs existants au 01/07/2023) : **> 10 000 m² → 01/07/2026** ; **1 500–10 000 m²
+  → 01/07/2028** (extension possible 2030). Nouveaux parkings : dès le 01/12/2024.
+- Obligation : ombrières PV sur ≥ 50 % de la surface. Exemptions possibles (contraintes techniques/
+  patrimoniales/économiques, ensoleillement insuffisant) → attestation du propriétaire.
+- Sources : Bureau Veritas, Banque des Territoires, faceaurisque (concordantes).
+
+**Le seuil de la donnée (1 000 m²) divergeait du seuil légal (1 500 m²)** → doctrine Vic appliquée :
+**on refiltre la donnée, pas le texte.** `scripts/m75_refiltre_parkings_aper_1500.sql` :
+- ≤ 1 500 m² → NON soumis (tranche/échéance NULL) : **451 parkings** (dont **286 portaient une
+  tranche à tort**).
+- 1 500–10 000 m² → **426** (échéance 2028) ; > 10 000 m² → **24** (échéance 2026). **450 soumis.**
+- La surface (ST_Area OSM) n'est pas touchée — seule la classification d'obligation.
+
+## PVGIS → tiroir « Réseaux et accès » (information, Estimé)
+- Backend : `viabilisation_build.solaire_note()` = **point de calcul unique** du libellé ; branché
+  dans `_viabilisation_block` (`via.solaire`) ET dans le PDF flash (`collect_report_data`).
+- Front : `ViabilisationBlock.tsx`, ligne `☀` sous la note PV S3REnR.
+- Libellé (ex. 97401000AB0001) : *« Ensoleillement favorable à une installation solaire —
+  productible estimé ~1 430 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé. »*
+- **`score_solaire` /100 RETIRÉ** du PDF flash (`rapport.html.j2`) et exposé nulle part ailleurs
+  (vérifié : aucun autre `/100` solaire dans le code). Qualitatif « favorable / très favorable »
+  (bornes mesurées q25 1 329 · q75 1 501), jamais de jauge.
+
+## Parkings APER → tiroir « Urbanisme » (information, Sourcé)
+- Backend : `viabilisation_build.aper_note()` = **point de calcul unique** ; branché dans le payload
+  fiche (`aper`) ET le PDF flash. N'affiche QUE les parkings avec tranche (soumis, > 1 500 m²).
+- Front : carte `data-aper` en tête du tiroir Urbanisme.
+- Libellé (ex. 97415000DI0135) : *« 🅿 Grand parking (~6 000 m²) sur cette parcelle —
+  potentiellement concerné par l'obligation d'ombrières photovoltaïques (loi APER, décret 2024-1023 ;
+  obligation au-delà de 1 500 m²), échéance 01/07/2028. Surface mesurée (OpenStreetMap). Une
+  installation d'ombrières est déjà cartographiée (OSM). Sourcé. »*
+- **« potentiellement concerné », jamais « soumis à »** ; `equipe` (OSM) → « déjà cartographiée »,
+  jamais « à équiper ».
+
+## Exports — mêmes libellés, au mot près
+Vérifié programmatiquement : `fiche.aper.note == export.aper.note` ET `fiche.solaire.note ==
+export.solaire.note`, sur parcelle avec et sans parking. Un seul point de calcul → zéro divergence.
+
+## Requalification catalogue
+`parcel_solar` (48) et `Parkings OSM (loi APER)` (51) : `partiel — ingéré non exploité` →
+**connecte** (lecture effective). **Bandeau 49 → 51 = accueil 51**, dynamique.
+
+## Report DA
+`docs/DA-FICHE-v6.html` : règle « ligne d'information données dormantes » ajoutée (puce d'unité +
+état ; « potentiellement concerné » ; aucun score /100). Aucune ligne concernée dans DA-LABUSE.html.
+
+## Garde-fous (état final)
+| Garde | Résultat |
+|-------|----------|
+| tsc --noEmit | **0** |
+| vitest | **37/37** |
+| npm run build | **vert** |
+| golden 118 | **33 FAIL = baseline, 0 régression** (information seule confirmée) |
+| pytest flash/viab | **29 passed** |
+| bandeau = accueil | **51 = 51**, dynamique |
+| fiche == export | solaire + APER identiques au mot près |
+| exports PDF | 200 (avec/sans parking) |
+| console JS | **0** (hors tuiles carto 404 du harnais dev, préexistant) |
+
+## Pièges notés
+- `to_jsonb(:idu::text)` casse le binding SQLAlchemy → `to_jsonb(CAST(:idu AS text))`.
+- `parkings_aper` doit figurer dans `_NEEDED_TABLES` (flash) sinon la section APER est omise.
+- Le seuil de la donnée (1 000 m²) ≠ seuil légal (1 500 m²) : refiltrer la donnée, jamais arrondir
+  le texte.
+
+**NE PAS MERGER.**
