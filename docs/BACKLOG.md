@@ -356,6 +356,27 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   `parcelPrefill` (un seul champ pour les 4). **Pas fait dans M-ENTREE** : on ne refactore pas ce qui marche
   pendant qu'on ajoute (arbitrage Vic). Petit mandat de fusion quand l'occasion se présente.
 
+## Mandat candidat — FACETTE RISQUE EN RECHERCHE (anomalie produit, issu de M78 Phase 2)
+- **ANOMALIE PRODUIT, pas une facette manquante.** LABUSE vend un radar foncier qui affiche le risque sur
+  CHAQUE fiche (cascade risques arbitrés, graduation PPR M-I sur ~14 000 parcelles), mais **on ne peut pas
+  chercher « hors zone inondable » / « hors PPR »**. C'est probablement le PREMIER filtre qu'un promoteur
+  veut, et la donnée est fraîche et fiable (le PPR vient de la corriger sur 14 000 parcelles) — elle mérite
+  d'être cherchable. Constat M78 : 42 facettes `FiltreCriteres`, aucune sur le risque en recherche (seul
+  `evenement=rouge` existe, insuffisant). **Mandat futur** : facette risque en recherche (la donnée EXISTE —
+  cascade risques, graduation PPR M-I — elle n'est pas filtrable). La télémétrie Copilote (§1e) confirmera
+  la demande. En attendant (M78) : le Copilote le DIT au client, ne le promet pas.
+
+## Mandat candidat — FACETTE SPATIALE (« proche de la mer / distance à un point ») (issu de M78 Phase 2)
+- Aucune facette spatiale géométrique en recherche (« proche de la mer », « à moins de X m de [lieu] »,
+  distance à un point). Chantier réel (calcul de distance / buffer / intersection). Mandat futur. En attendant
+  (M78) : le Copilote DIT que ce n'est pas un critère applicable + télémétrie.
+
+## Donnée absente (PAS un mandat) — « déjà en vente / sur le marché » (M78 Phase 2)
+- LABUSE n'a **aucune source d'annonces actives**. Ce n'est pas une facette manquante ni un chantier — c'est
+  une donnée qu'on **n'a pas**. Le Copilote doit le dire AINSI (« LABUSE n'a pas de source d'annonces »),
+  jamais comme une limite temporaire (pas de « bientôt »). Réévaluer seulement si une source d'annonces
+  entre un jour au catalogue.
+
 ## Artefacts d'audit conservés (M80 — ne pas purger sans savoir ce qu'ils rejouent)
 - **Tables `m6_*` (694 Mo, audit M6, juin-juillet 2026) — GARDÉES pour reproductibilité d'audit** (arbitrage
   Vic M80). Un artefact gardé sans justification devient un déchet ; voici ce que chacune rejoue :

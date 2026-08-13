@@ -36,6 +36,19 @@ modèle journalisé (prompt, outils appelés, réponse, tokens) — c'est l'audi
 
 ---
 
+## PHASE 2 — Accueil + mission RECHERCHE _(en cours)_
+
+- **Endpoint** `/api/copilote-v2` (POST /ask, GET /telemetrie) monté (`6f2c56cf`), testé TestClient.
+- **Audit entonnoir (2d)** : Arrêter propre EXISTE (POST /cancel → run_cancelled persisté, exécuteur
+  vérifie le statut à chaque étape = pas de zombie) ; async SSE + daemon + reprise. **Seul manque : modif
+  de chip pendant l'instruction** (brief/plan figés) → à ajouter comme `annuler()` + relance (le cancel
+  propre existe déjà). Je rebranche, je ne refais pas.
+- **Audit facettes (2c)** : 42 facettes `FiltreCriteres`. **3 demandes-types NON couvertes** (arbitrage Vic
+  → BACKLOG, « le DIRE » en attendant) : (1) **risque en recherche = ANOMALIE PRODUIT** (la donnée existe —
+  cascade risques, PPR M-I 14 000 parcelles — pas filtrable) ; (2) facette spatiale (« proche de la mer ») ;
+  (3) « déjà en vente » = donnée absente (pas de source d'annonces — à dire ainsi, jamais « bientôt »).
+  Les chips ne promettront jamais ces trois ; le Copilote les DIT + télémétrie.
+
 ## PHASE 1 — Routeur et boîte à outils
 _(en cours — 1a LIVRÉ ci-dessous ; restent : 1b outils+SQL · 1c table demande→outil · 1d test
 véracité 32 questions · 1e télémétrie · 1f plafonds/coûts)_
