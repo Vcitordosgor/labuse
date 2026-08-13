@@ -3161,15 +3161,30 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         select(func.ST_X(p.__class__.centroid), func.ST_Y(p.__class__.centroid)).where(models.Parcel.id == p.id)
     ).one()
 
-    # Cascade (avec nom de source) — la traçabilité EST le produit.
+    # M73 §1 (bascule de rail) — md/html/one-pager lisaient le rail LEGACY `cascade_results`,
+    # divergent de la fiche écran (dryrun servi) : d'où « intersection marginale < 10 % » et les
+    # niveaux d'aléa côte à côte. Doctrine « le dryrun servi fait foi » : on lit désormais la MÊME
+    # cascade servie que _q_v2_fiche, dédupliquée (M46) et arbitrée/libellée (risques_arbitrage).
+    # Le rail cascade_results n'alimente plus AUCUN document (déclaré mort, cf. RAPPORT_M73).
     cascade_rows = db.execute(
         text(
-            """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail, ds.name AS source
-               FROM cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
-               WHERE cr.parcel_id = :pid ORDER BY cr.id"""
-        ), {"pid": p.id}
+            """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
+                      ds.name AS source
+               FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
+               WHERE cr.run_label = :run AND cr.parcel_id = :pid
+               ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""
+        ), {"pid": p.id, "run": Q_A_RUN_LABEL}
     ).mappings().all()
-    cascade = [dict(r) for r in cascade_rows]
+    from .risques_arbitrage import arbitrer_risques
+    _seen: set = set()
+    cascade = []
+    for r in cascade_rows:
+        k = (r["layer_name"], r["result"], r["detail"])
+        if k in _seen:
+            continue
+        _seen.add(k)
+        cascade.append(dict(r))
+    cascade = arbitrer_risques(cascade)
     reasons = [r for r in cascade if r["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
 
     sources_responded = sorted({r["source"] for r in cascade if r["source"] and r["result"] != "UNKNOWN"})
