@@ -69,6 +69,22 @@ if _override and _override != _SERVED_RUN:
         _override, _SERVED_RUN)
 Q_A_RUN_LABEL = _override or _SERVED_RUN
 
+
+def _run_precedent_versionne() -> str:
+    """M80 — Lit config/run_precedent.txt (1ʳᵉ ligne non commentée) : le run servi PRÉCÉDENT.
+    Même mécanisme que served_run.txt — plus jamais un nom de run codé en dur (interdit doctrine :
+    une constante hardcodée rend une purge dangereuse). À faire suivre AVEC served_run.txt à chaque bascule."""
+    f = Path(__file__).resolve().parents[3] / "config" / "run_precedent.txt"
+    for line in f.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            return s
+    raise RuntimeError(f"config/run_precedent.txt ne contient aucune valeur : {f}")
+
+
+#: run servi PRÉCÉDENT (versionné, M80) — consommé par l'accueil pour le diff de bascule.
+RUN_PRECEDENT = _run_precedent_versionne()
+
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.
 V_BANDS = (

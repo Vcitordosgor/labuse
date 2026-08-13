@@ -335,3 +335,27 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   DONNÉE reste fausse en tant que « distance ». Vic 08/2026 : « signale-le, ne le corrige pas ici —
   ça mérite un re-sourcing ». Mandat futur : re-sourcer les monuments historiques (Mérimée/points
   réels + covisibilité ABF), recalculer une vraie distance/covisibilité, et rebrancher la cascade.
+
+## Artefacts d'audit conservés (M80 — ne pas purger sans savoir ce qu'ils rejouent)
+- **Tables `m6_*` (694 Mo, audit M6, juin-juillet 2026) — GARDÉES pour reproductibilité d'audit** (arbitrage
+  Vic M80). Un artefact gardé sans justification devient un déchet ; voici ce que chacune rejoue :
+  - `m6_snapshot_mvt_post2a` (221 Mo) + `m6_snapshot_mvt_post2b` (221 Mo) : état des tuiles `mvt_parcels`
+    APRÈS les sections 2a/2b de l'audit M6 (reports/m6-audit/) — rejouer la comparaison visuelle des tuiles.
+  - `m6_a02_backup_plu_dup` (252 Mo) : sauvegarde de l'état PLU AVANT la dé-duplication de la section A02 —
+    permet de rejouer/vérifier la correction des doublons de zonage.
+  - `m6_p103_backup_dvf_surfaces` (120 Ko) : surfaces DVF avant la correction P103.
+  - **À réévaluer** : si l'audit M6 n'est plus une référence vivante, ces 694 Mo peuvent partir (mandat de purge d'audit).
+- **`backup_*_avant_littoral` (2 tables, 21 Mo)** : état PPR Saint-Paul AVANT la correction littoral (trait de
+  côte, irréversible) — gardées M80. À purger seulement si la correction littoral est elle-même rejouable.
+
+## Règle de rétention des runs (M80 — appliquée)
+- **On garde : SERVI + PRÉCÉDENT + tout run RÉFÉRENCÉ** (lignée `lignee_tete`, `served_run_exceptions`,
+  démo `q_v2_demo`). On purge le reste, **de façon ATOMIQUE** (un run se crée et se purge dans TOUTES les
+  tables run-scoped ensemble — plus jamais « à moitié », défaut #1 RAPPORT_M80). Le SERVI et le PRÉCÉDENT
+  sont les deux points de vérité versionnés (`config/served_run.txt` + `config/run_precedent.txt`), jamais
+  un nom de run figé dans le code.
+- **Commande** : `labuse purge-runs-morts` (dry-run) / `--apply` (app arrêtée, VACUUM FULL). **Déclenchée
+  À LA BASCULE** de run, jamais un cron indépendant. Runbook : `docs/BASCULE_RUN_RUNBOOK.md`.
+- **Dette résiduelle signalée** : les hypothèses de calcul PLU globales lues depuis `plu_saint_paul.yaml`
+  (12 communes) restent un « nom de référence figé » du même type que RUN_PRECEDENT l'était — cf. mandat
+  `docs/mandats/MANDAT_PLU_REFERENCE.md`.

@@ -442,6 +442,76 @@ def dryrun_evaluate_cmd(
     typer.echo(f"✓ DRY-RUN [{label}] {nom} : {len(todo)} parcelles évaluées à blanc (tables dryrun_*).")
 
 
+#: M80 — tables run-scoped connues qui portent une colonne run_id/run_label (découvertes en base au
+#: lancement ; cette liste sert de repli/documentation). Le cycle de vie d'un run est ATOMIQUE :
+#: un run se crée et se PURGE dans TOUTES ces tables ensemble (défaut #1 du RAPPORT_M80).
+def _tables_run_scoped(session) -> list[tuple[str, str]]:
+    # M80 — uniquement les colonnes TEXTE : les runs de SCORING sont des labels 'q_*' (text). Les
+    # colonnes run_id de type UUID (agent_events/agent_run_parcels) sont des runs d'AGENT, hors périmètre.
+    rows = session.execute(text(
+        "SELECT table_name, column_name FROM information_schema.columns "
+        "WHERE table_schema='public' AND column_name IN ('run_id','run_label') "
+        "AND data_type IN ('character varying','text','character') ORDER BY table_name")).all()
+    return [(r[0], r[1]) for r in rows]
+
+
+def _runs_a_garder(session) -> set[str]:
+    """RÈGLE DE RÉTENTION M80 : garder le SERVI + le PRÉCÉDENT (les deux points de vérité versionnés,
+    served_run.txt + run_precedent.txt) + TOUT run encore RÉFÉRENCÉ (lignée, exceptions, démo). Un run
+    référencé n'est jamais purgé."""
+    from .scoring.lignee_tete import CHAINE_GESTES
+    from .scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
+    keep = {Q_A_RUN_LABEL, RUN_PRECEDENT, "q_v2_demo"}          # servi + précédent + démo vivante
+    for a, b, *_ in CHAINE_GESTES:                              # lignée (lignee_tete lit leur donnée)
+        keep.update({a, b})
+    keep.update(r[0] for r in session.execute(                 # exceptions de service encore posées
+        text("SELECT DISTINCT run_id FROM served_run_exceptions")).all() if r[0])
+    return keep
+
+
+@app.command("purge-runs-morts")
+def purge_runs_morts_cmd(
+    apply: bool = typer.Option(False, "--apply", help="Exécute la purge (défaut : dry-run, rien supprimé)."),
+    vacuum: bool = typer.Option(True, help="VACUUM FULL après purge — VERROU EXCLUSIF, app à l'arrêt."),
+) -> None:
+    """M80 — RÈGLE DE RÉTENTION appelée À LA BASCULE de run (jamais un cron indépendant).
+
+    Garde le SERVI + le PRÉCÉDENT + tout run RÉFÉRENCÉ (lignée/exceptions/démo) ; purge le reste de
+    façon ATOMIQUE (toutes les tables run-scoped ensemble — un run ne vit jamais à moitié). Dry-run par
+    défaut. `--apply` supprime puis VACUUM FULL (app arrêtée). Jamais le run servi, jamais un référencé."""
+    with session_scope() as s:
+        tables = _tables_run_scoped(s)
+        keep = _runs_a_garder(s)
+        present: set[str] = set()
+        for t, c in tables:
+            present.update(r[0] for r in s.execute(text(f"SELECT DISTINCT {c} FROM {t}")).all() if r[0])
+        purgeables = sorted(present - keep)
+        typer.echo(f"Tables run-scoped : {len(tables)} · runs présents : {len(present)} · à GARDER : "
+                   f"{sorted(keep & present)}")
+        if not purgeables:
+            typer.echo("✓ Aucun run à purger (rétention déjà respectée).")
+            return
+        typer.echo(f"À PURGER ({len(purgeables)}) : {purgeables}")
+        if not apply:
+            typer.echo("Dry-run — rien supprimé. Relancer avec --apply (app arrêtée) pour exécuter.")
+            return
+        # Purge ATOMIQUE : chaque run retiré de TOUTES les tables dans la même transaction.
+        touched: set[str] = set()
+        for t, c in tables:
+            n = s.execute(text(f"DELETE FROM {t} WHERE {c} = ANY(:r)"), {"r": purgeables}).rowcount
+            if n:
+                touched.add(t)
+                typer.echo(f"  DELETE {t} : {n}")
+        s.commit()
+    if vacuum and touched:
+        typer.echo("VACUUM FULL (verrou exclusif) …")
+        with engine().connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            for t in sorted(touched):
+                conn.execute(text(f"VACUUM FULL {t}"))
+                typer.echo(f"  ✓ {t}")
+    typer.echo(f"✓ Purge terminée : {len(purgeables)} run(s), {len(touched)} table(s).")
+
+
 @app.command("dryrun-report")
 def dryrun_report_cmd(
     label: str = typer.Option("baseline", help="run_label à lire."),
@@ -2518,7 +2588,8 @@ def defisc_fenetres_cmd(
 ) -> None:
     """Phase A-1 volet 2 — badge « fenêtre de sortie de défiscalisation » : table additive
     defisc_fenetres (maisons/monopropriété), fenêtre de sortie d'engagement +6/+11 ans dérivée
-    de DVF (VEFA) + permis. Lecture seule des sources ; ne touche jamais le run servi q_v6_m8."""
+    de DVF (VEFA) + permis. Lecture seule des sources ; ne touche jamais le run servi (M80 : nom de
+    run figé « q_v6_m8 » retiré de la docstring — le servi se lit dans config/served_run.txt)."""
     from .ingestion import defisc_fenetres
 
     with session_scope() as s:

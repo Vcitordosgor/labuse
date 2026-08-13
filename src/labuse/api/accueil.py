@@ -15,14 +15,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from ..scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
 
 router = APIRouter(tags=["accueil"])
 
-#: run servi PRÉCÉDENT — le diff des tiers entre les deux runs SERVIS successifs mesure les
-#: « bascules » de la dernière mise à jour. À faire suivre à chaque bascule de run (comme
-#: config/served_run.txt) ; le NOMBRE, lui, reste toujours calculé, jamais figé.
-RUN_PRECEDENT = "q_v7_defisc"
+# M80 — RUN_PRECEDENT n'est PLUS codé en dur ici : il est lu de config/run_precedent.txt (point de
+# vérité versionné, même mécanisme que served_run.txt), importé depuis score_v_constants. Un nom de
+# run hardcodé rendait la purge dangereuse (et c'était un chiffre en dur, interdit par la doctrine).
+# Le diff des tiers entre les deux runs SERVIS successifs reste TOUJOURS calculé, jamais figé.
 
 #: fenêtre d'entraînement du modèle SERVI (m36-l2f — cf. /v2/modele provenance.train)
 TRAIN_ANNEES = (2017, 2024)

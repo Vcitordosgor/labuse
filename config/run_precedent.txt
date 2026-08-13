@@ -1,0 +1,6 @@
+# LABUSE — RUN SERVI PRÉCÉDENT (point de vérité versionné, M80).
+# Miroir de config/served_run.txt : le run servi JUSTE AVANT l'actuel, pour mesurer le diff de
+# tiers d'une bascule à l'autre (accueil). À FAIRE SUIVRE à chaque bascule de run, EN MÊME TEMPS
+# que served_run.txt (l'actuel devient le précédent). Jamais un nom de run codé en dur ailleurs.
+# (Première ligne non-commentée = la valeur.)
+q_v8_calibre_pre_m28
