@@ -264,3 +264,88 @@ manquait au proxy » (M58). Option 2 : préfixer l'URL via `import.meta.env.BASE
 **Garde-fous à ce STOP** : tsc 0 · vitest 37/37 · build vert · visuels 2/4/6a/7a livrés et vérifiés
 (en-tête viabilisation 20px = 1 ligne, portes patrimoine/SPF OK) · défilement M68 non régressé.
 **NE PAS MERGER.**
+
+---
+
+# PHASE 1 — corrections (arbitrages Vic appliqués)
+
+## Ce qui est LIVRÉ (immédiat, effectif tout de suite)
+- **Déc. 4** — pastilles « vérifiée » → **« suivie »** au point unique `_FIAB` (couvre DPE) ; couleurs
+  honnêtes (suivie=mint, à confirmer=ambre, reste neutre) ; « N couches vérifiées » → « évaluées ».
+  Vérifié live : **0 « vérifiée »** sur la fiche.
+- **Déc. 5** — les **deux jauges retirées** : ViabilisationBlock `/100`+barre → phrase qualitative ;
+  ICD score+barre → **verdict qualitatif** (`icd.libelle`). Une seule jauge dans la fiche.
+- **Déc. 6** — clé technique `source_table#source_id` retirée de SourceRef, SourceDrawer (+ EXTRAIT
+  via `layerLabel`) et **PDF Premium** (ref + préfixe poids + somme + layer brut → libellés FR).
+- **Déc. 8** — bloc absences **conservé, replié** (`<details>`), reformulé « Ce que LABUSE ne peut
+  pas savoir sur cette parcelle ».
+- **Déc. 11** — bug 10 (TimeMachine `center={flyTo?.center}`) + bug 11 (`/pre-dossier` au proxy Vite).
+- Points visuels **2/4/6a/7a** (commit précédent).
+
+## Ce qui est POSÉ dans le code (effectif au REJEU, pas avant — déc. 1)
+Les `lines` de la fiche viennent du run gelé ; ces correctifs prennent effet quand le run est rejoué.
+- **Déc. 2** — ENS garde per-commune (`kind_present_commune`) → « Donnée ENS non disponible sur cette
+  commune » (UNKNOWN, jamais « Hors ENS ») ; OCS GE réserve proxy visible ; S3REnR : plus de « capacité
+  NULLE » sur le stub (déjà effectif live, `elec_pv=None`). + 3 tests ENS.
+- **Déc. 3** — BODACC branché à `bodacc_sondages` : « sondé le [date] » / « non concluant » / « sans
+  objet ». + 2 tests.
+- **Déc. 7** — âge dirigeant sans nombre exact (label seul, score inchangé).
+
+## Déc. 1 — CHIFFRAGE DU REJEU (pour ton séquencement)
+**Ordre demandé** : rebaser le golden (mandat séparé) → rejouer → constater. Rien rejoué ici.
+- **Ce que le rejeu régénère** : `dryrun_cascade_results` (les lignes de fiche) + `parcel_p_score_v2`
+  (431 663 scores/tiers) + la **référence golden**.
+- **Ce qui bascule** (mesuré) :
+  - Les libellés des 5 couches (ENS/passoire/BODACC/OCS GE/âge) — la passoire **disparaît** (couche
+    retirée M71, ne tourne plus).
+  - **Tiers : quasi stables.** `bodacc` = INFO ×0 (0 impact) ; `age_dirigeant`/`ocs_ge` = label seul
+    (poids/sévérité inchangés) ; **ENS** : « Hors ENS » PASS → UNKNOWN sur les **3 communes vides
+    (Le Port, Saint-André, Sainte-Suzanne) = ~45 000 parcelles** → +1 UNKNOWN chacune ⇒ légère baisse
+    de `a_completude` ; bascule de tier possible seulement pour les rares parcelles au ras du
+    double-verrou `a_completude_min` (à mesurer au rejeu, attendu marginal).
+  - **Golden** : à régénérer (il reflétera les nouveaux libellés ENS/BODACC — c'est le but).
+- **Durée** : un run complet = cascade dry-run + score-v2 sur 431 663 parcelles ; ordre de grandeur
+  **~15–45 min** (mesurable au lancement). La régénération golden est incluse dans le geste (garde #6).
+- **Recommandation de séquencement** : (1) mandat golden-rebase (rebaser la référence sur le run
+  servi actuel, éteindre les 33 FAIL préexistants) ; (2) rejouer q_v8_calibre avec les correctifs
+  M70 posés ; (3) mesurer les bascules ENS-complétude + régénérer golden ; (4) constater la
+  disparition des 3 faux négatifs. **Tant que (2) n'a pas eu lieu, la fiche montre encore les
+  anciens libellés cascade — c'est attendu, décision 1.**
+
+## Déc. 10 — DVF : analyse + ce qui est posé
+- Le bloc **`market_signal` (M-U) est DÉJÀ single-calc** (`moteurs.py` : « calcul unique lu par
+  l'outil, la fiche et market_signal ») → pas de divergence fiche/export sur ce bloc.
+- Les deux autres chiffres DVF portent déjà leur clé de lecture : encart voisinage « (< 100 m,
+  36 mois) », spark secteur « N ventes secteur · DVF — {millésime} ».
+- **La divergence de MÉDIANE** (ligne cascade « Marché DVF » 379 €/m², rayon 250 m, tous biens ÷
+  surface terrain — vs secteur 173 €/m², terrain seul) vient de **deux calculs différents DANS LA
+  CASCADE GELÉE**. La réconcilier = aligner le calcul de médiane de la couche `dvf` sur la méthode
+  secteur → **change cascade, effectif au rejeu** (même lot que déc. 2/3). Décision 1 interdit le
+  filtre/relabel de lecture. **Posé pour le rejeu** ; je te propose au rejeu : la ligne cascade DVF
+  adopte la médiane terrain du secteur (point de calcul unique), vérif programmatique fiche==export.
+  Dis-moi si tu confirmes cette méthode avant que je l'écrive dans la couche.
+
+## Déc. 9 — TABLEAU OUTIL → TIROIR (à valider rattachement par rattachement)
+La grille « OUTILS SUR CETTE PARCELLE » (pied de fiche, M60-d) sera SUPPRIMÉE **après** ta validation
+(déc. 12). Rien retiré/branché tant que tu n'as pas validé la table ci-dessous (déjà au corps du
+rapport, §Point 9). Rappel des rattachements proposés :
+- **Marché** : Comparer des parcelles · Remonter le temps · Comparateur de communes
+- **Urbanisme** : Vérif procédure PLU · Annuaire PLU · Changement PLU (simulplu)
+- **Propriétaire** : Courrier SPF *(déjà livré 7a)* · Scan patrimoine *(déjà porte M60)*
+- **Constructibilité** : Calculette *(déjà porte M60)* · Faisabilité · Division · Assemblage
+- **Risques** : Contrôle avant achat (due diligence) · Servitudes invisibles
+- **hors fiche** : Radar mutations, Mode bailleur, Rareté, Quoi de neuf, Matching, Scorer adresse,
+  Baromètre, Radar permis, Promesses mortes, Vélocité, ZAN, Suivi de secteur.
+Valide (ou corrige) rattachement par rattachement → j'implémente les portes + supprime la grille (déc. 12).
+
+## Garde-fous (état à ce point)
+tsc 0 · vitest 37/37 · build vert · **golden 33 FAIL = baseline (0 régression)** · tests cascade
+58+14 passed · console 0 erreur · **0 « vérifiée » / 0 clé technique / 0 jauge (sauf ICD déchiffré)
+sur la fiche** · défilement M68 non régressé · S3REnR ne dit plus « capacité NULLE » (live).
+
+## DÉCISIONS RESTANTES POUR TOI
+1. **Séquencement du rejeu** (golden-rebase d'abord ?) — cf. chiffrage.
+2. **Déc. 10** : confirmes-tu que la ligne cascade DVF adopte la médiane terrain du secteur (méthode) ?
+3. **Déc. 9** : valides-tu les rattachements outil→tiroir (→ déc. 12 : suppression de la grille) ?
+
+**NE PAS MERGER.**
