@@ -378,6 +378,15 @@ export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut'
   j<{ ok: boolean }>('/api/copilote-v2/feedback', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ conversation_id, pouce, commentaire }) })
+
+// §4 — veilles : l'écran minimal (liste + suppression) + les notifications stockées.
+export interface CopiloteVeille { id: number; type: string; commune: string | null; non_vues: number }
+export const copiloteV2Veilles = () => j<{ veilles: CopiloteVeille[] }>('/api/copilote-v2/veilles')
+export const copiloteV2VeilleSupprimer = (id: number) =>
+  j<{ ok: boolean }>(`/api/copilote-v2/veilles/${id}`, { method: 'DELETE' })
+export const copiloteV2Notifications = () =>
+  j<{ notifications: { id: number; titre: string; detail: string; vu: boolean; created_at: string }[] }>(
+    '/api/copilote-v2/notifications')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {

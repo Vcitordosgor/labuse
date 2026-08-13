@@ -184,6 +184,7 @@ class Settings(BaseSettings):
     copilote_v2_tokens_mission: int = 40_000   # plafond de tokens par mission (routage+outils+formulation)
     copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
     copilote_v2_retention_jours: int = 90      # historique conversations/missions conservé N jours (§2b)
+    copilote_v2_veilles_max: int = 20          # plafond de veilles actives par compte (§4)
 
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":

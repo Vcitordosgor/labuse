@@ -8,8 +8,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
-import { copiloteV2Ask, copiloteV2Feedback, copiloteV2Missions, copiloteV2Mission, getAccueilChiffres,
-  type AccueilChiffres, type CopiloteMission, type CopiloteV2Reponse } from '../../lib/api'
+import { copiloteV2Ask, copiloteV2Feedback, copiloteV2Missions, copiloteV2Mission, copiloteV2Veilles,
+  copiloteV2VeilleSupprimer, getAccueilChiffres, type AccueilChiffres, type CopiloteMission,
+  type CopiloteV2Reponse, type CopiloteVeille } from '../../lib/api'
 import { AccueilCopilote } from './AccueilCopilote'
 import { ChipsCompris } from './ChipsCompris'
 import { BlocLivrable } from './BlocLivrable'
@@ -148,12 +149,15 @@ export function CopiloteView() {
   const [v2, setV2] = useState<CopiloteV2Reponse | null>(null)
   const [dispatching, setDispatching] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
+  const [veilles, setVeilles] = useState<CopiloteVeille[]>([])       // §4 — écran minimal
   const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
   const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
-  useEffect(() => { void rafraichirMissions() }, [])
+  const rafraichirVeilles = () => copiloteV2Veilles().then((d) => setVeilles(d.veilles)).catch(() => {})
+  useEffect(() => { void rafraichirMissions(); void rafraichirVeilles() }, [])
+  const supprimerVeille = (id: number) => void copiloteV2VeilleSupprimer(id).then(rafraichirVeilles).catch(() => {})
 
   // M78 · 2a — dispatch : le client écrit, le routeur décide. RECHERCHE → mission lourde (run M26-A) ;
   // QUESTION/OUTIL/refus/hors-sujet → réponse inline instruite ; VERIFICATION/PROJET/VEILLE → phases 3/4.
@@ -166,7 +170,7 @@ export function CopiloteView() {
       if (r.conversation_id != null) setConvId(r.conversation_id)
       void rafraichirMissions()                        // §2b — l'historique se met à jour
       if (r.intent === 'RECHERCHE') void run.instruire(mission, msg)
-      else setV2(r)
+      else { setV2(r); if (r.intent === 'VEILLE') void rafraichirVeilles() }   // §4 — la veille posée apparaît
     } catch (e) {
       setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
     } finally { setDispatching(false) }
@@ -256,6 +260,7 @@ export function CopiloteView() {
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             missions={missions} onReprendre={rouvrir}
+            veilles={veilles} onSupprimerVeille={supprimerVeille}
             reponse={v2 ? <ReponseInline v2={v2} /> : null} />
         ) : (
           <>

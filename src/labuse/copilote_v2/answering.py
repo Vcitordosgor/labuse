@@ -248,7 +248,11 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         from .missions_lourdes import preparer_projet
         return _reply("Création du projet…", intent, _action={"type": "projet", **preparer_projet(params, message)})
 
-    # RECHERCHE → intercepté par le dispatch frontend (run M26-A) ; VEILLE → Phase 4
+    if intent == "VEILLE":
+        from .missions_lourdes import preparer_veille
+        return preparer_veille(params)
+
+    # RECHERCHE → intercepté par le dispatch frontend (run M26-A)
     return _reply(f"(Mission {intent} — construite dans une phase ultérieure de M78.)", intent,
                   en_construction=True)
 

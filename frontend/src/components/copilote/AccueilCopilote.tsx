@@ -5,7 +5,7 @@
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
 import { useEffect, useRef, type ReactNode } from 'react'
 import { fmtInt } from '../../lib/format'
-import type { AccueilChiffres, CopiloteMission } from '../../lib/api'
+import type { AccueilChiffres, CopiloteMission, CopiloteVeille } from '../../lib/api'
 
 type Carte = { past: string; titre: string; desc: (parc: string) => string; ex: [string, string] }
 
@@ -25,7 +25,7 @@ const CARTES: Carte[] = [
 ]
 
 export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
-  missions, onReprendre }: {
+  missions, onReprendre, veilles, onSupprimerVeille }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -35,6 +35,8 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
   missions?: CopiloteMission[]           // §2b — historique
   onReprendre?: (m: CopiloteMission) => void
+  veilles?: CopiloteVeille[]             // §4 — écran minimal des veilles
+  onSupprimerVeille?: (id: number) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
@@ -85,6 +87,29 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
                 {m.run_id && <span className="shrink-0 rounded border border-mint/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-mint">recherche</span>}
                 <span className="shrink-0 font-mono text-[10px] text-cp-faint">{m.n_messages} msg</span>
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* §4 — écran minimal des veilles : listées, supprimables. La notification stockée est signalée
+           (le CANAL qui la pousse au client — cloche/digest — est au BACKLOG, dit au rapport). */}
+      {(veilles?.length ?? 0) > 0 && (
+        <div data-accueil-veilles className="mb-8">
+          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">VEILLES</p>
+          <div className="flex flex-col gap-1.5">
+            {veilles!.map((v) => (
+              <div key={v.id} data-veille className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2">
+                <span className="text-[13px] text-mint">🔔</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-cp-txt">{v.type} · {v.commune}</span>
+                {v.non_vues > 0 && (
+                  <span data-veille-notif className="shrink-0 rounded-full bg-mint/15 px-2 py-px text-[10px] font-semibold text-mint">
+                    {v.non_vues} nouvelle{v.non_vues > 1 ? 's' : ''}
+                  </span>
+                )}
+                <button data-veille-supprimer aria-label="Supprimer la veille" onClick={() => onSupprimerVeille?.(v.id)}
+                  className="shrink-0 text-cp-faint opacity-60 hover:text-cp-txt hover:opacity-100">✕</button>
+              </div>
             ))}
           </div>
         </div>

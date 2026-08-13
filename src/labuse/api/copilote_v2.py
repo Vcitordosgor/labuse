@@ -49,16 +49,63 @@ def _executer_projet(act: dict, request: Request, db: Session, rep: dict) -> dic
             "intent": "PROJET", "projet_id": p["id"]}   # navigation vers Projets = surface embarquée (Phase 5)
 
 
+def _executer_veille(act: dict, request: Request, db: Session, rep: dict) -> dict:
+    """§4 — pose RÉELLE d'une veille (trigger persisté). Plafond par compte (config). Confirmation
+    explicite. L'ALERTE elle-même dépend du canal de notification (BACKLOG) — voir RAPPORT_M78."""
+    from .. import config
+    from ..copilote_v2 import veilles
+    cid = current_compte(request)
+    s = config.get_settings() if hasattr(config, "get_settings") else config.Settings()
+    if veilles.compter_actives(db, cid) >= s.copilote_v2_veilles_max:
+        return {**rep, "text": f"Vous avez atteint le plafond de {s.copilote_v2_veilles_max} veilles "
+                "actives. Supprimez-en une pour en poser une nouvelle.", "refus": "plafond_veilles"}
+    v = veilles.creer(db, compte_id=cid, type_=act["veille_type"], commune=act["commune"])
+    label = veilles.TYPES.get(act["veille_type"], act["veille_type"])
+    return {**rep, "text": f"Veille posée : {label} · {act['commune']} — vérification à chaque mise à "
+            "jour des données, notification in-app.", "intent": "VEILLE", "veille_id": v["id"]}
+
+
 @router.post("/ask")
 def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté)."""
     rep = answer(db, body.message, history=body.history, contexte=body.contexte)
-    act = rep.pop("_action", None)                    # écriture réelle demandée (PROJET) → API existante
+    act = rep.pop("_action", None)                    # écriture réelle demandée → API existante
     if act and act.get("type") == "projet":
         rep = _executer_projet(act, request, db, rep)
+    elif act and act.get("type") == "veille":
+        rep = _executer_veille(act, request, db, rep)
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message, reponse=rep)
     return {**rep, "conversation_id": cid}
+
+
+@router.get("/veilles")
+def veilles_lister(request: Request, db: Session = Depends(get_db)) -> dict:
+    """§4 — l'écran minimal : les veilles actives du compte (+ notifications non vues)."""
+    from ..copilote_v2 import veilles
+    return {"veilles": veilles.lister(db, current_compte(request))}
+
+
+@router.delete("/veilles/{veille_id}")
+def veille_supprimer(veille_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from ..copilote_v2 import veilles
+    return {"ok": veilles.supprimer(db, current_compte(request), veille_id)}
+
+
+@router.get("/notifications")
+def notifications(request: Request, db: Session = Depends(get_db)) -> dict:
+    """§4 — les notifications STOCKÉES (la moitié livrée). Le CANAL qui les pousse au client (cloche,
+    digest) est au BACKLOG — c'est la moitié manquante (RAPPORT_M78)."""
+    from ..copilote_v2 import veilles
+    return {"notifications": veilles.notifications(db, current_compte(request))}
+
+
+@router.post("/veilles/evaluer")
+def veilles_evaluer(db: Session = Depends(get_db)) -> dict:
+    """§4 — point d'entrée du déclenchement (le CRON J+1 de prod appellera ceci après ingestion).
+    ZÉRO modèle : SQL + notifications. Exposé pour le déclenchement simulé du STOP Phase 4."""
+    from ..copilote_v2 import veilles
+    return veilles.evaluer_toutes(db)
 
 
 class HerosIn(BaseModel):

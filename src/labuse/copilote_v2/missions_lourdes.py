@@ -41,6 +41,24 @@ def preparer_projet(params: dict, message: str) -> dict:
     return {"fiche": fiche, "nom": None, "idu": params.get("idu")}   # nom None → l'API le dérive
 
 
+# ───────────────────────── 4 — VEILLE (préparation) ─────────────────────────
+def preparer_veille(params: dict) -> dict:
+    """Parse la demande de veille (type + commune). Type non couvert → DIT, avec les types disponibles.
+    L'écriture réelle (+ plafond) est faite par l'endpoint. Le modèle ne sert QU'ICI (à la création)."""
+    from .veilles import TYPES
+    vt = params.get("veille_type")
+    commune = params.get("commune") or (params.get("perimetre") if isinstance(params.get("perimetre"), str) else None)
+    if vt not in TYPES:
+        dispo = " · ".join(TYPES.values())
+        return {"text": f"Je ne sais pas encore poser ce type de veille. Types disponibles : {dispo}.",
+                "intent": "VEILLE", "refus": "type_non_couvert"}
+    if not commune:
+        return {"text": f"Sur quelle commune veiller les {TYPES[vt]} ?", "intent": "VEILLE",
+                "clarification": True}
+    return {"text": "Pose de la veille…", "intent": "VEILLE",
+            "_action": {"type": "veille", "veille_type": vt, "commune": commune}}
+
+
 # ───────────────────────── 3a — VÉRIFICATION ─────────────────────────
 def verification(db: Session, params: dict) -> dict:
     """IDU + prix demandé → avis instruit. Une seule question si l'un manque (le Copilote demande)."""

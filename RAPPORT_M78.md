@@ -53,6 +53,42 @@ listé) · héros à verrou (dit la faiblesse, gabarit=False) · modif-chip + ar
 - Gardes : tsc 0 · vitest 38 · build vert · pytest copilote 93 · golden 119/119. **Encart campagne
   propriétaires LAISSÉ INACTIF** (arbitrage Vic au STOP).
 
+## PHASE 3 — VÉRIFICATION + PROJET (LIVRÉE)
+
+- **3b PROJET** : création RÉELLE via l'API projets existante (fiche `FICHE_SCHEMA` fermée) ; parcelle
+  citée attachée (pipeline). « Projet créé — le voir dans Projets ». Démo `demo_phase3.py` : relu
+  champ-à-champ (12 · Bras-Panon · 600 k€). pytest `preparer_projet` conforme au schéma.
+- **3a VÉRIFICATION** (arbitrage Vic — mission la plus exposée, avis DÉTERMINISTE, pas de modèle) :
+  JAMAIS « estimée à X € » → « à ce prix médian de zone, N m² représenteraient X € — projection
+  arithmétique, PAS une valeur vénale » ; réserve de MÉTHODE TOUJOURS dite (ignore config/accès/topo/
+  état/bâti) ; écart > 2× → « l'écart est important, à vérifier sur place » ; DVF sous seuil M79 →
+  « échantillon insuffisant ». Une seule question si IDU/prix manque.
+- Golden 119/119 (via `LABUSE_DEV_MODE=1`, option 2 — les 86/119 étaient le quota 300 fiches/jour).
+
+## PHASE 4 — VEILLE (LIVRÉE — STOP)
+
+Démo `demo_phase4.py` : « Préviens-moi de tout nouveau permis à Saint-Paul » → veille posée →
+déclenchement (cron simulé) → 6 notifications réelles stockées.
+- **Pose** : intent VEILLE → `preparer_veille` (type + commune ; **type non couvert DIT** avec les
+  types dispo) → écriture RÉELLE (table `veilles`, plafond `copilote_v2_veilles_max=20`). Confirmation
+  « Veille posée : {type} · {commune} — vérification à chaque mise à jour, notification in-app ».
+- **Évaluation ZÉRO modèle** (`veilles.evaluer_toutes`, SQL) : permis (m10_permit_delais) branché ;
+  ventes/procédure PLU/BODACC = veille posable, requête source à brancher (documenté). Watermark
+  `last_evaluated_at` → idempotent. Endpoint `/veilles/evaluer` = point d'entrée du cron.
+- **Écran minimal** : accueil liste les veilles (+ compteur « N nouvelles ») et les supprime.
+
+### La MOITIÉ MANQUANTE (ce qui manque pour qu'une alerte ATTEIGNE le client)
+**LIVRÉ** : pose · évaluation SQL · **stockage** des notifications (`veille_notifications`) · écran.
+**MANQUE** — trois maillons, tous au BACKLOG :
+1. **Le CRON J+1 (Train 8)** qui appelle `evaluer_toutes` à chaque ingestion — la fonction ET
+   l'endpoint existent, mais rien ne les DÉCLENCHE en prod (aujourd'hui : manuel / simulé).
+2. **La CLOCHE in-app** (centre de notifications global) — les notifs sont stockées et comptées par
+   veille, mais aucun canal ne les POUSSE à l'écran hors de la liste des veilles.
+3. **Le DIGEST e-mail** (SMTP non branché) — pour l'atteinte hors-application.
+→ **Une veille se POSE et s'ÉVALUE ; elle n'ALERTE pas encore proactivement.** La moitié manquante est
+précisément le **déclencheur de prod** + le **canal** (cloche + e-mail). Le mécanisme est livré, prêt à
+être branché — la promesse ne sera ENTIÈRE qu'avec le chantier notifications.
+
 ## PHASE 2 (détail initial) — Accueil + mission RECHERCHE
 
 - **Endpoint** `/api/copilote-v2` (POST /ask, GET /telemetrie) monté (`6f2c56cf`), testé TestClient.
