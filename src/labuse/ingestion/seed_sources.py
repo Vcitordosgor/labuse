@@ -69,7 +69,11 @@ SOURCES: list[dict] = [
          documentation_url="https://www.georisques.gouv.fr/doc-api",
          endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) ».",
-         technical_notes="✓ live 05/07/2026 (INSEE 97415) : /ssp → casias (ex-BASIAS) + instructions (ex-BASOL), géolocalisés + fiche BRGM. spatial_layers kind='sol_pollue'. Vague B (# TODO étage 1). last_sync_at à l'ingestion."),
+         technical_notes="PÉRIMÈTRE TRANCHÉ (M74 B) : /ssp expose 4 sous-collections, LABUSE ingère les 3 "
+                         "site-centrées — casias (ex-BASIAS, inventaire) + instructions (ex-BASOL, gestion) + "
+                         "conclusions_sis (SIS, périmètres réglementaires L.125-6 CE) — et EXCLUT conclusions_sup "
+                         "(servitude déjà portée par la couche SUP id 44, éviter le doublon). spatial_layers "
+                         "kind='sol_pollue'. Vague B. last_sync_at à l'ingestion."),
     dict(name="Géorisques — cavités souterraines", category="risques", provider="BRGM / Géorisques",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~1000 req/min/IP",
          documentation_url="https://www.georisques.gouv.fr/doc-api",
@@ -117,17 +121,27 @@ SOURCES: list[dict] = [
          access_type="WFS", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/bdtopo", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO, forêt publique ».",
-         technical_notes="✓ intégré auto : BDTOPO_V3:foret_publique (Géoplateforme, régime forestier). toponyme « domaniale » → HARD_EXCLUDE, sinon flag fort."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) : 65 géométries distinctes en base = 65 emprises au WFS "
+                         "BDTOPO_V3:foret_publique sur l'emprise 974 (numberMatched=65). ⚠ 227 LIGNES en base = "
+                         "162 doublons d'ingestion par bbox commune (features à cheval sur 2 communes comptés 2×) — "
+                         "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
+                         "→ HARD_EXCLUDE, sinon flag fort."),
     dict(name="SAR Réunion (PEIGEO)", category="urbanisme", provider="Région Réunion / AGORAH",
-         access_type="import", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer (jeu PEIGEO/AGORAH — audit M6 §1.11 R8). SAR juridiquement SUPÉRIEUR au PLU.",
-         technical_notes="INTROUVABLE EN PUBLIC (data.gouv vide, Région ODS vide, PEIGEO HTTP 503 sans OWS, DEAL injoignable). Reste UNKNOWN — listée au bandeau."),
+         technical_notes="PROXY : le zonage SAR officiel PEIGEO est INTROUVABLE en public (data.gouv/ODS vides, "
+                         "PEIGEO 503, DEAL injoignable). La vocation SAR est servie via le jeu Potentiel foncier "
+                         "de la Région — 2 453 emprises intégrées (spatial_layers kind='sar'), verdicts réels sur "
+                         "431 663 parcelles (couche cascade 'sar' = proxy indicatif, jamais une interdiction). "
+                         "M74 A : requalifiée connecte (mesurée, intégrée) — l'ancienne note « UNKNOWN » était périmée."),
     dict(name="Zonage SAFER (DAAF)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
-         access_type="WFS", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
+         access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Droit de préemption SAFER.",
-         technical_notes="Zonage SAFER/DAAF propre INTROUVABLE en public. ✓ proxy intégré : RPG.LATEST (parcelles agricoles déclarées, Géoplateforme) en flag agricole."),
+         technical_notes="PROXY : le zonage SAFER/DAAF officiel est INTROUVABLE en open data. ✓ proxy intégré : "
+                         "RPG.LATEST (38 460 parcelles agricoles déclarées, Géoplateforme) en flag agricole du scoring. "
+                         "M74 A : requalifiée connecte (mesurée, intégrée) — le proxy est le maximum publiable, jamais présenté comme la source officielle."),
     # ── Hubs ──
     dict(name="Région Réunion Open Data (Opendatasoft)", category="hub", provider="Région Réunion (Opendatasoft)",
          access_type="REST/GeoJSON", status=S.HUB, reliability_level=R.VERIFIE,
@@ -140,11 +154,14 @@ SOURCES: list[dict] = [
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer par jeu (AGORAH/PEIGEO — audit M6 §1.11 R8).",
          technical_notes="⚠ Hôte injoignable depuis l'infra (HTTP 000, 2026-06-07). Fallback Région ODS / import."),
-    dict(name="DEAL Réunion (WMS/WFS)", category="hub", provider="DEAL Réunion",
-         access_type="WMS/WFS", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+    dict(name="DEAL Réunion (WMS/WFS)", category="urbanisme", provider="DEAL Réunion",
+         access_type="WMS/WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://www.reunion.developpement-durable.gouv.fr", endpoint_url=None,
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion ». Licence à consigner couche par couche (audit M6 §1.11 R8).",
-         technical_notes="⚠ carto.reunion.developpement-durable.gouv.fr injoignable (HTTP 000). Risques via Géorisques en proxy ; sinon import."),
+         technical_notes="SERVI PAR PROXYS : l'hôte carto DEAL (carto.reunion.developpement-durable.gouv.fr) est "
+                         "INJOIGNABLE (HTTP 000). Les couches sont servies via proxys — 8 emprises ANRU intégrées "
+                         "(spatial_layers kind='anru'), lues par la fiche (contexte commune). M74 A : requalifiée "
+                         "connecte (mesurée, servie par proxys) — catégorie hub→urbanisme (une source, pas un portail)."),
     dict(name="Géoplateforme IGN", category="hub", provider="IGN",
          access_type="WFS/WMS/téléchargement", status=S.HUB, reliability_level=R.VERIFIE,
          rate_limit="10 req/s (téléchargement)",
@@ -156,7 +173,9 @@ SOURCES: list[dict] = [
          documentation_url="https://data.regionreunion.com/explore/dataset/potentiel-foncier/",
          endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/potentiel-foncier/records",
          legal_notes="Licence à confirmer (jeu potentiel-foncier, Région Réunion ODS — audit M6 §1.11 R8).",
-         technical_notes="✓ live : grain PARCELLE (section/parcelle/espacesar/zpu). Îlots > 500 m² (bâti) / 200 m² (vierge). BONUS (§1) + proxy SAR."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) : base 2 453 ≈ amont 2 458 (ODS total_count, 99,8 %) — écart de "
+                         "5 = filtrage géométrie. ✓ live : grain PARCELLE (section/parcelle/espacesar/zpu). Îlots "
+                         "> 500 m² (bâti) / 200 m² (vierge). BONUS (§1) + porte le proxy SAR (2 453 emprises kind='sar')."),
     # ── Enrichissement ──
     dict(name="SITADEL (autorisations d'urbanisme)", category="dynamique", provider="SDES (Dido)",
          access_type="REST/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="4 exports CSV/run",
@@ -185,7 +204,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte / Etalab 2.0 — attribution : « Source : Insee, Base permanente des équipements ».",
          technical_notes="Base permanente des équipements (import millésime)."),
     dict(name="Filosofi INSEE (carreaux 200 m)", category="attractivite", provider="INSEE",
-         access_type="import GeoJSON", status=S.PARTIEL, reliability_level=R.VERIFIE,
+         access_type="import GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.insee.fr/fr/statistiques/8735162?sommaire=8735243", endpoint_url=None,
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Filosofi 2021 ».",
          technical_notes="Table filosofi_carreaux_200m : 14 773 carreaux 200 m (974, EPSG:2975), millésime 2021 "
@@ -252,10 +271,15 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Sirene, via recherche-entreprises (DINUM) ».",
          technical_notes="✓ live : confirme une personne morale propriétaire en attendant les Fichiers fonciers."),
     dict(name="OCS GE (IGN)", category="occupation_sol", provider="IGN / Géoplateforme",
-         access_type="WFS", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
+         access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/ocsge", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD CARTO (proxy OCS GE) ».",
-         technical_notes="OCS GE 974 non exposé en WFS geopf (OCSGE:occupation_du_sol → 400). Proxy actuel : BDCARTO_V5:occupation_du_sol (naturel/agricole/artificialisé). Signal non juridique."),
+         technical_notes="PROXY : OCS GE 974 natif non exposé en WFS geopf (OCSGE:occupation_du_sol → 400). Proxy "
+                         "intégré : BDCARTO_V5:occupation_du_sol (naturel/agricole/artificialisé), lu par le scoring. "
+                         "Signal non juridique. MESURÉ MAXIMUM vs proxy (M74 C) : 1 643 géométries distinctes en base = "
+                         "1 643 au WFS BDCARTO 974 (numberMatched). ⚠ 3 250 LIGNES = 1 607 doublons d'ingestion par bbox "
+                         "commune (dedup à passer, dette BACKLOG). Le proxy BDCARTO n'est PAS le plafond de l'OCS GE natif "
+                         "(plus fin) — la couverture OCS GE réelle reste non mesurable sans exposition WFS. M74 A : connecte."),
     dict(name="ZNIEFF (INPN / Région)", category="environnement", provider="INPN/MNHN · Région ODS",
          access_type="REST/GeoJSON", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://data.regionreunion.com/explore/dataset/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/",
@@ -269,22 +293,46 @@ SOURCES: list[dict] = [
          documentation_url="https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/",
          endpoint_url="https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/records",
          legal_notes="Licence Ouverte (POP open data) — attribution : « Source : Ministère de la Culture, base Mérimée ».",
-         technical_notes="✓ live 05/07/2026 : base Mérimée, region='La Réunion' = 204 MH (coords WGS84 propres). Abords = TAMPON ~500 m (spatial_layers kind='abf') → intersection parcelles. ⚠ FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; tampon SUR-COUVRE vs régime réel (PDA ou 500 m avec covisibilité) → « covisibilité à instruire ». Rattachement 100% géométrique (pas cog_insee d'époque). Remplace l'ancien GPU AC1 (6 objets, communes dématérialisées seulement). # TODO étage 1."),
+         technical_notes="MESURÉ MAXIMUM (M74 C) sur les MONUMENTS : 200 tampons en base ≈ 200 immeubles MH 974 "
+                         "(amont data.gouv, dataset national). ⚠ la couche 'abf' compte des TAMPONS ~500 m autour des "
+                         "MH, PAS les périmètres ABF/SPR réglementaires (PDA + covisibilité) qui sont un objet distinct "
+                         "non mesuré. ⚠ ENDPOINT MORT : data.culture.gouv.fr (ODS) décommissionné (301→SPA, plus d'API) "
+                         "— re-ingestion à re-sourcer via le dump data.gouv ; les 200 en base datent du dernier run "
+                         "OK (05/07/2026). FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; « covisibilité à instruire »."),
     dict(name="ENS (Département)", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
-         access_type="WFS", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
+         access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://inpn.mnhn.fr/", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence à confirmer (couches espaces protégés INPN/patrinat — non tranché à l'audit M6 §1.11). Droit de préemption départemental.",
-         technical_notes="ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN) — 21/24 communes. Les 3 restantes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07/2026 » — passe INPN a tourné (parc national + forêt présents) mais 0 espace protégé de ces types (port urbain / plaines côtières agricoles). Couche ENS départementale officielle À DEMANDER au mail AGORAH/DEAL en attente. Ne rien inventer."),
+         technical_notes="PROXY (M74 A : requalifiée connecte, mesurée). ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN) — 73 emprises, 21/24 communes. Les 3 restantes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07/2026 » — passe INPN a tourné (parc national + forêt présents) mais 0 espace protégé de ces types (port urbain / plaines côtières agricoles). Couche ENS départementale officielle À DEMANDER au mail AGORAH/DEAL en attente. Ne rien inventer."),
     dict(name="VRD / assainissement (SPANC)", category="reseaux", provider="EPCI",
          access_type="manuel", status=S.MANUEL, reliability_level=R.A_CONFIRMER,
          documentation_url=None, endpoint_url=None,
          legal_notes="Licence à confirmer (données EPCI, champ manuel — non tranché à l'audit M6 §1.11).",
          technical_notes="Collectif vs non collectif : décisif. Souvent pas de donnée ouverte fine → lien EPCI + champ manuel."),
+    # M74 A — LA VRAIE SOURCE PROPRIÉTAIRE, absente du catalogue (surfacée par l'audit) : le fichier
+    # DGFiP « parcelles des personnes morales » (open data Licence Ouverte v2) porte les 82 701 liens
+    # parcelle↔PM lus par la fiche (bloc Propriétaire) — à ne pas confondre avec « Fichiers fonciers
+    # (Cerema) » (conventionné, non branché, 100 % UNKNOWN). Ingérée par ingestion/personnes_morales.py.
+    dict(name="DGFiP — parcelles des personnes morales", category="proprietaire", provider="DGFiP",
+         access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://data.economie.gouv.fr/explore/dataset/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/",
+         endpoint_url="https://data.economie.gouv.fr/api/v2/catalog/datasets/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
+         legal_notes="Licence Ouverte v2 — attribution : « Source : DGFiP — parcelles des personnes morales ». "
+                     "RGPD-safe : personnes MORALES uniquement (commune/État/SEM/bailleur/SCI), aucune personne physique.",
+         technical_notes="M74 A : source AJOUTÉE au catalogue (elle alimentait le produit sans y figurer — audit "
+                         "M74 C bis). Fichier DGFiP annuel (ZIP départemental, CSV PM_25_NB_974.csv), millésime 2025 : "
+                         "82 701 parcelles de personnes morales → parcelle_personne_morale (owner_type/owner_name), lu "
+                         "par la fiche (bloc Propriétaire) + recoupé avec BODACC/INPI. C'est la source réelle du "
+                         "propriétaire moral, distincte des Fichiers fonciers Cerema conventionnés."),
     dict(name="Fichiers fonciers (Cerema)", category="proprietaire", provider="DGFiP / Cerema",
          access_type="import", status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://datafoncier.cerema.fr", endpoint_url=None,
          legal_notes="NON INTÉGRÉ — aucune donnée ingérée. Acte d'engagement DGALN/DGFiP/Cerema : usage limité aux finalités déclarées, DÉMARCHAGE COMMERCIAL INTERDIT, rediffusion interdite → incompatible avec la prospection LABUSE (audit M6 §1.11 R1 : à trancher AVANT toute signature de convention). Version anonymisée : physiques masquées (_X_), morales complètes → RGPD-safe.",
-         technical_notes="idprocpte / idprodroit → nb_droits_propriete = signal d'indivision. Champ manuel en attendant la convention."),
+         technical_notes="M74 A : RESTE manuel (mesuré, PAS requalifiée). La couche cascade 'proprietaire' qui la "
+                         "cite renvoie 100 % UNKNOWN (parcel_source_results VIDE — convention non branchée). Les "
+                         "82 701 liens parcelle↔personne morale du produit viennent en réalité de « DGFiP — parcelles "
+                         "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
+                         "idprocpte / idprodroit → nb_droits_propriete = signal d'indivision, en attente de convention."),
     dict(name="DEAL Réunion — trait de côte", category="risques", provider="Cerema / GéoLittoral",
          access_type="import/SHP", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html",

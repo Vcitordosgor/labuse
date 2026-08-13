@@ -73,16 +73,28 @@ class GeorisquesConnector(Connector):
     # ── Vague B : couches par commune (paginées) ──
 
     def sites_pollues(self, code_insee: str) -> Iterator[tuple[str, dict]]:
-        """Sites et sols pollués /ssp → (subtype, objet) pour casias (ex-BASIAS), instructions
-        (ex-BASOL) et conclusions_sis (SIS — Secteurs d'Information sur les Sols : PÉRIMÈTRES
-        MultiPolygon réglementaires, LOT 2 data-gap ; champs propres nom/id_sis/
-        statut_classification/superficie, vérifié live 97407). [✓ live 974]."""
+        """Sites et sols pollués /ssp → (subtype, objet).
+
+        PÉRIMÈTRE TRANCHÉ (M74 B) — /ssp expose QUATRE sous-collections ; LABUSE en ingère TROIS,
+        celles qui décrivent le SITE lui-même (signal de vigilance foncière), et en exclut une :
+        - `casias` (ex-BASIAS) : inventaire historique des sites/activités potentiellement pollués
+          — le plus large, informatif → INGÉRÉ.
+        - `instructions` (ex-BASOL) : sites appelant une action des pouvoirs publics (pollution
+          avérée en gestion) → INGÉRÉ.
+        - `conclusions_sis` (SIS, art. L.125-6 CE) : Secteurs d'Information sur les Sols, périmètres
+          MultiPolygon RÉGLEMENTAIRES opposables (info acquéreur + étude de sols) → INGÉRÉ.
+        - `conclusions_sup` : Servitudes d'Utilité Publique liées aux sols pollués → **EXCLU ICI** :
+          une SUP n'est pas un descripteur de site mais une servitude, DÉJÀ portée par la couche
+          « SUP — assiettes GPU » (data_sources id 44). L'ingérer dans sol_pollue serait un DOUBLON
+          de portée SUP. La vigilance sols pollués reste site-centrée (casias+instructions+sis).
+        [✓ live 974]."""
         for it in self._paginate("ssp", code_insee, subkey="casias"):
             yield "casias", it
         for it in self._paginate("ssp", code_insee, subkey="instructions"):
             yield "instruction", it
         for it in self._paginate("ssp", code_insee, subkey="conclusions_sis"):
             yield "sis", it
+        # conclusions_sup : volontairement NON ingéré ici (cf. docstring — doublon couche SUP id 44).
 
     def cavites(self, code_insee: str) -> Iterator[dict]:
         """Cavités souterraines /cavites (naturelle, carrière, ouvrage civil…). [✓ live 974]."""

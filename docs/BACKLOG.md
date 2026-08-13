@@ -16,6 +16,53 @@ parcel_evaluations.status éteint (M37) ; filtres & recherche complets (M45/M45-
 **Chemin critique restant : TRAIN 8 (VPS/prod) → premier client.**
 Avant client (Vic seul) : SMTP DMARC/DKIM, avocat CGU/CGV.
 
+## M66→M74 — SOURCES & SCORING (le catalogue reflète le produit) [S] Fable
+> Le registre ne mentionnait ni aménités, ni piscines, ni équipements — il a fallu fouiller la base.
+> M66/M66-B (audit mesuré), M71 (réparation), M74 (fermeture). RAPPORT_M66*.md, RAPPORT_M71.md,
+> RAPPORT_SOURCES.md, RAPPORT_M74.md — non commités (mesure) ; branches feat/m71-sources (mergé),
+> feat/m74-catalogue (NON mergé).
+
+**Dettes CLOSES (mesurées) :**
+- [x] Bandeau « 62 sources branchées » MENSONGER (comptait a_faire/partiel/manuel) → mesuré, filtré
+  `connecte` hors doublons : **49** partout (bandeau = accueil, dynamique, M71-A + M74-A/F).
+- [x] DPE squelette dans le scoring (13 lignes) → RETIRÉ du scoring, servi en info fiche seule ;
+  ré-ingéré 17/17 de son amont réel (le « 913 » ADEME est contaminé 98 % métropole). M71-B1.
+- [x] Signaux morts en silence (Renouvellement, entonnoir, pv_candidat) → garde de non-constance.
+- [x] BODACC « sondage non démontré » → journal `bodacc_sondages`, **12 605/12 605** couverts. M71-D.
+- [x] Trous terrain (8 211) → RÉCUPÉRÉS (parcel_terrain 100 %). M71-E.
+- [x] 7 sources branchées absentes du bandeau → 6 requalifiées connecte + la vraie source
+  propriétaire **DGFiP parcelles PM** AJOUTÉE au catalogue (elle alimentait la fiche sans y figurer) ;
+  « Fichiers fonciers (Cerema) » laissé manuel (couche cascade = 100 % UNKNOWN, convention interdit
+  le démarchage). M74-A.
+- [x] Écarts résiduels ICPE 1 252→1 261, sols pollués périmètre tranché (casias+instructions+sis,
+  exclut conclusions_sup = doublon SUP). M74-B.
+- [x] 4 NON MESURÉ levés (Potentiel foncier, ABF/MH, ONF, OCS GE) = tous MAXIMUM. M74-C.
+- [x] Page Sources confrontée à la mesure : doublons retirés, notes de proxy visibles, bandeau
+  documenté. M74-C bis.
+
+**Dettes OUVERTES (inscrites) :**
+- [ ] **Tuilage ortho — végétation manquante** : 5 556 parcelles (1,3 %) hors emprise du tuilage
+  IRC/MNH (Sainte-Rose 9,5 % — le pire taux). Neutralisées documentées (motif_absence). Levée =
+  étendre `ortho_tiles` sur ces zones puis `labuse vegetation-irc` + `labuse vegetation`.
+- [ ] **Gisements dormants** : PVGIS (`parcel_solar` 431 663, table riche score_solaire/prod/facture)
+  et Parkings APER (`parkings_aper` 901 ≥500 m²) matérialisés, JAMAIS lus. Statut `partiel — ingéré
+  non exploité`. Proposition d'usage fiche au RAPPORT_M74 bloc D — arbitrage Vic.
+- [ ] **Session de jugement PV** (M71-B2, GO Vic donné, montage EN PAUSE) : 300 vignettes,
+  worktree spin-off, ~320 Mo tuiles. Tant qu'elle n'a pas eu lieu, `pv_candidat` reste hors scoring
+  sous exemption datée `NON_CONSTANCE_EXEMPTIONS`.
+- [ ] **Doublons bbox spatial_layers** : `foret_publique` 227 lignes = 65 distinctes ; `ocs_ge`
+  3 250 = 1 643 distinctes (features à cheval sur 2 communes comptées 2×). Dedup + re-score requis.
+- [ ] **ABF endpoint mort** : data.culture.gouv.fr ODS décommissionné (301) → re-sourcer via dump
+  data.gouv avant toute ré-ingestion MH.
+- [ ] **Golden gelé 07/08 : 33 FAIL préexistants** (la fiche sert `score_v2` aux déclassées que le
+  golden gelé attend `<absent>`) — **à rebaser AVANT Train 8** (régénérer la référence sur le run
+  servi). Diff M71/M74 = 0 (aucune régression ajoutée).
+
+**Règle ACQUISE (grave, transverse) :**
+- **Tout signal du scoring porte un test de NON-CONSTANCE** (garde M71-B3, `check_non_constance`
+  au build). Trois signaux étaient morts en silence avant qu'elle existe. Une exemption est DATÉE
+  et motivée, jamais un silence.
+
 ## M37 — CLOS (mergé 06/08) — bilan qa/m37/M37_BILAN.md
 
 - [x] Extinction rail legacy `parcel_evaluations.status` (option c tracée M34-P0). Lecteurs

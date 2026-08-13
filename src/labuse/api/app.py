@@ -623,6 +623,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
     from ..radar import etat_radar
     radar = {r["source_name"]: r for r in etat_radar(db)}
+    # M74 C bis — la page Sources = la VITRINE mesurée : on ne sert QUE les connecte NON doublons
+    # (les 3 doublons de catalogue — même donnée qu'une ligne canonique — ne sont plus listés).
+    served = [s for s in rows if not (s.technical_notes or "").startswith("DOUBLON de")]
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -632,7 +635,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
-            "doublon": bool((s.technical_notes or "").startswith("DOUBLON de")),
+            # M74 C bis — NOTE DE NATURE visible (proxy / servi par proxys) : une source proxy ne
+            # doit JAMAIS être présentée comme la source officielle (doctrine anti-faux-positif).
+            "nature": _source_nature(s.technical_notes),
             "testable": s.name in _connector_names(),
             "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
             "derniere_donnee": donnees.get(s.name),
@@ -640,8 +645,23 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "verified_at": checks.get(s.id),
             "radar": radar.get(s.name),
         }
-        for s in rows
+        for s in served
     ]
+
+
+def _source_nature(notes: str | None) -> dict | None:
+    """M74 C bis — extrait la NATURE d'une source de ses technical_notes (proxy / servi par proxys),
+    pour un affichage visible et non replié. `detail` = la 1re phrase explicative. None si directe."""
+    n = notes or ""
+    if n.startswith("SERVI PAR PROXYS"):
+        label = "servi par proxys"
+    elif n.startswith("PROXY"):
+        label = "proxy"
+    else:
+        return None
+    detail = n.split(" : ", 1)[1] if " : " in n else n
+    detail = detail.split(". ", 1)[0].rstrip(".") + "."
+    return {"label": label, "detail": detail}
 
 
 def _connector_names() -> set[str]:
