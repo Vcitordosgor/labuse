@@ -147,12 +147,16 @@ body{margin:0;background:var(--noir);font-family:'Archivo',system-ui,sans-serif;
     <span class="lien">fiche →</span>
   </div>
 
-  <div class="campagne">
+  <!-- DÉCISION Vic (STOP Phase 2) : l'encart campagne SAUTE de la v1. Pas de « bientôt » — on ne
+       promet pas ce qui n'existe pas (la règle du mandat vaut pour nous). Jamais codé dans l'écran
+       résultats M78 ; il reviendra ENTIER et fonctionnel avec le mandat « campagne propriétaires »
+       (courriers pré-remplis + relances J+15/J+30 + suivi CRM). Bloc gardé ici en RÉFÉRENCE future. -->
+  <div class="campagne" hidden data-campagne-v1-retiree>
     <div class="past">✉</div>
     <div class="corps">
       <p class="t">Et maintenant : écrire aux 3 propriétaires</p>
       <p class="s">Courriers pré-remplis, relances à J+15 et J+30, réponses suivies au CRM.
-        [v1 : « bientôt » ou retiré — arbitrage Vic au STOP Phase 2]</p>
+        [RETIRÉ de la v1 — reviendra avec le mandat campagne propriétaires, entier et fonctionnel.]</p>
     </div>
     <button>Préparer la campagne</button>
   </div>
