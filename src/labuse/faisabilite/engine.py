@@ -168,8 +168,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     modul: list[str] = []
 
     if not rules.calibree:
-        avert.append("Capacité ESTIMÉE — PLU de la commune non outillé (valeurs génériques "
-                     "prudentes). Calibrage = ajout d'un YAML PLU communal (config/plu_<commune>.yaml).")
+        # M73 C2 : ne plus affirmer « commune non outillée » (la calibration couvre 23/24 communes) —
+        # ici c'est la ZONE qui n'est pas calibrée finement. Aucun chemin de config côté client.
+        avert.append("Capacité ESTIMÉE — zone non calibrée finement : hypothèses génériques "
+                     "prudentes (reculs et hauteurs par défaut).")
 
     def fini(constructible, verdict, fourchette, cause=None):
         return Faisabilite(rules.code, rules.via_renvoi, constructible, verdict,

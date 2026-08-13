@@ -476,7 +476,11 @@ def faisabilite(out: dict) -> str:
             f"existant supposé démoli (reculs réglementaires appliqués). La démolition est à "
             f"chiffrer — <b>non incluse</b> dans le bilan. Le potentiel « bâti conservé » figure "
             f"au dossier parcelle.</p>{synth}"
-            f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
+            # M73 C4 : jamais un tableau à en-têtes seuls. Sans étape (zone inconstructible), une phrase.
+            + (f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>"
+               if fais.steps else
+               "<p class='note'>Aucune étape de capacité — la construction neuve n'est pas autorisée "
+               "sur cette parcelle (zonage/PPR excluant le neuf).</p>")
             + (f"<p class='note'>Avertissements : <ul>{avert}</ul></p>" if avert else "")
             + f"<p class='note'>{esc(fais.bandeau)}</p>")
 
