@@ -1053,7 +1053,6 @@ function BilanTab({ idu }: { idu: string }) {
           {(b.marche.fraicheur?.horizon_libelle || b.marche.dvf_couverture?.libelle) && (
             <div className="mt-1 text-[11px] text-txt-dim">
               DVF — {b.marche.fraicheur?.horizon_libelle ?? b.marche.dvf_couverture?.libelle}
-              {b.marche.fraicheur?.millesime ? ` · ${b.marche.fraicheur.millesime}` : ' (dernière transaction en base · millésime en vigueur)'}
             </div>
           )}
         </Sec>
@@ -1227,7 +1226,7 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
             </div>
           ))}
           <p className="text-[9px] leading-snug text-txt-dim">
-            {rtaa.meta.champ} Vérifié le {rtaa.meta.verifie_le} — rappel de conception, ne
+            {rtaa.meta.champ} — rappel de conception, ne
             remplace pas l'étude réglementaire du maître d'œuvre.
           </p>
         </div>
@@ -1668,10 +1667,6 @@ export function Fiche({ idu }: { idu: string }) {
                     {f.renouvellement.composantes.map((c) => (
                       <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
-                        <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
-                          <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
-                        </div>
-                        <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
                       </div>
                     ))}
                     <MicroTriple items={[
@@ -1679,7 +1674,7 @@ export function Fiche({ idu }: { idu: string }) {
                       f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
                       `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
                     ]} />
-                    <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}{f.renouvellement.maj ? ` · maj ${f.renouvellement.maj}` : ''}</p>
+                    <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
                   </div>
                 </details>
               </div>
@@ -1720,7 +1715,7 @@ export function Fiche({ idu }: { idu: string }) {
           <div data-rnu-banner style={{ marginTop: 10, background: '#2a2213', border: '1px solid #4a3c20', borderRadius: 10, padding: '9px 12px' }}>
             <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600, color: '#e6b15c' }}>⚠ {f.rnu.libelle}</p>
             <p style={{ margin: '4px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#c9b98e' }}>
-              {f.rnu.detail}{f.rnu.verifie_le ? ` Statut vérifié le ${f.rnu.verifie_le}.` : ''}
+              {f.rnu.detail}
             </p>
             {f.rnu.dans_pau != null && (
               <p data-rnu-pau style={{ margin: '5px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#e6b15c' }}>
@@ -1975,7 +1970,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M57-P1 (Q4) : points signés RETIRÉS ici (hideWeight) — le fait, la source et la
                     date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
-                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight />)}</div> : null })()}
+                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div> : null })()}
                 {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
                     REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
                 <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
@@ -2528,7 +2523,11 @@ function BanquierButton({ idu }: { idu: string }) {
 
 
 /** BLOC B · S45 — Traducteur PLU (variante B, verdict Vic) : bloc dépliable de l'onglet
- *  Règles. Charge à l'ouverture seulement ; Sourcé = article calibré, Estimé = générique. */
+ *  Règles. Sourcé = article calibré, Estimé = générique.
+ *  M76 pt4 : le bloc ne s'affiche QUE s'il a quelque chose à dire — masqué entièrement quand aucune
+ *  règle n'est traduisible pour la zone (ex. zones A/N non constructibles, 152 638 parcelles). Le
+ *  fetch est donc AVANCÉ (déterministe, pas d'IA sur `{}`) pour connaître `regles_appliquees` avant
+ *  de rendre : plus de bloc qui s'affiche pour annoncer son propre vide. */
 function TraducteurBloc({ idu }: { idu: string }) {
   const [open, setOpen] = useState(false)
   const q = useQuery({
@@ -2542,9 +2541,11 @@ function TraducteurBloc({ idu }: { idu: string }) {
         reglement: { url: string | null; note: string | null }
       }>
     },
-    enabled: open, staleTime: 300_000,
+    enabled: true, staleTime: 300_000,
   })
   const d = q.data
+  // M76 pt4 — tant qu'on ne sait pas OU rien à traduire → aucun bloc (jamais « Aucune règle traduite »).
+  if (!d || d.regles_appliquees.length === 0) return null
   return (
     <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
       <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
@@ -2559,37 +2560,28 @@ function TraducteurBloc({ idu }: { idu: string }) {
               PLU est une LECTURE FACTUELLE (rien à « juger »), la mise en garde IA y était hors-sujet.
               Les surfaces IA GÉNÉRATIVES la conservent (Synthèse/explication, « Une question ? »,
               recherche IA, entretien, copilote, restitution). */}
-          {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
-          {q.isError && (
-            <p className="text-[11px] text-st-ecartee">
-              Traduction indisponible — <button onClick={() => q.refetch()} className="underline">réessayer</button>
-            </p>
-          )}
-          {d && (
-            <>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
-                {!d.zone_calibree && (
-                  <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
-                    zone non calibrée — valeurs génériques (Estimé)</span>
-                )}
+          {/* M76 pt4 — d est garanti chargé + non vide (sinon le bloc entier est masqué au-dessus) :
+              plus de rendu de chargement/erreur/vide (« Aucune règle traduite » supprimé). */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
+            {!d.zone_calibree && (
+              <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
+                zone non calibrée — valeurs génériques (Estimé)</span>
+            )}
+          </div>
+          <div className="mt-1.5 space-y-1">
+            {d.regles_appliquees.map((r, i) => (
+              <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
+                <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
+                <b className="tnum text-txt-hi">{r.valeur}</b>
+                <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
+                  title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
               </div>
-              <div className="mt-1.5 space-y-1">
-                {d.regles_appliquees.map((r, i) => (
-                  <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
-                    <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
-                    <b className="tnum text-txt-hi">{r.valeur}</b>
-                    <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
-                      title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
-                  </div>
-                ))}
-                {d.regles_appliquees.length === 0 && <p className="text-[11px] text-txt-dim">Aucune règle traduite pour cette zone.</p>}
-              </div>
-              <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-                La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
-              </p>
-            </>
-          )}
+            ))}
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
+            La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
+          </p>
         </div>
       )}
     </div>

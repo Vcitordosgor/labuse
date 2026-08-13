@@ -117,10 +117,10 @@ export function ScoreV2Block({ idu }: { idu: string }) {
       <p className="label-caps mt-2">Pourquoi ce score</p>
       <ul className="mt-1 flex flex-col gap-0.5">
         {data.pourquoi.map((c, i) => (
-          <li key={i} className="flex items-baseline gap-2 text-[11.5px]">
-            <span className={`w-12 shrink-0 text-right font-mono font-semibold ${
+          <li key={i} className="flex items-baseline gap-1.5 text-[11.5px]">
+            <span aria-hidden className={`shrink-0 ${
               c.signe === '+' ? 'text-st-chaude' : 'text-st-ecartee'}`}>
-              {c.signe}{Math.abs(c.log_hazard).toFixed(2)}
+              {c.signe === '+' ? '▲' : '▽'}
             </span>
             {/* M5.1 lot 3.3 : la phrase client (table versionnée serveur) remplace le
                 « libellé [bin] » technique ; le bin exact reste au survol/tap (audit) */}

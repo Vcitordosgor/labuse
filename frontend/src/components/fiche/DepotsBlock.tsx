@@ -29,7 +29,7 @@ export function DepotsBlock({ d }: { d: Depots }) {
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="text-xs font-semibold text-txt">Activité de dépôt de permis</span>
         <span className="rounded-full border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
-          {d.sourcage} {d.source}{d.millesime ? ` · ${d.millesime}` : ''}
+          {d.sourcage} {d.source}
         </span>
       </div>
       <div className="flex flex-col gap-1">
