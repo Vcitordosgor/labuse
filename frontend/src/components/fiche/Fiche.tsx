@@ -344,8 +344,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
-  const setModule = useApp((s) => s.setModule)
-  const setPluPrefill = useApp((s) => s.setPluPrefill)
+  // M76 pt5 : plus de lien-module ici — l'Annuaire PLU passe par sa porte (tiroir Urbanisme).
   // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
   // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
   // on reste par zone (repli honnête).
@@ -365,13 +364,8 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
               {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
                 {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
               </a>}
-              {z.annuaire?.insee && (
-                <button data-plu-annuaire-link
-                  onClick={() => { setPluPrefill({ insee: z.annuaire!.insee!, zone: z.annuaire!.zone ?? null }); setModule('plu-annuaire') }}
-                  className="text-[11px] text-violet hover:underline">
-                  Annuaire PLU →
-                </button>
-              )}
+              {/* M76 pt5 (arbitrage Vic) : lien violet « Annuaire PLU → » retiré — doublon de la porte
+                  « Annuaire PLU de la commune » (grammaire officielle M60). Une action, une seule forme. */}
             </div>
             {z.articles.length > 0 && (
               <ul className="mt-1 flex flex-col gap-0.5">

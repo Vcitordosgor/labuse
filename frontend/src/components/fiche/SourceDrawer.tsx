@@ -5,8 +5,8 @@ import { layerLabel } from '../../lib/layers'
 import { useApp } from '../../store/useApp'
 
 /** Drawer « source » (exigence : jamais un cul-de-sac). S'ouvre PAR-DESSUS la fiche, qui reste
- *  montée — fermeture par ✕, clic-extérieur et Échap. Montre l'extrait (la ligne), sa date, sa
- *  référence tracée, et la carte d'identité de la source (statut, fraîcheur, doc). */
+ *  montée — fermeture par ✕, clic-extérieur et Échap. Montre l'extrait (la ligne), sa référence
+ *  tracée, et la carte d'identité de la source (fournisseur, catégorie, accès, fiabilité, doc). */
 export function SourceDrawer() {
   const { sourceLine, closeSourceDrawer, openSources } = useApp()
   const sources = useQuery({ queryKey: ['sources'], queryFn: getSources, enabled: !!sourceLine })
@@ -40,11 +40,7 @@ export function SourceDrawer() {
           <div className="rounded-lg border border-line-2 bg-surface-3 p-3">
             <p className="font-mono text-[10px] tracking-widest text-txt-dim">EXTRAIT — {layerLabel(sourceLine.layer)}</p>
             <p className="mt-1.5 text-xs leading-relaxed text-txt">{sourceLine.detail}</p>
-            {sourceLine.date && (
-              <div className="mt-2 flex items-center gap-3 text-[11px] text-txt-dim">
-                <span className="ml-auto font-mono" title="Date du fait">{sourceLine.date}</span>
-              </div>
-            )}
+            {/* M76 pt1 (arbitrage Vic) : millésime retiré du drawer — le nom de la source reste, la date part. */}
           </div>
 
           {/* carte d'identité de la source */}
@@ -54,7 +50,7 @@ export function SourceDrawer() {
               {meta.category && <Row k="Catégorie" v={meta.category} />}
               {meta.access_type && <Row k="Accès" v={meta.access_type} />}
               {meta.reliability_level && <Row k="Fiabilité" v={meta.reliability_level} />}
-              <Row k="Synchronisée" v={meta.last_sync_at ? new Date(meta.last_sync_at).toLocaleDateString('fr-FR') : 'jamais'} />
+              {/* M76 pt1 (arbitrage Vic) : ligne « Synchronisée le … » retirée (millésime de fraîcheur). */}
               {meta.documentation_url && (
                 <a href={meta.documentation_url} target="_blank" rel="noreferrer"
                   className="mt-1 text-[#5a7d6c] hover:text-mint hover:underline">Documentation officielle ↗</a>
