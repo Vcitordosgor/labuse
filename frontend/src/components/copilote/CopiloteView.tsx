@@ -11,6 +11,7 @@ import { CLIENT } from '../../lib/strings'
 import { copiloteV2Ask, copiloteV2Feedback, copiloteV2Missions, copiloteV2Mission, getAccueilChiffres,
   type AccueilChiffres, type CopiloteMission, type CopiloteV2Reponse } from '../../lib/api'
 import { AccueilCopilote } from './AccueilCopilote'
+import { ChipsCompris } from './ChipsCompris'
 import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
 import { FilInstruction } from './FilInstruction'
@@ -220,6 +221,22 @@ export function CopiloteView() {
     briefRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
   }
 
+  // §2c/2d — modifier un critère (chip) : si une instruction tourne, on l'ANNULE proprement (le
+  // client pilote, il ne subit pas) puis on relance avec les critères corrigés. Aucun job zombie.
+  const relancerAvec = async (nouveauBrief: string) => {
+    if (!nouveauBrief.trim()) return
+    setBrief(nouveauBrief)
+    if (enInstruction || enAttente) await run.annuler()
+    void run.instruire(mission, nouveauBrief)
+  }
+  // « + corriger » : ramène le brief dans la barre d'accueil (édition libre), instruction annulée.
+  const corrigerDansBarre = (b: string) => {
+    setBrief(b); setV2(null)
+    if (enInstruction || enAttente) void run.annuler()
+    run.reinitialiser()
+    setTimeout(() => briefRef.current?.focus(), 0)
+  }
+
   const pill = run.quota != null
     ? <PillStatut ton="rouge">{S.quota.pill}</PillStatut>
     : actif
@@ -281,6 +298,13 @@ export function CopiloteView() {
                 </div>
               </div>
             </div>
+            {/* §2c — « COMPRIS : » chips éditables des critères déduits (dès brief_parsed) */}
+            {vue.briefJson && (
+              <div className="mt-4">
+                <ChipsCompris briefJson={vue.briefJson} enCours={enInstruction}
+                  onRelancer={relancerAvec} onCorriger={corrigerDansBarre} />
+              </div>
+            )}
           </>
         )}
 
@@ -386,6 +410,7 @@ export function CopiloteView() {
               meta={S.resultats.meta(vue.recap.n_retenues)} />
             {vue.recap.n_restituees > 0 ? (
               <Resultats recap={vue.recap} etiquettes={etiquettesDe(vue)}
+                budgetMax={(vue.briefJson?.budget_max_eur as number | undefined) ?? null}
                 titre={[communes?.join(', '), nLogements != null ? `${nLogements} logements` : null]
                   .filter(Boolean).join(' · ')} />
             ) : (

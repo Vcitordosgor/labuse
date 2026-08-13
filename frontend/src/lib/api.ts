@@ -366,6 +366,13 @@ export interface CopiloteConversation extends CopiloteMission {
 export const copiloteV2Missions = () => j<{ missions: CopiloteMission[] }>('/api/copilote-v2/missions')
 export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
 
+// §2e — le héros : phrase (pourquoi cette parcelle gagne, faiblesses comprises) avec verrou
+// anti-invention côté serveur (tout nombre ∈ JSON parcelle, sinon gabarit).
+export const copiloteV2Heros = (parcelle: Record<string, unknown>, budget_max_eur?: number | null) =>
+  j<{ phrase: string; gabarit: boolean }>('/api/copilote-v2/heros', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parcelle, budget_max_eur }) })
+
 // §2f — feedback 👍/👎 (le 👎 ouvre un champ libre optionnel).
 export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut' | 'bas', commentaire?: string) =>
   j<{ ok: boolean }>('/api/copilote-v2/feedback', {

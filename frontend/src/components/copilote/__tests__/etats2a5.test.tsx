@@ -90,6 +90,20 @@ describe('état 2 — instruction en cours', () => {
       (c) => String(c[0]).includes('/cancel'))).toBe(true))
   })
 
+  it('§2c/2d — chips COMPRIS visibles ; retirer une chip EN COURS annule proprement puis relance', async () => {
+    const { es } = await lancerRun()
+    act(() => { for (const e of etat2EnCours()) es.emet(e) })
+    // les critères déduits sont montrés en chips (brief_json), avec la traduction visible
+    expect(document.querySelector('[data-chips-compris]')).toBeInTheDocument()
+    expect(document.querySelector('[data-chip="programme"] [data-chip-traduction]')).toBeInTheDocument()
+    const nRunsAvant = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/copilote/runs')).length
+    // retirer une chip pendant l'instruction : annulation PROPRE (POST /cancel) puis relance (nouveau run)
+    fireEvent.click(document.querySelector('[data-chip="ppr"] [data-chip-retirer]')!)
+    await waitFor(() => expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/cancel'))).toBe(true))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(
+      (c) => String(c[0]).endsWith('/api/copilote/runs')).length).toBe(nRunsAvant + 1))
+  })
+
   it('rafraîchissement en plein run : le même fil revient, sans doublon ni trou', async () => {
     const { es, rendu } = await lancerRun()
     act(() => { for (const e of etat2EnCours()) es.emet(e) })

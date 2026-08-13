@@ -5,8 +5,10 @@
 // Règle 4 : la ligne « N autres retenues » est TOUJOURS visible quand retenues >
 // restituées. Règle 7 : l'indicateur de charge supportable est une INFORMATION sur
 // chaque parcelle concernée, jamais un filtre.
+import { useEffect, useState } from 'react'
 import { fmtEurCompact, fmtM2 } from '../../lib/format'
 import { fmtInt } from '../../lib/format'
+import { copiloteV2Heros } from '../../lib/api'
 import { ALL_TIER_META } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import type { RecapAssemblage, Restituee } from '../../lib/copilote'
@@ -55,7 +57,21 @@ function FlagCharge({ p }: { p: Restituee }) {
   )
 }
 
-function Lead({ p, et }: { p: Restituee; et: EtiquettesMoteurs }) {
+/** §2e — la phrase du héros, générée depuis le JSON de la parcelle avec verrou anti-invention
+ *  (serveur). Tant qu'elle n'est pas revenue, RIEN (jamais une phrase inventée côté client). */
+function HerosPhrase({ p, budgetMax }: { p: Restituee; budgetMax: number | null | undefined }) {
+  const [phrase, setPhrase] = useState<string | null>(null)
+  useEffect(() => {
+    let vivant = true
+    copiloteV2Heros(p as unknown as Record<string, unknown>, budgetMax)
+      .then((r) => { if (vivant) setPhrase(r.phrase) }).catch(() => {})
+    return () => { vivant = false }
+  }, [p, budgetMax])
+  if (!phrase) return null
+  return <p data-heros className="mt-2.5 max-w-[52ch] text-[13px] leading-relaxed text-cp-txt">{phrase}</p>
+}
+
+function Lead({ p, et, budgetMax }: { p: Restituee; et: EtiquettesMoteurs; budgetMax?: number | null }) {
   return (
     <div data-restituee={p.idu} className="grid grid-cols-1 gap-4 border-b border-cp-line px-5 py-4 md:grid-cols-[1fr_230px]">
       <div>
@@ -64,6 +80,7 @@ function Lead({ p, et }: { p: Restituee; et: EtiquettesMoteurs }) {
           <span className="ml-2.5 font-display text-lg font-bold text-cp-txt">{p.idu}</span>
         </div>
         <div className="mt-1 text-[11.5px] text-cp-faint">{p.commune}</div>
+        <HerosPhrase p={p} budgetMax={budgetMax} />
         {p.zone && (
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-lg border border-mint/25 bg-mint/10 px-2.5 py-1 font-display text-[11px] font-semibold text-mint">
@@ -173,10 +190,11 @@ function Ligne({ p, i, et }: { p: Restituee; i: number; et: EtiquettesMoteurs })
   )
 }
 
-export function Resultats({ recap, titre, etiquettes }: {
+export function Resultats({ recap, titre, etiquettes, budgetMax }: {
   recap: RecapAssemblage
   titre: string
   etiquettes: EtiquettesMoteurs
+  budgetMax?: number | null              // §2e — pour dire « au-dessus de votre budget » sans inventer
 }) {
   const liste = recap.restituees ?? []
   const idus = recap.restituees_idu ?? []
@@ -186,7 +204,7 @@ export function Resultats({ recap, titre, etiquettes }: {
       <div className="flex flex-wrap items-center gap-3 border-b border-cp-line px-5 py-3.5">
         <h3 className="font-display text-[13.5px] font-semibold text-cp-txt">{titre}</h3>
       </div>
-      {liste.length > 0 && <Lead p={liste[0]} et={etiquettes} />}
+      {liste.length > 0 && <Lead p={liste[0]} et={etiquettes} budgetMax={budgetMax} />}
       {liste.slice(1).map((p, i) => <Ligne key={p.idu} p={p} i={i + 1} et={etiquettes} />)}
       {/* mission shortlist (assemblage_court) : le payload ne porte que les IDU */}
       {liste.length === 0 && idus.map((idu, i) => (

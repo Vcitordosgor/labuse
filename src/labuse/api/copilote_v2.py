@@ -41,6 +41,19 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     return {**rep, "conversation_id": cid}
 
 
+class HerosIn(BaseModel):
+    parcelle: dict                       # la meilleure parcelle (payload restituees[0])
+    budget_max_eur: float | None = None  # pour dire « au-dessus de votre budget » sans inventer
+
+
+@router.post("/heros")
+def heros(body: HerosIn, db: Session = Depends(get_db)) -> dict:
+    """§2e — phrase du héros (pourquoi cette parcelle gagne, faiblesses comprises) avec verrou
+    anti-invention : tout nombre ∈ JSON parcelle, sinon gabarit sans modèle. Retourne {phrase, gabarit}."""
+    from ..copilote_v2 import heros as _h
+    return _h.phrase(db, body.parcelle, body.budget_max_eur)
+
+
 @router.get("/missions")
 def missions(request: Request, db: Session = Depends(get_db)) -> dict:
     """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir."""
