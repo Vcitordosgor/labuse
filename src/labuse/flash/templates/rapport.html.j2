@@ -452,10 +452,11 @@
   {% if t.pente and t.pente.terrassement_lourd %}
   <p><span class="chip alerte">Pente forte — terrassement lourd probable</span></p>
   {% endif %}
-  {% if t.anc %}
-  <p>Assainissement : {% if t.anc.zone_anc %}zone d'assainissement NON collectif (fosse
-     probable){% else %}hors zonage d'assainissement non collectif connu{% endif %}.</p>
-  {% endif %}
+  {# M73-D — ANC + réhabilitation par le bloc PARTAGÉ (anc_service.statut_anc / compute_mode_b, rendus
+     dans report.py). Supprime la lecture DIRECTE de zone_anc — bug M59 : « collectif » est truthy, le
+     template affichait « NON collectif (fosse probable) » pour une parcelle COLLECTIF. Jamais masqué. #}
+  {{ bloc_anc }}
+  {{ bloc_rehab }}
   {% if t.solaire %}
   {# M75 — libellé IDENTIQUE à la fiche (point de calcul unique solaire_note) ; plus de score /100. #}
   <p>☀ {{ t.solaire.note }} <span style="color:var(--txt-mut)">{{ t.solaire.etat }}.</span></p>
