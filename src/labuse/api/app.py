@@ -2907,6 +2907,15 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     # direct). Chaque vente porte date/distance/surface/prix ; n et rayon dits ; liste possiblement vide.
     from .. import marche_service
     fiche["comparables"] = marche_service.comparables(db, idu)
+    # M73-F — plan de situation ORTHO : composite via build_situation_map (point d'appel UNIQUE, jamais
+    # un fournisseur de tuiles en direct). Un échec de carte NE CASSE PAS le PDF (dict ok/echec). Le
+    # millésime ortho est LU depuis data_sources (source unique, jamais en dur).
+    from .plan_situation import plan_ortho
+    from ..flash.report import storage_dir
+    _gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    fiche["plan_situation"] = plan_ortho(_gj, storage_dir() / "tiles")
+    fiche["ortho_millesime"] = db.execute(text(
+        "SELECT source_millesime FROM data_sources WHERE name = 'BD ORTHO 20 cm (IGN)'")).scalar()
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
