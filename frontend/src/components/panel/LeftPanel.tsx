@@ -3,7 +3,9 @@ import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
-import { getAccueilChiffres } from '../../lib/api'
+import { getAccueilChiffres, getAccueilCetteSemaine } from '../../lib/api'
+import { MODULES } from '../outils/registry'
+import { fmtDateNum } from '../../lib/format'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
@@ -377,48 +379,85 @@ function CaseChiffre({ n, label, anime }: { n: number | null | undefined; label:
   )
 }
 
+// M83 B — une PORTE du bloc « PAR OÙ COMMENCER » (gabarit .porte-outil). Tranche mint / mauve / neutre.
+function Porte({ ton, icone, titre, sous, onClick }: {
+  ton: 'verte' | 'ia' | 'neutre'; icone: string; titre: string; sous: string; onClick: () => void
+}) {
+  const bord = ton === 'verte' ? 'border-l-mint' : ton === 'ia' ? 'border-l-[#7F77DD]' : 'border-l-[#2A362F]'
+  const icoBg = ton === 'verte' ? 'bg-[#12291D] text-mint' : ton === 'ia' ? 'bg-[#1A1730] text-[#AFA9EC]' : 'bg-[#141B17] text-[#8B9990]'
+  const fleche = ton === 'verte' ? 'text-mint' : ton === 'ia' ? 'text-[#AFA9EC]' : 'text-[#8B9990]'
+  return (
+    <button data-accueil-porte={ton} onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-r-[9px] border-l-2 ${bord} bg-[#101612] px-3.5 py-3 text-left transition-colors duration-quick hover:brightness-110`}>
+      <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] text-[15px] ${icoBg}`}>{icone}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-medium text-txt">{titre}</span>
+        <span className="block text-[10.5px] leading-snug text-txt-dim">{sous}</span>
+      </span>
+      <span className={`text-[14px] ${fleche}`}>→</span>
+    </button>
+  )
+}
+
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
+  const cs = useQuery({ queryKey: ['accueil-cette-semaine'], queryFn: getAccueilCetteSemaine, staleTime: 300_000, retry: 1 })
   const d = q.data
   const A = CLIENT.accueil
-  const { setView } = useApp()   // M65 P2c — le bouton mauve ouvre l'onglet Copilote (« IA »).
-  // M55-L point 1 (décision Vic) : la section d'accueil est FIXE (overflow-hidden, pas de scroll).
-  // M61 P6a : le halo respirant M65 est RETIRÉ — le bloc reste sur fond plat #0A0C0B.
+  const { setView, setAccueilVu, toggleOutils } = useApp()
+  const c = cs.data
+  // B4 — trois signaux, HONNÊTES : un zéro n'est pas une absence. Source en retard → on DIT la dernière
+  // donnée (fraîcheur) au lieu d'un « 0 cette semaine » trompeur.
+  const activite = c ? [
+    c.permis.frais
+      ? { n: String(c.permis.n_7j), txt: 'nouveaux permis déposés (Sitadel, 7 j)', mint: c.permis.n_7j > 0 }
+      : { n: '·', txt: `permis Sitadel — dernière donnée ${c.permis.derniere ? fmtDateNum(c.permis.derniere) : '—'}`, mint: false },
+    c.ventes.frais
+      ? { n: String(c.ventes.n_7j), txt: 'ventes publiées au cadastre (DVF, 7 j)', mint: c.ventes.n_7j > 0 }
+      : { n: '·', txt: `ventes DVF — dernier trimestre publié ${c.ventes.dernier_trimestre ?? '—'}`, mint: false },
+    { n: c.communes_procedure_plu != null ? String(c.communes_procedure_plu) : '·',
+      txt: 'communes en procédure PLU', mint: (c.communes_procedure_plu ?? 0) > 0 },
+  ] : []
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col items-center overflow-hidden px-7 py-6 text-center">
-      <div data-accueil-contenu className="my-auto flex w-full flex-col items-center"
-        style={{ ['--accueil-w' as string]: '240px' }}>
-        <h3 className="max-w-[var(--accueil-w)] font-display text-[13px] font-semibold leading-snug text-txt-hi">{A.b1Titre}</h3>
-        {/* M65 P2a — bandeau 3 cases : chiffre 19px/500 #F4F6F5, libellé 11px #7C8A83 (4px dessous),
-            grille 3 col gap 1px sur fond #1E2622, cases #121815, rayon 10px. Valeurs servies. */}
-        <div className="mt-4 grid w-full grid-cols-3 gap-px overflow-hidden rounded-[10px] bg-[#1E2622]">
-          <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime />
-          <CaseChiffre n={d?.communes} label={A.labelCommunes} />
-          <CaseChiffre n={d?.sources} label={A.labelSources} />
-        </div>
-        <p className="mt-4 max-w-[var(--accueil-w)] text-[9.5px] leading-relaxed text-txt-dim">{A.b1Suite.replace(' — ', '')}</p>
-        {/* M65 P2c / M61 P6b — DEUX boutons sur UNE ligne, largeurs égales, gap 9px, sans retour à la
-            ligne du texte (whitespace-nowrap). Vert = « Commencer → » (Filtres) ; Mauve = « LABUSE IA »
-            (Copilote), étincelles. Vérifié à 400px de large. */}
-        <div className="mt-5 flex w-full gap-[9px]">
-          <button data-commencer onClick={onCommencer}
-            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] bg-mint p-[13px] font-display text-[14px] font-bold text-mint-on transition-[filter,transform] duration-soft ease-cockpit hover:brightness-105 active:translate-y-[1px] active:brightness-95">
-            <span>{A.commencer.replace(/\s*→\s*$/, '')}</span>
-            <svg viewBox="0 0 16 16" aria-hidden="true"
-              className="h-[15px] w-[15px] transition-transform duration-quick group-hover:translate-x-0.5">
-              <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
-                strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button data-decouvrir onClick={() => setView('copilote')}
-            className="group flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[9px] border border-[#2E2552] bg-[#1A1430] p-[13px] font-display text-[14px] font-bold text-[#B9AEF2] transition-[filter,transform] duration-soft ease-cockpit hover:brightness-110 active:translate-y-[1px]">
-            <svg viewBox="0 0 20 20" aria-hidden="true" className="h-[15px] w-[15px] shrink-0">
-              <path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z"
-                fill="currentColor" />
-            </svg>
-            <span>{A.decouvrir}</span>
-          </button>
-        </div>
+    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
+      {/* B1 — la promesse (2e ligne en --mint) */}
+      <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
+      <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
+
+      {/* B2 — les chiffres descendent d'un cran (compacts, dynamiques) */}
+      <div className="mb-5 grid grid-cols-3 gap-px overflow-hidden rounded-[9px] bg-[#1E2622]">
+        <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime />
+        <CaseChiffre n={d?.communes} label={A.labelCommunes} />
+        <CaseChiffre n={d?.sources} label={A.labelSources} />
+      </div>
+
+      {/* B3 — trois portes */}
+      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Par où commencer</p>
+      <div className="mb-5 flex flex-col gap-1.5">
+        <Porte ton="verte" icone="⌕" titre="Explorer la carte" sous="activez une couche, cliquez une parcelle"
+          onClick={onCommencer} />
+        <Porte ton="ia" icone="✦" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
+          onClick={() => setView('copilote')} />
+        <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.length} outils — trouver, instruire, agir, comprendre, suivre`}
+          onClick={() => { setAccueilVu(); toggleOutils() }} />
+      </div>
+
+      {/* B4 — CETTE SEMAINE : la preuve que la base vit (chiffres mesurés, fraîcheur dite) */}
+      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Cette semaine</p>
+      <div className="mb-4 rounded-[9px] bg-[#101612] px-3.5 py-2.5">
+        {activite.length === 0 && <p className="py-2 text-[11px] text-txt-dim">…</p>}
+        {activite.map((l, i) => (
+          <div key={i} className={`flex items-center gap-2.5 py-2 ${i > 0 ? 'border-t border-[#1E2622]' : ''}`}>
+            <span className={`min-w-[24px] font-mono text-[13px] ${l.mint ? 'text-mint' : 'text-txt'}`}>{l.n}</span>
+            <span className="text-[11px] leading-snug text-txt-2">{l.txt}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* B5 — la ligne de fraîcheur */}
+      <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
+        <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-mint" />
+        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</span>
       </div>
     </div>
   )

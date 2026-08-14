@@ -329,6 +329,14 @@ export interface AccueilChiffres {
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
 
+// M83 B4 — « CETTE SEMAINE » : trois signaux mesurés, avec fraîcheur (un zéro n'est pas une absence).
+export interface AccueilCetteSemaine {
+  permis: { n_7j: number; frais: boolean; derniere: string | null }
+  ventes: { n_7j: number; frais: boolean; dernier_trimestre: string | null; sans_date_publication: boolean }
+  communes_procedure_plu: number | null
+}
+export const getAccueilCetteSemaine = () => j<AccueilCetteSemaine>('/accueil/cette-semaine')
+
 // M78 — Copilote v2 : le client écrit, le routeur décide. Réponse instruite (QUESTION/OUTIL/refus)
 // OU aiguillage vers une mission (RECHERCHE → run M26-A ; VERIFICATION/PROJET/VEILLE → phases 3/4).
 export interface CopiloteV2Reponse {
