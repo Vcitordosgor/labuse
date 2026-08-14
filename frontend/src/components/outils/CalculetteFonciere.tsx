@@ -18,7 +18,7 @@ export function CalculetteFonciere() {
   }, [calcPrefill, setCalcPrefill])
   return (
     <>
-      <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+      <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         Ce qu'un terrain peut <b>supporter</b> selon VOS hypothèses (coût, marge). LABUSE affiche le
         sourcé (SDP, prix de sortie) ; vous saisissez vos hypothèses ; le moteur calcule —
         <b> le même calcul que la fiche</b>.

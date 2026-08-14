@@ -340,10 +340,12 @@ def _barometre_data(db: Session) -> dict:
                  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
                  FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
+          AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     permis = db.execute(text("""
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
-        FROM sitadel_permits GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+        FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     top_communes = db.execute(text(f"""
         SELECT commune, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (

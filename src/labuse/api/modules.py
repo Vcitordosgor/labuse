@@ -566,7 +566,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
             "has_more": offset + len(rows) < true_total, "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
-        "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
+        "verrou": "société introuvable au registre" if r["inpi_introuvable"] else "dirigeant inactif (registre des entreprises)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
     } for r in rows]}
 

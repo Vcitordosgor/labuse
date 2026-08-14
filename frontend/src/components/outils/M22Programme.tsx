@@ -60,7 +60,7 @@ export function M22() {
     <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
       <input type="number" min={opts?.min ?? 1} value={form[k] as number}
         onChange={(e) => setForm({ ...form, [k]: Number(e.target.value) })}
-        className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-violet focus:outline-none" />
+        className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
     </label>
   )
 
@@ -70,7 +70,7 @@ export function M22() {
       <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
         {([['criteres', 'Par critères'], ['parcelle', 'Par parcelle']] as const).map(([m, l]) => (
           <button key={m} data-faisa-mode={m} onClick={() => setMode(m)}
-            className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${mode === m ? 'bg-violet text-bg' : 'text-txt-mut hover:text-txt'}`}>
+            className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${mode === m ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
             {l}
           </button>
         ))}
@@ -78,7 +78,7 @@ export function M22() {
 
       {mode === 'criteres' && (
         <>
-          <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+          <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
             Décrivez le programme — les critères sont <b>calculés et affichés</b> (SDP, hauteur PLU).
             Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 avec parking ».
           </div>
@@ -100,26 +100,26 @@ export function M22() {
             {F('surface_unite_m2', 'M²/UNITÉ (hyp.)', { min: 15 })}
             <label className="flex min-w-0 flex-1 flex-col text-[11px] tracking-wide text-txt-dim">PARKING
               <button onClick={() => setForm({ ...form, parking: !form.parking })}
-                className={`mt-0.5 w-full rounded border py-1 text-xs transition-colors duration-quick ${form.parking ? 'border-violet text-violet' : 'border-line-2 text-txt-mut'}`}>
+                className={`mt-0.5 w-full rounded border py-1 text-xs transition-colors duration-quick ${form.parking ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
                 {form.parking ? 'oui' : 'non'}
               </button>
             </label>
           </div>
           <button onClick={() => run.mutate()} disabled={run.isPending}
-            className="rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
             {run.isPending ? 'Calcul…' : 'Trouver les parcelles'}
           </button>
           {d && (
             <>
               <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
-                <div><b className="text-txt">{d.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-violet">{fmtInt(d.criteres.sdp_min_m2)} m²</b>
+                <div><b className="text-txt">{d.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-mint">{fmtInt(d.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim"> ({d.criteres.calcul})</span></div>
                 <div className="mt-0.5">{d.criteres.hauteur_regle}{form.parking ? ` · parking ~${fmtInt(d.criteres.parking_m2)} m²` : ''}</div>
                 <div className="mt-1 text-[11px] leading-snug text-txt-dim">{d.bandeau}</div>
               </div>
-              <div data-prog-count className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2">
+              <div data-prog-count className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2">
                 <p className="text-[13px] leading-snug text-txt">
-                  <b className="num-key text-lg text-violet">{fmtInt(d.n)}</b>{' '}
+                  <b className="num-key text-lg text-mint">{fmtInt(d.n)}</b>{' '}
                   parcelle{d.n > 1 ? 's' : ''} correspond{d.n > 1 ? 'ent' : ''} à vos critères
                   <span className="text-txt-dim">{commune ? ` à ${commune}` : ' (toute l’île)'}</span>
                 </p>
@@ -132,7 +132,7 @@ export function M22() {
               <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
                 {(d.items as Record<string, any>[]).map((i) => (
                   <button key={i.idu} onClick={() => select(i.idu)}
-                    className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-violet/50">
+                    className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-mint/50">
                     <div className="min-w-0 flex-1">
                       <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}
                         {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
@@ -142,7 +142,7 @@ export function M22() {
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="num-key text-sm text-violet">×{i.marge_capacite}</div>
+                      <div className="num-key text-sm text-mint">×{i.marge_capacite}</div>
                       <div>
                         <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
                       </div>
@@ -157,7 +157,7 @@ export function M22() {
 
       {mode === 'parcelle' && (
         <>
-          <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+          <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
             Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, explication IA,
             charge foncière) — le même calcul que l'onglet Faisabilité de la fiche.
           </div>

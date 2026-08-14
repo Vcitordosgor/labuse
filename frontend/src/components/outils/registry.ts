@@ -1,8 +1,12 @@
-// Registre des modules outils — « filtres savants ». Couleur module : VIOLET (doctrine).
+// Registre des modules outils — « filtres savants ».
+// M82 #DA (M61) : le mauve est RÉSERVÉ à l'IA. La couleur des outils passe au VERT (--mint) : l'action,
+// pas l'IA. Les noms d'export restent (VIOLET/VIOLET_DIM = ~120 usages) mais pointent le vert — point
+// unique de bascule. Ce constant est outils-only (page Outils + un bloc fiche non-IA) ; le Copilote,
+// lui, garde le mauve (classes Tailwind cp-violet, indépendantes de ce token).
 import { TOKENS } from '../../lib/tokens'
 
-export const VIOLET = TOKENS.violet
-export const VIOLET_DIM = TOKENS.violetDim
+export const VIOLET = TOKENS.mint
+export const VIOLET_DIM = TOKENS.vizGreenDeep
 
 // P3 (revue Vic n°3) — CURATION. Les codes M01…M22 sont un langage d'ingénieur : ils restent
 // EN INTERNE (`num`, utile aux logs/URL/QA) mais ne s'affichent plus. Chaque outil porte un

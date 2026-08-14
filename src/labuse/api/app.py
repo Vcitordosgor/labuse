@@ -3089,7 +3089,7 @@ def renouvellement_liste(commune: str | None = None,
     """Liste du segment Renouvellement, triable (score par défaut). Sert l'outil dédié —
     JAMAIS le flux principal (doctrine : pas de mélange avec les tiers servis)."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
-        raise HTTPException(503, "segment Renouvellement non calculé — lancer `labuse renouv`.")
+        raise HTTPException(503, "segment Renouvellement non calculé (table absente).")
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
     orders = {"score": "r.renouv_score DESC, r.idu",
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",

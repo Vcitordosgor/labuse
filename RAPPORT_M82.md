@@ -214,13 +214,43 @@ Répartition proposée (le client comprend en 5 s ce qui sert tous les jours) :
 
 ---
 
-## 8. Ce que je corrige en Phase 1 (strictement factuel, sans arbitrage)
+## 8. Ce que j'ai corrigé en Phase 1 (strictement factuel, fait)
 
-Voir commit « M82 Phase 1 ». Périmètre : mauve→vert (§5), fuites de vocabulaire (§4), scroll horizontal
-Rareté, mots coupés Comparateur + bouton Matching, trimestre en cours du Baromètre. **Je ne touche PAS**
-aux réparations d'outils morts (promesses SQL, zan, proxy servitudes/comparateur, renouvellement
-affichage, courriers), aux 3 refontes (Annuaire, Remonter le temps, Comparer), au tri de la page — ils
-attendent ton arbitrage.
+**Mauve→vert (§5)** : `VIOLET`/`VIOLET_DIM` du registre repointés vers `mint`/`vert atténué` (point
+unique) + ~100 classes Tailwind `violet`→`mint` dans les outils + badge copro rendu neutre + les 2
+mentions texte « nombre violet »→« nombre vert ». Le Copilote reste mauve. Vérifié aux captures.
+
+**Fuites de vocabulaire (§4)** — toutes retirées côté client :
+- `labuse renouv` → « momentanément indisponible » (front) + « (table absente) » (503 API)
+- `post-M7` + `mandat Auth & Plans` + `watch_zones/watched_parcels` → « L'abonnement… n'est pas encore
+  actif » (carnet, servi)
+- `Merci Facteur PRO — action Vic ; LABUSE_MERCIFACTEUR_*` → « L'envoi postal n'est pas encore
+  disponible » (courrier statut, servi)
+- « (SQL) » retiré du compteur Division · « PM »/« RNE » → « société introuvable au registre » /
+  « dirigeant inactif (registre des entreprises) » · « nouveau run de scoring » → « mise à jour des
+  données ». Tests durcis (assertent désormais l'ABSENCE de fuite : `test_note_abonnement_sans_fuite`,
+  `test_statut_stub_sans_compte`).
+
+**Scroll horizontal** : Rareté — colonnes flexibles (`min-w-0 flex-1 truncate` + largeurs fixes réduites
++ `overflow-hidden`), tient dans les 288 px.
+
+**Mots coupés / deux lignes** : Comparateur — libellés de pondération courts (`PONDER_LABELS`,
+`whitespace-nowrap`) ; bouton Matching « RÉEL · SITADEL » forcé sur une ligne (`shrink-0 whitespace-nowrap`
++ label `truncate`).
+
+**Baromètre — trimestre en cours** : exclu en SQL (`date_trunc('quarter', …) < date_trunc('quarter',
+CURRENT_DATE)`) côté DVF et Sitadel. Vérifié : le 1ᵉʳ trimestre affiché passe de `2026T3` (0) à
+**`2025T4` (1209 mutations)**. **Observation (arbitrage)** : le retard de publication DVF (1-3 ans) rend
+AUSSI 2026T1/T2 vides — ils sont absents naturellement (0 vente publiée), mais si des ventes 2026
+arrivent partielles, il faudra plafonner la série au dernier trimestre « DVF-complet », pas seulement
+exclure le trimestre courant. À décider.
+
+**Garde-fous atteints** : tsc 0 · vitest 36 · build · **golden 119/119 (diff 0)** · pytest carnet+courrier
+8/8 · le mauve ne subsiste que sur l'IA · captures `qa/m82/captures/outils-*`.
+
+**Je n'ai PAS touché** (attend ton arbitrage) : réparations d'outils morts (promesses SQL, zan, proxy
+servitudes/comparateur, renouvellement affichage, courriers), les 3 refontes (Annuaire, Remonter le
+temps, Comparer), le tri de la page + l'en-tête.
 
 ---
 

@@ -30,7 +30,7 @@ export function VerifProcedure() {
             placeholder="IDU (ex. 97413000CJ0096)"
             className="flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt" />
           <button onClick={run} disabled={idu.trim().length < 10 || m.isPending}
-            className="rounded-md border border-violet/50 bg-violet/15 px-3 py-1.5 text-[12px] font-medium text-violet disabled:opacity-40">
+            className="rounded-md border border-mint/50 bg-mint/15 px-3 py-1.5 text-[12px] font-medium text-mint disabled:opacity-40">
             {m.isPending ? '…' : 'Vérifier'}
           </button>
         </div>
@@ -50,7 +50,7 @@ export function VerifProcedure() {
               <div className="mt-1">{d.synthese}</div>
               <div className="mt-1 text-[10px] text-txt-dim">
                 Sourcé {d.source} · confiance {d.confiance} · constaté le {d.date_constat}
-                {d.source_url && <> · <a href={d.source_url} target="_blank" rel="noreferrer" className="text-violet hover:underline">source ↗</a></>}
+                {d.source_url && <> · <a href={d.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
               </div>
               {cons?.veille_au && (
                 <div className="mt-2 border-t border-line-2 pt-2 text-[11px]">

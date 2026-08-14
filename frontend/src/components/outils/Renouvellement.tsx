@@ -36,7 +36,7 @@ export function RenouvellementModule() {
   })
 
   if (isLoading) return <Loading label="Segment Renouvellement…" />
-  if (error || !data) return <ErrorState message="Segment Renouvellement non calculé (lancer `labuse renouv`)." />
+  if (error || !data) return <ErrorState message="Segment Renouvellement momentanément indisponible — réessayez." />
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">

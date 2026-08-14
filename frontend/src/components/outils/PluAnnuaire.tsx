@@ -53,13 +53,13 @@ export function PluAnnuaire() {
             placeholder="ex. hauteur clôture, stationnement, emprise au sol"
             className="flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt" />
           <button onClick={run} disabled={q.trim().length < 2 || m.isPending}
-            className="rounded-md border border-violet/50 bg-violet/15 px-3 py-1.5 text-[12px] font-medium text-violet disabled:opacity-40">
+            className="rounded-md border border-mint/50 bg-mint/15 px-3 py-1.5 text-[12px] font-medium text-mint disabled:opacity-40">
             {m.isPending ? '…' : 'Chercher'}
           </button>
         </div>
         {zone && (
           <div className="flex items-center gap-1.5 text-[10.5px] text-txt-mut">
-            <span>Filtré sur la <span className="font-mono text-violet">zone {zone}</span> (depuis la fiche)</span>
+            <span>Filtré sur la <span className="font-mono text-mint">zone {zone}</span> (depuis la fiche)</span>
             <button onClick={() => setZone('')} className="rounded bg-surface-3 px-1 text-txt-dim hover:text-txt">✕ retirer</button>
           </div>
         )}
@@ -91,7 +91,7 @@ export function PluAnnuaire() {
           {d.resultats.map((r: PluExtrait, i: number) => (
             <div key={i} className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
               <div className="flex flex-wrap items-baseline gap-x-2 text-[11px]">
-                <span className="font-medium text-violet">{r.article_ref}</span>
+                <span className="font-medium text-mint">{r.article_ref}</span>
                 {r.zone && <span className="text-txt-mut">zone {r.zone}</span>}
                 <span className="text-txt-mut">{r.commune}</span>
                 <span className="text-txt-dim">p. PDF {r.page_pdf}</span>
@@ -104,7 +104,7 @@ export function PluAnnuaire() {
               <pre className="mt-1 whitespace-pre-wrap font-sans text-[11px] leading-snug text-txt">{r.texte_verbatim}</pre>
               <div className="mt-1 flex flex-wrap gap-x-2 text-[10px] text-txt-dim">
                 <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>
-                <a href={r.source_url} target="_blank" rel="noreferrer" className="text-violet hover:underline">archive GPU ↗</a>
+                <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">archive GPU ↗</a>
                 {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
               </div>
             </div>

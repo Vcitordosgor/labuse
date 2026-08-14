@@ -30,8 +30,7 @@ def courrier_statut(db: Session = Depends(get_db)) -> dict:
     prov = courrier.provider_actif()
     return {"disponible": prov != "stub", "provider": prov, "tarif": courrier.tarif(),
             "raison": None if prov != "stub" else
-            "compte prestataire non configuré (Merci Facteur PRO — action Vic ; "
-            "LABUSE_MERCIFACTEUR_API_KEY/SECRET)"}
+            "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}
 
 
 class EnvoiIn(BaseModel):

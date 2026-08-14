@@ -33,8 +33,9 @@ _SIGNAL_LABELS = {
     "aper_deadline": "APER — échéance photovoltaïque",
 }
 
-POST_M7 = ("Abonnement (digest hebdomadaire, compte utilisateur) = post-M7 (mandat Auth & Plans) ; "
-           "carnet consultable à la demande. Ancrage futur : watch_zones / watched_parcels.")
+# M82 #fuite : ce texte est SERVI au client (champ `note`) — jamais de nom de mandat ni de table.
+POST_M7 = ("L'abonnement (digest hebdomadaire, compte utilisateur) n'est pas encore actif ; "
+           "le carnet se consulte à la demande.")
 
 
 def get_db():
