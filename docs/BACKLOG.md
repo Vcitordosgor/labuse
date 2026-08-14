@@ -348,6 +348,37 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 - **Note M78 (Copilote)** : à l'intention OUTIL « diviser ce terrain », le Copilote n'a **aucun outil
   parcellaire** à proposer — il répond sur le fond avec ce qu'il a (surface, zonage, règlement) et ne
   propose rien. C'est le cas « aucun outil ne correspond » de la doctrine, appliqué proprement.
+- **MAJ M82 (cas A) — le score PAR PARCELLE EXISTE en fait.** L'audit M82 a trouvé que `module_division`
+  est indexée **par idu** (4433 lignes, 1/parcelle) : un lookup par IDU est un simple SELECT, aucun nouvel
+  endpoint. Le Copilote enrichit désormais sa réponse « divisible ? » avec ce score GÉOMÉTRIQUE
+  (`_division` : « CANDIDATE, facilité N/100, lot ~X m² — pas un feu vert », doctrine réglementaire >
+  géométrique préservée). **Restes du chantier** : (1) `module_division` est un gisement **admin figé**,
+  23/24 communes → automatiser le `compute` dans le pipeline de run + la 24ᵉ commune ; (2) une **porte
+  fiche→Division** par IDU devient possible (le score existe) — à décider ; (3) exposer aussi le lot
+  détachable dessiné (lot_geom) sur la fiche.
+
+## Renvois M82 (chantiers différés — arbitrage/décision Vic)
+- **Réactiver « Matching promoteurs » (retiré M82).** L'outil a été retiré (démo : 2 profils `demo=t`,
+  0 match jamais produit, création de profil gelée admin → boucle d'alerte morte). Pour le faire vivre, il
+  faut : (1) des **profils RÉELS compte-scopés** (lever le gate admin, rattacher au compte utilisateur —
+  dépend du chantier Auth & Plans) ; (2) la **vraie boucle d'alerte** — `match_run` cronné qui produit des
+  `event_log kind='match'` à chaque bascule + poussée à la cloche/au digest (dépend du chantier
+  notifications). Tant que ces deux briques n'existent pas, l'outil reste hors registre. Le composant
+  M19/`PromoteursActifs` (bloc SITADEL réel + allumage carte) est conservé en code, réutilisable.
+- **Courrier propriétaire — DÉCISION PRODUIT à trancher (chiffrage des 2 options).** Aujourd'hui (M82) :
+  l'outil dit la vérité en tête, génère un courrier **téléchargeable en PDF** (le client l'envoie
+  lui-même), et l'« enregistrement » n'ment plus. Reste LA décision sur l'envoi :
+  - **Option A — brancher un vrai traitement.** Un lecteur de `courrier_demandes` (UI ops/admin ou
+    notification) qui traite réellement + un prestataire postal branché (compte Merci Facteur PRO,
+    `LABUSE_MERCIFACTEUR_API_KEY/SECRET`). Chiffrage : ~1 écran ops (liste des demandes, marquage traité) +
+    l'intégration prestataire déjà codée (`courrier.envoyer`, provider) à activer + le coût récurrent
+    d'affranchissement/marge + l'engagement humain de traiter la file. **Ordre de grandeur : 2-3 j dev +
+    ouverture de compte prestataire (action commerciale) + process humain.**
+  - **Option B — n'offrir que la génération.** Retirer l'« enregistrement de demande » et la table
+    `courrier_demandes` (dead-letter), ne garder que la génération + le PDF téléchargeable. **Chiffrage :
+    ~0,5 j** (retirer le bouton + la route `/courrier/demande` + la table). Honnête, zéro promesse d'envoi.
+  - **Recommandation** : B maintenant (honnête, livrable), A quand le volume justifie l'ouverture du compte
+    prestataire et un process de traitement.
 
 ## Mandat séparé — unifier calcPrefill → parcelPrefill (issu de M-ENTREE)
 - **M-ENTREE a introduit `parcelPrefill` (store)** : motif partagé d'amorçage parcelle (un champ, plusieurs
