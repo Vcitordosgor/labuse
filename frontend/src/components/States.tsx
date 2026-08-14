@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 /* L'oiseau en filigrane — le motif signature aux endroits calmes (états vides). */
 export function Oiseau({ className = 'h-6 w-auto', dim = true }: { className?: string; dim?: boolean }) {
   return (
-    <svg viewBox="0 0 240 82" className={className} fill={dim ? '#1E2A23' : '#2FE0A0'} aria-hidden>
+    <svg viewBox="0 0 240 82" className={className} fill={dim ? '#1E2A23' : '#4ADE80'} aria-hidden>
       <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
     </svg>
   )

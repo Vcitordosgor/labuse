@@ -116,7 +116,9 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 @media (max-width:480px){body{padding:16px;align-items:flex-start}.recap .prix{font-size:22px}}
 """
 
-OISEAU = ('<svg class="oiseau" viewBox="0 0 240 82" fill="var(--or)" aria-hidden="true">'
+# M83 D — logo LABUSE #4ADE80 (nouvelle marque). Constante UNIQUE réutilisée par tout le tunnel auth
+# (auth.py, onboarding.py, app.py 404). Tracé = celui du fichier source frontend/public/marque.
+OISEAU = ('<svg class="oiseau" viewBox="0 0 240 82" fill="#4ADE80" aria-hidden="true">'
           '<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 '
           'C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>')
 
@@ -144,7 +146,7 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, h
             # M18 RG-FAV : favicon = logo LABUSE (buse) INLINE en SVG — garanti sur toutes les pages
             # du tunnel, indépendant du service statique /socle/ (les PNG restent en repli).
             f"<link rel=\"icon\" type=\"image/svg+xml\" href=\"data:image/svg+xml,"
-            f"%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 82'%3E%3Cpath fill='%23C9A961' "
+            f"%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 82'%3E%3Cpath fill='%234ADE80' "
             f"d='M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 "
             f"120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z'/%3E%3C/svg%3E\">"
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/socle/favicon-32.png\">"

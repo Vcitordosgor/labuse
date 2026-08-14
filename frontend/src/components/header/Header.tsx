@@ -514,11 +514,11 @@ export function Header() {
   // M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registry).
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
-      {/* identité — la buse + wordmark */}
+      {/* identité — la buse + wordmark. M83 D : logo servi depuis le FICHIER SOURCE unique
+          (frontend/public/marque, servi sous /socle) — plus de SVG inline dupliqué. */}
       <div className="flex shrink-0 items-center gap-2 pr-1" title="LABUSE — Radar foncier premium, La Réunion">
-        <svg viewBox="0 0 240 82" className="h-4 w-auto" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 6px rgba(47,224,160,0.35))' }}>
-          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
-        </svg>
+        <img src="/socle/marque/labuseicone4ADE80.svg" alt="LABUSE" data-logo className="h-4 w-auto"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.35))' }} />
         <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
       </div>
       <Omnibox />

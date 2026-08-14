@@ -69,7 +69,7 @@ h1 { font-size: 16pt; }
 table { width:100%; border-collapse:collapse; font-size:8pt; margin-top:1.5mm; }
 td { padding:0.8mm 2mm 0.8mm 0; }
 .leg { font-size:7.5pt; color:#555; }
-.leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818} .leg b.v{color:#2A5AC8}
+.leg b.p{color:#1E9E58} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818} .leg b.v{color:#2A5AC8}
 .valid { margin-top:1.5mm; font-size:8.5pt; }
 .statut { margin:0 0 1mm; font-size:8pt; font-weight:bold; color:#7A5A12; }
 """
@@ -116,7 +116,7 @@ def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir, demolir_gj=None, 
                    for l, t, u in tiles)
     svg = (f"<svg width='{VIEW_W}' height='{VIEW_H}' style='position:absolute;left:0;top:0;'>"
            + to_svg(voirie_gj, "rgba(40,90,200,0.35)", "#2A5AC8", 0.8)
-           + to_svg(parcelle_gj, "none", "#0B8A5F", 3)
+           + to_svg(parcelle_gj, "none", "#1E9E58", 3)
            + to_svg(bati_gj, "rgba(120,120,120,0.55)", "#666", 1)
            + to_svg(lot_gj, "rgba(201,138,0,0.30)", "#C98A00", 2.5)
            + to_svg(demolir_gj, "rgba(200,30,30,0.45)", "#B01818", 2) + "</svg>")

@@ -114,14 +114,14 @@ _PAGE_CSS = """
   @bottom-center {{ content: "{libelle}";
     font-family: sans-serif; font-size: 6.5pt; color: #78551477; }} }}
 body {{ font-family: sans-serif; color: #28322D; font-size: 10pt; }}
-h1 {{ font-size: 15pt; color: #111814; border-bottom: 1.4pt solid #0B8A5F;
+h1 {{ font-size: 15pt; color: #111814; border-bottom: 1.4pt solid #1E9E58;
      padding-bottom: 2mm; }}
 h2 {{ font-size: 11.5pt; color: #111814; }}
 table {{ width: 100%; border-collapse: collapse; }}
 td, th {{ border-bottom: 0.5pt solid #D8E2DC; padding: 1.6mm 2mm 1.6mm 0;
          text-align: left; font-size: 9pt; vertical-align: top; }}
 th {{ color: #5F6C65; text-transform: uppercase; font-size: 7pt;
-     border-bottom: 0.8pt solid #0B8A5F; }}
+     border-bottom: 0.8pt solid #1E9E58; }}
 .note {{ font-size: 8pt; color: #5F6C65; }}
 .bandeau {{ background: #FFF4D6; border-radius: 2mm; padding: 3mm 4mm;
            font-size: 8.5pt; color: #785514; }}
@@ -151,7 +151,7 @@ def _plan_situation(db: Session, parcelle: dict) -> bytes | None:
         f"<img src='{t['data_uri']}' style='position:absolute; left:{t['left']}px;"
         f" top:{t['top']}px; width:256px; height:256px;'>" for t in carte["tiles"])
     polys = "".join(
-        f"<polygon points='{p}' fill='rgba(11,138,95,0.18)' stroke='#0B8A5F'"
+        f"<polygon points='{p}' fill='rgba(11,138,95,0.18)' stroke='#1E9E58'"
         f" stroke-width='2.5'/>" for p in carte["polygons"])
     body = (f"<p>Parcelle <b>{parcelle['idu']}</b> · {parcelle['commune']} · section "
             f"{parcelle['section']} n° {parcelle['numero']} · {parcelle['surface_m2']} m²</p>"
