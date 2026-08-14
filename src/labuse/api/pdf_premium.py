@@ -9,6 +9,7 @@ footer non-garantie. Les données viennent de _q_v2_fiche — même source que l
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from fpdf import FPDF
@@ -517,6 +518,69 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
+
+    # ── M73-F — PLAN DE SITUATION (ortho) : image compositée par plan_situation (via build_situation_map,
+    # point d'appel unique). Échelle + nord + millésime ortho (lu de data_sources) + source. Un échec de
+    # carte NE MASQUE PAS le bloc : on écrit la RAISON (réseau ≠ hors emprise), jamais un cadre vide.
+    import io as _io
+    plan = fiche.get("plan_situation") or {}
+    if pdf.get_y() > pdf.h - 40:
+        pdf.add_page()
+    pdf.ln(2)
+    pdf.set_font("mono", size=7.5)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 5, "PLAN DE SITUATION", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_draw_color(*LINE)
+    pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+    pdf.ln(1.4)
+    if plan.get("ok"):
+        disp_w = pdf.w - 28
+        disp_h = disp_w * (plan["height"] / plan["width"])
+        if pdf.get_y() + disp_h > pdf.h - 16:
+            pdf.add_page()
+        y0 = pdf.get_y()
+        pdf.image(_io.BytesIO(plan["jpeg"]), x=14, y=y0, w=disp_w, h=disp_h)
+        mm_par_srcpx = disp_w / plan["width"]
+        mpp = plan.get("metres_par_px")
+        if mpp:                                          # ── barre d'échelle (bas-gauche), valeur ronde
+            m_par_mm = mpp / mm_par_srcpx
+            cible_m = 28 * m_par_mm                       # ~28 mm de barre
+            p = 10 ** math.floor(math.log10(cible_m)) if cible_m > 0 else 1
+            nice = next((f * p for f in (5, 2, 1) if f * p <= cible_m), p)
+            bar_mm = nice / m_par_mm
+            bx, by = 14 + 4, y0 + disp_h - 6
+            pdf.set_fill_color(255, 255, 255)
+            pdf.rect(bx - 2, by - 3.4, bar_mm + 4, 6.4, style="F")
+            pdf.set_draw_color(*TXT_HI)
+            pdf.set_line_width(0.5)
+            pdf.line(bx, by, bx + bar_mm, by)
+            pdf.line(bx, by - 1.2, bx, by + 1.2)
+            pdf.line(bx + bar_mm, by - 1.2, bx + bar_mm, by + 1.2)
+            pdf.set_font("mono", size=6)
+            pdf.set_text_color(*TXT_HI)
+            pdf.set_xy(bx, by - 3.4)
+            pdf.cell(bar_mm, 2.2, f"{round(nice)} m", align="C")
+            pdf.set_line_width(0.2)
+        pdf.set_fill_color(255, 255, 255)               # ── nord (haut-droite) : tuiles nord en haut
+        pdf.rect(pdf.w - 14 - 8, y0 + 2, 6, 8, style="F")
+        pdf.set_font("mono", size=7)
+        pdf.set_text_color(*TXT_HI)
+        pdf.set_xy(pdf.w - 14 - 8, y0 + 2.2)
+        pdf.cell(6, 3.4, "N", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_xy(pdf.w - 14 - 8, y0 + 5.4)
+        pdf.cell(6, 3.4, "^", align="C")
+        pdf.set_y(y0 + disp_h + 1)
+        pdf.set_font("inter", size=6.5)
+        pdf.set_text_color(*TXT_DIM)
+        mill = str(fiche.get("ortho_millesime") or "millésime non renseigné")
+        pdf.multi_cell(pdf.w - 28, 3.2, f"Fond : {plan.get('attribution') or 'IGN — BD ORTHO'} · {mill}. "
+                       "Contour parcellaire (cadastre) posé sur l'orthophotographie.",
+                       new_x="LMARGIN", new_y="NEXT")
+    else:
+        pdf.set_font("inter", size=7.5)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.multi_cell(pdf.w - 28, 4, f"Plan de situation indisponible — {plan.get('echec', 'raison inconnue')}. "
+                       "Le reste du document n'est pas affecté.", new_x="LMARGIN", new_y="NEXT")
 
     # ── M73-E Volet B — COMPARABLES DVF : la table du premium, via marche_service (aucun appel DVF
     # direct). Chaque vente porte date/distance/surface/prix (requête les garantit) ; n + rayon dits ;
