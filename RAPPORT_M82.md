@@ -190,14 +190,20 @@ Répartition proposée (le client comprend en 5 s ce qui sert tous les jours) :
   Renouvellement · Mode bailleur · Rareté du foncier
 - **Instruire** — Scorer une adresse★ · Calculette foncière · Contrôle avant achat★ · Vérif procédure PLU ·
   Annuaire PLU · Servitudes invisibles · Comparer les parcelles · Assemblage★ · Changement PLU
-- **Contacter** — Courrier propriétaire · Matching promoteurs
+- **Contacter** — Courrier propriétaire *(seul depuis le retrait de Matching — groupe à 1 : à garder tel
+  quel, ou à fondre dans « Trouver » à côté de Scan patrimoine, ton arbitrage)*
 - **Comprendre le marché** — Marché★ · Comparateur de communes★ · Baromètre foncier · Radar permis ·
   Vélocité admin · Promesses mortes · Simulateur ZAN
 - **Suivre le temps** — Quoi de neuf · Suivi de secteur · Remonter le temps
 
-**En-tête** : « Les moteurs métier de LABUSE » saute (« métier » n'est pas le sujet). Proposition :
-**« Les outils LABUSE — 29 moteurs pour détecter, instruire et suivre le foncier. »** (ou plus court :
-**« Vos outils : trouver, instruire, contacter, comprendre, suivre. »**). Aucun mot sur deux lignes.
+**28 outils** (matching retiré). Deux placements discutables, à trancher : **Faisabilité** (mode
+« par critères » = Trouver / mode « par parcelle » = Instruire — mise en Trouver pour son mode
+découverte) ; **Changement PLU** (Instruire ou Comprendre le marché).
+
+**En-tête** — « Les moteurs métier de LABUSE » saute (« métier » n'est pas le sujet). Trois formulations :
+1. **« 28 outils fonciers, du repérage à l'action. »** *(recommandée — courte, aucun mot sur 2 lignes)*
+2. **« Vos outils : trouver, instruire, contacter, comprendre, suivre. »** *(miroir des 5 groupes)*
+3. **« Les outils LABUSE — chaque étape du foncier, de la détection au suivi. »**
 
 ---
 
