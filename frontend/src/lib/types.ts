@@ -174,7 +174,8 @@ export interface SourceInfo {
   doublon?: boolean
   // M74 C bis : NATURE de la source (proxy / servi par proxys) — visible, jamais repliée :
   // une source proxy ne doit pas être présentée comme la source officielle.
-  nature?: { label: string; detail: string } | null
+  // `dashed` (M87) : proxy / servi par proxys / curée manuellement → rendu badge en pointillé.
+  nature?: { label: string; detail: string; dashed?: boolean } | null
 }
 
 // M33 — mode B (réhabilitation) : lecture de fiche, TOUJOURS Estimé, jamais persisté.

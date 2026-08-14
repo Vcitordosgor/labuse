@@ -19,6 +19,8 @@ export const TOKENS = {
   // sémantique DA
   mintBg: '#12291D', mintOn: '#06301A', mintSub: '#0B4526',
   amber: '#E0A94F', amberBg: '#2A2113',
+  // M87 — état « en retard sur sa cadence » (page Sources). Token unique, repris de DA-LABUSE.html.
+  warn: '#D9873D', warnBg: 'rgba(217,135,61,.10)', warnDim: '#8a5a28',
   coral: '#E2726A', coralBg: '#2B1715',
   blue: '#8FB4F0', iris: '#8B7BD8', iris2: '#C4B5FD', irisBg: '#16121F', irisLine: '#2E2545',
   danger: '#8A5A5A', dangerLine: '#3A2626', lien: '#7FA88F',
