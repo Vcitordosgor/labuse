@@ -101,6 +101,12 @@ CREATE TABLE IF NOT EXISTS notif_canaux (
   email  boolean NOT NULL DEFAULT true,
   PRIMARY KEY (compte_id, pref_type)
 );
+-- M85-B — trace des ANNONCES (chaîne 3) : qui, quoi, quand, combien de destinataires, statut.
+CREATE TABLE IF NOT EXISTS annonces (
+  id serial PRIMARY KEY, type varchar(20), titre text, corps text, lien text,
+  envoye_par text, at timestamptz DEFAULT now(),
+  n_cible int, n_mail_ok int, n_mail_echec int, n_cloche int
+);
 """
 
 
@@ -136,7 +142,14 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
                        dedup: str | None = None, demo: bool = False) -> int:
     """Insère UNE notification dans event_log si dédup + plafond l'autorisent. Retourne l'id créé, ou
     0 si dédupliqué/plafonné. `dedup` : clé stable (ex. 'veille:12:2026-08-14') — même clé le même jour
-    ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client)."""
+    ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client).
+
+    M85-B — LE REGISTRE fait loi : un `kind` non déclaré (ni type de registre, ni kind historique connu)
+    est REFUSÉ (ValueError). Personne n'ajoute un envoi hors inventaire."""
+    from ..notif_registry import _KIND_VERS_TYPE, est_declare
+    if kind not in _KIND_VERS_TYPE and not est_declare(kind):
+        log.error("NOTIF REFUSÉE — kind/type « %s » non déclaré au registre (M85-B).", kind)
+        raise ValueError(f"type de notification non déclaré au registre : {kind!r}")
     _ensure_cols(db)
     if dedup and db.execute(text(
             "SELECT 1 FROM event_log WHERE dedup = :d AND compte_id IS NOT DISTINCT FROM :c "
@@ -181,44 +194,51 @@ def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
                       {"j": jours}).rowcount
 
 
-# ─────────────── M85 · préférences par TYPE et par CANAL (le client contrôle ce qu'il reçoit) ───────────────
+# ─────────────── M85 / M85-B · préférences par TYPE (registre) et par CANAL ───────────────
 REUNION_TZ = timezone(timedelta(hours=4))   # UTC+4 EXPLICITE — JAMAIS le fuseau de la machine (doctrine M85)
 DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
 
-# Catégories client, mappées depuis event_log.kind (+ cloison marché). Défauts raisonnables : veilles et
-# suivi de parcelles poussent partout (cloche + e-mail) ; le marché, volumineux et informatif, reste à la
-# cloche (e-mail OFF par défaut, activable). `systeme` (tuyauterie ingestion) est HORS préférences client.
-PREF_TYPES = {
-    "veille": {"label": "Vos veilles", "cloche": True, "email": True},
-    "suivi": {"label": "Vos parcelles suivies", "cloche": True, "email": True},
-    "marche": {"label": "Le marché (bascules, BODACC, matchs)", "cloche": True, "email": False},
+# M85-B — les types de préférence sont ceux du REGISTRE (source unique). notif_canaux porte les
+# surcharges ; les défauts viennent du registre (tout activé). `maintenance` est VERROUILLÉ (e-mail
+# toujours on, non désactivable — conséquences réelles). Le marché partagé (compte NULL) n'est PAS un
+# type de préférence : flux CLOCHE informatif, hors des 3 chaînes, jamais d'e-mail.
+_KINDS_PAR_PREF = {   # type de registre → kinds event_log (perso) qu'il gouverne à la cloche
+    "veille_zone": ("veille", "match", "veille_zone"),
+    "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie"),
+    "annonce_produit": ("annonce_produit",),
+    "maintenance": ("maintenance",),
 }
 
 
-def _pref_type(kind: str, is_market: bool) -> str | None:
-    """kind (+ cloison marché) → catégorie de préférence. `systeme` = pilote/admin, HORS pref client."""
-    if kind == "systeme":
-        return None
-    if kind == "veille":
-        return "veille"
-    return "marche" if is_market else "suivi"
+def _pref_type(kind: str, is_market: bool = False) -> str:
+    """kind event_log → type de préférence du REGISTRE (source unique)."""
+    from ..notif_registry import type_pour_kind
+    return type_pour_kind(kind)
 
 
 def prefs_compte(db: Session, cid: int | None) -> dict:
-    """Préférences EFFECTIVES {pref_type: {cloche, email}} : les défauts, écrasés par notif_canaux."""
-    out = {k: {"cloche": v["cloche"], "email": v["email"]} for k, v in PREF_TYPES.items()}
-    if cid is None:
-        return out
-    for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
-                        {"c": cid}).mappings():
-        if r["pref_type"] in out:
-            out[r["pref_type"]] = {"cloche": bool(r["cloche"]), "email": bool(r["email"])}
+    """Préférences EFFECTIVES {type: {cloche, email, verrou, label}} : défauts du registre (tout activé),
+    écrasés par notif_canaux. `maintenance` : e-mail FORCÉ à True + verrou (jamais désactivable)."""
+    from ..notif_registry import REGISTRE, TYPES_CLIENT, canaux, desactivable
+    out = {t: {"cloche": "cloche" in canaux(t), "email": "mail" in canaux(t),
+               "verrou": not desactivable(t), "label": REGISTRE[t]["libelle"]} for t in TYPES_CLIENT}
+    if cid is not None:
+        for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
+                            {"c": cid}).mappings():
+            if r["pref_type"] in out:
+                out[r["pref_type"]].update(cloche=bool(r["cloche"]), email=bool(r["email"]))
+    for t in out:                                    # maintenance : e-mail jamais coupable
+        if out[t]["verrou"]:
+            out[t]["email"] = True
     return out
 
 
 def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool) -> None:
-    if pref_type not in PREF_TYPES:
+    from ..notif_registry import TYPES_CLIENT, desactivable
+    if pref_type not in TYPES_CLIENT:
         return
+    if not desactivable(pref_type):                  # maintenance : e-mail non désactivable
+        email = True
     db.execute(text(
         "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email) VALUES (:c,:p,:cl,:em) "
         "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em"),
@@ -226,24 +246,99 @@ def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool
 
 
 def desabonner_email(db: Session, cid: int) -> None:
-    """Désinscription e-mail GLOBALE (lien légal / List-Unsubscribe) : coupe l'e-mail de TOUS les types,
-    laisse la cloche intacte. Le client ré-affine ensuite dans ses préférences."""
+    """Désinscription e-mail GLOBALE (lien légal / List-Unsubscribe) : coupe l'e-mail des types
+    DÉSACTIVABLES (maintenance reste ON — conséquences réelles) ; la cloche reste intacte."""
+    from ..notif_registry import TYPES_CLIENT, desactivable
     cur = prefs_compte(db, cid)
-    for p in PREF_TYPES:
-        set_pref(db, cid, p, cloche=cur[p]["cloche"], email=False)
+    for p in TYPES_CLIENT:
+        if desactivable(p):
+            set_pref(db, cid, p, cloche=cur[p]["cloche"], email=False)
 
 
 def _cloche_filter_sql(prefs: dict) -> str:
-    """Fragment WHERE excluant les types dont la cloche est coupée (bornage par cloison). Vide si tout
-    est actif. `:cid`/`:market` sont déjà liés par l'appelant. `systeme` n'est JAMAIS exclu (pilote)."""
+    """Fragment WHERE excluant les types (registre) dont la CLOCHE est coupée. Le marché partagé
+    (compte NULL) reste TOUJOURS visible (flux informatif hors préférences) ; `systeme` jamais exclu."""
     excl = []
-    if not prefs["veille"]["cloche"]:
-        excl.append("NOT (e.kind='veille' AND e.compte_id IS NOT DISTINCT FROM :cid)")
-    if not prefs["suivi"]["cloche"]:
-        excl.append("NOT (e.kind IN ('permis','bascule','bodacc') AND e.compte_id IS NOT DISTINCT FROM :cid)")
-    if not prefs["marche"]["cloche"]:
-        excl.append("NOT (e.compte_id IS NULL AND e.kind = ANY(:market))")
+    for t, kinds in _KINDS_PAR_PREF.items():
+        if t in prefs and not prefs[t]["cloche"]:
+            ks = ",".join(f"'{k}'" for k in kinds)
+            excl.append(f"NOT (e.kind IN ({ks}) AND e.compte_id IS NOT DISTINCT FROM :cid)")
     return (" AND " + " AND ".join(excl)) if excl else ""
+
+
+# ─────────────── M85-B · le SUIVI DE PARCELLE (producteur unique, SQL, ZÉRO modèle) ───────────────
+# La règle du mandant : « ma parcelle a changé » dit MA parcelle (maille stricte, jamais le secteur —
+# le secteur, c'est les veilles de zone). Cinq changements, avec une HIÉRARCHIE :
+#   · MUTATION (vente) = l'événement MAJEUR → libellé distinct, en tête ;
+#   · BASCULE DE TIER = NOTRE verdict qui change (pas un fait du monde) → formulé comme tel, et
+#     seulement les bascules significatives (vers/depuis chaude|brûlante) [traitée dans detect_events] ;
+#   · PERMIS, MUTATION, BODACC détectés ICI à chaque ingestion ; ZONAGE par comparaison d'empreinte.
+# Dédup par ÉVÉNEMENT (un permis/mutation donné notifie une fois) ; fenêtre = après la pose du suivi
+# (pas de backfill). Type de registre : `parcelle_suivie`.
+SUIVIS_MAX = 50   # plafond de parcelles suivies par compte (config M85-B)
+
+
+def _ensure_suivi_cols(db: Session) -> None:
+    db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS zone_snap varchar(64)"))
+
+
+def evaluer_suivis(db: Session) -> dict:
+    """Pour chaque parcelle suivie, détecte les changements SUR elle depuis la pose du suivi et crée des
+    notifications typées `parcelle_suivie` (dédupliquées par événement). Cronable (à chaque ingestion).
+    ZÉRO modèle. Retourne le compte par catégorie."""
+    _ensure_suivi_cols(db)
+    court = lambda idu: idu[8:] if idu and len(idu) > 8 else idu   # noqa: E731 — libellé court
+    suivis = db.execute(text(
+        "SELECT idu, compte_id, created_at, zone_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
+    out = {"mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+    for s in suivis:
+        idu, cid, depuis = s["idu"], s["compte_id"], s["created_at"]
+        # 1) MUTATION (vente) — l'événement majeur, libellé distinct « Vente ».
+        for m in db.execute(text(
+                "SELECT id_mutation, date_mutation, valeur_fonciere, nature_mutation "
+                "FROM dvf_mutations_parcelle WHERE id_parcelle = :idu AND date_mutation >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            prix = f" — {int(m['valeur_fonciere']):,} €".replace(",", " ") if m["valeur_fonciere"] else ""
+            out["mutation"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Mutation", idu=idu,
+                titre=f"Vente : votre parcelle {court(idu)} a changé de mains",
+                detail=f"Mutation du {m['date_mutation']}{prix} ({m['nature_mutation'] or 'vente'}).",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:mut:{idu}:{m['id_mutation']}") else 0
+        # 2) PERMIS SUR la parcelle (idu_codes contient l'idu) — jamais la proximité (secteur = veille).
+        for p in db.execute(text(
+                "SELECT permit_id, type, date_depot FROM sitadel_permits "
+                "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND date_depot >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            out["permis"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Permis", idu=idu,
+                titre=f"Nouveau permis sur votre parcelle {court(idu)}",
+                detail=f"{p['type']} {p['permit_id']} déposé le {p['date_depot']}.",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:permis:{idu}:{p['permit_id']}") else 0
+        # 3) BODACC sur le propriétaire (personne morale) de la parcelle.
+        for b in db.execute(text(
+                "SELECT bp.annonce_id, bp.type_procedure, bp.date_annonce, pm.denomination "
+                "FROM parcelle_personne_morale pm JOIN bodacc_procedures bp ON bp.siren = pm.siren "
+                "WHERE pm.idu = :idu AND pm.siren IS NOT NULL AND bp.date_annonce >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            out["bodacc"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="BODACC", idu=idu,
+                titre=f"Procédure sur le propriétaire de {court(idu)}",
+                detail=f"{b['type_procedure']} publiée le {b['date_annonce']} — {b['denomination'] or 'propriétaire'}.",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
+        # 4) ZONAGE — comparaison d'empreinte (le zonage n'a pas de date ; on compare au dernier vu).
+        zone = db.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :idu"),
+                          {"idu": idu}).scalar()
+        snap = s["zone_snap"]
+        if zone is not None and snap is not None and zone != snap:
+            out["zonage"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Zonage", idu=idu,
+                titre=f"Changement de zonage sur votre parcelle {court(idu)}",
+                detail=f"Le zonage PLU est passé de « {snap} » à « {zone} ».",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:zone:{idu}:{zone}") else 0
+        if zone is not None and zone != snap:                # mémorise l'empreinte courante
+            db.execute(text("UPDATE watched_parcels SET zone_snap = :z WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
+                       {"z": zone, "idu": idu, "c": cid})
+    return out
 
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
@@ -294,34 +389,30 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
     # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
     _veilles_match(db, run_to, demo)
 
-    # 3. nouveau permis proche (≤ 300 m) d'une parcelle SUIVIE (pipeline + watched) — permis
-    # récents relativement à la fin des données Sitadel (12 derniers mois de données).
-    # CLOISON : l'événement appartient au COMPTE qui suit la parcelle (une même parcelle suivie
-    # par A et B produit un événement pour chacun, jamais partagé).
+    # 3. M85-B — BASCULE DE TIER sur une parcelle SUIVIE = NOTRE VERDICT qui change (jamais un fait du
+    # monde réel). Seulement les bascules SIGNIFICATIVES (vers/depuis 'chaude', le tier prioritaire).
+    # REMPLACE l'ancien bloc « permis ≤ 300 m » : la proximité est un fait de SECTEUR, pas de parcelle —
+    # c'est ce que couvrent les veilles de zone. « Permis à proximité » (opt-in, rayon choisi) → BACKLOG.
+    # Les changements SUR la parcelle (permis/mutation/BODACC/zonage) sont produits par evaluer_suivis
+    # à chaque ingestion — ici, uniquement le verdict de classement (qui dépend d'un diff de run).
     rows = db.execute(text("""
-        WITH suivies AS (
-          SELECT p.id, p.idu, p.geom_2975, pe.compte_id
-          FROM parcels p JOIN pipeline_entries pe ON pe.parcel_id = p.id
-          UNION
-          SELECT p.id, p.idu, p.geom_2975, w.compte_id
-          FROM parcels p JOIN watched_parcels w ON w.idu = p.idu
-        )
-        SELECT s.idu, s.compte_id, sp.permit_id, sp.type, sp.date::date::text AS date
-        FROM suivies s
-        JOIN sitadel_permits sp ON sp.geom IS NOT NULL
-          AND ST_DWithin(s.geom_2975, ST_Transform(sp.geom, 2975), 300)
-          AND sp.date >= (SELECT max(date) FROM sitadel_permits) - interval '12 months'"""),
-    ).mappings().all()
+        SELECT p.idu, w.compte_id, a.matrice_statut AS de, b.matrice_statut AS vers
+        FROM dryrun_parcel_evaluations a
+        JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
+        JOIN parcels p ON p.id = a.parcel_id
+        JOIN watched_parcels w ON w.idu = p.idu
+        WHERE a.run_label = :from AND a.matrice_statut <> b.matrice_statut
+          AND 'chaude' IN (a.matrice_statut, b.matrice_statut)"""),
+        {"from": run_from, "to": run_to}).mappings().all()
     for r in rows:
-        n = db.execute(text("""
-            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo, compte_id)
-            SELECT 'permis', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean), :cid
-            WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='permis' AND idu=:idu AND detail=:detail
-                              AND compte_id IS NOT DISTINCT FROM :cid)"""),
-            {"idu": r["idu"], "titre": f"Permis {r['type']} à ≤ 300 m de {r['idu'][8:]}",
-             "detail": f"{r['permit_id']} du {r['date']} — le secteur bouge autour d'une parcelle suivie.",
-             "from": run_from, "to": run_to, "demo": demo, "cid": r["compte_id"]}).rowcount
-        inserted["permis"] += n
+        sens = "montée en" if r["vers"] == "chaude" else "sortie de"
+        inserted["permis"] += creer_notification(
+            db, kind="parcelle_suivie", compte_id=r["compte_id"], source="Classement", idu=r["idu"],
+            titre=f"Le classement de votre parcelle {r['idu'][8:]} a évolué",
+            detail=("Suite à une mise à jour de NOS données, le classement est passé de "
+                    f"« {r['de']} » à « {r['vers']} » ({sens} tier prioritaire). Ce n'est pas un "
+                    "événement extérieur : c'est notre analyse qui a changé."),
+            lien=f"/socle/#parcelle={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo)
     db.flush()
     # M23-C : reprises de veille ÉCHUES → le MÊME canal que les veilles (event_log kind='veille',
     # cron detect-events existant) — jamais un second circuit de notification.
@@ -476,7 +567,10 @@ def seed_demo(db: Session) -> dict:
 # LECTURE. Les kinds PERSONNELS (permis suivis, veilles, reprises de veille) restent cloisonnés
 # STRICT (jamais partagés — cf. cloison M-K). Le broadcast ne touche QUE ces trois kinds.
 _MARKET_KINDS = ("bascule", "bodacc", "match")
-_PERSO_KINDS = ("permis", "veille")
+# M85-B — kinds PERSO éligibles au DIGEST du matin (chaînes 1+2) : suivi de parcelle + veille de zone
+# (historiques permis/veille + nouveaux types de registre). annonce/maintenance sont IMMÉDIATS (chaîne
+# 3), hors digest ; systeme_pilote = cloche seule.
+_PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
 
 
 def _visible(alias: str = "e") -> str:
@@ -642,8 +736,31 @@ def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> d
         db.execute(text("DELETE FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                    {"i": idu, "cid": cid})
         return {"watched": False}
+    # M85-B — plafond de parcelles suivies par compte (config), garde-fou anti-emballement.
+    n = db.execute(text("SELECT count(*) FROM watched_parcels WHERE compte_id IS NOT DISTINCT FROM :cid"),
+                   {"cid": cid}).scalar() or 0
+    if n >= SUIVIS_MAX:
+        raise HTTPException(409, f"Plafond de {SUIVIS_MAX} parcelles suivies atteint — retirez-en une.")
     db.execute(text("INSERT INTO watched_parcels (idu, compte_id) VALUES (:i, :cid)"), {"i": idu, "cid": cid})
     return {"watched": True}
+
+
+@router.get("/suivis")
+def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
+    """M85-B — les parcelles SUIVIES du compte + la date du DERNIER changement détecté. Une parcelle
+    qui n'a jamais bougé le DIT (dernier_changement = null) — c'est une information, pas un vide."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    rows = db.execute(text("""
+        SELECT w.idu, w.created_at::date::text AS depuis, p.commune,
+               (SELECT max(e.ts)::date::text FROM event_log e
+                 WHERE e.idu = w.idu AND e.kind = 'parcelle_suivie'
+                   AND e.compte_id IS NOT DISTINCT FROM :cid) AS dernier_changement
+        FROM watched_parcels w LEFT JOIN parcels p ON p.idu = w.idu
+        WHERE w.compte_id IS NOT DISTINCT FROM :cid
+        ORDER BY dernier_changement DESC NULLS LAST, w.created_at DESC"""),
+        {"cid": cid}).mappings().all()
+    return {"suivis": [dict(r) for r in rows], "plafond": SUIVIS_MAX}
 
 
 # ── M11 — veilles (recherches sauvegardées) ──
@@ -786,18 +903,20 @@ def _mes_communes(db: Session, cid: int | None) -> list[str]:
     return [r[0] for r in rows]
 
 
-def _digest_data(db: Session, cid: int | None = None) -> dict:
-    # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici — il est borné
-    # en résumé plus bas ; jamais la liste exhaustive du marché dans un digest).
+def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
+    # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici). M85-B : fenêtre
+    # paramétrable (J-1 pour le digest quotidien du matin). ORDRE (hiérarchie du mandant) : la MUTATION
+    # d'abord (événement majeur), puis les autres changements de parcelle SUIVIE, puis les veilles de zone.
     events = db.execute(text("""
-        SELECT e.kind, e.idu, e.titre, e.detail, e.demo, d.q_score, d.a_score, d.matrice_statut
+        SELECT e.kind, e.idu, e.titre, e.detail, e.demo, e.source, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE e.ts >= now() - interval '7 days'
+        WHERE e.ts >= now() - make_interval(days => :jours)
           AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
-        ORDER BY (e.kind = 'bascule') DESC, d.q_score DESC NULLS LAST LIMIT 10"""),
-        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
+        ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
+                 e.ts DESC NULLS LAST LIMIT 20"""),
+        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -895,8 +1014,9 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
         lien_prefs = f"/events/preferences?c={cid}&t={tok}"
     else:
         lien_desabo = lien_prefs = "#"
-    marche = d["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
-    return digest_html_email(evs, marche, d.get("top_chaudes", []), lien_desabo, lien_prefs,
+    # M85-B — le marché SORT du digest (règle mandant : mail SSI parcelle suivie / zone / annonce —
+    # « rien d'autre »). Il reste un flux cloche informatif, jamais un e-mail.
+    return digest_html_email(evs, {"total": 0}, d.get("top_chaudes", []), lien_desabo, lien_prefs,
                              periode="aujourd'hui")
 
 
@@ -938,8 +1058,9 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     from ..mail import send_email
 
     interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
+    fenetre_jours = 1 if freq == "quotidien" else 7      # M85-B — J-1 pour le digest du matin
     now = datetime.now(timezone.utc)
-    periode = "aujourd'hui" if freq == "quotidien" else "cette semaine"
+    periode = "hier" if freq == "quotidien" else "cette semaine"
     # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
     # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
     # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
@@ -976,11 +1097,12 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
             ignores += 1
             _note(cid, email, "ignoré", f"anti-double-envoi (dernier digest {last:%Y-%m-%d %H:%M} UTC)")
             continue
-        data = _digest_data(db, cid)
-        # FILTRE par préférence e-mail PAR TYPE : un type dont l'e-mail est coupé n'entre pas au digest.
+        data = _digest_data(db, cid, jours=fenetre_jours)   # M85-B — fenêtre J-1 pour le quotidien
+        # FILTRE par préférence e-mail PAR TYPE (registre) : un type dont l'e-mail est coupé n'entre pas.
         evs = [e for e in data["evenements"]
-               if not e.get("demo") and prefs.get(_pref_type(e["kind"], False), {}).get("email")]
-        marche = data["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
+               if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
+        # M85-B — le marché SORT du digest (règle mandant : « rien d'autre »). Flux cloche seulement.
+        marche = {"total": 0}
         # M85 P3 — enrichissement « depuis hier sur vos secteurs » (permis dans vos communes suivies,
         # même point de calcul que M83). Ligne présente SEULEMENT si non-nulle (honnêteté : pas de
         # remplissage — cf. le retard d'ingestion qui la garde souvent vide).
@@ -1017,6 +1139,84 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "details": details}
 
 
+# ─────────────── M85-B · l'ANNONCE (chaîne 3) : aperçu obligatoire, test à soi, trace ───────────────
+
+def apercu_annonce(db: Session, *, type_: str, titre: str, corps: str, lien: str | None = None,
+                   debut: str = "", fin: str = "", duree: str = "") -> dict:
+    """APERÇU (sujet + texte) + nombre de destinataires, SANS envoyer. Obligatoire avant tout envoi
+    réel — le mandant relit ce qui partira."""
+    from ..emails import annonce_email, maintenance_email
+    if type_ == "maintenance":
+        sujet, txt, _ = maintenance_email(titre, corps, debut=debut, fin=fin, duree=duree)
+    else:
+        sujet, txt = annonce_email(titre, corps, lien=lien)
+    n = db.execute(text(
+        "SELECT count(DISTINCT c.id) FROM comptes c JOIN utilisateurs u ON u.compte_id=c.id "
+        "AND u.role='titulaire' WHERE c.statut='actif'")).scalar() or 0
+    return {"sujet": sujet, "texte": txt, "n_destinataires": int(n)}
+
+
+def envoyer_annonce(db: Session, *, type_: str, titre: str, corps: str, lien: str | None = None,
+                    base_url: str = "", envoye_par: str = "pilote", test_email: str | None = None,
+                    debut: str = "", fin: str = "", duree: str = "") -> dict:
+    """Envoie une ANNONCE (chaîne 3) → cloche + mail à TOUS les comptes actifs (ciblage v1 ; segments →
+    BACKLOG). `test_email` = envoi UNIQUE de test à soi, sans cloche ni trace. Sinon : cloche typée +
+    mail respectant les préférences (annonce désactivable ; maintenance NON), puis TRACE (qui/quoi/quand/
+    destinataires/statut). `type_` ∈ {annonce_produit, maintenance} (déclaré au registre)."""
+    from ..emails import annonce_email, annonce_html, maintenance_email
+    from ..mail import send_email
+    from ..notif_registry import est_declare
+    if type_ not in ("annonce_produit", "maintenance") or not est_declare(type_):
+        raise ValueError(f"type d'annonce invalide : {type_!r}")
+
+    def _build(cid):
+        if type_ == "maintenance":
+            sujet, txt, html = maintenance_email(titre, corps, debut=debut, fin=fin, duree=duree)
+            return sujet, txt, html, {}          # maintenance : PAS de désinscription (non désactivable)
+        tok = _notif_token(db, cid) if cid is not None else "x"
+        desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}" if cid is not None else ""
+        prefs_l = f"{base_url}/events/preferences?c={cid}&t={tok}" if cid is not None else ""
+        sujet, txt = annonce_email(titre, corps, lien=lien, lien_desabo=desabo, lien_prefs=prefs_l)
+        html = annonce_html(titre, corps, lien=lien, lien_desabo=desabo, lien_prefs=prefs_l)
+        headers = ({"List-Unsubscribe": f"<{desabo}>", "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}
+                   if desabo else {})
+        return sujet, txt, html, headers
+
+    if test_email:                               # ENVOI DE TEST à soi, AVANT le vrai (obligatoire)
+        sujet, txt, html, _ = _build(None)
+        res = send_email(test_email, "[TEST] " + sujet, txt, body_html=html)
+        return {"test": True, "email": test_email, "statut": "ok" if res.ok else res.detail}
+
+    recipients = db.execute(text(
+        "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
+        "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id=c.id "
+        "WHERE c.statut='actif' GROUP BY c.id")).mappings().all()
+    n_cible = n_mail_ok = n_mail_echec = n_cloche = 0
+    for r in recipients:
+        cid, email = r["cid"], r["email"]
+        n_cible += 1
+        prefs = prefs_compte(db, cid)
+        if prefs.get(type_, {}).get("cloche", True):    # cloche (respecte la pref ; maintenance toujours)
+            n_cloche += 1 if creer_notification(db, kind=type_, compte_id=cid, source="LABUSE",
+                titre=titre, detail=corps, lien=lien, dedup=f"annonce:{type_}:{titre}"[:96]) else 0
+        if email and not _adresse_placeholder(email) and prefs.get(type_, {}).get("email", True):
+            sujet, txt, html, headers = _build(cid)
+            res = send_email(email, sujet, txt, body_html=html, headers=headers)
+            if res.ok:
+                n_mail_ok += 1
+            else:
+                n_mail_echec += 1
+                log.warning("ANNONCE mail échec — compte=%s cause=%s", cid, res.detail)
+    db.execute(text(
+        "INSERT INTO annonces (type, titre, corps, lien, envoye_par, n_cible, n_mail_ok, n_mail_echec, n_cloche) "
+        "VALUES (:t,:ti,:co,:l,:by,:nc,:ok,:ko,:cl)"),
+        {"t": type_, "ti": titre, "co": corps, "l": lien, "by": envoye_par,
+         "nc": n_cible, "ok": n_mail_ok, "ko": n_mail_echec, "cl": n_cloche})
+    db.commit()
+    return {"test": False, "n_cible": n_cible, "n_mail_ok": n_mail_ok,
+            "n_mail_echec": n_mail_echec, "n_cloche": n_cloche}
+
+
 def _token_ok(db: Session, c: int, t: str) -> bool:
     tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": c}).scalar()
     return bool(tok and t and tok == t)
@@ -1050,19 +1250,25 @@ def desabonner_one_click(c: int, t: str, db: Session = Depends(get_db)) -> dict:
     return {"ok": True}
 
 
-# ── M85 · les PRÉFÉRENCES par type et par canal ──
+# ── M85 / M85-B · les PRÉFÉRENCES par type (registre) et par canal ──
 
 def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
+    from ..notif_registry import TYPES_CLIENT
     prefs = prefs_compte(db, c)
     lignes = ""
-    for k, meta in PREF_TYPES.items():
+    for k in TYPES_CLIENT:
         p = prefs[k]
+        verrou = p.get("verrou")
+        # maintenance : VERROUILLÉ (case e-mail cochée + désactivée + mention « conséquences réelles »).
+        em_cell = (f"<input type='checkbox' checked disabled title='Non désactivable — conséquences réelles'>"
+                   if verrou else
+                   f"<input type='checkbox' name='{k}_email'{' checked' if p['email'] else ''}>")
         lignes += (
-            f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{meta['label']}</td>"
+            f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{p['label']}"
+            f"{' <span style=\"color:#888;font-size:12px\">(toujours actif)</span>' if verrou else ''}</td>"
             f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_cloche'"
             f"{' checked' if p['cloche'] else ''}></td>"
-            f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_email'"
-            f"{' checked' if p['email'] else ''}></td></tr>")
+            f"<td style='text-align:center;padding:10px 8px'>{em_cell}</td></tr>")
     ok = ("<p style='background:#e8f7ee;color:#1E9E58;padding:8px 12px;border-radius:8px;"
           "font:13px sans-serif'>✓ Préférences enregistrées.</p>" if sauve else "")
     return (f"<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:32px;"
@@ -1091,8 +1297,9 @@ def preferences_page(c: int, t: str, db: Session = Depends(get_db)) -> str:
 async def preferences_save(c: int, t: str, request: Request, db: Session = Depends(get_db)) -> str:
     if not _token_ok(db, c, t):
         return HTMLResponse("Lien invalide.", status_code=400)
+    from ..notif_registry import TYPES_CLIENT
     form = await request.form()
-    for k in PREF_TYPES:
+    for k in TYPES_CLIENT:                               # maintenance : set_pref force l'e-mail (verrou)
         set_pref(db, c, k, cloche=f"{k}_cloche" in form, email=f"{k}_email" in form)
     db.commit()
     return _page_preferences(db, c, t, sauve=True)
@@ -1103,8 +1310,9 @@ def prefs_get(request: Request, db: Session = Depends(get_db)) -> dict:
     """API in-app : les préférences du compte courant (+ leurs libellés)."""
     from .tenant import current_compte
     cid = current_compte(request)
+    from ..notif_registry import TYPES_CLIENT
     p = prefs_compte(db, cid)
-    return {"types": [{"key": k, "label": PREF_TYPES[k]["label"], **p[k]} for k in PREF_TYPES]}
+    return {"types": [{"key": k, **p[k]} for k in TYPES_CLIENT]}
 
 
 class PrefIn(BaseModel):

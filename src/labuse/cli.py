@@ -1831,6 +1831,19 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") ->
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
 
 
+@app.command("migrer-prefs")
+def migrer_prefs_cmd() -> None:
+    """M85-B — migre notif_canaux vers les types du REGISTRE : veille→veille_zone, suivi→parcelle_suivie,
+    marche SUPPRIMÉ (le marché n'est plus un type de mail — flux cloche seul). Idempotent."""
+    with session_scope() as s:
+        a = s.execute(text("UPDATE notif_canaux SET pref_type='veille_zone' WHERE pref_type='veille'")).rowcount
+        b = s.execute(text("UPDATE notif_canaux SET pref_type='parcelle_suivie' WHERE pref_type='suivi'")).rowcount
+        n = s.execute(text("DELETE FROM notif_canaux WHERE pref_type='marche'")).rowcount
+        s.commit()
+    typer.echo(f"✓ Préférences migrées au registre : veille→veille_zone ({a}), suivi→parcelle_suivie ({b}), "
+               f"marche supprimé ({n}).")
+
+
 @app.command("migrer-notifications")
 def migrer_notifications_cmd() -> None:
     """M85 — migration UNIQUE : veille_notifications (store parallèle M78) → event_log (centre unifié),
@@ -1896,6 +1909,22 @@ def notif_test_cmd(compte: int = typer.Option(None, help="compte_id destinataire
                if nid else "• Déjà créée aujourd'hui (dédup) — aucune nouvelle ligne.")
 
 
+@app.command("evaluer-suivis")
+def evaluer_suivis_cmd() -> None:
+    """M85-B — évalue les PARCELLES SUIVIES : changements SUR la parcelle (mutation, permis, BODACC,
+    zonage) → notifications typées parcelle_suivie. À appeler après l'ingestion. Zéro modèle, dédup."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, evaluer_suivis
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        out = evaluer_suivis(s)
+        s.commit()
+    typer.echo(f"✓ Suivis évalués : {out}")
+
+
 @app.command("notifier-fraicheur")
 def notifier_fraicheur_cmd() -> None:
     """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À
@@ -1949,6 +1978,48 @@ def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
                    f"{d['statut']} : {d['motif']}")
     typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s), "
                f"{out['echecs']} échec(s).")
+
+
+@app.command("annonce")
+def annonce_cmd(
+    titre: str = typer.Option(..., help="Titre de l'annonce."),
+    corps: str = typer.Option(..., help="Corps du message (le fait, se suffit à lui-même)."),
+    lien: str = typer.Option(None, help="Lien optionnel."),
+    type_: str = typer.Option("annonce_produit", "--type", help="annonce_produit | maintenance"),
+    test: str = typer.Option(None, help="Envoi de TEST à cette adresse (à soi, avant le vrai)."),
+    confirmer: bool = typer.Option(False, help="Confirme l'envoi RÉEL à tous les comptes actifs."),
+    debut: str = typer.Option("", help="Maintenance : début de coupure."),
+    fin: str = typer.Option("", help="Maintenance : fin."),
+    duree: str = typer.Option("", help="Maintenance : durée estimée."),
+) -> None:
+    """M85-B — ANNONCE (chaîne 3) : cloche + mail à tous les comptes actifs. APERÇU obligatoire ;
+    --test <email> essaie à soi d'abord ; --confirmer requis pour l'envoi réel. `maintenance` = gabarit
+    distinct (dates/durée en évidence), non désactivable."""
+    from .api.events import apercu_annonce, ensure_tables, envoyer_annonce
+    from .db import engine, session_scope
+
+    ensure_tables(engine())
+    base = get_settings().public_base_url or ""
+    with session_scope() as s:                       # 1) APERÇU systématique
+        ap = apercu_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien,
+                            debut=debut, fin=fin, duree=duree)
+    typer.echo("─────────── APERÇU ───────────")
+    typer.echo(f"Sujet : {ap['sujet']}\n")
+    typer.echo(ap["texte"])
+    typer.echo(f"──── Destinataires : {ap['n_destinataires']} compte(s) actif(s) ────")
+    if test:                                         # 2) TEST à soi, avant le vrai
+        with session_scope() as s:
+            r = envoyer_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien, base_url=base,
+                                test_email=test, debut=debut, fin=fin, duree=duree)
+        typer.echo(f"✉ Test envoyé à {test} : {r['statut']}")
+    if not confirmer:                                # 3) envoi RÉEL seulement sur --confirmer
+        typer.echo("⏸ Aperçu seul. --test <votre-email> pour un essai, puis --confirmer pour l'envoi réel.")
+        return
+    with session_scope() as s:
+        r = envoyer_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien, base_url=base,
+                            debut=debut, fin=fin, duree=duree)
+    typer.echo(f"✓ Annonce envoyée — cible {r['n_cible']}, mail ok {r['n_mail_ok']}, "
+               f"échecs {r['n_mail_echec']}, cloche {r['n_cloche']}. Tracée dans `annonces`.")
 
 
 @app.command("score-v-fetch")

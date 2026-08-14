@@ -91,7 +91,7 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles, suivisOpen, toggleSuivis } = useApp()
   // M85 — la pastille de notification a QUITTÉ cette entrée : les notifications appartiennent à la
   // CLOCHE (chrome global). « Secteurs » n'est plus que les zones géographiques DVF (M54). Trois
   // objets démêlés : Notifications (cloche) · Veilles (déclencheurs) · Secteurs (zones, ici).
@@ -136,6 +136,16 @@ export function Rail() {
         })}
 
         <div className="mt-auto flex flex-col items-center gap-2">
+          {/* M85-B — « Suivis » : les parcelles suivies (échelle parcelle). Avec « Secteurs » (échelle
+              zone), ce sont les deux échelles du même geste : ce que je surveille. */}
+          <button data-rail-suivis onClick={() => toggleSuivis()} className="group flex w-full flex-col items-center gap-1"
+            title="Mes suivis — parcelles surveillées et dernier changement détecté">
+            <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+              suivisOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 2.5c-3 0-5.5 2.4-5.5 5.4 0 4 5.5 9.6 5.5 9.6s5.5-5.6 5.5-9.6c0-3-2.5-5.4-5.5-5.4Z"/><circle cx="10" cy="8" r="2"/></svg>
+            </span>
+            <span className={`text-[10.5px] ${suivisOpen ? 'text-mint' : 'text-txt-mut'}`}>Suivis</span>
+          </button>
           {/* M54-EXPO-3 / M85 — « Secteurs » : panneau des ZONES GÉOGRAPHIQUES de surveillance DVF
               (surimpression carte). Renommé de « Veilles » pour lever la confusion avec la cloche
               (notifications) et les veilles Copilote — trois objets distincts. */}

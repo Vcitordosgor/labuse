@@ -635,8 +635,12 @@ export interface BriefMatin {
   cause_vide: string | null
 }
 export const getBrief = () => j<BriefMatin>('/events/brief')
-// M85 — préférences de notification par type et par canal (cloche / e-mail).
-export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean }
+// M85-B — les parcelles suivies + date du dernier changement (null = jamais bougé).
+export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null }
+export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
+// M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
+// désactivable (maintenance : e-mail toujours actif, conséquences réelles).
+export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; verrou?: boolean }
 export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')
 export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean }) =>
   j<{ ok: boolean }>('/events/prefs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })

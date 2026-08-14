@@ -13,6 +13,7 @@ import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { VeillesPanel } from './components/veilles/VeillesPanel'
+import { SuivisPanel } from './components/suivis/SuivisPanel'
 import { ComparePanel } from './components/compare/ComparePanel'
 import { filtersFromHash, filtersToHash, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
@@ -252,7 +253,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, suivisOpen, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -318,6 +319,7 @@ export default function App() {
               </Suspense>
               {parcours && <ParcoursTinder />}
               {veillesOpen && <VeillesPanel />}
+              {suivisOpen && <SuivisPanel />}
               {/* M55-L point 9 : le comparateur s'ouvre aussi depuis l'outil « Comparer » (Outils),
                   donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
                   (ComparePanel gère l'état vide). */}
