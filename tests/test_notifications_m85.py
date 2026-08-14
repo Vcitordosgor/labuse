@@ -119,6 +119,14 @@ def test_reunion_tz_explicite_utc4():
     assert events.DIGEST_HEURE_REUNION == 7
 
 
+def test_adresse_placeholder_bloquee():
+    """Réputation Brevo : jamais un envoi réel vers une adresse factice (bounce = domaine dégradé)."""
+    f = events._adresse_placeholder
+    assert f("ton-email@test.com") and f("qa-m23@labuse.test") and f("x@example.com")
+    assert f(None) and f("") and f("sans-arobase")
+    assert not f("kampusreunion@gmail.com") and not f("bob@labuse.immo")
+
+
 def test_pref_type_mapping():
     assert events._pref_type("veille", False) == "veille"
     assert events._pref_type("permis", False) == "suivi"

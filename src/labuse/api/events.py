@@ -868,6 +868,19 @@ def _notif_token(db: Session, cid: int) -> str:
     return db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": cid}).scalar()
 
 
+# Domaines d'adresses FACTICES : jamais un envoi réel vers elles (protection réputation Brevo). La
+# vraie hygiène — ne PAS créer de comptes actifs à adresse placeholder — est au BACKLOG ; ceci est la
+# ceinture de sécurité côté expédition.
+_DOMAINES_PLACEHOLDER = frozenset({"test.com", "example.com", "example.org", "example.net",
+                                   "labuse.test", "test.test", "localhost", "invalid", "email.com"})
+
+
+def _adresse_placeholder(email: str | None) -> bool:
+    e = (email or "").strip().lower()
+    dom = e.rsplit("@", 1)[-1] if "@" in e else ""
+    return (not dom) or dom in _DOMAINES_PLACEHOLDER or e.startswith("ton-email@")
+
+
 def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien", force: bool = False) -> dict:
     """Envoie le digest aux comptes actifs, FILTRÉ par préférence e-mail (par type/canal). Garanties :
     anti-double-envoi (last_digest_at + intervalle mini), un digest VIDE ne part pas, désinscription +
@@ -897,6 +910,12 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
         if not email or not str(email).strip():
             ignores += 1
             _note(cid, email, "ignoré", "pas d'adresse (aucun utilisateur titulaire avec e-mail)")
+            continue
+        if _adresse_placeholder(email):
+            # DÉFENSE réputation (Vic M85) : jamais un ENVOI RÉEL vers une adresse factice — Brevo
+            # compterait l'envoi et le bounce dégraderait la réputation du domaine. On refuse ICI.
+            ignores += 1
+            _note(cid, email, "ignoré", "adresse placeholder — envoi bloqué (jamais un envoi réel vers une adresse factice)")
             continue
         prefs = prefs_compte(db, cid)
         if not any(p["email"] for p in prefs.values()):
