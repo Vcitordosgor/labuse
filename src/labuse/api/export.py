@@ -539,6 +539,24 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                             f"loyer retenu : {html.escape(lo['etiquette'])} · ~{lo['annuel_eur']} €/an · {vl}")
             mode_b_kv += (f"<div class='foot' style='margin-top:2px'>"
                           f"{html.escape(sl.get('mention_fiscale') or '')}</div>")
+    if not mode_b_kv:   # M73-D — JAMAIS masqué : l'absence est un état (un zéro n'est pas une absence)
+        from .blocs_documents import rehab_bloc
+        rb = rehab_bloc(mb)
+        mode_b_kv = kv(f"Réhabilitation · {html.escape(rb['etat'])}",
+                       html.escape(rb["lignes"][0][1]) if rb["lignes"] else "")
+
+    # M73-D — assainissement : kv compact, TEXTE issu de la forme NEUTRE partagée (anc_bloc, écrit une
+    # fois) ; aucune reformulation locale, jamais lu depuis zone_anc. Jamais masqué (Absent = affiché).
+    anc_kv = ""
+    ab = fiche.get("anc")
+    if ab:
+        from .blocs_documents import anc_bloc
+        b = anc_bloc(ab)
+        roles = {r: t for r, t in b["lignes"]}
+        val = html.escape(roles.get("libelle") or b["etat"])
+        if roles.get("maille"):
+            val += f" · {html.escape(roles['maille'])}"
+        anc_kv = kv(f"Assainissement · {html.escape(b['etat'])}", val)
 
     # Contraintes (HARD_EXCLUDE + SOFT_FLAG) et à-vérifier (UNKNOWN).
     contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
@@ -669,6 +687,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     {res_html}
     {bil_html}
     {mode_b_kv}
+    {anc_kv}
     {plu_html}
     {radar_html}
     {histo_html}

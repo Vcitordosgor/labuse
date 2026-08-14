@@ -487,6 +487,13 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "parcel_anc" in avail and {"zone_anc"} <= _existing_columns(db, "parcel_anc"):
         from ..anc_service import statut_anc
         out["anc"] = statut_anc(db, idu)
+    # M73-D — réhabilitation via le helper UNIQUE (compute_mode_b), jamais recalculée. Absence = état
+    # affiché (« Non évaluée »), jamais masquée. Le template rend anc + mode_b par le bloc partagé.
+    try:
+        from ..faisabilite.bilan import compute_mode_b
+        out["mode_b"] = compute_mode_b(db, idu)          # run=None → run servi (Q_A_RUN_LABEL)
+    except Exception:  # noqa: BLE001
+        pass
     if "parcel_vegetation" in avail and {"ombrage_pct"} <= _existing_columns(db, "parcel_vegetation"):
         r = db.execute(text("SELECT ombrage_pct FROM parcel_vegetation WHERE idu = :idu"),
                        {"idu": idu}).mappings().first()

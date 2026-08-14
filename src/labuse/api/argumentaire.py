@@ -346,7 +346,8 @@ def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
     if strip:
         marche += f"<h3>Les ventes retenues, une à une</h3>{strip}"
     sections = [_synthese(out, marque), marche, permet, _reductions(out),
-                _bilan_rebours(out), _vigilance(out), _sources(out)]
+                _bilan_rebours(out), _vigilance(out), bq.assainissement_rehab(out),
+                _sources(out)]      # M73-D — ANC + réhab (rendu partagé, jamais masqué)
     # C7 : bandeau de contexte sur chaque page
     pdf = bq.render_pdf(sections, LIBELLE, produit="Argumentaire de négociation",
                         idu=idu, commune=out["parcelle"].get("commune") or "")

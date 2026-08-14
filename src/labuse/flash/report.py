@@ -85,11 +85,17 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
         date_generation=data["date_generation"], watermark=watermark)
     from ..api.export_commun import LIMITES_TITRE, limites_document   # M73 §5 (source unique)
+    # M73-D — le dossier rend enfin l'ANC (il le collectait sans l'afficher = bug) + la réhab, via le
+    # bloc PARTAGÉ (écrit une fois). Markup = HTML déjà échappé côté builder, on ne re-échappe pas.
+    from ..api.blocs_documents import anc_bloc_html, rehab_bloc_html
+    _terr = data.get("terrain") or {}                    # anc + mode_b sont collectés dans _terrain
     return _env.get_template("rapport.html.j2").render(
         data=data, carte=carte, css=Markup(css), order_ref=order_ref,
         produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION,
+        bloc_anc=Markup(anc_bloc_html(_terr.get("anc"))),
+        bloc_rehab=Markup(rehab_bloc_html(_terr.get("mode_b"))),
         limites=limites_document("dossier"), limites_titre=LIMITES_TITRE)
 
 

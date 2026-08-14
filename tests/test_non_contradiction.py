@@ -126,3 +126,18 @@ def test_ppr_regime_coherent(client, idu):
     # premium & fiche & dossier & banquier & one-pager doivent s'accorder sur la présence du régime rouge
     vals = set(rouge.values())
     assert len(vals) == 1, f"{idu} : « PPR zone rouge » présent dans certains docs seulement : {rouge}"
+
+
+@pytest.mark.parametrize("idu", PARCELLES)
+def test_anc_et_rehab_dans_tous_les_documents(client, idu):
+    """M73-D — l'assainissement (anc_service.statut_anc) et la réhabilitation (compute_mode_b) sont
+    SERVIS à l'écran (toujours un état, jamais un trou). Un critère servi à l'écran mais ABSENT d'un
+    document est une divergence de fond : ce test la fait ÉCHOUER, il ne la laisse pas dormir jusqu'au
+    prochain audit (la réhab a dormi de M59 à M73-C exactement comme ça). Les blocs ne se masquent
+    jamais (un zéro n'est pas une absence) → « Assainissement » et « Réhabilitation » sont attendus
+    dans les CINQ documents."""
+    docs = _docs(client, idu)
+    for name in ("premium", "dossier", "banquier", "one-pager"):
+        texte = docs[name].lower()
+        assert "assainissement" in texte, f"{name} : bloc ASSAINISSEMENT absent (critère servi à l'écran)"
+        assert "réhabilitation" in texte, f"{name} : bloc RÉHABILITATION absent (critère servi à l'écran)"

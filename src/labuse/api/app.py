@@ -3528,6 +3528,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M33 — mode B (réhabilitation) : présent aussi sur le payload legacy (exports
         # md/html/one-pager) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
         "mode_b": _mode_b_block(db, idu, Q_A_RUN_LABEL),
+        # M73-D — ANC servi (statut_anc, point unique) sur le payload legacy aussi (one-pager + premium
+        # fpdf) : le critère était absent de _build_fiche. Jamais recalculé, jamais lu depuis zone_anc.
+        "anc": _anc_block(db, idu),
         "cascade": cascade,
         "sources_responded": sources_responded,
         "sources_silent": sources_silent,

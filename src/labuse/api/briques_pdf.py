@@ -305,6 +305,19 @@ def collect(db: Session, idu: str) -> dict:
             out["verdict"] = {**vs, "rang_total": rang_total(db)}
     except Exception:  # noqa: BLE001
         pass
+    # M73-D — assainissement + réhabilitation, via les helpers UNIQUES (jamais recalculés ni lus depuis
+    # zone_anc/proba_anc). L'absence est un état (statut_anc renvoie toujours un dict ; compute_mode_b
+    # « non disponible »). Rendus par blocs_documents (écrit une fois).
+    try:
+        from ..anc_service import statut_anc
+        out["anc"] = statut_anc(db, idu)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from ..faisabilite.bilan import compute_mode_b
+        out["mode_b"] = compute_mode_b(db, idu)          # run=None → run servi (Q_A_RUN_LABEL)
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
@@ -612,6 +625,15 @@ def risques(out: dict) -> str:
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "
                  f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Voir la fiche commune pour budget/reste.</p>")
     return body
+
+
+def assainissement_rehab(out: dict) -> str:
+    """M73-D — les blocs ASSAINISSEMENT + RÉHABILITATION, rendu PARTAGÉ (blocs_documents, écrit une
+    fois). Jamais recalculé (helpers uniques statut_anc / compute_mode_b posés dans collect), jamais
+    masqué : l'absence est un état affiché (« Absent » / « Non évaluée »)."""
+    from .blocs_documents import anc_bloc_html, rehab_bloc_html
+    return ("<div class='pb'></div><h2>Assainissement &amp; réhabilitation</h2>"
+            + anc_bloc_html(out.get("anc")) + rehab_bloc_html(out.get("mode_b")))
 
 
 def limites_section(doc: str) -> str:
