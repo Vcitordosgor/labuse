@@ -655,7 +655,8 @@ def render_pdf(sections: list[str], libelle: str, *, produit: str = "",
     (« LABUSE — produit · IDU — commune ») court sur CHAQUE page (sauf la garde,
     qui porte le wordmark graphique — même règle que le Flash)."""
     from weasyprint import HTML
-    css = page_css(libelle, produit=produit, idu=idu, commune=commune)
+    from .blocs_documents import BLOC_CSS            # M73-G — habillage des blocs, écrit une fois
+    css = page_css(libelle, produit=produit, idu=idu, commune=commune) + BLOC_CSS
     doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{css}</style></head>"
            f"<body>{''.join(sec for sec in sections if sec)}</body></html>")
     return HTML(string=doc).write_pdf()

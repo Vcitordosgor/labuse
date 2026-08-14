@@ -19,6 +19,29 @@ import html
 #: libellé d'état ANC (dérivé du statut servi par anc_service — jamais un verdict).
 _ANC_LABEL = {"source": "Sourcé", "source_secteur": "Sourcé secteur", "absent": "Absent"}
 
+# M73-G — l'HABILLAGE DA des blocs, écrit UNE fois (maquette DA-PDF-v2 .carte/.chef/.past), injecté dans
+# les deux points CSS WeasyPrint (rapport.css via report.py, briques_pdf via render_pdf). Cartouche fond
+# SURFACE + filet, titre + pastille d'état colorée par le statut (le TEXTE de l'état porte le sens →
+# distinguable en N&B), réserves ≥ 8 pt. Utilise les variables déjà définies dans chaque CSS.
+BLOC_CSS = """
+.bloc { background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+        padding: 9px 12px; margin: 8px 0; break-inside: avoid; }
+.bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+             margin-bottom: 4px; }
+.bloc-titre { font-size: 11pt; font-weight: 600; color: var(--txt-hi); }
+.bloc-etat { font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; text-transform: uppercase;
+             letter-spacing: .05em; padding: 1px 7px; border-radius: 9px; white-space: nowrap;
+             color: var(--txt-dim); background: #EEF1EF; }
+.bloc-etat[data-etat="source"], .bloc-etat[data-etat="source_secteur"],
+.bloc-etat[data-etat="dispo"] { color: var(--mint); background: var(--mint-soft); }
+.bloc-etat[data-etat="trop_petit"] { color: var(--amber); background: #F6EEDD; }
+.bloc-libelle { font-size: 9.5pt; font-weight: 600; color: var(--txt); margin: 3px 0 1px; }
+.bloc-maille, .bloc-phrase, .bloc-ligne { font-size: 8.5pt; color: var(--txt-mut);
+             line-height: 1.45; margin: 2px 0; }
+.bloc-phrase strong { color: var(--txt-hi); font-weight: 600; }
+.bloc-source { font-size: 8pt; color: var(--txt-dim); margin: 2px 0; }
+"""
+
 
 # ── FORME NEUTRE (le texte servi, produit une fois) ──────────────────────────────────────────────
 def anc_bloc(anc: dict | None) -> dict | None:
