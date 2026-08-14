@@ -22,7 +22,7 @@ FONTS = Path(__file__).resolve().parent / "fonts"
 BG = (255, 255, 255)
 SURFACE = (244, 248, 246)  # cartouches gris-vert très pâle
 LINE = (216, 226, 220)
-MINT = (11, 138, 95)       # menthe d'impression (accents, positifs) — contraste AA sur blanc
+MINT = (30, 158, 88)       # M73-G — vert print CANON #1E9E58 (mandat + les 4 weasyprint), AA sur blanc
 MINT_SOFT = (226, 247, 237)  # fond de chip
 TXT_HI = (17, 24, 20)      # quasi-noir
 TXT = (40, 50, 45)
@@ -197,7 +197,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_fill_color(*SURFACE)
     pdf.rect(14, y, pdf.w - 28, card_h, style="F", round_corners=True, corner_radius=2.4)
     pdf.set_xy(19, y + 2.2)
-    pdf.set_font("mono", size=6.6)
+    pdf.set_font("mono", size=7)
     pdf.set_text_color(*TXT_DIM)
     pdf.cell(0, 3.6, "VERDICT LABUSE", new_x="LMARGIN", new_y="NEXT")
     pdf.set_xy(19, y + 6.6)
@@ -231,7 +231,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_text_color(*c)
         pdf.cell(cw - 10, 7, str(v))
         pdf.set_xy(x + 5, y + 10.6)
-        pdf.set_font("mono", size=6.3)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         # M54-AB F8 : chiffre de tête étiqueté (doctrine Sourcé/Estimé du banquier) — Q/A = Estimé.
         pdf.cell(cw - 10, 4, f"{k} / 100 · ESTIMÉ")
@@ -256,14 +256,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_x(14)
         pdf.multi_cell(pdf.w - 28, 3.8, txt)
         if bande == "faible":
-            pdf.set_font("inter", size=6.6)
+            pdf.set_font("inter", size=7)
             pdf.set_text_color(*AMBER)
             pdf.set_x(14)
             pdf.multi_cell(pdf.w - 28, 3.4,
                            "⚠ Confiance faible : données de la parcelle incomplètes — "
                            "verdict à confirmer par vérification terrain/CU.")
         pdf.set_text_color(*TXT_DIM)
-        pdf.set_font("inter", size=6.2)
+        pdf.set_font("inter", size=7)
         pdf.set_x(14)
         pdf.multi_cell(pdf.w - 28, 3.2,
                        "L'indice mesure la complétude des données ; il n'entre pas dans le score d'opportunité.")
@@ -272,7 +272,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── M9 lot 4 — POTENTIEL DE TRANSFORMATION (fond de l'ancien outil Mutabilité)
     pt = fiche.get("potentiel_transformation")
     if pt and pt.get("niveau") and pt["niveau"] != "indetermine":
-        pdf.set_font("mono", size=6.6)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, "POTENTIEL DE TRANSFORMATION", new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=7.6)
@@ -291,7 +291,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── CONTEXTE COMMUNE (mandat promotrice) — SRU · QPV/ANRU · marché, sourcé
     ctx = fiche.get("contexte_commune") or {}
     if ctx:
-        pdf.set_font("mono", size=6.6)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, f"CONTEXTE COMMUNE — {fiche.get('commune', '').upper()}",
                  new_x="LMARGIN", new_y="NEXT")
@@ -318,7 +318,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             lignes.append(fiche["marche_synthese"])
         for ln_txt in lignes:
             pdf.multi_cell(pdf.w - 28, 4.0, ln_txt, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("inter", size=6.2)
+        pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 3.6, "Sources : inventaire SRU DHUP (01/01/2024) · DEAL Réunion/ANCT (NPNRU) · "
                          "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
@@ -327,7 +327,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
     rtaa = fiche.get("rtaa") or {}
     if rtaa:
-        pdf.set_font("mono", size=6.6)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, "RTAA DOM — RAPPEL RÉGLEMENTAIRE (CONSTRUCTION NEUVE DE LOGEMENTS)",
                  new_x="LMARGIN", new_y="NEXT")
@@ -350,7 +350,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         for volet, txt in resume.items():
             pdf.set_font("inter", size=7.2)
             pdf.multi_cell(pdf.w - 28, 3.8, f"{volet.upper()} — {txt}", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("inter", size=6.2)
+        pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.4,
                        "Références : arrêtés du 17/04/2009 (thermique, acoustique, aération) modifiés par "
@@ -409,7 +409,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_font("grotesk", size=8.5)
         pdf.set_text_color(*TXT_HI)
         pdf.cell(90, 4, TITRES_M19.get(key, titre))
-        pdf.set_font("mono", size=6.4)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_MUT)
         pdf.set_xy(14, y + 1.8)
         pdf.cell(pdf.w - 32, 4, resume, align="R")
@@ -453,7 +453,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # et M-P (P2-64) NOMME la/les section(s) tronquée(s) (souvent PROPRIO, la plus utile en
         # prospection) — le lecteur sait EXACTEMENT ce qui manque, pas juste un total.
         quoi = " · ".join(sections_omises)
-        pdf.set_font("inter", size=6.8)
+        pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.6,
                        f"… {omises} signal(aux) non imprimé(s) (format 2 pages)"
@@ -514,7 +514,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                  f"(ecart {_e(ach.get('ecart_eur'))}, {ach.get('ecart_pct')} %)")
             pdf.multi_cell(pdf.w - 28, 4, v, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.3)
-        pdf.set_font("inter", size=6.5)
+        pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
@@ -524,7 +524,11 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # carte NE MASQUE PAS le bloc : on écrit la RAISON (réseau ≠ hors emprise), jamais un cadre vide.
     import io as _io
     plan = fiche.get("plan_situation") or {}
-    if pdf.get_y() > pdf.h - 40:
+    disp_w = pdf.w - 28
+    # M73-G — anti-orphelin : on réserve la hauteur du BLOC ENTIER (titre + image + attribution) AVANT de
+    # poser le titre. Fini le titre seul en bas de page, l'image sautant à la suivante (dette M73-F).
+    besoin = (8 + disp_w * (plan["height"] / plan["width"]) + 9) if plan.get("ok") else 16
+    if pdf.get_y() + besoin > pdf.h - 16:
         pdf.add_page()
     pdf.ln(2)
     pdf.set_font("mono", size=7.5)
@@ -534,10 +538,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
     pdf.ln(1.4)
     if plan.get("ok"):
-        disp_w = pdf.w - 28
         disp_h = disp_w * (plan["height"] / plan["width"])
-        if pdf.get_y() + disp_h > pdf.h - 16:
-            pdf.add_page()
         y0 = pdf.get_y()
         pdf.image(_io.BytesIO(plan["jpeg"]), x=14, y=y0, w=disp_w, h=disp_h)
         mm_par_srcpx = disp_w / plan["width"]
@@ -570,7 +571,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(pdf.w - 14 - 8, y0 + 5.4)
         pdf.cell(6, 3.4, "^", align="C")
         pdf.set_y(y0 + disp_h + 1)
-        pdf.set_font("inter", size=6.5)
+        pdf.set_font("inter", size=7)                    # M73-G — source/attribution ≥ 7 pt (technique)
         pdf.set_text_color(*TXT_DIM)
         mill = str(fiche.get("ortho_millesime") or "millésime non renseigné")
         pdf.multi_cell(pdf.w - 28, 3.2, f"Fond : {plan.get('attribution') or 'IGN — BD ORTHO'} · {mill}. "
@@ -603,52 +604,68 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 28, 4, f"Aucune vente comparable dans le rayon retenu ({cmp.get('rayon_m', '?')} m).",
                        new_x="LMARGIN", new_y="NEXT")
     else:
-        cols = [("Date", 24), ("Distance", 20), ("Surface", 22), ("Prix", 30), ("€/m²", 22)]
+        # M73-G — chiffres alignés à DROITE (Date à gauche), unités présentes ; en-têtes assortis.
+        cols = [("Date", 24, "L"), ("Distance", 20, "R"), ("Surface", 22, "R"),
+                ("Prix", 30, "R"), ("€/m²", 22, "R")]
         pdf.set_x(14)
-        pdf.set_font("mono", size=6.5)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
-        for lbl, w in cols:
-            pdf.cell(w, 4.4, lbl, new_x="RIGHT", new_y="TOP")
+        for lbl, w, al in cols:
+            pdf.cell(w, 4.4, lbl, new_x="RIGHT", new_y="TOP", align=al)
         pdf.ln(4.4)
-        pdf.set_font("inter", size=7)
+        pdf.set_font("inter", size=8)
         pdf.set_text_color(*TXT)
         for c in lst:
             pdf.set_x(14)
-            pdf.cell(24, 4.2, str(c.get("date") or "—"), new_x="RIGHT", new_y="TOP")
-            pdf.cell(20, 4.2, f"{c.get('distance_m')} m", new_x="RIGHT", new_y="TOP")
-            pdf.cell(22, 4.2, f"{c.get('surface_m2')} m²", new_x="RIGHT", new_y="TOP")
-            pdf.cell(30, 4.2, f"{c.get('prix_eur'):,} €".replace(",", " "), new_x="RIGHT", new_y="TOP")
-            pdf.cell(22, 4.2, str(c.get("prix_m2") or "—"), new_x="RIGHT", new_y="TOP")
-            pdf.ln(4.2)
-        pdf.ln(0.6)
-        pdf.set_font("inter", size=6.5)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.multi_cell(pdf.w - 28, 3.2, "Les ventes récentes mettent 1 à 3 ans à apparaître dans DVF : "
+            pdf.cell(24, 4.6, str(c.get("date") or "—"), new_x="RIGHT", new_y="TOP", align="L")
+            pdf.cell(20, 4.6, f"{c.get('distance_m')} m", new_x="RIGHT", new_y="TOP", align="R")
+            pdf.cell(22, 4.6, f"{c.get('surface_m2')} m²", new_x="RIGHT", new_y="TOP", align="R")
+            pdf.cell(30, 4.6, f"{c.get('prix_eur'):,} €".replace(",", " "), new_x="RIGHT", new_y="TOP", align="R")
+            pdf.cell(22, 4.6, str(c.get("prix_m2") or "—"), new_x="RIGHT", new_y="TOP", align="R")
+            pdf.ln(4.6)
+        pdf.ln(0.8)
+        pdf.set_font("inter", size=8)                    # M73-G — réserve de méthode ≥ 8 pt (lisible)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.multi_cell(pdf.w - 28, 4, "Les ventes récentes mettent 1 à 3 ans à apparaître dans DVF : "
                        "les niveaux les plus récents sont provisoires, le classement reste fiable.",
                        new_x="LMARGIN", new_y="NEXT")
 
     # ── M73-D — ASSAINISSEMENT + RÉHABILITATION : la forme NEUTRE partagée (blocs_documents), dessinée
     # en fpdf. Le premium POSE le MÊME texte que les 4 weasyprint (aucune reformulation — c'est la
     # divergence que M73-C/D réparent). Jamais recalculé, jamais masqué (l'absence est un état).
+    # M73-G — habillage CARTOUCHE (maquette DA-PDF-v2 .carte/.chef/.past) : fond SURFACE, coin arrondi,
+    # titre + pastille d'état colorée par le statut, lignes en 8 pt (réserves lisibles, jamais corps 6).
     from .blocs_documents import anc_bloc, rehab_bloc
+    pad, lh = 4.0, 4.4
+    inner_w = pdf.w - 28 - 2 * pad
     for bloc in (anc_bloc(fiche.get("anc")), rehab_bloc(fiche.get("mode_b"))):
         if not bloc:
             continue
-        if pdf.get_y() > pdf.h - 46:
+        etat_col = (MINT if bloc["statut"] in ("source", "source_secteur")
+                    else AMBER if bloc["statut"] in ("dispo", "trop_petit") else TXT_DIM)
+        pdf.set_font("inter", size=8)
+        body_h = sum(max(1, len(pdf.multi_cell(inner_w, lh, t, dry_run=True, output="LINES"))) * lh
+                     for _, t in bloc["lignes"])
+        card_h = 8.5 + body_h + 2 * pad
+        if pdf.get_y() + card_h > pdf.h - 16:          # veuve/orpheline : la carte ne se coupe pas
             pdf.add_page()
         pdf.ln(2)
-        pdf.set_font("mono", size=7.5)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 5, f"{bloc['titre'].upper()} — {bloc['etat'].upper()}", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_draw_color(*LINE)
-        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
-        pdf.ln(1.4)
+        y0 = pdf.get_y()
+        pdf.set_fill_color(*SURFACE)
+        pdf.rect(14, y0, pdf.w - 28, card_h, style="F", round_corners=True, corner_radius=2.4)
+        pdf.set_xy(14 + pad, y0 + pad)                 # .chef : titre + pastille d'état
+        pdf.set_font("grotesk", size=11)
+        pdf.set_text_color(*TXT_HI)
+        pdf.cell(inner_w * 0.62, 5, bloc["titre"])
+        _chip(pdf, pdf.w - 14 - pad - (pdf.get_string_width(bloc["etat"]) + 6), y0 + pad + 0.2,
+              bloc["etat"], etat_col)
+        pdf.set_xy(14 + pad, y0 + pad + 8.5)
         for role, texte in bloc["lignes"]:
-            forte = role == "phrase_forte"
-            pdf.set_font("inter", size=8 if forte else 7.5)
-            pdf.set_text_color(*(MINT if forte else TXT_MUT))
-            pdf.multi_cell(pdf.w - 28, 4, texte, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(0.4)
+            pdf.set_x(14 + pad)
+            pdf.set_font("inter", size=8)
+            pdf.set_text_color(*(etat_col if role == "phrase_forte" else TXT))
+            pdf.multi_cell(inner_w, lh, texte, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_y(y0 + card_h + 1)
 
     # ── M73 §5 — « Ce que ce document ne peut pas dire » : matérialisation du 3e terme de la
     # doctrine (ce qui est absent + où le chercher). Source unique export_commun.limites_document.
