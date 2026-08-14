@@ -8,6 +8,9 @@ Cronable via `labuse detect-events`. Sans second run réel, un run de DÉMONSTRA
 """
 from __future__ import annotations
 
+import logging
+from datetime import date
+
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -15,6 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/events", tags=["events"])
+log = logging.getLogger("labuse.events")
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 
 
@@ -76,6 +80,17 @@ CREATE TABLE IF NOT EXISTS notif_prefs (
   digest_freq varchar(12) DEFAULT 'hebdo',   -- hebdo | quotidien (réglable)
   last_digest_at timestamptz
 );
+-- M85 — event_log DEVIENT le centre unifié de notifications. Trois objets distincts (démêlés en M85) :
+--   · NOTIFICATIONS = les lignes ci-dessous (ce que le client reçoit, servi à la cloche) ;
+--   · VEILLES       = les déclencheurs Copilote (copilote_v2/veilles.py) qui PRODUISENT des notifs ;
+--   · SECTEURS      = les zones géographiques DVF (M54, panneau carte) — renommées, sans rapport ici.
+-- Colonnes M85 (idempotentes) : source (« dit sa source »), lien (cible directe : parcelle OU /sources),
+-- dedup (clé de déduplication/regroupement), envoi_statut (trace e-mail par ligne — motif M84).
+ALTER TABLE event_log ADD COLUMN IF NOT EXISTS source varchar(48);
+ALTER TABLE event_log ADD COLUMN IF NOT EXISTS lien text;
+ALTER TABLE event_log ADD COLUMN IF NOT EXISTS dedup varchar(96);
+ALTER TABLE event_log ADD COLUMN IF NOT EXISTS envoi_statut varchar(16) DEFAULT 'na';
+CREATE INDEX IF NOT EXISTS ix_event_log_dedup ON event_log (dedup, compte_id);
 """
 
 
@@ -84,6 +99,76 @@ def ensure_tables(engine) -> None:
         for stmt in DDL.split(";"):
             if stmt.strip():
                 c.execute(text(stmt))
+
+
+def _ensure_cols(db: Session) -> None:
+    """Colonnes M85 idempotentes — appelées par le producteur (une base servie avant ce mandat les
+    reçoit à la 1re notification). Pas de migration lourde : ADD COLUMN IF NOT EXISTS."""
+    for stmt in ("ALTER TABLE event_log ADD COLUMN IF NOT EXISTS source varchar(48)",
+                 "ALTER TABLE event_log ADD COLUMN IF NOT EXISTS lien text",
+                 "ALTER TABLE event_log ADD COLUMN IF NOT EXISTS dedup varchar(96)",
+                 "ALTER TABLE event_log ADD COLUMN IF NOT EXISTS envoi_statut varchar(16) DEFAULT 'na'"):
+        db.execute(text(stmt))
+
+
+# ─────────────── M85 · le PRODUCTEUR UNIQUE du centre (dédup · plafond · rétention) ───────────────
+# Tout producteur (Copilote-veille, ingestion/fraîcheur, futur brief) passe par ICI — jamais un INSERT
+# direct. Trois garde-fous contre le bug qui inonderait un client : DÉDUP (même clé + même jour → une
+# seule ligne), REGROUPEMENT (au producteur : N faits = 1 notif à N entrées) et PLAFOND DUR (par
+# kind/compte/jour). ZÉRO appel modèle : du SQL et des gabarits.
+NOTIF_RETENTION_JOURS = 90    # rétention (config M85) — au-delà, purge
+NOTIF_CAP_JOUR = 50           # plafond dur par (kind, compte, jour) — backstop anti-inondation
+
+
+def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None = None,
+                       compte_id: int | None = None, source: str | None = None,
+                       lien: str | None = None, idu: str | None = None,
+                       dedup: str | None = None, demo: bool = False) -> int:
+    """Insère UNE notification dans event_log si dédup + plafond l'autorisent. Retourne l'id créé, ou
+    0 si dédupliqué/plafonné. `dedup` : clé stable (ex. 'veille:12:2026-08-14') — même clé le même jour
+    ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client)."""
+    _ensure_cols(db)
+    if dedup and db.execute(text(
+            "SELECT 1 FROM event_log WHERE dedup = :d AND compte_id IS NOT DISTINCT FROM :c "
+            "AND ts::date = now()::date LIMIT 1"), {"d": dedup, "c": compte_id}).scalar():
+        return 0
+    n_jour = db.execute(text(
+        "SELECT count(*) FROM event_log WHERE kind = :k AND compte_id IS NOT DISTINCT FROM :c "
+        "AND ts::date = now()::date"), {"k": kind, "c": compte_id}).scalar() or 0
+    if n_jour >= NOTIF_CAP_JOUR:
+        log.warning("NOTIF PLAFOND — kind=%s compte=%s ≥ %d/jour : ligne refusée (producteur en boucle ?)",
+                    kind, compte_id, NOTIF_CAP_JOUR)
+        return 0
+    return db.execute(text(
+        "INSERT INTO event_log (kind, titre, detail, compte_id, source, lien, idu, dedup, demo) "
+        "VALUES (:k, :t, :d, :c, :s, :l, :i, :dd, :demo) RETURNING id"),
+        {"k": kind, "t": titre, "d": detail, "c": compte_id, "s": source, "l": lien,
+         "i": idu, "dd": dedup, "demo": demo}).scalar() or 0
+
+
+def notifier_fraicheur(db: Session) -> int:
+    """M85/M84 — producteur INGESTION : chaque source réellement en retard (check_fraicheur) → une notif
+    `systeme` pour le pilote/admin (compte_id NULL, hors marché → INVISIBLE aux clients : la tuyauterie
+    ne les concerne pas). Dédup par source/jour : une source qui décroche N jours ne fait pas N notifs."""
+    from ..ingestion import fraicheur
+    crees = 0
+    for e in fraicheur.etat_sources(db):
+        if e.get("statut") != "en_retard":
+            continue
+        crees += 1 if creer_notification(
+            db, kind="systeme", compte_id=None, source=f"Ingestion · {e['source']}",
+            titre=f"Source en retard : {e['label']}",
+            detail=(f"Dernière donnée {e['derniere_donnee']} — Δ{e['delta_donnee_jours']} j "
+                    f"(seuil {e['seuil_jours']} j, soit 2× la cadence). À rattraper."),
+            lien="/sources", dedup=f"fraicheur:{e['source']}:{date.today()}") else 0
+    return crees
+
+
+def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
+    """Rétention (config) : supprime les notifications de plus de `jours` (défaut 90). `event_seen`
+    part en cascade (FK). À appeler par le cron quotidien."""
+    return db.execute(text("DELETE FROM event_log WHERE ts < now() - make_interval(days => :j)"),
+                      {"j": jours}).rowcount
 
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
@@ -338,20 +423,24 @@ def _seen(alias: str = "e") -> str:
 
 
 @router.get("")
-def list_events(request: Request, unread_only: bool = False, limit: int = 100, db: Session = Depends(get_db)) -> dict:
+def list_events(request: Request, unread_only: bool = False, limit: int = 100, offset: int = 0,
+                db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
     mk = list(_MARKET_KINDS)
+    # M85 — non-lues D'ABORD (cloche), puis récentes ; paginé (offset). source/lien/ts exposés pour
+    # que la cloche affiche « dit sa source et sa date » + le lien direct vers l'objet.
     rows = db.execute(text(f"""
-        SELECT e.id, e.ts::date::text AS date, e.kind, e.idu, e.titre, e.detail, e.demo,
+        SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
+               e.demo, e.source, e.lien,
                {_seen('e')} AS lu,
                d.matrice_statut AS statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}
-        ORDER BY e.ts DESC, e.id DESC LIMIT :lim"""),
-        {"lim": limit, "run": RUN, "cid": cid, "market": mk}).mappings().all()
+        ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
+        {"lim": limit, "off": max(0, offset), "run": RUN, "cid": cid, "market": mk}).mappings().all()
     unread = db.execute(text(f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"),
                         {"cid": cid, "market": mk}).scalar()
     return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}

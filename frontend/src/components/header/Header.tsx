@@ -218,6 +218,18 @@ function FilterChips() {
 // parcelle (bloc « Potentiel de transformation »), alimenté par le ratio SDP consommée/
 // autorisée du bloc D + le signal surélévation. Cf. reports/m9-fiche/SYNTHESE-M9.md.
 
+// M85 — date relative sobre (sans dépendance) : « à l'instant / il y a 3 h / il y a 2 j / 14 août ».
+function tempsRelatif(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  const s = Math.floor((Date.now() - d.getTime()) / 1000)
+  if (s < 60) return "à l'instant"
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`
+  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`
+  if (s < 7 * 86400) return `il y a ${Math.floor(s / 86400)} j`
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
 function NotifBell() {
   const [open, setOpen] = useState(false)
   const [veilleNom, setVeilleNom] = useState('')
@@ -225,7 +237,7 @@ function NotifBell() {
   const [nlResume, setNlResume] = useState<string | null>(null)
   const [nlRefus, setNlRefus] = useState<string | null>(null)
   const qc = useQueryClient()
-  const { filters, zone, select, setView, setFilters } = useApp()
+  const { filters, zone, select, setView, setFilters, openSources } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
   const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
@@ -288,13 +300,24 @@ function NotifBell() {
                   {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
                   <div className="flex items-center gap-2">
                     <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
-                    {e.demo && <span className="rounded-full bg-violet/15 px-1.5 py-0.5 text-[8.5px] font-medium text-violet" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
-                    <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
+                    {/* M85 : badge DÉMO NEUTRE (le mauve est réservé à l'IA — rien ici n'en est). */}
+                    {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
+                    {/* M85 : le lien mène à l'OBJET — parcelle suivie, sinon la cible du lien (ex. /sources
+                        pour une alerte d'ingestion). Chaque notification « dit sa source et sa date ». */}
+                    <button onClick={() => {
+                        if (e.idu) { setView('cartes'); select(e.idu) }
+                        else if (e.lien?.startsWith('/sources')) openSources()
+                        else if (e.lien?.startsWith('/copilote')) setView('copilote')
+                        setOpen(false)
+                      }}
                       className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
                     {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
                   </div>
-                  {e.detail && <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
-                  <p className="mt-0.5 font-mono text-[9px] text-txt-dim">{e.date}</p>
+                  {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[9px] text-txt-dim">
+                    {e.source && <><span className="font-medium text-txt-mut">{e.source}</span><span>·</span></>}
+                    <span className="font-mono" title={e.date}>{tempsRelatif(e.ts ?? e.date)}</span>
+                  </p>
                 </div>
               ))}
             </div>

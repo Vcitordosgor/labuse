@@ -1831,6 +1831,65 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") ->
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
 
 
+@app.command("migrer-notifications")
+def migrer_notifications_cmd() -> None:
+    """M85 — migration UNIQUE : veille_notifications (store parallèle M78) → event_log (centre unifié),
+    puis SUPPRESSION de la table. Idempotent (no-op si la table n'existe plus). Zéro perte : les 12
+    notifs Copilote deviennent des lignes event_log kind='veille', source='Copilote'."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import _ensure_cols, ensure_tables
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        existe = s.execute(text("SELECT to_regclass('public.veille_notifications')")).scalar()
+        if not existe:
+            typer.echo("veille_notifications déjà supprimée — no-op."); return
+        _ensure_cols(s)
+        n = s.execute(text(
+            "INSERT INTO event_log (kind, idu, titre, detail, compte_id, source, lien, dedup, lu, ts) "
+            "SELECT 'veille', NULL, titre, detail, compte_id, 'Copilote · veille', "
+            "       '/copilote?veille=' || veille_id, 'migr:vn:' || id, vu, created_at "
+            "FROM veille_notifications "
+            "WHERE NOT EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = 'migr:vn:' || veille_notifications.id)"
+        )).rowcount
+        s.execute(text("DROP TABLE veille_notifications"))
+        s.commit()
+    typer.echo(f"✓ Migration : {n} notification(s) veille → event_log, table veille_notifications supprimée.")
+
+
+@app.command("notifier-fraicheur")
+def notifier_fraicheur_cmd() -> None:
+    """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À
+    appeler par le cron quotidien après l'ingestion. Dédup par source/jour. Zéro modèle."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, notifier_fraicheur
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        n = notifier_fraicheur(s)
+        s.commit()
+    typer.echo(f"✓ Fraîcheur → notifications : {n} source(s) en retard signalée(s).")
+
+
+@app.command("purge-notifications")
+def purge_notifications_cmd(jours: int = typer.Option(90, help="Rétention (jours).")) -> None:
+    """M85 — rétention : supprime les notifications de plus de N jours (défaut 90). Cronable."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, purge_notifications
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        n = purge_notifications(s, jours)
+        s.commit()
+    typer.echo(f"✓ Purge : {n} notification(s) de plus de {jours} j supprimée(s).")
+
+
 @app.command("digest")
 def digest_cmd(freq: str = typer.Option("hebdo", help="hebdo | quotidien"),
                force: bool = typer.Option(False, help="ignore l'intervalle mini (test)")) -> None:

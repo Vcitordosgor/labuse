@@ -404,14 +404,12 @@ export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut'
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ conversation_id, pouce, commentaire }) })
 
-// §4 — veilles : l'écran minimal (liste + suppression) + les notifications stockées.
-export interface CopiloteVeille { id: number; type: string; commune: string | null; non_vues: number }
+// §4 — veilles : l'écran minimal (liste + suppression). M85 : les notifications produites vivent
+// dans le centre unifié (cloche /events), plus dans un store parallèle.
+export interface CopiloteVeille { id: number; type: string; commune: string | null }
 export const copiloteV2Veilles = () => j<{ veilles: CopiloteVeille[] }>('/api/copilote-v2/veilles')
 export const copiloteV2VeilleSupprimer = (id: number) =>
   j<{ ok: boolean }>(`/api/copilote-v2/veilles/${id}`, { method: 'DELETE' })
-export const copiloteV2Notifications = () =>
-  j<{ notifications: { id: number; titre: string; detail: string; vu: boolean; created_at: string }[] }>(
-    '/api/copilote-v2/notifications')
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {
@@ -626,7 +624,7 @@ export const askParcel = (idu: string, question: string) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) })
 
 // ── Événements (Vague 3 : M11-M14) ──
-export interface LabuseEvent { id: number; date: string; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null }
+export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
 export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
 export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })

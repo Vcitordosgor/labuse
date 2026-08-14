@@ -158,3 +158,69 @@ cloche, ou la cloche est séparée et « Veilles » reste les zones géographiqu
 ## Garde-fous (Phase 0)
 Mesure pure — aucun fichier produit modifié, aucune table touchée, golden non contacté. **NE PAS
 MERGER.** J'attends ton arbitrage schéma + fournisseur.
+
+---
+
+# PHASE 1 — Le centre et la cloche (arbitrages Vic appliqués)
+
+Décisions actées : **event_log = centre unifié** ; **veille_notifications SUPPRIMÉE** (aucun repli) ;
+**Brevo** (pas de repli Gmail) ; **trois objets démêlés**. Livré et démontré de bout en bout.
+
+## La nomenclature retenue (les trois objets, trois noms — demandé par Vic)
+
+| Objet | Nom retenu | Où | Rôle |
+|---|---|---|---|
+| Ce que le client reçoit | **Notifications** | la CLOCHE (chrome global, en-tête) | le centre unifié (event_log) |
+| Les déclencheurs | **Veilles** | Copilote + recherches sauvegardées | produisent des notifications |
+| Les zones géographiques DVF (M54) | **Secteurs** | entrée du rail (renommée) | surveillance cartographique |
+
+« Veilles » couvre les DEUX chemins de création de déclencheurs (Copilote commune+type, et recherches
+sauvegardées filtrées) : ce sont tous des triggers qui alimentent le centre — cohérent. La cloche est
+dans l'**en-tête** (placement retenu : convention universelle, à droite, près du compte), PAS le rail.
+La pastille de notification a QUITTÉ l'entrée rail « Secteurs » (elle appartient à la cloche).
+**« Secteurs » est mon nom proposé** pour l'ex-« Veilles » du rail — dis si tu préfères « Zones suivies ».
+
+## 1a — La table et l'API
+- **event_log + 4 colonnes** (idempotentes) : `source` (« dit sa source »), `lien` (cible directe :
+  parcelle OU /sources), `dedup` (clé de déduplication), `envoi_statut` (trace e-mail par ligne, motif M84).
+- **Producteur UNIQUE** `events.creer_notification` — tout producteur passe par lui. Trois garde-fous :
+  **dédup** (même clé + même jour → 1 ligne), **regroupement** (au producteur : N faits = 1 notif à N
+  entrées), **plafond dur** `NOTIF_CAP_JOUR=50` par kind/compte/jour (backstop anti-inondation).
+- **Migration jouée** : 12 lignes `veille_notifications` → event_log (kind=veille, source='Copilote'),
+  **table DROP**. Preuve par grep : aucun producteur/écrivain ne subsiste (seuls l'outil de migration
+  one-shot — SELECT+DROP, no-op ensuite, requis pour migrer la prod — et des commentaires).
+- **API** (déjà mûre, complétée) : `/events` non-lues D'ABORD + paginé (offset) + `source`/`lien`/`ts`
+  exposés ; `/events/count`, `/{id}/read`, `/read-all` conservés. Rétention 90 j (`purge-notifications`).
+
+## 1b — La cloche
+- **Elle existait** (NotifBell, M16) : badge, panneau, mark-read, digest. **Enrichie M85** : chaque
+  notification affiche sa **source**, une **date relative** (« il y a 3 h »), et un **lien vers l'objet**
+  (parcelle suivie, sinon la cible — ex. /sources pour une alerte d'ingestion).
+- **DA** : grammaire LABUSE, vert/neutre. Le badge « DÉMO » était **violet** → **neutralisé** (le mauve
+  est réservé à l'IA, rien ici n'en est).
+- Rail « Veilles » → **« Secteurs »** (zones DVF), pastille de notif retirée (séparation nette).
+
+## 1c — Les producteurs branchés
+- **Veilles Copilote** : `evaluer_toutes` écrit désormais dans le CENTRE (event_log), avec regroupement
+  et dédup par contenu (rejeu du même lot = pas de doublon). Testé de bout en bout.
+- **Ingestion / fraîcheur** : deux producteurs → notif `systeme` pour le **pilote/admin** (compte_id
+  NULL, hors marché → INVISIBLE aux clients) : `notifier_fraicheur` (source en retard, dédup source/jour)
+  et `trace_ingestion` en échec (une notif systeme, sans jamais masquer l'échec). `lien=/sources`.
+
+## Démo (STOP Phase 1)
+- Chaîne **ingestion→cloche** en direct : `notifier-fraicheur` → notif systeme « Source en retard : DPE
+  ADEME » (source « Ingestion · dpe », lien /sources), visible à la cloche du pilote.
+- Chaîne **veille→cloche** testée : veille + 400 permis injectés → **1** notification groupée (jamais 400).
+- Playwright : rail « Secteurs », cloche ouverte, notifs ingestion + Copilote visibles, dates relatives,
+  **0 erreur console**.
+
+## Ce qui reste dormant (en attendant le compte Brevo + les crons VPS)
+- L'e-mail (Phase 2) attend **Brevo** — dis-moi quand le compte est prêt (sinon on décale, pas de Gmail).
+- `evaluer_toutes` / `notifier-fraicheur` / `purge-notifications` sont **cronables** mais **aucun cron
+  n'est déployé** (même dépendance VPS que M84). En local, tout est déclenchable et testé.
+
+## Garde-fous (Phase 1)
+tsc 0 · vitest 36/36 · build vert · pytest 133 passed (+5 tests M85 ; `test_pdf_premium` = échec de
+collection PRÉ-EXISTANT, non touché) · **golden 119/119 PASS, diff 0** (aucun contact scoring) · console
+0 erreur · chaîne veille→cloche testée · chaîne ingestion→cloche testée · dédup + plafond + regroupement
+(400→1) testés. **NE PAS MERGER.** STOP — Phase 2 (e-mail) sur ton feu vert Brevo.

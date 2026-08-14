@@ -4,11 +4,16 @@ Une veille = un trigger PERSISTÉ (compte, type, périmètre, critères, fréque
 à CHAQUE ingestion de données — ZÉRO appel modèle : du SQL et des notifications. Le modèle ne sert
 qu'à la CRÉATION (parser la demande). En production, le cron J+1 (Train 8) appelle `evaluer_toutes`.
 
-DÉPENDANCE (la « moitié manquante ») : le CANAL de notification (cloche in-app, digest e-mail) est au
-BACKLOG, non livré. Ici on POSE la veille, on ÉVALUE, et on STOCKE la notification dans
-`veille_notifications`. Ce qui manque pour qu'elle ATTEIGNE le client est décrit dans RAPPORT_M78.
+M85 — LE CANAL EXISTE désormais : une veille qui se déclenche écrit dans le CENTRE unifié
+(`event_log` via `events.creer_notification`), visible à la cloche + repris par le digest. La table
+`veille_notifications` (store parallèle M78) a été SUPPRIMÉE — un seul centre, plus de doublon.
+Nomenclature M85 : VEILLES = ces déclencheurs ; NOTIFICATIONS = ce qu'ils produisent (event_log) ;
+SECTEURS = les zones géographiques DVF (M54, sans rapport).
 """
 from __future__ import annotations
+
+import hashlib
+from datetime import date
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -30,12 +35,7 @@ CREATE TABLE IF NOT EXISTS veilles (
   criteres jsonb DEFAULT '{}', frequence varchar(12) DEFAULT 'ingestion', actif boolean DEFAULT true,
   last_evaluated_at timestamptz, created_at timestamptz DEFAULT now()
 );
-CREATE TABLE IF NOT EXISTS veille_notifications (
-  id serial PRIMARY KEY, veille_id int REFERENCES veilles(id) ON DELETE CASCADE, compte_id int,
-  titre text, detail text, ref varchar(64), vu boolean DEFAULT false, created_at timestamptz DEFAULT now()
-);
 CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
-CREATE INDEX IF NOT EXISTS ix_veille_notif_compte ON veille_notifications (compte_id, vu, created_at DESC);
 """
 
 
@@ -56,8 +56,7 @@ def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None
 def lister(db: Session, compte_id: int | None) -> list[dict]:
     db.execute(text(DDL))
     rows = db.execute(text(
-        "SELECT v.id, v.type, v.commune, v.actif, v.created_at, "
-        "  (SELECT count(*) FROM veille_notifications n WHERE n.veille_id=v.id AND NOT n.vu) AS non_vues "
+        "SELECT v.id, v.type, v.commune, v.actif, v.created_at "
         "FROM veilles v WHERE v.compte_id IS NOT DISTINCT FROM :c AND v.actif ORDER BY v.created_at DESC"),
         {"c": compte_id}).mappings().all()
     return [dict(r) for r in rows]
@@ -90,18 +89,30 @@ _EVALUATEURS = {"permis": _nouveaux_permis}   # ventes/procedure_plu/bodacc : so
 
 
 def evaluer(db: Session, veille: dict) -> int:
-    """Évalue UNE veille depuis son watermark (last_evaluated_at) : nouvelles données → notifications.
-    ZÉRO modèle. Retourne le nombre de notifications créées. Idempotent via le watermark."""
+    """Évalue UNE veille depuis son watermark (last_evaluated_at) : nouvelles données → 1 notification
+    dans le CENTRE (event_log). ZÉRO modèle. REGROUPEMENT : N faits = 1 notif à N entrées (jamais N
+    notifs). DÉDUP par contenu (rejeu du MÊME lot = pas de doublon ; un lot NOUVEAU passe). Retourne le
+    nombre de faits. Idempotent via watermark + dédup."""
     ev = _EVALUATEURS.get(veille["type"])
     since = veille.get("last_evaluated_at")
     if since is None:
         since = db.execute(text("SELECT now() - interval '90 days'")).scalar()   # 1re éval : fenêtre récente
     hits = ev(db, veille["commune"], since) if (ev and veille.get("commune")) else []
-    for h in hits:
-        db.execute(text(
-            "INSERT INTO veille_notifications (veille_id, compte_id, titre, detail, ref) "
-            "VALUES (:v, :c, :t, :d, :r)"),
-            {"v": veille["id"], "c": veille.get("compte_id"), "t": h["titre"], "d": h["detail"], "r": h.get("ref")})
+    if hits:
+        from ..api.events import creer_notification
+        commune = veille["commune"]
+        if len(hits) == 1:
+            titre, detail = hits[0]["titre"], hits[0]["detail"]
+        else:                                             # REGROUPEMENT
+            titre = f"{len(hits)} nouveaux permis à {commune}"
+            detail = "\n".join(f"· {h['detail']} (réf. {h['ref']})" for h in hits[:20])
+            if len(hits) > 20:
+                detail += f"\n… et {len(hits) - 20} autres."
+        refs = "|".join(sorted(str(h.get("ref")) for h in hits))
+        dedup = f"veille:{veille['id']}:" + hashlib.md5(refs.encode()).hexdigest()[:16]
+        creer_notification(db, kind="veille", compte_id=veille.get("compte_id"),
+                           titre=titre, detail=detail, source="Copilote · veille",
+                           lien=f"/copilote?veille={veille['id']}", dedup=dedup)
     db.execute(text("UPDATE veilles SET last_evaluated_at=now() WHERE id=:i"), {"i": veille["id"]})
     return len(hits)
 
@@ -114,11 +125,3 @@ def evaluer_toutes(db: Session) -> dict:
         {"t": list(EVALUABLES)}).mappings().all()
     total = sum(evaluer(db, dict(v)) for v in veilles)
     return {"veilles_evaluees": len(veilles), "notifications_creees": total}
-
-
-def notifications(db: Session, compte_id: int | None, limite: int = 50) -> list[dict]:
-    rows = db.execute(text(
-        "SELECT id, veille_id, titre, detail, ref, vu, created_at FROM veille_notifications "
-        "WHERE compte_id IS NOT DISTINCT FROM :c ORDER BY created_at DESC LIMIT :l"),
-        {"c": compte_id, "l": limite}).mappings().all()
-    return [dict(r) for r in rows]
