@@ -679,6 +679,13 @@ def _rnu_flag(idu: str) -> bool:
     return _rnu.is_rnu_idu(idu)
 
 
+def _marche_via_service(db: Session, idu: str, avail: set[str]) -> dict | None:
+    """M73-B Volet C — le dossier LIT le marché par le point d'appel UNIQUE (profil nommé), qui délègue
+    à `_marche` (calcul inchangé). `avail` est passé pour éviter une seconde résolution des tables."""
+    from .. import marche_service
+    return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_SECTEUR_DOSSIER, avail=avail)
+
+
 def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> dict:
     """Assemble toutes les sections du rapport pour UNE parcelle.
 
@@ -704,7 +711,7 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "constructibilite": _constructibilite(db, idu, avail),
         "risques": _risques(db, idu, avail),
         "patrimoine": _patrimoine(db, idu, avail),
-        "marche": _marche(db, idu, avail),
+        "marche": _marche_via_service(db, idu, avail),   # M73-B Volet C — point d'appel UNIQUE
         "dynamique": _dynamique(db, idu, avail),
         "terrain": _terrain(db, idu, avail),
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
