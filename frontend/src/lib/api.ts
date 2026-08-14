@@ -168,6 +168,15 @@ export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
+  // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
+  foncier: {
+    n_parcelles: number; surface_ha: number | null
+    repartition_zonage: { U: number; AU: number; A: number; N: number; total: number } | null
+    classement: { evaluees: number; sans_zonage: number; raison_sans_zonage: string }
+    prix_terrain_nu: { par_zone: Record<string, { median_eur_m2: number | null; n: number | null; calculable: boolean }> | null; calculable: boolean; motif: string | null; seuil_n: number; etiquette: string | null }
+    mutations_12m: number
+    permis_12m: { n: number; reserve: string }
+  } | null
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
   sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null

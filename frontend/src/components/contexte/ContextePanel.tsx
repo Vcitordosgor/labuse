@@ -76,7 +76,7 @@ export function ContextePanel() {
     <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
       <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
         <div>
-          <p className="label-caps text-violet">Contexte commune</p>
+          <p className="label-caps text-txt-mut">Contexte commune</p>
           <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
@@ -100,6 +100,66 @@ export function ContextePanel() {
                   <p className="mt-1 text-[11px] leading-relaxed text-txt">{d.rnu.detail}</p>
                 </div>
               </div>
+            )}
+            {/* M83 C1 — LE FONCIER DE LA COMMUNE, EN TÊTE (c'est le produit). Points de calcul EXISTANTS
+                réutilisés (M79 prix terrain nu / permis, agrégats bruts pour parcelles/surface/zonage/
+                mutations) — aucun recalcul local. */}
+            {d.foncier && (
+              <Section title="LE FONCIER DE LA COMMUNE">
+                <div className="mb-3 flex gap-5">
+                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles cadastrées</p></div>
+                  {d.foncier.surface_ha != null && (
+                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.surface_ha)} ha</p><p className="text-[11px] text-txt-dim">surface cadastrée</p></div>
+                  )}
+                </div>
+                {d.foncier.repartition_zonage && (() => {
+                  const z = d.foncier.repartition_zonage; const t = z.total || 1
+                  const pc = (n: number) => Math.round(1000 * n / t) / 10
+                  return (
+                    <div className="mb-3">
+                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Répartition par famille de zonage
+                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">Sourcé · zonage calibré</span></p>
+                      <Bar parts={[
+                        { label: 'U', pct: pc(z.U), color: TOKENS.mint },
+                        { label: 'AU', pct: pc(z.AU), color: TOKENS.vizCyan },
+                        { label: 'A', pct: pc(z.A), color: TOKENS.stCreuser },
+                        { label: 'N', pct: pc(z.N), color: TOKENS.vizGreenDeep },
+                      ]} />
+                    </div>
+                  )
+                })()}
+                <div className="mb-3 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+                  <p className="text-[11.5px] text-txt"><b>{fmt(d.foncier.classement.evaluees)}</b> parcelles évaluées au classement servi</p>
+                  {d.foncier.classement.sans_zonage > 0 && (
+                    <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">dont <b className="text-st-creuser">{fmt(d.foncier.classement.sans_zonage)}</b> sans zonage publié — non classables ({d.foncier.classement.raison_sans_zonage}).</p>
+                  )}
+                </div>
+                {d.foncier.prix_terrain_nu.par_zone && (
+                  <div className="mb-3">
+                    <p className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] text-txt-dim">Prix médian du terrain nu, par zone
+                      {d.foncier.prix_terrain_nu.etiquette && <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier.prix_terrain_nu.etiquette}</span>}</p>
+                    <div className="flex gap-5">
+                      {(['U', 'AU'] as const).map((fam) => {
+                        const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
+                        if (!pz || !pz.calculable) return (
+                          <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">échantillon insuffisant (&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes)</p></div>
+                        )
+                        return (
+                          <div key={fam}>
+                            <p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p>
+                            <p className="text-[10.5px] text-txt-dim">zone {fam} · {fmt(pz.n)} ventes{(pz.n ?? 0) < 5 ? ' (fragile)' : ''}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-5">
+                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.mutations_12m)}</p><p className="text-[11px] text-txt-dim">mutations (12 mois, DVF)</p></div>
+                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.permis_12m.n)}</p><p className="text-[11px] text-txt-dim">permis (12 mois, Sitadel)</p></div>
+                </div>
+                <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">Prix terrain nu, mutations et permis : point de calcul Marché (M79) — DVF (actes) + Sitadel (autorisations, {d.foncier.permis_12m.reserve}).</p>
+              </Section>
             )}
             {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de
                 production — parcelles brûlantes/chaudes, propriétaires PM) est RETIRÉ de la fiche
@@ -134,7 +194,7 @@ export function ContextePanel() {
                   {d.anru.map((a) => (
                     <div key={a.nom} className="mb-1.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                       <span className="text-xs font-medium text-txt-hi">{a.nom}</span>
-                      <span className="ml-2 rounded-full bg-violet/15 px-2 py-0.5 text-[11px] font-medium text-violet">intérêt {a.interet}</span>
+                      <span className="ml-2 rounded-full border border-line-2 bg-surface-3 px-2 py-0.5 text-[11px] font-medium text-txt-mut">intérêt {a.interet}</span>
                       <p className="mt-0.5 text-[11px] text-txt-dim">{a.code_qpv} · activer la couche « ANRU » sur la carte</p>
                     </div>
                   ))}
@@ -190,7 +250,7 @@ export function ContextePanel() {
                       const autres = Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
                       return (
                         <Bar parts={[
-                          { label: 'locataires', pct: loc, color: TOKENS.violet },
+                          { label: 'locataires', pct: loc, color: TOKENS.vizCyan },
                           { label: 'propriétaires', pct: prop, color: TOKENS.mint },
                           ...(autres >= 1 ? [{ label: 'logés gratuitement', pct: autres, color: TOKENS.txtMut }] : []),
                         ]} />
@@ -204,13 +264,13 @@ export function ContextePanel() {
                   {d.marche.typologie && (
                     <div className="mt-3">
                       <p className="mb-1 text-[11px] text-txt-dim" title={d.marche.typologie.libelle}>
-                        Résidences principales par nombre de pièces (proxy T1…T5+)
+                        Résidences principales par nombre de pièces (1 à 5+ pièces — approche la typologie)
                       </p>
                       <Bar parts={(['p1', 'p2', 'p3', 'p4', 'p5p'] as const).map((k, i) => {
                         const total = ['p1', 'p2', 'p3', 'p4', 'p5p'].reduce((s, kk) => s + (d.marche!.typologie[kk] ?? 0), 0) || 1
                         return { label: k === 'p5p' ? '5p+' : k.replace('p', '') + 'p',
                                  pct: Math.round(1000 * (d.marche!.typologie[k] ?? 0) / total) / 10,
-                                 color: [TOKENS.vizGreenDeep, TOKENS.stSurveiller, TOKENS.mint, TOKENS.vizCyan, TOKENS.violet][i] }
+                                 color: [TOKENS.vizGreenDeep, TOKENS.stSurveiller, TOKENS.mint, TOKENS.vizCyan, TOKENS.txtMut][i] }
                       })} />
                     </div>
                   )}
