@@ -71,12 +71,6 @@ class Hypotheses:
     # l'Art. 2 d'une autre commune (un Estimé emprunté présenté en Sourcé est interdit — boussole).
     commune: str | None = None
     mixite_source_ref: str | None = None
-    # M-PLU-REF — RÉFÉRENCE SOURCÉE de la constructibilité (coef_occupation, densité, place_m2 = issus du
-    # RÈGLEMENT). Renseignée UNIQUEMENT si le YAML de la commune DÉCLARE `constructibilite_source_ref`
-    # (ex. « Règlement PLU <commune> »). None → ces valeurs sont GÉNÉRIQUES (île, copiées de Saint-Paul
-    # à l'origine), non calibrées pour cette commune → affichées « Estimé », jamais présentées comme
-    # locales. Même doctrine que `mixite_source_ref` (M-N). N'ALTÈRE AUCUN calcul.
-    constructibilite_source_ref: str | None = None
 
     @classmethod
     def charger(cls, commune: str | None = None) -> "Hypotheses":
@@ -103,9 +97,6 @@ class Hypotheses:
         # DÉCLARE (mixite_source_ref) — des nombres recopiés de Saint-Paul ne sont pas un Sourcé.
         _ref = h.get("mixite_source_ref")
         out.mixite_source_ref = _ref.strip() if isinstance(_ref, str) and _ref.strip() else None
-        # M-PLU-REF — constructibilité Sourcée SEULEMENT si la commune la DÉCLARE (sinon générique/Estimé).
-        _cref = h.get("constructibilite_source_ref")
-        out.constructibilite_source_ref = _cref.strip() if isinstance(_cref, str) and _cref.strip() else None
         return out
 
 
@@ -305,13 +296,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       f"~{footprint:.0f} m²", "hypothèse occupation"))
     hypotheses.append(f"Coefficient d'occupation du gabarit supposé {hyp.coef_occupation:.0%} "
                       "(on ne bâtit pas 100 % de l'emprise constructible).")
-    # M-PLU-REF — MARQUAGE (voyage avec la valeur, doctrine Sourcé/Estimé) : emprise au sol + densité
-    # sont issues du RÈGLEMENT. Sourcées SEULEMENT si la commune le déclare ; sinon GÉNÉRIQUES (île,
-    # copiées de Saint-Paul), non calibrées ici → dit en clair, jamais présentées comme locales.
-    if not hyp.constructibilite_source_ref:
+    # M-PLU-REF-B — MARQUAGE ZONE-AWARE et VRAI (mesuré AUDIT_PLU_REF_B : emprise chiffrée 64 %, non
+    # réglementée 35 %, densité réglementée NULLE PART). `coef_occupation` est un facteur de MODÉLISATION
+    # (occupation du gabarit), PAS l'emprise réglementaire (`rules.emprise_sol_pct`, consommée l.255 si
+    # chiffrée). On dit donc le SILENCE du règlement quand l'emprise n'est pas chiffrée, jamais une dette
+    # « non calibrée » (le marquage commune-uniforme M-PLU-REF sonnait à tort même sur une zone chiffrée).
+    if not _is_num(rules.emprise_sol_pct):
         _com = hyp.commune or "cette commune"
-        hypotheses.append(f"⚠ Emprise au sol et densité : hypothèse GÉNÉRIQUE (île), non calibrée au "
-                          f"règlement de {_com} — capacité et charge foncière à confirmer localement (Estimé).")
+        hypotheses.append(f"Emprise au sol non réglementée par le PLU de {_com} (silence du règlement) : "
+                          f"occupation du gabarit ~{hyp.coef_occupation:.0%} posée par hypothèse de "
+                          "modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.")
 
     # ---- Surface de plancher BRUTE puis HABITABLE (rendement) ----
     sdp = footprint * niveaux
@@ -342,8 +336,9 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
                       f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
                       f"~{capped_lo:.0f} à {capped_hi:.0f}", "hypothèse densité (ex-COS)"))
-    hypotheses.append(f"Plafond de densité {hyp.densite_logts_ha_par_niveau:g} logts/ha par niveau "
-                      "(filet de sécurité remplaçant le COS).")
+    hypotheses.append(f"Plafond de densité {hyp.densite_logts_ha_par_niveau:g} logts/ha par niveau : "
+                      "filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune "
+                      "commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.")
     if densite_cap < floor_hi:
         modul.append(f"Plafond de densité {cap_logts_ha:.0f} logts/ha appliqué : le calcul détaillé "
                      f"donnait ~{math.floor(floor_lo)}-{math.ceil(floor_hi)} → borné à "

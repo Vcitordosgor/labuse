@@ -63,10 +63,10 @@ hypotheses_faisabilite:
   logement_m2_haut: 80.0            # surface moyenne d'un logement (borne haute)
   place_m2: 25.0                    # 1 place de stationnement (avec circulation)
   densite_logts_ha_par_niveau: 30.0 # plafond densité = ce taux x niveaux (logts/ha) — filet ex-COS
-  # M-PLU-REF — Saint-Paul est la SEULE commune dont coef_occupation/densité/place_m2 viennent de SON
-  # règlement (calibrée). Les 12 autres ont COPIÉ ces nombres ; sans cette clé, leur sortie les marque
-  # « générique, non calibrée » (Estimé — jamais présentés comme locaux). Doctrine M-N (mixite_source_ref).
-  constructibilite_source_ref: "Règlement PLU Saint-Paul (emprise au sol + densité)"
+  # M-PLU-REF-B — pas de `constructibilite_source_ref` : la mesure (AUDIT_PLU_REF_B) montre que Saint-Paul
+  # n'a NI emprise chiffrée (35 zones « pas de règle ») NI densité réglementaire. coef_occupation/densité
+  # sont des hypothèses de MODÉLISATION partout ; le marquage est désormais zone-aware (emprise chiffrée
+  # = Sourcé ; sinon « non réglementée — modélisation »), plus de flag commune faux.
   # --- Bilan promoteur (CA, charge foncière) ---
   # RÉALIGNÉ audit O2 (décision Vic 28/07/2026, revue M26-B — MANDAT_HYPOTHESES_BILAN.md) :
   # valeurs auditées du 12/06/2026 (`2c25746`, bilan prudent Réunion), en €/m² de PLANCHER.
