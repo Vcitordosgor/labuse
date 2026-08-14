@@ -103,7 +103,9 @@ export function Rail() {
   // un outil ne peut pas récupérer la parcelle regardée). Ferme le tiroir Outils.
   const openOutil = (k: string) => {
     if (k !== 'comparer') { setModule(k); return }
-    useApp.getState().setCompareOpen(true)
+    const st = useApp.getState()
+    st.setCompareOpen(true)
+    if (st.compareIdus.length === 0) st.setComparePicking(true)   // M82 : vide → on ajoute par la carte
     toggleOutils()
   }
 

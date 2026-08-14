@@ -472,6 +472,7 @@ export interface CompareRow {
   zone?: string | null; constructible?: boolean | null; capacite?: string | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
   ca_bas?: number | null; ca_haut?: number | null; charge_fonciere_m2?: number | null
+  terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]; synthese?: string | null
 }
 export const getCompare = (idus: string[]) =>
