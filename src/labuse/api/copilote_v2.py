@@ -82,7 +82,8 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/veilles")
 def veilles_lister(request: Request, db: Session = Depends(get_db)) -> dict:
-    """§4 — l'écran minimal : les veilles actives du compte (+ notifications non vues)."""
+    """§4 — l'écran minimal : les veilles actives du compte. M85 : les notifications qu'elles
+    produisent vivent désormais dans le CENTRE (event_log, servi par la cloche /events), plus ici."""
     from ..copilote_v2 import veilles
     return {"veilles": veilles.lister(db, current_compte(request))}
 
@@ -93,12 +94,8 @@ def veille_supprimer(veille_id: int, request: Request, db: Session = Depends(get
     return {"ok": veilles.supprimer(db, current_compte(request), veille_id)}
 
 
-@router.get("/notifications")
-def notifications(request: Request, db: Session = Depends(get_db)) -> dict:
-    """§4 — les notifications STOCKÉES (la moitié livrée). Le CANAL qui les pousse au client (cloche,
-    digest) est au BACKLOG — c'est la moitié manquante (RAPPORT_M78)."""
-    from ..copilote_v2 import veilles
-    return {"notifications": veilles.notifications(db, current_compte(request))}
+# M85 — l'ancien GET /notifications (store parallèle veille_notifications) est SUPPRIMÉ : la cloche
+# lit le centre unifié via /events. Plus de doublon (arbitrage Vic : le store parallèle disparaît).
 
 
 @router.post("/veilles/evaluer")

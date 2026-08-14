@@ -60,7 +60,8 @@ def avis_echeance(echeance_iso: str, lien_espace: str) -> tuple[str, str]:
 # ── B3 · digest de notifications ─────────────────────────────────────────────
 def digest_notifications(evenements: list[dict], lien_desabo: str, *,
                          periode: str = "cette semaine", base_url: str = "",
-                         marche: dict | None = None) -> tuple[str, str]:
+                         marche: dict | None = None, lien_prefs: str = "",
+                         secteurs_ligne: str = "") -> tuple[str, str]:
     """`evenements` : liste PERSONNELLE {kind, titre, detail, idu} (parcelles suivies + veilles).
     `marche` (M-T V2) : RÉSUMÉ BORNÉ du marché {total, dans_vos_communes} — jamais une liste
     exhaustive. `lien_desabo` : lien de désinscription (obligatoire)."""
@@ -77,11 +78,12 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
                       "Le détail est dans la cloche de l'application.")
     else:
         marche_txt = ""
-    # Sujet : reflète le contenu réel (perso prioritaire, sinon marché).
+    # Sujet FACTUEL / transactionnel (pas marketing : ni « nouveautés », ni parenthèse newsletter) —
+    # « 3 changements sur vos suivis » se lit comme une notification, pas comme une campagne.
     if n:
-        sujet = f"LABUSE — {n} nouveauté{'s' if n > 1 else ''} sur vos parcelles ({periode})"
+        sujet = f"LABUSE — {n} changement{'s' if n > 1 else ''} sur vos suivis"
     else:
-        sujet = f"LABUSE — {m_total} mouvement{'s' if m_total > 1 else ''} de marché ({periode})"
+        sujet = f"LABUSE — {m_total} mouvement{'s' if m_total > 1 else ''} de marché"
     lignes = []
     for e in evenements:
         idu = e.get("idu") or ""
@@ -97,13 +99,60 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         # Aucun événement personnel : le RÉSUMÉ MARCHÉ suffit à déclencher le digest (fin du
         # « digest vide à vie »). L'appelant a déjà vérifié qu'il y a du contenu.
         bloc = marche_txt
+    prefs_ligne = (f"Régler vos préférences (par type, cloche ou e-mail) :\n{lien_prefs}\n"
+                   if lien_prefs else "")
     corps = (
         "Bonjour,\n\n"
         + bloc
+        + (("\n\n" + secteurs_ligne) if secteurs_ligne else "")   # M85 P3 — « depuis hier sur vos secteurs »
         + "\n\n— — —\n"
         "Vous recevez cet e-mail parce que vous suivez des parcelles, avez enregistré des veilles, "
-        "ou êtes abonné au résumé de marché LABUSE. Pour ne plus le recevoir :\n"
+        "ou êtes abonné au résumé de marché LABUSE.\n"
+        + prefs_ligne
+        + "Pour ne plus rien recevoir par e-mail :\n"
         f"{lien_desabo}"
         + _SIGNATURE
     )
     return sujet, corps
+
+
+# ── M85 · gabarit HTML du digest — style TRANSACTIONNEL (boîte Principale, pas Promotions) ──
+def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: list[dict],
+                      lien_desabo: str, lien_prefs: str, *, base_url: str = "",
+                      periode: str = "aujourd'hui", secteurs_ligne: str = "") -> str:
+    """Alternative HTML du digest, volontairement SOBRE pour ressembler à une notification, pas à une
+    newsletter (Gmail classe le décoratif en Promotions) : texte dense, UNE colonne, aucune carte, aucun
+    gros bouton, pas d'en-tête coloré, une action par ligne. Aucune image externe (zéro tracking). Le
+    vert #1E9E58 ne sert QUE d'accent de lien. Le texte brut reste le repli (multipart/alternative)."""
+    V = "#1E9E58"
+
+    def _ligne(titre: str, detail: str = "") -> str:
+        d = f" <span style='color:#555'>— {detail}</span>" if detail else ""
+        return f"<p style='margin:0 0 8px'>{titre}{d}</p>"
+
+    corps = "".join(_ligne(e.get("titre") or "", (e.get("detail") or "").replace("\n", " ").strip())
+                    for e in evenements)
+    mr = marche or {}
+    if mr.get("total"):
+        cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
+                 if mr.get("dans_vos_communes") is not None else "")
+        corps += _ligne(f"{mr['total']} mouvement(s) de marché{cadre}", "détail dans l'application")
+    if not corps:
+        corps = "<p style='margin:0'>Rien de nouveau sur vos suivis.</p>"
+    if secteurs_ligne:                                   # M85 P3 — « depuis hier sur vos secteurs »
+        corps += f"<p style='margin:12px 0 0;color:#333'>{secteurs_ligne}</p>"
+    top = ""
+    if top_chaudes:
+        items = "".join(f"<p style='margin:0 0 4px'>{(t.get('idu') or '')[8:]} — "
+                        f"{t.get('commune') or ''}, {round(t.get('surface_m2') or 0)} m²</p>"
+                        for t in top_chaudes[:5])
+        top = f"<p style='margin:16px 0 6px;font-weight:600'>Les plus chaudes</p>{items}"
+    return (f"<!doctype html><html><body style=\"margin:0;background:#ffffff;color:#1a1a1a;"
+            f"font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif\">"
+            f"<div style=\"max-width:600px;padding:20px\">"
+            f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point du jour</p>"
+            f"{corps}{top}"
+            f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">"
+            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Préférences</a> — choisir ce que vous recevez.<br>"
+            f"<a href=\"{lien_desabo}\" style=\"color:#888\">Se désinscrire des e-mails</a>.</p>"
+            f"</div></body></html>")

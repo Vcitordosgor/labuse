@@ -256,6 +256,17 @@ def trace_ingestion(session: Session, label: str, ds_names: list[str] | None = N
         session.rollback()
         session.execute(text(
             "UPDATE ingestion_runs SET finished_at = now(), status = 'error' WHERE id = :id"), {"id": rid})
+        # M85 — un échec d'ingestion PRODUIT une notification systeme (pilote/admin, hors marché) :
+        # visible à la cloche, pas seulement dans un log. Import paresseux (ingestion→api) + jamais
+        # bloquant : une notif défaillante ne masque PAS l'échec d'origine (motif M84).
+        try:
+            from ..api.events import creer_notification
+            creer_notification(session, kind="systeme", compte_id=None, source=f"Ingestion · {label}",
+                               titre=f"Échec d'ingestion — {label}", lien="/sources",
+                               detail="La trace ingestion_runs est passée en 'error'. Rejeu à vérifier.",
+                               dedup=f"ingest-echec:{label}")
+        except Exception:  # noqa: BLE001 — la notification ne doit JAMAIS empêcher la remontée de l'échec
+            pass
         session.commit()
         raise
     session.execute(text(

@@ -1831,11 +1831,108 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") ->
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
 
 
+@app.command("migrer-notifications")
+def migrer_notifications_cmd() -> None:
+    """M85 — migration UNIQUE : veille_notifications (store parallèle M78) → event_log (centre unifié),
+    puis SUPPRESSION de la table. Idempotent (no-op si la table n'existe plus). Zéro perte : les 12
+    notifs Copilote deviennent des lignes event_log kind='veille', source='Copilote'."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import _ensure_cols, ensure_tables
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        existe = s.execute(text("SELECT to_regclass('public.veille_notifications')")).scalar()
+        if not existe:
+            typer.echo("veille_notifications déjà supprimée — no-op."); return
+        _ensure_cols(s)
+        n = s.execute(text(
+            "INSERT INTO event_log (kind, idu, titre, detail, compte_id, source, lien, dedup, lu, ts) "
+            "SELECT 'veille', NULL, titre, detail, compte_id, 'Copilote · veille', "
+            "       '/copilote?veille=' || veille_id, 'migr:vn:' || id, vu, created_at "
+            "FROM veille_notifications "
+            "WHERE NOT EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = 'migr:vn:' || veille_notifications.id)"
+        )).rowcount
+        s.execute(text("DROP TABLE veille_notifications"))
+        s.commit()
+    typer.echo(f"✓ Migration : {n} notification(s) veille → event_log, table veille_notifications supprimée.")
+
+
+@app.command("evaluer-veilles")
+def evaluer_veilles_cmd() -> None:
+    """M85 — évalue toutes les veilles Copilote actives → notifications dans le centre (event_log).
+    À appeler après l'ingestion (le cron J+1). Zéro modèle : SQL + regroupement + dédup."""
+    from sqlalchemy.orm import Session
+
+    from .copilote_v2 import veilles
+    from .db import engine
+
+    with Session(engine()) as s:
+        out = veilles.evaluer_toutes(s)
+        s.commit()
+    typer.echo(f"✓ Veilles évaluées : {out['veilles_evaluees']}, notifications créées : {out['notifications_creees']}.")
+
+
+@app.command("notif-test")
+def notif_test_cmd(compte: int = typer.Option(None, help="compte_id destinataire (défaut : pilote NULL).")) -> None:
+    """M85 — crée UNE notification de test (kind=veille, e-mail-activée) pour vérifier la chaîne
+    cloche + digest de bout en bout. Idempotente par jour (dédup). Pour un DIGEST réel : viser SON
+    compte (--compte <id>), puis `labuse digest --force`."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import creer_notification, ensure_tables
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        nid = creer_notification(
+            s, kind="veille", compte_id=compte, source="Test",
+            titre="Notification de test LABUSE",
+            detail="Ceci est une notification de test — la chaîne cloche + digest fonctionne.",
+            lien="/", dedup=f"test:{compte}")
+        s.commit()
+    typer.echo(f"✓ Notification de test créée (id={nid}) pour compte {compte if compte is not None else 'pilote (NULL)'}."
+               if nid else "• Déjà créée aujourd'hui (dédup) — aucune nouvelle ligne.")
+
+
+@app.command("notifier-fraicheur")
+def notifier_fraicheur_cmd() -> None:
+    """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À
+    appeler par le cron quotidien après l'ingestion. Dédup par source/jour. Zéro modèle."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, notifier_fraicheur
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        n = notifier_fraicheur(s)
+        s.commit()
+    typer.echo(f"✓ Fraîcheur → notifications : {n} source(s) en retard signalée(s).")
+
+
+@app.command("purge-notifications")
+def purge_notifications_cmd(jours: int = typer.Option(90, help="Rétention (jours).")) -> None:
+    """M85 — rétention : supprime les notifications de plus de N jours (défaut 90). Cronable."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, purge_notifications
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        n = purge_notifications(s, jours)
+        s.commit()
+    typer.echo(f"✓ Purge : {n} notification(s) de plus de {jours} j supprimée(s).")
+
+
 @app.command("digest")
-def digest_cmd(freq: str = typer.Option("hebdo", help="hebdo | quotidien"),
+def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
                force: bool = typer.Option(False, help="ignore l'intervalle mini (test)")) -> None:
-    """M21-B3 : envoie le DIGEST e-mail (résumé des événements) aux comptes actifs abonnés. Cronable
-    (hebdo par défaut). Respecte l'opt-out (désinscription) ; ne notifie que des déclencheurs réels."""
+    """M85 : envoie le DIGEST e-mail QUOTIDIEN (7h00 Réunion via le cron) aux comptes actifs, FILTRÉ
+    par préférence e-mail/type. Anti-double-envoi ; digest vide ne part pas ; désinscription +
+    préférences dans chaque e-mail ; statut d'envoi tracé (jamais silencieux)."""
     from sqlalchemy.orm import Session
 
     from .api.events import ensure_tables, envoyer_digests
@@ -1845,7 +1942,13 @@ def digest_cmd(freq: str = typer.Option("hebdo", help="hebdo | quotidien"),
     base = get_settings().public_base_url or ""
     with Session(engine()) as s:
         out = envoyer_digests(s, base_url=base, freq=freq, force=force)
-    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s).")
+    # M85 — un MOTIF par compte : jamais un « ignoré » muet (le silence qu'on interdit partout).
+    for d in out.get("details", []):
+        marque = {"envoyé": "✓", "ignoré": "•", "échec": "⚠"}.get(d["statut"], "·")
+        typer.echo(f"  {marque} compte {d['compte']} ({d.get('email') or 'sans e-mail'}) — "
+                   f"{d['statut']} : {d['motif']}")
+    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s), "
+               f"{out['echecs']} échec(s).")
 
 
 @app.command("score-v-fetch")

@@ -1,5 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
-import { getEvents } from '../lib/api'
 import { useApp, type View } from '../store/useApp'
 import { GROUPS, MODULES } from './outils/registry'
 
@@ -94,9 +92,9 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles } = useApp()
-  // DA §10 — pastille ambre sur « Veilles » S'IL Y A un événement. Lecture read-only qui
-  // PARTAGE le cache ['events'] de la cloche (aucun appel supplémentaire ; présentation pure).
-  const veilleEvent = (useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 }).data?.unread ?? 0) > 0
+  // M85 — la pastille de notification a QUITTÉ cette entrée : les notifications appartiennent à la
+  // CLOCHE (chrome global). « Secteurs » n'est plus que les zones géographiques DVF (M54). Trois
+  // objets démêlés : Notifications (cloche) · Veilles (déclencheurs) · Secteurs (zones, ici).
   // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
   // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
   // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
@@ -138,16 +136,16 @@ export function Rail() {
         })}
 
         <div className="mt-auto flex flex-col items-center gap-2">
-          {/* M54-EXPO-3 — « Veilles » : panneau des zones de veille géographiques (surimpression carte). */}
+          {/* M54-EXPO-3 / M85 — « Secteurs » : panneau des ZONES GÉOGRAPHIQUES de surveillance DVF
+              (surimpression carte). Renommé de « Veilles » pour lever la confusion avec la cloche
+              (notifications) et les veilles Copilote — trois objets distincts. */}
           <button data-rail-veilles onClick={() => toggleVeilles()} className="group flex w-full flex-col items-center gap-1"
-            title="Mes veilles — zones de surveillance et alertes DVF">
+            title="Mes secteurs — zones géographiques de surveillance et alertes DVF">
             <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
               veillesOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
-              {/* DA §10 — pastille ambre : un événement de veille non lu. */}
-              {veilleEvent && <span data-veille-event className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber ring-2 ring-surface-1" />}
             </span>
-            <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Veilles</span>
+            <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Secteurs</span>
           </button>
           {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
               claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}
