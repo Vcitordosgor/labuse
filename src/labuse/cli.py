@@ -1859,6 +1859,21 @@ def migrer_notifications_cmd() -> None:
     typer.echo(f"✓ Migration : {n} notification(s) veille → event_log, table veille_notifications supprimée.")
 
 
+@app.command("evaluer-veilles")
+def evaluer_veilles_cmd() -> None:
+    """M85 — évalue toutes les veilles Copilote actives → notifications dans le centre (event_log).
+    À appeler après l'ingestion (le cron J+1). Zéro modèle : SQL + regroupement + dédup."""
+    from sqlalchemy.orm import Session
+
+    from .copilote_v2 import veilles
+    from .db import engine
+
+    with Session(engine()) as s:
+        out = veilles.evaluer_toutes(s)
+        s.commit()
+    typer.echo(f"✓ Veilles évaluées : {out['veilles_evaluees']}, notifications créées : {out['notifications_creees']}.")
+
+
 @app.command("notifier-fraicheur")
 def notifier_fraicheur_cmd() -> None:
     """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À
@@ -1891,10 +1906,11 @@ def purge_notifications_cmd(jours: int = typer.Option(90, help="Rétention (jour
 
 
 @app.command("digest")
-def digest_cmd(freq: str = typer.Option("hebdo", help="hebdo | quotidien"),
+def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
                force: bool = typer.Option(False, help="ignore l'intervalle mini (test)")) -> None:
-    """M21-B3 : envoie le DIGEST e-mail (résumé des événements) aux comptes actifs abonnés. Cronable
-    (hebdo par défaut). Respecte l'opt-out (désinscription) ; ne notifie que des déclencheurs réels."""
+    """M85 : envoie le DIGEST e-mail QUOTIDIEN (7h00 Réunion via le cron) aux comptes actifs, FILTRÉ
+    par préférence e-mail/type. Anti-double-envoi ; digest vide ne part pas ; désinscription +
+    préférences dans chaque e-mail ; statut d'envoi tracé (jamais silencieux)."""
     from sqlalchemy.orm import Session
 
     from .api.events import ensure_tables, envoyer_digests

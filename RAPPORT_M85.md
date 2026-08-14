@@ -224,3 +224,66 @@ tsc 0 · vitest 36/36 · build vert · pytest 133 passed (+5 tests M85 ; `test_p
 collection PRÉ-EXISTANT, non touché) · **golden 119/119 PASS, diff 0** (aucun contact scoring) · console
 0 erreur · chaîne veille→cloche testée · chaîne ingestion→cloche testée · dédup + plafond + regroupement
 (400→1) testés. **NE PAS MERGER.** STOP — Phase 2 (e-mail) sur ton feu vert Brevo.
+
+---
+
+# PHASE 2 — L'e-mail (Brevo configuré par Vic)
+
+## 2a — Le canal
+- **Transport** : `mail.py` (M21) étendu — `send_email` accepte désormais un **`body_html`**
+  (multipart/alternative : le texte reste le repli, meilleure délivrabilité). Secrets en `.env`
+  (`LABUSE_SMTP_*`), jamais en dur. Échec **tracé** (statut ok/error dans le retour + log), jamais
+  silencieux (motif M84). Brevo = relais SMTP standard, rien de spécifique dans le code.
+- **Gabarit DA** (`emails.digest_html_email`) : **vert #1E9E58 sur blanc**, wordmark LABUSE, sobre.
+  **Aucune image externe** (le SVG est mal supporté en e-mail → wordmark ; zéro tracking tiers, zéro
+  pixel espion). Le **mauve a disparu** du digest (l'ancien `🟣 DÉMO` de l'aperçu HTML est retiré).
+- **DNS Cloudflare** (SPF `include:spf.brevo.com`, 2 DKIM `brevoN._domainkey`, DMARC `p=none`) :
+  procédure complète écrite dans `docs/DEPLOYMENT_OVH_VPS.md` — ton geste (déjà fait, tu me l'as dit).
+
+## 2b — Le digest, pas le spam
+- **Un digest QUOTIDIEN**, calé sur **7h00 heure Réunion**. **Fuseau UTC+4 EXPLICITE** dans le code
+  (`events.REUNION_TZ = timezone(timedelta(hours=4))`) — jamais hérité de la machine. Le cron VPS tire
+  à **03:00 UTC = 07:00 Réunion** ; cron et code s'accordent sans dépendre du fuseau système.
+- **Anti-double-envoi** (`last_digest_at` + intervalle mini 20 h) · **digest vide ne part pas** (aucun
+  événement e-mail-activé ET résumé marché vide → ignoré) · **statut d'envoi tracé** (envoyes/echecs).
+- **Exception « immédiat » par type** : **aucun type ne l'utilise en v1** (tout passe par le digest) —
+  conforme au cahier ; le point d'extension existe (un type pourrait un jour pousser en direct).
+- **Désinscription** (obligation légale) : `List-Unsubscribe` + lien dans chaque e-mail → coupe
+  l'e-mail de TOUS les types (la cloche reste). **Lien « préférences »** dans chaque e-mail aussi.
+
+## 2c — Les préférences (par type ET par canal — remplacent l'opt-out global de notif_prefs)
+- **Table `notif_canaux` (compte, pref_type, cloche, email)**. `notif_prefs` ne garde QUE la
+  comptabilité d'envoi (jeton désinscription, `last_digest_at`) — l'opt-out global est remplacé par le
+  par-type/par-canal.
+- **3 types client** (`event_log.kind` mappé) avec défauts raisonnables :
+
+| Type | Couvre | Cloche | E-mail |
+|---|---|---|---|
+| **Vos veilles** | kind `veille` (Copilote + recherches) | ✓ | ✓ |
+| **Vos parcelles suivies** | `permis`/`bascule`/`bodacc` perso | ✓ | ✓ |
+| **Le marché** | `bascule`/`bodacc`/`match` partagés | ✓ | ✗ (volumineux — activable) |
+
+  *(`systeme` — la tuyauterie ingestion — est HORS préférences client : pilote/admin seulement.)*
+- **Filtrage effectif** : un type dont la **cloche** est coupée ne s'affiche NI ne compte à la cloche ;
+  un type dont l'**e-mail** est coupé n'entre pas au digest. Testé.
+- **Deux écrans** : in-app (compact, dans la cloche : 3 types × cloche/e-mail) + page serveur
+  DA (jeton, atteignable depuis l'e-mail — le client règle tout sans se connecter). *(La session
+  pilote ne persiste pas — compte NULL ; un vrai compte persiste.)*
+
+## Démo (STOP Phase 2) — **il me faut TON serveur pour l'envoi réel**
+En local, tout est vérifié SAUF l'envoi SMTP (dev sans clé Brevo → mail journalisé, `sent=False`
+honnête). Le gabarit HTML se génère (vert #1E9E58, zéro mauve, zéro image externe, liens désabo +
+préférences), les préférences filtrent, la page de préférences rend, le digest respecte anti-double +
+vide. **Quand tu veux le test réel** : lance depuis ton serveur (qui a les identifiants Brevo)
+`sudo -u labuse /opt/labuse/venv/bin/labuse digest --force` (ou d'abord `labuse mail-test <ton-email>`)
+et dis-moi si le mail arrive — je corrige si besoin (SPF/DKIM, rendu).
+
+## Ce qui reste dormant
+- Le **cron `notifications`** (`deploy/cron.d/notifications`, 03:00 UTC) est écrit mais **pas déployé**
+  (même dépendance VPS que M84) : veilles → fraîcheur → purge → digest. À installer avec les autres.
+
+## Garde-fous (Phase 2)
+tsc 0 · vitest 36/36 · build vert · pytest 141 passed (+10 tests M85) · **golden 119/119 PASS, diff 0** ·
+console 0 erreur · gabarit HTML sans mauve/tracking vérifié · préférences par type/canal testées
+(défauts, override, désinscription, filtre cloche, fuseau UTC+4) · digest anti-double + vide testés.
+**NE PAS MERGER.** STOP — j'attends ton test d'envoi réel avant la Phase 3 (le brief du matin).

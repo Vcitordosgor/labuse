@@ -60,7 +60,7 @@ def avis_echeance(echeance_iso: str, lien_espace: str) -> tuple[str, str]:
 # ── B3 · digest de notifications ─────────────────────────────────────────────
 def digest_notifications(evenements: list[dict], lien_desabo: str, *,
                          periode: str = "cette semaine", base_url: str = "",
-                         marche: dict | None = None) -> tuple[str, str]:
+                         marche: dict | None = None, lien_prefs: str = "") -> tuple[str, str]:
     """`evenements` : liste PERSONNELLE {kind, titre, detail, idu} (parcelles suivies + veilles).
     `marche` (M-T V2) : RÉSUMÉ BORNÉ du marché {total, dans_vos_communes} — jamais une liste
     exhaustive. `lien_desabo` : lien de désinscription (obligatoire)."""
@@ -97,13 +97,62 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         # Aucun événement personnel : le RÉSUMÉ MARCHÉ suffit à déclencher le digest (fin du
         # « digest vide à vie »). L'appelant a déjà vérifié qu'il y a du contenu.
         bloc = marche_txt
+    prefs_ligne = (f"Régler vos préférences (par type, cloche ou e-mail) :\n{lien_prefs}\n"
+                   if lien_prefs else "")
     corps = (
         "Bonjour,\n\n"
         + bloc
         + "\n\n— — —\n"
         "Vous recevez cet e-mail parce que vous suivez des parcelles, avez enregistré des veilles, "
-        "ou êtes abonné au résumé de marché LABUSE. Pour ne plus le recevoir :\n"
+        "ou êtes abonné au résumé de marché LABUSE.\n"
+        + prefs_ligne
+        + "Pour ne plus rien recevoir par e-mail :\n"
         f"{lien_desabo}"
         + _SIGNATURE
     )
     return sujet, corps
+
+
+# ── M85 · gabarit HTML du digest (DA LABUSE : vert print #1E9E58 sur blanc, sobre) ──
+def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: list[dict],
+                      lien_desabo: str, lien_prefs: str, *, base_url: str = "",
+                      periode: str = "aujourd'hui") -> str:
+    """Alternative HTML du digest. DA LABUSE : vert #1E9E58 sur blanc, wordmark (aucune image externe
+    → zéro tracking, rendu fiable partout ; le logo SVG est mal supporté en e-mail). Le texte reste
+    le repli (multipart/alternative)."""
+    V = "#1E9E58"
+    ev_rows = "".join(
+        f"<tr><td style='padding:10px 16px;border-bottom:1px solid #eef2f0;font:14px sans-serif;color:#1a2b22'>"
+        f"<b>{(e.get('titre') or '')}</b>"
+        f"<div style='color:#667;font-size:12px;margin-top:2px'>{(e.get('detail') or '')}</div></td></tr>"
+        for e in evenements) or ("<tr><td style='padding:14px 16px;font:14px sans-serif;color:#667'>"
+                                 "Rien de nouveau sur vos parcelles suivies.</td></tr>")
+    mr = marche or {}
+    marche_row = ""
+    if mr.get("total"):
+        cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
+                 if mr.get("dans_vos_communes") is not None else " sur l'île")
+        marche_row = (f"<tr><td style='padding:10px 16px;border-bottom:1px solid #eef2f0;"
+                      f"font:14px sans-serif;color:#1a2b22'>{mr['total']} mouvement(s) de marché{cadre}."
+                      f"<div style='color:#667;font-size:12px'>Le détail est dans la cloche.</div></td></tr>")
+    top_rows = "".join(
+        f"<tr><td style='padding:6px 16px;font:600 13px monospace;color:#1a2b22'>{(t.get('idu') or '')[8:]}</td>"
+        f"<td style='padding:6px;font:13px sans-serif;color:#445'>{t.get('commune') or ''} · "
+        f"{round(t.get('surface_m2') or 0)} m²</td></tr>"
+        for t in (top_chaudes or [])[:5])
+    top_bloc = (f"<p style='font:600 13px sans-serif;color:{V};margin:18px 16px 4px'>Les plus chaudes</p>"
+                f"<table style='width:100%;border-collapse:collapse'>{top_rows}</table>" if top_rows else "")
+    return (f"<!doctype html><html><body style=\"margin:0;background:#f4f7f5;padding:24px 0\">"
+            f"<table width=\"600\" align=\"center\" style=\"background:#fff;border-radius:14px;"
+            f"overflow:hidden;margin:auto;box-shadow:0 1px 4px rgba(0,0,0,.06)\">"
+            f"<tr><td style=\"padding:20px 24px;border-bottom:3px solid {V}\">"
+            f"<span style=\"font:800 18px sans-serif;color:{V};letter-spacing:.5px\">LABUSE</span>"
+            f"<span style=\"float:right;color:#889;font:12px sans-serif;padding-top:4px\">"
+            f"Votre point — {periode}</span></td></tr>"
+            f"<tr><td style=\"padding:14px 0 4px\"><table style=\"width:100%;border-collapse:collapse\">"
+            f"{ev_rows}{marche_row}</table>{top_bloc}</td></tr>"
+            f"<tr><td style=\"padding:16px 24px;border-top:1px solid #eef2f0;font:12px sans-serif;color:#889\">"
+            f"Vous recevez ce résumé parce que vous suivez des parcelles ou avez des veilles sur LABUSE.<br>"
+            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Régler mes préférences</a> · "
+            f"<a href=\"{lien_desabo}\" style=\"color:#889\">Me désinscrire</a></td></tr>"
+            f"</table></body></html>")

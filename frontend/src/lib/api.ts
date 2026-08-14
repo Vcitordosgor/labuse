@@ -626,6 +626,11 @@ export const askParcel = (idu: string, question: string) =>
 // ── Événements (Vague 3 : M11-M14) ──
 export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+// M85 — préférences de notification par type et par canal (cloche / e-mail).
+export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean }
+export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')
+export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean }) =>
+  j<{ ok: boolean }>('/events/prefs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
 export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
 export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })
 export const markAllEventsRead = () => j<{ ok: boolean }>('/events/read-all', { method: 'POST' })

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
+import { Fragment, useEffect, useState } from 'react'
+import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
@@ -243,6 +243,10 @@ function NotifBell() {
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
+  // M85 — préférences par type et par canal (cloche / e-mail), l'écran minimal in-app.
+  const [prefsOpen, setPrefsOpen] = useState(false)
+  const notifPrefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs, enabled: open && prefsOpen })
+  const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
   const addVeille = useMutation({ mutationFn: () => saveSearch(veilleNom, filtersToHash(filters, zone) || '#f=1'),
     onSuccess: () => { setVeilleNom(''); qc.invalidateQueries({ queryKey: ['searches'] }) } })
   const delVeille = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
@@ -283,16 +287,42 @@ function NotifBell() {
               <p className="label-caps">Notifications{unread > 0 ? ` · ${unread} non lue${unread > 1 ? 's' : ''}` : (ev.data?.items ?? []).length ? ' · à jour' : ''}</p>
               <div className="flex gap-3">
                 {/* M16-B2 : « Digest » (jargon) → « Le point de la semaine » */}
-                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Récapitulatif hebdomadaire (ce qui a bougé + top chaudes)">Le point de la semaine →</a>
+                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Aperçu du résumé e-mail (ce qui a bougé + top chaudes)">Le point du jour →</a>
+                {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
+                <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt" title="Préférences de notification">{prefsOpen ? 'fermer' : 'préférences'}</button>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
               </div>
             </div>
-            {/* M16-B1 : intro — ne décrit QUE les déclencheurs RÉELS (audit A1/A5) */}
+            {/* M85 — l'écran minimal : par type, cloche / e-mail / les deux / rien. */}
+            {prefsOpen ? (
+              <div data-notif-prefs className="shrink-0 border-b border-line bg-surface-2 px-4 py-3">
+                <p className="mb-2 text-[11px] font-medium text-txt">Que recevoir, et où ?</p>
+                <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-2 text-[11px]">
+                  <span className="text-txt-dim">Type</span>
+                  <span className="text-center text-txt-dim">Cloche</span>
+                  <span className="text-center text-txt-dim">E-mail</span>
+                  {(notifPrefs.data?.types ?? []).map((t) => (
+                    <Fragment key={t.key}>
+                      <span className="text-txt">{t.label}</span>
+                      <input type="checkbox" checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
+                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: e.target.checked, email: t.email })}
+                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                      <input type="checkbox" checked={t.email} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
+                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked })}
+                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                    </Fragment>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] leading-snug text-txt-dim">L'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
+              </div>
+            ) : (
+            /* M16-B1 : intro — ne décrit QUE les déclencheurs RÉELS (audit A1/A5) */
             <div className="shrink-0 border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
               Les <b className="text-txt">changements sur les parcelles que vous suivez</b> — bascule de
               statut, procédure BODACC, permis neuf à proximité — et les <b className="text-txt">alertes de
               vos veilles</b>. On ne vous prévient que sur ce qu'on sait réellement détecter.
             </div>
+            )}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {(ev.data?.items ?? []).map((e) => (

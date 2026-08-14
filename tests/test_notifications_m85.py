@@ -3,6 +3,8 @@ regroupement. Chaînes veille→cloche et ingestion(systeme)→cloche testées d
 appel modèle dans la chaîne (du SQL + des gabarits). Un bug de producteur (400 faits) → 1 notif."""
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import text
 
@@ -79,6 +81,51 @@ def test_producteur_systeme_dit_sa_source_et_son_lien(db_session):
 
 
 @pytest.mark.db
+def test_prefs_defauts_et_override(db_session):
+    _ensure(db_session)
+    p = events.prefs_compte(db_session, None)
+    assert p["veille"]["email"] and p["suivi"]["cloche"] and not p["marche"]["email"]   # défauts
+    events.set_pref(db_session, 55, "veille", cloche=False, email=False)
+    p2 = events.prefs_compte(db_session, 55)
+    assert not p2["veille"]["cloche"] and not p2["veille"]["email"]                       # override
+
+
+@pytest.mark.db
+def test_desabonner_coupe_email_garde_cloche(db_session):
+    _ensure(db_session)
+    events.desabonner_email(db_session, 56)
+    p = events.prefs_compte(db_session, 56)
+    assert all(not v["email"] for v in p.values())    # e-mail coupé partout (désinscription globale)
+    assert all(v["cloche"] for v in p.values())        # la cloche reste (défaut intact)
+
+
+@pytest.mark.db
+def test_cloche_filtre_exclut_le_type_coupe_jamais_systeme(db_session):
+    _ensure(db_session)
+    db_session.execute(text("DELETE FROM event_log"))
+    events.creer_notification(db_session, kind="veille", compte_id=None, titre="v1")
+    events.creer_notification(db_session, kind="systeme", compte_id=None, titre="s1", source="Ingestion")
+    prefs = events.prefs_compte(db_session, None)
+    prefs["veille"]["cloche"] = False
+    cf = events._cloche_filter_sql(prefs)
+    n = db_session.execute(text(
+        f"SELECT count(*) FROM event_log e WHERE e.compte_id IS NOT DISTINCT FROM :cid {cf}"),
+        {"cid": None, "market": list(events._MARKET_KINDS)}).scalar()
+    assert n == 1                                      # veille exclue ; systeme (pilote) jamais exclu
+
+
+def test_reunion_tz_explicite_utc4():
+    assert events.REUNION_TZ.utcoffset(None) == timedelta(hours=4)   # UTC+4, jamais la machine
+    assert events.DIGEST_HEURE_REUNION == 7
+
+
+def test_pref_type_mapping():
+    assert events._pref_type("veille", False) == "veille"
+    assert events._pref_type("permis", False) == "suivi"
+    assert events._pref_type("bascule", True) == "marche"
+    assert events._pref_type("systeme", False) is None    # tuyauterie ingestion : hors pref client
+
+
 def test_zero_modele_dans_le_module_veilles():
     """Garde-fou doctrine : le module de la chaîne n'appelle aucun modèle (anthropic/openai/llm)."""
     from pathlib import Path

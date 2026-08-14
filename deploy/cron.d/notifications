@@ -1,0 +1,13 @@
+# LA BUSE — LE CENTRE DE NOTIFICATIONS (M85). Le digest quotidien part à 7h00 HEURE RÉUNION.
+# Le VPS tourne en UTC : 03:00 UTC = 07:00 à La Réunion (UTC+4, pas d'heure d'été). Le fuseau est
+# AUSSI explicite dans le code (events.REUNION_TZ = UTC+4) — le cron et le code s'accordent, aucun
+# n'hérite du fuseau machine.
+#
+# Chaîne quotidienne, dans l'ordre : évaluer les veilles Copilote (nouvelles données → notifications)
+# → signaler les décrochages de fraîcheur (source en retard → notif systeme pilote) → purger les
+# notifications de plus de 90 j → envoyer le digest e-mail (filtré par préférence, digest vide ne part
+# pas, désinscription + préférences dans chaque e-mail). Chaque geste est idempotent et journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/notifications /etc/cron.d/notifications
+SHELL=/bin/sh
+0 3 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse evaluer-veilles >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse notifier-fraicheur >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse purge-notifications >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse digest --freq quotidien >> /var/log/labuse/notifications.log 2>&1

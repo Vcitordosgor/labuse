@@ -44,7 +44,7 @@ class SendResult:
 
 
 def _build_message(to: str, subject: str, body_text: str, from_addr: str,
-                   *, headers: dict[str, str] | None = None) -> EmailMessage:
+                   *, headers: dict[str, str] | None = None, body_html: str | None = None) -> EmailMessage:
     msg = EmailMessage()
     msg["From"] = from_addr
     msg["To"] = to
@@ -54,14 +54,18 @@ def _build_message(to: str, subject: str, body_text: str, from_addr: str,
     for k, v in (headers or {}).items():
         msg[k] = v
     msg.set_content(body_text)
+    if body_html:                                    # M85 — alternative HTML (DA LABUSE) ; le texte
+        msg.add_alternative(body_html, subtype="html")   # reste le repli (clients sans HTML, délivrabilité)
     return msg
 
 
 def send_email(to: str, subject: str, body_text: str, *,
-               headers: dict[str, str] | None = None, settings=None) -> SendResult:
+               headers: dict[str, str] | None = None, body_html: str | None = None,
+               settings=None) -> SendResult:
     """Envoi SYNCHRONE. Retourne un état honnête (l'appelant décide du message UI).
 
     `headers` : en-têtes additionnels (ex. `List-Unsubscribe` pour le digest).
+    `body_html` : alternative HTML (multipart/alternative) — le texte reste le repli.
     """
     s = settings or get_settings()
     from_addr = getattr(s, "mail_from", None) or getattr(s, "smtp_from", "LABUSE <contact@labuse.immo>")
@@ -72,7 +76,7 @@ def send_email(to: str, subject: str, body_text: str, *,
                  to, subject, body_text)
         return SendResult(False, "no-config")
 
-    msg = _build_message(to, subject, body_text, from_addr, headers=headers)
+    msg = _build_message(to, subject, body_text, from_addr, headers=headers, body_html=body_html)
     try:
         with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=15) as server:
             server.ehlo()

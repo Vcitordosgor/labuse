@@ -333,7 +333,7 @@ install -d -o labuse -g labuse /var/log/labuse
 
 # 2) Installer les crons d'ingestion (fichiers /etc/cron.d, exécutés par l'utilisateur `labuse`)
 cd /opt/labuse/app
-for c in sitadel bodacc dpe dvf ban radar; do
+for c in sitadel bodacc dpe dvf ban radar notifications; do
   install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/$c
 done
 systemctl reload cron    # relit /etc/cron.d
@@ -355,6 +355,30 @@ systemctl reload cron    # relit /etc/cron.d
 | `dvf` | hebdo mercredi 05:00 | `refresh-dvf` (HEAD Last-Modified ; reload si livraison Etalab avril/oct.) | ~5-10 s en no-op ; ~5-10 min le jour d'une livraison semestrielle |
 | `ban` | mensuel le 5 à 03:30 | `ingest-ban --download` (remplacement complet idempotent) | ~5-15 min |
 | `radar` | hebdo lundi 02:40 | `radar-sources` (sondes HEAD/métadonnées, zéro téléchargement) | ~1 min |
+| `notifications` | quotidien **03:00 UTC = 07:00 Réunion** | veilles → fraîcheur → purge 90 j → **digest e-mail** | ~10-30 s |
+
+### L'e-mail transactionnel — Brevo (M85)
+
+Le digest e-mail part par **Brevo** (relais SMTP, offre gratuite 300/j, EU/RGPD). Le transport
+(`mail.py`) est agnostique : il suffit des 5 variables dans `/etc/labuse/labuse.env` :
+
+```
+LABUSE_SMTP_HOST=smtp-relay.brevo.com
+LABUSE_SMTP_PORT=587
+LABUSE_SMTP_USER=<login SMTP Brevo>
+LABUSE_SMTP_PASSWORD=<clé SMTP Brevo>          # jamais en dur dans le code / git
+LABUSE_MAIL_FROM=LABUSE <contact@labuse.immo>
+```
+
+**DNS (Cloudflare, zone `labuse.immo`)** — Brevo « Authentifier le domaine » génère les valeurs
+exactes ; poser : le **SPF** (`v=spf1 include:spf.brevo.com ~all`, fusionné avec l'existant), les **2
+DKIM** (`brevo1._domainkey`, `brevo2._domainkey`) fournis, et un **DMARC** (`_dmarc` →
+`v=DMARC1; p=none; rua=mailto:contact@labuse.immo`) pour démarrer en observation. Vérifier l'envoi :
+`sudo -u labuse /opt/labuse/venv/bin/labuse mail-test <votre-email>` puis `labuse digest --force`.
+
+> **Fuseau** : le digest est calé sur **7h00 heure Réunion**. Le VPS étant en UTC, le cron tire à
+> **03:00 UTC** ; le code borne la fenêtre quotidienne avec `events.REUNION_TZ` (UTC+4 explicite) —
+> ni l'un ni l'autre n'hérite du fuseau de la machine (doctrine M85).
 
 Charge quotidienne cumulée : ~10 min ; pic hebdo (ban le 5, dpe le mardi) : ~30 min. Négligeable
 sur le VPS ; les fenêtres sont décalées la nuit pour ne pas se chevaucher.

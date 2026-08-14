@@ -9,7 +9,7 @@ Cronable via `labuse detect-events`. Sans second run réel, un run de DÉMONSTRA
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
@@ -91,6 +91,16 @@ ALTER TABLE event_log ADD COLUMN IF NOT EXISTS lien text;
 ALTER TABLE event_log ADD COLUMN IF NOT EXISTS dedup varchar(96);
 ALTER TABLE event_log ADD COLUMN IF NOT EXISTS envoi_statut varchar(16) DEFAULT 'na';
 CREATE INDEX IF NOT EXISTS ix_event_log_dedup ON event_log (dedup, compte_id);
+-- M85 — préférences par TYPE et par CANAL (remplacent l'opt-out GLOBAL de notif_prefs). Un type non
+-- désiré ne s'affiche PAS à la cloche (cloche=false) et/ou ne part PAS en e-mail (email=false).
+-- notif_prefs subsiste UNIQUEMENT pour la comptabilité d'envoi (token désinscription, last_digest_at).
+CREATE TABLE IF NOT EXISTS notif_canaux (
+  compte_id integer NOT NULL,
+  pref_type varchar(16) NOT NULL,       -- veille | suivi | marche
+  cloche boolean NOT NULL DEFAULT true,
+  email  boolean NOT NULL DEFAULT true,
+  PRIMARY KEY (compte_id, pref_type)
+);
 """
 
 
@@ -169,6 +179,71 @@ def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
     part en cascade (FK). À appeler par le cron quotidien."""
     return db.execute(text("DELETE FROM event_log WHERE ts < now() - make_interval(days => :j)"),
                       {"j": jours}).rowcount
+
+
+# ─────────────── M85 · préférences par TYPE et par CANAL (le client contrôle ce qu'il reçoit) ───────────────
+REUNION_TZ = timezone(timedelta(hours=4))   # UTC+4 EXPLICITE — JAMAIS le fuseau de la machine (doctrine M85)
+DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
+
+# Catégories client, mappées depuis event_log.kind (+ cloison marché). Défauts raisonnables : veilles et
+# suivi de parcelles poussent partout (cloche + e-mail) ; le marché, volumineux et informatif, reste à la
+# cloche (e-mail OFF par défaut, activable). `systeme` (tuyauterie ingestion) est HORS préférences client.
+PREF_TYPES = {
+    "veille": {"label": "Vos veilles", "cloche": True, "email": True},
+    "suivi": {"label": "Vos parcelles suivies", "cloche": True, "email": True},
+    "marche": {"label": "Le marché (bascules, BODACC, matchs)", "cloche": True, "email": False},
+}
+
+
+def _pref_type(kind: str, is_market: bool) -> str | None:
+    """kind (+ cloison marché) → catégorie de préférence. `systeme` = pilote/admin, HORS pref client."""
+    if kind == "systeme":
+        return None
+    if kind == "veille":
+        return "veille"
+    return "marche" if is_market else "suivi"
+
+
+def prefs_compte(db: Session, cid: int | None) -> dict:
+    """Préférences EFFECTIVES {pref_type: {cloche, email}} : les défauts, écrasés par notif_canaux."""
+    out = {k: {"cloche": v["cloche"], "email": v["email"]} for k, v in PREF_TYPES.items()}
+    if cid is None:
+        return out
+    for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
+                        {"c": cid}).mappings():
+        if r["pref_type"] in out:
+            out[r["pref_type"]] = {"cloche": bool(r["cloche"]), "email": bool(r["email"])}
+    return out
+
+
+def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool) -> None:
+    if pref_type not in PREF_TYPES:
+        return
+    db.execute(text(
+        "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email) VALUES (:c,:p,:cl,:em) "
+        "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em"),
+        {"c": cid, "p": pref_type, "cl": cloche, "em": email})
+
+
+def desabonner_email(db: Session, cid: int) -> None:
+    """Désinscription e-mail GLOBALE (lien légal / List-Unsubscribe) : coupe l'e-mail de TOUS les types,
+    laisse la cloche intacte. Le client ré-affine ensuite dans ses préférences."""
+    cur = prefs_compte(db, cid)
+    for p in PREF_TYPES:
+        set_pref(db, cid, p, cloche=cur[p]["cloche"], email=False)
+
+
+def _cloche_filter_sql(prefs: dict) -> str:
+    """Fragment WHERE excluant les types dont la cloche est coupée (bornage par cloison). Vide si tout
+    est actif. `:cid`/`:market` sont déjà liés par l'appelant. `systeme` n'est JAMAIS exclu (pilote)."""
+    excl = []
+    if not prefs["veille"]["cloche"]:
+        excl.append("NOT (e.kind='veille' AND e.compte_id IS NOT DISTINCT FROM :cid)")
+    if not prefs["suivi"]["cloche"]:
+        excl.append("NOT (e.kind IN ('permis','bascule','bodacc') AND e.compte_id IS NOT DISTINCT FROM :cid)")
+    if not prefs["marche"]["cloche"]:
+        excl.append("NOT (e.compte_id IS NULL AND e.kind = ANY(:market))")
+    return (" AND " + " AND ".join(excl)) if excl else ""
 
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
@@ -429,7 +504,9 @@ def list_events(request: Request, unread_only: bool = False, limit: int = 100, o
     cid = current_compte(request)
     mk = list(_MARKET_KINDS)
     # M85 — non-lues D'ABORD (cloche), puis récentes ; paginé (offset). source/lien/ts exposés pour
-    # que la cloche affiche « dit sa source et sa date » + le lien direct vers l'objet.
+    # que la cloche affiche « dit sa source et sa date » + le lien direct vers l'objet. Le FILTRE cloche
+    # (préférences par type) borne la liste ET le compteur : un type coupé ne s'affiche ni ne compte.
+    cf = _cloche_filter_sql(prefs_compte(db, cid))
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
                e.demo, e.source, e.lien,
@@ -438,11 +515,12 @@ def list_events(request: Request, unread_only: bool = False, limit: int = 100, o
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}
+        WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
         {"lim": limit, "off": max(0, offset), "run": RUN, "cid": cid, "market": mk}).mappings().all()
-    unread = db.execute(text(f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"),
-                        {"cid": cid, "market": mk}).scalar()
+    unread = db.execute(text(
+        f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}{cf}"),
+        {"cid": cid, "market": mk}).scalar()
     return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}
 
 
@@ -755,43 +833,23 @@ def digest(request: Request, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/digest.html", response_class=HTMLResponse)
 def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
-    """Digest « les pépites de la semaine » — HTML email-ready (styles inline, table layout).
-    L'envoi SMTP = config à brancher (cf. NOTES) ; le contenu est généré ici."""
+    """Aperçu HTML du digest (le MÊME gabarit DA que l'e-mail réel — vert #1E9E58 sur blanc, sans
+    mauve, sans image externe). Les liens désabo/préférences sont réels si le compte a un jeton."""
+    from ..emails import digest_html_email
     from .tenant import current_compte
-    d = _digest_data(db, current_compte(request))
-    ev_rows = "".join(
-        f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e9e7;font:13px sans-serif'>"
-        f"{'🟣 DÉMO · ' if e['demo'] else ''}{e['titre']}"
-        f"<div style='color:#667;font-size:11px'>{e['detail'] or ''}</div></td></tr>"
-        for e in d["evenements"]) or "<tr><td style='padding:12px;font:13px sans-serif;color:#667'>Aucun événement cette semaine.</td></tr>"
-    top_rows = "".join(
-        f"<tr><td style='padding:6px 12px;font:600 13px monospace'>{t['idu'][8:]}</td>"
-        f"<td style='padding:6px;font:13px sans-serif'>{t.get('commune') or ''} · Q {t['q_score']} · A {t['a_score']}</td>"
-        f"<td style='padding:6px;font:12px sans-serif;color:#667'>{t['surface_m2'] or '—'} m² · SDP {round(t['sdp_residuelle_m2'] or 0)} m²</td></tr>"
-        for t in d["top_chaudes"])
-    # M-T V2 : résumé marché BORNÉ (jamais la liste). Ici la cloche/preview PEUT donner le détail,
-    # mais le digest e-mail reste au résumé — on affiche le compte agrégé.
-    mr = d["marche_resume"]
-    cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
-             if mr.get("dans_vos_communes") is not None else " sur l'île")
-    marche_row = (
-        f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e9e7;font:13px sans-serif'>"
-        f"{mr['total']} mouvement(s) de marché (bascules, BODACC, matchs){cadre}."
-        f"<div style='color:#667;font-size:11px'>Résumé — le détail est dans la cloche.</div></td></tr>"
-        if mr.get("total") else "")
-    return f"""<!doctype html><html><body style="margin:0;background:#f2f5f3;padding:24px">
-<table width="600" align="center" style="background:#fff;border-radius:12px;overflow:hidden">
-<tr><td style="background:#060A08;padding:18px 24px">
-  <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(74,222,128,.35))" fill="#4ADE80"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LABUSE</span></span>
-  <span style="font:12px sans-serif;color:#8FA69A"> · la chasse au trésor de la semaine</span></td></tr>
-<tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">CE QUI A BOUGÉ</td></tr>
-{ev_rows}
-{marche_row}
-<tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">TOP 5 CHAUDES (île entière)</td></tr>
-<tr><td><table width="100%">{top_rows}</table></td></tr>
-<tr><td style="padding:14px 24px;font:10px sans-serif;color:#99a">Estimations indicatives issues de
-données publiques — ne valent ni conseil juridique ni garantie de constructibilité.</td></tr>
-</table></body></html>"""
+    cid = current_compte(request)
+    d = _digest_data(db, cid)
+    evs = [e for e in d["evenements"] if not e.get("demo")]
+    prefs = prefs_compte(db, cid)
+    if cid is not None:
+        tok = _notif_token(db, cid); db.commit()
+        lien_desabo = f"/events/desabonner?c={cid}&t={tok}"
+        lien_prefs = f"/events/preferences?c={cid}&t={tok}"
+    else:
+        lien_desabo = lien_prefs = "#"
+    marche = d["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
+    return digest_html_email(evs, marche, d.get("top_chaudes", []), lien_desabo, lien_prefs,
+                             periode="aujourd'hui")
 
 
 # ── M21-B3 — ENVOI du digest par e-mail (le contenu M13 existait, l'envoi jamais) ──
@@ -810,64 +868,153 @@ def _notif_token(db: Session, cid: int) -> str:
     return db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": cid}).scalar()
 
 
-def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "hebdo", force: bool = False) -> dict:
-    """Envoie le digest aux comptes actifs abonnés ayant des événements RÉELS récents. Respecte
-    l'opt-out (`notif_prefs.unsubscribed`) et un intervalle mini (anti-double-envoi)."""
-    from datetime import datetime, timedelta, timezone
-
-    from ..emails import digest_notifications
+def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien", force: bool = False) -> dict:
+    """Envoie le digest aux comptes actifs, FILTRÉ par préférence e-mail (par type/canal). Garanties :
+    anti-double-envoi (last_digest_at + intervalle mini), un digest VIDE ne part pas, désinscription +
+    préférences dans chaque e-mail (légal), statut d'envoi tracé (jamais silencieux — motif M84).
+    Fuseau explicite UTC+4 pour la fenêtre quotidienne (jamais hérité de la machine)."""
+    from ..emails import digest_html_email, digest_notifications
     from ..mail import send_email
 
-    interval_h = 20 if freq == "quotidien" else 24 * 6  # hebdo ≈ 6 j
+    interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
     now = datetime.now(timezone.utc)
+    periode = "aujourd'hui" if freq == "quotidien" else "cette semaine"
     recipients = db.execute(text(
         "SELECT c.id AS cid, u.email FROM comptes c "
         "JOIN utilisateurs u ON u.compte_id = c.id AND u.role = 'titulaire' "
         "WHERE c.statut = 'actif'")).mappings().all()
-    envoyes = ignores = 0
+    envoyes = ignores = echecs = 0
     for r in recipients:
         cid, email = r["cid"], r["email"]
-        pref = db.execute(text("SELECT unsubscribed, last_digest_at FROM notif_prefs WHERE compte_id=:c"),
-                          {"c": cid}).first()
-        if pref and pref[0]:                          # désinscrit → jamais d'envoi
+        prefs = prefs_compte(db, cid)
+        if not any(p["email"] for p in prefs.values()):        # tous canaux e-mail coupés = désinscrit
             ignores += 1
             continue
-        last = pref[1] if pref else None
+        last = db.execute(text("SELECT last_digest_at FROM notif_prefs WHERE compte_id=:c"),
+                          {"c": cid}).scalar()
         if not force and last and (now - last) < timedelta(hours=interval_h):
             ignores += 1
             continue
         data = _digest_data(db, cid)
-        evs = [e for e in data["evenements"] if not e.get("demo")]   # jamais de démo dans un vrai digest
-        marche = data["marche_resume"]
-        # M-T V2 : un abonné SANS veille reçoit désormais un digest si le RÉSUMÉ MARCHÉ est non vide
-        # (le « digest vide à vie » était le bug). L'opt-out et le mini-intervalle ont déjà filtré
-        # AU-DESSUS, et List-Unsubscribe est posé à l'envoi → les deux garanties tiennent sur ce chemin.
-        if not evs and not marche.get("total"):
+        # FILTRE par préférence e-mail PAR TYPE : un type dont l'e-mail est coupé n'entre pas au digest.
+        evs = [e for e in data["evenements"]
+               if not e.get("demo") and prefs.get(_pref_type(e["kind"], False), {}).get("email")]
+        marche = data["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
+        if not evs and not marche.get("total"):                # digest VIDE ne part pas
             ignores += 1
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"
-        sujet, corps = digest_notifications(
-            evs, lien_desabo, base_url=base_url, marche=marche,
-            periode="aujourd'hui" if freq == "quotidien" else "cette semaine")
-        send_email(email, sujet, corps, headers={"List-Unsubscribe": f"<{lien_desabo}>"})
+        lien_prefs = f"{base_url}/events/preferences?c={cid}&t={tok}"
+        sujet, corps = digest_notifications(evs, lien_desabo, base_url=base_url, marche=marche,
+                                            periode=periode, lien_prefs=lien_prefs)
+        html = digest_html_email(evs, marche, data.get("top_chaudes", []), lien_desabo, lien_prefs,
+                                 base_url=base_url, periode=periode)
+        res = send_email(email, sujet, corps, body_html=html,
+                         headers={"List-Unsubscribe": f"<{lien_desabo}>"})
+        if res.ok:
+            envoyes += 1
+        else:                                                  # échec tracé, jamais silencieux
+            echecs += 1
+            log.warning("DIGEST non envoyé — compte=%s cause=%s", cid, res.detail)
         db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
                         "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
-        envoyes += 1
     db.commit()
-    return {"envoyes": envoyes, "ignores": ignores}
+    return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs}
+
+
+def _token_ok(db: Session, c: int, t: str) -> bool:
+    tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": c}).scalar()
+    return bool(tok and t and tok == t)
 
 
 @router.get("/desabonner", response_class=HTMLResponse, include_in_schema=False)
 def desabonner(c: int, t: str, db: Session = Depends(get_db)) -> str:
-    """Désinscription en 1 clic du digest e-mail (lien public, jeton par compte). Obligation légale."""
-    tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": c}).scalar()
-    if not tok or tok != t:
+    """Désinscription en 1 clic du digest e-mail (lien public, jeton par compte). Obligation légale.
+    M85 : coupe l'e-mail de TOUS les types (les préférences fines restent réglables) ; la cloche reste."""
+    if not _token_ok(db, c, t):
         return HTMLResponse("<!doctype html><meta charset=utf-8><p style='font:15px sans-serif;padding:40px'>"
                             "Lien de désinscription invalide ou expiré.</p>", status_code=400)
-    db.execute(text("UPDATE notif_prefs SET unsubscribed = true WHERE compte_id = :c"), {"c": c})
+    desabonner_email(db, c)
     db.commit()
+    lien_prefs = f"/events/preferences?c={c}&t={t}"
     return ("<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:40px;max-width:520px'>"
-            "<h1 style='color:#4ADE80'>Désinscription confirmée</h1>"
-            "<p>Vous ne recevrez plus le résumé e-mail LABUSE. Les notifications restent visibles dans "
-            "l'application. Vous pouvez réactiver le résumé depuis votre espace compte.</p></body>")
+            "<h1 style='color:#1E9E58'>Désinscription confirmée</h1>"
+            "<p>Vous ne recevrez plus d'e-mail LABUSE. Les notifications restent visibles dans "
+            f"l'application. Vous pouvez <a href='{lien_prefs}' style='color:#1E9E58'>régler vos "
+            "préférences par type</a> à tout moment.</p></body>")
+
+
+# ── M85 · les PRÉFÉRENCES par type et par canal ──
+
+def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
+    prefs = prefs_compte(db, c)
+    lignes = ""
+    for k, meta in PREF_TYPES.items():
+        p = prefs[k]
+        lignes += (
+            f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{meta['label']}</td>"
+            f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_cloche'"
+            f"{' checked' if p['cloche'] else ''}></td>"
+            f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_email'"
+            f"{' checked' if p['email'] else ''}></td></tr>")
+    ok = ("<p style='background:#e8f7ee;color:#1E9E58;padding:8px 12px;border-radius:8px;"
+          "font:13px sans-serif'>✓ Préférences enregistrées.</p>" if sauve else "")
+    return (f"<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:32px;"
+            f"max-width:560px;margin:auto'>"
+            f"<h1 style='color:#1E9E58;font-size:20px'>Vos préférences de notification</h1>"
+            f"<p style='color:#555'>Pour chaque type, choisissez la <b>cloche</b> (dans l'application) "
+            f"et/ou l'<b>e-mail</b> (le résumé quotidien). Décochez tout pour ne rien recevoir.</p>{ok}"
+            f"<form method='post' action='/events/preferences?c={c}&t={t}'>"
+            f"<table style='width:100%;border-collapse:collapse;margin:16px 0'>"
+            f"<tr style='border-bottom:2px solid #1E9E58'><th style='text-align:left;padding:8px'>Type</th>"
+            f"<th style='padding:8px'>Cloche</th><th style='padding:8px'>E-mail</th></tr>{lignes}</table>"
+            f"<button type='submit' style='background:#1E9E58;color:#fff;border:0;border-radius:8px;"
+            f"padding:10px 20px;font:600 14px sans-serif;cursor:pointer'>Enregistrer</button></form></body>")
+
+
+@router.get("/preferences", response_class=HTMLResponse, include_in_schema=False)
+def preferences_page(c: int, t: str, db: Session = Depends(get_db)) -> str:
+    """Page PRÉFÉRENCES par type/canal (lien de l'e-mail, jeton par compte). Le client contrôle tout."""
+    if not _token_ok(db, c, t):
+        return HTMLResponse("<!doctype html><meta charset=utf-8><p style='font:15px sans-serif;"
+                            "padding:40px'>Lien invalide ou expiré.</p>", status_code=400)
+    return _page_preferences(db, c, t)
+
+
+@router.post("/preferences", response_class=HTMLResponse, include_in_schema=False)
+async def preferences_save(c: int, t: str, request: Request, db: Session = Depends(get_db)) -> str:
+    if not _token_ok(db, c, t):
+        return HTMLResponse("Lien invalide.", status_code=400)
+    form = await request.form()
+    for k in PREF_TYPES:
+        set_pref(db, c, k, cloche=f"{k}_cloche" in form, email=f"{k}_email" in form)
+    db.commit()
+    return _page_preferences(db, c, t, sauve=True)
+
+
+@router.get("/prefs")
+def prefs_get(request: Request, db: Session = Depends(get_db)) -> dict:
+    """API in-app : les préférences du compte courant (+ leurs libellés)."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    p = prefs_compte(db, cid)
+    return {"types": [{"key": k, "label": PREF_TYPES[k]["label"], **p[k]} for k in PREF_TYPES]}
+
+
+class PrefIn(BaseModel):
+    pref_type: str
+    cloche: bool
+    email: bool
+
+
+@router.patch("/prefs")
+def prefs_patch(body: PrefIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """API in-app : régler un type/canal. Le pilote (compte NULL) ne persiste pas (défauts servis)."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    if cid is None:
+        return {"ok": False, "motif": "session pilote — préférences non persistées"}
+    set_pref(db, cid, body.pref_type, cloche=body.cloche, email=body.email)
+    db.commit()
+    return {"ok": True}
