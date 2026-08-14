@@ -103,6 +103,17 @@ def _hypotheses_faisabilite(commune: str | None = None) -> dict:
     return _doc_for(str(path)).get("hypotheses_faisabilite") or {}
 
 
+def _hypotheses_ile() -> dict:
+    """M-PLU-REF — les hypothèses ÎLE-GÉNÉRIQUES (source NEUTRE `config/hypotheses_ile.yaml`), base de
+    résolution AVANT tout override commune. Valeurs identiques aux anciens défauts → golden = baseline ;
+    elles ne s'appellent plus « Saint-Paul par défaut »."""
+    from .. import config
+    try:
+        return (config.load_yaml_config("hypotheses_ile") or {}).get("hypotheses_ile") or {}
+    except Exception:  # noqa: BLE001 — fichier absent = repli défauts dataclass, jamais un crash
+        return {}
+
+
 def load_rules(commune: str | None = None) -> dict[str, ZoneRules]:
     """(Sous-)zones détaillées du YAML PLU de la commune → ZoneRules (défaut = Saint-Paul)."""
     path = _calibrated_yaml(commune)
