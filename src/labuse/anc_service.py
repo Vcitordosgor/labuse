@@ -1,44 +1,34 @@
-"""M86-B — L'ASSAINISSEMENT (ANC / tout-à-l'égout) SERVI à la fiche. POINT DE CALCUL UNIQUE.
+"""M88 — L'ASSAINISSEMENT SERVI à la fiche. POINT DE CALCUL UNIQUE (fiche écran, PDF, export).
 
-Un critère = un seul endroit : ce module sert la fiche écran, le PDF ET l'export — jamais recalculé
-ailleurs. Trois états, jamais quatre :
-  · Sourcé  — `zone_anc` réglementaire (collectif | ANC) + commune (source amont : zonage GPU) ;
-  · Estimé  — zonage absent MAIS proba de SECTEUR (maille IRIS) ≥ seuil → alerte SECTORIELLE
-              « à vérifier auprès du SPANC ». JAMAIS « cette parcelle est en ANC », JAMAIS
-              « probablement collectif » (le péché mortel : rassurer sur une contrainte à 8-15 k€) ;
-  · Absent  — ni l'un ni l'autre → « zonage non disponible » (un NULL n'est PAS un raccordement).
+Trois états, jamais quatre, et AUCUN seuil, AUCUNE bascule (M88 a retiré l'Estimé `proba_anc`) :
+  · Sourcé           — `zone_anc` réglementaire (collectif | ANC) + commune (source : zonage GPU) ;
+  · Sourcé (secteur) — zonage absent MAIS taux INSEE de non-raccordement du SECTEUR (RP2022, variable
+                       EGOUL, maille IRIS, repli commune). On affiche le TAUX, jamais un verdict :
+                       « Dans ce secteur, X % des logements ne sont pas raccordés au réseau collectif. »
+                       Pas de « probablement », pas de seuil — le lecteur conclut, pas nous. Un taux bas
+                       n'est JAMAIS un feu vert au raccordement. La maille ET le millésime sont dits ;
+  · Absent           — ni zonage ni taux de secteur → « zonage non disponible » (un NULL n'est pas un
+                       raccordement).
 
-On ne sert JAMAIS l'estimation SOUS le seuil : sous le seuil = Absent, ce qui est exactement vrai.
-Asymétrie assumée (mesurée M86-B) : proba ≥ seuil = une alerte (faux positif = une vérif SPANC de trop,
-supportable) ; proba < seuil ne devient jamais un feu vert « collectif ». Le seuil vit en config
-(`anc.fiche.proba_seuil`, défaut 75 — précision au-dessus du seuil ~34 %, grade SECTEUR, jamais parcellaire).
+M88 : `proba_anc` n'est plus lu ici (mesuré hors domaine — précision plafonnée à 34 %, calculée sur
+l'urbain zoné alors que l'Estimé servait le rural ; cf. docs/audits/AUDIT_M88_ANC_SECTEUR.md). La table
+`parcel_anc` et son job sont CONSERVÉS (le champ `zone_anc` reste lu ci-dessous, et `proba_anc` garde un
+usage interne — signal `anc_mutation`), mais ne fabriquent plus l'affichage. Le taux servi est le taux
+BRUT (`anc_maille_taux.taux_non_racc`), sans bonus rural, sans borne, sans seuil.
 """
 from __future__ import annotations
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-_DEFAUT_SEUIL_FICHE = 75
-
-
-def seuil_fiche() -> int:
-    try:
-        from .config import load_yaml_config
-        cfg = (load_yaml_config("anc_vegetation") or {}).get("anc", {}).get("fiche", {})
-        return int(cfg.get("proba_seuil", _DEFAUT_SEUIL_FICHE))
-    except Exception:  # noqa: BLE001 — config absente = défaut, jamais un crash de fiche
-        return _DEFAUT_SEUIL_FICHE
-
 
 def statut_anc(db: Session, idu: str) -> dict:
     """L'état ANC SERVI d'une parcelle. Retourne TOUJOURS un dict (Absent est un état, pas un trou)."""
-    row = db.execute(text("SELECT zone_anc, source, proba_anc FROM parcel_anc WHERE idu = :idu"),
-                     {"idu": idu}).mappings().first()
+    zone = db.execute(text("SELECT zone_anc FROM parcel_anc WHERE idu = :idu"), {"idu": idu}).scalar()
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
-    seuil = seuil_fiche()
 
-    if row and row["zone_anc"]:                                    # ── SOURCÉ (réglementaire) ──
-        est_anc = row["zone_anc"] == "anc"
+    if zone:                                                       # ── SOURCÉ (réglementaire) ──
+        est_anc = zone == "anc"
         return {
             "statut": "source",
             "libelle": "Assainissement non collectif" if est_anc else "Tout-à-l'égout (collectif)",
@@ -50,21 +40,56 @@ def statut_anc(db: Session, idu: str) -> dict:
             "commune": commune,
         }
 
-    if row and row["proba_anc"] is not None and row["proba_anc"] >= seuil:   # ── ESTIMÉ (secteur) ──
+    # ── SOURCÉ (SECTEUR) : taux BRUT RP2022, IRIS d'abord (maille fine), repli commune. Rattachement
+    # spatial par centroïde (spatial_layers kind='iris_insee'), jamais proba_anc. Un seul endroit. ──
+    # Garde défensive : sur une base sans ingestion ANC (tables absentes), on ne plante pas une fiche —
+    # le secteur est simplement introuvable → Absent (un état, pas un crash).
+    tables_ok = db.execute(text(
+        "SELECT to_regclass('anc_maille_taux') IS NOT NULL "
+        "  AND to_regclass('spatial_layers') IS NOT NULL")).scalar()
+    sect = None if not tables_ok else db.execute(text(
+        "SELECT round(t.taux_non_racc)::int AS taux, t.millesime, sl.name AS nom "
+        "FROM parcels p "
+        "JOIN spatial_layers sl ON sl.kind = 'iris_insee' "
+        "  AND ST_Contains(sl.geom_2975, ST_Centroid(p.geom_2975)) "
+        "JOIN anc_maille_taux t ON t.maille = 'iris' AND t.code = sl.subtype "
+        "WHERE p.idu = :idu LIMIT 1"), {"idu": idu}).mappings().first()
+    maille_type = "iris"
+    if tables_ok and not sect:                                     # repli commune (IRIS non diffusé)
+        sect = db.execute(text(
+            "SELECT round(t.taux_non_racc)::int AS taux, t.millesime "
+            "FROM anc_maille_taux t WHERE t.maille = 'commune' AND t.insee = left(:idu, 5) LIMIT 1"),
+            {"idu": idu}).mappings().first()
+        maille_type = "commune"
+
+    if sect and sect["taux"] is not None:
+        taux = int(sect["taux"])
+        mille = sect["millesime"] or "RP2022"
+        nom = sect.get("nom")
+        if maille_type == "iris" and nom:
+            maille_txt, intro, grain = f"secteur IRIS « {nom} »", f"Dans ce secteur IRIS « {nom} »", "IRIS"
+        elif maille_type == "commune":
+            maille_txt, intro, grain = f"commune de {commune}", f"Dans la commune de {commune}", "commune"
+        else:
+            maille_txt, intro, grain = "secteur", "Dans ce secteur", "secteur"
         return {
-            "statut": "estime",
-            "libelle": "Secteur à forte proportion d'ANC",
-            "phrase": ("Secteur à forte proportion d'assainissement non collectif — estimation "
-                       "statistique de SECTEUR (maille IRIS, non parcellaire). À vérifier auprès du SPANC."),
-            "maille": "IRIS (secteur, jamais la parcelle)",
-            "methode": "taux de non-raccordement du secteur (INSEE RP2022, agrégé par IRIS)",
+            "statut": "source_secteur",
+            "libelle": f"{taux} % des logements du secteur ne sont pas raccordés au réseau collectif",
+            "taux_non_racc": taux,
+            "maille": maille_txt,
+            "maille_type": maille_type,
+            "millesime": mille,
+            "phrase": (f"{intro}, {taux} % des logements ne sont pas raccordés au réseau collectif "
+                       f"(INSEE {mille}). C'est un taux de SECTEUR, pas l'état de cette parcelle. "
+                       f"À vérifier auprès du SPANC."),
+            "source": f"INSEE {mille} — variable EGOUL, agrégée par {grain}",
         }
 
     return {                                                        # ── ABSENT ──
         "statut": "absent",
         "libelle": "Zonage non disponible",
         "phrase": ("Zonage d'assainissement non disponible sur cette commune "
-                   "(réglementaire absent, secteur non estimé). Ce n'est pas un raccordement présumé."),
+                   "(réglementaire absent, secteur non renseigné). Ce n'est pas un raccordement présumé."),
     }
 
 

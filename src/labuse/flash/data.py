@@ -480,9 +480,10 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
                             "terrassement_lourd": bool(r["flag_terrassement_lourd"])}
     # Mandats futurs (ANC & Végétation) : colonnes déclarées par le registre des
     # segments — la sous-section apparaît TOUTE SEULE le jour où la table est mergée.
-    # M86-B — point de calcul UNIQUE (anc_service.statut_anc), partagé avec la fiche écran et l'export.
+    # M88 — point de calcul UNIQUE (anc_service.statut_anc), partagé avec la fiche écran et l'export.
     # CORRIGE le bug `bool(zone_anc)` (M59→M86-B) qui servait « ANC » aux 47 803 parcelles en COLLECTIF :
-    # bool('collectif') = bool('anc') = True. Désormais Sourcé/Estimé/Absent distincts, jamais un faux ANC.
+    # bool('collectif') = bool('anc') = True. Désormais Sourcé / Sourcé secteur (taux INSEE) / Absent
+    # distincts, jamais un faux ANC, jamais un verdict de secteur (M88 a retiré l'Estimé proba_anc).
     if "parcel_anc" in avail and {"zone_anc"} <= _existing_columns(db, "parcel_anc"):
         from ..anc_service import statut_anc
         out["anc"] = statut_anc(db, idu)

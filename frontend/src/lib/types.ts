@@ -304,7 +304,7 @@ export interface Fiche {
   potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
-  // M86-B : assainissement (ANC / tout-à-l'égout) — Sourcé / Estimé (secteur IRIS) / Absent.
+  // M88 : assainissement (ANC / tout-à-l'égout) — Sourcé / Sourcé secteur (taux INSEE) / Absent.
   anc?: AncStatut | null
   gestionnaires?: Gestionnaires | null
   // M75 : obligation APER (ombrières PV, grand parking > 1 500 m²) — tiroir Urbanisme, information.
@@ -402,13 +402,17 @@ export interface PotentielTransformation {
 export interface ViaContribution { libelle: string; points: number; detail: string; signe: '+' | '−' | '·' }
 // M86-B — état ANC servi (point de calcul unique côté back). Trois états, jamais quatre.
 export interface AncStatut {
-  statut: 'source' | 'estime' | 'absent'
+  // M88 : plus d'« estime » (proba_anc retiré) — « source_secteur » = taux INSEE brut du secteur.
+  statut: 'source' | 'source_secteur' | 'absent'
   libelle: string
   phrase: string
   anc?: boolean            // pour Sourcé : true = ANC, false = collectif
   commune?: string | null
   source?: string
-  maille?: string
+  maille?: string          // « secteur IRIS « … » » | « commune de … » (maille DITE à l'écran)
+  maille_type?: string     // 'iris' | 'commune'
+  millesime?: string       // 'RP2022' (millésime DIT à l'écran)
+  taux_non_racc?: number   // % de logements non raccordés du secteur (fait, jamais un verdict)
   methode?: string
   couverture?: { communes_avec_zonage: number; communes_total: number }
 }

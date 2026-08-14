@@ -11,10 +11,11 @@ import { TOKENS } from '../../lib/tokens'
 import type { AncStatut, Viabilisation } from '../../lib/types'
 import { Tip } from '../Tip'
 
-// M86-B — badge d'état ANC : Sourcé (mint, réglementaire), Estimé (amber, secteur IRIS), Absent (dim).
+// M88 — badge d'état ANC : Sourcé (mint, réglementaire) · Sourcé secteur (mint clair, taux INSEE de
+// secteur, JAMAIS un verdict parcellaire ni un seuil) · Absent (dim). L'« Estimé » proba_anc est retiré.
 const ANC_BADGE: Record<AncStatut['statut'], { label: string; cls: string }> = {
   source: { label: 'Sourcé', cls: 'bg-mint/15 text-mint' },
-  estime: { label: 'Estimé', cls: 'bg-amber/15 text-amber' },
+  source_secteur: { label: 'Sourcé · secteur', cls: 'bg-mint/10 text-mint' },
   absent: { label: 'Absent', cls: 'bg-surface-2 text-txt-dim' },
 }
 
@@ -68,8 +69,9 @@ export function ViabilisationBlock({ via, anc }: { via: Viabilisation; anc?: Anc
         <p className="mt-1 text-[11px] leading-snug text-txt-dim">{via.cout_raccordement.assainissement}</p>
       </div>
 
-      {/* M86-B — état d'ASSAINISSEMENT (ANC / tout-à-l'égout) : contrainte de constructibilité.
-          Trois états jamais quatre — Sourcé (réglementaire) / Estimé (secteur IRIS) / Absent. */}
+      {/* M88 — état d'ASSAINISSEMENT (ANC / tout-à-l'égout) : contrainte de constructibilité.
+          Trois états jamais quatre — Sourcé (réglementaire) / Sourcé secteur (taux INSEE, maille +
+          millésime DITS dans la phrase) / Absent. Le libellé du secteur est un TAUX, pas un verdict. */}
       {anc && ab && (
         <div data-anc className="mt-2 rounded-lg bg-surface-3 px-2.5 py-2">
           <div className="flex items-center justify-between gap-2">
