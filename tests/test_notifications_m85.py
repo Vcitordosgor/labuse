@@ -86,19 +86,24 @@ def test_producteur_systeme_dit_sa_source_et_son_lien(db_session):
 def test_prefs_defauts_et_override(db_session):
     _ensure(db_session)
     p = events.prefs_compte(db_session, None)
-    assert p["veille"]["email"] and p["suivi"]["cloche"] and not p["marche"]["email"]   # défauts
-    events.set_pref(db_session, 55, "veille", cloche=False, email=False)
+    # M85-B — types du registre ; défaut tout activé. maintenance verrouillée (e-mail toujours on).
+    assert p["veille_zone"]["email"] and p["parcelle_suivie"]["cloche"]
+    assert p["maintenance"]["verrou"] and p["maintenance"]["email"]
+    assert "marche" not in p                                                    # marché n'est plus un type
+    events.set_pref(db_session, 55, "veille_zone", cloche=False, email=False)
     p2 = events.prefs_compte(db_session, 55)
-    assert not p2["veille"]["cloche"] and not p2["veille"]["email"]                       # override
+    assert not p2["veille_zone"]["cloche"] and not p2["veille_zone"]["email"]   # override
 
 
 @pytest.mark.db
-def test_desabonner_coupe_email_garde_cloche(db_session):
+def test_desabonner_coupe_desactivables_garde_maintenance(db_session):
     _ensure(db_session)
     events.desabonner_email(db_session, 56)
     p = events.prefs_compte(db_session, 56)
-    assert all(not v["email"] for v in p.values())    # e-mail coupé partout (désinscription globale)
-    assert all(v["cloche"] for v in p.values())        # la cloche reste (défaut intact)
+    # e-mail coupé sur les DÉSACTIVABLES, mais maintenance reste ON (conséquences réelles) ; cloche intacte.
+    assert not p["parcelle_suivie"]["email"] and not p["veille_zone"]["email"]
+    assert p["maintenance"]["email"] is True
+    assert all(v["cloche"] for v in p.values())
 
 
 @pytest.mark.db
@@ -108,7 +113,7 @@ def test_cloche_filtre_exclut_le_type_coupe_jamais_systeme(db_session):
     events.creer_notification(db_session, kind="veille", compte_id=None, titre="v1")
     events.creer_notification(db_session, kind="systeme", compte_id=None, titre="s1", source="Ingestion")
     prefs = events.prefs_compte(db_session, None)
-    prefs["veille"]["cloche"] = False
+    prefs["veille_zone"]["cloche"] = False
     cf = events._cloche_filter_sql(prefs)
     n = db_session.execute(text(
         f"SELECT count(*) FROM event_log e WHERE e.compte_id IS NOT DISTINCT FROM :cid {cf}"),
@@ -129,11 +134,28 @@ def test_adresse_placeholder_bloquee():
     assert not f("kampusreunion@gmail.com") and not f("bob@labuse.immo")
 
 
-def test_pref_type_mapping():
-    assert events._pref_type("veille", False) == "veille"
-    assert events._pref_type("permis", False) == "suivi"
-    assert events._pref_type("bascule", True) == "marche"
-    assert events._pref_type("systeme", False) is None    # tuyauterie ingestion : hors pref client
+def test_pref_type_mapping_registre():
+    # M85-B — kind → type de registre (source unique)
+    assert events._pref_type("veille") == "veille_zone"
+    assert events._pref_type("permis") == "parcelle_suivie"
+    assert events._pref_type("bascule") == "parcelle_suivie"
+    assert events._pref_type("systeme") == "systeme_pilote"
+
+
+def test_registre_refuse_type_non_declare():
+    """M85-B — un type hors registre est REFUSÉ (personne n'ajoute un envoi hors inventaire)."""
+    from labuse import notif_registry as R
+    assert R.est_declare("parcelle_suivie") and not R.est_declare("bidon")
+    assert not R.desactivable("maintenance") and R.desactivable("parcelle_suivie")
+    assert R.peut_mail("annonce_produit") and not R.peut_mail("systeme_pilote")
+
+
+@pytest.mark.db
+def test_creer_notification_refuse_hors_registre(db_session):
+    """Le garde-fou EN DUR : creer_notification lève sur un type non déclaré."""
+    _ensure(db_session)
+    with pytest.raises(ValueError):
+        events.creer_notification(db_session, kind="campagne_bidon", titre="spam")
 
 
 @pytest.mark.db

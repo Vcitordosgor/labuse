@@ -1831,6 +1831,19 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") ->
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
 
 
+@app.command("migrer-prefs")
+def migrer_prefs_cmd() -> None:
+    """M85-B — migre notif_canaux vers les types du REGISTRE : veille→veille_zone, suivi→parcelle_suivie,
+    marche SUPPRIMÉ (le marché n'est plus un type de mail — flux cloche seul). Idempotent."""
+    with session_scope() as s:
+        a = s.execute(text("UPDATE notif_canaux SET pref_type='veille_zone' WHERE pref_type='veille'")).rowcount
+        b = s.execute(text("UPDATE notif_canaux SET pref_type='parcelle_suivie' WHERE pref_type='suivi'")).rowcount
+        n = s.execute(text("DELETE FROM notif_canaux WHERE pref_type='marche'")).rowcount
+        s.commit()
+    typer.echo(f"✓ Préférences migrées au registre : veille→veille_zone ({a}), suivi→parcelle_suivie ({b}), "
+               f"marche supprimé ({n}).")
+
+
 @app.command("migrer-notifications")
 def migrer_notifications_cmd() -> None:
     """M85 — migration UNIQUE : veille_notifications (store parallèle M78) → event_log (centre unifié),

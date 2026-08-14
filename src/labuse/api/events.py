@@ -136,7 +136,14 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
                        dedup: str | None = None, demo: bool = False) -> int:
     """Insère UNE notification dans event_log si dédup + plafond l'autorisent. Retourne l'id créé, ou
     0 si dédupliqué/plafonné. `dedup` : clé stable (ex. 'veille:12:2026-08-14') — même clé le même jour
-    ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client)."""
+    ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client).
+
+    M85-B — LE REGISTRE fait loi : un `kind` non déclaré (ni type de registre, ni kind historique connu)
+    est REFUSÉ (ValueError). Personne n'ajoute un envoi hors inventaire."""
+    from ..notif_registry import _KIND_VERS_TYPE, est_declare
+    if kind not in _KIND_VERS_TYPE and not est_declare(kind):
+        log.error("NOTIF REFUSÉE — kind/type « %s » non déclaré au registre (M85-B).", kind)
+        raise ValueError(f"type de notification non déclaré au registre : {kind!r}")
     _ensure_cols(db)
     if dedup and db.execute(text(
             "SELECT 1 FROM event_log WHERE dedup = :d AND compte_id IS NOT DISTINCT FROM :c "
@@ -181,44 +188,51 @@ def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
                       {"j": jours}).rowcount
 
 
-# ─────────────── M85 · préférences par TYPE et par CANAL (le client contrôle ce qu'il reçoit) ───────────────
+# ─────────────── M85 / M85-B · préférences par TYPE (registre) et par CANAL ───────────────
 REUNION_TZ = timezone(timedelta(hours=4))   # UTC+4 EXPLICITE — JAMAIS le fuseau de la machine (doctrine M85)
 DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
 
-# Catégories client, mappées depuis event_log.kind (+ cloison marché). Défauts raisonnables : veilles et
-# suivi de parcelles poussent partout (cloche + e-mail) ; le marché, volumineux et informatif, reste à la
-# cloche (e-mail OFF par défaut, activable). `systeme` (tuyauterie ingestion) est HORS préférences client.
-PREF_TYPES = {
-    "veille": {"label": "Vos veilles", "cloche": True, "email": True},
-    "suivi": {"label": "Vos parcelles suivies", "cloche": True, "email": True},
-    "marche": {"label": "Le marché (bascules, BODACC, matchs)", "cloche": True, "email": False},
+# M85-B — les types de préférence sont ceux du REGISTRE (source unique). notif_canaux porte les
+# surcharges ; les défauts viennent du registre (tout activé). `maintenance` est VERROUILLÉ (e-mail
+# toujours on, non désactivable — conséquences réelles). Le marché partagé (compte NULL) n'est PAS un
+# type de préférence : flux CLOCHE informatif, hors des 3 chaînes, jamais d'e-mail.
+_KINDS_PAR_PREF = {   # type de registre → kinds event_log (perso) qu'il gouverne à la cloche
+    "veille_zone": ("veille", "match", "veille_zone"),
+    "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie"),
+    "annonce_produit": ("annonce_produit",),
+    "maintenance": ("maintenance",),
 }
 
 
-def _pref_type(kind: str, is_market: bool) -> str | None:
-    """kind (+ cloison marché) → catégorie de préférence. `systeme` = pilote/admin, HORS pref client."""
-    if kind == "systeme":
-        return None
-    if kind == "veille":
-        return "veille"
-    return "marche" if is_market else "suivi"
+def _pref_type(kind: str, is_market: bool = False) -> str:
+    """kind event_log → type de préférence du REGISTRE (source unique)."""
+    from ..notif_registry import type_pour_kind
+    return type_pour_kind(kind)
 
 
 def prefs_compte(db: Session, cid: int | None) -> dict:
-    """Préférences EFFECTIVES {pref_type: {cloche, email}} : les défauts, écrasés par notif_canaux."""
-    out = {k: {"cloche": v["cloche"], "email": v["email"]} for k, v in PREF_TYPES.items()}
-    if cid is None:
-        return out
-    for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
-                        {"c": cid}).mappings():
-        if r["pref_type"] in out:
-            out[r["pref_type"]] = {"cloche": bool(r["cloche"]), "email": bool(r["email"])}
+    """Préférences EFFECTIVES {type: {cloche, email, verrou, label}} : défauts du registre (tout activé),
+    écrasés par notif_canaux. `maintenance` : e-mail FORCÉ à True + verrou (jamais désactivable)."""
+    from ..notif_registry import REGISTRE, TYPES_CLIENT, canaux, desactivable
+    out = {t: {"cloche": "cloche" in canaux(t), "email": "mail" in canaux(t),
+               "verrou": not desactivable(t), "label": REGISTRE[t]["libelle"]} for t in TYPES_CLIENT}
+    if cid is not None:
+        for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
+                            {"c": cid}).mappings():
+            if r["pref_type"] in out:
+                out[r["pref_type"]].update(cloche=bool(r["cloche"]), email=bool(r["email"]))
+    for t in out:                                    # maintenance : e-mail jamais coupable
+        if out[t]["verrou"]:
+            out[t]["email"] = True
     return out
 
 
 def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool) -> None:
-    if pref_type not in PREF_TYPES:
+    from ..notif_registry import TYPES_CLIENT, desactivable
+    if pref_type not in TYPES_CLIENT:
         return
+    if not desactivable(pref_type):                  # maintenance : e-mail non désactivable
+        email = True
     db.execute(text(
         "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email) VALUES (:c,:p,:cl,:em) "
         "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em"),
@@ -226,23 +240,23 @@ def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool
 
 
 def desabonner_email(db: Session, cid: int) -> None:
-    """Désinscription e-mail GLOBALE (lien légal / List-Unsubscribe) : coupe l'e-mail de TOUS les types,
-    laisse la cloche intacte. Le client ré-affine ensuite dans ses préférences."""
+    """Désinscription e-mail GLOBALE (lien légal / List-Unsubscribe) : coupe l'e-mail des types
+    DÉSACTIVABLES (maintenance reste ON — conséquences réelles) ; la cloche reste intacte."""
+    from ..notif_registry import TYPES_CLIENT, desactivable
     cur = prefs_compte(db, cid)
-    for p in PREF_TYPES:
-        set_pref(db, cid, p, cloche=cur[p]["cloche"], email=False)
+    for p in TYPES_CLIENT:
+        if desactivable(p):
+            set_pref(db, cid, p, cloche=cur[p]["cloche"], email=False)
 
 
 def _cloche_filter_sql(prefs: dict) -> str:
-    """Fragment WHERE excluant les types dont la cloche est coupée (bornage par cloison). Vide si tout
-    est actif. `:cid`/`:market` sont déjà liés par l'appelant. `systeme` n'est JAMAIS exclu (pilote)."""
+    """Fragment WHERE excluant les types (registre) dont la CLOCHE est coupée. Le marché partagé
+    (compte NULL) reste TOUJOURS visible (flux informatif hors préférences) ; `systeme` jamais exclu."""
     excl = []
-    if not prefs["veille"]["cloche"]:
-        excl.append("NOT (e.kind='veille' AND e.compte_id IS NOT DISTINCT FROM :cid)")
-    if not prefs["suivi"]["cloche"]:
-        excl.append("NOT (e.kind IN ('permis','bascule','bodacc') AND e.compte_id IS NOT DISTINCT FROM :cid)")
-    if not prefs["marche"]["cloche"]:
-        excl.append("NOT (e.compte_id IS NULL AND e.kind = ANY(:market))")
+    for t, kinds in _KINDS_PAR_PREF.items():
+        if t in prefs and not prefs[t]["cloche"]:
+            ks = ",".join(f"'{k}'" for k in kinds)
+            excl.append(f"NOT (e.kind IN ({ks}) AND e.compte_id IS NOT DISTINCT FROM :cid)")
     return (" AND " + " AND ".join(excl)) if excl else ""
 
 
@@ -476,7 +490,10 @@ def seed_demo(db: Session) -> dict:
 # LECTURE. Les kinds PERSONNELS (permis suivis, veilles, reprises de veille) restent cloisonnés
 # STRICT (jamais partagés — cf. cloison M-K). Le broadcast ne touche QUE ces trois kinds.
 _MARKET_KINDS = ("bascule", "bodacc", "match")
-_PERSO_KINDS = ("permis", "veille")
+# M85-B — kinds PERSO éligibles au DIGEST du matin (chaînes 1+2) : suivi de parcelle + veille de zone
+# (historiques permis/veille + nouveaux types de registre). annonce/maintenance sont IMMÉDIATS (chaîne
+# 3), hors digest ; systeme_pilote = cloche seule.
+_PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
 
 
 def _visible(alias: str = "e") -> str:
@@ -895,8 +912,9 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
         lien_prefs = f"/events/preferences?c={cid}&t={tok}"
     else:
         lien_desabo = lien_prefs = "#"
-    marche = d["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
-    return digest_html_email(evs, marche, d.get("top_chaudes", []), lien_desabo, lien_prefs,
+    # M85-B — le marché SORT du digest (règle mandant : mail SSI parcelle suivie / zone / annonce —
+    # « rien d'autre »). Il reste un flux cloche informatif, jamais un e-mail.
+    return digest_html_email(evs, {"total": 0}, d.get("top_chaudes", []), lien_desabo, lien_prefs,
                              periode="aujourd'hui")
 
 
@@ -977,10 +995,11 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
             _note(cid, email, "ignoré", f"anti-double-envoi (dernier digest {last:%Y-%m-%d %H:%M} UTC)")
             continue
         data = _digest_data(db, cid)
-        # FILTRE par préférence e-mail PAR TYPE : un type dont l'e-mail est coupé n'entre pas au digest.
+        # FILTRE par préférence e-mail PAR TYPE (registre) : un type dont l'e-mail est coupé n'entre pas.
         evs = [e for e in data["evenements"]
-               if not e.get("demo") and prefs.get(_pref_type(e["kind"], False), {}).get("email")]
-        marche = data["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
+               if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
+        # M85-B — le marché SORT du digest (règle mandant : « rien d'autre »). Flux cloche seulement.
+        marche = {"total": 0}
         # M85 P3 — enrichissement « depuis hier sur vos secteurs » (permis dans vos communes suivies,
         # même point de calcul que M83). Ligne présente SEULEMENT si non-nulle (honnêteté : pas de
         # remplissage — cf. le retard d'ingestion qui la garde souvent vide).
@@ -1050,19 +1069,25 @@ def desabonner_one_click(c: int, t: str, db: Session = Depends(get_db)) -> dict:
     return {"ok": True}
 
 
-# ── M85 · les PRÉFÉRENCES par type et par canal ──
+# ── M85 / M85-B · les PRÉFÉRENCES par type (registre) et par canal ──
 
 def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
+    from ..notif_registry import TYPES_CLIENT
     prefs = prefs_compte(db, c)
     lignes = ""
-    for k, meta in PREF_TYPES.items():
+    for k in TYPES_CLIENT:
         p = prefs[k]
+        verrou = p.get("verrou")
+        # maintenance : VERROUILLÉ (case e-mail cochée + désactivée + mention « conséquences réelles »).
+        em_cell = (f"<input type='checkbox' checked disabled title='Non désactivable — conséquences réelles'>"
+                   if verrou else
+                   f"<input type='checkbox' name='{k}_email'{' checked' if p['email'] else ''}>")
         lignes += (
-            f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{meta['label']}</td>"
+            f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{p['label']}"
+            f"{' <span style=\"color:#888;font-size:12px\">(toujours actif)</span>' if verrou else ''}</td>"
             f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_cloche'"
             f"{' checked' if p['cloche'] else ''}></td>"
-            f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_email'"
-            f"{' checked' if p['email'] else ''}></td></tr>")
+            f"<td style='text-align:center;padding:10px 8px'>{em_cell}</td></tr>")
     ok = ("<p style='background:#e8f7ee;color:#1E9E58;padding:8px 12px;border-radius:8px;"
           "font:13px sans-serif'>✓ Préférences enregistrées.</p>" if sauve else "")
     return (f"<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:32px;"
@@ -1091,8 +1116,9 @@ def preferences_page(c: int, t: str, db: Session = Depends(get_db)) -> str:
 async def preferences_save(c: int, t: str, request: Request, db: Session = Depends(get_db)) -> str:
     if not _token_ok(db, c, t):
         return HTMLResponse("Lien invalide.", status_code=400)
+    from ..notif_registry import TYPES_CLIENT
     form = await request.form()
-    for k in PREF_TYPES:
+    for k in TYPES_CLIENT:                               # maintenance : set_pref force l'e-mail (verrou)
         set_pref(db, c, k, cloche=f"{k}_cloche" in form, email=f"{k}_email" in form)
     db.commit()
     return _page_preferences(db, c, t, sauve=True)
@@ -1103,8 +1129,9 @@ def prefs_get(request: Request, db: Session = Depends(get_db)) -> dict:
     """API in-app : les préférences du compte courant (+ leurs libellés)."""
     from .tenant import current_compte
     cid = current_compte(request)
+    from ..notif_registry import TYPES_CLIENT
     p = prefs_compte(db, cid)
-    return {"types": [{"key": k, "label": PREF_TYPES[k]["label"], **p[k]} for k in PREF_TYPES]}
+    return {"types": [{"key": k, **p[k]} for k in TYPES_CLIENT]}
 
 
 class PrefIn(BaseModel):
