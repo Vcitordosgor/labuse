@@ -54,8 +54,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Rareté du foncier', desc: 'Où le foncier se raréfie : combien de constructible reste-t-il par commune, et pour combien de temps (horizon ZAN)' },
   { key: 'o10-bascules', num: 'O10', group: 'detecter',
     label: 'Quoi de neuf', desc: 'Le quoi-de-neuf daté du run — bascules, matches, événements' },
-  { key: 'matching', num: 'M19', group: 'detecter',
-    label: 'Matching promoteurs', desc: 'Enregistrez vos critères, soyez alerté quand ça matche' },
+  // M82 : « Matching promoteurs » RETIRÉ (démo, 0 match jamais produit, boucle d'alerte morte,
+  // création de profil gelée admin — un outil de démo dans un produit payant nous décrédibilise).
+  // Le composant M19/PromoteursActifs reste en code (moteurs.tsx) mais n'est plus exposé. Chantier de
+  // réactivation au BACKLOG (vraie boucle + profils réels compte-scopés).
   // ── Analyser & simuler ──
   // M12-D4 : « Scorer une adresse » quitte la barre d'en-tête et rejoint les Outils.
   { key: 'scoreur-adresse', num: 'O2', group: 'analyser', phare: true,

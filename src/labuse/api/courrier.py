@@ -6,6 +6,7 @@ N'EST PAS AFFICHÉ (jamais de bouton mort). Aucun envoi sans la case de responsa
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -73,8 +74,39 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
         "INSERT INTO courrier_demandes (sujet, idu, motif, texte) VALUES (:s, :i, :m, :t)"),
         {"s": sujet_de(request), "i": body.idu, "m": body.motif, "t": body.texte})
     db.flush()
+    # M82 : message HONNÊTE — l'envoi postal automatique n'est pas branché. La demande est mise en
+    # file ; en attendant, le client télécharge son courrier (PDF) et l'envoie lui-même.
     return {"ok": True,
-            "message": "Demande enregistrée — notre équipe prépare l'envoi et reviendra vers vous."}
+            "message": "Demande enregistrée. L'envoi postal automatique n'est pas encore actif — "
+                       "en attendant, téléchargez votre courrier ci-dessous et envoyez-le vous-même."}
+
+
+class PdfIn(BaseModel):
+    idu: str | None = None
+    motif: str = "standard"
+    texte: str = Field(min_length=10, max_length=8000)
+
+
+@router.post("/pdf")
+def courrier_pdf(body: PdfIn) -> Response:
+    """M82 : rend le courrier généré en PDF TÉLÉCHARGEABLE — le client l'imprime/l'envoie lui-même
+    (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire."""
+    from fpdf import FPDF
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(True, margin=20)
+    pdf.set_margins(20, 20, 20)
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 15)
+    pdf.cell(0, 9, "LABUSE", ln=1)
+    pdf.set_font("Helvetica", "", 11)
+    pdf.ln(4)
+    for ligne in body.texte.split("\n"):
+        safe = ligne.encode("latin-1", "replace").decode("latin-1")   # polices de base = latin-1
+        pdf.multi_cell(0, 6, safe)
+    data = bytes(pdf.output())
+    nom = (body.idu or "parcelle").replace("/", "-")
+    return Response(content=data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="courrier-{nom}.pdf"'})
 
 
 @router.get("/envois")

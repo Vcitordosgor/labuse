@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierDemande, getCommunes, getCourrierEnvois, getCourrierStatut, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierDemande, courrierPdf, getCommunes, getCourrierEnvois, getCourrierStatut, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
@@ -15,7 +15,7 @@ import { Loading } from '../Loading'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
 import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
-import { M15, M16, M17, M18, M19, MarcheCommune } from './moteurs'
+import { M15, M16, M17, M18, MarcheCommune } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
 import { VerifProcedure } from './VerifProcedure'
@@ -653,6 +653,11 @@ function M09() {
     mutationFn: () => courrierDemande({ idu: idu.trim() || null, motif, texte }),
     onSuccess: (r) => setDone(r.message),
   })
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const telecharger = async () => {
+    setPdfBusy(true)
+    try { await courrierPdf(idu.trim() || null, motif, texte) } catch { /* ignore */ } finally { setPdfBusy(false) }
+  }
   const Stepper = () => (
     <div className="flex items-center gap-1 text-[10px]">
       {['Parcelle', 'Motif', 'Rédaction', 'Demande'].map((l, i) => (
@@ -667,17 +672,22 @@ function M09() {
     <>
       <Banner>Demande enregistrée.</Banner>
       <div data-courrier-done className="rounded-xl border border-mint/40 bg-mint/[0.06] p-4 text-center">
-        <p className="font-display text-sm font-bold text-mint">✓ {done}</p>
+        <p className="text-[12px] leading-snug text-txt">✓ {done}</p>
+        <button data-courrier-pdf onClick={telecharger} disabled={pdfBusy || texte.trim().length < 10}
+          className="mt-3 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
         <button onClick={() => { setDone(null); setStep(1); setIdu(''); setTexte('') }}
-          className="mt-3 text-[11px] text-txt-mut hover:text-txt">Nouvelle demande</button>
+          className="mt-2 block w-full text-[11px] text-txt-mut hover:text-txt">Nouvelle demande</button>
       </div>
     </>
   )
   return (
     <>
-      <Banner>Demande d'envoi guidée — <b>pas un envoi automatique</b> : notre équipe la traite. Le
-        courrier est <b>adressé génériquement</b> (aucune identité de propriétaire particulier utilisée ;
-        identification via le workflow SPF/CERFA).</Banner>
+      {/* M82 : la VÉRITÉ, en tête, avant toute saisie. L'envoi postal automatique n'est pas branché ;
+           l'outil rédige un courrier à partir des faits vérifiés de la parcelle, téléchargeable en PDF. */}
+      <Banner>Cet outil <b>rédige votre courrier</b> (faits réels de la parcelle) — vous le
+        <b> téléchargez en PDF et l'envoyez vous-même</b>. L'envoi postal automatique n'est <b>pas encore
+        actif</b>. Adressage générique : aucune identité de propriétaire particulier (workflow SPF/CERFA).</Banner>
       <Stepper />
       <CourrierStatutJournal />
 
@@ -736,11 +746,16 @@ function M09() {
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-[11px] text-txt-mut">Aperçu — {MOTIFS.find((m) => m.key === motif)?.label} · {idu}</p>
           <div data-courrier-apercu className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-1 p-3 text-[11px] leading-snug text-txt">{texte}</div>
+          {/* M82 : action PRIMAIRE = télécharger le PDF (le client l'envoie lui-même, utile tout de
+               suite). L'enregistrement d'une demande reste offert, honnêtement (file, envoi ultérieur). */}
+          <button data-courrier-pdf onClick={telecharger} disabled={pdfBusy || texte.trim().length < 10}
+            className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
           <div className="flex gap-2">
             <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
             <button data-courrier-envoyer onClick={() => envoi.mutate()} disabled={envoi.isPending}
-              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-              {envoi.isPending ? 'Envoi…' : 'Demander l\'envoi'}</button>
+              className="flex-1 rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt disabled:opacity-40">
+              {envoi.isPending ? '…' : 'M\'enregistrer pour un envoi ultérieur'}</button>
           </div>
         </div>
       )}
@@ -847,7 +862,7 @@ function M10() {
 const COMPONENTS: Record<string, () => JSX.Element> = {
   division: M01, patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
-  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
+  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,
   'scoring-v2': ScoringV2Module,
   renouvellement: RenouvellementModule,

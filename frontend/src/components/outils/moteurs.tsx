@@ -123,20 +123,29 @@ export function M16() {
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             <div className="flex items-center gap-2">
-              <span className="num-key text-lg text-mint">{d.score_assemblage}</span>
+              <span className={`num-key text-lg ${d.score_assemblage > 0 ? 'text-mint' : 'text-txt-dim'}`}>{d.score_assemblage}</span>
               <span className="text-txt-mut">score d'assemblage</span>
               <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {d.contigu ? "d'un seul tenant" : 'NON contiguë'}
               </span>
             </div>
-            {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
-            <div data-asm-gain className="mt-1.5 rounded-md bg-mint/[0.06] px-2 py-1.5">
-              <div className="text-txt">Ensemble : <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
-                {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+            {/* CAS I — assiette sans potentiel résiduel : on le DIT, pas de bloc gain trompeur. */}
+            {d.sans_potentiel ? (
+              <div data-asm-sans-potentiel className="mt-1.5 rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
+                Assiette sans SDP résiduelle (ou parcelles écartées du run) — <b>aucun potentiel de projet en l'état</b>. La contiguïté seule ne fait pas une opération.
               </div>
-              <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
-            </div>
-            <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
+            ) : (
+              <>
+                {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
+                <div data-asm-gain className="mt-1.5 rounded-md bg-mint/[0.06] px-2 py-1.5">
+                  <div className="text-txt">Ensemble : <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
+                    {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+                  </div>
+                  <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
+                </div>
+                <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
+              </>
+            )}
           </div>
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
