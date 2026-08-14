@@ -24,11 +24,12 @@ export function ScoreurAdresse() {
   const select = useApp((s) => s.select)
   const setModule = useApp((s) => s.setModule)
   const [adresse, setAdresse] = useState('')       // adresse normalisée BAN (jamais libre)
+  const [idu, setIdu] = useState<string | null>(null)   // M82 (CAS E) : parcelle déjà résolue par l'autocomplétion
   const [prix, setPrix] = useState<number | null>(null)
-  const m = useMutation({ mutationFn: () => scoreurAdresse(adresse.trim(), prix) })
+  const m = useMutation({ mutationFn: () => scoreurAdresse(adresse.trim(), prix, idu) })
   const d: ScoreurResult | undefined = m.data
   const run = () => { if (adresse.trim().length >= 3) m.mutate() }
-  const onPick = (sel: AddressSelection) => { setAdresse(sel.label); m.reset() }
+  const onPick = (sel: AddressSelection) => { setAdresse(sel.label); setIdu(sel.idu ?? null); m.reset() }
 
   return (
     <div data-scoreur-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -45,7 +46,7 @@ export function ScoreurAdresse() {
           autoFocus
           placeholder="Adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
           onSelect={onPick}
-          onClear={() => { setAdresse(''); m.reset() }}
+          onClear={() => { setAdresse(''); setIdu(null); m.reset() }}
         />
 
         <input data-scoreur-prix type="number" min={0} value={prix ?? ''} placeholder="Prix demandé € (optionnel)"

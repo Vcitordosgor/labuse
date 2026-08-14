@@ -152,8 +152,13 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     M2_PAR_LOGT = 70   # hypothèse AFFICHÉE (m² SDP / logement), cohérente avec M22
     sdp_max_seule = max(sdp_vals) if sdp_vals else 0
     gain_ratio = round(sdp / sdp_max_seule, 1) if sdp_max_seule else None
-    # score : d'un seul tenant + interlocuteurs peu nombreux/moraux (B) + SDP cumulée
-    score = round(min(100, (45 if contigu else 10) + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
+    # score : d'un seul tenant + interlocuteurs peu nombreux/moraux (B) + SDP cumulée.
+    # M82 #garde-fou (CAS I) : une assiette SANS SDP résiduelle, ou entièrement en étage 0 (parcelles
+    # écartées / faux positif probable), n'a AUCUN potentiel de projet — le score ne doit pas récompenser
+    # la seule géométrie (contiguïté = 45 pts). On le plancher à 0 et on le DIT.
+    sans_potentiel = sdp <= 0 or all(bool(r["etage0"]) for r in rows)
+    score = 0 if sans_potentiel else round(min(100, (45 if contigu else 10)
+                  + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
                   + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
     return {
         "n": len(rows), "contigu": contigu, "surface_totale_m2": round(surface),
@@ -172,7 +177,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "tous_personnes_morales": tous_pm,
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,
-        "score_assemblage": score,
+        "score_assemblage": score, "sans_potentiel": sans_potentiel,
         "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score")},
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "proprio": pr}
@@ -340,10 +345,12 @@ def _barometre_data(db: Session) -> dict:
                  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
                  FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
+          AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     permis = db.execute(text("""
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
-        FROM sitadel_permits GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+        FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     top_communes = db.execute(text(f"""
         SELECT commune, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (

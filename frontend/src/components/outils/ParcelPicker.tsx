@@ -16,9 +16,9 @@ export function ParcelPicker({ onPick, picked }: { onPick: (idu: string) => void
         <input data-picker-idu value={idu} onChange={(e) => { setIdu(e.target.value.trim()); setAddrMsg(null) }}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(idu) }}
           placeholder="IDU — 97415000CW0658"
-          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[10.5px] text-txt focus:border-violet focus:outline-none" />
+          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
         <button data-picker-go onClick={() => submit(idu)} disabled={idu.trim().length < 10}
-          className="shrink-0 rounded border border-violet/40 px-2 text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-40">voir</button>
+          className="shrink-0 rounded border border-mint/40 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">voir</button>
       </div>
       {/* entrée « adresse » : autocomplétion → parcelle rattachée (source interne) */}
       <AddressAutocomplete placeholder="… ou une adresse"
@@ -27,7 +27,7 @@ export function ParcelPicker({ onPick, picked }: { onPick: (idu: string) => void
       {/* entrée « clic carte » : la dernière parcelle sélectionnée sur la carte */}
       {selectedIdu && selectedIdu !== picked && (
         <button data-picker-sel onClick={() => onPick(selectedIdu)}
-          className="self-start text-[10.5px] text-violet hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
+          className="self-start text-[10.5px] text-mint hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
       )}
     </div>
   )

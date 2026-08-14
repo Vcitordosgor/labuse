@@ -12,7 +12,7 @@ const fmt = fmtInt
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+    <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )
@@ -40,27 +40,27 @@ export function M15() {
       <div className="flex flex-wrap gap-1.5">
         {(zones.data ?? []).map((z) => (
           <button key={z.zone} onClick={() => setZone(z.zone)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${zone === z.zone ? 'border-violet text-violet' : 'border-line-2 text-txt-mut'}`}>
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${zone === z.zone ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
             {z.zone} → U
           </button>
         ))}
       </div>
-      {sim.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Recalcul à blanc en cours…" big /></div>}
+      {sim.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Recalcul à blanc en cours…" big /></div>}
       {d && (
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
             <div><b className="text-txt">{fmt(d.n_parcelles)}</b> parcelles en {d.zone} · ratio analogie <b className="text-txt">{d.ratio_analogie}</b></div>
-            <div className="mt-1">SDP estimée totale <b className="tnum text-violet">{fmt(d.sdp_totale_estimee_m2)} m²</b> ·{' '}
-              <b className="tnum text-violet">{fmt(d.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
+            <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(d.sdp_totale_estimee_m2)} m²</b> ·{' '}
+              <b className="tnum text-mint">{fmt(d.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {(d.items as Record<string, any>[]).slice(0, 120).map((i) => (
               <button key={i.idu} data-m15-item onClick={() => select(i.idu)}
                 title="Ouvrir la parcelle"
-                className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-violet/60">
+                className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60">
                 <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                 <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
-                <span className={`ml-auto tnum ${i.bascule_potentielle ? 'text-violet' : 'text-txt-dim'}`}>
+                <span className={`ml-auto tnum ${i.bascule_potentielle ? 'text-mint' : 'text-txt-dim'}`}>
                   SDP est. {fmt(i.sdp_estimee_m2)} m²{i.bascule_potentielle ? ' ▲' : ''}
                 </span>
               </button>
@@ -102,7 +102,7 @@ export function M16() {
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
-            className="min-h-7 rounded-full border border-violet/60 px-2 py-0.5 font-mono text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10"
+            className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10"
             title="Retirer de la sélection">
             {i.slice(8)} ×
           </button>
@@ -111,7 +111,7 @@ export function M16() {
       </div>
       <div className="flex gap-2">
         <button onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-          className="flex-1 rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
           Analyser l'assiette ({msel.length})
         </button>
         {msel.length > 0 && (
@@ -123,20 +123,29 @@ export function M16() {
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             <div className="flex items-center gap-2">
-              <span className="num-key text-lg text-violet">{d.score_assemblage}</span>
+              <span className={`num-key text-lg ${d.score_assemblage > 0 ? 'text-mint' : 'text-txt-dim'}`}>{d.score_assemblage}</span>
               <span className="text-txt-mut">score d'assemblage</span>
               <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {d.contigu ? "d'un seul tenant" : 'NON contiguë'}
               </span>
             </div>
-            {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
-            <div data-asm-gain className="mt-1.5 rounded-md bg-mint/[0.06] px-2 py-1.5">
-              <div className="text-txt">Ensemble : <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
-                {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+            {/* CAS I — assiette sans potentiel résiduel : on le DIT, pas de bloc gain trompeur. */}
+            {d.sans_potentiel ? (
+              <div data-asm-sans-potentiel className="mt-1.5 rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
+                Assiette sans SDP résiduelle (ou parcelles écartées du run) — <b>aucun potentiel de projet en l'état</b>. La contiguïté seule ne fait pas une opération.
               </div>
-              <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
-            </div>
-            <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
+            ) : (
+              <>
+                {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
+                <div data-asm-gain className="mt-1.5 rounded-md bg-mint/[0.06] px-2 py-1.5">
+                  <div className="text-txt">Ensemble : <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
+                    {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+                  </div>
+                  <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
+                </div>
+                <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
+              </>
+            )}
           </div>
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
@@ -226,13 +235,13 @@ export function M17() {
   return (
     <>
       <Banner>{d?.bandeau ?? '…'}</Banner>
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
 
       {/* SIGNAL PAR PARCELLE (mène — robuste, sourcé, indépendant des quotas) */}
       <p className="label-caps">Signal ZAN par parcelle</p>
       <input data-zan-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
         placeholder="IDU (ou sélectionnez une parcelle sur la carte)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-violet focus:outline-none" />
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
       {s && (
         <div data-zan-signal className="flex flex-col gap-1.5 rounded-lg border px-3 py-2" style={{ borderColor: `${sigColor}55` }}>
           <div className="flex items-center gap-2">
@@ -266,7 +275,7 @@ export function M17() {
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {((d?.zan_compatibles ?? []) as Record<string, any>[]).slice(0, 60).map((i) => (
           <button key={i.idu} onClick={() => { setIdu(i.idu); select(i.idu) }}
-            className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-violet/50">
+            className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/50">
             <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
             <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
             <span className="ml-auto">
@@ -290,7 +299,7 @@ export function M18() {
       <Banner>Île entière (DVF 24 communes, Sitadel régional). Le PDF est le rapport
         distribuable — canal marketing.</Banner>
       <a href="/moteurs/barometre.pdf" target="_blank" rel="noreferrer"
-        className="self-start rounded-lg bg-violet px-3 py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+        className="self-start rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
         ⬇ Rapport PDF
       </a>
       <p className="label-caps">DVF par trimestre</p>
@@ -299,7 +308,7 @@ export function M18() {
           <div key={r.trimestre} className="flex items-center gap-2 text-[11px]">
             <span className="w-14 font-mono text-txt-dim">{r.trimestre}</span>
             <span className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-              <span className="absolute left-0 top-0 h-full rounded-full bg-violet" style={{ width: `${(100 * r.mutations) / max}%` }} />
+              <span className="absolute left-0 top-0 h-full rounded-full bg-mint" style={{ width: `${(100 * r.mutations) / max}%` }} />
             </span>
             <span className="w-12 text-right font-mono text-txt-mut">{fmt(r.mutations)}</span>
             <span className="w-20 text-right font-mono text-txt-dim">{fmt(r.median_eur_m2_bati)} €/m²</span>
@@ -312,7 +321,7 @@ export function M18() {
           <div key={r.commune} className="flex items-center gap-2 border-b border-line py-1 text-[11px]">
             <span className="min-w-0 flex-1 truncate text-txt">{r.commune}</span>
             <span className="font-mono text-txt-dim">{fmt(r.mutations)} mut.</span>
-            <span className="tnum font-mono text-violet">{fmt(r.median_eur_m2)} €/m²</span>
+            <span className="tnum font-mono text-mint">{fmt(r.median_eur_m2)} €/m²</span>
           </div>
         ))}
       </div>
@@ -398,10 +407,10 @@ export function MarcheCommune() {
     <>
       <Banner>{CLIENT.marche.banner}</Banner>
       <select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
-        className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-violet focus:outline-none">
+        className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Marché…" big /></div>}
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Marché…" big /></div>}
       {d && <>
         <MuSignal sig={d.market_signal} />
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -473,7 +482,7 @@ export function M19() {
 
   return (
     <>
-      <Banner>Deux blocs bien distincts. <b className="text-violet">Profils de démonstration</b>
+      <Banner>Deux blocs bien distincts. <b className="text-mint">Profils de démonstration</b>
         (des exemples, pour illustrer) et les <b className="text-mint">promoteurs réellement actifs</b>
         du secteur (donnée SITADEL). <b>Cliquez un profil</b> : les parcelles qui lui correspondent
         <b> s'allument sur la carte</b> — cliquez-en une pour ouvrir sa fiche avec la raison du match.</Banner>
@@ -481,7 +490,7 @@ export function M19() {
       {/* ── DÉMO — profils cliquables (un seul actif à la fois) ── */}
       <div className="flex items-center gap-1.5">
         <p className="label-caps">Profils de recherche</p>
-        <span className="rounded bg-violet/15 px-1.5 py-0.5 text-[8px] font-medium text-violet">DÉMO · EXEMPLES</span>
+        <span className="rounded bg-mint/15 px-1.5 py-0.5 text-[8px] font-medium text-mint">DÉMO · EXEMPLES</span>
       </div>
       <div className="flex flex-col gap-1.5">
         {list.map((p) => {
@@ -490,15 +499,15 @@ export function M19() {
             <button key={p.id} data-m19-profil aria-pressed={on}
               onClick={() => setActiveId(on ? null : p.id)}
               className={`rounded-lg border px-3 py-2 text-left text-[11px] transition-colors duration-quick ${
-                on ? 'border-violet bg-violet/10' : 'border-line-2 bg-surface-3 hover:border-violet/50'}`}>
+                on ? 'border-mint bg-mint/10' : 'border-line-2 bg-surface-3 hover:border-mint/50'}`}>
               <div className="flex items-center gap-2">
-                <span className={`font-medium ${on ? 'text-violet' : 'text-txt'}`}>{on ? '● ' : ''}{p.nom}</span>
+                <span className={`font-medium ${on ? 'text-mint' : 'text-txt'}`}>{on ? '● ' : ''}{p.nom}</span>
                 <span className="ml-auto text-[9px] text-txt-dim">{on ? 'actif — voir la carte' : 'cliquer pour voir'}</span>
               </div>
               <div className="mt-0.5 text-[10.5px] text-txt-dim">
                 {p.commune ?? 'toute commune'} · surface {fmt(p.surface_min)}–{fmt(p.surface_max)} m² · SDP ≥ {p.sdp_min ?? '—'}
               </div>
-              {on && <div className="mt-1 text-[10.5px] text-violet">{matched.isFetching ? 'recherche des parcelles…' : `${fmt(nMatch)} parcelle(s) allumée(s) sur la carte — cliquez-en une`}</div>}
+              {on && <div className="mt-1 text-[10.5px] text-mint">{matched.isFetching ? 'recherche des parcelles…' : `${fmt(nMatch)} parcelle(s) allumée(s) sur la carte — cliquez-en une`}</div>}
             </button>
           )
         })}
@@ -506,17 +515,17 @@ export function M19() {
       {/* ajout d'un profil de démo */}
       <div className="flex gap-1.5">
         <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nouveau profil…"
-          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-violet focus:outline-none" />
+          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
-          className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-violet focus:outline-none" />
+          className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} title="Ajouter le profil" aria-label="Ajouter le profil"
-          className="rounded bg-violet px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
+          className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
       </div>
 
       {/* ── RÉEL — promoteurs actifs SITADEL (commune du profil actif) ── */}
       <div className="mt-1 flex items-center gap-1.5">
-        <p className="label-caps">Promoteurs actifs du secteur</p>
-        <span className="rounded bg-mint/10 px-1.5 py-0.5 text-[8px] font-medium text-mint">RÉEL · SITADEL</span>
+        <p className="label-caps min-w-0 truncate">Promoteurs actifs du secteur</p>
+        <span className="shrink-0 whitespace-nowrap rounded bg-mint/10 px-1.5 py-0.5 text-[8px] font-medium text-mint">RÉEL · SITADEL</span>
       </div>
       <PromoteursActifs commune={active?.commune ?? null} />
     </>
@@ -527,7 +536,7 @@ export function M19() {
 function PromoteursActifs({ commune }: { commune: string | null }) {
   const actifs = useQuery({ queryKey: ['m19-actifs', commune], queryFn: () => promoteursActifs(commune!), enabled: !!commune })
   if (!commune) return <p className="text-[10.5px] text-txt-dim">Choisissez un profil ciblant une commune pour voir les promoteurs réellement actifs (SITADEL).</p>
-  if (!actifs.data) return <Loading accent="violet" label="Promoteurs actifs…" />
+  if (!actifs.data) return <Loading accent="mint" label="Promoteurs actifs…" />
   const promos = (actifs.data.promoteurs as Record<string, any>[]) ?? []
   return (
     <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">

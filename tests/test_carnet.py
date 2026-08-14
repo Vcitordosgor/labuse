@@ -21,8 +21,10 @@ def test_secteur_mauvaise_longueur_422():
     assert e.value.status_code == 422
 
 
-def test_post_m7_documente():
-    assert "post-M7" in k.POST_M7 and "watch_zones" in k.POST_M7
+def test_note_abonnement_sans_fuite():
+    # M82 #fuite : la note est SERVIE au client — jamais de numéro de mandat ni de nom de table.
+    assert "post-M7" not in k.POST_M7 and "watch_zones" not in k.POST_M7 and "mandat" not in k.POST_M7
+    assert "abonnement" in k.POST_M7.lower()
 
 
 def test_signal_labels():
@@ -46,7 +48,7 @@ def test_carnet_secteur_stock_et_robustesse(db_session):
     out = k.carnet("97499000ZK", s)
     assert out["secteur"] == "97499000ZK" and out["section"] == "ZK" and out["insee"] == "97499"
     assert out["stock"]["opportunites"] == 1 and out["stock"]["par_tier"].get("chaude") == 1
-    assert "post-M7" in out["note"]     # abonnement documenté
+    assert "post-M7" not in out["note"] and "abonnement" in out["note"].lower()   # note client, sans fuite
 
 
 @pytest.mark.db

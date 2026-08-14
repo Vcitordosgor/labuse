@@ -39,6 +39,7 @@ _TIER_LABELS = {
 class ScoreurIn(BaseModel):
     q: str                              # adresse libre
     prix_demande_eur: float | None = None   # prix affiché/demandé, saisi manuellement
+    idu: str | None = None              # M82 (CAS E) : parcelle DÉJÀ résolue par l'autocomplétion interne
 
 
 def _geocode(q: str) -> dict:
@@ -96,17 +97,25 @@ def get_db():
 @router.post("")
 def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     """Adresse → parcelle en base → verdict compact (+ confrontation du prix demandé si fourni)."""
-    geo = _geocode(body.q)
-    row = db.execute(text(
-        """SELECT p.idu, p.commune, p.section, p.numero, round(p.surface_m2) AS surface_m2,
-                  s2.tier, s2.rang, s2.percentile
-           FROM parcels p
-           LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
-           WHERE ST_Contains(p.geom, ST_SetSRID(ST_Point(:lon, :lat), 4326))
-           ORDER BY p.surface_m2 DESC NULLS LAST LIMIT 1"""),
-        {"run": Q_A_RUN_LABEL, "lon": geo["lon"], "lat": geo["lat"]}).mappings().first()
+    # M82 (CAS E) : si l'autocomplétion interne a DÉJÀ rattaché une parcelle (idu), on l'utilise
+    # directement — le re-géocodage BAN du label formaté (« 12 Rue…, Saint-Paul (97460) ») pouvait
+    # retomber hors de la parcelle et fabriquer un « aucune parcelle » fantôme.
+    _sel = """SELECT p.idu, p.commune, p.section, p.numero, round(p.surface_m2) AS surface_m2,
+                     s2.tier, s2.rang, s2.percentile
+              FROM parcels p
+              LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run """
+    if body.idu:
+        label = body.q
+        row = db.execute(text(_sel + "WHERE p.idu = :idu LIMIT 1"),
+                         {"run": Q_A_RUN_LABEL, "idu": body.idu}).mappings().first()
+    else:
+        geo = _geocode(body.q)
+        label = geo["label"]
+        row = db.execute(text(_sel + "WHERE ST_Contains(p.geom, ST_SetSRID(ST_Point(:lon, :lat), 4326)) "
+                              "ORDER BY p.surface_m2 DESC NULLS LAST LIMIT 1"),
+                         {"run": Q_A_RUN_LABEL, "lon": geo["lon"], "lat": geo["lat"]}).mappings().first()
     if not row:
-        return {"ok": False, "adresse": geo["label"],
+        return {"ok": False, "adresse": label,
                 "message": "Aucune parcelle en base à cette adresse — hors périmètre couvert, "
                            "ou terrain non cadastré. Essayez l'audit par référence cadastrale."}
 
@@ -129,7 +138,7 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
-    out = {"ok": True, "adresse": geo["label"], "idu": row["idu"], "commune": row["commune"],
+    out = {"ok": True, "adresse": label, "idu": row["idu"], "commune": row["commune"],
            "section": row["section"], "numero": row["numero"], "surface_m2": row["surface_m2"],
            "verdict": verdict, "score_e": score_e,
            "fiche_url": f"/parcels/{row['idu']}"}

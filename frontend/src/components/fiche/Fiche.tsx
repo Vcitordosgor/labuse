@@ -2122,7 +2122,7 @@ export function Fiche({ idu }: { idu: string }) {
               {f.coords && (
                 <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
                   sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"
-                  onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
+                  onClick={() => { setParcelPrefill(idu); setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
               )}
             </RefDrawer>
 
@@ -2354,7 +2354,7 @@ export function Fiche({ idu }: { idu: string }) {
                     </a>
                   )}
                   {f.coords && (
-                    <button className="exp" onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} title="Ce terrain en 1950 — comparateur temporel">
+                    <button className="exp" onClick={() => { setParcelPrefill(idu); setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} title="Ce terrain en 1950 — comparateur temporel">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
                       <span>1950</span>
                     </button>

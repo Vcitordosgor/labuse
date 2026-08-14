@@ -268,6 +268,10 @@ interface AppState {
   removeFromCompare: (idu: string) => void
   clearCompare: () => void
   setCompareOpen: (v: boolean) => void
+  // M82 — mode « cliquer sur la carte » : la carte reste cliquable (barre compacte), le clic AJOUTE
+  // une parcelle à la comparaison (motif du clic-sélection d'Assemblage).
+  comparePicking: boolean
+  setComparePicking: (v: boolean) => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
   sourceLine: FicheLine | null
   openSourceDrawer: (line: FicheLine) => void
@@ -463,8 +467,10 @@ export const useApp = create<AppState>((set) => ({
     compareIdus: s.compareIdus.includes(idu) ? s.compareIdus : [...s.compareIdus, idu].slice(0, 3),
     compareOpen: true, view: 'cartes' })),
   removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen } }),
-  clearCompare: () => set({ compareIdus: [], compareOpen: false }),
-  setCompareOpen: (v) => set({ compareOpen: v }),
+  clearCompare: () => set({ compareIdus: [], compareOpen: false, comparePicking: false }),
+  setCompareOpen: (v) => set((s) => ({ compareOpen: v, comparePicking: v ? s.comparePicking : false })),
+  comparePicking: false,
+  setComparePicking: (comparePicking) => set({ comparePicking }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),

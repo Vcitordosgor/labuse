@@ -405,7 +405,7 @@ def promesses(commune: str | None = None, months: int = 24,
     rows = db.execute(text("""
         WITH cand AS MATERIALIZED (
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
-                   p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.q_score,
+                   p.idu, round(p.surface_m2) AS surface_m2, d.q_score,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
             FROM sitadel_permits s
             JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
@@ -420,7 +420,7 @@ def promesses(commune: str | None = None, months: int = 24,
                                 AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
-               cand.idu, cand.surface_m2, cand.statut, cand.q_score, cand.etage0,
+               cand.idu, cand.surface_m2, s2.tier AS statut, cand.q_score, cand.etage0,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
@@ -566,7 +566,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
             "has_more": offset + len(rows) < true_total, "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
-        "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
+        "verrou": "société introuvable au registre" if r["inpi_introuvable"] else "dirigeant inactif (registre des entreprises)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
     } for r in rows]}
 

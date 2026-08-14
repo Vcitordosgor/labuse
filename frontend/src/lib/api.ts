@@ -267,10 +267,10 @@ export interface ScoreurResult {
   prix?: { prix_demande_eur: number; prix_demande_m2_terrain?: number; marge_a_ce_prix_eur?: number
            verdict: string; message: string; avertissement: string }
 }
-export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null) =>
+export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null) =>
   j<ScoreurResult>('/scoreur-adresse', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur }),
+    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null }),
   })
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN
@@ -472,6 +472,7 @@ export interface CompareRow {
   zone?: string | null; constructible?: boolean | null; capacite?: string | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
   ca_bas?: number | null; ca_haut?: number | null; charge_fonciere_m2?: number | null
+  terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]; synthese?: string | null
 }
 export const getCompare = (idus: string[]) =>
@@ -569,9 +570,18 @@ export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
-export const courrierDemande = (body: { idu: string | null; motif: string; texte: string }) =>
-  j<{ ok: boolean; message: string }>('/courrier/demande', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// M82 (option B) : « /courrier/demande » retiré (aucune promesse d'envoi). Le courrier généré est
+// téléchargeable en PDF — le client l'envoie lui-même.
+export const courrierPdf = async (idu: string | null, motif: string, texte: string): Promise<void> => {
+  const r = await fetch('/courrier/pdf', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif, texte }) })
+  if (!r.ok) throw new ApiError('/courrier/pdf', r.status)
+  const url = URL.createObjectURL(await r.blob())
+  const a = document.createElement('a')
+  a.href = url; a.download = `courrier-${idu ?? 'parcelle'}.pdf`
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })

@@ -89,7 +89,7 @@ export function ScoringV2Module() {
             className="mb-1 flex min-h-7 w-full items-center gap-2 rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left transition-colors duration-quick hover:border-mint/40">
             <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de mutation vs moyenne du parc (P)">×{it.mult_base.toFixed(1)}</span>
             <span className="flex-1 truncate font-mono text-[10.5px] text-txt">{it.parcelle_id}</span>
-            {it.badges.copro && <span className="text-[9.5px] text-violet">copro</span>}
+            {it.badges.copro && <span className="text-[9.5px] text-txt-dim">copro</span>}
             {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude" title={`Événement BODACC — ${it.badges.evenement_date}`}>évén.</span>}
             {it.rang != null && <span className="font-mono text-[10px] text-txt-dim">#{it.rang}</span>}
           </button>

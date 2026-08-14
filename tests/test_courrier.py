@@ -24,7 +24,9 @@ def test_statut_stub_sans_compte(client):
     """Sans compte prestataire : disponible=false — le front N'AFFICHE PAS le bouton."""
     r = client.get("/courrier/statut").json()
     assert r["disponible"] is False and r["provider"] == "stub"
-    assert "Merci Facteur" in r["raison"]
+    # M82 #fuite : la raison est SERVIE au client — jamais le prestataire ni les variables d'env.
+    assert r["raison"] and "Merci Facteur" not in r["raison"] and "MERCIFACTEUR" not in r["raison"]
+    assert "envoi postal" in r["raison"].lower()
     # tarif = coût prestataire × marge (défauts : 2,69 × 1,5)
     assert r["tarif"]["prix_client_eur"] == round(2.69 * 1.5, 2)
 

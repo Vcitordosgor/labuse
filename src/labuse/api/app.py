@@ -3089,7 +3089,7 @@ def renouvellement_liste(commune: str | None = None,
     """Liste du segment Renouvellement, triable (score par défaut). Sert l'outil dédié —
     JAMAIS le flux principal (doctrine : pas de mélange avec les tiers servis)."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
-        raise HTTPException(503, "segment Renouvellement non calculé — lancer `labuse renouv`.")
+        raise HTTPException(503, "segment Renouvellement non calculé (table absente).")
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
     orders = {"score": "r.renouv_score DESC, r.idu",
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
@@ -3564,7 +3564,12 @@ def _compare_row(fiche: dict) -> dict:
     ca = bilan.get("ca") or {}
     cf = bilan.get("charge_fonciere") or {}
     contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    # M82 — la contrainte MAJEURE explicite (la plus sévère) pour la vue côte à côte : HARD_EXCLUDE
+    # d'abord, sinon le 1er SOFT_FLAG (ABF…), sinon rien.
+    majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
+                   next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
     return {
+        "contrainte_majeure": majeure,
         "idu": p["idu"], "commune": p.get("commune"), "section": p.get("section"), "numero": p.get("numero"),
         "surface_m2": round(p["surface_m2"]) if p.get("surface_m2") else None,
         "status": v.get("status"),
@@ -3755,12 +3760,30 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     """Comparateur de parcelles (Lot D2) : 2-3 parcelles côte à côte (verdict, capacité,
     résiduel, bilan, contraintes). Ignore silencieusement un IDU introuvable."""
     ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
-    out = []
+    from ..faisabilite.marche_commune import build_marche_commune
+    out: list[dict] = []
+    marche_cache: dict[str, dict] = {}
     for idu in ids:
         try:
-            out.append(_compare_row(_build_fiche(db, idu, with_assistant=False)))
+            row = _compare_row(_build_fiche(db, idu, with_assistant=False))
         except HTTPException:
             continue
+        # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
+        commune, zone = row.get("commune"), (row.get("zone") or "")
+        fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
+        if commune and fam in ("U", "AU"):
+            if commune not in marche_cache:
+                try:
+                    marche_cache[commune] = build_marche_commune(db, commune)
+                except Exception:  # noqa: BLE001
+                    marche_cache[commune] = {}
+            for l in (marche_cache[commune].get("lignes") or []):
+                if isinstance(l, dict) and l.get("cle") == "prix_terrain_nu_par_zone":
+                    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
+                    if pz and pz.get("calculable"):
+                        row["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
+                    break
+        out.append(row)
     return {"count": len(out), "parcels": out}
 
 

@@ -348,6 +348,38 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
 - **Note M78 (Copilote)** : à l'intention OUTIL « diviser ce terrain », le Copilote n'a **aucun outil
   parcellaire** à proposer — il répond sur le fond avec ce qu'il a (surface, zonage, règlement) et ne
   propose rien. C'est le cas « aucun outil ne correspond » de la doctrine, appliqué proprement.
+- **MAJ M82 (cas A) — le score PAR PARCELLE EXISTE en fait.** L'audit M82 a trouvé que `module_division`
+  est indexée **par idu** (4433 lignes, 1/parcelle) : un lookup par IDU est un simple SELECT, aucun nouvel
+  endpoint. Le Copilote enrichit désormais sa réponse « divisible ? » avec ce score GÉOMÉTRIQUE
+  (`_division` : « CANDIDATE, facilité N/100, lot ~X m² — pas un feu vert », doctrine réglementaire >
+  géométrique préservée). **Restes du chantier** : (1) `module_division` est un gisement **admin figé**,
+  23/24 communes → automatiser le `compute` dans le pipeline de run + la 24ᵉ commune ; (2) une **porte
+  fiche→Division** par IDU devient possible (le score existe) — à décider ; (3) exposer aussi le lot
+  détachable dessiné (lot_geom) sur la fiche.
+
+## Renvois M82 (chantiers différés — arbitrage/décision Vic)
+- **Option de tri — sous-groupe « Activité de construction » (si le seau « Comprendre le marché »
+  déborde).** Le tri M82 met 10 outils dans « Comprendre le marché » (le plus gros groupe). Si à l'usage
+  il devient trop long à l'écran, en détacher un sous-groupe **« Activité de construction »** = Radar
+  permis · Vélocité admin · Promesses mortes (le triptyque « qui construit · à quel rythme · quels
+  ratés »). À décider à l'usage — pas prioritaire (Vic).
+- **Réactiver « Matching promoteurs » (retiré M82).** L'outil a été retiré (démo : 2 profils `demo=t`,
+  0 match jamais produit, création de profil gelée admin → boucle d'alerte morte). Pour le faire vivre, il
+  faut : (1) des **profils RÉELS compte-scopés** (lever le gate admin, rattacher au compte utilisateur —
+  dépend du chantier Auth & Plans) ; (2) la **vraie boucle d'alerte** — `match_run` cronné qui produit des
+  `event_log kind='match'` à chaque bascule + poussée à la cloche/au digest (dépend du chantier
+  notifications). Tant que ces deux briques n'existent pas, l'outil reste hors registre. Le composant
+  M19/`PromoteursActifs` (bloc SITADEL réel + allumage carte) est conservé en code, réutilisable.
+- **Courrier propriétaire — DÉCISION PRISE (Vic) : OPTION B, génération seule.** Livré M82 : la route
+  `/courrier/demande` + le journal de statut + la table dead-letter `courrier_demandes` sont RETIRÉS ;
+  l'outil ne fait plus que **générer le courrier, téléchargeable en PDF** (`/courrier/pdf`) — le client
+  l'envoie lui-même. Zéro promesse d'envoi ou de traitement.
+  - **Réouverture OPTION A — quand un client le demandera.** Le canal d'envoi prestataire
+    (`/courrier/envois`, `courrier.envoyer`, provider Merci Facteur) reste **DORMANT en code**. Pour le
+    rouvrir : ouvrir le compte prestataire PRO (`LABUSE_MERCIFACTEUR_API_KEY/SECRET`, action commerciale) +
+    un écran ops qui LIT et traite réellement les demandes + le process humain. **Ordre de grandeur :
+    2-3 j dev + compte prestataire + engagement de traitement.** À ne rouvrir que sur demande client.
+  - Nettoyage optionnel : dropper la table physique `courrier_demandes` (~2 lignes, plus aucune écriture).
 
 ## Mandat séparé — unifier calcPrefill → parcelPrefill (issu de M-ENTREE)
 - **M-ENTREE a introduit `parcelPrefill` (store)** : motif partagé d'amorçage parcelle (un champ, plusieurs

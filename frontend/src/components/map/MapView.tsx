@@ -271,7 +271,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module, comparePicking } = useApp()
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Les couleurs d'OPINION (palette tiers, lisérés promues/brûlantes, marqueurs « chauds »)
@@ -504,7 +504,7 @@ export function MapView() {
       // violet et bien visibles, uniquement quand l'outil est actif (sinon la carte outils est
       // quasi vide et on ne voit pas quoi cliquer). Aucun impact hors assemblage.
       m.addLayer({ id: 'ile-pick', type: 'line', ...SL, layout: { visibility: 'none' },
-        paint: { 'line-color': '#B497F0', 'line-width': 0.8, 'line-opacity': 0.85 } })
+        paint: { 'line-color': '#4ADE80', 'line-width': 0.8, 'line-opacity': 0.85 } })
       // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
       // (prochain build-mvt) ; d'ici là text-field vide = aucun rendu, rien ne casse
       m.addLayer({
@@ -530,16 +530,16 @@ export function MapView() {
       // calques MODULE (violet) : surlignage de parcelles + géométries propres (lots, permis)
       m.addSource('module-extra', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'module-hl', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''],
-        paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
+        paint: { 'line-color': '#4ADE80', 'line-width': 1.6, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'ile-hl', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
         layout: { visibility: 'none' }, filter: ['==', ['get', 'idu'], ''],
-        paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
+        paint: { 'line-color': '#4ADE80', 'line-width': 1.6, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'lot'],
-        paint: { 'line-color': '#B497F0', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
+        paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'permis'],
-        paint: { 'circle-radius': 4, 'circle-color': '#B497F0', 'circle-opacity': 0.85,
+        paint: { 'circle-radius': 4, 'circle-color': '#4ADE80', 'circle-opacity': 0.85,
                  'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
 
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
@@ -603,6 +603,10 @@ export function MapView() {
           const st = useApp.getState()
           if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
             st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
+            return
+          }
+          if (st.comparePicking) {                       // M82 : le clic ajoute à la comparaison (max 3)
+            st.addToCompare(idu)
             return
           }
           // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
@@ -778,7 +782,7 @@ export function MapView() {
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
     // M15 A1 : couche de picking Assemblage — contours violets visibles seulement quand l'outil est actif
-    m.setLayoutProperty('ile-pick', 'visibility', vis(module === 'assemblage' && ile))
+    m.setLayoutProperty('ile-pick', 'visibility', vis((module === 'assemblage' || comparePicking) && ile))
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
     m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
@@ -852,7 +856,7 @@ export function MapView() {
     // M64-P1 (A) : `basemap` dans les deps — au changement de thème, cet effet (seul à connaître le
     // mode zonage/opinion/factuel/neutre) se ré-exécute et RE-POSE la bonne fill-color des parcelles.
     // Corrige la teinte rouge/brune au boot : la couleur des parcelles n'appartient plus à applyTheme.
-  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, resultIdus, basemap])
+  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
@@ -864,7 +868,7 @@ export function MapView() {
     const active = !!iaRestitution
     for (const id of ['parcels-line', 'ile-line']) {
       if (!m.getLayer(id)) continue
-      m.setPaintProperty(id, 'line-color', active ? '#B497F0' : STATUS_COLOR)
+      m.setPaintProperty(id, 'line-color', active ? '#4ADE80' : STATUS_COLOR)
       m.setPaintProperty(id, 'line-width', active ? 2 : 0.6)
       m.setPaintProperty(id, 'line-opacity', active ? 1 : 0.9)
     }

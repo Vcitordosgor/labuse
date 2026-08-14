@@ -224,6 +224,36 @@ def recherche_web(db: Session, *, question: str) -> ToolResult:
                       source="web")
 
 
+# ───────────────────────── divisibilite (M82 cas A) ─────────────────────────
+def divisibilite(db: Session, *, idu: str) -> ToolResult:
+    """Facilité GÉOMÉTRIQUE de détachement d'un lot (score `module_division` précalculé, LOOKUP par IDU) —
+    JAMAIS un verdict réglementaire de divisibilité (le règlement de zone fait foi). Le calcul existe déjà
+    (M82) : aucun recalcul, aucun nouvel endpoint — une lecture de la table par idu."""
+    from sqlalchemy import text as _text
+    idu = (idu or "").strip()
+    if len(idu) != 14:
+        return ToolResult("divisibilite", ok=False, refus=f"IDU invalide : « {idu} »")
+    row = db.execute(_text(
+        "SELECT score, round(surface_m2) AS surface_m2, round(lot_area_m2) AS lot_estime_m2, "
+        "zone, acces_voirie FROM module_division WHERE idu = :i LIMIT 1"), {"i": idu}).mappings().first()
+    if not row:
+        # « Non repérée comme candidate » ≠ « non divisible » — on le DIT, le réglementaire fait foi.
+        return ToolResult("divisibilite", ok=True, valeur=None, data={"idu": idu, "candidate": False},
+                          source="cadastre (analyse géométrique)", partiel=True,
+                          reserve="Parcelle NON repérée comme candidate à la division (hors critères "
+                                  "géométriques : surface 600-5000 m², peu bâtie, emprise modérée, zone U — "
+                                  "ou commune non couverte). Ce n'est PAS un « non divisible » : la "
+                                  "divisibilité réglementaire dépend du règlement de zone, qui fait foi.")
+    return ToolResult("divisibilite", valeur=row["score"],
+                      data={"idu": idu, "candidate": True, "score": row["score"],
+                            "lot_estime_m2": row["lot_estime_m2"], "surface_m2": row["surface_m2"],
+                            "zone": row["zone"], "acces_voirie": row["acces_voirie"]},
+                      source="cadastre (analyse géométrique)", partiel=True,
+                      reserve="Score de FACILITÉ GÉOMÉTRIQUE de détachement (place libre, forme, accès) sur "
+                              "100 — PAS un verdict de divisibilité réglementaire. Le lot est estimé. Le "
+                              "règlement de zone (surface minimale, accès, emprise, réseaux) fait foi.")
+
+
 # Registre nom → fonction (l'exécuteur du serveur ; le modèle choisit le NOM, jamais le SQL).
 OUTILS = {
     "compter_parcelles": compter_parcelles,
@@ -232,5 +262,6 @@ OUTILS = {
     "stats_commune": stats_commune,
     "delais_instruction": delais_instruction,
     "marche": marche,
+    "divisibilite": divisibilite,
     "recherche_web": recherche_web,
 }

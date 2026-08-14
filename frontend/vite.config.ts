@@ -46,6 +46,12 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // (même origine FastAPI). ⚠ TRAIN 8 : si la prod passe par Caddy, ces mêmes préfixes doivent y être
   // routés vers l'API (cf. RAPPORT_M55N — liste exhaustive des routes hors-`/parcels`).
   '/anti-fiche',
+  // M82 : SEPT routes d'OUTILS manquaient au proxy dev → 404 en `npm run dev`, d'où les états
+  // « indisponible » / « non calculé » que la recette a pris pour des outils morts. La donnée et les
+  // routes sont SAINES (audit M82, SQL vérifié) ; c'était un trou de proxy dev, même famille que /bilan
+  // (M58) et /anti-fiche (M55-N). Prod OK (même origine FastAPI). ⚠ TRAIN 8 Caddy : à router aussi.
+  '/servitudes-invisibles', '/comparateur-communes', '/carnet-secteur', '/renouvellement',
+  '/scoreur-adresse', '/verif-procedure', '/plu-annuaire',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

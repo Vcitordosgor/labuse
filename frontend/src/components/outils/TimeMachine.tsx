@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
-import { getParcelsGeojson } from '../../lib/api'
+import { getParcelsGeojson, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
 
@@ -78,6 +78,12 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     }
     past.on('move', sync(past, now))
     now.on('move', sync(now, past))
+    // M82 (refonte) — CLIC CARTE = désigner la parcelle : parcelAt(point)→idu→parcelPrefill (motif
+    // M-ENTREE, pas un nouveau mécanisme). Le bandeau M08 consomme parcelPrefill et recentre.
+    const onPick = (e: maplibregl.MapMouseEvent) => {
+      parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => { if (r.idu) useApp.getState().setParcelPrefill(r.idu) }).catch(() => {})
+    }
+    past.on('click', onPick); now.on('click', onPick)
     const addParcels = (m: maplibregl.Map) => m.on('load', () => {
       m.addSource('p', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
       m.addLayer({ id: 'p', type: 'line', source: 'p',
@@ -89,6 +95,13 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     return () => { past.remove(); now.remove(); maps.current = null }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // M82 (refonte) — recentrer sur la parcelle désignée après le montage (le bandeau M08 pose flyTo
+  // → center change ; l'init ne s'exécute qu'une fois). jumpTo l'une → la synchro recadre l'autre.
+  useEffect(() => {
+    if (!center) return
+    for (const m of maps.current ?? []) m.jumpTo({ center, zoom: 17 })
+  }, [center])
 
   // Fond de gauche / de droite : posés au montage, ré-échangés sur place si le choix change.
   useEffect(() => {
