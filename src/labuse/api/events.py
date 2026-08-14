@@ -897,18 +897,20 @@ def _mes_communes(db: Session, cid: int | None) -> list[str]:
     return [r[0] for r in rows]
 
 
-def _digest_data(db: Session, cid: int | None = None) -> dict:
-    # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici — il est borné
-    # en résumé plus bas ; jamais la liste exhaustive du marché dans un digest).
+def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
+    # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici). M85-B : fenêtre
+    # paramétrable (J-1 pour le digest quotidien du matin). ORDRE (hiérarchie du mandant) : la MUTATION
+    # d'abord (événement majeur), puis les autres changements de parcelle SUIVIE, puis les veilles de zone.
     events = db.execute(text("""
-        SELECT e.kind, e.idu, e.titre, e.detail, e.demo, d.q_score, d.a_score, d.matrice_statut
+        SELECT e.kind, e.idu, e.titre, e.detail, e.demo, e.source, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE e.ts >= now() - interval '7 days'
+        WHERE e.ts >= now() - make_interval(days => :jours)
           AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
-        ORDER BY (e.kind = 'bascule') DESC, d.q_score DESC NULLS LAST LIMIT 10"""),
-        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
+        ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
+                 e.ts DESC NULLS LAST LIMIT 20"""),
+        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -1050,8 +1052,9 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     from ..mail import send_email
 
     interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
+    fenetre_jours = 1 if freq == "quotidien" else 7      # M85-B — J-1 pour le digest du matin
     now = datetime.now(timezone.utc)
-    periode = "aujourd'hui" if freq == "quotidien" else "cette semaine"
+    periode = "hier" if freq == "quotidien" else "cette semaine"
     # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
     # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
     # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
@@ -1088,7 +1091,7 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
             ignores += 1
             _note(cid, email, "ignoré", f"anti-double-envoi (dernier digest {last:%Y-%m-%d %H:%M} UTC)")
             continue
-        data = _digest_data(db, cid)
+        data = _digest_data(db, cid, jours=fenetre_jours)   # M85-B — fenêtre J-1 pour le quotidien
         # FILTRE par préférence e-mail PAR TYPE (registre) : un type dont l'e-mail est coupé n'entre pas.
         evs = [e for e in data["evenements"]
                if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
