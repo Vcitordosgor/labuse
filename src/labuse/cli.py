@@ -1909,6 +1909,22 @@ def notif_test_cmd(compte: int = typer.Option(None, help="compte_id destinataire
                if nid else "• Déjà créée aujourd'hui (dédup) — aucune nouvelle ligne.")
 
 
+@app.command("evaluer-suivis")
+def evaluer_suivis_cmd() -> None:
+    """M85-B — évalue les PARCELLES SUIVIES : changements SUR la parcelle (mutation, permis, BODACC,
+    zonage) → notifications typées parcelle_suivie. À appeler après l'ingestion. Zéro modèle, dédup."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, evaluer_suivis
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        out = evaluer_suivis(s)
+        s.commit()
+    typer.echo(f"✓ Suivis évalués : {out}")
+
+
 @app.command("notifier-fraicheur")
 def notifier_fraicheur_cmd() -> None:
     """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À

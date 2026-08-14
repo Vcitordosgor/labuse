@@ -260,6 +260,9 @@ interface AppState {
   veillesOpen: boolean
   toggleVeilles: () => void
   setVeillesOpen: (v: boolean) => void
+  // M85-B — panneau « Suivis » (les parcelles suivies + date du dernier changement).
+  suivisOpen: boolean
+  toggleSuivis: () => void
   // M54-EXPO-3 A8 — comparateur : 2 à 3 parcelles côte à côte (GET /compare). Sélection cumulative
   // depuis la fiche (« Comparer ») et la shortlist ; panneau en surimpression.
   compareIdus: string[]
@@ -460,7 +463,10 @@ export const useApp = create<AppState>((set) => ({
     parcours: null, openProjet: null }),
   veillesOpen: false,
   setVeillesOpen: (v) => set({ veillesOpen: v }),
-  toggleVeilles: () => set((s) => ({ veillesOpen: !s.veillesOpen, view: 'cartes' })),
+  toggleVeilles: () => set((s) => ({ veillesOpen: !s.veillesOpen, view: 'cartes', suivisOpen: false })),
+  // M85-B — « Suivis » : liste des parcelles suivies (exclusif du panneau Secteurs).
+  suivisOpen: false,
+  toggleSuivis: () => set((s) => ({ suivisOpen: !s.suivisOpen, view: 'cartes', veillesOpen: false })),
   compareIdus: [],
   compareOpen: false,
   addToCompare: (idu) => set((s) => ({

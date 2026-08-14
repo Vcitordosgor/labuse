@@ -10,4 +10,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/notifications /etc/cron.d/notifications
 SHELL=/bin/sh
-0 3 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse evaluer-veilles >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse notifier-fraicheur >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse purge-notifications >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse digest --freq quotidien >> /var/log/labuse/notifications.log 2>&1
+0 3 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse evaluer-suivis >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse evaluer-veilles >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse notifier-fraicheur >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse purge-notifications >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse digest --freq quotidien >> /var/log/labuse/notifications.log 2>&1

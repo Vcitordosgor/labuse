@@ -260,6 +260,81 @@ def _cloche_filter_sql(prefs: dict) -> str:
     return (" AND " + " AND ".join(excl)) if excl else ""
 
 
+# ─────────────── M85-B · le SUIVI DE PARCELLE (producteur unique, SQL, ZÉRO modèle) ───────────────
+# La règle du mandant : « ma parcelle a changé » dit MA parcelle (maille stricte, jamais le secteur —
+# le secteur, c'est les veilles de zone). Cinq changements, avec une HIÉRARCHIE :
+#   · MUTATION (vente) = l'événement MAJEUR → libellé distinct, en tête ;
+#   · BASCULE DE TIER = NOTRE verdict qui change (pas un fait du monde) → formulé comme tel, et
+#     seulement les bascules significatives (vers/depuis chaude|brûlante) [traitée dans detect_events] ;
+#   · PERMIS, MUTATION, BODACC détectés ICI à chaque ingestion ; ZONAGE par comparaison d'empreinte.
+# Dédup par ÉVÉNEMENT (un permis/mutation donné notifie une fois) ; fenêtre = après la pose du suivi
+# (pas de backfill). Type de registre : `parcelle_suivie`.
+SUIVIS_MAX = 50   # plafond de parcelles suivies par compte (config M85-B)
+
+
+def _ensure_suivi_cols(db: Session) -> None:
+    db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS zone_snap varchar(64)"))
+
+
+def evaluer_suivis(db: Session) -> dict:
+    """Pour chaque parcelle suivie, détecte les changements SUR elle depuis la pose du suivi et crée des
+    notifications typées `parcelle_suivie` (dédupliquées par événement). Cronable (à chaque ingestion).
+    ZÉRO modèle. Retourne le compte par catégorie."""
+    _ensure_suivi_cols(db)
+    court = lambda idu: idu[8:] if idu and len(idu) > 8 else idu   # noqa: E731 — libellé court
+    suivis = db.execute(text(
+        "SELECT idu, compte_id, created_at, zone_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
+    out = {"mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+    for s in suivis:
+        idu, cid, depuis = s["idu"], s["compte_id"], s["created_at"]
+        # 1) MUTATION (vente) — l'événement majeur, libellé distinct « Vente ».
+        for m in db.execute(text(
+                "SELECT id_mutation, date_mutation, valeur_fonciere, nature_mutation "
+                "FROM dvf_mutations_parcelle WHERE id_parcelle = :idu AND date_mutation >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            prix = f" — {int(m['valeur_fonciere']):,} €".replace(",", " ") if m["valeur_fonciere"] else ""
+            out["mutation"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Mutation", idu=idu,
+                titre=f"Vente : votre parcelle {court(idu)} a changé de mains",
+                detail=f"Mutation du {m['date_mutation']}{prix} ({m['nature_mutation'] or 'vente'}).",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:mut:{idu}:{m['id_mutation']}") else 0
+        # 2) PERMIS SUR la parcelle (idu_codes contient l'idu) — jamais la proximité (secteur = veille).
+        for p in db.execute(text(
+                "SELECT permit_id, type, date_depot FROM sitadel_permits "
+                "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND date_depot >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            out["permis"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Permis", idu=idu,
+                titre=f"Nouveau permis sur votre parcelle {court(idu)}",
+                detail=f"{p['type']} {p['permit_id']} déposé le {p['date_depot']}.",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:permis:{idu}:{p['permit_id']}") else 0
+        # 3) BODACC sur le propriétaire (personne morale) de la parcelle.
+        for b in db.execute(text(
+                "SELECT bp.annonce_id, bp.type_procedure, bp.date_annonce, pm.denomination "
+                "FROM parcelle_personne_morale pm JOIN bodacc_procedures bp ON bp.siren = pm.siren "
+                "WHERE pm.idu = :idu AND pm.siren IS NOT NULL AND bp.date_annonce >= :d"),
+                {"idu": idu, "d": depuis}).mappings():
+            out["bodacc"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="BODACC", idu=idu,
+                titre=f"Procédure sur le propriétaire de {court(idu)}",
+                detail=f"{b['type_procedure']} publiée le {b['date_annonce']} — {b['denomination'] or 'propriétaire'}.",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
+        # 4) ZONAGE — comparaison d'empreinte (le zonage n'a pas de date ; on compare au dernier vu).
+        zone = db.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :idu"),
+                          {"idu": idu}).scalar()
+        snap = s["zone_snap"]
+        if zone is not None and snap is not None and zone != snap:
+            out["zonage"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Zonage", idu=idu,
+                titre=f"Changement de zonage sur votre parcelle {court(idu)}",
+                detail=f"Le zonage PLU est passé de « {snap} » à « {zone} ».",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:zone:{idu}:{zone}") else 0
+        if zone is not None and zone != snap:                # mémorise l'empreinte courante
+            db.execute(text("UPDATE watched_parcels SET zone_snap = :z WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
+                       {"z": zone, "idu": idu, "c": cid})
+    return out
+
+
 # ───────────────────────── détection (le job cronable) ─────────────────────────
 
 def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -> dict:
@@ -308,34 +383,30 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
     # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
     _veilles_match(db, run_to, demo)
 
-    # 3. nouveau permis proche (≤ 300 m) d'une parcelle SUIVIE (pipeline + watched) — permis
-    # récents relativement à la fin des données Sitadel (12 derniers mois de données).
-    # CLOISON : l'événement appartient au COMPTE qui suit la parcelle (une même parcelle suivie
-    # par A et B produit un événement pour chacun, jamais partagé).
+    # 3. M85-B — BASCULE DE TIER sur une parcelle SUIVIE = NOTRE VERDICT qui change (jamais un fait du
+    # monde réel). Seulement les bascules SIGNIFICATIVES (vers/depuis 'chaude', le tier prioritaire).
+    # REMPLACE l'ancien bloc « permis ≤ 300 m » : la proximité est un fait de SECTEUR, pas de parcelle —
+    # c'est ce que couvrent les veilles de zone. « Permis à proximité » (opt-in, rayon choisi) → BACKLOG.
+    # Les changements SUR la parcelle (permis/mutation/BODACC/zonage) sont produits par evaluer_suivis
+    # à chaque ingestion — ici, uniquement le verdict de classement (qui dépend d'un diff de run).
     rows = db.execute(text("""
-        WITH suivies AS (
-          SELECT p.id, p.idu, p.geom_2975, pe.compte_id
-          FROM parcels p JOIN pipeline_entries pe ON pe.parcel_id = p.id
-          UNION
-          SELECT p.id, p.idu, p.geom_2975, w.compte_id
-          FROM parcels p JOIN watched_parcels w ON w.idu = p.idu
-        )
-        SELECT s.idu, s.compte_id, sp.permit_id, sp.type, sp.date::date::text AS date
-        FROM suivies s
-        JOIN sitadel_permits sp ON sp.geom IS NOT NULL
-          AND ST_DWithin(s.geom_2975, ST_Transform(sp.geom, 2975), 300)
-          AND sp.date >= (SELECT max(date) FROM sitadel_permits) - interval '12 months'"""),
-    ).mappings().all()
+        SELECT p.idu, w.compte_id, a.matrice_statut AS de, b.matrice_statut AS vers
+        FROM dryrun_parcel_evaluations a
+        JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
+        JOIN parcels p ON p.id = a.parcel_id
+        JOIN watched_parcels w ON w.idu = p.idu
+        WHERE a.run_label = :from AND a.matrice_statut <> b.matrice_statut
+          AND 'chaude' IN (a.matrice_statut, b.matrice_statut)"""),
+        {"from": run_from, "to": run_to}).mappings().all()
     for r in rows:
-        n = db.execute(text("""
-            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo, compte_id)
-            SELECT 'permis', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean), :cid
-            WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='permis' AND idu=:idu AND detail=:detail
-                              AND compte_id IS NOT DISTINCT FROM :cid)"""),
-            {"idu": r["idu"], "titre": f"Permis {r['type']} à ≤ 300 m de {r['idu'][8:]}",
-             "detail": f"{r['permit_id']} du {r['date']} — le secteur bouge autour d'une parcelle suivie.",
-             "from": run_from, "to": run_to, "demo": demo, "cid": r["compte_id"]}).rowcount
-        inserted["permis"] += n
+        sens = "montée en" if r["vers"] == "chaude" else "sortie de"
+        inserted["permis"] += creer_notification(
+            db, kind="parcelle_suivie", compte_id=r["compte_id"], source="Classement", idu=r["idu"],
+            titre=f"Le classement de votre parcelle {r['idu'][8:]} a évolué",
+            detail=("Suite à une mise à jour de NOS données, le classement est passé de "
+                    f"« {r['de']} » à « {r['vers']} » ({sens} tier prioritaire). Ce n'est pas un "
+                    "événement extérieur : c'est notre analyse qui a changé."),
+            lien=f"/socle/#parcelle={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo)
     db.flush()
     # M23-C : reprises de veille ÉCHUES → le MÊME canal que les veilles (event_log kind='veille',
     # cron detect-events existant) — jamais un second circuit de notification.
@@ -659,8 +730,31 @@ def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> d
         db.execute(text("DELETE FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                    {"i": idu, "cid": cid})
         return {"watched": False}
+    # M85-B — plafond de parcelles suivies par compte (config), garde-fou anti-emballement.
+    n = db.execute(text("SELECT count(*) FROM watched_parcels WHERE compte_id IS NOT DISTINCT FROM :cid"),
+                   {"cid": cid}).scalar() or 0
+    if n >= SUIVIS_MAX:
+        raise HTTPException(409, f"Plafond de {SUIVIS_MAX} parcelles suivies atteint — retirez-en une.")
     db.execute(text("INSERT INTO watched_parcels (idu, compte_id) VALUES (:i, :cid)"), {"i": idu, "cid": cid})
     return {"watched": True}
+
+
+@router.get("/suivis")
+def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
+    """M85-B — les parcelles SUIVIES du compte + la date du DERNIER changement détecté. Une parcelle
+    qui n'a jamais bougé le DIT (dernier_changement = null) — c'est une information, pas un vide."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    rows = db.execute(text("""
+        SELECT w.idu, w.created_at::date::text AS depuis, p.commune,
+               (SELECT max(e.ts)::date::text FROM event_log e
+                 WHERE e.idu = w.idu AND e.kind = 'parcelle_suivie'
+                   AND e.compte_id IS NOT DISTINCT FROM :cid) AS dernier_changement
+        FROM watched_parcels w LEFT JOIN parcels p ON p.idu = w.idu
+        WHERE w.compte_id IS NOT DISTINCT FROM :cid
+        ORDER BY dernier_changement DESC NULLS LAST, w.created_at DESC"""),
+        {"cid": cid}).mappings().all()
+    return {"suivis": [dict(r) for r in rows], "plafond": SUIVIS_MAX}
 
 
 # ── M11 — veilles (recherches sauvegardées) ──

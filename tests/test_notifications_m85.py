@@ -22,8 +22,16 @@ def _ensure(db):
                     "permit_id varchar(64), commune varchar(64), nature varchar(64), "
                     "date_depot date)"))
     db.execute(text("CREATE TABLE IF NOT EXISTS sitadel_permits ("
-                    "permit_id varchar(64), commune varchar(64), date_depot date, date date)"))
+                    "permit_id varchar(64), commune varchar(64), date_depot date, date date, "
+                    "type varchar(8), idu_codes jsonb)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS dvf_mutations_parcelle ("
+                    "id_mutation varchar(32), id_parcelle varchar(14), date_mutation date, "
+                    "valeur_fonciere numeric, nature_mutation varchar(32))"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS parcelle_personne_morale (idu varchar(14), siren varchar(9), denomination text)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS bodacc_procedures (annonce_id varchar(32), siren varchar(9), type_procedure text, date_annonce date)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS parcel_zone_plu (idu varchar(14), zone_lib varchar(64))"))
     events._ensure_cols(db)
+    events._ensure_suivi_cols(db)
 
 
 @pytest.mark.db
@@ -156,6 +164,27 @@ def test_creer_notification_refuse_hors_registre(db_session):
     _ensure(db_session)
     with pytest.raises(ValueError):
         events.creer_notification(db_session, kind="campagne_bidon", titre="spam")
+
+
+@pytest.mark.db
+def test_chaine_suivi_parcelle_bout_en_bout(db_session):
+    """M85-B — suivre une parcelle → injecter un permis SUR elle → evaluer_suivis → notification
+    typée parcelle_suivie. Dédup : la ré-évaluation ne crée pas de doublon."""
+    _ensure(db_session)
+    idu = "97411000AB0001"
+    db_session.execute(text("DELETE FROM event_log WHERE idu=:i"), {"i": idu})
+    db_session.execute(text("INSERT INTO watched_parcels (idu, compte_id, created_at) VALUES (:i, NULL, now()-interval '1 day')"), {"i": idu})
+    db_session.execute(text("INSERT INTO sitadel_permits (permit_id, type, idu_codes, date_depot) "
+                            "VALUES ('PC-X','PC', to_jsonb(ARRAY[:i]), now()::date)"), {"i": idu})
+    out = events.evaluer_suivis(db_session)
+    assert out["permis"] == 1
+    rows = db_session.execute(text("SELECT titre, source, kind FROM event_log WHERE idu=:i AND kind='parcelle_suivie'"),
+                              {"i": idu}).mappings().all()
+    assert len(rows) == 1 and rows[0]["source"] == "Permis"
+    events.evaluer_suivis(db_session)                     # ré-éval → dédup
+    n = db_session.execute(text("SELECT count(*) FROM event_log WHERE idu=:i AND kind='parcelle_suivie'"),
+                           {"i": idu}).scalar()
+    assert n == 1                                         # aucun doublon
 
 
 @pytest.mark.db
