@@ -603,7 +603,7 @@ def list_events(request: Request, unread_only: bool = False, limit: int = 100, o
     cf = _cloche_filter_sql(prefs_compte(db, cid))
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
-               e.demo, e.source, e.lien,
+               e.demo, e.source, e.lien, p.commune AS commune,
                {_seen('e')} AS lu,
                d.matrice_statut AS statut
         FROM event_log e
