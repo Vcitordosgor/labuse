@@ -53,32 +53,12 @@ def courrier_envoyer(body: EnvoiIn, request: Request, db: Session = Depends(get_
         raise HTTPException(422, str(exc))
 
 
-class DemandeIn(BaseModel):
-    idu: str | None = None
-    motif: str = "standard"
-    texte: str = Field(min_length=10, max_length=8000)
-
-
-@router.post("/demande")
-def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Enregistre une DEMANDE d'envoi (pas un envoi auto) — l'équipe LABUSE la traite et revient
-    vers l'utilisateur. Aucune identité de propriétaire n'est stockée (le texte est adressé
-    génériquement ; l'identification passe par le workflow SPF/CERFA). Privacy respectée."""
-    from .protection import sujet_de
-    db.execute(text(
-        "CREATE TABLE IF NOT EXISTS courrier_demandes ("
-        "  id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(),"
-        "  sujet varchar(24) NOT NULL, idu varchar(14), motif varchar(24),"
-        "  texte text NOT NULL, statut varchar(16) NOT NULL DEFAULT 'a_traiter')"))
-    db.execute(text(
-        "INSERT INTO courrier_demandes (sujet, idu, motif, texte) VALUES (:s, :i, :m, :t)"),
-        {"s": sujet_de(request), "i": body.idu, "m": body.motif, "t": body.texte})
-    db.flush()
-    # M82 : message HONNÊTE — l'envoi postal automatique n'est pas branché. La demande est mise en
-    # file ; en attendant, le client télécharge son courrier (PDF) et l'envoie lui-même.
-    return {"ok": True,
-            "message": "Demande enregistrée. L'envoi postal automatique n'est pas encore actif — "
-                       "en attendant, téléchargez votre courrier ci-dessous et envoyez-le vous-même."}
+# M82 (option B, arbitrage Vic) — la route « /demande » et la table dead-letter `courrier_demandes`
+# ont été RETIRÉES : aucune promesse d'envoi ni de traitement (personne ne lisait la file). L'outil
+# ne fait plus que GÉNÉRER le courrier, téléchargeable en PDF (voir /pdf) — le client l'envoie lui-même.
+# Le canal d'envoi prestataire (/envois, courrier.envoyer) reste en code, DORMANT, pour rouvrir l'option
+# A quand un client le demandera. La table physique `courrier_demandes` (~2 lignes) peut être droppée
+# en maintenance ; plus aucune écriture ne la vise.
 
 
 class PdfIn(BaseModel):

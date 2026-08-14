@@ -175,8 +175,9 @@ export function Rail() {
         <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
           <div className="shrink-0 px-5 pb-2 pt-5">
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
+            {/* M82 : compte DYNAMIQUE (le nombre d'outils bouge) ; « métier » retiré (hors sujet). */}
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              Les moteurs métier de LABUSE.
+              {MODULES.length} outils fonciers, du repérage à l’action.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">

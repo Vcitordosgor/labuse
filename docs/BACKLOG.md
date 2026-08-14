@@ -365,20 +365,16 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   `event_log kind='match'` à chaque bascule + poussée à la cloche/au digest (dépend du chantier
   notifications). Tant que ces deux briques n'existent pas, l'outil reste hors registre. Le composant
   M19/`PromoteursActifs` (bloc SITADEL réel + allumage carte) est conservé en code, réutilisable.
-- **Courrier propriétaire — DÉCISION PRODUIT à trancher (chiffrage des 2 options).** Aujourd'hui (M82) :
-  l'outil dit la vérité en tête, génère un courrier **téléchargeable en PDF** (le client l'envoie
-  lui-même), et l'« enregistrement » n'ment plus. Reste LA décision sur l'envoi :
-  - **Option A — brancher un vrai traitement.** Un lecteur de `courrier_demandes` (UI ops/admin ou
-    notification) qui traite réellement + un prestataire postal branché (compte Merci Facteur PRO,
-    `LABUSE_MERCIFACTEUR_API_KEY/SECRET`). Chiffrage : ~1 écran ops (liste des demandes, marquage traité) +
-    l'intégration prestataire déjà codée (`courrier.envoyer`, provider) à activer + le coût récurrent
-    d'affranchissement/marge + l'engagement humain de traiter la file. **Ordre de grandeur : 2-3 j dev +
-    ouverture de compte prestataire (action commerciale) + process humain.**
-  - **Option B — n'offrir que la génération.** Retirer l'« enregistrement de demande » et la table
-    `courrier_demandes` (dead-letter), ne garder que la génération + le PDF téléchargeable. **Chiffrage :
-    ~0,5 j** (retirer le bouton + la route `/courrier/demande` + la table). Honnête, zéro promesse d'envoi.
-  - **Recommandation** : B maintenant (honnête, livrable), A quand le volume justifie l'ouverture du compte
-    prestataire et un process de traitement.
+- **Courrier propriétaire — DÉCISION PRISE (Vic) : OPTION B, génération seule.** Livré M82 : la route
+  `/courrier/demande` + le journal de statut + la table dead-letter `courrier_demandes` sont RETIRÉS ;
+  l'outil ne fait plus que **générer le courrier, téléchargeable en PDF** (`/courrier/pdf`) — le client
+  l'envoie lui-même. Zéro promesse d'envoi ou de traitement.
+  - **Réouverture OPTION A — quand un client le demandera.** Le canal d'envoi prestataire
+    (`/courrier/envois`, `courrier.envoyer`, provider Merci Facteur) reste **DORMANT en code**. Pour le
+    rouvrir : ouvrir le compte prestataire PRO (`LABUSE_MERCIFACTEUR_API_KEY/SECRET`, action commerciale) +
+    un écran ops qui LIT et traite réellement les demandes + le process humain. **Ordre de grandeur :
+    2-3 j dev + compte prestataire + engagement de traitement.** À ne rouvrir que sur demande client.
+  - Nettoyage optionnel : dropper la table physique `courrier_demandes` (~2 lignes, plus aucune écriture).
 
 ## Mandat séparé — unifier calcPrefill → parcelPrefill (issu de M-ENTREE)
 - **M-ENTREE a introduit `parcelPrefill` (store)** : motif partagé d'amorçage parcelle (un champ, plusieurs

@@ -569,10 +569,8 @@ export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
-export const courrierDemande = (body: { idu: string | null; motif: string; texte: string }) =>
-  j<{ ok: boolean; message: string }>('/courrier/demande', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-// M82 : le courrier généré, téléchargeable en PDF — le client l'envoie lui-même.
+// M82 (option B) : « /courrier/demande » retiré (aucune promesse d'envoi). Le courrier généré est
+// téléchargeable en PDF — le client l'envoie lui-même.
 export const courrierPdf = async (idu: string | null, motif: string, texte: string): Promise<void> => {
   const r = await fetch('/courrier/pdf', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif, texte }) })

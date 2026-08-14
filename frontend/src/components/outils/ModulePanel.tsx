@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierDemande, courrierPdf, getCommunes, getCourrierEnvois, getCourrierStatut, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierPdf, getCommunes, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
@@ -600,39 +600,6 @@ const MOTIFS: { key: string; label: string; desc: string }[] = [
 
 /** M54-EXPO-2 Volet C — statut prestataire courrier + journal des envois, affichés là où le
  *  module M09 vit. Rend visible ce que le silence cachait : provider actif et suivi des envois. */
-function CourrierStatutJournal() {
-  const st = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut })
-  const env = useQuery({ queryKey: ['courrier-envois'], queryFn: getCourrierEnvois })
-  const [open, setOpen] = useState(false)
-  const d = st.data
-  const rows = env.data?.envois ?? []
-  return (
-    <div data-courrier-statut className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
-      <div className="flex items-center gap-2 text-txt-mut">
-        <span className={`h-1.5 w-1.5 rounded-full ${d ? (d.disponible ? 'bg-mint' : 'bg-st-ecartee') : 'bg-line-2'}`} />
-        {d ? (d.disponible
-          ? <span>Envoi postal actif — prestataire <b className="text-txt">{d.provider}</b></span>
-          : <span title={d.raison ?? ''}>Envoi postal indisponible — <span className="text-txt-dim">demande guidée uniquement</span></span>)
-          : <span className="text-txt-dim">statut prestataire…</span>}
-        {rows.length > 0 && <button onClick={() => setOpen((o) => !o)} className="ml-auto text-mint hover:underline">Journal ({env.data?.n}) {open ? '▲' : '▼'}</button>}
-      </div>
-      {open && rows.length > 0 && (
-        <ul data-courrier-envois className="mt-2 flex flex-col gap-1 border-t border-line pt-2">
-          {rows.slice(0, 20).map((e) => (
-            <li key={e.id} className="flex items-center gap-2 text-[10.5px] text-txt-dim">
-              <span className="font-mono">{(e.ts || '').slice(0, 10)}</span>
-              {e.idu && <span className="font-mono text-txt-mut">{e.idu}</span>}
-              <span className="ml-auto rounded-full border border-line-2 px-1.5 text-txt-mut">{e.statut}</span>
-              {e.prix_eur != null && <span>{e.prix_eur} €</span>}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
-
 function M09() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const [step, setStep] = useState(1)
@@ -643,15 +610,10 @@ function M09() {
   useEffect(() => { if (selectedIdu && step === 1) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const [motif, setMotif] = useState('standard')
   const [texte, setTexte] = useState('')
-  const [done, setDone] = useState<string | null>(null)
   const [addrMsg, setAddrMsg] = useState<string | null>(null)  // M15-G : retour entrée « adresse »
   const gen = useMutation({
     mutationFn: () => modCourriers([idu.trim()], motif),
     onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
-  })
-  const envoi = useMutation({
-    mutationFn: () => courrierDemande({ idu: idu.trim() || null, motif, texte }),
-    onSuccess: (r) => setDone(r.message),
   })
   const [pdfBusy, setPdfBusy] = useState(false)
   const telecharger = async () => {
@@ -660,7 +622,7 @@ function M09() {
   }
   const Stepper = () => (
     <div className="flex items-center gap-1 text-[10px]">
-      {['Parcelle', 'Motif', 'Rédaction', 'Demande'].map((l, i) => (
+      {['Parcelle', 'Motif', 'Rédaction', 'Courrier'].map((l, i) => (
         <div key={l} className={`flex items-center gap-1 ${step === i + 1 ? 'text-mint' : step > i + 1 ? 'text-mint' : 'text-txt-dim'}`}>
           <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step === i + 1 ? 'border-mint' : step > i + 1 ? 'border-mint' : 'border-line-2'}`}>{step > i + 1 ? '✓' : i + 1}</span>
           {l}{i < 3 && <span className="text-txt-dim">›</span>}
@@ -668,28 +630,14 @@ function M09() {
       ))}
     </div>
   )
-  if (done) return (
-    <>
-      <Banner>Demande enregistrée.</Banner>
-      <div data-courrier-done className="rounded-xl border border-mint/40 bg-mint/[0.06] p-4 text-center">
-        <p className="text-[12px] leading-snug text-txt">✓ {done}</p>
-        <button data-courrier-pdf onClick={telecharger} disabled={pdfBusy || texte.trim().length < 10}
-          className="mt-3 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-          {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
-        <button onClick={() => { setDone(null); setStep(1); setIdu(''); setTexte('') }}
-          className="mt-2 block w-full text-[11px] text-txt-mut hover:text-txt">Nouvelle demande</button>
-      </div>
-    </>
-  )
   return (
     <>
-      {/* M82 : la VÉRITÉ, en tête, avant toute saisie. L'envoi postal automatique n'est pas branché ;
-           l'outil rédige un courrier à partir des faits vérifiés de la parcelle, téléchargeable en PDF. */}
+      {/* M82 (option B, arbitrage Vic) : l'outil GÉNÈRE le courrier, téléchargeable en PDF — le client
+           l'envoie lui-même. Aucune promesse d'envoi ni de traitement (le canal postal n'existe pas). */}
       <Banner>Cet outil <b>rédige votre courrier</b> (faits réels de la parcelle) — vous le
-        <b> téléchargez en PDF et l'envoyez vous-même</b>. L'envoi postal automatique n'est <b>pas encore
-        actif</b>. Adressage générique : aucune identité de propriétaire particulier (workflow SPF/CERFA).</Banner>
+        <b> téléchargez en PDF et l'envoyez vous-même</b>. Adressage générique : aucune identité de
+        propriétaire particulier (workflow SPF/CERFA).</Banner>
       <Stepper />
-      <CourrierStatutJournal />
 
       {step === 1 && (
         <div className="flex flex-col gap-2">
@@ -753,9 +701,8 @@ function M09() {
             {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
           <div className="flex gap-2">
             <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
-            <button data-courrier-envoyer onClick={() => envoi.mutate()} disabled={envoi.isPending}
-              className="flex-1 rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt disabled:opacity-40">
-              {envoi.isPending ? '…' : 'M\'enregistrer pour un envoi ultérieur'}</button>
+            <button onClick={() => { setStep(1); setIdu(''); setTexte('') }}
+              className="flex-1 rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">Nouveau courrier</button>
           </div>
         </div>
       )}
