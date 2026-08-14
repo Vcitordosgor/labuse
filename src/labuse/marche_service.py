@@ -51,6 +51,37 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
     raise ValueError(f"profil DVF inconnu : {profil!r}")
 
 
+# ── Comparables individuels (liste par vente) — M73-E, profil provisoire nommé (MANDAT_DVF) ───────
+COMPARABLES_PREMIUM = "comparables_premium"      # < 500 m / 3 ans, ventes bâties (surface ≥ 20)
+
+
+def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> dict:
+    """Liste des comparables DVF d'une parcelle — un point de lecture UNIQUE (aucun appel DVF hors
+    d'ici). SURFAÇAGE de données déjà en base (dvf_mutations), PAS un recalcul de prix : chaque vente
+    porte sa DATE, sa DISTANCE, sa SURFACE et son PRIX. Une vente à laquelle il manque l'un de ces
+    quatre est exclue par la requête (jamais un comparable à trous). Toujours un dict : `n` et `rayon_m`
+    sont dits, la liste peut être vide (« aucune vente comparable » → le document l'écrit). Paramètres
+    provisoires, nommés (cf. MANDAT_DVF)."""
+    rayon_m, fenetre_ans = (500.0, 3) if profil == COMPARABLES_PREMIUM else (500.0, 3)
+    rows = db.execute(text(
+        "WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu) "
+        "SELECT to_char(dm.date_mutation, 'YYYY-MM-DD') AS date, "
+        "  round(ST_Distance(ST_Transform(dm.geom, 2975), p.geom_2975))::int AS distance_m, "
+        "  round(dm.surface_reelle_bati)::int AS surface_m2, "
+        "  round(dm.valeur_fonciere)::int AS prix_eur, "
+        "  round(dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0))::int AS prix_m2 "
+        "FROM dvf_mutations dm, p "
+        "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
+        "  AND dm.date_mutation >= (CURRENT_DATE - make_interval(years => :ans)) "
+        "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
+        "  AND dm.surface_reelle_bati >= 20 "
+        "  AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r) "
+        "ORDER BY dm.date_mutation DESC LIMIT 12"),
+        {"idu": idu, "ans": fenetre_ans, "r": rayon_m}).mappings().all()
+    return {"rayon_m": int(rayon_m), "fenetre_ans": fenetre_ans,
+            "n": len(rows), "comparables": [dict(r) for r in rows]}
+
+
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:
     """Lecture des permis (SITADEL) d'une parcelle, par le point d'appel UNIQUE. `profil` = préset de
     paramètres nommé (provisoire, MANDAT_DVF). Délègue au calcul existant — aucun recalcul."""

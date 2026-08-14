@@ -2903,6 +2903,10 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     except Exception:  # noqa: BLE001
         pass
     fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
+    # M73-E Volet B — comparables DVF du premium via le point d'appel UNIQUE (jamais un appel DVF
+    # direct). Chaque vente porte date/distance/surface/prix ; n et rayon dits ; liste possiblement vide.
+    from .. import marche_service
+    fiche["comparables"] = marche_service.comparables(db, idu)
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",

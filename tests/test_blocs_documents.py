@@ -44,11 +44,19 @@ def test_anc_absent_est_affiche_jamais_vide():
 
 
 def test_rehab_absence_affichee_jamais_masquee():
-    # un zéro n'est pas une absence : sans potentiel, le bloc s'affiche quand même
+    # un zéro n'est pas une absence : le bloc s'affiche quand même (donnée manquante → Absent).
     h = rehab_bloc_html({"disponible": False})
-    assert h and "Non évaluée" in h
+    assert h and "Absent" in h
     h2 = rehab_bloc_html(None)
-    assert h2 and "Non évaluée" in h2
+    assert h2 and "Absent" in h2
+
+
+def test_rehab_hors_population_est_sans_objet():
+    # M73-E — hors population mode B (tier non déclassé-bâti) → « Sans objet » explicite, jamais masqué.
+    h = rehab_bloc_html({"disponible": False,
+                         "motif": "hors population mode B (réservé aux parcelles déclassées pour cause de bâti)"})
+    assert "Sans objet" in h and "pas déclassée pour cause de bâti" in h
+    assert "Non évaluée" not in h
 
 
 def test_rehab_trop_petit_dit_le_motif():
@@ -85,4 +93,4 @@ def test_parite_neutre_html_aucune_divergence():
 
 
 def test_rehab_neutre_jamais_none_absence_affichee():
-    assert rehab_bloc(None)["etat"] == "Non évaluée"        # jamais None, l'absence est un état
+    assert rehab_bloc(None)["etat"] == "Absent"             # jamais None, l'absence est un état affiché

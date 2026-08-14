@@ -518,6 +518,51 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
 
+    # ── M73-E Volet B — COMPARABLES DVF : la table du premium, via marche_service (aucun appel DVF
+    # direct). Chaque vente porte date/distance/surface/prix (requête les garantit) ; n + rayon dits ;
+    # liste vide → on l'écrit, jamais un tableau vide. Rappel de méthode sous le tableau.
+    cmp = fiche.get("comparables") or {}
+    lst = cmp.get("comparables") or []
+    if pdf.get_y() > pdf.h - 62:
+        pdf.add_page()
+    pdf.ln(2)
+    pdf.set_font("mono", size=7.5)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 5, f"COMPARABLES DVF — {cmp.get('n', 0)} VENTE(S) A MOINS DE {cmp.get('rayon_m', '?')} M "
+             f"({cmp.get('fenetre_ans', '?')} ANS)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_draw_color(*LINE)
+    pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+    pdf.ln(1.2)
+    if not lst:
+        pdf.set_font("inter", size=7.5)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.multi_cell(pdf.w - 28, 4, f"Aucune vente comparable dans le rayon retenu ({cmp.get('rayon_m', '?')} m).",
+                       new_x="LMARGIN", new_y="NEXT")
+    else:
+        cols = [("Date", 24), ("Distance", 20), ("Surface", 22), ("Prix", 30), ("€/m²", 22)]
+        pdf.set_x(14)
+        pdf.set_font("mono", size=6.5)
+        pdf.set_text_color(*TXT_DIM)
+        for lbl, w in cols:
+            pdf.cell(w, 4.4, lbl, new_x="RIGHT", new_y="TOP")
+        pdf.ln(4.4)
+        pdf.set_font("inter", size=7)
+        pdf.set_text_color(*TXT)
+        for c in lst:
+            pdf.set_x(14)
+            pdf.cell(24, 4.2, str(c.get("date") or "—"), new_x="RIGHT", new_y="TOP")
+            pdf.cell(20, 4.2, f"{c.get('distance_m')} m", new_x="RIGHT", new_y="TOP")
+            pdf.cell(22, 4.2, f"{c.get('surface_m2')} m²", new_x="RIGHT", new_y="TOP")
+            pdf.cell(30, 4.2, f"{c.get('prix_eur'):,} €".replace(",", " "), new_x="RIGHT", new_y="TOP")
+            pdf.cell(22, 4.2, str(c.get("prix_m2") or "—"), new_x="RIGHT", new_y="TOP")
+            pdf.ln(4.2)
+        pdf.ln(0.6)
+        pdf.set_font("inter", size=6.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.2, "Les ventes récentes mettent 1 à 3 ans à apparaître dans DVF : "
+                       "les niveaux les plus récents sont provisoires, le classement reste fiable.",
+                       new_x="LMARGIN", new_y="NEXT")
+
     # ── M73-D — ASSAINISSEMENT + RÉHABILITATION : la forme NEUTRE partagée (blocs_documents), dessinée
     # en fpdf. Le premium POSE le MÊME texte que les 4 weasyprint (aucune reformulation — c'est la
     # divergence que M73-C/D réparent). Jamais recalculé, jamais masqué (l'absence est un état).
