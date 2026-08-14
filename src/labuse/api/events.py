@@ -12,7 +12,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -944,8 +944,12 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                                             periode=periode, lien_prefs=lien_prefs)
         html = digest_html_email(evs, marche, data.get("top_chaudes", []), lien_desabo, lien_prefs,
                                  base_url=base_url, periode=periode)
+        # RFC 8058 — désinscription EN UN CLIC (mieux traitée par Gmail qu'un simple lien) : l'URL
+        # accepte le POST `List-Unsubscribe=One-Click`. AUCUN en-tête de campagne (X-Campaign, List-ID
+        # marketing…) : ce mail est TRANSACTIONNEL, pas une newsletter.
         res = send_email(email, sujet, corps, body_html=html,
-                         headers={"List-Unsubscribe": f"<{lien_desabo}>"})
+                         headers={"List-Unsubscribe": f"<{lien_desabo}>",
+                                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"})
         if res.ok:
             envoyes += 1
             _note(cid, email, "envoyé", f"{len(evs)} événement(s)" + (f" + {marche['total']} marché" if marche.get("total") else ""))
@@ -979,6 +983,17 @@ def desabonner(c: int, t: str, db: Session = Depends(get_db)) -> str:
             "<p>Vous ne recevrez plus d'e-mail LABUSE. Les notifications restent visibles dans "
             f"l'application. Vous pouvez <a href='{lien_prefs}' style='color:#1E9E58'>régler vos "
             "préférences par type</a> à tout moment.</p></body>")
+
+
+@router.post("/desabonner", include_in_schema=False)
+def desabonner_one_click(c: int, t: str, db: Session = Depends(get_db)) -> dict:
+    """RFC 8058 — désinscription EN UN CLIC : le fournisseur (Gmail…) POST sur cette URL, sans page de
+    confirmation. Même jeton que le GET. Réponse 200 minimale."""
+    if not _token_ok(db, c, t):
+        return JSONResponse({"ok": False}, status_code=400)
+    desabonner_email(db, c)
+    db.commit()
+    return {"ok": True}
 
 
 # ── M85 · les PRÉFÉRENCES par type et par canal ──

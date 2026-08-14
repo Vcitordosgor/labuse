@@ -287,3 +287,27 @@ tsc 0 · vitest 36/36 · build vert · pytest 141 passed (+10 tests M85) · **go
 console 0 erreur · gabarit HTML sans mauve/tracking vérifié · préférences par type/canal testées
 (défauts, override, désinscription, filtre cloche, fuseau UTC+4) · digest anti-double + vide testés.
 **NE PAS MERGER.** STOP — j'attends ton test d'envoi réel avant la Phase 3 (le brief du matin).
+
+## Correctifs post-test (retours de Vic)
+
+**Motif par compte** (« ignoré » muet interdit) : `envoyer_digests` renvoie `details[]`
+{compte, email, statut, motif}, imprimés par le CLI. `recipients` en LEFT JOIN → un compte actif sans
+titulaire n'est plus SILENCIEUSEMENT exclu (« pas d'adresse »). + CLI `notif-test` (notif e-mail-activée
+pour un compte → recevoir un vrai digest). + CLI `notif-test`, `evaluer-veilles`.
+
+**Garde-fou adresse placeholder** : jamais un envoi RÉEL vers une adresse factice (`test.com`,
+`example.*`, `labuse.test`, `ton-email@…`) — Brevo compterait l'envoi, le bounce dégraderait la
+réputation. Bloqué à l'expédition (motif explicite). Hygiène de fond (ne pas seeder d'actifs à adresse
+factice) → BACKLOG. Comptes de test repérés : 19 (placeholder) et 30 (résidu QA-M23).
+
+**Délivrabilité — Principale, pas Promotions** (le digest arrivait en Promotions Gmail) :
+- **Objet** factuel/transactionnel : « LABUSE — N changements sur vos suivis » (fini « nouveautés (période) »).
+- **Gabarit** refait SOBRE : texte dense, UNE colonne, aucune carte/ombre/bouton/en-tête coloré, une
+  action par ligne, vert #1E9E58 en accent de lien seul. Aucune image (déjà). Ressemble à une notif, pas
+  à une newsletter.
+- **En-têtes** : `List-Unsubscribe` passé en **One-Click RFC 8058** (`List-Unsubscribe-Post:
+  List-Unsubscribe=One-Click` + POST `/events/desabonner`) ; **aucun** en-tête de campagne.
+- **Brevo** : rester sur le **SMTP relay (transactionnel)**, jamais l'outil Campagnes — documenté dans
+  `DEPLOYMENT_OVH_VPS.md`.
+- Garde-fous : golden 119/119, pytest 11/11 (module notif), rendu vérifié (sans carte/image, objet OK,
+  POST one-click 200 coupe l'e-mail). **Reteste l'envoi** — dis-moi l'onglet Gmail obtenu.

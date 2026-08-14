@@ -77,11 +77,12 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
                       "Le détail est dans la cloche de l'application.")
     else:
         marche_txt = ""
-    # Sujet : reflète le contenu réel (perso prioritaire, sinon marché).
+    # Sujet FACTUEL / transactionnel (pas marketing : ni « nouveautés », ni parenthèse newsletter) —
+    # « 3 changements sur vos suivis » se lit comme une notification, pas comme une campagne.
     if n:
-        sujet = f"LABUSE — {n} nouveauté{'s' if n > 1 else ''} sur vos parcelles ({periode})"
+        sujet = f"LABUSE — {n} changement{'s' if n > 1 else ''} sur vos suivis"
     else:
-        sujet = f"LABUSE — {m_total} mouvement{'s' if m_total > 1 else ''} de marché ({periode})"
+        sujet = f"LABUSE — {m_total} mouvement{'s' if m_total > 1 else ''} de marché"
     lignes = []
     for e in evenements:
         idu = e.get("idu") or ""
@@ -113,46 +114,41 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
     return sujet, corps
 
 
-# ── M85 · gabarit HTML du digest (DA LABUSE : vert print #1E9E58 sur blanc, sobre) ──
+# ── M85 · gabarit HTML du digest — style TRANSACTIONNEL (boîte Principale, pas Promotions) ──
 def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: list[dict],
                       lien_desabo: str, lien_prefs: str, *, base_url: str = "",
                       periode: str = "aujourd'hui") -> str:
-    """Alternative HTML du digest. DA LABUSE : vert #1E9E58 sur blanc, wordmark (aucune image externe
-    → zéro tracking, rendu fiable partout ; le logo SVG est mal supporté en e-mail). Le texte reste
-    le repli (multipart/alternative)."""
+    """Alternative HTML du digest, volontairement SOBRE pour ressembler à une notification, pas à une
+    newsletter (Gmail classe le décoratif en Promotions) : texte dense, UNE colonne, aucune carte, aucun
+    gros bouton, pas d'en-tête coloré, une action par ligne. Aucune image externe (zéro tracking). Le
+    vert #1E9E58 ne sert QUE d'accent de lien. Le texte brut reste le repli (multipart/alternative)."""
     V = "#1E9E58"
-    ev_rows = "".join(
-        f"<tr><td style='padding:10px 16px;border-bottom:1px solid #eef2f0;font:14px sans-serif;color:#1a2b22'>"
-        f"<b>{(e.get('titre') or '')}</b>"
-        f"<div style='color:#667;font-size:12px;margin-top:2px'>{(e.get('detail') or '')}</div></td></tr>"
-        for e in evenements) or ("<tr><td style='padding:14px 16px;font:14px sans-serif;color:#667'>"
-                                 "Rien de nouveau sur vos parcelles suivies.</td></tr>")
+
+    def _ligne(titre: str, detail: str = "") -> str:
+        d = f" <span style='color:#555'>— {detail}</span>" if detail else ""
+        return f"<p style='margin:0 0 8px'>{titre}{d}</p>"
+
+    corps = "".join(_ligne(e.get("titre") or "", (e.get("detail") or "").replace("\n", " ").strip())
+                    for e in evenements)
     mr = marche or {}
-    marche_row = ""
     if mr.get("total"):
         cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
-                 if mr.get("dans_vos_communes") is not None else " sur l'île")
-        marche_row = (f"<tr><td style='padding:10px 16px;border-bottom:1px solid #eef2f0;"
-                      f"font:14px sans-serif;color:#1a2b22'>{mr['total']} mouvement(s) de marché{cadre}."
-                      f"<div style='color:#667;font-size:12px'>Le détail est dans la cloche.</div></td></tr>")
-    top_rows = "".join(
-        f"<tr><td style='padding:6px 16px;font:600 13px monospace;color:#1a2b22'>{(t.get('idu') or '')[8:]}</td>"
-        f"<td style='padding:6px;font:13px sans-serif;color:#445'>{t.get('commune') or ''} · "
-        f"{round(t.get('surface_m2') or 0)} m²</td></tr>"
-        for t in (top_chaudes or [])[:5])
-    top_bloc = (f"<p style='font:600 13px sans-serif;color:{V};margin:18px 16px 4px'>Les plus chaudes</p>"
-                f"<table style='width:100%;border-collapse:collapse'>{top_rows}</table>" if top_rows else "")
-    return (f"<!doctype html><html><body style=\"margin:0;background:#f4f7f5;padding:24px 0\">"
-            f"<table width=\"600\" align=\"center\" style=\"background:#fff;border-radius:14px;"
-            f"overflow:hidden;margin:auto;box-shadow:0 1px 4px rgba(0,0,0,.06)\">"
-            f"<tr><td style=\"padding:20px 24px;border-bottom:3px solid {V}\">"
-            f"<span style=\"font:800 18px sans-serif;color:{V};letter-spacing:.5px\">LABUSE</span>"
-            f"<span style=\"float:right;color:#889;font:12px sans-serif;padding-top:4px\">"
-            f"Votre point — {periode}</span></td></tr>"
-            f"<tr><td style=\"padding:14px 0 4px\"><table style=\"width:100%;border-collapse:collapse\">"
-            f"{ev_rows}{marche_row}</table>{top_bloc}</td></tr>"
-            f"<tr><td style=\"padding:16px 24px;border-top:1px solid #eef2f0;font:12px sans-serif;color:#889\">"
-            f"Vous recevez ce résumé parce que vous suivez des parcelles ou avez des veilles sur LABUSE.<br>"
-            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Régler mes préférences</a> · "
-            f"<a href=\"{lien_desabo}\" style=\"color:#889\">Me désinscrire</a></td></tr>"
-            f"</table></body></html>")
+                 if mr.get("dans_vos_communes") is not None else "")
+        corps += _ligne(f"{mr['total']} mouvement(s) de marché{cadre}", "détail dans l'application")
+    if not corps:
+        corps = "<p style='margin:0'>Rien de nouveau sur vos suivis.</p>"
+    top = ""
+    if top_chaudes:
+        items = "".join(f"<p style='margin:0 0 4px'>{(t.get('idu') or '')[8:]} — "
+                        f"{t.get('commune') or ''}, {round(t.get('surface_m2') or 0)} m²</p>"
+                        for t in top_chaudes[:5])
+        top = f"<p style='margin:16px 0 6px;font-weight:600'>Les plus chaudes</p>{items}"
+    return (f"<!doctype html><html><body style=\"margin:0;background:#ffffff;color:#1a1a1a;"
+            f"font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif\">"
+            f"<div style=\"max-width:600px;padding:20px\">"
+            f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point du jour</p>"
+            f"{corps}{top}"
+            f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">"
+            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Préférences</a> — choisir ce que vous recevez.<br>"
+            f"<a href=\"{lien_desabo}\" style=\"color:#888\">Se désinscrire des e-mails</a>.</p>"
+            f"</div></body></html>")

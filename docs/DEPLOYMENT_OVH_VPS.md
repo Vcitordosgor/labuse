@@ -380,6 +380,16 @@ DKIM** (`brevo1._domainkey`, `brevo2._domainkey`) fournis, et un **DMARC** (`_dm
 > **03:00 UTC** ; le code borne la fenêtre quotidienne avec `events.REUNION_TZ` (UTC+4 explicite) —
 > ni l'un ni l'autre n'hérite du fuseau de la machine (doctrine M85).
 
+**Délivrabilité — rester en boîte Principale, pas Promotions (M85)** : le digest est un mail
+**TRANSACTIONNEL**, pas une campagne. Deux points côté Brevo :
+- Utiliser le **canal transactionnel** = le **SMTP relay** (`smtp-relay.brevo.com`, ce que fait
+  `mail.py`), JAMAIS l'outil « Campagnes » de Brevo. Si le compte a une IP dédiée transactionnelle,
+  s'y rattacher. Le SMTP relay pose des en-têtes transactionnels ; les Campagnes posent des en-têtes
+  marketing (List-ID de campagne, Feedback-ID marketing) que Gmail classe en Promotions.
+- Côté code : objet **factuel** (« LABUSE — N changements sur vos suivis »), gabarit **sobre** (texte
+  dense, une colonne, sans carte ni bouton ni image), `List-Unsubscribe` en **One-Click (RFC 8058)** et
+  **aucun** en-tête de campagne. C'est déjà en place — ne rien rajouter qui « fasse newsletter ».
+
 Charge quotidienne cumulée : ~10 min ; pic hebdo (ban le 5, dpe le mardi) : ~30 min. Négligeable
 sur le VPS ; les fenêtres sont décalées la nuit pour ne pas se chevaucher.
 
