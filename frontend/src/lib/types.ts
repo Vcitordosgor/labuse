@@ -302,6 +302,8 @@ export interface Fiche {
   potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
+  // M86-B : assainissement (ANC / tout-à-l'égout) — Sourcé / Estimé (secteur IRIS) / Absent.
+  anc?: AncStatut | null
   gestionnaires?: Gestionnaires | null
   // M75 : obligation APER (ombrières PV, grand parking > 1 500 m²) — tiroir Urbanisme, information.
   // `note` = libellé client (point de calcul unique = mêmes mots que les exports).
@@ -396,6 +398,19 @@ export interface PotentielTransformation {
 }
 
 export interface ViaContribution { libelle: string; points: number; detail: string; signe: '+' | '−' | '·' }
+// M86-B — état ANC servi (point de calcul unique côté back). Trois états, jamais quatre.
+export interface AncStatut {
+  statut: 'source' | 'estime' | 'absent'
+  libelle: string
+  phrase: string
+  anc?: boolean            // pour Sourcé : true = ANC, false = collectif
+  commune?: string | null
+  source?: string
+  maille?: string
+  methode?: string
+  couverture?: { communes_avec_zonage: number; communes_total: number }
+}
+
 export interface Viabilisation {
   score: number
   band: 'confirmee' | 'probable' | 'incertaine' | 'lourde'

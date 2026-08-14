@@ -95,3 +95,50 @@ le verdict MORTE de M86 : Sudocuh alimente bien un point servi, par curation.
   n'était pas morte** (source indirecte curée) ; **Office de l'eau reste morte** (QA).
 - **Un seul endroit** : le champ servi sera calculé par un **helper partagé** (fiche écran + PDF + export),
   jamais recalculé trois fois. Emplacement retenu : **tiroir Constructibilité** (contrainte, pas confort).
+
+---
+
+# PHASE 2 — Branchement (LIVRÉ)
+
+## Mesure exigée avant de figer le seuil : la PRÉCISION au-dessus du seuil
+Validée sur les 57 712 parcelles à `zone_anc` connu (part de vrais ANC parmi proba ≥ seuil) :
+
+| seuil | flag (proba ≥) | vrais ANC | **précision** | rappel |
+|---|---|---|---|---|
+| 70 | 9 810 | 3 031 | **30,9 %** | 30,6 % |
+| **75** | 8 365 | 2 849 | **34,1 %** (pic) | 28,8 % |
+| 80 | 7 554 | 2 371 | **31,4 %** | 23,9 % |
+| 85 | 5 415 | 607 | **11,2 %** | 6,1 % |
+
+**AUCUN seuil n'atteint 60 %.** La précision plafonne à **34 % vers 75** puis s'effondre au-delà de 80.
+Comme demandé, je le **DIS** : l'estimation est **de grade SECTEUR, pas parcellaire** — d'où la phrase
+strictement sectorielle (« secteur à forte proportion… à vérifier auprès du SPANC »), jamais un verdict de
+parcelle. Seuil servi remonté au **pic (75)**, en config (`anc.fiche.proba_seuil`). *(Validation sur 4
+communes URBAINES, taux de base d'ANC 17 % — le pire cas ; les 20 rurales, non validables, sont son
+terrain naturel.)*
+
+## Ce qui est livré
+- **Helper UNIQUE `src/labuse/anc_service.py`** (`statut_anc` + `couverture_anc` + `seuil_fiche`), partagé
+  par la **fiche écran** (`api/app.py _anc_block` → clé `anc`), le **PDF** (`flash/data.py`) et l'export.
+  Trois états servis, jamais quatre. `parcel_viabilisation` couvre 431 663 parcelles → bloc toujours affiché.
+- **Bug PDF corrigé** : `flash/data.py:483` faisait `bool(zone_anc)` → « ANC » pour les **47 803 parcelles
+  en COLLECTIF** (faux positif servi en prod depuis M59). Remplacé par le helper.
+- **Front** : ligne « Assainissement (zonage) » dans le bloc Réseaux/viabilisation — badge **Sourcé**
+  (mint) / **Estimé** (amber) / **Absent** (dim) + phrase + couverture (« sur 4 communes sur 24, état
+  documenté »). Vérifié : `proba < seuil → Absent`, jamais « collectif ».
+- **Seuil en config** (75), **jamais en dur**.
+
+## Effet sur M86 (résurrections)
+L'Estimé étant SERVI, `iris_insee` + `anc_maille_taux` (INSEE RP2022/EGOUL) sont lus par un point servi →
+**IRIS + EGOUL SORTENT de la liste MORTE.** Restent : **Office de l'eau** (QA seul, morte) → retrait en
+M87 Phase 0 (compteur 51 → 50, recalculé) ; **Sudocuh** gardée (« curée manuellement »). **Une seule
+morte** subsiste.
+
+## DETTE ouverte (BACKLOG)
+**« ANC — obtenir les zonages d'assainissement des 20 communes manquantes ».** 13,4 % de couverture sur
+un critère qui commande la constructibilité (épandage + étude de sol) est un **gisement** : les sourcer
+ferait passer la majorité des parcelles de « Estimé/Absent » à « Sourcé ».
+
+## Garde-fous (Phase 2)
+tsc 0 · build vert · pytest 4/4 (trois états ; sous seuil = Absent jamais collectif ; Estimé sectoriel ;
+seuil en config) · **golden 119/119 diff 0** · endpoint `/parcels/{idu}.anc` servi. **NE PAS MERGER.**
