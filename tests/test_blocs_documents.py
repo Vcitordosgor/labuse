@@ -3,7 +3,8 @@ maille + millésime NOMMÉS, jamais un verdict, un taux bas (16 %) ne se lit pas
 l'absence de potentiel s'AFFICHE (jamais masquée)."""
 from __future__ import annotations
 
-from labuse.api.blocs_documents import anc_bloc_html, rehab_bloc_html
+from labuse.api.blocs_documents import (_bloc_html, anc_bloc, anc_bloc_html,
+                                        rehab_bloc, rehab_bloc_html)
 
 
 def _anc_secteur_16():
@@ -61,3 +62,27 @@ def test_rehab_disponible_rend_le_montant():
                          "surface_parcelle_m2": 420,
                          "terrain_nu": {"valeur_libelle": "63 000 €", "prix_m2": 150, "surface_m2": 420}})
     assert "180 000" in h and "63 000" in h and "Estimé" in h
+
+
+# ── M73-D : la forme NEUTRE (consommée par fpdf) et la PARITÉ avec le HTML ────────────────────────
+def test_forme_neutre_anc_porte_le_texte_et_les_etats():
+    b = anc_bloc(_anc_secteur_16())
+    assert b["statut"] == "source_secteur" and b["etat"] == "Sourcé secteur"
+    roles = {r for r, _ in b["lignes"]}
+    assert "maille" in roles and "phrase" in roles         # maille = ligne explicite, pas une note
+    # le premium fpdf itère ces lignes : le texte servi vit ICI, une fois.
+    assert any("RP2022" in t for _, t in b["lignes"])
+
+
+def test_parite_neutre_html_aucune_divergence():
+    # tout texte de la forme neutre se retrouve dans le HTML : les deux médias posent le MÊME texte.
+    for src in (anc_bloc(_anc_secteur_16()), rehab_bloc({"disponible": True,
+                "achat_max_libelle": "180 000 €", "terrain_nu": {"valeur_libelle": "63 000 €",
+                "prix_m2": 150, "surface_m2": 420}})):
+        h = _bloc_html(src)
+        for _, texte in src["lignes"]:
+            assert texte.split(" (INSEE")[0][:20] in h     # fragment stable présent des deux côtés
+
+
+def test_rehab_neutre_jamais_none_absence_affichee():
+    assert rehab_bloc(None)["etat"] == "Non évaluée"        # jamais None, l'absence est un état

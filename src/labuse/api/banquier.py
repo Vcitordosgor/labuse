@@ -184,6 +184,7 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
                          produit_sous_titre="DOSSIER BANQUIER · présentation financeur"),
                 bq.identite(out), bq.faisabilite(out),
                 bq.bilan(out), bq.comparables(out), bq.risques(out),
+                bq.assainissement_rehab(out),        # M73-D — ANC + réhab (rendu partagé, jamais masqué)
                 bq.limites_section("banquier")]      # M73 §5 — « Ce que ce document ne peut pas dire »
     # C7 : bandeau de contexte sur chaque page (produit · IDU — commune)
     pdf = bq.render_pdf(sections, LIBELLE, produit="Dossier banquier",
