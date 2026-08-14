@@ -106,8 +106,8 @@ def check_peremption(ack_motif: str | None = None) -> dict:
 
 
 # M32 Phase B §2 : cadence normée → jours attendus entre deux millésimes amont. Seuil d'alerte = ×2.
-_CADENCE_JOURS = {"hebdo": 7, "hebdomadaire": 7, "mensuel": 30, "trimestriel": 91,
-                  "semestriel": 182, "annuel": 365}
+# M84 — le barème de cadence est désormais UNIQUE (`fraicheur.CADENCE_JOURS`) : la garde de rebuild
+# (ici) et le statut live de la page Sources en découlent tous deux — plus de table à faire diverger.
 
 
 def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
@@ -119,7 +119,7 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
     Retourne la liste des retards constatés."""
     import datetime
 
-    from labuse.ingestion.fraicheur import DS_NAMES, SOURCES
+    from labuse.ingestion.fraicheur import CADENCE_JOURS, DS_NAMES, SOURCES
     # M-R (P2-fraîcheur) : la garde parcourt L'UNIVERS des couches fraîcheur (fraicheur.SOURCES),
     # plus « les lignes data_sources qui ont un source_cadence » (l'ancien filtre n'en voyait qu'UNE
     # — dvf — et affichait « tout va bien »). Chaque couche est CLASSÉE :
@@ -136,7 +136,7 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
         today = datetime.date.today()
         evaluees, retards, inconnues, non_bornables = 0, [], [], []
         for key, s in SOURCES.items():
-            jours = _CADENCE_JOURS.get((s.get("cadence_norme") or "").lower())
+            jours = CADENCE_JOURS.get((s.get("cadence_norme") or "").lower())
             if not jours:
                 non_bornables.append(key)
                 continue

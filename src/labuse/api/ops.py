@@ -82,10 +82,20 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
     # J+2 : la matrice de fraîcheur des SOURCES (dates de données, pas seulement les crons)
     #        + le compteur de réveil du badge DPE en réserve (visible dès qu'il bouge).
     sources = None
+    retards = None
     dpe_reveil = None
     try:
         from ..ingestion import fraicheur
         sources = fraicheur.etat_sources(db)
+        # M84 — le VERDICT de fraîcheur (statut dérivé de 2× cadence) : les seules sources réellement
+        # en retard. Champ FORT et visible (la sentinelle VPS et la page Sources le lisent) — mais SÉPARÉ
+        # du bit `ok` : `ok` = santé PROCESS/cron (un job mort, capté par la liveness `crons` ci-dessus,
+        # dégrade). Un retard amont CHRONIQUE (ex. DPE ~3 sem. côté ADEME) ne doit pas faire sonner en
+        # boucle la sonde uptime — il a sa propre sentinelle dédiée (`labuse check-fraicheur`, code 1).
+        # Cadences libres/annuelles jamais comptées (anti-faux-positif : DVF 226 j, Sudocuh 591 j…).
+        retards = [{"source": e["source"], "delta_jours": e["delta_donnee_jours"],
+                    "seuil_jours": e["seuil_jours"], "derniere_donnee": e["derniere_donnee"]}
+                   for e in sources if e.get("statut") == "en_retard"]
         import json as _json
         with db.begin_nested():   # table absente → savepoint, jamais une TX avortée
             raw = db.execute(text(
@@ -121,5 +131,5 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
                           "statut": "ok" if dernier else "jamais_vu"}
     except Exception:  # noqa: BLE001
         pass
-    return {"ok": not degrade, "crons": out, "sources": sources, "dpe_reveil": dpe_reveil,
-            "radar": radar, "stripe_webhook": stripe_webhook}
+    return {"ok": not degrade, "crons": out, "sources": sources, "retards": retards,
+            "dpe_reveil": dpe_reveil, "radar": radar, "stripe_webhook": stripe_webhook}

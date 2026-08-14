@@ -862,7 +862,7 @@ def ingest_georisques_cmd(
     import time
 
     from .connectors.georisques import GeorisquesConnector
-    from .ingestion import georisques_layers, layers_ingest
+    from .ingestion import fraicheur, georisques_layers, layers_ingest
     from .ingestion.run_all import REUNION_COMMUNES, _commune_bbox
 
     conn = GeorisquesConnector(throttle_s=throttle)
@@ -871,39 +871,42 @@ def ingest_georisques_cmd(
     t0 = time.time()
     tot: dict[str, int] = {k: 0 for k in api_kinds}
     tot["georisque_alea"] = 0
-    for insee, nom in targets:
-        with session_scope() as s:
-            has_api = s.execute(text(
-                "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind=ANY(:k)"),
-                {"c": nom, "k": api_kinds}).scalar()
-            if has_api and not force:
-                typer.echo(f"  ⏭ {nom} : couches API déjà là ({has_api}), sauté.")
-            else:
-                counts = georisques_layers.ingest_commune(s, insee, nom, connector=conn)
-                for k, v in counts.items():
-                    tot[k] += v
-                typer.echo(f"  ✓ {nom} API : {counts}")
-            if alea:
-                has_alea = s.execute(text(
-                    "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
-                    {"c": nom}).scalar()
-                if has_alea and not force:
-                    typer.echo(f"     aléas déjà là ({has_alea}), sauté.")
+    # M84 — trace ingestion_runs (running → ok | error) : un échec Géorisques devient VISIBLE (avant :
+    # aucune trace). Session de trace dédiée ; chaque commune garde sa session committée isolément.
+    with session_scope() as _trace, fraicheur.trace_ingestion(_trace, "974 (Géorisques)", fraicheur.DS_NAMES["georisques"]):
+        for insee, nom in targets:
+            with session_scope() as s:
+                has_api = s.execute(text(
+                    "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind=ANY(:k)"),
+                    {"c": nom, "k": api_kinds}).scalar()
+                if has_api and not force:
+                    typer.echo(f"  ⏭ {nom} : couches API déjà là ({has_api}), sauté.")
                 else:
-                    bbox = _commune_bbox(s, nom)
-                    if bbox is None:
-                        typer.echo(f"     ⚠ {nom} : pas de parcelles → bbox absente, aléas sautés.")
+                    counts = georisques_layers.ingest_commune(s, insee, nom, connector=conn)
+                    for k, v in counts.items():
+                        tot[k] += v
+                    typer.echo(f"  ✓ {nom} API : {counts}")
+                if alea:
+                    has_alea = s.execute(text(
+                        "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
+                        {"c": nom}).scalar()
+                    if has_alea and not force:
+                        typer.echo(f"     aléas déjà là ({has_alea}), sauté.")
                     else:
-                        sids = layers_ingest._source_ids(s)
-                        s.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
-                                  {"c": nom})
-                        try:
-                            n_al = layers_ingest.ingest_georisque_alea(s, bbox, nom, None, sids, insee)
-                            tot["georisque_alea"] += n_al
-                            typer.echo(f"     ✓ aléas DEAL : {n_al}")
-                        except Exception as exc:  # noqa: BLE001 — une commune en échec ne bloque pas les autres
-                            typer.echo(f"     ⚠ aléas {nom} en échec : {type(exc).__name__}: {exc}")
-            s.commit()
+                        bbox = _commune_bbox(s, nom)
+                        if bbox is None:
+                            typer.echo(f"     ⚠ {nom} : pas de parcelles → bbox absente, aléas sautés.")
+                        else:
+                            sids = layers_ingest._source_ids(s)
+                            s.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
+                                      {"c": nom})
+                            try:
+                                n_al = layers_ingest.ingest_georisque_alea(s, bbox, nom, None, sids, insee)
+                                tot["georisque_alea"] += n_al
+                                typer.echo(f"     ✓ aléas DEAL : {n_al}")
+                            except Exception as exc:  # noqa: BLE001 — une commune en échec ne bloque pas les autres
+                                typer.echo(f"     ⚠ aléas {nom} en échec : {type(exc).__name__}: {exc}")
+                s.commit()
     typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
 
 
@@ -955,32 +958,35 @@ def ingest_dpe_cmd(
     import time
 
     from .connectors.dpe import DpeConnector
-    from .ingestion import dpe
+    from .ingestion import dpe, fraicheur
     from .ingestion.run_all import REUNION_COMMUNES
 
     conn = DpeConnector(throttle_s=throttle)
     targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
     t0 = time.time()
     tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 0}
-    for insee, nom in targets:
-        with session_scope() as s:
-            has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
-            if has and not force:
-                typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté.")
-                continue
-            res = dpe.ingest_commune(s, insee, nom, connector=conn)
-            s.commit()
-            for k in tot:
-                tot[k] += res.get(k, 0)
-            typer.echo(f"  ✓ {nom} : {res}")
-    if not commune:
-        with session_scope() as s:
-            res = dpe.ingest_orphelins(s, connector=conn)
-            s.commit()
-            tot["dpe"] += res["dpe"]
-            tot["rattaches_parcelle"] += res["rattaches_parcelle"]
-            tot["hors_reunion"] += res.get("hors_reunion", 0)
-            typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
+    # M84 — trace ingestion_runs (running → ok | error) : un échec DPE devient VISIBLE (avant : aucune
+    # trace → décrochage possible en silence). Session de trace dédiée ; les communes gardent la leur.
+    with session_scope() as _trace, fraicheur.trace_ingestion(_trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]):
+        for insee, nom in targets:
+            with session_scope() as s:
+                has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
+                if has and not force:
+                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté.")
+                    continue
+                res = dpe.ingest_commune(s, insee, nom, connector=conn)
+                s.commit()
+                for k in tot:
+                    tot[k] += res.get(k, 0)
+                typer.echo(f"  ✓ {nom} : {res}")
+        if not commune:
+            with session_scope() as s:
+                res = dpe.ingest_orphelins(s, connector=conn)
+                s.commit()
+                tot["dpe"] += res["dpe"]
+                tot["rattaches_parcelle"] += res["rattaches_parcelle"]
+                tot["hors_reunion"] += res.get("hors_reunion", 0)
+                typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
     typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
     if tot["hors_reunion"]:
         typer.echo(f"  ⓘ {tot['hors_reunion']} lignes métropolitaines écartées (géocodage BAN "
@@ -2211,6 +2217,28 @@ def fraicheur_etat_cmd() -> None:
             typer.echo(f"{r['source']:<12} {r['cadence']:<34} donnée {r['derniere_donnee'] or '—':<11} "
                        f"ingestion {r['derniere_ingestion'] or '—':<11} Δ{r['delta_donnee_jours']} j"
                        f"{'' if r['auto'] else '  [détection seule — grande passe requise]'}")
+
+
+@app.command("check-fraicheur")
+def check_fraicheur_cmd() -> None:
+    """M84 — la SENTINELLE : verdict live de chaque source (statut dérivé de sa cadence). Code de
+    sortie 1 si au moins une source est en RETARD (delta > 2× cadence) → le cron le DIT (mail/log),
+    une source ne peut plus décrocher en silence. Les cadences libres (event-driven/annuel) et sans
+    donnée ne comptent jamais comme un retard (anti-faux-positif — cf. DVF, SITADEL à 45 j)."""
+    from .ingestion import fraicheur
+
+    with session_scope() as s:
+        etats = fraicheur.etat_sources(s)
+    retards = [e for e in etats if e["statut"] == "en_retard"]
+    for e in etats:
+        marque = {"en_retard": "⚠ RETARD", "a_jour": "✓", "cadence_libre": "·", "sans_donnee": "?"}[e["statut"]]
+        seuil = f"seuil {e['seuil_jours']} j" if e["seuil_jours"] else "cadence libre"
+        typer.echo(f"{marque:<9} {e['source']:<12} donnée {e['derniere_donnee'] or '—':<11} "
+                   f"Δ{e['delta_donnee_jours']} j ({seuil})")
+    if retards:
+        typer.echo(f"⚠ {len(retards)} source(s) EN RETARD : {', '.join(r['source'] for r in retards)}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"✓ fraîcheur : aucune source en retard ({len(etats)} évaluées).")
 
 
 @app.command("ingest-bodacc")

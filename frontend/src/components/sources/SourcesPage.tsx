@@ -129,6 +129,15 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {/* Ligne 1 : le nom de la source + marqueur sondable/déclaratif + producteur + licence + lien. */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-xs font-medium text-txt">{s.name}</span>
+          {/* M84 : DÉCROCHAGE d'ingestion — chip ROUGE, le plus visible. La donnée dépasse 2× la
+              cadence de la source : le client le voit AVANT de rater une opportunité (jamais un
+              zéro silencieux). Distinct du radar amont (millésime), distinct du statut catalogue. */}
+          {s.fraicheur_statut === 'en_retard' && (
+            <span data-source-decroche className="shrink-0 rounded-full bg-st-ecartee/15 px-1.5 py-px text-[8.5px] font-semibold text-st-ecartee"
+              title={`Décrochage d'ingestion : la donnée date de ${s.fraicheur_delta_jours} j, au-delà du seuil de ${s.fraicheur_seuil_jours} j (2× la cadence de publication). À rattraper.`}>
+              ⚠ en retard
+            </span>
+          )}
           {/* M74 C bis : NATURE (proxy / servi par proxys) — chip VISIBLE (jamais replié) : une
               source proxy n'est jamais présentée comme la source officielle (doctrine anti-faux-positif). */}
           {s.nature && (

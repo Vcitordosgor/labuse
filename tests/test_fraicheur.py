@@ -42,6 +42,30 @@ def test_seuil_reveil_dpe():
     assert f.SEUIL_REVEIL_DPE == 200      # F/G ∩ mono ∩ non-écarté ≥ 200 (cadrage cycle 3)
 
 
+def test_m84_seuil_derive_de_la_cadence():
+    """M84 — le seuil est 2× la cadence normée, jamais un chiffre arbitraire. Les sources sans
+    cadence bornable n'ont PAS de seuil (elles ne peuvent pas être « en retard »)."""
+    assert f.seuil_jours("sitadel") == 60      # mensuel  → 2×30
+    assert f.seuil_jours("dpe") == 14          # hebdo    → 2×7
+    assert f.seuil_jours("dvf") == 364         # semestriel → 2×182
+    assert f.seuil_jours("ban") == 60
+    for k in ("bodacc", "catnat", "gpu_plu", "georisques", "sudocuh", "ortho_piscine"):
+        assert f.seuil_jours(k) is None        # event-driven / annuel / révisions → pas de seuil
+
+
+def test_m84_statut_anti_faux_positif():
+    """M84 — le piège du faux positif ne revient PAS dans le mécanisme : DVF semestriel à 226 j et
+    SITADEL à 45 j sont À JOUR pour leur cadence ; les cadences libres ne sont jamais un retard ;
+    un vrai décrochage (delta > seuil) est bien déclaré. Aucun accès base (fonction pure)."""
+    assert f.statut_fraicheur("dvf", 226) == "a_jour"       # mesuré M84 : 226 < 364, pas un retard
+    assert f.statut_fraicheur("sitadel", 45) == "a_jour"    # mesuré M84 : 45 < 60, cadence SDES
+    assert f.statut_fraicheur("sitadel", 61) == "en_retard"  # au-delà du seuil → décrochage réel
+    assert f.statut_fraicheur("dpe", 30) == "en_retard"
+    assert f.statut_fraicheur("sitadel", None) == "sans_donnee"
+    for k in ("bodacc", "sudocuh", "ortho_piscine", "gpu_plu", "georisques", "catnat"):
+        assert f.statut_fraicheur(k, 9999) == "cadence_libre"   # jamais une alerte, quel que soit l'âge
+
+
 @pytest.mark.db
 def test_etat_fraicheur_kv(db_session):
     s = db_session

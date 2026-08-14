@@ -318,6 +318,60 @@ Mettre en place la maintenance + les sauvegardes (cron) :
 > tests manuels, ou via cron comme ci-dessus. Le mot de passe DB est lu depuis `~labuse/.pgpass`
 > (voir `backup_postgres.sh`) ou depuis `LABUSE_DATABASE_URL`.
 
+### Les crons d'ingestion — le « Train J+1 » (OBLIGATOIRE, sinon les sources décrochent)
+
+Les blocs ci-dessus n'installent QUE la maintenance et les sauvegardes. **Le rafraîchissement des
+données (permis, BODACC, DPE, DVF, adresses) est un ensemble de crons séparés, versionnés dans
+`deploy/cron.d/`, qu'il faut installer explicitement.** Sans eux, une source cesse d'être ingérée et
+**décroche en silence** — c'est le défaut mesuré en M84 (permis figés au 30/06 faute d'ingestion
+relancée). Un cron J+1 idempotent (recouvrement, no-op tant que l'amont n'a pas publié) supprime ce
+risque : le jour de la livraison amont, l'ingestion part le jour même.
+
+```bash
+# 1) Le répertoire de logs que tous les crons d'ingestion écrivent
+install -d -o labuse -g labuse /var/log/labuse
+
+# 2) Installer les crons d'ingestion (fichiers /etc/cron.d, exécutés par l'utilisateur `labuse`)
+cd /opt/labuse/app
+for c in sitadel bodacc dpe dvf ban radar; do
+  install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/$c
+done
+systemctl reload cron    # relit /etc/cron.d
+
+# 3) La SENTINELLE de fraîcheur — un décrochage doit se DIRE (jamais six semaines de silence).
+#    `labuse check-fraicheur` sort en code 1 si une source dépasse 2× sa cadence → cron mail.
+( crontab -l -u labuse 2>/dev/null; \
+  echo '30 6 * * * /opt/labuse/venv/bin/labuse check-fraicheur >> /var/log/labuse/check_fraicheur.log 2>&1' \
+) | crontab -u labuse -
+```
+
+**Ce que chaque cron rejoue, à quelle fréquence, et ce qu'il coûte en temps machine :**
+
+| Cron | Quand | Ingestion | Coût machine (mesuré/estimé) |
+|---|---|---|---|
+| `sitadel` | quotidien 04:15 | `permits_sdes --refresh` (delta, recouvrement 3 mois) + dérivés | ~30-60 s (no-op tant que SDES n'a pas publié ; jour de livraison ~1-2 min) |
+| `bodacc` | quotidien 04:30 | `ingest-bodacc` (12,6k SIREN propriétaires, throttlé) + dérivés | ~3-8 min |
+| `dpe` | hebdo mardi 05:20 | `ingest-dpe` (24 communes, API ADEME throttlée) + dérivés | ~10-20 min |
+| `dvf` | hebdo mercredi 05:00 | `refresh-dvf` (HEAD Last-Modified ; reload si livraison Etalab avril/oct.) | ~5-10 s en no-op ; ~5-10 min le jour d'une livraison semestrielle |
+| `ban` | mensuel le 5 à 03:30 | `ingest-ban --download` (remplacement complet idempotent) | ~5-15 min |
+| `radar` | hebdo lundi 02:40 | `radar-sources` (sondes HEAD/métadonnées, zéro téléchargement) | ~1 min |
+
+Charge quotidienne cumulée : ~10 min ; pic hebdo (ban le 5, dpe le mardi) : ~30 min. Négligeable
+sur le VPS ; les fenêtres sont décalées la nuit pour ne pas se chevaucher.
+
+**Vérifier que le Train tourne (le jour J et à chaque revue) :**
+
+```bash
+# état de tous les crons + verdict de fraîcheur par source (retards = [] attendu)
+curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool
+# sentinelle en direct (code de sortie 1 s'il y a un décrochage)
+sudo -u labuse /opt/labuse/venv/bin/labuse check-fraicheur
+```
+
+`/healthz/crons` expose `crons` (dernier passage OK par tâche), `sources` (dates + statut de
+fraîcheur) et `retards` (les sources au-delà de 2× leur cadence). `ok: false` = au moins un cron mort
+ou une source décrochée — la sentinelle de supervision VPS lit ce champ.
+
 ---
 
 ## 13. Procédure de ROLLBACK
