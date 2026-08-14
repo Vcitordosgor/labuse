@@ -392,9 +392,11 @@ export const useApp = create<AppState>((set) => ({
   // drawer source, restitution IA, tiroir outils). Une seule vue active à la fois — plus de
   // fiche/kanban fantôme qui persiste à travers les vues. Les flux « ouvrir une fiche depuis
   // X » appellent setView('cartes') PUIS select(idu) (ordre respecté partout).
+  // M87 P3 — bug de fermeture : les panneaux Secteurs (« Mes veilles ») et Suivis se FERMENT à tout
+  // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
-    entretienDirect: null }),
+    entretienDirect: null, veillesOpen: false, suivisOpen: false }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
