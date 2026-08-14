@@ -518,6 +518,29 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
                        "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
 
+    # ── M73-D — ASSAINISSEMENT + RÉHABILITATION : la forme NEUTRE partagée (blocs_documents), dessinée
+    # en fpdf. Le premium POSE le MÊME texte que les 4 weasyprint (aucune reformulation — c'est la
+    # divergence que M73-C/D réparent). Jamais recalculé, jamais masqué (l'absence est un état).
+    from .blocs_documents import anc_bloc, rehab_bloc
+    for bloc in (anc_bloc(fiche.get("anc")), rehab_bloc(fiche.get("mode_b"))):
+        if not bloc:
+            continue
+        if pdf.get_y() > pdf.h - 46:
+            pdf.add_page()
+        pdf.ln(2)
+        pdf.set_font("mono", size=7.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 5, f"{bloc['titre'].upper()} — {bloc['etat'].upper()}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_draw_color(*LINE)
+        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+        pdf.ln(1.4)
+        for role, texte in bloc["lignes"]:
+            forte = role == "phrase_forte"
+            pdf.set_font("inter", size=8 if forte else 7.5)
+            pdf.set_text_color(*(MINT if forte else TXT_MUT))
+            pdf.multi_cell(pdf.w - 28, 4, texte, new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(0.4)
+
     # ── M73 §5 — « Ce que ce document ne peut pas dire » : matérialisation du 3e terme de la
     # doctrine (ce qui est absent + où le chercher). Source unique export_commun.limites_document.
     from .export_commun import LIMITES_TITRE, limites_document
