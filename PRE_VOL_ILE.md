@@ -24,20 +24,27 @@ empruntée était présentée comme locale. 53 % des parcelles concernées.
 3. **Params économiques** (cout/marge) : en plus, `bilan_params` (registre ← global `'*'` ← secteur).
 
 ## Le marquage (doctrine Sourcé / Estimé / Absent)
-La constructibilité (emprise au sol + densité) est **Sourcée** SEULEMENT si la commune DÉCLARE
-`constructibilite_source_ref` dans son YAML (ex. Saint-Paul : « Règlement PLU Saint-Paul »). Sans cette
-clé, les valeurs sont **génériques (île), non calibrées** pour la commune → la sortie l'écrit :
-« ⚠ Emprise au sol et densité : hypothèse GÉNÉRIQUE (île), non calibrée au règlement de {commune}… (Estimé) ».
+**M-PLU-REF-B (correction du marquage)** : la mesure (AUDIT_PLU_REF_B) a montré que le marquage initial
+était FAUX PAR EXCÈS. L'emprise au sol RÉGLEMENTAIRE (`rules.emprise_sol_pct`) est captée par zone —
+**64 % chiffrées** (Sourcé, consommées par le moteur l.255), **35 % explicitement « non réglementées »**
+(silence documenté). `coef_occupation` (0,45) est un facteur de MODÉLISATION appliqué EN PLUS, sans
+équivalent réglementaire ; aucune commune n'a de densité réglementaire (le 30 est un filet ex-COS). Le
+flag commune `constructibilite_source_ref` a donc été RETIRÉ (il sonnait même sur une zone chiffrée).
 
-**Un critère = un seul endroit** : le marquage est ajouté UNE fois, dans la liste `hypotheses` de
-`estimate_capacity` (engine.py), commune-aware (`hyp.constructibilite_source_ref` / `hyp.commune`). Il
-voyage donc avec la valeur — la fiche, la faisabilité, l'assemblage et les 5 PDF rendent cette liste,
-personne ne rajoute la mention à la main. Même doctrine que `mixite_source_ref` (M-N P1-13).
+Le marquage est désormais **ZONE-AWARE et VRAI**, dans la liste `hypotheses` de `estimate_capacity`
+(écrit UNE fois, voyage avec la valeur) :
+- zone à emprise **chiffrée** → **Sourcé** (l'étape « emprise bâtie » cite `surface × emprise%`), aucune
+  mention « générique » ;
+- zone à emprise **non réglementée** → « Emprise au sol non réglementée par le PLU de {commune} (silence
+  du règlement) : occupation du gabarit ~45 % par hypothèse de modélisation ; capacité bornée par reculs,
+  hauteur, pleine terre » ;
+- densité → « filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité ».
 
 ## Ce qui reste à Vic (CALIBRATION, pas correction)
-Établir les **valeurs réelles** de `coef_occupation` / `densite` / `place_m2` par commune (mesure du
-règlement graphique/écrit). Tant qu'une commune n'est pas calibrée + ne déclare pas
-`constructibilite_source_ref`, sa sortie reste marquée « générique ». `capacité ∝ coef_occupation ×
+Presque rien : l'emprise réglementaire est déjà captée (99 % chiffrée ou silence documenté). Restent **2
+zones** null-sans-source à préciser (**Saint-Paul U1lec + AU5e**, `emprise_sol_pct='a_verifier'`) et
+l'extraction chiffrée m²/place du **stationnement** (norme en ratio texte partout — autre mandat). `capacité
+∝ coef_occupation ×
 densité` (linéaire) : l'écart au règlement réel est structurant (±33 % mesuré pour ±10 de densité).
 
 ## Suivi (mécanique, non fait ici)
