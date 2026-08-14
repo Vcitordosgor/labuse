@@ -50,8 +50,17 @@ def rehab_bloc(mode_b: dict | None) -> dict:
     JAMAIS (un zéro n'est pas une absence)."""
     mb = mode_b or {}
     if not mb.get("disponible"):
-        return {"cls": "rehab", "titre": "Réhabilitation", "statut": "indispo", "etat": "Non évaluée",
-                "lignes": [("phrase", "Potentiel de réhabilitation non évalué sur cette parcelle.")]}
+        # M73-E — distinguer le PÉRIMÈTRE MÉTIER (hors population mode B, réservé au bâti déclassé : la
+        # réhab est « sans objet », pas un trou) de la donnée manquante (« Absent »). Mesuré : 92 % des
+        # parcelles sont hors population (cf. AUDIT_M73E_REHAB) → libellé explicite, jamais masqué.
+        motif = str(mb.get("motif") or "").strip()
+        hors_pop = "hors population" in motif.lower()
+        if hors_pop:
+            return {"cls": "rehab", "titre": "Réhabilitation", "statut": "sans_objet", "etat": "Sans objet",
+                    "lignes": [("phrase", "Réhabilitation sans objet : cette parcelle n'est pas déclassée "
+                                          "pour cause de bâti — la thèse de réhabilitation ne s'y applique pas.")]}
+        return {"cls": "rehab", "titre": "Réhabilitation", "statut": "absent", "etat": "Absent",
+                "lignes": [("phrase", motif or "Potentiel de réhabilitation non évaluable (donnée manquante).")]}
     if mb.get("trop_petit"):                              # bâti trop petit → DIT (M59-P1 Q4)
         return {"cls": "rehab", "titre": "Réhabilitation", "statut": "trop_petit", "etat": "Estimé",
                 "lignes": [("phrase", str(mb.get("motif", "Bâti trop petit pour une thèse de réhabilitation.")))]}
