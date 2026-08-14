@@ -2605,8 +2605,9 @@ def _aper_block(db: Session, idu: str) -> dict | None:
 
 
 def _anc_block(db: Session, idu: str) -> dict:
-    """M86-B — état ANC servi (Sourcé / Estimé / Absent) + couverture réglementaire, via le point de
-    calcul UNIQUE `anc_service.statut_anc` (partagé fiche/PDF/export). Toujours un dict (Absent = état)."""
+    """M88 — état ANC servi (Sourcé / Sourcé secteur / Absent) + couverture réglementaire, via le point
+    de calcul UNIQUE `anc_service.statut_anc` (partagé fiche/PDF/export). Le secteur sert le taux INSEE
+    brut (RP2022), jamais proba_anc. Toujours un dict (Absent = état)."""
     from ..anc_service import couverture_anc, statut_anc
     out = statut_anc(db, idu)
     out["couverture"] = couverture_anc(db)

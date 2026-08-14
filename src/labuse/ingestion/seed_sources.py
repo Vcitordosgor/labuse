@@ -49,15 +49,17 @@ SOURCES: list[dict] = [
          documentation_url="https://apicarto.ign.fr/api/doc/gpu",
          endpoint_url="https://apicarto.ign.fr/api/gpu/municipality/document/info-surf",
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), annexes d'assainissement des collectivités ».",
-         technical_notes="✓ couches d'information surfaciques typeinf=19 (« zonage d'assainissement » CNIG). Couverture SIG partielle (4/24 communes au 11/07/2026) ; ailleurs proba INSEE."),
+         technical_notes="✓ couches d'information surfaciques typeinf=19 (« zonage d'assainissement » CNIG). Couverture SIG partielle (4/24 communes au 11/07/2026) ; ailleurs, taux de non-raccordement du secteur (INSEE RP2022), jamais une proba parcellaire (M88)."),
     # M-H — contours IRIS (maille infra-communale IGN/INSEE) : support des taux d'assainissement
     # agrégés (RP2022 EGOUL). Consommé par anc.py (ingest_iris_contours).
     dict(name="Contours IRIS (IGN/INSEE)", category="attractivite", provider="IGN / INSEE",
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/contoursiris",
          endpoint_url="https://data.geopf.fr/wfs/ows",
+         source_millesime="Contours IRIS — géographie 2024 (IGN/INSEE)",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Contours IRIS © IGN/INSEE ».",
-         technical_notes="✓ WFS Géoplateforme, filtre code_insee 974 (330 IRIS). Maille la plus fine diffusée pour l'agrégation statistique."),
+         # M88 — maille du FAIT de secteur servi (taux RP2022 par IRIS), plus une estimation probabiliste.
+         technical_notes="✓ WFS Géoplateforme, filtre code_insee 974 (330 IRIS). Maille la plus fine diffusée : support du taux de non-raccordement servi à la fiche (Sourcé secteur)."),
     dict(name="Géorisques", category="risques", provider="BRGM / MTE",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.georisques.gouv.fr/doc-api",
@@ -372,11 +374,14 @@ SOURCES: list[dict] = [
          reliability_level=R.VERIFIE,
          documentation_url="https://www.insee.fr/fr/statistiques/8647099",
          endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8647099/RP2022_logemt.zip",
+         source_millesime="RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)",
          legal_notes="Licence Ouverte Etalab — attribution INSEE obligatoire (UI).",
-         technical_notes="✓ live 11/07/2026. Variable EGOUL (mode d'évacuation des eaux usées, "
+         # M88 — sert le FAIT de secteur (taux de non-raccordement, Sourcé secteur), jamais une proba
+         # parcellaire. Variable EGOUL agrégée par IRIS/commune ; le taux BRUT est servi tel quel.
+         technical_notes="✓ Variable EGOUL (mode d'évacuation des eaux usées, "
                          "DOM uniquement : 1=égout, 2=fosse, 3=puisard, 4=sol), pondérée IPONDL, "
-                         "diffusée à l'IRIS (330 IRIS 974). Agrégé → anc_maille_taux (iris + commune). "
-                         "148 307 rés. principales 974."),
+                         "diffusée à l'IRIS (330 IRIS 974). Agrégé → anc_maille_taux (iris + commune) : "
+                         "taux de non-raccordement du SECTEUR servi à la fiche. 148 307 rés. principales 974."),
     dict(name="GPU — zonages d'assainissement (info-surf typeinf 19)", category="assainissement",
          provider="IGN / Géoportail de l'urbanisme", access_type="REST/GeoJSON",
          status=S.CONNECTE, reliability_level=R.VERIFIE,

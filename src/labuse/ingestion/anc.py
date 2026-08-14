@@ -238,6 +238,11 @@ def ingest_zonages_gpu(session: Session, log=print) -> dict[str, Any]:
 # ── A1.3 + A2.3 : proba par parcelle bâtie + application des zonages ────────────
 
 def compute_proba(session: Session, *, batch: int = 20000, log=print) -> dict[str, Any]:
+    # M88 — DORMANT pour le produit servi. `proba_anc` (taux + bonus rural + borne 5-95) ne sert PLUS
+    # l'ANC à la fiche/PDF/export : la couche servie lit le taux BRUT `anc_maille_taux` (cf. anc_service).
+    # Mesure hors domaine (précision plafonnée 34 %, calculée sur l'urbain zoné, servie au rural — cf.
+    # docs/audits/AUDIT_M88_ANC_SECTEUR.md). Table + job CONSERVÉS (mandat) ; seul reste aval le signal
+    # `anc_mutation` (parcel_signals), lu par le carnet — JAMAIS pesé par le scoring (absent de scoring/).
     session.execute(text(DDL))
     cfg = _cfg()["proba"]
     params = {"emin": float(cfg["emprise_batie_min_m2"]),
