@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-M82 — Remonter le temps, la parcelle d'abord</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --surface3:#1A211D;
+  --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06180E;
+  --texte:#F4F6F5; --texte2:#B8C4BD; --texte3:#8B9990; --texte4:#7C8A83; --texte5:#5C6A63;
+  --filet:#1E2622; --bord:#2A362F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#2A2E2B;padding:38px 20px;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.note{max-width:360px;margin:0 auto 14px;color:#C7D0CB;font-size:12px;line-height:1.5}
+.titre{max-width:360px;margin:0 auto 8px;color:#F4F6F5;font-size:14px;font-weight:500}
+.pan{background:var(--noir);border-radius:12px;padding:18px;max-width:360px;margin:0 auto 26px;border:1px solid #24302A}
+.lab{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--texte5);margin-bottom:11px}
+.tt{font-size:14px;font-weight:600;color:var(--texte);margin-bottom:2px}
+.sub{font-size:11px;color:var(--texte3);margin-bottom:13px}
+/* étape 1 : désigner la parcelle, 3 entrées */
+.field{display:flex;align-items:center;gap:8px;background:#0D1310;border:1px solid var(--bord);border-radius:9px;padding:9px 11px;margin-bottom:8px}
+.field input{flex:1;background:none;border:none;outline:none;color:var(--texte);font-family:'JetBrains Mono',monospace;font-size:12px}
+.field input::placeholder{color:var(--texte5);font-family:'Archivo'}
+.sep{display:flex;align-items:center;gap:8px;color:var(--texte5);font-size:10px;margin:2px 0 8px}
+.sep::before,.sep::after{content:'';flex:1;height:1px;background:var(--filet)}
+.pick{width:100%;background:var(--mint-bg);border:1px solid var(--mint);border-radius:9px;padding:10px;color:var(--mint);font-size:12px;font-weight:500;cursor:pointer;text-align:center}
+/* étape 2 : un SEUL curseur (l'année ancienne) ; l'après = aujourd'hui, verrouillé */
+.parc{display:flex;align-items:center;gap:8px;background:var(--carte);border:1px solid var(--filet);border-radius:9px;padding:9px 11px;margin-bottom:13px}
+.parc .idu{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--texte)}
+.parc .meta{font-size:10.5px;color:var(--texte3);margin-left:auto}
+.axe{margin:6px 0 4px}
+.axe .row{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--texte5);margin-bottom:5px}
+.track{position:relative;height:4px;background:var(--surface3);border-radius:2px}
+.track .fill{position:absolute;left:0;top:0;height:100%;width:34%;background:var(--mint);border-radius:2px}
+.track .knob{position:absolute;top:50%;left:34%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--mint);border:2px solid var(--noir)}
+.annees{display:flex;gap:6px;margin-top:12px}
+.annees .a{flex:1;text-align:center;border:.5px solid var(--bord);border-radius:7px;padding:6px 0;font-size:11px;color:var(--texte3);cursor:pointer}
+.annees .a.on{border-color:var(--mint);color:var(--mint);background:var(--mint-bg)}
+.apres{display:flex;align-items:center;justify-content:space-between;background:var(--carte);border:1px dashed var(--bord);border-radius:9px;padding:9px 11px;margin-top:12px}
+.apres .l{font-size:11px;color:var(--texte3)}
+.apres .v{font-size:11.5px;color:var(--texte);font-weight:500}
+.apres .lock{font-size:9px;color:var(--texte5)}
+.go{width:100%;margin-top:14px;background:var(--mint);color:var(--mint-on);border:none;border-radius:9px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer}
+/* écran comparateur */
+.swipe{position:relative;height:150px;border-radius:10px;overflow:hidden;border:1px solid var(--filet);margin-bottom:8px;background:linear-gradient(90deg,#2b3a2f 0 52%,#3a4a3e 52% 100%)}
+.swipe .tagL,.swipe .tagR{position:absolute;top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 7px;border-radius:5px;background:#0A0C0Bcc;color:var(--texte)}
+.swipe .tagL{left:8px} .swipe .tagR{right:8px;color:var(--mint)}
+.swipe .handle{position:absolute;top:0;bottom:0;left:52%;width:2px;background:var(--mint)}
+.swipe .handle::after{content:'⟷';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--mint);color:var(--mint-on);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px}
+</style></head>
+<body>
+
+<p class="note"><b>REFONTE Remonter le temps</b> — la parcelle D'ABORD (IDU, adresse, ou clic carte via <code>parcelPrefill</code>), PUIS on choisit l'année ancienne. L'« après » est TOUJOURS aujourd'hui (verrouillé). Un seul curseur, pas deux listes identiques. L'accès depuis la fiche reste.</p>
+
+<div class="titre">ÉCRAN 1 — DÉSIGNER LA PARCELLE</div>
+<div class="pan">
+  <div class="lab">REMONTER LE TEMPS · ÉTAPE 1/2</div>
+  <div class="tt">Quelle parcelle voulez-vous voir évoluer ?</div>
+  <div class="sub">Trois entrées — l'outil part de la parcelle, pas d'une carte au hasard.</div>
+  <div class="field"><span style="color:var(--texte5)">▦</span><input placeholder="IDU — 97415000CW0658"></div>
+  <div class="sep">ou</div>
+  <div class="field"><span style="color:var(--texte5)">⌂</span><input placeholder="… une adresse (autocomplétion)" style="font-family:'Archivo'"></div>
+  <div class="sep">ou</div>
+  <div class="pick">◉ Cliquer une parcelle sur la carte</div>
+</div>
+
+<div class="titre">ÉCRAN 2 — CHOISIR L'ANNÉE ANCIENNE (un seul choix)</div>
+<div class="pan">
+  <div class="lab">REMONTER LE TEMPS · ÉTAPE 2/2</div>
+  <div class="parc"><span class="idu">97415000CW0658</span><span class="meta">Saint-Paul · 1 240 m²</span></div>
+
+  <div class="lab">L'ANNÉE À REVOIR (AVANT)</div>
+  <div class="axe">
+    <div class="row"><span>1950</span><span>1978</span><span>2000</span><span>aujourd'hui</span></div>
+    <div class="track"><div class="fill"></div><div class="knob"></div></div>
+  </div>
+  <div class="annees">
+    <span class="a on">1950-65</span>
+    <span class="a">1978</span>
+    <span class="a">1997</span>
+    <span class="a">2008</span>
+  </div>
+
+  <div class="apres">
+    <span class="l">Après</span>
+    <span class="v">Aujourd'hui (ortho actuelle)</span>
+    <span class="lock">🔒 fixe</span>
+  </div>
+
+  <button class="go">Comparer 1950-65 ↔ aujourd'hui →</button>
+</div>
+
+<div class="titre">ÉCRAN 3 — LE COMPARATEUR (glissière)</div>
+<div class="pan">
+  <div class="parc"><span class="idu">97415000CW0658</span><span class="meta">Saint-Paul · 1 240 m²</span></div>
+  <div class="swipe">
+    <span class="tagL">1950-1965</span>
+    <span class="tagR">aujourd'hui</span>
+    <span class="handle"></span>
+  </div>
+  <p style="font-size:10.5px;color:var(--texte3);margin:0">Glissez la poignée. Le contour de la parcelle reste affiché des deux côtés. Fonds IGN Géoplateforme (orthophotos historiques + actuelle).</p>
+</div>
+
+</body></html>

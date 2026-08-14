@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DA-M82 — Annuaire PLU, la bibliothèque</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0A0C0B; --carte:#101612; --carte2:#141B17; --surface3:#1A211D;
+  --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06180E;
+  --texte:#F4F6F5; --texte2:#B8C4BD; --texte3:#8B9990; --texte4:#7C8A83; --texte5:#5C6A63;
+  --filet:#1E2622; --bord:#2A362F; --source:#3E8455;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#2A2E2B;padding:38px 20px;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.note{max-width:360px;margin:0 auto 14px;color:#C7D0CB;font-size:12px;line-height:1.5}
+.pan{background:var(--noir);border-radius:12px;padding:18px;max-width:360px;margin:0 auto 26px;border:1px solid #24302A}
+.lab{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--texte5);margin-bottom:12px}
+.tt{font-size:14px;font-weight:600;color:var(--texte)}
+.sub{font-size:11px;color:var(--texte3);margin:2px 0 12px}
+/* recherche digne, pleine largeur, VERTICAL */
+.search{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.search .field{display:flex;align-items:center;gap:8px;background:#0D1310;border:1px solid var(--bord);border-radius:9px;padding:10px 12px}
+.search .field input{flex:1;background:none;border:none;outline:none;color:var(--texte);font-size:13px}
+.search .field input::placeholder{color:var(--texte5)}
+.search .go{background:var(--mint);color:var(--mint-on);border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.scope{display:flex;gap:6px}
+.scope .chip{flex:1;text-align:center;border:.5px solid var(--bord);border-radius:7px;padding:6px;font-size:11px;color:var(--texte3);cursor:pointer}
+.scope .chip.on{border-color:var(--mint);color:var(--mint);background:var(--mint-bg)}
+/* les 23 communes VISIBLES d'emblée */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.com{display:flex;align-items:center;justify-content:space-between;background:var(--carte);border:1px solid var(--filet);border-radius:8px;padding:8px 10px;cursor:pointer}
+.com:hover{border-color:#2f5a41}
+.com .n{font-size:11.5px;color:var(--texte)}
+.com .st{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--source)}
+.com .st.rev{color:#BA7517}
+.com .st.rnu{color:var(--texte5)}
+/* écran commune : verbatim sourcé */
+.crumb{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--texte3);margin-bottom:12px}
+.crumb b{color:var(--texte)}
+.crumb .back{color:var(--mint);cursor:pointer}
+.res{background:var(--carte);border-left:2px solid var(--mint);border-radius:0 9px 9px 0;padding:12px 14px;margin-bottom:9px}
+.res .art{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mint);font-weight:600;margin-bottom:5px}
+.res .verb{font-size:12.5px;line-height:1.55;color:var(--texte);margin:0 0 8px}
+.res .src{display:flex;gap:10px;align-items:center;font-size:9.5px;color:var(--texte4);padding-top:7px;border-top:.5px solid var(--filet)}
+.res .src a{color:var(--source);text-decoration:none}
+.titre{max-width:360px;margin:0 auto 8px;color:#F4F6F5;font-size:14px;font-weight:500}
+</style></head>
+<body>
+
+<p class="note"><b>REFONTE Annuaire PLU</b> — une bibliothèque : les 23 communes servables VISIBLES d'emblée, on entre dans une commune, on cherche dans SON règlement, le verbatim sourcé arrive (article, page, lien). Recherche île-entière possible, jamais l'unique entrée. Tout vertical, aucun scroll horizontal.</p>
+
+<div class="titre">ÉCRAN 1 — LA BIBLIOTHÈQUE (entrée)</div>
+<div class="pan">
+  <div class="lab">ANNUAIRE PLU · 23 RÈGLEMENTS INTERROGEABLES</div>
+  <div class="tt">Cherchez dans le règlement des communes</div>
+  <div class="sub">Verbatim sourcé (article, page, lien) — jamais un résumé.</div>
+
+  <div class="search">
+    <div class="field">
+      <span style="color:var(--texte5)">⌕</span>
+      <input placeholder="ex. hauteur de clôture, stationnement, emprise au sol…">
+      <button class="go">Chercher</button>
+    </div>
+    <div class="scope">
+      <span class="chip on">Toute l'île (23)</span>
+      <span class="chip">Une commune ↓</span>
+    </div>
+  </div>
+
+  <div class="lab">OU OUVREZ UN PLU</div>
+  <div class="grid">
+    <div class="com"><span class="n">Saint-Paul</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Saint-Denis</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Saint-Pierre</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Le Tampon</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Saint-Louis</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Saint-Benoît</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Saint-André</span><span class="st rev">révision</span></div>
+    <div class="com"><span class="n">Saint-Leu</span><span class="st rev">révision</span></div>
+    <div class="com"><span class="n">La Possession</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Sainte-Marie</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Sainte-Suzanne</span><span class="st">à jour</span></div>
+    <div class="com"><span class="n">Bras-Panon</span><span class="st">à jour</span></div>
+    <div class="com" style="grid-column:1/3;justify-content:center;color:var(--texte4);border-style:dashed"><span class="n" style="font-size:10.5px;color:var(--texte4)">+ 11 autres · Saint-Philippe (RNU, hors PLU)</span></div>
+  </div>
+</div>
+
+<div class="titre">ÉCRAN 2 — DANS UNE COMMUNE (verbatim sourcé)</div>
+<div class="pan">
+  <div class="crumb"><span class="back">‹ Bibliothèque</span> · <b>Saint-Paul</b> · règlement à jour</div>
+  <div class="search">
+    <div class="field">
+      <span style="color:var(--texte5)">⌕</span>
+      <input value="hauteur de clôture" style="color:var(--texte)">
+      <button class="go">Chercher</button>
+    </div>
+  </div>
+
+  <div class="lab">2 EXTRAITS TROUVÉS DANS LE RÈGLEMENT DE SAINT-PAUL</div>
+  <div class="res">
+    <div class="art">Article U2 11.2 · Clôtures</div>
+    <p class="verb">« La hauteur totale des clôtures est limitée à <b>2,00 mètres</b>. En bordure des voies, un mur bahut de 0,80 m maximum peut être surmonté d'un dispositif à claire-voie… »</p>
+    <div class="src"><span>Règlement PLU Saint-Paul · zone U2 · p. 47</span><a href="#">archive GPU ↗</a></div>
+  </div>
+  <div class="res">
+    <div class="art">Article U1 11.1 · Aspect extérieur</div>
+    <p class="verb">« Les clôtures sur rue seront constituées… hauteur maximale <b>1,80 m</b>… »</p>
+    <div class="src"><span>Règlement PLU Saint-Paul · zone U1 · p. 31</span><a href="#">archive GPU ↗</a></div>
+  </div>
+  <p style="font-size:10px;color:var(--texte4);margin-top:6px">Verbatim opposable — pas un conseil juridique. Le document source fait foi.</p>
+</div>
+
+</body></html>
