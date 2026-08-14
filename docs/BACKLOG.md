@@ -358,6 +358,11 @@ exceptions actives (run servi) : CH1893 + les 14 bâties de la revue dette #4
   détachable dessiné (lot_geom) sur la fiche.
 
 ## Renvois M82 (chantiers différés — arbitrage/décision Vic)
+- **Option de tri — sous-groupe « Activité de construction » (si le seau « Comprendre le marché »
+  déborde).** Le tri M82 met 10 outils dans « Comprendre le marché » (le plus gros groupe). Si à l'usage
+  il devient trop long à l'écran, en détacher un sous-groupe **« Activité de construction »** = Radar
+  permis · Vélocité admin · Promesses mortes (le triptyque « qui construit · à quel rythme · quels
+  ratés »). À décider à l'usage — pas prioritaire (Vic).
 - **Réactiver « Matching promoteurs » (retiré M82).** L'outil a été retiré (démo : 2 profils `demo=t`,
   0 match jamais produit, création de profil gelée admin → boucle d'alerte morte). Pour le faire vivre, il
   faut : (1) des **profils RÉELS compte-scopés** (lever le gate admin, rattacher au compte utilisateur —
