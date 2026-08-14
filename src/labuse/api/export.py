@@ -539,6 +539,11 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                             f"loyer retenu : {html.escape(lo['etiquette'])} · ~{lo['annuel_eur']} €/an · {vl}")
             mode_b_kv += (f"<div class='foot' style='margin-top:2px'>"
                           f"{html.escape(sl.get('mention_fiscale') or '')}</div>")
+    if not mode_b_kv:   # M73-D — JAMAIS masqué : l'absence est un état (un zéro n'est pas une absence)
+        from .blocs_documents import rehab_bloc
+        rb = rehab_bloc(mb)
+        mode_b_kv = kv(f"Réhabilitation · {html.escape(rb['etat'])}",
+                       html.escape(rb["lignes"][0][1]) if rb["lignes"] else "")
 
     # M73-D — assainissement : kv compact, TEXTE issu de la forme NEUTRE partagée (anc_bloc, écrit une
     # fois) ; aucune reformulation locale, jamais lu depuis zone_anc. Jamais masqué (Absent = affiché).
