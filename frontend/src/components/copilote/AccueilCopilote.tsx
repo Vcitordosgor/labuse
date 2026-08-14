@@ -21,36 +21,17 @@ const CARTES: Carte[] = [
     desc: () => "Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé." },
 ]
 
-// M78-bis §1 — POOL d'exemples VARIÉS couvrant les 7 intentions (le client comprend en un regard qu'il
-// peut TOUT écrire). Beaucoup viennent du test de véracité (vérifiés → démontrables sans risque). 6 en
-// rotation aléatoire à chaque visite. Un clic remplit la barre, ne lance rien.
-const POOL: string[] = [
-  'Combien de parcelles à Saint-Paul ?',
-  'Quel est le PLU en vigueur à Saint-Denis ?',
-  'Quelles parcelles appartiennent à la SIDR ?',
-  'Combien de temps met un permis à Saint-Benoît ?',
-  'Je cherche un terrain de 1 000 m² à La Possession, budget 300 k€',
-  'Un projet de lotissement étudiant à Sainte-Marie : 6 bâtiments de 4 appartements',
-  'On me propose 97411000AK0043 à 340 000 € — bon prix ?',
-  'Préviens-moi de tout nouveau permis à Saint-Paul',
-  'Crée un projet : résidence 12 logements à Bras-Panon',
-  'Je veux écrire au propriétaire de cette parcelle',
-  'Quelles communes manquent de logements sociaux ?',
-  'Le marché de Saint-Pierre est-il actif en ce moment ?',
-  "Combien de parcelles d'au moins 5 000 m² à Saint-Paul ?",
-  'Quel est le taux de logement social à Saint-Benoît ?',
-  'Cette parcelle 97414000CV0907 est-elle divisible ?',
-  'Assemble des parcelles contiguës',
-  // M78-ter — questions servies par le web (public hors base)
-  'Qui est le maire de Saint-Denis ?',
-  'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?',
-  'Y a-t-il un appel à projets logement en cours à La Réunion ?',
+// M87 P2 — SIX exemples FIXES, dans cet ordre (fini la rotation aléatoire de l'ancien POOL de 19 :
+// retirée, une grille figée vaut mieux qu'un tirage qui change à chaque visite). Chaque exemple porte
+// son étiquette d'intention. Un clic REMPLIT la barre, ne lance rien.
+const EXEMPLES: { intent: string; txt: string }[] = [
+  { intent: 'Chercher', txt: 'Quelles parcelles appartiennent à la SIDR ?' },
+  { intent: 'Chercher', txt: 'Combien de parcelles à Saint-Paul ?' },
+  { intent: 'Veiller', txt: 'Préviens-moi de tout nouveau permis à Saint-Paul' },
+  { intent: 'Vérifier', txt: 'Qui est le maire de Saint-Denis ?' },
+  { intent: 'Vérifier', txt: 'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?' },
+  { intent: 'Agir', txt: 'Je veux écrire au propriétaire de cette parcelle' },
 ]
-
-/** 6 exemples tirés au hasard (à chaque montage = à chaque visite). */
-function sixAuHasard(): string[] {
-  return [...POOL].sort(() => Math.random() - 0.5).slice(0, 6)
-}
 
 export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
   missions, onReprendre }: {
@@ -72,7 +53,6 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   // de CopiloteView) — pas de QueryClient requis.
   const [brief, setBrief] = useState<BriefMatin | null>(null)
   useEffect(() => { getBrief().then(setBrief).catch(() => {}) }, [])
-  const exemples6 = useMemo(sixAuHasard, [])   // §1 — 6 exemples variés, tirés à cette visite
   const [toutHisto, setToutHisto] = useState(false)   // #2 — « voir tout » au-delà de 4
 
   // #2 — DÉDOUBLONNER par question (missions déjà triées updated_at DESC → 1re occurrence = plus récente).
@@ -104,6 +84,13 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         Une parcelle instruite en une minute{nSources ? <> — <b className="text-cp-txt">{nSources}</b> sources</> : null}, chaque chiffre daté.
       </p>
 
+      {/* M87 P1 — LE CLAIM, permanent et STATIQUE (aucune animation, aucun curseur). Classe .claim de la
+          maquette DA-ACCUEIL-BRIEF-v1. Visible à tout moment sur l'accueil, plus seulement à l'état initial. */}
+      <div data-claim className="mx-auto mb-8 max-w-[640px] rounded-xl border border-cp-line bg-cp-card/60 px-[22px] py-[18px] text-left">
+        <p className="mb-[5px] text-[15px] font-semibold text-cp-txt">Tout le foncier de La Réunion. Au même endroit.</p>
+        <p className="text-[13px] text-cp-muted">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</p>
+      </div>
+
       {/* M85 Phase 3 — LE BRIEF DU MATIN : la veille racontée, en tête d'accueil, seulement s'il est
           frais (non vide) ET bien formé. Des faits datés, pas de la prose générée — vert/neutre, jamais
           mauve. Rendu DÉFENSIF (le brief peut être null/partiel selon la réponse). */}
@@ -124,13 +111,15 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         </div>
       )}
 
-      {/* barre unique */}
-      <div data-accueil-barre className="mb-3.5 flex items-center gap-3 rounded-xl border border-cp-line2 bg-cp-card/60 py-2 pl-[18px] pr-2">
+      {/* barre unique — M87 P2 : FOCUS sans contour vert. Le contour :focus-visible mint (index.css) est
+          neutralisé sur le champ ; le focus reste PERCEPTIBLE au clavier via la barre (border renforcée +
+          fond #12170F, comme la maquette). On remplace le focus, on ne le supprime pas (accessibilité). */}
+      <div data-accueil-barre className="mb-3.5 flex items-center gap-3 rounded-xl border border-cp-line bg-cp-card/60 py-2 pl-[18px] pr-2 transition-colors duration-quick focus-within:border-cp-line2 focus-within:bg-[#12170F]">
         <textarea ref={ref} data-brief rows={1} value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (value.trim()) onSubmit() } }}
           placeholder="15 logements à Saint-Denis, budget foncier 800 k€…"
-          className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none placeholder:text-cp-faint" />
+          className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none focus-visible:outline-none placeholder:text-cp-faint" />
         <button data-accueil-envoyer onClick={() => value.trim() && onSubmit()} disabled={!value.trim() || occupe}
           className="shrink-0 rounded-lg bg-mint px-5 py-2.5 text-[13px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
           {occupe ? '…' : 'Envoyer'}
@@ -140,14 +129,16 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         Écrivez librement — le Copilote comprend s'il faut chercher, vérifier ou veiller.
       </p>
 
-      {/* §1 — le client voit d'un regard qu'il peut TOUT écrire : 6 exemples variés (7 intentions),
-           tirés au hasard. Un clic REMPLIT la barre, ne lance rien. */}
+      {/* M87 P2 — SIX exemples FIXES (plus de rotation aléatoire), grille régulière 3×2 (1 colonne
+           sous 820 px), chaque exemple porte son étiquette d'intention en petites capitales mono.
+           Classes .examples / .ex de la maquette. Un clic REMPLIT la barre, ne lance rien. */}
       {!reponse && (
-        <div data-accueil-exemples className="mb-8 flex flex-wrap justify-center gap-2">
-          {exemples6.map((e) => (
-            <button key={e} data-accueil-ex onClick={() => onPick(e)}
-              className="rounded-lg border border-cp-line bg-cp-card/40 px-3 py-1.5 text-left text-[11px] italic text-cp-muted transition-colors duration-quick hover:border-mint/30 hover:text-cp-txt">
-              « {e} »
+        <div data-accueil-exemples className="mx-auto mb-8 grid max-w-[820px] grid-cols-1 gap-2 min-[820px]:grid-cols-3">
+          {EXEMPLES.map((e) => (
+            <button key={e.txt} data-accueil-ex onClick={() => onPick(e.txt)}
+              className="rounded-lg border border-cp-line bg-transparent px-3.5 py-[11px] text-left text-[12.5px] leading-[1.35] text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
+              <span className="mb-[5px] block font-mono text-[9.5px] uppercase tracking-[.12em] text-cp-faint">{e.intent}</span>
+              {e.txt}
             </button>
           ))}
         </div>
