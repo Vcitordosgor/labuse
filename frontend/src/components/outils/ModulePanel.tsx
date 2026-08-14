@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierPdf, getCommunes, getFiche, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
@@ -10,7 +10,6 @@ import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
-import { BASEMAP_CHOICES } from '../map/basemaps'
 import { Loading } from '../Loading'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
@@ -548,41 +547,79 @@ function M07() {
 
 /* ───────────────────────────── M08 — REMONTER LE TEMPS ───────────────────────────── */
 
+// M82 (refonte) — la PARCELLE d'abord : IDU / adresse / clic carte (motif parcelPrefill de M-ENTREE),
+// PUIS l'année ancienne (UN seul choix) ; l'« après » est TOUJOURS aujourd'hui (verrouillé). L'accès
+// depuis la fiche (bouton « 1950 » → parcelPrefill) reste. Les millésimes ANCIENS réellement dispo.
+const TEMPS_AVANT = [{ key: 'bm-ortho-1950', label: '1950-1965' }, { key: 'bm-ortho-2000', label: '2000-2005' }]
+
 function M08() {
-  // M15 D1 : les contrôles « avant → après » vivent ICI (bandeau gauche), plus en surimpression
-  // sur la carte. On pilote les deux fonds via le store ; la poignée de glissement reste sur la carte.
-  const { cmpLeft, cmpRight, setCmpLeft, setCmpRight, setModule } = useApp()
+  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, selectedIdu, setFlyTo } = useApp()
+  const [idu, setIdu] = useState('')
+  const [raw, setRaw] = useState('')
+  const [addrMsg, setAddrMsg] = useState<string | null>(null)
+  // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si non-historique.
+  useEffect(() => {
+    setCmpRight('bm-ortho-now')
+    if (cmpLeft !== 'bm-ortho-1950' && cmpLeft !== 'bm-ortho-2000') setCmpLeft('bm-ortho-1950')
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  const designer = async (code: string, coords?: [number, number]) => {
+    const c = code.trim(); if (c.length < 10) return
+    setIdu(c); setAddrMsg(null)
+    if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
+    try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
+  }
+  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle.
+  useEffect(() => {
+    if (parcelPrefill) { void designer(parcelPrefill); setParcelPrefill(null) }
+  }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── ÉTAPE 1 — désigner la parcelle ──
+  if (!idu) return (
+    <>
+      <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
+        choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
+      <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
+        <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
+        <input data-temps-idu value={raw} onChange={(e) => setRaw(e.target.value.trim())}
+          onKeyDown={(e) => { if (e.key === 'Enter') void designer(raw) }}
+          placeholder="IDU — 97415000CW0658"
+          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
+        <AddressAutocomplete placeholder="… ou une adresse"
+          onSelect={(sel) => { if (sel.idu) void designer(sel.idu, [sel.lon, sel.lat]); else setAddrMsg("Adresse trouvée, mais aucune parcelle rattachée — saisissez l'IDU.") }} />
+        {addrMsg && <p className="text-[10.5px] text-st-creuser">{addrMsg}</p>}
+        {selectedIdu && (
+          <button onClick={() => void designer(selectedIdu)} className="self-start text-[10.5px] text-mint hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
+        )}
+        <p className="text-[10.5px] text-txt-dim">… ou cliquez une parcelle directement sur la carte.</p>
+      </div>
+      <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>
+    </>
+  )
+
+  // ── ÉTAPE 2 — année ancienne (un seul choix) ; après = aujourd'hui, verrouillé ──
   return (
     <>
-      <Banner>Comparateur <b>1950-1965 ↔ aujourd'hui</b> (orthos IGN libres). Choisissez les deux
-        fonds ci-dessous, puis <b>glissez la poignée</b> au centre de la carte pour révéler l'un ou
-        l'autre. Les parcelles promues restent affichées des deux côtés.</Banner>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-        <p className="label-caps text-[9.5px]">Comparer — avant → après</p>
-        <div className="mt-1.5 flex flex-col gap-1.5">
-          <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-            <span className="w-12 shrink-0 text-txt-dim">Avant</span>
-            <select data-cmp-left value={cmpLeft} onChange={(e) => setCmpLeft(e.target.value)}
-              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
-              {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-            </select>
-          </label>
-          <div className="pl-14 text-mint" title="glisser la poignée pour révéler">⇕</div>
-          <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-            <span className="w-12 shrink-0 text-txt-dim">Après</span>
-            <select data-cmp-right value={cmpRight} onChange={(e) => setCmpRight(e.target.value)}
-              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
-              {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-            </select>
-          </label>
-        </div>
-        <button onClick={() => setModule(null)}
-          className="mt-2 w-full rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
-          title="Revenir à la carte (fond unique)">✕ Quitter le comparateur</button>
+      <div className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+        <span className="font-mono text-[12px] text-txt">{idu}</span>
+        <button onClick={() => { setIdu(''); setRaw('') }} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
       </div>
-      <p className="text-[11px] leading-relaxed text-txt-mut">
-        Accès direct depuis toute fiche : bouton « 1950 ».
-      </p>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
+        <div className="mt-1.5 flex gap-1.5">
+          {TEMPS_AVANT.map((a) => (
+            <button key={a.key} data-cmp-left={a.key} onClick={() => setCmpLeft(a.key)}
+              className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] ${cmpLeft === a.key ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{a.label}</button>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center justify-between rounded-md border border-dashed border-line-2 px-2.5 py-1.5">
+          <span className="text-[11px] text-txt-dim">Après</span>
+          <span className="text-[11px] text-txt">Aujourd'hui (ortho actuelle)</span>
+          <span className="text-[9px] text-txt-dim">🔒 fixe</span>
+        </div>
+        <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
+        <button onClick={() => setModule(null)}
+          className="mt-2 w-full rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt">✕ Quitter</button>
+      </div>
     </>
   )
 }
