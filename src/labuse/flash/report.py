@@ -84,6 +84,8 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     css = _env.get_template("rapport.css").render(
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
         date_generation=data["date_generation"], watermark=watermark)
+    from ..api.blocs_documents import BLOC_CSS       # M73-G — habillage des blocs, écrit une fois
+    css += BLOC_CSS
     from ..api.export_commun import LIMITES_TITRE, limites_document   # M73 §5 (source unique)
     # M73-D — le dossier rend enfin l'ANC (il le collectait sans l'afficher = bug) + la réhab, via le
     # bloc PARTAGÉ (écrit une fois). Markup = HTML déjà échappé côté builder, on ne re-échappe pas.
