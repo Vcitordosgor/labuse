@@ -2777,9 +2777,9 @@ def _voisinage_proche(db: Session, idu: str) -> dict | None:
     """M42 — « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois). None si rien. Jamais bloquant.
     SAVEPOINT : une table/colonne absente (base de test) n'avorte pas la TX fiche."""
     try:
-        from .site_voisinage import voisinage_proche
+        from .. import marche_service          # M73-B Volet C — point d'appel UNIQUE (profil 100 m M38)
         with db.begin_nested():
-            return voisinage_proche(db, idu)
+            return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_VOISINAGE_100M)
     except Exception:  # noqa: BLE001
         return None
 

@@ -245,7 +245,9 @@ def collect(db: Session, idu: str) -> dict:
             out["faisabilite"] = fais
             shab = (fais.fourchette or {}).get("shab_vendable_m2")
             if shab and shab > 0:
-                out["prix_dvf"] = sector_price(db, pid, Hypotheses.charger())  # comparables DVF (LÉGITIME)
+                # M73-B Volet C — le banquier LIT le marché par le point d'appel UNIQUE (profil nommé).
+                from .. import marche_service
+                out["prix_dvf"] = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
                 # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — Banquier + Argumentaire servent
                 # LE MÊME bilan que la fiche (compute_bilan_servi : charge COHÉRENTE À L'EURO — même
                 # capacité, hypothèses résolues, prix de sortie neuf, contexte éco). Non calculable
@@ -268,10 +270,10 @@ def collect(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
-    # permis SITADEL voisins (contexte promoteur)
+    # permis SITADEL voisins (contexte promoteur) — M73-B Volet C : par le point d'appel UNIQUE.
     try:
-        from ..ingestion.permits import nearby_permits
-        out["permits"] = nearby_permits(db, pid)
+        from .. import marche_service
+        out["permits"] = marche_service.permits(db, idu, profil=marche_service.PERMITS_FLASH_500M)
     except Exception as exc:  # noqa: BLE001
         log.warning("permits %s : %s", idu, exc)
 
