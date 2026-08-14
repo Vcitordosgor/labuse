@@ -42,6 +42,11 @@ anc:
   signal:
     proba_seuil: 70                 # zone_anc='anc' OU proba_anc >= seuil
     fenetre_mois: 12
+  # M86-B — seuil de l'ESTIMÉ SERVI à la fiche (au-dessus = alerte sectorielle « à vérifier SPANC » ;
+  # en dessous = Absent, jamais « collectif »). Mesuré : précision plafonne à 34 % vers 75 puis
+  # s'effondre au-delà de 80 — donc 75 (le pic), l'Estimé reste de grade SECTEUR (maille IRIS).
+  fiche:
+    proba_seuil: 75
 
 # ── LOT B : végétation (IRC + LiDAR HD) ──────────────────────────────────────
 vegetation:

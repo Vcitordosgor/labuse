@@ -2491,6 +2491,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "marche_secteur": marche_secteur,
         # M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires.
         "viabilisation": _viabilisation_block(db, idu),
+        # M86-B — assainissement (ANC / tout-à-l'égout) : contrainte de constructibilité, point de
+        # calcul UNIQUE partagé avec le PDF/export (anc_service). Toujours servi (Absent = un état).
+        "anc": _anc_block(db, idu),
         "gestionnaires": _gestionnaires_block(head["commune"]),
         # M75 — obligation APER (ombrières PV) portant sur la parcelle → tiroir Urbanisme. Information.
         "aper": _aper_block(db, idu),
@@ -2593,6 +2596,15 @@ def _aper_block(db: Session, idu: str) -> dict | None:
     Délègue au point de calcul unique (viabilisation_build.aper_note) partagé avec les exports."""
     from ..faisabilite.viabilisation_build import aper_note
     return aper_note(db, idu)
+
+
+def _anc_block(db: Session, idu: str) -> dict:
+    """M86-B — état ANC servi (Sourcé / Estimé / Absent) + couverture réglementaire, via le point de
+    calcul UNIQUE `anc_service.statut_anc` (partagé fiche/PDF/export). Toujours un dict (Absent = état)."""
+    from ..anc_service import couverture_anc, statut_anc
+    out = statut_anc(db, idu)
+    out["couverture"] = couverture_anc(db)
+    return out
 
 
 def _gestionnaires_block(commune: str) -> dict | None:

@@ -2142,7 +2142,7 @@ export function Fiche({ idu }: { idu: string }) {
                       <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
                   </div>
                 )}
-                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} anc={f.anc} />}
                 {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
                 <PermitsProximityBlock idu={idu} />
                 {f.depots && <DepotsBlock d={f.depots} />}
