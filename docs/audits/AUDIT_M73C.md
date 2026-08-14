@@ -73,4 +73,23 @@
   Saint-Paul = non-régression M59, Sourcé secteur IRIS Le Tampon, une avec potentiel réhab) · grep
   (aucun `zone_anc`/`proba_anc` en générateur, aucun recalcul réhab).
 
-**Deux décisions à trancher avant que j'écrive la Phase 2** (ci-dessous).
+## ARBITRAGE VIC (14/08/2026) — les deux critères dans les 5 documents
+Vic tranche : **ANC ET réhabilitation rendus dans les 5 documents** (couverture uniforme).
+- **ANC** : banquier + argumentaire + one-pager (mandat) **+ premium (fpdf) + dossier flash**.
+- **Réhab** : banquier + argumentaire (mandat) + one-pager (déjà) **+ premium (fpdf) + dossier flash**.
+
+### Plan Phase 2 arrêté (à exécuter — session suivante)
+1. **Builder de bloc partagé (écrit UNE fois)** — HTML, pour la famille WeasyPrint (dossier /
+   banquier / argumentaire / one-pager) : `anc_bloc_html(anc)` + `rehab_bloc_html(mode_b)`. Rendu
+   ANC : maille **nommée visiblement** (secteur IRIS « nom » ou commune) + millésime ; jamais un
+   verdict ; formulation testée sur un cas à 16 %. Réhab : absence de potentiel **affichée**, jamais
+   masquée. Nouveau module, ex. `src/labuse/api/blocs_documents.py`.
+2. **Premium (fpdf)** — média distinct : rendu fpdf des deux blocs (mêmes libellés/états, dessin
+   Python), lisant `fiche["anc"]` / `fiche["mode_b"]` déjà dans le payload.
+3. **Câblage data** : ajouter `statut_anc` + `compute_mode_b` à `briques_pdf.collect`
+   (banquier/argumentaire) ; ajouter `mode_b` (via `compute_mode_b`, jamais recalcul) à
+   `flash/data.py` collect (dossier) ; rendre l'ANC dans `templates/rapport.html.j2` (déjà collecté) ;
+   ajouter l'ANC au one-pager (`export.py`). Jamais lire `zone_anc`/`proba_anc` en générateur.
+4. **Phase 3** : 5 exports 200 · non-contradiction M73 + **nouveau cas** (critère écran absent d'un
+   document = échec) · golden 119/119 · recette 4 parcelles (L'Étang-Salé ANC · Saint-Paul collectif
+   = non-régression M59 · Le Tampon Sourcé secteur IRIS · une avec potentiel réhab) · grep de contrôle.
