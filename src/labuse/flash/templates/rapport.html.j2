@@ -15,7 +15,7 @@
 {# ══ Page de garde ══ #}
 <section class="garde">
   <div class="marque">
-    <svg width="46" height="13" viewBox="0 0 240 62"><path d="{{ logo_path }}" fill="#0B8A5F"/></svg>
+    <svg width="46" height="13" viewBox="0 0 240 62"><path d="{{ logo_path }}" fill="#1E9E58"/></svg>
     <span class="wordmark">LABUSE</span>
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
@@ -31,7 +31,7 @@
     {% for t in carte.tiles %}<img src="{{ t.data_uri }}" style="left:{{ t.left }}px; top:{{ t.top }}px;">{% endfor %}
     <svg width="{{ carte.width }}" height="{{ carte.height }}">
       {% for poly in carte.polygons %}
-      <polygon points="{{ poly }}" fill="rgba(11,138,95,0.18)" stroke="#0B8A5F" stroke-width="2.5"/>
+      <polygon points="{{ poly }}" fill="rgba(11,138,95,0.18)" stroke="#1E9E58" stroke-width="2.5"/>
       {% endfor %}
     </svg>
   </div>

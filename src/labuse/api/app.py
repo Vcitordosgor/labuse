@@ -1357,6 +1357,56 @@ def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) ->
     return _communes_data(db, source)
 
 
+def _foncier_commune(db: Session, commune: str) -> dict:
+    """M83 C1 — LE FONCIER DE LA COMMUNE (le produit). Métriques CALCULÉES réutilisées des points de
+    calcul EXISTANTS (M79 : `ligne2_terrain_zone` pour le prix terrain nu, `ligne6_offre_engagee` pour
+    les permis 12 mois) — aucun recalcul. Les comptes (parcelles, surface, zonage, évaluées, sans-zonage,
+    mutations 12 m) sont des AGRÉGATS DIRECTS sur les tables (pas la duplication d'une métrique calculée).
+    « UNKNOWN » n'existe pas comme statut : c'est l'absence de zonage publié au GPU (→ écartée)."""
+    from ..faisabilite.marche_commune import ligne2_terrain_zone, ligne6_offre_engagee
+
+    def scal(sql: str):
+        return db.execute(text(sql), {"c": commune, "r": Q_A_RUN_LABEL}).scalar()
+
+    n_parcelles = scal("SELECT count(*) FROM parcels WHERE commune = :c") or 0
+    surface_ha = db.execute(text(
+        "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
+        {"c": commune}).scalar()
+    zon = {(r["fam"] or "").upper(): r["n"] for r in db.execute(text(
+        "SELECT z.zone_fam AS fam, count(*) n FROM parcels p JOIN parcel_zone_plu z ON z.idu = p.idu "
+        "WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
+    au = sum(v for k, v in zon.items() if k.startswith("AU"))
+    a = sum(v for k, v in zon.items() if k.startswith("A") and not k.startswith("AU"))
+    u = sum(v for k, v in zon.items() if k.startswith("U"))
+    nz = sum(v for k, v in zon.items() if k.startswith("N"))
+    total_zone = u + au + a + nz
+    evaluees = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu "
+                    "WHERE p.commune = :c AND s.run_id = :r") or 0
+    sans_zonage = scal("SELECT count(*) FROM parcels p WHERE p.commune = :c AND NOT EXISTS "
+                       "(SELECT 1 FROM parcel_zone_plu z WHERE z.idu = p.idu)") or 0
+    # 12 DERNIERS MOIS DE DONNÉES de la commune (pas relatif à now() : DVF est publié avec retard,
+    # une fenêtre calendaire donnerait un volume partiel trompeur).
+    mutations_12m = db.execute(text(
+        "SELECT count(*) FROM dvf_mutations WHERE commune = :c AND date_mutation > "
+        "(SELECT max(date_mutation) FROM dvf_mutations WHERE commune = :c) - interval '12 months'"),
+        {"c": commune}).scalar() or 0
+    terrain = ligne2_terrain_zone(db, commune)     # point de calcul M79 (réutilisé, pas recréé)
+    offre = ligne6_offre_engagee(db, commune)      # permis 12 mois (Sitadel), réutilisé
+    return {
+        "n_parcelles": int(n_parcelles),
+        "surface_ha": int(surface_ha) if surface_ha is not None else None,
+        "repartition_zonage": ({"U": u, "AU": au, "A": a, "N": nz, "total": total_zone} if total_zone else None),
+        "classement": {"evaluees": int(evaluees), "sans_zonage": int(sans_zonage),
+                       "raison_sans_zonage": "zonage non publié au GPU"},
+        "prix_terrain_nu": {"par_zone": (terrain.get("valeurs") or {}).get("par_zone"),
+                            "calculable": terrain.get("calculable"), "motif": terrain.get("motif"),
+                            "seuil_n": 10, "etiquette": terrain.get("etiquette")},
+        "mutations_12m": int(mutations_12m),
+        "permis_12m": {"n": (offre.get("valeurs") or {}).get("permis_12m") or 0,
+                       "reserve": "accordés seulement (les refus et abandons ne sont pas publiés)"},
+    }
+
+
 @app.get("/communes/{commune}/contexte")
 def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
@@ -1402,12 +1452,13 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
+            "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
             "notes": ["ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà "
                       "couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : "
-                      "pas de source propre 974 identifiée (écart consigné).",
+                      "pas de source spécifique à La Réunion identifiée à ce jour.",
                       "Données de CONTEXTE : aucune n'entre dans le scoring."]}
 
 

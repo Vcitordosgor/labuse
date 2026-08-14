@@ -74,7 +74,7 @@ def _logo(pdf: FPDF, x: float, y: float, w: float) -> None:
     k = w / 240.0
     pdf.set_fill_color(*MINT)
     with pdf.new_path() as path:
-        path.style.fill_color = "#0B8A5F"
+        path.style.fill_color = "#1E9E58"
         path.style.stroke_width = 0
         path.move_to(x + 2 * k, y + 15 * k)
         for px, py in _LOGO_PTS:

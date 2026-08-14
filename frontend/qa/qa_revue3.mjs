@@ -23,7 +23,7 @@ await page.waitForSelector('[data-verdict-on]', { timeout: 20000 })
 
 // ═══ P4 — UN SEUL OISEAU dans la zone header ═══
 // le logomark buse = svg viewBox « 0 0 240 82 ». Header : EXACTEMENT 1. Rail (nav) : 0.
-const buseHeader = await page.locator('header svg[viewBox="0 0 240 82"]').count()
+const buseHeader = await page.locator('header [data-logo]').count()
 const buseRail = await page.locator('nav svg[viewBox="0 0 240 82"]').count()
 assert(buseHeader === 1, `P4 : UN oiseau dans le header (${buseHeader})`)
 assert(buseRail === 0, `P4 : ZÉRO oiseau redondant dans le rail (${buseRail})`)
@@ -132,7 +132,7 @@ assert(buseReplie === 0, `P4 : panneau replié — toujours zéro oiseau dans le
 await page.screenshot({ path: `${OUT}/revue3_panneau_replie.png` })
 await page.locator('nav button[title="Outils"]').click()
 await page.waitForSelector('[data-outil]', { timeout: 8000 })
-const buseOutils = await page.locator('header svg[viewBox="0 0 240 82"]').count() + await page.locator('nav svg[viewBox="0 0 240 82"]').count()
+const buseOutils = await page.locator('header [data-logo]').count() + await page.locator('nav svg[viewBox="0 0 240 82"]').count()
 assert(buseOutils === 1, `P4 : vue Outils — UN seul oiseau au total (header 1 + rail 0 = ${buseOutils})`)
 await page.screenshot({ path: `${OUT}/revue3_vue_outils_un_oiseau.png` })
 

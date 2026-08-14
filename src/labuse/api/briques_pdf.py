@@ -51,13 +51,13 @@ PAGE_CSS = """
   @top-left {{
     content: "{produit_ctx}";
     font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
-    border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
+    border-bottom: 0.6pt solid #1E9E58; width: 100%; padding-bottom: 4pt;
     margin-bottom: 8pt; vertical-align: bottom;
   }}
   @top-right {{
     content: "{date_edition}";
     font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
-    border-bottom: 0.6pt solid #0B8A5F; vertical-align: bottom;
+    border-bottom: 0.6pt solid #1E9E58; vertical-align: bottom;
     padding-bottom: 4pt; margin-bottom: 8pt;
   }}
   @bottom-center {{
@@ -72,11 +72,11 @@ body {{ font-family: "Inter", sans-serif; color: #28322D; line-height: 1.45; mar
 h1, h2, h3 {{ font-family: "Space Grotesk", "Inter", sans-serif; font-weight: 700; color: #111814; }}
 h1 {{ font-size: 21pt; margin: 0 0 2mm 0; line-height: 1.2; }}
 h2 {{ font-size: 13pt; margin: 7mm 0 3mm 0; padding-bottom: 1.5mm;
-     border-bottom: 1.4pt solid #0B8A5F; break-after: avoid; }}
+     border-bottom: 1.4pt solid #1E9E58; break-after: avoid; }}
 h3 {{ font-size: 10pt; margin: 4mm 0 1.5mm 0; break-after: avoid; }}
 .marque {{ display: flex; align-items: center; margin-bottom: 8mm; }}
 .wordmark {{ font-family: "Space Grotesk"; font-weight: 700; font-size: 16pt;
-            color: #0B8A5F; letter-spacing: 0.04em; margin-left: 4mm; }}
+            color: #1E9E58; letter-spacing: 0.04em; margin-left: 4mm; }}
 .produit {{ font-family: "JetBrains Mono", monospace; font-size: 8pt;
            color: #5F6C65; margin-left: 4mm; }}
 .refs {{ font-family: "JetBrains Mono", monospace; font-size: 9pt;
@@ -86,7 +86,7 @@ table {{ width: 100%; border-collapse: collapse; margin: 1mm 0; }}
 td, th {{ border-bottom: 0.5pt solid #D8E2DC; padding: 1.6mm 2mm 1.6mm 0; text-align: left;
   font-size: 8.6pt; vertical-align: top; }}
 th {{ color: #5F6C65; text-transform: uppercase; font-size: 6.8pt; letter-spacing: 0.3pt;
-  border-bottom: 0.8pt solid #0B8A5F; font-family: "JetBrains Mono", monospace; }}
+  border-bottom: 0.8pt solid #1E9E58; font-family: "JetBrains Mono", monospace; }}
 td.n, th.n {{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }}
 .note {{ font-size: 7.6pt; color: #5F6C65; }}
 .src {{ font-size: 6.6pt; text-transform: uppercase; letter-spacing: 0.3pt; padding: 0.2mm 1.2mm;
@@ -100,10 +100,10 @@ td.n, th.n {{ text-align: right; font-variant-numeric: tabular-nums; white-space
 .cartouche .valeur {{ font-family: "Space Grotesk"; font-weight: 700; font-size: 15pt;
   color: #111814; display: block; margin-top: 1mm; }}
 .cartouche .valeur small {{ font-size: 8.5pt; color: #5F6C65; font-family: "Inter"; font-weight: 400; }}
-.cartouche.hero .valeur {{ font-size: 27pt; color: #0B8A5F; }}   /* C6 : lisible à 2 mètres */
+.cartouche.hero .valeur {{ font-size: 27pt; color: #1E9E58; }}   /* C6 : lisible à 2 mètres */
 .cartouches {{ display: flex; gap: 3mm; margin: 3mm 0; }}
 .cartouches .cartouche {{ flex: 1; margin: 0; }}
-.exec {{ background: #F4F8F6; border-left: 2.5pt solid #0B8A5F; padding: 3mm 4mm;
+.exec {{ background: #F4F8F6; border-left: 2.5pt solid #1E9E58; padding: 3mm 4mm;
   border-radius: 0 1.5mm 1.5mm 0; font-size: 9.4pt; }}
 .bandeau {{ background: #FFF6DE; border-radius: 1.5mm; padding: 2.5mm 3.5mm; font-size: 7.8pt;
   color: #7A5A12; margin: 2mm 0 4mm; }}
@@ -162,7 +162,7 @@ def wordmark_html(produit_sous_titre: str) -> str:
     from ..flash.report import _logo_svg_path
     return (f"<div class='marque'>"
             f"<svg width='46' height='13' viewBox='0 0 240 62'>"
-            f"<path d='{_logo_svg_path()}' fill='#0B8A5F'/></svg>"
+            f"<path d='{_logo_svg_path()}' fill='#1E9E58'/></svg>"
             f"<span class='wordmark'>LABUSE</span>"
             f"<span class='produit'>{esc(produit_sous_titre)}</span></div>")
 
@@ -324,7 +324,7 @@ def map_html(geojson: str, ign: bool = False) -> str:
         return "<p class='note'>Fond de carte momentanément indisponible.</p>"
     tiles = "".join(f"<img src='{t['data_uri']}' style='position:absolute;left:{t['left']}px;"
                     f"top:{t['top']}px;width:256px;height:256px;'>" for t in carte["tiles"])
-    polys = "".join(f"<polygon points='{p}' fill='rgba(11,138,95,0.16)' stroke='#0B8A5F' "
+    polys = "".join(f"<polygon points='{p}' fill='rgba(11,138,95,0.16)' stroke='#1E9E58' "
                     f"stroke-width='2.5'/>" for p in carte["polygons"])
     return (f"<div class='map' style='position:relative;width:{carte['width']}px;height:{carte['height']}px;'>"
             f"{tiles}<svg width='{carte['width']}' height='{carte['height']}' "

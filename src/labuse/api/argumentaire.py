@@ -84,7 +84,7 @@ def _svg_bande_points(prix: dict) -> str:
     x = lambda v: PAD + (W - 2 * PAD) * (v - lo) / (hi - lo)  # noqa: E731
     med = prix.get("median")
     cercles = "".join(
-        f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#0B8A5F' fill-opacity='0.45'/>" for v in pts)
+        f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#1E9E58' fill-opacity='0.45'/>" for v in pts)
     med_svg = (f"<line x1='{x(med):.1f}' y1='16' x2='{x(med):.1f}' y2='58' stroke='#111814' "
                f"stroke-width='1.6'/>"
                f"<text x='{x(med):.1f}' y='12' text-anchor='middle' font-family='Inter' "
@@ -113,7 +113,7 @@ def _svg_cascade(calc: dict) -> str:
     construction = (float(c.get("cc_bas") or 0) + float(c.get("cc_haut") or 0)) / 2
     vrd = float(c.get("cout_vrd") or 0)
     terrain = float(cf.get("central") or 0)
-    etapes = [("Chiffre d'affaires", ca, "#0B8A5F"), ("− Marge & frais", -marge, "#A87916"),
+    etapes = [("Chiffre d'affaires", ca, "#1E9E58"), ("− Marge & frais", -marge, "#A87916"),
               ("− Construction", -construction, "#A87916")]
     if vrd:
         etapes.append(("− VRD", -vrd, "#A87916"))

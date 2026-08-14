@@ -102,3 +102,52 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
     }
     _cache.update(at=now, data=data)
     return data
+
+
+_cs_cache: dict = {"at": 0.0, "data": None}
+
+
+@router.get("/accueil/cette-semaine")
+def accueil_cette_semaine(db: Session = Depends(get_db)) -> dict:
+    """B4 (M83) — trois signaux d'activité, MESURÉS en base. Doctrine « un zéro n'est pas une
+    absence » : si une source est en retard d'ingestion, on le DIT (fraîcheur + dernière donnée)
+    plutôt qu'un zéro trompeur. DVF n'a PAS de date de publication en base (seul date_mutation) : la
+    fraîcheur se lit sur le dernier trimestre RÉEL (≥ 50 ventes), jamais sur un enregistrement isolé.
+    Cache court (5 min) — requête légère."""
+    now = time.time()
+    if _cs_cache["data"] is not None and now - _cs_cache["at"] < 300:
+        return _cs_cache["data"]
+
+    def scal(sql: str, params: dict | None = None):
+        try:
+            return db.execute(text(sql), params or {}).scalar()
+        except Exception:  # noqa: BLE001
+            return None
+
+    permis_7j = scal("SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 7")
+    permis_30j = scal("SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 30") or 0
+    permis_max = scal("SELECT max(date_depot) FROM sitadel_permits")
+
+    ventes_7j = scal("SELECT count(*) FROM dvf_mutations WHERE date_mutation > now()::date - 7")
+    ventes_30j = scal("SELECT count(*) FROM dvf_mutations WHERE date_mutation > now()::date - 30") or 0
+    ventes_trim = scal(
+        "SELECT to_char(max(q), 'YYYY\"T\"Q') FROM (SELECT date_trunc('quarter', date_mutation) AS q "
+        "FROM dvf_mutations GROUP BY 1 HAVING count(*) >= 50) t")
+
+    try:
+        from .. import veille_plu
+        communes_plu = sum(1 for e in veille_plu._registre().values() if veille_plu.procedure_active(e))
+    except Exception:  # noqa: BLE001
+        communes_plu = None
+
+    data = {
+        # frais = la source a bougé récemment (≥ un seuil d'activité sur 30 j) — sinon la ligne DIT la
+        # dernière donnée au lieu d'un « 0 cette semaine » trompeur.
+        "permis": {"n_7j": int(permis_7j or 0), "frais": permis_30j >= 10,
+                   "derniere": str(permis_max)[:10] if permis_max else None},
+        "ventes": {"n_7j": int(ventes_7j or 0), "frais": ventes_30j >= 20,
+                   "dernier_trimestre": ventes_trim, "sans_date_publication": True},
+        "communes_procedure_plu": communes_plu,
+    }
+    _cs_cache.update(at=now, data=data)
+    return data

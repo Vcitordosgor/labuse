@@ -5,7 +5,7 @@
 - Génération IDEMPOTENTE : même (order_ref, idu, version) → même chemin ; le fichier
   existant est réutilisé sauf force=True. Objectif < 30 s.
 - DA print : fond blanc, typos de la marque (fonts OFL de api/fonts, les mêmes que les
-  exports fpdf2 existants), accents menthe #0B8A5F.
+  exports fpdf2 existants), accents menthe #1E9E58.
 """
 from __future__ import annotations
 

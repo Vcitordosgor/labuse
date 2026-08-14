@@ -1,6 +1,6 @@
 /* Rapport Flash — DA IMPRESSION LABUSE : fond BLANC (un notaire imprime), typos de la
    marque (Space Grotesk / Inter / JetBrains Mono, OFL embarquées api/fonts), accents
-   vert menthe #0B8A5F (déclinaison print de la menthe écran). Pas le thème sombre. */
+   vert menthe #1E9E58 (déclinaison print de la menthe écran). Pas le thème sombre. */
 
 @font-face { font-family: "Inter"; src: url("{{ fonts_dir }}/Inter-Regular.ttf"); }
 @font-face { font-family: "JetBrains Mono"; src: url("{{ fonts_dir }}/JetBrainsMono-Regular.ttf"); }
@@ -8,7 +8,7 @@
              src: url("{{ fonts_dir }}/SpaceGrotesk-Bold.ttf"); }
 
 :root {
-  --mint: #0B8A5F;
+  --mint: #1E9E58;
   --mint-soft: #E2F7ED;
   --surface: #F4F8F6;
   --line: #D8E2DC;
@@ -27,13 +27,13 @@
   @top-left {
     content: "LABUSE — {{ produit }} · {{ order_ref }}";
     font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
-    border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
+    border-bottom: 0.6pt solid #1E9E58; width: 100%; padding-bottom: 4pt;
     margin-bottom: 8pt; vertical-align: bottom;
   }
   @top-right {
     content: "{{ date_generation }}";
     font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
-    border-bottom: 0.6pt solid #0B8A5F; vertical-align: bottom;
+    border-bottom: 0.6pt solid #1E9E58; vertical-align: bottom;
     padding-bottom: 4pt; margin-bottom: 8pt;
   }
   @bottom-center {
