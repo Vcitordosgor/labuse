@@ -147,6 +147,7 @@ export interface SourceInfo {
   // UX V1 ajout A : fraîcheur RÉELLE lue dans ingestion_runs (jamais codée en dur)
   derniere_ingestion: string | null
   derniere_donnee?: string | null   // J+2 : date de la dernière DONNÉE en base (≠ ingestion)
+  source_millesime?: string | null   // M86 : millésime amont centralisé (lu ici, plus jamais en dur au front)
   // M84 : verdict de fraîcheur live (seuil = 2× cadence). « en_retard » = décrochage à VOIR ;
   // « cadence_libre »/« sans_donnee » ne sont jamais une alerte (anti-faux-positif).
   fraicheur_statut?: 'en_retard' | 'a_jour' | 'cadence_libre' | 'sans_donnee' | null

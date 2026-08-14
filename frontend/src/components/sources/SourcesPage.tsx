@@ -13,25 +13,12 @@ const STATUS_DOT: Record<string, string> = {
   error: TOKENS.stEcartee, down: TOKENS.stEcartee, hub: TOKENS.txtDim,
 }
 
-// P4.2 (dernière passe) — « version la plus récente publiée » : rassure que LABUSE n'est pas
-// en retard, c'est la SOURCE qui publie par millésime. Notes VÉRIFIÉES + repli sur l'année du nom.
-const MILLESIME_VERIFIE: Record<string, string> = {
-  'DVF / valeurs foncières': 'ventes jusqu’à déc. 2025',
-  // M14 E2 (QA) : millésime réel de la donnée ingérée, renseigné là où il n'est ni dans le
-  // nom ni dans un job daté. Filosofi carroyé 200 m = millésime 2021 (directive M14). BPE et
-  // SAFER : millésime NON tracé en base localement → consigné, jamais inventé (voir Row).
-  'Filosofi INSEE (carreaux 200 m)': 'millésime 2021',
-  // M17-A : millésimes RÉELS retrouvés dans le code d'ingestion (jamais devinés). Réf. seed_sources.py :
-  'Parc National de La Réunion (INPN)': 'millésime 2021',              // jeu ODS `pnrun_2021` (l.94-95)
-  'QPV 2024 (ANCT)': 'génération 2024',                                // décret 2023-1314, en vigueur 01/01/2024 (l.217)
-  'Classement sonore ITT (Cerema)': 'arrêtés déc. 2023',              // arrêtés préfectoraux 14-15/12/2023 (l.199)
-  '50 pas géométriques — limite haute (DEAL)': 'cadastre 1877 (géoréf. 2012/1950)', // lignée documentée (l.193)
-  'DEAL Réunion — trait de côte': 'millésime 2018',                    // fichier GéoLittoral `…_062018_shape.zip` (l.272)
-  // BPE INSEE et Zonage SAFER (DAAF) : millésime INTROUVABLE en base/code → laissés « non tracé »
-  // assumé (BPE = A_FAIRE, note « import millésime » sans année ; SAFER = proxy RPG.LATEST, non daté).
-}
+// M86 (correction factuelle) — le millésime amont est LU depuis l'API (`data_sources.source_millesime`,
+// magasin centralisé) : plus AUCUNE date en dur au front. Repli sur l'année présente dans le nom (dérivé,
+// pas inventé). L'ancienne carte `MILLESIME_VERIFIE` (7 dates codées) a été supprimée — ses valeurs
+// vivent désormais dans data_sources.source_millesime (exposé par /sources).
 function millesimeNote(s: SourceInfo): string | null {
-  if (MILLESIME_VERIFIE[s.name]) return MILLESIME_VERIFIE[s.name]
+  if (s.source_millesime) return s.source_millesime
   const y = s.name.match(/\b(19|20)\d{2}\b/)
   return y ? `millésime ${y[0]}` : null
 }

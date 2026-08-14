@@ -648,6 +648,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
+            # M86 — millésime amont CENTRALISÉ (data_sources.source_millesime, écrit par persist_millesime
+            # ou seed) : le front le LIT au lieu de coder des dates en dur (correction factuelle M86).
+            "source_millesime": s.source_millesime,
             # M74 C bis — NOTE DE NATURE visible (proxy / servi par proxys) : une source proxy ne
             # doit JAMAIS être présentée comme la source officielle (doctrine anti-faux-positif).
             "nature": _source_nature(s.technical_notes),

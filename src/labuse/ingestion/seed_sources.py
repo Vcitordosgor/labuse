@@ -112,6 +112,7 @@ SOURCES: list[dict] = [
          technical_notes="✓ live (elevations:[6.43]). Batch commune : préférer raster RGE ALTI + pente PostGIS aux milliers d'appels."),
     # ── Spécificité réunionnaise (premier rang) ──
     dict(name="Parc National de La Réunion (INPN)", category="environnement", provider="INPN/MNHN · API Carto · Région ODS",
+         source_millesime="millésime 2021",   # M86 — millésime centralisé (plus de date en dur au front)
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://data.regionreunion.com/explore/dataset/pnrun_2021/",
          endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/pnrun_2021/records",
@@ -204,6 +205,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte / Etalab 2.0 — attribution : « Source : Insee, Base permanente des équipements ».",
          technical_notes="Base permanente des équipements (import millésime)."),
     dict(name="Filosofi INSEE (carreaux 200 m)", category="attractivite", provider="INSEE",
+         source_millesime="millésime 2021",   # M86 — millésime centralisé (plus de date en dur au front)
          access_type="import GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.insee.fr/fr/statistiques/8735162?sommaire=8735243", endpoint_url=None,
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Filosofi 2021 ».",
@@ -224,12 +226,14 @@ SOURCES: list[dict] = [
          legal_notes="Licence INPI RNE 2024 (licence spécifique homologuée, art. L. 323-2 CRPA) : réutilisation, y compris commerciale, autorisée (art. 2.1) ; attribution exigée (art. 2.4, source + date de dernière mise à jour) : « Source : INPI — Registre national des entreprises, données du [date de dernière synchronisation] », sans suggérer une caution de l'INPI ; restrictions de recherche art. A.123-69 c. com. (art. 2.5). RGPD : personnes morales en open data complet ; données d'une personne PHYSIQUE conservées seulement si l'entreprise est diffusible. Signal INTERNE de priorisation, jamais un export nominatif de masse (règle d'archi #2). Naissance au MOIS.",
          technical_notes="✓ login live 05/07/2026 (schéma vérifié, siren 913037362 SCI ALOE). Auth POST /api/sso/login (compte portail, identifiants en env INPI_API_*, JAMAIS en dur ; SFTP abandonné = firewall IP). GET /api/companies/{siren}. Champs : composition.pouvoirs[].individu.descriptionPersonne.dateDeNaissance (AAAA-MM). ⚠ pas de procédures collectives dans cet endpoint (restent BODACC A1). Vague A3 : signal propension_vendre / âge dirigeant (# TODO étage 2). last_sync_at posé à l'ingestion."),
     dict(name="50 pas géométriques — limite haute (DEAL)", category="reglement", provider="DEAL Réunion (Lizmap)",
+         source_millesime="cadastre 1877 (géoréf. 2012/1950)",   # M86 — millésime centralisé
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER, rate_limit="1 requête",
          documentation_url="https://deal974.lizmap.com/cartes/",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion",
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion, 50 pas géométriques (limite haute) ». Limite numérisée du cadastre 1877 (géoréf. orthos 2012/1950) — indicative, la bande polygonale officielle n'est pas diffusée.",
          technical_notes="✓ live 10/07/2026 (LOT 6 data-gap) : couche LIMITE_HA, 163 tronçons (~184 km). CORRIDOR ±90 m matérialisé (approximation documentée) → kind='cinquante_pas', flag « au contact » Stage 1 faible. 16 099 parcelles touchées."),
     dict(name="Classement sonore ITT (Cerema)", category="reglement", provider="Cerema (Cartagène)",
+         source_millesime="arrêtés déc. 2023",   # M86 — millésime centralisé
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="1 requête (export intégral)",
          documentation_url="https://cartagene.cerema.fr",
          endpoint_url="https://cartagene.cerema.fr/server/rest/services/Hosted/Routes_classement_sonore_La_Reunion_V2/FeatureServer/0/query",
@@ -248,6 +252,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte (open data DINUM, agrégat INSEE/RNE) — attribution : « Source : Insee (Sirene) / INPI (RNE), via recherche-entreprises.api.gouv.fr ». RGPD : personnes morales ; signal INTERNE de priorisation (Score V), jamais un export nominatif de masse (règle d'archi #2).",
          technical_notes="✓ live 10/07/2026 (schéma vérifié, SHLMR 310895172). Sans clé. Score V : enrichissement propriétaire PAR SIREN (état administratif A/C, siège, NAF, catégorie juridique, dirigeants naissance AAAA-MM) → cache owner_enrichment ; fallback matching PAR DÉNOMINATION (§4.2) → owner_denom_lookup. Complète le RNE (état administratif absent de la vague A3)."),
     dict(name="QPV 2024 (ANCT)", category="fiscal", provider="ANCT (Agence nationale cohésion des territoires)",
+         source_millesime="génération 2024",   # M86 — millésime centralisé
          access_type="téléchargement/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.data.gouv.fr/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv",
          endpoint_url="https://static.data.gouv.fr/resources/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/20260115-204323/qpv-2024-geojson.zip",
@@ -334,6 +339,7 @@ SOURCES: list[dict] = [
                          "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
                          "idprocpte / idprodroit → nb_droits_propriete = signal d'indivision, en attente de convention."),
     dict(name="DEAL Réunion — trait de côte", category="risques", provider="Cerema / GéoLittoral",
+         source_millesime="millésime 2018",   # M86 — millésime centralisé
          access_type="import/SHP", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html",
          endpoint_url="https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
