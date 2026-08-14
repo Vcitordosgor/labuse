@@ -1980,6 +1980,48 @@ def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
                f"{out['echecs']} échec(s).")
 
 
+@app.command("annonce")
+def annonce_cmd(
+    titre: str = typer.Option(..., help="Titre de l'annonce."),
+    corps: str = typer.Option(..., help="Corps du message (le fait, se suffit à lui-même)."),
+    lien: str = typer.Option(None, help="Lien optionnel."),
+    type_: str = typer.Option("annonce_produit", "--type", help="annonce_produit | maintenance"),
+    test: str = typer.Option(None, help="Envoi de TEST à cette adresse (à soi, avant le vrai)."),
+    confirmer: bool = typer.Option(False, help="Confirme l'envoi RÉEL à tous les comptes actifs."),
+    debut: str = typer.Option("", help="Maintenance : début de coupure."),
+    fin: str = typer.Option("", help="Maintenance : fin."),
+    duree: str = typer.Option("", help="Maintenance : durée estimée."),
+) -> None:
+    """M85-B — ANNONCE (chaîne 3) : cloche + mail à tous les comptes actifs. APERÇU obligatoire ;
+    --test <email> essaie à soi d'abord ; --confirmer requis pour l'envoi réel. `maintenance` = gabarit
+    distinct (dates/durée en évidence), non désactivable."""
+    from .api.events import apercu_annonce, ensure_tables, envoyer_annonce
+    from .db import engine, session_scope
+
+    ensure_tables(engine())
+    base = get_settings().public_base_url or ""
+    with session_scope() as s:                       # 1) APERÇU systématique
+        ap = apercu_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien,
+                            debut=debut, fin=fin, duree=duree)
+    typer.echo("─────────── APERÇU ───────────")
+    typer.echo(f"Sujet : {ap['sujet']}\n")
+    typer.echo(ap["texte"])
+    typer.echo(f"──── Destinataires : {ap['n_destinataires']} compte(s) actif(s) ────")
+    if test:                                         # 2) TEST à soi, avant le vrai
+        with session_scope() as s:
+            r = envoyer_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien, base_url=base,
+                                test_email=test, debut=debut, fin=fin, duree=duree)
+        typer.echo(f"✉ Test envoyé à {test} : {r['statut']}")
+    if not confirmer:                                # 3) envoi RÉEL seulement sur --confirmer
+        typer.echo("⏸ Aperçu seul. --test <votre-email> pour un essai, puis --confirmer pour l'envoi réel.")
+        return
+    with session_scope() as s:
+        r = envoyer_annonce(s, type_=type_, titre=titre, corps=corps, lien=lien, base_url=base,
+                            debut=debut, fin=fin, duree=duree)
+    typer.echo(f"✓ Annonce envoyée — cible {r['n_cible']}, mail ok {r['n_mail_ok']}, "
+               f"échecs {r['n_mail_echec']}, cloche {r['n_cloche']}. Tracée dans `annonces`.")
+
+
 @app.command("score-v-fetch")
 def score_v_fetch_cmd(
     passe: str = typer.Option("all", help="all | owners | denoms | bodacc"),

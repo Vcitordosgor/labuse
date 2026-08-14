@@ -116,6 +116,69 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
     return sujet, corps
 
 
+# ── M85-B · annonce produit (chaîne 3) — sobre, transactionnel, désinscription (désactivable) ──
+def annonce_email(titre: str, corps: str, *, lien: str | None = None, lien_desabo: str = "",
+                  lien_prefs: str = "") -> tuple[str, str]:
+    """Annonce LABUSE (nouveauté, source). Texte sobre ; désinscription obligatoire (type désactivable)."""
+    sujet = f"LABUSE — {titre}"
+    lignes = corps.strip()
+    if lien:
+        lignes += f"\n\n{lien}"
+    pieds = []
+    if lien_prefs:
+        pieds.append(f"Vos préférences : {lien_prefs}")
+    if lien_desabo:
+        pieds.append(f"Ne plus recevoir les annonces : {lien_desabo}")
+    corps_txt = "Bonjour,\n\n" + lignes + ("\n\n— — —\n" + "\n".join(pieds) if pieds else "") + _SIGNATURE
+    return sujet, corps_txt
+
+
+def annonce_html(titre: str, corps: str, *, lien: str | None = None, lien_desabo: str = "",
+                 lien_prefs: str = "") -> str:
+    V = "#1E9E58"
+    lien_html = (f"<p style='margin:14px 0 0'><a href='{lien}' style='color:{V}'>{lien}</a></p>" if lien else "")
+    pied = " · ".join(x for x in (
+        (f"<a href='{lien_prefs}' style='color:{V}'>Préférences</a>" if lien_prefs else ""),
+        (f"<a href='{lien_desabo}' style='color:#888'>Se désinscrire des annonces</a>" if lien_desabo else "")) if x)
+    return (f"<!doctype html><html><body style=\"margin:0;background:#fff;color:#1a1a1a;"
+            f"font:14px/1.55 -apple-system,Segoe UI,sans-serif\"><div style=\"max-width:600px;padding:20px\">"
+            f"<p style=\"margin:0 0 12px;color:{V};font-weight:600\">LABUSE — {titre}</p>"
+            f"<div style=\"white-space:pre-line\">{corps.strip()}</div>{lien_html}"
+            f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">{pied}</p></div></body></html>")
+
+
+# ── M85-B · maintenance (chaîne 3) — gabarit DISTINCT : dates et durée de coupure EN ÉVIDENCE,
+#    NON désactivable (conséquences réelles) → aucun lien de désinscription. ──
+def maintenance_email(titre: str, corps: str, *, debut: str = "", fin: str = "",
+                      duree: str = "") -> tuple[str, str, str]:
+    """Retourne (sujet, texte, html). Fenêtre de coupure MISE EN AVANT. Pas de désinscription."""
+    sujet = f"LABUSE — maintenance programmée : {titre}"
+    fenetre = ""
+    if debut or fin or duree:
+        parts = []
+        if debut:
+            parts.append(f"début {debut}")
+        if fin:
+            parts.append(f"fin {fin}")
+        if duree:
+            parts.append(f"durée estimée {duree}")
+        fenetre = "Fenêtre de coupure : " + ", ".join(parts) + "."
+    txt = ("Bonjour,\n\n" + (fenetre + "\n\n" if fenetre else "") + corps.strip()
+           + "\n\nCe message concerne le fonctionnement de votre service — il n'est pas désactivable."
+           + _SIGNATURE)
+    V = "#1E9E58"
+    fenetre_html = (f"<p style='margin:0 0 12px;padding:10px 12px;background:#fff6e8;border-left:3px solid #E8B44C;"
+                    f"font-weight:600'>{fenetre}</p>" if fenetre else "")
+    html = (f"<!doctype html><html><body style=\"margin:0;background:#fff;color:#1a1a1a;"
+            f"font:14px/1.55 -apple-system,Segoe UI,sans-serif\"><div style=\"max-width:600px;padding:20px\">"
+            f"<p style=\"margin:0 0 12px;color:{V};font-weight:600\">LABUSE — maintenance programmée</p>"
+            f"{fenetre_html}<p style=\"margin:0 0 8px;font-weight:600\">{titre}</p>"
+            f"<div style=\"white-space:pre-line\">{corps.strip()}</div>"
+            f"<p style=\"margin:20px 0 0;color:#888;font-size:12px\">Ce message concerne le fonctionnement "
+            f"de votre service — il n'est pas désactivable.</p></div></body></html>")
+    return sujet, txt, html
+
+
 # ── M85 · gabarit HTML du digest — style TRANSACTIONNEL (boîte Principale, pas Promotions) ──
 def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: list[dict],
                       lien_desabo: str, lien_prefs: str, *, base_url: str = "",

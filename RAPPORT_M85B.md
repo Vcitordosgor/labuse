@@ -77,5 +77,53 @@ rythme historique (crons actifs), l'ordre de grandeur reste **~1-2 mails/mois** 
 
 ## Garde-fous (Phase A + B1)
 tsc 0 · vitest 36/36 · build vert · pytest 155 (+ refus hors registre + maintenance verrouillée testés) ·
-golden 119/119 diff 0 · console 0. **NE PAS MERGER.** STOP — j'attends ton arbitrage (périmètre des
-changements + maille permis + emplacement de la liste) avant de construire le producteur (B2).
+golden 119/119 diff 0 · console 0.
+
+---
+
+# PHASE B2 — Le suivi de parcelle (LIVRÉ, commit `dd950d59`) — arbitrages appliqués
+
+- **Producteur `evaluer_suivis`** (SQL, zéro modèle) : changements **SUR la parcelle** (maille stricte
+  `idu_codes`, jamais la proximité), dédup par événement, fenêtre post-suivi :
+  - **MUTATION** (vente) — l'événement majeur, libellé distinct « Vente » ;
+  - **PERMIS** sur la parcelle ; **BODACC** sur le propriétaire (personne morale) ; **ZONAGE** par
+    comparaison d'empreinte (`zone_snap`).
+- **BASCULE DE TIER** dans `detect_events` : formulée comme **NOTRE verdict** (« suite à une mise à jour
+  de NOS données … c'est notre analyse qui a changé »), **seulement vers/depuis chaude**. Elle
+  **REMPLACE** l'ancien bloc « permis ≤ 300 m » (retiré — pas de doublon, motif veille_notifications
+  jamais refait). « Permis à proximité » (opt-in, rayon choisi) → **BACKLOG**.
+- **Plafond 50** parcelles/compte (`watch_toggle` → 409). Le bouton « Suivre » existait (WatchButton
+  M14, cloche verte).
+- **Écran « Suivis »** : entrée rail près de « Secteurs » (deux échelles du même geste), panneau listant
+  les suivis + **date du dernier changement** — une parcelle qui n'a jamais bougé le **dit** (info, pas
+  un vide). CLI `evaluer-suivis` + ajouté au cron `notifications`.
+
+# PHASE C — Le digest du matin (LIVRÉ, commit `c56e7987`)
+- **Fenêtre J-1** explicite pour le quotidien (« hier »), 7h00 Réunion (UTC+4 explicite, acquis M85).
+- **Ordre = hiérarchie du mandant** : la **mutation d'abord**, puis les autres changements de parcelle
+  suivie, puis les veilles de zone. Le **marché est hors digest** (« rien d'autre »).
+- Un mail/jour max, digest **vide ne part pas**, sobre transactionnel, désinscription one-click RFC 8058.
+
+# PHASE D — L'annonce (chaîne 3) — CLI `labuse annonce`
+- **Aperçu OBLIGATOIRE** (sujet + texte + nombre de destinataires) à chaque appel. **`--test <email>`**
+  envoie d'abord à soi ; **`--confirmer`** requis pour l'envoi réel (sinon aperçu seul).
+- Cible **v1 : tous les comptes actifs** (segments → BACKLOG). Cloche typée + mail respectant les
+  préférences (`annonce_produit` désactivable). **Trace** dans `annonces` (qui/quoi/quand/cible/mail
+  ok/échecs/cloche).
+- **`maintenance`** : même mécanique, **NON désactivable**, **gabarit distinct** (fenêtre de coupure —
+  début/fin/durée — en évidence, aucun lien de désinscription).
+
+## Ce qui reste dormant (en attente du geste VPS)
+Tout le mécanisme est livré et testé en local. Le **contenu réel** (permis/mutations récents, digest
+matinal) attend les **crons VPS** (ingestion M84 + cron `notifications` 03:00 UTC, qui enchaîne
+`evaluer-suivis → evaluer-veilles → notifier-fraicheur → purge → digest`). Sans eux, permis figés au
+30/06 → suivis et digest honnêtement vides. L'annonce (chaîne 3), elle, part **quand tu le décides**.
+
+## BACKLOG (noté)
+« Permis à proximité » comme type distinct opt-in (rayon choisi par le client) · segments d'annonce ·
+push navigateur/mobile · récapitulatif mensuel éditorial.
+
+## Garde-fous (A→D)
+tsc 0 · vitest 36/36 · build vert · pytest 17 (module M85, dont chaîne suivi→cloche, refus hors registre,
+maintenance non désactivable, gabarits annonce/maintenance) · **golden 119/119 diff 0** · console 0 ·
+grep : zéro résidu de l'ancien schéma de préférences. **NE PAS MERGER.**

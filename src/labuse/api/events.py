@@ -101,6 +101,12 @@ CREATE TABLE IF NOT EXISTS notif_canaux (
   email  boolean NOT NULL DEFAULT true,
   PRIMARY KEY (compte_id, pref_type)
 );
+-- M85-B — trace des ANNONCES (chaîne 3) : qui, quoi, quand, combien de destinataires, statut.
+CREATE TABLE IF NOT EXISTS annonces (
+  id serial PRIMARY KEY, type varchar(20), titre text, corps text, lien text,
+  envoye_par text, at timestamptz DEFAULT now(),
+  n_cible int, n_mail_ok int, n_mail_echec int, n_cloche int
+);
 """
 
 
@@ -1131,6 +1137,84 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                         "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
     db.commit()
     return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "details": details}
+
+
+# ─────────────── M85-B · l'ANNONCE (chaîne 3) : aperçu obligatoire, test à soi, trace ───────────────
+
+def apercu_annonce(db: Session, *, type_: str, titre: str, corps: str, lien: str | None = None,
+                   debut: str = "", fin: str = "", duree: str = "") -> dict:
+    """APERÇU (sujet + texte) + nombre de destinataires, SANS envoyer. Obligatoire avant tout envoi
+    réel — le mandant relit ce qui partira."""
+    from ..emails import annonce_email, maintenance_email
+    if type_ == "maintenance":
+        sujet, txt, _ = maintenance_email(titre, corps, debut=debut, fin=fin, duree=duree)
+    else:
+        sujet, txt = annonce_email(titre, corps, lien=lien)
+    n = db.execute(text(
+        "SELECT count(DISTINCT c.id) FROM comptes c JOIN utilisateurs u ON u.compte_id=c.id "
+        "AND u.role='titulaire' WHERE c.statut='actif'")).scalar() or 0
+    return {"sujet": sujet, "texte": txt, "n_destinataires": int(n)}
+
+
+def envoyer_annonce(db: Session, *, type_: str, titre: str, corps: str, lien: str | None = None,
+                    base_url: str = "", envoye_par: str = "pilote", test_email: str | None = None,
+                    debut: str = "", fin: str = "", duree: str = "") -> dict:
+    """Envoie une ANNONCE (chaîne 3) → cloche + mail à TOUS les comptes actifs (ciblage v1 ; segments →
+    BACKLOG). `test_email` = envoi UNIQUE de test à soi, sans cloche ni trace. Sinon : cloche typée +
+    mail respectant les préférences (annonce désactivable ; maintenance NON), puis TRACE (qui/quoi/quand/
+    destinataires/statut). `type_` ∈ {annonce_produit, maintenance} (déclaré au registre)."""
+    from ..emails import annonce_email, annonce_html, maintenance_email
+    from ..mail import send_email
+    from ..notif_registry import est_declare
+    if type_ not in ("annonce_produit", "maintenance") or not est_declare(type_):
+        raise ValueError(f"type d'annonce invalide : {type_!r}")
+
+    def _build(cid):
+        if type_ == "maintenance":
+            sujet, txt, html = maintenance_email(titre, corps, debut=debut, fin=fin, duree=duree)
+            return sujet, txt, html, {}          # maintenance : PAS de désinscription (non désactivable)
+        tok = _notif_token(db, cid) if cid is not None else "x"
+        desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}" if cid is not None else ""
+        prefs_l = f"{base_url}/events/preferences?c={cid}&t={tok}" if cid is not None else ""
+        sujet, txt = annonce_email(titre, corps, lien=lien, lien_desabo=desabo, lien_prefs=prefs_l)
+        html = annonce_html(titre, corps, lien=lien, lien_desabo=desabo, lien_prefs=prefs_l)
+        headers = ({"List-Unsubscribe": f"<{desabo}>", "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}
+                   if desabo else {})
+        return sujet, txt, html, headers
+
+    if test_email:                               # ENVOI DE TEST à soi, AVANT le vrai (obligatoire)
+        sujet, txt, html, _ = _build(None)
+        res = send_email(test_email, "[TEST] " + sujet, txt, body_html=html)
+        return {"test": True, "email": test_email, "statut": "ok" if res.ok else res.detail}
+
+    recipients = db.execute(text(
+        "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
+        "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id=c.id "
+        "WHERE c.statut='actif' GROUP BY c.id")).mappings().all()
+    n_cible = n_mail_ok = n_mail_echec = n_cloche = 0
+    for r in recipients:
+        cid, email = r["cid"], r["email"]
+        n_cible += 1
+        prefs = prefs_compte(db, cid)
+        if prefs.get(type_, {}).get("cloche", True):    # cloche (respecte la pref ; maintenance toujours)
+            n_cloche += 1 if creer_notification(db, kind=type_, compte_id=cid, source="LABUSE",
+                titre=titre, detail=corps, lien=lien, dedup=f"annonce:{type_}:{titre}"[:96]) else 0
+        if email and not _adresse_placeholder(email) and prefs.get(type_, {}).get("email", True):
+            sujet, txt, html, headers = _build(cid)
+            res = send_email(email, sujet, txt, body_html=html, headers=headers)
+            if res.ok:
+                n_mail_ok += 1
+            else:
+                n_mail_echec += 1
+                log.warning("ANNONCE mail échec — compte=%s cause=%s", cid, res.detail)
+    db.execute(text(
+        "INSERT INTO annonces (type, titre, corps, lien, envoye_par, n_cible, n_mail_ok, n_mail_echec, n_cloche) "
+        "VALUES (:t,:ti,:co,:l,:by,:nc,:ok,:ko,:cl)"),
+        {"t": type_, "ti": titre, "co": corps, "l": lien, "by": envoye_par,
+         "nc": n_cible, "ok": n_mail_ok, "ko": n_mail_echec, "cl": n_cloche})
+    db.commit()
+    return {"test": False, "n_cible": n_cible, "n_mail_ok": n_mail_ok,
+            "n_mail_echec": n_mail_echec, "n_cloche": n_cloche}
 
 
 def _token_ok(db: Session, c: int, t: str) -> bool:

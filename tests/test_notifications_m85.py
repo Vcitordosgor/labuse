@@ -166,6 +166,17 @@ def test_creer_notification_refuse_hors_registre(db_session):
         events.creer_notification(db_session, kind="campagne_bidon", titre="spam")
 
 
+def test_annonce_et_maintenance_gabarits():
+    """M85-B — annonce désactivable (a une désinscription) ; maintenance NON (aucune désinscription,
+    fenêtre de coupure en évidence)."""
+    from labuse.emails import annonce_email, maintenance_email
+    s, txt = annonce_email("Titre", "Corps.", lien_desabo="/d", lien_prefs="/p")
+    assert s == "LABUSE — Titre" and "ne plus recevoir" in txt.lower()              # a une désinscription
+    ms, mtxt, mhtml = maintenance_email("Serveur", "Coupure planifiée.", debut="dim 3h", duree="30 min")
+    assert "maintenance" in ms.lower() and "coupure" in mtxt.lower()
+    assert "pas désactivable" in mtxt.lower() and "ne plus recevoir" not in mtxt.lower()   # jamais de désinscription
+
+
 @pytest.mark.db
 def test_chaine_suivi_parcelle_bout_en_bout(db_session):
     """M85-B — suivre une parcelle → injecter un permis SUR elle → evaluer_suivis → notification
