@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
+import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
@@ -240,6 +240,8 @@ function NotifBell() {
   const { filters, zone, select, setView, setFilters, openSources } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
   const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
+  // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
+  const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
@@ -318,11 +320,13 @@ function NotifBell() {
                 <p className="mt-2 text-[10px] leading-snug text-txt-dim">L'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
               </div>
             ) : (
-            /* M16-B1 : intro — ne décrit QUE les déclencheurs RÉELS (audit A1/A5) */
+            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle, plus
+               de « à proximité » figé ; mutation et zonage inclus dès qu'ils sont détectables. */
             <div className="shrink-0 border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
-              Les <b className="text-txt">changements sur les parcelles que vous suivez</b> — bascule de
-              statut, procédure BODACC, permis neuf à proximité — et les <b className="text-txt">alertes de
-              vos veilles</b>. On ne vous prévient que sur ce qu'on sait réellement détecter.
+              Ce qui bouge sur <b className="text-txt">les parcelles que vous suivez</b>
+              {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
+              et dans <b className="text-txt">vos zones de veille</b>. On ne vous prévient que sur ce
+              qu'on sait réellement détecter.
             </div>
             )}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">

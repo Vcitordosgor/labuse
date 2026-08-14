@@ -626,6 +626,8 @@ export const askParcel = (idu: string, question: string) =>
 // ── Événements (Vague 3 : M11-M14) ──
 export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+// M87 P5 — libellés de l'en-tête de la cloche, dérivés du registre (jamais écrits à la main).
+export const getEnteteCloche = () => j<{ libelles: string[] }>('/events/entete')
 // M85 Phase 3 — le brief du matin (déterministe : veilles déclenchées + « depuis hier sur vos secteurs »).
 export interface BriefMatin {
   genere_le: string

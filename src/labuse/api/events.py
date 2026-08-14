@@ -1305,6 +1305,15 @@ async def preferences_save(c: int, t: str, request: Request, db: Session = Depen
     return _page_preferences(db, c, t, sauve=True)
 
 
+@router.get("/entete")
+def entete_cloche() -> dict:
+    """M87 P5 — libellés de l'en-tête de la cloche, DÉRIVÉS du registre (jamais écrits à la main) : ce
+    qu'on sait RÉELLEMENT détecter SUR une parcelle suivie. La cloche les concatène — l'en-tête ne peut
+    plus mentir au prochain mandat (plus de « à proximité » figé, mutation et zonage inclus)."""
+    from ..notif_registry import libelles_entete_cloche
+    return {"libelles": libelles_entete_cloche()}
+
+
 @router.get("/prefs")
 def prefs_get(request: Request, db: Session = Depends(get_db)) -> dict:
     """API in-app : les préférences du compte courant (+ leurs libellés)."""

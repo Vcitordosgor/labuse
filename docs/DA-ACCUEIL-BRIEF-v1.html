@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DA — Accueil Copilote + brief du matin (maquette v1)</title>
+<style>
+:root{
+  --bg:#0A0D0B;
+  --card:#101410;
+  --card-2:#0D110E;
+  --line:rgba(255,255,255,.075);
+  --line-strong:rgba(255,255,255,.14);
+  --ink:#E9EEEA;
+  --ink-2:#98A19A;
+  --ink-3:#6B736D;
+  --mint:#4ADE80;
+  --mint-dim:#2F7F4E;
+  --pastille:#12291D;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+     font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── Accueil ─────────────────────────────────────────── */
+.hero{max-width:900px;margin:0 auto;padding:72px 28px 40px;text-align:center}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+         text-transform:uppercase;color:var(--ink-3);margin:0 0 20px}
+h1{font-size:44px;line-height:1.15;font-weight:700;letter-spacing:-.025em;margin:0 0 16px}
+h1 em{font-style:normal;color:var(--mint)}
+.lede{color:var(--ink-2);font-size:16px;margin:0 0 34px}
+.lede b{color:var(--ink);font-weight:600}
+
+/* PJ1 — ce bloc reste affiché en permanence, sans animation ni curseur mobile */
+.claim{max-width:640px;margin:0 auto 34px;padding:18px 22px;
+       border:1px solid var(--line);border-radius:12px;background:var(--card-2)}
+.claim strong{display:block;font-size:15px;margin-bottom:5px}
+.claim span{color:var(--ink-2);font-size:13px}
+
+/* PJ2 — champ sans contour vert au focus */
+.ask{display:flex;gap:10px;max-width:760px;margin:0 auto 14px}
+.ask input{flex:1;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:15px 18px;color:var(--ink);font-size:15px;
+  font-family:var(--sans)}
+.ask input::placeholder{color:var(--ink-3)}
+.ask input:focus{outline:none;border-color:var(--line-strong);
+  background:#12170F00;background-color:#12170F}
+.ask button{background:var(--mint);color:#06210F;border:0;border-radius:10px;
+  padding:0 26px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.hint{color:var(--ink-3);font-size:12.5px;margin:0 0 26px}
+
+/* PJ2 — exemples : grille régulière, plus d'escalier */
+.examples{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+          max-width:820px;margin:0 auto}
+.ex{background:transparent;border:1px solid var(--line);border-radius:8px;
+    padding:11px 14px;color:var(--ink-2);font-size:12.5px;text-align:left;
+    cursor:pointer;font-family:var(--sans);line-height:1.35}
+.ex:hover{border-color:var(--line-strong);color:var(--ink)}
+.ex i{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;
+      letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+
+/* PJ6 — le brief n'est plus déversé dans la page : une seule barre */
+.brief-btn{display:flex;align-items:center;gap:12px;margin:44px auto 0;
+  max-width:760px;width:100%;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:13px 18px;cursor:pointer;text-align:left;
+  color:var(--ink);font-family:var(--sans);font-size:13.5px}
+.brief-btn:hover{border-color:var(--mint-dim)}
+.brief-btn .pip{width:7px;height:7px;border-radius:50%;background:var(--mint);
+  box-shadow:0 0 0 3px rgba(74,222,128,.12);flex:none}
+.brief-btn .count{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  margin-left:auto}
+.brief-btn .arrow{color:var(--ink-3)}
+
+/* ── Panneau brief ───────────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;
+  pointer-events:none;transition:opacity .18s}
+.scrim.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);
+  background:var(--card-2);border-left:1px solid var(--line);
+  transform:translateX(100%);transition:transform .22s ease;
+  display:flex;flex-direction:column;z-index:10}
+.panel.open{transform:none}
+.panel header{display:flex;align-items:center;gap:12px;padding:20px 22px;
+  border-bottom:1px solid var(--line)}
+.panel header h2{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;font-weight:400;color:var(--ink-2);margin:0}
+.panel header .date{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  margin-left:auto}
+.panel .close{background:none;border:0;color:var(--ink-3);font-size:18px;
+  cursor:pointer;padding:0 0 0 8px}
+.panel .intro{padding:16px 22px;color:var(--ink-2);font-size:13px;
+  border-bottom:1px solid var(--line)}
+.panel .intro b{color:var(--ink);font-weight:600}
+.panel .body{overflow-y:auto;padding:6px 0 22px}
+
+/* Un événement = une commune, jamais une ligne par permis */
+.evt{padding:16px 22px;border-bottom:1px solid var(--line)}
+.evt:last-child{border-bottom:0}
+.evt-head{display:flex;align-items:baseline;gap:10px}
+.evt-head h3{font-size:14px;font-weight:600;margin:0}
+.evt-head .n{font-family:var(--mono);font-size:11px;color:var(--mint);
+  background:var(--pastille);border-radius:4px;padding:1px 7px}
+.evt-head .when{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  margin-left:auto}
+.evt p{margin:7px 0 0;color:var(--ink-2);font-size:12.5px}
+.evt .refs{margin-top:9px;display:flex;flex-wrap:wrap;gap:5px}
+.evt .refs code{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+.evt .more{background:none;border:0;color:var(--mint);font-size:12px;
+  cursor:pointer;padding:8px 0 0;font-family:var(--sans)}
+.evt.late .evt-head h3{color:#D9873D}
+
+.panel footer{border-top:1px solid var(--line);padding:14px 22px;
+  display:flex;gap:14px;align-items:center}
+.panel footer a{color:var(--ink-2);font-size:12.5px;text-decoration:none}
+.panel footer a:hover{color:var(--mint)}
+
+@media(max-width:820px){.examples{grid-template-columns:1fr}h1{font-size:32px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <p class="eyebrow">Copilote</p>
+  <h1>Dites ce que vous cherchez.<br>Le Copilote <em>instruit</em>.</h1>
+  <p class="lede">Une parcelle instruite en une minute — <b>51</b> sources, chaque chiffre daté.</p>
+
+  <!-- PJ1 : permanent, statique, aucun curseur qui clignote -->
+  <div class="claim">
+    <strong>Tout le foncier de La Réunion. Au même endroit.</strong>
+    <span>Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</span>
+  </div>
+
+  <div class="ask">
+    <input placeholder="15 logements à Saint-Denis, budget foncier 800 k€…">
+    <button>Envoyer</button>
+  </div>
+  <p class="hint">Écrivez librement — le Copilote comprend s'il faut chercher, vérifier ou veiller.</p>
+
+  <div class="examples">
+    <button class="ex"><i>Chercher</i>Quelles parcelles appartiennent à la SIDR ?</button>
+    <button class="ex"><i>Chercher</i>Combien de parcelles à Saint-Paul ?</button>
+    <button class="ex"><i>Veiller</i>Préviens-moi de tout nouveau permis à Saint-Paul</button>
+    <button class="ex"><i>Vérifier</i>Qui est le maire de Saint-Denis ?</button>
+    <button class="ex"><i>Vérifier</i>Qui gère les dossiers de financement des bailleurs sociaux à la Région ?</button>
+    <button class="ex"><i>Agir</i>Je veux écrire au propriétaire de cette parcelle</button>
+  </div>
+
+  <!-- PJ6 : le brief tient dans une barre, le contenu s'ouvre à la demande -->
+  <button class="brief-btn" id="open">
+    <span class="pip"></span>
+    Votre brief du matin
+    <span class="count">13 événements depuis hier</span>
+    <span class="arrow">→</span>
+  </button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="panel" id="panel" aria-label="Brief du matin">
+  <header>
+    <h2>Brief du matin</h2>
+    <span class="date">vendredi 14 août</span>
+    <button class="close" id="close">✕</button>
+  </header>
+
+  <p class="intro">Ce qui a bougé sur <b>vos parcelles suivies</b> et dans
+     <b>vos zones de veille</b> depuis hier.</p>
+
+  <div class="body">
+    <div class="evt">
+      <div class="evt-head"><h3>Saint-Louis</h3><span class="n">8 permis</span>
+        <span class="when">il y a 1 h</span></div>
+      <p>6 permis de construire, 1 déclaration préalable, 1 permis de démolir,
+         déposés les 28 et 29 mai.</p>
+      <div class="refs"><code>97441426A0041</code><code>97441426A0044</code>
+        <code>97441426G0214</code></div>
+      <button class="more">Voir les 8 →</button>
+    </div>
+
+    <div class="evt">
+      <div class="evt-head"><h3>Saint-Paul</h3><span class="n">5 permis</span>
+        <span class="when">il y a 1 h</span></div>
+      <p>5 permis de construire déposés entre le 18 et le 27 mai.</p>
+      <button class="more">Voir les 5 →</button>
+    </div>
+
+    <div class="evt late">
+      <div class="evt-head"><h3>DPE ADEME en retard</h3>
+        <span class="when">il y a 1 h</span></div>
+      <p>Dernière donnée le 21/07/2026, soit 24 jours pour une cadence de 14.
+         Les DPE affichés restent valides, ils ne sont simplement pas les derniers publiés.</p>
+    </div>
+  </div>
+
+  <footer>
+    <a href="#">Toutes les notifications</a>
+    <a href="#">Préférences d'envoi</a>
+  </footer>
+</aside>
+
+<script>
+const p=document.getElementById('panel'),s=document.getElementById('scrim');
+const open=()=>{p.classList.add('open');s.classList.add('open')};
+const shut=()=>{p.classList.remove('open');s.classList.remove('open')};
+document.getElementById('open').onclick=open;
+document.getElementById('close').onclick=shut;
+s.onclick=shut;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')shut()});
+</script>
+</body>
+</html>

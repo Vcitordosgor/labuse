@@ -94,6 +94,25 @@ def type_pour_kind(kind: str) -> str:
     return _KIND_VERS_TYPE.get(kind, "systeme_pilote")
 
 
+# M87 P5 — les CHANGEMENTS détectés SUR une parcelle suivie (maille STRICTE, jamais « à proximité »),
+# avec leur libellé court. L'en-tête de la cloche est DÉRIVÉ de cette liste, jamais écrit à la main —
+# ainsi il ne redevient pas faux au prochain mandat. `producteur_reel` = le producteur DÉTECTE vraiment
+# (code présent et exécutable, evaluer_suivis / detect_events) ; on n'annonce que le détectable.
+CHANGEMENTS_SUIVI: list[dict] = [
+    {"code": "mutation", "libelle_court": "vente", "producteur_reel": True},
+    {"code": "permis", "libelle_court": "permis", "producteur_reel": True},
+    {"code": "bodacc", "libelle_court": "procédure BODACC", "producteur_reel": True},
+    {"code": "zonage", "libelle_court": "changement de zonage", "producteur_reel": True},
+    {"code": "tier", "libelle_court": "évolution du classement", "producteur_reel": True},
+]
+
+
+def libelles_entete_cloche() -> list[str]:
+    """Libellés courts des changements RÉELLEMENT détectés (producteur présent) — l'en-tête de la cloche
+    les concatène, jamais écrit en dur. La maille est SUR la parcelle (jamais « à proximité »)."""
+    return [c["libelle_court"] for c in CHANGEMENTS_SUIVI if c["producteur_reel"]]
+
+
 def defaut_prefs() -> dict:
     """Défaut nouveau compte : TOUT activé (cloche + mail là où c'est permis). maintenance = verrouillé
     on. systeme_pilote exclu (pas une préférence client)."""
