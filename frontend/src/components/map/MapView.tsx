@@ -118,8 +118,23 @@ function hasCriteresHorsTuiles(f: Filters): boolean {
 }
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
+// M83 A1 — REPLI de tout premier frame seulement (avant que /communes ait chargé). Le cadrage réel de
+// l'île est CALCULÉ sur l'emprise des données (union des bbox `ST_Extent` par commune, cf. ileBounds) —
+// si la couverture évolue, le cadrage suit. Jamais figé sur ces coordonnées à l'affichage.
 const ILE_BOUNDS: [number, number, number, number] = [55.20, -21.42, 55.87, -20.85]
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
+
+// M83 A1 — emprise réelle de l'île = union des bbox de communes servies par /communes (ST_Extent du
+// parcellaire). Repli sur ILE_BOUNDS tant que la donnée n'est pas là (1er frame).
+function ileBounds(communes: { bbox?: number[] }[] | undefined): [number, number, number, number] {
+  let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity
+  for (const c of communes ?? []) {
+    if (!c.bbox || c.bbox.length < 4) continue
+    x1 = Math.min(x1, c.bbox[0]); y1 = Math.min(y1, c.bbox[1])
+    x2 = Math.max(x2, c.bbox[2]); y2 = Math.max(y2, c.bbox[3])
+  }
+  return Number.isFinite(x1) ? [x1, y1, x2, y2] : ILE_BOUNDS
+}
 
 // Item 11 (UX V1) : padding de fitBounds BORNÉ au canvas — 40 px fixes déclenchaient
 // « Map cannot fit within canvas » au boot 375 (le panneau ne laissait presque rien à la
@@ -944,7 +959,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pad = fitPadding(m.getContainer().clientWidth, m.getContainer().clientHeight)
-    if (ile) { m.fitBounds(ILE_BOUNDS, { padding: pad, duration: 900 }); return }
+    if (ile) { m.fitBounds(ileBounds(communes.data), { padding: pad, duration: 900 }); return }
     const info = communes.data?.find((c) => c.commune === commune)
     if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: pad, duration: 900 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
