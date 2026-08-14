@@ -1,0 +1,23 @@
+# M-PLU-REF — Hypothèses de faisabilité ÎLE-GÉNÉRIQUES (neutres, valables pour toute La Réunion).
+#
+# Source NEUTRE NOMMÉE : ces paramètres ne dépendent PAS du règlement d'une commune (physique de la
+# construction, technique promoteur, marché insulaire, coûts para-cycloniques/sismiques). Ils vivaient
+# par accident dans `plu_saint_paul.yaml` (« hérité de Saint-Paul par défaut ») ; ils sont ici pour
+# qu'ils cessent de s'appeler « la valeur de Saint-Paul ». VALEURS INCHANGÉES (correction de CHEMIN,
+# pas de calibration — golden = baseline).
+#
+# Ce qui N'EST PAS ici (car COMMUNE-SPÉCIFIQUE, issu du règlement) : `coef_occupation`, `densite_logts_
+# ha_par_niveau`, `place_m2`. Ceux-là restent lus au YAML de la commune ; tant qu'une commune ne DÉCLARE
+# pas `constructibilite_source_ref`, la sortie les marque « générique, non calibrée » (Estimé).
+hypotheses_ile:
+  etage_m: 3.0                      # hauteur d'un niveau (physique)
+  coef_rendement: 0.80              # surface de plancher BRUTE → HABITABLE vendable (technique)
+  coef_plancher_habitable: 1.15     # plancher ≈ habitable × 1.15 (murs, gaines, circulations) — audit O2
+  logement_m2_bas: 65.0             # surface moyenne d'un logement (marché)
+  logement_m2_haut: 80.0
+  cout_construction_m2_bas: 2300.0  # coût au m² de PLANCHER, contexte insulaire — audit O2 (Estimé)
+  cout_construction_m2_haut: 2800.0
+  marge_promoteur_pct: 0.09         # marge promoteur (% du CA) — 8–10 %
+  frais_annexes_pct: 0.12           # honoraires, commercialisation, financier, aléas (% du CA)
+  dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables
+  dvf_min_ventes: 8                 # en deçà, prix DVF jugé non fiable

@@ -71,6 +71,12 @@ class Hypotheses:
     # l'Art. 2 d'une autre commune (un Estimé emprunté présenté en Sourcé est interdit — boussole).
     commune: str | None = None
     mixite_source_ref: str | None = None
+    # M-PLU-REF — RÉFÉRENCE SOURCÉE de la constructibilité (coef_occupation, densité, place_m2 = issus du
+    # RÈGLEMENT). Renseignée UNIQUEMENT si le YAML de la commune DÉCLARE `constructibilite_source_ref`
+    # (ex. « Règlement PLU <commune> »). None → ces valeurs sont GÉNÉRIQUES (île, copiées de Saint-Paul
+    # à l'origine), non calibrées pour cette commune → affichées « Estimé », jamais présentées comme
+    # locales. Même doctrine que `mixite_source_ref` (M-N). N'ALTÈRE AUCUN calcul.
+    constructibilite_source_ref: str | None = None
 
     @classmethod
     def charger(cls, commune: str | None = None) -> "Hypotheses":
@@ -83,17 +89,23 @@ class Hypotheses:
           - commune SANS YAML → DÉFAUTS DU DATACLASS, JAMAIS Saint-Paul (plus d'emprunt silencieux
             des seuils/coûts de la commune la mieux calibrée).
         On mémorise la provenance des seuils de mixité (`mixite_source`) pour l'affichage."""
-        from .plu_rules import _hypotheses_faisabilite
+        from .plu_rules import _hypotheses_faisabilite, _hypotheses_ile
         h = _hypotheses_faisabilite(commune)
         out = cls()
         out.commune = commune
-        for k, v in h.items():
+        # M-PLU-REF — BASE île-générique (source neutre `hypotheses_ile.yaml`), PUIS override commune
+        # (commune-spécifique + toute valeur calibrée par la commune). Valeurs identiques aux défauts →
+        # AUCUN calcul ne bouge (correction de chemin, golden = baseline).
+        for k, v in {**_hypotheses_ile(), **h}.items():
             if hasattr(out, k) and isinstance(v, (int, float)):
                 setattr(out, k, float(v))
         # Source AFFICHÉE des seuils de mixité : « Art. 2 » SEULEMENT si le YAML de la commune la
         # DÉCLARE (mixite_source_ref) — des nombres recopiés de Saint-Paul ne sont pas un Sourcé.
         _ref = h.get("mixite_source_ref")
         out.mixite_source_ref = _ref.strip() if isinstance(_ref, str) and _ref.strip() else None
+        # M-PLU-REF — constructibilité Sourcée SEULEMENT si la commune la DÉCLARE (sinon générique/Estimé).
+        _cref = h.get("constructibilite_source_ref")
+        out.constructibilite_source_ref = _cref.strip() if isinstance(_cref, str) and _cref.strip() else None
         return out
 
 
@@ -293,6 +305,13 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       f"~{footprint:.0f} m²", "hypothèse occupation"))
     hypotheses.append(f"Coefficient d'occupation du gabarit supposé {hyp.coef_occupation:.0%} "
                       "(on ne bâtit pas 100 % de l'emprise constructible).")
+    # M-PLU-REF — MARQUAGE (voyage avec la valeur, doctrine Sourcé/Estimé) : emprise au sol + densité
+    # sont issues du RÈGLEMENT. Sourcées SEULEMENT si la commune le déclare ; sinon GÉNÉRIQUES (île,
+    # copiées de Saint-Paul), non calibrées ici → dit en clair, jamais présentées comme locales.
+    if not hyp.constructibilite_source_ref:
+        _com = hyp.commune or "cette commune"
+        hypotheses.append(f"⚠ Emprise au sol et densité : hypothèse GÉNÉRIQUE (île), non calibrée au "
+                          f"règlement de {_com} — capacité et charge foncière à confirmer localement (Estimé).")
 
     # ---- Surface de plancher BRUTE puis HABITABLE (rendement) ----
     sdp = footprint * niveaux
