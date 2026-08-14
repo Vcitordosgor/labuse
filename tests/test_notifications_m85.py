@@ -21,6 +21,8 @@ def _ensure(db):
     db.execute(text("CREATE TABLE IF NOT EXISTS m10_permit_delais ("
                     "permit_id varchar(64), commune varchar(64), nature varchar(64), "
                     "date_depot date)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS sitadel_permits ("
+                    "permit_id varchar(64), commune varchar(64), date_depot date, date date)"))
     events._ensure_cols(db)
 
 
@@ -132,6 +134,27 @@ def test_pref_type_mapping():
     assert events._pref_type("permis", False) == "suivi"
     assert events._pref_type("bascule", True) == "marche"
     assert events._pref_type("systeme", False) is None    # tuyauterie ingestion : hors pref client
+
+
+@pytest.mark.db
+def test_brief_vide_le_dit_honnetement(db_session):
+    """Phase 3 — un brief sans veille ni permis ne s'invente RIEN : vide=True + un motif explicite."""
+    _ensure(db_session)
+    b = events.brief_matin(db_session, 99999)          # compte sans veille ni parcelle suivie
+    assert b["vide"] is True and b["cause_vide"]        # honnête : dit pourquoi, ne remplit pas
+    assert b["genere_le"].endswith("+04:00")           # 7h Réunion — fuseau UTC+4 explicite
+
+
+@pytest.mark.db
+def test_brief_liste_les_veilles_declenchees(db_session):
+    """Phase 3 — DÉTERMINISTE : le brief liste les veilles déclenchées récentes, pas de la prose."""
+    _ensure(db_session)
+    db_session.execute(text("DELETE FROM event_log WHERE kind='veille'"))
+    events.creer_notification(db_session, kind="veille", compte_id=None,
+                              titre="Nouveau permis à Saint-Paul", source="Copilote · veille")
+    b = events.brief_matin(db_session, None)
+    assert not b["vide"] and len(b["veilles"]) == 1
+    assert b["veilles"][0]["titre"] == "Nouveau permis à Saint-Paul"
 
 
 def test_zero_modele_dans_le_module_veilles():

@@ -825,6 +825,54 @@ def _digest_data(db: Session, cid: int | None = None) -> dict:
             "top_chaudes": [dict(r) for r in top]}
 
 
+# ─────────────── M85 Phase 3 · le BRIEF DU MATIN (déterministe, zéro modèle) ───────────────
+
+def brief_matin(db: Session, cid: int | None) -> dict:
+    """La veille RACONTÉE, chaque matin — DÉTERMINISTE (des comptes et des listes, jamais de la prose
+    générée ; ZÉRO modèle). Deux parties : (1) les veilles déclenchées récemment (24 h), (2) « depuis
+    hier sur vos secteurs suivis » = nouveaux permis dans VOS communes, MÊME point de calcul que le bloc
+    « cette semaine » de M83 (`sitadel_permits.date_depot`, aucun recalcul). HONNÊTE : si tout est à
+    zéro (souvent, tant que les crons d'ingestion ne tournent pas), le brief le DIT et n'invente rien."""
+    veilles = db.execute(text(
+        "SELECT titre, detail, ts::text AS ts, lien, source FROM event_log "
+        "WHERE kind='veille' AND compte_id IS NOT DISTINCT FROM :c AND ts >= now() - interval '24 hours' "
+        "ORDER BY ts DESC LIMIT 20"), {"c": cid}).mappings().all()
+    communes = _mes_communes(db, cid)
+    permis_max = db.execute(text("SELECT max(date_depot) FROM sitadel_permits")).scalar()
+    permis_hier = 0
+    if communes:
+        permis_hier = db.execute(text(
+            "SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 1 "
+            "AND commune = ANY(:coms)"), {"coms": communes}).scalar() or 0
+    donnee_perimee = bool(permis_max and (date.today() - permis_max).days > 2)   # ingestion en attente ?
+    vide = (len(veilles) == 0 and permis_hier == 0)
+    cause = None
+    if vide:
+        if not communes:
+            cause = "Vous ne suivez encore aucun secteur — suivez des parcelles pour un brief ciblé."
+        elif donnee_perimee:
+            cause = (f"Rien de neuf depuis hier, et les permis sont figés au {permis_max} : "
+                     "l'ingestion quotidienne n'a pas encore tourné. Le brief se remplira dès que les "
+                     "crons d'ingestion seront actifs (VPS).")
+        else:
+            cause = "Rien de nouveau sur vos secteurs depuis hier."
+    return {
+        "genere_le": datetime.now(REUNION_TZ).isoformat(timespec="minutes"),   # 7h Réunion (UTC+4)
+        "veilles": [dict(r) for r in veilles],
+        "secteurs": {"communes": communes, "permis_depuis_hier": int(permis_hier),
+                     "derniere_donnee_permis": str(permis_max) if permis_max else None,
+                     "donnee_perimee": donnee_perimee},
+        "vide": vide, "cause_vide": cause,
+    }
+
+
+@router.get("/brief")
+def brief(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Le brief du matin du compte courant — servi au Copilote (carte d'accueil) et repris au digest."""
+    from .tenant import current_compte
+    return brief_matin(db, current_compte(request))
+
+
 @router.get("/digest")
 def digest(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
@@ -933,17 +981,23 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
         evs = [e for e in data["evenements"]
                if not e.get("demo") and prefs.get(_pref_type(e["kind"], False), {}).get("email")]
         marche = data["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
-        if not evs and not marche.get("total"):
+        # M85 P3 — enrichissement « depuis hier sur vos secteurs » (permis dans vos communes suivies,
+        # même point de calcul que M83). Ligne présente SEULEMENT si non-nulle (honnêteté : pas de
+        # remplissage — cf. le retard d'ingestion qui la garde souvent vide).
+        sect = brief_matin(db, cid)["secteurs"]
+        secteurs_ligne = (f"Depuis hier sur vos secteurs : {sect['permis_depuis_hier']} nouveau(x) permis "
+                          f"dans {', '.join(sect['communes'][:5])}." if sect["permis_depuis_hier"] else "")
+        if not evs and not marche.get("total") and not secteurs_ligne:
             ignores += 1
-            _note(cid, email, "ignoré", "aucune notification en attente (rien d'e-mail-activé sur 7 j + marché vide)")
+            _note(cid, email, "ignoré", "aucune notification en attente (rien d'e-mail-activé sur 7 j + marché + secteurs vides)")
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"
         lien_prefs = f"{base_url}/events/preferences?c={cid}&t={tok}"
         sujet, corps = digest_notifications(evs, lien_desabo, base_url=base_url, marche=marche,
-                                            periode=periode, lien_prefs=lien_prefs)
+                                            periode=periode, lien_prefs=lien_prefs, secteurs_ligne=secteurs_ligne)
         html = digest_html_email(evs, marche, data.get("top_chaudes", []), lien_desabo, lien_prefs,
-                                 base_url=base_url, periode=periode)
+                                 base_url=base_url, periode=periode, secteurs_ligne=secteurs_ligne)
         # RFC 8058 — désinscription EN UN CLIC (mieux traitée par Gmail qu'un simple lien) : l'URL
         # accepte le POST `List-Unsubscribe=One-Click`. AUCUN en-tête de campagne (X-Campaign, List-ID
         # marketing…) : ce mail est TRANSACTIONNEL, pas une newsletter.

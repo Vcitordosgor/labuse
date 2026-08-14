@@ -626,6 +626,15 @@ export const askParcel = (idu: string, question: string) =>
 // ── Événements (Vague 3 : M11-M14) ──
 export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+// M85 Phase 3 — le brief du matin (déterministe : veilles déclenchées + « depuis hier sur vos secteurs »).
+export interface BriefMatin {
+  genere_le: string
+  veilles: { titre: string; detail: string | null; ts: string; lien: string | null; source: string | null }[]
+  secteurs: { communes: string[]; permis_depuis_hier: number; derniere_donnee_permis: string | null; donnee_perimee: boolean }
+  vide: boolean
+  cause_vide: string | null
+}
+export const getBrief = () => j<BriefMatin>('/events/brief')
 // M85 — préférences de notification par type et par canal (cloche / e-mail).
 export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean }
 export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')

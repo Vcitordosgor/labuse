@@ -5,7 +5,7 @@
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { fmtInt, ilYA } from '../../lib/format'
-import type { AccueilChiffres, CopiloteMission } from '../../lib/api'
+import { getBrief, type AccueilChiffres, type BriefMatin, type CopiloteMission } from '../../lib/api'
 
 type Carte = { past: string; titre: string; desc: (parc: string) => string }
 
@@ -66,6 +66,12 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
+  // M85 Phase 3 — le brief du matin (déterministe). Affiché en tête SEULEMENT s'il est frais (non vide) :
+  // on ne remplit jamais l'accueil avec un brief creux (l'honnêteté du « rien de neuf »). Vert/neutre,
+  // jamais mauve (ce n'est pas de l'IA — ce sont des faits datés). Fetch simple (motif AccueilChiffres
+  // de CopiloteView) — pas de QueryClient requis.
+  const [brief, setBrief] = useState<BriefMatin | null>(null)
+  useEffect(() => { getBrief().then(setBrief).catch(() => {}) }, [])
   const exemples6 = useMemo(sixAuHasard, [])   // §1 — 6 exemples variés, tirés à cette visite
   const [toutHisto, setToutHisto] = useState(false)   // #2 — « voir tout » au-delà de 4
 
@@ -97,6 +103,26 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
       <p data-accueil-tagline className="mb-8 text-center text-[13px] text-cp-muted">
         Une parcelle instruite en une minute{nSources ? <> — <b className="text-cp-txt">{nSources}</b> sources</> : null}, chaque chiffre daté.
       </p>
+
+      {/* M85 Phase 3 — LE BRIEF DU MATIN : la veille racontée, en tête d'accueil, seulement s'il est
+          frais (non vide) ET bien formé. Des faits datés, pas de la prose générée — vert/neutre, jamais
+          mauve. Rendu DÉFENSIF (le brief peut être null/partiel selon la réponse). */}
+      {brief && brief.vide === false && Array.isArray(brief.veilles) && (
+        <div data-brief-matin className="mb-7 rounded-xl border border-mint/30 bg-cp-card/60 p-4 text-left">
+          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[.1em] text-mint">Votre brief du matin</p>
+          {brief.veilles.slice(0, 6).map((v, i) => (
+            <p key={i} className="mb-1 text-[12.5px] leading-snug text-cp-txt">
+              • {v.titre}{v.detail ? <span className="text-cp-muted"> — {v.detail}</span> : null}
+            </p>
+          ))}
+          {(brief.secteurs?.permis_depuis_hier ?? 0) > 0 && (
+            <p className="mt-1.5 text-[12px] text-cp-muted">
+              Depuis hier : <b className="text-cp-txt">{brief.secteurs.permis_depuis_hier}</b> nouveau·x permis sur vos secteurs
+              {brief.secteurs.communes?.length ? <> ({brief.secteurs.communes.slice(0, 4).join(', ')})</> : null}.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* barre unique */}
       <div data-accueil-barre className="mb-3.5 flex items-center gap-3 rounded-xl border border-cp-line2 bg-cp-card/60 py-2 pl-[18px] pr-2">

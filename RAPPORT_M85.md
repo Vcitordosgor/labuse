@@ -311,3 +311,50 @@ factice) → BACKLOG. Comptes de test repérés : 19 (placeholder) et 30 (résid
   `DEPLOYMENT_OVH_VPS.md`.
 - Garde-fous : golden 119/119, pytest 11/11 (module notif), rendu vérifié (sans carte/image, objet OK,
   POST one-click 200 coupe l'e-mail). **Reteste l'envoi** — dis-moi l'onglet Gmail obtenu.
+
+---
+
+# PHASE 3 — Le brief du matin (STOP final)
+
+La veille RACONTÉE, chaque matin, DÉTERMINISTE — des comptes et des listes, **zéro modèle**.
+
+## Ce qui est livré
+- **`events.brief_matin(db, cid)`** : deux parties — (1) les **veilles déclenchées** récentes (24 h,
+  lues du centre `event_log`), (2) **« depuis hier sur vos secteurs suivis »** = nouveaux permis dans
+  VOS communes suivies (`sitadel_permits.date_depot`, **MÊME point de calcul que le bloc M83 "cette
+  semaine", aucun recalcul**). `genere_le` en **UTC+4 explicite** (7h Réunion).
+- **Endpoint `GET /events/brief`** ; **carte « Votre brief du matin »** en tête de l'accueil Copilote
+  (M78-quater), cohérente avec les cartes existantes, **vert/neutre jamais mauve** (ce sont des faits
+  datés, pas de l'IA), affichée SEULEMENT s'il y a du frais.
+- **Digest e-mail enrichi** : une ligne « Depuis hier sur vos secteurs : N permis… » — présente
+  UNIQUEMENT si non-nulle (elle entre aussi dans le test « digest vide ne part pas »).
+
+## L'HONNÊTETÉ du vide (exigence Vic)
+Le brief **ne remplit jamais avec autre chose**. S'il n'y a ni veille déclenchée ni permis depuis
+hier, `vide=true` + un **motif explicite** :
+- pas de secteur suivi → « suivez des parcelles pour un brief ciblé » ;
+- **données figées (permis vieux de > 2 j)** → « les permis sont figés au \<date\>, l'ingestion
+  quotidienne n'a pas encore tourné — le brief se remplira dès que les crons d'ingestion seront
+  actifs (VPS) ». La carte d'accueil ne s'affiche pas quand c'est vide (pas de bruit).
+
+## Ce qui DÉBLOQUERA son contenu réel (à te rappeler)
+Le brief lit les **mêmes tables que le bloc "cette semaine" de M83**, qui affiche des zéros parce que
+**les crons d'ingestion ne tournent pas encore** (permis figés au 30/06 — mesuré en M84). Deux gestes,
+tous deux **VPS, ton geste** :
+1. **Installer les crons d'ingestion** (`deploy/cron.d/{sitadel,…}`, procédure M84 dans
+   `DEPLOYMENT_OVH_VPS.md`) → les permis/mutations récents entrent en base.
+2. **Installer le cron `notifications`** (03:00 UTC = 07:00 Réunion) → évalue les veilles + envoie le
+   brief chaque matin.
+Tant que ces crons ne tournent pas, le mécanisme est **livré et testé en local**, mais le brief servi
+restera honnêtement vide (ou limité aux veilles déjà en base). C'est le seul verrou, et il est côté VPS.
+
+## Garde-fous (Phase 3)
+tsc 0 · **vitest 36/36** · build vert · pytest 144 passed (+13 tests M85 dont brief vide honnête +
+brief déterministe) · **golden 119/119 PASS, diff 0** · console 0 erreur · carte brief rendue sans
+mauve · `genere_le` UTC+4 vérifié. **NE PAS MERGER.**
+
+## Récapitulatif M85 (6 commits, `feat/m85-notifications`)
+Phase 0 architecture · Phase 1 centre+cloche · Phase 2 e-mail (digest, préférences, délivrabilité,
+motif par compte, garde-fou placeholder) · Phase 3 brief du matin. **Dormant, en attente du geste VPS
+(crons d'ingestion + cron notifications)** : sans lui, le contenu récent (permis, mutations, digest
+matinal) reste vide — le mécanisme, lui, est complet et testé.

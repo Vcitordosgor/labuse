@@ -60,7 +60,8 @@ def avis_echeance(echeance_iso: str, lien_espace: str) -> tuple[str, str]:
 # ── B3 · digest de notifications ─────────────────────────────────────────────
 def digest_notifications(evenements: list[dict], lien_desabo: str, *,
                          periode: str = "cette semaine", base_url: str = "",
-                         marche: dict | None = None, lien_prefs: str = "") -> tuple[str, str]:
+                         marche: dict | None = None, lien_prefs: str = "",
+                         secteurs_ligne: str = "") -> tuple[str, str]:
     """`evenements` : liste PERSONNELLE {kind, titre, detail, idu} (parcelles suivies + veilles).
     `marche` (M-T V2) : RÉSUMÉ BORNÉ du marché {total, dans_vos_communes} — jamais une liste
     exhaustive. `lien_desabo` : lien de désinscription (obligatoire)."""
@@ -103,6 +104,7 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
     corps = (
         "Bonjour,\n\n"
         + bloc
+        + (("\n\n" + secteurs_ligne) if secteurs_ligne else "")   # M85 P3 — « depuis hier sur vos secteurs »
         + "\n\n— — —\n"
         "Vous recevez cet e-mail parce que vous suivez des parcelles, avez enregistré des veilles, "
         "ou êtes abonné au résumé de marché LABUSE.\n"
@@ -117,7 +119,7 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
 # ── M85 · gabarit HTML du digest — style TRANSACTIONNEL (boîte Principale, pas Promotions) ──
 def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: list[dict],
                       lien_desabo: str, lien_prefs: str, *, base_url: str = "",
-                      periode: str = "aujourd'hui") -> str:
+                      periode: str = "aujourd'hui", secteurs_ligne: str = "") -> str:
     """Alternative HTML du digest, volontairement SOBRE pour ressembler à une notification, pas à une
     newsletter (Gmail classe le décoratif en Promotions) : texte dense, UNE colonne, aucune carte, aucun
     gros bouton, pas d'en-tête coloré, une action par ligne. Aucune image externe (zéro tracking). Le
@@ -137,6 +139,8 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
         corps += _ligne(f"{mr['total']} mouvement(s) de marché{cadre}", "détail dans l'application")
     if not corps:
         corps = "<p style='margin:0'>Rien de nouveau sur vos suivis.</p>"
+    if secteurs_ligne:                                   # M85 P3 — « depuis hier sur vos secteurs »
+        corps += f"<p style='margin:12px 0 0;color:#333'>{secteurs_ligne}</p>"
     top = ""
     if top_chaudes:
         items = "".join(f"<p style='margin:0 0 4px'>{(t.get('idu') or '')[8:]} — "
