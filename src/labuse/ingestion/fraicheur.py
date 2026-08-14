@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import contextmanager
 from datetime import date
 
 import httpx
@@ -187,8 +188,82 @@ def etat_sources(session: Session) -> list[dict]:
         out.append({"source": key, "label": s["label"], "cadence": s["cadence"],
                     "derniere_donnee": str(derniere_donnee) if derniere_donnee else None,
                     "derniere_ingestion": str(derniere_ingestion) if derniere_ingestion else None,
-                    "delta_donnee_jours": delta, "auto": s["auto"], "detection": s["detection"]})
+                    "delta_donnee_jours": delta, "seuil_jours": seuil_jours(key),
+                    "statut": statut_fraicheur(key, delta),   # M84 — verdict live (anti-faux-positif)
+                    "auto": s["auto"], "detection": s["detection"]})
     return out
+
+
+# ─────────────── M84 · le SEUIL de fraîcheur, dérivé de la cadence (source unique de vérité) ───────────────
+# La promesse du module — « jamais en retard de plus de 2× la cadence sur la DERNIÈRE PUBLICATION » —
+# repose sur UN seuil, jamais un chiffre arbitraire : il se dérive de la cadence RÉELLE de chaque source
+# (`cadence_norme`, déjà dans la matrice). Une source SANS cadence bornable (event-driven, annuelle,
+# révisions irrégulières, re-survol pluriannuel) ne PEUT PAS être en retard — c'est le piège du faux
+# positif (DVF semestriel à 226 j, SITADEL à 45 j, Sudocuh à un an) qu'on REFUSE de réintroduire.
+# M84 : ce seuil est désormais l'UNIQUE référence — la garde de rebuild (`bascule_gardes.check_fraicheur`)
+# l'importe d'ici, et le statut LIVE de la page Sources en découle. Deux surfaces, un seul seuil.
+
+CADENCE_JOURS = {"hebdomadaire": 7, "hebdo": 7, "mensuel": 30, "trimestriel": 91,
+                 "semestriel": 182, "annuel": 365}
+SEUIL_FACTEUR = 2   # 2× la cadence : la marge d'UN cycle de publication manqué avant de crier au retard
+
+
+def seuil_jours(source_key: str) -> int | None:
+    """Seuil de retard d'une source = SEUIL_FACTEUR × sa cadence normée (en jours). None si la source
+    n'a pas de cadence bornable → elle ne PEUT PAS être déclarée « en retard » (anti-faux-positif)."""
+    base = CADENCE_JOURS.get((SOURCES.get(source_key, {}).get("cadence_norme") or "").lower())
+    return int(base * SEUIL_FACTEUR) if base else None
+
+
+def statut_fraicheur(source_key: str, delta_jours: int | None) -> str:
+    """Verdict LIVE d'une source, du delta observé (max(date) en base) au seuil dérivé de sa cadence :
+      • `en_retard`     — delta > seuil (2× cadence) : décrochage RÉEL, à voir et corriger ;
+      • `a_jour`        — delta ≤ seuil : frais pour sa cadence (SITADEL 45 j < 60 j, DVF 226 j < 360 j) ;
+      • `cadence_libre` — pas de cadence bornable → JAMAIS une alerte (event-driven / annuel / révisions) ;
+      • `sans_donnee`   — aucune donnée datée en base.
+    Cohérent AVEC la date affichée (`derniere_donnee`) : même delta, même source de vérité."""
+    seuil = seuil_jours(source_key)
+    if seuil is None:
+        return "cadence_libre"
+    if delta_jours is None:
+        return "sans_donnee"
+    return "en_retard" if delta_jours > seuil else "a_jour"
+
+
+def retards_live(session: Session) -> list[dict]:
+    """Les sources RÉELLEMENT en retard (statut live `en_retard`). Vide = tout est frais pour sa cadence.
+    Lue par la sentinelle (CLI `check-fraicheur`, code de sortie) : un décrochage y est visible en un
+    GET / une commande, jamais découvert en ratant une opportunité. L'alerte qui manquait aux surfaces."""
+    return [e for e in etat_sources(session) if e["statut"] == "en_retard"]
+
+
+# ─────────────── M84 · trace_ingestion : toute ingestion LAISSE UNE TRACE (échec compris) ───────────────
+
+@contextmanager
+def trace_ingestion(session: Session, label: str, ds_names: list[str] | None = None):
+    """Journalise TOUTE ingestion dans `ingestion_runs` (running → ok | error). bodacc/dpe/georisques
+    n'y laissaient AUCUNE trace : un échec y était donc INVISIBLE — le défaut de fond de M84 (une source
+    peut décrocher six semaines en silence). Désormais un échec est ÉCRIT (status='error') PUIS remonté
+    (jamais avalé) ; un succès pose aussi `data_sources.last_sync_at` (cohérence avec /healthz/crons).
+    La trace est committée à part pour survivre à un rollback de l'ingestion elle-même."""
+    rid = session.execute(text(
+        "INSERT INTO ingestion_runs (commune, status) VALUES (:c, 'running') RETURNING id"),
+        {"c": label}).scalar()
+    session.commit()
+    try:
+        yield rid
+    except Exception:
+        session.rollback()
+        session.execute(text(
+            "UPDATE ingestion_runs SET finished_at = now(), status = 'error' WHERE id = :id"), {"id": rid})
+        session.commit()
+        raise
+    session.execute(text(
+        "UPDATE ingestion_runs SET finished_at = now(), status = 'ok' WHERE id = :id"), {"id": rid})
+    if ds_names:
+        session.execute(text(
+            "UPDATE data_sources SET last_sync_at = now() WHERE name = ANY(:names)"), {"names": ds_names})
+    session.commit()
 
 
 # ─────────────────────── M32 Phase B §2 · millésime amont persisté (spec Vic) ───────────────────────
@@ -285,11 +360,14 @@ def ingest_bodacc_quotidien(session: Session, *, commit: bool = True, log_fn=pri
     from ..connectors.bodacc import BodaccConnector
     from .bodacc import distinct_sirens, ingest_bodacc
 
-    sirens = distinct_sirens(session)
-    stats = ingest_bodacc(session, sirens, connector=BodaccConnector())
-    if commit:
-        session.commit()
-    apres = session.execute(text("SELECT max(date_annonce)::date FROM bodacc_procedures")).scalar()
+    # M84 — trace ingestion_runs (running → ok | error) : un échec BODACC est désormais VISIBLE
+    # (avant : aucune trace, décrochage silencieux). Le contexte gère aussi last_sync_at au succès.
+    with trace_ingestion(session, "974 (BODACC quotidien)", DS_NAMES["bodacc"]):
+        sirens = distinct_sirens(session)
+        stats = ingest_bodacc(session, sirens, connector=BodaccConnector())
+        if commit:
+            session.commit()
+        apres = session.execute(text("SELECT max(date_annonce)::date FROM bodacc_procedures")).scalar()
     log_fn(f"BODACC : {len(sirens)} SIREN interrogés, état {stats} — dernière annonce {apres}")
     return {"sirens": len(sirens), "stats": stats, "derniere_annonce": str(apres)}
 

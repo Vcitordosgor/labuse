@@ -569,6 +569,14 @@ def _source_pour_run(commune: str | None) -> str | None:
         return "SITADEL (autorisations d'urbanisme)"
     if commune.startswith("974 (tuiles ortho"):
         return "Géoplateforme IGN"
+    # M84 — les ingestions J+2 laissent désormais une trace ingestion_runs : les câbler ICI, sinon le
+    # `else` cadastre s'approprierait leur date d'ingestion (faux positif de fraîcheur sur le cadastre).
+    if commune.startswith("974 (BODACC"):
+        return "BODACC (procédures collectives)"
+    if commune.startswith("974 (DPE ADEME"):
+        return "DPE ADEME (logements existants)"
+    if commune.startswith("974 (Géorisques"):
+        return "Géorisques"
     return "Cadastre Etalab (bulk DGFiP/Etalab)"
 
 
@@ -607,6 +615,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # J+2 (fraîcheur) : la date de la DERNIÈRE DONNÉE en base par source (≠ date d'ingestion) —
     # les dates parlent seules, wording sobre. Mapping via fraicheur.SOURCES (ds_name ILIKE).
     donnees: dict[str, str] = {}
+    statuts: dict[str, dict] = {}   # M84 — verdict de fraîcheur live par source (statut « en retard »)
     try:
         from fnmatch import fnmatch
 
@@ -615,8 +624,12 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
         for e in etats:
             motif = fraicheur.SOURCES[e["source"]]["ds_name"].lower().replace("%", "*")
             for src in rows:
-                if fnmatch(src.name.lower(), motif) and e["derniere_donnee"]:
-                    donnees[src.name] = e["derniere_donnee"]
+                if fnmatch(src.name.lower(), motif):
+                    if e["derniere_donnee"]:
+                        donnees[src.name] = e["derniere_donnee"]
+                    # statut dérivé du MÊME delta que la date affichée : cohérence (doctrine M73).
+                    statuts[src.name] = {"statut": e["statut"], "seuil_jours": e["seuil_jours"],
+                                         "delta_jours": e["delta_donnee_jours"]}
     except Exception:  # noqa: BLE001 — l'affichage de fraîcheur ne casse jamais la page Sources
         pass
     # B3 (BLOC B) : l'état du RADAR par source (dernière publication détectée amont) —
@@ -644,6 +657,11 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
             "verified_at": checks.get(s.id),
             "radar": radar.get(s.name),
+            # M84 — statut de fraîcheur (en_retard / a_jour / cadence_libre / sans_donnee) : un
+            # décrochage est VISIBLE sur la page Sources, distinct du radar amont (≠ millésime).
+            "fraicheur_statut": statuts.get(s.name, {}).get("statut"),
+            "fraicheur_seuil_jours": statuts.get(s.name, {}).get("seuil_jours"),
+            "fraicheur_delta_jours": statuts.get(s.name, {}).get("delta_jours"),
         }
         for s in served
     ]

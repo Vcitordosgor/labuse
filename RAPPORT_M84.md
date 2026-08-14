@@ -166,3 +166,79 @@ garantie doit rendre l'état visible, pas rejouer à l'aveugle.
 ## Garde-fous (Phase 1)
 Rejeu idempotent (delta, recouvrement 3 mois). Aucune table de run touchée. golden 119/119 PASS.
 **NE PAS MERGER.**
+
+---
+
+# PHASE 2 — La garantie (le vrai sujet : un décrochage ne peut plus passer en silence)
+
+## Correction d'une erreur de Phase 0 (assumée)
+
+Phase 0 déclarait `check_fraicheur` « concept documenté jamais construit ». **C'était faux** : la
+fonction EXISTE — dans `bascule_gardes.check_fraicheur` (garde de rebuild, testée, seuil 2× cadence,
+non-bornables jamais alarmés). J'avais lu les commentaires de `fraicheur.py` sans trouver la fonction
+dans `bascule_gardes.py`. Le VRAI défaut n'était donc pas « la fonction manque » mais : **elle imprime
+dans un log au moment du rebuild et n'est JAMAIS remontée** à une surface vivante (healthz / page
+Sources) ; + `ingestion_runs` partiel ; + le cron d'ingestion jamais déployé. La garantie porte là.
+
+## 1 — check_fraicheur rendu VISIBLE, sur un seuil unique (le plus important)
+
+- **Seuil unique** : `fraicheur.CADENCE_JOURS` + `seuil_jours()` deviennent la source de vérité du
+  barème (2× la cadence normée). `bascule_gardes.check_fraicheur` l'importe désormais (fin de la table
+  dupliquée qui pouvait diverger). Deux surfaces (garde de rebuild + statut live), un seul seuil.
+- **Statut live** : `etat_sources()` porte maintenant `seuil_jours` + `statut` ∈ {`en_retard`,
+  `a_jour`, `cadence_libre`, `sans_donnee`}, **dérivé du MÊME delta que la date affichée** (cohérence
+  M73 : millésime amont et date d'ingestion restent deux colonnes distinctes).
+- **Trois surfaces vivantes** : page Sources (chip ROUGE « ⚠ en retard », `data-source-decroche`) ·
+  `/healthz/crons` (champ `retards`) · CLI `labuse check-fraicheur` (**code de sortie 1** si décrochage
+  — la sentinelle que le cron appelle).
+- **Anti-faux-positif prouvé (mesuré)** : DVF 226 j < 364 j → `a_jour` ; SITADEL 45 j < 60 j →
+  `a_jour` ; Sudocuh 591 j, ortho 590 j, BODACC, CatNat, GPU, Géorisques → `cadence_libre` (jamais une
+  alerte, quel que soit l'âge). Le piège qu'on a évité sur DVF ne revient pas dans le mécanisme.
+- **Le seul retard live** : **DPE, 24 j > seuil 14 j** (hebdomadaire). C'est un VRAI retard (amont
+  ADEME, comme tu l'as toi-même qualifié) — **surfacé, jamais masqué**. Je n'ai PAS retouché sa
+  cadence pour éteindre l'alarme (ce serait masquer). Décision ouverte pour toi : soit on l'accepte
+  comme signal honnête, soit la cadence effective ADEME (établissement→publication ~3 sem.) justifie
+  un desserrage du seuil DPE — **à toi**, pas un geste silencieux de ma part.
+
+## 2 — Le cron d'ingestion : il EXISTAIT, il n'était pas DÉPLOYÉ
+
+Découverte : `deploy/cron.d/{sitadel,bodacc,dpe,dvf,ban,radar}` **existent** (bien datés). Le défaut
+n'était pas leur absence mais que **`docs/DEPLOYMENT_OVH_VPS.md` n'installait QUE maintenance+backup**,
+jamais ces crons-là. C'est le « Train J+1 » jamais posé. Ajouté à la doc : une section **« Les crons
+d'ingestion — le Train J+1 (OBLIGATOIRE) »** avec la procédure d'installation (`install … /etc/cron.d`),
+la création de `/var/log/labuse`, la **sentinelle** (`check-fraicheur` en cron, code 1 = mail), un
+**tableau quoi/fréquence/coût machine** (quotidien cumulé ~10 min, pic hebdo ~30 min), et la
+vérification (`curl /healthz/crons`). **Le déploiement VPS sort de mon périmètre — la procédure est
+écrite pour que tu l'exécutes.**
+
+## 3 — ingestion_runs complété + statut « décroche » sur la page Sources
+
+- **`trace_ingestion`** (nouveau, `fraicheur.py`) : contexte `running → ok | error` qui journalise
+  TOUTE ingestion dans `ingestion_runs` ET pose `last_sync_at` au succès. Branché sur **bodacc, dpe,
+  georisques** (qui n'y laissaient AUCUNE trace). Un échec est désormais ÉCRIT (`status='error'`) puis
+  remonté — **jamais avalé**.
+- **`_source_pour_run`** (app.py) : les nouveaux libellés de trace sont câblés explicitement — sinon
+  le `else` cadastre se serait approprié leur date d'ingestion (faux positif évité).
+- **Chip « en retard »** sur la page Sources (livré au point 1).
+
+## L'exigence de fond : un échec doit le DIRE
+
+Une ingestion qui échoue est maintenant visible sur **quatre** surfaces : `ingestion_runs.status='error'`
+· la liveness `crons` de `/healthz/crons` (dernier passage OK trop vieux) · le champ `retards` · le code
+de sortie 1 de `labuse check-fraicheur`. **Décision de conception assumée** : `retards` (fraîcheur
+donnée) est SÉPARÉ du bit `ok` (santé process/cron). Un job mort dégrade `ok` (liveness) ; un retard
+amont chronique (DPE) alimente `retards` + la sentinelle dédiée, sans faire sonner en boucle la sonde
+uptime — la fatigue d'alerte, c'est le silence inversé. C'est le même motif que le golden qui prenait
+un quota dépassé pour une régression : distinguer la panne du bruit.
+
+## 2d — Le bloc « cette semaine »
+
+Phase 1 a montré que **0 permis récent est la vérité** (SDES n'a rien après le 30/06). Le bloc M83
+dit donc déjà juste (il affiche la dernière donnée + un drapeau de fraîcheur, jamais un « 0 » nu).
+**Aucune retouche** : fabriquer une fenêtre « vraie » sur une donnée qui n'existe pas serait masquer.
+
+## Garde-fous (Phase 2)
+tsc 0 · vitest 36/36 · build vert · pytest 113 passed (0 régression ; `test_pdf_premium` = échec de
+collection PRÉ-EXISTANT, fichier non touché) · **golden 119/119 PASS, diff 0** · exports md/html/
+onepager/pdf → 200 · `/sources` + `/healthz/crons` → 200 · page Sources : **0 erreur console**, chip
+décroche rendu (DPE). Aucune table de run touchée. Aucune bascule. **NE PAS MERGER.**
