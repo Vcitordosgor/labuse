@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import sources_catalog as _srccat
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
 
 router = APIRouter(tags=["accueil"])
@@ -71,11 +72,11 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
         # ── bloc 1 · « Je couvre tout » ──
         "parcelles": one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": Q_A_RUN_LABEL}),
         "communes": one("SELECT count(DISTINCT commune) FROM parcels"),
-        # M71 F (arbitrage Vic) : UN SEUL chiffre partout — même règle que le bandeau Sources :
-        # connecte HORS doublons (lignes marquées « DOUBLON de … » au catalogue). Dynamique,
-        # aucun chiffre en dur.
-        "sources": one("SELECT count(*) FROM data_sources WHERE status = 'connecte' "
-                       "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%'"),
+        # M71 F / M87 P0 : UN SEUL chiffre partout — définition CANONIQUE des sources affichées
+        # (`sources_catalog.WHERE_AFFICHEES` : connecte, hors DOUBLON, hors masquées). accueil ET
+        # /sources lisent d'ici. Dynamique, aucun chiffre en dur. (Office de l'eau masquée → 50.)
+        "sources": one(f"SELECT count(*) FROM data_sources WHERE {_srccat.WHERE_AFFICHEES}",
+                       {"masquees": _srccat.masquees_param()}),
         # ── bloc 2 · « Je ne devine pas » ──
         "ventes_train": one(
             "SELECT count(*) FROM p_model_ext_dataset WHERE label_l2 = 1 AND annee BETWEEN :a AND :b",

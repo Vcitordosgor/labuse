@@ -3,9 +3,8 @@ import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
-import { getAccueilChiffres, getAccueilCetteSemaine } from '../../lib/api'
+import { getAccueilChiffres } from '../../lib/api'
 import { MODULES } from '../outils/registry'
-import { fmtDateNum } from '../../lib/format'
 import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
@@ -401,23 +400,11 @@ function Porte({ ton, icone, titre, sous, onClick }: {
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
-  const cs = useQuery({ queryKey: ['accueil-cette-semaine'], queryFn: getAccueilCetteSemaine, staleTime: 300_000, retry: 1 })
   const d = q.data
   const A = CLIENT.accueil
   const { setView, setAccueilVu, toggleOutils } = useApp()
-  const c = cs.data
-  // B4 — trois signaux, HONNÊTES : un zéro n'est pas une absence. Source en retard → on DIT la dernière
-  // donnée (fraîcheur) au lieu d'un « 0 cette semaine » trompeur.
-  const activite = c ? [
-    c.permis.frais
-      ? { n: String(c.permis.n_7j), txt: 'nouveaux permis déposés (Sitadel, 7 j)', mint: c.permis.n_7j > 0 }
-      : { n: '·', txt: `permis Sitadel — dernière donnée ${c.permis.derniere ? fmtDateNum(c.permis.derniere) : '—'}`, mint: false },
-    c.ventes.frais
-      ? { n: String(c.ventes.n_7j), txt: 'ventes publiées au cadastre (DVF, 7 j)', mint: c.ventes.n_7j > 0 }
-      : { n: '·', txt: `ventes DVF — dernier trimestre publié ${c.ventes.dernier_trimestre ?? '—'}`, mint: false },
-    { n: c.communes_procedure_plu != null ? String(c.communes_procedure_plu) : '·',
-      txt: 'communes en procédure PLU', mint: (c.communes_procedure_plu ?? 0) > 0 },
-  ] : []
+  // M87 P1 — le bloc « Cette semaine » (M83) est RETIRÉ (composant + appel /accueil/cette-semaine + calcul
+  // d'activité). Le claim et la ligne de fraîcheur restent : le foncier vit sans compteur 7 jours en tête.
   return (
     <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
       {/* B1 — la promesse (2e ligne en --mint) */}
@@ -442,17 +429,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           onClick={() => { setAccueilVu(); toggleOutils() }} />
       </div>
 
-      {/* B4 — CETTE SEMAINE : la preuve que la base vit (chiffres mesurés, fraîcheur dite) */}
-      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Cette semaine</p>
-      <div className="mb-4 rounded-[9px] bg-[#101612] px-3.5 py-2.5">
-        {activite.length === 0 && <p className="py-2 text-[11px] text-txt-dim">…</p>}
-        {activite.map((l, i) => (
-          <div key={i} className={`flex items-center gap-2.5 py-2 ${i > 0 ? 'border-t border-[#1E2622]' : ''}`}>
-            <span className={`min-w-[24px] font-mono text-[13px] ${l.mint ? 'text-mint' : 'text-txt'}`}>{l.n}</span>
-            <span className="text-[11px] leading-snug text-txt-2">{l.txt}</span>
-          </div>
-        ))}
-      </div>
+      {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
 
       {/* B5 — la ligne de fraîcheur */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">

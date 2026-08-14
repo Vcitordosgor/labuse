@@ -636,9 +636,11 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
     from ..radar import etat_radar
     radar = {r["source_name"]: r for r in etat_radar(db)}
-    # M74 C bis — la page Sources = la VITRINE mesurée : on ne sert QUE les connecte NON doublons
-    # (les 3 doublons de catalogue — même donnée qu'une ligne canonique — ne sont plus listés).
-    served = [s for s in rows if not (s.technical_notes or "").startswith("DOUBLON de")]
+    # M74 C bis / M87 P0 — la page Sources = la VITRINE mesurée : définition CANONIQUE partagée avec
+    # le compteur d'accueil (`sources_catalog.est_affichee`) : hors DOUBLON de catalogue ET hors
+    # masquées (Office de l'eau, morte à l'affichage — ingestion/table conservées).
+    from .. import sources_catalog as _srccat
+    served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes)]
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -653,7 +655,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "source_millesime": s.source_millesime,
             # M74 C bis — NOTE DE NATURE visible (proxy / servi par proxys) : une source proxy ne
             # doit JAMAIS être présentée comme la source officielle (doctrine anti-faux-positif).
-            "nature": _source_nature(s.technical_notes),
+            "nature": _source_nature(s.name, s.technical_notes),
             "testable": s.name in _connector_names(),
             "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
             "derniere_donnee": donnees.get(s.name),
@@ -670,9 +672,13 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     ]
 
 
-def _source_nature(notes: str | None) -> dict | None:
-    """M74 C bis — extrait la NATURE d'une source de ses technical_notes (proxy / servi par proxys),
-    pour un affichage visible et non replié. `detail` = la 1re phrase explicative. None si directe."""
+def _source_nature(name: str, notes: str | None) -> dict | None:
+    """M74 C bis / M87 P0 — NATURE d'une source (proxy / servi par proxys / curée manuellement), pour un
+    affichage visible et non replié. `detail` = la 1re phrase explicative. None si directe. `curee=True`
+    et `proxy=True` : le front les rend TOUS deux en pointillé (même visuel)."""
+    from .. import sources_catalog as _srccat
+    if name in _srccat.SOURCES_CUREES:
+        return {"label": "curée manuellement", "detail": _srccat.CUREES_NOTE, "dashed": True}
     n = notes or ""
     if n.startswith("SERVI PAR PROXYS"):
         label = "servi par proxys"
@@ -682,7 +688,7 @@ def _source_nature(notes: str | None) -> dict | None:
         return None
     detail = n.split(" : ", 1)[1] if " : " in n else n
     detail = detail.split(". ", 1)[0].rstrip(".") + "."
-    return {"label": label, "detail": detail}
+    return {"label": label, "detail": detail, "dashed": True}
 
 
 def _connector_names() -> set[str]:

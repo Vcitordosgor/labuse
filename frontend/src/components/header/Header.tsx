@@ -1,6 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
+import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL, type LabuseEvent } from '../../lib/api'
+
+// M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
+// nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
+// qui noient la cloche. Les événements sans commune (veilles de zone, système) restent en ligne propre.
+const _NOM_KIND: Record<string, string> = {
+  permis: 'permis', bascule: 'basculements de statut', bodacc: 'procédures BODACC',
+  veille: 'alertes de veille', parcelle_suivie: 'changements', veille_zone: 'alertes de veille',
+}
+type Bloc =
+  | { type: 'single'; e: LabuseEvent }
+  | { type: 'groupe'; cle: string; nature: string; commune: string; items: LabuseEvent[] }
+function grouperEvents(items: LabuseEvent[]): Bloc[] {
+  const par = new Map<string, LabuseEvent[]>()
+  for (const e of items) {
+    const cle = e.commune ? `${e.kind}|${e.commune}` : `__solo__${e.id}`
+    if (!par.has(cle)) par.set(cle, [])
+    par.get(cle)!.push(e)
+  }
+  const out: Bloc[] = []
+  for (const [cle, es] of par) {
+    if (es.length >= 2 && es[0].commune)
+      out.push({ type: 'groupe', cle, nature: _NOM_KIND[es[0].kind] ?? 'événements', commune: es[0].commune, items: es })
+    else for (const e of es) out.push({ type: 'single', e })
+  }
+  return out
+}
 import { filtersToHash } from '../../lib/filters'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
@@ -240,11 +266,37 @@ function NotifBell() {
   const { filters, zone, select, setView, setFilters, openSources } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
   const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
+  // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
+  const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
+  // M87 P5.1 — la carte d'un événement, réutilisée en ligne seule ET dans un groupe déplié.
+  const carte = (e: LabuseEvent) => (
+    <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
+      {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
+      <div className="flex items-center gap-2">
+        <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
+        {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
+        <button onClick={() => {
+            if (e.idu) { setView('cartes'); select(e.idu) }
+            else if (e.lien?.startsWith('/sources')) openSources()
+            else if (e.lien?.startsWith('/copilote')) setView('copilote')
+            setOpen(false)
+          }}
+          className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
+        {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
+      </div>
+      {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
+      <p className="mt-0.5 flex items-center gap-1.5 text-[9px] text-txt-dim">
+        {e.source && <><span className="font-medium text-txt-mut">{e.source}</span><span>·</span></>}
+        <span className="font-mono" title={e.date}>{tempsRelatif(e.ts ?? e.date)}</span>
+      </p>
+    </div>
+  )
   // M85 — préférences par type et par canal (cloche / e-mail), l'écran minimal in-app.
   const [prefsOpen, setPrefsOpen] = useState(false)
+  const [ouverts, setOuverts] = useState<Set<string>>(() => new Set())   // M87 P5.1 — groupes dépliés
   const notifPrefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs, enabled: open && prefsOpen })
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
   const addVeille = useMutation({ mutationFn: () => saveSearch(veilleNom, filtersToHash(filters, zone) || '#f=1'),
@@ -318,40 +370,36 @@ function NotifBell() {
                 <p className="mt-2 text-[10px] leading-snug text-txt-dim">L'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
               </div>
             ) : (
-            /* M16-B1 : intro — ne décrit QUE les déclencheurs RÉELS (audit A1/A5) */
+            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle, plus
+               de « à proximité » figé ; mutation et zonage inclus dès qu'ils sont détectables. */
             <div className="shrink-0 border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
-              Les <b className="text-txt">changements sur les parcelles que vous suivez</b> — bascule de
-              statut, procédure BODACC, permis neuf à proximité — et les <b className="text-txt">alertes de
-              vos veilles</b>. On ne vous prévient que sur ce qu'on sait réellement détecter.
+              Ce qui bouge sur <b className="text-txt">les parcelles que vous suivez</b>
+              {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
+              et dans <b className="text-txt">vos zones de veille</b>. On ne vous prévient que sur ce
+              qu'on sait réellement détecter.
             </div>
             )}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
-              {(ev.data?.items ?? []).map((e) => (
-                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
-                  {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
-                  <div className="flex items-center gap-2">
-                    <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
-                    {/* M85 : badge DÉMO NEUTRE (le mauve est réservé à l'IA — rien ici n'en est). */}
-                    {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
-                    {/* M85 : le lien mène à l'OBJET — parcelle suivie, sinon la cible du lien (ex. /sources
-                        pour une alerte d'ingestion). Chaque notification « dit sa source et sa date ». */}
-                    <button onClick={() => {
-                        if (e.idu) { setView('cartes'); select(e.idu) }
-                        else if (e.lien?.startsWith('/sources')) openSources()
-                        else if (e.lien?.startsWith('/copilote')) setView('copilote')
-                        setOpen(false)
-                      }}
-                      className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
-                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
+              {/* M87 P5.1 — REGROUPÉ par commune (une ligne + « Voir les N → ») ; sinon carte simple. */}
+              {grouperEvents(ev.data?.items ?? []).map((b) => {
+                if (b.type === 'single') return carte(b.e)
+                const ouvert = ouverts.has(b.cle)
+                const nonLus = b.items.filter((e) => !e.lu).length
+                return (
+                  <div key={b.cle} className={`rounded-lg border ${nonLus ? 'border-line-2 bg-bg-2' : 'border-line-2 opacity-55'}`}>
+                    <div className="flex items-center gap-2 px-3 py-2">
+                      <span className="dot shrink-0" style={{ background: nonLus ? 'var(--amber)' : 'var(--line-3)' }} />
+                      <span className="min-w-0 flex-1 truncate text-xs text-txt">
+                        <b className="font-semibold">{b.items.length}</b> {b.nature} à {b.commune}
+                      </span>
+                      <button onClick={() => setOuverts((s) => { const n = new Set(s); n.has(b.cle) ? n.delete(b.cle) : n.add(b.cle); return n })}
+                        className="shrink-0 text-[11px] text-txt-dim hover:text-mint">{ouvert ? 'Réduire ↑' : `Voir les ${b.items.length} →`}</button>
+                    </div>
+                    {ouvert && <div className="flex flex-col gap-1 px-2 pb-2">{b.items.map(carte)}</div>}
                   </div>
-                  {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
-                  <p className="mt-0.5 flex items-center gap-1.5 text-[9px] text-txt-dim">
-                    {e.source && <><span className="font-medium text-txt-mut">{e.source}</span><span>·</span></>}
-                    <span className="font-mono" title={e.date}>{tempsRelatif(e.ts ?? e.date)}</span>
-                  </p>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <div className="shrink-0 border-t border-line p-3">
               {/* M16-B3 : « veilles » = alerte par filtres (fonctionnel) — renommé + expliqué */}

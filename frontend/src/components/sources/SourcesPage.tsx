@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { getSources } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
@@ -7,31 +7,21 @@ import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
-const STATUS_DOT: Record<string, string> = {
-  active: TOKENS.mint, ok: TOKENS.mint, connecte: TOKENS.mint, partial: TOKENS.stCreuser, partiel: TOKENS.stCreuser,
-  degraded: TOKENS.stCreuser, manuel: TOKENS.stCreuser, planned: TOKENS.txtDim, todo: TOKENS.txtDim, a_faire: TOKENS.txtDim,
-  error: TOKENS.stEcartee, down: TOKENS.stEcartee, hub: TOKENS.txtDim,
-}
-
 // M86 (correction factuelle) — le millésime amont est LU depuis l'API (`data_sources.source_millesime`,
 // magasin centralisé) : plus AUCUNE date en dur au front. Repli sur l'année présente dans le nom (dérivé,
-// pas inventé). L'ancienne carte `MILLESIME_VERIFIE` (7 dates codées) a été supprimée — ses valeurs
-// vivent désormais dans data_sources.source_millesime (exposé par /sources).
+// pas inventé). L'ancienne carte `MILLESIME_VERIFIE` (7 dates codées) a été supprimée.
 function millesimeNote(s: SourceInfo): string | null {
   if (s.source_millesime) return s.source_millesime
   const y = s.name.match(/\b(19|20)\d{2}\b/)
   return y ? `millésime ${y[0]}` : null
 }
 
-// ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli
-// « Données publiques » (R6). Le libellé est lu dans legal_notes (rempli ligne à ligne
-// au 2a-p1, seed_sources.py = source de vérité) ; le référentiel par nom ne garde que
-// les cas particuliers (usage encadré, non intégré, lignes hors seed).
+// ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli « Données publiques ».
+// Le libellé est lu dans legal_notes (seed_sources.py = source de vérité) ; le référentiel par nom ne
+// garde que les cas particuliers (usage encadré, non intégré, lignes hors seed).
 const LICENCE_PAR_SOURCE: Record<string, string> = {
   'DVF / valeurs foncières': 'Licence Ouverte — usage encadré (art. L.112 A LPF)',
   'INPI RNE (dirigeants)': 'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)',
-  // M74 C bis : « Fichiers fonciers (Cerema) » retiré de cette table — plus servi par /sources
-  // (statut manuel, cf. M74 A : la vraie source PM = « DGFiP — parcelles des personnes morales »).
   'PLH des 5 EPCI (extraction documentaire)': 'Documents publics — licence à confirmer',
   'RTAA DOM (textes réglementaires)': 'Textes officiels (Légifrance) — réutilisation libre',
   'DEAL Réunion (WMS/WFS)': 'Licence Ouverte (données État)',
@@ -44,10 +34,8 @@ function licence(s: SourceInfo): string {
   if (/licence ouverte/i.test(notes)) return 'Licence Ouverte 2.0 (Etalab)'
   if (/odbl/i.test(notes)) return 'ODbL 1.0 (OpenStreetMap)'
   if (/CC BY 4\.0/i.test(notes)) return 'CC BY 4.0'
-  // Jamais un libellé inventé : sans licence vérifiée à l'audit, on l'affiche tel quel.
-  return 'Licence à confirmer'
+  return 'Licence à confirmer'   // jamais un libellé inventé
 }
-// Lien vers le TEXTE de la licence (audit §1.11 : « lien licence » exigé par le mandat).
 const LICENCE_URL: Record<string, string> = {
   'Licence Ouverte 2.0 (Etalab)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
   'Licence Ouverte (données État)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
@@ -58,150 +46,117 @@ const LICENCE_URL: Record<string, string> = {
     'https://www.inpi.fr/sites/default/files/Licence%20donnees%20RNE_2024_0.pdf',
 }
 
-/** La date de mise à jour AFFICHÉE : la plus récente entre last_sync_at (posé par les jobs)
- *  et la dernière ingestion tracée dans ingestion_runs (servie par l'API — jamais en dur). */
+/** Date de mise à jour AFFICHÉE : la plus récente entre last_sync_at et la dernière ingestion tracée. */
 function majReelle(s: SourceInfo): string | null {
   const a = s.last_sync_at, b = s.derniere_ingestion
   if (a && b) return b > a ? b : a
   return b ?? a
 }
 
-// M13-F1 (QA-55) : la fiche source ne porte plus AUCUN vocabulaire de statut (« Cadence non
-// sondable », « fiabilité à confirmer », « manuel / grande passe — non sondable », « pas encore
-// contrôlée manuellement »). DEUX informations, pas plus :
-//   1. LA VERSION EN SERVICE  — millésime ou date de la donnée effectivement en base.
-//   2. LE DERNIER CONTRÔLE     — quand LABUSE a vérifié pour la dernière fois que c'est bien
-//      la version la plus récente (source_checks.verified_at). Si cette date n'existe pas en
-//      base, on affiche la version SEULE — on n'invente jamais de date.
+// M87 P4 — DÉRIVÉS de la donnée servie (jamais recalculés : la fraîcheur vient de fraicheur.py via /sources,
+// le radar amont de radar.py). Ces prédicats nourrissent la barre d'état, les filtres ET les badges — un
+// seul jeu de règles, pas de chiffre en dur.
+const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.statut === 'nouvelle_publication'
+const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard'
+/** La ligne « meta » : « jusqu'au JJ/MM/AAAA » (donnée en base) › millésime › « donnée du … » (ingestion)
+ *  › « millésime non tracé » (untracked). Jamais un « — » nu, jamais une date inventée. */
+function versionMeta(s: SourceInfo): { label: string; untracked: boolean } {
+  if (s.derniere_donnee) return { label: `jusqu'au ${new Date(s.derniere_donnee).toLocaleDateString('fr-FR')}`, untracked: false }
+  const mil = millesimeNote(s)
+  if (mil) return { label: mil, untracked: false }
+  const ing = majReelle(s)
+  if (ing) return { label: `donnée du ${new Date(ing).toLocaleDateString('fr-FR')}`, untracked: false }
+  return { label: 'millésime non tracé', untracked: true }
+}
+const nonTrace = (s: SourceInfo) => versionMeta(s).untracked
+const aJour = (s: SourceInfo) => !enRetard(s) && !nonTrace(s)
+
+// ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
+// expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
+// (proxy / servi par proxys / curée manuellement — donnée approchée, jamais servie comme source).
+function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed'; children: ReactNode; title?: string }) {
+  const base = 'shrink-0 rounded-[3px] px-1.5 py-px font-mono text-[9.5px] uppercase tracking-[.09em]'
+  if (kind === 'auto') return <span title={title} className={`${base} border border-mint/40 bg-mint/10 text-mint`}>{children}</span>
+  if (kind === 'late') return <span title={title} className={base} style={{ border: `1px solid ${TOKENS.warn}`, color: TOKENS.warn, background: TOKENS.warnBg }}>{children}</span>
+  return <span title={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
+}
+
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (focused) ref.current?.scrollIntoView({ block: 'center' })
-  }, [focused])
+  useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
 
-  // 1) VERSION EN SERVICE : la date de la DONNÉE en base d'abord (derniere_donnee), sinon le
-  //    millésime que la source publie, sinon la date d'ingestion tracée. Jamais rien d'inventé ;
-  //    si aucune de ces informations n'existe → repli HONNÊTE (jamais un « — » nu).
-  const mil = millesimeNote(s)
-  const donneeJusquau = s.derniere_donnee ? new Date(s.derniere_donnee).toLocaleDateString('fr-FR') : null
-  const ingIso = majReelle(s)
-  const version = donneeJusquau
-    ? `données jusqu’au ${donneeJusquau}`
-    : mil
-      ? mil
-      : ingIso
-        ? `donnée du ${new Date(ingIso).toLocaleDateString('fr-FR')}`
-        : 'millésime non tracé en base'
-
-  // 2) M15 H1 — STATUT DE FRAÎCHEUR centré sur la VERSION (ce qui compte : « c'est bien la
-  //    dernière version qui existe », pas « vérifié tel jour »). Trois états, selon le radar (LOT A) :
-  //  • sondable + À JOUR ('a_jour')            → « ✓ Dernière version disponible » — le ✓ est
-  //    VÉRIFIÉ par le radar (aucune version plus récente côté producteur), jamais déclaratif.
-  //  • sondable + EN RETARD ('nouvelle_publication') → « Nouvelle version publiée » — ré-ingestion à faire.
-  //  • NON SONDABLE ('non_sondable' / pas de radar) → factuel : « le producteur publie [cadence] ».
-  //    Aucune promesse de vérification (pas d'URL datée) — mais PAS une source douteuse (cf. H2).
-  const statut = s.radar?.statut ?? 'non_sondable'
-  const sondable = statut === 'a_jour' || statut === 'nouvelle_publication'
-  const verifieIso = s.radar?.derniere_verif ?? null
-  const cadence = s.radar?.cadence ?? null
-
+  const meta = versionMeta(s)
+  const late = enRetard(s)
   const lic = licence(s)
+  const prod = [s.provider, lic].filter(Boolean)
+
   return (
     <div ref={ref} data-source-row
-      className={`flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 ${
-        focused ? 'bg-mint/[0.06]' : ''}`}>
-      <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? TOKENS.txtDim }}
-        title={`Statut : ${s.status ?? 'inconnu'}`} />
-      <div className="min-w-0 flex-1">
-        {/* Ligne 1 : le nom de la source + marqueur sondable/déclaratif + producteur + licence + lien. */}
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-xs font-medium text-txt">{s.name}</span>
-          {/* M84 : DÉCROCHAGE d'ingestion — chip ROUGE, le plus visible. La donnée dépasse 2× la
-              cadence de la source : le client le voit AVANT de rater une opportunité (jamais un
-              zéro silencieux). Distinct du radar amont (millésime), distinct du statut catalogue. */}
-          {s.fraicheur_statut === 'en_retard' && (
-            <span data-source-decroche className="shrink-0 rounded-full bg-st-ecartee/15 px-1.5 py-px text-[8.5px] font-semibold text-st-ecartee"
-              title={`Décrochage d'ingestion : la donnée date de ${s.fraicheur_delta_jours} j, au-delà du seuil de ${s.fraicheur_seuil_jours} j (2× la cadence de publication). À rattraper.`}>
-              ⚠ en retard
-            </span>
-          )}
-          {/* M74 C bis : NATURE (proxy / servi par proxys) — chip VISIBLE (jamais replié) : une
-              source proxy n'est jamais présentée comme la source officielle (doctrine anti-faux-positif). */}
-          {s.nature && (
-            <span data-source-nature className="shrink-0 rounded-full bg-amber/15 px-1.5 py-px text-[8.5px] font-medium text-amber"
-              title={s.nature.detail}>
-              {s.nature.label}
-            </span>
-          )}
-          {/* M15 H2 : marqueur DISCRET — vérifiée automatiquement (radar) vs déclarative. Non
-              anxiogène : une source déclarative N'EST PAS douteuse, son producteur n'expose
-              simplement pas de date interrogeable. */}
-          {sondable ? (
-            <span data-source-marqueur="auto" className="shrink-0 rounded-full bg-mint/10 px-1.5 py-px text-[8.5px] font-medium text-mint"
-              title="Fraîcheur vérifiée automatiquement par notre radar (cette source expose une date interrogeable).">
-              ✓ vérifiée auto
-            </span>
-          ) : (
-            <span data-source-marqueur="declaratif" className="shrink-0 rounded-full bg-surface-2 px-1.5 py-px text-[8.5px] text-txt-dim"
-              title="Fraîcheur déclarative : le producteur n'expose pas de date interrogeable, on s'appuie sur sa cadence de publication. Ce n'est PAS une source douteuse.">
-              cadence producteur
-            </span>
-          )}
-          {s.provider && <span className="text-[11px] text-txt-dim">{s.provider}</span>}
-          {LICENCE_URL[lic] ? (
-            <a data-source-licence href={LICENCE_URL[lic]} target="_blank" rel="noreferrer"
-              className="text-[11px] text-txt-dim hover:underline" title="Texte de la licence">{lic}</a>
-          ) : (
-            <span data-source-licence className="text-[11px] text-txt-dim">{lic}</span>
-          )}
-          {s.documentation_url && (
-            <a href={s.documentation_url} target="_blank" rel="noreferrer"
-              className="text-[11px] font-medium text-mint hover:underline print:hidden" title={s.documentation_url}>
-              Source officielle ↗
-            </a>
-          )}
-        </div>
-        {/* Ligne 2 (M15 H1) : version en service + STATUT de fraîcheur à trois états. Jamais de « — » nu. */}
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-[11px]">
-          <span data-source-version className="text-txt">
-            <span className="text-txt-dim">Version en service :</span>{' '}
-            <span className="font-medium">{version}</span>
-          </span>
-          {statut === 'a_jour' ? (
-            <span data-source-statut="a_jour" className="font-medium text-mint"
-              title={`Vérifié par notre radar${verifieIso ? ` (dernier passage le ${new Date(verifieIso).toLocaleDateString('fr-FR')})` : ''} : aucune version plus récente n'existe côté producteur.`}>
-              ✓ Dernière version disponible
-            </span>
-          ) : statut === 'nouvelle_publication' ? (
-            <span data-source-statut="nouvelle" className="font-medium text-st-creuser"
-              title="Le radar a détecté une publication plus récente côté producteur — ré-ingestion à lancer.">
-              ▲ Nouvelle version publiée
-            </span>
-          ) : cadence ? (
-            <span data-source-statut="cadence" className="text-txt-dim"
-              title="Source non sondable automatiquement — fraîcheur fondée sur la cadence connue du producteur, pas sur une vérification.">
-              le producteur publie <span className="text-txt-mut">{cadence}</span>
-            </span>
-          ) : null}
-        </div>
-        {/* M74 C bis — Ligne 3 : la NATURE dite en clair, non repliée (proxy / servi par proxys).
-            Le client sait qu'il regarde un proxy, jamais la source officielle. */}
-        {s.nature && (
-          <p data-source-nature-detail className="mt-1 text-[10.5px] leading-snug text-amber/90">
-            <span className="font-medium">{s.nature.label === 'proxy' ? 'Proxy' : 'Servi par proxys'} :</span>{' '}
-            {s.nature.detail}
-          </p>
+      className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_150px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
+      {/* pastille — mint (à jour) ou warn (en retard), avec halo (comme la maquette) */}
+      <span className="h-[7px] w-[7px] shrink-0 rounded-full"
+        style={late
+          ? { background: TOKENS.warn, boxShadow: `0 0 0 3px ${TOKENS.warnBg}` }
+          : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
+        title={late ? 'En retard sur sa cadence de publication' : 'À jour selon la cadence du producteur'} />
+
+      {/* nom + badges d'état */}
+      <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
+        {s.name}
+        {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
+        {late && (
+          <Badge kind="late" title={`Décrochage d'ingestion : la donnée date de ${s.fraicheur_delta_jours} j, au-delà du seuil de ${s.fraicheur_seuil_jours} j (2× la cadence). À rattraper.`}>
+            <span data-source-decroche>en retard</span>
+          </Badge>
         )}
-      </div>
+        {s.nature?.dashed && (
+          <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
+        )}
+      </span>
+
+      {/* lien source officielle — col 3 sur mobile (1re ligne), col 5 en large */}
+      {s.documentation_url
+        ? <a className="col-[3/4] row-start-1 text-right text-[13px] text-txt-dim hover:text-mint md:col-[5/6] md:row-auto" href={s.documentation_url} target="_blank" rel="noreferrer" title="Source officielle">↗</a>
+        : <span className="col-[3/4] row-start-1 md:col-[5/6] md:row-auto" />}
+
+      {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
+      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4]">
+        {s.provider}{s.provider && prod.length > 1 ? ' · ' : ''}
+        {LICENCE_URL[lic]
+          ? <a data-source-licence href={LICENCE_URL[lic]} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
+          : <span data-source-licence>{lic}</span>}
+      </span>
+
+      {/* date de la version en service (mono) */}
+      <span data-source-version
+        className={`col-[2/-1] min-w-0 truncate font-mono text-[11.5px] md:col-[4/5] md:whitespace-nowrap ${meta.untracked ? 'text-txt-dim' : 'text-txt-mut'}`}>
+        {meta.label}
+      </span>
+
+      {/* ligne dépliée : le retard chiffré, ou la nature (proxy/curée) dite en clair */}
+      {late && s.fraicheur_delta_jours != null && s.fraicheur_seuil_jours != null && (
+        <p className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
+          Δ {s.fraicheur_delta_jours} jours pour une cadence attendue de {Math.round(s.fraicheur_seuil_jours / 2)} jours.
+          Les données affichées restent valides, elles ne sont simplement pas les dernières publiées.
+        </p>
+      )}
+      {s.nature?.detail && (
+        <p data-source-nature-detail className="col-[2/-1] text-[12px] leading-snug text-txt-dim">{s.nature.detail}</p>
+      )}
     </div>
   )
 }
 
+type Filtre = 'toutes' | 'ajour' | 'retard' | 'nontrace'
+
 export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
   const sourcesFocus = useApp((s) => s.sourcesFocus)
+  const [q, setQ] = useState('')
+  const [filtre, setFiltre] = useState<Filtre>('toutes')
 
-  // M5 : version du modèle P v2 (sha court + gel) et avertissement censure — additif.
+  // M5 : version du modèle P v2 (sha + avertissement censure) — RÉSERVE DE MÉTHODE conservée (repliée
+  // en bas), jamais supprimée : la maquette ne la montre pas mais la doctrine interdit d'effacer une réserve.
   const modele = useQuery({
     queryKey: ['v2-modele'],
     queryFn: async () => {
@@ -213,123 +168,151 @@ export function SourcesPage() {
     retry: false, staleTime: 5 * 60_000,
   }).data
 
-  const cats = new Map<string, SourceInfo[]>()
-  for (const s of data ?? []) {
-    const k = s.category || 'Autres'
-    cats.set(k, [...(cats.get(k) ?? []), s])
-  }
-  // M56-D · DA §9 — bandeau 3 chiffres depuis les DONNÉES RÉELLES (jamais en dur).
-  // M74 C bis (audits M66/M66-B/M74) — ce que compte chaque nombre, mesuré sur les sources SERVIES :
-  //  • SOURCES BRANCHÉES = sources réellement branchées (status='connecte' hors doublons de catalogue).
-  //  • VÉRIFIÉES AUTO = sources dont le RADAR (source_radar, table peuplée — PAS source_checks qui est
-  //    vide) confirme la dernière version publiée amont. Faible car peu de producteurs exposent une
-  //    date interrogeable (les proxys/imports sont « cadence producteur », comptés ici comme non).
-  //  • MILLÉSIME NON TRACÉ = sources sans aucune date de version (ni donnée, ni millésime, ni ingestion)
-  //    — inhérent aux proxys sans amont daté ; c'est une limite dite, pas un défaut caché.
-  // L'API ne sert déjà que connecte-hors-doublons ; le filtre reste défensif.
-  const comptees = (data ?? []).filter((s) => !s.doublon)
+  // M87 P4 — les 4 compteurs de la barre d'état sont DÉRIVÉS des sources servies (jamais en dur).
+  // L'API ne sert déjà que connecte-hors-doublons-hors-masquées ; le filtre reste défensif.
+  const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
-  const nVerif = comptees.filter((s) => { const st = s.radar?.statut ?? 'non_sondable'; return st === 'a_jour' || st === 'nouvelle_publication' }).length
-  const nSansMil = comptees.filter((s) => !s.derniere_donnee && !millesimeNote(s) && !majReelle(s)).length
+  const nVerif = comptees.filter(sondable).length
+  const nRetard = comptees.filter(enRetard).length
+  const nNonTrace = comptees.filter(nonTrace).length
+  const nAJour = comptees.filter(aJour).length
+
+  const CHIPS: { key: Filtre; label: string; n: number }[] = [
+    { key: 'toutes', label: 'Toutes', n: nTotal },
+    { key: 'ajour', label: 'À jour', n: nAJour },
+    { key: 'retard', label: 'En retard', n: nRetard },
+    { key: 'nontrace', label: 'Millésime non tracé', n: nNonTrace },
+  ]
+
+  // Recherche (nom / producteur / licence / catégorie) + filtre actif. Groupé par catégorie.
+  const cats = useMemo(() => {
+    const ql = q.trim().toLowerCase()
+    const passeFiltre = (s: SourceInfo) =>
+      filtre === 'toutes' ? true : filtre === 'ajour' ? aJour(s) : filtre === 'retard' ? enRetard(s) : nonTrace(s)
+    const passeSearch = (s: SourceInfo) =>
+      !ql || [s.name, s.provider, s.category, licence(s)].some((v) => (v ?? '').toLowerCase().includes(ql))
+    const m = new Map<string, SourceInfo[]>()
+    for (const s of comptees) {
+      if (!passeFiltre(s) || !passeSearch(s)) continue
+      const k = s.category || 'Autres'
+      m.set(k, [...(m.get(k) ?? []), s])
+    }
+    return [...m.entries()]
+  }, [comptees, q, filtre])
+
+  const nVisibles = cats.reduce((acc, [, l]) => acc + l.length, 0)
+
   return (
     <div data-sources-page className="sources-print flex min-w-0 flex-1 flex-col overflow-y-auto">
-      <div className="mx-auto w-full max-w-3xl px-6 py-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-medium text-txt-hi">Sources & fraîcheur</h2>
-            {/* UX V1 ajout A : la phrase de positionnement — l'écran de crédibilité en rendez-vous */}
-            <p data-sources-positionnement className="mt-1 text-[13px] font-medium leading-snug text-txt">
-              Chaque réponse LABUSE est traçable jusqu'à sa source publique.
-            </p>
-          </div>
-        </div>
-        {/* DA §9 — bandeau 3 chiffres en tête (données réelles, cf. calcul ci-dessus). */}
-        {data && (
-          <div data-sources-bandeau className="stats mt-4" style={{ gridTemplateColumns: 'repeat(3,1fr)', maxWidth: 560 }}>
-            <div className="stat" style={{ padding: '12px 14px' }} title="Sources réellement branchées : status connecté, hors doublons de catalogue. Mesuré dynamiquement."><div className="stat-l">SOURCES BRANCHÉES</div><div className="stat-v" style={{ fontSize: 17 }}>{nTotal}</div></div>
-            <div className="stat" style={{ padding: '12px 14px' }} title="Sources dont notre radar (métadonnées amont) confirme la dernière version publiée. Peu nombreuses : la plupart des producteurs (et tous les proxys/imports) n'exposent pas de date interrogeable."><div className="stat-l">VÉRIFIÉES AUTO</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--mint)' }}>{nVerif}</div></div>
-            <div className="stat" style={{ padding: '12px 14px' }} title="Sources sans aucune date de version en base (ni donnée datée, ni millésime, ni ingestion tracée). Inhérent aux proxys sans amont daté — une limite dite, pas un défaut caché."><div className="stat-l">MILLÉSIME NON TRACÉ</div><div className="stat-v" style={{ fontSize: 17, color: 'var(--amber)' }}>{nSansMil}</div></div>
-          </div>
-        )}
-        {/* M15 H1 : ce qui compte = « c'est bien la dernière version qui existe », pas « vérifié
-            tel jour ». Statut de fraîcheur à trois états + marqueur sondable/déclaratif. */}
-        <p className="mt-1.5 text-[11px] leading-relaxed text-txt-dim">
-          Ce qui compte n'est pas de tout re-vérifier chaque jour, mais que <b className="text-txt-mut">la
-          version consultée soit la dernière qui existe</b>. Un fichier INSEE de 2021 est à jour si
-          l'INSEE n'a rien publié depuis. Pour les sources qui exposent une date interrogeable
-          (<span className="text-mint">✓ vérifiée auto</span>), notre radar confirme
-          <b className="text-txt-mut"> « ✓ Dernière version disponible »</b> — ou signale
-          <b className="text-txt-mut"> « Nouvelle version publiée »</b> quand il faut ré-ingérer.
-          Pour les autres (INSEE, SAFER… <span className="text-txt-dim">cadence producteur</span>),
-          pas de vérification possible : on affiche la version et le rythme de publication du
-          producteur. Une source non vérifiable n'est <b className="text-txt-mut">pas</b> une source
-          douteuse.
+      <div className="mx-auto w-full max-w-[1060px] px-7 py-10">
+        {/* en-tête */}
+        <p className="mb-3.5 font-mono text-[10.5px] uppercase tracking-[.16em] text-txt-dim">Données et méthode</p>
+        <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources &amp; fraîcheur</h1>
+        <p data-sources-positionnement className="mb-7 max-w-[62ch] text-[13px] leading-relaxed text-txt-mut">
+          Chaque réponse LABUSE est traçable jusqu'à sa source publique. Ce tableau dit d'où vient le
+          chiffre, à quelle date il a été publié par son producteur, et si nous savons vérifier cette
+          date automatiquement.
         </p>
 
-        {/* M13-F2 (QA-56) : le bloc « Ce que LABUSE mesure » (BAN 99,99 %, jamais de SQL généré,
-            signal ANC) a été RETIRÉ de l'interface. Son contenu est conservé pour l'argumentaire
-            commercial dans docs/ARGUMENTAIRE_PRECISION.md. */}
-
-        {/* B4 (M12) : le bloc modèle est scindé. VISIBLE = le seul point de CONFIANCE (les niveaux
-            récents sont provisoires, mais le CLASSEMENT reste fiable). REPLIÉ derrière « détail
-            technique » = version/sha/gel/mécanique de recalage. */}
-        {modele && (
-          <div data-sources-modele className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5">
-            <p className="text-[11px] leading-snug text-txt">{CLIENT.modele.confiance}</p>
-            <details className="mt-1.5">
-              <summary className="cursor-pointer list-none text-[10.5px] font-medium text-txt-dim hover:text-txt">
-                ▸ {CLIENT.modele.detailToggle}
-              </summary>
-              {/* M55-H point 11 : la DATE de gel du run a disparu du rendu client — le sha
-                  court reste (empreinte d'intégrité, pas une date ni un nom de run). */}
-              <p className="mt-1 text-[10.5px] font-medium text-txt">
-                Modèle de scoring : <span className="font-mono">{modele.model_version}</span>
-                <span className="ml-1.5 font-mono text-[10px] text-txt-dim">sha {modele.sha256_court}</span>
-              </p>
-              <p className="mt-1 text-[10.5px] leading-snug text-st-creuser">▲ {modele.avertissement_censure}.</p>
-              <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
-            </details>
+        {/* barre d'état — une ligne, 4 compteurs calculés (jamais en dur) */}
+        {data && (
+          <div data-sources-bandeau className="mb-3.5 flex flex-wrap overflow-hidden rounded-[10px] border border-line bg-surface-2">
+            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+              <b className="block text-[22px] font-semibold leading-tight text-txt-hi">{nTotal}</b>
+              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">sources branchées</span>
+            </div>
+            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+              <b className="block text-[22px] font-semibold leading-tight text-mint">{nVerif}</b>
+              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">version vérifiée auto</span>
+            </div>
+            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+              <b className="block text-[22px] font-semibold leading-tight text-txt-hi">{nNonTrace}</b>
+              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">millésime non tracé</span>
+            </div>
+            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+              <b className="block text-[22px] font-semibold leading-tight" style={{ color: TOKENS.warn }}>{nRetard}</b>
+              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">en retard sur sa cadence</span>
+            </div>
           </div>
         )}
 
-        {/* M-RENOUV lot C — méthodo du segment Renouvellement : la définition, le score, LA LIMITE.
-            Texte validé au rapport (M_RENOUV_RAPPORT.md) — ne pas reformuler sans décision Vic. */}
-        <div data-sources-renouv className="mt-4 rounded-lg border px-4 py-2.5"
-          style={{ borderColor: `${TOKENS.renouv}40`, background: `${TOKENS.renouv}0a` }}>
-          <p className="text-[11px] font-medium" style={{ color: TOKENS.renouv }}>Segment Renouvellement</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-txt">
-            Le classement principal écarte volontairement les parcelles <b>déjà occupées</b> (bâties).
-            Le segment Renouvellement rend visibles celles d'entre elles qui restent en <b>zone
-            constructible (U/AU)</b> avec une <b>capacité réelle</b> (surface constructible résiduelle
-            supérieure à 100 m², ou assiette d'au moins 600 m²) — hors copropriétés et hors foncier
-            public. Son score (0-100) est une <b>règle de calcul transparente</b>, pas un modèle
-            prédictif : droits à bâtir résiduels (40), taille de l'assiette (25), rotation du bâti
-            dans le secteur (20), géométrie favorable (15) — chaque parcelle est située par rang au
-            sein du segment.
-          </p>
-          <p className="mt-1.5 text-[10.5px] leading-relaxed text-st-creuser">
-            ▲ La limite : ce segment identifie un potentiel physique et réglementaire ; il ne prédit
-            pas une mise en vente et ne constitue pas une opportunité qualifiée.
-          </p>
+        {/* les DEUX réserves de méthode — conservées, repliées (jamais supprimées) */}
+        <details data-sources-reserves className="mb-8 rounded-[10px] border border-line bg-surface-2">
+          <summary className="flex cursor-pointer list-none items-center gap-2.5 px-[18px] py-3.5 text-[13px] text-txt-mut [&::-webkit-details-marker]:hidden">
+            <span className="rounded-[3px] border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[.12em]"
+              style={{ borderColor: TOKENS.warn, color: TOKENS.warn }}>Réserves</span>
+            Deux limites à connaître avant de lire les scores
+          </summary>
+          <div className="border-t border-line px-[18px] pb-[18px] pt-4">
+            <p className="mb-3 max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
+              <strong className="font-semibold text-txt">Retard de publication des ventes.</strong> Les ventes
+              mettent 1 à 3 ans à apparaître dans DVF. Les niveaux de prix 2025–2026 sont provisoires ; le
+              classement relatif entre parcelles, lui, reste fiable.
+            </p>
+            <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
+              <strong className="font-semibold text-txt">Segment Renouvellement.</strong> Il identifie un
+              potentiel physique et réglementaire sur des parcelles déjà bâties. Il ne prédit pas une mise en
+              vente et ne constitue pas une opportunité qualifiée.
+            </p>
+          </div>
+        </details>
+
+        {/* barre d'outils : recherche + 4 filtres (comptes calculés) */}
+        <div className="sticky top-0 z-[5] mb-5 flex flex-wrap items-center gap-2.5 border-b border-line bg-bg py-3">
+          <input data-sources-search value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="Chercher une source, un producteur…"
+            className="min-w-[200px] flex-[1_1_240px] rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-txt placeholder:text-txt-dim focus:border-line-2 focus:outline-none" />
+          {CHIPS.map((c) => (
+            <button key={c.key} data-sources-chip={c.key} aria-pressed={filtre === c.key} onClick={() => setFiltre(c.key)}
+              className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
+                filtre === c.key ? 'border-mint/40 bg-mint/10 text-mint' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
+              {c.label} <span className="ml-1.5 font-mono text-[11px] opacity-70">{c.n}</span>
+            </button>
+          ))}
         </div>
 
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}
         {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
-        {[...cats.entries()].map(([cat, list]) => (
-          <div key={cat} className="mt-6">
-            {/* DA §9 — groupe encarté par catégorie : micro-label + .gcard, deux lignes par source. */}
-            <p className="label-caps mb-2 block">{cat.toUpperCase()}</p>
-            <div className="gcard">
+        {data && nVisibles === 0 && (
+          <p className="mt-8 text-[13px] text-txt-dim">Aucune source ne correspond{q ? <> à « {q} »</> : null}{filtre !== 'toutes' ? ' pour ce filtre' : ''}.</p>
+        )}
+
+        {/* groupes par catégorie */}
+        {cats.map(([cat, list]) => (
+          <div key={cat} className="mt-7">
+            <div className="mb-0.5 flex items-baseline gap-2.5 pb-2">
+              <h2 className="m-0 font-mono text-[10.5px] font-normal uppercase tracking-[.16em] text-txt-dim">{cat}</h2>
+              <span className="font-mono text-[10.5px] text-txt-dim opacity-60">{list.length}</span>
+            </div>
+            <div className="overflow-hidden rounded-[10px] border border-line bg-surface-1">
               {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} />)}
             </div>
           </div>
         ))}
-        <p className="mt-6 text-[11px] leading-relaxed text-txt-dim">
-          Le contrôle automatique de fraîcheur est assuré par le <b className="text-txt-mut">radar</b>
-          des sources (sonde des métadonnées amont, sans téléchargement), aujourd'hui hebdomadaire.
-          Il ne couvre que les sources qui exposent une date interrogeable ; pour les autres, la
-          fraîcheur repose sur la cadence connue du producteur.
-        </p>
+
+        {/* légende (reprise de la maquette) */}
+        {data && (
+          <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line pt-4 text-[12px] text-txt-dim">
+            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.mint }} /> à jour selon la cadence du producteur</span>
+            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.warn }} /> en retard sur sa cadence</span>
+            <span className="flex items-center gap-2"><Badge kind="auto">version vérifiée</Badge> le producteur expose une date interrogeable</span>
+            <span className="flex items-center gap-2"><Badge kind="dashed">proxy</Badge> donnée approchée, jamais servie comme source</span>
+          </div>
+        )}
+
+        {/* RÉSERVE DE MÉTHODE conservée : le modèle de scoring (version + avertissement censure), replié */}
+        {modele && (
+          <details data-sources-modele className="mt-6 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5">
+            <summary className="cursor-pointer list-none text-[11px] font-medium text-txt-mut hover:text-txt">▸ {CLIENT.modele.detailToggle}</summary>
+            <p className="mt-2 text-[11px] leading-snug text-txt">{CLIENT.modele.confiance}</p>
+            <p className="mt-2 text-[10.5px] font-medium text-txt">
+              Modèle de scoring : <span className="font-mono">{modele.model_version}</span>
+              <span className="ml-1.5 font-mono text-[10px] text-txt-dim">sha {modele.sha256_court}</span>
+            </p>
+            <p className="mt-1 text-[10.5px] leading-snug text-st-creuser">▲ {modele.avertissement_censure}.</p>
+            <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
+          </details>
+        )}
       </div>
     </div>
   )

@@ -603,7 +603,7 @@ def list_events(request: Request, unread_only: bool = False, limit: int = 100, o
     cf = _cloche_filter_sql(prefs_compte(db, cid))
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
-               e.demo, e.source, e.lien,
+               e.demo, e.source, e.lien, p.commune AS commune,
                {_seen('e')} AS lu,
                d.matrice_statut AS statut
         FROM event_log e
@@ -964,6 +964,22 @@ def brief_matin(db: Session, cid: int | None) -> dict:
             "SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 1 "
             "AND commune = ANY(:coms)"), {"coms": communes}).scalar() or 0
     donnee_perimee = bool(permis_max and (date.today() - permis_max).days > 2)   # ingestion en attente ?
+    # M87 P6 — la barre « N événements depuis hier » et le panneau latéral. Point de lecture UNIQUE :
+    # event_log (fenêtre J-1, kinds perso) — MÊME source que le digest Brevo, pas deux fenêtres qui
+    # divergent. Groupé par commune (maquette : une ligne par commune + « Voir les N → »). La ligne
+    # secteur (permis SITADEL, M83) reste un APPOINT tant que les crons evaluer_suivis ne tournent pas ;
+    # quand ils tourneront, les permis passeront par event_log et cet appoint devra être retiré pour ne
+    # pas double-compter (dépendance VPS, cf. M84).
+    groupes = db.execute(text(
+        "SELECT COALESCE(p.commune, '—') AS commune, count(*) AS n, max(e.ts)::text AS ts_max, "
+        "  (array_agg(DISTINCT e.idu) FILTER (WHERE e.idu IS NOT NULL))[1:3] AS idus, "
+        "  (array_agg(DISTINCT e.source) FILTER (WHERE e.source IS NOT NULL)) AS sources "
+        "FROM event_log e LEFT JOIN parcels p ON p.idu = e.idu "
+        "WHERE e.ts >= now() - interval '24 hours' "
+        "  AND e.compte_id IS NOT DISTINCT FROM :c AND e.kind = ANY(:perso) AND NOT e.demo "
+        "GROUP BY COALESCE(p.commune, '—') ORDER BY max(e.ts) DESC"),
+        {"c": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
+    n_evenements = sum(r["n"] for r in groupes) + int(permis_hier)
     vide = (len(veilles) == 0 and permis_hier == 0)
     cause = None
     if vide:
@@ -981,6 +997,8 @@ def brief_matin(db: Session, cid: int | None) -> dict:
         "secteurs": {"communes": communes, "permis_depuis_hier": int(permis_hier),
                      "derniere_donnee_permis": str(permis_max) if permis_max else None,
                      "donnee_perimee": donnee_perimee},
+        "n": int(n_evenements),                       # M87 P6 — le compteur de la barre (0 → « rien de neuf »)
+        "groupes": [dict(r) for r in groupes],        # M87 P6 — une ligne par commune pour le panneau latéral
         "vide": vide, "cause_vide": cause,
     }
 
@@ -1303,6 +1321,15 @@ async def preferences_save(c: int, t: str, request: Request, db: Session = Depen
         set_pref(db, c, k, cloche=f"{k}_cloche" in form, email=f"{k}_email" in form)
     db.commit()
     return _page_preferences(db, c, t, sauve=True)
+
+
+@router.get("/entete")
+def entete_cloche() -> dict:
+    """M87 P5 — libellés de l'en-tête de la cloche, DÉRIVÉS du registre (jamais écrits à la main) : ce
+    qu'on sait RÉELLEMENT détecter SUR une parcelle suivie. La cloche les concatène — l'en-tête ne peut
+    plus mentir au prochain mandat (plus de « à proximité » figé, mutation et zonage inclus)."""
+    from ..notif_registry import libelles_entete_cloche
+    return {"libelles": libelles_entete_cloche()}
 
 
 @router.get("/prefs")

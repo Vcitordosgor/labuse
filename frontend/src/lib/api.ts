@@ -624,13 +624,18 @@ export const askParcel = (idu: string, question: string) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) })
 
 // ── Événements (Vague 3 : M11-M14) ──
-export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null }
+export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null; commune?: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+// M87 P5 — libellés de l'en-tête de la cloche, dérivés du registre (jamais écrits à la main).
+export const getEnteteCloche = () => j<{ libelles: string[] }>('/events/entete')
 // M85 Phase 3 — le brief du matin (déterministe : veilles déclenchées + « depuis hier sur vos secteurs »).
+export interface BriefGroupe { commune: string; n: number; ts_max: string | null; idus: string[] | null; sources: string[] | null }
 export interface BriefMatin {
   genere_le: string
   veilles: { titre: string; detail: string | null; ts: string; lien: string | null; source: string | null }[]
   secteurs: { communes: string[]; permis_depuis_hier: number; derniere_donnee_permis: string | null; donnee_perimee: boolean }
+  n: number                 // M87 P6 — compteur de la barre (0 → « rien de neuf depuis hier »)
+  groupes: BriefGroupe[]    // M87 P6 — une ligne par commune pour le panneau latéral
   vide: boolean
   cause_vide: string | null
 }
