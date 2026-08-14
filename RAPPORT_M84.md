@@ -118,4 +118,51 @@ DPE), soit inhérent à la cadence (DVF).
 
 ## Garde-fous (Phase 0)
 Mesure pure — aucune bascule, aucun rejeu, aucun fichier produit modifié. golden intact (non touché).
-**NE PAS MERGER.** J'attends ton arbitrage sur Phase 1 (que rattraper) et Phase 2 (la garantie).
+**NE PAS MERGER.**
+
+---
+
+# PHASE 1 — Rejeu SITADEL (arbitrage Vic : SITADEL seul ; DVF/Sudocuh/CatNat/DPE laissés)
+
+Séquence M81 appliquée : rejouer → mesurer le NET → mesurer le delta de classement AVANT toute
+bascule → golden. Commande : `labuse ingest-permits --refresh` (delta, recouvrement 3 mois, idempotent).
+
+## Le chiffre exact (Vic : « tu annonces 300-400, je veux le chiffre exact »)
+
+| Mesure | AVANT | APRÈS | Net |
+|---|---|---|---|
+| Total `sitadel_permits` | 50 292 | 50 292 | **0** |
+| max(`date`) autorisation | 2026-06-30 | 2026-06-30 | inchangé |
+| Permis déposés après 30/06 | — | — | **0** |
+| Lignes récupérées / upserts | — | 691 / 662 | 662 = **corrections** aux permis mars→juin (recouvrement) |
+
+**Le chiffre exact des permis rattrapables = 0.** Le rejeu a interrogé SDES/Sitadel3 : **l'amont ne
+publie RIEN après le 30/06**. Les ~300-400 permis « manquants » estimés en Phase 0 **n'existent pas
+encore chez SDES** — ils supposaient à tort que SDES avait des dépôts juillet/août qu'on n'aurait pas
+ingérés. La latence de 45 j est la **cadence de publication de Sitadel3** (~1,5-2 mois de délai
+administratif), exactement comme DVF est semestriel. Notre base était **déjà à jour avec la source**.
+
+Les 662 upserts sont des corrections idempotentes sur mars→juin (dates/statuts affinés en amont), pas
+de nouveaux permis : le max(date) n'a pas bougé.
+
+## Delta de classement (M81 — mesuré AVANT bascule)
+
+0 permis nouveau → **0 nouveau signal** (offre engagée, PC caducs, mutation). Le run servi `q_v9_m81`
+est gelé et n'est pas recalculé (doctrine). **Golden : 119/119 PASS, 0 FAIL, 0 incohérence base↔API.**
+Delta de classement = **nul**. Aucune bascule, aucun rejeu de run nécessaire. Golden diff = **0**.
+
+## Ce que Phase 1 corrige de Phase 0
+
+La séquence M81 a fait son travail : **mesurer a renversé l'hypothèse**. SITADEL n'est PAS en retard
+de notre fait — son delta de 45 j est **< son seuil de 60 j (2×cadence mensuelle)**, donc DANS la
+tolérance. Il rejoint DVF dans la catégorie « faux positif de retard » : la cadence amont est lente,
+pas notre ingestion. **Le coût client actionnable du retard = 0.** Le bloc « cette semaine » (M83)
+disait donc la vérité : 0 permis récent parce qu'il n'en existe aucun, nulle part.
+
+Le vrai défaut, lui, reste entier et c'est le sujet de Phase 2 : **on ne pouvait pas SAVOIR** qu'on
+était (ou non) en retard — pas d'alerte, pas de cron, journal partiel. On a ASSUMÉ un retard. La
+garantie doit rendre l'état visible, pas rejouer à l'aveugle.
+
+## Garde-fous (Phase 1)
+Rejeu idempotent (delta, recouvrement 3 mois). Aucune table de run touchée. golden 119/119 PASS.
+**NE PAS MERGER.**
