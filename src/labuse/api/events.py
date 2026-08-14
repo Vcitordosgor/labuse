@@ -879,29 +879,44 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
     now = datetime.now(timezone.utc)
     periode = "aujourd'hui" if freq == "quotidien" else "cette semaine"
+    # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
+    # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
+    # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
     recipients = db.execute(text(
-        "SELECT c.id AS cid, u.email FROM comptes c "
-        "JOIN utilisateurs u ON u.compte_id = c.id AND u.role = 'titulaire' "
-        "WHERE c.statut = 'actif'")).mappings().all()
+        "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
+        "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
+        "WHERE c.statut = 'actif' GROUP BY c.id ORDER BY c.id")).mappings().all()
     envoyes = ignores = echecs = 0
+    details: list[dict] = []
+
+    def _note(cid, email, statut, motif):
+        details.append({"compte": cid, "email": email, "statut": statut, "motif": motif})
+
     for r in recipients:
         cid, email = r["cid"], r["email"]
-        prefs = prefs_compte(db, cid)
-        if not any(p["email"] for p in prefs.values()):        # tous canaux e-mail coupés = désinscrit
+        if not email or not str(email).strip():
             ignores += 1
+            _note(cid, email, "ignoré", "pas d'adresse (aucun utilisateur titulaire avec e-mail)")
+            continue
+        prefs = prefs_compte(db, cid)
+        if not any(p["email"] for p in prefs.values()):
+            ignores += 1
+            _note(cid, email, "ignoré", "e-mail désactivé (préférences : tous les canaux e-mail coupés)")
             continue
         last = db.execute(text("SELECT last_digest_at FROM notif_prefs WHERE compte_id=:c"),
                           {"c": cid}).scalar()
         if not force and last and (now - last) < timedelta(hours=interval_h):
             ignores += 1
+            _note(cid, email, "ignoré", f"anti-double-envoi (dernier digest {last:%Y-%m-%d %H:%M} UTC)")
             continue
         data = _digest_data(db, cid)
         # FILTRE par préférence e-mail PAR TYPE : un type dont l'e-mail est coupé n'entre pas au digest.
         evs = [e for e in data["evenements"]
                if not e.get("demo") and prefs.get(_pref_type(e["kind"], False), {}).get("email")]
         marche = data["marche_resume"] if prefs["marche"]["email"] else {"total": 0}
-        if not evs and not marche.get("total"):                # digest VIDE ne part pas
+        if not evs and not marche.get("total"):
             ignores += 1
+            _note(cid, email, "ignoré", "aucune notification en attente (rien d'e-mail-activé sur 7 j + marché vide)")
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"
@@ -914,13 +929,15 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                          headers={"List-Unsubscribe": f"<{lien_desabo}>"})
         if res.ok:
             envoyes += 1
+            _note(cid, email, "envoyé", f"{len(evs)} événement(s)" + (f" + {marche['total']} marché" if marche.get("total") else ""))
         else:                                                  # échec tracé, jamais silencieux
             echecs += 1
+            _note(cid, email, "échec", f"envoi refusé : {res.detail}")
             log.warning("DIGEST non envoyé — compte=%s cause=%s", cid, res.detail)
         db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
                         "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
     db.commit()
-    return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs}
+    return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "details": details}
 
 
 def _token_ok(db: Session, c: int, t: str) -> bool:

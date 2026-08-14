@@ -1874,6 +1874,28 @@ def evaluer_veilles_cmd() -> None:
     typer.echo(f"✓ Veilles évaluées : {out['veilles_evaluees']}, notifications créées : {out['notifications_creees']}.")
 
 
+@app.command("notif-test")
+def notif_test_cmd(compte: int = typer.Option(None, help="compte_id destinataire (défaut : pilote NULL).")) -> None:
+    """M85 — crée UNE notification de test (kind=veille, e-mail-activée) pour vérifier la chaîne
+    cloche + digest de bout en bout. Idempotente par jour (dédup). Pour un DIGEST réel : viser SON
+    compte (--compte <id>), puis `labuse digest --force`."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import creer_notification, ensure_tables
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        nid = creer_notification(
+            s, kind="veille", compte_id=compte, source="Test",
+            titre="Notification de test LABUSE",
+            detail="Ceci est une notification de test — la chaîne cloche + digest fonctionne.",
+            lien="/", dedup=f"test:{compte}")
+        s.commit()
+    typer.echo(f"✓ Notification de test créée (id={nid}) pour compte {compte if compte is not None else 'pilote (NULL)'}."
+               if nid else "• Déjà créée aujourd'hui (dédup) — aucune nouvelle ligne.")
+
+
 @app.command("notifier-fraicheur")
 def notifier_fraicheur_cmd() -> None:
     """M85/M84 — produit une notification systeme (pilote/admin) pour chaque source EN RETARD. À
@@ -1920,7 +1942,13 @@ def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
     base = get_settings().public_base_url or ""
     with Session(engine()) as s:
         out = envoyer_digests(s, base_url=base, freq=freq, force=force)
-    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s).")
+    # M85 — un MOTIF par compte : jamais un « ignoré » muet (le silence qu'on interdit partout).
+    for d in out.get("details", []):
+        marque = {"envoyé": "✓", "ignoré": "•", "échec": "⚠"}.get(d["statut"], "·")
+        typer.echo(f"  {marque} compte {d['compte']} ({d.get('email') or 'sans e-mail'}) — "
+                   f"{d['statut']} : {d['motif']}")
+    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s), "
+               f"{out['echecs']} échec(s).")
 
 
 @app.command("score-v-fetch")
