@@ -23,6 +23,13 @@ class DvfLayer(Layer):
     name = "dvf"
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        # M91 (finding) — « un zéro n'est pas une absence » : une commune dont le DVF n'est PAS ingéré
+        # est UNKNOWN (on n'a pas mesuré), jamais PASS (« aucune vente » affirmerait une mesure). M79
+        # avait retiré ce garde en réécrivant le calcul ; restauré ici. Sans impact servi (DVF ingéré
+        # pour les 24 communes → le garde ne se déclenche jamais en prod ; golden inchangé), mais
+        # rétablit la distinction pour les bases partielles (démo) et le contrat du test.
+        if not ctx.table_has_commune("dvf_mutations", parcel.commune):
+            return unknown(self.name, "DVF non ingéré pour la commune.", source=SRC_DVF)
         # M79 — POINT DE CALCUL UNIQUE : prix médian de TERRAIN NU du SECTEUR cadastral
         # (dvf_secteur_medianes type='terrain'), JAMAIS un ratio bâti/foncier ni un rayon.
         # L'ancien €/m² « rayon, tous biens » comptait du bâti au m² de terrain (facteur ~2) —

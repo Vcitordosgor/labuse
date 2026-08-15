@@ -18,7 +18,12 @@ def test_au_st_non_constructible_neuf():
     r = resolve_zone("AU3st")
     assert r is not None and r.constructible_neuf is False
     f = estimate_capacity(r, 1000)
-    assert f.constructible is False and "transition" in f.verdict.lower()
+    # M58-P1 (Q2) a retiré le libellé « secteur de transition » hardcodé pour TOUTE zone AU*st au
+    # profit du verdict de zone RÉELLE (engine.py:188) : « Construction neuve non autorisée en zone
+    # AU3st. ». On vérifie la substance (non-constructible) + le verdict réel servi, pas le mot disparu.
+    assert f.constructible is False
+    v = f.verdict.lower()
+    assert "non autorisée" in v and "au3st" in v
     assert f.fourchette["logements_au_sol"] == (0, 0)
 
 

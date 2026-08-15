@@ -28,6 +28,10 @@ def _stub(monkeypatch):
     monkeypatch.setattr("labuse.bati.layer_available", lambda s: True)
     monkeypatch.setattr("labuse.faisabilite.residuel._niveaux_existants",
                         lambda s, pid, defaut: (float(defaut), False))
+    # M32 (BASCULE PHASE C) — compute_residuel lit désormais le bâti RÉVÉLÉ CoSIA (parcel_bati_revele) :
+    # point unique isolé en `_emprise_revelee`, qu'on stubbe (pas de bâti révélé par défaut) pour garder
+    # ces tests PURS. Avant M32 le calcul n'accédait pas à la base — d'où l'ancien `session=None`.
+    monkeypatch.setattr("labuse.faisabilite.residuel._emprise_revelee", lambda s, pid: None)
 
 
 def _ratio(monkeypatch, ratio):
@@ -40,6 +44,16 @@ def test_terrain_nu_residuel_quasi_integral(monkeypatch):
     r = residuel.compute_residuel(None, 1, faisa=_faisa(emprise=500, sdp_max=1000))
     assert r["disponible"] and r["taux_emprise_pct"] == 0 and r["sous_densite"] is True
     assert r["sdp_residuelle_m2"] == 1000 and "terrain nu" in r["libelle"]
+
+
+def test_bati_revele_cosia_prime_sur_bd_topo(monkeypatch):
+    # M32 — CoSIA voit une emprise que BD TOPO rate (ratio 0) : la parcelle cesse d'être « terrain nu ».
+    _ratio(monkeypatch, 0.0)                      # BD TOPO : 0 m² bâti
+    monkeypatch.setattr("labuse.faisabilite.residuel._emprise_revelee", lambda s, pid: 300.0)
+    r = residuel.compute_residuel(None, 1, faisa=_faisa(emprise=500, sdp_max=1000))
+    # révélée 300 > BD TOPO 0 → retenue ; taux 300/500 = 60 % ; SDP existante 300×1 → résiduelle 700.
+    assert r["emprise_batie_m2"] == 300 and r["taux_emprise_pct"] == 60
+    assert r["sdp_residuelle_m2"] == 700 and r["sous_densite"] is False
 
 
 def test_parcelle_dense_pas_sous_densite(monkeypatch):
