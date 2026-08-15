@@ -46,9 +46,20 @@ def test_collect_parcelle_pauvre_sections_omises(db_session, parcelle_seedee):
     data = collect_report_data(db_session, parcelle_seedee)
     assert data["parcelle"]["commune"] == "Petite-Île"
     assert data["parcelle"]["surface_m2"] == 815
-    # Sections sans donnée : None (omises) ou explicitement « rien » — pas de section vide.
-    for cle in ("constructibilite", "terrain"):
-        assert data[cle] is None, f"{cle} devrait être omise sur base vide"
+    # Sections sans donnée : None (omises) ou explicitement « rien » — pas de chiffre fabriqué.
+    assert data["constructibilite"] is None, "constructibilite devrait être omise sur base vide"
+    # M73-D (c8e208d1) : la réhabilitation (mode_b) est désormais SERVIE comme ÉTAT d'absence dans les
+    # 5 documents (« Sans objet »/« Non évaluée »), jamais omise — `compute_mode_b` hors-population
+    # renvoie {disponible: False}, JAMAIS un chiffre inventé. Sur base pauvre, `terrain` peut donc la
+    # porter. La protection réelle n'est PAS « section omise » mais « aucune donnée fabriquée » : on
+    # vérifie qu'aucun chiffre de terrain (pente/solaire/canopée) n'est inventé et que mode_b n'est
+    # jamais faussement « disponible ».
+    terrain = data["terrain"]
+    if terrain is not None:
+        assert set(terrain) <= {"mode_b", "anc"}, f"terrain ne doit porter que des états d'absence, pas {set(terrain)}"
+        assert terrain.get("mode_b", {}).get("disponible") is not True, "mode_b faussement disponible sur base vide"
+        for chiffre in ("pente", "solaire", "canopee"):
+            assert chiffre not in terrain, f"{chiffre} : chiffre fabriqué sur base vide"
     assert data["sources"], "la page Sources doit toujours exister"
 
 
