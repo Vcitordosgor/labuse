@@ -52,6 +52,12 @@ DECLASSE_COLOR = "#8C7468"
 DECLASSE_RGB = (140, 116, 104)
 
 
+# M89 — le PÉRIMÈTRE du dénominateur, écrit UNE fois (un critère = un endroit). rang_total exclut les
+# copropriétés (hors univers de classement, doctrine M3.6) : le chiffre servi doit le DIRE, jamais un
+# dénominateur nu. Mesuré M89 : les 3 424 sans rang = exactement les 3 424 copropriétés (corrélation 100 %).
+RANG_PERIMETRE = "copropriétés hors univers de classement"
+
+
 def rang_total(db: Session, run: str = Q_A_RUN_LABEL) -> int | None:
     """Dénominateur du rang servi : nombre de parcelles CLASSÉES (hors copropriétés) du run.
     Un rang ne dit rien sans lui (« rang 57 643 / 428 239 »). Lecture seule, niveau run."""
