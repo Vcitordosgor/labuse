@@ -77,22 +77,19 @@ _LIMITES_COMMUN: list[tuple[str, str]] = [
     ("Prix de marché fin", "DVF détaillé + agent local"),
 ]
 
-#: Ajouts SPÉCIFIQUES par document (concaténés au commun ; one-pager = version courte).
+#: Ajouts SPÉCIFIQUES par document (concaténés au commun).
 _LIMITES_SPECIFIQUE: dict[str, list[tuple[str, str]]] = {
     "premium": [("Comparables de vente détaillés", "dossier parcelle / banquier")],
     "banquier": [("Plan de financement et LTV", "établissement prêteur"),
                  ("Coût de démolition / dépollution", "devis entreprise")],
     "dossier": [("Réseaux et raccordements chiffrés", "concessionnaires (eau / électricité)")],
-    "onepager": [],
 }
 
 
 def limites_document(doc: str) -> list[tuple[str, str]]:
     """M73 §5 — source de contenu PARTAGÉE (doctrine « un seul endroit ») de la section
     « Ce que ce document ne peut pas dire ». Renvoie une liste de (ABSENCE, OÙ CHERCHER).
-    `doc` ∈ {"premium", "banquier", "dossier", "onepager"} ; one-pager = version courte (3 items)."""
-    if doc == "onepager":
-        return _LIMITES_COMMUN[:3]
+    `doc` ∈ {"premium", "banquier", "dossier"} (M93 — one-pager retiré)."""
     return _LIMITES_COMMUN + _LIMITES_SPECIFIQUE.get(doc, [])
 
 

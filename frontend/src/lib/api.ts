@@ -443,7 +443,7 @@ export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge
 }
 
 // M54-EXPO — exports « document » orphelins branchés (URLs directes, ouvertes en onglet/téléchargées).
-export const onePagerUrl = (idu: string) => `/parcels/${idu}/export?format=onepager`
+// M93 — one-pager retiré (onePagerUrl supprimé).
 export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 export const spfLetterUrl = (idu: string) => `/parcels/${idu}/spf-letter`
 

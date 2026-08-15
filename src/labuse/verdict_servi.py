@@ -1,6 +1,6 @@
 """M34 (dette #14) — POINT DE TRADUCTION UNIQUE tier servi → verdict de fiche.
 
-Le verdict affiché par TOUTE surface non-v2 (fiche legacy, exports md/html/one-pager,
+Le verdict affiché par TOUTE surface non-v2 (fiche legacy, exports md/html,
 comparateur, assistant IA, shortlist, Kanban, /parcels sans source) est une TRADUCTION du
 tier servi (`parcel_p_score_v2`, run `Q_A_RUN_LABEL`) — jamais un re-calcul. Le rail cascade
 legacy (`parcel_evaluations.status`, logique pré-M28) ne pilote plus aucun verdict : ses

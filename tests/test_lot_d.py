@@ -1,10 +1,8 @@
-"""Lot D — one-pager (D1), comparateur (D2), filtres sauvegardés (D3)."""
+"""Lot D — comparateur (D2), filtres sauvegardés (D3). M93 — D1 (one-pager) retiré avec le document."""
 from __future__ import annotations
 
 import pytest
 from sqlalchemy import text
-
-from labuse.api.export import fiche_onepager
 
 # ── Fiche minimale réutilisable (forme du payload _build_fiche) ──
 _FICHE = {
@@ -22,25 +20,6 @@ _FICHE = {
                 {"layer_name": "ravine", "result": "SOFT_FLAG", "severity": "moyen", "detail": "Proximité ravine", "source": "BD TOPO"}],
     "disclaimer": "Pré-analyse.",
 }
-
-
-# ── D1 — one-pager ──
-
-def test_onepager_contient_les_sections_cles():
-    geo = {"type": "Polygon", "coordinates": [[[55.284, -21.011], [55.286, -21.011],
-                                               [55.286, -21.009], [55.284, -21.009], [55.284, -21.011]]]}
-    h = fiche_onepager(_FICHE, geo)
-    assert "@page" in h and "size: A4" in h
-    for s in ("97415000BV0912", "Capacité", "Potentiel résiduel", "Bilan", "Contraintes",
-              "À vérifier", "Proximité ravine", "wms-r/ows", "polygon points"):
-        assert s in h, s
-    assert "2.2 M€" in h or "2.2 M" in h   # CA formaté en M€
-
-
-def test_onepager_degrade_sans_faisabilite_ni_geom():
-    fiche = {**_FICHE, "faisabilite": None}
-    h = fiche_onepager(fiche, None)   # ne doit pas crasher
-    assert "97415000BV0912" in h and "Contraintes" in h
 
 
 # ── D2 — _compare_row ──

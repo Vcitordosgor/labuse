@@ -1,4 +1,4 @@
-"""M54-AB — validation finale : régénère les 5 exportables + le one-pager sur une parcelle,
+"""M54-AB — validation finale : régénère les exportables sur une parcelle (M93 — one-pager retiré),
 extrait le texte, et vérifie les 6 critères du mandat. Lecture seule.
 
 Usage : LABUSE_DATABASE_URL=… PROJ_DATA=… PYTHONPATH=src python qa/m54ab_validate.py [IDU]
@@ -39,8 +39,6 @@ def main() -> None:
 
     r = client.get(f"/parcels/{IDU}/export.pdf")
     texts["premium"] = _pdf_text(r.content)
-    r = client.get(f"/parcels/{IDU}/export", params={"format": "onepager"})
-    texts["onepager"] = r.text
     r = client.get(f"/dossier/{IDU}.pdf", params={"carte": "false"})
     texts["dossier"] = _pdf_text(r.content)
 

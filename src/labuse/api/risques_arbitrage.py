@@ -15,8 +15,8 @@ Doctrine M73 (arbitrages Vic) :
     (`PPR INONDATION_MOUVEMENT_DE_TERRAIN`, `mouvement_terrain`, « eleve », `PM1_..._ass`,
     `parcel_residuel`).
 
-Fonction PURE sur la liste de lignes servies — **un seul endroit**, consommée par les 5 documents
-(premium, dossier, banquier, one-pager, fiche écran).
+Fonction PURE sur la liste de lignes servies — **un seul endroit**, consommée par les 4 documents
+(premium, dossier, banquier, fiche écran).
 """
 from __future__ import annotations
 

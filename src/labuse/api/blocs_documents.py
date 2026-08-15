@@ -2,8 +2,8 @@
 
 Le texte servi et sa logique d'états sont produits **UNE fois**, sous une forme NEUTRE (`anc_bloc`,
 `rehab_bloc` → dict {titre, etat, statut, lignes:[(role, texte)]}). Chaque média se contente de la
-POSER : `anc_bloc_html`/`rehab_bloc_html` pour la famille WeasyPrint (dossier/banquier/argumentaire/
-one-pager), et le premium fpdf itère les mêmes `lignes` (aucune reformulation — c'est ce qui a produit
+POSER : `anc_bloc_html`/`rehab_bloc_html` pour la famille WeasyPrint (dossier/banquier/
+argumentaire), et le premium fpdf itère les mêmes `lignes` (aucune reformulation — c'est ce qui a produit
 la divergence que M73-C/D réparent). AUCUN recalcul ici : on rend ce que les helpers UNIQUES servent
 (`anc_service.statut_anc`, `compute_mode_b`).
 

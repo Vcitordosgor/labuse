@@ -96,3 +96,33 @@ Résumé : retrait circonscrit à **route (1 branche) + générateur export.py (
 + 1 branche dans un helper partagé + front (bouton/api/strings) + test D1 + ajustement du test
 5→4**. `voisinage_100m` RESTE (consommé par la fiche écran). Golden non concerné. Aucune
 fonction partagée cassée. Rien de commenté « au cas où » : le code part (git garde l'historique).
+
+---
+
+## Phase 2+3 — retrait + vérification (frontière validée par Vic)
+
+Arbitrage : nettoyer aussi les 2 helpers QA actifs + les commentaires orphelins des fichiers partagés.
+
+**Retiré :**
+- Route `app.py` : pattern `^(md|html)$`, branche onepager + import supprimés (md/html conservés).
+- `export.py` : `fiche_onepager`, `_minimap`, `_badge_class`, `_rlt_link`, `_eur_fourchette` (5 fns onepager-only) + le commentaire de section.
+- `export_commun.py` : branche `onepager` de `limites_document` + entrée dict (fonction et 3 autres docs intacts).
+- Front : bouton `Fiche.tsx`, import `onePagerUrl`, `api.ts` `onePagerUrl`, `strings.ts` `onepager`/`onepagerTip`.
+- Tests : volet D1 de `test_lot_d` (2 tests + import) ; `test_non_contradiction` ajusté 5→4 (attente tracée « M93 — one-pager retiré », pas un test tu).
+- Commentaires orphelins nettoyés : 6 fichiers partagés (blocs_documents, pdf_premium, served_cascade, risques_arbitrage, flash/data, verdict_servi) + 6 commentaires dans `app.py`.
+- QA : `qa/m54ab_validate.py` + `qa/m54ab_regen.py` (appels onepager retirés).
+
+**Incident rattrapé** : la plage export.py 358-370 contenait, outre `_eur_fourchette` (onepager),
+les constantes PARTAGÉES `_SOURCE_LABEL`/`_CONF_LABEL` (lues par `_prospection_view`, md/html) —
+emportées par erreur, **restaurées** avant re-test. md/html seraient tombés en 500 sans ça.
+
+**Vérification (Phase 3) :**
+- **4 documents 200** (premium/dossier/banquier/argumentaire) + **md/html 200** (bruts, conservés) ;
+  `format=onepager` → **422** (rejeté par le pattern). Aucun bouton/route orphelin (front `tsc` exit 0).
+- **Golden 119/119** (inchangé — ne teste pas les exports).
+- **Grep servi+front** : plus AUCUNE référence fonctionnelle au one-pager (seuls subsistent les
+  commentaires « M93 — one-pager retiré » qui documentent le retrait).
+- **Suite : 1549 passed, 0 failed, 31 skipped** (M92 : 1551 ; −2 = exactement les 2 tests D1 retirés).
+  `test_non_contradiction` 12 passed en version 4 documents.
+- Rien de commenté « au cas où » : le code est parti (historique git).
+- `voisinage_100m` NON touché (interdit respecté).
