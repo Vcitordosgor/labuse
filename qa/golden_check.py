@@ -107,6 +107,17 @@ TOLERANCES: dict[str, float] = {
     "obstruction_pct": 2.0,
 }
 
+#: M92 — champs TRANSITOIRES INCIDENTS, RÉ-ANCRÉS sur le stable : dates/compteurs qui périssent sur un
+#: évènement RÉEL de la parcelle (nouvelle vente DVF, nouveau permis), horizon imprévisible, et qui ne
+#: sont JAMAIS le but d'une ancre (le but est le tier/verdict/surface). On les EXCLUT de la comparaison
+#: pour couper le bruit à la racine — la couverture réelle reste. Ce n'est PAS une suppression d'ancre
+#: (l'ancre garde tous ses autres champs) ni le marquage `transitoire` (dirigeant_age/canari, cf. plus
+#: bas) qui, lui, reste comparé mais daté. Arbitrage Vic M92.
+TRANSITOIRE_SKIP: tuple[str, ...] = (
+    "dvf.derniere", "dvf.n_mutations",
+    "permis_sitadel.dernier", "permis_sitadel.n",
+)
+
 
 def _jsonable(v: Any) -> Any:
     if isinstance(v, (datetime, date)):
@@ -434,12 +445,30 @@ def compare_entry(expected: dict, actual: dict) -> list[str]:
         e, a = exp.get(path, "<absent>"), act.get(path, "<absent>")
         if e == a:
             continue
+        if any(path.endswith(suf) for suf in TRANSITOIRE_SKIP):
+            continue                       # M92 — champ transitoire incident ré-ancré : non comparé
         tol = next((t for suf, t in TOLERANCES.items() if path.endswith(suf)), None)
         if (tol is not None and isinstance(e, (int, float)) and isinstance(a, (int, float))
                 and abs(float(e) - float(a)) <= tol):
             continue
         diffs.append(f"{path}: attendu={e!r} obtenu={a!r}")
     return diffs
+
+
+def _tri_transitoire(exp: dict, diffs: list[str]) -> tuple[list[str], list[str]]:
+    """M92 — sépare les écarts en (RÉELS, TRANSITOIRES). Une ancre peut porter un bloc `transitoire`
+    {champ, perime_le, raison, rafraichir} : un écart SUR CE CHAMP est une péremption prévisible (« à
+    rafraîchir »), pas un FAIL de bascule. Tout autre écart reste RÉEL — une régression ne se cache
+    JAMAIS derrière le marquage (interdit M92). Sans marquage : tous les écarts sont réels."""
+    t = exp.get("transitoire")
+    if not t:
+        return diffs, []
+    champ = str(t.get("champ") or "")
+    reels, trans = [], []
+    for d in diffs:
+        path = d.split(":", 1)[0].strip()
+        (trans if champ and (path == champ or path.endswith(champ)) else reels).append(d)
+    return reels, trans
 
 
 def collect_all(idus: list[str], anchors: set[str] | None = None) -> dict:
@@ -526,7 +555,7 @@ def main() -> int:
         print(f"WARN: run v2 servi a changé (référence={ref_run}, courant={cur_run}) — "
               f"écarts tier/rang attendus")
 
-    n_fail, n_coh, n_indet = 0, 0, 0
+    n_fail, n_coh, n_indet, n_rafr = 0, 0, 0, 0
     # M-RENOUV lot C — cas golden (3) : effectifs des 5 tiers servis STRICTS (si la
     # référence les gèle ; référence antérieure sans le champ = pas de check, rétro-compatible).
     ref_tiers = golden["meta"].get("tiers_effectifs")
@@ -556,11 +585,18 @@ def main() -> int:
             coh = got["coherence_db_api"]
             if coh:
                 n_coh += 1
-            if diffs:
+            reels, trans = _tri_transitoire(exp, diffs)   # M92 — péremption ≠ régression
+            if reels:
                 n_fail += 1
-                print(f"FAIL {idu} [ancre {exp.get('validation')}] — {len(diffs)} écart(s)")
-                for d in diffs:
+                print(f"FAIL {idu} [ancre {exp.get('validation')}] — {len(reels)} écart(s)")
+                for d in reels:
                     print(f"     · {d}")
+            elif trans:
+                n_rafr += 1
+                _t = exp["transitoire"]
+                print(f"À RAFRAÎCHIR {idu} [ancre transitoire] — {_t.get('raison')} "
+                      f"(péremption prévue {_t.get('perime_le')}) : rafraîchir la référence, PAS une "
+                      f"régression. {_t.get('rafraichir') or ''}".rstrip())
             else:
                 print(f"PASS {idu} [ancre {exp.get('validation')} · {exp.get('motif') or exp.get('tier_v2')}]")
             continue
@@ -577,22 +613,38 @@ def main() -> int:
         coh = got["coherence_db_api"]
         if coh:
             n_coh += 1
-        if diffs:
+        reels, trans = _tri_transitoire(exp, diffs)   # M92 — péremption prévisible ≠ régression
+        if reels:
             n_fail += 1
-            print(f"FAIL {idu} — {len(diffs)} écart(s)")
-            for d in diffs:
+            print(f"FAIL {idu} — {len(reels)} écart(s)")
+            for d in reels:
                 print(f"     · {d}")
+        elif trans:
+            n_rafr += 1
+            _t = exp["transitoire"]
+            print(f"À RAFRAÎCHIR {idu} — ancre transitoire ({_t.get('raison')}, péremption prévue "
+                  f"{_t.get('perime_le')}) : rafraîchir la référence, PAS une régression. "
+                  f"{_t.get('rafraichir') or ''}".rstrip())
         else:
             print(f"PASS {idu}" + (f"  [cohérence base↔API: {'; '.join(coh)}]" if coh else ""))
 
-    print(f"\nBilan: {len(idus) - n_fail - n_indet}/{len(idus)} PASS, {n_fail} FAIL, "
+    print(f"\nBilan: {len(idus) - n_fail - n_indet - n_rafr}/{len(idus)} PASS, {n_fail} FAIL, "
+          f"{n_rafr} À RAFRAÎCHIR (ancre transitoire périmée), "
           f"{n_indet} INDÉTERMINÉ (environnement), "
           f"{n_coh} parcelle(s) avec incohérence base↔API (runtime)")
     # M90 — priorité aux vrais écarts : un FAIL métier prime (code 1) même si des parcelles sont
-    # indéterminées. Sans FAIL mais avec indéterminé : NON concluant (code 2), jamais un OK (code 0) —
-    # « indéterminé » n'est pas un laissez-passer.
+    # indéterminées ou à rafraîchir. Sans FAIL mais avec indéterminé/à-rafraîchir : NON concluant
+    # (code 2), jamais un OK (code 0) — ni « indéterminé » ni « à rafraîchir » n'est un laissez-passer.
     if n_fail:
         return 1
+    if n_rafr:
+        # M92 — 3e état : une ancre transitoire a péri (sa valeur datée a bougé, aucun écart RÉEL à
+        # côté). Ce n'est PAS une régression : régénérer la référence de ces ancres, jamais chercher
+        # un bug. Distinct du FAIL (interdit M92 : ne pas confondre péremption prévisible et régression).
+        print(f"⚠ {n_rafr} ANCRE(S) TRANSITOIRE(S) À RAFRAÎCHIR : leur valeur datée a évolué sans "
+              f"écart réel à côté — régénérer la référence (qa/golden_check.py --dump --idu <ids>), "
+              f"PAS une régression. Ce n'est ni un PASS ni un FAIL.", file=sys.stderr)
+        return 2
     if n_indet:
         print(f"⚠ GOLDEN NON CONCLUANT : {n_indet} parcelle(s) indéterminée(s) pour cause "
               f"d'environnement — relancer sans throttling (LABUSE_RATE_LIMIT_RPM élevé) ou hors "

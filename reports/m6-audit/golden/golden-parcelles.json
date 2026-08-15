@@ -1034,6 +1034,12 @@
           "recouvrement_pct": null,
           "zone": "AUc"
         }
+      },
+      "transitoire": {
+        "champ": "veille_succession.dirigeant_age",
+        "perime_le": "2027-08-15",
+        "rafraichir": "au prochain rejeu, régénérer cette ancre : qa/golden_check.py --dump --idu <id>",
+        "raison": "âge du dirigeant recalculé age(date_naissance) à chaque build (v_pm_propension_vendre) — incrémente d'un an au prochain REJEU postérieur à l'anniversaire (horizon ≤1 an, prévisible)"
       }
     },
     "97408000AB0007": {
@@ -1813,6 +1819,12 @@
           "recouvrement_pct": null,
           "zone": "AUc"
         }
+      },
+      "transitoire": {
+        "champ": "veille_succession.dirigeant_age",
+        "perime_le": "2027-08-15",
+        "rafraichir": "au prochain rejeu, régénérer cette ancre : qa/golden_check.py --dump --idu <id>",
+        "raison": "âge du dirigeant recalculé age(date_naissance) à chaque build (v_pm_propension_vendre) — incrémente d'un an au prochain REJEU postérieur à l'anniversaire (horizon ≤1 an, prévisible)"
       }
     },
     "97410000AS1450": {
@@ -1991,6 +2003,12 @@
           "recouvrement_pct": null,
           "zone": "AUc"
         }
+      },
+      "transitoire": {
+        "champ": "veille_succession.dirigeant_age",
+        "perime_le": "2027-08-15",
+        "rafraichir": "au prochain rejeu, régénérer cette ancre : qa/golden_check.py --dump --idu <id>",
+        "raison": "âge du dirigeant recalculé age(date_naissance) à chaque build (v_pm_propension_vendre) — incrémente d'un an au prochain REJEU postérieur à l'anniversaire (horizon ≤1 an, prévisible)"
       }
     },
     "97410000CD0905": {
@@ -2216,6 +2234,7 @@
             "couleur_hex": "#8C7468",
             "declasse": true,
             "exception_registre": false,
+            "hors_classement": "Copropriété — hors univers de classement (pas d'assiette foncière mobilisable)",
             "label": "Potentiel épuisé · bâti saturé",
             "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
             "mult_base": 1.66,
@@ -2270,8 +2289,7 @@
               "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
               "mot": "proche de la moyenne",
               "reglette_pct": 15.7
-            },
-            "hors_classement": "Copropriété — hors univers de classement (pas d'assiette foncière mobilisable)"
+            }
           },
           "surface_m2": 439,
           "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
@@ -3330,19 +3348,25 @@
     },
     "97414000CV0907": {
       "anchor": true,
-      "validation": "coherence",
-      "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable). NOUVEAU canari (M81, remplace 97415000AC0253) : SIREN 540092202, « conversion en liquidation judiciaire » 2025-06-12 (état terminal stable), 2 signaux concordants (BODACC rouge + gérant proche de la retraite), Saint-Louis. NB : ancre sur procédure collective = durée de vie limitée (péremption prévisible ~2027-2028 si clôture) — re-valider au prochain rejeu (cf. BACKLOG).",
       "cascade_status": "a_creuser",
       "matrice_statut": "chaude",
-      "tier_v2": "declasse_non_constructible"
+      "motif": "canari évènement rouge BODACC — chaude forcée (doctrine non balayable). NOUVEAU canari (M81, remplace 97415000AC0253) : SIREN 540092202, « conversion en liquidation judiciaire » 2025-06-12 (état terminal stable), 2 signaux concordants (BODACC rouge + gérant proche de la retraite), Saint-Louis. NB : ancre sur procédure collective = durée de vie limitée (péremption prévisible ~2027-2028 si clôture) — re-valider au prochain rejeu (cf. BACKLOG).",
+      "tier_v2": "declasse_non_constructible",
+      "transitoire": {
+        "champ": "tier_v2",
+        "perime_le": "2027-2028",
+        "rafraichir": "à la clôture : re-ancrer 97414000CV0907 sur un nouveau canari-évènement (lignée M81) ; régénérer la référence",
+        "raison": "tier forcé « chaude » par évènement rouge BODACC — procédure collective SIREN 540092202 (liquidation judiciaire 2025-06-12) ; le tier retombera « a_creuser » à la CLÔTURE (état terminal, ~2027-2028)"
+      },
+      "validation": "coherence"
     },
     "97415000AC0253": {
       "anchor": true,
-      "validation": "coherence",
-      "motif": "EX-canari évènement rouge BODACC (M81) — chaude dans le run servi q_v8_calibre (donnée gelée), mais sa procédure a CLÔTURÉ au rejeu q_v9 (extinction du passif, annonce postérieure au 29/07) : donnée fraîche, PAS un bug. Remplacé comme canari-événement par 97414000CV0907. À la bascule vers q_v9, cette ancre devient a_creuser (non-forcée).",
       "cascade_status": "opportunite",
       "matrice_statut": "a_creuser",
-      "tier_v2": "chaude"
+      "motif": "EX-canari évènement rouge BODACC (M81) — chaude dans le run servi q_v8_calibre (donnée gelée), mais sa procédure a CLÔTURÉ au rejeu q_v9 (extinction du passif, annonce postérieure au 29/07) : donnée fraîche, PAS un bug. Remplacé comme canari-événement par 97414000CV0907. À la bascule vers q_v9, cette ancre devient a_creuser (non-forcée).",
+      "tier_v2": "chaude",
+      "validation": "coherence"
     },
     "97415000AH0410": {
       "anchor": true,
