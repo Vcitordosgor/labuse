@@ -45,7 +45,11 @@ def test_r1_redeploiement_sans_perte():
 def test_r1_nav_onglets_hors_du_panneau_ia():
     # La fiche est passée en pile scrollée (« plus de navigation par onglets ») ; l'AskBar reste
     # un panneau injecté SÉPARÉMENT et repliable (startOpen/onClose) — il ne masque jamais la fiche (R1).
-    assert "<AskBar" in FICHE and "onClose={() => setAskOpen(false)}" in FICHE
+    # M61-P1 (panneau IA unifié) : le repli booléen `setAskOpen(false)` est devenu l'état à trois
+    # valeurs `iaOuvert` → l'onClose réel ferme via `setIaOuvert('aucun')`. La protection tient (AskBar
+    # séparé, repliable, `startOpen`), c'est le mécanisme d'état qui a changé de nom.
+    assert "<AskBar" in FICHE and "startOpen" in FICHE
+    assert "onClose={() => setIaOuvert('aucun')}" in FICHE
     assert "plus de navigation par onglets" in FICHE
 
 
