@@ -26,6 +26,11 @@ class _Ctx:
     def dvf_stats(self, pid, radius, years):
         return self._v.get("dvf", {"count": 0, "median_eur_m2": None})
 
+    def dvf_sector_terrain(self, idu):
+        # M79 — POINT DE CALCUL UNIQUE lu par DvfLayer : prix médian TERRAIN NU du secteur cadastral
+        # ({median_eur_m2, n_ventes, fenetre}). Remplace `dvf_stats(rayon)` (rayon/tous biens, retiré).
+        return self._v.get("dvf_sector")
+
     def latest_source_result(self, pid, src):
         return self._v.get("owner")
 
@@ -87,17 +92,32 @@ def test_proprietaire_absent_unknown():
 
 # ───────────────────── DvfLayer : nominal + absent ─────────────────────
 
-def test_dvf_mutations_contexte_positif():
-    v = DvfLayer().evaluate(P, _Ctx(dvf={"count": 6, "median_eur_m2": 600}), {})
+# M79 a remplacé `dvf_stats(rayon)` par `dvf_sector_terrain(idu)` (prix médian TERRAIN NU du secteur,
+# point unique) : le stub fournit désormais `dvf_sector`, et le libellé servi porte « terrain / ventes /
+# secteur cadastral » (plus « mutation … rayon »). Les scénarios exercent la logique M79 réelle.
+def test_dvf_secteur_terrain_contexte_positif():
+    # n≥5 (fiable) + prix dans la fourchette favorable (plo=150/phi=325) → magnitude > 0 → POSITIVE.
+    v = DvfLayer().evaluate(P, _Ctx(dvf_sector={"n_ventes": 6, "median_eur_m2": 300,
+                                                "fenetre": "2021-2025"}), {})
     assert v.result == CascadeVerdict.POSITIVE
-    assert "mutation" in v.detail.lower()
+    assert "terrain" in v.detail.lower() and "300" in v.detail
 
 
-def test_dvf_aucune_mutation_pass():
-    v = DvfLayer().evaluate(P, _Ctx(dvf={"count": 0, "median_eur_m2": None}), {})
+def test_dvf_aucune_vente_terrain_pass():
+    # secteur sans médiane terrain (aucune vente) → PASS (mesuré : pas de contexte favorable).
+    v = DvfLayer().evaluate(P, _Ctx(dvf_sector=None), {})
     assert v.result == CascadeVerdict.PASS
 
 
+def test_dvf_echantillon_insuffisant_pass():
+    # n < plancher (3) → « échantillon insuffisant », jamais un chiffre présenté robuste (RAPPORT_M79).
+    v = DvfLayer().evaluate(P, _Ctx(dvf_sector={"n_ventes": 2, "median_eur_m2": 300,
+                                                "fenetre": "2021-2025"}), {})
+    assert v.result == CascadeVerdict.PASS
+    assert "insuffisant" in v.detail.lower()
+
+
 def test_dvf_commune_non_ingeree_unknown():
+    # M91 (finding restauré) : DVF non ingéré pour la commune → UNKNOWN, jamais PASS.
     v = DvfLayer().evaluate(P, _Ctx(has_commune=False), {})
     assert v.result == CascadeVerdict.UNKNOWN
