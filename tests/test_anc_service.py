@@ -57,3 +57,26 @@ def test_absent_jamais_collectif_ni_raccordement(db_session):
         low = r["phrase"].lower()
         assert "collectif" not in low and "probablement" not in low
         assert "pas un raccordement" in low
+
+
+@pytest.mark.db
+def test_source_commune_office_eau_dit_echelle_et_millesime(db_session):
+    """M95 — commune classée INTÉGRALEMENT en ANC (Office de l'eau) : 3ᵉ échelle de Sourcé, distincte du
+    parcellaire et du secteur. L'ÉCHELLE (commune entière) et le MILLÉSIME (source amont) sont DITS ; une
+    commune < 100 % NE bascule PAS (jamais un « intégralement » inventé)."""
+    _ensure(db_session)   # parcel_anc existe mais VIDE pour ces idus → pas de zone parcellaire
+    db_session.execute(text(
+        "CREATE TABLE IF NOT EXISTS anc_office_eau_commune (insee varchar(5) PRIMARY KEY, commune text, "
+        "pct_anc int, detail text, millesime text, source_ref text, updated_at timestamptz)"))
+    db_session.execute(text("DELETE FROM anc_office_eau_commune WHERE insee IN ('97421','97499')"))
+    db_session.execute(text(
+        "INSERT INTO anc_office_eau_commune (insee, commune, pct_anc, millesime, source_ref) VALUES "
+        "('97421','Salazie',100,'Chronique n°149 — données 2023','Office de l''eau Réunion, texte p.13'),"
+        "('97499','Autre',80,'x','y')"))                 # 80 % ≠ intégral → PAS source_commune
+    r = anc_service.statut_anc(db_session, "97421000TESTA1")
+    assert r["statut"] == "source_commune" and r["maille_type"] == "commune" and r["anc"] is True
+    assert "données 2023" in r["millesime"]
+    low = r["phrase"].lower()
+    assert "intégralement" in low and "commune entière" in low   # l'échelle est DITE
+    # une commune sous 100 % ne fabrique JAMAIS un « intégralement »
+    assert anc_service.statut_anc(db_session, "97499000TESTB1")["statut"] != "source_commune"

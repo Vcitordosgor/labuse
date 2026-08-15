@@ -16,6 +16,8 @@ import { Tip } from '../Tip'
 const ANC_BADGE: Record<AncStatut['statut'], { label: string; cls: string }> = {
   source: { label: 'Sourcé', cls: 'bg-mint/15 text-mint' },
   source_secteur: { label: 'Sourcé · secteur', cls: 'bg-mint/10 text-mint' },
+  // M95 — commune classée intégralement en ANC (Office de l'eau) : Sourcé d'échelle COMMUNE.
+  source_commune: { label: 'Sourcé · commune', cls: 'bg-mint/15 text-mint' },
   absent: { label: 'Absent', cls: 'bg-surface-2 text-txt-dim' },
 }
 

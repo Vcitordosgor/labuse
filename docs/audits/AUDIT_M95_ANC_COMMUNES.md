@@ -67,3 +67,40 @@ faudra RENSEIGNER son `source_millesime` (n°149, données 2023) — la fraîche
 Question pour Vic : valide-t-on le millésime **n°149 / 2023** (recommandé) ou tient-on au
 **n°111 / 2020** du mandat ? Rien n'est branché avant cette validation (interdit du mandat).
 Si Vic refuse la source, ces communes restent en l'état (statut M88 secteur).
+
+---
+
+## Phase 2+3 — branchement (arbitrages rendus)
+
+STOP validé : **millésime n°149 / données 2023** ; **commune Sourcé EN TÊTE + secteur INSEE en corroboration**.
+
+**Branché — via le point unique `anc_service`, aucune branche parallèle :**
+1. **Ingestion** (`ingestion/anc.py::load_office_eau_communes`) : matérialise `anc_office_eau_commune`
+   (insee, commune, pct_anc, millésime, source_ref) depuis le SEED versionné (jamais en dur), et
+   renseigne `data_sources.source_millesime` de l'Office de l'eau (fraîcheur = date amont). Câblé au
+   CLI (`ingest-anc`, étape proba/tout). 6 communes chargées, 3 intégrales (pct ≥ 100).
+2. **`anc_service.statut_anc`** : nouvelle branche `source_commune` APRÈS le parcellaire (M86-B), AVANT
+   le secteur (M88). Lit `anc_office_eau_commune` (garde `to_regclass` : table absente → retombe sur
+   secteur, jamais un crash). Sert : « {commune} est classée INTÉGRALEMENT en ANC (commune entière —
+   pas un secteur ni un zonage à la parcelle) — {source} ({millésime}). Corroboré : INSEE {taux} %… ».
+   **Les 3 échelles de Sourcé sont distinctes** : `source` (parcelle) / `source_secteur` (secteur) /
+   `source_commune` (commune) — la phrase dit toujours laquelle.
+3. **Rendu 4 documents + fiche** : `blocs_documents.anc_bloc` (label « Sourcé commune », ligne
+   « Échelle : commune entière · millésime », CSS mint), `pdf_premium` (état vert), front
+   (`AncStatut.statut` + `ANC_BADGE.source_commune` « Sourcé · commune »). Le millésime voyage avec la
+   valeur, écrit une fois (point unique).
+
+**Vérification (Phase 3) :**
+- **Golden 119/119** — statut_anc n'est pas un champ golden ; aucune ancre des 3 communes cassée.
+- **4 documents** servent le statut : banquier Salazie rend « INTÉGRALEMENT ANC » + « Sourcé commune »
+  + « données 2023 » + « Corroboré INSEE ». Front `tsc` exit 0.
+- **Grep** : aucune valeur ANC ni code commune EN DUR dans `anc_service` (la liste vient de la table,
+  du seed) ; la source/millésime viennent de `data_sources` + table.
+- **Suite 1549 passed, 0 failed** ; `test_anc_service` 4 passed (dont le nouveau test source_commune :
+  échelle + millésime dits ; une commune < 100 % NE bascule pas).
+- **Recette** : Salazie / La Plaine-des-Palmistes / Petite-Île → `source_commune`, échelle commune,
+  millésime « Chronique n°149 — données 2023 », corroboration INSEE (94-98 %).
+
+**Interdits respectés** : Sourcé sur source primaire vérifiée (Office de l'eau + INSEE + CIREST/CIVIS) ;
+millésime = date amont (2023), jamais l'ingestion ; PAS de branche parallèle à `anc_service` ; échelle
+commune DITE (jamais présentée comme parcellaire) ; rien inventé.

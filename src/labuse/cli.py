@@ -2818,6 +2818,8 @@ def anc_cmd(
             typer.echo(f"✓ zonages officiels GPU : {anc.ingest_zonages_gpu(s, log=typer.echo)}")
         if etape in ("proba", "tout"):
             typer.echo(f"✓ proba_anc : {anc.compute_proba(s, log=typer.echo)}")
+            # M95 — communes classées INTÉGRALEMENT en ANC (Office de l'eau) → table servie par anc_service.
+            typer.echo(f"✓ communes 100 % ANC (Office de l'eau) : {anc.load_office_eau_communes(s)}")
             typer.echo(f"✓ calage Office de l'eau : {anc.calage_office_eau(s)}")
         if etape in ("signal", "tout"):
             typer.echo(f"✓ signal anc_mutation : {anc.signal_mutation(s)}")

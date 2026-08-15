@@ -17,7 +17,8 @@ from __future__ import annotations
 import html
 
 #: libellé d'état ANC (dérivé du statut servi par anc_service — jamais un verdict).
-_ANC_LABEL = {"source": "Sourcé", "source_secteur": "Sourcé secteur", "absent": "Absent"}
+_ANC_LABEL = {"source": "Sourcé", "source_secteur": "Sourcé secteur",
+              "source_commune": "Sourcé commune", "absent": "Absent"}   # M95 — 3e échelle Sourcé
 
 # M73-G — l'HABILLAGE DA des blocs, écrit UNE fois (maquette DA-PDF-v2 .carte/.chef/.past), injecté dans
 # les deux points CSS WeasyPrint (rapport.css via report.py, briques_pdf via render_pdf). Cartouche fond
@@ -33,6 +34,7 @@ BLOC_CSS = """
              letter-spacing: .05em; padding: 1px 7px; border-radius: 9px; white-space: nowrap;
              color: var(--txt-dim); background: #EEF1EF; }
 .bloc-etat[data-etat="source"], .bloc-etat[data-etat="source_secteur"],
+.bloc-etat[data-etat="source_commune"],
 .bloc-etat[data-etat="dispo"] { color: var(--mint); background: var(--mint-soft); }
 .bloc-etat[data-etat="trop_petit"] { color: var(--amber); background: #F6EEDD; }
 .bloc-libelle { font-size: 9.5pt; font-weight: 600; color: var(--txt); margin: 3px 0 1px; }
@@ -59,6 +61,9 @@ def anc_bloc(anc: dict | None) -> dict | None:
         maille = str(anc.get("maille") or "secteur")
         mille = str(anc.get("millesime") or "RP2022")
         lignes.append(("maille", f"Maille : {maille} · millésime : {mille}"))
+    elif statut == "source_commune":                     # M95 — échelle COMMUNE dite, jamais confondue
+        mille = str(anc.get("millesime") or "")
+        lignes.append(("maille", f"Échelle : commune entière · millésime : {mille}"))
     if anc.get("phrase"):
         lignes.append(("phrase", str(anc["phrase"])))
     if anc.get("source"):

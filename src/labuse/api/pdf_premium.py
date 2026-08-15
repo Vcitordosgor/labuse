@@ -655,7 +655,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     for bloc in (anc_bloc(fiche.get("anc")), rehab_bloc(fiche.get("mode_b"))):
         if not bloc:
             continue
-        etat_col = (MINT if bloc["statut"] in ("source", "source_secteur")
+        etat_col = (MINT if bloc["statut"] in ("source", "source_secteur", "source_commune")
                     else AMBER if bloc["statut"] in ("dispo", "trop_petit") else TXT_DIM)
         pdf.set_font("inter", size=8)
         body_h = sum(max(1, len(pdf.multi_cell(inner_w, lh, t, dry_run=True, output="LINES"))) * lh
