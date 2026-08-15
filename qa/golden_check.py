@@ -14,7 +14,7 @@ Usage (à lancer après chaque refresh de données) :
 Environnement :
     LABUSE_DATABASE_URL  (défaut postgresql://openclaw@localhost:5432/labuse — la partie +psycopg est acceptée)
     LABUSE_QA_TARGET     cible QA distante (M7 : le VPS) — prime sur LABUSE_API_BASE
-    LABUSE_API_BASE      (défaut http://127.0.0.1:8010)
+    LABUSE_API_BASE      (défaut http://127.0.0.1:8000 — le port réel de l'uvicorn local)
     (--base-url prime sur les deux ; la face DB suit LABUSE_DATABASE_URL)
 
 Code retour : 0 si 100 % PASS, 1 si au moins un écart (FAIL), 2 si erreur d'exécution.
@@ -52,9 +52,11 @@ from psycopg.rows import dict_row
 DB_URL = (os.environ.get("LABUSE_DATABASE_URL")
           or "postgresql://openclaw@localhost:5432/labuse").replace("+psycopg", "")
 # Pré-vol M7 P2 — cible QA paramétrable : --base-url > LABUSE_QA_TARGET > LABUSE_API_BASE > localhost.
-# Défaut inchangé (localhost:8010). C'est le geste que M7 fera contre le VPS.
+# M90 — le défaut vise :8000 (le port RÉEL de l'uvicorn local), plus :8010 : le décalage
+# défaut≠réalité a produit 33 faux FAIL pendant 6 jours (piège nommé dans _api_reachable). La
+# cible distante (VPS) passe TOUJOURS par un env/--base-url explicite, jamais par ce défaut.
 API_BASE = os.environ.get("LABUSE_QA_TARGET",
-                          os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8010")).rstrip("/")
+                          os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8000")).rstrip("/")
 # M8b — run cascade lu par le golden. Défaut = run SERVI (source unique Q_A_RUN_LABEL).
 # Override `LABUSE_GOLDEN_RUN_LABEL` pour tester un candidat.
 # P2-29 — plus de repli SILENCIEUX sur un run mort (« q_v5_m6b ») : comparer le golden à un run
@@ -305,6 +307,24 @@ def _api_reachable() -> tuple[bool, str]:
         return False, str(e)
 
 
+def _env_error(api_entry: dict) -> str | None:
+    """M90 — le GET d'une parcelle a-t-il échoué pour une raison d'ENVIRONNEMENT (pas un écart métier) ?
+    On n'attribue à l'environnement QUE des causes NON ambiguës — un 429 (quota) ou une erreur de
+    connexion (injoignable) : le garde doit être SÛR de la cause. Un 404/500 reste un écart métier (il
+    pourrait être une vraie régression — une régression ne doit pas se déguiser en panne). Retourne le
+    libellé de la panne, ou None si l'échec (s'il y en a un) est du ressort métier."""
+    errs = [e for e in ((api_entry.get("fiche") or {}).get("erreur"),
+                        (api_entry.get("score_v2") or {}).get("erreur")) if e]
+    if not errs:
+        return None
+    if any(str(e).startswith("HTTP 429") for e in errs):
+        return "quota dépassé (429)"
+    # une erreur NON-HTTP = échec au niveau connexion (refus/DNS/timeout) survenu EN COURS de run
+    if any(not str(e).startswith("HTTP ") for e in errs):
+        return "API injoignable en cours de run"
+    return None                                  # HTTP 4xx/5xx « propre » = l'API répond → métier
+
+
 def collect_api(idu: str) -> dict:
     """Fiche de référence côté API — GET uniquement (fiche premium + score v2)."""
     fiche, err_f = _get_json(f"{API_BASE}/parcels/{idu}?source={RUN_LABEL}")
@@ -506,7 +526,7 @@ def main() -> int:
         print(f"WARN: run v2 servi a changé (référence={ref_run}, courant={cur_run}) — "
               f"écarts tier/rang attendus")
 
-    n_fail, n_coh = 0, 0
+    n_fail, n_coh, n_indet = 0, 0, 0
     # M-RENOUV lot C — cas golden (3) : effectifs des 5 tiers servis STRICTS (si la
     # référence les gèle ; référence antérieure sans le champ = pas de check, rétro-compatible).
     ref_tiers = golden["meta"].get("tiers_effectifs")
@@ -544,6 +564,14 @@ def main() -> int:
             else:
                 print(f"PASS {idu} [ancre {exp.get('validation')} · {exp.get('motif') or exp.get('tier_v2')}]")
             continue
+        # M90 — une parcelle dont le GET a échoué pour une raison d'ENVIRONNEMENT (429/injoignable)
+        # est INDÉTERMINÉE, jamais FAIL : on n'a pas pu mesurer. Ne desserre rien, ne valide rien.
+        env = _env_error(got["api"])
+        if env:
+            n_indet += 1
+            print(f"INDÉTERMINÉ {idu} — {env} : panne d'environnement, PAS un écart métier "
+                  f"(golden non évaluable pour cette parcelle).")
+            continue
         diffs = compare_entry({"db": exp["db"], "api": exp["api"]},
                               {"db": got["db"], "api": got["api"]})
         coh = got["coherence_db_api"]
@@ -557,9 +585,20 @@ def main() -> int:
         else:
             print(f"PASS {idu}" + (f"  [cohérence base↔API: {'; '.join(coh)}]" if coh else ""))
 
-    print(f"\nBilan: {len(idus) - n_fail}/{len(idus)} PASS, {n_fail} FAIL, "
+    print(f"\nBilan: {len(idus) - n_fail - n_indet}/{len(idus)} PASS, {n_fail} FAIL, "
+          f"{n_indet} INDÉTERMINÉ (environnement), "
           f"{n_coh} parcelle(s) avec incohérence base↔API (runtime)")
-    return 1 if n_fail else 0
+    # M90 — priorité aux vrais écarts : un FAIL métier prime (code 1) même si des parcelles sont
+    # indéterminées. Sans FAIL mais avec indéterminé : NON concluant (code 2), jamais un OK (code 0) —
+    # « indéterminé » n'est pas un laissez-passer.
+    if n_fail:
+        return 1
+    if n_indet:
+        print(f"⚠ GOLDEN NON CONCLUANT : {n_indet} parcelle(s) indéterminée(s) pour cause "
+              f"d'environnement — relancer sans throttling (LABUSE_RATE_LIMIT_RPM élevé) ou hors "
+              f"quota. Ce n'est ni un PASS ni un FAIL.", file=sys.stderr)
+        return 2
+    return 0
 
 
 if __name__ == "__main__":

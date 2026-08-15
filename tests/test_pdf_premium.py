@@ -1,12 +1,19 @@
 """Régression audit UI (12/07) — export PDF de la fiche premium.
 
-La bascule q_v2 → q_v3_datagap (0c9f335) avait mis un f-string `{RUN}` dans le footer
-de pdf_premium.py SANS importer le symbole → NameError sur TOUTES les fiches (500).
-Ce test rend un PDF avec une fiche minimale : il pète si l'import RUN redisparaît.
+À l'origine : la bascule q_v2 → q_v3_datagap (0c9f335) avait mis un f-string `{RUN}` dans le
+footer de pdf_premium.py SANS importer le symbole → NameError sur TOUTES les fiches (500). Ce
+test rendait un PDF minimal et vérifiait aussi que `RUN` restait importable.
+
+M90 — le footer a depuis migré vers `export_commun.pied_de_page_pdf` (M6 2a) : il ne porte plus
+de f-string `{RUN}`, et le symbole `RUN` a été retiré du module. La régression d'origine est donc
+STRUCTURELLEMENT éteinte (évolution voulue, pas un bug). On retire l'`import RUN` qui, resté en
+tête de module, faisait échouer la COLLECTE de TOUTE la suite (ImportError) — une panne de test
+qui masquait 1500+ autres tests. Le test de rendu ci-dessous exerce le PDF footer compris : un
+NameError de pied de page y crasherait encore, donc la protection utile est conservée.
 """
 from __future__ import annotations
 
-from labuse.api.pdf_premium import RUN, render_fiche_pdf
+from labuse.api.pdf_premium import render_fiche_pdf
 
 FICHE_MIN = {
     "idu": "97415000AB0001", "commune": "Saint-Paul", "statut": "chaude",
@@ -18,10 +25,6 @@ FICHE_MIN = {
 
 
 def test_render_fiche_pdf_ne_crashe_plus():
+    # Rend le PDF ENTIER, pied de page compris (auto_page_break) : capture tout NameError de footer.
     pdf = render_fiche_pdf(FICHE_MIN)
     assert pdf[:5] == b"%PDF-" and len(pdf) > 2000
-
-
-def test_footer_porte_le_run_de_reference():
-    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
-    assert RUN == Q_A_RUN_LABEL          # bascule centralisée : jamais un littéral local

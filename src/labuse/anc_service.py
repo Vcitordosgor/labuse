@@ -24,7 +24,14 @@ from sqlalchemy.orm import Session
 
 def statut_anc(db: Session, idu: str) -> dict:
     """L'état ANC SERVI d'une parcelle. Retourne TOUJOURS un dict (Absent est un état, pas un trou)."""
-    zone = db.execute(text("SELECT zone_anc FROM parcel_anc WHERE idu = :idu"), {"idu": idu}).scalar()
+    # M90 — garde défensive AU POINT UNIQUE (cohérente avec le garde secteur plus bas) : sur une base
+    # sans la table `parcel_anc` (data-gap, base de test, base fraîche), on ne plante PAS une fiche en
+    # 500 — ce serait une panne d'environnement déguisée en régression. Table absente → zone introuvable
+    # (None) → on retombe sur secteur puis Absent (un état, jamais un crash). L'absence de la COLONNE
+    # `zone_anc`, elle, resterait levée : une régression de schéma ne doit pas se cacher derrière ce garde.
+    zone = None
+    if db.execute(text("SELECT to_regclass('parcel_anc')")).scalar() is not None:
+        zone = db.execute(text("SELECT zone_anc FROM parcel_anc WHERE idu = :idu"), {"idu": idu}).scalar()
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
 
     if zone:                                                       # ── SOURCÉ (réglementaire) ──
@@ -96,6 +103,9 @@ def statut_anc(db: Session, idu: str) -> dict:
 def couverture_anc(db: Session) -> dict:
     """Couverture réglementaire = communes ayant un zonage (pour DIRE l'Absent, pas le subir). Calculé,
     jamais en dur : sur 24 communes, le zonage réglementaire SIG n'existe que pour une minorité."""
-    avec = db.execute(text("SELECT count(DISTINCT left(idu, 5)) FROM parcel_anc WHERE zone_anc IS NOT NULL")).scalar() or 0
+    # M90 — même garde défensive : table absente (data-gap) → couverture 0 (l'absence honnête), pas un 500.
+    avec = 0
+    if db.execute(text("SELECT to_regclass('parcel_anc')")).scalar() is not None:
+        avec = db.execute(text("SELECT count(DISTINCT left(idu, 5)) FROM parcel_anc WHERE zone_anc IS NOT NULL")).scalar() or 0
     total = db.execute(text("SELECT count(DISTINCT commune) FROM parcels")).scalar() or 0
     return {"communes_avec_zonage": int(avec), "communes_total": int(total)}
