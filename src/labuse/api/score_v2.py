@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..scoring.p_v2 import MODEL_FREEZE, MODEL_VERSION
 from ..scoring.p_v2.libelles_client import enrichir_contributions
+from ..verdict_servi import COPRO_MOTIF as _COPRO_MOTIF   # M89 — motif copro (libellé unique)
 
 router = APIRouter(prefix="/v2", tags=["scoring-v2"])
 
@@ -68,6 +69,9 @@ def _row_payload(r, run: dict) -> dict:
         "mult_base": r["mult_base"],              # « ×N vs moyenne » — l'affichage produit
         "percentile": r["percentile"],
         "rang": r["rang"],
+        # M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide.
+        # Même libellé que le banquier (source unique verdict_servi.COPRO_MOTIF).
+        "hors_classement": (_COPRO_MOTIF if (bool(r["copro"]) and r["rang"] is None) else None),
         "tier": r["tier"],
         "contrib_z": r["contrib_z"], "contrib_d": r["contrib_d"],
         # M5.1 lot 3.3 : chaque contribution porte sa `phrase` en français client

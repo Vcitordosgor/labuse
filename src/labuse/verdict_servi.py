@@ -52,10 +52,15 @@ DECLASSE_COLOR = "#8C7468"
 DECLASSE_RGB = (140, 116, 104)
 
 
-# M89 — le PÉRIMÈTRE du dénominateur, écrit UNE fois (un critère = un endroit). rang_total exclut les
-# copropriétés (hors univers de classement, doctrine M3.6) : le chiffre servi doit le DIRE, jamais un
-# dénominateur nu. Mesuré M89 : les 3 424 sans rang = exactement les 3 424 copropriétés (corrélation 100 %).
-RANG_PERIMETRE = "copropriétés hors univers de classement"
+# M89 — le PÉRIMÈTRE du dénominateur + le motif copro, écrits UNE fois (un critère = un endroit).
+# rang_total exclut les copropriétés (hors univers de classement) : le chiffre servi doit le DIRE, jamais
+# un dénominateur nu. Mesuré M89 : les 3 424 sans rang = exactement les 3 424 copropriétés (corrélation
+# 100 %). Raison EXACTE (arbitrage Vic) : ce n'est pas le morcellement qui exclut, c'est l'absence
+# d'assiette foncière mobilisable. Banquier ET fiche portent le même libellé corrigé.
+_COPRO_RAISON = "pas d'assiette foncière mobilisable"
+RANG_PERIMETRE = f"copropriétés hors univers de classement — {_COPRO_RAISON}"
+#: motif servi sur la FICHE d'une copropriété, à la place du rang omis (jamais un vide).
+COPRO_MOTIF = f"Copropriété — hors univers de classement ({_COPRO_RAISON})"
 
 
 def rang_total(db: Session, run: str = Q_A_RUN_LABEL) -> int | None:

@@ -2301,7 +2301,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # UNIQUE (verdict_servi) — jamais le code technique du tier, jamais une table recopiée.
         # + dénominateur du rang (un rang seul ne dit rien).
         from ..verdict_servi import (verdict_servi as _verdict_servi, rang_total as _rang_total,
-                                      DECLASSE_COLOR as _DECLASSE_COLOR)
+                                      DECLASSE_COLOR as _DECLASSE_COLOR, COPRO_MOTIF as _COPRO_MOTIF)
         _vs = _verdict_servi(db, idu, run=v2run)
         score_v2 = {"tier": s2["tier"], "rang": s2["rang"], "mult_base": _mult,
                     "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
@@ -2315,6 +2315,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
                     # + « pourquoi » (top5 traduites, libelles_client existant).
                     "verbal": enrichir_verbal(_mult, s2["tier"]),
                     "pourquoi": enrichir_contributions(_top5) if _top5 else []}
+        # M89 — copropriété sans rang : on DIT pourquoi (jamais un vide). Clé AJOUTÉE seulement pour une
+        # copro non classée (absente sinon → golden baseline inchangé). Libellé unique verdict_servi.
+        if bool(s2["copro"]) and s2["rang"] is None:
+            score_v2["hors_classement"] = _COPRO_MOTIF
     # M9 lot 1 — Indice de confiance données (ICD). Méta d'AFFICHAGE, CLOISONNÉE du score P :
     # ne modifie ni le tier, ni le rang, ni p_raw (cf. scoring/icd.py). Bloc annexe.
     icd_block = _icd_block(s2)

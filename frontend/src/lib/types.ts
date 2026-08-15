@@ -255,6 +255,7 @@ export interface Fiche {
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
   score_v2: {
     tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean
+    hors_classement?: string | null   // M89 — copro : motif « hors univers de classement » (fiche)
     // M52 Lot 1 (présentation) : mot verbal + ⓘ + fréquence par tier + « pourquoi » (top5 traduites).
     verbal?: {
       mot?: string; cle?: string; info: string; reglette_pct?: number
