@@ -1,6 +1,6 @@
 """M73 §2 — TEST DE NON-CONTRADICTION (exigence centrale du mandat).
 
-Génère les CINQ documents (premium, dossier, banquier, one-pager, fiche écran) sur les parcelles
+Génère les QUATRE documents (premium, dossier, banquier, fiche écran) sur les parcelles
 de recette et ÉCHOUE si une valeur commune diffère entre deux documents, ou si un jeton de
 contradiction / libellé technique brut atteint le papier. C'est la garantie que le problème
 (RAPPORT_M73 : double rail de cascade, aléas côte à côte, PPR divergent) ne revient pas.
@@ -55,7 +55,7 @@ def _pdf_text(content: bytes) -> str:
 
 
 def _docs(client, idu: str) -> dict[str, str]:
-    """Texte des 5 documents. Skip la parcelle si un endpoint clé échoue (env)."""
+    """Texte des 4 documents. Skip la parcelle si un endpoint clé échoue (env). M93 — one-pager retiré."""
     fiche = client.get(f"/parcels/{idu}", params={"source": RUN})
     if fiche.status_code != 200:
         pytest.skip(f"{idu} : fiche indisponible ({fiche.status_code})")
@@ -63,8 +63,7 @@ def _docs(client, idu: str) -> dict[str, str]:
     dos = client.get(f"/dossier/{idu}.pdf")
     client.post(f"/dossier-banquier/{idu}/prepare")            # amorce le cache (async)
     banq = client.get(f"/dossier-banquier/{idu}.pdf")          # GET direct = synchrone
-    op = client.get(f"/parcels/{idu}/export", params={"format": "onepager", "source": RUN})
-    for name, r in (("premium", prem), ("dossier", dos), ("banquier", banq), ("one-pager", op)):
+    for name, r in (("premium", prem), ("dossier", dos), ("banquier", banq)):
         if r.status_code != 200:
             pytest.skip(f"{idu} : {name} indisponible ({r.status_code})")
     return {
@@ -72,7 +71,6 @@ def _docs(client, idu: str) -> dict[str, str]:
         "premium": _pdf_text(prem.content),
         "dossier": _pdf_text(dos.content),
         "banquier": _pdf_text(banq.content),
-        "one-pager": op.text,
     }
 
 
@@ -123,7 +121,7 @@ def test_ppr_regime_coherent(client, idu):
     par INTERDITS) et « zone rouge » est cohérent : si un doc l'exclut, aucun autre ne l'ignore."""
     docs = _docs(client, idu)
     rouge = {name: ("zone rouge" in txt.lower()) for name, txt in docs.items()}
-    # premium & fiche & dossier & banquier & one-pager doivent s'accorder sur la présence du régime rouge
+    # premium & fiche & dossier & banquier doivent s'accorder sur la présence du régime rouge
     vals = set(rouge.values())
     assert len(vals) == 1, f"{idu} : « PPR zone rouge » présent dans certains docs seulement : {rouge}"
 
@@ -135,9 +133,9 @@ def test_anc_et_rehab_dans_tous_les_documents(client, idu):
     document est une divergence de fond : ce test la fait ÉCHOUER, il ne la laisse pas dormir jusqu'au
     prochain audit (la réhab a dormi de M59 à M73-C exactement comme ça). Les blocs ne se masquent
     jamais (un zéro n'est pas une absence) → « Assainissement » et « Réhabilitation » sont attendus
-    dans les CINQ documents."""
+    dans les QUATRE documents."""
     docs = _docs(client, idu)
-    for name in ("premium", "dossier", "banquier", "one-pager"):
+    for name in ("premium", "dossier", "banquier"):
         texte = docs[name].lower()
         assert "assainissement" in texte, f"{name} : bloc ASSAINISSEMENT absent (critère servi à l'écran)"
         assert "réhabilitation" in texte, f"{name} : bloc RÉHABILITATION absent (critère servi à l'écran)"

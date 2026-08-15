@@ -1,7 +1,7 @@
 """M73 §1 — accès UNIQUE aux lignes de cascade SERVIES (dryrun) pour les générateurs de documents.
 
-Doctrine (arbitrage Vic) : « le dryrun servi fait foi ». Les 5 documents — premium, dossier,
-banquier, one-pager, fiche écran — lisent la MÊME cascade servie (`dryrun_cascade_results`, run
+Doctrine (arbitrage Vic) : « le dryrun servi fait foi ». Les 4 documents — premium, dossier,
+banquier, fiche écran — lisent la MÊME cascade servie (`dryrun_cascade_results`, run
 épinglé), dédupliquée (M46) et arbitrée/libellée (`risques_arbitrage`). Aucun générateur ne lit
 plus `cascade_results` (rail legacy, mort) ni `spatial_layers` pour un aléa/PPR/zonage : ce serait
 un second point de calcul, cause racine des contradictions du RAPPORT_M73.

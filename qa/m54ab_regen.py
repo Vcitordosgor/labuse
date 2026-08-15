@@ -5,7 +5,7 @@ Usage :
   PROJ_DATA=/Users/openclaw/miniforge3/envs/labusedb/share/proj \
   PYTHONPATH=src /Users/openclaw/Desktop/labuse/.venv/bin/python qa/m54ab_regen.py [IDU]
 
-Rend les documents accessibles simplement (premium, dossier, one-pager). Banquier/projet/flash
+Rend les documents accessibles simplement (premium, dossier). Banquier/projet/flash
 sont ajoutés au fur et à mesure. Écrit sous qa/m54ab_out/ et extrait le texte des PDF (pdftotext
 si présent, sinon pypdf) pour le grep des codes techniques.
 """
@@ -55,19 +55,13 @@ def main() -> None:
     if r.status_code == 200:
         docs["premium"] = _save(f"premium_{IDU}.pdf", r.content)
 
-    # 2) one-pager comité (HTML)
-    r = client.get(f"/parcels/{IDU}/export", params={"format": "onepager"})
-    print(f"onepager: {r.status_code} {len(r.content)}o")
-    if r.status_code == 200:
-        docs["onepager"] = _save(f"onepager_{IDU}.html", r.content)
-
-    # 3) dossier parcelle
+    # 2) dossier parcelle
     r = client.get(f"/dossier/{IDU}.pdf", params={"carte": "false"})
     print(f"dossier: {r.status_code} {len(r.content)}o")
     if r.status_code == 200:
         docs["dossier"] = _save(f"dossier_{IDU}.pdf", r.content)
 
-    # 4) banquier + 5) flash : générateurs appelés en direct (on mesure le rendu, pas la porte)
+    # 3) banquier + 4) flash : générateurs appelés en direct (on mesure le rendu, pas la porte)
     from labuse.db import session_scope
     with session_scope() as db:
         try:

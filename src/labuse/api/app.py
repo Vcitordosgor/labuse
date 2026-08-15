@@ -2369,7 +2369,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     # M73 §1 — arbitrage & libellés client des lignes de risque (POINT DE CALCUL UNIQUE) : un seul
     # niveau par aléa (le plus contraignant, nommé), régime PPR réglementaire > intersection
     # géométrique marginale, aucun libellé technique brut. Consommé par les 5 documents via la
-    # fiche servie (premium/dossier/banquier/one-pager/fiche écran lisent ces lignes arbitrées).
+    # fiche servie (premium/dossier/banquier/fiche écran lisent ces lignes arbitrées).
     from .risques_arbitrage import arbitrer_risques
     lines = arbitrer_risques(lines)
     flags = [l for l in lines
@@ -2715,7 +2715,7 @@ def _plu_fraicheur(idu: str) -> dict | None:
     libelle = (f"{document_servi} — {fait_foi}" if fait_foi else document_servi)
     return {"idurba": c.get("idurba"), "horizon": horizon, "statut": statut,
             "libelle": libelle, "note": note, "cadence": "révisions (périodique)",
-            # M40 : exposition en 3 temps (front + one-pager). fait_foi_ok = booléen honnête.
+            # M40 : exposition en 3 temps (front). fait_foi_ok = booléen honnête.
             "document_servi": document_servi, "fait_foi": fait_foi, "en_cours": en_cours,
             "action": action, "fait_foi_ok": statut in ("a_jour", "annule_partiel", "opposabilite_en_attente")}
 
@@ -3268,7 +3268,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         select(func.ST_X(p.__class__.centroid), func.ST_Y(p.__class__.centroid)).where(models.Parcel.id == p.id)
     ).one()
 
-    # M73 §1 (bascule de rail) — md/html/one-pager lisaient le rail LEGACY `cascade_results`,
+    # M73 §1 (bascule de rail) — md/html lisaient le rail LEGACY `cascade_results`,
     # divergent de la fiche écran (dryrun servi) : d'où « intersection marginale < 10 % » et les
     # niveaux d'aléa côte à côte. Doctrine « le dryrun servi fait foi » : on lit désormais la MÊME
     # cascade servie que _q_v2_fiche, dédupliquée (M46) et arbitrée/libellée (risques_arbitrage).
@@ -3524,7 +3524,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "voisinage": voisinage,
         "faisabilite": faisabilite,
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
-        # exports (one-pager), pas seulement la fiche premium. Jamais un zonage servi sans mention.
+        # exports (md/html), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
@@ -3545,9 +3545,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
         "verdict": verdict_block,
         # M33 — mode B (réhabilitation) : présent aussi sur le payload legacy (exports
-        # md/html/one-pager) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
+        # md/html) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
         "mode_b": _mode_b_block(db, idu, Q_A_RUN_LABEL),
-        # M73-D — ANC servi (statut_anc, point unique) sur le payload legacy aussi (one-pager + premium
+        # M73-D — ANC servi (statut_anc, point unique) sur le payload legacy aussi (premium
         # fpdf) : le critère était absent de _build_fiche. Jamais recalculé, jamais lu depuis zone_anc.
         "anc": _anc_block(db, idu),
         "cascade": cascade,
@@ -3630,21 +3630,15 @@ def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
 
 
 @app.get("/parcels/{idu}/export")
-def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html|onepager)$"),
+def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
                  db: Session = Depends(get_db)):
-    """Export fiche : Markdown (md), HTML détaillé (html), ou one-pager A4 imprimable (onepager,
-    Lot D1 — le document de comité : verdict, capacité, résiduel, bilan, contraintes, mini-carte)."""
+    """Export fiche : Markdown (md) ou HTML détaillé (html). M93 — le one-pager (format
+    `onepager`) a été retiré : quatre documents cohérents (dossier/banquier/argumentaire/premium)."""
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
-    from .export import fiche_html, fiche_markdown, fiche_onepager
+    from .export import fiche_html, fiche_markdown
 
     fiche = _build_fiche(db, idu)
-    if format == "onepager":
-        _check_idu(idu)
-        gj = db.execute(
-            text("SELECT ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.000005)) FROM parcels WHERE idu = :i"),
-            {"i": idu}).scalar()
-        return HTMLResponse(fiche_onepager(fiche, json.loads(gj) if gj else None))
     if format == "html":
         return HTMLResponse(fiche_html(fiche))
     return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")

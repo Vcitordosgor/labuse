@@ -98,7 +98,7 @@ def _chip(pdf: _Pdf, x: float, y: float, label: str, color: tuple) -> float:
 def _motif_verdict(s2: dict) -> str | None:
     """UNE phrase de « pourquoi » sous le verdict — assemblée depuis les DONNÉES moteur
     (probabilité de mutation vs base + motif servi). Déterministe, pas d'IA ; c'est le MÊME
-    motif que l'écran et le one-pager (verdict_servi). Borné pour tenir sur ~2 lignes."""
+    motif que l'écran (verdict_servi). Borné pour tenir sur ~2 lignes."""
     bouts: list[str] = []
     if s2.get("mult_base") is not None:
         bouts.append(f"probabilité de mutation ×{s2['mult_base']:.1f} vs base")

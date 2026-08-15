@@ -239,7 +239,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "tier": tier_eff, "libelle": TIER_LABELS.get(tier_eff, tier_eff),
                     "etage0": etage0,
                     "declasse": tier_eff.startswith("declasse_"),
-                    # motif servi (« pourquoi ») — même phrase que l'écran/one-pager ; jamais sur l'étage 0
+                    # motif servi (« pourquoi ») — même phrase que l'écran ; jamais sur l'étage 0
                     # (l'exclusion dure a sa propre note ci-dessous).
                     "motif": (None if etage0 else vs.get("motif")),
                     "rang": (None if etage0 or not v2 else v2["rang"]),
