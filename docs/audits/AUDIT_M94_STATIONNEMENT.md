@@ -119,3 +119,65 @@ dimensionnée tant que la Phase 2 n'a pas montré qu'une dimension conditionnell
 servi. La Phase 2 (STOP 2) mesurera justement l'impact de la norme réelle sur la capacité/bilan.
 
 **Rien n'est extrait ni branché avant les deux arbitrages** (interdit du mandat).
+
+---
+
+## Phase 2 — comment le moteur consomme la norme (mesure, STOP 2)
+
+Arbitrage STOP 1 rendu : **structure HYBRIDE** (valeur simple + barème ciblé aux formes qui
+bougent un chiffre servi) ; **`place_m2` marqué Estimé partout, Sourcé chez Cilaos**.
+
+### 2.1 Où la norme est lue, et ce que le calcul en fait
+
+- `place_m2` n'est utilisé QUE dans `engine.py` (355/357/364) — **jamais dans `bilan.py`**.
+- `ppl = rules.places_par_logement()` (engine.py:349) → si nombre : `log_max_park =
+  sol_dispo / (ppl × place_m2)` (355) **borne le scénario AU SOL** (`logements_au_sol`).
+- Deux scénarios : **au sol** (capé par le parking) et **sous-sol/silo** (parking enterré →
+  sol non consommé, NON capé).
+- **`shab_vendable_m2`** (base du CA / charge foncière du bilan) = `(sous_lo+sous_hi)/2 ×
+  logt_moyen` (engine.py:414) — calculé sur le scénario **SOUS-SOL**. Donc **le stationnement
+  ne touche JAMAIS le bilan (CA, charge foncière, marge)** : il ne borne que l'affichage
+  `logements_au_sol`.
+- `logements_au_sol` EST servi (fiche front `Fiche.tsx`, PDF premium `briques_pdf:472`,
+  banquier `banquier:79`) — mais `app.py:3047/3421` prend `sous_sol OR au_sol` (sous-sol
+  préféré). C'est donc un nombre de capacité AFFICHÉ (fourchette « au sol »), pas un € servi.
+
+### 2.2 L'impact mesuré (échantillon 120 parcelles estimables, île entière)
+
+| Mesure | Résultat |
+|---|---|
+| Régime `borne` (parking appliqué) | 83/120 (69 %) |
+| Régime `non_applique` (ppl None — le TROU) | **37/120 (31 %)** |
+| Régime `a_verifier` / `exempt` | 0 / 0 |
+| Stationnement qui **BORNE réellement** (`au_sol_hi < sous_sol_hi`) | **5/120 = 4 %** |
+| Écart médian quand ça borne | ~20 % du haut de fourchette au sol |
+| Impact sur le BILAN (CA / charge foncière) | **0 % — jamais** (shab_vendable = sous-sol) |
+
+**Lecture** : le stationnement est un **raffinement d'AFFICHAGE** (`logements_au_sol`), pas un
+intrant structurant. Il bouge un nombre servi (la fourchette au sol de la fiche/PDF) dans ~4 %
+des parcelles, jamais un euro. Le gros signal est le **31 % `non_applique`** : un tiers des
+parcelles n'ont AUCUN garde-fou stationnement appliqué, en SILENCE.
+
+### 2.3 Conséquence pour le HYBRIDE (mesuré)
+
+Le « barème ciblé aux formes qui bougent un chiffre servi » (option retenue) **n'a pas de cible
+matérielle** : aucune dimension conditionnelle (type/seuil/plafond/visiteur) ne bouge le bilan,
+et le seul effet — sur `logements_au_sol` — est marginal (4 %) et déjà capté par le ppl dominant.
+Structurer un barème par type/seuil raffinerait un affichage qui borne 4 % du temps.
+
+Le vrai gisement de valeur mesuré n'est donc PAS le barème, mais **l'honnêteté et les trous** :
+1. le `non_applique` SILENCIEUX (31 %) → doit DIRE « norme non modélisable » (Phase 3.2) ;
+2. l'unité par-m² SDP non parsée (Saint-Pierre 1/75 m²) → aujourd'hui None ;
+3. Saint-Benoît sans `stat_logement` extrait ;
+4. `place_m2` à marquer Estimé/Sourcé (décision STOP 1).
+
+## STOP 2 — Vic valide le point de branchement
+
+Point de branchement mesuré : `engine.py` (ppl × place_m2 → `log_max_park` → `logements_au_sol`),
+déjà en place. Le stationnement borne un AFFICHAGE (4 % des cas), jamais le bilan.
+
+Au vu de l'usage réel, l'arbitrage HYBRIDE de STOP 1 se réduit en pratique à la **consolidation +
+honnêteté** (le barème ciblé n'a pas de cible matérielle). Question pour Vic : Phase 3 se
+concentre-t-elle sur **combler les trous + marquer les statuts** (None qui parle, unité SDP,
+Saint-Benoît, place_m2 Estimé) — sans construire de barème conditionnel qui raffinerait un nombre
+marginal ? Ou maintient-on un barème structuré malgré l'impact mesuré nul sur le bilan ?
