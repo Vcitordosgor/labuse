@@ -162,6 +162,13 @@ def aper_note(session: Session, idu: str) -> dict | None:
     (scripts/m75_refiltre_parkings_aper_1500.sql). On dit « POTENTIELLEMENT concerné », JAMAIS
     « soumis à » (exemptions possibles) ; `equipe` OSM incomplet → jamais « à équiper ». None sinon.
     """
+    # M90 — garde défensive au POINT UNIQUE : sur une base sans la couche `parkings_aper` (gisement
+    # M75 optionnel, OSM/ODbL « sur demande » ; data-gap, base de test), on ne plante pas une fiche en
+    # 500 (panne d'environnement déguisée en régression). Table absente → None (aucune obligation
+    # affichée), cohérent avec le « None sinon » de cette fonction. L'absence d'une COLONNE resterait
+    # levée (régression de schéma non masquée).
+    if session.execute(text("SELECT to_regclass('parkings_aper')")).scalar() is None:
+        return None
     r = session.execute(text(
         "SELECT max(surface_m2) surf, min(echeance) ech, bool_or(equipe) eq "
         "FROM parkings_aper WHERE idus @> to_jsonb(CAST(:idu AS text)) AND tranche IS NOT NULL"),

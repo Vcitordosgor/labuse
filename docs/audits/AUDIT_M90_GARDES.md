@@ -156,3 +156,61 @@ Question ouverte pour Phase 2 (voir arbitrage joint) : quels trous traiter, et
 pour `parcel_anc` — **fixture** (créer la table vide au session-setup, comme
 `parcel_terrain`) ou **skipif** (le test déclare son prérequis et sort en
 « indéterminé ») ?
+
+---
+
+## Phase 2 — traitement (arbitrage Vic)
+
+Périmètre retenu : golden (429 + port) · test_pdf_premium · bascule base injoignable
+· parcel_anc (« les deux selon le cas »). Hors périmètre confirmé : tests périmés
+(`_Ctx`, `session=None`) et imports non déclarés (dette de test/hygiène séparée).
+
+1. **golden 429 → INDÉTERMINÉ** — `_env_error()` classe l'échec d'un GET par parcelle :
+   429 = « quota dépassé », erreur de connexion = « injoignable en cours de run » →
+   la parcelle est **INDÉTERMINÉE**, jamais FAIL. Un 4xx/5xx *propre* reste métier (une
+   régression ne se déguise pas en panne). Code retour **2** (non concluant) s'il n'y a
+   que des indéterminées — ni 0 (OK) ni 1 (FAIL). *Vérifié* : sous RPM=3, 4 parcelles
+   INDÉTERMINÉ, 0 FAIL, code 2.
+2. **golden défaut de port** — défaut `:8010` → `:8000` (le port réel de l'uvicorn local).
+   La cible distante passe toujours par un env/`--base-url` explicite. *Vérifié* : golden
+   sans `--base-url` → 119/119.
+3. **test_pdf_premium** — `import RUN` retiré (symbole supprimé quand le footer a migré vers
+   `pied_de_page_pdf` : régression d'origine ÉTEINTE) ; sous-test mort supprimé. La collecte
+   n'est plus interrompue ; le test de rendu (footer compris) conserve la protection utile.
+4. **parcel_anc** — garde-source AU POINT UNIQUE `anc_service.statut_anc` + `couverture_anc`
+   (`to_regclass('parcel_anc')`) : table absente → « Absent » (un état) / couverture 0, jamais
+   un 500. **Pas de fixture** : le flash omet déjà l'ANC via `avail` et `test_collect_parcelle_pauvre`
+   vérifie cette omission — la matérialiser la casserait (mesuré). L'absence d'une *colonne* reste
+   levée (régression de schéma non masquée). Le même garde a été appliqué à `parkings_aper`
+   (`viabilisation_build`, gisement M75), **même classe démasquée** en corrigeant parcel_anc.
+5. **bascule base injoignable** — `BaseInjoignableError` + points d'accès `_connect()`/`_scope()`
+   dans `bascule_gardes` : un `OperationalError` (PostgreSQL down) devient « BASE INJOIGNABLE …
+   panne d'environnement, PAS un écart métier ». *Vérifié* : sur une URL morte, `check_*` lèvent
+   la cause nommée ; sur la base réelle, inchangés.
+
+### Résultat mesuré (avant → après)
+
+| | Avant M90 | Après M90 |
+|---|---|---|
+| Collecte pytest | **interrompue** (ImportError test_pdf_premium) | complète |
+| Suite | 20 failed, 1528 passed | **13 failed, 1536 passed** |
+| Rouges de classe ENV (parcel_anc/parkings_aper) | ~7 (ProgrammingError, lus régression) | **0** (dégradés en « Absent »/None) |
+| golden 429 | FAIL (régression apparente) | INDÉTERMINÉ (code 2) |
+| golden mauvais port | 33 faux FAIL possibles | défaut correct + préflight |
+| bascule base down | OperationalError brut | BaseInjoignableError nommé |
+
+Les **13 rouges restants sont TOUS non-env** et désormais HONNÊTEMENT attribuables à
+leur vraie cause (ils étaient masqués derrière les ProgrammingError) : données seedées
+manquantes (test_api ×2), doubles de test périmés (test_phase2_layers ×3, test_residuel
+×4), drift M73-D `mode_b` (test_flash_report), findings réels (test_deps_declared imports,
+test_faisabilite verdict, test_front_reliquats). **C'est la thèse du mandat réalisée : en
+retirant la panne, la vraie nature de chaque échec redevient lisible.** Ces 13 relèvent de
+la dette de test / des findings, hors classe « panne vs régression ».
+
+### Phase 3 — vérification
+- Chaque mode d'échec d'environnement provoqué dit la BONNE cause (429, port, table absente,
+  base injoignable) — jamais un FAIL générique. ✓
+- Golden **119/119** en conditions normales, code 0. ✓
+- Aucun seuil métier desserré : seuls messages, statuts et gardes de table/connexion ont changé
+  (TOLERANCES golden, `seuil_facteur` fraîcheur, `SEUIL_BLOCAGE_JOURS`, seuil APER 1 500 m² :
+  inchangés). « Indéterminé » n'est jamais devenu « OK » (code 2 distinct, état « Absent » distinct). ✓

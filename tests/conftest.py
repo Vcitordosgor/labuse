@@ -160,6 +160,11 @@ def engine():
             "  flag_terrassement_lourd boolean, pente_non_batie_deg real,"
             "  computed_at timestamptz DEFAULT now())"))
         _c.execute(rnic.DDL)   # rnic_coproprietes (+ index) — DDL existante de l'ingesteur
+        # M90 — l'ANC (parcel_anc) n'est VOLONTAIREMENT pas matérialisée ici : le flash l'omet déjà
+        # proprement via `avail` (test_collect_parcelle_pauvre vérifie cette omission), et le POINT
+        # UNIQUE anc_service.statut_anc s'auto-garde désormais sur table absente → « Absent » (un état),
+        # jamais un 500. La matérialiser casserait le test d'omission. « selon le cas » : garde-source,
+        # pas fixture (mesuré).
         # carreau Filosofi (contexte marché fiche) + parc social RPLS : tables vides suffisent
         # (les requêtes fiche tolèrent 0 ligne → panneau « data-gap », jamais une erreur).
         _c.execute(text(

@@ -20,13 +20,54 @@ Lecture seule / idempotentes sauf ensure_backups (écrit une fois, jamais écras
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from labuse.db import engine, session_scope
 
 TARGET = "q_v8_calibre"
+
+
+# ── M90 — une panne de BASE ne doit jamais se confondre avec un écart métier ─────────────────────────
+class BaseInjoignableError(RuntimeError):
+    """La base PostgreSQL est INJOIGNABLE : panne d'ENVIRONNEMENT, jamais un écart métier. Un garde qui
+    ne peut pas se connecter ne valide RIEN et ne bloque RIEN de métier — il est INDÉTERMINÉ et le DIT,
+    au lieu de laisser remonter un `OperationalError` brut qu'on prendrait pour une régression."""
+
+
+def _base_injoignable_msg(e: Exception) -> str:
+    return (f"BASE INJOIGNABLE : PostgreSQL ne répond pas ({type(e).__name__}) — panne d'ENVIRONNEMENT, "
+            f"PAS un écart métier. Vérifier que la base tourne et DATABASE_URL. Garde INDÉTERMINÉ : "
+            f"ne valide rien, ne desserre rien, ne bloque rien de métier.")
+
+
+@contextmanager
+def _connect():
+    """Connexion (lecture) qui NOMME une panne de base : OperationalError → BaseInjoignableError. Les
+    gardes lisent la base à travers ce point pour ne jamais confondre « base down » et « écart métier »."""
+    try:
+        conn = engine().connect()
+    except OperationalError as e:
+        raise BaseInjoignableError(_base_injoignable_msg(e)) from e
+    try:
+        yield conn
+    except OperationalError as e:
+        raise BaseInjoignableError(_base_injoignable_msg(e)) from e
+    finally:
+        conn.close()
+
+
+@contextmanager
+def _scope():
+    """Idem `session_scope`, mais traduit une panne de base en cause nommée (BaseInjoignableError)."""
+    try:
+        with session_scope() as _s:
+            yield _s
+    except OperationalError as e:
+        raise BaseInjoignableError(_base_injoignable_msg(e)) from e
 
 #: Référence golden versionnée (qa/golden_check.py la compare champ par champ).
 GOLDEN_PATH = Path(__file__).resolve().parents[2] / "reports" / "m6-audit" / "golden" / "golden-parcelles.json"
@@ -85,7 +126,7 @@ def check_peremption(ack_motif: str | None = None) -> dict:
     import getpass
     from labuse.faisabilite.au_statut import (
         declassees_perimees, journalise_peremption_ack, SEUIL_BLOCAGE_JOURS)
-    with session_scope() as s:
+    with _scope() as s:
         n = declassees_perimees(s, SEUIL_BLOCAGE_JOURS)
     if n == 0:
         return {"perimees": 0, "acked": False}
@@ -97,7 +138,7 @@ def check_peremption(ack_motif: str | None = None) -> dict:
             f"(calibre puis `labuse compute-au-ouverture` ; `compute-au-statut` pour le reste) OU "
             f"contourne, tracé :\n    --peremption-ack \"motif du passage en force\"")
     who = getpass.getuser()
-    with session_scope() as s:
+    with _scope() as s:
         journalise_peremption_ack(s, acked_by=who, n_parcels=n,
                                   seuil_jours=SEUIL_BLOCAGE_JOURS, motif=ack_motif)
     print(f"{_ts()} ⚠ PÉREMPTION CONTOURNÉE par {who} : {n} déclassées AU > {SEUIL_BLOCAGE_JOURS} j "
@@ -155,7 +196,7 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
     if session is not None:
         evaluees, retards, inconnues, non_bornables = _run(session)
     else:
-        with session_scope() as s:
+        with _scope() as s:
             evaluees, retards, inconnues, non_bornables = _run(s)
     total = len(SOURCES)
     for r in retards:
@@ -235,7 +276,7 @@ def check_disque(target: str = TARGET, marge: float = 1.25, session=None) -> dic
     if session is not None:
         need_rest, dead = _run(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             need_rest, dead = _run(c)
     free = shutil.disk_usage(".").free
     # Le FSM ABSORBE les écritures (réutilisation sans grossir le fichier) ; seul le DÉBORDEMENT
@@ -285,7 +326,7 @@ def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: i
     if session is not None:
         counts = _counts(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             counts = _counts(c)
     problems = []
     if counts["parcel_p_score_v2"] != n_expected_scores:
@@ -312,7 +353,7 @@ def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: i
 def check_run_absent(target: str = TARGET) -> int:
     """1ʳᵉ garde ANTI-ÉCRASEMENT. Refuse si le run cible existe déjà ; sinon renvoie le nombre
     de parcelles (dimensionne la re-passe). Lecture seule."""
-    with engine().connect() as c:
+    with _connect() as c:
         if c.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id=:t"), {"t": target}).scalar():
             raise RunDejaExistantError(
                 f"{target} existe déjà — rollback d'abord (python scripts/rollback_v8_calibre.py).")
@@ -382,7 +423,7 @@ def check_coherence_idurba(session=None) -> dict:
     if session is not None:
         rows = session.execute(text(sql)).all()
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             rows = c.execute(text(sql)).all()
     gpu = {insee: [i for i in idus if i] for insee, idus in rows}
     divergences = _confronter_idurba(communes, gpu)
@@ -417,7 +458,7 @@ def check_coherence_renouvellement(session=None) -> dict:
         exists = bool(session.execute(text(sql_exist)).scalar())
         rows = session.execute(text(sql_runs)).all() if exists else []
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             exists = bool(c.execute(text(sql_exist)).scalar())
             rows = c.execute(text(sql_runs)).all() if exists else []
     runs = {r: int(n) for r, n in rows}
@@ -464,7 +505,7 @@ def check_peremption_tuiles(session=None) -> dict:
     if session is not None:
         run, mvt_at, amont_at = _run(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             run, mvt_at, amont_at = _run(c)
     if mvt_at is None:
         print(f"{_ts()} ⚠ TUILES [ABSENTES] — `mvt_parcels`/`mvt_meta` non matérialisées. "
@@ -518,7 +559,7 @@ def check_sources_declarees(session=None) -> dict:
     if session is not None:
         _run(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             _run(c)
     return out
 
@@ -556,7 +597,7 @@ def check_unicite_pm(session=None) -> dict:
     if session is not None:
         _run(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             _run(c)
     return out
 
@@ -593,6 +634,6 @@ def check_coherence_tables_run_scopees(session=None) -> dict:
     if session is not None:
         _run(session)
     else:
-        with engine().connect() as c:
+        with _connect() as c:
             _run(c)
     return out
