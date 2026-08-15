@@ -82,3 +82,45 @@ Aucun finding servi caché → aucune réparation de code servi + rejeu de run n
 requise (bonne nouvelle). Reste à valider le périmètre et la manière (voir arbitrage
 joint). Chaque correction sera un commit séparé nommé par le test et sa nature ; aucun
 test ne sera mis au vert en abaissant son exigence ou en retirant une assertion.
+
+---
+
+## Phase 2+3 — traitement (arbitrage Vic : traiter les 13 · scaffolding unit)
+
+Un commit par test + nature. Jamais de vert par affaiblissement.
+
+1. **test_deps_declared (finding réel)** — `pymupdf/pillow/requests/urllib3` déclarés
+   dans pyproject.toml (réparation de la config, pas du test).
+2. **DvfLayer / phase2 (FINDING découvert + scaffolding)** — en reconstruisant le stub,
+   découverte que `test_dvf_commune_non_ingeree_unknown` n'était PAS qu'un test périmé :
+   M79 (f3d4c1ec) avait RETIRÉ le garde « DVF non ingéré → UNKNOWN », faisant retourner
+   PASS (« aucune vente ») là où rien n'est mesuré — violation de « un zéro n'est pas une
+   absence ». **Garde restauré** dans DvfLayer. Impact servi NUL (DVF ingéré pour les 24
+   communes → le garde ne se déclenche jamais en prod ; golden 119/119, aucun rejeu). Stub
+   `_Ctx` doté de `dvf_sector_terrain` (M79) + cas « échantillon insuffisant ».
+3. **test_au_st_non_constructible_neuf (test périmé, M58-P1)** — attente alignée sur le
+   verdict de zone réelle servi (« non autorisée en zone AU3st »), substance (0 logement)
+   inchangée.
+4. **test_r1_nav_onglets (test périmé, M61-P1)** — `onClose` réel `setIaOuvert('aucun')` ;
+   protection R1 conservée.
+5. **test_collect_parcelle_pauvre (test périmé, M73-D)** — assertion RENFORCÉE : « aucun
+   chiffre fabriqué » (pente/solaire/canopée absents, mode_b jamais faussement disponible)
+   au lieu de « section omise ». La réhab servie est un état d'absence, pas un chiffre.
+6. **test_residuel ×4 (test périmé, M32)** — lecture bâti révélé CoSIA extraite en point
+   unique `_emprise_revelee` (stubbable) ; tests dotés du stub + cas M32 réel (CoSIA prime).
+7. **test_api ×2 (seed obsolète)** — fixture `client` matérialise AUSSI la cascade sous le
+   run servi (`dryrun_label=Q_A_RUN_LABEL`) que la fiche lit, en gardant la passe LIVE.
+8. **test_dvf_terrain (régression rattrapée)** — conséquence du garde UNKNOWN restauré :
+   stub complété `table_has_commune → True` (ces tests exercent le calcul de prix).
+
+### Vérification (Phase 3)
+- Suite : **1551 passed, 0 failed, 31 skipped** (état M90 : 1536 passed / 13 failed).
+  Les 13 rouges traités, aucune régression laissée.
+- Golden **119/119**, code 0 — revalidé après la restauration du garde DvfLayer
+  (impact servi nul, confirmé : 0 commune sans DVF).
+- **Aucun seuil desserré, aucune assertion retirée** : mode_b RENFORCÉE, garde UNKNOWN
+  RESTAURÉ, libellés alignés sur la valeur RÉELLEMENT servie (pas l'inverse).
+- **Aucun chiffre servi n'a changé** → aucune recette document requise.
+- Observation hors périmètre : `test_ban_adresses::test_ingest_ban_rattachement` est
+  FLAKY (dépendant de l'ordre : rouge dans une passe, vert isolé et dans la passe finale)
+  — pré-existant, sans lien avec M91, à traiter séparément si confirmé.
