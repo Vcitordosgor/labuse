@@ -181,3 +181,42 @@ honnêteté** (le barème ciblé n'a pas de cible matérielle). Question pour Vi
 concentre-t-elle sur **combler les trous + marquer les statuts** (None qui parle, unité SDP,
 Saint-Benoît, place_m2 Estimé) — sans construire de barème conditionnel qui raffinerait un nombre
 marginal ? Ou maintient-on un barème structuré malgré l'impact mesuré nul sur le bilan ?
+
+---
+
+## Phase 3+4 — consolidation + honnêteté (arbitrages rendus)
+
+STOP 2 rendu : **consolidation + honnêteté, PAS de barème** ; **distinguer ABSENT / NON MODÉLISABLE**.
+
+**Livré :**
+1. **4 issues distinctes** (`plu_rules.places_par_logement`) : nombre (chiffrable) / `None` (ABSENTE :
+   aucun `stat_logement`) / `A_VERIFIER` (ambiguë) / `EXEMPT` (non réglementé) / **`NON_MODELISABLE`**
+   (nouveau — présente mais pas par logement : par m² SDP / chambre / %SHON). Jamais une valeur inventée.
+2. **Le moteur DIT le trou** (`engine.py`, régime `non_applique`) — 3 messages distincts au lieu du
+   silence : « non renseignée (absente) » / « présente mais NON MODÉLISABLE (par m² SDP…) » /
+   « à vérifier ». Servis dans `fais.avertissements` → rendus sur la **fiche écran** (Fiche.tsx:809)
+   ET les **PDF** premium/banquier (briques_pdf:488).
+3. **`place_m2` marqué** (patron M-PLU-REF-B) : champ `place_m2_source_ref`, renseigné SEULEMENT si le
+   règlement de la commune le déclare. **Cilaos = Sourcé** (« 1 place = 25 m² », Art. 12) ; **partout
+   ailleurs = Estimé** (« supposée 25 m² au sol — modélisation, non réglementée pour cette commune »).
+   Jamais un défaut déguisé en norme locale.
+4. **Départage de seuil tracé** : sur un barème de surface, le regex retient le MAJORANT (tranche en
+   tête), documenté dans `places_par_logement` — plus muet.
+5. **Saint-Benoît NON extrait** — la mesure a corrigé l'audit : `zones: {}` VIDE par **arbitrage Vic
+   28/07/2026** (hauteurs par secteur graphique non portables). Ajouter des zones contredirait Vic →
+   le message « absente » couvre honnêtement Saint-Benoît, sans inventer de zone.
+
+**Vérification (Phase 4) :**
+- **Golden 119/119** — aucun rejeu : `None`↔`NON_MODELISABLE` donnent le MÊME régime `non_applique`
+  → la capacité (`logements_au_sol`) est inchangée ; seul le MESSAGE change. Zéro nombre servi bougé.
+- **4 documents** servent le statut (avertissements rendus fiche + premium/banquier).
+- **Grep** : le moteur ne lit PAS `regles_transverses.stationnement` (texte libre) — il lit
+  `stat_logement` par zone ; `place_m2` n'est plus un défaut muet (marqué Estimé/Sourcé).
+- **Suite : 1549 passed, 0 failed** ; `test_faisabilite` 19 passed.
+- **Recette 3 formes** : Le Tampon (règle simple → `borne` + place_m2 **Estimé**) · Saint-Benoît
+  (**absente** → « non renseignée ») · Saint-Pierre Ud (per-SDP → **NON MODÉLISABLE**).
+
+**Ce qui n'a PAS été fait (et pourquoi)** : aucun barème conditionnel structuré (impact mesuré nul
+sur le bilan, 4 % sur l'affichage) ; per-SDP non MODÉLISÉ mais RECONNU et dit (aucune valeur inventée) ;
+Saint-Benoît non extrait (respect arbitrage Vic 28/07). Interdits respectés : rien extrait avant les
+2 STOP, aucune valeur de modélisation présentée comme norme locale, aucune valeur inventée.

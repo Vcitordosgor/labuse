@@ -21,6 +21,9 @@ _YAML = _CONFIG_DIR / "plu_saint_paul.yaml"   # PLU « gold » de référence (d
 A_VERIFIER = "a_verifier"
 # Stationnement explicitement non réglementé (ex. U1pru exemptée par l'Art. 12).
 EXEMPT = "exempt"
+# M94 — norme PRÉSENTE au règlement mais pas exprimée en places/logement (ex. « 1 place / 75 m² SDP »,
+# ou par chambre, ou % SHON) : non modélisable dans le scénario au sol (≠ absente, ≠ à vérifier).
+NON_MODELISABLE = "non_modelisable"
 
 
 @dataclass
@@ -49,7 +52,13 @@ class ZoneRules:
     raw: dict = field(default_factory=dict)
 
     def places_par_logement(self) -> float | str | None:
-        """Ratio places/logement : nombre, None, A_VERIFIER, ou EXEMPT (non réglementé)."""
+        """Ratio places/logement. M94 — quatre issues DISTINCTES, jamais une valeur inventée :
+          · nombre           — norme chiffrable en places/logement (Sourcé, bornée) ;
+          · None             — ABSENTE : aucune norme extraite pour cette zone (`stat_logement` vide) ;
+          · A_VERIFIER       — présente mais ambiguë (tableau non extrait) : à signaler ;
+          · EXEMPT           — explicitement non réglementé ;
+          · NON_MODELISABLE  — PRÉSENTE mais pas exprimée par logement (par m² SDP / chambre / %SHON) :
+                               le scénario au sol ne sait pas la traduire (dit, jamais comblé)."""
         s = self.stat_logement
         if not s:
             return None
@@ -57,8 +66,13 @@ class ZoneRules:
             return A_VERIFIER
         if re.search(r"exempt|aucune place|sauf en zone", s, re.I):
             return EXEMPT
+        # M94 — sur un barème de surface (« 1,5 place/logt (>30 m²) ; 1 place (<30) »), on retient le
+        # nombre COLLÉ au premier « place/logement », qui est la tranche écrite en tête (le MAJORANT,
+        # prudent : plus de stationnement = capacité au sol plus basse). Départage tracé, jamais muet.
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/?\s*(?:par\s*)?logement", s, re.I)
-        return float(m.group(1).replace(",", ".")) if m else None
+        if m:
+            return float(m.group(1).replace(",", "."))
+        return NON_MODELISABLE          # texte présent mais aucune forme « X place/logement » lisible
 
 
 def _commune_slug(commune: str) -> str:
