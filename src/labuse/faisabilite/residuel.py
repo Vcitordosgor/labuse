@@ -41,6 +41,15 @@ def _niveaux_existants(session: Session, parcel_id: int, defaut: float) -> tuple
     return float(defaut), False
 
 
+def _emprise_revelee(session: Session, parcel_id: int) -> float | None:
+    """M32 — emprise bâtie RÉVÉLÉE par CoSIA (`max(emprise_cosia_m2)`), là où BD TOPO la rate. POINT
+    UNIQUE de cette lecture (isolée pour être stubbable en test, comme `_niveaux_existants`)."""
+    rev = session.execute(text(
+        "SELECT max(emprise_cosia_m2) FROM parcel_bati_revele WHERE parcel_id = :p"),
+        {"p": parcel_id}).scalar()
+    return float(rev) if rev is not None else None
+
+
 def compute_residuel(session: Session, parcel_id: int,
                      faisa: tuple | None = None) -> dict:
     """Bloc « potentiel résiduel » d'une parcelle. `faisa` = (ctx, Faisabilite) déjà calculé
@@ -69,11 +78,9 @@ def compute_residuel(session: Session, parcel_id: int,
     # grande pour que ces parcelles cessent de s'afficher « terrain nu ». Ces parcelles sont
     # déjà déclassées (declasse_bati_revele) → le résiduel ne les fait pas entrer en tête ; ce
     # correctif est un affichage de fiche (résiduel = cache isolé du scoring, cf. en-tête).
-    rev = session.execute(text(
-        "SELECT max(emprise_cosia_m2) FROM parcel_bati_revele WHERE parcel_id = :p"),
-        {"p": parcel_id}).scalar()
-    if rev and float(rev) > emprise_batie:
-        emprise_batie = float(rev)
+    rev = _emprise_revelee(session, parcel_id)
+    if rev and rev > emprise_batie:
+        emprise_batie = rev
 
     niveaux_exist, niveaux_reels = _niveaux_existants(session, parcel_id, hyp.niveaux_bati_existant_defaut)
     sdp_existante = emprise_batie * niveaux_exist
