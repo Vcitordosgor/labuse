@@ -15,6 +15,11 @@ class _Ctx:
     def __init__(self, sector):
         self._s = sector
 
+    def table_has_commune(self, table, commune):
+        # M91 — ces tests exercent le CALCUL DE PRIX (plancher/échelle/fragilité), commune supposée
+        # ingérée. Le garde « DVF non ingéré → UNKNOWN » (restauré M91) a son propre test dédié.
+        return True
+
     def dvf_sector_terrain(self, idu):
         return self._s
 
