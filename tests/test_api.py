@@ -16,12 +16,20 @@ def client(engine):
     from labuse.cascade import evaluate_parcels
     from labuse.db import session_scope
     from labuse.ingestion import demo_saint_paul, seed_sources
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
 
     with session_scope() as s:
         seed_sources.seed(s)
         demo_saint_paul.seed_demo(s)
         ids = [r[0] for r in s.execute(select(models.Parcel.id)).all()]
+        # LIVE (parcel_evaluations) — feedback terrain, pipeline CRM lisent le live.
         evaluate_parcels(ids, s, persist=True, ai_provider=StubProvider())
+        # M91 (seed obsolète) : la fiche lit la cascade dans `dryrun_cascade_results` AU RUN SERVI
+        # (app.py:3281, Q_A_RUN_LABEL) — table distincte du live. Sans cette seconde passe, `f["cascade"]`
+        # était vide → `len(cascade) > 10` échouait. On matérialise donc AUSSI la cascade sous le run
+        # servi pour que la fixture soit représentative (le verdict reste « non_evaluee » : le score v2
+        # servi, parcel_p_score_v2, n'est pas peuplé par evaluate_parcels).
+        evaluate_parcels(ids, s, persist=True, ai_provider=StubProvider(), dryrun_label=Q_A_RUN_LABEL)
     try:
         yield TestClient(app)
     finally:
