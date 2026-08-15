@@ -604,6 +604,20 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 28, 4, f"Aucune vente comparable dans le rayon retenu ({cmp.get('rayon_m', '?')} m).",
                        new_x="LMARGIN", new_y="NEXT")
     else:
+        # MANDAT_DVF — effectif trop faible (< seuil du profil) : on le DIT, le tableau ne doit pas
+        # paraître solide (mesuré : sous n≈8 la médiane oscille ±44 %). Grandeur affichée aussi.
+        if cmp.get("effectif_suffisant") is False:
+            pdf.set_font("inter", size=8)
+            pdf.set_text_color(*AMBER)
+            pdf.multi_cell(pdf.w - 28, 4, f"Échantillon insuffisant ({cmp.get('n')} vente(s), minimum "
+                           f"{cmp.get('seuil_effectif', 8)}) — comparables indicatifs, à lire avec prudence.",
+                           new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(0.6)
+        if cmp.get("grandeur"):
+            pdf.set_font("inter", size=7)
+            pdf.set_text_color(*TXT_DIM)
+            pdf.multi_cell(pdf.w - 28, 3.4, f"Grandeur : {cmp['grandeur']}.", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(0.4)
         # M73-G — chiffres alignés à DROITE (Date à gauche), unités présentes ; en-têtes assortis.
         cols = [("Date", 24, "L"), ("Distance", 20, "R"), ("Surface", 22, "R"),
                 ("Prix", 30, "R"), ("€/m²", 22, "R")]

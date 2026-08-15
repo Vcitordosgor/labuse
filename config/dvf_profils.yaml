@@ -1,0 +1,53 @@
+# MANDAT_DVF — LA DOCTRINE DE LECTURE DVF, figée sur une RAISON (jamais une habitude).
+#
+# Chaque profil de `marche_service` porte ICI : sa QUESTION, son RAYON, sa FENÊTRE, sa GRANDEUR, sa
+# RAISON (mesurée, AUDIT_MANDAT_DVF), et son SEUIL D'EFFECTIF. Un critère = un seul endroit : plus aucun
+# rayon/fenêtre posé « par continuité » dans le code. `marche_service` reste le point d'appel UNIQUE ;
+# aucun document ne recalcule ni n'appelle DVF en direct.
+#
+# Sensibilité mesurée (dense/rural/littoral) : 100 m = 0 vente en dense (signal, pas référence) ; rural
+# = 1 vente même à 500 m/5 ans (instable) ; 500 m/3 ans = point stable (n≥20, ±8 %) ; sous n≈8 la médiane
+# oscille ±44 %. Seuil d'effectif PAR PROFIL (arbitrage Vic) : référence marché n≥8, voisinage n≥3.
+
+# La réserve de méthode, écrite UNE fois, voyage avec CHAQUE chiffre DVF servi (interdit d'afficher un
+# prix DVF sans elle).
+reserve_methode: >-
+  Les ventes récentes mettent 1 à 3 ans à apparaître dans DVF : les niveaux les plus récents sont
+  provisoires, le classement reste fiable.
+
+# Garde-fou du 2× (doctrine actée) : si une projection arithmétique s'écarte de plus de ce facteur de la
+# référence de marché, la sortie le signale comme INFORMATION MANQUANTE, jamais comme une affaire.
+garde_fou_ecart_facteur: 2.0
+
+profils:
+  secteur_dossier:
+    question: "Quel niveau de prix dans le secteur de la parcelle ?"
+    rayon_m: 500
+    fenetre_ans: 3
+    grandeur: "médiane €/m² bâti ET €/m² terrain nu du secteur"
+    seuil_effectif: 8      # référence de marché : sous 8 ventes, médiane instable (mesuré ±44 % à n=3)
+    raison: "500 m/3 ans = effectif stable pour une médiane de secteur (mesuré n=226 dense, n=74 littoral)."
+
+  banquier_adaptatif:
+    question: "À quel prix revendre le programme neuf (prix de sortie) ?"
+    rayon_m: [500, 1000, 1500]   # adaptatif croissant jusqu'à l'effectif, puis repli commune
+    fenetre_ans: null            # sector_price ne borne pas la fenêtre (récence pondérée en interne)
+    grandeur: "€/m² HABITABLE, prix de sortie neuf (appart/maison, Q1/médiane/Q3)"
+    seuil_effectif: 8            # = dvf_min_ventes existant ; en deçà, fiabilité 'insuffisant' dite
+    raison: "Rayon croissant pour ATTEINDRE l'effectif minimal avant de servir un prix de sortie fiable."
+
+  voisinage_100m:
+    question: "Qu'est-ce qui s'est vendu au pied de la parcelle ?"
+    rayon_m: 100
+    fenetre_mois: 36
+    grandeur: "médiane BRUTE de valeur foncière (transaction, PAS un €/m²)"
+    seuil_effectif: 3            # SIGNAL de proximité, pas une référence : n≥3 pour une médiane, sinon dit
+    raison: "100 m = voisinage immédiat (doctrine M38). Rare par nature (0 vente en dense) → un SIGNAL, jamais une référence de marché ; l'effectif est toujours affiché."
+
+  comparables_premium:
+    question: "Quelles ventes comparables montrer au financeur ?"
+    rayon_m: 500
+    fenetre_ans: 3
+    grandeur: "€/m² bâti par vente (date · distance · surface · prix)"
+    seuil_effectif: 8            # référence : sous 8, on l'écrit, pas un tableau qui paraît solide
+    raison: "500 m/3 ans = même référence de marché que le dossier ; comparables individuels tracés."
