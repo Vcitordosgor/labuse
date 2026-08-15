@@ -627,6 +627,10 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
                      + kv("Ventes (36 mois)", f"{vp['ventes_dvf']} vente(s) à &lt; {vp['rayon_m']} m{prix}")
                      + kv("Permis (36 mois)", f"{vp['permis']} permis à &lt; {vp['rayon_m']} m")
                      + f"<div class='foot' style='margin-top:2px'>{html.escape(vp.get('honnetete') or '')}</div>")
+        # MANDAT_DVF-B — quand un prix DVF est servi, sa réserve de méthode l'accompagne (helper unique).
+        if vp.get("prix_median_eur"):
+            from .. import marche_service
+            vois_html += f"<div class='foot' style='margin-top:1px'>{html.escape(marche_service.reserve_methode())}</div>"
 
     synth = html.escape(rv.get("synthese") or "")
     action = html.escape(rv.get("prochaine_action") or "")
