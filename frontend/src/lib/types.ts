@@ -401,10 +401,12 @@ export interface PotentielTransformation {
 }
 
 export interface ViaContribution { libelle: string; points: number; detail: string; signe: '+' | '−' | '·' }
-// M86-B — état ANC servi (point de calcul unique côté back). Trois états, jamais quatre.
+// M86-B — état ANC servi (point de calcul unique côté back). M95 : 3 ÉCHELLES de Sourcé (parcelle /
+// secteur / commune), + Absent — l'échelle est DITE, jamais confondue.
 export interface AncStatut {
   // M88 : plus d'« estime » (proba_anc retiré) — « source_secteur » = taux INSEE brut du secteur.
-  statut: 'source' | 'source_secteur' | 'absent'
+  // M95 : « source_commune » = commune classée intégralement en ANC (Office de l'eau).
+  statut: 'source' | 'source_secteur' | 'source_commune' | 'absent'
   libelle: string
   phrase: string
   anc?: boolean            // pour Sourcé : true = ANC, false = collectif

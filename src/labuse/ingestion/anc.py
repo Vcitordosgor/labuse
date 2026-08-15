@@ -319,9 +319,47 @@ def _appliquer_zonages(session: Session) -> int:
     """)).rowcount
 
 
+OFFICE_EAU_MILLESIME = "Chronique n°149 — données 2023"
+OFFICE_EAU_SEED = "office_eau_chronique_149_2023.csv"
+
+
+def load_office_eau_communes(session: Session) -> dict:
+    """M95 — matérialise les communes classées INTÉGRALEMENT en ANC d'après l'Office de l'eau
+    (seed versionné, déjà utilisé par `calage_office_eau`). Table LUE par `anc_service` pour servir un
+    Sourcé d'ÉCHELLE COMMUNE (distinct du parcellaire M86-B et du secteur M88). Idempotent. Renseigne
+    aussi le millésime dans `data_sources` (fraîcheur = date amont, jamais l'ingestion). « Un seul
+    endroit » : la liste des communes vient du SEED, JAMAIS en dur dans le service."""
+    session.execute(text(
+        "CREATE TABLE IF NOT EXISTS anc_office_eau_commune ("
+        "  insee varchar(5) PRIMARY KEY, commune text, pct_anc int, detail text,"
+        "  millesime text, source_ref text, updated_at timestamptz DEFAULT now())"))
+    seed = _repo_root() / "data" / "anc" / OFFICE_EAU_SEED
+    src_ref = f"Office de l'eau Réunion, {OFFICE_EAU_MILLESIME}, texte p.13"
+    n = 0
+    with seed.open(encoding="utf-8") as f:
+        for row in csv.DictReader(f, delimiter=";"):
+            if not row["insee"]:
+                continue
+            session.execute(text(
+                "INSERT INTO anc_office_eau_commune (insee, commune, pct_anc, detail, millesime, source_ref) "
+                "VALUES (:i,:c,:p,:d,:m,:s) ON CONFLICT (insee) DO UPDATE SET commune=EXCLUDED.commune, "
+                "pct_anc=EXCLUDED.pct_anc, detail=EXCLUDED.detail, millesime=EXCLUDED.millesime, "
+                "source_ref=EXCLUDED.source_ref, updated_at=now()"),
+                {"i": row["insee"], "c": row["commune"], "p": int(row["pct_foyers_anc"]),
+                 "d": row["detail"], "m": OFFICE_EAU_MILLESIME, "s": src_ref})
+            n += 1
+    # Fraîcheur : le millésime voyage depuis data_sources (date amont = données 2023).
+    session.execute(text("UPDATE data_sources SET source_millesime = :m WHERE name = :n"),
+                    {"m": OFFICE_EAU_MILLESIME, "n": "Office de l'eau Réunion — Chroniques de l'eau"})
+    session.commit()
+    integrales = session.execute(text(
+        "SELECT count(*) FROM anc_office_eau_commune WHERE pct_anc >= 100")).scalar()
+    return {"communes": n, "integrales_anc": int(integrales)}
+
+
 def calage_office_eau(session: Session) -> list[dict]:
     """Contrôle croisé : taux INSEE par commune vs chiffres Office de l'eau (seed)."""
-    seed = _repo_root() / "data" / "anc" / "office_eau_chronique_149_2023.csv"
+    seed = _repo_root() / "data" / "anc" / OFFICE_EAU_SEED
     out: list[dict] = []
     with seed.open(encoding="utf-8") as f:
         for row in csv.DictReader(f, delimiter=";"):
