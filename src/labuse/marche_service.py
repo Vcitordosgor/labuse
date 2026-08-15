@@ -51,18 +51,47 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
     raise ValueError(f"profil DVF inconnu : {profil!r}")
 
 
-# ── Comparables individuels (liste par vente) — M73-E, profil provisoire nommé (MANDAT_DVF) ───────
-COMPARABLES_PREMIUM = "comparables_premium"      # < 500 m / 3 ans, ventes bâties (surface ≥ 20)
+# ── MANDAT_DVF — la DOCTRINE des profils est figée en config (config/dvf_profils.yaml), lue ICI (point
+# unique). Plus aucun rayon/fenêtre « par continuité » : chaque profil porte sa question/rayon/fenêtre/
+# grandeur/raison/seuil d'effectif. La réserve de méthode et le facteur du garde-fou 2× vivent aussi là.
+COMPARABLES_PREMIUM = "comparables_premium"
+
+
+def _profils_doc() -> dict:
+    from . import config as _cfg
+    try:
+        return _cfg.load_yaml_config("dvf_profils") or {}
+    except Exception:  # noqa: BLE001 — config absente = défauts prudents, jamais un crash
+        return {}
+
+
+def profil_meta(profil: str) -> dict:
+    """Métadonnées SERVIES d'un profil (question, rayon_m, fenetre_*, grandeur, seuil_effectif, raison) —
+    pour afficher les PARAMÈTRES à côté du chiffre. Source unique config/dvf_profils.yaml."""
+    return (_profils_doc().get("profils") or {}).get(profil, {})
+
+
+def reserve_methode() -> str:
+    """La réserve de méthode DVF (retard 1-3 ans, récents provisoires, classement fiable) — écrite une
+    fois, voyage avec chaque chiffre DVF servi."""
+    return str(_profils_doc().get("reserve_methode") or "").strip()
+
+
+def garde_fou_facteur() -> float:
+    """Facteur du garde-fou : projection > facteur × référence → information manquante, jamais une affaire."""
+    return float(_profils_doc().get("garde_fou_ecart_facteur") or 2.0)
 
 
 def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> dict:
-    """Liste des comparables DVF d'une parcelle — un point de lecture UNIQUE (aucun appel DVF hors
-    d'ici). SURFAÇAGE de données déjà en base (dvf_mutations), PAS un recalcul de prix : chaque vente
-    porte sa DATE, sa DISTANCE, sa SURFACE et son PRIX. Une vente à laquelle il manque l'un de ces
-    quatre est exclue par la requête (jamais un comparable à trous). Toujours un dict : `n` et `rayon_m`
-    sont dits, la liste peut être vide (« aucune vente comparable » → le document l'écrit). Paramètres
-    provisoires, nommés (cf. MANDAT_DVF)."""
-    rayon_m, fenetre_ans = (500.0, 3) if profil == COMPARABLES_PREMIUM else (500.0, 3)
+    """Liste des comparables DVF d'une parcelle — point de lecture UNIQUE (aucun appel DVF hors d'ici).
+    SURFAÇAGE de dvf_mutations, PAS un recalcul : chaque vente porte DATE/DISTANCE/SURFACE/PRIX (une
+    vente à trous est exclue par la requête). Rayon/fenêtre/seuil LUS de la config (MANDAT_DVF). Le dict
+    porte ses PARAMÈTRES (rayon, fenêtre, n), sa GRANDEUR, sa RÉSERVE et `effectif_suffisant` (sous le
+    seuil : le document l'écrit, pas un tableau qui paraît solide)."""
+    meta = profil_meta(profil)
+    rayon_m = float(meta.get("rayon_m") or 500.0)
+    fenetre_ans = int(meta.get("fenetre_ans") or 3)
+    seuil = int(meta.get("seuil_effectif") or 8)
     rows = db.execute(text(
         "WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu) "
         "SELECT to_char(dm.date_mutation, 'YYYY-MM-DD') AS date, "
@@ -78,8 +107,12 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
         "  AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r) "
         "ORDER BY dm.date_mutation DESC LIMIT 12"),
         {"idu": idu, "ans": fenetre_ans, "r": rayon_m}).mappings().all()
-    return {"rayon_m": int(rayon_m), "fenetre_ans": fenetre_ans,
-            "n": len(rows), "comparables": [dict(r) for r in rows]}
+    n = len(rows)
+    return {"rayon_m": int(rayon_m), "fenetre_ans": fenetre_ans, "n": n,
+            "comparables": [dict(r) for r in rows],
+            "seuil_effectif": seuil, "effectif_suffisant": n >= seuil,   # sous le seuil : « échantillon insuffisant »
+            "grandeur": meta.get("grandeur"), "question": meta.get("question"),
+            "reserve": reserve_methode()}
 
 
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:
