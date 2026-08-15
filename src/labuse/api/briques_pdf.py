@@ -398,7 +398,10 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
         if vd.get("rang") is not None:
             rg = f" · rang {vd['rang']:,}".replace(",", " ")
             if vd.get("rang_total"):
-                rg += f" / {vd['rang_total']:,}".replace(",", " ")
+                # M89 — dénominateur NOMMÉ (jamais nu) : « / 428 239 classées » + le périmètre exclu.
+                from ..verdict_servi import RANG_PERIMETRE
+                rg += (f" / {vd['rang_total']:,} classées".replace(",", " ")
+                       + f" <span style='color:#8c9891'>({RANG_PERIMETRE})</span>")
         motif = f"<div class='note' style='margin:1mm 0 0'>{esc(vd['motif'])}</div>" if vd.get("motif") else ""
         col = DECLASSE_COLOR if vd.get("declasse") else "#5f6c65"
         verdict_box = (f"<div style='border-left:3px solid {col};padding:2mm 3mm;margin:2mm 0;"

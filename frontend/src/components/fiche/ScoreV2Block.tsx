@@ -18,6 +18,7 @@ import { Tip } from '../Tip'
 type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number; phrase?: string }
 type ScoreV2 = {
   parcelle_id: string; mult_base: number; percentile: number | null; rang: number | null
+  hors_classement?: string | null   // M89 — copro : « hors univers de classement », à la place du rang
   tier: string; contrib_z: number; contrib_d: number; pourquoi: Contribution[]
   badges: { copro: boolean; evenement_date: string | null; veille_succession: boolean }
   model_version: string; avertissement: string
@@ -112,6 +113,10 @@ export function ScoreV2Block({ idu }: { idu: string }) {
           <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
         )}
         {data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
+        {/* M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide. */}
+        {data.rang == null && data.hors_classement && (
+          <span className="text-[11px] text-txt-mut">{data.hors_classement}</span>
+        )}
       </div>
 
       <p className="label-caps mt-2">Pourquoi ce score</p>
