@@ -553,6 +553,16 @@ def bilan(out: dict) -> str:
                  f"− prix probable du foncier {eur(sa['prix_probable'])} "
                  f"(prix de sortie neuf — {esc(niveau_label(sa['niveau_prix']))}).</p>"
                  f"<p class='note'>{esc(detail)}</p>")
+        # MANDAT_DVF-B Phase 2 — le garde-fou du 2× : la charge foncière SUPPORTABLE (projection du
+        # bilan à rebours) confrontée au prix PROBABLE du foncier (référence marché, médiane terrain
+        # sectorielle). Un écart > 2× = information manquante (coûts sous-estimés ou référence trop
+        # mince), jamais une affaire. Il ANNOTE : ne bloque, ne masque, ne retire aucun chiffre. Si la
+        # référence manque, il le DIT (écart non mesurable) plutôt que de se taire.
+        from ..marche_service import garde_fou_signal
+        gf = garde_fou_signal(sa.get("charge"), sa.get("prix_probable"))
+        if gf["note"]:
+            couleur = "#A87916" if gf["declenche"] else "#5F6C65"   # ambre (alerte) / gris (non mesurable)
+            body += f"<p class='note' style='color:{couleur}'>{esc(gf['note'])}</p>"
     elif se:
         body += f"<h3>Score É</h3><p class='note'>Marge {s('A')} — données de marché insuffisantes.</p>"
     return body

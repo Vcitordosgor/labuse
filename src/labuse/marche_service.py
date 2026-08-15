@@ -82,6 +82,27 @@ def garde_fou_facteur() -> float:
     return float(_profils_doc().get("garde_fou_ecart_facteur") or 2.0)
 
 
+def garde_fou_signal(projection: float | None, reference: float | None, *,
+                     effectif: int | None = None, seuil_effectif: int | None = None) -> dict:
+    """MANDAT_DVF — le garde-fou du 2× : si la PROJECTION arithmétique s'écarte de plus du facteur de la
+    RÉFÉRENCE de marché, on le signale comme INFORMATION MANQUANTE (jamais une affaire). Il ANNOTE, ne
+    bloque ni ne masque rien. Si un terme manque (pas de référence, ou effectif de référence insuffisant),
+    il NE se déclenche PAS — un écart non mesurable n'est pas un écart — et le DIT plutôt que de se taire.
+    Retourne {declenche, mesurable, note}."""
+    fac = garde_fou_facteur()
+    if not reference or reference <= 0:
+        return {"declenche": False, "mesurable": False,
+                "note": "Écart à la référence de secteur non mesurable (pas de référence DVF fiable)."}
+    if seuil_effectif and effectif is not None and effectif < seuil_effectif:
+        return {"declenche": False, "mesurable": False,
+                "note": "Écart à la référence non mesurable (échantillon de référence insuffisant)."}
+    if projection and projection > fac * reference:
+        return {"declenche": True, "mesurable": True,
+                "note": (f"Écart important à la référence de secteur (×{projection / reference:.1f}) — "
+                         "donnée probablement incomplète, à vérifier. Pas une opportunité chiffrée.")}
+    return {"declenche": False, "mesurable": True, "note": None}
+
+
 def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> dict:
     """Liste des comparables DVF d'une parcelle — point de lecture UNIQUE (aucun appel DVF hors d'ici).
     SURFAÇAGE de dvf_mutations, PAS un recalcul : chaque vente porte DATE/DISTANCE/SURFACE/PRIX (une

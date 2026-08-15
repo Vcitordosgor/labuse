@@ -264,6 +264,17 @@ def _bilan_rebours(out: dict) -> str:
              f"<tr><td class='n'>{eur(cf['bas'])}</td><td class='n'><b>{eur(cf['central'])}</b></td>"
              f"<td class='n'>{eur(cf['haut'])}</td>"
              f"<td class='n'>{esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>")
+    # MANDAT_DVF-B Phase 2 — le garde-fou du 2× : le prix d'achat MAX admissible (projection du bilan
+    # à rebours) confronté au prix PROBABLE du foncier (référence marché, médiane terrain sectorielle).
+    # Écart > 2× = information manquante, jamais une affaire. Annote, ne bloque ni ne masque rien ;
+    # si la référence manque, le dit (écart non mesurable). Même point unique que le Dossier banquier.
+    from ..marche_service import garde_fou_signal
+    sa = bq.score_e_affiche(out)
+    if sa:
+        gf = garde_fou_signal(cf.get("central"), sa.get("prix_probable"))
+        if gf["note"]:
+            couleur = "#A87916" if gf["declenche"] else "#5F6C65"
+            body += f"<p class='note' style='color:{couleur}'>{esc(gf['note'])}</p>"
     # C9 — le même bilan, en cascade (CA → coûts → marge → terrain), scénario médian
     cascade = _svg_cascade(calc)
     if cascade:
