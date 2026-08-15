@@ -91,3 +91,38 @@ datés) et du couple run-gated (rang/tier). Quatre traitements possibles, à arb
 
 Aucune ancre ne sera supprimée (interdit). Le nombre d'ancres stables ne baisse pas ;
 il peut monter si des champs incidents sont ré-ancrés sur du stable.
+
+---
+
+## Phase 2+3 — traitement (arbitrage Vic : les 4 · run-gated différé)
+
+1. **Marquer** (golden JSON) — bloc `transitoire {champ, perime_le, raison, rafraichir}`
+   sur les 4 prévisibles : `dirigeant_age` ×3 (`veille_succession.dirigeant_age`,
+   péremption `2027-08-15` = ≤1 an, prochain rejeu post-anniversaire) + canari BODACC
+   `97414000CV0907` (`tier_v2`, péremption `2027-2028`, clôture). La date vit dans un
+   champ exploitable, plus seulement dans un commentaire.
+2. **Ré-ancrer** (golden_check `TRANSITOIRE_SKIP`) — les champs incidents datés
+   (`dvf.derniere`, `dvf.n_mutations`, `permis_sitadel.dernier`, `permis_sitadel.n`) sont
+   EXCLUS de la comparaison : imprévisibles et jamais le but de l'ancre. La couverture
+   réelle reste ; aucune ancre supprimée (l'entrée garde tous ses autres champs).
+3. **3e état « à rafraîchir »** (golden_check `_tri_transitoire`) — un écart SUR le champ
+   marqué = péremption prévisible → `À RAFRAÎCHIR` (code 2), jamais FAIL. Tout écart
+   AILLEURS reste FAIL : une régression ne se cache pas derrière le marquage.
+4. **Assumer** — le canari est gardé (teste un vrai évènement rouge) avec date + procédure
+   de re-ancre documentée.
+
+### Vérification (Phase 3)
+- Golden **119/119 PASS, code 0** (rien n'a encore péri). **119 ancres** (0 supprimée).
+  `TOLERANCES` inchangées (aucun seuil desserré).
+- Simulations de péremption (copie du golden, états forcés) :
+  - `dirigeant_age` périmé seul → **À RAFRAÎCHIR** (code 2), pas FAIL. ✓
+  - `dirigeant_age` périmé **+ surface régressée** → **FAIL** — la régression n'est PAS
+    masquée par le marquage (interdit respecté). ✓
+  - canari `tier_v2` périmé (clôture simulée) → **À RAFRAÎCHIR** (code 2). ✓
+  - `dvf.derniere` ré-ancré modifié → **PASS** (champ incident non comparé). ✓
+- Non-régression : `check_golden_regenere` lit toujours `meta.run_v2_servi` (119) ;
+  `test_bascule_gardes` + `test_run_serving_coherence` verts.
+
+**Run-gated `rang`/`tier`** (32 + 86, périssent au rejeu, WARN partiel existant) :
+**différé** (« à voir après » — arbitrage Vic). Candidat à étendre le 3e état au
+changement de `run_v2_servi` dans un mandat suivant, si le besoin se confirme.
