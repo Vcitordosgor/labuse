@@ -322,6 +322,8 @@
   <p class="note">Comparables de proximité : {{ m.n }} ventes dans un rayon de {{ m.rayon_m }} m
      sur {{ m.annees }} ans.</p>
   {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
+  {# MANDAT_DVF-B — la réserve de méthode accompagne le prix DVF, lisible (≥ 8 pt), jamais au pied. #}
+  {% if m.reserve %}<p class="reserve-dvf">{{ m.reserve }}</p>{% endif %}
   <h3>Comparables récents (anonymisés)</h3>
   <table class="donnees">
     <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>

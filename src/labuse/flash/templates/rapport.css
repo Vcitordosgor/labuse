@@ -112,6 +112,8 @@ table.donnees tr { break-inside: avoid; }
 .chip.neutre { background: #EEF1EF; color: var(--txt-mut); }
 
 .note { font-size: 7.8pt; color: var(--txt-mut); }
+/* MANDAT_DVF-B — réserve de méthode DVF : lisible (≥ 8 pt), accolée au chiffre (règle M73-G). */
+.reserve-dvf { font-size: 8pt; color: var(--txt-mut); margin: 1mm 0 0; }
 .ok-vide { color: var(--mint); font-size: 9pt; }
 
 ul.liste { margin: 1mm 0 2mm 0; padding-left: 5mm; }

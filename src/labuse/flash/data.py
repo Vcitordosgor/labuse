@@ -34,6 +34,15 @@ def _dvf_secteur_cfg() -> tuple[int, int]:
 
 
 RAYON_MARCHE_M, FENETRE_MARCHE_ANNEES = _dvf_secteur_cfg()
+
+
+def _reserve_dvf() -> str:
+    """MANDAT_DVF-B — la réserve de méthode DVF (helper UNIQUE marche_service.reserve_methode)."""
+    try:
+        from ..marche_service import reserve_methode
+        return reserve_methode()
+    except Exception:  # noqa: BLE001
+        return ""
 RAYON_PERMIS_M = 500
 RAYON_ICPE_M = 500
 FENETRE_PERMIS_MOIS = 24
@@ -391,7 +400,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().first()
     if not stats or not stats["n"]:
         return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
-                "commune_marche": commune_marche}
+                "commune_marche": commune_marche, "reserve": _reserve_dvf()}
     # Comparables ANONYMISÉS : type, surface, prix, mois — JAMAIS d'adresse exacte (mandat).
     comps = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
@@ -415,7 +424,9 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            "methode": (f"Médiane €/m² observée, tous types de biens, rayon {RAYON_MARCHE_M} m sur "
                        f"{FENETRE_MARCHE_ANNEES} ans, sans exclusion d'aberrants — indicateur de marché "
                        "local, distinct du prix de sortie du bilan (appartements, rayon adaptatif, "
-                       "aberrants exclus).")}
+                       "aberrants exclus)."),
+           # MANDAT_DVF-B — la réserve de méthode DVF voyage avec le chiffre (helper unique).
+           "reserve": _reserve_dvf()}
     if "v_parcel_dvf_last" in avail:
         last = db.execute(text(
             "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain "

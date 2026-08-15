@@ -580,6 +580,9 @@ def comparables(out: dict) -> str:
                  f"<td>{esc(prix.get('periode'))}</td><td>{esc(prix.get('fiabilite'))}</td></tr></table>"
                  f"<p class='note'>€/m² habitable · rayon {esc(prix.get('radius_m'))} m adaptatif autour de la parcelle"
                  + (" · repli commune" if prix.get("commune_fallback") else "") + ".</p>")
+        # MANDAT_DVF-B — la RÉSERVE de méthode accompagne le chiffre (helper unique, écrite une fois).
+        from ..marche_service import reserve_methode
+        body += f"<p class='note'>{esc(reserve_methode())}</p>"
         comp = prix.get("comparables")
         if isinstance(comp, dict) and (comp.get("mediane_ancien") or comp.get("mediane_vefa")):
             body += (f"<table><tr><th>Segment</th><th class='n'>Ventes</th><th class='n'>Médiane €/m²</th></tr>"
