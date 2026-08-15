@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-from .plu_rules import A_VERIFIER, EXEMPT, ZoneRules
+from .plu_rules import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
 
 SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → "trop exigu"
 
@@ -71,6 +71,10 @@ class Hypotheses:
     # l'Art. 2 d'une autre commune (un Estimé emprunté présenté en Sourcé est interdit — boussole).
     commune: str | None = None
     mixite_source_ref: str | None = None
+    # M94 — source de la conversion place→m² : renseignée UNIQUEMENT si le YAML de la commune la
+    # DÉCLARE au règlement (ex. Cilaos « 1 place = 25 m² »). Sinon place_m2 (=25) est de la MODÉLISATION
+    # (Estimé), jamais une norme locale déguisée. Voyage avec la valeur (marquage M-PLU-REF-B).
+    place_m2_source_ref: str | None = None
 
     @classmethod
     def charger(cls, commune: str | None = None) -> "Hypotheses":
@@ -97,6 +101,9 @@ class Hypotheses:
         # DÉCLARE (mixite_source_ref) — des nombres recopiés de Saint-Paul ne sont pas un Sourcé.
         _ref = h.get("mixite_source_ref")
         out.mixite_source_ref = _ref.strip() if isinstance(_ref, str) and _ref.strip() else None
+        # M94 — idem pour la conversion place→m² : Sourcé SEULEMENT si le règlement de la commune le dit.
+        _pref = h.get("place_m2_source_ref")
+        out.place_m2_source_ref = _pref.strip() if isinstance(_pref, str) and _pref.strip() else None
         return out
 
 
@@ -361,7 +368,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
                           f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12")))
         sol_lo, sol_hi = min(floor_lo, log_max_park), min(floor_hi, log_max_park)
-        hypotheses.append(f"1 place de stationnement supposée {hyp.place_m2:g} m² (au sol restant).")
+        if hyp.place_m2_source_ref:
+            hypotheses.append(f"1 place de stationnement = {hyp.place_m2:g} m² (Sourcé — {hyp.place_m2_source_ref}).")
+        else:
+            hypotheses.append(f"1 place de stationnement supposée {hyp.place_m2:g} m² au sol (Estimé — "
+                              "modélisation, non réglementée pour cette commune).")
     elif ppl == EXEMPT:
         regime = "exempt"
         avert.append(f"Stationnement non réglementé pour {rules.code} (exemptée, Art. 12) → "
@@ -370,6 +381,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         regime = "non_applique"
         if ppl == A_VERIFIER:
             avert.append(f"Stationnement « à_vérifier » pour {rules.code} → garde-fou non appliqué (Art. 12).")
+        elif ppl == NON_MODELISABLE:
+            # M94 — norme PRÉSENTE mais pas par logement (par m² SDP / chambre / %SHON) : on le DIT,
+            # jamais un défaut déguisé en local. Distinct de « absente » ci-dessous.
+            avert.append(f"Norme de stationnement présente mais NON MODÉLISABLE pour {rules.code} "
+                         "(exprimée par m² de plancher, par chambre ou en %, pas par logement — Art. 12) : "
+                         "capacité au sol non bornée, aucune valeur inventée.")
+        else:  # ppl is None → norme non extraite / absente pour cette zone
+            # M94 — ne plus rester SILENCIEUX : la norme est absente de l'extraction, on le signale.
+            avert.append(f"Norme de stationnement non renseignée pour {rules.code} "
+                         "(absente du règlement extrait) → garde-fou au sol non appliqué (Art. 12).")
 
     # ---- Modulation réunionnaise ----
     facteur = 1.0

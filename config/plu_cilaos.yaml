@@ -102,6 +102,9 @@ hypotheses_faisabilite:
   logement_m2_bas: 65.0
   logement_m2_haut: 80.0
   place_m2: 25.0
+  # M94 — Cilaos DÉCLARE la conversion au règlement : « Une place = 25 m² » (Art. <Z> 12). Seule
+  # commune où place_m2 est Sourcé (réglementaire) ; ailleurs 25 est de la modélisation (Estimé).
+  place_m2_source_ref: "Cilaos, Art. <Z> 12 — « Une place = 25 m² »"
   densite_logts_ha_par_niveau: 30.0
   he_defaut_generique_m: 9.0
 
