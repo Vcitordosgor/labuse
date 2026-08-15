@@ -1413,6 +1413,8 @@ def _foncier_commune(db: Session, commune: str) -> dict:
                        "(SELECT 1 FROM parcel_zone_plu z WHERE z.idu = p.idu)") or 0
     # 12 DERNIERS MOIS DE DONNÉES de la commune (pas relatif à now() : DVF est publié avec retard,
     # une fenêtre calendaire donnerait un volume partiel trompeur).
+    # MANDAT_DVF-B — SIGNAL d'agrégat COMMUNE (un COMPTE de mutations, PAS un prix de parcelle) : reste
+    # HORS marche_service et hors profils (ne pas mélanger deux grandeurs). Jamais lu comme un €/m².
     mutations_12m = db.execute(text(
         "SELECT count(*) FROM dvf_mutations WHERE commune = :c AND date_mutation > "
         "(SELECT max(date_mutation) FROM dvf_mutations WHERE commune = :c) - interval '12 months'"),
@@ -2928,9 +2930,9 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
     """Recalcule la charge foncière (moteur) pour l'export PDF — None si non calculable."""
-    from ..faisabilite.bilan import compute_calculette, sector_price, resolve_prix_sortie_servi
+    from ..faisabilite.bilan import compute_calculette, resolve_prix_sortie_servi
     from ..faisabilite.db import parcel_faisabilite
-    from ..faisabilite.engine import Hypotheses
+    from .. import marche_service          # MANDAT_DVF-B — point d'appel UNIQUE (plus de sector_price direct)
     row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
     if not row:
         return None
@@ -2943,7 +2945,7 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
     ps = resolve_prix_sortie_servi(db, row["id"])
     if ps["non_calculable"]:
         return None
-    prix = sector_price(db, row["id"], Hypotheses.charger())
+    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"]}   # prix de sortie NEUF
     res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande)
     return res if res.get("calculable") else None

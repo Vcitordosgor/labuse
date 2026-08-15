@@ -15,8 +15,18 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-RAYON_M = 100           # maille FIXE (constat P0 : libellé exact, contraste dense/rural = info vraie)
-FENETRE_MOIS = 36       # ventes/permis « récents »
+# MANDAT_DVF-B — rayon/fenêtre du voisinage (profil voisinage_100m) LUS de config/dvf_profils.yaml : plus
+# aucun rayon/fenêtre DVF en dur. Valeurs identiques (100 m / 36 mois) → golden stable ; repli si absente.
+def _voisinage_cfg() -> tuple[int, int]:
+    try:
+        from ..marche_service import profil_meta
+        m = profil_meta("voisinage_100m")
+        return int(m["rayon_m"]), int(m["fenetre_mois"])
+    except Exception:  # noqa: BLE001 — config absente = repli, jamais un crash
+        return 100, 36
+
+
+RAYON_M, FENETRE_MOIS = _voisinage_cfg()   # maille FIXE (M38 : libellé exact, contraste dense/rural)
 SRC_SITADEL = "Sitadel (autorisations d'urbanisme, dépôts datés)"
 SRC_DVF = "DVF / valeurs foncières (Etalab)"
 

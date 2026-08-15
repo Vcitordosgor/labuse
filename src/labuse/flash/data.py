@@ -21,10 +21,21 @@ from ..scoring.score_v_constants import Q_A_RUN_LABEL
 log = logging.getLogger("labuse.flash")
 
 # Rayons d'analyse (m) — projection locale 2975 (mètres vrais).
-RAYON_MARCHE_M = 500
+# MANDAT_DVF-B — le rayon/fenêtre DVF (profil secteur_dossier) vient de config/dvf_profils.yaml : plus
+# aucun rayon/fenêtre DVF en dur. Lu au chargement (valeurs identiques → golden stable) ; le 500/3 n'est
+# qu'un repli prudent si la config est absente. Les rayons PERMIS/ICPE ne sont pas des lectures DVF.
+def _dvf_secteur_cfg() -> tuple[int, int]:
+    try:
+        from ..marche_service import profil_meta
+        m = profil_meta("secteur_dossier")
+        return int(m["rayon_m"]), int(m["fenetre_ans"])
+    except Exception:  # noqa: BLE001 — config absente = repli, jamais un crash
+        return 500, 3
+
+
+RAYON_MARCHE_M, FENETRE_MARCHE_ANNEES = _dvf_secteur_cfg()
 RAYON_PERMIS_M = 500
 RAYON_ICPE_M = 500
-FENETRE_MARCHE_ANNEES = 3
 FENETRE_PERMIS_MOIS = 24
 
 # M73 — libellés client des COUCHES de la cascade servie (par layer_name). Le DÉTAIL de chaque
