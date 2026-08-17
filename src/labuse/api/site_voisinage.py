@@ -77,7 +77,11 @@ def voisinage_proche(db: Session, idu: str) -> dict | None:
     if not row or ((row["n_dvf"] or 0) == 0 and (row["n_permis"] or 0) == 0):
         return None
     n_dvf = row["n_dvf"] or 0
-    prix = round(row["prix_median"]) if (n_dvf >= 3 and row["prix_median"]) else None
+    # M103 P1 — le seuil du SIGNAL de voisinage est celui du profil voisinage_100m
+    # (config/dvf_profils.yaml, n≥3 doctrine M38) — plus jamais écrit en dur ici.
+    from ..marche_service import DVF_VOISINAGE_100M, profil_meta
+    _seuil = int(profil_meta(DVF_VOISINAGE_100M).get("seuil_effectif") or 3)
+    prix = round(row["prix_median"]) if (n_dvf >= _seuil and row["prix_median"]) else None
     return {
         "titre": f"Autour, à moins de {RAYON_M} m",
         "rayon_m": RAYON_M, "fenetre_mois": FENETRE_MOIS,

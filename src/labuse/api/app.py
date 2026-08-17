@@ -1137,10 +1137,14 @@ def _q_v2_where(run_label: str, score_min: int | None,
                      " AND dl2.prix_m2_terrain <= :f_pmmax)")
         params["f_pmmax"] = prix_marche_max
     if marche_fiable:
-        # fiabilité DVF : le secteur cadastral (section = 10 1ers car. de l'idu) a n≥3 ventes
-        # (sinon « échantillon limité »). Un filtre « données marché fiables » assumé.
+        # M103 P1 (défaut M100 n°1) : « fiable » = le seuil de la DOCTRINE, lu du profil
+        # secteur_dossier (config/dvf_profils.yaml, n≥8 — sous n≈8 la médiane oscille ±44 %,
+        # mesuré MANDAT_DVF). L'ancien 3 local étiquetait 29 228 parcelles « fiables » sur un
+        # échantillon que notre propre mesure déclare instable. Un critère, un endroit.
+        from ..marche_service import DVF_SECTEUR_DOSSIER, profil_meta
         conds.append("EXISTS (SELECT 1 FROM dvf_secteur_medianes dm WHERE dm.secteur = left(p.idu, 10)"
-                     " AND dm.n_ventes >= 3)")
+                     " AND dm.n_ventes >= :f_marche_seuil)")
+        params["f_marche_seuil"] = int(profil_meta(DVF_SECTEUR_DOSSIER).get("seuil_effectif") or 8)
     if ca_min is not None:
         # bilan CA indicatif : prix de sortie neuf sectoriel × SDP résiduelle (Estimé, hors coûts).
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rca JOIN dvf_prix_sortie_neuf sn"

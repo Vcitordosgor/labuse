@@ -729,20 +729,23 @@ MODE_B_SHAB_MIN = 50.0
 
 def _prix_bati_local(session: Session, idu: str) -> dict | None:
     """Prix de sortie BÂTI local (€/m² habitable) — médianes DVF maison/appartement,
-    préséance SECTEUR (n≥3) → repli COMMUNE (même logique de préséance que le mode A ;
-    le niveau retenu est tracé et étiqueté). None si aucun prix (hors mesure P0 : 0 cas)."""
+    préséance SECTEUR → repli COMMUNE (même logique de préséance que le mode A ;
+    le niveau retenu est tracé et étiqueté). Seuil d'effectif LU de la config
+    (M103 P1 — seuils_effectif.mode_b_prix_local, plus jamais en dur). None si aucun prix."""
+    from ..marche_service import seuil_effectif_local
+    n_min = seuil_effectif_local("mode_b_prix_local", 3)
     r = session.execute(text(
         "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
-        "WHERE secteur = :s AND type_bien IN ('maison','appartement') AND n_ventes >= 3"),
-        {"s": idu[:10]}).mappings().first()
+        "WHERE secteur = :s AND type_bien IN ('maison','appartement') AND n_ventes >= :n"),
+        {"s": idu[:10], "n": n_min}).mappings().first()
     if r and r["prix"]:
         return {"prix_m2": float(r["prix"]), "niveau": "secteur",
-                "libelle": "médiane DVF maison/appartement du secteur (n ≥ 3)"}
+                "libelle": f"médiane DVF maison/appartement du secteur (n ≥ {n_min})"}
     r = session.execute(text(
         "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
         "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
-        "AND type_bien IN ('maison','appartement') AND n_ventes >= 3"),
-        {"c": idu[:5]}).mappings().first()
+        "AND type_bien IN ('maison','appartement') AND n_ventes >= :n"),
+        {"c": idu[:5], "n": n_min}).mappings().first()
     if r and r["prix"]:
         return {"prix_m2": float(r["prix"]), "niveau": "commune",
                 "libelle": "médiane DVF maison/appartement de la commune (repli — pas assez "
@@ -752,21 +755,23 @@ def _prix_bati_local(session: Session, idu: str) -> dict | None:
 
 def _prix_terrain_local(session: Session, idu: str) -> dict | None:
     """M59-P1 (Q1) — prix du TERRAIN NU (€/m²) du secteur, MÊME logique de préséance que le bâti
-    (secteur n≥3 → repli commune) mais type_bien='terrain'. Sert UNIQUEMENT la comparaison
-    « terrain nu au prix du secteur » (jamais le calcul réhab, qui reste sur la SHAB). None si
-    aucune médiane terrain locale."""
+    (secteur → repli commune) mais type_bien='terrain'. Seuil d'effectif LU de la config (M103
+    P1). Sert UNIQUEMENT la comparaison « terrain nu au prix du secteur » (jamais le calcul
+    réhab, qui reste sur la SHAB). None si aucune médiane terrain locale."""
+    from ..marche_service import seuil_effectif_local
+    n_min = seuil_effectif_local("mode_b_prix_local", 3)
     r = session.execute(text(
         "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
-        "WHERE secteur = :s AND type_bien = 'terrain' AND n_ventes >= 3"),
-        {"s": idu[:10]}).mappings().first()
+        "WHERE secteur = :s AND type_bien = 'terrain' AND n_ventes >= :n"),
+        {"s": idu[:10], "n": n_min}).mappings().first()
     if r and r["prix"]:
         return {"prix_m2": float(r["prix"]), "niveau": "secteur",
-                "libelle": "médiane DVF terrain du secteur (n ≥ 3)"}
+                "libelle": f"médiane DVF terrain du secteur (n ≥ {n_min})"}
     r = session.execute(text(
         "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
         "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
-        "AND type_bien = 'terrain' AND n_ventes >= 3"),
-        {"c": idu[:5]}).mappings().first()
+        "AND type_bien = 'terrain' AND n_ventes >= :n"),
+        {"c": idu[:5], "n": n_min}).mappings().first()
     if r and r["prix"]:
         return {"prix_m2": float(r["prix"]), "niveau": "commune",
                 "libelle": "médiane DVF terrain de la commune (repli)"}
