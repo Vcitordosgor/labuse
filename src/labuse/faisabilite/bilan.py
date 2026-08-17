@@ -773,6 +773,41 @@ def _prix_terrain_local(session: Session, idu: str) -> dict | None:
     return None
 
 
+def _porte_mode_b(session: Session, idu: str, tier: str) -> str | None:
+    """M101 A2 (arbitrage Vic) — la PORTE réelle du mode B, expliquée en français lisible,
+    calée mot à mot sur la règle mesurée (AUDIT_M101 §A1.1), jamais au-delà. POINT UNIQUE :
+    la fiche, les 4 documents (rehab_bloc) et l'export lisent cette phrase d'ici. Les caches
+    (parcel_bati_revele / parcel_filtre_bati) restent la preuve brute, non réécrite."""
+    if tier == "declasse_bati_revele":
+        # garde-source M90 : table absente (base de test, install partielle) = pas de phrase
+        # inventée, jamais un crash — le garde le DIT par l'absence, au point unique.
+        if not session.execute(text("SELECT to_regclass('parcel_bati_revele') IS NOT NULL")).scalar():
+            return None
+        emprise = session.execute(text(
+            "SELECT emprise_cosia_m2 FROM parcel_bati_revele WHERE idu = :i"), {"i": idu}).scalar()
+        m2 = f" (~{round(float(emprise))} m²)" if emprise else ""
+        return (f"L'image aérienne 2025 montre un bâtiment{m2} que les bases cartographiques "
+                "n'ont pas encore enregistré — le terrain n'est pas nu.")
+    if tier == "declasse_bati_sature":
+        if not session.execute(text("SELECT to_regclass('parcel_filtre_bati') IS NOT NULL")).scalar():
+            return None                        # garde-source M90 (cf. ci-dessus)
+        row = session.execute(text(
+            "SELECT ratio_pct, motif FROM parcel_filtre_bati WHERE idu = :i"),
+            {"i": idu}).mappings().first()
+        if row is None:
+            return None                        # cache absent : pas de phrase inventée
+        if (row["motif"] or "").startswith("SDP saturée"):
+            return ("La surface constructible autorisée par le PLU est déjà consommée "
+                    "par le bâti existant.")
+        ratio = round(float(row["ratio_pct"] or 0))
+        if ratio > 40:
+            return (f"Le bâti existant occupe {ratio} % du terrain (mesuré sur BD TOPO et "
+                    "image aérienne 2025) — il ne reste pas d'assiette pour construire.")
+        return (f"Le terrain est bâti ({ratio} % d'emprise) d'un bâti récent ou d'année "
+                "inconnue, et n'est pas divisible — pas d'assiette exploitable.")
+    return None
+
+
 def compute_mode_b(session: Session, idu: str, *,
                    travaux_m2: float | None = None,
                    run: str | None = None,
@@ -793,14 +828,15 @@ def compute_mode_b(session: Session, idu: str, *,
         return {"disponible": False,
                 "motif": "hors population mode B (réservé aux parcelles déclassées pour "
                          "cause de bâti : saturé ou révélé)"}
+    porte = _porte_mode_b(session, idu, tier)   # M101 A2 — la porte réelle, en français lisible
     emprise = session.execute(text(
         "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
     if not emprise or float(emprise) < 20:
-        return {"disponible": False,
+        return {"disponible": False, "porte": porte,
                 "motif": "Absent — emprise bâtie non mesurable (< 20 m²) : pas de bilan inventé"}
     px = _prix_bati_local(session, idu)
     if px is None:
-        return {"disponible": False,
+        return {"disponible": False, "porte": porte,
                 "motif": "Absent — aucun prix de sortie bâti local (DVF) : pas de bilan inventé"}
 
     hyp = Hypotheses.charger()
@@ -820,7 +856,7 @@ def compute_mode_b(session: Session, idu: str, *,
     # M59-P1 (Q4) — seuil de pertinence : sous MODE_B_SHAB_MIN, on NE sert PAS le calcul
     # (thèse de réhabilitation non pertinente) mais on le DIT (jamais un tiroir muet).
     if shab < MODE_B_SHAB_MIN:
-        return {"disponible": True, "trop_petit": True,
+        return {"disponible": True, "trop_petit": True, "porte": porte,
                 "shab_rehabilitable_m2": round(shab),
                 "motif": f"Bâti trop petit (SHAB ~{round(shab)} m²) pour une thèse de réhabilitation."}
 
@@ -859,6 +895,7 @@ def compute_mode_b(session: Session, idu: str, *,
         "disponible": True,
         "trop_petit": False,
         "population_tier": tier,
+        "porte": porte,           # M101 A2 — la porte réelle du mode B, en français lisible
         # M59-P1 (Q1) — surface du foncier (toujours servie, pour la ligne « hors valeur du
         # terrain »), repère « terrain nu au prix du secteur » (Estimé) + drapeau « valeur portée
         # par le terrain » (le foncier vaut plus que ce que le bâti justifie).

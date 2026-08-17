@@ -1099,6 +1099,13 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
       context="Estimé — hypothèse travaux à ajuster"
       value={mb.negatif ? <span className="pill-amber">bilan négatif</span> : `~${mb.achat_max_libelle ?? ''}`}>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* M101 A2 — la PORTE du mode B en tête : pourquoi cette parcelle est « bâtie »,
+            en français lisible (servie par compute_mode_b, jamais un libellé interne). */}
+        {mb.porte && (
+          <p data-mode-b-porte style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-hi)' }}>
+            {mb.porte}
+          </p>
+        )}
         {/* M59-P1 (Q1) — tête + comparaison terrain. La comparaison terrain nu ET la phrase
             « portée par le terrain » s'affichent dans LES DEUX cas (positif ou négatif) : c'est la
             vraie information sur ~50-64 % du stock, souvent des bilans bâti négatifs. */}
@@ -2077,6 +2084,23 @@ export function Fiche({ idu }: { idu: string }) {
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+              {/* M101 B2 — le NEUF (VEFA) de la commune : grandeur NOMMÉE, effectif, fenêtre et
+                  réserve avec le chiffre ; sous le seuil, la phrase « échantillon insuffisant »
+                  À LA PLACE du chiffre (absence normale du profil, jamais un trou). */}
+              {(() => { const nv = f.dvf_parcelle?.neuf_vefa
+                return nv ? (
+                  <div data-fiche-neuf-vefa className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
+                    {nv.effectif_suffisant && nv.mediane_prix_m2_bati != null ? (
+                      <span className="font-medium text-txt">
+                        Neuf (VEFA) — commune : {fmtInt(nv.mediane_prix_m2_bati)} €/m² bâti
+                        <span className="font-normal text-txt-mut"> · {nv.n} ventes / {nv.fenetre_ans} ans</span>
+                      </span>
+                    ) : (
+                      <span className="text-txt-mut">Neuf (VEFA) — commune : {nv.insuffisant_libelle}</span>
+                    )}
+                    <p className="mt-0.5 text-[9px] text-txt-dim">{nv.grandeur} · {nv.reserve}</p>
+                  </div>
+                ) : null })()}
               {/* M-U — signal de marché condensé (DVF actes + Sitadel), jamais un mot nu : les 2
                   composantes sont affichées ; l'outil « Marché » donne le bloc commune complet (9 lignes). */}
               {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal

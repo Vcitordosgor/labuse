@@ -196,6 +196,9 @@ export interface ModeB {
   terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
     niveau: string; libelle: string; etiquette: string } | null
   porte_par_terrain?: boolean
+  // M101 A2 : la PORTE du mode B — pourquoi cette parcelle est « bâtie », en français lisible
+  // (phrase unique servie par compute_mode_b, calée sur la règle mesurée — jamais de jargon).
+  porte?: string | null
   composantes?: {
     surface: { emprise_bati_m2: number; niveaux: number; niveaux_reels: boolean
       niveaux_etiquette: string; sdp_existante_m2: number; shab_rehabilitable_m2: number
@@ -357,6 +360,12 @@ export interface DvfSecteur {
 export interface DvfParcelle {
   derniere_mutation?: unknown
   secteur?: DvfSecteur[] | null
+  // M101 B2 : le NEUF que l'acte déclare (VEFA), grain commune, profil dvf_profils.yaml —
+  // sous le seuil, insuffisant_libelle est servi À LA PLACE de la médiane (état normal, dit).
+  neuf_vefa?: { grandeur: string; grain: string; fenetre_ans: number; n: number
+    seuil_effectif: number; effectif_suffisant: boolean
+    mediane_prix_m2_bati: number | null; insuffisant_libelle: string | null
+    reserve: string } | null
 }
 
 export interface IcdBlock {

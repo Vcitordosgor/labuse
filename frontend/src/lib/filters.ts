@@ -225,6 +225,11 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
   // portant `sv=nu_pm` ou `sv=cession` (signaux supprimés) s'ouvre sans erreur, la clé est
   // ignorée (jamais un filtre actif invisible ; le backend, lui, reste intact).
   f.signaux = (f.signaux as string[]).filter((s) => SIGNAUX_VALIDES.includes(s))
+  // M101 A2 : les clés legacy d'état du sol (bati_marginal/bati_sature/bati_revele) se PLIENT
+  // sur 'bati' — un vieux lien reste actif (jamais un no-op silencieux), le backend fait de même.
+  f.etatSol = Array.from(new Set((f.etatSol as string[])
+    .map((s) => (['bati_marginal', 'bati_sature', 'bati_revele'].includes(s) ? 'bati' : s))
+    .filter((s) => ['nu', 'bati'].includes(s))))
   // M55-D stage 6 : le flag binaire « Avec événement (BODACC) » est REMPLACÉ par le groupe
   // Signaux de vie — un vieux lien `ev=1` mappe vers le signal « procédure collective ».
   if (p.get('ev') === '1') {

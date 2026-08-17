@@ -79,17 +79,25 @@ def compute_medianes_secteur(session: Session) -> dict:
         INSERT INTO dvf_secteur_medianes
           (secteur, type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre)
         WITH mutations AS (            -- 1 vente = 1 observation (toutes lignes agrégées)
+          -- M101 B2 (arbitrage Vic) : « Vente terrain à bâtir » (995 actes) ENTRE dans la médiane
+          -- TERRAIN — un acte qui se déclare terrain à bâtir EST une vente de terrain nu ; l'exclure
+          -- jetait la donnée la plus qualifiée (écart mesuré ≤ +11 %/commune, AUDIT_M101 §B2). Les
+          -- VTB portant du bâti (34/995) n'entrent NULLE PART (leur bâti n'est pas arbitré). VEFA /
+          -- Échange / Adjudication / Expropriation restent EXCLUES (neuf → profil neuf_vefa dédié ;
+          -- le reste = hors marché de gré à gré) : rien d'autre n'entre sans arbitrage.
           SELECT id_mutation,
                  max(valeur_fonciere)                 AS valeur,
                  sum(COALESCE(surface_reelle_bati,0)) AS bati_m2,
                  sum(terrain_par_parcelle)            AS terrain_m2,
                  bool_or(type_local = 'Maison')       AS a_maison,
-                 bool_or(type_local = 'Appartement')  AS a_appart
-          FROM (SELECT id_mutation, valeur_fonciere, surface_reelle_bati, type_local,
+                 bool_or(type_local = 'Appartement')  AS a_appart,
+                 bool_or(nature_mutation = 'Vente terrain à bâtir') AS vtb
+          FROM (SELECT id_mutation, valeur_fonciere, surface_reelle_bati, type_local, nature_mutation,
                        max(COALESCE(surface_terrain,0)) OVER (PARTITION BY id_mutation, id_parcelle)
                          / greatest(count(*) OVER (PARTITION BY id_mutation, id_parcelle), 1)
                          AS terrain_par_parcelle
-                FROM dvf_mutations_parcelle WHERE nature_mutation = 'Vente') x
+                FROM dvf_mutations_parcelle
+                WHERE nature_mutation IN ('Vente', 'Vente terrain à bâtir')) x
           GROUP BY id_mutation
         ),
         typees AS (
@@ -103,6 +111,7 @@ def compute_medianes_secteur(session: Session) -> dict:
                       WHEN bati_m2 = 0 AND terrain_m2 > 0 THEN valeur / terrain_m2
                       END AS prix_m2
           FROM mutations WHERE valeur IS NOT NULL AND valeur > 1000   -- ventes à 1 € symbolique écartées
+            AND (NOT vtb OR bati_m2 = 0)   -- M101 B2 : la VTB = terrain nu SEULEMENT, jamais le bâti
         ),
         secteurs AS (                   -- la mutation compte dans chaque secteur touché
           SELECT DISTINCT substring(d.id_parcelle FROM 1 FOR 10) AS secteur, t.*
@@ -119,3 +128,34 @@ def compute_medianes_secteur(session: Session) -> dict:
     row = session.execute(text(
         "SELECT count(*), count(DISTINCT secteur), sum(n_ventes) FROM dvf_secteur_medianes")).one()
     return {"lignes": row[0], "secteurs": row[1], "ventes": int(row[2] or 0)}
+
+
+NEUF_VEFA_FENETRE_ANS = 3   # M101 B2 — même fenêtre que la référence secteur (dvf_profils.yaml)
+
+
+def neuf_vefa_commune(session: Session, insee: str) -> dict:
+    """M101 B2 (arbitrage Vic) — le NEUF que l'ACTE déclare : médiane €/m² bâti des ventes
+    « Vente en l'état futur d'achèvement » de la COMMUNE, fenêtre 3 ans. Jamais une inférence
+    (DVF ne porte aucune année de construction — AUDIT_M101 §B1.2) ; le complément non-VEFA ne
+    s'appelle JAMAIS « ancien ». Grain commune : la VEFA n'atteint le seuil que dans 11/24
+    communes (§B1.3) — l'absence est un état normal du profil, dite, pas un trou. Le SEUIL
+    d'effectif est appliqué par marche_service (config dvf_profils.yaml, un critère un endroit).
+    Renvoie {n, mediane_prix_m2_bati|None, fenetre_ans}."""
+    row = session.execute(text(f"""
+        WITH mut AS (
+          SELECT id_mutation, max(valeur_fonciere) AS valeur,
+                 sum(COALESCE(surface_reelle_bati,0)) AS bati
+          FROM dvf_mutations_parcelle
+          WHERE code_commune = :insee
+            AND nature_mutation = 'Vente en l''état futur d''achèvement'
+            AND date_mutation >= (now() - interval '{NEUF_VEFA_FENETRE_ANS} years')::date
+          GROUP BY id_mutation)
+        SELECT count(*) FILTER (WHERE bati > 0 AND valeur > 1000
+                                AND valeur/bati BETWEEN 50 AND 20000) AS n,
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur/bati)
+                 FILTER (WHERE bati > 0 AND valeur > 1000
+                         AND valeur/bati BETWEEN 50 AND 20000) AS med
+        FROM mut"""), {"insee": insee}).one()
+    n = int(row[0] or 0)
+    return {"n": n, "mediane_prix_m2_bati": round(float(row[1])) if row[1] is not None else None,
+            "fenetre_ans": NEUF_VEFA_FENETRE_ANS}

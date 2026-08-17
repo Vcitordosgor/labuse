@@ -1027,17 +1027,23 @@ def _q_v2_where(run_label: str, score_min: int | None,
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
     if etat_sol:
-        # État du sol : nu/marginal dérivés de l'emprise bâtie (parcel_residuel), saturé/révélé du tier.
-        cl = [x.strip() for x in etat_sol.split(",") if x.strip()]
+        # M101 A2 (arbitrage Vic) : DEUX entrées seulement — « Terrain nu » / « Terrain bâti ».
+        # Les tiers internes (saturé/révélé) sortent de l'interface de filtrage : c'est une
+        # information de FIABILITÉ (désaccord BD TOPO/CoSIA), servie en fiche via le motif,
+        # jamais un filtre. PARTITION EXACTE sur UN critère (emprise bâtie, seuil 5 % existant) :
+        # nu = pas d'emprise ≥ 5 % connue ; bâti = emprise ≥ 5 % — disjoints, somme = parc
+        # filtrable (contrôle chiffré Phase C). Clés legacy (bati_marginal/sature/revele des
+        # URL/API antérieures) pliées sur 'bati' — jamais un no-op silencieux.
+        cl = {x.strip() for x in etat_sol.split(",") if x.strip()}
+        if cl & {"bati_marginal", "bati_sature", "bati_revele"}:
+            cl = (cl - {"bati_marginal", "bati_sature", "bati_revele"}) | {"bati"}
         sub = []
         if "nu" in cl:
-            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id AND COALESCE(rs.taux_emprise_pct,0) < 5)")
-        if "bati_marginal" in cl:
-            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id AND rs.taux_emprise_pct >= 5 AND rs.taux_emprise_pct < 25)")
-        if "bati_sature" in cl:
-            sub.append("s2.tier = 'declasse_bati_sature'")
-        if "bati_revele" in cl:
-            sub.append("s2.tier = 'declasse_bati_revele'")
+            sub.append("NOT EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
+                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
+        if "bati" in cl:
+            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
+                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
     if capacite_min is not None:
@@ -2425,12 +2431,21 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
+        # M101 B2 — le NEUF (VEFA) de la commune, par le point d'appel unique (profil neuf_vefa,
+        # config dvf_profils.yaml). Sous le seuil : « échantillon insuffisant » AVEC la grandeur —
+        # l'absence est un état normal de ce profil (11/24 communes servables, mesuré).
+        from ..marche_service import DVF_NEUF_VEFA, marche_dvf as _marche_dvf
+        try:
+            neuf_vefa = _marche_dvf(db, idu, profil=DVF_NEUF_VEFA)
+        except Exception:  # noqa: BLE001 — le neuf VEFA ne casse jamais la fiche
+            neuf_vefa = None
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
                                    if dvf_last["date_mutation"] else None}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
+            "neuf_vefa": neuf_vefa,
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
         }
     # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
