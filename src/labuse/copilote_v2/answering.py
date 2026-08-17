@@ -80,7 +80,16 @@ RÈGLES :
   couverte par un outil LABUSE (une procédure PLU, un règlement de zone, un prix/délai/marché, des
   parcelles… restent des outils internes, JAMAIS le web), ET (c) le sujet reste dans la barrière :
   foncier/immobilier/urbanisme/collectivités et acteurs de LA RÉUNION. Hors barrière → pas le web.
-SORTIE : {{"tool": <nom|null>, "args": {{...}}, "refus": <"proprietaire_pp"|"projection"|"aucun_outil"|null>}}"""
+- CRITÈRES NON APPLIQUÉS (M109, RÈGLE DURE) : `compter_parcelles` n'accepte QUE commune, surface
+  (min/max), tier (brûlante/chaude/opportunités) et personne_morale. Si la demande porte un AUTRE
+  critère de tri de parcelles — zonage/zone PLU, constructibilité, événement/procédure/BODACC,
+  friche, défiscalisation, copropriété, sans adresse, renouvellement urbain, budget/prix, densité…
+  — tu choisis quand même `compter_parcelles` avec les paramètres applicables, MAIS tu listes ce
+  ou ces critères dans "criteres_non_appliques" (en langage client, ex. "renouvellement urbain",
+  "zone U", "constructibilité"). NE JAMAIS faire passer un critère non applicable pour appliqué.
+  Rien à signaler → [].
+SORTIE : {{"tool": <nom|null>, "args": {{...}}, "refus": <"proprietaire_pp"|"projection"|"aucun_outil"|null>,
+  "criteres_non_appliques": [<critères de la demande que l'outil ne peut pas appliquer>]}}"""
 
 FORMULE_SYSTEM = """Tu es le copilote foncier de LABUSE. Formule une réponse en français, brève et claire, à la
 question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Règles STRICTES :
@@ -92,8 +101,22 @@ question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Rè
   mémoire ».
 - Cite la source entre parenthèses à la fin (champ "source"), avec le millésime s'il est fourni.
 - Si le résultat porte une "reserve" (couverture partielle), INCLUS-la fidèlement — ne la tais jamais.
+- Si un champ "criteres_non_appliques" est fourni, ta réponse ne doit PAS prétendre que ces critères
+  sont appliqués (le système ajoute lui-même l'avertissement). Réponds sur les critères APPLIQUÉS
+  seulement, sans habiller le chiffre du critère manquant.
 - Pas de conseil juridique, pas de projection, pas de superlatif. Le ton est sobre et honnête.
 Réponds seulement la réponse au client, sans préambule ni balises."""
+
+
+def _avert_cna(cna: list[str]) -> str:
+    """M109 — l'avertissement DÉTERMINISTE des critères lâchés (jamais laissé au hasard du modèle) :
+    le chiffre est servi POUR CE QU'IL EST, le critère non appliqué est nommé."""
+    if not cna:
+        return ""
+    crit = ", ".join(f"« {c} »" for c in cna)
+    pl = "s" if len(cna) > 1 else ""
+    return (f" ⚠️ Le critère{pl} {crit} n'est pas encore interrogeable ici : ce chiffre couvre les "
+            "critères appliqués seulement, pas celui-là.")
 
 
 def _reply(text: str, intent: str, **extra: Any) -> dict:
@@ -170,7 +193,10 @@ def _select_tool(db: Session, message: str, params: dict) -> dict:
     if res.degraded:
         return {"tool": None, "refus": "_infra"}
     data = _extract_json(res.text) or {}
-    return {"tool": data.get("tool"), "args": data.get("args") or {}, "refus": data.get("refus")}
+    cna = data.get("criteres_non_appliques") or []
+    cna = [str(c).strip() for c in cna if str(c or "").strip()][:5] if isinstance(cna, list) else []
+    return {"tool": data.get("tool"), "args": data.get("args") or {}, "refus": data.get("refus"),
+            "criteres_non_appliques": cna}
 
 
 # coercition des args du modèle vers les kwargs typés de chaque outil
@@ -202,9 +228,11 @@ def _clean_args(tool: str, args: dict) -> dict:
 
 def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = None) -> str:
     from . import registre_faits
+    cna = res.criteres_non_appliques or []
     payload = {"question": message, "outil": res.tool, "resultat": res.data,
                "valeur": res.valeur, "source": res.source, "millesime": res.millesime,
-               "reserve": res.reserve if res.partiel else None}
+               "reserve": res.reserve if res.partiel else None,
+               "criteres_non_appliques": cna or None}
     if faits_fil:
         # M102-B3 — les faits du fil (chiffres déjà servis, avec outil/source/millésime) : le
         # formuler ne peut reprendre QUE ceux-là, le verrou le vérifie contre le registre.
@@ -216,10 +244,17 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
         # gabarit sourcé (jamais l'affirmation douteuse) — inclut la réserve si partielle
         base = (f"{res.valeur}" if res.valeur is not None
                 else json.dumps(res.data, ensure_ascii=False, default=str))
-        txt = f"{base} ({res.source}{' · ' + res.millesime if res.millesime else ''})."
+        prose = f"{base} ({res.source}{' · ' + res.millesime if res.millesime else ''})."
         if res.partiel and res.reserve:
-            txt += " " + res.reserve
-        return txt
+            prose += " " + res.reserve
+    # M109 — LE VERROU ÉTENDU : un chiffre servi doit correspondre à la demande INTERPRÉTÉE. Si un
+    # critère a été lâché, la réponse le DIT — déterministe, jamais laissé au modèle. Le sous-total
+    # muet n'est plus possible : si la prose ne dit pas déjà l'absence (marqueur), on l'ajoute ; le
+    # chemin gabarit (anti-invention échouée) ne dit jamais rien → l'avertissement y tombe toujours.
+    if cna and not any(w in prose.lower() for w in
+                       ("pas pu être appliqué", "pas pu etre applique", "non appliqué", "non applique",
+                        "pas appliqué", "pas applique", "pas interrogeable")):
+        return prose + _avert_cna(cna)
     return prose
 
 
@@ -253,6 +288,11 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     if (route.intent in ("QUESTION", "OUTIL", "PROJET", "VEILLE")
             and not rep.get("degraded") and rep.get("refus") != "hors_sujet"):
         compris = _compris_fr(route.intent, route.params or {})
+        # M109 — le récap dit ce qui est appliqué ET ce qui ne l'est pas : un critère lâché est
+        # nommé DANS le récap (pas seulement dans la réponse), jamais passé sous silence.
+        cna = rep.get("criteres_non_appliques") or []
+        if compris and cna:
+            compris = compris.rstrip(".") + " — critère non appliqué : " + ", ".join(cna) + "."
         if compris:
             rep.setdefault("compris", compris)
     return rep
@@ -326,6 +366,9 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
             return _reply(f"{d['reponse']}\n\n{marque}", intent, tool="recherche_web", web=True,
                           sources=d["domaines"])
         res = OUTILS[tool](db, **_clean_args(tool, sel.get("args") or {}))
+        # M109 — les critères de la demande que l'outil ne peut pas appliquer voyagent avec le
+        # résultat (le sélecteur les a nommés) : le formuler et le récap DOIVENT les dire.
+        res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
         if not res.ok:
             return _sans_outil(db, message, params, intent, motif=res.refus)
         text = _formuler(db, message, res, faits_fil)
@@ -333,7 +376,8 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         # persisté avec la conversation — jamais servi au client).
         from . import registre_faits
         return _reply(text, intent, refus=None, tool=tool, sources=[res.source],
-                      partiel=res.partiel, _faits_tour=registre_faits.extraire_faits(res))
+                      partiel=res.partiel, criteres_non_appliques=res.criteres_non_appliques,
+                      _faits_tour=registre_faits.extraire_faits(res))
 
     if intent == "OUTIL":
         return _outil(db, message, params)

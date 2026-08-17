@@ -28,8 +28,11 @@ const EXEMPLES: { intent: string; txt: string }[] = [
   { intent: 'Chercher', txt: 'Quelles parcelles appartiennent à la SIDR ?' },
   { intent: 'Chercher', txt: 'Combien de parcelles à Saint-Paul ?' },
   { intent: 'Veiller', txt: 'Préviens-moi de tout nouveau permis à Saint-Paul' },
-  { intent: 'Vérifier', txt: 'Qui est le maire de Saint-Denis ?' },
-  { intent: 'Vérifier', txt: 'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?' },
+  // M109 — étiquette corrigée : ces deux exemples routent QUESTION→recherche web (renseignement),
+  // PAS l'intention VÉRIFICATION (qui = évaluer une parcelle face à un prix). L'ancien libellé
+  // « Vérifier » créait une fausse prémisse (audit M108 §3ter.1).
+  { intent: 'Renseigner', txt: 'Qui est le maire de Saint-Denis ?' },
+  { intent: 'Renseigner', txt: 'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?' },
   { intent: 'Agir', txt: 'Je veux écrire au propriétaire de cette parcelle' },
 ]
 

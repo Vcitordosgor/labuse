@@ -41,6 +41,21 @@ def juger(item: dict, rep: dict, oracle) -> tuple[bool, str]:
             return (False, f"réserve tue (manque {manques}) dans: {text[:110]}")
         return (True, "")
 
+    if cat == "cna":
+        # M109 — critère non applicable : le sous-compte est servi, MAIS le critère lâché est
+        # NOMMÉ et marqué comme absent (jamais le sous-total muet). Trois conditions.
+        ok_num = oracle is None or _num_match(oracle, text)
+        manques = [m for m in item.get("manque", []) if _fold(m) not in ft]
+        marqueur = any(w in ft for w in ("pas applique", "non applique", "pas interrogeable",
+                                         "pas encore interrogeable", "n'est pas encore"))
+        if not ok_num:
+            return (False, f"sous-compte {oracle} absent de: {text[:90]}")
+        if manques:
+            return (False, f"critère lâché non nommé (manque {manques}): {text[:110]}")
+        if not marqueur:
+            return (False, f"critère lâché servi SANS marqueur d'absence (miscompte muet): {text[:110]}")
+        return (True, "")
+
     if cat == "refus_pp":
         ok = rep.get("refus") == "proprietaire_pp" or "publicite fonciere" in ft
         return (ok, f"refus PP attendu, obtenu: {text[:90]}")
