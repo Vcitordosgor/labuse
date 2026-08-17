@@ -1,4 +1,10 @@
 # LA BUSE — DPE ADEME hebdo (J+2) : flux continu, upsert numero_dpe idempotent ; le compteur de
 # réveil du badge en réserve (F/G ∩ mono ∩ non-écarté ≥ 200) est réévalué par les dérivés.
+# Mardi 05:20 UTC (09:20 Réunion) — INCHANGÉ M98 : hebdo, hors chemin critique du digest.
+# NOTE : l'ingestion (~10-20 min) chevauche le backup de 05:30 le mardi — pg_dump prend un
+# instantané cohérent ; l'état complet ingéré est dans le dump du lendemain.
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/dpe /etc/cron.d/dpe
 SHELL=/bin/sh
-20 5 * * 2 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-dpe >> /var/log/labuse/dpe.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dpe.log 2>&1
+20 5 * * 2 labuse flock -n -E 200 /run/lock/labuse-dpe.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-dpe >> /var/log/labuse/dpe.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dpe.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) dpe : passage sauté : exécution précédente en cours" >> /var/log/labuse/dpe.log

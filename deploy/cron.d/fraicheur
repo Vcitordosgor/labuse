@@ -1,0 +1,10 @@
+# LA BUSE — LA SENTINELLE DE FRAÎCHEUR (M84) : un décrochage doit se DIRE (jamais six
+# semaines de silence). `labuse check-fraicheur` sort en code 1 si une source dépasse 2× sa
+# cadence → cron mail. M98 (Phase 4) : sortait du crontab utilisateur (doc de déploiement),
+# devient le 10e fichier cron.d — un seul mécanisme, le crontab utilisateur reste vide.
+# 06:30 UTC (10:30 Réunion) — APRÈS tout le Train J+1 : la sentinelle juge la nuit complète.
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/fraicheur /etc/cron.d/fraicheur
+SHELL=/bin/sh
+30 6 * * * labuse flock -n -E 200 /run/lock/labuse-fraicheur.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse check-fraicheur >> /var/log/labuse/check_fraicheur.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) fraicheur : passage sauté : exécution précédente en cours" >> /var/log/labuse/check_fraicheur.log

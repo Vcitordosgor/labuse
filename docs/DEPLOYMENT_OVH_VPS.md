@@ -300,23 +300,15 @@ curl -sS https://app.labuse.immo/healthz
 curl -sS https://app.labuse.immo/readyz          # 200 = schéma + données critiques OK
 ```
 
-Mettre en place la maintenance + les sauvegardes (cron) :
-
-```bash
-# Sauvegarde quotidienne hors dossier applicatif (3h du matin)
-( crontab -l -u labuse 2>/dev/null; \
-  echo '0 3 * * * /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse-backup.log 2>&1' \
-) | crontab -u labuse -
-
-# Maintenance hebdo (VACUUM ANALYZE + audit tailles) — dimanche 4h
-( crontab -l -u labuse 2>/dev/null; \
-  echo '0 4 * * 0 /opt/labuse/app/deploy/scripts/db_maintenance.sh >> /var/log/labuse-maint.log 2>&1' \
-) | crontab -u labuse -
-```
+Maintenance et sauvegardes : **UN SEUL MÉCANISME (M98)** — tout passe par les fichiers versionnés
+`deploy/cron.d/` posés dans `/etc/cron.d/` (voir le Train J+1 ci-dessous, qui les installe TOUS,
+backup et maintenance compris). Le crontab utilisateur (`crontab -u labuse`) reste **VIDE** : deux
+mécanismes, c'est un cron oublié à la prochaine pose. La sauvegarde quotidienne (05:30 UTC) et la
+maintenance hebdo (VACUUM ANALYZE, dimanche 04:00 UTC) vivent dans `deploy/cron.d/backup`.
 
 > `labuse` n'ayant pas de shell, exécuter ces scripts via `sudo -u labuse bash -lc '...'` lors des
-> tests manuels, ou via cron comme ci-dessus. Le mot de passe DB est lu depuis `~labuse/.pgpass`
-> (voir `backup_postgres.sh`) ou depuis `LABUSE_DATABASE_URL`.
+> tests manuels. Le mot de passe DB est lu depuis `~labuse/.pgpass` (voir `backup_postgres.sh`)
+> ou depuis `LABUSE_DATABASE_URL`.
 
 ### Les crons d'ingestion — le « Train J+1 » (OBLIGATOIRE, sinon les sources décrochent)
 
@@ -331,31 +323,39 @@ risque : le jour de la livraison amont, l'ingestion part le jour même.
 # 1) Le répertoire de logs que tous les crons d'ingestion écrivent
 install -d -o labuse -g labuse /var/log/labuse
 
-# 2) Installer les crons d'ingestion (fichiers /etc/cron.d, exécutés par l'utilisateur `labuse`)
+# 2) Installer les DIX crons (fichiers /etc/cron.d, exécutés par l'utilisateur `labuse`) —
+#    ingestions, notifications, backup+maintenance, abuse et la sentinelle de fraîcheur.
+#    M98 : la sentinelle et le backup sont des fichiers cron.d comme les autres — le crontab
+#    utilisateur reste VIDE (un seul mécanisme).
 cd /opt/labuse/app
-for c in sitadel bodacc dpe dvf ban radar notifications; do
+for c in radar sitadel bodacc notifications ban dvf dpe backup abuse fraicheur; do
   install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/$c
 done
 systemctl reload cron    # relit /etc/cron.d
 
-# 3) La SENTINELLE de fraîcheur — un décrochage doit se DIRE (jamais six semaines de silence).
-#    `labuse check-fraicheur` sort en code 1 si une source dépasse 2× sa cadence → cron mail.
-( crontab -l -u labuse 2>/dev/null; \
-  echo '30 6 * * * /opt/labuse/venv/bin/labuse check-fraicheur >> /var/log/labuse/check_fraicheur.log 2>&1' \
-) | crontab -u labuse -
+# 3) La rotation des logs (hebdo, 8 semaines compressées — M98 Phase 3)
+install -o root -g root -m 644 deploy/logrotate.d/labuse /etc/logrotate.d/labuse
 ```
 
 **Ce que chaque cron rejoue, à quelle fréquence, et ce qu'il coûte en temps machine :**
 
-| Cron | Quand | Ingestion | Coût machine (mesuré/estimé) |
+L'ordonnancement M98 : les ingestions quotidiennes passent AVANT les notifications de 03:00 —
+le digest de 7h Réunion parle de la nuit, pas de l'avant-veille. Le backup passe APRÈS toutes
+les écritures de la nuit. Chaque ligne est sous verrou `flock -n` (code 200 = tour sauté,
+journalisé — jamais d'empilement, jamais de saut silencieux).
+
+| Cron (fichier) | Quand (UTC ; Réunion = UTC+4) | Ce qu'il fait | Coût machine (mesuré/estimé) |
 |---|---|---|---|
-| `sitadel` | quotidien 04:15 | `permits_sdes --refresh` (delta, recouvrement 3 mois) + dérivés | ~30-60 s (no-op tant que SDES n'a pas publié ; jour de livraison ~1-2 min) |
-| `bodacc` | quotidien 04:30 | `ingest-bodacc` (12,6k SIREN propriétaires, throttlé) + dérivés | ~3-8 min |
-| `dpe` | hebdo mardi 05:20 | `ingest-dpe` (24 communes, API ADEME throttlée) + dérivés | ~10-20 min |
-| `dvf` | hebdo mercredi 05:00 | `refresh-dvf` (HEAD Last-Modified ; reload si livraison Etalab avril/oct.) | ~5-10 s en no-op ; ~5-10 min le jour d'une livraison semestrielle |
+| `radar` | hebdo lundi 02:00 | `radar-sources` (sondes HEAD/métadonnées, zéro téléchargement) — l'amont AVANT tout | ~1 min |
+| `sitadel` | quotidien 02:15 (+ dérivés hebdo lundi 03:45) | `permits_sdes --refresh` (delta, recouvrement 3 mois) + dérivés | ~30-60 s (no-op tant que SDES n'a pas publié ; jour de livraison ~1-2 min) |
+| `bodacc` | quotidien 02:30 | `ingest-bodacc` (12,6k SIREN propriétaires, throttlé) + dérivés | ~3-8 min |
+| `notifications` | quotidien **03:00 = 07:00 Réunion** | suivis → veilles → fraîcheur → purge 90 j → **digest e-mail** | ~10-30 s |
 | `ban` | mensuel le 5 à 03:30 | `ingest-ban --download` (remplacement complet idempotent) | ~5-15 min |
-| `radar` | hebdo lundi 02:40 | `radar-sources` (sondes HEAD/métadonnées, zéro téléchargement) | ~1 min |
-| `notifications` | quotidien **03:00 UTC = 07:00 Réunion** | veilles → fraîcheur → purge 90 j → **digest e-mail** | ~10-30 s |
+| `backup` | quotidien 05:30 (+ maintenance dimanche 04:00) | dump -Fc + rotation ; VACUUM ANALYZE hebdo | ~2-5 min |
+| `dvf` | hebdo mercredi 05:00 | `refresh-dvf` (HEAD Last-Modified ; reload si livraison Etalab avril/oct.) | ~5-10 s en no-op ; ~5-10 min le jour d'une livraison semestrielle |
+| `dpe` | hebdo mardi 05:20 | `ingest-dpe` (24 communes, API ADEME throttlée) + dérivés | ~10-20 min |
+| `abuse` | quotidien 06:00 | `abuse-scan` (patterns de scraping de la veille) | ~1 min |
+| `fraicheur` | quotidien 06:30 | `check-fraicheur` (sentinelle : code 1 si une source dépasse 2× sa cadence → cron mail) — juge la nuit COMPLÈTE | ~5 s |
 
 ### L'e-mail transactionnel — Brevo (M85)
 
@@ -390,7 +390,7 @@ DKIM** (`brevo1._domainkey`, `brevo2._domainkey`) fournis, et un **DMARC** (`_dm
   dense, une colonne, sans carte ni bouton ni image), `List-Unsubscribe` en **One-Click (RFC 8058)** et
   **aucun** en-tête de campagne. C'est déjà en place — ne rien rajouter qui « fasse newsletter ».
 
-Charge quotidienne cumulée : ~10 min ; pic hebdo (ban le 5, dpe le mardi) : ~30 min. Négligeable
+Charge quotidienne cumulée : ~10 min ; pics (ban le 5 du mois, dpe le mardi) : ~30 min. Négligeable
 sur le VPS ; les fenêtres sont décalées la nuit pour ne pas se chevaucher.
 
 **Vérifier que le Train tourne (le jour J et à chaque revue) :**

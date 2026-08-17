@@ -2,7 +2,9 @@
 # régularité machinale, volume nocturne, ratio consultations/exports) sur la journée
 # écoulée → abuse_scores + alertes admin. AUCUN blocage automatique (faux positifs) :
 # le gel est une décision manuelle de Vic (table acces_gels).
+# 06:00 UTC (10:00 Réunion) — INCHANGÉ M98 : hors chemin critique.
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/abuse /etc/cron.d/abuse
 SHELL=/bin/sh
-0 6 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse abuse-scan >> /var/log/labuse/abuse_scan.log 2>&1
+0 6 * * * labuse flock -n -E 200 /run/lock/labuse-abuse.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse abuse-scan >> /var/log/labuse/abuse_scan.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) abuse : passage sauté : exécution précédente en cours" >> /var/log/labuse/abuse_scan.log
