@@ -109,8 +109,12 @@ def _facts_synthese(out: dict, core_mod):
     from .briques_pdf import score_e_affiche
     sa = score_e_affiche(out)
     if sa:
+        # M97 G2 : la provenance de la charge entre dans le FAIT synthétisé — la prose IA ne peut
+        # pas attribuer au bilan une charge qui vient du repli Score É (bilan indisponible).
+        prov = ("charge du bilan à rebours" if sa["charge_du_bilan"]
+                else "charge estimée par le Score É, bilan complet indisponible")
         facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} "
-                           f"(prix de sortie neuf, niveau {sa['niveau_prix']})", "ESTIME")
+                           f"({prov} ; prix de sortie neuf, niveau {sa['niveau_prix']})", "ESTIME")
     perm = out.get("permits")
     if perm and perm.get("n"):
         facts["permis_voisins"] = F(f"{perm['n']} permis de construire dans le voisinage récent", "SOURCE")
