@@ -1518,8 +1518,9 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
-# M13-B1 — normalisation accents pour la recherche (unaccent n'est pas installé sur ce serveur).
-_ADR_ACCENTS = ("àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ", "aaaeeeeiioouuucAAAEEEEIIOOUUUC")
+# M13-B1 → M103 P2 : la table de pliage vit désormais dans constants.RECHERCHE_ACCENTS
+# (partagée avec la recherche propriétaire — un critère, un endroit).
+from ..constants import RECHERCHE_ACCENTS as _ADR_ACCENTS  # noqa: E402 — alias local conservé
 
 
 @app.get("/adresses/autocomplete")

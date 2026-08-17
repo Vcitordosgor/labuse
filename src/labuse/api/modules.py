@@ -189,14 +189,20 @@ def division_list(min_score: int = 0, limit: int = 300, commune: str | None = No
 
 @router.get("/patrimoine/search")
 def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
+    # M103 P2 (défaut M100 n°3) : la colonne MAJIC est 100 % désaccentuée (82 701 lignes) et
+    # ILIKE ne plie pas les accents — « Société » rendait 0 en silence. LE MÊME pliage
+    # (constants.sql_plie) s'applique au paramètre ET à la colonne (motif NDé M99-B, déjà en
+    # place à l'autocomplétion d'adresses).
+    from ..constants import params_pliage, sql_plie
     if len(q.strip()) < 2:
         return []
-    rows = db.execute(text("""
+    rows = db.execute(text(f"""
         SELECT siren, max(denomination) AS nom, count(*) AS n
         FROM parcelle_personne_morale
-        WHERE siren IS NOT NULL AND (denomination ILIKE :q OR siren LIKE :qs)
+        WHERE siren IS NOT NULL
+          AND ({sql_plie('denomination')} LIKE {sql_plie("'%' || :q || '%'")} OR siren LIKE :qs)
         GROUP BY siren ORDER BY n DESC LIMIT 12"""),
-        {"q": f"%{q}%", "qs": f"{q}%"}).mappings().all()
+        {"q": q, "qs": f"{q}%", **params_pliage()}).mappings().all()
     return [dict(r) for r in rows]
 
 
