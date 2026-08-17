@@ -86,6 +86,10 @@ FORMULE_SYSTEM = """Tu es le copilote foncier de LABUSE. Formule une réponse en
 question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Règles STRICTES :
 - N'invente AUCUN chiffre : tout nombre de ta réponse doit apparaître dans le résultat. Si une valeur
   manque, dis-le, ne la devine pas.
+- Si un champ "faits_du_fil" est fourni (chiffres déjà servis plus tôt dans CETTE conversation), tu
+  peux reprendre UNIQUEMENT un chiffre qui y figure, en citant sa source et son millésime. Un chiffre
+  absent des faits_du_fil ET du résultat d'outil N'EXISTE PAS pour toi — jamais de reprise « de
+  mémoire ».
 - Cite la source entre parenthèses à la fin (champ "source"), avec le millésime s'il est fourni.
 - Si le résultat porte une "reserve" (couverture partielle), INCLUS-la fidèlement — ne la tais jamais.
 - Pas de conseil juridique, pas de projection, pas de superlatif. Le ton est sobre et honnête.
@@ -143,9 +147,14 @@ def _valeurs_autorisees(res) -> set[float]:
     return autor
 
 
-def _anti_invention(prose: str, res) -> bool:
-    """Vrai si tout nombre de la prose est justifié par le résultat (tolérance d'arrondi)."""
+def _anti_invention(prose: str, res, valeurs_fil: set[float] | None = None) -> bool:
+    """Vrai si tout nombre de la prose est justifié par le résultat DU TOUR ou par le REGISTRE
+    DE FAITS DU FIL (M102-B3 — chaque fait du registre vient d'un ToolResult antérieur, avec
+    outil/source/millésime : c'est l'oracle de la reprise). Un nombre dans AUCUN des deux →
+    False → gabarit du tour courant (le chiffre n'est PAS servi, jamais de reprise de mémoire)."""
     autor = _valeurs_autorisees(res)
+    if valeurs_fil:
+        autor = autor | valeurs_fil
     for n in _nombres(prose):
         if n in autor or round(n) in autor or any(abs(n - a) <= 1 for a in autor):
             continue
@@ -191,14 +200,19 @@ def _clean_args(tool: str, args: dict) -> dict:
     return out
 
 
-def _formuler(db: Session, message: str, res) -> str:
+def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = None) -> str:
+    from . import registre_faits
     payload = {"question": message, "outil": res.tool, "resultat": res.data,
                "valeur": res.valeur, "source": res.source, "millesime": res.millesime,
                "reserve": res.reserve if res.partiel else None}
+    if faits_fil:
+        # M102-B3 — les faits du fil (chiffres déjà servis, avec outil/source/millésime) : le
+        # formuler ne peut reprendre QUE ceux-là, le verrou le vérifie contre le registre.
+        payload["faits_du_fil"] = registre_faits.contexte_formuler(faits_fil)
     out = core.complete(db, kind="copilote-formule", model=core.MODEL_REASONING, max_tokens=350,
                         system=FORMULE_SYSTEM, context=payload)
     prose = (out.text or "").strip()
-    if out.degraded or not prose or not _anti_invention(prose, res):
+    if out.degraded or not prose or not _anti_invention(prose, res, registre_faits.valeurs(faits_fil or [])):
         # gabarit sourcé (jamais l'affirmation douteuse) — inclut la réserve si partielle
         base = (f"{res.valeur}" if res.valeur is not None
                 else json.dumps(res.data, ensure_ascii=False, default=str))
@@ -211,7 +225,7 @@ def _formuler(db: Session, message: str, res) -> str:
 
 def answer(db: Session, message: str, history: list[dict] | None = None,
            contexte: dict | None = None, confirme: bool = False,
-           prior_params: dict | None = None) -> dict:
+           prior_params: dict | None = None, faits_fil: list[dict] | None = None) -> dict:
     """Point d'entrée unique du Copilote v2. Retourne un dict prêt à rendre. `confirme=True` : le client
     a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap.
 
@@ -225,7 +239,8 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
-    rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme)
+    rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
+                             faits_fil=faits_fil)
     # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
     # poppé par l'endpoint pour la persistance du fil, jamais servi au client.
     rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
@@ -264,7 +279,7 @@ def _compris_fr(intent: str, params: dict) -> str | None:
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
-                       confirme: bool = False) -> dict:
+                       confirme: bool = False, faits_fil: list[dict] | None = None) -> dict:
     intent = route.intent
     params = route.params
     # §5 Copilote EMBARQUÉ : le contexte visible (la parcelle / la sélection) EST le contexte du
@@ -312,9 +327,12 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         res = OUTILS[tool](db, **_clean_args(tool, sel.get("args") or {}))
         if not res.ok:
             return _sans_outil(db, message, params, intent, motif=res.refus)
-        text = _formuler(db, message, res)
+        text = _formuler(db, message, res, faits_fil)
+        # M102-B3 — les faits numériques de CE tour rejoignent le registre (poppé par l'endpoint,
+        # persisté avec la conversation — jamais servi au client).
+        from . import registre_faits
         return _reply(text, intent, refus=None, tool=tool, sources=[res.source],
-                      partiel=res.partiel)
+                      partiel=res.partiel, _faits_tour=registre_faits.extraire_faits(res))
 
     if intent == "OUTIL":
         return _outil(db, message, params)
