@@ -45,11 +45,64 @@ _TIER_ALIAS = {"opportunites": "brulante,chaude", "opportunité": "brulante,chau
                "reserve": "reserve", "a_creuser": "a_creuser"}
 
 
+# ───────────────────────── garde toponyme (M103 P4, défaut M100 n°5) ─────────────────────────
+# La « normalisation en toponyme réunionnais » ne vivait QUE dans le prompt du routeur — aucune
+# garantie code. Filet EN DUR après le prompt : le nom rendu est rapproché du RÉFÉRENTIEL des 24
+# communes (labuse.communes, jamais recopié ici) par pliage casse + accents + ponctuation +
+# variantes St/Ste → Saint/Sainte. Pas de correspondance → refus HONNÊTE (« je n'ai pas reconnu
+# cette commune »), jamais un résultat vide sans raison. Même fonction de pliage des DEUX côtés
+# (le référentiel est plié par la même _plier_toponyme — motif M99-B, en Python pur ici).
+_TOPO_TRANS = str.maketrans("àâäéèêëïîôöùûüç", "aaaeeeeiioouuuc")
+
+
+def _plier_toponyme(s: str) -> str:
+    import re
+    t = s.lower().translate(_TOPO_TRANS)
+    t = re.sub(r"[^a-z0-9]+", " ", t).strip()
+    t = re.sub(r"\bst\b", "saint", t)
+    t = re.sub(r"\bste\b", "sainte", t)
+    return t.replace(" ", "")
+
+
+def _referentiel_plie() -> dict[str, str]:
+    """{forme pliée: nom officiel} — chaque nom est aussi indexé SANS son article de tête
+    (« plaine des palmistes » → « La Plaine-des-Palmistes ») ; aucune collision sur les 24."""
+    import re
+    from ..communes import load_communes
+    out: dict[str, str] = {}
+    for nom in load_communes():
+        out[_plier_toponyme(nom)] = nom
+        sans_article = re.sub(r"^(le|la|les|l)\s+", "", re.sub(r"[^a-zàâäéèêëïîôöùûüç0-9]+", " ",
+                                                               nom.lower()).strip())
+        cle = _plier_toponyme(sans_article)
+        out.setdefault(cle, nom)
+    return out
+
+
+def resoudre_commune(nom: str | None) -> str | None:
+    """Nom officiel du référentiel, ou None si non reconnu. « st denis », « SAINT-DENIS »,
+    « Sainte Marie » → le toponyme officiel exact ; « Sant-Denys » → None (refus honnête)."""
+    if not nom or not nom.strip():
+        return None
+    return _referentiel_plie().get(_plier_toponyme(nom))
+
+
+def _refus_commune(outil: str, nom: str) -> ToolResult:
+    return ToolResult(outil, ok=False,
+                      refus=f"Je n'ai pas reconnu la commune « {nom} » — précisez parmi les "
+                            "24 communes de La Réunion (ex. Saint-Denis, Le Tampon, L'Étang-Salé).")
+
+
 def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: int | None = None,
                       surface_max: int | None = None, tier: str | None = None,
                       personne_morale: bool = False) -> ToolResult:
     """Compte via la FACETTE canonique `filtre()` (mêmes chiffres que la recherche à l'écran)."""
     from ..api.app import FiltreCriteres, filtre
+    if commune is not None:                          # M103 P4 — filet toponyme, refus honnête
+        resolue = resoudre_commune(commune)
+        if resolue is None:
+            return _refus_commune("compter_parcelles", commune)
+        commune = resolue
     tiers = _TIER_ALIAS.get((tier or "").lower().strip()) if tier else None
     fc = FiltreCriteres(source=RUN, commune=commune,
                         surface_min=int(surface_min) if surface_min is not None else None,
@@ -129,6 +182,10 @@ def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
 def stats_commune(db: Session, *, commune: str) -> ToolResult:
     """Contexte commune via `commune_contexte` (SRU + INSEE logement — chaque bloc sa source)."""
     from ..api.app import commune_contexte
+    resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
+    if resolue is None:
+        return _refus_commune("stats_commune", commune)
+    commune = resolue
     c = commune_contexte(commune, db=db)
     sru = c.get("sru") or {}
     marche = c.get("marche") or {}
@@ -145,6 +202,10 @@ def stats_commune(db: Session, *, commune: str) -> ToolResult:
 def delais_instruction(db: Session, *, commune: str) -> ToolResult:
     """Délai médian d'instruction via `velocite` — la RÉSERVE Sitadel est CITÉE mot pour mot."""
     from ..api.modules import velocite
+    resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
+    if resolue is None:
+        return _refus_commune("delais_instruction", commune)
+    commune = resolue
     v = velocite(fmt="json", nature=None, db=db)
     row = next((r for r in v["communes"] if r["commune"] == commune), None)
     if not row or row.get("delai_median_mois") is None:
@@ -166,6 +227,10 @@ def delais_instruction(db: Session, *, commune: str) -> ToolResult:
 def marche(db: Session, *, commune: str) -> ToolResult:
     """Marché commune via `build_marche_commune` (point de calcul unique, terrain nu M79 inclus)."""
     from ..faisabilite.marche_commune import build_marche_commune
+    resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
+    if resolue is None:
+        return _refus_commune("marche", commune)
+    commune = resolue
     m = build_marche_commune(db, commune)
     lignes = [{"cle": l.get("cle") or l.get("libelle"), "valeur": l.get("valeur"),
                "source": l.get("source"), "millesime": l.get("millesime")}
