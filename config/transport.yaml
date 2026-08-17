@@ -2,10 +2,28 @@
 # Le seuil de dérivation des pôles d'échange vit ICI, jamais en dur (le critère est
 # dit à l'écran : « arrêt desservi par ≥ N lignes », statut Estimé car dérivé).
 pole_echange:
-  # nombre de LIGNES DISTINCTES desservant un même nom d'arrêt pour en faire un pôle dérivé.
+  # nombre de LIGNES DISTINCTES desservant une GRAPPE d'arrêts pour en faire un pôle dérivé.
   # CALIBRÉ SUR MESURE (17/08/2026) : le taux de confirmation par les stations OSM (source
   # indépendante) passe de ~10 % (seuils 4-11) à 53 % au seuil 12, et le volume dérivé (30)
   # rejoint l'ordre de grandeur OSM (42). Sous 12, on fabrique des pôles que rien ne confirme.
-  seuil_lignes: 12
+  # ARBITRAGE M106-B : le dénombrement CUMULE les réseaux d'une même grappe spatiale (un pôle
+  # d'échange EST un lieu où plusieurs réseaux se croisent). RECALIBRÉ CONTRE OSM après le
+  # changement, comme exigé : au seuil 12 cumulé, la confirmation OSM s'effondre à 40 % et des
+  # FANTÔMES apparaissent (corridors de rue à 12-13 lignes, doublons) — le nouveau dénombrement
+  # élargit mécaniquement les comptes, LE SEUIL BOUGE AVEC LUI (dit) : à 14, confirmation 58 %
+  # (> l'étalon 53 % de l'ancien comptage), 19 pôles crédibles (gares, pôles nommés, mairies-
+  # hubs). À 16 : 83 % mais on perd des nœuds réels multi-réseaux. Grille complète : AUDIT_M106B.
+  # CAS TÉMOIN RENVERSÉ PAR LA MESURE : Savanna n'est PAS un nœud multi-réseaux (2 quais, mêmes
+  # 9 lignes Kar'Ouest, aucun autre réseau à ≤ 150 m) — le détecter coûterait seuil 9 = 88 pôles
+  # dont 75 % non confirmés. Constat de donnée, pas un défaut du cumul ; arbitrage à Vic s'il
+  # veut Savanna malgré ce prix.
+  seuil_lignes: 14
+  # rayon (mètres) de la GRAPPE spatiale d'arrêts (DBSCAN) — la RAISON : c'est la distance de
+  # correspondance À PIED entre quais d'un même nœud. Trop petit = les quais d'une gare de part
+  # et d'autre d'une voie ne se cumulent pas ; trop grand = deux arrêts distincts fusionnent en
+  # faux pôle. TESTÉ 100/150/200 m (AUDIT_M106B) : 200 sur-fusionne (confirmation 33 %),
+  # 100 et 150 quasi équivalents (63 % vs 58 % au seuil 14) — 150 retenu (une correspondance
+  # à pied réelle dépasse souvent 100 m entre quais d'une gare).
+  rayon_grappe_m: 150
   # rayon (mètres) de la mesure de concordance OSM ↔ dérivé GTFS — une contradiction se DIT
   rayon_concordance_m: 300

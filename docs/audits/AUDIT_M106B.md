@@ -84,6 +84,50 @@ pour arbitrage, AUCUN ajustement fait :
 - piste pour l'arbitrage : cumul inter-réseaux par grappe spatiale (~150 m)
   avant seuil — change la calibration, donc décision de Vic.
 
+### 4-bis. ARBITRAGE APPLIQUÉ : le cumul par grappe, recalibré (17/08/2026)
+
+La dérivation cumule désormais les lignes DISTINCTES (`réseau:ligne`, union —
+jamais une somme qui double-compte) d'une grappe spatiale DBSCAN. Seuil ET rayon
+en config avec leur raison ; le critère complet voyage avec la donnée jusqu'à la
+légende (« arrêts groupés à ≤ 150 m desservis par ≥ 14 lignes, tous réseaux
+cumulés »).
+
+**Recalibrage contre OSM (condition 1 de l'arbitrage)** — grille mesurée :
+
+| rayon | seuil | pôles dérivés | confirmés OSM | taux | multi-réseaux |
+|---|---|---|---|---|---|
+| 100 m | 12 | 39 | 17 | 44 % | 15 |
+| 100 m | 14 | 19 | 12 | 63 % | 11 |
+| 100 m | 16 | 12 | 10 | 83 % | 9 |
+| 150 m | 12 | 42 | 17 | 40 % | 16 |
+| **150 m** | **14** | **19** | **11** | **58 %** | **11** |
+| 150 m | 16 | 12 | 10 | 83 % | 9 |
+| 150 m | 18 | 9 | 9 | 100 % | 8 |
+| 200 m | 12 | 36 | 12 | 33 % | — (sur-fusion) |
+
+**Le nouveau dénombrement refabrique des fantômes au seuil 12** (confirmation
+40 % ; « Rue Frédéric Badré », « Paris », deux « Centhor », trois pôles à
+Plateau Caillou — des corridors où beaucoup de lignes passent, pas des nœuds) →
+**le seuil bouge avec le dénombrement, et on le dit : 12 → 14** (confirmation
+58 % > l'étalon 53 % de l'ancien comptage ; les 19 retenus sont des gares, des
+pôles nommés et des mairies-hubs, 11 multi-réseaux). Rayon : 200 sur-fusionne
+(33 %), 100 et 150 quasi équivalents — **150 retenu** (une correspondance à pied
+entre quais d'une gare dépasse souvent 100 m).
+
+**CAS TÉMOIN RENVERSÉ PAR LA MESURE.** Savanna n'est PAS détecté — et ne peut
+pas l'être par le cumul : sa grappe réelle (150 m) = 2 quais desservis par LES
+MÊMES 9 lignes Kar'Ouest (l'union reste 9 ; Car Jaune ne s'y arrête pas — le
+plus proche arrêt Car Jaune est « Pont de l'Étang », à 275 m, un nœud distinct).
+La prémisse « Savanna = nœud multi-réseaux raté par le comptage » est donc
+FAUSSE dans la donnée GTFS. Le prix pour le détecter par le seuil : **9 lignes →
+88 pôles dont 75 % non confirmés par OSM** (mesuré). Constat de donnée, pas un
+défaut du cumul — si Vic veut Savanna malgré ce prix, c'est un nouvel arbitrage
+(ou une station OSM à faire relever sur le terrain, qui le rendrait Sourcé).
+
+Trois tests gravent la définition (tests/test_transport_poles.py) : cumul
+inter-réseaux dans une grappe · union jamais une somme (le cas Savanna) ·
+pas de cumul hors grappe.
+
 ## 5. Vérification (Phase 4)
 
 - Captures clair + sombre, tous réseaux + axes actifs : réseaux distinguables
