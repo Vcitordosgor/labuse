@@ -385,6 +385,10 @@ export interface CopiloteV2Reponse {
   // M107 — le BRIEF EFFECTIF composé du fil (serveur) : le récap et le run repartent de lui,
   // jamais de la réponse nue (« 15 logements » seul perdait la commune du tour d'avant).
   brief_effectif?: string
+  // M112 — GUIDAGE vers les surfaces (portes cliquables, jamais « rendez-vous dans X ») :
+  carte_filtre?: { commune: string | null; filtres: Record<string, unknown>; libelle: string } | null
+  surveillance?: { volet: 'parcelles' | 'secteurs' | 'criteres' } | null
+  document?: { kind: string; idu: string; libelle: string } | null
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>

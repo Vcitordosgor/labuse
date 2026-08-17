@@ -241,6 +241,18 @@ def _clean_args(tool: str, args: dict) -> dict:
     return out
 
 
+def _reply_compte(db: Session, message: str, res, faits_fil, intent: str) -> dict:
+    """Réponse d'un comptage : la prose + le registre + la PORTE CARTE FILTRÉE (M112 P2.1) —
+    partagée par la QUESTION « combien de… » et la demande VISUELLE « montre-moi les… »."""
+    text = _formuler(db, message, res, faits_fil)
+    from . import registre_faits
+    return _reply(text, intent, refus=None, tool=res.tool, sources=[res.source],
+                  partiel=res.partiel, criteres_non_appliques=res.criteres_non_appliques,
+                  criteres_appliques=(res.data or {}).get("criteres_labels") or [],
+                  carte_filtre=_carte_depuis_compte(res),
+                  _faits_tour=registre_faits.extraire_faits(res))
+
+
 def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = None) -> str:
     from . import registre_faits
     cna = res.criteres_non_appliques or []
@@ -358,18 +370,31 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         if contexte.get("selection") and not params.get("selection"):
             params["selection"] = contexte["selection"]
 
+    # M110/M112 — CONCEPTS-OUTILS du registre reconnus AVANT tout (même si le routeur a deviné une
+    # clarification, une recherche vague ou un HORS_SUJET) : « bascules du mois », « où investir »,
+    # « parcelles fantômes »… routent vers l'OUTIL (porte cliquable, mécanique M102). Les outils
+    # EXISTENT — un mot-clé spécifique ne matche jamais un vrai hors-sujet.
+    concept = _match_concept(message)
+    if concept:
+        module, label = concept
+        return _reply(f"Je peux ouvrir l'outil {label}.", "OUTIL", porte=module, prefill=None)
+
+    # M112 P2.3 — DOCUMENTS : « fais-moi le dossier banquier de cette parcelle » → porte vers
+    # l'export, IDU résolu (params ou contexte embarqué). Sans IDU → on demande (champ M107).
+    doc = _match_document(message)
+    if doc:
+        kind, label = doc
+        idu = params.get("idu") or (contexte or {}).get("idu")
+        if not idu:
+            return _reply(f"Pour éditer le {label}, donnez-moi l'IDU de la parcelle (14 caractères).",
+                          "OUTIL", clarification=True)
+        return _reply(f"Je peux éditer le {label} de la parcelle {idu}.", "OUTIL",
+                      document={"kind": kind, "idu": idu, "libelle": label})
+
     # §M78-bis 2d : RECHERCHE/VERIFICATION ne court-circuitent PAS sur la clarification du routeur — elle
     # ALIMENTE leur récap (qui pose une clarification COURTE, ≤ 4 options). Pas de double question.
     if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION"):
         return _reply(route.clarification, intent, clarification=True)
-
-    # M110 — CONCEPTS-OUTILS du registre reconnus quel que soit l'intent deviné (« parcelles
-    # fantômes », « bailleurs sociaux ») : le Copilote route vers l'OUTIL (porte cliquable, mécanique
-    # M102) au lieu d'une recherche vague ou d'un « je ne comprends pas ». Les deux outils EXISTENT.
-    concept = _match_concept(message)
-    if concept and intent in ("RECHERCHE", "OUTIL", "QUESTION"):
-        module, label = concept
-        return _reply(f"Je peux ouvrir l'outil {label}.", "OUTIL", porte=module, prefill=None)
 
     if intent == "HORS_SUJET":
         return _reply(HORS_SUJET, intent, refus="hors_sujet")
@@ -410,14 +435,7 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
             return _reply(res.refus.split(":", 1)[1], intent, clarification=True)
         if not res.ok:
             return _sans_outil(db, message, params, intent, motif=res.refus)
-        text = _formuler(db, message, res, faits_fil)
-        # M102-B3 — les faits numériques de CE tour rejoignent le registre (poppé par l'endpoint,
-        # persisté avec la conversation — jamais servi au client).
-        from . import registre_faits
-        return _reply(text, intent, refus=None, tool=tool, sources=[res.source],
-                      partiel=res.partiel, criteres_non_appliques=res.criteres_non_appliques,
-                      criteres_appliques=(res.data or {}).get("criteres_labels") or [],
-                      _faits_tour=registre_faits.extraire_faits(res))
+        return _reply_compte(db, message, res, faits_fil, intent)
 
     if intent == "OUTIL":
         return _outil(db, message, params)
@@ -450,6 +468,18 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         # SERVI (brief_effectif) — le front relance le récap et le run avec LUI, jamais avec la
         # réponse nue. (Si ce tour est classé RECHERCHE avec un fil, c'est une continuation — le
         # routeur contextuel en atteste, gate 45.)
+        # M112 P2.1 — demande VISUELLE sans programme (« montre-moi les friches à Saint-Paul »,
+        # « où sont les parcelles en procédure ») : la réponse naturelle est une CARTE, pas une
+        # mission de recherche. On route vers le comptage facette (qui porte la carte filtrée).
+        # Une vraie mission (avec programme/budget) n'est PAS interceptée.
+        if _veut_carte(message) and not route.params.get("programme_logements") \
+                and not route.params.get("budget_eur"):
+            sel = _select_tool(db, message, route.params)
+            if sel.get("tool") == "compter_parcelles":
+                res = OUTILS["compter_parcelles"](db, **_clean_args("compter_parcelles", sel.get("args") or {}))
+                res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
+                if res.ok:
+                    return _reply_compte(db, message, res, faits_fil, "QUESTION")
         from .recap import recap_recherche
         tours_client = [h.get("content", "") for h in (history or []) if h.get("role") == "user"]
         # M111 — RUPTURE DE SUJET : un tour AUTONOME (route.nouveau_sujet) ne concatène plus le fil
@@ -491,15 +521,125 @@ _SANS_OUTIL_KW = ("divis", "decoup", "lotir", "detacher un lot")
 # Le routeur les envoyait en recherche vague (« je ne comprends pas ») ; ici ils deviennent une
 # porte cliquable vers l'outil qui existe. (module registre, libellé client.)
 _CONCEPT_MAP = [
+    # M110 — fantôme / bailleur
     (("parcelle fantome", "parcelles fantomes", "parcelles fantome", "parcelle fantome",
       "bien fantome", "biens fantomes"), ("fantome", "Parcelles fantômes")),
-    # NB : PAS « logements sociaux » nu (= le taux SRU d'une commune → stats_commune, pas l'outil
-    # bailleur). Le concept-outil vise le PATRIMOINE des bailleurs, pas la métrique SRU.
-    (("bailleur social", "bailleurs sociaux", "parcelles des bailleurs", "parc social bailleur",
-      "patrimoine des bailleurs", "parcelles de bailleur"), ("bailleur", "Bailleurs sociaux")),
+    # NB : le concept-outil vise le FONCIER/PATRIMOINE des bailleurs — un mot foncier/parcelle est
+    # REQUIS. PAS « bailleurs sociaux » nu (= « qui gère le financement des bailleurs » → web,
+    # « taux de logements sociaux » → stats SRU). Piège écarté (accueil #5, audit M108).
+    (("parcelles des bailleurs", "parcelles de bailleur", "foncier des bailleurs", "foncier bailleur",
+      "patrimoine des bailleurs", "parc social bailleur", "mode bailleur", "foncier social bailleur"),
+     ("bailleur", "Bailleurs sociaux")),
+    # M112 — les 11 outils invisibles du registre (mots-clés SPÉCIFIQUES, sans collision avec le
+    # comptage/marché/délais : jamais « permis » nu, jamais « renouvellement » nu, jamais « marché »).
+    # Marché & veille d'abord (valeur d'usage), reconnaissance depuis les libellés servis du registre.
+    (("comparateur de communes", "comparer les communes", "comparer des communes", "ou investir",
+      "quelle commune investir", "quelle commune pour investir", "meilleures communes ou investir"),
+     ("o6-comparateur", "Comparateur de communes")),
+    (("barometre", "état du marché foncier", "etat du marche foncier", "barometre foncier"),
+     ("barometre", "Baromètre foncier")),
+    (("radar permis", "qui construit quoi", "qui construit a", "qui construit dans",
+      "quels permis dans la commune"), ("permis", "Radar permis")),
+    (("promesses mortes", "permis jamais sortis", "permis jamais construits",
+      "permis anciens jamais", "permis abandonnes"), ("promesses", "Promesses mortes")),
+    (("simulateur zan", "artificialisation", "contrainte d'artificialisation", "contrainte zan",
+      "zan de la commune", "objectif zan"), ("zan", "Simulateur ZAN")),
+    (("rarete du foncier", "rarete foncier", "le foncier se rarefie", "ou le foncier se rarefie",
+      "combien de constructible reste"), ("o9-rarete", "Rareté du foncier")),
+    (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
+      "vue renouvellement du"), ("renouvellement", "Renouvellement")),
+    (("changement de plu", "si cette zone passait", "zone passait constructible",
+      "si cette zone devenait constructible", "zone devenait constructible",
+      "prospective de territoire", "simuler un plu", "simuler un changement de zonage"),
+     ("simulplu", "Changement PLU")),
+    (("quoi de neuf", "les bascules du mois", "bascules du secteur", "bascules du mois",
+      "evenements du secteur", "qui a bascule ce mois"), ("o10-bascules", "Quoi de neuf")),
+    (("suivi de secteur", "suivre le secteur", "portefeuille de secteur", "suivre un secteur comme"),
+     ("o7-carnet", "Suivi de secteur")),
+    (("scorer une adresse", "scorer un bien", "seconde opinion avant d'offrir", "avis sur cette adresse",
+      "noter une adresse"), ("scoreur-adresse", "Scorer une adresse")),
+]
+
+# M112 P2.3 — les 4 DOCUMENTS du registre (porte vers l'export, IDU résolu). « banquier » avant
+# « dossier » nu (le plus spécifique gagne). Chaque kind = une URL PDF connue du front.
+_DOC_MAP = [
+    (("dossier banquier", "dossier bancaire", "dossier pour la banque", "dossier pour le banquier",
+      "dossier de financement"), ("dossier-banquier", "dossier banquier")),
+    (("argumentaire", "argument de negociation", "argumentaire de negociation",
+      "lettre de negociation"), ("argumentaire", "argumentaire de négociation")),
+    (("pre-dossier", "predossier", "pre dossier", "fiche flash", "note flash"),
+     ("pre-dossier", "pré-dossier")),
+    (("dossier complet", "le dossier", "faire le dossier", "editer le dossier", "sors le dossier",
+      "monte le dossier", "monter le dossier"), ("dossier", "dossier complet")),
 ]
 
 from .outils import _fold_py  # accent-fold (réutilisé)
+
+
+def _match_document(message: str):
+    """(kind, libellé) si la demande vise un DOCUMENT du registre, sinon None."""
+    m = _fold_py(message.lower())
+    for kws, cible in _DOC_MAP:
+        if any(k in m for k in kws):
+            return cible
+    return None
+
+
+# M112 P2.1 — CARTE FILTRÉE. Traducteur critères facette (compter_parcelles) → filtres du front
+# (le même point unique : la facette). `carte_filtre` = {commune, filtres, libelle} → le front pose
+# setCommune + setFilters + vue carte. Aucune requête parallèle : ce sont les critères DÉJÀ comptés.
+def _criteres_vers_filtres(crit: dict) -> dict:
+    f: dict[str, Any] = {}
+    if crit.get("surface_min") is not None:
+        f["surfaceMin"] = crit["surface_min"]
+    if crit.get("surface_max") is not None:
+        f["surfaceMax"] = crit["surface_max"]
+    if crit.get("tier"):
+        f["tiers"] = [t for t in str(crit["tier"]).split(",") if t]
+    if crit.get("personne_morale"):
+        f["personneMorale"] = True
+    if crit.get("evenement"):
+        f["evenement"] = True
+    sig = [s for s in str(crit.get("signaux") or "").split(",") if s]
+    if crit.get("defisc") and "defisc" not in sig:
+        sig.append("defisc")
+    if sig:
+        f["signaux"] = sig
+    if crit.get("adresse_absente"):
+        f["adresseAbsente"] = True
+    if crit.get("copro"):
+        f["copro"] = [crit["copro"]]
+    if crit.get("renouvellement"):
+        f["renouvellement"] = True
+    if crit.get("zonage"):
+        f["zonagePlu"] = [z for z in str(crit["zonage"]).split(",") if z]
+    return f
+
+
+def _carte_depuis_compte(res) -> dict | None:
+    """La porte CARTE FILTRÉE d'un ToolResult compter_parcelles (commune + filtres facette)."""
+    if res.tool != "compter_parcelles":
+        return None
+    crit = (res.data or {}).get("criteres") or {}
+    commune = crit.get("commune")
+    filtres = _criteres_vers_filtres(crit)
+    if not commune and not filtres:
+        return None
+    labs = (res.data or {}).get("criteres_labels") or []
+    libelle = ("les parcelles " + ", ".join(labs) if labs else "les parcelles") + (f" à {commune}" if commune else "")
+    return {"commune": commune, "filtres": filtres, "libelle": libelle}
+
+
+# M112 P2.1 — la demande VISUELLE (« montre-moi », « où sont », « sur la carte ») dont la réponse
+# naturelle est une carte, pas un nombre : on route vers le comptage facette (qui porte la carte).
+_CARTE_KW = ("montre", "montre-moi", "montre moi", "affiche", "ou sont", "où sont", "sur la carte",
+             "sur une carte", "localise", "visualise", "voir sur la carte", "cartographie")
+
+
+def _veut_carte(message: str) -> bool:
+    m = _fold_py(message.lower())
+    return any(k in m for k in ("montre", "affiche", "ou sont", "sur la carte", "sur une carte",
+                                "localise", "visualise", "cartographie"))
 
 
 def _match_outil(message: str):
