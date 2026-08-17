@@ -84,16 +84,20 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
         # une durée de vie bornée (config copilote_v2_contexte_ttl_minutes) ; conversation_id
         # absent = fil neuf (repartir de zéro). `body.history` reste un appoint des surfaces
         # embarquées quand il n'y a pas de conversation persistée.
-        history, prior = body.history, None
+        history, prior, faits_fil = body.history, None, None
         if body.conversation_id is not None:
             from .. import config as _cfg
+            from ..copilote_v2 import registre_faits
             s = _cfg.get_settings() if hasattr(_cfg, "get_settings") else _cfg.Settings()
             ttl = int(getattr(s, "copilote_v2_contexte_ttl_minutes", 120))
             fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl)
             if fil_h:
                 history, prior = fil_h, (fil_p or {}).get("params") or None
+            # M102-B3 — le REGISTRE DE FAITS du fil (mêmes bornes que le fil) : l'oracle des
+            # chiffres repris d'un tour antérieur.
+            faits_fil = registre_faits.du_fil(db, current_compte(request), body.conversation_id, ttl)
         rep = answer(db, body.message, history=history, contexte=body.contexte,
-                     confirme=body.confirme, prior_params=prior)
+                     confirme=body.confirme, prior_params=prior, faits_fil=faits_fil)
         payload_tour = rep.pop("_route", None)        # contexte du tour → persistance, jamais servi
         act = rep.pop("_action", None)                # écriture réelle demandée → API existante
         if act and act.get("type") == "projet":
@@ -107,9 +111,13 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
                        "serveur. Reformulez-la autrement, ou réessayez dans un instant.",
                "intent": None, "erreur": True}
     rep.pop("_route", None)                           # ceinture : jamais servi, même sur un chemin d'action
+    faits_tour = rep.pop("_faits_tour", None)         # M102-B3 — faits du tour → registre, jamais servis
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message,
                                  reponse=rep, payload=payload_tour)
+    if faits_tour and cid is not None:
+        from ..copilote_v2 import registre_faits
+        registre_faits.enregistrer(db, cid, faits_tour)
     return {**rep, "conversation_id": cid}
 
 
