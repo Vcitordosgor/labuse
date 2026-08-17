@@ -67,7 +67,10 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
-          AND cr.detail LIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
+          -- M99 (périmètre point 4) : ILIKE — ce match sur le verbatim cascade était le seul
+          -- comparateur de zone servi SENSIBLE à la casse ; la liste /simulplu/zones sert la
+          -- graphie GPU brute, le match la retrouve désormais quelle que soit sa casse.
+          AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
         ORDER BY p.surface_m2 DESC LIMIT 400"""),
         {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     items = []

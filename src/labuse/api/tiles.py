@@ -81,7 +81,13 @@ def build_parcel_zone_plu(db: Session) -> int:
             FROM z0
         )
         SELECT DISTINCT ON (p.idu)
-               p.idu, z.lib AS zone_lib, z.fam AS zone_fam, z.lib_full AS zone_libelle
+               p.idu, z.lib AS zone_lib, z.fam AS zone_fam, z.lib_full AS zone_libelle,
+               -- M99 (arbitrage Vic) : clé NORMALISÉE du filtre, graphie réglementaire MAJUSCULE.
+               -- La casse mixte est une graphie de canal d'ingestion (coexistence intra-commune
+               -- nulle, règlement toujours en majuscules — AUDIT_M99_ZONAGE.md). zone_lib
+               -- d'origine est CONSERVÉ (la fiche affiche la graphie officielle de sa commune) ;
+               -- zone_filtre est LE critère servi au filtre — un critère, un endroit (ici).
+               upper(z.lib) AS zone_filtre
         FROM parcels p
         JOIN z ON p.geom_2975 && z.g AND ST_Intersects(p.geom_2975, z.g)
         ORDER BY p.idu, ST_Area(ST_Intersection(p.geom_2975, z.g)) DESC

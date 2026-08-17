@@ -949,6 +949,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
+    ensure_zone_filtre(engine)              # M99 : clé normalisée du filtre zonage
     ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
@@ -1547,6 +1548,23 @@ def ensure_data_sources_millesime(engine) -> None:
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_horizon_at date"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_cadence varchar(32)"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS prochain_millesime_at date"))
+
+
+def ensure_zone_filtre(engine) -> None:
+    """M99 (arbitrage Vic) — clé normalisée du filtre zonage sur la table dérivée
+    `parcel_zone_plu` : `zone_filtre = upper(zone_lib)` (graphie réglementaire MAJUSCULE —
+    coexistence intra-commune nulle, règlement jamais en casse mixte, AUDIT_M99_ZONAGE.md).
+    Idempotent ; le builder (tiles.build_parcel_zone_plu) l'écrit désormais nativement, cette
+    migration couvre la table déjà matérialisée sans rebuild spatial (~20-40 min évitées).
+    `zone_lib` d'origine n'est JAMAIS écrasé."""
+    with engine.begin() as c:
+        if not c.execute(text("SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar():
+            return                       # table dérivée pas encore matérialisée — le builder l'écrira
+        c.execute(text("ALTER TABLE parcel_zone_plu ADD COLUMN IF NOT EXISTS zone_filtre varchar"))
+        c.execute(text("UPDATE parcel_zone_plu SET zone_filtre = upper(zone_lib) "
+                       "WHERE zone_filtre IS DISTINCT FROM upper(zone_lib)"))
+        c.execute(text("CREATE INDEX IF NOT EXISTS idx_pzp_zone_filtre "
+                       "ON parcel_zone_plu (zone_filtre)"))
 
 
 def ensure_dvf_marche(engine) -> None:
