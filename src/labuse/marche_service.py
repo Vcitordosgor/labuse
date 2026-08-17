@@ -93,6 +93,16 @@ def profil_meta(profil: str) -> dict:
     return (_profils_doc().get("profils") or {}).get(profil, {})
 
 
+def seuil_effectif_local(nom: str, defaut: int) -> int:
+    """M103 P1 — seuils d'effectif DVF hors profils nommés (bloc `seuils_effectif` de la config).
+    Un critère, un endroit : plus aucun seuil d'effectif DVF écrit dans le code. `defaut` = repli
+    prudent si la config est absente (base de test) — jamais un desserrage."""
+    try:
+        return int((_profils_doc().get("seuils_effectif") or {}).get(nom, defaut))
+    except (TypeError, ValueError):
+        return defaut
+
+
 def reserve_methode() -> str:
     """La réserve de méthode DVF (retard 1-3 ans, récents provisoires, classement fiable) — écrite une
     fois, voyage avec chaque chiffre DVF servi."""

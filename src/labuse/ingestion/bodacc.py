@@ -69,6 +69,40 @@ def sirens_jamais_sondes(session: Session) -> list[str]:
         "ORDER BY 1")).all()]
 
 
+def demojibake(s: str | None) -> str | None:
+    """M103 P3 (défaut M100 n°4) — GARDE AMONT contre le double encodage UTF-8 : un libellé
+    contenant une séquence mojibake (« Ã©», « Ã´», « Ãª »…) n'est JAMAIS servi brut. La
+    correction est l'inverse exact du défaut (réencodage latin-1 → décodage UTF-8) — pas une
+    table de cas : le PROCHAIN mojibake est corrigé aussi. Si le rond-point échoue (chaîne
+    composite), la valeur d'origine est conservée (jamais une perte de donnée silencieuse)."""
+    if not s or "Ã" not in s:
+        return s
+    try:
+        repare = s.encode("latin-1").decode("utf-8")
+        return repare if "Ã" not in repare else s     # double-double encodage : une passe suffit ici
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+
+
+def demojibake_existant(session: Session) -> int:
+    """M103 P3 — répare les lignes DÉJÀ ingérées (8 annonces mesurées M100). Idempotent :
+    ne touche que les lignes portant une séquence mojibake. Retourne le nombre corrigé."""
+    rows = session.execute(text(
+        "SELECT annonce_id, type_procedure, famille_jugement, tribunal "
+        "FROM bodacc_procedures WHERE type_procedure LIKE '%Ã%' "
+        "   OR famille_jugement LIKE '%Ã%' OR tribunal LIKE '%Ã%'")).mappings().all()
+    n = 0
+    for r in rows:
+        session.execute(text(
+            "UPDATE bodacc_procedures SET type_procedure=:tp, famille_jugement=:fj, tribunal=:tr "
+            "WHERE annonce_id=:aid"),
+            {"aid": r["annonce_id"], "tp": demojibake(r["type_procedure"]),
+             "fj": demojibake(r["famille_jugement"]), "tr": demojibake(r["tribunal"])})
+        n += 1
+    session.flush()
+    return n
+
+
 def ingest_bodacc(session: Session, sirens: list[str], connector: BodaccConnector | None = None,
                   batch_size: int = 40) -> dict:
     """Récupère et UPSERT les procédures collectives des SIREN dans `bodacc_procedures`.
@@ -91,9 +125,12 @@ def ingest_bodacc(session: Session, sirens: list[str], connector: BodaccConnecto
             "  type_procedure=EXCLUDED.type_procedure, famille_jugement=EXCLUDED.famille_jugement, "
             "  date_annonce=EXCLUDED.date_annonce, tribunal=EXCLUDED.tribunal, "
             "  url_source=EXCLUDED.url_source, raw=EXCLUDED.raw"),
-            {"aid": p["annonce_id"], "s": p["siren"], "tp": p["type_procedure"],
-             "fj": p["famille_jugement"], "da": p["date_annonce"], "djt": p["date_jugement_txt"],
-             "tr": p["tribunal"], "na": p["numero_annonce"], "pub": p["publication"],
+            {"aid": p["annonce_id"], "s": p["siren"],
+             # M103 P3 — garde amont : jamais un libellé mojibake écrit (donc jamais servi brut)
+             "tp": demojibake(p["type_procedure"]),
+             "fj": demojibake(p["famille_jugement"]), "da": p["date_annonce"],
+             "djt": p["date_jugement_txt"], "tr": demojibake(p["tribunal"]),
+             "na": p["numero_annonce"], "pub": p["publication"],
              "url": p["url_source"], "raw": json.dumps(p["raw"], ensure_ascii=False)})
         n_proc += 1
         hits[p["siren"]] = hits.get(p["siren"], 0) + 1

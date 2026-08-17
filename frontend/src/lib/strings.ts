@@ -26,7 +26,7 @@ export const CLIENT = {
     } as Record<string, string>,
     infos: {
       pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
-      procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés.',
+      procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés. L’événement BODACC du classement n’est évalué que sur les parcelles classées et, de façon ciblée, sur les écartées dont le propriétaire est sous procédure — une écartée sans procédure connue ne porte jamais d’événement (exclusion délibérée, M103).',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
       defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE, maj 07/2026).',

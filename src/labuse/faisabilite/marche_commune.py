@@ -27,8 +27,19 @@ from ..verdict_servi import TIERS_SERVABLES
 
 #: seuils d'honnêteté (arbitrage Vic 08/08). Sous le seuil : ligne « non calculable », jamais un
 #: chiffre inventé (une flèche sur 8 ventes est un mensonge statistique).
-SEUIL_TENDANCE_N = 30       # par fenêtre 12 mois
-SEUIL_TERRAIN_CELLULE_N = 10  # par cellule commune × zone
+SEUIL_TENDANCE_N = 30       # par fenêtre 12 mois (comptage Sitadel/DVF mêlé — pas un seuil DVF pur)
+
+
+def _seuil_terrain_cellule() -> int:
+    """M103 P1 — le seuil d'effectif de la cellule commune × zone est LU de la config
+    (seuils_effectif.terrain_cellule_commune, dvf_profils.yaml) — plus jamais en dur ici."""
+    from ..marche_service import seuil_effectif_local
+    return seuil_effectif_local("terrain_cellule_commune", 10)
+
+
+#: valeur RÉSOLUE à l'import depuis la config (source unique) — le littéral ci-dessus n'est
+#: qu'un repli prudent si la config est absente (base de test), jamais un second critère.
+SEUIL_TERRAIN_CELLULE_N = _seuil_terrain_cellule()
 
 
 def _ligne(cle: str, groupe: str, *, valeurs: dict, source: str, date_amont: str | None,

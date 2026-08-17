@@ -66,3 +66,40 @@ def test_phases_1_seule_ne_lance_jamais_la_phase2():
     res = run_cascade([p], _Ctx(public_ids=set()), phases=(1,))
     assert _v(res[3], "foncier_public").result == CascadeVerdict.PASS
     assert _v(res[3], "potentiel_foncier_region") is None   # phase 2 non demandée
+
+
+def test_m103_a_prime_bodacc_evalue_les_ecartees_sous_pression():
+    """M103 P5 (arbitrage A') — la couche bodacc s'évalue AUSSI pour une NON-promue dont le
+    propriétaire est SOUS PRESSION (exception nommée — l'invisible de M100 : 37 rouges sans
+    ligne) ; une non-promue SANS pression n'est toujours PAS évaluée (le reste du périmètre
+    est DIT à la facette, filet B patron M89) ; une promue garde son comportement."""
+    rules = {"layers": [
+        {"name": "foncier_public", "phase": 1, "enabled": True, "params": {}},
+        {"name": "bodacc", "phase": 2, "enabled": True,
+         "params": {"etats": {"rouge": ["Jugement d'ouverture de liquidation judiciaire"],
+                              "orange": [], "gris": []}, "mojibake": {}}},
+    ]}
+
+    class _CtxB(_Ctx):
+        def __init__(self, public_ids, pression_ids):
+            super().__init__(public_ids)
+            self.rules = rules
+            self._pression = set(pression_ids)
+
+        def bodacc(self, pid):
+            return ({"siren": "123456789", "date_annonce": "2024-06-28",
+                     "type_procedure": "Jugement d'ouverture de liquidation judiciaire"}
+                    if pid in self._pression else None)
+
+        def bodacc_sondage(self, pid):
+            return None
+
+    ecartee_pression = ParcelRef(id=10, idu="D", commune="X")
+    ecartee_sans = ParcelRef(id=11, idu="E", commune="X")
+    classee = ParcelRef(id=12, idu="F", commune="X")
+    res = run_cascade([ecartee_pression, ecartee_sans, classee],
+                      _CtxB(public_ids={10, 11}, pression_ids={10, 12}))
+    v = _v(res[10], "bodacc")
+    assert v is not None and v.extra.get("evenement") == "rouge"   # l'invisible M100 est VU
+    assert _v(res[11], "bodacc") is None      # sans pression : non évaluée — exclusion DITE (filet B)
+    assert _v(res[12], "bodacc") is not None  # promue : comportement inchangé

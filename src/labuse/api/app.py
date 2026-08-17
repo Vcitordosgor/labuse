@@ -1137,10 +1137,14 @@ def _q_v2_where(run_label: str, score_min: int | None,
                      " AND dl2.prix_m2_terrain <= :f_pmmax)")
         params["f_pmmax"] = prix_marche_max
     if marche_fiable:
-        # fiabilité DVF : le secteur cadastral (section = 10 1ers car. de l'idu) a n≥3 ventes
-        # (sinon « échantillon limité »). Un filtre « données marché fiables » assumé.
+        # M103 P1 (défaut M100 n°1) : « fiable » = le seuil de la DOCTRINE, lu du profil
+        # secteur_dossier (config/dvf_profils.yaml, n≥8 — sous n≈8 la médiane oscille ±44 %,
+        # mesuré MANDAT_DVF). L'ancien 3 local étiquetait 29 228 parcelles « fiables » sur un
+        # échantillon que notre propre mesure déclare instable. Un critère, un endroit.
+        from ..marche_service import DVF_SECTEUR_DOSSIER, profil_meta
         conds.append("EXISTS (SELECT 1 FROM dvf_secteur_medianes dm WHERE dm.secteur = left(p.idu, 10)"
-                     " AND dm.n_ventes >= 3)")
+                     " AND dm.n_ventes >= :f_marche_seuil)")
+        params["f_marche_seuil"] = int(profil_meta(DVF_SECTEUR_DOSSIER).get("seuil_effectif") or 8)
     if ca_min is not None:
         # bilan CA indicatif : prix de sortie neuf sectoriel × SDP résiduelle (Estimé, hors coûts).
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rca JOIN dvf_prix_sortie_neuf sn"
@@ -1514,8 +1518,6 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
-# M13-B1 — normalisation accents pour la recherche (unaccent n'est pas installé sur ce serveur).
-_ADR_ACCENTS = ("àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ", "aaaeeeeiioouuucAAAEEEEIIOOUUUC")
 
 
 @app.get("/adresses/autocomplete")
@@ -1533,23 +1535,24 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
     needle = q.strip()
     if len(needle) < 3:
         return {"features": []}
-    a, b = _ADR_ACCENTS
+    # M103 P2/P6 — pliage PARTAGÉ (constants.sql_plie : casse + accents + ligatures œ/æ +
+    # apostrophe typographique) — même fonction des deux côtés, même point que le patrimoine.
+    from ..constants import params_pliage, sql_plie
+    _col = sql_plie("coalesce(numero,'') || ' ' || voie")
     rows = db.execute(text(
-        """
+        f"""
         SELECT id_ban,
                trim(coalesce(numero, '') || ' ' || voie) AS label_court,
                commune, code_postal, idu,
                ST_X(geom) AS lon, ST_Y(geom) AS lat
         FROM adresses
         WHERE idu IS NOT NULL AND geom IS NOT NULL
-          AND lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
-              LIKE lower(translate('%' || :q || '%', :a, :b))
-        ORDER BY (lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
-                  LIKE lower(translate(:q || '%', :a, :b))) DESC,
+          AND {_col} LIKE {sql_plie("'%' || :q || '%'")}
+        ORDER BY ({_col} LIKE {sql_plie(":q || '%'")}) DESC,
                  length(voie), voie, numero
         LIMIT :lim
         """),
-        {"a": a, "b": b, "q": needle, "lim": limit}).mappings().all()
+        {"q": needle, "lim": limit, **params_pliage()}).mappings().all()
     feats = []
     for r in rows:
         label = r["label_court"]
