@@ -1046,9 +1046,12 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rc WHERE rc.parcel_id = p.id"
                      " AND rc.sdp_residuelle_m2 >= :f_capa)")
         params["f_capa"] = capacite_min * SDP_PAR_LOGEMENT_M2
-    if zone_plu:   # zone PLU EXACTE (tiroir droit) — `zone_lib` (colonne du modèle), casse normalisée.
+    if zone_plu:   # zone PLU EXACTE (tiroir droit).
+        # M99 : le critère normalisé vit dans la TABLE (zone_filtre, écrit par
+        # build_parcel_zone_plu + ensure_zone_filtre) — plus d'upper() ad hoc sur la colonne
+        # ici. L'entrée utilisateur est pliée à la même clé (graphie réglementaire MAJUSCULE).
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu zx WHERE zx.idu = p.idu"
-                     " AND upper(zx.zone_lib) = ANY(:f_zplu))")
+                     " AND zx.zone_filtre = ANY(:f_zplu))")
         params["f_zplu"] = [z.strip().upper() for z in zone_plu.split(",") if z.strip()]
     # ── M45 (P2d) — tiroirs éco / mutation / propriété / veille (facettes composables) ──
     if sous_densite:   # éco/risques : bâti en sous-densité (parcel_residuel)
@@ -1660,6 +1663,34 @@ def stats(commune: str | None = None, source: str | None = None,
 #: MapLibre « in literal » devient coûteux ; le front replie sur l'expression par critères
 #: carte et le DIT (toast, règle no-silent-caps).
 _FILTRE_IDUS_CAP = 20_000
+
+
+@app.get("/zonage/zones")
+def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_db)) -> dict:
+    """M99 Phase 3 — les zones du sélecteur par famille. Familles triées par volume RÉEL,
+    zones en graphie réglementaire MAJUSCULE (`zone_filtre`, le critère du filtre — un
+    critère, un endroit) avec leur compte de parcelles CALCULÉ (jamais en dur : il suit les
+    recalibrages PLU). Portée : l'île par défaut, les communes passées sinon — une zone à 0
+    dans la portée est ABSENTE de la liste (comportement explicite : le front affiche la
+    portée en tête de liste). La fiche, elle, garde `zone_lib` (graphie officielle)."""
+    coms = [x.strip() for x in (communes or "").split(",") if x.strip()]
+    join, where, params = "", "WHERE z.zone_filtre IS NOT NULL", {}
+    if coms:
+        join = "JOIN parcels p ON p.idu = z.idu"
+        where += " AND p.commune = ANY(:coms)"
+        params["coms"] = coms
+    rows = db.execute(text(
+        f"SELECT z.zone_fam AS fam, z.zone_filtre AS zone, count(*) AS n "
+        f"FROM parcel_zone_plu z {join} {where} GROUP BY 1, 2"), params).mappings().all()
+    fams: dict[str, dict] = {}
+    for r in rows:
+        f = fams.setdefault(r["fam"] or "autre", {"fam": r["fam"] or "autre", "n": 0, "zones": []})
+        f["n"] += r["n"]
+        f["zones"].append({"zone": r["zone"], "n": r["n"]})
+    familles = sorted(fams.values(), key=lambda f: -f["n"])
+    for f in familles:
+        f["zones"].sort(key=lambda z: (-z["n"], z["zone"]))
+    return {"portee": "commune" if coms else "ile", "communes": coms, "familles": familles}
 
 
 @app.get("/filtre")
