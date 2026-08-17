@@ -37,6 +37,9 @@ class ToolResult:
     reserve: str | None = None                # texte de réserve (cité mot pour mot depuis le point de calcul)
     refus: str | None = None                  # motif de refus si l'outil ne peut pas répondre
     web: bool = False                         # M78-ter — réponse issue du WEB (marquage distinct, jamais Sourcé/Estimé)
+    # M109 — critères de la demande que l'outil choisi NE PEUT PAS appliquer (absents de ses
+    # paramètres). Un chiffre servi avec un critère lâché DOIT le dire (jamais le sous-total muet).
+    criteres_non_appliques: list[str] = field(default_factory=list)
 
 
 # ───────────────────────── compter_parcelles ─────────────────────────
