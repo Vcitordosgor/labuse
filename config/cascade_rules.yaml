@@ -477,6 +477,11 @@ layers:
           - "Autre jugement de clôture"
       # « Liste des créances… LJ » (9) = NEUTRE (Vic : la bascule se fait sur le JUGEMENT, pas les
       # publications de suivi — déjà capté en rouge par ouverture/conversion). Tout le reste = neutre.
-      mojibake:   # double-encodage UTF-8 → libellé propre (cf. dette d'ingestion NOTES)
+      mojibake:   # double-encodage UTF-8 → libellé propre. M103 P3 : les 4 formes MESURÉES (M100)
+        # sont couvertes — les 2 manquantes étaient en liste ROUGE et partaient en « neutre ».
+        # DÉFENSE EN PROFONDEUR : le garde amont (ingestion/bodacc.demojibake) corrige désormais à
+        # l'écriture (et les lignes existantes sont réparées) ; ce mapping reste le filet du servi.
         "Jugement arrÃªtant le plan de sauvegarde": "Jugement arrêtant le plan de sauvegarde"
         "DÃ©pÃ´t de l'Ã©tat des crÃ©ances": "Dépôt de l'état des créances"
+        "Jugement d'ouverture d'une procÃ©dure de redressement judiciaire": "Jugement d'ouverture d'une procédure de redressement judiciaire"
+        "Jugement d'ouverture d'une procÃ©dure de sauvegarde": "Jugement d'ouverture d'une procédure de sauvegarde"
