@@ -141,7 +141,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
             className="ml-auto border-0 bg-transparent text-[18px] text-cp-muted transition-colors duration-quick hover:text-cp-txt">✕</button>
         </header>
         <p className="border-b border-cp-line px-[22px] py-4 text-[13px] leading-snug text-cp-muted">
-          Ce qui a bougé sur <b className="font-semibold text-cp-txt">vos parcelles suivies</b> et dans <b className="font-semibold text-cp-txt">vos zones de veille</b> depuis hier.
+          Ce qui a bougé sur <b className="font-semibold text-cp-txt">vos parcelles suivies</b> et dans <b className="font-semibold text-cp-txt">vos secteurs</b> depuis hier.
         </p>
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
           {briefN === 0 && <p className="px-[22px] py-6 text-[13px] text-cp-muted">Rien de neuf depuis hier.</p>}

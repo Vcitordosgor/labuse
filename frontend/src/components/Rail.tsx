@@ -91,10 +91,10 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, veillesOpen, toggleVeilles, suivisOpen, toggleSuivis } = useApp()
-  // M85 — la pastille de notification a QUITTÉ cette entrée : les notifications appartiennent à la
-  // CLOCHE (chrome global). « Secteurs » n'est plus que les zones géographiques DVF (M54). Trois
-  // objets démêlés : Notifications (cloche) · Veilles (déclencheurs) · Secteurs (zones, ici).
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, surveillanceOpen, toggleSurveillance } = useApp()
+  // M104 — UNE seule entrée « Surveillance » (fusion Suivis + Secteurs + Critères, arbitrage
+  // 17/08). Les notifications restent à la CLOCHE (chrome global) : la section configure et
+  // liste ce qu'on surveille, la cloche affiche ce qui en sort.
   // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
   // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
   // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
@@ -136,26 +136,15 @@ export function Rail() {
         })}
 
         <div className="mt-auto flex flex-col items-center gap-2">
-          {/* M85-B — « Suivis » : les parcelles suivies (échelle parcelle). Avec « Secteurs » (échelle
-              zone), ce sont les deux échelles du même geste : ce que je surveille. */}
-          <button data-rail-suivis onClick={() => toggleSuivis()} className="group flex w-full flex-col items-center gap-1"
-            title="Mes suivis — parcelles surveillées et dernier changement détecté">
+          {/* M104 — « Surveillance » : parcelles suivies + secteurs dessinés + critères
+              enregistrés, une seule entrée (le mot « veille » est banni du vocabulaire servi). */}
+          <button data-rail-surveillance onClick={() => toggleSurveillance()} className="group flex w-full flex-col items-center gap-1"
+            title="Surveillance — parcelles suivies, secteurs dessinés et critères enregistrés">
             <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-              suivisOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
-              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 2.5c-3 0-5.5 2.4-5.5 5.4 0 4 5.5 9.6 5.5 9.6s5.5-5.6 5.5-9.6c0-3-2.5-5.4-5.5-5.4Z"/><circle cx="10" cy="8" r="2"/></svg>
-            </span>
-            <span className={`text-[10.5px] ${suivisOpen ? 'text-mint' : 'text-txt-mut'}`}>Suivis</span>
-          </button>
-          {/* M54-EXPO-3 / M85 — « Secteurs » : panneau des ZONES GÉOGRAPHIQUES de surveillance DVF
-              (surimpression carte). Renommé de « Veilles » pour lever la confusion avec la cloche
-              (notifications) et les veilles Copilote — trois objets distincts. */}
-          <button data-rail-veilles onClick={() => toggleVeilles()} className="group flex w-full flex-col items-center gap-1"
-            title="Mes secteurs — zones géographiques de surveillance et alertes DVF">
-            <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-              veillesOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+              surveillanceOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
             </span>
-            <span className={`text-[10.5px] ${veillesOpen ? 'text-mint' : 'text-txt-mut'}`}>Secteurs</span>
+            <span className={`text-[10.5px] ${surveillanceOpen ? 'text-mint' : 'text-txt-mut'}`}>Surveillance</span>
           </button>
           {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
               claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}

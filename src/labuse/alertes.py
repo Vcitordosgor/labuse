@@ -35,7 +35,7 @@ def create_watch_zone(session: Session, name: str, commune: str, polygon_geojson
     gid = session.execute(
         text("INSERT INTO watch_zones (name, commune, compte_id, geom) "
              "VALUES (:n, :c, :cid, ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326)) RETURNING id"),
-        {"n": name.strip()[:120] or "Zone de veille", "c": commune, "cid": cid,
+        {"n": name.strip()[:120] or "Secteur surveillé", "c": commune, "cid": cid,
          "g": json.dumps(polygon_geojson)},
     ).scalar()
     session.flush()
@@ -68,7 +68,7 @@ def rename_watch_zone(session: Session, zone_id: int, name: str, cid: int | None
     """M54-EXPO-3 — renomme une zone du compte `cid` (SEC-IDOR : rowcount 0 → 404). Nom borné."""
     n = session.execute(
         text("UPDATE watch_zones SET name = :n WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
-        {"n": name.strip()[:120] or "Zone de veille", "i": zone_id, "cid": cid}).rowcount
+        {"n": name.strip()[:120] or "Secteur surveillé", "i": zone_id, "cid": cid}).rowcount
     session.flush()
     return n > 0
 

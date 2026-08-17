@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, deleteSearch, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, saveSearch, searchParcels, veilleNL, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, searchParcels, type LabuseEvent } from '../../lib/api'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
 // qui noient la cloche. Les événements sans commune (veilles de zone, système) restent en ligne propre.
 const _NOM_KIND: Record<string, string> = {
   permis: 'permis', bascule: 'basculements de statut', bodacc: 'procédures BODACC',
-  veille: 'alertes de veille', parcelle_suivie: 'changements', veille_zone: 'alertes de veille',
+  veille: 'alertes de vos secteurs et critères', parcelle_suivie: 'changements', veille_zone: 'alertes de vos secteurs et critères',
 }
 type Bloc =
   | { type: 'single'; e: LabuseEvent }
@@ -27,8 +27,7 @@ function grouperEvents(items: LabuseEvent[]): Bloc[] {
   }
   return out
 }
-import { filtersToHash } from '../../lib/filters'
-import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 
 // M65 P7 — le CP n'est plus affiché dans le sélecteur de communes ; le lookup CP_PAR_COMMUNE
@@ -258,14 +257,11 @@ function tempsRelatif(iso: string): string {
 
 function NotifBell() {
   const [open, setOpen] = useState(false)
-  const [veilleNom, setVeilleNom] = useState('')
-  const [nlText, setNlText] = useState('')          // M17-B : saisie veille en langage naturel
-  const [nlResume, setNlResume] = useState<string | null>(null)
-  const [nlRefus, setNlRefus] = useState<string | null>(null)
+  // M104 P3 — la config des recherches sauvegardées (NL, exemples, liste) a déménagé dans la
+  // section Surveillance (volet Critères) : la cloche affiche des événements, rien d'autre.
   const qc = useQueryClient()
-  const { filters, zone, select, setView, setFilters, openSources } = useApp()
+  const { select, setView, openSources, openSurveillance } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
-  const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
   // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
   const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
@@ -299,22 +295,6 @@ function NotifBell() {
   const [ouverts, setOuverts] = useState<Set<string>>(() => new Set())   // M87 P5.1 — groupes dépliés
   const notifPrefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs, enabled: open && prefsOpen })
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
-  const addVeille = useMutation({ mutationFn: () => saveSearch(veilleNom, filtersToHash(filters, zone) || '#f=1'),
-    onSuccess: () => { setVeilleNom(''); qc.invalidateQueries({ queryKey: ['searches'] }) } })
-  const delVeille = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
-  // M17-B : traduction NL → filtres VISIBLES (setFilters) OU refus honnête si non déclenchable
-  const nlVeille = useMutation({
-    mutationFn: () => veilleNL(nlText),
-    onSuccess: (r) => {
-      if (r.ok && r.filters) {
-        setFilters({ ...EMPTY_FILTERS, ...(r.filters as Partial<typeof EMPTY_FILTERS>) })
-        setVeilleNom(nlText.trim().slice(0, 80))
-        setNlResume(r.resume ?? null); setNlRefus(null)
-      } else {
-        setNlRefus(r.refus ?? 'Veille non déclenchable.'); setNlResume(null)
-      }
-    },
-  })
   const unread = ev.data?.unread ?? 0
   return (
     <div className="relative">
@@ -333,18 +313,22 @@ function NotifBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="floating absolute right-0 top-11 z-20 flex max-h-[70vh] w-[380px] flex-col overflow-hidden">
-            <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-2.5">
+          <div className="floating absolute right-0 top-11 z-20 flex max-h-[70vh] w-[min(440px,92vw)] flex-col overflow-hidden">
+            {/* M104 P3 — en-tête refondu : classes du panneau brief (DA-ACCUEIL-BRIEF-v1, même
+                famille de surface) — titre mono capitales + actions à droite, UNE ligne. */}
+            <header data-notif-entete className="flex shrink-0 items-center gap-3 border-b border-line px-[22px] py-4">
               {/* M16-B5 : plus d'incohérence « 0 non lue » sur liste pleine — « à jour » quand tout est lu */}
-              <p className="label-caps">Notifications{unread > 0 ? ` · ${unread} non lue${unread > 1 ? 's' : ''}` : (ev.data?.items ?? []).length ? ' · à jour' : ''}</p>
-              <div className="flex gap-3">
-                {/* M16-B2 : « Digest » (jargon) → « Le point de la semaine » */}
+              <h2 className="m-0 whitespace-nowrap font-mono text-[11px] uppercase tracking-[.16em] text-txt-mut">
+                Notifications{unread > 0 ? ` · ${unread}` : ''}
+              </h2>
+              <div className="ml-auto flex items-center gap-3 whitespace-nowrap">
+                {/* M16-B2 : « Digest » (jargon) → le point du jour */}
                 <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Aperçu du résumé e-mail (ce qui a bougé + top chaudes)">Le point du jour →</a>
                 {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
                 <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt" title="Préférences de notification">{prefsOpen ? 'fermer' : 'préférences'}</button>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
               </div>
-            </div>
+            </header>
             {/* M85 — l'écran minimal : par type, cloche / e-mail / les deux / rien. */}
             {prefsOpen ? (
               <div data-notif-prefs className="shrink-0 border-b border-line bg-surface-2 px-4 py-3">
@@ -370,14 +354,16 @@ function NotifBell() {
                 <p className="mt-2 text-[10px] leading-snug text-txt-dim">L'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
               </div>
             ) : (
-            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle, plus
-               de « à proximité » figé ; mutation et zonage inclus dès qu'ils sont détectables. */
-            <div className="shrink-0 border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
-              Ce qui bouge sur <b className="text-txt">les parcelles que vous suivez</b>
+            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle,
+               jamais « à proximité » figé ; un déclencheur ajouté au registre met la phrase à jour
+               SEUL. M104 : vocabulaire aligné (« vos secteurs », plus jamais « veille »). */
+            <p className="shrink-0 border-b border-line px-[22px] py-3 text-[12.5px] leading-snug text-txt-mut">
+              Ce qui bouge sur <b className="font-semibold text-txt">vos parcelles suivies</b>
               {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
-              et dans <b className="text-txt">vos zones de veille</b>. On ne vous prévient que sur ce
+              dans <b className="font-semibold text-txt">vos secteurs</b> et sur
+              <b className="font-semibold text-txt"> vos critères</b>. On ne vous prévient que sur ce
               qu'on sait réellement détecter.
-            </div>
+            </p>
             )}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
@@ -401,52 +387,14 @@ function NotifBell() {
                 )
               })}
             </div>
-            <div className="shrink-0 border-t border-line p-3">
-              {/* M16-B3 : « veilles » = alerte par filtres (fonctionnel) — renommé + expliqué */}
-              <p className="label-caps">Vos veilles — alertes sur mesure</p>
-              <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Enregistrez une recherche : on vous alerte dès qu'une parcelle <b>bascule</b> et correspond à vos critères.</p>
-              {/* M17-B : décrire sa veille en français → filtres VISIBLES (ci-contre) ou refus honnête */}
-              <div className="mt-2 flex gap-1.5">
-                <input data-nl-veille value={nlText}
-                  onChange={(e) => { setNlText(e.target.value); setNlRefus(null) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && nlText.trim().length >= 3) nlVeille.mutate() }}
-                  placeholder="Décrivez : « les grandes parcelles à Saint-Paul qui deviennent chaudes »"
-                  className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-                <button data-nl-go onClick={() => nlText.trim().length >= 3 && nlVeille.mutate()} disabled={nlText.trim().length < 3 || nlVeille.isPending}
-                  className="shrink-0 rounded border border-mint/50 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
-                  {nlVeille.isPending ? '…' : 'Traduire'}</button>
-              </div>
-              {nlResume && (
-                <p data-nl-resume className="mt-1 rounded-md border border-mint/40 bg-mint/[0.07] px-2 py-1 text-[10.5px] leading-snug text-mint">
-                  ✓ {nlResume} <span className="text-txt-dim">— vérifiez/ajustez les filtres, puis « + Veille ».</span>
-                </p>
-              )}
-              {nlRefus && (
-                <p data-nl-refus className="mt-1 rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2 py-1 text-[10.5px] leading-snug text-st-creuser">{nlRefus}</p>
-              )}
-              {(veilles.data ?? []).map((v) => (
-                <div key={v.id} className="mt-1.5 flex items-center gap-2 text-[11px]">
-                  <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
-                  <button onClick={() => delVeille.mutate(v.id)} aria-label="Supprimer la veille"
-                  className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
-                </div>
-              ))}
-              {/* M16-B4 : exemples de veilles UTILES = déclencheurs RÉELS (audit A5). Un clic pré-remplit
-                  filtres + nom ; l'utilisateur nomme et « + Veille » enregistre. Aucune fausse saisie qui
-                  ne déclencherait rien (pas de « changement de PLU » / « permis abandonné » : non détectables). */}
-              <div className="mt-2 flex flex-wrap items-center gap-1">
-                <span className="text-[10px] text-txt-dim">Suivre, par exemple :</span>
-                <button data-veille-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, tiers: ['chaude'] }); setVeilleNom('Parcelles qui basculent en chaude') }}
-                  className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">parcelles qui deviennent chaudes</button>
-                <button data-veille-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, evenement: true }); setVeilleNom('Nouvelles procédures BODACC') }}
-                  className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">nouvelle procédure BODACC</button>
-              </div>
-              <div className="mt-1.5 flex gap-1.5">
-                <input value={veilleNom} onChange={(e) => setVeilleNom(e.target.value)} placeholder="Nommez cette veille…"
-                  className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-                <button onClick={() => veilleNom.trim() && addVeille.mutate()} disabled={!veilleNom.trim()}
-                  className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+ Veille</button>
-              </div>
+            {/* M104 P3 — l'encart « Vos veilles — alertes sur mesure » a DÉMÉNAGÉ dans la section
+                Surveillance (volet Critères) : la cloche affiche des ÉVÉNEMENTS, rien d'autre.
+                Un renvoi garde la boucle visible depuis ici — aucune régression, tout est là-bas. */}
+            <div className="shrink-0 border-t border-line px-[22px] py-2.5">
+              <button data-notif-vers-surveillance onClick={() => { openSurveillance('criteres'); setOpen(false) }}
+                className="text-[11px] text-mint hover:underline">
+                Régler ce que vous surveillez (parcelles, secteurs, critères) →
+              </button>
             </div>
           </div>
         </>
