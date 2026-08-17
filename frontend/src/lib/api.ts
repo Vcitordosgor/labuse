@@ -372,6 +372,7 @@ export interface CopiloteV2Reponse {
   degraded?: boolean
   en_construction?: boolean
   web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
+  compris?: string | null               // M102-B2 — récap systématique : « J'ai compris : … » (une phrase)
   conversation_id?: number | null       // §2b — la conversation persistée (reprise)
   // §M78-bis — récap-confirmation avant mission lourde (RECHERCHE/VERIFICATION)
   needs_confirmation?: boolean

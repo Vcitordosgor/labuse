@@ -231,7 +231,36 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
                               "params": {k: v for k, v in (route.params or {}).items()
                                          if v is not None and k != "selection"}})
+    # M102-B2 — RÉCAP SYSTÉMATIQUE (extension Vic de la règle M78) : une phrase « j'ai compris »
+    # partout où une interprétation a eu lieu. Les missions lourdes gardent leur récap-péage M78
+    # (pas de doublon) ; hors-sujet/dégradé n'interprètent rien. Jamais un slug : clés traduites,
+    # clé inconnue ÉLAGUÉE (plutôt muette que jargonnante).
+    if (route.intent in ("QUESTION", "OUTIL", "PROJET", "VEILLE")
+            and not rep.get("degraded") and rep.get("refus") != "hors_sujet"):
+        compris = _compris_fr(route.intent, route.params or {})
+        if compris:
+            rep.setdefault("compris", compris)
     return rep
+
+
+_COMPRIS_INTENT = {"QUESTION": "répondre à votre question", "OUTIL": "vous ouvrir un outil",
+                   "PROJET": "cadrer votre projet", "VEILLE": "poser une veille"}
+_COMPRIS_PARAM = {"commune": lambda v: str(v), "idu": lambda v: f"parcelle {v}",
+                  "zone": lambda v: f"zone {v}", "surface_min": lambda v: f"≥ {v} m²",
+                  "surface_max": lambda v: f"≤ {v} m²", "budget_eur": lambda v: f"budget {v} €",
+                  "prix_eur": lambda v: f"prix {v} €", "entreprise": lambda v: str(v),
+                  "programme_logements": lambda v: f"{v} logements", "sujet": lambda v: str(v)}
+
+
+def _compris_fr(intent: str, params: dict) -> str | None:
+    """La phrase du récap systématique (M102-B2) — UNE phrase, jamais un formulaire, jamais un
+    slug (clé hors table = élaguée)."""
+    tete = _COMPRIS_INTENT.get(intent)
+    if not tete:
+        return None
+    bouts = [fmt(params[k]) for k, fmt in _COMPRIS_PARAM.items()
+             if params.get(k) not in (None, "", [])]
+    return f"J'ai compris : {tete}" + (f" — {' · '.join(bouts)}." if bouts else ".")
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,

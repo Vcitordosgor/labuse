@@ -92,7 +92,10 @@ export function CopiloteView() {
   const [mission] = useState<MissionActive>('instruire')   // v2 : le routeur décide, plus d'onglets
   const [journalOuvert, setJournalOuvert] = useState(false)
   const [chiffres, setChiffres] = useState<AccueilChiffres | null>(null)
-  const [v2, setV2] = useState<CopiloteV2Reponse | null>(null)
+  // M102-B2 — LE FIL : ce qui a été demandé, compris, répondu — lisible tour par tour. Quand le
+  // Copilote pose une question (clarification), le champ de réponse apparaît DANS le fil.
+  const [fil, setFil] = useState<{ q: string; r: CopiloteV2Reponse }[]>([])
+  const [reponseFil, setReponseFil] = useState('')
   const [recap, setRecap] = useState<CopiloteV2Reponse | null>(null)      // §M78-bis — péage de confirmation
   const [recapConfirme, setRecapConfirme] = useState<string | null>(null)  // reste en tête pendant l'instruction
   const [dispatching, setDispatching] = useState(false)
@@ -112,7 +115,7 @@ export function CopiloteView() {
   const interroger = async (msg: string, opts?: { confirme?: boolean }) => {
     const m = msg.trim()
     if (!m || dispatching) return
-    setDispatching(true); setV2(null); setRecap(null)
+    setDispatching(true); setRecap(null)
     if (!opts?.confirme) setRecapConfirme(null)        // nouveau brief = nouveau contexte
     try {
       const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme })
@@ -124,12 +127,14 @@ export function CopiloteView() {
       } else if (r.intent === 'RECHERCHE') {           // confirmé → on lance le run M26-A
         setRecapConfirme(r.recap ?? m); void run.instruire(mission, m)
       } else {
-        setV2(r)
+        setFil((f) => [...f, { q: m, r }])             // M102-B2 — le tour rejoint le fil
+        setReponseFil('')
       }
     } catch {
       // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
       // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
-      setV2({ text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null })
+      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null } as CopiloteV2Reponse
+      setFil((f) => [...f, { q: m, r: echec }])
     } finally { setDispatching(false) }
   }
   const soumettre = () => void interroger(brief)
@@ -153,8 +158,17 @@ export function CopiloteView() {
     try {
       const conv = await copiloteV2Mission(m.id)
       setConvId(conv.id)
-      const dernier = [...conv.messages].reverse().find((x) => x.role === 'copilote')
-      if (dernier) setV2({ text: dernier.texte, intent: (dernier.intent as CopiloteV2Reponse['intent']) ?? null })
+      // M102-B2 — la reprise restaure le FIL COMPLET (demandé/répondu), pas seulement le dernier tour.
+      const tours: { q: string; r: CopiloteV2Reponse }[] = []
+      let question: string | null = null
+      for (const x of conv.messages) {
+        if (x.role === 'client') question = x.texte
+        else if (question != null) {
+          tours.push({ q: question, r: { text: x.texte, intent: (x.intent as CopiloteV2Reponse['intent']) ?? null } })
+          question = null
+        }
+      }
+      setFil(tours)
     } catch { /* silencieux — l'historique ne casse pas l'écran */ }
   }
 
@@ -217,7 +231,7 @@ export function CopiloteView() {
   }
   // « + corriger » : ramène le brief dans la barre d'accueil (édition libre), instruction annulée.
   const corrigerDansBarre = (b: string) => {
-    setBrief(b); setV2(null)
+    setBrief(b)
     if (enInstruction || enAttente) void run.annuler()
     run.reinitialiser()
     setTimeout(() => briefRef.current?.focus(), 0)
@@ -242,12 +256,45 @@ export function CopiloteView() {
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             missions={missions} onReprendre={rouvrir}
-            reponse={dispatching
-              ? <TraitementEnCours />
-              : recap
-                ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
-                    onLancer={lancerRecap} onCorriger={corrigerRecap} />
-                : v2 ? <ReponseInline v2={v2} /> : null} />
+            reponse={recap
+              ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
+                  onLancer={lancerRecap} onCorriger={corrigerRecap} />
+              : (fil.length > 0 || dispatching) ? (
+                /* M102-B2 — LE FIL : demandé / compris / répondu, tour par tour. */
+                <div data-fil className="flex flex-col gap-3 text-left">
+                  {fil.map((t, i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                      <p data-fil-question className="self-end rounded-xl bg-cp-violet/10 px-3.5 py-1.5 text-[12.5px] text-cp-txt">
+                        {t.q}
+                      </p>
+                      <ReponseInline v2={t.r}
+                        onCorriger={() => { setBrief(t.q); briefRef.current?.focus() }} />
+                    </div>
+                  ))}
+                  {dispatching && <TraitementEnCours />}
+                  {!dispatching && fil.length > 0 && fil[fil.length - 1].r.clarification && (
+                    /* la question du Copilote a SON champ de réponse — on répond sur place. */
+                    <div data-fil-reponse className="flex items-center gap-2">
+                      <input autoFocus value={reponseFil} onChange={(e) => setReponseFil(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && reponseFil.trim()) void interroger(reponseFil) }}
+                        placeholder="Votre réponse…"
+                        className="min-w-0 flex-1 rounded-lg border border-violet/30 bg-cp-card px-3.5 py-2 text-[13px] text-cp-txt placeholder:text-cp-faint focus:border-violet focus:outline-none" />
+                      <button data-fil-envoyer disabled={!reponseFil.trim()}
+                        onClick={() => void interroger(reponseFil)}
+                        className="rounded-lg border border-violet/40 bg-violet/10 px-3.5 py-2 font-display text-[12px] font-semibold text-violet hover:bg-violet/15 disabled:opacity-40">
+                        Répondre
+                      </button>
+                    </div>
+                  )}
+                  {!dispatching && fil.length > 0 && (
+                    <button data-fil-nouveau
+                      onClick={() => { setFil([]); setConvId(null); setReponseFil(''); setBrief(''); briefRef.current?.focus() }}
+                      className="self-start text-[11px] text-cp-muted underline decoration-cp-muted/40 underline-offset-2 hover:text-cp-violet">
+                      Repartir de zéro (nouveau fil)
+                    </button>
+                  )}
+                </div>
+              ) : null} />
         ) : (
           <>
             <div className="mb-4 flex items-center gap-3">
