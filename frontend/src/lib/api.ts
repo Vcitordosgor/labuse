@@ -374,6 +374,7 @@ export interface CopiloteV2Reponse {
   web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
   compris?: string | null               // M102-B2 — récap systématique : « J'ai compris : … » (une phrase)
   conversation_id?: number | null       // §2b — la conversation persistée (reprise)
+  contexte_ttl_minutes?: number         // M107 P3 — TTL d'inactivité du fil (servi, jamais recopié)
   // §M78-bis — récap-confirmation avant mission lourde (RECHERCHE/VERIFICATION)
   needs_confirmation?: boolean
   recap?: string
@@ -381,6 +382,9 @@ export interface CopiloteV2Reponse {
   chips?: string[]
   suggestions?: { label: string; ajout: string | null }[]
   clarification_recap?: { question: string; options: string[]; champ: string | null }
+  // M107 — le BRIEF EFFECTIF composé du fil (serveur) : le récap et le run repartent de lui,
+  // jamais de la réponse nue (« 15 logements » seul perdait la commune du tour d'avant).
+  brief_effectif?: string
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>

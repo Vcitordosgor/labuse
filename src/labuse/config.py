@@ -185,9 +185,12 @@ class Settings(BaseSettings):
     copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
     copilote_v2_retention_jours: int = 90      # historique conversations/missions conservé N jours (§2b)
     copilote_v2_veilles_max: int = 20          # plafond de veilles actives par compte (§4)
-    copilote_v2_contexte_ttl_minutes: int = 120  # M102-B1 : au-delà, le fil n'alimente PLUS
-                                                 # l'interprétation (conversation lisible/reprenable —
-                                                 # seule la mémoire d'interprétation est bornée)
+    copilote_v2_contexte_ttl_minutes: int = 10   # M107 (arbitrage Vic) : 10 min d'INACTIVITÉ → le
+                                                 # fil repart de zéro (M102-B1 posait 120). Le front
+                                                 # lit cette valeur (servie par /ask) et ANNONCE
+                                                 # l'expiration — jamais un fil vidé en silence.
+                                                 # ATTENTION mesuré : 10 min est court pour qui
+                                                 # réfléchit à sa réponse — ajustable ICI.
 
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":
