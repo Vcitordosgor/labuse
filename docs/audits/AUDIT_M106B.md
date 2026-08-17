@@ -128,6 +128,23 @@ Trois tests gravent la définition (tests/test_transport_poles.py) : cumul
 inter-réseaux dans une grappe · union jamais une somme (le cas Savanna) ·
 pas de cumul hors grappe.
 
+### 4-ter. Arbitrage final (Vic, 17/08/2026) — à ne pas redécouvrir
+
+- **Seuil 14 retenu, Savanna NON détecté — décision assumée.** Savanna est un
+  pôle d'échange RÉEL de la route des Tamarins que le critère ne détecte pas,
+  et ce n'est PAS un bug : sa grappe GTFS réelle = deux quais desservis par les
+  mêmes 9 lignes Kar'Ouest (union 9 < 14 ; Car Jaune ne s'y arrête pas — son
+  arrêt le plus proche est un nœud distinct à 275 m). Forcer sa détection
+  coûterait seuil 9 → 88 pôles dont 75 % non confirmés (trois pôles inventés
+  sur quatre — le ratio qui avait disqualifié proba_anc en M88). REFUSÉ.
+  Voie retenue : faire relever la station dans OSM (elle deviendra Sourcé,
+  hors seuil) — action HORS DÉPÔT, à la main de Vic. Un futur audit qui
+  retrouve « Savanna absent des pôles dérivés » lit ce paragraphe, pas un bug.
+- **Le seuil 14 est calibré SUR LE COMPTAGE CUMULÉ** (grappe 150 m, union
+  réseau:ligne). Si la définition du dénombrement change encore (rayon, mode
+  d'union, nouvelle source), le seuil doit être RECALIBRÉ contre OSM avec la
+  même grille — il n'a aucune valeur hors de cette définition.
+
 ## 5. Vérification (Phase 4)
 
 - Captures clair + sombre, tous réseaux + axes actifs : réseaux distinguables
