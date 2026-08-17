@@ -3007,7 +3007,10 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
 #: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas"}
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas",
+                    # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
+                    # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
+                    "georisque_alea"}
 
 
 @app.get("/map/layers.geojson")
@@ -3019,15 +3022,22 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
     rows = db.execute(text(
-        """SELECT sl.id, sl.subtype, sl.name,
+        """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
            LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
+    # M106 : `niveau` (aléa faible/moyen/fort) voyage avec la géométrie — null pour les autres kinds.
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
-              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"]}}
+              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
+                             "niveau": r["niveau"]}}
              for r in rows if r["g"]]
-    return {"type": "FeatureCollection", "features": feats}
+    # M106 : millésime SERVI, jamais en dur (doctrine M86) — date d'intégration du flux
+    # (max created_at du kind) ; la légende la dit comme telle.
+    mill = db.execute(text(
+        "SELECT max(created_at)::date FROM spatial_layers WHERE kind = :k"), {"k": kind}).scalar()
+    return {"type": "FeatureCollection", "features": feats,
+            "millesime_integration": mill.isoformat() if mill else None}
 
 
 @app.get("/map/bati")

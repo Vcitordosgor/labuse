@@ -110,6 +110,10 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // rattachement calibré à la parcelle ; couvrent aussi l'espace non parcellaire (voirie, domaine public).
   { key: 'zonage', label: 'Zones du PLU officiel (brut)' },
   { key: 'ppr', label: 'PPR multirisque' },
+  // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
+  // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
+  { key: 'alea_inondation', label: 'Aléa inondation' },
+  { key: 'alea_mvt', label: 'Aléa mouvement de terrain' },
   { key: 'equipements', label: 'Équipements' },
   { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
@@ -126,7 +130,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
-  { famille: 'Risques et protections', keys: ['ppr', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
 ]
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 

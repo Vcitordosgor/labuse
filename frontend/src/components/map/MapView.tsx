@@ -236,6 +236,13 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
   set('ov-50pas-line', 'line-color', t.cinquantePas)
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
+  // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + trame + contour)
+  for (const c of ALEA_COUCHES) {
+    set(c.id, 'fill-color', t[c.token]); set(c.id, 'fill-opacity', aleaOpacityExpr(t))
+    set(`${c.id}-trame`, 'fill-pattern', `${c.trame}-${clair ? 'clair' : 'sombre'}`)
+    set(`${c.id}-trame`, 'fill-opacity', t.aleaTrameOpacity)
+    set(`${c.id}-line`, 'line-color', t[c.token]); set(`${c.id}-line`, 'line-width', t.aleaContourW)
+  }
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -259,25 +266,48 @@ function selectedParcelCentroid(m: maplibregl.Map): LngLat | null {
   return feats[0] ? roughCentroid(feats[0].geometry) : null
 }
 
-// M105-B — motif de TRAME diagonale ANRU (canvas → addImage, comme les icônes équipements).
-// Tracée dans la chartreuse CLAIRE (la trame ne rend qu'en Clair — opacité 0 en Sombre) ;
-// trois segments pour un raccord sans couture d'une tuile à l'autre.
-function makeTrameAnru(m: maplibregl.Map) {
-  if (m.hasImage('trame-anru')) return
+// M105-B / M106 — motifs de TRAME (canvas → addImage, comme les icônes équipements).
+// Trois ORIENTATIONS distinctes : la texture différencie des couches superposables même
+// quand les teintes se rapprochent (doctrine M105-B, daltonisme). Segments décalés pour
+// un raccord sans couture d'une tuile à l'autre.
+function makeTrame(m: maplibregl.Map, id: string, color: string, orient: 'slash' | 'backslash' | 'horiz') {
+  if (m.hasImage(id)) return
   const S = 12
   const cv = document.createElement('canvas')
   cv.width = cv.height = S
   const ctx = cv.getContext('2d')
   if (!ctx) return
-  ctx.strokeStyle = MAP_THEME.clair.anru
+  ctx.strokeStyle = color
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.moveTo(0, S); ctx.lineTo(S, 0)
-  ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, -S / 2)
-  ctx.moveTo(S / 2, S * 1.5); ctx.lineTo(S * 1.5, S / 2)
+  if (orient === 'slash') {
+    ctx.moveTo(0, S); ctx.lineTo(S, 0)
+    ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, -S / 2)
+    ctx.moveTo(S / 2, S * 1.5); ctx.lineTo(S * 1.5, S / 2)
+  } else if (orient === 'backslash') {
+    ctx.moveTo(0, 0); ctx.lineTo(S, S)
+    ctx.moveTo(S / 2, -S / 2); ctx.lineTo(S * 1.5, S / 2)
+    ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, S * 1.5)
+  } else {
+    ctx.moveTo(0, S / 4); ctx.lineTo(S, S / 4)
+    ctx.moveTo(0, S * 3 / 4); ctx.lineTo(S, S * 3 / 4)
+  }
   ctx.stroke()
-  m.addImage('trame-anru', ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
+  m.addImage(id, ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
 }
+// M105-B : trame ANRU (chartreuse claire — opacité 0 en Sombre, posée en Clair)
+const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.clair.anru, 'slash')
+// M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
+// partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
+const aleaOpacityExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
+  'match', ['coalesce', ['get', 'niveau'], 'moyen'],
+  'faible', t.aleaOpacity.faible, 'fort', t.aleaOpacity.fort, t.aleaOpacity.moyen,
+] as unknown as maplibregl.ExpressionSpecification
+//: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte, trame dédiée)
+const ALEA_COUCHES = [
+  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', trame: 'trame-alea-inond', orient: 'backslash' },
+  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', trame: 'trame-alea-mvt', orient: 'horiz' },
+] as const
 
 function makeEquipIcons(m: maplibregl.Map) {
   const S = 46
@@ -395,6 +425,8 @@ export function MapView() {
   const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite', 20_000), enabled: layers.equipements })
   // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
   const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
+  // M106 P1 : aléas DEAL (993 objets île, un seul fetch — les 2 couches filtrent par subtype)
+  const alea = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: layers.alea_inondation || layers.alea_mvt })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
   const renouv = useQuery({ queryKey: ['layer', 'renouv', commune], queryFn: getRenouvGeojson, enabled: layers.renouv })
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
@@ -521,6 +553,23 @@ export function MapView() {
         paint: { 'fill-color': T_SOMBRE.cinquantePas, 'fill-opacity': T_SOMBRE.cinquantePasFillOpacity } })
       m.addLayer({ id: 'ov-50pas-line', type: 'line', source: 'ov-50pas', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.cinquantePas, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
+      // M106 P1 : ALÉAS DEAL SÉPARÉS — deux couches depuis un même flux (kind=georisque_alea,
+      // filtrées par subtype), là où le zonage PPR réglementaire est multirisque insécable.
+      // Aplat GRADUÉ par le niveau servi + contour + trame (superposables, doctrine M105-B) —
+      // dans les DEUX thèmes ; les valeurs vivent dans mapTheme.
+      m.addSource('ov-alea', { type: 'geojson', data: EMPTY_FC as never })
+      for (const c of ALEA_COUCHES) {
+        const filt = ['==', ['get', 'subtype'], c.sub] as unknown as maplibregl.FilterSpecification
+        // une image de trame PAR THÈME (la teinte y est peinte) — la bascule change le motif
+        makeTrame(m, `${c.trame}-sombre`, MAP_THEME.sombre[c.token], c.orient)
+        makeTrame(m, `${c.trame}-clair`, MAP_THEME.clair[c.token], c.orient)
+        m.addLayer({ id: c.id, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
+          paint: { 'fill-color': T_SOMBRE[c.token], 'fill-opacity': aleaOpacityExpr(T_SOMBRE) } })
+        m.addLayer({ id: `${c.id}-trame`, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
+          paint: { 'fill-pattern': `${c.trame}-sombre`, 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
+        m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
+          paint: { 'line-color': T_SOMBRE[c.token], 'line-width': T_SOMBRE.aleaContourW, 'line-opacity': 0.9 } })
+      }
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
@@ -756,7 +805,7 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru]]
+    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru], ['alea', alea]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
@@ -796,7 +845,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -892,6 +941,12 @@ export function MapView() {
     m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
     m.setLayoutProperty('ov-anru-trame', 'visibility', vis(layers.anru))
+    // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
+    for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
+      m.setLayoutProperty(id, 'visibility', vis(on))
+      m.setLayoutProperty(`${id}-trame`, 'visibility', vis(on))
+      m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
+    }
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))

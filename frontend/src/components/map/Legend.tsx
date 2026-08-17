@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { MAP_THEME } from '../../lib/mapTheme'
+import { getMapLayer } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
@@ -30,7 +32,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const verdict = useApp((s) => s.verdict)
   const analyse = useApp((s) => s.filters.analyseLabuse)
   const peint = useApp((s) => s.mapPeint)
+  const commune = useApp((s) => s.commune)
+  const basemap = useApp((s) => s.basemap)
   const v2 = useV2Actif()
+  // M106 : la légende des aléas dit le MILLÉSIME SERVI (jamais en dur) — même clé de requête
+  // que la carte (React Query dédoublonne, aucun fetch supplémentaire) ; swatches à la teinte
+  // du THÈME courant (mapTheme) pour que la légende corresponde à ce qui est peint.
+  const aleaActifHook = layers.alea_inondation || layers.alea_mvt
+  const aleaQ = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: aleaActifHook })
+  const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
+  const aleaMillesime = (aleaQ.data as unknown as { millesime_integration?: string } | undefined)?.millesime_integration
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
 
@@ -42,8 +53,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const verdictPeint = opinion && peint.parcelles && !peint.zonage
   const zonagePeint = peint.zonage
   const equipPeint = peint.equipements
-  // 50 pas / Renouvellement : GeoJSON sans minzoom — peints dès que la couche est active
-  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
+  // 50 pas / Renouvellement / aléas : GeoJSON sans minzoom — peints dès que la couche est active
+  const aleaActif = aleaActifHook
+  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv && !aleaActif
   if (rien) return null
 
   return (
@@ -120,6 +132,29 @@ export function Legend({ inline = false }: { inline?: boolean }) {
           </Tip>
         </div>
       )}
+
+      {/* ── M106 : aléas DEAL séparés — gradation par niveau, source et millésime SERVIS ── */}
+      {(['alea_inondation', 'alea_mvt'] as const).map((k) => layers[k] && (
+        <div key={k} data-legend-alea={k} className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <p className="label-caps mb-2">{k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain'}</p>
+          <div className="flex items-center gap-2">
+            {(['faible', 'moyen', 'fort'] as const).map((n) => (
+              <span key={n} className="flex items-center gap-1">
+                <span className="h-2.5 w-4 rounded-sm border" style={{
+                  background: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt,
+                  opacity: Math.min(1, tTheme.aleaOpacity[n] + 0.25),
+                  borderColor: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt,
+                }} />
+                <span className="text-[10.5px] text-txt-dim">{n}</span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-[10px] text-txt-dim">
+            DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)
+            {aleaMillesime ? ` · intégré le ${aleaMillesime.split('-').reverse().join('/')}` : ''}
+          </p>
+        </div>
+      ))}
 
       {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
       {layers.renouv && (
