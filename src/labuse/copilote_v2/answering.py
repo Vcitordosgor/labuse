@@ -210,12 +210,32 @@ def _formuler(db: Session, message: str, res) -> str:
 
 
 def answer(db: Session, message: str, history: list[dict] | None = None,
-           contexte: dict | None = None, confirme: bool = False) -> dict:
+           contexte: dict | None = None, confirme: bool = False,
+           prior_params: dict | None = None) -> dict:
     """Point d'entrée unique du Copilote v2. Retourne un dict prêt à rendre. `confirme=True` : le client
-    a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap."""
-    route = classify(db, message, history=history, contexte=contexte)
+    a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap.
+
+    M102-B1 — `history`/`prior_params` viennent du FIL persisté (rechargés par l'endpoint depuis
+    conversation_id) : le tour est interprété DANS son contexte (une réponse à une clarification
+    hérite de l'intention et des paramètres — le prompt routeur est conçu pour, gate 45 msgs).
+    La réponse porte `_route` (intent + params du tour, jamais servi au client — poppé par
+    l'endpoint) pour alimenter le contexte du tour SUIVANT. AUCUNE reprise de chiffre d'un tour
+    antérieur ici : une clarification apporte des PARAMÈTRES, pas des faits — l'anti-invention
+    reste vérifiée contre l'outil du tour courant (le registre de faits est le mandat B3)."""
+    route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
+    rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme)
+    # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
+    # poppé par l'endpoint pour la persistance du fil, jamais servi au client.
+    rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
+                              "params": {k: v for k, v in (route.params or {}).items()
+                                         if v is not None and k != "selection"}})
+    return rep
+
+
+def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
+                       confirme: bool = False) -> dict:
     intent = route.intent
     params = route.params
     # §5 Copilote EMBARQUÉ : le contexte visible (la parcelle / la sélection) EST le contexte du

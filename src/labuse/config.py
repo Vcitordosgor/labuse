@@ -185,6 +185,9 @@ class Settings(BaseSettings):
     copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
     copilote_v2_retention_jours: int = 90      # historique conversations/missions conservé N jours (§2b)
     copilote_v2_veilles_max: int = 20          # plafond de veilles actives par compte (§4)
+    copilote_v2_contexte_ttl_minutes: int = 120  # M102-B1 : au-delà, le fil n'alimente PLUS
+                                                 # l'interprétation (conversation lisible/reprenable —
+                                                 # seule la mémoire d'interprétation est bornée)
 
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":

@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS copilote_messages (
 );
 CREATE INDEX IF NOT EXISTS ix_copilote_conv_compte ON copilote_conversations (compte_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS ix_copilote_msg_conv ON copilote_messages (conversation_id, ts);
+-- M102-B1 : contexte d'interprétation du tour (intent + params du routeur + clarification) — jamais
+-- servi au client, relu par fil() pour interpréter le tour SUIVANT dans son contexte.
+ALTER TABLE copilote_messages ADD COLUMN IF NOT EXISTS payload jsonb;
 """
 
 
@@ -41,9 +44,11 @@ def _titre(message: str) -> str:
 
 
 def enregistrer(db: Session, *, compte_id: int | None, conversation_id: int | None,
-                message: str, reponse: dict) -> int | None:
+                message: str, reponse: dict, payload: dict | None = None) -> int | None:
     """Journalise un tour (message client + réponse Copilote). Crée la conversation au 1er tour
-    (titre = 1re demande). Retourne l'id de conversation (à renvoyer au client pour la suite)."""
+    (titre = 1re demande). `payload` (M102-B1) = contexte d'interprétation du tour (intent +
+    params du routeur), relu par fil(). Retourne l'id de conversation."""
+    import json
     try:
         db.execute(text(DDL))
         cid = conversation_id
@@ -57,13 +62,43 @@ def enregistrer(db: Session, *, compte_id: int | None, conversation_id: int | No
                             "AND compte_id IS NOT DISTINCT FROM :c"), {"i": cid, "c": compte_id})
         db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent) "
                         "VALUES (:i, 'client', :t, NULL)"), {"i": cid, "t": message[:2000]})
-        db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent) "
-                        "VALUES (:i, 'copilote', :t, :n)"),
-                   {"i": cid, "t": (reponse.get("text") or "")[:4000], "n": reponse.get("intent")})
+        db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent, payload) "
+                        "VALUES (:i, 'copilote', :t, :n, CAST(:p AS jsonb))"),
+                   {"i": cid, "t": (reponse.get("text") or "")[:4000], "n": reponse.get("intent"),
+                    "p": json.dumps(payload, ensure_ascii=False) if payload else None})
         return cid
     except Exception:
         db.rollback()
         return conversation_id
+
+
+def fil(db: Session, compte_id: int | None, conversation_id: int,
+        ttl_minutes: int, max_tours: int = 6) -> tuple[list[dict], dict | None]:
+    """M102-B1 — le FIL pour l'INTERPRÉTATION : (history [{role: user|assistant, content}],
+    prior = payload du dernier tour Copilote). Cloison compte. Le contexte a une DURÉE DE VIE
+    bornée (`ttl_minutes` depuis le dernier tour) : au-delà, ([], None) — la conversation reste
+    lisible/reprenable à l'écran, seule la mémoire d'interprétation expire (le contexte ne
+    traîne pas). Jamais d'exception sortante (un fil illisible = interprétation à froid, dite
+    par l'absence de contexte, pas un crash)."""
+    try:
+        rows = db.execute(text(
+            "SELECT m.role, m.texte, m.payload FROM copilote_messages m "
+            "JOIN copilote_conversations c ON c.id = m.conversation_id "
+            "WHERE m.conversation_id = :i AND c.compte_id IS NOT DISTINCT FROM :c "
+            "  AND c.updated_at >= now() - make_interval(mins => :ttl) "
+            "ORDER BY m.ts DESC, m.id DESC LIMIT :n"),
+            {"i": conversation_id, "c": compte_id, "ttl": int(ttl_minutes),
+             "n": int(max_tours) * 2}).mappings().all()
+    except Exception:
+        db.rollback()
+        return [], None
+    if not rows:
+        return [], None
+    history = [{"role": "user" if r["role"] == "client" else "assistant",
+                "content": (r["texte"] or "")[:600]} for r in reversed(rows)]
+    prior = next((dict(r["payload"]) for r in rows
+                  if r["role"] == "copilote" and r["payload"]), None)
+    return history, prior
 
 
 def lister(db: Session, compte_id: int | None, limite: int = 40) -> list[dict]:
