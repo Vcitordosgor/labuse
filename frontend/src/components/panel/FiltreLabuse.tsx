@@ -109,78 +109,117 @@ function ChipGroup({ field, options }: { field: keyof Filters; options: { k: str
 // les communes filtrées sinon — une zone à 0 parcelle dans la portée est ABSENTE de la liste,
 // et le bandeau de portée le dit (comportement explicite, pas un masquage silencieux). La
 // fiche, elle, garde la graphie officielle de sa commune (zone_lib, jamais écrasé).
+// M99-B — CHOIX PUR, AUCUNE FRAPPE (correctif Vic sur M99) : tout champ de saisie laisse taper
+// une valeur inexistante (uc, U-C, faute) → résultat vide inexpliqué. Ici, uniquement des clics :
+// la famille (= tout U, le geste par défaut), ou un menu déroulant de sous-zones (défilant,
+// « Toutes les zones U » en tête pour revenir au mode famille). Aucun <input> dans ce bloc.
+// EXCLUSIVITÉ familles/sous-zones (M99-B) : côté backend `zonage` (familles) et `zone_plu`
+// (zones) se combinent en ET — un mélange inter-familles (famille A + zone UC) rendrait ZÉRO
+// en silence. Le menu est donc exclusif : choisir une sous-zone passe le bloc en mode
+// sous-zones (familles vidées) ; choisir une famille repasse en mode familles (zones vidées).
+// Multi-sélection libre À L'INTÉRIEUR de chaque mode (U+AU, ou UC+UB+1AUB). L'aide le dit.
+// PORTÉE (Phase 2) : île par défaut, communes filtrées sinon ; une sous-zone sélectionnée qui
+// SORT de la portée est RETIRÉE du filtre et ANNONCÉE — jamais de filtre fantôme qui renvoie
+// zéro. Purge UNIQUEMENT sur données chargées (jamais sur erreur réseau : on ne vide pas un
+// filtre sur une panne).
 function ZoneSelector() {
   const { filters, setFilter } = useApp()
   const [openFam, setOpenFam] = useState<string | null>(null)
-  const [q, setQ] = useState('')
+  const [retirees, setRetirees] = useState<string[]>([])
   const zq = useQuery({
     queryKey: ['zonage-zones', [...filters.communes].sort().join('|')],
     queryFn: () => getZonageZones(filters.communes), staleTime: 300_000,
   })
   const selFam = filters.zonagePlu
   const selZones = filters.zonePlu
-  const toggleFam = (k: string) =>
-    setFilter('zonagePlu', selFam.includes(k) ? selFam.filter((x) => x !== k) : [...selFam, k])
-  const toggleZone = (z: string) =>
-    setFilter('zonePlu', selZones.includes(z) ? selZones.filter((x) => x !== z) : [...selZones, z])
   const familles = zq.data?.familles ?? ZONE_FAM.map((f) => ({ fam: f.k, n: 0, zones: [] }))
+  // Phase 2.4 — purge annoncée des sous-zones sorties de la portée (données chargées seulement).
+  const dispo = zq.data ? zq.data.familles.flatMap((f) => f.zones.map((z) => z.zone)) : null
+  useEffect(() => {
+    if (!dispo) return
+    const absentes = selZones.filter((z) => !dispo.includes(z))
+    if (absentes.length) {
+      setFilter('zonePlu', selZones.filter((z) => dispo.includes(z)))
+      setRetirees(absentes)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zq.data])
+  const choisirFamille = (fam: string) => {          // mode famille : zones vidées (exclusivité)
+    setFilter('zonePlu', [])
+    setFilter('zonagePlu', selFam.includes(fam) ? selFam.filter((x) => x !== fam) : [...selFam, fam])
+    setRetirees([])
+  }
+  const choisirZone = (z: string) => {               // mode sous-zones : familles vidées
+    setFilter('zonagePlu', [])
+    setFilter('zonePlu', selZones.includes(z) ? selZones.filter((x) => x !== z) : [...selZones, z])
+    setRetirees([])
+  }
   const portee = filters.communes.length
     ? `zones des ${filters.communes.length} commune${filters.communes.length > 1 ? 's' : ''} filtrée${filters.communes.length > 1 ? 's' : ''}`
     : 'zones de toute l’île'
   return (
     <div className="mt-1 flex flex-col gap-1">
       <p className="text-[10px] text-txt-dim">
-        Cocher une famille = toute la famille · déplier pour choisir des zones · {portee}
+        Une famille = toutes ses zones · ou des zones précises au menu (l'un ou l'autre) · {portee}
       </p>
+      {retirees.length > 0 && (
+        <p data-zones-retirees className="rounded-md bg-surface-2/80 px-2 py-1 text-[10.5px] text-st-creuser">
+          {retirees.length > 1 ? `Zones ${retirees.join(', ')} retirées du filtre` : `Zone ${retirees[0]} retirée du filtre`}
+          {' '}: absente{retirees.length > 1 ? 's' : ''} de la portée courante.
+        </p>
+      )}
       {familles.map((f) => {
         const zonesSelFam = f.zones.filter((z) => selZones.includes(z.zone)).length
         const ouverte = openFam === f.fam
-        const visibles = ouverte
-          ? f.zones.filter((z) => !q || z.zone.toLowerCase().includes(q.toLowerCase()))
-          : []
+        const enModeFamille = selFam.includes(f.fam)
         return (
           <div key={f.fam} className="rounded-lg border border-line-2 bg-surface-3/60">
             <div className="flex items-center gap-2 px-2 py-1">
-              <Chip on={selFam.includes(f.fam)} onClick={() => toggleFam(f.fam)}>{f.fam}</Chip>
+              <Chip on={enModeFamille} onClick={() => choisirFamille(f.fam)}>{f.fam}</Chip>
               <span className="flex-1 text-[10.5px] text-txt-dim">
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
-                {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} cochée{zonesSelFam > 1 ? 's' : ''}</span>}
+                {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
-              <button data-zones-fam={f.fam} onClick={() => { setOpenFam(ouverte ? null : f.fam); setQ('') }}
+              <button data-zones-fam={f.fam} onClick={() => setOpenFam(ouverte ? null : f.fam)}
                 className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
                 {ouverte ? 'refermer' : 'zones…'}
               </button>
             </div>
             {ouverte && (
-              <div className="border-t border-line-2 px-2 py-1.5">
-                <input autoFocus placeholder={`chercher dans ${f.zones.length} zones ${f.fam}…`}
-                  value={q} onChange={(e) => setQ(e.target.value)}
-                  className="mb-1.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-                <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto">
-                  {visibles.map((z) => (
-                    <label key={z.zone} data-zone={z.zone}
-                      className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-[11px] hover:bg-surface-3">
-                      <input type="checkbox" checked={selZones.includes(z.zone)} onChange={() => toggleZone(z.zone)}
-                        className="accent-[var(--mint,#4ADE80)]" />
-                      <span className={selZones.includes(z.zone) ? 'font-medium text-txt-hi' : 'text-txt'}>{z.zone}</span>
+              <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-t border-line-2 px-2 py-1.5">
+                <button data-zone-toutes={f.fam} onClick={() => choisirFamille(f.fam)}
+                  className={`flex items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3 ${
+                    enModeFamille ? 'font-medium text-mint' : 'text-txt'}`}>
+                  <span className="w-3 text-center">{enModeFamille ? '✓' : ''}</span>
+                  <span>Toutes les zones {f.fam}</span>
+                  <span className="ml-auto text-[10px] text-txt-dim">{zq.data ? nf.format(f.n) : '…'}</span>
+                </button>
+                {f.zones.map((z) => {
+                  const on = selZones.includes(z.zone)
+                  return (
+                    <button key={z.zone} data-zone={z.zone} onClick={() => choisirZone(z.zone)}
+                      className={`flex items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3 ${
+                        on ? 'font-medium text-txt-hi' : 'text-txt'}`}>
+                      <span className="w-3 text-center text-mint">{on ? '✓' : ''}</span>
+                      <span>{z.zone}</span>
                       <span className="ml-auto text-[10px] text-txt-dim">{nf.format(z.n)}</span>
-                    </label>
-                  ))}
-                  {visibles.length === 0 && (
-                    <p className="px-1 py-1 text-[10.5px] text-txt-dim">
-                      {q ? 'Aucune zone ne correspond à la recherche.' : 'Aucune zone de cette famille dans la portée courante.'}
-                    </p>
-                  )}
-                </div>
+                    </button>
+                  )
+                })}
+                {f.zones.length === 0 && (
+                  <p className="px-1 py-1 text-[10.5px] text-txt-dim">
+                    Aucune zone de cette famille dans la portée courante.
+                  </p>
+                )}
               </div>
             )}
           </div>
         )
       })}
       {selZones.length > 0 && (
-        <button data-zones-vider onClick={() => setFilter('zonePlu', [])}
+        <button data-zones-vider onClick={() => { setFilter('zonePlu', []); setRetirees([]) }}
           className="self-start text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
-          Vider les {selZones.length} zone{selZones.length > 1 ? 's' : ''} cochée{selZones.length > 1 ? 's' : ''}
+          Vider les {selZones.length} zone{selZones.length > 1 ? 's' : ''} choisie{selZones.length > 1 ? 's' : ''}
         </button>
       )}
     </div>
