@@ -1048,11 +1048,14 @@ def _q_v2_where(run_label: str, score_min: int | None,
         params["f_capa"] = capacite_min * SDP_PAR_LOGEMENT_M2
     if zone_plu:   # zone PLU EXACTE (tiroir droit).
         # M99 : le critère normalisé vit dans la TABLE (zone_filtre, écrit par
-        # build_parcel_zone_plu + ensure_zone_filtre) — plus d'upper() ad hoc sur la colonne
-        # ici. L'entrée utilisateur est pliée à la même clé (graphie réglementaire MAJUSCULE).
+        # build_parcel_zone_plu + ensure_zone_filtre). M99-B : le PLIAGE du paramètre se fait
+        # en PG AUSSI — str.upper() Python monte les accents (NDé→NDÉ) quand upper() PG
+        # (locale C) ne les touche pas : la colonne porte « NDé » (Cilaos, 10 parcelles,
+        # mesuré), le pliage Python renvoyait 0 silencieux sur un clic du menu. Même fonction
+        # des deux côtés = même clé, toujours.
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu zx WHERE zx.idu = p.idu"
-                     " AND zx.zone_filtre = ANY(:f_zplu))")
-        params["f_zplu"] = [z.strip().upper() for z in zone_plu.split(",") if z.strip()]
+                     " AND zx.zone_filtre = ANY(SELECT upper(v) FROM unnest(CAST(:f_zplu AS text[])) v))")
+        params["f_zplu"] = [z.strip() for z in zone_plu.split(",") if z.strip()]
     # ── M45 (P2d) — tiroirs éco / mutation / propriété / veille (facettes composables) ──
     if sous_densite:   # éco/risques : bâti en sous-densité (parcel_residuel)
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rd WHERE rd.parcel_id = p.id AND rd.sous_densite)")
