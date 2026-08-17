@@ -259,13 +259,15 @@ interface AppState {
   setModeB: (p: Partial<ModeBParams>) => void
   sourcesFocus: string | null // nom de source à surligner sur la page Sources
   openSources: (focus?: string | null) => void
-  // M54-EXPO-3 — panneau « Mes veilles » en surimpression de la carte (vue cartes conservée pour
-  // dessiner). Pas une View exclusive : la carte + l'outil zone restent dispo.
-  veillesOpen: boolean
+  // M104 — LA section SURVEILLANCE (fusion Suivis + Secteurs + Critères, arbitrage 17/08) :
+  // une entrée, trois volets. En surimpression de la carte (l'outil de dessin reste dispo).
+  surveillanceOpen: boolean
+  surveillanceVolet: 'parcelles' | 'secteurs' | 'criteres'
+  openSurveillance: (volet?: 'parcelles' | 'secteurs' | 'criteres') => void
+  setSurveillanceOpen: (v: boolean) => void
+  toggleSurveillance: () => void
+  // anciennes entrées (Secteurs / Suivis) : REDIRECTIONS vers la section unifiée — jamais un 404.
   toggleVeilles: () => void
-  setVeillesOpen: (v: boolean) => void
-  // M85-B — panneau « Suivis » (les parcelles suivies + date du dernier changement).
-  suivisOpen: boolean
   toggleSuivis: () => void
   // M54-EXPO-3 A8 — comparateur : 2 à 3 parcelles côte à côte (GET /compare). Sélection cumulative
   // depuis la fiche (« Comparer ») et la shortlist ; panneau en surimpression.
@@ -400,7 +402,7 @@ export const useApp = create<AppState>((set) => ({
   // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
-    entretienDirect: null, veillesOpen: false, suivisOpen: false }),
+    entretienDirect: null, surveillanceOpen: false }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
@@ -467,12 +469,16 @@ export const useApp = create<AppState>((set) => ({
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
     parcours: null, openProjet: null }),
-  veillesOpen: false,
-  setVeillesOpen: (v) => set({ veillesOpen: v }),
-  toggleVeilles: () => set((s) => ({ veillesOpen: !s.veillesOpen, view: 'cartes', suivisOpen: false })),
-  // M85-B — « Suivis » : liste des parcelles suivies (exclusif du panneau Secteurs).
-  suivisOpen: false,
-  toggleSuivis: () => set((s) => ({ suivisOpen: !s.suivisOpen, view: 'cartes', veillesOpen: false })),
+  // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
+  surveillanceOpen: false,
+  surveillanceVolet: 'parcelles',
+  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes',
+    surveillanceVolet: volet ?? s.surveillanceVolet })),
+  setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
+  toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes' })),
+  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant.
+  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes' }),
+  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes' }),
   compareIdus: [],
   compareOpen: false,
   addToCompare: (idu) => set((s) => ({

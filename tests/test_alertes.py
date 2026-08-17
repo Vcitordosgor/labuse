@@ -79,7 +79,10 @@ def test_permis_ne_passe_plus_par_ce_canal(db_session):
     _permit(db_session, lon + 0.0005, lat)                                    # ~50 m — jadis détecté
     res = alertes.compute_alertes(db_session, COMMUNE, None)
     assert "permit_near_followed" not in res                                  # clé disparue
-    assert res == {"dvf_in_zone": 0, "total": 0}                              # rien via ce canal
+    # M104 : compute rend aussi permis/bodacc/zonage PAR SECTEUR (canal arbitré, distinct du
+    # canal retiré « près d'une parcelle suivie ») — l'intention du test est intacte : SANS zone
+    # dessinée, rien ne sort de ce module, et jamais par proximité d'une parcelle suivie.
+    assert res["dvf_in_zone"] == 0 and res["total"] == 0                      # rien via ce canal
     assert not any(a["kind"] == "permit_near_followed"
                    for a in alertes.list_alertes(db_session, COMMUNE, None))  # aucune ligne permis
 
@@ -159,3 +162,77 @@ def test_api_watch_zone_rename(api_client):
     z = [x for x in client.get("/watch-zones", params={"commune": commune}).json() if x["id"] == zid][0]
     assert z["name"] == "Après"
     assert client.patch("/watch-zones/99999999", json={"name": "X"}).status_code == 404
+
+
+# ───────────────────────── M104 — raccordement + 3 déclencheurs ─────────────────────────
+# Chaque déclencheur PROUVE qu'il produit un ÉVÉNEMENT RÉEL (event_log, type veille_zone),
+# et le rattrapage est borné : un fait antérieur à la création de la zone alimente le
+# panneau mais ne notifie JAMAIS (« repartir du présent », arbitrage M104).
+
+def _notifs_secteur(db):
+    return db.execute(text(
+        "SELECT titre, dedup FROM event_log WHERE kind = 'veille_zone' AND dedup LIKE 'secteur:%'"
+    )).all()
+
+
+def test_permis_dans_secteur_produit_un_evenement_reel(db_session):
+    lon, lat = 55.31, -21.06
+    alertes.create_watch_zone(db_session, "Quartier permis", COMMUNE, _zone(lon, lat), None)
+    alertes.compute_alertes(db_session, COMMUNE, None)              # photo initiale, rien
+    db_session.execute(text(
+        "INSERT INTO sitadel_permits (permit_id, type, date_depot, commune, geom) "
+        "VALUES ('PC974TEST01', 'PC', now()::date, :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+        {"c": COMMUNE, "lon": lon, "lat": lat})
+    out = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert out["permis_in_zone"] == 1 and out["notifications"] == 1
+    assert any("Permis déposé" in t for t, _ in _notifs_secteur(db_session))
+    # idempotence : re-évaluer n'ajoute rien
+    again = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert again["permis_in_zone"] == 0 and again["notifications"] == 0
+
+
+def test_bodacc_dans_secteur_produit_un_evenement_reel(db_session):
+    lon, lat = 55.33, -21.07
+    pid = _parcel(db_session, "97499000ZZ0001", lon, lat)
+    assert pid
+    alertes.create_watch_zone(db_session, "Quartier BODACC", COMMUNE, _zone(lon, lat), None)
+    db_session.execute(text(
+        "INSERT INTO parcelle_personne_morale (idu, siren, denomination) "
+        "VALUES ('97499000ZZ0001', '000000001', 'SCI TEST')"))
+    db_session.execute(text(
+        "INSERT INTO bodacc_procedures (annonce_id, siren, type_procedure, date_annonce) "
+        "VALUES ('A-TEST-1', '000000001', 'Redressement judiciaire', now()::date)"))
+    out = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert out["bodacc_in_zone"] == 1 and out["notifications"] == 1
+    assert any("Procédure BODACC" in t for t, _ in _notifs_secteur(db_session))
+
+
+def test_zonage_dans_secteur_photo_puis_diff(db_session):
+    lon, lat = 55.35, -21.08
+    _parcel(db_session, "97499000ZZ0002", lon, lat)
+    db_session.execute(text(
+        "INSERT INTO parcel_zone_plu (idu, zone_lib) VALUES ('97499000ZZ0002', 'U1')"))
+    alertes.create_watch_zone(db_session, "Quartier zonage", COMMUNE, _zone(lon, lat), None)
+    # 1re rencontre = PHOTO silencieuse (repartir du présent) — aucune alerte, aucune notif
+    out = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert out["zonage_in_zone"] == 0
+    # le zonage change → alerte + événement réel
+    db_session.execute(text("UPDATE parcel_zone_plu SET zone_lib = 'AU2' WHERE idu = '97499000ZZ0002'"))
+    out = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert out["zonage_in_zone"] == 1 and out["notifications"] == 1
+    assert any("Changement de zonage" in t for t, _ in _notifs_secteur(db_session))
+    # empreinte mémorisée : re-évaluer n'ajoute rien
+    assert alertes.compute_alertes(db_session, COMMUNE, None)["zonage_in_zone"] == 0
+
+
+def test_repartir_du_present_fait_ancien_ne_notifie_pas(db_session):
+    """Un fait daté AVANT la création de la zone alimente le panneau, jamais la cloche."""
+    lon, lat = 55.37, -21.09
+    alertes.create_watch_zone(db_session, "Zone rattrapage", COMMUNE, _zone(lon, lat), None)
+    db_session.execute(text(
+        "INSERT INTO sitadel_permits (permit_id, type, date_depot, commune, geom) "
+        "VALUES ('PC974VIEUX', 'PC', '2020-01-15', :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+        {"c": COMMUNE, "lon": lon, "lat": lat})
+    out = alertes.compute_alertes(db_session, COMMUNE, None)
+    assert out["permis_in_zone"] == 1        # le panneau montre l'historique…
+    assert out["notifications"] == 0         # …la cloche ne le reçoit jamais

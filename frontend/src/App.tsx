@@ -12,8 +12,7 @@ import { SourcesPage } from './components/sources/SourcesPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
-import { VeillesPanel } from './components/veilles/VeillesPanel'
-import { SuivisPanel } from './components/suivis/SuivisPanel'
+import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
 import { filtersFromHash, filtersToHash, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
@@ -253,7 +252,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, veillesOpen, suivisOpen, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, surveillanceOpen, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -286,6 +285,10 @@ export default function App() {
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
     if (m) setModule(m)
+    // M104 — lien profond des notifications de secteur (#surveillance=parcelles|secteurs|criteres) :
+    // ouvre la section unifiée sur le bon volet (aucun lien mort).
+    const sv = p.get('surveillance')
+    if (sv) useApp.getState().openSurveillance(sv === 'parcelles' || sv === 'criteres' ? sv : 'secteurs')
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -318,8 +321,8 @@ export default function App() {
                 {module === 'temps' ? <TimeMachine center={flyTo?.center ?? null} /> : <MapView />}
               </Suspense>
               {parcours && <ParcoursTinder />}
-              {veillesOpen && <VeillesPanel />}
-              {suivisOpen && <SuivisPanel />}
+              {/* M104 — la section Surveillance unifiée (Parcelles / Secteurs / Critères) */}
+              {surveillanceOpen && <SurveillancePanel />}
               {/* M55-L point 9 : le comparateur s'ouvre aussi depuis l'outil « Comparer » (Outils),
                   donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
                   (ComparePanel gère l'état vide). */}
