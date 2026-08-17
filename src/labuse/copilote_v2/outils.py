@@ -96,10 +96,28 @@ def _refus_commune(outil: str, nom: str) -> ToolResult:
                             "24 communes de La Réunion (ex. Saint-Denis, Le Tampon, L'Étang-Salé).")
 
 
+#: M110 — signaux de vie interrogeables (facette FiltreCriteres.signaux, mêmes clés qu'à l'écran).
+_SIGNAUX_OK = {"procedure", "friche", "cession", "permis_actif", "permis_caduc",
+               "defisc", "nu_pm", "assemblage"}
+#: libellés client des signaux (le récap nomme le critère appliqué, jamais la clé technique).
+_SIGNAUX_FR = {"procedure": "procédure judiciaire (BODACC)", "friche": "friche",
+               "cession": "cession de fonds récente", "permis_actif": "permis actif",
+               "permis_caduc": "permis caduc", "defisc": "en défiscalisation",
+               "nu_pm": "terrain nu détenu par une société", "assemblage": "candidate à l'assemblage"}
+
+
 def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: int | None = None,
                       surface_max: int | None = None, tier: str | None = None,
-                      personne_morale: bool = False) -> ToolResult:
-    """Compte via la FACETTE canonique `filtre()` (mêmes chiffres que la recherche à l'écran)."""
+                      personne_morale: bool = False, evenement: bool = False,
+                      signaux: str | None = None, adresse_absente: bool = False,
+                      copro: str | None = None, defisc: bool = False,
+                      renouvellement: bool = False, zonage: str | None = None) -> ToolResult:
+    """Compte via la FACETTE canonique `filtre()` (mêmes chiffres que la recherche à l'écran).
+
+    M110 — la facette est interrogeable au-delà des 5 premiers critères : événement rouge,
+    signaux de vie (procédure/friche/…), adresse absente, copropriété, défiscalisation,
+    renouvellement, zonage PLU (U/AU/A/N). Le Copilote APPELLE la facette, il ne réimplémente
+    rien (un critère = un seul endroit). Chaque critère appliqué est NOMMÉ (récap M109)."""
     from ..api.app import FiltreCriteres, filtre
     if commune is not None:                          # M103 P4 — filet toponyme, refus honnête
         resolue = resoudre_commune(commune)
@@ -107,16 +125,46 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
             return _refus_commune("compter_parcelles", commune)
         commune = resolue
     tiers = _TIER_ALIAS.get((tier or "").lower().strip()) if tier else None
+    sig = ",".join(s for s in [x.strip().lower() for x in (signaux or "").split(",")]
+                   if s in _SIGNAUX_OK) or None
+    cp = (copro or "").strip().lower() if copro and copro.strip().lower() in ("avec", "sans") else None
+    zon = ",".join(z for z in [x.strip().upper() for x in (zonage or "").split(",")]
+                   if z in ("U", "AU", "A", "N")) or None
     fc = FiltreCriteres(source=RUN, commune=commune,
                         surface_min=int(surface_min) if surface_min is not None else None,
                         surface_max=int(surface_max) if surface_max is not None else None,
-                        tiers=tiers, personne_morale=bool(personne_morale))
+                        tiers=tiers, personne_morale=bool(personne_morale),
+                        evenement=bool(evenement), signaux=sig, adresse_absente=bool(adresse_absente),
+                        copro=cp, defisc_active=bool(defisc), renouvellement=bool(renouvellement),
+                        zonage=zon)
     out = filtre(c=fc, limit=0, offset=0, sort=None, idus=0, groupes=0, db=db)
     n = out.get("compte")
     crit = {k: v for k, v in {"commune": commune, "surface_min": surface_min,
-            "surface_max": surface_max, "tier": tiers, "personne_morale": personne_morale or None}.items()
-            if v is not None}
-    return ToolResult("compter_parcelles", valeur=n, data={"compte": n, "criteres": crit},
+            "surface_max": surface_max, "tier": tiers, "personne_morale": personne_morale or None,
+            "evenement": evenement or None, "signaux": sig, "adresse_absente": adresse_absente or None,
+            "copro": cp, "defisc": defisc or None, "renouvellement": renouvellement or None,
+            "zonage": zon}.items() if v is not None}
+    # M110 — libellés client des critères de FACETTE appliqués (le récap les nomme, comme aujourd'hui).
+    labels: list[str] = []
+    if evenement:
+        labels.append("à événement rouge")
+    for s in (sig or "").split(","):
+        if s:
+            labels.append(_SIGNAUX_FR.get(s, s))
+    if adresse_absente:
+        labels.append("sans adresse (BAN)")
+    if cp == "avec":
+        labels.append("en copropriété")
+    elif cp == "sans":
+        labels.append("hors copropriété")
+    if defisc:
+        labels.append("en défiscalisation")
+    if renouvellement:
+        labels.append("en renouvellement urbain")
+    if zon:
+        labels.append("zone " + "/".join(zon.split(",")))
+    return ToolResult("compter_parcelles", valeur=n,
+                      data={"compte": n, "criteres": crit, "criteres_labels": labels},
                       source="cadastre", millesime=CADASTRE_MILLESIME)
 
 
@@ -131,14 +179,67 @@ def _fold_py(s: str) -> str:
     return s.translate(_ACCENTS)
 
 
+# ───────────────────────── M110 — résolution d'acronyme (référentiel en base) ─────────────────────────
+def _repo_root_entites():
+    from pathlib import Path
+    return Path(__file__).resolve().parents[3]
+
+
+def _ensure_acronymes(db: Session) -> None:
+    """Table `entite_acronyme` (référentiel en base, JAMAIS une table en dur dans le prompt),
+    semée depuis le CSV versionné data/entites/acronymes_moraux.csv (SIREN vérifiés). Idempotent :
+    créée + semée à la 1re demande si vide (tests / base fraîche), jamais rechargée ensuite."""
+    import csv as _csv
+    from sqlalchemy import text as _text
+    db.execute(_text("CREATE TABLE IF NOT EXISTS entite_acronyme ("
+                     "acronyme text PRIMARY KEY, siren varchar(9) NOT NULL, libelle text)"))
+    if (db.execute(_text("SELECT count(*) FROM entite_acronyme")).scalar() or 0) == 0:
+        seed = _repo_root_entites() / "data" / "entites" / "acronymes_moraux.csv"
+        if seed.exists():
+            with seed.open(encoding="utf-8") as f:
+                for row in _csv.DictReader(f, delimiter=";"):
+                    if row.get("acronyme") and row.get("siren"):
+                        db.execute(_text("INSERT INTO entite_acronyme (acronyme, siren, libelle) "
+                                         "VALUES (:a,:s,:l) ON CONFLICT (acronyme) DO NOTHING"),
+                                   {"a": row["acronyme"].strip().upper(), "s": row["siren"].strip(),
+                                    "l": (row.get("libelle") or "").strip()})
+            db.commit()
+
+
+def resoudre_acronyme(db: Session, q: str) -> tuple[str, str] | None:
+    """(siren, libellé) si un MOT de la demande est un acronyme connu (« la SIDR » → 310863592),
+    sinon None. Insensible casse/ponctuation ; le référentiel vit en base (seed vérifié)."""
+    import re as _re
+    _ensure_acronymes(db)
+    from sqlalchemy import text as _text
+    for w in [q] + q.split():
+        key = _re.sub(r"[^A-Z0-9]", "", w.upper())
+        if len(key) < 3:
+            continue
+        row = db.execute(_text("SELECT siren, libelle FROM entite_acronyme WHERE acronyme = :k"),
+                         {"k": key}).first()
+        if row:
+            return (row[0], row[1])
+    return None
+
+
 def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
     """Patrimoine d'une personne morale (nom ou SIREN) via `patrimoine` (DGFiP open data). Résolution
-    nom→SIREN accent-INSENSIBLE (le client tape « Société », la base stocke « SOCIETE »)."""
+    nom→SIREN accent-INSENSIBLE (le client tape « Société », la base stocke « SOCIETE »).
+
+    M110 — un ACRONYME connu (SIDR, SHLMR, SAFER…) résout d'abord par le référentiel en base : le
+    token-matcher tombait sinon sur un homonyme (« lot SIDR de Terre Sainte »). En cas d'ambiguïté
+    réelle du nom (deux entités plausibles de taille comparable), le Copilote DEMANDE."""
     from sqlalchemy import text as _text
 
     from ..api.modules import patrimoine
     q = (q or "").strip()
     siren = q if q.isdigit() and len(q) >= 9 else None
+    libelle_acro = None
+    if siren is None:
+        acro = resoudre_acronyme(db, q)                  # M110 — l'acronyme prime sur les tokens
+        if acro:
+            siren, libelle_acro = acro
     if siren is None:
         # matching par TOKENS : chaque mot significatif du nom doit être présent (accent-insensible),
         # robuste aux mots de liaison (« du », « de la ») que la dénomination DGFiP n'a pas.
@@ -149,13 +250,22 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
             return ToolResult("parcelles_par_entreprise", ok=False, refus=f"nom trop court : « {q} »")
         conds = " AND ".join(f"lower({_FOLD.format(c='denomination')}) LIKE :t{i}" for i in range(len(toks)))
         params = {f"t{i}": f"%{_fold_py(t)}%" for i, t in enumerate(toks)}
-        row = db.execute(_text(
-            f"SELECT siren FROM parcelle_personne_morale WHERE siren IS NOT NULL AND {conds} "
-            f"GROUP BY siren ORDER BY count(*) DESC LIMIT 1"), params).first()
-        if not row:
+        rows = db.execute(_text(
+            f"SELECT siren, max(denomination) nom, count(*) n FROM parcelle_personne_morale "
+            f"WHERE siren IS NOT NULL AND {conds} GROUP BY siren ORDER BY count(*) DESC LIMIT 3"),
+            params).mappings().all()
+        if not rows:
             return ToolResult("parcelles_par_entreprise", ok=False,
                               refus=f"aucune personne morale trouvée pour « {q} »")
-        siren = row[0]
+        # M110 — AMBIGUÏTÉ RÉELLE : deux entités plausibles de taille comparable (2e ≥ 60 % du 1er)
+        # ET aucune n'est manifestement dominante → on DEMANDE (clarification, champ M107), on ne
+        # tranche pas au hasard.
+        if len(rows) >= 2 and rows[1]["n"] >= 0.6 * rows[0]["n"] and rows[0]["n"] < 200:
+            noms = " ou ".join(f"« {r['nom']} »" for r in rows[:2])
+            return ToolResult("parcelles_par_entreprise", ok=False,
+                              refus=f"_ambigu:Plusieurs sociétés correspondent à « {q} » : {noms}. "
+                                    "Laquelle ? (vous pouvez répondre par son nom ou son SIREN)")
+        siren = rows[0]["siren"]
     res = patrimoine(siren=siren, db=db)
     return ToolResult("parcelles_par_entreprise", valeur=res["n_parcelles"],
                       data={"siren": siren, "nom": res["nom"], "n_parcelles": res["n_parcelles"],

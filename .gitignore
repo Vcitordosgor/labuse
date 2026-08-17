@@ -31,6 +31,9 @@ data/*
 # …et le seed des dispositifs fiscaux territoriaux M106 (petit, versionné, requis par la fiche)
 !data/fiscal/
 !data/fiscal/*.csv
+# …et le référentiel des acronymes de personnes morales M110 (petit, versionné, référentiel en base)
+!data/entites/
+!data/entites/*.csv
 *.gpkg
 *.shp
 *.shx
