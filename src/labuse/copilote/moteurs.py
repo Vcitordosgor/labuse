@@ -373,13 +373,16 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
 
     hyp = Hypotheses.charger()
     retenus = dossier.retenus()
-    # Prix probable (une requête pour tout le lot).
+    # Prix probable (une requête pour tout le lot). M103 P1 : seuil d'effectif LU de la config
+    # (module sans importeur — mesuré M96/M100 — mais aucun seuil DVF ne reste en dur).
+    from ..marche_service import seuil_effectif_local
     prix_terrain = dict(db.execute(text(
         "SELECT left(p.idu, 10), max(m.mediane_prix_m2) "
         "FROM parcels p JOIN dvf_secteur_medianes m ON m.secteur = left(p.idu, 10) "
-        "WHERE p.id = ANY(:ids) AND m.type_bien = 'terrain' AND m.n_ventes >= 3 "
+        "WHERE p.id = ANY(:ids) AND m.type_bien = 'terrain' AND m.n_ventes >= :n_min "
         "GROUP BY left(p.idu, 10)"),
-        {"ids": [c["parcel_id"] for c in retenus]}).all())
+        {"ids": [c["parcel_id"] for c in retenus],
+         "n_min": seuil_effectif_local("mode_b_prix_local", 3)}).all())
     lock = threading.Lock()
     n_ok = [0]
 
