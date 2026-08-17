@@ -158,6 +158,15 @@ export const getFiltreIdus = (f: Filters) => {
     `/filtre?${qf({ limit: 0, idus: 1, ...rest, ...tiersParam(f) })}`)
 }
 
+/** M99 Phase 3 — zones du sélecteur par famille : familles triées par volume réel, zones en
+ *  graphie réglementaire MAJUSCULE (zone_filtre) avec compte CALCULÉ ; portée île ou communes. */
+export type ZonageZones = {
+  portee: 'ile' | 'commune'; communes: string[]
+  familles: { fam: string; n: number; zones: { zone: string; n: number }[] }[]
+}
+export const getZonageZones = (communes: string[]) =>
+  j<ZonageZones>(`/zonage/zones${communes.length ? `?communes=${encodeURIComponent(communes.join(','))}` : ''}`)
+
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 // M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
 export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
