@@ -214,6 +214,19 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
   // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
   const t = MAP_THEME[clair ? 'clair' : 'sombre']
+  // MESURÉ SUR CAPTURES (P3) : en Clair les parcelles sont OPAQUES (#F4F2EC @1) — l'ordre de
+  // création les peignait AU-DESSUS des couches d'information : l'aplat de zonage ne rendait
+  // que sur la masse non parcellisée, et les limites communes étaient recouvertes. En Clair,
+  // les remplissages parcellaires DESCENDENT sous le bloc d'information (les limites noires,
+  // sélections et étiquettes restent au-dessus) ; en Sombre, l'ordre d'origine est RESTAURÉ —
+  // la vue sombre ne bouge pas.
+  const mv = (id: string, before: string) => { if (m.getLayer(id) && m.getLayer(before)) m.moveLayer(id, before) }
+  if (clair) {
+    for (const id of ['parcels-base', 'parcels-fill', 'ile-base', 'ile-fill']) mv(id, 'ov-zonage')
+  } else {
+    for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
+    for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
+  }
   for (const id of ['ov-zonage', 'ovmvt-zonage']) { set(id, 'fill-color', zonageFillExpr(t)); set(id, 'fill-opacity', t.zonageOpacity) }
   for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', zonageFillExpr(t)); set(id, 'line-width', t.zonageContourW) }
   for (const id of ['ov-ppr', 'ovmvt-ppr']) { set(id, 'fill-color', t.ppr); set(id, 'fill-opacity', t.pprOpacity) }

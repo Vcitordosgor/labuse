@@ -85,4 +85,79 @@ dans un jeu de tokens par thème (un thème, un jeu de valeurs — pas de condit
 éparpillées), zonage U en premier.
 
 **STOP — Vic arbitre les valeurs cibles sur ces mesures ; validation à l'œil sur
-captures en Phase 2.**
+captures en Phase 2.** *(Arbitrage rendu le 17/08 : critère validé, doctrine
+contour+trame retenue, les 3 candidats retenus, même traitement aux éléments
+restants, priorité zonage U puis trait de côte. Phases 2-3 ci-dessous.)*
+
+---
+
+# PHASES 2-3 — livraison et vérification (17/08/2026)
+
+## 6. Phase 2 — le jeu de tokens par thème
+
+`frontend/src/lib/mapTheme.ts` = LE jeu de tokens par thème (colonne `sombre` =
+littéraux historiques verbatim, mêmes sources que la légende ; colonne `clair` =
+valeurs arbitrées). Consommé à la création des couches et par `applyClairMode`
+(un seul point de bascule — aucune condition éparpillée). Nouvelles couches :
+`ov-zonage-line`/`ov-ppr-line` (+ jumelles MVT — largeur 0 en Sombre, 1 px en
+Clair) et `ov-anru-trame` (motif diagonal canvas, opacité 0 en Sombre).
+
+| élément | clair livré | aplat mesuré | contour/trait mesuré |
+|---|---|---|---|
+| zonage U | `#1E9E58` @ 0,22 + contour | 1,26 ✓ | 3,08 ✓ |
+| zonage non-U | `#6E4F27` @ 0,22 + contour | 1,39 ✓ | 6,67 ✓ |
+| PPR | `#D14432` @ 0,20 + contour | 1,31 ✓ | 4,09 ✓ |
+| ANRU | `#8FA818` @ 0,30 + trame | 1,28 ✓ | 2,41 — la trame compense (arbitré) |
+| 50 pas | `#1777A3` @ 0,20 + tireté | 1,30 ✓ | 4,46 ✓ |
+| trait de côte | `#14713E` 2,2 px | — | 3,49 ✓ sur la masse (était 1,00) |
+| contour tier brûlante | `#C23A28` | — | 4,77 ✓ |
+| contour tier chaude | `#A8720F` | — | 3,69 ✓ |
+| liseré brûlantes | `#C1440E` | — | 4,57 ✓ |
+
+Conformes SANS changement (critère aplat ≥ 1,25 déjà atteint, mesuré) : Parc 1,34 ·
+AU (fill famille @ 0,55) 1,89 · réserve foncière 1,54 · à creuser 1,41. Aucune
+teinte réattribuée : vert reste vert, rouge reste rouge, chartreuse reste
+chartreuse, cyan reste cyan.
+
+## 7. DÉCOUVERTE de la vérification pixel (Phase 3) — le recouvrement
+
+La première salve de captures a RENVERSÉ un implicite de la Phase 1 : l'aplat
+corrigé ne rendait QUE sur la masse non parcellisée (`#A3BCA3` mesuré au pixel =
+composite exact sur gris) et **pas du tout sur la terre parcellisée** — en Clair,
+le remplissage des parcelles est OPAQUE (`#F4F2EC` @ 1) et l'ordre de création le
+peignait AU-DESSUS des couches d'information (et des limites communes). La Phase 1
+avait mesuré le composite mathématique « couche sur fond » ; le rendu réel
+empilait « fond sur couche ». Correction : en Clair, les 4 remplissages
+parcellaires descendent sous le bloc d'information (`moveLayer`, dans
+`applyClairMode`) — limites noires, sélections et étiquettes restent au-dessus ;
+en Sombre, l'ordre d'origine est RESTAURÉ.
+
+## 8. Vérification au pixel (captures servies, pas la théorie)
+
+Sur les captures (`qa/m105b/captures.mjs`, 19 vues clair+sombre, seul +
+combinaisons, Saint-Paul puis Le Port) les composites SERVIS sont EXACTS au
+calcul : U sur terre `#C5E0CB` (8 953 px) · non-U `#D7CEC1` (70 533 px) · 50 pas
+`#C8D9DD` (4 961 px) · trait de contour PPR pur `#D14432` · ANRU sur U `#B5CF95`
+(25 043 px au cadre quartier).
+
+## 9. LE VERDICT DES COMBINAISONS (l'exigence de l'arbitrage)
+
+- **zonage U + PPR** (capture 05, Saint-Paul) : PAS confondues — le PPR se lit
+  par son contour rouge `#D14432` + lavis rosé, le zonage U par son aplat mint +
+  contour vert. Réserve honnête : à petite échelle, la mosaïque multirisque rend
+  une image DENSE en traits rouges (chargée mais lisible) ; à l'échelle de
+  travail parcellaire la densité tombe.
+- **zonage U + ANRU** (captures 08/09, Le Port) : PAS confondues — le quartier
+  NPNRU se lit en olive TRAMÉ (hachures visibles au zoom quartier), distinct du
+  mint U et du beige non-U ; la trame porte la distinction daltonienne comme
+  arbitré.
+
+## 10. Non-régression Sombre + portes
+
+Sombre : colonne de tokens verbatim, ordre des couches restauré, contours
+largeur 0, trame opacité 0 — les captures sombre (mêmes cadres) montrent le rendu
+historique (chartreuse pleine sans trame, aucun contour de zone). Greps : aucun
+mauve hors IA, `#F5C518` seulement token Pages Jaunes, les littéraux restants de
+MapView sont outils/marque/sélection hors périmètre (documentés). Portes :
+tsc 0 · build OK · suite 1553 passed · golden 0 FAIL (33 INDÉTERMINÉ = quota API
+du jour, panne d'environnement dite, jamais un écart métier).
