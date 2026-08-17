@@ -966,10 +966,13 @@ def brief_matin(db: Session, cid: int | None) -> dict:
     donnee_perimee = bool(permis_max and (date.today() - permis_max).days > 2)   # ingestion en attente ?
     # M87 P6 — la barre « N événements depuis hier » et le panneau latéral. Point de lecture UNIQUE :
     # event_log (fenêtre J-1, kinds perso) — MÊME source que le digest Brevo, pas deux fenêtres qui
-    # divergent. Groupé par commune (maquette : une ligne par commune + « Voir les N → »). La ligne
-    # secteur (permis SITADEL, M83) reste un APPOINT tant que les crons evaluer_suivis ne tournent pas ;
-    # quand ils tourneront, les permis passeront par event_log et cet appoint devra être retiré pour ne
-    # pas double-compter (dépendance VPS, cf. M84).
+    # divergent. Groupé par commune (maquette : une ligne par commune + « Voir les N → »).
+    # M97 G3 (tranché par la mesure, 17/08/2026) : la ligne secteur ci-dessus (lecture DIRECTE de
+    # sitadel_permits, M83) est un DOUBLE TUYAU assumé — event_log ne contient AUCUN événement permis
+    # réel (mesure : 0 kind permis hors démo ; seuls 15 veille + 1 systeme), la chaîne evaluer_suivis
+    # n'a jamais produit de permis ici. À SUPPRIMER quand le cron VPS evaluer-suivis alimentera
+    # event_log en permis (critère : ≥1 événement permis réel hors seed) — sinon double-compte.
+    # Voir audit M96 G3 (docs/audits/AUDIT_M96_TUYAUTERIE.md §1.4).
     groupes = db.execute(text(
         "SELECT COALESCE(p.commune, '—') AS commune, count(*) AS n, max(e.ts)::text AS ts_max, "
         "  (array_agg(DISTINCT e.idu) FILTER (WHERE e.idu IS NOT NULL))[1:3] AS idus, "
