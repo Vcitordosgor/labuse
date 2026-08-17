@@ -110,12 +110,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         Une parcelle instruite en une minute{nSources ? <> — <b className="text-cp-txt">{nSources}</b> sources</> : null}, chaque chiffre daté.
       </p>
 
-      {/* M87 P1 — LE CLAIM, permanent et STATIQUE (aucune animation, aucun curseur). Classe .claim de la
-          maquette DA-ACCUEIL-BRIEF-v1. Visible à tout moment sur l'accueil, plus seulement à l'état initial. */}
-      <div data-claim className="mx-auto mb-8 max-w-[640px] rounded-xl border border-cp-line bg-cp-card/60 px-[22px] py-[18px] text-left">
-        <p className="mb-[5px] text-[15px] font-semibold text-cp-txt">Tout le foncier de La Réunion. Au même endroit.</p>
-        <p className="text-[13px] text-cp-muted">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</p>
-      </div>
+      {/* M102 P3 — l'encart « claim » (M87 P1) est RETIRÉ (correctif Vic). */}
 
       {/* M87 P6 — LE BRIEF quitte le flux de l'accueil : une BARRE (classe .brief-btn de la maquette).
           N = brief.n (event_log, J-1) — même point de lecture que l'e-mail Brevo. N=0 → « Rien de neuf
