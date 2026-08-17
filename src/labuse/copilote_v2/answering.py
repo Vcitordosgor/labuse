@@ -240,7 +240,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
     rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
-                             faits_fil=faits_fil)
+                             faits_fil=faits_fil, history=history)
     # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
     # poppé par l'endpoint pour la persistance du fil, jamais servi au client.
     rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
@@ -279,7 +279,8 @@ def _compris_fr(intent: str, params: dict) -> str | None:
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
-                       confirme: bool = False, faits_fil: list[dict] | None = None) -> dict:
+                       confirme: bool = False, faits_fil: list[dict] | None = None,
+                       history: list[dict] | None = None) -> dict:
     intent = route.intent
     params = route.params
     # §5 Copilote EMBARQUÉ : le contexte visible (la parcelle / la sélection) EST le contexte du
@@ -359,8 +360,19 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
     if intent == "RECHERCHE":
         # §M78-bis : on n'instruit PAS tout de suite — récap (interprétation sans lancer) + suggestions.
         # Le front lance le run M26-A sur « Lancer ». Une clarification alimente le récap (≤ 3-4 options).
+        # M107 — une réponse à une clarification n'est JAMAIS interprétée nue : le BRIEF EFFECTIF =
+        # les tours CLIENT du fil (bornés aux 4 derniers) + le message courant. Mesuré : « 15
+        # logements » seul re-demandait la commune donnée au tour d'avant. Le brief effectif est
+        # SERVI (brief_effectif) — le front relance le récap et le run avec LUI, jamais avec la
+        # réponse nue. (Si ce tour est classé RECHERCHE avec un fil, c'est une continuation — le
+        # routeur contextuel en atteste, gate 45.)
         from .recap import recap_recherche
-        return recap_recherche(db, message)
+        tours_client = [h.get("content", "") for h in (history or []) if h.get("role") == "user"]
+        brief_effectif = (", ".join([t for t in tours_client[-4:] if t] + [message])
+                          if tours_client else message)
+        rep = recap_recherche(db, brief_effectif)
+        rep["brief_effectif"] = brief_effectif
+        return rep
 
     return _reply(f"(Mission {intent} — inconnue.)", intent, en_construction=True)
 

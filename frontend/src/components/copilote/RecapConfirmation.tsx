@@ -6,19 +6,27 @@ import { useState } from 'react'
 import type { CopiloteV2Reponse } from '../../lib/api'
 import { ChipsCompris } from './ChipsCompris'
 
-export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }: {
+export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, onRepondre }: {
   data: CopiloteV2Reponse
   brief: string
   onReask: (b: string) => void        // re-interprète (option/chip retirée) → nouveau récap
   onLancer: (b: string) => void       // valide → lance la mission
   onCorriger: (b: string) => void     // réécrire : remet le brief dans la barre
+  // M107 — LA RÉPONSE SE DONNE LÀ OÙ LA QUESTION EST POSÉE : envoie un message dans le même
+  // fil (conversation_id) — le serveur l'interprète dans son contexte (prior_params, gate 45).
+  onRepondre: (texte: string) => void
 }) {
   const [etape, setEtape] = useState<'recap' | 'corriger' | 'affiner'>('recap')
   const [ajouts, setAjouts] = useState<string[]>([])
   const [libre, setLibre] = useState('')     // champ libre d'affinage (maquette : « … ou écrivez »)
+  const [reponse, setReponse] = useState('')      // M107 — réponse DANS la carte Précision
+  const [correction, setCorrection] = useState('')  // M107 — correction écrite directement au récap
   const mission = data.intent === 'VERIFICATION' ? 'vérification' : 'recherche'
+  const envoyer = (t: string, raz: (v: string) => void) => { if (t.trim()) { onRepondre(t.trim()); raz('') } }
 
-  // ── clarification COURTE (≤ 4 options) — la barre reste utilisable (non verrouillée) ──
+  // ── clarification COURTE (≤ 4 options) — M107 : le champ de réponse est DANS LA CARTE, sous
+  // la question, avec autofocus. L'ancienne promesse « écrivez dans la barre » (fausse : la
+  // barre gardait la demande précédente) est REMPLACÉE par le champ qui la tient. ──
   if (data.clarification_recap) {
     const cl = data.clarification_recap
     return (
@@ -35,7 +43,16 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }
             ))}
           </div>
         )}
-        <p className="mt-3 text-[11px] text-cp-faint">…ou écrivez librement votre réponse dans la barre — le Copilote comprend.</p>
+        <div className="mt-3 flex items-center gap-2">
+          <input data-clarif-reponse autoFocus value={reponse} onChange={(e) => setReponse(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') envoyer(reponse, setReponse) }}
+            placeholder="…ou répondez librement ici"
+            className="min-w-0 flex-1 rounded-lg border border-cp-violet/30 bg-cp-card2 px-3.5 py-2 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-cp-violet" />
+          <button data-clarif-envoyer disabled={!reponse.trim()} onClick={() => envoyer(reponse, setReponse)}
+            className="rounded-lg border border-cp-violet/40 bg-cp-violet/10 px-3.5 py-2 font-display text-[12px] font-semibold text-cp-violet hover:bg-cp-violet/15 disabled:opacity-40">
+            Répondre
+          </button>
+        </div>
       </div>
     )
   }
@@ -104,7 +121,8 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }
     )
   }
 
-  // ── RÉCAP : « J'ai compris : … C'est bien ça ? » + Oui / Corriger ──
+  // ── RÉCAP : « J'ai compris : … C'est bien ça ? » + Oui / Corriger — M107 : et la possibilité
+  // d'écrire DIRECTEMENT une correction, sans passer par le bouton (le geste de Vic). ──
   return (
     <div data-recap className="rounded-2xl border border-mint/30 bg-cp-card px-5 py-4">
       <p className="text-[14px] leading-relaxed text-cp-txt">{data.recap} <b className="text-cp-txt">C'est bien ça ?</b></p>
@@ -118,6 +136,10 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger }
           Corriger
         </button>
       </div>
+      <input data-recap-correction value={correction} onChange={(e) => setCorrection(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') envoyer(correction, setCorrection) }}
+        placeholder="…ou corrigez directement en écrivant ici (ex. « plutôt à Saint-Leu »)"
+        className="mt-2.5 w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[12.5px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-mint/50" />
     </div>
   )
 }

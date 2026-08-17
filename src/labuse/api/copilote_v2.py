@@ -118,7 +118,11 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     if faits_tour and cid is not None:
         from ..copilote_v2 import registre_faits
         registre_faits.enregistrer(db, cid, faits_tour)
-    return {**rep, "conversation_id": cid}
+    # M107 P3 — le TTL du fil VOYAGE vers le front (jamais une constante recopiée) : l'écran
+    # arme son minuteur d'inactivité dessus et ANNONCE l'expiration (« nouvelle conversation »).
+    from .. import config as _cfg2
+    ttl_servi = int(getattr(_cfg2.get_settings(), "copilote_v2_contexte_ttl_minutes", 10))
+    return {**rep, "conversation_id": cid, "contexte_ttl_minutes": ttl_servi}
 
 
 @router.get("/veilles")

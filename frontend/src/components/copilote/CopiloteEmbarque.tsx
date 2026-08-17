@@ -18,23 +18,49 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
   compact?: boolean                            // fiche : une ligne discrète, pas un encart
 }) {
   const [q, setQ] = useState('')
+  const [derniereQ, setDerniereQ] = useState('')   // M107 — la question envoyée (Corriger la ramène)
   const [rep, setRep] = useState<CopiloteV2Reponse | null>(null)
+  const [reponse, setReponse] = useState('')       // M107 — réponse à une clarification, SUR PLACE
+  const [convId, setConvId] = useState<number | null>(null)  // M107 — le fil embarqué est chaîné
   const [busy, setBusy] = useState(false)
   const ouvrirEntretien = useApp((s) => s.ouvrirEntretien)
 
-  const soumettre = async () => {
-    const m = q.trim()
-    if (!m || busy) return
-    setBusy(true); setRep(null)
-    try { setRep(await copiloteV2Ask(m, { contexte })) }
-    catch (e) { setRep({ text: e instanceof Error ? e.message : String(e), intent: null }) }
+  const envoyer = async (m: string) => {
+    if (!m.trim() || busy) return
+    setBusy(true); setRep(null); setDerniereQ(m.trim())
+    // M107 P2.3 — la barre se vide après envoi (elle ne garde plus la question à l'écran)
+    setQ(''); setReponse('')
+    try {
+      const r = await copiloteV2Ask(m.trim(), { contexte, conversation_id: convId })
+      if (r.conversation_id != null) setConvId(r.conversation_id)
+      setRep(r)
+    } catch (e) { setRep({ text: e instanceof Error ? e.message : String(e), intent: null }) }
     finally { setBusy(false) }
   }
+  const soumettre = () => void envoyer(q)
 
   const suite = rep && (
     <>
-      <div className="mt-3"><ReponseInline v2={rep} ton={ton} /></div>
-      <button data-embarque-plein onClick={() => ouvrirEntretien(q)}
+      <div className="mt-3">
+        {/* M107 — le récap systématique a AUSSI son Corriger ici (la barre embarquée le reçoit) */}
+        <ReponseInline v2={rep} ton={ton} onCorriger={() => setQ(derniereQ)} />
+      </div>
+      {rep.clarification && (
+        /* M107 — la question posée a SON champ de réponse, au même endroit, autofocus. */
+        <div data-embarque-reponse className="mt-2 flex items-center gap-2">
+          <input autoFocus value={reponse} onChange={(e) => setReponse(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void envoyer(reponse) }}
+            placeholder="Votre réponse…"
+            className={`min-w-0 flex-1 rounded-lg border bg-transparent px-3 py-1.5 text-[12.5px] text-txt outline-none placeholder:text-txt-faint ${
+              ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-mint/30 focus:border-mint'}`} />
+          <button data-embarque-repondre disabled={!reponse.trim()} onClick={() => void envoyer(reponse)}
+            className={`shrink-0 text-[11.5px] font-medium hover:underline disabled:opacity-30 ${
+              ton === 'violet' ? 'text-violet' : 'text-mint'}`}>
+            Répondre
+          </button>
+        </div>
+      )}
+      <button data-embarque-plein onClick={() => ouvrirEntretien(derniereQ)}
         className={`mt-2 text-[11px] font-medium hover:underline ${ton === 'violet' ? 'text-violet' : 'text-mint'}`}>
         Ouvrir dans le Copilote →
       </button>
