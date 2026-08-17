@@ -58,6 +58,27 @@ function majReelle(s: SourceInfo): string | null {
 // seul jeu de règles, pas de chiffre en dur.
 const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.statut === 'nouvelle_publication'
 const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard'
+// M105 P2 — le verdict AMONT EN AVANCE (M96) : le radar a vu une publication plus récente que
+// ce que nous avons intégré. Distinct de « publication ancienne » (là, c'est le producteur).
+// NUANCE mesurée : `nouvelle_publication` = « changé depuis le DERNIER PASSAGE radar », pas
+// « non intégré » — les sources à cron auto (SITADEL/DPE) sont souvent déjà ingérées APRÈS la
+// publication détectée. Le verdict compare donc la date AMONT sondée à notre dernière
+// intégration (tolérance 1 jour) — faux positifs mesurés et écartés (17/08).
+const amontEnAvance = (s: SourceInfo) => {
+  if (s.radar?.statut !== 'nouvelle_publication' || !s.radar?.valeur) return false
+  const amont = Date.parse(s.radar.valeur)
+  const integreStr = majReelle(s)
+  const integre = integreStr ? Date.parse(integreStr) : NaN
+  return Number.isFinite(amont) && (!Number.isFinite(integre) || amont > integre + 86_400_000)
+}
+/** La cadence en mots (dérivée du seuil servi = 2× la cadence — jamais un chiffre en dur ici). */
+function cadenceMot(seuil?: number | null): string {
+  const j = seuil != null ? Math.round(seuil / 2) : null
+  if (j === 7) return 'chaque semaine'
+  if (j === 30) return 'chaque mois'
+  if (j === 91) return 'chaque trimestre'
+  return j != null ? `tous les ${j} jours` : 'à cadence connue'
+}
 /** La ligne « meta » : « jusqu'au JJ/MM/AAAA » (donnée en base) › millésime › « donnée du … » (ingestion)
  *  › « millésime non tracé » (untracked). Jamais un « — » nu, jamais une date inventée. */
 function versionMeta(s: SourceInfo): { label: string; untracked: boolean } {
@@ -69,7 +90,10 @@ function versionMeta(s: SourceInfo): { label: string; untracked: boolean } {
   return { label: 'millésime non tracé', untracked: true }
 }
 const nonTrace = (s: SourceInfo) => versionMeta(s).untracked
-const aJour = (s: SourceInfo) => !enRetard(s) && !nonTrace(s)
+// M105 P1 — « à jour » = ni retard de publication (producteur), ni version plus récente non
+// intégrée (nous). Une source SANS date exposée par le producteur n'est PAS « pas à jour » —
+// c'est une propriété du producteur, dite dans la petite ligne de l'encart, pas un défaut LABUSE.
+const aJour = (s: SourceInfo) => !enRetard(s) && !amontEnAvance(s)
 
 // ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
 // expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
@@ -105,8 +129,13 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {s.name}
         {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
         {late && (
-          <Badge kind="late" title={`Décrochage d'ingestion : la donnée date de ${s.fraicheur_delta_jours} j, au-delà du seuil de ${s.fraicheur_seuil_jours} j (2× la cadence). À rattraper.`}>
-            <span data-source-decroche>en retard</span>
+          <Badge kind="late" title="Le producteur n'a rien publié depuis plus longtemps que sa cadence habituelle — nous servons bien la dernière version publiée.">
+            <span data-source-decroche>publication ancienne</span>
+          </Badge>
+        )}
+        {amontEnAvance(s) && (
+          <Badge kind="late" title="Le radar amont a détecté une publication plus récente chez le producteur, pas encore intégrée chez nous.">
+            <span data-source-amont>version plus récente disponible</span>
           </Badge>
         )}
         {s.nature?.dashed && (
@@ -134,10 +163,19 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       </span>
 
       {/* ligne dépliée : le retard chiffré, ou la nature (proxy/curée) dite en clair */}
-      {late && s.fraicheur_delta_jours != null && s.fraicheur_seuil_jours != null && (
-        <p className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
-          Δ {s.fraicheur_delta_jours} jours pour une cadence attendue de {Math.round(s.fraicheur_seuil_jours / 2)} jours.
-          Les données affichées restent valides, elles ne sont simplement pas les dernières publiées.
+      {/* M105 P2 — état 1 : c'est le PRODUCTEUR qui n'a rien publié (nous servons la dernière
+          version publiée) — formulation côté producteur, jamais « LABUSE en retard ». */}
+      {late && (
+        <p data-source-retard-producteur className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
+          Dernière publication : {s.derniere_donnee ? new Date(s.derniere_donnee).toLocaleDateString('fr-FR') : 'date inconnue'}.
+          {' '}Le producteur publie habituellement {cadenceMot(s.fraicheur_seuil_jours)}.
+        </p>
+      )}
+      {/* M105 P2 — état 2 (verdict AMONT EN AVANCE de M96, côté NOUS) : devrait rester vide en
+          permanence une fois les crons VPS actifs — sinon c'est un vrai signal. */}
+      {amontEnAvance(s) && (
+        <p data-source-amont-detail className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
+          Une version plus récente est disponible et n'est pas encore intégrée.
         </p>
       )}
       {s.nature?.detail && (
@@ -176,6 +214,12 @@ export function SourcesPage() {
   const nRetard = comptees.filter(enRetard).length
   const nNonTrace = comptees.filter(nonTrace).length
   const nAJour = comptees.filter(aJour).length
+  // M105 P3.2 — la DATE du dernier passage radar (max des derniere_verif servis) : un état
+  // « à jour » mesuré il y a un mois doit dire son âge.
+  const radarPassage = useMemo(() => comptees.reduce<string | null>((acc, s) => {
+    const d = s.radar?.derniere_verif ?? null
+    return d && (!acc || d > acc) ? d : acc
+  }, null), [comptees])
 
   const CHIPS: { key: Filtre; label: string; n: number }[] = [
     { key: 'toutes', label: 'Toutes', n: nTotal },
@@ -214,25 +258,27 @@ export function SourcesPage() {
           date automatiquement.
         </p>
 
-        {/* barre d'état — une ligne, 4 compteurs calculés (jamais en dur) */}
+        {/* M105 P1 — l'encart HIÉRARCHISÉ : en grand l'essentiel (sources · à jour), en petit la
+            méthode (vérifiées auto · sans date exposée PAR LE PRODUCTEUR — ce n'est pas LABUSE qui
+            ne trace pas). Le compteur « en retard » a QUITTÉ l'encart : l'information vit sur la
+            ligne de chaque source concernée (badge + formulation, jamais masquée). Tous les
+            compteurs restent CALCULÉS (nAJour dérivé), aucun chiffre en dur. */}
         {data && (
-          <div data-sources-bandeau className="mb-3.5 flex flex-wrap overflow-hidden rounded-[10px] border border-line bg-surface-2">
-            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-              <b className="block text-[22px] font-semibold leading-tight text-txt-hi">{nTotal}</b>
-              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">sources branchées</span>
+          <div data-sources-bandeau className="mb-3.5 overflow-hidden rounded-[10px] border border-line bg-surface-2">
+            <div className="flex flex-wrap">
+              <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+                <b className="block text-[26px] font-semibold leading-tight text-txt-hi">{nTotal}</b>
+                <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">sources</span>
+              </div>
+              <div className="min-w-[150px] flex-1 px-[18px] py-3.5">
+                <b className="block text-[26px] font-semibold leading-tight text-mint">{nAJour}</b>
+                <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">à jour</span>
+              </div>
             </div>
-            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-              <b className="block text-[22px] font-semibold leading-tight text-mint">{nVerif}</b>
-              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">version vérifiée auto</span>
-            </div>
-            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-              <b className="block text-[22px] font-semibold leading-tight text-txt-hi">{nNonTrace}</b>
-              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">millésime non tracé</span>
-            </div>
-            <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-              <b className="block text-[22px] font-semibold leading-tight" style={{ color: TOKENS.warn }}>{nRetard}</b>
-              <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">en retard sur sa cadence</span>
-            </div>
+            <p data-sources-sousligne className="border-t border-line px-[18px] py-2 text-[11.5px] text-txt-dim">
+              {nVerif} vérifiées automatiquement · {nNonTrace} sans date exposée par le producteur
+              {radarPassage && <> · radar amont : dernier passage le {new Date(radarPassage).toLocaleDateString('fr-FR')}</>}
+            </p>
           </div>
         )}
 
