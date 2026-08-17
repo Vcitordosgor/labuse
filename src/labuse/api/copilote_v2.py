@@ -76,8 +76,25 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     échoue doit le dire, jamais un 500 (ni un identifiant technique) au visage de l'utilisateur."""
     import logging
     log = logging.getLogger("labuse.copilote_v2")
+    payload_tour = None
     try:
-        rep = answer(db, body.message, history=body.history, contexte=body.contexte, confirme=body.confirme)
+        # M102-B1 — LE FIL ALIMENTE L'INTERPRÉTATION : quand une conversation est en cours, le
+        # serveur recharge les derniers tours (history) et le contexte du dernier tour Copilote
+        # (prior_params) — plus jamais un routage à froid après une clarification. Le contexte a
+        # une durée de vie bornée (config copilote_v2_contexte_ttl_minutes) ; conversation_id
+        # absent = fil neuf (repartir de zéro). `body.history` reste un appoint des surfaces
+        # embarquées quand il n'y a pas de conversation persistée.
+        history, prior = body.history, None
+        if body.conversation_id is not None:
+            from .. import config as _cfg
+            s = _cfg.get_settings() if hasattr(_cfg, "get_settings") else _cfg.Settings()
+            ttl = int(getattr(s, "copilote_v2_contexte_ttl_minutes", 120))
+            fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl)
+            if fil_h:
+                history, prior = fil_h, (fil_p or {}).get("params") or None
+        rep = answer(db, body.message, history=history, contexte=body.contexte,
+                     confirme=body.confirme, prior_params=prior)
+        payload_tour = rep.pop("_route", None)        # contexte du tour → persistance, jamais servi
         act = rep.pop("_action", None)                # écriture réelle demandée → API existante
         if act and act.get("type") == "projet":
             rep = _executer_projet(act, request, db, rep)
@@ -89,8 +106,10 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
         rep = {"text": "Je n'ai pas su traiter cette demande — l'incident est enregistré côté "
                        "serveur. Reformulez-la autrement, ou réessayez dans un instant.",
                "intent": None, "erreur": True}
+    rep.pop("_route", None)                           # ceinture : jamais servi, même sur un chemin d'action
     cid = historique.enregistrer(db, compte_id=current_compte(request),
-                                 conversation_id=body.conversation_id, message=body.message, reponse=rep)
+                                 conversation_id=body.conversation_id, message=body.message,
+                                 reponse=rep, payload=payload_tour)
     return {**rep, "conversation_id": cid}
 
 
