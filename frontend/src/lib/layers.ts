@@ -92,6 +92,8 @@ export const LAYER_INFO: Record<string, string> = {
   // M106 P4 : transport public et lignes HT (arbitrage Vic).
   transport:
     'Les tracés des lignes de transport public (les 7 réseaux de l’île : Car Jaune, Citalis, Kar’Ouest, Alternéo, Carsud, Estival — source : GTFS officiels des autorités de transport, Licence Ouverte), les pôles d’échange (gares routières relevées dans OpenStreetMap, complétées par les arrêts desservis par de nombreuses lignes — critère affiché dans la légende), et le téléphérique Papang en service à Saint-Denis (tracé OpenStreetMap). La ligne 2 « Zèl La Montagne », prévue pour 2029, n’a pas de tracé publié : elle n’est pas affichée.',
+  axes:
+    'Les axes routiers structurants de l’île — route des Tamarins, routes nationales et grandes liaisons — d’après la hiérarchie officielle de la BD TOPO IGN (niveaux d’importance 1 et 2). À double face pour un projet : accessibilité d’un côté, nuisances potentielles de l’autre (bruit, pollution, recul le long des axes classés). Sur la fiche d’une parcelle, LABUSE indique la distance à l’axe le plus proche, avec son nom.',
   lignes_ht:
     'Les lignes électriques haute tension de l’île (source : BD TOPO IGN, tension indiquée — lignes aériennes uniquement). C’est une CONTRAINTE potentielle pour un projet (servitudes, reculs) : la servitude exacte n’est pas cartographiée en donnée ouverte et doit être vérifiée auprès du gestionnaire de réseau (EDF SEI). Sur la fiche d’une parcelle, LABUSE indique la distance à la ligne la plus proche.',
   renouv:

@@ -334,6 +334,8 @@ export interface Fiche {
     pole?: { nom: string; distance_m: number; statut: 'Sourcé' | 'Estimé'; source: string
       concordance: string | null; nb_lignes: number | null }
     telepherique?: { station: string; distance_m: number; licence: string }
+    // M106-B P3 — axe structurant (BD TOPO importance 1-2) : libellé à DEUX FACES
+    axe?: { nom: string; nature: string; distance_m: number; libelle: string; source: string }
     ligne_ht?: { distance_m: number; tension: string; libelle: string; source: string }
   } | null
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —

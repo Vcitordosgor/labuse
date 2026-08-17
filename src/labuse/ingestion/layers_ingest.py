@@ -70,6 +70,7 @@ KIND_SOURCE = {
     "pole_echange": "OSM — transport (pôles d'échange & téléphérique)",
     "telepherique": "OSM — transport (pôles d'échange & téléphérique)",
     "ligne_ht": "BD TOPO IGN",
+    "axe_structurant": "BD TOPO IGN",   # M106-B P3 — importance IGN 1-2, jamais une hiérarchie inventée
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).

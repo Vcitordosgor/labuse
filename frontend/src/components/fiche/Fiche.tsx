@@ -2189,6 +2189,14 @@ export function Fiche({ idu }: { idu: string }) {
                     )}
                   </div>
                 )}
+                {/* M106-B P3 — l'AXE STRUCTURANT le plus proche : le libellé porte LES DEUX
+                    FACES (accessibilité ET nuisance) — jamais un avantage nu. */}
+                {f.proximites?.axe && (
+                  <div data-proximite-axe className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
+                    <p className="text-[11.5px] leading-snug text-txt">{f.proximites.axe.libelle}</p>
+                    <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.axe.source}</p>
+                  </div>
+                )}
                 {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
                   <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
                     <span aria-hidden className="text-st-creuser">▲</span>

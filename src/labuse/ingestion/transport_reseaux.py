@@ -60,7 +60,8 @@ def _config() -> dict:
     """Seuils du mandat — config/transport.yaml, jamais en dur (défauts si fichier absent)."""
     cfg = _cfg.load_yaml_config("transport") or {}
     pole = cfg.get("pole_echange") or {}
-    return {"seuil_lignes": int(pole.get("seuil_lignes", 4)),
+    return {"seuil_lignes": int(pole.get("seuil_lignes", 12)),
+            "rayon_grappe_m": int(pole.get("rayon_grappe_m", 150)),
             "rayon_concordance_m": int(pole.get("rayon_concordance_m", 300))}
 
 
@@ -123,7 +124,6 @@ def _shapes(zf: zipfile.ZipFile) -> dict[str, list[tuple[float, float]]]:
 
 def ingest_gtfs(session: Session, run_id: int | None, sids: dict) -> dict:
     """Les 7 GTFS → transport_arret + transport_ligne + pole_echange(subtype='gtfs')."""
-    cfg = _config()
     session.execute(text("DELETE FROM spatial_layers WHERE kind IN ('transport_arret', 'transport_ligne')"))
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'pole_echange' AND subtype = 'gtfs'"))
     sid_gtfs = sids.get(SRC_GTFS)
@@ -142,7 +142,6 @@ def ingest_gtfs(session: Session, run_id: int | None, sids: dict) -> dict:
             routes = {r["route_id"]: r for r in _read_csv(zf, "routes.txt")}
             par_arret = _routes_par_arret(zf)
             # ── arrêts (quais, location_type vide/0) ──
-            groupes: dict[str, list] = defaultdict(list)   # nom d'arrêt → [(lon, lat, nb_lignes)]
             for s in _read_csv(zf, "stops.txt"):
                 if (s.get("location_type") or "0") not in ("", "0"):
                     continue   # stations parentes = groupements de quais, pas des arrêts
@@ -150,13 +149,15 @@ def ingest_gtfs(session: Session, run_id: int | None, sids: dict) -> dict:
                     lon, lat = float(s["stop_lon"]), float(s["stop_lat"])
                 except (KeyError, ValueError):
                     continue
-                nb = len(par_arret.get(s["stop_id"], ()))
+                # M106-B arbitrage : les IDENTIFIANTS de lignes voyagent avec l'arrêt (préfixés
+                # réseau) — la dérivation des pôles CUMULE les réseaux d'une grappe spatiale,
+                # elle a besoin de l'union DISTINCTE, pas d'un simple compte par arrêt.
+                lignes = sorted(f"{reseau}:{rid}" for rid in par_arret.get(s["stop_id"], ()))
                 _insert_layer(session, "transport_arret", reseau, s.get("stop_name") or s["stop_id"],
                               {"type": "Point", "coordinates": [lon, lat]}, sid_gtfs, None, run_id,
-                              {"reseau": reseau, "stop_id": s["stop_id"], "nb_lignes": nb,
-                               "gtfs_maj": updated})
+                              {"reseau": reseau, "stop_id": s["stop_id"], "nb_lignes": len(lignes),
+                               "lignes": lignes, "gtfs_maj": updated})
                 bilan["arrets"] += 1
-                groupes[(s.get("stop_name") or s["stop_id"]).strip().lower()].append((lon, lat, s["stop_id"]))
             # ── tracés par ligne (jusqu'à 4 variantes de shape, MultiLineString) ──
             shapes = _shapes(zf)
             route_shapes: dict[str, Counter] = defaultdict(Counter)
@@ -174,21 +175,56 @@ def ingest_gtfs(session: Session, run_id: int | None, sids: dict) -> dict:
                               {"reseau": reseau, "route_id": rid, "route_type": r.get("route_type"),
                                "gtfs_maj": updated})
                 bilan["lignes"] += 1
-            # ── pôles DÉRIVÉS : nom d'arrêt desservi par ≥ seuil lignes distinctes (Estimé) ──
-            for nom_cle, quais in groupes.items():
-                lignes_du_groupe = set().union(*(par_arret.get(sid, set()) for _, _, sid in quais))
-                if len(lignes_du_groupe) < cfg["seuil_lignes"]:
-                    continue
-                lon = sum(q[0] for q in quais) / len(quais)
-                lat = sum(q[1] for q in quais) / len(quais)
-                _insert_layer(session, "pole_echange", "gtfs", nom_cle.title(),
-                              {"type": "Point", "coordinates": [lon, lat]}, sid_gtfs, None, run_id,
-                              {"reseau": reseau, "nb_lignes": len(lignes_du_groupe),
-                               "seuil": cfg["seuil_lignes"], "statut": "Estimé",
-                               "critere": f"arrêt desservi par ≥ {cfg['seuil_lignes']} lignes (dérivé GTFS)"})
-                bilan["poles_gtfs"] += 1
             bilan["reseaux"] += 1
+    # M106-B arbitrage — la dérivation des pôles se fait APRÈS tous les réseaux : correction
+    # de DÉFINITION (un pôle d'échange EST un lieu où plusieurs réseaux se croisent) — le
+    # comptage par réseau ratait structurellement les vrais nœuds (cas témoin : Savanna).
+    bilan["poles_gtfs"] = deriver_poles(session, run_id, sid_gtfs)
     return bilan
+
+
+def deriver_poles(session: Session, run_id: int | None, sid_gtfs: int | None,
+                  seuil: int | None = None, rayon: int | None = None) -> int:
+    """Pôles DÉRIVÉS (Estimé) = GRAPPES spatiales d'arrêts (DBSCAN, rayon config = distance de
+    correspondance à pied) desservies par ≥ seuil lignes DISTINCTES, TOUS RÉSEAUX CUMULÉS
+    (union des identifiants réseau:ligne — jamais une somme qui double-compte). Le seuil reste
+    12 (arbitrage : appliqué au bon dénombrement). Le critère complet voyage en attrs jusqu'à
+    la légende. `seuil`/`rayon` surchargent la config pour la CALIBRATION seulement."""
+    cfg = _config()
+    seuil = seuil if seuil is not None else cfg["seuil_lignes"]
+    rayon = rayon if rayon is not None else cfg["rayon_grappe_m"]
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'pole_echange' AND subtype = 'gtfs'"))
+    n = session.execute(text("""
+        WITH quais AS (
+          SELECT id, name, geom, attrs,
+                 ST_ClusterDBSCAN(ST_Transform(geom, 2975), eps := :rayon, minpoints := 1)
+                   OVER () AS grappe
+          FROM spatial_layers WHERE kind = 'transport_arret'),
+        agg AS (
+          SELECT q.grappe,
+                 count(DISTINCT l.ligne) AS nb_lignes,
+                 count(DISTINCT split_part(l.ligne, ':', 1)) AS nb_reseaux,
+                 ST_Centroid(ST_Collect(DISTINCT q.geom)) AS centre
+          FROM quais q
+          CROSS JOIN LATERAL jsonb_array_elements_text(q.attrs->'lignes') AS l(ligne)
+          GROUP BY q.grappe
+          HAVING count(DISTINCT l.ligne) >= :seuil),
+        nommage AS (
+          -- le nom du pôle = celui du quai le plus desservi de la grappe (jamais un code)
+          SELECT DISTINCT ON (grappe) grappe, name
+          FROM quais ORDER BY grappe, jsonb_array_length(attrs->'lignes') DESC, name)
+        INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, ingestion_run_id)
+        SELECT 'pole_echange', 'gtfs', initcap(n.name), a.centre,
+               jsonb_build_object(
+                 'nb_lignes', a.nb_lignes, 'nb_reseaux', a.nb_reseaux,
+                 'seuil', CAST(:seuil AS int), 'rayon_grappe_m', CAST(:rayon AS int),
+                 'statut', 'Estimé',
+                 'critere', 'arrêts groupés à ≤ ' || :rayon || ' m desservis par ≥ ' || :seuil ||
+                            ' lignes, tous réseaux cumulés (dérivé GTFS)'),
+               :sid, :run
+        FROM agg a JOIN nommage n USING (grappe)
+        RETURNING 1"""), {"seuil": seuil, "rayon": rayon, "sid": sid_gtfs, "run": run_id}).rowcount
+    return int(n)
 
 
 # ────────────────────────────── OSM (Overpass) ──────────────────────────────
@@ -323,6 +359,46 @@ def ingest_lignes_ht(session: Session, run_id: int | None, sids: dict) -> int:
     return n
 
 
+# ────────────────────────────── BD TOPO — axes structurants (M106-B P3) ──────────────────────────────
+
+def ingest_axes(session: Session, run_id: int | None, sids: dict) -> dict:
+    """Axes structurants = la HIÉRARCHIE DE LA BD TOPO elle-même, jamais une invention :
+    `importance` IN ('1','2') (réseau routier majeur IGN — mesuré : 3 481 tronçons sur l'île,
+    N1/N2/N6/D400…, dont la route des Tamarins). Nom (cpx_numero/toponyme) et nature voyagent
+    en attrs — la fiche sert « distance à l'axe le plus proche, nom, nature ».
+
+    PIÈGE mesuré : le cql_filter Géoplateforme veut la BBOX en ordre LAT/LON (axis order du
+    CRS par défaut) — l'ordre lon/lat renvoie silencieusement 0."""
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'axe_structurant'"))
+    n, start = 0, 0
+    with httpx.Client() as c:
+        while True:
+            r = c.get("https://data.geopf.fr/wfs/ows", params={
+                "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                "typenames": "BDTOPO_V3:troncon_de_route", "outputFormat": "application/json",
+                "count": 5000, "startIndex": start, "sortBy": "cleabs",
+                "cql_filter": "importance IN ('1','2') AND BBOX(geometrie,-21.42,55.20,-20.85,55.90)"},
+                timeout=300)
+            r.raise_for_status()
+            feats = r.json().get("features", []) or []
+            for f in feats:
+                if not f.get("geometry"):
+                    continue
+                p = f.get("properties") or {}
+                nom = p.get("cpx_numero") or p.get("cpx_toponyme_route_nommee") or (p.get("nature") or "axe")
+                _insert_layer(session, "axe_structurant", str(p.get("importance") or ""), str(nom),
+                              f["geometry"], sids.get(SRC_BDTOPO), None, run_id,
+                              {"importance": p.get("importance"), "nature": p.get("nature"),
+                               "numero": p.get("cpx_numero"),
+                               "toponyme": p.get("cpx_toponyme_route_nommee"),
+                               "nb_voies": p.get("nombre_de_voies")})
+                n += 1
+            if len(feats) < 5000:
+                break
+            start += 5000
+    return {"troncons": n}
+
+
 # ────────────────────────────── orchestration ──────────────────────────────
 
 def run_m106(session: Session, log_fn=print) -> dict:
@@ -338,6 +414,7 @@ def run_m106(session: Session, log_fn=print) -> dict:
     out["concordance"] = marquer_concordance(session)
     out["telepherique"] = ingest_telepherique(session, run.id, sids)
     out["lignes_ht"] = ingest_lignes_ht(session, run.id, sids)
+    out["axes"] = ingest_axes(session, run.id, sids)
     # millésimes AMONT dans data_sources (fraîcheur = amont, jamais la date d'ingestion)
     maj = [m.split(": ")[1] for m in out["gtfs"]["maj"] if "ABSENT" not in m]
     if maj:
