@@ -49,3 +49,22 @@ honnête et gratuit si l'angle mort de la voie manuelle est jugé acceptable. **
 coûte ~11,6 M lignes pour le même gain visible que A' — déconseillé par la mesure.
 
 **STOP — Phases 6-7 continuent, la Phase 5 attend l'arbitrage.**
+
+---
+
+## Arbitrage rendu (Vic) et exécution
+
+**A' retenue** (A complète disqualifiée par sa propre mesure), **B en filet**.
+
+- **A'** : exception NOMMÉE dans `cascade/engine.run_cascade` — après la phase 2 des promues,
+  la couche bodacc s'évalue aussi pour les non-promues dont `ctx.bodacc(pid)` est renseigné
+  (préchargé depuis `v_foncier_sous_pression` pour tout le lot : zéro requête ajoutée,
+  ~417 lignes marginales). Test moteur dédié (`test_m103_a_prime_bodacc_evalue_les_
+  ecartees_sous_pression`) : l'écartée sous pression porte l'événement rouge, l'écartée sans
+  pression n'est pas évaluée, la promue est inchangée. **Effet au PROCHAIN run de
+  classement** — les tables du run servi restent intouchables (doctrine), les 37 invisibles
+  apparaîtront à la bascule.
+- **B (filet)** : le périmètre restant est DIT — l'aide du signal « Procédure collective »
+  (strings.ts) précise que l'événement n'est évalué que sur les classées et, de façon
+  ciblée, sur les écartées à propriétaire sous procédure ; une écartée sans procédure connue
+  ne porte jamais d'événement (exclusion délibérée, patron M89).
