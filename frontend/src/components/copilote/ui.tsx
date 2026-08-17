@@ -59,3 +59,22 @@ export function PillStatut({ ton, pulse, children }: { ton: 'mint' | 'violet' | 
     </span>
   )
 }
+
+// M102 P1.1 — INDICATEUR DE TRAITEMENT (surface IA → mauve légitime). SOBRE : trois points en
+// pulsation + une phrase — JAMAIS une barre de progression (elle prétendrait savoir où elle en
+// est). Affiché pendant que le routeur/les outils travaillent, retiré à la réponse.
+export function TraitementEnCours() {
+  return (
+    <div data-traitement className="rounded-2xl border border-violet/25 bg-cp-card px-5 py-4 text-left"
+      role="status" aria-live="polite">
+      <span className="inline-flex items-center gap-2 text-[13px] text-cp-muted">
+        <span className="inline-flex gap-1" aria-hidden>
+          <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-cp-violet" />
+          <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-cp-violet [animation-delay:150ms]" />
+          <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-cp-violet [animation-delay:300ms]" />
+        </span>
+        Le Copilote instruit votre demande…
+      </span>
+    </div>
+  )
+}

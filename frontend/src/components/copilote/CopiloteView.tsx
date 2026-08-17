@@ -20,7 +20,7 @@ import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
 import { FilInstruction } from './FilInstruction'
 import { Resultats, type EtiquettesMoteurs } from './Resultats'
-import { PillStatut, SecHead } from './ui'
+import { PillStatut, SecHead, TraitementEnCours } from './ui'
 import { runEpingle, useCopiloteRun } from './useCopiloteRun'
 import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
 import { useApp } from '../../store/useApp'
@@ -126,8 +126,10 @@ export function CopiloteView() {
       } else {
         setV2(r)
       }
-    } catch (e) {
-      setV2({ text: e instanceof Error ? e.message : String(e), intent: null })
+    } catch {
+      // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
+      // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
+      setV2({ text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null })
     } finally { setDispatching(false) }
   }
   const soumettre = () => void interroger(brief)
@@ -240,10 +242,12 @@ export function CopiloteView() {
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             missions={missions} onReprendre={rouvrir}
-            reponse={recap
-              ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
-                  onLancer={lancerRecap} onCorriger={corrigerRecap} />
-              : v2 ? <ReponseInline v2={v2} /> : null} />
+            reponse={dispatching
+              ? <TraitementEnCours />
+              : recap
+                ? <RecapConfirmation data={recap} brief={brief} onReask={reask}
+                    onLancer={lancerRecap} onCorriger={corrigerRecap} />
+                : v2 ? <ReponseInline v2={v2} /> : null} />
         ) : (
           <>
             <div className="mb-4 flex items-center gap-3">
