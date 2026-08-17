@@ -188,9 +188,10 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   const selLine = clair ? '#14181A' : '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
   for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C') }
-  // limites parcelles : #B9B3A6 / 0,5 px sur terre claire ; sinon valeur sombre d'origine.
+  // M105 P4.1 — limites parcelles NOIRES en vue claire (le beige #B9B3A6 se noyait sur la
+  // terre claire) ; la vue sombre ne bouge pas. Deux traitements selon le fond, assumés.
   for (const id of ['parcels-limites', 'ile-limites']) {
-    set(id, 'line-color', clair ? '#B9B3A6' : '#8FA69A')
+    set(id, 'line-color', clair ? '#000000' : '#8FA69A')
     set(id, 'line-width', clair ? 0.5 : 0.3)
   }
   // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
