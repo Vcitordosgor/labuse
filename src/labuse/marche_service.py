@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 DVF_SECTEUR_DOSSIER = "secteur_dossier"        # 500 m / 3 ans, bâti + terrain nu (flash/_marche)
 DVF_BANQUIER_ADAPTATIF = "banquier_adaptatif"  # rayon adaptatif 500→1500→commune, Q1/méd/Q3 (bilan/sector_price)
 DVF_VOISINAGE_100M = "voisinage_100m"          # < 100 m / 36 mois, doctrine M38 (site_voisinage)
+DVF_NEUF_VEFA = "neuf_vefa"                    # M101 B2 : neuf déclaré par l'acte (VEFA), grain commune
 
 # ── Profils PERMIS (paramètres provisoires — cf. MANDAT_DVF) ──────────────────────────────────────
 PERMITS_FLASH_500M = "flash_500m"              # 500 m / 24 mois (ingestion/permits.nearby_permits)
@@ -48,6 +49,27 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
     if profil == DVF_VOISINAGE_100M:
         from .api.site_voisinage import voisinage_proche
         return voisinage_proche(db, idu)
+    if profil == DVF_NEUF_VEFA:
+        # M101 B2 (arbitrage Vic) — le NEUF que l'acte déclare (VEFA), grain COMMUNE. Le seuil,
+        # la grandeur et la raison viennent de la config (un critère, un endroit) ; sous le seuil,
+        # AUCUNE médiane — « échantillon insuffisant » AVEC la grandeur, jamais un chiffre fragile.
+        from .ingestion.dvf_marche import neuf_vefa_commune
+        meta = profil_meta(DVF_NEUF_VEFA)
+        seuil = int(meta.get("seuil_effectif") or 8)
+        r = neuf_vefa_commune(db, idu[:5])
+        suffisant = r["n"] >= seuil and r["mediane_prix_m2_bati"] is not None
+        return {
+            "grandeur": meta.get("grandeur"),
+            "grain": meta.get("grain", "commune"),
+            "fenetre_ans": r["fenetre_ans"],
+            "n": r["n"], "seuil_effectif": seuil,
+            "effectif_suffisant": suffisant,
+            "mediane_prix_m2_bati": r["mediane_prix_m2_bati"] if suffisant else None,
+            "insuffisant_libelle": (None if suffisant else
+                                    f"Échantillon insuffisant ({r['n']} vente{'s' if r['n'] > 1 else ''} "
+                                    f"VEFA sur {r['fenetre_ans']} ans, seuil {seuil}) — pas de médiane servie."),
+            "reserve": reserve_methode(),
+        }
     raise ValueError(f"profil DVF inconnu : {profil!r}")
 
 

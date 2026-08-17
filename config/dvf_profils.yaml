@@ -44,6 +44,15 @@ profils:
     seuil_effectif: 3            # SIGNAL de proximité, pas une référence : n≥3 pour une médiane, sinon dit
     raison: "100 m = voisinage immédiat (doctrine M38). Rare par nature (0 vente en dense) → un SIGNAL, jamais une référence de marché ; l'effectif est toujours affiché."
 
+  neuf_vefa:
+    question: "À quel prix se vend le NEUF (VEFA) dans cette commune ?"
+    grain: "commune"             # M101 B2 : la VEFA n'atteint n≥8 que dans 11/24 communes (mesuré) —
+    rayon_m: null                # un grain plus fin n'est pas servable ; l'ABSENCE est un état NORMAL
+    fenetre_ans: 3               # de ce profil, identifiable comme tel (« échantillon insuffisant »).
+    grandeur: "médiane €/m² bâti des ventes en l'état futur d'achèvement (VEFA — le neuf que l'acte déclare)"
+    seuil_effectif: 8            # référence de marché : sous 8 ventes, médiane instable (mesuré ±44 %)
+    raison: "Le neuf n'est identifiable SANS inférence que par la nature d'acte VEFA (DVF ne porte aucune année de construction) ; le complément non-VEFA mélange ancien et récent — il ne s'appelle jamais « ancien »."
+
   comparables_premium:
     question: "Quelles ventes comparables montrer au financeur ?"
     rayon_m: 500
