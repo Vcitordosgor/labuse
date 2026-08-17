@@ -86,7 +86,45 @@ if not reg:
     echecs.append(f"S3 : l'oracle {oracle_sp} absent du registre de la conversation {cid}")
 print(f"S3 registre alimenté : {'OK' if reg else 'ÉCHEC'} ({reg} fait(s) à l'oracle)")
 
-print(f"\n=== BILAN VÉRACITÉ FIL : {3 - min(len(echecs), 3)}/3 ===")
+# ── M111 — RUPTURE DE SUJET ──────────────────────────────────────────────────────────────────
+with Session(engine()) as s:
+    oracle_proc_sd = float(s.execute(text(
+        "SELECT count(*) FROM parcels p WHERE p.commune='Saint-Denis' AND EXISTS("
+        "SELECT 1 FROM parcelle_personne_morale pms JOIN bodacc_procedures bps ON bps.siren=pms.siren "
+        "WHERE pms.idu=p.idu)")).scalar())
+
+# S4 — deux RECHERCHE de sujets DIFFÉRENTS : le tour 2 ne fond plus le tour 1 (audit M108 §3.1).
+n = len(echecs)
+c4 = ask("trouve des terrains de plus de 20000 m² à Saint-Paul pour 30 logements")["conversation_id"]
+r4 = ask("montre-moi des friches en zone U à Cilaos pour 8 logements", c4)
+recap4 = (r4.get("recap") or "").lower()
+if "cilaos" not in recap4:
+    echecs.append(f"S4 : le sujet neuf (Cilaos) perdu — {recap4[:120]}")
+for pollue in ("saint-paul", "20000", "20 000", "38"):
+    if pollue in recap4:
+        echecs.append(f"S4 : contamination « {pollue} » dans le récap du sujet neuf — {recap4[:120]}")
+print(f"S4 rupture 2×RECHERCHE : {'OK' if len(echecs) == n else 'ÉCHEC'} — {recap4[:90]}")
+
+# S5 — RECHERCHE puis QUESTION procédure : le compte retombe JUSTE (126), pas le contaminé (≥20000).
+n = len(echecs)
+c5 = ask("trouve des terrains de plus de 20000 m² à Saint-Paul pour 30 logements")["conversation_id"]
+r5 = ask("combien de parcelles en procédure judiciaire à Saint-Denis", c5)
+if not ok_vs_oracle(r5.get("text", ""), {oracle_proc_sd}):
+    echecs.append(f"S5 : compte procédure contaminé (attendu {oracle_proc_sd}) — {r5.get('text','')[:120]}")
+if any(p in (r5.get("compris") or "") for p in ("20000", "20 000")):
+    echecs.append(f"S5 : « ≥ 20000 m² » hérité au récap d'une question sans rapport — {r5.get('compris','')[:120]}")
+print(f"S5 rupture RECHERCHE→QUESTION : {'OK' if len(echecs) == n else 'ÉCHEC'} — {r5.get('text','')[:80]}")
+
+# S6 — LA CLARIFICATION TIENT (cas témoin M107) : le contexte DOIT être gardé.
+n = len(echecs)
+c6 = ask("trouves moi une parcelle de plus de 100000m2 à saint paul")["conversation_id"]
+r6 = ask("15 logements", c6)
+recap6 = (r6.get("recap") or "").lower()
+if not ("saint-paul" in recap6 and "15" in recap6 and ("100000" in recap6 or "100 000" in recap6)):
+    echecs.append(f"S6 : la clarification ne tient plus (contexte perdu) — {recap6[:130]}")
+print(f"S6 clarification tient : {'OK' if len(echecs) == n else 'ÉCHEC'} — {recap6[:90]}")
+
+print(f"\n=== BILAN VÉRACITÉ FIL : {6 - min(len(echecs), 6)}/6 ===")
 for e in echecs:
     print(" ✗", e)
 sys.exit(1 if echecs else 0)

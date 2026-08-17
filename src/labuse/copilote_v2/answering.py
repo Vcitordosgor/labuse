@@ -308,6 +308,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         appliques = rep.get("criteres_appliques") or []
         if compris and appliques:
             compris = compris.rstrip(".") + " · " + " · ".join(appliques) + "."
+        # M111 — un héritage DIT n'est pas une contamination : les paramètres VENUS DU FIL (continuation)
+        # sont nommés explicitement au récap, jamais muets. (Le tour autonome n'hérite plus — herites vide.)
+        herites = getattr(route, "herites", None) or {}
+        hlabs = [_COMPRIS_PARAM[k](herites[k]) for k in _COMPRIS_PARAM
+                 if herites.get(k) not in (None, "", [])]
+        if compris and hlabs:
+            compris = compris.rstrip(".") + " (repris du fil : " + " · ".join(hlabs) + ")."
         # M109 — le récap dit AUSSI ce qui n'est PAS appliqué : un critère lâché est nommé DANS le
         # récap (pas seulement dans la réponse), jamais passé sous silence.
         cna = rep.get("criteres_non_appliques") or []
@@ -445,8 +452,14 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         # routeur contextuel en atteste, gate 45.)
         from .recap import recap_recherche
         tours_client = [h.get("content", "") for h in (history or []) if h.get("role") == "user"]
-        brief_effectif = (", ".join([t for t in tours_client[-4:] if t] + [message])
-                          if tours_client else message)
+        # M111 — RUPTURE DE SUJET : un tour AUTONOME (route.nouveau_sujet) ne concatène plus le fil
+        # (fin du « 38 logements [30+8] » et du « ≥ 20000 m² hérité »). Une CONTINUATION compose avec
+        # les tours client — la clarification M107 tient toujours (le cas témoin « 15 logements »).
+        # Décidé par le routeur (UN seul endroit, jamais une heuristique front).
+        if route.nouveau_sujet or not tours_client:
+            brief_effectif = message
+        else:
+            brief_effectif = ", ".join([t for t in tours_client[-4:] if t] + [message])
         rep = recap_recherche(db, brief_effectif)
         rep["brief_effectif"] = brief_effectif
         return rep

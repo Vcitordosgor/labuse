@@ -55,6 +55,9 @@ ROUTE_SCHEMA: dict[str, Any] = {
         },
         "clarification": {"type": ["string", "null"]},
         "confidence": {"type": ["number", "null"]},
+        # M111 — RUPTURE DE SUJET : le message change-t-il de sujet (demande autonome) ou
+        # continue-t-il le fil (réponse à une clarification, correction, ajout de critère) ?
+        "nouveau_sujet": {"type": ["boolean", "null"]},
     },
     "required": ["intent"],
     "additionalProperties": False,
@@ -118,6 +121,14 @@ RÈGLES :
   Saint-Paul HÉRITE de l'intention et des paramètres non modifiés (ici surface_min), en changeant la commune.
 - CORRECTION : « non, je voulais dire… » RE-CLASSE le message, mais CONSERVE les paramètres déjà connus qui
   ne sont pas contredits (un IDU donné au tour précédent survit).
+- RUPTURE DE SUJET (M111) : mets "nouveau_sujet" à true si le message est une DEMANDE AUTONOME qui change
+  de sujet — une question ou une recherche complète en elle-même, sans lien avec les paramètres connus
+  (ex. après « des terrains ≥ 20000 m² à Saint-Paul pour 30 logements », le message « combien de parcelles
+  en procédure à Saint-Denis » ou « des friches à Cilaos pour 8 logements » est un NOUVEAU sujet). Mets-le
+  à false si le message CONTINUE le fil : réponse à une clarification (« 15 logements »), correction
+  (« non, plutôt à Saint-Leu », « et à Saint-Benoît ? »), ajout d'un critère au sujet courant (« hors
+  ABF »). Sans contexte antérieur → true. En cas de doute, laisse hériter (false) : un héritage DIT au
+  récap n'est pas une faute, l'utilisateur corrige d'un clic.
 - EXTRACTION : remplis params avec ce qui est explicitement dit (commune normalisée en toponyme réunionnais ;
   idu = 14 caractères ; surfaces en m² ; budget_eur = budget d'ACHAT ; prix_eur = prix DEMANDÉ à vérifier ;
   entreprise = nom ou SIREN d'une personne morale ; programme_logements = nombre de logements visés ;
@@ -125,7 +136,8 @@ RÈGLES :
   télémétrie). Mets null ce qui n'est pas dit. N'INVENTE aucune valeur.
 
 SORTIE : un objet JSON STRICT, rien d'autre (pas de texte autour, pas de balises), de la forme :
-{"intent": "<UNE des sept>", "params": {clés ci-dessus, null si absent}, "clarification": <string|null>, "confidence": <0..1>}"""
+{"intent": "<UNE des sept>", "params": {clés ci-dessus, null si absent}, "clarification": <string|null>,
+ "confidence": <0..1>, "nouveau_sujet": <true si le message change de sujet, false s'il continue le fil>}"""
 
 
 @dataclass
@@ -138,6 +150,8 @@ class Route:
     degraded: bool = False        # clé absente / API down → repli honnête à l'écran
     error: str | None = None      # JSON illisible après re-demande
     raw: str | None = None        # sortie brute du modèle (audit)
+    nouveau_sujet: bool = True     # M111 — rupture de sujet : true = demande autonome (pas d'héritage)
+    herites: dict[str, Any] = field(default_factory=dict)   # M111 — params VENUS du fil (récap les nomme)
 
 
 def _extract_json(text: str) -> dict | None:
@@ -170,18 +184,30 @@ def _normalise(data: dict, prior_params: dict | None) -> Route | None:
             clean["confidence"] = float(data["confidence"])
         except (TypeError, ValueError):
             pass
+    if data.get("nouveau_sujet") is not None:
+        clean["nouveau_sujet"] = bool(data["nouveau_sujet"])
     try:
         validate(clean, ROUTE_SCHEMA)
     except ValidationError:
         return None
-    # Fusion serveur : un paramètre déjà connu (tour précédent) survit si le tour courant ne le fixe pas.
-    merged = dict(prior_params or {})
-    for k, v in params.items():
-        if v is not None:
-            merged[k] = v
-    merged = {k: v for k, v in merged.items() if k in PARAM_KEYS and v is not None}
-    return Route(intent=clean["intent"], params=merged,
-                 clarification=clean.get("clarification"), confidence=clean.get("confidence"))
+    # M111 — RUPTURE DE SUJET : on n'hérite du fil QUE si le tour est une continuation. Un tour
+    # autonome (nouveau_sujet) part de SES seuls paramètres — fini le « ≥ 20000 m² hérité » appliqué
+    # à une question sans rapport (le compte servi retombe juste). En continuation, l'héritage est
+    # tracé (`herites`) pour que le récap le NOMME (un héritage dit ≠ une contamination, M109/M111).
+    # Défaut prudent (modèle qui omet le champ) : HÉRITER (false) — protège la clarification
+    # (« en cas de doute, laisse hériter », mandat M111) ; un fil neuf n'a de toute façon rien à
+    # hériter. Le modèle met true pour les vrais nouveaux sujets (mesuré fiable, gate S4/S5).
+    nouveau = clean.get("nouveau_sujet", False)
+    tour = {k: v for k, v in params.items() if v is not None and k in PARAM_KEYS}
+    herites: dict[str, Any] = {}
+    if nouveau:
+        merged = tour
+    else:
+        merged = {k: v for k, v in (prior_params or {}).items() if k in PARAM_KEYS and v is not None}
+        herites = {k: v for k, v in merged.items() if k not in tour}   # ce qui vient du fil, pas du tour
+        merged.update(tour)                                            # le tour courant prime (jamais une somme)
+    return Route(intent=clean["intent"], params=merged, clarification=clean.get("clarification"),
+                 confidence=clean.get("confidence"), nouveau_sujet=nouveau, herites=herites)
 
 
 def classify(db: Session | None, message: str, *, history: list[dict] | None = None,

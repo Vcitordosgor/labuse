@@ -94,6 +94,10 @@ RÈGLES ABSOLUES :
 6. Phrase hors-sujet (pas un besoin foncier) → clarification honnête, champ_manquant
    "besoin", question expliquant ce que le Copilote sait instruire.
 7. contraintes/budget/surface_min non évoqués → null (les défauts sont posés par le code).
+7bis. Si la phrase porte PLUSIEURS valeurs d'un même paramètre (plusieurs nombres de logements,
+   plusieurs budgets, plusieurs surfaces — cas d'un fil de conversation recomposé), retiens la
+   DERNIÈRE valeur (la plus récente), JAMAIS la somme (« 30 logements … 8 logements » → 8, pas 38).
+   Un paramètre a UNE valeur.
 8. criteres_non_appliques : liste les critères que tu COMPRENDS mais que LABUSE ne sait PAS
    filtrer en recherche — la PROXIMITÉ spatiale (« proche de la mer », « à moins de X m de… »)
    et « déjà en vente / sur le marché » (LABUSE n'a pas d'annonces). NE liste PAS le risque/PPR/
