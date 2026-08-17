@@ -3,15 +3,15 @@
 UN critère, UN endroit : le compteur d'accueil (`accueil.py`) ET la liste `/sources` lisent d'ici.
 Exclusions de l'AFFICHAGE (l'ingestion et les tables restent, seul l'écran change) :
   · les DOUBLON de catalogue (même donnée qu'une ligne canonique — M71) ;
-  · les sources MASQUÉES : mortes à l'affichage (arbitrage M86/M87). Office de l'eau (Chroniques) —
-    lue uniquement par un contrôle QA (`/signals` retiré) — sort de la page ; sa dette reste ouverte.
+  · les sources MASQUÉES : mortes à l'affichage. M97 : le mécanisme reste, l'ensemble est VIDE —
+    Office de l'eau (masquée M87 comme « QA seul ») est SERVIE à la fiche depuis M95
+    (anc_office_eau_commune, Sourcé commune) ; une source servie s'affiche (audit M96 G1).
 """
 from __future__ import annotations
 
-#: sources retirées de l'AFFICHAGE (jamais de l'ingestion) — arbitrage M87 P0.
-SOURCES_MASQUEES: frozenset[str] = frozenset({
-    "Office de l'eau Réunion — Chroniques de l'eau",
-})
+#: sources retirées de l'AFFICHAGE (jamais de l'ingestion). Vide depuis M97 (Office de l'eau
+#: démasquée — servie via anc_service depuis M95). Le mécanisme reste pour un prochain arbitrage.
+SOURCES_MASQUEES: frozenset[str] = frozenset()
 
 #: fragment SQL commun : connecte, hors DOUBLON, hors masquées. `:masquees` lié par l'appelant.
 WHERE_AFFICHEES = ("status = 'connecte' AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%' "

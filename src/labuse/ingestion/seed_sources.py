@@ -399,11 +399,13 @@ SOURCES: list[dict] = [
          documentation_url="https://eaureunion.fr/fileadmin/user_upload/Chroniques/2025/"
                            "25.12.17_CHRONIQUES_de_L_EAU_149.pdf",
          endpoint_url=None,
-         legal_notes="Licence à confirmer (publication Office de l'eau Réunion — non tranché à l'audit M6 §1.11) ; utilisée en calage/contrôle croisé uniquement.",
-         technical_notes="M71 (nuance M66-B) : usage RÉEL en seed versionné (calage ANC) — pas un faux positif, "
-                         "pas de table dédiée par conception. Chronique n°149 (déc. 2025, données 2023) : ~189 000 installations ANC "
-                         "= 46 % des foyers. Chiffres par commune du texte p. 13 → seed versionné "
-                         "data/anc/office_eau_chronique_149_2023.csv (pas de scraping du PDF)."),
+         legal_notes="Licence à confirmer (publication Office de l'eau Réunion — non tranché à l'audit M6 §1.11).",
+         technical_notes="SERVIE à la fiche depuis M95 (démasquée M97, audit M96 G1) : source du classement "
+                         "« Sourcé · commune » des 3 communes intégralement en ANC — Salazie, La Plaine des "
+                         "Palmistes, Petite-Île (anc_office_eau_commune, branche source_commune d'anc_service). "
+                         "Chronique n°149 (déc. 2025, données 2023), chiffres par commune du texte p. 13 → seed "
+                         "versionné data/anc/office_eau_chronique_149_2023.csv (pas de scraping du PDF). "
+                         "Second usage : calage/contrôle croisé INSEE (calage_office_eau, QA)."),
     dict(name="BD ORTHO IRC (IGN)", category="imagerie", provider="IGN / Géoplateforme",
          access_type="WMS", status=S.CONNECTE, reliability_level=R.VERIFIE,
          rate_limit="gratuit sans clé ; 4 requêtes simultanées (politesse)",

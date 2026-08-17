@@ -1,5 +1,11 @@
 """M3.5 LOT A — profondeur historique DVF 2014-2020 (974) → table dvf_mutations_histo.
 
+STATUT (audit M96, acté M97) : TUYAU D'ENTRAÎNEMENT — aucun lecteur servi. L'unique
+lecteur de `dvf_mutations_histo` est le dataset d'entraînement du modèle P
+(scoring/p_model/ext_sql.py) ; aucune surface utilisateur ne la lit. Assumé — si un
+lecteur servi apparaît, la réserve de méthode DVF (profils, config/dvf_profils.yaml)
+s'applique. Voir docs/audits/AUDIT_M96_TUYAUTERIE.md §1.5.
+
 Les millésimes géo-DVF ≤ 2020 sont RETIRÉS de la distribution officielle (fenêtre
 glissante 5 ans DGFiP) mais les publications semestrielles brutes « Demandes de valeurs
 foncières » restent archivées sur le mirror communautaire cquest (data.cquest.org/dgfip_dvf,

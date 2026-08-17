@@ -385,8 +385,10 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
         kpis.append(cartouche("Surface vendable · Estimé", f"~{fo['shab_vendable_m2']:.0f} m²"))
     sa = score_e_affiche(out)
     if sa:
-        # marge = charge (bilan à rebours, point de calcul unique) − prix probable du foncier
-        kpis.append(cartouche("Marge estimée · Estimé", eur(sa["marge"])))
+        # marge = charge (bilan à rebours, point de calcul unique) − prix probable du foncier.
+        # M97 G2 : en repli (bilan indisponible), la provenance Score É est dite sur le cartouche.
+        label_marge = "Marge estimée · Estimé" if sa["charge_du_bilan"] else "Marge estimée · Score É"
+        kpis.append(cartouche(label_marge, eur(sa["marge"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
     # M54-AB F10 : encadré SOBRE du verdict LABUSE (libellé client + rang + motif), pour que le
     # financeur sache si le scoring déclasse la parcelle. Bordure « terre » pour les déclassements.
@@ -543,12 +545,25 @@ def bilan(out: dict) -> str:
         # M54-AB C3 : la charge LUE ici = celle du bilan à rebours ci-dessus (point de calcul
         # unique), jamais la charge Score É recalculée à 21 % — sinon 71 vs 69 k€ sur le même
         # document. La marge en découle. On ne réutilise plus se['detail'] (il citait 71 k€ / ×0.79).
+        # M97 G2 : le REPLI Score É (bilan indisponible) reste légitime mais il est NOMMÉ, visible à
+        # côté du chiffre — une substitution silencieuse est un péché mortel (audit M96).
         terrain = out["parcelle"]["surface_m2"]
-        detail = (f"Charge supportable = charge foncière acceptable du bilan à rebours ci-dessus "
-                  f"({eur(sa['charge'])}) ; prix probable du foncier = médiane terrain sectorielle "
-                  f"× {terrain:.0f} m². Estimé — hors coûts spécifiques (démolition, dépollution, VRD, "
-                  f"stationnement, TVA, aléas). N'est ni un prix ni une promesse.")
+        if sa["charge_du_bilan"]:
+            provenance = "<p><b>Charge foncière issue du bilan à rebours</b> (ci-dessus).</p>"
+            detail = (f"Charge supportable = charge foncière acceptable du bilan à rebours ci-dessus "
+                      f"({eur(sa['charge'])}) ; prix probable du foncier = médiane terrain sectorielle "
+                      f"× {terrain:.0f} m². Estimé — hors coûts spécifiques (démolition, dépollution, VRD, "
+                      f"stationnement, TVA, aléas). N'est ni un prix ni une promesse.")
+        else:
+            provenance = ("<p><b>Charge estimée par le Score É — bilan complet indisponible sur "
+                          "cette parcelle.</b></p>")
+            detail = (f"Charge supportable = charge estimée par le Score É ({eur(sa['charge'])}, "
+                      f"barème sectoriel — le bilan à rebours n'a pas pu être calculé ici) ; prix "
+                      f"probable du foncier = médiane terrain sectorielle × {terrain:.0f} m². Estimé — "
+                      f"hors coûts spécifiques (démolition, dépollution, VRD, stationnement, TVA, "
+                      f"aléas). N'est ni un prix ni une promesse.")
         body += (f"<h3>Score É — marge foncière estimée {s('E')}</h3>"
+                 f"{provenance}"
                  f"<p><b>{eur(sa['marge'])}</b> = charge supportable {eur(sa['charge'])} "
                  f"− prix probable du foncier {eur(sa['prix_probable'])} "
                  f"(prix de sortie neuf — {esc(niveau_label(sa['niveau_prix']))}).</p>"
