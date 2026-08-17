@@ -2323,7 +2323,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
            FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
            WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
     if not head:
-        raise HTTPException(404, f"Parcelle {idu} absente du run {run_label}")
+        # M102 P1.4 — jamais un identifiant de run dans un message susceptible d'atteindre
+        # l'écran (mesuré : servi brut via le Copilote). Le run reste dans les logs serveur.
+        raise HTTPException(404, f"Parcelle {idu} inconnue de l'analyse en cours.")
 
     # Correctif M5 (verdict d'en-tête) : tier v2 du run SERVI (`_score_v2_run_id` = Q_A_RUN_LABEL,
     # épinglé — PAS « le dernier run par timestamp ») — pilote la bannière/badge quand il existe ;

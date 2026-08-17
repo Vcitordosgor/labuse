@@ -102,7 +102,8 @@ def score_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
         WHERE s.run_id = :run AND s.parcelle_id = :idu"""),
         {"run": run["run_id"], "idu": idu}).mappings().one_or_none()
     if r is None:
-        raise HTTPException(404, f"parcelle {idu} absente du run {run['run_id']}")
+        # M102 P1.4 — pas d'identifiant de run dans un message servable à l'écran.
+        raise HTTPException(404, f"Parcelle {idu} inconnue de l'analyse en cours.")
     return _row_payload(r, run)
 
 

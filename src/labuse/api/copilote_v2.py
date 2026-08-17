@@ -68,13 +68,27 @@ def _executer_veille(act: dict, request: Request, db: Session, rep: dict) -> dic
 
 @router.post("/ask")
 def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté)."""
-    rep = answer(db, body.message, history=body.history, contexte=body.contexte, confirme=body.confirme)
-    act = rep.pop("_action", None)                    # écriture réelle demandée → API existante
-    if act and act.get("type") == "projet":
-        rep = _executer_projet(act, request, db, rep)
-    elif act and act.get("type") == "veille":
-        rep = _executer_veille(act, request, db, rep)
+    """Le client écrit, LABUSE instruit. Retourne {text, intent, …, conversation_id} (§2b : persisté).
+
+    M102 P1 (constat 2) — GARDE GÉNÉRALE : aucune exception (y compris une HTTPException levée
+    par un outil aval — mesuré : 404 « absente du run q_v9_m81 » servi BRUT à l'écran) ne sort
+    de cet endpoint. Message honnête au client, TRACE COMPLÈTE côté serveur — un garde qui
+    échoue doit le dire, jamais un 500 (ni un identifiant technique) au visage de l'utilisateur."""
+    import logging
+    log = logging.getLogger("labuse.copilote_v2")
+    try:
+        rep = answer(db, body.message, history=body.history, contexte=body.contexte, confirme=body.confirme)
+        act = rep.pop("_action", None)                # écriture réelle demandée → API existante
+        if act and act.get("type") == "projet":
+            rep = _executer_projet(act, request, db, rep)
+        elif act and act.get("type") == "veille":
+            rep = _executer_veille(act, request, db, rep)
+    except Exception:  # noqa: BLE001 — garde générale M102 : trace serveur, réponse honnête
+        log.exception("copilote /ask — exception non prévue (message=%r)", (body.message or "")[:200])
+        db.rollback()
+        rep = {"text": "Je n'ai pas su traiter cette demande — l'incident est enregistré côté "
+                       "serveur. Reformulez-la autrement, ou réessayez dans un instant.",
+               "intent": None, "erreur": True}
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message, reponse=rep)
     return {**rep, "conversation_id": cid}
