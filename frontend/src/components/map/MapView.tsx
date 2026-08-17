@@ -3,7 +3,8 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
-import { ALL_TIER_META, CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { ALL_TIER_META, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
@@ -62,6 +63,18 @@ const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
   ['match', TIER_V2,
     ...Object.keys(ALL_TIER_META).flatMap((k) => [k, TIER_OPACITY[k] ?? DECLASSE_OPACITY]),
     LEGACY_OPACITY],
+] as unknown as maplibregl.ExpressionSpecification
+// M105-B — contour des tiers PAR THÈME : en Clair, les liserés brûlante/chaude s'assombrissent
+// (mêmes teintes, ≥ 3:1 sur la terre claire — tokens lib/mapTheme) ; en Sombre, l'expression
+// historique verbatim. Un seul propriétaire du paint : l'effet « résultats en violet » plus bas.
+const statusLineExpr = (clair: boolean): maplibregl.ExpressionSpecification => !clair ? STATUS_COLOR : [
+  'case', ETAGE0, ECARTEE_COLOR,
+  ['match', TIER_V2,
+    ...Object.entries(ALL_TIER_META).flatMap(([k, mt]) => [k,
+      k === 'brulante' ? MAP_THEME.clair.contourBrulante
+        : k === 'chaude' ? MAP_THEME.clair.contourChaude
+          : k === 'ecartee' ? ECARTEE_COLOR : mt.color]),
+    LEGACY_COLOR],
 ] as unknown as maplibregl.ExpressionSpecification
 // liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
 // `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
@@ -141,24 +154,23 @@ function ileBounds(communes: { bbox?: number[] }[] | undefined): [number, number
 // carte). Jamais plus d'un dixième de la plus petite dimension, plancher 8 px.
 const fitPadding = (w: number, h: number) => Math.max(8, Math.min(40, Math.floor(Math.min(w, h) / 10)))
 
+// M105-B — les couleurs/opacités de zonage, PPR, ANRU et 50 pas vivent dans lib/mapTheme
+// (un jeu de tokens PAR THÈME) : ici la colonne `sombre` (création des couches),
+// `applyClairMode` pose la colonne du thème courant au même format. Un seul endroit.
+const zonageFillExpr = (t: MapTokens) => ['case',
+  ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
+  t.zonageU, t.zonageAutre] as unknown as maplibregl.ExpressionSpecification
+const T_SOMBRE = MAP_THEME.sombre
 const OVERLAYS = {
-  zonage: {
-    paint: {
-      'fill-color': ['case',
-        ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
-        '#5CE6A1', '#8a6b3f'] as unknown as maplibregl.ExpressionSpecification,
-      'fill-opacity': 0.10,
-    },
-  },
-  ppr: { paint: { 'fill-color': '#E8695A', 'fill-opacity': 0.14 } },
+  zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
+  // Hors mapTheme : 1,34:1 mesuré sur la terre claire (AUDIT_M105B) — conforme dans les deux thèmes.
   parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
-  // M55-A-bis : l'ancien bleu pâle (#8FB4F0 @ 0.16) se noyait dans le Carto sombre ET collidait
-  // avec l'icône police (#8FB4F0) et la bande bleue déjà prise (AU #4C7DF0, réserve #6FA8DC,
-  // 50 pas #4CC3E8). Chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
+  ppr: { paint: { 'fill-color': T_SOMBRE.ppr, 'fill-opacity': T_SOMBRE.pprOpacity } },
+  // M55-A-bis : chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
   // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
-  anru: { paint: { 'fill-color': '#C6E82E', 'fill-opacity': 0.30 } },
+  anru: { paint: { 'fill-color': T_SOMBRE.anru, 'fill-opacity': T_SOMBRE.anruOpacity } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
@@ -198,6 +210,32 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
   set('communes-bounds', 'line-color', clair ? '#2E7D52' : '#5CE6A1')
   set('communes-bounds', 'line-width', clair ? 1.6 : COMMUNES_W_SOMBRE)
+  // M105-B — les couches d'INFORMATION consomment le jeu de tokens du thème (lib/mapTheme,
+  // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
+  // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
+  const t = MAP_THEME[clair ? 'clair' : 'sombre']
+  // MESURÉ SUR CAPTURES (P3) : en Clair les parcelles sont OPAQUES (#F4F2EC @1) — l'ordre de
+  // création les peignait AU-DESSUS des couches d'information : l'aplat de zonage ne rendait
+  // que sur la masse non parcellisée, et les limites communes étaient recouvertes. En Clair,
+  // les remplissages parcellaires DESCENDENT sous le bloc d'information (les limites noires,
+  // sélections et étiquettes restent au-dessus) ; en Sombre, l'ordre d'origine est RESTAURÉ —
+  // la vue sombre ne bouge pas.
+  const mv = (id: string, before: string) => { if (m.getLayer(id) && m.getLayer(before)) m.moveLayer(id, before) }
+  if (clair) {
+    for (const id of ['parcels-base', 'parcels-fill', 'ile-base', 'ile-fill']) mv(id, 'ov-zonage')
+  } else {
+    for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
+    for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
+  }
+  for (const id of ['ov-zonage', 'ovmvt-zonage']) { set(id, 'fill-color', zonageFillExpr(t)); set(id, 'fill-opacity', t.zonageOpacity) }
+  for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', zonageFillExpr(t)); set(id, 'line-width', t.zonageContourW) }
+  for (const id of ['ov-ppr', 'ovmvt-ppr']) { set(id, 'fill-color', t.ppr); set(id, 'fill-opacity', t.pprOpacity) }
+  for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', t.ppr); set(id, 'line-width', t.pprContourW) }
+  set('ov-anru', 'fill-color', t.anru); set('ov-anru', 'fill-opacity', t.anruOpacity)
+  set('ov-anru-trame', 'fill-opacity', t.anruTrameOpacity)
+  set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
+  set('ov-50pas-line', 'line-color', t.cinquantePas)
+  set('parcels-brulantes', 'line-color', t.lisereBrulantes)
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -219,6 +257,26 @@ function selectedParcelCentroid(m: maplibregl.Map): LngLat | null {
   if (!lids.length) return null
   const feats = m.queryRenderedFeatures({ layers: lids, filter: ['==', ['get', 'idu'], sel] as never })
   return feats[0] ? roughCentroid(feats[0].geometry) : null
+}
+
+// M105-B — motif de TRAME diagonale ANRU (canvas → addImage, comme les icônes équipements).
+// Tracée dans la chartreuse CLAIRE (la trame ne rend qu'en Clair — opacité 0 en Sombre) ;
+// trois segments pour un raccord sans couture d'une tuile à l'autre.
+function makeTrameAnru(m: maplibregl.Map) {
+  if (m.hasImage('trame-anru')) return
+  const S = 12
+  const cv = document.createElement('canvas')
+  cv.width = cv.height = S
+  const ctx = cv.getContext('2d')
+  if (!ctx) return
+  ctx.strokeStyle = MAP_THEME.clair.anru
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(0, S); ctx.lineTo(S, 0)
+  ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, -S / 2)
+  ctx.moveTo(S / 2, S * 1.5); ctx.lineTo(S * 1.5, S / 2)
+  ctx.stroke()
+  m.addImage('trame-anru', ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
 }
 
 function makeEquipIcons(m: maplibregl.Map) {
@@ -440,6 +498,19 @@ export function MapView() {
       for (const [k, o] of Object.entries(OVERLAYS)) {
         m.addLayer({ id: `ov-${k}`, type: 'fill', source: `ov-${k}`, layout: { visibility: 'none' }, paint: o.paint as never })
       }
+      // M105-B : CONTOURS de zonage et PPR (teinte identitaire saturée) — c'est le contour qui
+      // différencie les couches actives ensemble, pas l'aplat (doctrine arbitrée). Largeur portée
+      // par le thème : 0 en Sombre (aucun contour, comme toujours), 1 px en Clair.
+      m.addLayer({ id: 'ov-zonage-line', type: 'line', source: 'ov-zonage', layout: { visibility: 'none' },
+        paint: { 'line-color': zonageFillExpr(T_SOMBRE), 'line-width': T_SOMBRE.zonageContourW, 'line-opacity': 0.9 } })
+      m.addLayer({ id: 'ov-ppr-line', type: 'line', source: 'ov-ppr', layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.ppr, 'line-width': T_SOMBRE.pprContourW, 'line-opacity': 0.9 } })
+      // M105-B : TRAME diagonale ANRU (daltonisme — zonage U vert et ANRU chartreuse quasi
+      // confondus en deutéranopie : la trame est la seconde variable). Opacité portée par le
+      // thème : 0 en Sombre (invisible), posée en Clair par applyClairMode.
+      makeTrameAnru(m)
+      m.addLayer({ id: 'ov-anru-trame', type: 'fill', source: 'ov-anru', layout: { visibility: 'none' },
+        paint: { 'fill-pattern': 'trame-anru', 'fill-opacity': T_SOMBRE.anruTrameOpacity } })
       // P10 : liseré marron du Parc national (borne nette)
       m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
         paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
@@ -447,9 +518,9 @@ export function MapView() {
       // (style distinct : bande littorale, pas une couche de zonage pleine)
       m.addSource('ov-50pas', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'ov-50pas', type: 'fill', source: 'ov-50pas', layout: { visibility: 'none' },
-        paint: { 'fill-color': CINQUANTE_PAS_COLOR, 'fill-opacity': 0.16 } })
+        paint: { 'fill-color': T_SOMBRE.cinquantePas, 'fill-opacity': T_SOMBRE.cinquantePasFillOpacity } })
       m.addLayer({ id: 'ov-50pas-line', type: 'line', source: 'ov-50pas', layout: { visibility: 'none' },
-        paint: { 'line-color': CINQUANTE_PAS_COLOR, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
+        paint: { 'line-color': T_SOMBRE.cinquantePas, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
@@ -479,7 +550,7 @@ export function MapView() {
       m.addLayer({
         id: 'parcels-brulantes', type: 'line', source: 'parcels',
         filter: ['all', ['==', TIER_V2, 'brulante'], ['!', ETAGE0]] as never,
-        paint: { 'line-color': '#FF6B35', 'line-width': 1.8, 'line-opacity': 0.95 },
+        paint: { 'line-color': T_SOMBRE.lisereBrulantes, 'line-width': 1.8, 'line-opacity': 0.95 },
       })
       // M55-F point 4 (décision Vic) : les étiquettes « #rang » ont QUITTÉ la carte — la
       // référence cadastrale vit sur la fiche. Layer parcels-v-badge retirée (0-caller).
@@ -500,6 +571,13 @@ export function MapView() {
         layout: { visibility: 'none' }, paint: OVERLAYS.zonage.paint as never })
       m.addLayer({ id: 'ovmvt-ppr', type: 'fill', source: 'ovmvt-ppr', 'source-layer': 'ppr',
         layout: { visibility: 'none' }, paint: OVERLAYS.ppr.paint as never })
+      // M105-B : contours jumeaux côté île (mêmes tokens de thème que ov-zonage-line/ov-ppr-line)
+      m.addLayer({ id: 'ovmvt-zonage-line', type: 'line', source: 'ovmvt-zonage', 'source-layer': 'plu_gpu_zone',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': zonageFillExpr(T_SOMBRE), 'line-width': T_SOMBRE.zonageContourW, 'line-opacity': 0.9 } })
+      m.addLayer({ id: 'ovmvt-ppr-line', type: 'line', source: 'ovmvt-ppr', 'source-layer': 'ppr',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.ppr, 'line-width': T_SOMBRE.pprContourW, 'line-opacity': 0.9 } })
 
       // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
       m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
@@ -530,12 +608,14 @@ export function MapView() {
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
-      // M65 P8 — TRAIT DE CÔTE : le SEUL endroit de la carte où le vert de marque #4ADE80 est
-      // autorisé — il sépare le noir de la mer et le clair de la terre. Posé au-dessus des
-      // remplissages (parcelles/île). Sur le contour DISSOUS uniquement (jamais les limites
-      // internes des communes). Masqué en Sombre. 2,2 px.
+      // M65 P8 — TRAIT DE CÔTE : il sépare le noir de la mer et le clair de la terre. Posé
+      // au-dessus des remplissages (parcelles/île). Sur le contour DISSOUS uniquement (jamais
+      // les limites internes des communes). Masqué en Sombre. 2,2 px.
+      // M105-B : la couche ne rend qu'en Clair — création directement au token clair
+      // (#14713E, 3,49:1 sur la masse grise, son fond principal ; le #4ADE80 d'origine y
+      // faisait 1,00 — invisible). Le vert reste vert, la famille mint est conservée.
       m.addLayer({ id: 'ile-cote', type: 'line', source: 'ile-mass', layout: { visibility: 'none' },
-        paint: { 'line-color': '#4ADE80', 'line-width': 2.2, 'line-opacity': 0.95 } })
+        paint: { 'line-color': MAP_THEME.clair.cote, 'line-width': 2.2, 'line-opacity': 0.95 } })
 
       // mesure (ligne + polygone + points + étiquette)
       m.addSource('measure', { type: 'geojson', data: EMPTY_FC as never })
@@ -803,9 +883,15 @@ export function MapView() {
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
     m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
     m.setLayoutProperty('ovmvt-ppr', 'visibility', vis(layers.ppr && ile))
+    // M105-B : les contours suivent EXACTEMENT leur remplissage (largeur 0 en Sombre)
+    m.setLayoutProperty('ov-zonage-line', 'visibility', vis(layers.zonage && !ile))
+    m.setLayoutProperty('ov-ppr-line', 'visibility', vis(layers.ppr && !ile))
+    m.setLayoutProperty('ovmvt-zonage-line', 'visibility', vis(layers.zonage && ile))
+    m.setLayoutProperty('ovmvt-ppr-line', 'visibility', vis(layers.ppr && ile))
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
+    m.setLayoutProperty('ov-anru-trame', 'visibility', vis(layers.anru))
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
@@ -884,11 +970,13 @@ export function MapView() {
     const active = !!iaRestitution
     for (const id of ['parcels-line', 'ile-line']) {
       if (!m.getLayer(id)) continue
-      m.setPaintProperty(id, 'line-color', active ? '#4ADE80' : STATUS_COLOR)
+      // M105-B : hors restitution, le liseré suit le CONTOUR DE TIER du thème courant
+      // (Clair = brûlante/chaude assombries ≥ 3:1, tokens lib/mapTheme ; Sombre = inchangé).
+      m.setPaintProperty(id, 'line-color', active ? '#4ADE80' : statusLineExpr(basemap === 'clair'))
       m.setPaintProperty(id, 'line-width', active ? 2 : 0.6)
       m.setPaintProperty(id, 'line-opacity', active ? 1 : 0.9)
     }
-  }, [iaRestitution, mapReady, ile, verdict, filters])
+  }, [iaRestitution, mapReady, ile, verdict, filters, basemap])
 
   // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
   // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable
