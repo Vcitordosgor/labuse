@@ -2573,7 +2573,17 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # déclassés bâti (rien persisté, aucun tier touché, TOUJOURS Estimé). Hors
         # population → disponible=False, le front n'affiche rien.
         "mode_b": _mode_b_block(db, idu, run_label),
+        # M106 P3 — dispositifs fiscaux TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de
+        # COMMUNE (patron M95), point de service unique territoire_fiscal.attributs_commune.
+        # Des ÉTATS sourcés/datés + lien vers le texte — JAMAIS un chiffre fiscal (interdit
+        # absolu du mandat) ; None si table absente (l'absence ne casse pas la fiche).
+        "territoire_fiscal": _territoire_fiscal_block(db, idu),
     }
+
+
+def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
+    from ..territoire_fiscal import attributs_commune
+    return attributs_commune(db, idu[:5])
 
 
 def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:

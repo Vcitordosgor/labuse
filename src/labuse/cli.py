@@ -152,6 +152,16 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("territoire-fiscal")
+def territoire_fiscal_cmd() -> None:
+    """M106 P3 — charge le seed des dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR,
+    attributs de COMMUNE, patron M95). Aucun chiffre fiscal en base : des états sourcés."""
+    from .territoire_fiscal import load_territoire_fiscal
+
+    with session_scope() as s:
+        typer.echo(f"✓ territoire fiscal (ZFANG/FRR) : {load_territoire_fiscal(s)}")
+
+
 @app.command("backfill-sources")
 def backfill_sources_cmd() -> None:
     """M-H — seed le catalogue (crée les sources manquantes) puis rattache les couches

@@ -320,6 +320,14 @@ export interface Fiche {
   // M-RENOUV : segment Renouvellement (parcelle OCCUPÉE, potentiel de renouvellement urbain —
   // jamais « opportunité »). Le verdict d'en-tête reste « Écartée » ; badge + pourquoi seulement.
   renouvellement?: Renouvellement | null
+  // M106 P3 — dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
+  // des ÉTATS sourcés + lien vers le texte — JAMAIS un chiffre fiscal (interdit du mandat).
+  territoire_fiscal?: {
+    commune: string
+    zfang: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
+    frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
+    avertissement: string
+  } | null
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null

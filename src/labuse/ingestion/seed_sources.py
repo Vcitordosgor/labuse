@@ -436,6 +436,36 @@ SOURCES: list[dict] = [
                          "(426 en 1 500-10 000 m² éch. 2028, 24 > 10 000 m² éch. 2026), 451 sous le seuil. "
                          "amenity=parking (polygones) → parkings_aper, surface = ST_Area OSM. Complétude "
                          "déclarative OSM : volumétrie = plancher, pas un recensement (« potentiellement concerné »)."),
+    # M106 P3 — dispositifs fiscaux TERRITORIAUX servis comme attributs de commune (patron M95,
+    # seed data/fiscal/territoire_fiscal.csv, service territoire_fiscal.attributs_commune).
+    # INTERDIT ABSOLU du mandat : aucun chiffre fiscal servi (ni taux, ni plafond, ni calcul) —
+    # LABUSE sert le fait territorial sourcé/daté, le fiscaliste tranche. Le radar sonde les
+    # pages Légifrance (repli HEAD automatique sur endpoint_url).
+    dict(name="ZFANG — zone franche d'activité nouvelle génération (Légifrance)", category="fiscal",
+         provider="Légifrance / DGOM", access_type="seed CSV (texte réglementaire)", status=S.CONNECTE,
+         reliability_level=R.VERIFIE,
+         documentation_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+         endpoint_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+         legal_notes="Texte réglementaire (Légifrance, réutilisation libre). Attribution : "
+                     "« Source : décret n° 2026-421 du 29 mai 2026 (Légifrance) ».",
+         technical_notes="Attribut de COMMUNE (jamais parcellaire) : régime standard (plein droit DOM, "
+                         "art. 44 quaterdecies CGI) ou RENFORCÉ pour 6 communes de l'Est (Bras-Panon, "
+                         "La Plaine-des-Palmistes, Saint-André, Saint-Benoît, Sainte-Rose, Salazie — "
+                         "décret n° 2026-421 du 29/05/2026, critère taux de pauvreté EPCI). Dispositif "
+                         "modifié deux fois en 2026 (février puis mai) → radar sur la page du décret."),
+    dict(name="FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)", category="fiscal",
+         provider="Légifrance / Région Réunion", access_type="seed CSV (texte réglementaire)",
+         status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+         endpoint_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+         legal_notes="Texte réglementaire (Légifrance) ; référence infra-communale : jeu « ZRR 2017 » "
+                     "du portail open data Région Réunion (Licence Ouverte).",
+         technical_notes="Attribut de COMMUNE en 3 états MESURÉS (jeu Région ZRR 2017, ZSAR décret "
+                         "n° 78-690 les Hauts, FRR au 01/07/2024 art. 44 quindecies A) : EN TOTALITÉ "
+                         "(Cilaos, Salazie, La Plaine-des-Palmistes) / EN PARTIE (20 communes — "
+                         "délimitation infra-communale, on ne conclut JAMAIS à la parcelle) / HORS "
+                         "(Le Port). À CONFIRMER : liste FRR 2024+ par commune entière (annexe de "
+                         "l'arrêté du 19/06/2024, section 974 non consultable en ligne)."),
 ]
 
 

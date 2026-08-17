@@ -2173,6 +2173,32 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
+            {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
+                des états sourcés + lien vers le texte. JAMAIS un chiffre fiscal (ni taux, ni
+                plafond, ni calcul) — le fiscaliste tranche, et la fiche le dit. */}
+            {f.territoire_fiscal && (
+              <RefDrawer id="territoire" icon={IC.marche} name="Dispositifs territoriaux"
+                context={f.territoire_fiscal.commune}
+                value={f.territoire_fiscal.zfang.regime === 'renforce'
+                  ? <span className="pill-mint">ZFANG renforcé</span> : 'ZFANG standard'}>
+                <div className="flex flex-col gap-2.5" data-territoire-fiscal>
+                  {([['ZFANG (zone franche d’activité)', f.territoire_fiscal.zfang],
+                     ['FRR — ex-ZRR (revitalisation rurale)', f.territoire_fiscal.frr]] as const).map(([titre, a]) => (
+                    <div key={titre}>
+                      <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a.libelle}</p>
+                      <p className="mt-0.5 text-[10.5px] text-txt-dim">
+                        {a.source_ref} · <a href={a.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
+                      </p>
+                    </div>
+                  ))}
+                  <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
+                    {f.territoire_fiscal.avertissement}
+                  </p>
+                </div>
+              </RefDrawer>
+            )}
+
             {/* M55-O phase 2.1c : Mode B rendu une seule fois, rattaché à la Constructibilité (plus haut). */}
 
             {/* M55-O phase 2.1c : le tiroir « Contexte » (historique + voisinage) est ABSORBÉ dans

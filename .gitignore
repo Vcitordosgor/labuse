@@ -28,6 +28,9 @@ data/*
 # …et le seed de calage Office de l'eau du mandat ANC & Végétation (petit, versionné)
 !data/anc/
 !data/anc/*.csv
+# …et le seed des dispositifs fiscaux territoriaux M106 (petit, versionné, requis par la fiche)
+!data/fiscal/
+!data/fiscal/*.csv
 *.gpkg
 *.shp
 *.shx
