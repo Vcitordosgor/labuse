@@ -2636,6 +2636,29 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
     if tele:
         out["telepherique"] = {"station": tele["nom"], "distance_m": tele["distance_m"],
                                "licence": "OSM (ODbL)"}
+    # M106-B P3 — l'AXE STRUCTURANT le plus proche (BD TOPO, hiérarchie « importance » IGN 1-2,
+    # jamais une hiérarchie inventée). Le libellé porte LES DEUX FACES : accessibilité ET
+    # nuisance — jamais un avantage nu. Le recul L. 111-6 des axes classés n'est pas cartographié
+    # en donnée ouverte (dit) ; le classement SONORE est déjà évalué au tiroir Risques
+    # (couche bruit_route) — pointé, pas dupliqué.
+    try:
+        axe = _plus_proche(db, idu, "axe_structurant")
+    except Exception:
+        db.rollback()
+        axe = None
+    if axe:
+        nat = (axe["attrs"].get("nature") or "route")
+        d = axe["distance_m"]
+        out["axe"] = {
+            "nom": axe["nom"], "nature": nat, "distance_m": d,
+            "libelle": (f"Axe structurant {axe['nom']} ({nat.lower()}) "
+                        + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
+                        + " — deux faces : accessibilité (desserte rapide) ET nuisances "
+                        "potentielles (bruit, pollution ; recul le long des axes classés, "
+                        "art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). "
+                        "Le classement sonore, lui, est évalué au tiroir Risques."),
+            "source": "BD TOPO IGN — hiérarchie « importance » de l'IGN (niveaux 1-2)",
+        }
     if ht:
         t = ht["attrs"].get("tension") or "tension non renseignée"
         out["ligne_ht"] = {
@@ -3087,10 +3110,11 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
                     # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
                     "georisque_alea",
-                    # M106 P4 : transport public (tracés + pôles + Papang) et lignes HT (BD TOPO).
-                    # transport_arret (9 941 points) n'est PAS servi en couche carte — la couche
-                    # équipements (aménités OSM) montre déjà les arrêts ; il sert la PROXIMITÉ fiche.
-                    "transport_ligne", "pole_echange", "telepherique", "ligne_ht"}
+                    # M106 P4 / M106-B : transport public (tracés + arrêts + pôles + Papang),
+                    # lignes HT et axes structurants (BD TOPO, hiérarchie « importance » IGN 1-2).
+                    # Les arrêts sont servis en couche depuis M106-B (petits points, minzoom front).
+                    "transport_ligne", "transport_arret", "pole_echange", "telepherique",
+                    "ligne_ht", "axe_structurant"}
 
 
 @app.get("/map/layers.geojson")
@@ -3104,7 +3128,7 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     rows = db.execute(text(
         """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
-                  sl.attrs->>'tension' AS tension,
+                  sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
@@ -3114,7 +3138,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
               "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
                              "niveau": r["niveau"], "critere": r["critere"],
-                             "concordance": r["concordance"], "tension": r["tension"]}}
+                             "concordance": r["concordance"], "tension": r["tension"],
+                             "nature": r["nature"]}}
              for r in rows if r["g"]]
     # M106 : millésime SERVI, jamais en dur (doctrine M86) — date d'intégration du flux
     # (max created_at du kind) ; la légende la dit comme telle.

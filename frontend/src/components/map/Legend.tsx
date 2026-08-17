@@ -165,20 +165,45 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         </div>
       ))}
 
-      {/* ── M106 P4 : transport public — trait + pôles (la FORME dit la source), Papang ── */}
+      {/* ── M106-B : transport public — LA COULEUR DIT LE RÉSEAU, LA FORME DIT LE TYPE.
+          Légende lisible seule : les réseaux sont NOMMÉS, jamais un code interne. ── */}
       {layers.transport && (
         <div data-legend-transport className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">Transport public</p>
+          <p className="label-caps mb-2">Transport public — un réseau, une couleur</p>
           <div className="flex flex-col gap-1 text-[11px] text-txt">
-            <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.transport }} />lignes (7 réseaux, GTFS officiels)</span>
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: tTheme.transport }} />pôle d’échange — station OSM (Sourcé)</span>
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full border-2" style={{ borderColor: tTheme.transport }} />pôle dérivé — {critereDerive} (Estimé)</span>
-            <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.transport, backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 3px, #0000 3px 5px)' }} />téléphérique Papang (en service)</span>
+            {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'],
+               ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'],
+               ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
+              <span key={r} className="flex items-center gap-2">
+                <span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} />
+                <span><b>{r}</b> — {d}</span>
+              </span>
+            ))}
           </div>
-          <p className="mt-1 text-[10px] text-txt-dim">
-            GTFS : AOM de La Réunion (Licence Ouverte) · pôles &amp; Papang : © les contributeurs
-            d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}
+          <p className="label-caps mb-1.5 mt-2.5">La forme dit le type</p>
+          <div className="flex flex-col gap-1 text-[11px] text-txt">
+            <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded bg-txt-mut" />tracé de ligne (couleur du réseau)</span>
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tTheme.pole }} />pôle d’échange relevé sur le terrain (OSM — Sourcé)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
+          </div>
+          <p className="mt-1.5 text-[10px] text-txt-dim">
+            GTFS : réseaux officiels de La Réunion (Licence Ouverte) · pôles &amp; Papang : © les
+            contributeurs d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}
           </p>
+        </div>
+      )}
+
+      {/* ── M106-B P3 : axes structurants (BD TOPO, hiérarchie IGN) ── */}
+      {layers.axes && (
+        <div data-legend-axes className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <Tip block side="top" tip="Double face : accessibilité ET nuisances (bruit, pollution, recul le long des axes classés). La fiche d'une parcelle donne la distance à l'axe le plus proche.">
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-4 rounded" style={{ background: tTheme.axe }} />
+              <span className="text-[11px] text-txt">Axes structurants (route des Tamarins, nationales…)</span>
+            </div>
+          </Tip>
+          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN — hiérarchie officielle « importance » niveaux 1-2 (Licence Ouverte)</p>
         </div>
       )}
 

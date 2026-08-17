@@ -323,6 +323,46 @@ def ingest_lignes_ht(session: Session, run_id: int | None, sids: dict) -> int:
     return n
 
 
+# ────────────────────────────── BD TOPO — axes structurants (M106-B P3) ──────────────────────────────
+
+def ingest_axes(session: Session, run_id: int | None, sids: dict) -> dict:
+    """Axes structurants = la HIÉRARCHIE DE LA BD TOPO elle-même, jamais une invention :
+    `importance` IN ('1','2') (réseau routier majeur IGN — mesuré : 3 481 tronçons sur l'île,
+    N1/N2/N6/D400…, dont la route des Tamarins). Nom (cpx_numero/toponyme) et nature voyagent
+    en attrs — la fiche sert « distance à l'axe le plus proche, nom, nature ».
+
+    PIÈGE mesuré : le cql_filter Géoplateforme veut la BBOX en ordre LAT/LON (axis order du
+    CRS par défaut) — l'ordre lon/lat renvoie silencieusement 0."""
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'axe_structurant'"))
+    n, start = 0, 0
+    with httpx.Client() as c:
+        while True:
+            r = c.get("https://data.geopf.fr/wfs/ows", params={
+                "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                "typenames": "BDTOPO_V3:troncon_de_route", "outputFormat": "application/json",
+                "count": 5000, "startIndex": start, "sortBy": "cleabs",
+                "cql_filter": "importance IN ('1','2') AND BBOX(geometrie,-21.42,55.20,-20.85,55.90)"},
+                timeout=300)
+            r.raise_for_status()
+            feats = r.json().get("features", []) or []
+            for f in feats:
+                if not f.get("geometry"):
+                    continue
+                p = f.get("properties") or {}
+                nom = p.get("cpx_numero") or p.get("cpx_toponyme_route_nommee") or (p.get("nature") or "axe")
+                _insert_layer(session, "axe_structurant", str(p.get("importance") or ""), str(nom),
+                              f["geometry"], sids.get(SRC_BDTOPO), None, run_id,
+                              {"importance": p.get("importance"), "nature": p.get("nature"),
+                               "numero": p.get("cpx_numero"),
+                               "toponyme": p.get("cpx_toponyme_route_nommee"),
+                               "nb_voies": p.get("nombre_de_voies")})
+                n += 1
+            if len(feats) < 5000:
+                break
+            start += 5000
+    return {"troncons": n}
+
+
 # ────────────────────────────── orchestration ──────────────────────────────
 
 def run_m106(session: Session, log_fn=print) -> dict:
@@ -338,6 +378,7 @@ def run_m106(session: Session, log_fn=print) -> dict:
     out["concordance"] = marquer_concordance(session)
     out["telepherique"] = ingest_telepherique(session, run.id, sids)
     out["lignes_ht"] = ingest_lignes_ht(session, run.id, sids)
+    out["axes"] = ingest_axes(session, run.id, sids)
     # millésimes AMONT dans data_sources (fraîcheur = amont, jamais la date d'ingestion)
     maj = [m.split(": ")[1] for m in out["gtfs"]["maj"] if "ABSENT" not in m]
     if maj:

@@ -51,9 +51,18 @@ export type MapTokens = {
   aleaOpacity: { faible: number; moyen: number; fort: number }
   aleaContourW: number
   aleaTrameOpacity: number
-  /** M106 P4 — transport public (tracés GTFS + pôles + Papang) : rose, teinte neuve de la
-   *  palette (mauve = IA, braise = risques) ; trait seul, critère contour ≥ 3:1. */
-  transport: string
+  /** M106-B — LA COULEUR DIT LE RÉSEAU (arbitrage : « tout en rose, on ne distingue rien »).
+   *  Une teinte par réseau, critère M105-B dans les deux thèmes ; ni mint, ni mauve, ni
+   *  #F5C518. Papang = couleur Citalis (même réseau CINOR), la FORME (tireté) dit le type. */
+  transportReseaux: Record<string, string>
+  /** repli d'un réseau inconnu (GTFS futur) — jamais un trou de couleur */
+  transportDefaut: string
+  /** pôle d'échange : NEUTRE fort (un nœud où les réseaux se croisent, pas un réseau) —
+   *  la forme dit la source : disque plein = OSM (Sourcé), anneau = dérivé (Estimé). */
+  pole: string
+  /** M106-B P3 — axes structurants BD TOPO (importance IGN 1-2) : bleu-gris ardoise, trait
+   *  PLEIN épais (l'HT anthracite reste tiretée — la forme les sépare). */
+  axe: string
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
@@ -83,8 +92,19 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaOpacity: { faible: 0.14, moyen: 0.22, fort: 0.34 },
     aleaContourW: 0.8,
     aleaTrameOpacity: 0.4,
-    transport: '#E87BB0',   // 6,62 sur fond sombre
-    ht: '#B9C4C0',          // 9,83 sur fond sombre
+    transportReseaux: {
+      'Car Jaune': '#E3B93C',   // or — 9,46 sur fond sombre (≠ #F5C518 Pages Jaunes, moins saturé)
+      'Citalis': '#E87BB0',     // rose — 6,62
+      "Kar'Ouest": '#6FA8E8',   // azur — 7,08
+      'Alternéo': '#45D0B8',    // turquoise — 9,20
+      'Estival': '#E8935A',     // orange — 6,71
+      'Carsud': '#B8C24A',      // olive — 9,11
+      'Papang': '#E87BB0',      // = Citalis (réseau CINOR) ; le tireté dit « téléphérique »
+    },
+    transportDefaut: '#E87BB0',
+    pole: '#E8EFEA',            // blanc cassé — 15,1
+    axe: '#8FA6C4',             // bleu-gris — 7,06
+    ht: '#B9C4C0',              // 9,83 sur fond sombre
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -109,8 +129,19 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaOpacity: { faible: 0.18, moyen: 0.28, fort: 0.40 },
     aleaContourW: 1,
     aleaTrameOpacity: 0.5,
-    transport: '#B01E63',   // 5,84 terre / 3,76 masse ✓
-    ht: '#3F4A47',          // 8,22 terre / 5,29 masse ✓
+    transportReseaux: {
+      'Car Jaune': '#8A6D08',   // or profond — 4,39 sur terre claire
+      'Citalis': '#B01E63',     // rose — 5,84
+      "Kar'Ouest": '#1D5FC2',   // azur — 5,41
+      'Alternéo': '#0B7D68',    // turquoise — 4,52
+      'Estival': '#A34A00',     // orange — 5,30
+      'Carsud': '#667000',      // olive — 4,83
+      'Papang': '#B01E63',      // = Citalis
+    },
+    transportDefaut: '#B01E63',
+    pole: '#14181A',            // quasi-noir — 15,9
+    axe: '#33506B',             // bleu-gris profond — 7,50
+    ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
   },
 }
 

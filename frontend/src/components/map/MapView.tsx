@@ -243,11 +243,15 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
     set(`${c.id}-trame`, 'fill-opacity', t.aleaTrameOpacity)
     set(`${c.id}-line`, 'line-color', t[c.token]); set(`${c.id}-line`, 'line-width', t.aleaContourW)
   }
-  // M106 P4 : transport (rose) et lignes HT (anthracite/argent) — traits, tokens par thème
-  for (const id of ['ov-trans-ligne', 'ov-tele']) set(id, 'line-color', t.transport)
-  set('ov-tele-st', 'circle-color', t.transport)
+  // M106 P4 / M106-B : la couleur dit le RÉSEAU (expression par subtype), la forme dit le type ;
+  // pôles neutres ; Papang = couleur Citalis ; axes ardoise ; HT anthracite — tokens par thème
+  set('ov-trans-ligne', 'line-color', reseauColorExpr(t))
+  set('ov-trans-arret', 'circle-color', reseauColorExpr(t))
+  set('ov-tele', 'line-color', t.transportReseaux['Papang'])
+  set('ov-tele-st', 'circle-color', t.transportReseaux['Papang'])
   set('ov-tele-st', 'circle-stroke-color', clair ? '#FFFFFF' : SOMBRE_BG)
-  set('ov-pole', 'circle-color', t.transport); set('ov-pole', 'circle-stroke-color', t.transport)
+  set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
+  set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
 }
 
@@ -309,6 +313,14 @@ const aleaOpacityExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
   'match', ['coalesce', ['get', 'niveau'], 'moyen'],
   'faible', t.aleaOpacity.faible, 'fort', t.aleaOpacity.fort, t.aleaOpacity.moyen,
 ] as unknown as maplibregl.ExpressionSpecification
+// M106-B — LA COULEUR DIT LE RÉSEAU : expression match sur subtype (= réseau GTFS), tokens
+// par thème (mapTheme.transportReseaux) ; repli transportDefaut pour un réseau futur.
+const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
+  'match', ['coalesce', ['get', 'subtype'], ''],
+  ...Object.entries(t.transportReseaux).flatMap(([k, c]) => [k, c]),
+  t.transportDefaut,
+] as unknown as maplibregl.ExpressionSpecification
+
 //: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte, trame dédiée)
 const ALEA_COUCHES = [
   { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', trame: 'trame-alea-inond', orient: 'backslash' },
@@ -435,9 +447,12 @@ export function MapView() {
   const alea = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: layers.alea_inondation || layers.alea_mvt })
   // M106 P4 : transport public (tracés + pôles + Papang, 3 kinds servis île) et lignes HT
   const transLignes = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
+  const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.transport })
   const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.transport })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
+  // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
+  const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
   const renouv = useQuery({ queryKey: ['layer', 'renouv', commune], queryFn: getRenouvGeojson, enabled: layers.renouv })
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
@@ -581,25 +596,32 @@ export function MapView() {
         m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
           paint: { 'line-color': T_SOMBRE[c.token], 'line-width': T_SOMBRE.aleaContourW, 'line-opacity': 0.9 } })
       }
-      // M106 P4 : TRANSPORT PUBLIC (tracés GTFS + pôles d'échange + Papang) et LIGNES HT.
-      // Trait seul (pas d'aplat) — tokens par thème (mapTheme). Pôles : OSM = disque plein
-      // (Sourcé), dérivé GTFS = anneau (Estimé) — la forme dit la nature de la source.
-      for (const src of ['ov-trans-ligne', 'ov-pole', 'ov-tele', 'ov-ht']) {
+      // M106 P4 / M106-B : TRANSPORT PUBLIC — LA COULEUR DIT LE RÉSEAU, LA FORME DIT LE TYPE :
+      // tracé = trait · arrêt = petit point (minzoom 12, sinon 9 956 points noient l'île) ·
+      // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
+      // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
+      // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
+      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht']) {
         m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
       }
+      m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.axe, 'line-width': 2.2, 'line-opacity': 0.85 } })
       m.addLayer({ id: 'ov-trans-ligne', type: 'line', source: 'ov-trans-ligne', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.transport, 'line-width': 1.3, 'line-opacity': 0.7 } })
+        paint: { 'line-color': reseauColorExpr(T_SOMBRE), 'line-width': 1.3, 'line-opacity': 0.75 } })
+      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 12,
+        layout: { visibility: 'none' },
+        paint: { 'circle-radius': 2.2, 'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.85 } })
       m.addLayer({ id: 'ov-tele', type: 'line', source: 'ov-tele', layout: { visibility: 'none' },
         filter: ['==', ['get', 'subtype'], 'ligne'] as never,
-        paint: { 'line-color': T_SOMBRE.transport, 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
+        paint: { 'line-color': T_SOMBRE.transportReseaux['Papang'], 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
       m.addLayer({ id: 'ov-tele-st', type: 'circle', source: 'ov-tele', layout: { visibility: 'none' },
         filter: ['==', ['get', 'subtype'], 'station'] as never,
-        paint: { 'circle-radius': 4, 'circle-color': T_SOMBRE.transport, 'circle-stroke-color': SOMBRE_BG, 'circle-stroke-width': 1.2 } })
+        paint: { 'circle-radius': 4, 'circle-color': T_SOMBRE.transportReseaux['Papang'], 'circle-stroke-color': SOMBRE_BG, 'circle-stroke-width': 1.2 } })
       m.addLayer({ id: 'ov-pole', type: 'circle', source: 'ov-pole', layout: { visibility: 'none' },
         paint: { 'circle-radius': 5,
-                 'circle-color': T_SOMBRE.transport,
-                 'circle-opacity': ['case', ['==', ['get', 'subtype'], 'osm'], 0.9, 0] as never,
-                 'circle-stroke-color': T_SOMBRE.transport, 'circle-stroke-width': 2 } })
+                 'circle-color': T_SOMBRE.pole,
+                 'circle-opacity': ['case', ['==', ['get', 'subtype'], 'osm'], 0.95, 0] as never,
+                 'circle-stroke-color': T_SOMBRE.pole, 'circle-stroke-width': 2 } })
       m.addLayer({ id: 'ov-ht', type: 'line', source: 'ov-ht', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.ht, 'line-width': 1.6, 'line-dasharray': [5, 2.5], 'line-opacity': 0.9 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
@@ -838,7 +860,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['pole', poles], ['tele', tele], ['ht', lignesHt]]
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
@@ -878,7 +900,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, transLignes.data, poles.data, tele.data, lignesHt.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -980,10 +1002,11 @@ export function MapView() {
       m.setLayoutProperty(`${id}-trame`, 'visibility', vis(on))
       m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
     }
-    // M106 P4 : transport public (tracés + pôles + Papang) et lignes HT
-    for (const id of ['ov-trans-ligne', 'ov-pole', 'ov-tele', 'ov-tele-st']) {
+    // M106 P4 / M106-B : transport public (tracés + arrêts + pôles + Papang), axes et lignes HT
+    for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-tele-st']) {
       m.setLayoutProperty(id, 'visibility', vis(layers.transport))
     }
+    m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
