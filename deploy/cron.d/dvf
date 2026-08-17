@@ -1,4 +1,11 @@
 # LA BUSE — DVF hebdo-en-attente-du-semestriel (J+2) : détection Last-Modified des CSV Etalab ;
 # no-op tant que la livraison (avril/octobre) n'a pas changé ; sinon reload du millésime modifié.
+# Mercredi 05:00 UTC (09:00 Réunion) — INCHANGÉ M98 : hebdo, dérivés seulement, hors chemin
+# critique du digest. NOTE : le jour d'une livraison semestrielle, le reload (~5-10 min) peut
+# dépasser le backup de 05:30 — pg_dump prend un instantané cohérent ; l'état complet ingéré
+# est dans le dump du lendemain.
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/dvf /etc/cron.d/dvf
 SHELL=/bin/sh
-0 5 * * 3 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse refresh-dvf >> /var/log/labuse/dvf.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dvf.log 2>&1
+0 5 * * 3 labuse flock -n -E 200 /run/lock/labuse-dvf.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse refresh-dvf >> /var/log/labuse/dvf.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dvf.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) dvf : passage sauté : exécution précédente en cours" >> /var/log/labuse/dvf.log

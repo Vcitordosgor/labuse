@@ -1,6 +1,13 @@
 # LA BUSE — SITADEL quotidien-en-attente-du-mensuel (J+2) : le refresh delta (recouvrement
 # 3 mois) est un no-op léger tant que le SDES n'a pas publié ; le jour de la livraison
 # mensuelle, l'ingestion part le jour même. Puis dérivés (hebdo le lundi : + m10 vélocité).
+# M98 : ingestion 02:15 UTC (06:15 Réunion) — AVANT les notifications de 03:00, pour que le
+# digest de 7h Réunion parle de la nuit, pas de l'avant-veille. Le volet dérivés hebdo passe
+# au lundi 03:45 UTC (07:45 Réunion) : toujours APRÈS l'ingestion du lundi (02:15), et
+# désormais AVANT le backup (05:30) pour que le dump du jour capte ses écritures.
+# Verrou flock partagé entre les deux lignes (-E 200 = tour sauté) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/sitadel /etc/cron.d/sitadel
 SHELL=/bin/sh
-15 4 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/python -m labuse.ingestion.permits_sdes --refresh >> /var/log/labuse/sitadel_refresh.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/sitadel_refresh.log 2>&1
-45 5 * * 1 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse fraicheur-derives --hebdo >> /var/log/labuse/sitadel_refresh.log 2>&1
+15 2 * * * labuse flock -n -E 200 /run/lock/labuse-sitadel.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/python -m labuse.ingestion.permits_sdes --refresh >> /var/log/labuse/sitadel_refresh.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/sitadel_refresh.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) sitadel : passage sauté : exécution précédente en cours" >> /var/log/labuse/sitadel_refresh.log
+45 3 * * 1 labuse flock -n -E 200 /run/lock/labuse-sitadel.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse fraicheur-derives --hebdo >> /var/log/labuse/sitadel_refresh.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) sitadel (hebdo) : passage sauté : exécution précédente en cours" >> /var/log/labuse/sitadel_refresh.log

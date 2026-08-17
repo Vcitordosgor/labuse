@@ -1,5 +1,15 @@
 # LA BUSE — sauvegarde PostgreSQL quotidienne (pré-vol M7 · P4)
 # Dump -Fc + rotation (deploy/scripts/backup_postgres.sh) ; le rapatriement vers le
 # poste local est un cron LOCAL (pull_backups.sh), jamais une tâche du VPS.
+# M98 : 05:30 UTC (09:30 Réunion) — APRÈS toutes les écritures de la nuit (sitadel 02:15,
+# bodacc 02:30, notifications 03:00, ban le 5 à 03:30, dérivés hebdo lundi 03:45).
+# 2e ligne M98 : la maintenance hebdo (VACUUM ANALYZE + audit tailles, db_maintenance.sh,
+# dimanche 04:00 UTC = 08:00 Réunion) sort du crontab utilisateur (qui reste VIDE — un seul
+# mécanisme, Phase 4) et vit ici, avec le backup : VACUUM avant dump, log sous /var/log/labuse/
+# pour entrer dans la rotation logrotate.
+# Verrou flock partagé (-E 200 = tour sauté, jamais confondu avec un échec) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/backup /etc/cron.d/backup
 SHELL=/bin/sh
-0 3 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse/backup.log 2>&1
+30 5 * * * labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse/backup.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) backup : passage sauté : exécution précédente en cours" >> /var/log/labuse/backup.log
+0 4 * * 0 labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/db_maintenance.sh >> /var/log/labuse/maintenance.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) maintenance : passage sauté : exécution précédente en cours" >> /var/log/labuse/maintenance.log

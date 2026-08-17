@@ -1,4 +1,8 @@
-SHELL=/bin/sh
 # BLOC B (B3) — radar des sources : sondes HEAD/métadonnées (zéro téléchargement), hebdo.
 # Le radar SIGNALE (healthz/crons + page Sources) ; l'ingestion reste une décision humaine.
-40 2 * * 1 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse radar-sources >> /var/log/labuse/radar.log 2>&1
+# M98 : lundi 02:00 UTC (06:00 Réunion) — la sonde amont passe AVANT tout le Train J+1.
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/radar /etc/cron.d/radar
+SHELL=/bin/sh
+0 2 * * 1 labuse flock -n -E 200 /run/lock/labuse-radar.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse radar-sources >> /var/log/labuse/radar.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) radar : passage sauté : exécution précédente en cours" >> /var/log/labuse/radar.log

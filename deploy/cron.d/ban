@@ -3,8 +3,10 @@
 # complet idempotent + rattachement parcelles (point-dans-parcelle, cad_parcelles, < 20 m)
 # + index inverse adresse_parcelles (assiette multi-parcelles, bâtiments à cheval)
 # + rattachement des copropriétés RNIC restées sans parcelle.
-# Passage le 5 à 03h30 — avant Sitadel (04h15) et CATNAT (05h00), la nuit du même jour.
+# Passage le 5 à 03:30 UTC (07:30 Réunion) — INCHANGÉ M98 : mensuel, hors chemin critique du
+# digest (les ingestions quotidiennes sitadel/bodacc tournent désormais à 02:15/02:30).
+# Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec du job) ; saut journalisé.
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/ban /etc/cron.d/ban
 SHELL=/bin/sh
-30 3 5 * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-ban --download >> /var/log/labuse/ban_refresh.log 2>&1
+30 3 5 * * labuse flock -n -E 200 /run/lock/labuse-ban.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-ban --download >> /var/log/labuse/ban_refresh.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) ban : passage sauté : exécution précédente en cours" >> /var/log/labuse/ban_refresh.log
