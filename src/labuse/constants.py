@@ -10,13 +10,20 @@ USER_AGENT = "LA-BUSE/0.1 (+pre-qualification fonciere)"
 # applicatif d'un côté et SQL de l'autre. Consommé par l'autocomplétion d'adresses (app.py) et la
 # recherche propriétaire (modules.py — colonne MAJIC 100 % désaccentuée : sans ce pliage, toute
 # saisie accentuée rendait 0 en silence, défaut M100 n°3). Table 1:1 (translate = char→char).
-RECHERCHE_ACCENTS = ("àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ", "aaaeeeeiioouuucAAAEEEEIIOOUUUC")
+# M103 P6 — table COMPLÉTÉE après inventaire exhaustif des données (voies + dénominations) :
+# ó (présent dans les voies), ÿ (défensif — noms propres), et l'APOSTROPHE TYPOGRAPHIQUE ’
+# pliée sur ' (« l’Étang » tapé « l'Etang » ne matchait pas). Les LIGATURES œ/æ sont des
+# digraphes — translate() ne mappe que char→char, elles passent par replace() dans sql_plie().
+RECHERCHE_ACCENTS = ("àâäéèêëïîôöùûüçóÿ’ÀÂÄÉÈÊËÏÎÔÖÙÛÜÇÓŸ", "aaaeeeeiioouuucoy'AAAEEEEIIOOUUUCOY")
 
 
 def sql_plie(expr: str) -> str:
-    """Expression SQL du pliage (casse + accents) à appliquer À L'IDENTIQUE aux deux côtés d'une
-    comparaison. Requiert les binds de `params_pliage()`."""
-    return f"lower(translate({expr}, :fold_a, :fold_b))"
+    """Expression SQL du pliage (casse + accents + ligatures) à appliquer À L'IDENTIQUE aux deux
+    côtés d'une comparaison. Requiert les binds de `params_pliage()`."""
+    ligatures = expr
+    for a, b in (("œ", "oe"), ("Œ", "OE"), ("æ", "ae"), ("Æ", "AE")):
+        ligatures = f"replace({ligatures}, '{a}', '{b}')"
+    return f"lower(translate({ligatures}, :fold_a, :fold_b))"
 
 
 def params_pliage() -> dict:

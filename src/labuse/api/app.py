@@ -1518,9 +1518,6 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
-# M13-B1 → M103 P2 : la table de pliage vit désormais dans constants.RECHERCHE_ACCENTS
-# (partagée avec la recherche propriétaire — un critère, un endroit).
-from ..constants import RECHERCHE_ACCENTS as _ADR_ACCENTS  # noqa: E402 — alias local conservé
 
 
 @app.get("/adresses/autocomplete")
@@ -1538,23 +1535,24 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
     needle = q.strip()
     if len(needle) < 3:
         return {"features": []}
-    a, b = _ADR_ACCENTS
+    # M103 P2/P6 — pliage PARTAGÉ (constants.sql_plie : casse + accents + ligatures œ/æ +
+    # apostrophe typographique) — même fonction des deux côtés, même point que le patrimoine.
+    from ..constants import params_pliage, sql_plie
+    _col = sql_plie("coalesce(numero,'') || ' ' || voie")
     rows = db.execute(text(
-        """
+        f"""
         SELECT id_ban,
                trim(coalesce(numero, '') || ' ' || voie) AS label_court,
                commune, code_postal, idu,
                ST_X(geom) AS lon, ST_Y(geom) AS lat
         FROM adresses
         WHERE idu IS NOT NULL AND geom IS NOT NULL
-          AND lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
-              LIKE lower(translate('%' || :q || '%', :a, :b))
-        ORDER BY (lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
-                  LIKE lower(translate(:q || '%', :a, :b))) DESC,
+          AND {_col} LIKE {sql_plie("'%' || :q || '%'")}
+        ORDER BY ({_col} LIKE {sql_plie(":q || '%'")}) DESC,
                  length(voie), voie, numero
         LIMIT :lim
         """),
-        {"a": a, "b": b, "q": needle, "lim": limit}).mappings().all()
+        {"q": needle, "lim": limit, **params_pliage()}).mappings().all()
     feats = []
     for r in rows:
         label = r["label_court"]
