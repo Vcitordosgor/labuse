@@ -3,9 +3,10 @@ import { useApp, type Basemap, type MapTool, type OrthoYear } from '../../store/
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
 
 // M63-P1 (a) : le fond CLAIR rejoint le sélecteur existant (pas un nouveau bouton). Libellés simples.
+// M105 P4.2 — SOMBRE EN PREMIER (défaut au boot : readBasemap = 'dark', vérifié).
 const BASEMAPS: { key: Basemap; label: string }[] = [
-  { key: 'clair', label: 'Clair' },
   { key: 'dark', label: 'Sombre' },
+  { key: 'clair', label: 'Clair' },
   { key: 'plan', label: 'Plan IGN' },
   { key: 'ortho', label: 'Ortho IGN' },
 ]
