@@ -1,0 +1,12 @@
+# LA BUSE — rotation hebdo des logs du Train J+1 (M98 Phase 3). 8 semaines compressées ;
+# un log manquant ou vide n'est pas une erreur. Aucun log supprimé hors rotation.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/logrotate.d/labuse /etc/logrotate.d/labuse
+/var/log/labuse/*.log {
+    weekly
+    rotate 8
+    compress
+    missingok
+    notifempty
+    su labuse labuse
+}
