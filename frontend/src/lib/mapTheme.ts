@@ -51,6 +51,12 @@ export type MapTokens = {
   aleaOpacity: { faible: number; moyen: number; fort: number }
   aleaContourW: number
   aleaTrameOpacity: number
+  /** M106 P4 — transport public (tracés GTFS + pôles + Papang) : rose, teinte neuve de la
+   *  palette (mauve = IA, braise = risques) ; trait seul, critère contour ≥ 3:1. */
+  transport: string
+  /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
+   *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
+  ht: string
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -77,6 +83,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaOpacity: { faible: 0.14, moyen: 0.22, fort: 0.34 },
     aleaContourW: 0.8,
     aleaTrameOpacity: 0.4,
+    transport: '#E87BB0',   // 6,62 sur fond sombre
+    ht: '#B9C4C0',          // 9,83 sur fond sombre
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -101,6 +109,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaOpacity: { faible: 0.18, moyen: 0.28, fort: 0.40 },
     aleaContourW: 1,
     aleaTrameOpacity: 0.5,
+    transport: '#B01E63',   // 5,84 terre / 3,76 masse ✓
+    ht: '#3F4A47',          // 8,22 terre / 5,29 masse ✓
   },
 }
 

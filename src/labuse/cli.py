@@ -152,6 +152,20 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("transport-reseaux")
+def transport_reseaux_cmd() -> None:
+    """M106 P4 — ingère transport public (7 GTFS PAN), pôles d'échange (OSM + dérivés GTFS,
+    concordance dite), téléphérique Papang (OSM, en service seul) et lignes HT (BD TOPO).
+    Versionné (IngestionRun) ; geom_2975 backfillée ensuite pour les distances."""
+    from . import models
+    from .ingestion.transport_reseaux import run_m106
+
+    with session_scope() as s:
+        run_m106(s, log_fn=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo("✓ geom_2975 backfillée (distances prêtes)")
+
+
 @app.command("territoire-fiscal")
 def territoire_fiscal_cmd() -> None:
     """M106 P3 — charge le seed des dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR,

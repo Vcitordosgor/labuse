@@ -441,6 +441,36 @@ SOURCES: list[dict] = [
     # INTERDIT ABSOLU du mandat : aucun chiffre fiscal servi (ni taux, ni plafond, ni calcul) —
     # LABUSE sert le fait territorial sourcé/daté, le fiscaliste tranche. Le radar sonde les
     # pages Légifrance (repli HEAD automatique sur endpoint_url).
+    # M106 P4 — transport public + téléphérique + lignes HT (arbitrage Vic 17/08/2026).
+    dict(name="Transport public — GTFS (PAN, 7 réseaux)", category="acces",
+         provider="AOM Réunion (Région, CINOR, TCO, CIVIS, CIREST, CASUD) via transport.data.gouv.fr",
+         access_type="GTFS (zip)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://transport.data.gouv.fr/datasets/region/04?format=GTFS",
+         # sonde radar : l'API data.gouv du jeu Citalis (le plus vivant) = CANARI des 7 —
+         # les URLs static.data.gouv sont horodatées et périment, on ne les sonde jamais.
+         endpoint_url="https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/",
+         legal_notes="Licence Ouverte v2.0 (les 7 jeux). Attribution : « Source : Point d'Accès "
+                     "National transport.data.gouv.fr — AOM de La Réunion ».",
+         technical_notes="Car Jaune, Citalis, Papang, Kar'Ouest, Alternéo, Carsud, Estival — "
+                         "300 lignes, ~9 900 quais (recouvrements inter-réseaux non dédoublonnés). "
+                         "kinds transport_arret/transport_ligne + pole_echange subtype='gtfs' "
+                         "(DÉRIVÉ : ≥ seuil lignes, config/transport.yaml, statut Estimé). "
+                         "Résolution des URLs à CHAQUE ingestion via la liste API du PAN "
+                         "(transport_reseaux._pan_urls). Papang sans shapes.txt (tracé = OSM)."),
+    dict(name="OSM — transport (pôles d'échange & téléphérique)", category="acces",
+         provider="OpenStreetMap", access_type="Overpass/GeoJSON", status=S.CONNECTE,
+         reliability_level=R.A_CONFIRMER,
+         documentation_url="https://wiki.openstreetmap.org/wiki/Key:public_transport",
+         endpoint_url="https://overpass-api.de/api/interpreter",
+         legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap — données "
+                     "disponibles sous ODbL (openstreetmap.org/copyright) ». Usage assumé par "
+                     "arbitrage Vic M106 (cohérent parkings APER/aménités) ; portée share-alike "
+                     "à faire trancher avant le premier client (note hors mandat).",
+         technical_notes="pole_echange subtype='osm' (stations + gares routières, Sourcé — "
+                         "concordance avec le dérivé GTFS mesurée et DITE : confirme/osm_seul/"
+                         "gtfs_seul) ; telepherique = le Papang EN SERVICE seul (gondola + "
+                         "stations) — la ligne 2 « Zèl La Montagne » (2029) est EXCLUE : aucun "
+                         "tracé publié, l'OSM proposed est une anticipation de contributeur."),
     dict(name="ZFANG — zone franche d'activité nouvelle génération (Légifrance)", category="fiscal",
          provider="Légifrance / DGOM", access_type="seed CSV (texte réglementaire)", status=S.CONNECTE,
          reliability_level=R.VERIFIE,

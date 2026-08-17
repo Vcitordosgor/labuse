@@ -116,3 +116,60 @@ lignes HT servies porteront une CONTRAINTE en proximité (le recul réglementair
 n'étant pas vectorisé, on ne peut pas servir la servitude elle-même) ; (3) la couche
 CINOR demandée est, pour sa part publiable, déjà en base — le reste est un courrier à
 la CINOR, pas une ingestion.
+
+---
+
+# PHASES 4-5 — livraison après arbitrage (17/08/2026)
+
+Arbitrage : OSM assumé (attribution ODbL) · GTFS + pôles OSM ET dérivés · HT BD TOPO
+sans servitude · Papang oui, ligne 2 NON · CINOR rien à ingérer (vérifier M86-B).
+
+## 6. Livré
+
+- **Ingestion versionnée** (`labuse transport-reseaux`, IngestionRun) : 9 941 arrêts,
+  288 tracés de lignes (7 réseaux), 42 pôles OSM (Sourcé), 30 pôles dérivés GTFS
+  (Estimé), Papang 2 tronçons + 5 stations (« Ancien téléphérique forestier » OSM
+  écarté : une station n'existe que le long d'une ligne en service), 48 lignes HT.
+- **Seuil des pôles dérivés CALIBRÉ PAR LA MESURE** (config/transport.yaml, critère
+  servi avec la donnée — jamais en dur à l'écran) : au seuil 4, 455 pôles dérivés dont
+  6 % confirmés par OSM ; le taux de confirmation saute à **53 % au seuil 12** et le
+  volume (30) rejoint l'ordre de grandeur de la source indépendante (42). Retenu : 12.
+- **Concordance OSM↔GTFS mesurée et DITE** (rayon 300 m, config) : 16 dérivés
+  confirmés / 14 gtfs_seul · 15 OSM confirmés / 27 osm_seul — servie sur la fiche
+  (« sources discordantes, dit tel quel »), jamais tranchée en silence.
+- **Fiche — proximité, jamais un booléen** : bloc `proximites` (arrêt, pôle avec
+  statut/critère/concordance, station Papang avec licence, ligne HT). La ligne HT vit
+  au tiroir Risques, côté CONTRAINTE, et son libellé dit que la servitude I4 n'est pas
+  cartographiée (à vérifier auprès d'EDF SEI).
+- **Carte** : couches « Transport public » (tracés + pôles — disque plein = OSM Sourcé,
+  anneau = dérivé Estimé — + Papang tireté) et « Lignes haute tension » (tireté long
+  anthracite, une contrainte n'a pas une couleur d'opportunité). Tokens par thème
+  (mapTheme) : transport `#E87BB0`/`#B01E63` (6,62 sombre · 5,84 terre · 3,76 masse),
+  HT `#B9C4C0`/`#3F4A47` (9,83 · 8,22 · 5,29) — critère trait ≥ 3:1 partout ✓.
+  Légendes avec sources, attribution ODbL, millésime servi.
+- **Catalogue + radar dès le premier jour** : « Transport public — GTFS (PAN,
+  7 réseaux) » (sonde JSON data.gouv/Citalis = canari des 7, constatée `a_jour` avec
+  valeur datée ; les URLs de zips horodatées ne sont jamais sondées — résolution PAN à
+  chaque ingestion) et « OSM — transport » (Overpass, non sondable HEAD — même état
+  documenté que Parkings OSM). Millésimes amont posés (« 7 jeux PAN, màj 2025-12-29 →
+  2026-08-17 »).
+
+## 7. Vérification CINOR (point 4 de l'arbitrage)
+
+Saint-Denis est bien servi **Sourcé parcellaire** par M86-B : 24 119 parcelles
+affectées dans `parcel_anc` (8 789 anc / 15 330 collectif), fiche live vérifiée
+(97411000AW0735 → statut `source`, GPU). Le décompte de couverture (`couverture_anc`)
+est CALCULÉ (4/24, Saint-Denis compris) — aucun décompte à corriger.
+
+## 8. Recette (Phase 5)
+
+| cas | parcelle | servi |
+|---|---|---|
+| proche pôle d'échange | 97407000AI1773 (Le Port) | pôle « Odette et Roger MOFY » à 47 m, Sourcé OSM, concordance confirmée ; arrêt Car Jaune à 51 m |
+| sous ligne HT | 97410000AX0527 (Saint-Benoît) | « Ligne haute tension (63 kV) au contact de la parcelle — contrainte potentielle… servitude I4 non cartographiée » ; pôle Estimé à 4,3 km avec critère dit et discordance dite |
+| commune ZFANG renforcée | 97410000AE1269 (Saint-Benoît) | `renforce` · FRR `partie` · liens Légifrance (P3) |
+| commune CINOR | 97411000AW0735 (Saint-Denis) | ANC `source` (zonage GPU parcellaire) |
+
+Portes : tsc 0 · build OK · suite **1554 passed** (un skip devenu vert) · golden
+**0 FAIL** (INDÉTERMINÉ = quota API du jour) · grep fiscal propre (aucun taux, aucun
+plafond, aucun calcul d'avantage servi).

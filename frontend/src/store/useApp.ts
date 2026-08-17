@@ -23,6 +23,8 @@ export interface LayerToggles {
   cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
   alea_inondation: boolean // M106 P1 : aléa inondation DEAL (kind=georisque_alea, subtype dédié) —
   alea_mvt: boolean        // le zonage PPR réglementaire reste agrégé (multirisque insécable)
+  transport: boolean       // M106 P4 : transport public (tracés GTFS + pôles d'échange + Papang)
+  lignes_ht: boolean       // M106 P4 : lignes haute tension BD TOPO (contrainte, tireté anthracite)
   renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
   couleurs_verdict: boolean // M55-G point 8 : palette des tiers en COUCHE activable — imposée
                             // seulement en mode analyse ; en tri factuel rien n'est imposé
@@ -441,7 +443,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, renouv: false, couleurs_verdict: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, renouv: false, couleurs_verdict: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

@@ -4,6 +4,7 @@ import { createContext, isValidElement, useContext, useEffect, useMemo, useState
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -2059,6 +2060,14 @@ export function Fiche({ idu }: { idu: string }) {
               {risquesLines.length
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+              {/* M106 P4 — ligne HT la plus proche : une CONTRAINTE (distance, jamais un booléen) ;
+                  le libellé dit que la servitude I4 n'est pas cartographiée (à vérifier gestionnaire). */}
+              {f.proximites?.ligne_ht && (
+                <div data-ligne-ht className="mt-1 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
+                  <p className="text-[11.5px] leading-snug text-txt">{f.proximites.ligne_ht.libelle}</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.ligne_ht.source}</p>
+                </div>
+              )}
               {/* M70 déc. 9 — PORTES Risques (grille terminale supprimée) : Contrôle avant achat
                   (due diligence) + Servitudes invisibles. Les deux lisent selectedIdu → pré-remplis. */}
               <PorteOutil ico="✓" data="duediligence" titre="Contrôle avant achat"
@@ -2159,6 +2168,27 @@ export function Fiche({ idu }: { idu: string }) {
                     (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
                     a_score intact (consommé ailleurs). */}
                 <EquipementsBadges idu={idu} />
+                {/* M106 P4 — PROXIMITÉ transport (distance, jamais un booléen) : arrêt, pôle
+                    d'échange (le statut DIT la source ; une discordance OSM↔GTFS se dit), Papang. */}
+                {f.proximites && (f.proximites.arret || f.proximites.pole || f.proximites.telepherique) && (
+                  <div data-proximites-transport className="flex flex-col gap-1 text-[11.5px] leading-snug text-txt">
+                    <p className="text-[12px] font-semibold text-txt-hi">Transport public — au plus proche</p>
+                    {f.proximites.arret && (
+                      <p>Arrêt « {f.proximites.arret.nom} » ({f.proximites.arret.reseau}) à ~{fmtDistanceM(f.proximites.arret.distance_m)}.</p>
+                    )}
+                    {f.proximites.pole && (
+                      <p>Pôle d’échange « {f.proximites.pole.nom} » à ~{fmtDistanceM(f.proximites.pole.distance_m)}{' '}
+                        <b className="text-txt-hi">{f.proximites.pole.statut}</b> ({f.proximites.pole.source}
+                        {f.proximites.pole.nb_lignes ? `, ${f.proximites.pole.nb_lignes} lignes` : ''})
+                        {f.proximites.pole.concordance === 'osm_seul' && <span className="text-txt-dim"> — la desserte GTFS ne confirme pas ce pôle (sources discordantes, dit tel quel)</span>}
+                        {f.proximites.pole.concordance === 'gtfs_seul' && <span className="text-txt-dim"> — aucune station OSM à proximité (sources discordantes, dit tel quel)</span>}.
+                      </p>
+                    )}
+                    {f.proximites.telepherique && (
+                      <p>Téléphérique Papang — station « {f.proximites.telepherique.station} » à ~{fmtDistanceM(f.proximites.telepherique.distance_m)} <span className="text-txt-dim">(tracé {f.proximites.telepherique.licence})</span>.</p>
+                    )}
+                  </div>
+                )}
                 {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
                   <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
                     <span aria-hidden className="text-st-creuser">▲</span>

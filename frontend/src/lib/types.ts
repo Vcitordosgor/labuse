@@ -328,6 +328,14 @@ export interface Fiche {
     frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
     avertissement: string
   } | null
+  // M106 P4 — PROXIMITÉS (distance, jamais un booléen) : transport + ligne HT (contrainte).
+  proximites?: {
+    arret?: { nom: string; reseau: string | null; distance_m: number }
+    pole?: { nom: string; distance_m: number; statut: 'Sourcé' | 'Estimé'; source: string
+      concordance: string | null; nb_lignes: number | null }
+    telepherique?: { station: string; distance_m: number; licence: string }
+    ligne_ht?: { distance_m: number; tension: string; libelle: string; source: string }
+  } | null
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null

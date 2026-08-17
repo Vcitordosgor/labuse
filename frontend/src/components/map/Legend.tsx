@@ -40,8 +40,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   // du THÈME courant (mapTheme) pour que la légende corresponde à ce qui est peint.
   const aleaActifHook = layers.alea_inondation || layers.alea_mvt
   const aleaQ = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: aleaActifHook })
+  const transQ = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
+  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.transport })
+  // le CRITÈRE du pôle dérivé voyage avec la donnée (config/transport.yaml) — jamais en dur ici
+  const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
+    ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
+  const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
   const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
-  const aleaMillesime = (aleaQ.data as unknown as { millesime_integration?: string } | undefined)?.millesime_integration
+  const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
+  const fmtMill = (m?: string) => (m ? ` · intégré le ${m.split('-').reverse().join('/')}` : '')
+  const aleaMillesime = mill(aleaQ)
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
 
@@ -55,7 +63,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const equipPeint = peint.equipements
   // 50 pas / Renouvellement / aléas : GeoJSON sans minzoom — peints dès que la couche est active
   const aleaActif = aleaActifHook
-  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv && !aleaActif
+  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
+    && !aleaActif && !layers.transport && !layers.lignes_ht
   if (rien) return null
 
   return (
@@ -155,6 +164,36 @@ export function Legend({ inline = false }: { inline?: boolean }) {
           </p>
         </div>
       ))}
+
+      {/* ── M106 P4 : transport public — trait + pôles (la FORME dit la source), Papang ── */}
+      {layers.transport && (
+        <div data-legend-transport className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <p className="label-caps mb-2">Transport public</p>
+          <div className="flex flex-col gap-1 text-[11px] text-txt">
+            <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.transport }} />lignes (7 réseaux, GTFS officiels)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: tTheme.transport }} />pôle d’échange — station OSM (Sourcé)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full border-2" style={{ borderColor: tTheme.transport }} />pôle dérivé — {critereDerive} (Estimé)</span>
+            <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.transport, backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 3px, #0000 3px 5px)' }} />téléphérique Papang (en service)</span>
+          </div>
+          <p className="mt-1 text-[10px] text-txt-dim">
+            GTFS : AOM de La Réunion (Licence Ouverte) · pôles &amp; Papang : © les contributeurs
+            d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}
+          </p>
+        </div>
+      )}
+
+      {/* ── M106 P4 : lignes haute tension — une CONTRAINTE, tireté anthracite ── */}
+      {layers.lignes_ht && (
+        <div data-legend-ht className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <Tip block side="top" tip="Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI).">
+            <div className="flex items-center gap-2">
+              <span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} />
+              <span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span>
+            </div>
+          </Tip>
+          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN (Licence Ouverte){fmtMill(mill(htQ))}</p>
+        </div>
+      )}
 
       {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
       {layers.renouv && (
