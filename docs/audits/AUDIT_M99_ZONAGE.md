@@ -122,5 +122,53 @@ le canal d'ingestion de la commune, pas une sémantique de zone.
 `zone_fam` mesuré : U=306 630 · A=73 946 · N=36 306 · AU=10 537 (identique au mandat).
 
 ---
-**STOP — Phase 2 (normalisation à un seul endroit, zone_lib d'origine conservé) et
-Phase 3 (sélecteur par famille) attendent l'arbitrage paire par paire de Vic.**
+
+## Arbitrage rendu (Vic, 17/08/2026) et exécution
+
+**Décision : fusion des 32 groupes sans exception ; graphie d'affichage du filtre =
+MAJUSCULE réglementaire ; la fiche garde la graphie officielle de sa commune.**
+
+### Condition d'arbitrage n°2 — les 19 groupes fusionnés SANS verbatim de règlement
+
+Fusionnés sur la seule preuve structurelle (coexistence intra-commune nulle), **à revérifier
+si une extraction future de règlement les couvre** :
+
+`ad · aua · aub · auc · aud · auf · nsc · nt · uaa · uac · uat · uav · uba · uc1 · uca ·
+ud1 · udp · uea · uep`
+
+(Les 13 autres — `aue aus aut ua ub uc ud ue uem uf ur us ut` — ont au moins un verbatim,
+toujours en majuscules.)
+
+### Point 4 — périmètre du défaut, confirmé surface par surface
+
+| surface | comparateur | état AVANT M99 | preuve |
+|---|---|---|---|
+| Recherche `/filtre?zone_plu=` | `upper(zone_lib) = ANY(upper(entrée))` | DÉJÀ insensible — mais la normalisation vivait ad hoc DANS le filtre (interdit doctrine) | app.py:1050-1052 ; mesuré : Uc/UC/uc → 55 891 identiques |
+| Facettes familles (`zonagePlu`) | `zone_fam` | insensible par nature | app.py:951 |
+| Recherche IA (`nl_semantics`) | familles U/AU/A/N, regex `re.I` | insensible | nl_semantics.py:66-69 |
+| Copilote `compter_parcelles` | délègue à `filtre()` | insensible (hérite) | copilote_v2/outils.py:48-64 |
+| Carte | `zone_lib` en ÉTIQUETTE seule (text-field), aucun filtrage par zone | insensible par nature ; graphie officielle affichée = voulu | MapView.tsx:485-527 |
+| 4 documents / faisabilité | `resolve_zone` → `normalize_key` (lower) | insensible depuis toujours | faisabilite/plu_rules.py:81 |
+| au_statut / au_ouverture | `normalize_key` + jointures internes même graphie | insensible / cohérent | au_ouverture.py:88,153 |
+| **Changement PLU (simulplu)** | `cr.detail LIKE '%« zone »%'` sur le verbatim cascade | **SENSIBLE — seul comparateur servi trouvé** ; risque réel faible (la liste `/simulplu/zones` sert la graphie brute que le match retrouve) | moteurs.py:70 → corrigé ILIKE (M99) |
+| copilote/moteurs.py:235 | dict `.get(zone_lib)` sur les règles YAML | sensible en théorie, cohérent par construction (YAML suit la graphie GPU de SA commune) — et module SANS importeur (dormant) | mesure YAML/GPU + grep imports |
+
+**Nuance de prémisse, dite en clair** : le faux négatif de l'énoncé (« filtrer Uc cache les
+31 109 UC ») n'était **pas reproductible sur `/filtre`** — l'upper() ad hoc du filtre le
+couvrait déjà. Le défaut réel : la normalisation vivait au mauvais endroit (dans le filtre),
+le seul comparateur sensible était simulplu, et la saisie libre du front scindait l'offre en
+419 graphies sans compte ni liste.
+
+### Ce qui a été livré (Phases 2-3)
+
+- **Phase 2** : colonne `zone_filtre = upper(zone_lib)` écrite AU POINT DE LECTURE — le
+  builder `tiles.build_parcel_zone_plu` (natif) + migration idempotente
+  `models.ensure_zone_filtre` (backfill sans rebuild spatial, index). Le filtre lit la
+  colonne (app.py — plus d'upper() sur la colonne dans la requête). `zone_lib` d'origine
+  **jamais écrasé** — la fiche, la carte et les documents affichent la graphie officielle.
+  simulplu passe en ILIKE. 386 zones normalisées (419 graphies brutes).
+- **Phase 3** : endpoint `/zonage/zones` (familles triées par volume réel, comptes calculés,
+  portée île/communes) + sélecteur par famille dans le panneau Filtres (déroulante
+  recherchable par famille, cocher la famille = toute la famille, portée dynamique dite en
+  bandeau, zone à 0 dans la portée = absente de la liste — comportement explicite). La
+  saisie libre est retirée.
