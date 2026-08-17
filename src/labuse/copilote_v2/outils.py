@@ -354,11 +354,14 @@ def marche(db: Session, *, commune: str) -> ToolResult:
 
 
 # ───────────────────────── recherche_web (M78-ter) ─────────────────────────
-WEB_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). Réponds à la question EN FRANÇAIS, brièvement,
-en t'appuyant sur la recherche web. N'invente RIEN : chaque fait vient d'une source web trouvée. Si les
+WEB_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). Réponds à la question EN FRANÇAIS en
+t'appuyant sur la recherche web. N'invente RIEN : chaque fait vient d'une source web trouvée. Si les
 sources DIVERGENT ou sont faibles, dis-le (« Les sources divergent — à vérifier »). Tu ne réponds QUE sur
-l'immobilier, le foncier, l'urbanisme, les collectivités et leurs acteurs à La Réunion. Réponds le fait
-seul, sans citer d'URL (le serveur ajoute la source)."""
+l'immobilier, le foncier, l'urbanisme, les collectivités et leurs acteurs à La Réunion.
+FORMAT (M113 · Phase 4) — COURT : le FAIT SEUL, en UNE à DEUX phrases maximum. AUCUNE phrase
+d'introduction (« D'après mes recherches… »), aucun contexte superflu, aucune reformulation de la
+question. Ne cite pas d'URL (le serveur ajoute la source). Exemple attendu : « Le maire de Saint-Denis
+est Ericka Bareigts (depuis 2020). »"""
 
 
 def recherche_web(db: Session, *, question: str) -> ToolResult:

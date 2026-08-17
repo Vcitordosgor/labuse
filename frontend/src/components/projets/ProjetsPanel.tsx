@@ -6,6 +6,7 @@ import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
 import { EmptyState } from '../States'
 import { ProjetKanban } from './ProjetKanban'
+import { ParcoursProjet } from './ParcoursProjet'
 
 const TYPE_LABEL: Record<string, string> = {
   logements: 'Logements', etudiant: 'Logement étudiant', bureaux: 'Bureaux', autre: 'Projet',
@@ -168,8 +169,10 @@ function groupesDoublons(actifs: Projet[]): Projet[][] {
 /** Vue PROJETS (copilote-projet) — liste « Mes projets » OU, si un projet est ouvert, sa vue
  *  kanban unifiée (À trier / Retenues / Écartées). « Ouvrir » = la vue kanban ; le tri vit dedans. */
 export function ProjetsPanel() {
-  const { ouvrirEntretien, openProjet } = useApp()
+  const { ouvrirEntretien, openProjet, setOpenProjet } = useApp()
   const [showArchived, setShowArchived] = useState(false)
+  const [formOuvert, setFormOuvert] = useState(false)   // M113 P3.4 — parcours guidé, accès direct
+  const qc = useQueryClient()
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
 
   // un projet ouvert → sa vue unifiée (le tri Tinder se lance DE LÀ et y revient)
@@ -194,10 +197,25 @@ export function ProjetsPanel() {
               Chaque projet garde votre cadrage — ouvrez-le pour trier, retenir, écarter (rejouable, exportable).
             </p>
           </div>
-          <button data-projet-nouveau onClick={() => ouvrirEntretien()}
-            className="shrink-0 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110"
-            title="Décrire un nouveau projet — ouvre directement « Votre projet »">+ Décrire un projet</button>
+          <div className="flex shrink-0 items-center gap-2">
+            {/* M113 P3.4 — création GUIDÉE (parcours en étapes, même composant que le Copilote). */}
+            <button data-projet-nouveau onClick={() => setFormOuvert((v) => !v)}
+              className="rounded-lg bg-mint px-4 py-2 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110"
+              title="Créer un projet — parcours guidé, champ par champ">+ Nouveau projet</button>
+            <button data-projet-decrire onClick={() => ouvrirEntretien()}
+              className="rounded-lg border border-line px-4 py-2 text-xs font-medium text-txt-mut transition-colors duration-quick hover:text-txt-hi"
+              title="Décrire un projet au copilote (langage naturel)">Décrire au copilote</button>
+          </div>
         </div>
+
+        {/* M113 P3.4 — le parcours guidé, inline, accès direct SANS Copilote. Même composant. */}
+        {formOuvert && (
+          <div data-projet-form className="mt-6">
+            <ParcoursProjet
+              onVoir={(p) => { setFormOuvert(false); void qc.invalidateQueries({ queryKey: ['projets'] }); setOpenProjet(p) }}
+              onFermer={() => setFormOuvert(false)} />
+          </div>
+        )}
 
         {archives.length > 0 && (
           /* DA §16 — contrôle SEGMENTÉ (un choix exclusif, pas deux pastilles). */

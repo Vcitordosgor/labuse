@@ -1,9 +1,11 @@
 """M78 · Phase 2 — ENDPOINT HTTP du Copilote v2 (le câblage de la couche de réponse Phase 1).
 
 POST /api/copilote-v2/ask   → une demande client → réponse instruite (routeur + outils + formulation).
+GET  /api/copilote-v2/scenarios → les chips de contexte (M113) servis par le serveur, jamais en dur.
 GET  /api/copilote-v2/telemetrie → la feuille de route mesurée (§1e), triée par fréquence.
 
-Sonnet partout (doctrine). Chaque appel modèle est déjà journalisé dans `ia_log`. Les plafonds (1f)
+Routeur sur haiku (M113·Ph0), sélection + formulation sur sonnet. Chaque appel modèle est déjà
+journalisé dans `ia_log`. Les plafonds (1f)
 sont en config (`copilote_v2_*`) — l'enforcement par compte réutilise le mécanisme `protection.py`
 existant (à brancher au test de charge ; ici la couche métier est câblée et testée par la véracité).
 """
@@ -13,7 +15,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..copilote_v2.answering import answer
+from ..copilote_v2.answering import answer, scenarios_publies
 from ..copilote_v2 import historique, telemetrie
 from .tenant import current_compte
 
@@ -31,25 +33,13 @@ class AskIn(BaseModel):
     contexte: dict | None = None       # {idu} | {selection} des surfaces embarquées (Phase 5)
     conversation_id: int | None = None  # §2b — reprendre une conversation existante
     confirme: bool = False             # §M78-bis — le client a validé le récap → produire la mission
+    scenario: str | None = None        # M113 — chip de contexte choisi (force le scénario) ; None = texte libre
 
 
-def _executer_projet(act: dict, request: Request, db: Session, rep: dict) -> dict:
-    """§3b — CRÉATION RÉELLE via l'API projets existante (jamais d'écriture directe en base). Quand le
-    Copilote dit « c'est fait », la chose EST faite et visible dans Projets. Parcelle citée → attachée."""
-    from .projets import ProjetIn, projet_create
-    res = projet_create(ProjetIn(fiche=act.get("fiche") or {}, nom=act.get("nom")), request, db)
-    p = res["projet"]
-    if act.get("idu"):
-        try:
-            from .app import PipelineAddIn, pipeline_add
-            pipeline_add(PipelineAddIn(idu=act["idu"], projet_id=p["id"]), request, db)
-        except Exception:   # l'attache ne doit pas faire échouer la création
-            pass
-    deja = " (il existait déjà)" if res.get("existing") else ""
-    return {**rep, "text": f"Projet créé : {p['nom']}{deja} — le voir dans Projets.",
-            "intent": "PROJET", "projet_id": p["id"]}   # navigation vers Projets = surface embarquée (Phase 5)
-
-
+# M113 · Phase 3 — la CRÉATION DIRECTE de projet par le Copilote est RETIRÉE : le Copilote ne crée
+# plus jamais un projet sans passage par le formulaire guidé (ParcoursProjet, qui protège par
+# construction et appelle l'API projets avec le compte). L'ancien `_executer_projet` (action serveur
+# « c'est fait » depuis un brief) n'a plus lieu d'être. La VEILLE, elle, reste une action serveur.
 def _executer_veille(act: dict, request: Request, db: Session, rep: dict) -> dict:
     """§4 — pose RÉELLE d'une veille (trigger persisté). Plafond par compte (config). Confirmation
     explicite. L'ALERTE elle-même dépend du canal de notification (BACKLOG) — voir RAPPORT_M78."""
@@ -97,12 +87,11 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
             # chiffres repris d'un tour antérieur.
             faits_fil = registre_faits.du_fil(db, current_compte(request), body.conversation_id, ttl)
         rep = answer(db, body.message, history=history, contexte=body.contexte,
-                     confirme=body.confirme, prior_params=prior, faits_fil=faits_fil)
+                     confirme=body.confirme, prior_params=prior, faits_fil=faits_fil,
+                     scenario=body.scenario)
         payload_tour = rep.pop("_route", None)        # contexte du tour → persistance, jamais servi
         act = rep.pop("_action", None)                # écriture réelle demandée → API existante
-        if act and act.get("type") == "projet":
-            rep = _executer_projet(act, request, db, rep)
-        elif act and act.get("type") == "veille":
+        if act and act.get("type") == "veille":       # M113 — le projet passe désormais par le formulaire
             rep = _executer_veille(act, request, db, rep)
     except Exception:  # noqa: BLE001 — garde générale M102 : trace serveur, réponse honnête
         log.exception("copilote /ask — exception non prévue (message=%r)", (body.message or "")[:200])
@@ -123,6 +112,13 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     from .. import config as _cfg2
     ttl_servi = int(getattr(_cfg2.get_settings(), "copilote_v2_contexte_ttl_minutes", 10))
     return {**rep, "conversation_id": cid, "contexte_ttl_minutes": ttl_servi}
+
+
+@router.get("/scenarios")
+def scenarios() -> dict:
+    """M113 · Phase 2 — les chips de contexte, servis par le serveur (jamais en dur au front). Le
+    front les affiche dans l'ordre reçu ; le chip choisi est renvoyé tel quel dans /ask (`scenario`)."""
+    return {"scenarios": scenarios_publies()}
 
 
 @router.get("/veilles")

@@ -12,11 +12,11 @@ function docUrl(kind: string, idu: string): string {
   return `/${kind}/${idu}.pdf`   // dossier · dossier-banquier · argumentaire
 }
 
-export function ReponseInline({ v2, ton = 'mint', onCorriger }: {
+export function ReponseInline({ v2, ton = 'mint' }: {
   v2: CopiloteV2Reponse; ton?: 'mint' | 'violet'
-  // M102-B2 — récap systématique : quand fourni, la ligne « J'ai compris : … » s'affiche avec
-  // le bouton Corriger (ramène la demande dans la barre). Absent sur les surfaces embarquées.
-  onCorriger?: () => void
+  // M113 · Phase 4 — plus AUCUN bouton de confirmation ni de correction sur une réponse : une
+  // réponse qui ne convient pas se corrige en RELANÇANT. Le récap M109 (« J'ai compris : … ») reste,
+  // mais comme une PHRASE d'information, jamais un bouton.
 }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill,
     setView, setCommune, setFilters, openSurveillance } = useApp()
@@ -44,15 +44,7 @@ export function ReponseInline({ v2, ton = 'mint', onCorriger }: {
     <div data-reponse className={`rounded-2xl border ${bord} bg-cp-card px-5 py-4 text-left`}>
       {/* M102-B2 — récap systématique : une phrase, un bouton Corriger, jamais un formulaire. */}
       {v2.compris && (
-        <p data-compris className="mb-2 flex items-baseline gap-2 text-[11.5px] text-cp-muted">
-          <span className="min-w-0">{v2.compris}</span>
-          {onCorriger && (
-            <button data-compris-corriger onClick={onCorriger}
-              className="shrink-0 underline decoration-cp-muted/40 underline-offset-2 hover:text-cp-violet">
-              Corriger
-            </button>
-          )}
-        </p>
+        <p data-compris className="mb-2 text-[11.5px] text-cp-muted">{v2.compris}</p>
       )}
       <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-cp-txt">{v2.text}</p>
       {v2.porte && (

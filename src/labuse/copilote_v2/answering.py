@@ -3,7 +3,14 @@
 Pipeline : routeur (intention) → aiguillage. Pour une QUESTION : le modèle CHOISIT un outil + des
 paramètres typés (jamais du SQL), le serveur exécute, le modèle FORMULE depuis le résultat en citant
 l'outil. Les cinq issues de la doctrine (RAPPORT_M78) sont appliquées ici. Refus = TEMPLATES
-déterministes (le ton d'un refus se gagne : on ne l'improvise pas). Sonnet partout.
+déterministes (le ton d'un refus se gagne : on ne l'improvise pas). Routeur sur haiku (M113·Ph0),
+sélection + formulation sur sonnet.
+
+M113 · Phase 2 — les CHIPS de contexte : le client choisit d'abord CE qu'il veut faire, puis écrit.
+Le scénario est connu AVANT de lire le message → classify est court-circuité (web) ou réduit à
+l'extraction de paramètres, intent FORCÉ. L'anti-invention s'applique à l'IDENTIQUE sur la voie chip
+(extraction vérifiée, chiffres à l'oracle, critères non appliqués dits — M109). Le court-circuit du
+routage ne court-circuite JAMAIS le verrou. Sans chip : texte libre → routeur (comportement M112).
 
 Verrou anti-invention : tout nombre de la réponse formulée doit exister dans le résultat d'outil ;
 sinon la prose est rejetée et remplacée par un gabarit sourcé (jamais l'affirmation douteuse).
@@ -285,11 +292,73 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
     return prose
 
 
+# M113 · Phase 2 — REGISTRE des chips de contexte. Servi par le serveur (GET /scenarios), jamais en
+# dur au front. `intent` = l'intent FORCÉ quand le chip est choisi ; `placeholder` = la zone de texte
+# adaptée au scénario (étape 2). L'ordre est celui d'affichage. Les noms sont ceux arbitrés par Vic.
+SCENARIOS: dict[str, dict] = {
+    "donnees": {"libelle": "Interroger mes données", "intent": "QUESTION",
+                "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?"},
+    "parcelle": {"libelle": "Trouver une parcelle", "intent": "RECHERCHE",
+                 "placeholder": "Ex. 15 logements à Saint-Paul, ≥ 2000 m², détenues par des personnes morales…"},
+    "projet": {"libelle": "Créer un projet", "intent": "PROJET",
+               "placeholder": "Ex. résidence 12 lots à Bras-Panon (facultatif — le formulaire s'ouvre)"},
+    "web": {"libelle": "Rechercher sur le web", "intent": "QUESTION",
+            "placeholder": "Ex. qui est le maire de Saint-Denis ?"},
+    "surveillance": {"libelle": "Mettre sous surveillance", "intent": "VEILLE",
+                     "placeholder": "Ex. les nouveaux permis à Saint-Paul"},
+    "outil": {"libelle": "Ouvrir un outil", "intent": "OUTIL",
+              "placeholder": "Ex. le baromètre du foncier, écrire au propriétaire, la calculette foncière…"},
+}
+
+
+def scenarios_publies() -> list[dict]:
+    """Les chips à servir au front (clé + libellé + placeholder). Point unique."""
+    return [{"cle": k, "libelle": v["libelle"], "placeholder": v["placeholder"]} for k, v in SCENARIOS.items()]
+
+
+def _reply_web(db: Session, message: str) -> dict:
+    """Chip « Rechercher sur le web » — classify COURT-CIRCUITÉ (le scénario est connu) : la question
+    verbatim part au web. Gain de latence majeur (ni route, ni sélection). Marquage web NON négociable,
+    jamais Sourcé/Estimé. Gabarit COURT (Phase 4) piloté par WEB_SYSTEM."""
+    res = OUTILS["recherche_web"](db, question=message)
+    if not res.ok:
+        telemetrie.refus(db, "web_rien_trouve", message, "QUESTION")
+        return _reply("Je n'ai rien trouvé de fiable sur le web pour cette demande. Reformulez-la, "
+                      "ou posez-la sur les données LABUSE.", "QUESTION", refus="web_rien_trouve", scenario="web")
+    telemetrie.web(db, message, res.data.get("domaines", []))
+    d = res.data
+    marque = f"Source : web · {d['domaines'][0]} · consulté le {d['date']}"
+    return _reply(f"{d['reponse']}\n\n{marque}", "QUESTION", tool="recherche_web", web=True,
+                  sources=d["domaines"], scenario="web")
+
+
+def _projet_form(db: Session, message: str, params: dict | None = None) -> dict:
+    """M113 · Phase 3 — « Créer un projet » : ouvre le PARCOURS GUIDÉ, JAMAIS une création directe (ni
+    par le chip, ni par le texte libre classé PROJET). Le formulaire s'ouvre PRÉREMPLI de ce qui est
+    compris (« 15 logements à Saint-Paul ») — l'utilisateur vérifie, complète, valide. Le formulaire
+    protège par construction (commune du référentiel, création explicite). `params` fournis → pas de
+    second appel modèle (le routeur les a déjà extraits)."""
+    p = params
+    if p is None and message and message.strip():
+        r = classify(db, message)      # extraction de paramètres (haiku) — aucune création
+        p = None if r.degraded else (r.params or {})
+    prefill = {k: (p or {}).get(k) for k in ("commune", "programme_logements", "budget_eur")
+               if (p or {}).get(k) is not None}
+    return _reply("Ouvrons votre projet — quelques champs à confirmer avant de le créer.", "PROJET",
+                  projet_form={"prefill": prefill}, scenario="projet")
+
+
 def answer(db: Session, message: str, history: list[dict] | None = None,
            contexte: dict | None = None, confirme: bool = False,
-           prior_params: dict | None = None, faits_fil: list[dict] | None = None) -> dict:
+           prior_params: dict | None = None, faits_fil: list[dict] | None = None,
+           scenario: str | None = None) -> dict:
     """Point d'entrée unique du Copilote v2. Retourne un dict prêt à rendre. `confirme=True` : le client
     a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap.
+
+    M113 · Phase 2 — `scenario` (chip choisi) FORCE le scénario : `web` court-circuite classify (la
+    question verbatim au web) ; `projet` ouvre le parcours guidé (aucune création directe) ; les autres
+    passent par classify RÉDUIT à l'extraction de paramètres (haiku) avec l'intent FORCÉ. Le verrou
+    anti-invention, le récap M109 et les gardes restent IDENTIQUES à la voie texte libre.
 
     M102-B1 — `history`/`prior_params` viennent du FIL persisté (rechargés par l'endpoint depuis
     conversation_id) : le tour est interprété DANS son contexte (une réponse à une clarification
@@ -298,11 +367,24 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     l'endpoint) pour alimenter le contexte du tour SUIVANT. AUCUNE reprise de chiffre d'un tour
     antérieur ici : une clarification apporte des PARAMÈTRES, pas des faits — l'anti-invention
     reste vérifiée contre l'outil du tour courant (le registre de faits est le mandat B3)."""
+    # M113 — les deux scénarios qui NE passent pas par classify : le web (court-circuit total) et le
+    # projet (parcours guidé, jamais de création directe). Les autres forcent l'intent après classify.
+    if scenario == "web":
+        return _reply_web(db, message)
+    if scenario == "projet":
+        return _projet_form(db, message)
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
+    if scenario and scenario in SCENARIOS and not route.degraded:
+        # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
+        # clarification de PARAMÈTRE (commune manquante…) reste, produite en aval par l'outil/le récap.
+        route.intent = SCENARIOS[scenario]["intent"]
+        route.clarification = None
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
     rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
                              faits_fil=faits_fil, history=history)
+    if scenario:
+        rep.setdefault("scenario", scenario)   # M113 — le gabarit de réponse (Phase 4) suit le scénario
     # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
     # poppé par l'endpoint pour la persistance du fil, jamais servi au client.
     rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
@@ -450,10 +532,10 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return recap_verification(params)
 
     if intent == "PROJET":
-        # la fiche est préparée ici ; l'ÉCRITURE RÉELLE (API projets) est faite par l'endpoint /ask
-        # (il a le compte). Doctrine : quand le Copilote dit « c'est fait », la chose EST faite.
-        from .missions_lourdes import preparer_projet
-        return _reply("Création du projet…", intent, _action={"type": "projet", **preparer_projet(params, message)})
+        # M113 · Phase 3 — le Copilote ne CRÉE PLUS directement (fin du « c'est fait » sans garde-fou) :
+        # le parcours guidé s'ouvre, prérempli de ce que le routeur a compris. La création réelle passe
+        # par le formulaire (valeurs contrôlées, commune du référentiel, action explicite).
+        return _projet_form(db, message, params)
 
     if intent == "VEILLE":
         from .missions_lourdes import preparer_veille
