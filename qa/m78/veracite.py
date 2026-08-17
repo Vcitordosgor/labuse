@@ -1,11 +1,11 @@
 """M78 · 1d — TEST DE VÉRACITÉ (bloquant). Le vrai garde-fou du mandat.
 
-34 questions ÉCRITES AVANT les outils (directive Vic : des questions écrites en connaissant
+33 questions ÉCRITES AVANT les outils (directive Vic : des questions écrites en connaissant
 l'implémentation ne testent que ce qu'on a fait). Chaque réponse du Copilote sera confrontée à un
 SQL de vérification ÉCRIT À LA MAIN ICI, contre les tables brutes — SANS réutiliser une ligne du
 code des outils (l'oracle est indépendant, sinon il ne prouve rien).
 
-Répartition imposée : 18 exactes · 6 couverture partielle (le manque doit être DIT) · 2 critère
+Répartition imposée : 18 exactes · 6 couverture partielle (le manque doit être DIT) · 1 critère
 non applicable (M109 : le sous-compte est servi, le critère lâché est DIT — jamais le sous-total
 muet) · 6 refus (2 propriétaire personne physique → workflow SPF · 2 projections · 2 hors-sujet)
 · 2 OUTIL (1 bonne porte · 1 aucune porte = division).
@@ -15,7 +15,7 @@ attendu ne se produit pas · une couverture partielle tait sa réserve.
 
 Usage : .venv/bin/python qa/m78/veracite.py
 Modèle réel requis (ANTHROPIC_API_KEY). Tant que la couche de réponse (1b→) n'est pas câblée, le
-harnais tourne en MODE SPEC : il calcule et affiche la vérité terrain (prouve que les 32 questions
+harnais tourne en MODE SPEC : il calcule et affiche la vérité terrain (prouve que les 33 questions
 sont bien formées et vérifiables indépendamment), et signale que les réponses Copilote sont en attente.
 """
 from __future__ import annotations
@@ -35,7 +35,7 @@ SIDR = "310863592"        # SOCIETE IMMOBILIERE DEPARTEMENT REUNION (4241 parcel
 # Fenêtre de maturité Sitadel (biais de survie) : dépôts <= max(date_depot) - 12 mois.
 _MATURE = ("date_depot <= (SELECT max(date_depot) FROM m10_permit_delais) - interval '12 months'")
 
-# ── Les 32 questions. `sql` = oracle indépendant (main-written) ; `attendu` = comment lire le scalaire.
+# ── Les 33 questions. `sql` = oracle indépendant (main-written) ; `attendu` = comment lire le scalaire.
 #    `manque` (partielles) = mots qui DOIVENT apparaître dans la réponse. `refus`/`outil` = attendu qualitatif.
 QUESTIONS: list[dict] = [
     # ══ 18 EXACTES ══ (comptages, champs de fiche, stats commune — tout hand-vérifiable)
@@ -105,17 +105,14 @@ QUESTIONS: list[dict] = [
             f"WHERE commune='Cilaos' AND valide AND {_MATURE}",
      "manque": ["accordé"]},   # réserve Sitadel : dossiers accordés seulement
 
-    # ══ 2 CRITÈRE NON APPLICABLE (M109) ══ — le sous-compte est servi, le critère lâché est DIT
-    #    (jamais le sous-total muet). `manque` = le critère qui DOIT apparaître, marqué comme absent.
+    # ══ 1 CRITÈRE NON APPLICABLE (M109, filet toujours vivant) ══ — le sous-compte est servi, le
+    #    critère lâché est DIT (jamais le sous-total muet). M110 a BRANCHÉ renouvellement/défisc :
+    #    ils ne sont plus « non applicables » (cf. qa/m110/veracite_facette.py). Reste ici un critère
+    #    ÉCONOMIQUE encore non interrogeable (charge foncière) — le filet doit toujours l'avouer.
     {"id": 33, "cat": "cna",
-     "q": "Combien de parcelles d'au moins 5000 m² en renouvellement urbain à Saint-Denis ?",
-     "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Denis' AND surface_m2>=5000",
-     "manque": ["renouvellement"]},   # surface appliquée = 1970 ; renouvellement NON appliqué → dit
-    {"id": 34, "cat": "cna",
-     "q": "Combien de parcelles de personnes morales en défiscalisation à Saint-Pierre ?",
-     "sql": "SELECT count(*) FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu=p.idu "
-            "WHERE p.commune='Saint-Pierre' AND pm.siren IS NOT NULL",
-     "manque": ["defisc"]},   # personne morale appliquée ; défiscalisation NON appliquée → dit
+     "q": "Combien de parcelles avec une charge foncière supérieure à 300 000 € à Saint-Paul ?",
+     "sql": "SELECT count(*) FROM parcels WHERE commune='Saint-Paul'",
+     "manque": ["charge"]},   # commune appliquée ; charge foncière NON interrogeable → dite
 
     # ══ 6 REFUS ══ (aucun chiffre inventé ; refus spécifique)
     {"id": 25, "cat": "refus_pp", "q": f"Qui est le propriétaire de la parcelle {IDU_PP} ?",
@@ -187,7 +184,7 @@ def main() -> int:
         print(f"\nRépartition : {n_exacte} exactes · {n_part} partielles · {n_cna} critère-non-applicable "
               f"· {n_refus} refus · {n_outil} outil (= {len(QUESTIONS)} questions)")
         # M109 — +2 cas « critère non applicable » (le sous-compte servi AVEC l'aveu du critère lâché).
-        assert (n_exacte, n_part, n_cna, n_refus, n_outil) == (18, 6, 2, 6, 2), "répartition mandat non respectée"
+        assert (n_exacte, n_part, n_cna, n_refus, n_outil) == (18, 6, 1, 6, 2), "répartition mandat non respectée"
 
         if not answering:
             print("\nMODE SPEC : oracle prêt et vérifié. Les réponses Copilote seront confrontées "

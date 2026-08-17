@@ -35,10 +35,18 @@ REFUS_PROJECTION = ("LABUSE ne projette pas de valeur future. Je peux vous donne
 
 # ───────────────────────── Catalogue des outils QUESTION (pour la sélection) ─────────────────────────
 CATALOGUE = [
-    {"nom": "compter_parcelles", "desc": "Compter des parcelles selon commune, surface (min/max en m²), "
-     "tier (brûlante / chaude / opportunités), et/ou détention par une personne morale.",
+    {"nom": "compter_parcelles", "desc": "Compter des parcelles d'une commune selon des critères de la "
+     "facette : surface (min/max en m²), tier (brûlante/chaude/opportunités), détention par une "
+     "personne morale, événement rouge, signaux de vie (procédure judiciaire/BODACC, friche, cession, "
+     "permis actif/caduc, défiscalisation, terrain nu de société), adresse absente, copropriété, "
+     "renouvellement urbain, zonage PLU (U/AU/A/N).",
      "params": {"commune": "str", "surface_min": "int m²", "surface_max": "int m²",
-                "tier": "brulante|chaude|opportunites", "personne_morale": "bool"}},
+                "tier": "brulante|chaude|opportunites", "personne_morale": "bool",
+                "evenement": "bool (événement rouge)",
+                "signaux": "csv parmi procedure,friche,cession,permis_actif,permis_caduc,defisc,nu_pm,assemblage",
+                "adresse_absente": "bool (sans adresse)", "copro": "avec|sans (copropriété)",
+                "defisc": "bool (défiscalisation)", "renouvellement": "bool (renouvellement urbain)",
+                "zonage": "csv parmi U,AU,A,N (famille de zone PLU)"}},
     {"nom": "parcelles_par_entreprise", "desc": "Parcelles détenues par une personne morale (nom OU SIREN).",
      "params": {"q": "nom ou SIREN"}},
     {"nom": "fiche_parcelle", "desc": "Données d'UNE parcelle précise identifiée par son IDU (14 car.) : "
@@ -66,7 +74,13 @@ RÈGLES :
   déductibles (surfaces en m² ; « au moins X » → surface_min=X ; « au plus X » → surface_max=X ;
   « brûlantes » SEULES → tier "brulante" ; « opportunités » OU « brûlantes ET chaudes » → tier
   "opportunites" ; « personnes morales » → personne_morale=true ; un IDU = 14 caractères ; un
-  nom/SIREN de société → q).
+  nom/SIREN de société → q). MAPPING FACETTE (M110) : « en procédure judiciaire / redressement /
+  liquidation / BODACC » → signaux "procedure" ; « friche(s) » → signaux "friche" ; « cession de
+  fonds » → signaux "cession" ; « en défiscalisation / défisc » → defisc=true ; « renouvellement
+  urbain » → renouvellement=true ; « sans adresse / adresse absente » → adresse_absente=true ;
+  « copropriété(s) / en copro » → copro "avec" ; « hors copropriété » → copro "sans" ; « à événement
+  (rouge) » → evenement=true ; « en zone U / AU / A / N » → zonage (ex. "U"). Ces critères sont
+  APPLIQUÉS (ne les mets JAMAIS dans criteres_non_appliques).
 - « Combien de permis (accordés) à X » → outil delais_instruction (il porte AUSSI le nombre de permis).
 - REFUS (mets "tool":null et "refus" à la bonne valeur, "args":{{}}) :
   · "proprietaire_pp" : on demande l'identité/nom/adresse du PROPRIÉTAIRE d'une parcelle (personne
@@ -80,14 +94,13 @@ RÈGLES :
   couverte par un outil LABUSE (une procédure PLU, un règlement de zone, un prix/délai/marché, des
   parcelles… restent des outils internes, JAMAIS le web), ET (c) le sujet reste dans la barrière :
   foncier/immobilier/urbanisme/collectivités et acteurs de LA RÉUNION. Hors barrière → pas le web.
-- CRITÈRES NON APPLIQUÉS (M109, RÈGLE DURE) : `compter_parcelles` n'accepte QUE commune, surface
-  (min/max), tier (brûlante/chaude/opportunités) et personne_morale. Si la demande porte un AUTRE
-  critère de tri de parcelles — zonage/zone PLU, constructibilité, événement/procédure/BODACC,
-  friche, défiscalisation, copropriété, sans adresse, renouvellement urbain, budget/prix, densité…
-  — tu choisis quand même `compter_parcelles` avec les paramètres applicables, MAIS tu listes ce
-  ou ces critères dans "criteres_non_appliques" (en langage client, ex. "renouvellement urbain",
-  "zone U", "constructibilité"). NE JAMAIS faire passer un critère non applicable pour appliqué.
-  Rien à signaler → [].
+- CRITÈRES NON APPLIQUÉS (M109/M110, RÈGLE DURE) : les critères listés au MAPPING FACETTE ci-dessus
+  sont APPLICABLES — mappe-les. Restent NON applicables par `compter_parcelles` : la constructibilité
+  calibrée, le budget/prix (charge foncière, prix marché), la densité/capacité, le rang, la fiabilité
+  marché. Si la demande porte un tel critère, tu choisis quand même `compter_parcelles` avec les
+  paramètres applicables, MAIS tu listes ce ou ces critères dans "criteres_non_appliques" (langage
+  client, ex. "constructibilité", "budget maximum"). NE JAMAIS faire passer un critère non applicable
+  pour appliqué. Rien à signaler → [].
 SORTIE : {{"tool": <nom|null>, "args": {{...}}, "refus": <"proprietaire_pp"|"projection"|"aucun_outil"|null>,
   "criteres_non_appliques": [<critères de la demande que l'outil ne peut pas appliquer>]}}"""
 
@@ -202,7 +215,9 @@ def _select_tool(db: Session, message: str, params: dict) -> dict:
 # coercition des args du modèle vers les kwargs typés de chaque outil
 _ARG_SPEC = {
     "compter_parcelles": {"commune": str, "surface_min": int, "surface_max": int, "tier": str,
-                          "personne_morale": bool},
+                          "personne_morale": bool, "evenement": bool, "signaux": str,
+                          "adresse_absente": bool, "copro": str, "defisc": bool,
+                          "renouvellement": bool, "zonage": str},
     "parcelles_par_entreprise": {"q": str},
     "fiche_parcelle": {"idu": str},
     "stats_commune": {"commune": str},
@@ -288,8 +303,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     if (route.intent in ("QUESTION", "OUTIL", "PROJET", "VEILLE")
             and not rep.get("degraded") and rep.get("refus") != "hors_sujet"):
         compris = _compris_fr(route.intent, route.params or {})
-        # M109 — le récap dit ce qui est appliqué ET ce qui ne l'est pas : un critère lâché est
-        # nommé DANS le récap (pas seulement dans la réponse), jamais passé sous silence.
+        # M110 — le récap NOMME les critères de facette appliqués (au-delà des params du routeur :
+        # friche, procédure, copropriété, zone U…) — « comme aujourd'hui » pour commune/surface.
+        appliques = rep.get("criteres_appliques") or []
+        if compris and appliques:
+            compris = compris.rstrip(".") + " · " + " · ".join(appliques) + "."
+        # M109 — le récap dit AUSSI ce qui n'est PAS appliqué : un critère lâché est nommé DANS le
+        # récap (pas seulement dans la réponse), jamais passé sous silence.
         cna = rep.get("criteres_non_appliques") or []
         if compris and cna:
             compris = compris.rstrip(".") + " — critère non appliqué : " + ", ".join(cna) + "."
@@ -336,6 +356,14 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
     if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION"):
         return _reply(route.clarification, intent, clarification=True)
 
+    # M110 — CONCEPTS-OUTILS du registre reconnus quel que soit l'intent deviné (« parcelles
+    # fantômes », « bailleurs sociaux ») : le Copilote route vers l'OUTIL (porte cliquable, mécanique
+    # M102) au lieu d'une recherche vague ou d'un « je ne comprends pas ». Les deux outils EXISTENT.
+    concept = _match_concept(message)
+    if concept and intent in ("RECHERCHE", "OUTIL", "QUESTION"):
+        module, label = concept
+        return _reply(f"Je peux ouvrir l'outil {label}.", "OUTIL", porte=module, prefill=None)
+
     if intent == "HORS_SUJET":
         return _reply(HORS_SUJET, intent, refus="hors_sujet")
 
@@ -369,6 +397,10 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         # M109 — les critères de la demande que l'outil ne peut pas appliquer voyagent avec le
         # résultat (le sélecteur les a nommés) : le formuler et le récap DOIVENT les dire.
         res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
+        # M110 — ambiguïté d'entité : le Copilote DEMANDE (clarification, champ de réponse M107),
+        # il ne tranche pas au hasard entre deux sociétés plausibles.
+        if not res.ok and (res.refus or "").startswith("_ambigu:"):
+            return _reply(res.refus.split(":", 1)[1], intent, clarification=True)
         if not res.ok:
             return _sans_outil(db, message, params, intent, motif=res.refus)
         text = _formuler(db, message, res, faits_fil)
@@ -377,6 +409,7 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         from . import registre_faits
         return _reply(text, intent, refus=None, tool=tool, sources=[res.source],
                       partiel=res.partiel, criteres_non_appliques=res.criteres_non_appliques,
+                      criteres_appliques=(res.data or {}).get("criteres_labels") or [],
                       _faits_tour=registre_faits.extraire_faits(res))
 
     if intent == "OUTIL":
@@ -441,12 +474,34 @@ _OUTIL_MAP = [
 ]
 _SANS_OUTIL_KW = ("divis", "decoup", "lotir", "detacher un lot")
 
+# M110 — CONCEPTS-OUTILS souvent formulés en RECHERCHE/QUESTION mais qui SONT un outil du registre.
+# Le routeur les envoyait en recherche vague (« je ne comprends pas ») ; ici ils deviennent une
+# porte cliquable vers l'outil qui existe. (module registre, libellé client.)
+_CONCEPT_MAP = [
+    (("parcelle fantome", "parcelles fantomes", "parcelles fantome", "parcelle fantome",
+      "bien fantome", "biens fantomes"), ("fantome", "Parcelles fantômes")),
+    # NB : PAS « logements sociaux » nu (= le taux SRU d'une commune → stats_commune, pas l'outil
+    # bailleur). Le concept-outil vise le PATRIMOINE des bailleurs, pas la métrique SRU.
+    (("bailleur social", "bailleurs sociaux", "parcelles des bailleurs", "parc social bailleur",
+      "patrimoine des bailleurs", "parcelles de bailleur"), ("bailleur", "Bailleurs sociaux")),
+]
+
 from .outils import _fold_py  # accent-fold (réutilisé)
 
 
 def _match_outil(message: str):
     m = _fold_py(message.lower())
     for kws, cible in _OUTIL_MAP:
+        if any(k in m for k in kws):
+            return cible
+    return None
+
+
+def _match_concept(message: str):
+    """(module, libellé) si la demande désigne un concept-outil du registre (fantôme, bailleur),
+    sinon None. Reconnaissance par mots-clés foldés — jamais une devinette."""
+    m = _fold_py(message.lower())
+    for kws, cible in _CONCEPT_MAP:
         if any(k in m for k in kws):
             return cible
     return None

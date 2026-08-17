@@ -176,6 +176,22 @@ def territoire_fiscal_cmd() -> None:
         typer.echo(f"✓ territoire fiscal (ZFANG/FRR) : {load_territoire_fiscal(s)}")
 
 
+@app.command("entites-acronymes")
+def entites_acronymes_cmd() -> None:
+    """M110 — (re)charge le référentiel des acronymes de personnes morales (SIDR, SHLMR…) depuis
+    le seed versionné data/entites/acronymes_moraux.csv. Le Copilote l'auto-sème à la 1re demande ;
+    cette commande force le rechargement (SIREN vérifiés en base)."""
+    from sqlalchemy import text as _text
+
+    from .copilote_v2.outils import _ensure_acronymes
+    with session_scope() as s:
+        s.execute(_text("DELETE FROM entite_acronyme"))   # force le rechargement depuis le CSV
+        s.commit()
+        _ensure_acronymes(s)
+        n = s.execute(_text("SELECT count(*) FROM entite_acronyme")).scalar()
+    typer.echo(f"✓ Référentiel acronymes : {n} entrées (SIDR, SHLMR, SAFER, SODIAC, SEMADER…).")
+
+
 @app.command("backfill-sources")
 def backfill_sources_cmd() -> None:
     """M-H — seed le catalogue (crée les sources manquantes) puis rattache les couches
