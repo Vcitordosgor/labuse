@@ -153,3 +153,55 @@ lue par `marche_service` — aucun chemin parallèle. Candidats naturels au vu d
 **STOP B.** Vic tranche : (1) la distinction servie (nu/bâti déjà là ; neuf = VEFA seul,
 « hors VEFA » jamais étiqueté « ancien ») ; (2) le sort des 995 « Vente terrain à bâtir »
 exclues des médianes ; (3) le grain (commune vs secteur) et le profil porteur.
+
+---
+
+## Arbitrages rendus (Vic, 17/08/2026) et exécution (A2 · B2 · C)
+
+### A2 — appliqué
+
+- **Filtre** : deux entrées « Terrain nu » / « Terrain bâti » (FiltreLabuse.tsx), partition
+  EXACTE sur un critère unique (emprise bâtie, seuil 5 % existant — app.py etat_sol) :
+  nu = pas d'emprise ≥ 5 % connue, bâti = emprise ≥ 5 %. Clés legacy
+  (bati_marginal/sature/revele) pliées sur « bati » côté front (filters.ts) ET côté API —
+  jamais un no-op silencieux. Les tiers internes ont quitté l'interface de filtrage ; la
+  fiabilité (désaccord BD TOPO/CoSIA) reste dite en fiche par le motif.
+- **Fiche, bloc Réhabilitation** : la PORTE réelle est servie par `compute_mode_b`
+  (`_porte_mode_b`, faisabilite/bilan.py — point unique lu par la fiche ET les 4 documents
+  via rehab_bloc). Les formulations appliquées, calées mot à mot sur les règles :
+  ratio > 40 % → « Le bâti existant occupe N % du terrain… » ; SDP consommée → « La surface
+  constructible autorisée par le PLU est déjà consommée… » ; 15-40 % récent/année inconnue
+  non divisible → « Le terrain est bâti (N % d'emprise) d'un bâti récent ou d'année
+  inconnue, et n'est pas divisible… » ; révélé → « L'image aérienne 2025 montre un bâtiment
+  (~N m²) que les bases cartographiques n'ont pas encore enregistré… ». Cache absent = pas
+  de phrase inventée. Les caches (preuve brute) ne sont pas réécrits.
+
+### B2 — appliqué
+
+- **« Vente terrain à bâtir » dans la médiane terrain** (dvf_marche.py) : condition 1
+  vérifiée AVANT application — écart par commune ≤ **+11 %** (Sainte-Marie ; médiane des
+  écarts ~2 %, tableau complet en historique de mesure), aucun > 20 % → pas de signalement
+  bloquant. Les 34/995 VTB portant du bâti n'entrent **nulle part**. Condition 2 : le
+  filtre `'Vente'` strict excluait aussi VEFA (2 686 — reste exclue du bâti générique, le
+  neuf a son profil dédié), Échange (233), Adjudication (190), Expropriation (32) — hors
+  marché de gré à gré, exclusion maintenue, rien d'autre intégré. Médianes rejouées :
+  2 359 lignes / 850 secteurs / 40 383 ventes.
+- **Profil `neuf_vefa` DÉDIÉ** (config/dvf_profils.yaml + marche_service.DVF_NEUF_VEFA +
+  ingestion/dvf_marche.neuf_vefa_commune) : grain commune, fenêtre 3 ans, n≥8 (seuil lu de
+  la config), grandeur nommée « médiane €/m² bâti des ventes en l'état futur d'achèvement
+  (VEFA — le neuf que l'acte déclare) », réserve de méthode jointe. Sous le seuil :
+  « Échantillon insuffisant (N ventes VEFA sur 3 ans, seuil 8) » servi À LA PLACE du
+  chiffre. Servi : fiche > tiroir Marché (payload dvf_parcelle.neuf_vefa). Le mot
+  « ancien » n'apparaît nulle part.
+
+### C — vérification
+
+- Partition : nu **205 814** + bâti **225 849** = **431 663** = parc entier (disjoints par
+  construction, somme exacte mesurée) ; legacy `bati_sature` → 225 849 (plié).
+- Recette : porte servie sur une saturée 15-40 (« Le terrain est bâti (16 % d'emprise)… »,
+  97401000AD0573) et une révélée (« ~89 m²… », 97410000BX0251) ; 3 prix Saint-Denis
+  (terrain 350 €/m² n=5 · maison 1 423 n=12 · appart 2 156 n=10 · neuf VEFA 5 850 n=115) ;
+  Cilaos rural : VEFA 0 vente → « échantillon insuffisant » avec la grandeur.
+- Grep : aucun slug interne rendu (la seule occurrence « saturé/révélé » du panneau est un
+  commentaire de code) ; golden 0 FAIL ; tsc 0 ; build OK ; suite complète (résultat au
+  commit).
