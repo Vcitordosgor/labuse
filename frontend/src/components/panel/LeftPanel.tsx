@@ -110,12 +110,19 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // rattachement calibré à la parcelle ; couvrent aussi l'espace non parcellaire (voirie, domaine public).
   { key: 'zonage', label: 'Zones du PLU officiel (brut)' },
   { key: 'ppr', label: 'PPR multirisque' },
+  // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
+  // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
+  { key: 'alea_inondation', label: 'Aléa inondation' },
+  { key: 'alea_mvt', label: 'Aléa mouvement de terrain' },
   { key: 'equipements', label: 'Équipements' },
   { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
   { key: 'anru', label: 'ANRU (NPNRU)' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
+  // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
+  { key: 'transport', label: 'Transport public' },
+  { key: 'lignes_ht', label: 'Lignes haute tension' },
   // M62-P1 (g) : entrée « Renouvellement » (renouv) retirée du panneau (cf. note plus haut).
 ]
 
@@ -126,7 +133,9 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
-  { famille: 'Risques et protections', keys: ['ppr', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
+  // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
+  { famille: 'Accès et réseaux', keys: ['transport', 'lignes_ht'] },
 ]
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 

@@ -1,0 +1,11 @@
+# M106 P4 — les seuils du transport public (arbitrage Vic 17/08/2026).
+# Le seuil de dérivation des pôles d'échange vit ICI, jamais en dur (le critère est
+# dit à l'écran : « arrêt desservi par ≥ N lignes », statut Estimé car dérivé).
+pole_echange:
+  # nombre de LIGNES DISTINCTES desservant un même nom d'arrêt pour en faire un pôle dérivé.
+  # CALIBRÉ SUR MESURE (17/08/2026) : le taux de confirmation par les stations OSM (source
+  # indépendante) passe de ~10 % (seuils 4-11) à 53 % au seuil 12, et le volume dérivé (30)
+  # rejoint l'ordre de grandeur OSM (42). Sous 12, on fabrique des pôles que rien ne confirme.
+  seuil_lignes: 12
+  # rayon (mètres) de la mesure de concordance OSM ↔ dérivé GTFS — une contradiction se DIT
+  rayon_concordance_m: 300

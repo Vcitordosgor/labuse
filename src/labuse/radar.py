@@ -80,6 +80,12 @@ SONDES: dict[str, dict] = {
         "kind": "json", "mode": "auto", "cadence": "cron hebdo (mar. 05:20)",
         "url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant",
         "champ": ("dataUpdatedAt",)},
+    # M106 P4 — GTFS transport : sonde JSON sur l'API data.gouv du jeu Citalis (canari des 7 ;
+    # les URLs de zips static.data.gouv sont horodatées et périment — jamais sondées).
+    "Transport public — GTFS%": {
+        "kind": "json", "mode": "manuel", "cadence": "republication par AOM (constatée ~mensuelle)",
+        "url": "https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/",
+        "champ": ("last_update",)},
     "SITADEL%": {
         "kind": "json", "mode": "auto", "cadence": "cron quotidien (04:15)",
         "url": ("https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/"

@@ -436,6 +436,66 @@ SOURCES: list[dict] = [
                          "(426 en 1 500-10 000 m² éch. 2028, 24 > 10 000 m² éch. 2026), 451 sous le seuil. "
                          "amenity=parking (polygones) → parkings_aper, surface = ST_Area OSM. Complétude "
                          "déclarative OSM : volumétrie = plancher, pas un recensement (« potentiellement concerné »)."),
+    # M106 P3 — dispositifs fiscaux TERRITORIAUX servis comme attributs de commune (patron M95,
+    # seed data/fiscal/territoire_fiscal.csv, service territoire_fiscal.attributs_commune).
+    # INTERDIT ABSOLU du mandat : aucun chiffre fiscal servi (ni taux, ni plafond, ni calcul) —
+    # LABUSE sert le fait territorial sourcé/daté, le fiscaliste tranche. Le radar sonde les
+    # pages Légifrance (repli HEAD automatique sur endpoint_url).
+    # M106 P4 — transport public + téléphérique + lignes HT (arbitrage Vic 17/08/2026).
+    dict(name="Transport public — GTFS (PAN, 7 réseaux)", category="acces",
+         provider="AOM Réunion (Région, CINOR, TCO, CIVIS, CIREST, CASUD) via transport.data.gouv.fr",
+         access_type="GTFS (zip)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://transport.data.gouv.fr/datasets/region/04?format=GTFS",
+         # sonde radar : l'API data.gouv du jeu Citalis (le plus vivant) = CANARI des 7 —
+         # les URLs static.data.gouv sont horodatées et périment, on ne les sonde jamais.
+         endpoint_url="https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/",
+         legal_notes="Licence Ouverte v2.0 (les 7 jeux). Attribution : « Source : Point d'Accès "
+                     "National transport.data.gouv.fr — AOM de La Réunion ».",
+         technical_notes="Car Jaune, Citalis, Papang, Kar'Ouest, Alternéo, Carsud, Estival — "
+                         "300 lignes, ~9 900 quais (recouvrements inter-réseaux non dédoublonnés). "
+                         "kinds transport_arret/transport_ligne + pole_echange subtype='gtfs' "
+                         "(DÉRIVÉ : ≥ seuil lignes, config/transport.yaml, statut Estimé). "
+                         "Résolution des URLs à CHAQUE ingestion via la liste API du PAN "
+                         "(transport_reseaux._pan_urls). Papang sans shapes.txt (tracé = OSM)."),
+    dict(name="OSM — transport (pôles d'échange & téléphérique)", category="acces",
+         provider="OpenStreetMap", access_type="Overpass/GeoJSON", status=S.CONNECTE,
+         reliability_level=R.A_CONFIRMER,
+         documentation_url="https://wiki.openstreetmap.org/wiki/Key:public_transport",
+         endpoint_url="https://overpass-api.de/api/interpreter",
+         legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap — données "
+                     "disponibles sous ODbL (openstreetmap.org/copyright) ». Usage assumé par "
+                     "arbitrage Vic M106 (cohérent parkings APER/aménités) ; portée share-alike "
+                     "à faire trancher avant le premier client (note hors mandat).",
+         technical_notes="pole_echange subtype='osm' (stations + gares routières, Sourcé — "
+                         "concordance avec le dérivé GTFS mesurée et DITE : confirme/osm_seul/"
+                         "gtfs_seul) ; telepherique = le Papang EN SERVICE seul (gondola + "
+                         "stations) — la ligne 2 « Zèl La Montagne » (2029) est EXCLUE : aucun "
+                         "tracé publié, l'OSM proposed est une anticipation de contributeur."),
+    dict(name="ZFANG — zone franche d'activité nouvelle génération (Légifrance)", category="fiscal",
+         provider="Légifrance / DGOM", access_type="seed CSV (texte réglementaire)", status=S.CONNECTE,
+         reliability_level=R.VERIFIE,
+         documentation_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+         endpoint_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+         legal_notes="Texte réglementaire (Légifrance, réutilisation libre). Attribution : "
+                     "« Source : décret n° 2026-421 du 29 mai 2026 (Légifrance) ».",
+         technical_notes="Attribut de COMMUNE (jamais parcellaire) : régime standard (plein droit DOM, "
+                         "art. 44 quaterdecies CGI) ou RENFORCÉ pour 6 communes de l'Est (Bras-Panon, "
+                         "La Plaine-des-Palmistes, Saint-André, Saint-Benoît, Sainte-Rose, Salazie — "
+                         "décret n° 2026-421 du 29/05/2026, critère taux de pauvreté EPCI). Dispositif "
+                         "modifié deux fois en 2026 (février puis mai) → radar sur la page du décret."),
+    dict(name="FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)", category="fiscal",
+         provider="Légifrance / Région Réunion", access_type="seed CSV (texte réglementaire)",
+         status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+         endpoint_url="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+         legal_notes="Texte réglementaire (Légifrance) ; référence infra-communale : jeu « ZRR 2017 » "
+                     "du portail open data Région Réunion (Licence Ouverte).",
+         technical_notes="Attribut de COMMUNE en 3 états MESURÉS (jeu Région ZRR 2017, ZSAR décret "
+                         "n° 78-690 les Hauts, FRR au 01/07/2024 art. 44 quindecies A) : EN TOTALITÉ "
+                         "(Cilaos, Salazie, La Plaine-des-Palmistes) / EN PARTIE (20 communes — "
+                         "délimitation infra-communale, on ne conclut JAMAIS à la parcelle) / HORS "
+                         "(Le Port). À CONFIRMER : liste FRR 2024+ par commune entière (annexe de "
+                         "l'arrêté du 19/06/2024, section 974 non consultable en ligne)."),
 ]
 
 

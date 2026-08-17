@@ -70,6 +70,13 @@ export const LAYER_INFO: Record<string, string> = {
     'Les 431 663 parcelles cadastrales de l’île (source DGFiP), colorées selon l’avis de LABUSE : les plus prometteuses ressortent. C’est la couche de travail principale — présente sur les 24 communes.',
   ppr:
     'Les zones exposées à un risque naturel connu (inondation, mouvement de terrain, littoral…) inscrites dans un Plan de Prévention des Risques. Source : la DEAL (via Géorisques). Couverture : les 24 communes de l’île. Utile pour écarter tôt un terrain contraint.',
+  // M106 P1 : les aléas DEAL séparés. La séparation inondation / mouvement de terrain n'existe
+  // pas dans le zonage réglementaire PPR (un document multirisque ne dit pas quel aléa commande
+  // chaque zone) — elle vit dans la cartographie d'aléas, qui la porte nativement.
+  alea_inondation:
+    'Les secteurs exposés à l’aléa inondation, avec leur niveau (faible, moyen, fort), d’après la cartographie des aléas de la DEAL Réunion. À distinguer du zonage PPR : ici c’est l’exposition au phénomène, pas la règle d’urbanisme. Couverture : les 24 communes.',
+  alea_mvt:
+    'Les secteurs exposés à l’aléa mouvement de terrain (glissements, chutes de blocs…), avec leur niveau (faible, moyen, fort), d’après la cartographie des aléas de la DEAL Réunion. À distinguer du zonage PPR : ici c’est l’exposition au phénomène, pas la règle d’urbanisme. Couverture : 23 communes (Saint-Denis non couverte par ce flux).',
   parc:
     'Le périmètre du Parc national de La Réunion (source : l’établissement public du Parc) : à l’intérieur, l’urbanisation est très restreinte voire interdite. Il couvre surtout les Hauts et le centre de l’île — il est donc normalement absent du littoral urbanisé.',
   limites:
@@ -82,6 +89,11 @@ export const LAYER_INFO: Record<string, string> = {
     'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée (source : cadastre). Elle ne longe que le rivage — normalement absente des communes sans littoral (les Hauts).',
   equipements:
     'Les équipements du quotidien à proximité, relevés dans OpenStreetMap (les 24 communes) : mairie, écoles primaires, collège / lycée, crèche, santé (pharmacie, hôpital, clinique, médecin), commerces — c’est-à-dire supermarché, supérette, boulangerie et centre commercial (pas toutes les boutiques) — marché forain, transport (arrêts de bus), police / gendarmerie et sport (terrains, gymnases, stades, piscines). Sur la fiche d’une parcelle, LABUSE indique la distance jusqu’à chaque équipement le plus proche.',
+  // M106 P4 : transport public et lignes HT (arbitrage Vic).
+  transport:
+    'Les tracés des lignes de transport public (les 7 réseaux de l’île : Car Jaune, Citalis, Kar’Ouest, Alternéo, Carsud, Estival — source : GTFS officiels des autorités de transport, Licence Ouverte), les pôles d’échange (gares routières relevées dans OpenStreetMap, complétées par les arrêts desservis par de nombreuses lignes — critère affiché dans la légende), et le téléphérique Papang en service à Saint-Denis (tracé OpenStreetMap). La ligne 2 « Zèl La Montagne », prévue pour 2029, n’a pas de tracé publié : elle n’est pas affichée.',
+  lignes_ht:
+    'Les lignes électriques haute tension de l’île (source : BD TOPO IGN, tension indiquée — lignes aériennes uniquement). C’est une CONTRAINTE potentielle pour un projet (servitudes, reculs) : la servitude exacte n’est pas cartographiée en donnée ouverte et doit être vérifiée auprès du gestionnaire de réseau (EDF SEI). Sur la fiche d’une parcelle, LABUSE indique la distance à la ligne la plus proche.',
   renouv:
     'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire). Segment calculé par LABUSE (68 445 parcelles sur l’île) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
   // M55-G point 8 / suite point 1 : l'avis LABUSE (palette des tiers) en COUCHE explicite —

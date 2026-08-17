@@ -42,6 +42,21 @@ export type MapTokens = {
   contourChaude: string
   /** liseré épais des brûlantes (couche parcels-brulantes) */
   lisereBrulantes: string
+  /** M106 — aléas DEAL séparés (le zonage PPR réglementaire est multirisque INSÉCABLE ;
+   *  la typologie inondation/mouvement de terrain vit dans kind=georisque_alea).
+   *  Réglementaires superposables → contour ET trame dans LES DEUX thèmes (doctrine M105-B).
+   *  L'aplat est gradué par le niveau d'aléa servi (faible/moyen/fort). */
+  aleaInondation: string
+  aleaMvt: string
+  aleaOpacity: { faible: number; moyen: number; fort: number }
+  aleaContourW: number
+  aleaTrameOpacity: number
+  /** M106 P4 — transport public (tracés GTFS + pôles + Papang) : rose, teinte neuve de la
+   *  palette (mauve = IA, braise = risques) ; trait seul, critère contour ≥ 3:1. */
+  transport: string
+  /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
+   *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
+  ht: string
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -63,6 +78,13 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     contourBrulante: TIER_V2_META.brulante.color,    // le liseré sombre suit la palette des tiers
     contourChaude: TIER_V2_META.chaude.color,
     lisereBrulantes: '#FF6B35',
+    aleaInondation: '#45B4C6',   // pétrole clair — 7,21 sur fond sombre
+    aleaMvt: '#D9A05B',          // ocre clair — 7,66 sur fond sombre
+    aleaOpacity: { faible: 0.14, moyen: 0.22, fort: 0.34 },
+    aleaContourW: 0.8,
+    aleaTrameOpacity: 0.4,
+    transport: '#E87BB0',   // 6,62 sur fond sombre
+    ht: '#B9C4C0',          // 9,83 sur fond sombre
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -82,6 +104,13 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     contourBrulante: '#C23A28', // 4,77 ✓ (braise assombrie)
     contourChaude: '#A8720F',   // 3,69 ✓ (ambre assombri)
     lisereBrulantes: '#C1440E', // 4,57 ✓ (orange assombri)
+    aleaInondation: '#0F6B7A',  // pétrole profond — contour 5,51 ✓ ; aplats 1,29/1,51/1,83 ✓
+    aleaMvt: '#935F0C',         // ocre profond — contour 4,83 ✓ ; aplats 1,26/1,45/1,74 ✓
+    aleaOpacity: { faible: 0.18, moyen: 0.28, fort: 0.40 },
+    aleaContourW: 1,
+    aleaTrameOpacity: 0.5,
+    transport: '#B01E63',   // 5,84 terre / 3,76 masse ✓
+    ht: '#3F4A47',          // 8,22 terre / 5,29 masse ✓
   },
 }
 

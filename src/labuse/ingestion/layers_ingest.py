@@ -62,6 +62,14 @@ KIND_SOURCE = {
     "iris_insee": "Contours IRIS (IGN/INSEE)",
     "zonage_assainissement": "GPU — zonages d'assainissement",
     "cinquante_pas": "50 pas géométriques — limite haute (DEAL)",
+    # M106 P4 — couches écrites par transport_reseaux.py (arbitrage Vic 17/08/2026).
+    "transport_arret": "Transport public — GTFS (PAN, 7 réseaux)",
+    "transport_ligne": "Transport public — GTFS (PAN, 7 réseaux)",
+    # pole_echange a DEUX sources dites (subtype 'osm'/'gtfs') — le registre pointe la source
+    # majoritaire ; le data_source_id réel est posé par subtype à l'ingestion.
+    "pole_echange": "OSM — transport (pôles d'échange & téléphérique)",
+    "telepherique": "OSM — transport (pôles d'échange & téléphérique)",
+    "ligne_ht": "BD TOPO IGN",
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).

@@ -2573,7 +2573,83 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # déclassés bâti (rien persisté, aucun tier touché, TOUJOURS Estimé). Hors
         # population → disponible=False, le front n'affiche rien.
         "mode_b": _mode_b_block(db, idu, run_label),
+        # M106 P3 — dispositifs fiscaux TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de
+        # COMMUNE (patron M95), point de service unique territoire_fiscal.attributs_commune.
+        # Des ÉTATS sourcés/datés + lien vers le texte — JAMAIS un chiffre fiscal (interdit
+        # absolu du mandat) ; None si table absente (l'absence ne casse pas la fiche).
+        "territoire_fiscal": _territoire_fiscal_block(db, idu),
+        # M106 P4 — PROXIMITÉS (arbitrage : distance, jamais un booléen) : arrêt, pôle
+        # d'échange (statut + concordance OSM↔GTFS dite), téléphérique, ligne HT (contrainte).
+        "proximites": _proximites_block(db, idu),
     }
+
+
+def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
+    from ..territoire_fiscal import attributs_commune
+    return attributs_commune(db, idu[:5])
+
+
+def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
+    """L'objet `kind` le plus proche de la parcelle (KNN geom_2975) + distance en mètres.
+    M106 : PROXIMITÉ, jamais appartenance — on sert la distance, le lecteur juge."""
+    row = db.execute(text(
+        "SELECT sl.name, sl.subtype, sl.attrs, round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS d "
+        "FROM spatial_layers sl, parcels p WHERE p.idu = :idu AND sl.kind = :k "
+        "AND sl.geom_2975 IS NOT NULL AND (CAST(:st AS text) IS NULL OR sl.subtype = :st) "
+        "ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1"),
+        {"idu": idu, "k": kind, "st": subtype}).mappings().first()
+    if not row:
+        return None
+    return {"nom": row["name"], "subtype": row["subtype"],
+            "attrs": row["attrs"] or {}, "distance_m": row["d"]}
+
+
+def _proximites_block(db: Session, idu: str) -> dict | None:
+    """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
+    Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas."""
+    try:
+        arret = _plus_proche(db, idu, "transport_arret")
+        pole = _plus_proche(db, idu, "pole_echange")
+        tele = _plus_proche(db, idu, "telepherique", "station")
+        ht = _plus_proche(db, idu, "ligne_ht")
+    except Exception:
+        db.rollback()
+        return None
+    if not any((arret, pole, tele, ht)):
+        return None
+    out: dict = {}
+    if arret:
+        out["arret"] = {"nom": arret["nom"], "reseau": arret["attrs"].get("reseau"),
+                        "distance_m": arret["distance_m"]}
+    if pole:
+        a = pole["attrs"]
+        est_osm = pole["subtype"] == "osm"
+        out["pole"] = {
+            "nom": pole["nom"], "distance_m": pole["distance_m"],
+            # le STATUT dit la nature : Sourcé (station OSM) ou Estimé (dérivé GTFS, critère dit)
+            "statut": "Sourcé" if est_osm else "Estimé",
+            "source": "station OSM" if est_osm else a.get("critere", "dérivé GTFS"),
+            # une contradiction entre les deux sources se DIT, jamais tranchée en silence
+            "concordance": a.get("concordance"),
+            "nb_lignes": a.get("nb_lignes"),
+        }
+    if tele:
+        out["telepherique"] = {"station": tele["nom"], "distance_m": tele["distance_m"],
+                               "licence": "OSM (ODbL)"}
+    if ht:
+        t = ht["attrs"].get("tension") or "tension non renseignée"
+        out["ligne_ht"] = {
+            "distance_m": ht["distance_m"], "tension": t,
+            # CONTRAINTE, pas un avantage — et la servitude I4 n'est pas cartographiée : on le dit.
+            "libelle": (f"Ligne haute tension ({t}) "
+                        + ("au contact de la parcelle" if ht["distance_m"] <= 5
+                           else f"à ~{ht['distance_m']} m")
+                        + " — contrainte potentielle (servitudes, reculs). La servitude I4 n'est "
+                        "pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire "
+                        "de réseau (EDF SEI)."),
+            "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
+        }
+    return out
 
 
 def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:
@@ -3007,7 +3083,14 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
 #: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas"}
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas",
+                    # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
+                    # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
+                    "georisque_alea",
+                    # M106 P4 : transport public (tracés + pôles + Papang) et lignes HT (BD TOPO).
+                    # transport_arret (9 941 points) n'est PAS servi en couche carte — la couche
+                    # équipements (aménités OSM) montre déjà les arrêts ; il sert la PROXIMITÉ fiche.
+                    "transport_ligne", "pole_echange", "telepherique", "ligne_ht"}
 
 
 @app.get("/map/layers.geojson")
@@ -3019,15 +3102,26 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
     rows = db.execute(text(
-        """SELECT sl.id, sl.subtype, sl.name,
+        """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
+                  sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
+                  sl.attrs->>'tension' AS tension,
                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
            LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
+    # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
+    # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
-              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"]}}
+              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
+                             "niveau": r["niveau"], "critere": r["critere"],
+                             "concordance": r["concordance"], "tension": r["tension"]}}
              for r in rows if r["g"]]
-    return {"type": "FeatureCollection", "features": feats}
+    # M106 : millésime SERVI, jamais en dur (doctrine M86) — date d'intégration du flux
+    # (max created_at du kind) ; la légende la dit comme telle.
+    mill = db.execute(text(
+        "SELECT max(created_at)::date FROM spatial_layers WHERE kind = :k"), {"k": kind}).scalar()
+    return {"type": "FeatureCollection", "features": feats,
+            "millesime_integration": mill.isoformat() if mill else None}
 
 
 @app.get("/map/bati")
