@@ -19,11 +19,12 @@ import { Tip } from '../Tip'
 
 // M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
 // post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
+// M101 A2 (arbitrage Vic) : DEUX entrées — les tiers internes (saturé/révélé) sortent du
+// filtre (information de fiabilité, dite en fiche via le motif). Partition exacte sur
+// l'emprise bâtie (seuil 5 %, backend app.py etat_sol) : nu ∪ bâti = parc filtrable.
 const ETAT_SOL = [
-  { k: 'nu', l: 'Nu' },
-  { k: 'bati_marginal', l: 'Bâti marginal' },
-  { k: 'bati_sature', l: 'Bâti saturé' },
-  { k: 'bati_revele', l: 'Bâti révélé' },
+  { k: 'nu', l: 'Terrain nu' },
+  { k: 'bati', l: 'Terrain bâti' },
 ]
 // M55-J point 1 : égalité de filtres pour le FILET d'invalidation — toute différence (y compris
 // un simple réordonnancement) invalide la carte, ce qui est le comportement conservateur voulu

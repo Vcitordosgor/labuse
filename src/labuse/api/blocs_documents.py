@@ -88,11 +88,16 @@ def rehab_bloc(mode_b: dict | None) -> dict:
                     "lignes": [("phrase", "Réhabilitation sans objet : cette parcelle n'est pas déclassée "
                                           "pour cause de bâti — la thèse de réhabilitation ne s'y applique pas.")]}
         return {"cls": "rehab", "titre": "Réhabilitation", "statut": "absent", "etat": "Absent",
-                "lignes": [("phrase", motif or "Potentiel de réhabilitation non évaluable (donnée manquante).")]}
+                "lignes": ([("phrase", str(mb["porte"]))] if mb.get("porte") else [])   # M101 A2
+                + [("phrase", motif or "Potentiel de réhabilitation non évaluable (donnée manquante).")]}
+    # M101 A2 — la PORTE du mode B (pourquoi cette parcelle est « bâtie » : phrase lisible de
+    # compute_mode_b, calée sur la règle mesurée, jamais du jargon) ouvre le bloc quand elle existe.
+    porte_ligne: list[tuple[str, str]] = [("phrase", str(mb["porte"]))] if mb.get("porte") else []
     if mb.get("trop_petit"):                              # bâti trop petit → DIT (M59-P1 Q4)
         return {"cls": "rehab", "titre": "Réhabilitation", "statut": "trop_petit", "etat": "Estimé",
-                "lignes": [("phrase", str(mb.get("motif", "Bâti trop petit pour une thèse de réhabilitation.")))]}
-    lignes: list[tuple[str, str]] = []
+                "lignes": porte_ligne
+                + [("phrase", str(mb.get("motif", "Bâti trop petit pour une thèse de réhabilitation.")))]}
+    lignes: list[tuple[str, str]] = list(porte_ligne)
     if mb.get("negatif"):
         lignes.append(("phrase_forte", str(mb.get("message_negatif", ""))))
     elif mb.get("achat_max_libelle"):
