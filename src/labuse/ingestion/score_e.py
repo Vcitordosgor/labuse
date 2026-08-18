@@ -95,7 +95,7 @@ SELECT p.idu,
             END AS niveau_prix
 FROM parcel_p_score_v2 s
 JOIN parcels p ON p.idu = s.parcelle_id
-LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
 LEFT JOIN med m ON m.secteur = left(p.idu, 10)
 LEFT JOIN neuf_sec ns ON ns.cle = left(p.idu, 10)
 LEFT JOIN neuf_com nc ON nc.cle = left(p.idu, 5)

@@ -50,25 +50,59 @@ def _emprise_revelee(session: Session, parcel_id: int) -> float | None:
     return float(rev) if rev is not None else None
 
 
+def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, int | None]:
+    """M125 — cause STRUCTURÉE d'un résiduel non disponible + la valeur de SDP à écrire
+    (arbitrage Vic, Option 1 : le 0 n'est pas un doute, c'est la réponse du moteur ;
+    seul `hors_plu` est réellement inconnaissable → NULL). MÊMES résolveurs que le moteur
+    (parcel_context/resolve_zone) — attribution de cause, jamais une 2e formule."""
+    if f is not None:
+        code = f.cause or "capacite_nulle"
+        zone = (f.zone or "").strip()
+        # `zone_transition` est émis à l'UNIQUE branche « constructible_neuf=False » du moteur
+        # (engine.fini, zone A/N/AU fermée) — le nom historique est trompeur : on écrit la
+        # famille lisible « zone non constructible » + le code de zone réel (nuance fiche/M127).
+        if code == "zone_transition":
+            return (f"zone_non_constructible:{zone}" if zone else "zone_non_constructible"), 0
+        if code == "habitat_interdit":
+            return (f"habitat_interdit:{zone}" if zone else "habitat_interdit"), 0
+        return code, 0          # terrain_exigu / redhibitoire / hauteur_indispo / capacite_nulle
+    # parcel_faisabilite → None : distinguer « aucune zone » (hors PLU) d'une zone sans règle.
+    from .db import parcel_context
+    from .plu_rules import resolve_zone
+    ctx = parcel_context(session, parcel_id)
+    if ctx is None or not ctx.zone:
+        return "hors_plu", None                      # réellement inconnaissable — dit, jamais muet
+    if resolve_zone(ctx.zone, ctx.commune) is None:
+        return f"zone_non_resolue:{ctx.zone}", 0     # C2 (A/N hors YAML calibré) — sans droits neufs
+    return "indetermine", None                       # inattendu : on ne devine pas, NULL + cause
+
+
 def compute_residuel(session: Session, parcel_id: int,
                      faisa: tuple | None = None) -> dict:
     """Bloc « potentiel résiduel » d'une parcelle. `faisa` = (ctx, Faisabilite) déjà calculé
     (réutilisé par la fiche pour ne pas relancer le moteur). `disponible=False` quand la
-    parcelle n'est pas constructible ou que le bâti n'est pas mesurable."""
+    parcelle n'est pas constructible ou que le bâti n'est pas mesurable — M125 : chaque
+    indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu)."""
     if not bati_mod.layer_available(session):
-        return {"disponible": False, "raison": "Couche bâtiments (BD TOPO) non ingérée."}
+        return {"disponible": False, "raison": "Couche bâtiments (BD TOPO) non ingérée.",
+                "cause": "bati_non_ingere", "sdp_ecrite": None}
     res = faisa or parcel_faisabilite(session, parcel_id)
     if res is None:
-        return {"disponible": False, "raison": "Zone hors PLU outillé — capacité non calculable."}
+        cause, sdp = _cause_indisponible(session, parcel_id)
+        return {"disponible": False, "raison": "Zone hors PLU outillé — capacité non calculable.",
+                "cause": cause, "sdp_ecrite": sdp}
     ctx, f = res
     if not f.constructible:
-        return {"disponible": False, "raison": "Parcelle non constructible — pas de potentiel résiduel."}
+        cause, sdp = _cause_indisponible(session, parcel_id, f=f)
+        return {"disponible": False, "raison": "Parcelle non constructible — pas de potentiel résiduel.",
+                "cause": cause, "sdp_ecrite": sdp}
 
     fr = f.fourchette
     emprise_max = float(fr.get("emprise_constructible_m2") or 0.0)
     sdp_max = float(fr.get("surface_plancher_m2") or 0.0)
     if emprise_max <= 0 or sdp_max <= 0:
-        return {"disponible": False, "raison": "Capacité max nulle — résiduel non défini."}
+        return {"disponible": False, "raison": "Capacité max nulle — résiduel non défini.",
+                "cause": "capacite_nulle", "sdp_ecrite": 0}
 
     hyp = Hypotheses.charger(getattr(ctx, "commune", None))   # M-N P1-13 : hypothèses de la commune
     st = bati_mod.stats_batch(session, [parcel_id]).get(parcel_id, {})
@@ -115,32 +149,57 @@ def compute_residuel(session: Session, parcel_id: int,
     }
 
 
-def compute_residuel_batch(session: Session, parcel_ids: list[int]) -> int:
-    """Calcule et CACHE le résiduel (table parcel_residuel) pour alimenter le filtre carte.
-    Ne stocke que les parcelles où le résiduel est défini (constructibles)."""
-    n = 0
+_UPSERT = text(
+    """INSERT INTO parcel_residuel
+         (parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
+          capacite_estimee, cause, computed_at)
+       VALUES (:p, :t, :pp, :sd, :sr, :ce, :cz, now())
+       ON CONFLICT (parcel_id) DO UPDATE SET
+         taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
+         sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
+         capacite_estimee=EXCLUDED.capacite_estimee, cause=EXCLUDED.cause, computed_at=now()""")
+
+
+def compute_residuel_batch(session: Session, parcel_ids: list[int],
+                           log=None) -> dict:
+    """Calcule et CACHE le résiduel (table parcel_residuel) pour alimenter le filtre carte
+    ET le dataset M127.
+
+    M125 (arbitrage Vic, Option 1) — le batch écrit TOUTES les parcelles, la vérité de chacune :
+      · disponible → valeurs pleines, cause NULL (les lecteurs VIVANTS ne lisent que celles-ci) ;
+      · non disponible → cause structurée + sdp 0 (vraie valeur : zone/enveloppe sans droits)
+        ou NULL (hors_plu — réellement inconnaissable) ; taux/pct/sous_densite = NULL (sans objet
+        hors constructible — le doute ne classe pas) ;
+      · exception → COMPTÉE et LOGGÉE, jamais avalée (une exception muette = un manquant sans
+        cause, même famille de défaut). Elle n'écrit rien (on ne devine pas une cause).
+    Renvoie {"calcules", "causes": {cause: n}, "erreurs", "erreurs_detail": [(pid, msg)…]}."""
+    res = {"calcules": 0, "causes": {}, "erreurs": 0, "erreurs_detail": []}
     for pid in parcel_ids:
         try:
             r = compute_residuel(session, pid)
-        except Exception:  # noqa: BLE001 - une parcelle ne casse pas le lot
+        except Exception as exc:  # noqa: BLE001 - une parcelle ne casse pas le lot, mais SE DIT
+            res["erreurs"] += 1
+            if len(res["erreurs_detail"]) < 20:
+                res["erreurs_detail"].append((pid, f"{type(exc).__name__}: {exc}"))
+            if log:
+                log(f"  ⚠ résiduel parcel_id={pid} : {type(exc).__name__}: {exc}")
             continue
-        if not r.get("disponible"):
-            session.execute(text("DELETE FROM parcel_residuel WHERE parcel_id = :p"), {"p": pid})
+        if r.get("disponible"):
+            session.execute(_UPSERT, {
+                "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
+                "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
+                "ce": r["capacite_estimee"], "cz": None})
+            res["calcules"] += 1
             continue
-        session.execute(text(
-            """INSERT INTO parcel_residuel
-                 (parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
-                  capacite_estimee, computed_at)
-               VALUES (:p, :t, :pp, :sd, :sr, :ce, now())
-               ON CONFLICT (parcel_id) DO UPDATE SET
-                 taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
-                 sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
-                 capacite_estimee=EXCLUDED.capacite_estimee, computed_at=now()"""),
-            {"p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
-             "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"], "ce": r["capacite_estimee"]})
-        n += 1
+        cause = r.get("cause") or "indetermine"
+        if cause == "bati_non_ingere":     # panne d'environnement, pas un état de parcelle
+            res["causes"][cause] = res["causes"].get(cause, 0) + 1
+            continue
+        session.execute(_UPSERT, {"p": pid, "t": None, "pp": None, "sd": None,
+                                  "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause})
+        res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
-    return n
+    return res
 
 
 def _libelle(taux: float, sdp_res: float, niveaux_reels: bool) -> str:

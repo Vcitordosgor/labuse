@@ -1201,12 +1201,22 @@ def compute_residuel_cmd(
     if not ids:
         typer.echo("Aucune parcelle ingérée.")
         raise typer.Exit(1)
+    # M125 — le batch écrit TOUTES les parcelles (calculées + causes structurées) et DIT ses erreurs.
     total = 0
+    causes: dict = {}
+    erreurs = 0
     for k in range(0, len(ids), chunk):
         with session_scope() as s:
-            total += compute_residuel_batch(s, ids[k:k + chunk])
+            r = compute_residuel_batch(s, ids[k:k + chunk], log=typer.echo)
+        total += r["calcules"]
+        erreurs += r["erreurs"]
+        for cz, n in r["causes"].items():
+            causes[cz] = causes.get(cz, 0) + n
         typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
-    typer.echo(f"✓ Potentiel résiduel caché pour {total} parcelles constructibles ({commune}).")
+    typer.echo(f"✓ Potentiel résiduel : {total} calculées · {sum(causes.values())} avec cause · "
+               f"{erreurs} erreur(s) ({commune})")
+    for cz, n in sorted(causes.items(), key=lambda kv: -kv[1]):
+        typer.echo(f"    cause {cz}: {n}")
 
 
 @app.command("compute-constructibilite")

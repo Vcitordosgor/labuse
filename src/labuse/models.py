@@ -1461,6 +1461,13 @@ def ensure_residuel_cache(engine) -> None:
             " computed_at timestamptz NOT NULL DEFAULT now())"))
         # Migration des bases existantes (table déjà créée sans la colonne).
         c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS capacite_estimee boolean"))
+        # M125 — la CAUSE du non-calculé (arbitrage Vic, Option 1) : NULL = ligne CALCULÉE
+        # (constructible, valeurs pleines) ; sinon le code structuré du refus
+        # (zone_non_constructible:<zone> / terrain_exigu / redhibitoire / zone_non_resolue:<lib> /
+        # hors_plu / capacite_nulle / habitat_interdit:<zone> / hauteur_indispo). Les LECTEURS
+        # VIVANTS (filtres carte, fiche, flash) ne lisent QUE cause IS NULL — comportement servi
+        # inchangé ; les lignes à cause n'existent que pour le dataset M127 et le run M128.
+        c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS cause text"))
 
 
 def ensure_spatial_layers_sub(engine, force: bool = False) -> int:
