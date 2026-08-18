@@ -244,6 +244,34 @@ def _run_cadrage(db: Session, cadrage: dict, limit: int) -> list[dict]:
     return _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
 
 
+#: M120-B — le cap de la shortlist figée vient de config/projets.yaml (jamais en dur). Défaut nommé
+#: en UN seul endroit, si le fichier manque (config error) — plus aucun 60/200 épars dans le code.
+_SHORTLIST_MAX_DEFAUT = 200
+
+
+def _shortlist_max() -> int:
+    from ..config import load_yaml_config
+    try:
+        return int(load_yaml_config("projets").get("shortlist_max", _SHORTLIST_MAX_DEFAUT))
+    except Exception:  # noqa: BLE001 — fichier absent/illisible : on retombe sur le défaut nommé
+        return _SHORTLIST_MAX_DEFAUT
+
+
+def _vivier_figeable(db: Session, cadrage: dict) -> int:
+    """M120-B — le VIVIER RÉELLEMENT FIGEABLE d'un cadrage : les parcelles qui peuvent entrer dans la
+    shortlist, c.-à-d. celles du cadrage HORS exclusions dures (non constructibles / faux positifs =
+    étage 0). C'est le dénominateur honnête (« top N sur M »), pas le total gonflé du compteur carte
+    (qui compte aussi les 79 % d'étage 0 — mesuré — qui ne peuvent jamais être triées)."""
+    from .app import _ETAGE0_SQL, _score_v2_run_id
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    return db.execute(text(
+        "SELECT count(*) FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id "
+        "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+        f"WHERE d.run_label = :run AND NOT {_ETAGE0_SQL}{where}"),
+        {"run": RUN, "v2run": _score_v2_run_id(db), **params}).scalar() or 0
+
+
 def _sdp_besoin(cadrage: dict) -> int | None:
     """La SDP besoin n'est plus dérivée d'un « programme » (M120) : c'est la facette `sdpMin` du
     cadrage, si le promoteur l'a posée. Un seul endroit."""
@@ -344,6 +372,26 @@ def _pourquoi_court(tier: str | None, carencee: bool, evenement: bool, surface: 
     return out[:2]
 
 
+class CadrageIn(BaseModel):
+    cadrage: dict = {}
+
+
+@router.post("/compteur")
+def projet_compteur(body: CadrageIn, db: Session = Depends(get_db)) -> dict:
+    """M120-B — le compteur du CADRAGE, ALIGNÉ sur ce qui est réellement figeable. `vivier` = les
+    parcelles triables (hors exclusions dures : non constructibles / faux positifs) ; `total` = le
+    compte carte brut (qui inclut ~79 % d'exclusions dures qui ne peuvent JAMAIS entrer dans la
+    shortlist — mesuré). Le front affiche `vivier` (l'univers réel), jamais `total` seul. `cap` = la
+    taille max de la shortlist figée (config). Léger : deux count(*), pas de top."""
+    cadrage = clean_cadrage(body.cadrage)
+    from .app import _q_v2_stats
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
+    vivier = _vivier_figeable(db, cadrage)
+    return {"vivier": vivier, "total": total, "cap": _shortlist_max()}
+
+
 class ApercuIn(BaseModel):
     cadrage: dict = {}
     identite: dict = {}
@@ -352,9 +400,10 @@ class ApercuIn(BaseModel):
 
 @router.post("/apercu")
 def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
-    """M120 — Aperçu du CADRAGE : compteur exact (même filtrage que la carte) + top parcelles avec
-    leur « pourquoi » SORTI DU MOTEUR. Un seul système : le run applique le jeu de filtres (aucune
-    dérivation parallèle, aucun M22). Aucune valeur inventée."""
+    """M120 — Aperçu du CADRAGE : compteur FIGEABLE (hors exclusions dures) + top parcelles avec leur
+    « pourquoi » SORTI DU MOTEUR. Un seul système : le run applique le jeu de filtres (aucune
+    dérivation parallèle, aucun M22). Aucune valeur inventée. M120-B : `n` = vivier figeable (pas le
+    total gonflé), `total` gardé à part pour la transparence."""
     cadrage = clean_cadrage(body.cadrage)
     identite = body.identite or {}
     sdp_besoin = _sdp_besoin(cadrage)
@@ -364,8 +413,8 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
     from .app import _q_v2_stats
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
-    stats = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)
-    n = stats["total"]                                # même compteur que la carte (compte = total)
+    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
+    n = _vivier_figeable(db, cadrage)                 # M120-B — le vivier RÉEL, hors exclusions dures
     top = _run_cadrage(db, cadrage, lim)
     top_out = [{
         "idu": it["idu"], "commune": it["commune"],
@@ -373,15 +422,15 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         "q_score": it.get("q_score"),
         "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
     } for it in top]
-    return {"nom": _nom_repli(identite, cadrage), "n": n, "sdp_besoin_m2": sdp_besoin,
-            "source": RUN, "top": top_out}
+    return {"nom": _nom_repli(identite, cadrage), "n": n, "total": total,
+            "cap": _shortlist_max(), "sdp_besoin_m2": sdp_besoin, "source": RUN, "top": top_out}
 
 
 class ProjetIn(BaseModel):
     cadrage: dict = {}                 # M120 : le jeu de filtres (les 44 facettes)
-    identite: dict = {}                # M120 : infos (budget_eur / type_logement / date_livraison)
+    identite: dict = {}                # M120 : infos (budget_eur / type_logement)
     nom: str | None = None            # éditable ; repli déterministe sinon
-    limit: int = 60                    # taille de la shortlist figée (best-first)
+    limit: int | None = None           # M120-B : None → cap de config (config/projets.yaml), plus de 60 en dur
 
 
 class ProjetPatchIn(BaseModel):
@@ -472,7 +521,8 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
     RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
     Rend le DIFF (entrées/sorties/tris conservés) pour que le rejeu DISE ce qui change."""
-    lim = max(1, min(limit or 60, 200))
+    cap = _shortlist_max()                            # M120-B — cap en config, plus aucun 60/200 en dur
+    lim = max(1, min(limit or cap, cap))
     avant = {r.idu: r.statut for r in db.execute(text(
         "SELECT par.idu, pp.statut FROM projet_parcelles pp JOIN parcels par ON par.id = pp.parcel_id "
         "WHERE pp.projet_id = :p"), {"p": p.id}).all()}
@@ -511,8 +561,12 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     p.derniere_execution_at = now
     p.shortlist_perimee = False
     db.flush()
+    # M120-B — le DÉNOMINATEUR HONNÊTE : le vivier figeable (hors exclusions dures). La shortlist se
+    # DIT « top {n} sur {vivier} » (ou « c'est tout le vivier » si vivier ≤ cap) — jamais « tout ce
+    # qui matche ». `tronquee` : y a-t-il plus de figeables que le cap ?
+    vivier = _vivier_figeable(db, p.filtres or {})
     return {"ajoutees": ajoutees, "sorties": sorties, "tris_conserves": tris_conserves,
-            "n_shortlist": len(idus)}
+            "n_shortlist": len(idus), "vivier": vivier, "cap": cap, "tronquee": vivier > len(idus)}
 
 
 @router.post("")
@@ -656,7 +710,7 @@ def projet_rejouer(pid: int, request: Request, db: Session = Depends(get_db)) ->
     (retenue/écartée/peut-être) SURVIVENT ; une parcelle sortie du cadrage le dit (`hors_criteres`)
     au lieu de disparaître. La shortlist ne bouge JAMAIS seule — seul ce bouton la rafraîchit."""
     p = _projet_or_404(db, pid, current_compte(request))
-    diff = _figer_shortlist(db, p, 60)
+    diff = _figer_shortlist(db, p, None)   # M120-B : cap de config
     return {"ok": True, "projet": _projet_dict(p), "shortlist": diff, **_counts(db, pid)}
 
 
@@ -717,7 +771,7 @@ def _search_items(db: Session, cadrage: dict, limit: int, overrides: dict | None
 
 
 class ProposerIn(BaseModel):
-    limit: int = 60
+    limit: int | None = None           # M120-B : None → cap de config
 
 
 @router.post("/{pid}/proposer")

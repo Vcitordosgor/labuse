@@ -200,7 +200,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
         )}
         {dernierDiff && (
           <p data-kanban-diff className="mt-1.5 text-[10.5px] text-txt-dim">
-            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.</p>
+            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.
+            {dernierDiff.tronquee && <> Vous triez les <b>{dernierDiff.n_shortlist}</b> meilleures sur <b>{dernierDiff.vivier.toLocaleString('fr-FR')}</b> du vivier.</>}</p>
         )}
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>

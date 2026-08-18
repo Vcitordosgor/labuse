@@ -98,7 +98,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
         {d && <p data-cree-shortlist style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
-          Shortlist figée : <b style={{ color: A.c }}>{d.n_shortlist}</b> parcelle{d.n_shortlist > 1 ? 's' : ''} à trier.
+          {/* M120-B — la shortlist se DIT : top-N du vivier, ou tout le vivier s'il tient sous le cap. */}
+          {d.tronquee
+            ? <>Shortlist figée : les <b style={{ color: A.c }}>{d.n_shortlist}</b> meilleures sur <b style={{ color: '#ECF5EF' }}>{d.vivier.toLocaleString('fr-FR')}</b> parcelles du vivier, classées par probabilité de mutation.</>
+            : <>Shortlist figée : <b style={{ color: A.c }}>{d.n_shortlist}</b> parcelle{d.n_shortlist > 1 ? 's' : ''} — c’est tout le vivier figeable.</>}
         </p>}
         <div style={{ display: 'flex', gap: 12 }}>
           <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}

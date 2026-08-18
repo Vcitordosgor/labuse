@@ -1,12 +1,12 @@
 // M120 — LE CADRAGE PROJET : les facettes de la carte (terrain + signaux) RÉUTILISÉES telles
 // quelles — mêmes contrôles (ChipGroup / ZoneSelector / SignalChip / NumField), jamais une copie —
-// branchées sur le binding fourni (le cadrage projet local, via FiltreProvider). Le compteur vivant
-// est le MÊME endpoint que la carte (/filtre) : jamais un calcul client, jamais un faux positif.
+// branchées sur le binding fourni (le cadrage projet local, via FiltreProvider).
+// M120-B — le compteur vivant compte le VIVIER FIGEABLE (hors exclusions dures), pas le total carte
+// gonflé : le client voit l'univers réel qu'il triera, et qu'il figera un TOP-N (jamais l'ensemble).
 import { useEffect, useState } from 'react'
 
-import { getFiltreCount } from '../../lib/api'
+import { getCadrageCompteur, type CadrageCompteur } from '../../lib/api'
 import { countActiveFilters } from '../../lib/filters'
-import { CLIENT } from '../../lib/strings'
 import {
   ChipGroup, ETAT_SOL, NumField, SignalChip, SIGNAUX_KEYS, TitreSection, ZoneSelector,
 } from './FiltreLabuse'
@@ -17,14 +17,14 @@ const nf = new Intl.NumberFormat('fr-FR')
 export function FiltreFacettes() {
   const { filters } = useFiltre()
   const nActifs = countActiveFilters(filters)
-  const [live, setLive] = useState<number | null>(null)
+  const [live, setLive] = useState<CadrageCompteur | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   useEffect(() => {
     const ctrl = new AbortController()
     setLiveLoading(true)
     const tmr = window.setTimeout(() => {
-      getFiltreCount(filters, ctrl.signal)
-        .then((r) => { setLive(r.compte); setLiveLoading(false) })
+      getCadrageCompteur(filters, ctrl.signal)
+        .then((r) => { setLive(r); setLiveLoading(false) })
         .catch(() => { /* abort/réseau : on garde le dernier nombre */ })
     }, 400)
     return () => { window.clearTimeout(tmr); ctrl.abort() }
@@ -71,13 +71,20 @@ export function FiltreFacettes() {
         </div>
       </div>
 
-      {/* COMPTEUR VIVANT — même endpoint /filtre que la carte (SQL exact, jamais estimé) */}
+      {/* COMPTEUR VIVANT — le VIVIER FIGEABLE (SQL exact) : ce que le client triera réellement, et
+          qu'il figera un TOP-N. Jamais le total gonflé par les exclusions dures. */}
       {nActifs > 0 && (
-        <p data-cadrage-compteur aria-live="polite"
-          className={`text-[11.5px] tabular-nums transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'} ${live === 0 ? 'text-st-creuser' : 'text-txt-mut'}`}>
-          {live == null ? '…' : live === 0 ? CLIENT.compteur.zero
-            : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à ce cadrage</>}
-        </p>
+        <div data-cadrage-compteur aria-live="polite"
+          className={`text-[11.5px] transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
+          {live == null ? <span className="text-txt-mut">…</span>
+            : live.vivier === 0 ? <span className="text-st-creuser">Aucune parcelle figeable — élargissez le cadrage.</span>
+            : live.vivier <= live.cap ? (
+              <span className="text-txt-mut"><b className="tabular-nums text-txt">{nf.format(live.vivier)}</b> parcelle{live.vivier > 1 ? 's' : ''} figeable{live.vivier > 1 ? 's' : ''} — toutes seront à trier.</span>
+            ) : (
+              <span className="text-txt-mut"><b className="tabular-nums text-txt">{nf.format(live.vivier)}</b> parcelles figeables · la shortlist figera les <b className="text-txt">{live.cap}</b> meilleures (par probabilité de mutation) — <span className="text-st-creuser">resserrez le cadrage pour cibler</span>.</span>
+            )}
+          <p className="mt-0.5 text-[10px] text-txt-dim">Figeable = hors terrains non constructibles et faux positifs (exclusions automatiques du moteur).</p>
+        </div>
       )}
     </div>
   )

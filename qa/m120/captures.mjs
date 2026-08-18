@@ -23,18 +23,18 @@ await page.waitForSelector('[data-parcours-projet]');
 
 // 01 · identité — nom
 await page.fill('[data-projet-nom]', 'Recette Saint-Leu');
-await shot('01-identite-nom', 'étape 1/7 · nom');
+await shot('01-identite-nom', 'étape 1/6 · nom');
 await next();
 
 // 02 · identité — périmètre (communes précises)
 await page.click('[data-projet-communes-mode]').catch(() => {});
 await page.click('[data-projet-communes] >> text=Saint-Leu').catch(() => {});
-await shot('02-identite-perimetre', 'étape 2/7 · périmètre (commune)');
+await shot('02-identite-perimetre', 'étape 2/6 · périmètre (commune)');
 await next();
 
 // 03 · identité — budget (INDICATIF, l'écran le dit)
 await page.fill('[data-projet-budget]', '720000');
-await shot('03-identite-budget-indicatif', 'étape 3/7 · budget « indicatif — sans effet sur la sélection »');
+await shot('03-identite-budget-indicatif', 'étape 3/6 · budget « indicatif — sans effet sur la sélection »');
 await next();
 
 // 04 · identité — type (INFORMATIF, servi par référentiel) — M120-B : plus de date de livraison

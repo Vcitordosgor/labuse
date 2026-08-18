@@ -1,0 +1,6 @@
+# LA BUSE — paramètres du flux PROJET (M120-B). Tunables ICI, jamais en dur dans le code.
+#
+# La shortlist figée d'un projet est un TOP-N best-first (classé par probabilité de mutation) du
+# VIVIER FIGEABLE — les parcelles réellement triables, HORS exclusions dures (non constructibles /
+# faux positifs). Le client est toujours informé qu'il trie un top-N, jamais « tout ce qui matche ».
+shortlist_max: 200          # taille max de la shortlist figée (ex-clamp/défaut en dur ; défaut Vic = 200)

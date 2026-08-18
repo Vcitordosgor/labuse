@@ -775,8 +775,17 @@ export interface Projet {
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
 }
-// M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
-export interface ShortlistDiff { ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number }
+// M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client. M120-B : + le vivier
+// figeable (dénominateur honnête) + le cap (config) + `tronquee` (top-N vs tout le vivier).
+export interface ShortlistDiff {
+  ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number
+  vivier: number; cap: number; tronquee: boolean
+}
+// M120-B — le compteur du cadrage, ALIGNÉ sur le figeable : `vivier` (triable, hors exclusions
+// dures) est ce qu'on affiche ; `total` (compte carte brut) est gardé pour transparence ; `cap`.
+export interface CadrageCompteur { vivier: number; total: number; cap: number }
+export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
+  j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
 // ses facettes (ParcoursProjet → FiltreFacettes), plus par une fiche remplie par l'IA. Le client
 // `/ia/entretien` et `/projets/reperes` est parti avec lui (endpoints backend conservés, non appelés).
@@ -791,7 +800,7 @@ export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
-export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
+export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
 export const getApercu = (cadrage: Cadrage, identite: Identite = {}, limit = 5) =>
   j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage, identite, limit }) })
 export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
