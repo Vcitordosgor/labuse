@@ -52,7 +52,9 @@ SOURCES = {
             # `prochain` = prochaine livraison géo-DVF (S1-2026 en octobre) ; `millesime` = édition
             # fournisseur (texte normé). L'horizon (max date_mutation) est CALCULÉ, pas figé ici.
             "cadence_norme": "semestriel", "prochain": "2026-10-01",
-            "millesime": "géo-DVF Etalab (millésimes 2021–2025)",
+            # M124 — la profondeur DIT les deux canaux : prod geo-DVF 2021+ ET archives brutes
+            # DGFiP 2014-2020 (dvf_mutations_histo, miroir cquest, Licence Ouverte).
+            "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
             "detection": "Last-Modified HTTP des CSV annuels — reload du millésime modifié uniquement"},
     "dpe": {"label": "DPE ADEME (logements existants)", "cadence": "hebdomadaire (flux continu)",
             "date_sql": "SELECT max(date_etablissement)::date FROM dpe_records",
