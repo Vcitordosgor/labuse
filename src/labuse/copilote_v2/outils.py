@@ -405,16 +405,44 @@ WEB_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). Réponds à l
 t'appuyant sur la recherche web. N'invente RIEN : chaque fait vient d'une source web trouvée. Si les
 sources DIVERGENT ou sont faibles, dis-le (« Les sources divergent — à vérifier »). Tu ne réponds QUE sur
 l'immobilier, le foncier, l'urbanisme, les collectivités et leurs acteurs à La Réunion.
-FORMAT (M113 · Phase 4) — COURT : le FAIT SEUL, en UNE à DEUX phrases maximum. AUCUNE phrase
-d'introduction (« D'après mes recherches… »), aucun contexte superflu, aucune reformulation de la
-question. Ne cite pas d'URL (le serveur ajoute la source). Exemple attendu : « Le maire de Saint-Denis
-est Ericka Bareigts (depuis 2020). »"""
+FORMAT (M117 · D5) — STRICT : UNE phrase, le FAIT PRINCIPAL SEUL, ~150 caractères MAXIMUM. INTERDIT :
+phrase d'introduction, reformulation de la question, ET tout détail secondaire (pourcentage, score,
+date d'élection, prédécesseur, nombre de voix) SAUF s'il EST la question posée. Ne cite pas d'URL (le
+serveur ajoute la source). Exemple attendu, à imiter EXACTEMENT : « Le maire de Saint-Denis est Ericka
+Bareigts. »"""
 
 
-def recherche_web(db: Session, *, question: str) -> ToolResult:
+def _deux_phrases(texte: str, max_car: int = 180) -> str:
+    """M117 · D5 — garde-fou DÉTERMINISTE de la brièveté web : au plus DEUX phrases, ~180 car. Le
+    prompt ne suffit pas (le modèle sur-produit) ; on tronque à une frontière de phrase, sinon de
+    clause, sinon net avec une ellipse. Jamais couper un mot en deux."""
+    import re
+    texte = " ".join((texte or "").split())
+    phrases = [p for p in re.split(r"(?<=[.!?])\s+", texte) if p.strip()]
+    out = ""
+    for i, p in enumerate(phrases):
+        if i >= 2:
+            break
+        cand = (out + " " + p).strip() if out else p
+        if out and len(cand) > max_car:
+            break
+        out = cand
+    if not out:
+        out = (phrases[0] if phrases else texte)[:max_car]
+    if len(out) > max_car:                        # une seule phrase déjà trop longue
+        # préférer la PREMIÈRE clause (le fait principal « X est Y »), sinon couper net au mot
+        prem = out.find(", ", 25)
+        out = (out[:prem] if 25 < prem < max_car else out[:max_car].rsplit(" ", 1)[0]).rstrip(" ,;") + "…"
+    return out.strip()
+
+
+def recherche_web(db: Session, *, question: str, history: list[dict] | None = None) -> ToolResult:
     """M78-ter — répondre au-delà de la base pour du PUBLIC hors base (élus, organigrammes, actualité
     réglementaire…) via la recherche web NATIVE de l'API Anthropic (pas de scraping maison). Marqué web,
-    jamais Sourcé/Estimé. La hiérarchie (base d'abord) est gérée par l'aiguillage en amont."""
+    jamais Sourcé/Estimé. La hiérarchie (base d'abord) est gérée par l'aiguillage en amont.
+
+    M117 · D9 — `history` (fil du chip web) : les derniers tours sont passés au modèle pour résoudre
+    un enchaînement (« et à Saint-Pierre ? »). Le modèle résout la référence ; il ne SOMME pas."""
     import urllib.parse as up
     from datetime import date
 
@@ -423,11 +451,13 @@ def recherche_web(db: Session, *, question: str) -> ToolResult:
         return ToolResult("recherche_web", ok=False, refus="recherche web indisponible")
     import anthropic
     client = anthropic.Anthropic(timeout=45, max_retries=1)
+    msgs = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
+            for m in (history or [])[-4:] if m.get("content")] + [{"role": "user", "content": question}]
     try:
         msg = client.messages.create(
-            model=core.MODEL_REASONING, max_tokens=700, system=WEB_SYSTEM,
+            model=core.MODEL_REASONING, max_tokens=300, system=WEB_SYSTEM,
             tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
-            messages=[{"role": "user", "content": question}])
+            messages=msgs)
     except Exception:
         return ToolResult("recherche_web", ok=False, refus="recherche web échouée")
     texte, domaines = "", []
@@ -448,7 +478,7 @@ def recherche_web(db: Session, *, question: str) -> ToolResult:
     if not texte.strip() or not domaines:
         return ToolResult("recherche_web", ok=False, refus="rien trouvé sur le web")
     return ToolResult("recherche_web", ok=True, web=True, valeur=None,
-                      data={"reponse": texte.strip(), "domaines": domaines[:3], "date": date.today().isoformat()},
+                      data={"reponse": _deux_phrases(texte), "domaines": domaines[:3], "date": date.today().isoformat()},
                       source="web")
 
 

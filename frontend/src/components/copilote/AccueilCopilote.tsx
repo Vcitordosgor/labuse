@@ -1,48 +1,19 @@
-// M78 · 2a — PAGE D'ACCUEIL du Copilote v2. Recopiée de docs/DA-COPILOTE-ACCUEIL.html (fait foi) :
-// promesse + tagline ([N] = comptage DYNAMIQUE du bandeau, jamais en dur), une barre unique, trois
-// cartes Chercher/Vérifier/Veiller à deux exemples cliquables (le clic REMPLIT la barre, ne lance
-// rien), pied de garanties. Retirés (mandat) : onglets « BIENTÔT », paragraphe défensif, pitch « il
-// ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
+// M78 · 2a → M117 · ACCUEIL Copilote v2 (maquette DA-COPILOTE-v2). Un SEUL point d'entrée : les six
+// intentions (grille, sous-titres servis par le serveur) remplacent les chips, les six exemples et
+// les trois cartes explicatives. Le bandeau de garanties est absorbé sous le titre ; le brief descend
+// sous le point d'entrée (ce n'est pas une action de Copilote). Surface IA → accent MAUVE (cp-ia) ;
+// le mint ne reste QUE sur le brief du matin (veille ≠ IA).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { fmtInt, ilYA } from '../../lib/format'
+import { ilYA } from '../../lib/format'
 import { getBrief, getScenarios, type AccueilChiffres, type BriefMatin, type CopiloteMission,
   type CopiloteScenario } from '../../lib/api'
+import { MODULES } from '../outils/registry'
 
-type Carte = { past: string; titre: string; desc: (parc: string) => string }
-
-// M78-quater #3 — la carte « Veiller » est retirée (la veille n'est pas exposée sur cet écran ; le
-// mécanisme reste en code, écran dédié au BACKLOG). Remplacée par « Demander » = le parcours des
-// QUESTIONS DIRECTES (maquette PARCOURS B), qui fonctionne aujourd'hui (base + web, sinon refus honnête).
-const CARTES: Carte[] = [
-  { past: '⌕', titre: 'Chercher',
-    desc: (parc) => `Décrivez le terrain ou le programme. Les moteurs passent les ${parc} parcelles au crible.` },
-  { past: '?', titre: 'Demander',
-    desc: () => "Une question directe — PLU, propriétaire, délais, marché. Le Copilote répond avec sa source, ou le dit s'il ne sait pas." },
-  { past: '⚖', titre: 'Vérifier',
-    desc: () => "Une parcelle qu'on vous propose. Le Copilote instruit à charge et à décharge, et rend un avis sourcé." },
-]
-
-// M87 P2 — SIX exemples FIXES, dans cet ordre (fini la rotation aléatoire de l'ancien POOL de 19 :
-// retirée, une grille figée vaut mieux qu'un tirage qui change à chaque visite). Chaque exemple porte
-// son étiquette d'intention. Un clic REMPLIT la barre, ne lance rien.
-const EXEMPLES: { intent: string; txt: string }[] = [
-  { intent: 'Chercher', txt: 'Quelles parcelles appartiennent à la SIDR ?' },
-  { intent: 'Chercher', txt: 'Combien de parcelles à Saint-Paul ?' },
-  { intent: 'Veiller', txt: 'Préviens-moi de tout nouveau permis à Saint-Paul' },
-  // M109 — étiquette corrigée : ces deux exemples routent QUESTION→recherche web (renseignement),
-  // PAS l'intention VÉRIFICATION (qui = évaluer une parcelle face à un prix). L'ancien libellé
-  // « Vérifier » créait une fausse prémisse (audit M108 §3ter.1).
-  { intent: 'Renseigner', txt: 'Qui est le maire de Saint-Denis ?' },
-  { intent: 'Renseigner', txt: 'Qui gère les dossiers de financement des bailleurs sociaux à la Région ?' },
-  { intent: 'Agir', txt: 'Je veux écrire au propriétaire de cette parcelle' },
-]
-
-export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
+export function AccueilCopilote({ value, onChange, onSubmit, chiffres, occupe, reponse,
   scenario, onScenario, missions, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
-  onPick: (ex: string) => void
   chiffres: AccueilChiffres | null
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
@@ -107,38 +78,21 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   }, [missions])
   const questionsVisibles = toutHisto ? questions : questions.slice(0, 4)
 
-  // [N] et [parc] DYNAMIQUES — masqués (pas inventés) si le bandeau ne les a pas encore.
+  // [N] DYNAMIQUE — masqué (pas inventé) si le bandeau ne l'a pas encore. Aucun compte en dur.
   const nSources = chiffres?.sources != null ? String(chiffres.sources) : null
-  const parc = chiffres?.parcelles != null ? fmtInt(chiffres.parcelles) : 'toutes les'
 
   return (
-    <div data-accueil className="mx-auto max-w-[640px] px-2 pt-6">
-      <div className="mb-2 text-center">
-        <span className="font-mono text-[10px] tracking-[.16em] text-cp-muted">COPILOTE</span>
+    <div data-accueil className="mx-auto max-w-[620px] px-2 pt-6">
+      {/* HERO — le bandeau de garanties est ABSORBÉ sous le titre (M117). Kicker + « instruit » en mauve. */}
+      <div className="mb-9 text-center">
+        <div className="mb-3.5 font-mono text-[11px] tracking-[.16em] text-cp-ia">COPILOTE</div>
+        <h1 className="mb-2.5 font-display text-[30px] font-medium leading-[1.25] tracking-[-.5px] text-cp-txt">
+          Dites ce que vous cherchez.<br />Le Copilote <span className="text-cp-ia">instruit</span>.
+        </h1>
+        <p data-accueil-tagline className="text-[13px] text-cp-muted">
+          {nSources ? <><b className="text-cp-txt">{nSources}</b> sources · </> : null}chaque chiffre daté · La Réunion uniquement
+        </p>
       </div>
-      <h1 className="mb-2.5 text-center font-display text-[30px] font-semibold leading-[1.2] tracking-[-.5px] text-cp-txt">
-        Dites ce que vous cherchez.<br />Le Copilote <span className="text-mint">instruit</span>.
-      </h1>
-      <p data-accueil-tagline className="mb-8 text-center text-[13px] text-cp-muted">
-        Une parcelle instruite en une minute{nSources ? <> — <b className="text-cp-txt">{nSources}</b> sources</> : null}, chaque chiffre daté.
-      </p>
-
-      {/* M102 P3 — l'encart « claim » (M87 P1) est RETIRÉ (correctif Vic). */}
-
-      {/* M87 P6 — LE BRIEF quitte le flux de l'accueil : une BARRE (classe .brief-btn de la maquette).
-          N = brief.n (event_log, J-1) — même point de lecture que l'e-mail Brevo. N=0 → « Rien de neuf
-          depuis hier », la barre ne disparaît pas. Vert/neutre, jamais mauve (faits datés, pas d'IA). */}
-      {brief && (
-        <button data-brief-btn onClick={() => setBriefOpen(true)}
-          className="mx-auto mb-2 mt-4 flex items-center gap-3 rounded-xl border border-cp-line bg-cp-card/60 px-[18px] py-3 transition-colors duration-quick hover:border-mint/60">
-          <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-mint" />
-          <span className="text-[13px] text-cp-txt">Votre brief du matin</span>
-          <span className="font-mono text-[11.5px] text-cp-muted">
-            {briefN > 0 ? `${briefN} événement${briefN > 1 ? 's' : ''} depuis hier` : 'Rien de neuf depuis hier'}
-          </span>
-          <span className="text-cp-muted">→</span>
-        </button>
-      )}
 
       {/* M87 P6 — le SCRIM + le PANNEAU latéral (classes .scrim / .panel de la maquette). Clic-dehors et
           Échap ferment (gérés plus haut) ; le focus est piégé. Contenu GROUPÉ par commune (brief.groupes),
@@ -190,26 +144,24 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         </footer>
       </aside>
 
-      {/* M113 · Phase 2 — ÉTAPE 1 : « Que souhaitez-vous faire ? » Les chips servis par le serveur.
-          Un clic sélectionne (ou déselectionne) le scénario ; le champ adapte son placeholder. Aucun
-          chip = texte libre (le routeur décide). Servis dans l'ordre du serveur, jamais en dur ici. */}
+      {/* M117 · les SIX INTENTIONS en grille (remplacent chips + exemples + cartes). Sous-titre servi
+          par le serveur (« {n} outils » → MODULES.length, aucun compte en dur). Un clic sélectionne
+          (ou désélectionne) le scénario ; le champ adapte son placeholder. Surface IA → mauve. */}
       {!reponse && scenarios.length > 0 && (
-        <div data-accueil-chips className="mb-3">
-          <p className="mb-2 text-center text-[11px] uppercase tracking-[.14em] text-cp-faint">Que souhaitez-vous faire ?</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {scenarios.map((s) => {
-              const on = s.cle === scenario
-              return (
-                <button key={s.cle} data-accueil-chip data-chip-cle={s.cle} aria-pressed={on}
-                  onClick={() => onScenario?.(on ? null : s.cle)}
-                  className={`rounded-full border px-3.5 py-1.5 font-display text-[12px] font-semibold transition-colors duration-quick ${
-                    on ? 'border-mint bg-mint/15 text-mint'
-                       : 'border-cp-line bg-transparent text-cp-muted hover:border-cp-line2 hover:text-cp-txt'}`}>
-                  {s.libelle}
-                </button>
-              )
-            })}
-          </div>
+        <div data-accueil-intents className="mb-3.5 grid grid-cols-2 gap-2 min-[560px]:grid-cols-3">
+          {scenarios.map((s) => {
+            const on = s.cle === scenario
+            const sub = (s.sub || '').replace('{n}', String(MODULES.length))
+            return (
+              <button key={s.cle} data-accueil-chip data-chip-cle={s.cle} aria-pressed={on}
+                onClick={() => onScenario?.(on ? null : s.cle)}
+                className={`rounded-[10px] border px-3.5 py-3.5 text-left transition-colors duration-quick ${
+                  on ? 'border-cp-ia bg-cp-ia-bg' : 'border-cp-ia-border bg-cp-ia-bg/40 hover:border-cp-ia-border-on'}`}>
+                <div className={`mb-[3px] text-[14px] ${on ? 'text-cp-ia' : 'text-cp-txt'}`}>{s.libelle}</div>
+                <div className="text-[12px] leading-[1.4] text-cp-muted">{sub}</div>
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -224,7 +176,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
           placeholder={scenActif?.placeholder ?? '15 logements à Saint-Denis, budget foncier 800 k€…'}
           className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none focus-visible:outline-none placeholder:text-cp-faint" />
         <button data-accueil-envoyer onClick={() => value.trim() && onSubmit()} disabled={!value.trim() || occupe}
-          className="shrink-0 rounded-lg bg-mint px-5 py-2.5 text-[13px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="shrink-0 rounded-lg bg-cp-ia px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
@@ -234,66 +186,47 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
           : 'Écrivez librement — ou choisissez ce que vous souhaitez faire ci-dessus.'}
       </p>
 
-      {/* M87 P2 — SIX exemples FIXES (plus de rotation aléatoire), grille régulière 3×2 (1 colonne
-           sous 820 px), chaque exemple porte son étiquette d'intention en petites capitales mono.
-           Classes .examples / .ex de la maquette. Un clic REMPLIT la barre, ne lance rien. */}
-      {!reponse && (
-        <div data-accueil-exemples className="mx-auto mb-8 grid max-w-[820px] grid-cols-1 gap-2 min-[820px]:grid-cols-3">
-          {EXEMPLES.map((e) => (
-            <button key={e.txt} data-accueil-ex onClick={() => onPick(e.txt)}
-              className="rounded-lg border border-cp-line bg-transparent px-3.5 py-[11px] text-left text-[12.5px] leading-[1.35] text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
-              <span className="mb-[5px] block font-mono text-[9.5px] uppercase tracking-[.12em] text-cp-faint">{e.intent}</span>
-              {e.txt}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* M117 — les six exemples et les trois cartes explicatives DISPARAISSENT (les six intentions
+           portent seules ce rôle). Le bandeau de garanties est absorbé dans la tagline. */}
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
 
-      {/* #2 — VOS DERNIÈRES QUESTIONS : conversations passées, dédoublonnées, datées en relatif, 4 max
-           puis « voir tout ». Rouvrir en restaure le fil. Masqué si l'historique est vide. */}
-      {questions.length > 0 && (
+      {/* M117 — LE BRIEF descend SOUS le point d'entrée (ce n'est pas une action de Copilote). Reste
+           en MINT : la veille n'est pas de l'IA (seule exception mint sur cette surface). */}
+      {!reponse && brief && (
+        <button data-brief-btn onClick={() => setBriefOpen(true)}
+          className="mb-7 flex w-full items-center gap-3 rounded-[10px] bg-cp-card px-4 py-3 transition-colors duration-quick hover:bg-cp-card2">
+          <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-mint" />
+          <span className="text-[14px] text-cp-txt">Votre brief du matin</span>
+          <span className="ml-auto font-mono text-[12px] uppercase tracking-[.06em] text-cp-muted">
+            {briefN > 0 ? `${briefN} événement${briefN > 1 ? 's' : ''} depuis hier` : 'Rien de neuf depuis hier'}
+          </span>
+          <span className="text-cp-muted">→</span>
+        </button>
+      )}
+
+      {/* REPRENDRE — conversations passées, dédoublonnées, datées en relatif, 4 max puis « voir tout ». */}
+      {!reponse && questions.length > 0 && (
         <div data-accueil-historique className="mb-8">
-          <p className="mb-2 font-mono text-[10px] tracking-[.16em] text-cp-muted">VOS DERNIÈRES QUESTIONS</p>
-          <div className="flex flex-col gap-1.5">
+          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">REPRENDRE</p>
+          <div className="flex flex-col">
             {questionsVisibles.map((m) => (
               <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
-                className="flex items-center gap-3 rounded-lg border border-cp-line bg-cp-card/50 px-3.5 py-2 text-left transition-colors duration-quick hover:border-mint/30">
-                <span className="min-w-0 flex-1 truncate text-[12px] text-cp-txt">{m.titre}</span>
-                {m.run_id && <span className="shrink-0 rounded border border-mint/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-mint">recherche</span>}
-                <span className="shrink-0 font-mono text-[10px] text-cp-faint">{ilYA(m.updated_at)}</span>
+                className="flex items-center gap-3 border-b border-cp-line/60 py-2.5 text-left transition-colors duration-quick last:border-b-0 hover:text-cp-txt">
+                <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt">{m.titre}</span>
+                {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia">recherche</span>}
+                <span className="shrink-0 font-mono text-[11px] text-cp-faint">{ilYA(m.updated_at)}</span>
               </button>
             ))}
           </div>
           {questions.length > 4 && (
             <button data-histo-tout onClick={() => setToutHisto((v) => !v)}
-              className="mt-2 text-[11px] text-cp-muted hover:text-cp-txt">
-              {toutHisto ? 'Réduire' : `Voir tout (${questions.length})`}
+              className="mt-3 font-mono text-[11px] tracking-[.06em] text-cp-muted hover:text-cp-txt">
+              {toutHisto ? 'RÉDUIRE' : `VOIR TOUT · ${questions.length}`}
             </button>
           )}
         </div>
       )}
-
-      {/* trois missions — les archétypes (les exemples VARIÉS vivent en pool sous la barre, §1) */}
-      <div className="mb-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        {CARTES.map((c) => (
-          <div key={c.titre} data-mission-carte className="rounded-[9px] bg-cp-card p-4">
-            <div className="mb-2 flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#12291D] text-[14px] text-mint">{c.past}</div>
-              <span className="font-display text-[13.5px] font-medium text-cp-txt">{c.titre}</span>
-            </div>
-            <p className="text-[11px] leading-[1.5] text-cp-muted">{c.desc(parc)}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* pied de garanties */}
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 border-t border-cp-line pt-4">
-        <span className="text-[10px] text-cp-faint">✓ Chaque étape journalisée</span>
-        <span className="text-[10px] text-cp-faint">◆ Sourcé, estimé ou absent — jamais autre chose</span>
-        <span className="text-[10px] text-cp-faint">◉ La Réunion uniquement</span>
-      </div>
     </div>
   )
 }

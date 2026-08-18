@@ -12,12 +12,19 @@ type Mode = 'logements' | 'surface'
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
 const ETAPES = ['NOM', 'COMMUNE', 'PROGRAMME', 'CRITÈRES', 'RÉCAPITULATIF']
 
-export function ParcoursProjet({ prefill, onVoir, onFermer }: {
+// M117 · gabarit 12 — l'accent est THÉMÉ : MINT dans la section Projets (défaut), MAUVE dans le
+// Copilote (surface IA). Le composant est partagé ; seul l'accent change.
+const ACCENT_MINT = { c: '#4ADE80', bg: '#12291D', on: '#05140B' }
+const ACCENT_IA = { c: '#B497F0', bg: '#1A1430', on: '#14091F' }
+
+export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   prefill?: Record<string, unknown> | null
   onVoir: (projet: { id: number; nom: string }) => void   // « Voir le projet → » (mécanique M107-B)
   onFermer: () => void
+  accent?: 'mint' | 'ia'                                   // Projets = mint (défaut) · Copilote = ia (mauve)
   plein?: boolean                                          // page Projets : occupe l'écran (layout géré au-dessus)
 }) {
+  const A = accent === 'ia' ? ACCENT_IA : ACCENT_MINT   // M117 — accent thémé (mauve dans le Copilote)
   const [communes, setCommunes] = useState<CommuneInfo[]>([])
   useEffect(() => { getCommunes().then(setCommunes).catch(() => {}) }, [])
 
@@ -71,13 +78,13 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
   // ── projet créé : « Voir le projet → » (ouvre CE projet) ──
   if (cree) {
     return (
-      <div data-parcours-projet-cree style={{ background: '#0C1410', border: '.5px solid #4ADE80', borderRadius: 12, padding: 24 }}>
+      <div data-parcours-projet-cree style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24 }}>
         <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 16px' }}>
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
-            style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
+            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
           <button onClick={onFermer} style={{ padding: '9px 18px', background: 'none', border: '.5px solid #1E2A23', color: '#8FA69A', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
         </div>
       </div>
@@ -102,14 +109,14 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
 
   return (
     <div data-parcours-projet ref={rootRef} tabIndex={-1} onKeyDown={onKey}
-      style={{ background: '#0C1410', border: '.5px solid #4ADE80', borderRadius: 12, padding: 24, outline: 'none' }}>
+      style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24, outline: 'none' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: '#4ADE80' }}>NOUVEAU PROJET</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c }}>NOUVEAU PROJET</div>
         <div data-parcours-step style={{ fontFamily: MONO, fontSize: 12, color: '#5F7267' }}>{etape + 1} / 5 · {ETAPES[etape]}</div>
       </div>
       {/* barre de progression — 5 segments (mint pour les faits) */}
       <div data-parcours-progress style={{ display: 'flex', gap: 5, marginBottom: 28 }}>
-        {ETAPES.map((_, i) => <i key={i} style={{ flex: 1, height: 2, background: i <= etape ? '#4ADE80' : '#1E2A23' }} />)}
+        {ETAPES.map((_, i) => <i key={i} style={{ flex: 1, height: 2, background: i <= etape ? A.c : '#1E2A23' }} />)}
       </div>
 
       <h2 style={{ fontSize: 24, fontWeight: 500, color: '#ECF5EF', margin: '0 0 6px' }}>{QUESTIONS[etape][0]}</h2>
@@ -135,8 +142,8 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
             {(['logements', 'surface'] as Mode[]).map((m) => (
               <button key={m} data-projet-mode={m} onClick={() => setMode(m)}
                 style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
-                  border: mode === m ? '.5px solid #4ADE80' : '.5px solid #1E2A23',
-                  background: mode === m ? '#12291D' : 'transparent', color: mode === m ? '#4ADE80' : '#8FA69A' }}>
+                  border: mode === m ? `.5px solid ${A.c}` : '.5px solid #1E2A23',
+                  background: mode === m ? A.bg : 'transparent', color: mode === m ? A.c : '#8FA69A' }}>
                 {m === 'logements' ? 'Logements' : 'Surface de plancher'}
               </button>
             ))}
@@ -180,10 +187,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
           <span style={{ fontFamily: MONO, fontSize: 12, color: '#4A5C52' }}>↵ POUR CONTINUER</span>
           {etape < 4 ? (
             <button data-projet-suivant disabled={!peutAvancer} onClick={avancer}
-              style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: peutAvancer ? 1 : 0.4 }}>Continuer →</button>
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: peutAvancer ? 1 : 0.4 }}>Continuer →</button>
           ) : (
             <button data-projet-creer disabled={envoi || !commune || progNum <= 0} onClick={() => void creer()}
-              style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: (envoi || !commune || progNum <= 0) ? 0.4 : 1 }}>
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: (envoi || !commune || progNum <= 0) ? 0.4 : 1 }}>
               {envoi ? 'Création…' : 'Créer le projet'}</button>
           )}
         </div>
@@ -194,7 +201,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
           {trail.map((t, i) => (
             <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {i > 0 && <span style={{ color: '#2A3A31', marginRight: 4 }}>·</span>}
-              <span style={{ color: '#4ADE80' }}>✓</span>{t}
+              <span style={{ color: A.c }}>✓</span>{t}
             </span>
           ))}
         </div>

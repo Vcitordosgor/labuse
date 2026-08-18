@@ -33,14 +33,14 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
       /* M113 P1.2 — la carte PRÉCISION : UN seul cadre au thème mint (jamais mauve-dans-vert),
          placeholder « Votre réponse… » (le « …ou » datait des deux voies d'avant M107). Bordure du
          champ neutre au repos, accent mint au focus. */
-      <div data-recap-clarif className="rounded-2xl border border-mint/30 bg-cp-card px-5 py-4">
-        <div className="mb-2 font-display text-[9.5px] uppercase tracking-[.2em] text-mint">Précision</div>
+      <div data-recap-clarif className="rounded-2xl border border-cp-ia/30 bg-cp-card px-5 py-4">
+        <div className="mb-2 font-display text-[9.5px] uppercase tracking-[.2em] text-cp-ia">Précision</div>
         <p className="text-[13.5px] leading-snug text-cp-txt">{cl.question}</p>
         {cl.options.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {cl.options.map((o) => (
               <button key={o} data-recap-option onClick={() => onReask(`${brief} ${o}`)}
-                className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-mint hover:text-mint">
+                className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-cp-ia hover:text-cp-ia">
                 {o}
               </button>
             ))}
@@ -50,9 +50,9 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
           <input data-clarif-reponse autoFocus value={reponse} onChange={(e) => setReponse(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') envoyer(reponse, setReponse) }}
             placeholder="Votre réponse…"
-            className="min-w-0 flex-1 rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-mint" />
+            className="min-w-0 flex-1 rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-cp-ia" />
           <button data-clarif-envoyer disabled={!reponse.trim()} onClick={() => envoyer(reponse, setReponse)}
-            className="rounded-lg border border-mint/40 bg-mint/10 px-3.5 py-2 font-display text-[12px] font-semibold text-mint hover:bg-mint/15 disabled:opacity-40">
+            className="rounded-lg border border-cp-ia/40 bg-cp-ia/10 px-3.5 py-2 font-display text-[12px] font-semibold text-cp-ia hover:bg-cp-ia/15 disabled:opacity-40">
             Répondre
           </button>
         </div>
@@ -63,13 +63,13 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
   // ── CORRIGER : les chips éditables (✕ retire → ré-interprète) + réécriture libre ──
   if (etape === 'corriger') {
     return (
-      <div data-recap-corriger className="rounded-2xl border border-mint/25 bg-cp-card px-5 py-4">
+      <div data-recap-corriger className="rounded-2xl border border-cp-ia/25 bg-cp-card px-5 py-4">
         {data.brief_json && (
           <ChipsCompris briefJson={data.brief_json} onRelancer={onReask} onCorriger={onCorriger} />
         )}
         <div className="mt-1 flex gap-2">
           <button data-recap-retour onClick={() => setEtape('recap')}
-            className="rounded-lg border border-cp-line2 px-4 py-2 font-display text-[12px] font-semibold text-cp-txt hover:border-mint/40">
+            className="rounded-lg border border-cp-line2 px-4 py-2 font-display text-[12px] font-semibold text-cp-txt hover:border-cp-ia/40">
             Retour au récap
           </button>
           <button data-recap-reecrire onClick={() => onCorriger(brief)}
@@ -85,14 +85,14 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
   if (etape === 'affiner') {
     const restantes = (data.suggestions ?? []).filter((s) => !s.ajout || !ajouts.includes(s.ajout))
     return (
-      <div data-recap-affiner className="rounded-2xl border border-mint/25 bg-cp-card px-5 py-4">
+      <div data-recap-affiner className="rounded-2xl border border-cp-ia/25 bg-cp-card px-5 py-4">
         <p className="text-[13.5px] text-cp-txt">Envie d'affiner ?</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {(data.chips ?? []).map((ch) => (
-            <span key={ch} className="rounded-lg border border-mint/25 bg-mint/[0.07] px-2.5 py-1 text-[11.5px] text-cp-txt">{ch}</span>
+            <span key={ch} className="rounded-lg border border-cp-ia/25 bg-cp-ia/[0.07] px-2.5 py-1 text-[11.5px] text-cp-txt">{ch}</span>
           ))}
           {ajouts.map((a) => (
-            <span key={a} className="rounded-lg border border-mint/40 bg-mint/[0.12] px-2.5 py-1 text-[11.5px] text-mint">{a}</span>
+            <span key={a} className="rounded-lg border border-cp-ia/40 bg-cp-ia/[0.12] px-2.5 py-1 text-[11.5px] text-cp-ia">{a}</span>
           ))}
         </div>
         {restantes.length > 0 && (
@@ -100,7 +100,7 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
             {restantes.map((s) => (
               <button key={s.label} data-recap-suggestion
                 onClick={() => (s.ajout ? setAjouts([...ajouts, s.ajout]) : onCorriger(brief))}
-                className="rounded-xl border border-cp-line2 bg-cp-card2 px-3.5 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-mint hover:text-mint">
+                className="rounded-xl border border-cp-line2 bg-cp-card2 px-3.5 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-ia hover:text-cp-ia">
                 + {s.label}
               </button>
             ))}
@@ -117,7 +117,7 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
           placeholder="… ou écrivez ce que vous voulez ajouter"
           className="mt-3 w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2.5 text-[12.5px] text-cp-txt outline-none placeholder:text-cp-faint" />
         <button data-recap-lancer onClick={() => onLancer([brief, ...ajouts, libre.trim()].filter(Boolean).join(', '))}
-          className="mt-4 w-full rounded-[13px] bg-mint px-7 py-3 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110">
+          className="mt-4 w-full rounded-[13px] bg-cp-ia px-7 py-3 font-display text-[13px] font-bold uppercase tracking-wide text-cp-ia-on shadow-[0_0_36px_rgba(180,151,240,.28)] transition-transform duration-quick hover:brightness-110">
           Lancer la {mission} →
         </button>
       </div>
@@ -127,22 +127,22 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
   // ── RÉCAP : « J'ai compris : … C'est bien ça ? » + Oui / Corriger — M107 : et la possibilité
   // d'écrire DIRECTEMENT une correction, sans passer par le bouton (le geste de Vic). ──
   return (
-    <div data-recap className="rounded-2xl border border-mint/30 bg-cp-card px-5 py-4">
+    <div data-recap className="rounded-2xl border border-cp-ia/30 bg-cp-card px-5 py-4">
       <p className="text-[14px] leading-relaxed text-cp-txt">{data.recap} <b className="text-cp-txt">C'est bien ça ?</b></p>
       <div className="mt-3.5 flex flex-wrap gap-2">
         <button data-recap-oui onClick={() => setEtape('affiner')}
-          className="rounded-xl bg-mint px-5 py-2.5 font-display text-[12.5px] font-bold text-mint-on transition-[filter] duration-quick hover:brightness-110">
+          className="rounded-xl bg-cp-ia px-5 py-2.5 font-display text-[12.5px] font-bold text-cp-ia-on transition-[filter] duration-quick hover:brightness-110">
           Oui, c'est ça
         </button>
         <button data-recap-corriger onClick={() => setEtape('corriger')}
-          className="rounded-xl border border-cp-line2 bg-cp-card2 px-5 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-mint hover:text-mint">
+          className="rounded-xl border border-cp-line2 bg-cp-card2 px-5 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-cp-ia hover:text-cp-ia">
           Corriger
         </button>
       </div>
       <input data-recap-correction value={correction} onChange={(e) => setCorrection(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') envoyer(correction, setCorrection) }}
         placeholder="…ou corrigez directement en écrivant ici (ex. « plutôt à Saint-Leu »)"
-        className="mt-2.5 w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[12.5px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-mint/50" />
+        className="mt-2.5 w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[12.5px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-cp-ia/50" />
     </div>
   )
 }

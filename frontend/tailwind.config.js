@@ -38,6 +38,17 @@ export default {
         // M69 B — le vert Copilote `cp-mint #63F2B8` est SUPPRIMÉ : aligné sur le vert de marque
         // unique `mint` #4ADE80 (les classes cp-mint sont devenues mint dans components/copilote/).
         'cp-violet': '#B497F0',
+        // M117 · surface IA du Copilote (maquette DA-COPILOTE-v2). Le mauve #B497F0 (= violet/cp-violet)
+        // est l'accent DOMINANT ici ; le mint ne reste QUE sur le brief du matin (veille ≠ IA). Ces
+        // tokens portent les CARTES et bordures IA (card / porte / précision / récap-péage / projet).
+        'cp-ia': '#B497F0',
+        'cp-ia-on': '#14091F',
+        'cp-ia-bg': '#100C1C',
+        'cp-ia-border': '#2A2340',
+        'cp-ia-border-on': '#4C3F73',
+        'cp-ia-dim': '#1A1430',
+        'cp-warn': '#D9873D', 'cp-warn-bg': '#140F08', 'cp-warn-border': '#4A3520',
+        'cp-danger': '#E2725B', 'cp-danger-bg': '#140A08', 'cp-danger-border': '#4A2820',
         'cp-amber': '#F0C97A',
         'cp-red': '#F08A8A',
         'cp-tier': '#F0A87A',

@@ -5,7 +5,7 @@
 // (le run REPREND, ne redémarre pas) · 4 zéro retenue (honnête, relances non chiffrées)
 // · 5 quota (aucun run créé). Un rafraîchissement en plein run retombe sur le même fil
 // (run épinglé + rejeu after_seq).
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
 import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
@@ -31,7 +31,7 @@ const S = CLIENT.copilote
 // halo discret de la maquette (radial mint en haut à droite, violet en bas à gauche)
 const FOND = {
   backgroundImage:
-    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(74,222,128,.06), transparent 62%), ' +
+    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(180,151,240,.06), transparent 62%), ' +
     'radial-gradient(ellipse 700px 460px at 5% 105%, rgba(180,151,240,.05), transparent 62%)',
 }
 
@@ -161,7 +161,7 @@ export function CopiloteView() {
       // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
       // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
       // M107 — l'échec est RÉCUPÉRABLE sur place : le tour porte un bouton Réessayer.
-      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null } as CopiloteV2Reponse
+      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null, erreur: true } as CopiloteV2Reponse
       setFil((f) => [...f, { q: m, r: echec, echec: true }])
     } finally { setDispatching(false) }
   }
@@ -192,6 +192,27 @@ export function CopiloteView() {
     else { setRecapConfirme(recap?.recap ?? finalBrief); void run.instruire(mission, finalBrief) }
   }
   const corrigerRecap = (b: string) => { setRecap(null); setBrief(b); setTimeout(() => briefRef.current?.focus(), 0) }
+  // M117 · D8 — « Nouveau fil » et l'annonce du TTL sur TOUS les chemins (fil, récap-péage, formulaire
+  // projet), plus seulement le fil. Repart de zéro : vide tout, refocalise le brief.
+  const nouveauFil = () => {
+    setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null)
+    setRecap(null); setProjetForm(null); briefRef.current?.focus()
+  }
+  const ttlNotice = filExpire ? (
+    <p data-fil-expire className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 text-[12px] text-cp-muted">
+      ⏱ <b className="text-cp-txt">Nouvelle conversation</b> — le fil précédent a expiré ({ttlMin} min d'inactivité). Votre prochain message repart de zéro.
+    </p>
+  ) : null
+  const boutonNouveauFil = (
+    <button data-fil-nouveau onClick={nouveauFil}
+      className="self-start rounded-lg border border-cp-line bg-transparent px-4 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
+      ↻ Nouveau fil
+    </button>
+  )
+  // enveloppe un gabarit d'action (récap-péage / formulaire projet) avec l'annonce TTL + « Nouveau fil ».
+  const avecChrome = (node: ReactNode) => (
+    <div className="flex flex-col gap-3 text-left">{ttlNotice}{node}{boutonNouveauFil}</div>
+  )
 
   // §2b — rouvrir une mission passée : RECHERCHE (run_id) rejoue le run ; sinon restaure la dernière
   // réponse Copilote de la conversation (inline). On reprend là où on s'est arrêté.
@@ -296,30 +317,24 @@ export function CopiloteView() {
         {!actif ? (
           /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
-            onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             scenario={scenario} onScenario={setScenario}
             missions={missions} onReprendre={rouvrir}
             reponse={projetForm
-              ? /* M113 P3 — le parcours projet guidé, prérempli de ce que le Copilote a compris. */
-                <ParcoursProjet prefill={projetForm.prefill}
+              ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */
+                avecChrome(<ParcoursProjet prefill={projetForm.prefill} accent="ia"
                   onVoir={(p) => { setProjetForm(null); setOpenProjet(p) }}
-                  onFermer={() => setProjetForm(null)} />
+                  onFermer={() => setProjetForm(null)} />)
               : recap
-              ? <RecapConfirmation data={recap} brief={recapBrief} onReask={reask}
+              ? /* M117 D8 — le récap-péage porte aussi le TTL + « Nouveau fil ». */
+                avecChrome(<RecapConfirmation data={recap} brief={recapBrief} onReask={reask}
                   onLancer={lancerRecap} onCorriger={corrigerRecap}
-                  onRepondre={(t) => void interroger(t)} />
+                  onRepondre={(t) => void interroger(t)} />)
               : (fil.length > 0 || dispatching) ? (
                 /* M102-B2 — LE FIL : demandé / compris / répondu, tour par tour. */
                 <div data-fil className="flex flex-col gap-3 text-left">
-                  {/* M107 P3 — l'expiration est ANNONCÉE, le fil reste visible estompé jusqu'au
-                      message suivant (jamais vidé en silence au milieu d'un échange). */}
-                  {filExpire && (
-                    <p data-fil-expire className="rounded-xl border border-cp-line2 bg-cp-card px-4 py-2.5 text-[12px] text-cp-muted">
-                      ⏱ <b className="text-cp-txt">Nouvelle conversation</b> — le fil précédent a expiré
-                      ({ttlMin} min d'inactivité). Votre prochain message repart de zéro.
-                    </p>
-                  )}
+                  {/* M107 P3 / M117 D8 — l'expiration ANNONCÉE (helper partagé, présent sur tous les chemins). */}
+                  {ttlNotice}
                   <div className={filExpire ? 'flex flex-col gap-3 opacity-50' : 'flex flex-col gap-3'}>
                   {fil.map((t, i) => (
                     <div key={i} className="flex flex-col gap-1.5">
@@ -355,17 +370,7 @@ export function CopiloteView() {
                       </button>
                     </div>
                   )}
-                  {!dispatching && fil.length > 0 && (
-                    /* M113 P1.1 — « Nouveau fil » : VRAI bouton secondaire (dette M107-B), classes
-                       DA-ACCUEIL-BRIEF (bordure cp-line, cible confortable px-4 py-2, survol), à
-                       portée du champ juste au-dessus. Repart de zéro : vide le fil, la conversation
-                       et la barre, refocalise le brief. */
-                    <button data-fil-nouveau
-                      onClick={() => { setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null); briefRef.current?.focus() }}
-                      className="self-start rounded-lg border border-cp-line bg-transparent px-4 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
-                      ↻ Nouveau fil
-                    </button>
-                  )}
+                  {!dispatching && fil.length > 0 && boutonNouveauFil}
                 </div>
               ) : null} />
         ) : (
@@ -380,12 +385,12 @@ export function CopiloteView() {
             {/* §M78-bis 2 — le récap validé RESTE en tête pendant l'instruction et sur les résultats :
                 le client qui revient (notification) relit son brief en une ligne. */}
             {recapConfirme && (
-              <div data-recap-confirme className="mb-4 rounded-xl border border-mint/20 bg-mint/[0.04] px-4 py-2 text-[12.5px] leading-snug text-cp-muted">
-                <span className="text-mint">✦</span> {recapConfirme}
+              <div data-recap-confirme className="mb-4 rounded-xl border border-cp-ia/20 bg-cp-ia/[0.04] px-4 py-2 text-[12.5px] leading-snug text-cp-muted">
+                <span className="text-cp-ia">✦</span> {recapConfirme}
               </div>
             )}
             {/* barre principale — JAMAIS verrouillée (§complément) : le client peut toujours écrire. */}
-            <div className="flex flex-wrap items-start gap-5 rounded-[18px] border border-mint/35 bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)]">
+            <div className="flex flex-wrap items-start gap-5 rounded-[18px] border border-cp-ia/35 bg-gradient-to-b from-cp-ia/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(180,151,240,.06)]">
               <div className="min-w-[250px] flex-1">
                 <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
                   placeholder={S.placeholder} rows={2}
@@ -400,12 +405,12 @@ export function CopiloteView() {
                 ) : (
                   <button data-instruire onClick={soumettre}
                     disabled={!brief.trim() || run.enCreation || dispatching}
-                    className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
+                    className="rounded-[13px] bg-cp-ia px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-ia-on shadow-[0_0_36px_rgba(180,151,240,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
                     {S.instruire} →
                   </button>
                 )}
                 <div className="flex items-center gap-2 text-[10.5px] text-cp-faint">
-                  <i className="h-1 w-1 rounded-full bg-mint" />
+                  <i className="h-1 w-1 rounded-full bg-cp-ia" />
                   {enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6) : S.serment}
                 </div>
               </div>
@@ -516,7 +521,7 @@ export function CopiloteView() {
                 <p className="mx-auto mt-2 max-w-[62ch] text-[13px] text-cp-muted">{S.resultats.zeroNote}</p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2.5">
                   <button data-relance onClick={relancer}
-                    className="rounded-xl bg-mint px-5 py-3 font-display text-[12px] font-bold text-mint-on">
+                    className="rounded-xl bg-cp-ia px-5 py-3 font-display text-[12px] font-bold text-cp-ia-on">
                     {S.resultats.relanceBudget}
                   </button>
                   <button data-relance onClick={relancer}

@@ -78,7 +78,7 @@ function Lead({ p, et, budgetMax, onOuvrirFiche }: {
     <div data-restituee={p.idu} className="grid grid-cols-1 gap-4 border-b border-cp-line px-5 py-4 md:grid-cols-[1fr_230px]">
       <div>
         <div>
-          <span className="rounded-md bg-mint px-2 py-0.5 font-display text-[10px] font-bold tracking-wide text-mint-on">#01</span>
+          <span className="rounded-md bg-cp-ia px-2 py-0.5 font-display text-[10px] font-bold tracking-wide text-cp-ia-on">#01</span>
           <span className="ml-2.5 font-display text-lg font-bold text-cp-txt">{p.idu}</span>
         </div>
         <div className="mt-1 text-[11.5px] text-cp-faint">{p.commune}</div>
@@ -86,13 +86,13 @@ function Lead({ p, et, budgetMax, onOuvrirFiche }: {
         {/* M78-bis — action LIVE (pas de bouton mort) : ouvrir la fiche existante de la 1ʳᵉ parcelle. */}
         {onOuvrirFiche && (
           <button data-ouvrir-fiche onClick={() => onOuvrirFiche(p.idu)}
-            className="mt-3 rounded-lg border border-mint/40 bg-mint/10 px-4 py-2 font-display text-[12px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">
+            className="mt-3 rounded-lg border border-cp-ia/40 bg-cp-ia/10 px-4 py-2 font-display text-[12px] font-semibold text-cp-ia transition-colors duration-quick hover:bg-cp-ia/15">
             Ouvrir la fiche →
           </button>
         )}
         {p.zone && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-lg border border-mint/25 bg-mint/10 px-2.5 py-1 font-display text-[11px] font-semibold text-mint">
+            <span className="rounded-lg border border-cp-ia/25 bg-cp-ia/10 px-2.5 py-1 font-display text-[11px] font-semibold text-cp-ia">
               Zone {p.zone}
             </span>
           </div>

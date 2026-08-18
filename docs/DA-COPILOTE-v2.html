@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — DA Copilote v2 (11 gabarits, référence M117)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #060A08;
+    --surface: #0C1410;
+    --surface-dim: #080D0A;
+
+    --ia: #B497F0;
+    --ia-on: #14091F;
+    --ia-bg: #100C1C;
+    --ia-border: #2A2340;
+    --ia-border-on: #4C3F73;
+    --ia-dim: #1A1430;
+
+    --mint: #4ADE80;
+    --warn: #D9873D;
+    --danger: #E2725B;
+
+    --border: #1E2A23;
+    --border-mid: #2A3A31;
+    --border-dim: #141C18;
+
+    --txt: #ECF5EF;
+    --txt-2: #C9DCD1;
+    --txt-3: #A8BDB0;
+    --txt-mut: #8FA69A;
+    --txt-mut-2: #6F8578;
+    --txt-mut-3: #5F7267;
+    --txt-mut-4: #4A5C52;
+
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font-family: var(--sans); padding: 40px 24px 80px; }
+  .page { max-width: 900px; margin: 0 auto; }
+  .col { max-width: 620px; margin: 0 auto; }
+
+  .spec { font-family: var(--mono); font-size: 11px; color: var(--ia); letter-spacing: .12em; margin: 56px 0 12px; padding-top: 24px; border-top: .5px solid var(--border); }
+  .spec:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+  .note { font-size: 12px; color: var(--txt-mut-3); margin: 0 0 24px; line-height: 1.65; max-width: 640px; }
+  .note code { font-family: var(--mono); color: var(--txt-mut-2); }
+  .note strong { color: var(--txt-mut); font-weight: 500; }
+
+  .hero { text-align: center; margin-bottom: 36px; }
+  .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; color: var(--ia); margin-bottom: 14px; }
+  .hero h1 { font-size: 30px; font-weight: 500; color: var(--txt); line-height: 1.25; margin: 0 0 10px; }
+  .hero p { font-size: 14px; color: var(--txt-mut-2); margin: 0; }
+
+  .intents { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .intent { background: var(--ia-bg); border: .5px solid var(--ia-border); border-radius: 10px; padding: 14px 14px 16px; cursor: pointer; }
+  .intent:hover { border-color: var(--ia-border-on); }
+  .intent i { color: var(--ia); font-size: 17px; display: block; margin-bottom: 8px; }
+  .intent .lbl { font-size: 14px; color: var(--txt); margin-bottom: 3px; }
+  .intent .sub { font-size: 12px; color: var(--txt-mut-2); line-height: 1.4; }
+
+  .composer { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  .composer .field { flex: 1; background: var(--surface); border: .5px solid var(--border-mid); border-radius: 10px; padding: 14px 16px; font-size: 15px; color: var(--txt-mut-4); }
+  .composer .send { padding: 0 22px; background: var(--ia); color: var(--ia-on); border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; cursor: pointer; }
+  .hint { text-align: center; font-size: 12px; color: var(--txt-mut-4); margin-bottom: 36px; }
+
+  .brief { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; background: var(--surface); border-radius: 10px; margin-bottom: 28px; cursor: pointer; }
+  .brief-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
+  .brief-lbl { font-size: 14px; color: var(--txt); }
+  .brief-state { font-family: var(--mono); font-size: 12px; color: var(--txt-mut-3); }
+
+  .section-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--txt-mut-4); margin-bottom: 10px; }
+  .recent { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: .5px solid var(--border-dim); cursor: pointer; }
+  .recent .q { font-size: 14px; color: var(--txt-3); }
+  .recent .t { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); }
+  .see-all { padding-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); letter-spacing: .06em; cursor: pointer; }
+
+  .thread-user { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .thread-user div { background: var(--surface); border-radius: 10px; padding: 11px 16px; font-size: 14px; color: var(--txt-2); max-width: 80%; }
+
+  .card { border: .5px solid var(--ia-border); background: var(--ia-bg); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+  .card.neutral { border-color: var(--border); background: var(--surface); }
+  .card.warn { border-color: #4A3520; background: #140F08; }
+  .card.err { border-color: #4A2820; background: #140A08; }
+  .card-kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; color: var(--ia); margin-bottom: 10px; }
+  .card-kicker.warn { color: var(--warn); }
+  .card-kicker.err { color: var(--danger); }
+  .recap { font-size: 12px; color: var(--txt-mut-2); margin-bottom: 12px; line-height: 1.5; }
+  .val { font-size: 15px; color: var(--txt); line-height: 1.6; margin-bottom: 14px; }
+  .val:last-child { margin-bottom: 0; }
+  .val strong { font-weight: 500; color: var(--ia); }
+  .src { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); letter-spacing: .04em; }
+  .porte { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 14px; border: .5px solid var(--ia-border-on); color: var(--ia); border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .porte.warn { border-color: #5A4028; color: var(--warn); }
+
+  .reply { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  .reply .field { flex: 1; background: var(--surface); border: .5px solid var(--ia-border-on); border-radius: 10px; padding: 12px 16px; font-size: 14px; color: var(--txt-mut-4); }
+  .reply .send { padding: 0 20px; border: .5px solid var(--ia-border-on); color: var(--ia); border-radius: 10px; font-size: 13px; display: flex; align-items: center; cursor: pointer; }
+  .newthread { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: .5px solid var(--border-mid); color: var(--txt-mut); border-radius: 8px; font-size: 13px; cursor: pointer; }
+
+  .peage { display: flex; gap: 10px; margin-top: 16px; }
+  .peage .go { padding: 9px 18px; background: var(--ia); color: var(--ia-on); border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .peage .fix { padding: 9px 18px; border: .5px solid var(--border-mid); color: var(--txt-mut); border-radius: 8px; font-size: 13px; cursor: pointer; }
+
+  .dots { display: inline-flex; gap: 5px; align-items: center; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ia); display: block; opacity: .35; }
+  .dots i:nth-child(2) { opacity: .65; }
+  .dots i:nth-child(3) { opacity: 1; }
+
+  .progress-steps { display: flex; gap: 5px; margin-bottom: 20px; }
+  .progress-steps i { flex: 1; height: 2px; background: var(--ia-dim); }
+  .progress-steps i.done { background: var(--ia); }
+
+  .run-line { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: .5px solid var(--border-dim); font-size: 13px; }
+  .run-line .ok { color: var(--ia); font-size: 13px; }
+  .run-line .lbl { color: var(--txt-3); flex: 1; }
+  .run-line .t { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); }
+
+  .ttl { text-align: center; padding: 12px; margin-bottom: 12px; background: var(--surface-dim); border-radius: 8px; font-size: 12px; color: var(--txt-mut-3); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="spec">DA COPILOTE v2 — LES 11 GABARITS</div>
+<p class="note">
+  Le Copilote est la surface IA : le mauve <code>--violet #B497F0</code> y est
+  l'accent dominant. L'audit M115 a compté <strong>58 usages de mint à migrer</strong>
+  sur cette surface ; seuls les 3 du brief du matin restent (la veille n'est pas de l'IA).<br><br>
+  La v1 ne dessinait que 4 gabarits. Cette v2 couvre les 11 recensés par M115.
+  <strong>Principe inchangé :</strong> un seul point d'entrée — les six intentions
+  remplacent les chips, les six exemples et les trois cartes explicatives.
+</p>
+
+<div class="spec">1 · ACCUEIL</div>
+<p class="note">
+  Le bandeau de garanties est absorbé sous le titre. Le brief descend sous le
+  point d'entrée : ce n'est pas une action de Copilote.
+  Les sous-titres des six intentions viennent du serveur (M115 : à ajouter).
+</p>
+
+<div class="col">
+  <div class="hero">
+    <div class="kicker">COPILOTE</div>
+    <h1>Dites ce que vous cherchez.</h1>
+    <p>55 sources · chaque chiffre daté · La Réunion uniquement</p>
+  </div>
+
+  <div class="intents">
+    <div class="intent"><i class="ti ti-database-search"></i><div class="lbl">Interroger mes données</div><div class="sub">Compter, filtrer, croiser</div></div>
+    <div class="intent"><i class="ti ti-map-search"></i><div class="lbl">Trouver une parcelle</div><div class="sub">Selon votre programme</div></div>
+    <div class="intent"><i class="ti ti-folder-plus"></i><div class="lbl">Créer un projet</div><div class="sub">Cadrage guidé</div></div>
+    <div class="intent"><i class="ti ti-world-search"></i><div class="lbl">Rechercher sur le web</div><div class="sub">Avec la source citée</div></div>
+    <div class="intent"><i class="ti ti-bell-plus"></i><div class="lbl">Mettre sous surveillance</div><div class="sub">Parcelle ou secteur</div></div>
+    <div class="intent"><i class="ti ti-tool"></i><div class="lbl">Ouvrir un outil</div><div class="sub">28 outils d'analyse</div></div>
+  </div>
+
+  <div class="composer">
+    <div class="field">Ou écrivez directement…</div>
+    <div class="send">Envoyer</div>
+  </div>
+  <div class="hint">Le Copilote comprend s'il faut chercher, vérifier ou veiller.</div>
+
+  <div class="brief">
+    <div class="brief-left">
+      <div class="dot"></div>
+      <div class="brief-lbl">Votre brief du matin</div>
+      <div class="brief-state">RIEN DE NEUF DEPUIS HIER</div>
+    </div>
+    <div style="font-size:15px;color:var(--txt-mut-3)">→</div>
+  </div>
+
+  <div class="section-lbl">REPRENDRE</div>
+  <div class="recent"><div class="q">Je cherche des terrains à fort potentiel</div><div class="t">14 MIN</div></div>
+  <div class="recent"><div class="q">Résidence 12 lots à Bras-Panon</div><div class="t">14 MIN</div></div>
+  <div class="see-all">VOIR TOUT · 13</div>
+</div>
+
+<div class="spec">2 · CHARGEMENT</div>
+<p class="note">
+  Trois points mauves en pulsation, une phrase. <strong>Jamais de fausse
+  progression</strong> — pas de barre qui prétend savoir où elle en est.
+</p>
+<div class="col">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div style="font-size:14px;color:var(--txt-mut)">Le Copilote instruit votre demande…</div>
+    </div>
+  </div>
+</div>
+
+<div class="spec">3 · RÉPONSE — DONNÉES DE L'APP</div>
+<p class="note">
+  Le récap M109 est une <strong>phrase</strong>, jamais un bouton. La source est
+  celle du critère (M116 D1 : BODACC pour la procédure, jamais un défaut cadastre).
+  Aucun bouton de confirmation — une réponse qui ne convient pas se relance.
+</p>
+<div class="col">
+  <div class="thread-user"><div>Combien de parcelles en procédure judiciaire à Saint-Denis ?</div></div>
+  <div class="card">
+    <div class="recap">J'ai compris : Saint-Denis · parcelles sous procédure judiciaire.</div>
+    <div class="val"><strong>126 parcelles</strong> à Saint-Denis appartiennent à un propriétaire sous procédure collective.</div>
+    <div class="src">SOURCE · BODACC — INGÉRÉ LE 16/08/2026</div>
+    <div class="porte"><i class="ti ti-map"></i> Voir sur la carte</div>
+  </div>
+  <div class="reply"><div class="field">Votre réponse…</div><div class="send">Répondre</div></div>
+  <div class="newthread"><i class="ti ti-refresh"></i> Nouveau fil</div>
+</div>
+
+<div class="spec">4 · RÉPONSE — RECHERCHE WEB (D5 : COURT)</div>
+<p class="note">
+  <strong>Deux phrases maximum</strong>, la source, la date. L'audit mesure
+  360–1035 caractères aujourd'hui — la cible est ~150. Pas d'enrobage,
+  pas de mise en contexte non demandée.
+</p>
+<div class="col">
+  <div class="thread-user"><div>Qui est le maire de La Possession ?</div></div>
+  <div class="card">
+    <div class="val">Le maire de La Possession est <strong>Vanessa Miranville</strong>.</div>
+    <div class="src">SOURCE · MON-MAIRE.FR — CONSULTÉ LE 18/08/2026</div>
+  </div>
+</div>
+
+<div class="spec">5 · PRÉCISION (GABARIT UNIQUE — D10)</div>
+<p class="note">
+  L'audit relève <strong>deux gabarits de précision</strong> (carte vs champ de fil) :
+  n'en garder qu'un. Le champ est <strong>dans la carte</strong>, sous la question,
+  autofocus. Placeholder « Votre réponse… », un seul cadre.
+</p>
+<div class="col">
+  <div class="card">
+    <div class="card-kicker">PRÉCISION</div>
+    <div class="val" style="margin-bottom:16px">Vous cherchez des parcelles d'au moins 1 000 m² à Saint-Benoît : quel est votre programme ?</div>
+    <div class="reply" style="margin-bottom:0"><div class="field">Votre réponse…</div><div class="send">Répondre</div></div>
+  </div>
+</div>
+
+<div class="spec">6 · RÉCAP-PÉAGE (MISSION LOURDE)</div>
+<p class="note">
+  Le seul écran qui garde des boutons : une <strong>action</strong> va être exécutée,
+  la confirmation protège. « Nouveau fil » et le TTL doivent y être présents (D8).
+</p>
+<div class="col">
+  <div class="card">
+    <div class="card-kicker">AVANT DE LANCER</div>
+    <div class="val">Rechercher des parcelles à <strong>Saint-Paul</strong>, ≥ 1 000 m², pour 15 logements, hors PPR rouge.</div>
+    <div class="src">431 663 PARCELLES AU CRIBLE · ~40 S</div>
+    <div class="peage"><div class="go">Lancer la recherche</div><div class="fix">Corriger</div></div>
+  </div>
+  <div class="newthread"><i class="ti ti-refresh"></i> Nouveau fil</div>
+</div>
+
+<div class="spec">7 · RUN EN COURS</div>
+<p class="note">
+  Les étapes réelles, cochées à mesure. Le temps écoulé en mono.
+  Aucune étape inventée — ce sont celles du moteur.
+</p>
+<div class="col">
+  <div class="card">
+    <div class="card-kicker">RECHERCHE EN COURS</div>
+    <div class="progress-steps"><i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i></div>
+    <div class="run-line"><span class="ok">✓</span><span class="lbl">Cadrage interprété</span><span class="t">0:02</span></div>
+    <div class="run-line"><span class="ok">✓</span><span class="lbl">Cascade d'exclusion</span><span class="t">0:11</span></div>
+    <div class="run-line"><span class="ok">✓</span><span class="lbl">Scoring des candidates</span><span class="t">0:24</span></div>
+    <div class="run-line"><span class="dots"><i></i><i></i><i></i></span><span class="lbl">Bilan à rebours</span><span class="t">—</span></div>
+    <div class="run-line" style="border-bottom:0;opacity:.4"><span style="color:var(--txt-mut-4)">·</span><span class="lbl">Rédaction de l'avis</span><span class="t">—</span></div>
+  </div>
+</div>
+
+<div class="spec">8 · REFUS AVEC VOIE (D6)</div>
+<p class="note">
+  Un refus n'emprunte <strong>jamais</strong> le gabarit PRÉCISION (pas de champ de
+  réponse — rien n'y débloquerait la situation). Il dit ce qui ne marche pas,
+  puis <strong>propose une voie cliquable</strong>, jamais « rendez-vous dans X ».
+</p>
+<div class="col">
+  <div class="thread-user"><div>Liste toutes les parcelles de Saint-Benoît</div></div>
+  <div class="card warn">
+    <div class="card-kicker warn">TROP DE RÉSULTATS</div>
+    <div class="val">21 671 parcelles à Saint-Benoît — trop pour une réponse ici. La carte les affiche toutes, filtrées.</div>
+    <div class="porte warn"><i class="ti ti-map"></i> Ouvrir la carte sur Saint-Benoît</div>
+  </div>
+</div>
+
+<div class="spec">9 · CRITÈRE NON APPLICABLE (M109 + D11)</div>
+<p class="note">
+  <strong>L'aveu d'abord</strong>, jamais le compte non filtré en réponse.
+  Si le seul critère n'est pas applicable : l'aveu seul, aucun chiffre, une voie.
+  Si un filtre applicable a agi : l'aveu, puis le sous-compte.
+</p>
+<div class="col">
+  <div class="card warn">
+    <div class="recap">J'ai compris : Saint-Denis · ≥ 5 000 m² · densité cible.</div>
+    <div class="val">Le critère « densité cible » n'est pas encore interrogeable ici. Sur le seul critère de surface : <strong>1 970 parcelles</strong> à Saint-Denis.</div>
+    <div class="src">SOURCE · CADASTRE — MILLÉSIME 2026-06</div>
+  </div>
+</div>
+
+<div class="spec">10 · ERREUR</div>
+<p class="note">
+  Message honnête, jamais un 500 nu, jamais un identifiant de run à l'écran.
+  Un bouton Réessayer sur place.
+</p>
+<div class="col">
+  <div class="card err">
+    <div class="card-kicker err">ÉCHEC</div>
+    <div class="val">Je n'ai pas pu instruire cette demande. L'incident est journalisé.</div>
+    <div class="porte" style="border-color:#5A3028;color:var(--danger)"><i class="ti ti-refresh"></i> Réessayer</div>
+  </div>
+</div>
+
+<div class="spec">11 · FIL EXPIRÉ (TTL)</div>
+<p class="note">
+  L'expiration est <strong>annoncée</strong>, jamais subie : le fil reste visible,
+  estompé, et ne repart de zéro qu'au message suivant. Présent sur tous les
+  chemins, y compris récap-péage et formulaire projet (D8).
+</p>
+<div class="col">
+  <div class="ttl">Nouvelle conversation — le fil précédent a expiré.</div>
+  <div style="opacity:.35">
+    <div class="thread-user"><div>Combien de parcelles à Saint-Paul ?</div></div>
+    <div class="card"><div class="val"><strong>51 129 parcelles</strong> recensées à Saint-Paul.</div></div>
+  </div>
+</div>
+
+<div class="spec">12 · FORMULAIRE PROJET (RAPPEL M113/M114)</div>
+<p class="note">
+  Le Copilote <strong>ne crée jamais</strong> un projet directement : il ouvre le
+  parcours guidé prérempli. Le gabarit est celui de
+  <code>docs/DA-PROJETS-v1.html</code> — accent mauve ici puisqu'on est dans le
+  Copilote, mint dans la section Projets. « Nouveau fil » et TTL présents (D8).
+</p>
+<div class="col">
+  <div class="card">
+    <div class="card-kicker">CRÉER UN PROJET · 3 / 5</div>
+    <div class="progress-steps"><i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i></div>
+    <div style="font-size:20px;color:var(--txt);margin-bottom:6px">Quel est le programme ?</div>
+    <div style="font-size:13px;color:var(--txt-mut-2);margin-bottom:16px">Nombre de logements, ou surface de plancher cible.</div>
+    <div class="reply" style="margin-bottom:0"><div class="field">13 logements</div><div class="send">Continuer →</div></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:.5px solid var(--ia-border);font-size:12px;color:var(--txt-mut-2)">
+      <span style="color:var(--ia)">✓</span> Résidence Barsac
+      <span style="color:var(--ia-border);margin:0 6px">·</span>
+      <span style="color:var(--ia)">✓</span> Sainte-Marie
+    </div>
+  </div>
+</div>
+
+<div class="spec">RÉCAP DES DÉFAUTS ADRESSÉS PAR LA REFONTE</div>
+<p class="note">
+  <strong>D5</strong> web trop long → gabarit 4, deux phrases.<br>
+  <strong>D6</strong> refus sans voie → gabarit 8, porte cliquable.<br>
+  <strong>D7</strong> récap redondant/slug → phrase lisible, jamais un slug.<br>
+  <strong>D8</strong> « Nouveau fil » + TTL absents → gabarits 6, 11, 12.<br>
+  <strong>D9</strong> chip web sans contexte conversationnel.<br>
+  <strong>D10</strong> gabarit précision double → gabarit 5 unique.<br>
+  <strong>Migration</strong> : 58 usages de mint → mauve <code>#B497F0</code>,
+  sauf les 3 du brief du matin.
+</p>
+
+</div>
+</body>
+</html>
