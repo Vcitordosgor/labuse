@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import {
-  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
-  type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
+  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, rejouerProjet, setStatutParcelle,
+  type Cadrage, type Identite, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
+  type ShortlistDiff, type StatutParcelle,
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
@@ -13,26 +14,21 @@ import { TierBadge } from '../outils/TierBadge'
 import { Tip } from '../Tip'
 
 const TYPE_LABEL: Record<string, string> = {
-  logements: 'Logements', etudiant: 'Logement étudiant', bureaux: 'Bureaux', autre: 'Projet',
-}
-const CONTRAINTE_LABEL: Record<string, string> = {
-  eviter_ppr: 'hors PPR', eviter_pollution: 'sol sain', eviter_abf: 'hors ABF', eviter_icpe: 'hors ICPE',
+  libre: 'Logement libre', social: 'Logement social', etudiant: 'Logement étudiant',
+  bureaux: 'Bureaux', autre: 'Projet', logements: 'Logements',
 }
 
-/** Critères résumés de la fiche → chips lisibles (mêmes libellés que la liste projets). */
-function criteres(f: FicheProjet): string[] {
+/** M120 — critères résumés du CADRAGE (facettes) + identité (indicatifs) → chips lisibles. */
+function criteres(c: Cadrage, id: Identite): string[] {
   const out: string[] = []
-  if (f.type_programme) {
-    const a = f.ampleur ?? {}
-    const n = a.logements ? ` ×${a.logements}` : a.sdp_m2 ? ` ${a.sdp_m2} m²` : ''
-    const g = a.niveaux ? ` R+${a.niveaux}` : ''
-    out.push(`${TYPE_LABEL[f.type_programme] ?? 'Projet'}${n}${g}`)
-  }
-  const p = f.perimetre
-  out.push(!p || p.mode === 'ile' ? "toute l'île" : p.mode === 'secteur' ? `secteur ${p.secteur}`
-    : (p.communes ?? []).length === 1 ? p.communes![0] : `${(p.communes ?? []).length} communes`)
-  if (f.contraintes?.length) out.push(f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · '))
-  if (f.budget_foncier_eur) out.push(fmtEurCompact(f.budget_foncier_eur))
+  const cs = c.communes ?? []
+  out.push(!cs.length ? "toute l'île" : cs.length === 1 ? cs[0] : `${cs.length} communes`)
+  if (c.surfaceMin != null || c.surfaceMax != null) out.push(`surface ${c.surfaceMin ?? 0}–${c.surfaceMax ?? '∞'} m²`)
+  if (c.zonagePlu?.length) out.push(`zonage ${c.zonagePlu.join('/')}`)
+  if (c.etatSol?.length) out.push(c.etatSol.map((e) => (e === 'nu' ? 'terrain nu' : 'terrain bâti')).join(' · '))
+  if (c.signaux?.length) out.push(`${c.signaux.length} signal${c.signaux.length > 1 ? 'aux' : ''} de vie`)
+  if (id.type_logement) out.push(`${TYPE_LABEL[id.type_logement] ?? id.type_logement} · indic.`)
+  if (id.budget_eur) out.push(`${fmtEurCompact(id.budget_eur)} · indic.`)
   return out
 }
 
@@ -81,24 +77,28 @@ function ProprioLine({ p }: { p?: ProprietairePublic | null }) {
 export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const qc = useQueryClient()
   const { setOpenProjet, openParcours, select } = useApp()
-  const proposed = useRef(false)
   const [drag, setDrag] = useState<{ idu: string; from: StatutParcelle } | null>(null)
   const [overCol, setOverCol] = useState<StatutParcelle | null>(null)
   const [expandCol, setExpandCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
   const [nomInput, setNomInput] = useState(nom)
   const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
+  const [dernierDiff, setDernierDiff] = useState<ShortlistDiff | null>(null)   // M120 : diff du dernier rejeu
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
 
-  // à l'ouverture : (re)proposer les parcelles du jour — idempotent, NON destructif (ON CONFLICT DO
-  // NOTHING). Garantit qu'« À trier » n'est jamais vide pour un projet jamais trié. Même source que le Tinder.
-  useEffect(() => {
-    if (!pid || proposed.current) return
-    proposed.current = true
-    proposerProjet(pid).then(() => qc.invalidateQueries({ queryKey: ['parcours', pid] }))
-  }, [pid, qc])
+  // M120 — PLUS DE RUN À L'OUVERTURE : la shortlist est FIGÉE au cadrage. On lit son état, on ne
+  // relance rien. Le seul rafraîchissement est le bouton « Rejouer » explicite ci-dessous.
+  const rejouer = useMutation({
+    mutationFn: () => rejouerProjet(pid),
+    onSuccess: (d) => {
+      setDernierDiff(d.shortlist)
+      qc.invalidateQueries({ queryKey: ['parcours', pid] })
+      qc.invalidateQueries({ queryKey: ['projet', pid] })
+      qc.invalidateQueries({ queryKey: ['projets'] })
+    },
+  })
 
   // LE geste de statut — UNE seule logique (drag, boutons, Tinder l'appellent tous). Optimiste +
   // resync CRM (retenue↔pipeline) + compteurs des fiches.
@@ -155,15 +155,19 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               <h1 data-kanban-nom className="truncate font-display text-lg font-bold text-txt-hi" title={projet?.nom ?? nom}>{projet?.nom ?? nom}</h1>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              {projet && criteres(projet.fiche).map((c, i) => (
+              {projet && criteres(projet.cadrage, projet.identite).map((c, i) => (
                 <span key={i} className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
               ))}
               {projet?.derniere_execution_at && (
-                <span className="whitespace-nowrap text-[10.5px] text-txt-dim">· rejoué {fmtDate(projet.derniere_execution_at)}</span>
+                <span data-kanban-cadrage-date className="whitespace-nowrap text-[10.5px] text-txt-dim">· cadrage du {fmtDate(projet.derniere_execution_at)}</span>
               )}
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <button data-kanban-rejouer disabled={rejouer.isPending} onClick={() => rejouer.mutate()}
+              className={`min-h-7 rounded-md px-2.5 py-1 text-[11px] transition-colors duration-quick ${projet?.shortlist_perimee ? 'border border-mint bg-mint/15 font-semibold text-mint hover:brightness-110' : 'border border-line-2 text-txt-mut hover:border-mint hover:text-txt-hi'}`}
+              title="Rejouer le cadrage sur les données du jour — vos tris sont conservés">
+              {rejouer.isPending ? 'Rejeu…' : projet?.shortlist_perimee ? '↻ Rejouer (cadrage modifié)' : '↻ Rejouer'}</button>
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
               className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi">Exporter</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
@@ -172,6 +176,15 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
           </div>
         </div>
+        {/* M120 — bandeau « cadrage modifié » (périmée) et diff du dernier rejeu (jamais un run muet). */}
+        {projet?.shortlist_perimee && !dernierDiff && (
+          <p data-kanban-perimee className="mt-1.5 rounded-md bg-mint/10 px-2 py-1 text-[10.5px] text-mint">
+            Le cadrage a changé — rejouez pour rafraîchir la shortlist (vos tris seront conservés).</p>
+        )}
+        {dernierDiff && (
+          <p data-kanban-diff className="mt-1.5 text-[10.5px] text-txt-dim">
+            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.</p>
+        )}
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>
 

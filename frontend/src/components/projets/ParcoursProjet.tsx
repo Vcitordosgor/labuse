@@ -1,87 +1,107 @@
-// M113 · Phase 3 → M114 · Phase 1 — LE PARCOURS PROJET GUIDÉ, refondu d'après DA-PROJETS-v1 (font
-// foi). UNE question à la fois en 24 px, barre de progression en 5 segments (mint pour les faits),
-// compteur « 3 / 5 · PROGRAMME » en mono, cadre mint (seul bloc encadré = la tâche active). Clavier :
-// Entrée valide et avance, Échap ferme, Retour revient (« ↵ POUR CONTINUER » en mono discret). Le fil
-// des réponses déjà données reste en bas, en petit, avec une coche mint. La commune vient du
-// RÉFÉRENTIEL (/communes), jamais du texte libre. Le Copilote ne crée plus jamais directement : il
-// ouvre CE formulaire, prérempli de ce qu'il a compris. Même composant côté section Projets.
+// M120 — LE PARCOURS PROJET : IDENTITÉ (nom · périmètre · budget · type · livraison) → CADRAGE
+// (les facettes de la carte, RÉUTILISÉES via FiltreFacettes) → CRÉER = le run part UNE FOIS, la
+// shortlist est figée et datée. Doctrine : un critère = un seul endroit (le périmètre et les
+// facettes vivent dans le cadrage) ; le budget, le type et la date sont INFORMATIFS et l'écran le
+// DIT (« indicatif — sans effet sur la sélection »). DA-PROJETS-v1 : une question à la fois en
+// 24 px, progression en segments, clavier (Entrée avance, Échap ferme, Retour recule).
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { createProjet, getCommunes, type CommuneInfo, type FicheProjet } from '../../lib/api'
 
-type Mode = 'logements' | 'surface'
+import { createProjet, getProjetTypes, type Cadrage, type Identite, type ShortlistDiff, type TypeLogement } from '../../lib/api'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'
+import { FiltreFacettes } from '../panel/FiltreFacettes'
+import { FiltreProvider } from '../panel/filtreContext'
+import { EMPTY_FILTERS, type Filters } from '../../store/useApp'
+
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
-const ETAPES = ['NOM', 'COMMUNE', 'PROGRAMME', 'CRITÈRES', 'RÉCAPITULATIF']
+const ETAPES = ['NOM', 'PÉRIMÈTRE', 'BUDGET', 'TYPE', 'LIVRAISON', 'CADRAGE', 'RÉCAPITULATIF']
+const N = ETAPES.length
 
-// M117 · gabarit 12 — l'accent est THÉMÉ : MINT dans la section Projets (défaut), MAUVE dans le
-// Copilote (surface IA). Le composant est partagé ; seul l'accent change.
+// M117 · gabarit 12 — accent THÉMÉ : MINT dans la section Projets, MAUVE dans le Copilote.
 const ACCENT_MINT = { c: '#4ADE80', bg: '#12291D', on: '#05140B' }
 const ACCENT_IA = { c: '#B497F0', bg: '#1A1430', on: '#14091F' }
 
 export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   prefill?: Record<string, unknown> | null
-  onVoir: (projet: { id: number; nom: string }) => void   // « Voir le projet → » (mécanique M107-B)
+  onVoir: (projet: { id: number; nom: string }) => void
   onFermer: () => void
-  accent?: 'mint' | 'ia'                                   // Projets = mint (défaut) · Copilote = ia (mauve)
-  plein?: boolean                                          // page Projets : occupe l'écran (layout géré au-dessus)
+  accent?: 'mint' | 'ia'
+  plein?: boolean
 }) {
-  const A = accent === 'ia' ? ACCENT_IA : ACCENT_MINT   // M117 — accent thémé (mauve dans le Copilote)
-  const [communes, setCommunes] = useState<CommuneInfo[]>([])
-  useEffect(() => { getCommunes().then(setCommunes).catch(() => {}) }, [])
-
+  const A = accent === 'ia' ? ACCENT_IA : ACCENT_MINT
   const pf = prefill || {}
-  const [nom, setNom] = useState('')
-  const [commune, setCommune] = useState<string>(typeof pf.commune === 'string' ? pf.commune : '')
-  const [mode, setMode] = useState<Mode>('logements')
-  const [logements, setLogements] = useState<string>(typeof pf.programme_logements === 'number' ? String(pf.programme_logements) : '')
-  const [surface, setSurface] = useState<string>('')
-  const [budget, setBudget] = useState<string>(typeof pf.budget_eur === 'number' ? String(pf.budget_eur) : '')
-  const [criteres, setCriteres] = useState<string>('')
-
   const [etape, setEtape] = useState(0)
+  const [nom, setNom] = useState('')
+  const [ile, setIle] = useState(false)
+  const [communes, setCommunes] = useState<string[]>(typeof pf.commune === 'string' ? [pf.commune] : [])
+  const [budget, setBudget] = useState<string>(typeof pf.budget_eur === 'number' ? String(pf.budget_eur) : '')
+  const [type, setType] = useState<string>('')
+  const [livraison, setLivraison] = useState<string>('')
+  // le CADRAGE local (les facettes) — un jeu de filtres complet, isolé du store de la carte.
+  const [cadrageFacettes, setCadrageFacettes] = useState<Filters>({ ...EMPTY_FILTERS })
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
-  const [cree, setCree] = useState<{ id: number; nom: string; existing?: boolean } | null>(null)
+  const [cree, setCree] = useState<{ id: number; nom: string; existing?: boolean; shortlist?: ShortlistDiff } | null>(null)
+  const [types, setTypes] = useState<TypeLogement[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
-  // les étapes à champ ont un autofocus (le keydown remonte au conteneur) ; l'étape RÉCAP n'a pas
-  // de champ → on focalise le conteneur pour qu'Entrée y déclenche la création (clavier sans souris).
-  useEffect(() => { if (etape === 4) rootRef.current?.focus() }, [etape])
+  useEffect(() => { getProjetTypes().then((r) => setTypes(r.types)).catch(() => {}) }, [])
+  useEffect(() => { if (etape === N - 1) rootRef.current?.focus() }, [etape])
 
-  const progNum = mode === 'logements' ? parseInt(logements || '0', 10) : parseInt(surface || '0', 10)
-  const progLabel = progNum > 0 ? (mode === 'logements' ? `${progNum} logements` : `${progNum} m² de plancher`) : null
-  const nomEffectif = nom.trim() || (commune ? `Projet ${commune}` : 'Nouveau projet')
+  const nomEffectif = nom.trim() || (communes.length === 1 ? `Projet ${communes[0]}` : 'Nouveau projet')
+  const perimetreLabel = ile || communes.length === 0 ? "toute l'île"
+    : communes.length === 1 ? communes[0] : `${communes.length} communes`
 
-  const fiche: FicheProjet = useMemo(() => ({
-    type_programme: 'logements',
-    ampleur: mode === 'logements' ? { logements: progNum || undefined } : { sdp_m2: progNum || undefined },
-    perimetre: { mode: 'communes', communes: commune ? [commune] : [] },
-    ...(budget.trim() ? { budget_foncier_eur: parseInt(budget, 10) } : {}),
-    ...(criteres.trim() ? { criteres_libres: criteres.trim() } : {}),
-  }), [mode, progNum, commune, budget, criteres])
+  // le binding partagé : FiltreFacettes écrit ICI (jamais dans le store de la carte).
+  const binding = useMemo(() => ({
+    filters: cadrageFacettes,
+    setFilter: <K extends keyof Filters>(k: K, v: Filters[K]) =>
+      setCadrageFacettes((c) => ({ ...c, [k]: v })),
+  }), [cadrageFacettes])
 
-  const peutAvancer = etape === 0 ? true : etape === 1 ? !!commune : etape === 2 ? progNum > 0 : true
+  // le CADRAGE servi = les facettes + le périmètre (un seul endroit) ; budget/type/date = identité.
+  const cadrage: Cadrage = useMemo(() => {
+    const c: Cadrage = {}
+    for (const [k, v] of Object.entries(cadrageFacettes) as [keyof Filters, unknown][]) {
+      const empty = v === null || v === false || (Array.isArray(v) && v.length === 0)
+      if (!empty && k !== 'analyseLabuse') (c as Record<string, unknown>)[k] = v
+    }
+    if (!ile && communes.length) c.communes = communes
+    else delete c.communes
+    return c
+  }, [cadrageFacettes, ile, communes])
+
+  const identite: Identite = useMemo(() => ({
+    ...(budget.trim() ? { budget_eur: parseInt(budget, 10) } : {}),
+    ...(type ? { type_logement: type } : {}),
+    ...(livraison.trim() ? { date_livraison: livraison.trim() } : {}),
+  }), [budget, type, livraison])
 
   const creer = async () => {
     setEnvoi(true); setErreur(null)
     try {
-      const r = await createProjet({ fiche, nom: nom.trim() || undefined })
-      setCree({ id: r.projet.id, nom: r.projet.nom, existing: r.existing })
-    } catch { setErreur('La création a échoué — vérifiez la commune et le programme, puis réessayez.') }
+      const r = await createProjet({ cadrage, identite, nom: nom.trim() || undefined })
+      setCree({ id: r.projet.id, nom: r.projet.nom, existing: r.existing, shortlist: r.shortlist })
+    } catch { setErreur('La création a échoué — réessayez.') }
     finally { setEnvoi(false) }
   }
-  const avancer = () => { if (etape < 4) { if (peutAvancer) setEtape(etape + 1) } else void creer() }
+  const avancer = () => { if (etape < N - 1) setEtape(etape + 1); else void creer() }
   const reculer = () => { if (etape > 0) setEtape(etape - 1); else onFermer() }
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') { e.preventDefault(); avancer() }
+    // sur le CADRAGE, Entrée est laissée aux champs de facette (ne pas avancer par mégarde).
+    if (e.key === 'Enter' && etape !== 5) { e.preventDefault(); avancer() }
     else if (e.key === 'Escape') { e.preventDefault(); onFermer() }
   }
 
-  // ── projet créé : « Voir le projet → » (ouvre CE projet) ──
+  // ── projet créé : la shortlist est figée ──
   if (cree) {
+    const d = cree.shortlist
     return (
       <div data-parcours-projet-cree style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24 }}>
-        <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 16px' }}>
+        <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 8px' }}>
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
+        {d && <p data-cree-shortlist style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
+          Shortlist figée : <b style={{ color: A.c }}>{d.n_shortlist}</b> parcelle{d.n_shortlist > 1 ? 's' : ''} à trier.
+        </p>}
         <div style={{ display: 'flex', gap: 12 }}>
           <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
             style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
@@ -94,27 +114,32 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const champ = { width: '100%', height: 52, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 8, padding: '0 16px', fontSize: 22, color: '#ECF5EF', outline: 'none' } as const
   const QUESTIONS = [
     ['Quel nom pour ce projet ?', 'Facultatif — un nom vous aide à le retrouver.'],
-    ['Sur quelle commune ?', 'Depuis le référentiel des communes — jamais une saisie libre.'],
-    ['Quel est le programme ?', 'Nombre de logements, ou surface de plancher cible.'],
-    ['Des critères particuliers ?', 'Budget foncier, contraintes — facultatif.'],
-    ['On récapitule.', 'Vérifiez avant de créer — vous pourrez tout rouvrir ensuite.'],
+    ['Sur quel périmètre ?', 'Une ou plusieurs communes, ou toute l’île.'],
+    ['Un budget foncier ?', 'Indicatif — il figure sur le projet, sans effet sur la sélection.'],
+    ['Quel type de logement ?', 'Indicatif — le moteur ne distingue pas les parcelles par type.'],
+    ['Une date de livraison visée ?', 'Indicatif — pour votre suivi, sans effet sur la sélection.'],
+    ['Affinez le cadrage.', 'Les mêmes critères que la carte. La shortlist sera figée sur ce cadrage.'],
+    ['On récapitule.', 'Vérifiez avant de créer — le cadrage restera modifiable.'],
   ]
+  const noteInfo = (txt: string) => (
+    <p style={{ fontSize: 12, color: '#6F8578', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ color: '#E0B341' }}>ⓘ</span>{txt}
+    </p>
+  )
 
-  // le fil des réponses déjà données (coche mint) — steps franchis, valeurs non vides.
   const trail: string[] = []
-  if (etape > 0 && (nom.trim() || commune)) trail.push(nomEffectif)
-  if (etape > 1 && commune) trail.push(commune)
-  if (etape > 2 && progLabel) trail.push(progLabel)
-  if (etape > 3 && budget.trim()) trail.push(`budget ${parseInt(budget, 10).toLocaleString('fr-FR')} €`)
+  if (etape > 0 && nom.trim()) trail.push(nomEffectif)
+  if (etape > 1) trail.push(perimetreLabel)
+  if (etape > 2 && budget.trim()) trail.push(`budget ${parseInt(budget, 10).toLocaleString('fr-FR')} € (indic.)`)
+  if (etape > 3 && type) trail.push(`${types.find((t) => t.cle === type)?.libelle ?? type} (indic.)`)
 
   return (
     <div data-parcours-projet ref={rootRef} tabIndex={-1} onKeyDown={onKey}
       style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24, outline: 'none' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c }}>NOUVEAU PROJET</div>
-        <div data-parcours-step style={{ fontFamily: MONO, fontSize: 12, color: '#5F7267' }}>{etape + 1} / 5 · {ETAPES[etape]}</div>
+        <div data-parcours-step style={{ fontFamily: MONO, fontSize: 12, color: '#5F7267' }}>{etape + 1} / {N} · {ETAPES[etape]}</div>
       </div>
-      {/* barre de progression — 5 segments (mint pour les faits) */}
       <div data-parcours-progress style={{ display: 'flex', gap: 5, marginBottom: 28 }}>
         {ETAPES.map((_, i) => <i key={i} style={{ flex: 1, height: 2, background: i <= etape ? A.c : '#1E2A23' }} />)}
       </div>
@@ -130,49 +155,69 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
       )}
       {etape === 1 && (
         <div style={{ marginBottom: 28 }}>
-          <select data-projet-commune autoFocus value={commune} onChange={(e) => setCommune(e.target.value)} style={champ}>
-            <option value="">— choisir une commune —</option>
-            {communes.map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <button data-projet-ile onClick={() => setIle(true)}
+              style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: ile ? A.bg : 'transparent', color: ile ? A.c : '#8FA69A' }}>Toute l’île</button>
+            <button data-projet-communes-mode onClick={() => setIle(false)}
+              style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: !ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: !ile ? A.bg : 'transparent', color: !ile ? A.c : '#8FA69A' }}>Communes précises</button>
+          </div>
+          {!ile && (
+            <div data-projet-communes style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
+              {CP_COMMUNES.map(([cp, nomC]) => {
+                const on = communes.includes(nomC)
+                return (
+                  <button key={cp} onClick={() => setCommunes(on ? communes.filter((x) => x !== nomC) : [...communes, nomC])}
+                    title={nomC}
+                    style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : '#080D0A', color: on ? A.c : '#8FA69A' }}>{nomC}</button>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
       {etape === 2 && (
         <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            {(['logements', 'surface'] as Mode[]).map((m) => (
-              <button key={m} data-projet-mode={m} onClick={() => setMode(m)}
-                style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
-                  border: mode === m ? `.5px solid ${A.c}` : '.5px solid #1E2A23',
-                  background: mode === m ? A.bg : 'transparent', color: mode === m ? A.c : '#8FA69A' }}>
-                {m === 'logements' ? 'Logements' : 'Surface de plancher'}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <input data-projet-programme autoFocus type="number" min="1"
-              value={mode === 'logements' ? logements : surface}
-              onChange={(e) => (mode === 'logements' ? setLogements : setSurface)(e.target.value)}
-              placeholder={mode === 'logements' ? 'Ex. 13' : 'Ex. 2000'} style={{ ...champ, flex: 1 }} />
-            <span style={{ fontSize: 14, color: '#6F8578' }}>{mode === 'logements' ? 'logements' : 'm² de plancher'}</span>
-          </div>
+          <input data-projet-budget autoFocus type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
+            placeholder="Budget foncier en € (facultatif)" style={champ} />
+          {noteInfo('Indicatif — sans effet sur la sélection des parcelles.')}
         </div>
       )}
       {etape === 3 && (
-        <div style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <input data-projet-budget autoFocus type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
-            placeholder="Budget foncier en € (facultatif)" style={champ} />
-          <input data-projet-criteres value={criteres} onChange={(e) => setCriteres(e.target.value)}
-            placeholder="Critères libres (facultatif)" style={{ ...champ, fontSize: 16 }} />
+        <div style={{ marginBottom: 28 }}>
+          <div data-projet-type style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {types.map((t) => {
+              const on = type === t.cle
+              return (
+                <button key={t.cle} onClick={() => setType(on ? '' : t.cle)}
+                  style={{ padding: '9px 16px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : 'transparent', color: on ? A.c : '#8FA69A' }}>{t.libelle}</button>
+              )
+            })}
+          </div>
+          {noteInfo('Indicatif — le moteur ne distingue pas les parcelles par type de logement.')}
         </div>
       )}
       {etape === 4 && (
+        <div style={{ marginBottom: 28 }}>
+          <input data-projet-livraison autoFocus type="month" value={livraison} onChange={(e) => setLivraison(e.target.value)}
+            style={champ} />
+          {noteInfo('Indicatif — pour votre suivi, sans effet sur la sélection.')}
+        </div>
+      )}
+      {etape === 5 && (
+        <div data-projet-cadrage style={{ marginBottom: 28, maxHeight: '52vh', overflowY: 'auto' }}>
+          <p style={{ fontSize: 12, color: '#6F8578', margin: '0 0 14px' }}>Périmètre : <b style={{ color: '#ECF5EF' }}>{perimetreLabel}</b> · modifiable à l’étape précédente.</p>
+          <FiltreProvider value={binding}><FiltreFacettes /></FiltreProvider>
+        </div>
+      )}
+      {etape === 6 && (
         <div data-projet-recap style={{ marginBottom: 28, border: '.5px solid #1E2A23', background: '#080D0A', borderRadius: 8, padding: '16px 18px' }}>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#ECF5EF' }}>
             <li><span style={{ color: '#6F8578' }}>Nom : </span>{nomEffectif}</li>
-            <li><span style={{ color: '#6F8578' }}>Commune : </span>{commune || <em style={{ color: '#E0B341' }}>à choisir</em>}</li>
-            <li><span style={{ color: '#6F8578' }}>Programme : </span>{progLabel || <em style={{ color: '#E0B341' }}>à renseigner</em>}</li>
-            {budget.trim() && <li><span style={{ color: '#6F8578' }}>Budget foncier : </span>{parseInt(budget, 10).toLocaleString('fr-FR')} €</li>}
-            {criteres.trim() && <li><span style={{ color: '#6F8578' }}>Critères : </span>{criteres.trim()}</li>}
+            <li><span style={{ color: '#6F8578' }}>Périmètre : </span>{perimetreLabel}</li>
+            <li><span style={{ color: '#6F8578' }}>Cadrage : </span>{Object.keys(cadrage).filter((k) => k !== 'communes').length} facette{Object.keys(cadrage).filter((k) => k !== 'communes').length > 1 ? 's' : ''} active{Object.keys(cadrage).filter((k) => k !== 'communes').length > 1 ? 's' : ''}</li>
+            {budget.trim() && <li><span style={{ color: '#6F8578' }}>Budget foncier : </span>{parseInt(budget, 10).toLocaleString('fr-FR')} € <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
+            {type && <li><span style={{ color: '#6F8578' }}>Type : </span>{types.find((t) => t.cle === type)?.libelle ?? type} <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
+            {livraison.trim() && <li><span style={{ color: '#6F8578' }}>Livraison : </span>{livraison} <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
           </ul>
         </div>
       )}
@@ -185,12 +230,12 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           <span style={{ fontFamily: MONO, fontSize: 12, color: '#4A5C52' }}>↵ POUR CONTINUER</span>
-          {etape < 4 ? (
-            <button data-projet-suivant disabled={!peutAvancer} onClick={avancer}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: peutAvancer ? 1 : 0.4 }}>Continuer →</button>
+          {etape < N - 1 ? (
+            <button data-projet-suivant onClick={avancer}
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Continuer →</button>
           ) : (
-            <button data-projet-creer disabled={envoi || !commune || progNum <= 0} onClick={() => void creer()}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: (envoi || !commune || progNum <= 0) ? 0.4 : 1 }}>
+            <button data-projet-creer disabled={envoi} onClick={() => void creer()}
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>
               {envoi ? 'Création…' : 'Créer le projet'}</button>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
+  getCarteDecision, getParcoursEtat, setStatutParcelle,
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { fmtInt, fmtM2, iduComplet } from '../../lib/format'
@@ -21,16 +21,11 @@ export function ParcoursTinder() {
   const retourProjet = () => (parcours ? setOpenProjet({ id: parcours.id, nom: parcours.nom }) : setView('projets'))
   const qc = useQueryClient()
   const pid = parcours?.id ?? 0
-  const proposed = useRef(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
 
-  // À l'entrée : (re)proposer les parcelles du jour (idempotent, préserve les décisions) puis lire l'état.
+  // M120 — PLUS DE RUN À L'ENTRÉE : la shortlist est FIGÉE au cadrage. On lit l'état, on ne relance
+  // rien (le rejeu est un geste explicite, dans le kanban). On trie ce qui a été figé.
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
-  useEffect(() => {
-    if (!pid || proposed.current) return
-    proposed.current = true
-    proposerProjet(pid).then(() => qc.invalidateQueries({ queryKey: ['parcours', pid] }))
-  }, [pid, qc])
 
   const etat = etatQ.data
   const deck = etat?.proposees ?? []
