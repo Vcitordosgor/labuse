@@ -50,10 +50,11 @@ CAS_COMPTE = [
             "ON p.idu=pm.idu WHERE pm.siren='310863592'"},
 ]
 
-# ── concepts-outils : la demande OUVRE l'outil (porte cliquable) ──
+# ── concepts-outils : M118 — ouvrir un outil QUITTE le chat → refus + voie « outils » (navigation,
+# jamais exécution). Le comptage facette (au-dessus) reste, lui, une mission 1 servie. ──
 CAS_PORTE = [
-    {"q": "Montre-moi les parcelles fantômes à Saint-Paul", "porte": "fantome"},
-    {"q": "Quelles parcelles de bailleurs sociaux à Saint-Denis", "porte": "bailleur"},
+    {"q": "Montre-moi les parcelles fantômes à Saint-Paul", "voie": "outils"},
+    {"q": "Quelles parcelles de bailleurs sociaux à Saint-Denis", "voie": "outils"},
 ]
 
 
@@ -73,10 +74,11 @@ def main() -> int:
                 print(f" OK  [{oracle}] {c['q'][:64]}")
         for c in CAS_PORTE:
             rep = answer(db, c["q"])
-            if rep.get("porte") != c["porte"]:
-                echecs.append((c["q"], f"porte {c['porte']} attendue, obtenu {rep.get('porte')}"))
+            got = (rep.get("voie") or {}).get("cible")
+            if rep.get("refus") != "hors_mission" or got != c["voie"]:
+                echecs.append((c["q"], f"refus-voie {c['voie']} attendu, obtenu refus={rep.get('refus')} voie={got}"))
             else:
-                print(f" OK  [porte {c['porte']}] {c['q'][:56]}")
+                print(f" OK  [voie {c['voie']}] {c['q'][:56]}")
     total = len(CAS_COMPTE) + len(CAS_PORTE)
     print(f"\n=== BILAN FACETTE M110 : {total - len(echecs)}/{total} ===")
     for q, why in echecs:

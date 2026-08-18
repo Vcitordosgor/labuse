@@ -148,7 +148,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, chiffres, occupe, r
           par le serveur (« {n} outils » → MODULES.length, aucun compte en dur). Un clic sélectionne
           (ou désélectionne) le scénario ; le champ adapte son placeholder. Surface IA → mauve. */}
       {!reponse && scenarios.length > 0 && (
-        <div data-accueil-intents className="mb-3.5 grid grid-cols-2 gap-2 min-[560px]:grid-cols-3">
+        <div data-accueil-intents className="mb-3.5 grid grid-cols-1 gap-2 min-[520px]:grid-cols-2">
           {scenarios.map((s) => {
             const on = s.cle === scenario
             const sub = (s.sub || '').replace('{n}', String(MODULES.length))

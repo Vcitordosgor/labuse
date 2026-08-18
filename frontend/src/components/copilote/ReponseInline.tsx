@@ -20,7 +20,19 @@ const KICKER: Record<string, string> = {
 
 export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill,
-    setView, setCommune, setFilters, openSurveillance, toggleOutils, outilsOpen } = useApp()
+    setView, setCommune, setFilters, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
+  // M118 — la VOIE d'un refus-voie : NAVIGATION pure vers la surface qui fait le travail (jamais une
+  // exécution). Chaque cible mène à son écran ; la fiche/courrier ouvre la parcelle si l'IDU est connu.
+  const allerVoie = () => {
+    const v = v2.voie!
+    if (v.cible === 'projets') setView('projets')
+    else if (v.cible === 'surveillance') openSurveillance('secteurs')
+    else if (v.cible === 'outils') { if (!outilsOpen) toggleOutils() }
+    else if (v.cible === 'fiche' || v.cible === 'courriers') {
+      if (v.idu) { setView('cartes'); select(v.idu) } else if (v.cible === 'courriers') setModule('courriers')
+      else setView('cartes')
+    }
+  }
   const ouvrir = () => {
     if (!v2.porte) return
     if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
@@ -89,6 +101,13 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
         <button data-reponse-outils onClick={() => { if (!outilsOpen) toggleOutils() }}
           className={`mt-3.5 inline-flex rounded-lg border px-3.5 py-2 font-display text-[12.5px] transition-colors duration-quick ${porteCls}`}>
           Voir les outils d'analyse →
+        </button>
+      )}
+      {/* M118 — la VOIE d'un refus-voie : navigation vers la surface qui fait le travail. */}
+      {v2.voie && (
+        <button data-reponse-voie data-voie-cible={v2.voie.cible} onClick={allerVoie}
+          className={`mt-3.5 inline-flex rounded-lg border px-3.5 py-2 font-display text-[12.5px] transition-colors duration-quick ${porteCls}`}>
+          {v2.voie.libelle} →
         </button>
       )}
       {(v2.sources?.length ?? 0) > 0 && (

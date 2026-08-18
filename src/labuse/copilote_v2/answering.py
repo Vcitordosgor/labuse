@@ -327,19 +327,17 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
 # M117 · Phase 2.1 — `sub` = le sous-titre de chaque intention (grille d'accueil, maquette DA v2),
 # servi par le serveur. « {n} » dans le sous-titre outil = le compte des outils, substitué au front
 # par MODULES.length (aucun nombre en dur — le registre des outils vit côté front).
+# M118 — le Copilote resserré à 4 MISSIONS. Le reste (trouver/instruire, créer un projet, surveiller,
+# ouvrir un outil, rédiger un courrier) quitte le chat et reçoit un REFUS avec voie cliquable.
 SCENARIOS: dict[str, dict] = {
-    "donnees": {"libelle": "Interroger mes données", "intent": "QUESTION", "sub": "Compter, filtrer, croiser",
+    "donnees": {"libelle": "Trouver une donnée", "intent": "QUESTION", "sub": "Compter, filtrer, croiser",
                 "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?"},
-    "parcelle": {"libelle": "Trouver une parcelle", "intent": "RECHERCHE", "sub": "Selon votre programme",
-                 "placeholder": "Ex. 15 logements à Saint-Paul, ≥ 2000 m², détenues par des personnes morales…"},
-    "projet": {"libelle": "Créer un projet", "intent": "PROJET", "sub": "Cadrage guidé",
-               "placeholder": "Ex. résidence 12 lots à Bras-Panon (facultatif — le formulaire s'ouvre)"},
-    "web": {"libelle": "Rechercher sur le web", "intent": "QUESTION", "sub": "Avec la source citée",
+    "web": {"libelle": "Renseigner par le web", "intent": "QUESTION", "sub": "Court, sourcé, daté",
             "placeholder": "Ex. qui est le maire de Saint-Denis ?"},
-    "surveillance": {"libelle": "Mettre sous surveillance", "intent": "VEILLE", "sub": "Parcelle ou secteur",
-                     "placeholder": "Ex. les nouveaux permis à Saint-Paul"},
-    "outil": {"libelle": "Ouvrir un outil", "intent": "OUTIL", "sub": "{n} outils d'analyse",
-              "placeholder": "Ex. le baromètre du foncier, écrire au propriétaire, la calculette foncière…"},
+    "expliquer": {"libelle": "Expliquer une notion", "intent": "EXPLIQUER", "sub": "AU, ZFANG, charge foncière…",
+                  "placeholder": "Ex. qu'est-ce qu'une zone AU ? c'est quoi la charge foncière ?"},
+    "preparer": {"libelle": "Préparer un script", "intent": "PREPARER", "sub": "Appel ou argumentaire",
+                 "placeholder": "Ex. prépare un argumentaire pour aborder le propriétaire"},
 }
 
 
@@ -408,8 +406,6 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # projet (parcours guidé, jamais de création directe). Les autres forcent l'intent après classify.
     if scenario == "web":
         return _reply_web(db, message, history)
-    if scenario == "projet":
-        return _projet_form(db, message)
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -431,8 +427,11 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # partout où une interprétation a eu lieu. Les missions lourdes gardent leur récap-péage M78
     # (pas de doublon) ; hors-sujet/dégradé n'interprètent rien. Jamais un slug : clés traduites,
     # clé inconnue ÉLAGUÉE (plutôt muette que jargonnante).
-    if (route.intent in ("QUESTION", "OUTIL", "PROJET", "VEILLE")
-            and not rep.get("degraded") and rep.get("refus") != "hors_sujet"):
+    # M118 — le récap systématique ne vaut plus que pour la MISSION 1 (QUESTION facette) : c'est la
+    # seule où une interprétation de paramètres/critères a lieu. Web/expliquer/préparer et les
+    # refus-voies n'interprètent pas de critères — pas de récap.
+    if (route.intent == "QUESTION" and not rep.get("web")
+            and not rep.get("degraded") and rep.get("refus") not in ("hors_sujet", "hors_mission")):
         compris = _compris_fr(route.intent, route.params or {})
         # M110 — le récap NOMME les critères de facette appliqués (au-delà des params du routeur :
         # friche, procédure, copropriété, zone U…) — « comme aujourd'hui » pour commune/surface.
@@ -484,6 +483,66 @@ def _compris_fr(intent: str, params: dict) -> str | None:
     return f"J'ai compris : {tete}" + (f" — {' · '.join(bouts)}." if bouts else ".")
 
 
+# ───────────────────────── M118 — refus-voie + les 2 missions nouvelles ─────────────────────────
+def _refus_voie(db: Session, message: str, intent: str, texte: str, cible: str, libelle: str,
+                idu: str | None = None) -> dict:
+    """Ce qui QUITTE le chat (instruire, créer un projet, surveiller, ouvrir un outil, rédiger un
+    courrier) reçoit un REFUS + une VOIE cliquable (gabarit D6, NAVIGATION pure, jamais une exécution).
+    `cible` ∈ {projets, surveillance, outils, fiche, courriers}."""
+    telemetrie.refus(db, f"hors_mission:{cible}", message, intent)
+    return _reply(texte, intent, refus="hors_mission",
+                  voie={"cible": cible, "libelle": libelle, **({"idu": idu} if idu else {})})
+
+
+EXPLIQUE_SYSTEM = (
+    "Tu es le copilote foncier de LABUSE (La Réunion). On te demande d'EXPLIQUER une NOTION "
+    "d'urbanisme, de foncier ou d'immobilier (zone AU, ZFANG, charge foncière, ANRU, PPR, SRU, "
+    "défiscalisation, coefficient d'emprise…). Réponds en 2 à 4 phrases, pédagogique et CONCRET, "
+    "adapté au contexte réunionnais quand c'est pertinent. RÈGLES ABSOLUES : (1) une notion s'explique "
+    "SANS COMPTER — n'avance AUCUN chiffre sur une commune ou une parcelle précise, aucune statistique "
+    "LABUSE ; (2) si la demande n'est PAS une notion d'urbanisme/foncier/immobilier (météo, cuisine, "
+    "autre), réponds EXACTEMENT : « HORS_SUJET ». Pas d'introduction, pas d'URL.")
+
+PREPARE_SYSTEM = (
+    "Tu es le copilote foncier de LABUSE (La Réunion). On te demande de PRÉPARER un SCRIPT D'APPEL ou "
+    "un ARGUMENTAIRE pour aborder un propriétaire/vendeur. Rends un script COURT et structuré (accroche "
+    "courtoise · intérêt · proposition · ouverture), ton professionnel et respectueux. RÈGLES : (1) "
+    "n'INVENTE ni ne CALCULE aucun chiffre (prix, surface, valeur) ; (2) si des FAITS SOURCÉS te sont "
+    "fournis, tu peux les reprendre tels quels, jamais en dériver d'autres ; (3) sans faits fournis, "
+    "reste GÉNÉRIQUE (pas de chiffre). Pas de mise en contexte, va au script.")
+
+
+def _expliquer(db: Session, message: str) -> dict:
+    """Mission 3 — expliquer une NOTION. Court, barrière thématique, JAMAIS un chiffre LABUSE."""
+    out = core.complete(db, kind="copilote-explique", model=core.MODEL_REASONING, max_tokens=280,
+                        system=EXPLIQUE_SYSTEM, context={"notion": message})
+    if out.degraded:
+        return _reply(ERREUR_INFRA, "EXPLIQUER", degraded=True)
+    txt = (out.text or "").strip()
+    if not txt or txt.upper().startswith("HORS_SUJET"):
+        telemetrie.refus(db, "explique_hors_sujet", message, "EXPLIQUER")
+        return _reply("Je n'explique que des notions d'urbanisme, de foncier et d'immobilier de "
+                      "La Réunion (zone AU, charge foncière, ZFANG…). Reformulez sur l'une d'elles.",
+                      "EXPLIQUER", refus="hors_sujet")
+    return _reply(txt, "EXPLIQUER", tool="explique")
+
+
+def _preparer(db: Session, message: str, params: dict, contexte: dict | None) -> dict:
+    """Mission 4 — préparer un script/argumentaire. Faits SOURCÉS repris si contexte parcelle, sinon
+    générique métier. Jamais inventer ni calculer un chiffre."""
+    idu = params.get("idu") or (contexte or {}).get("idu")
+    faits = _substance(db, idu) if idu else ""      # faits déjà sourcés de la fiche (jamais recalculés)
+    ctx = {"demande": message}
+    if faits:
+        ctx["faits_sources"] = f"Sur la parcelle {idu} : {faits}"
+    out = core.complete(db, kind="copilote-prepare", model=core.MODEL_REASONING, max_tokens=420,
+                        system=PREPARE_SYSTEM, context=ctx)
+    if out.degraded or not (out.text or "").strip():
+        return _reply(ERREUR_INFRA, "PREPARER", degraded=True)
+    return _reply(out.text.strip(), "PREPARER", tool="prepare",
+                  sources=(["fiche parcelle (faits sourcés)"] if faits else None))
+
+
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
                        confirme: bool = False, faits_fil: list[dict] | None = None,
                        history: list[dict] | None = None) -> dict:
@@ -497,33 +556,67 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         if contexte.get("selection") and not params.get("selection"):
             params["selection"] = contexte["selection"]
 
-    # M110/M112 — CONCEPTS-OUTILS du registre reconnus AVANT tout (même si le routeur a deviné une
-    # clarification, une recherche vague ou un HORS_SUJET) : « bascules du mois », « où investir »,
-    # « parcelles fantômes »… routent vers l'OUTIL (porte cliquable, mécanique M102). Les outils
-    # EXISTENT — un mot-clé spécifique ne matche jamais un vrai hors-sujet.
+    # M118 — les 2 MISSIONS NOUVELLES d'abord (le chip force l'intent ; ne pas laisser un mot-clé
+    # concept/document les intercepter). « prépare un argumentaire » ne doit pas matcher un document.
+    if intent == "EXPLIQUER":
+        return _expliquer(db, message)
+    if intent == "PREPARER":
+        return _preparer(db, message, params, contexte)
+
+    # M118 — un CONCEPT-OUTIL (baromètre, où investir, parcelles fantômes…) ou un DOCUMENT (dossier,
+    # courrier) reconnu QUITTE le chat : refus + voie cliquable. Ouvrir un outil → barre Outils ;
+    # rédiger un document → fiche/CRM (le générateur existant). Navigation, jamais exécution.
     concept = _match_concept(message)
     if concept:
-        module, label = concept
-        return _reply(f"Je peux ouvrir l'outil {label}.", "OUTIL", porte=module, prefill=None)
-
-    # M112 P2.3 — DOCUMENTS : « fais-moi le dossier banquier de cette parcelle » → porte vers
-    # l'export, IDU résolu (params ou contexte embarqué). Sans IDU → on demande (champ M107).
+        _, label = concept
+        return _refus_voie(db, message, "OUTIL", f"« {label} » s'ouvre depuis la barre Outils — je ne "
+                           "l'ouvre plus depuis le chat.", "outils", "Ouvrir les outils")
     doc = _match_document(message)
     if doc:
-        kind, label = doc
+        _, label = doc
         idu = params.get("idu") or (contexte or {}).get("idu")
-        if not idu:
-            return _reply(f"Pour éditer le {label}, donnez-moi l'IDU de la parcelle (14 caractères).",
-                          "OUTIL", clarification=True)
-        return _reply(f"Je peux éditer le {label} de la parcelle {idu}.", "OUTIL",
-                      document={"kind": kind, "idu": idu, "libelle": label})
+        return _refus_voie(db, message, "OUTIL", f"Le {label} se génère depuis la fiche de la parcelle "
+                           "(ou le CRM), pas depuis le chat.", "courriers", "Ouvrir la fiche", idu)
 
-    # §M78-bis 2d : RECHERCHE/VERIFICATION ne court-circuitent PAS sur la clarification du routeur — elle
-    # ALIMENTE leur récap (qui pose une clarification COURTE, ≤ 4 options). Pas de double question.
-    # M116 · D3 — PROJET non plus : l'intention PROJET doit OUVRIR le formulaire guidé (prérempli de ce
-    # qui est compris, même vide), en texte libre comme au chip — c'est ce que M113 promet. Avant, une
-    # clarification du routeur pré-emptait `_projet_form` et ré-servait l'ancienne question-texte.
-    if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION", "PROJET"):
+    # M118 — les intentions qui QUITTENT le chat : refus + voie (jamais une exécution). Chacune vers
+    # sa surface : instruire/créer → Projets, vérifier → fiche, surveiller → Surveillance, outil/
+    # courrier → Outils/CRM. Le routeur les CLASSE encore ; l'aiguillage les redirige.
+    if intent == "RECHERCHE":
+        # M112/M118 — une demande VISUELLE de données (« montre-moi les friches à Saint-Paul », « où
+        # sont les parcelles en procédure ») est de la MISSION 1 (compte + carte), pas de l'instruction :
+        # on la GARDE. Une vraie recherche (programme/budget) part en refus-voie Projets.
+        if _veut_carte(message) and not params.get("programme_logements") and not params.get("budget_eur"):
+            sel = _select_tool(db, message, params)
+            if sel.get("tool") == "compter_parcelles":
+                res = OUTILS["compter_parcelles"](db, **_clean_args("compter_parcelles", sel.get("args") or {}))
+                res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
+                if res.ok:
+                    return _reply_compte(db, message, res, faits_fil, "QUESTION")
+        return _refus_voie(db, message, intent, "Trouver et instruire des parcelles se fait dans Projets : "
+                           "créez un projet, il propose et classe les candidates. Le chat ne lance plus "
+                           "d'instruction.", "projets", "Ouvrir Projets")
+    if intent == "PROJET":
+        return _refus_voie(db, message, intent, "La création d'un projet se fait dans Projets, avec le "
+                           "parcours guidé.", "projets", "Ouvrir Projets")
+    if intent == "VERIFICATION":
+        idu = params.get("idu") or (contexte or {}).get("idu")
+        return _refus_voie(db, message, intent, "L'évaluation d'une parcelle (avis, marché DVF) vit sur sa "
+                           "fiche — pas dans le chat.", "fiche", "Ouvrir la fiche", idu)
+    if intent == "VEILLE":
+        return _refus_voie(db, message, intent, "Les surveillances se posent et se règlent dans "
+                           "Surveillance.", "surveillance", "Ouvrir la Surveillance")
+    if intent == "OUTIL":
+        m = _fold_py(message.lower())
+        if any(k in m for k in ("courrier", "ecrire au proprietaire", "ecrire au proprio", "lettre",
+                                "dossier", "argumentaire ecrit")):
+            idu = params.get("idu") or (contexte or {}).get("idu")
+            return _refus_voie(db, message, intent, "La rédaction d'un courrier au propriétaire se fait "
+                               "depuis la fiche / le CRM (le générateur existant).", "courriers",
+                               "Ouvrir la fiche", idu)
+        return _refus_voie(db, message, intent, "Les outils d'analyse s'ouvrent depuis la barre Outils.",
+                           "outils", "Ouvrir les outils")
+
+    if route.clarification and intent not in ("HORS_SUJET",):
         return _reply(route.clarification, intent, clarification=True)
 
     if intent == "HORS_SUJET":
@@ -576,64 +669,9 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
             return _sans_outil(db, message, params, intent, motif=res.refus)
         return _reply_compte(db, message, res, faits_fil, intent)
 
-    if intent == "OUTIL":
-        return _outil(db, message, params)
-
-    if intent == "VERIFICATION":
-        # §M78-bis : PÉAGE de confirmation (avis d'achat = coût élevé d'une mauvaise interprétation).
-        # Récap d'abord ; l'avis n'est produit qu'après validation du client (confirme).
-        if confirme:
-            from .missions_lourdes import verification
-            return verification(db, params)
-        from .recap import recap_verification
-        return recap_verification(params)
-
-    if intent == "PROJET":
-        # M113 · Phase 3 — le Copilote ne CRÉE PLUS directement (fin du « c'est fait » sans garde-fou) :
-        # le parcours guidé s'ouvre, prérempli de ce que le routeur a compris. La création réelle passe
-        # par le formulaire (valeurs contrôlées, commune du référentiel, action explicite).
-        return _projet_form(db, message, params)
-
-    if intent == "VEILLE":
-        from .missions_lourdes import preparer_veille
-        return preparer_veille(db, params, message)
-
-    if intent == "RECHERCHE":
-        # §M78-bis : on n'instruit PAS tout de suite — récap (interprétation sans lancer) + suggestions.
-        # Le front lance le run M26-A sur « Lancer ». Une clarification alimente le récap (≤ 3-4 options).
-        # M107 — une réponse à une clarification n'est JAMAIS interprétée nue : le BRIEF EFFECTIF =
-        # les tours CLIENT du fil (bornés aux 4 derniers) + le message courant. Mesuré : « 15
-        # logements » seul re-demandait la commune donnée au tour d'avant. Le brief effectif est
-        # SERVI (brief_effectif) — le front relance le récap et le run avec LUI, jamais avec la
-        # réponse nue. (Si ce tour est classé RECHERCHE avec un fil, c'est une continuation — le
-        # routeur contextuel en atteste, gate 45.)
-        # M112 P2.1 — demande VISUELLE sans programme (« montre-moi les friches à Saint-Paul »,
-        # « où sont les parcelles en procédure ») : la réponse naturelle est une CARTE, pas une
-        # mission de recherche. On route vers le comptage facette (qui porte la carte filtrée).
-        # Une vraie mission (avec programme/budget) n'est PAS interceptée.
-        if _veut_carte(message) and not route.params.get("programme_logements") \
-                and not route.params.get("budget_eur"):
-            sel = _select_tool(db, message, route.params)
-            if sel.get("tool") == "compter_parcelles":
-                res = OUTILS["compter_parcelles"](db, **_clean_args("compter_parcelles", sel.get("args") or {}))
-                res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
-                if res.ok:
-                    return _reply_compte(db, message, res, faits_fil, "QUESTION")
-        from .recap import recap_recherche
-        tours_client = [h.get("content", "") for h in (history or []) if h.get("role") == "user"]
-        # M111 — RUPTURE DE SUJET : un tour AUTONOME (route.nouveau_sujet) ne concatène plus le fil
-        # (fin du « 38 logements [30+8] » et du « ≥ 20000 m² hérité »). Une CONTINUATION compose avec
-        # les tours client — la clarification M107 tient toujours (le cas témoin « 15 logements »).
-        # Décidé par le routeur (UN seul endroit, jamais une heuristique front).
-        if route.nouveau_sujet or not tours_client:
-            brief_effectif = message
-        else:
-            brief_effectif = ", ".join([t for t in tours_client[-4:] if t] + [message])
-        rep = recap_recherche(db, brief_effectif)
-        rep["brief_effectif"] = brief_effectif
-        return rep
-
-    return _reply(f"(Mission {intent} — inconnue.)", intent, en_construction=True)
+    # M118 — OUTIL/RECHERCHE/VERIFICATION/PROJET/VEILLE sont interceptés PLUS HAUT (refus-voie). Il ne
+    # reste ici que QUESTION (missions 1/2), EXPLIQUER (3), PREPARER (4) — déjà traités. Filet.
+    return _reply(f"(Mission {intent} — hors du Copilote resserré.)", intent, en_construction=True)
 
 
 # ───────────────────────── Aiguillage OUTIL (1c) ─────────────────────────
