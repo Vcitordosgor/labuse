@@ -2612,8 +2612,10 @@ def radar_sources_cmd() -> None:
 
     with session_scope() as s:
         r = run_radar(s)
+    # M124 P0 — clé alignée sur run_radar M123 (`manuelles` a remplacé `non_sondables`) :
+    # le cron hebdo crashait sur KeyError APRÈS l'écriture (affichage seul, données intactes).
     typer.echo(f"radar : {r['sondees']} sondées · {len(r['changements'])} publication(s) détectée(s)"
-               f" · {r['non_sondables']} non sondables · {r['erreurs']} erreurs")
+               f" · {r['manuelles']} suivies à la main · {r['erreurs']} erreurs")
     for c in r["changements"]:
         typer.echo(f"  ↗ {c['source']} : {c['avant']} → {c['apres']}")
 
