@@ -661,22 +661,24 @@ class PipelineEntry(Base, TimestampMixin):
 # ─────────────────────── projets (copilote-projet) ───────────────────────
 
 class Projet(Base, TimestampMixin):
-    """Un PROJET de promoteur formalisé par l'entretien copilote.
+    """Un PROJET de promoteur — M120 : IDENTITÉ + CADRAGE + SHORTLIST FIGÉE.
 
-    L'objet persistant sépare ce que le promoteur A DIT (`fiche`, structurée par
-    l'entretien) de ce que le moteur EXÉCUTE (`filtres` + `programme` M22, dérivés).
-    Ouvrir un projet = REJOUER filtres + programme sur les données actuelles —
-    jamais un snapshot figé.
+    UN SEUL système de critères : le `cadrage` EST un jeu de filtres FiltreCriteres
+    sauvegardé (la dérivation parallèle `derive_filtres` a disparu — M120). Le run part
+    UNE FOIS à la fin du cadrage : la shortlist (projet_parcelles) est ÉCRITE puis FIGÉE,
+    datée par `derniere_execution_at`. Elle ne bouge JAMAIS seule — seul un rejeu explicite
+    la rafraîchit (en conservant les tris).
 
-    Forme de `fiche` (validée par FICHE_SCHEMA, api/projets.py) :
-      type_programme (logements|etudiant|bureaux|autre), ampleur {logements?, sdp_m2?},
-      perimetre {mode: ile|secteur|communes, secteur?, communes?}, contraintes [clés flags],
-      budget_foncier_eur?, criteres_libres?
+    Colonnes vivantes (M120) :
+      - `filtres`  : le CADRAGE — jeu de filtres `Filters` (forme front camelCase :
+        communes, surfaceMin, sdpMin, flags, flagsExclus, signaux…). Point unique des critères.
+      - `identite` : métadonnées INFORMATIVES (budget_eur, type_logement, date_livraison) —
+        affichées telles quelles, elles n'alimentent AUCUN filtre (mesuré M119/M120).
+      - `derniere_execution_at` : date de la shortlist figée (« cadrage du JJ/MM/AAAA »).
+      - `shortlist_perimee` : le cadrage a changé depuis le dernier run → un rejeu est proposé.
 
-    Prépa cron (RIEN de câblé) : `filtres` est déjà la matière du futur match
-    « nouveaux événements/parcelles ↔ projets actifs » ; `derniere_execution_at`
-    horodate le dernier rejeu (la fraîcheur comparera à ça) ; seuls les projets
-    `statut='actif'` seront matchés.
+    Legacy (M120, non lus/écrits — conservés le temps de la migration, non destructif) :
+      `fiche` (ancienne fiche 7 champs), `programme` (ancien paramétrage M22).
     """
 
     __tablename__ = "projets"
@@ -686,12 +688,14 @@ class Projet(Base, TimestampMixin):
     # (NULL = bucket pilote/démo hérité). Toute lecture/écriture est filtrée par le compte de
     # la session (api/tenant.py). Colonne aussi posée hors ORM (ADD COLUMN IF NOT EXISTS).
     compte_id: Mapped[int | None] = mapped_column(Integer, index=True)  # FK+cascade posée hors ORM
-    nom: Mapped[str] = mapped_column(String(160))             # proposé par l'IA, éditable
-    fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
-    filtres: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
-    programme: Mapped[dict | None] = mapped_column(JSONB)     # paramètres M22 si programme défini
+    nom: Mapped[str] = mapped_column(String(160))             # éditable
+    filtres: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 : LE CADRAGE
+    identite: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 : infos (budget/type/date)
     statut: Mapped[str] = mapped_column(String(16), default="actif", server_default="actif")
-    derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # date shortlist figée
+    shortlist_perimee: Mapped[bool] = mapped_column(default=False, server_default="false")  # cadrage changé → rejeu proposé
+    fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 legacy (migration)
+    programme: Mapped[dict | None] = mapped_column(JSONB)     # M120 legacy (migration)
 
 
 class ProjetParcelle(Base, TimestampMixin):

@@ -1,28 +1,24 @@
-"""PROJETS (copilote-projet) — l'objet persistant produit par l'entretien de cadrage.
+"""PROJETS (copilote-projet) — M120 : IDENTITÉ + CADRAGE + SHORTLIST FIGÉE.
 
-Doctrine : l'IA REMPLIT la fiche (validée par FICHE_SCHEMA), le serveur DÉRIVE — de
-façon déterministe et rejouable — les filtres et les paramètres M22. Aucun chiffre
-n'est produit par l'IA : la SDP besoin vient de la formule M22 EXISTANTE
-(unités × surface_unité × 1,15 — modules.faisabilite_sens2), les contraintes
-rédhibitoires deviennent des exclusions de flags SQL (flags_exclus).
-
-Ouvrir un projet = REJOUER (filtres + programme réappliqués sur les données
-actuelles) — jamais un snapshot figé. Le budget foncier reste une donnée de fiche
-(aucun prix par parcelle en base → un filtre budget serait menteur ; consigné).
+UN SEUL système de critères : le `cadrage` EST un jeu de filtres `FiltreCriteres`
+sauvegardé (forme `Filters` du front). La dérivation parallèle (`derive_filtres`,
+M22) a DISPARU — le run applique le cadrage via `FiltreCriteres.where()`, exactement
+le filtrage de la carte. Doctrine : un critère = un seul endroit · le budget (et la
+date) sont INFORMATIFS et dits tels quels (aucun effet sur la sélection, mesuré) ·
+la shortlist est FIGÉE au cadrage, datée, et ne bouge JAMAIS seule (rejeu explicite).
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from jsonschema import ValidationError, validate
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import models
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence
-from .ia import FILTER_SCHEMA, SECTEURS
+from .ia import SECTEURS
 from .tenant import current_compte
 
 
@@ -31,8 +27,6 @@ def _scope(q, cid: int | None):
     (NULL = bucket pilote/démo). Explicite plutôt que magique : la cloison se lit."""
     return q.filter(models.Projet.compte_id.is_(None) if cid is None
                     else models.Projet.compte_id == cid)
-from .projet_schema import (CONTRAINTE_FLAG, FICHE_SCHEMA, M22_SURFACE_UNITE_M2,
-                            TYPE_LABEL, clean_fiche, derive_sdp_besoin)
 
 router = APIRouter(prefix="/projets", tags=["projets"])
 
@@ -54,6 +48,8 @@ CREATE TABLE IF NOT EXISTS projets (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE projets ADD COLUMN IF NOT EXISTS identite jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE projets ADD COLUMN IF NOT EXISTS shortlist_perimee boolean NOT NULL DEFAULT false;
 ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS projet_id integer
   REFERENCES projets(id) ON DELETE SET NULL
 """
@@ -65,6 +61,62 @@ def ensure_tables(engine) -> None:
         for stmt in DDL.split(";"):
             if stmt.strip():
                 c.execute(_t(stmt))
+        _migrer_fiche_vers_cadrage(c)
+
+
+def _migrer_fiche_vers_cadrage(c) -> int:
+    """M120 — MIGRATION idempotente, NON destructive : les projets de l'ancien format (fiche 7
+    champs + `filtres` dérivé partiel) passent au nouveau format. Le cadrage EST déjà un jeu de
+    filtres camelCase (`filtres` : communes/sdpMin/flagsExclus — dérivé M114) → on le garde tel quel
+    (rien ne se perd). L'IDENTITÉ informative se remplit depuis la fiche legacy (budget/type). On ne
+    touche QUE les projets dont l'identité est encore vide ET qui portent une fiche → rejouable sans
+    risque (les colonnes `fiche`/`programme` restent en place)."""
+    from sqlalchemy import text as _t
+    rows = c.execute(_t("SELECT id, fiche, identite FROM projets "
+                        "WHERE (identite = '{}'::jsonb OR identite IS NULL) "
+                        "AND fiche IS NOT NULL AND fiche <> '{}'::jsonb")).mappings().all()
+    n = 0
+    for r in rows:
+        fiche = r["fiche"] or {}
+        identite = {}
+        if fiche.get("budget_foncier_eur") is not None:
+            identite["budget_eur"] = int(fiche["budget_foncier_eur"])
+        if fiche.get("type_programme"):
+            identite["type_logement"] = fiche["type_programme"]   # informatif (mesuré : 0 effet moteur)
+        identite["migre_m120"] = True                             # trace : ne pas re-migrer
+        c.execute(_t("UPDATE projets SET identite = CAST(:ident AS jsonb) WHERE id = :id"),
+                  {"ident": _json(identite), "id": r["id"]})
+        n += 1
+    return n
+
+
+def _json(v):
+    import json
+    return json.dumps(v, ensure_ascii=False)
+
+
+# M120 · Phase 1 — le RÉFÉRENTIEL des types de logement (servi, jamais figé au front). MESURÉ :
+# le moteur ne distingue RIEN par type (0 effet sur la sélection ni le scoring) → le type est
+# INFORMATIF. On le sert AVEC son drapeau `informatif` pour que l'écran le dise tel quel — jamais
+# un faux critère. Les clés viennent de projet_schema.TYPE_LABEL (source unique du vocabulaire),
+# élargies (libre/social) : « logement libre » = le défaut promoteur, « social » (LLS/LES) informatif.
+_TYPES_LOGEMENT = [
+    {"cle": "libre", "libelle": "Logement libre"},
+    {"cle": "social", "libelle": "Logement social"},
+    {"cle": "etudiant", "libelle": "Logement étudiant"},
+    {"cle": "bureaux", "libelle": "Bureaux / tertiaire"},
+    {"cle": "autre", "libelle": "Autre programme"},
+]
+
+
+@router.get("/types")
+def projet_types() -> dict:
+    """Le référentiel des types de logement (Phase 1). Chaque type est INFORMATIF (mesuré : aucun
+    effet moteur) — le drapeau le dit pour que l'écran ne présente jamais un champ informatif comme
+    s'il filtrait. Servi, jamais figé au front."""
+    return {"types": _TYPES_LOGEMENT, "informatif": True,
+            "note": "Le type de logement est indicatif : il figure sur le projet mais n'affecte "
+                    "pas la sélection des parcelles (le moteur ne distingue pas par type)."}
 
 
 # ─────────────────── arbitrages SOURCÉS (chiffres servis par la base) ───────────────────
@@ -115,92 +167,111 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
                     "Carencées : inventaire SRU. Aucun chiffre produit par l'IA."}
 
 
-def _valide_fiche(fiche: dict) -> dict:
-    """Garde-fou schéma : clé hors schéma = REJET (l'IA ne peut introduire ni champ ni
-    valeur hors vocabulaire). Le périmètre secteur/communes doit être cohérent."""
-    fiche = clean_fiche(fiche)              # null/"" = « pas encore su » → drop (hors enum)
-    try:
-        validate(fiche, FICHE_SCHEMA)
-    except ValidationError as exc:
-        raise HTTPException(422, f"Fiche projet invalide : {exc.message}") from None
-    per = fiche.get("perimetre") or {}
-    if per.get("mode") == "secteur" and per.get("secteur") not in SECTEURS:
-        raise HTTPException(422, "Périmètre secteur sans secteur valide")
-    if per.get("mode") == "communes" and not per.get("communes"):
-        raise HTTPException(422, "Périmètre communes sans commune")
-    return fiche
+# ─────────────────── M120 · LE CADRAGE = un jeu de filtres FiltreCriteres ───────────────────
+# UN SEUL système de critères. Le cadrage est stocké sous la forme `Filters` du front (camelCase).
+# Chaque clé connue → l'attribut `FiltreCriteres` (snake_case ; listes → CSV) — le MÊME point
+# d'entrée que la carte (`_q_v2_where`). Rejouer un cadrage = rejouer le filtrage de la carte,
+# à l'identique (mesuré M120). Une clé inconnue est écartée proprement (jamais un critère inventé).
+#: camelCase (cadrage) → (attribut FiltreCriteres, genre) ; genre : "csv" (liste→CSV) · "num" · "bool"
+_CADRAGE_MAP: dict[str, tuple[str, str]] = {
+    "tiers": ("tiers", "csv"), "scoreMin": ("score_min", "num"),
+    "surfaceMin": ("surface_min", "num"), "surfaceMax": ("surface_max", "num"),
+    "sdpMin": ("sdp_min", "num"), "sdpMax": ("sdp_max", "num"),
+    "evenement": ("evenement", "bool"), "veille": ("veille", "bool"),
+    "horsCopro": ("hors_copro", "bool"), "flags": ("flags", "csv"),
+    "flagsExclus": ("flags_exclus", "csv"), "communes": ("communes", "csv"),
+    "personneMorale": ("personne_morale", "bool"), "zonagePlu": ("zonage", "csv"),
+    "constructibilite": ("constructibilite", "csv"), "etatSol": ("etat_sol", "csv"),
+    "capaciteMin": ("capacite_min", "num"), "zonePlu": ("zone_plu", "csv"),
+    "sousDensite": ("sous_densite", "bool"), "multMin": ("mult_min", "num"),
+    "rangMax": ("rang_max", "num"), "renouvellement": ("renouvellement", "bool"),
+    "divisionOr": ("division_or", "bool"), "proprietaireType": ("proprietaire_type", "csv"),
+    "etatSociete": ("etat_societe", "csv"), "copro": ("copro", "csv"),
+    "npnru": ("npnru", "bool"), "adresseAbsente": ("adresse_absente", "bool"),
+    "budgetMax": ("budget_max", "num"), "chargeMin": ("charge_min", "num"),
+    "chargeMax": ("charge_max", "num"), "prixMarcheMin": ("prix_marche_min", "num"),
+    "prixMarcheMax": ("prix_marche_max", "num"), "marcheFiable": ("marche_fiable", "bool"),
+    "caMin": ("ca_min", "num"), "modeBRentable": ("mode_b_rentable", "bool"),
+    "modebTravauxM2": ("modeb_travaux_m2", "num"), "modebLoyerM2": ("modeb_loyer_m2", "num"),
+    "modebRendementPct": ("modeb_rendement_pct", "num"), "signaux": ("signaux", "csv"),
+}
 
 
-def derive_filtres(fiche: dict, extra: dict | None = None) -> dict:
-    """fiche → filtres (forme FILTER_SCHEMA, celle du front). Déterministe et rejouable.
-    `extra` : filtres additionnels de l'entretien, validés FILTER_SCHEMA — les
-    clés dérivées de la fiche PRIMENT (la fiche est la vérité du projet)."""
-    filtres: dict = {}
-    if extra:
-        try:
-            validate(extra, FILTER_SCHEMA)
-        except ValidationError as exc:
-            raise HTTPException(422, f"Filtres additionnels invalides : {exc.message}") from None
-        filtres.update({k: v for k, v in extra.items() if v is not None})
-    per = fiche.get("perimetre") or {}
-    filtres.pop("commune", None)
-    filtres.pop("communes", None)
-    if per.get("mode") == "secteur":
-        filtres["communes"] = list(SECTEURS[per["secteur"]])
-    elif per.get("mode") == "communes":
-        filtres["communes"] = list(per.get("communes") or [])
-    sdp = derive_sdp_besoin(fiche)
-    if sdp is not None:
-        filtres["sdpMin"] = sdp
-    flags_x = sorted({CONTRAINTE_FLAG[c] for c in (fiche.get("contraintes") or [])})
-    if flags_x:
-        filtres["flagsExclus"] = flags_x
-    return filtres
+def clean_cadrage(cadrage: dict | None) -> dict:
+    """Nettoie un cadrage : ne garde QUE les clés connues (vocabulaire des 44 facettes) et retire
+    les valeurs vides (None / "" / [] / False pour les toggles). Une clé hors vocabulaire est
+    silencieusement écartée — jamais un critère inventé (doctrine « un critère = un seul endroit »)."""
+    out: dict = {}
+    for k, (_attr, kind) in _CADRAGE_MAP.items():
+        if k not in (cadrage or {}):
+            continue
+        v = cadrage[k]
+        if kind == "bool":
+            if v is True:
+                out[k] = True
+        elif kind == "csv":
+            if isinstance(v, list) and v:
+                out[k] = list(v)
+        else:  # num
+            if v is not None:
+                out[k] = v
+    return out
 
 
-def derive_programme(fiche: dict) -> dict | None:
-    """fiche → paramètres M22 (ProgrammeIn) quand un programme est définissable
-    (type + nombre de logements). Mapping consigné : 1 bâtiment, R+2 (défauts du
-    formulaire M22), logements_par_batiment = total → unités = total (la formule
-    M22 `unités = bâtiments × logements/bât` est préservée). La vérité reste le
-    formulaire M22 pré-rempli, éditable."""
-    t = fiche.get("type_programme")
-    amp = fiche.get("ampleur") or {}
-    logements = amp.get("logements")
-    if t in (None, "autre") or not logements:
-        return None
-    per = fiche.get("perimetre") or {}
-    communes = per.get("communes") or []
-    # gabarit souhaité (R+n) → niveaux M22 ; défaut R+2 (défaut du formulaire) si non exprimé
-    niveaux = int(amp["niveaux"]) if amp.get("niveaux") else 2
-    return {
-        "type": t, "batiments": 1, "niveaux": niveaux,
-        "logements_par_batiment": int(logements),
-        "surface_unite_m2": M22_SURFACE_UNITE_M2, "parking": True,
-        "commune": communes[0] if per.get("mode") == "communes" and len(communes) == 1 else None,
-    }
+def _cadrage_to_filtre(cadrage: dict):
+    """cadrage (camelCase) → instance `FiltreCriteres` (le point d'entrée unique du filtrage carte).
+    Import local : casse le cycle projets ↔ app."""
+    from .app import FiltreCriteres
+    kw: dict = {"source": RUN}
+    for k, v in (cadrage or {}).items():
+        spec = _CADRAGE_MAP.get(k)
+        if not spec:
+            continue
+        attr, kind = spec
+        if kind == "csv":
+            kw[attr] = ",".join(str(x) for x in v) if v else None
+        else:
+            kw[attr] = v
+    return FiltreCriteres(**kw)
 
 
-def derive_nom(fiche: dict) -> str:
-    """Nom de repli déterministe (l'IA en propose un meilleur ; toujours éditable)."""
-    t = TYPE_LABEL.get(fiche.get("type_programme") or "", "Projet")
-    amp = fiche.get("ampleur") or {}
-    n = f" ×{amp['logements']}" if amp.get("logements") else ""
-    per = fiche.get("perimetre") or {}
-    if per.get("mode") == "secteur":
-        ou = f"secteur {per['secteur']}"
-    elif per.get("mode") == "communes":
-        cs = per.get("communes") or []
-        ou = cs[0] if len(cs) == 1 else f"{len(cs)} communes"
-    else:
+def _run_cadrage(db: Session, cadrage: dict, limit: int) -> list[dict]:
+    """LE RUN : applique le cadrage (jeu de filtres) via `FiltreCriteres.where()` — exactement le
+    filtrage de la carte — et rend la liste best-first. AUCUN re-scoring, AUCUne dérivation parallèle."""
+    from .app import _q_v2_list
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    return _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
+
+
+def _sdp_besoin(cadrage: dict) -> int | None:
+    """La SDP besoin n'est plus dérivée d'un « programme » (M120) : c'est la facette `sdpMin` du
+    cadrage, si le promoteur l'a posée. Un seul endroit."""
+    v = (cadrage or {}).get("sdpMin")
+    return int(v) if v is not None else None
+
+
+def _nom_repli(identite: dict, cadrage: dict) -> str:
+    """Nom de repli déterministe (toujours éditable) : type informatif + périmètre du cadrage."""
+    from .projet_schema import TYPE_LABEL as _TL
+    t = _TL.get((identite or {}).get("type_logement") or "", "Projet")
+    communes = (cadrage or {}).get("communes") or []
+    if not communes:
         ou = "toute l'île"
-    return f"{t}{n} — {ou}"
+    elif len(communes) == 1:
+        ou = communes[0]
+    else:
+        ou = f"{len(communes)} communes"
+    return f"{t} — {ou}"
 
 
 def _projet_dict(p: models.Projet) -> dict:
+    # M120 — le CADRAGE (jeu de filtres) et l'IDENTITÉ (infos) sont les deux faces servies ;
+    # `derniere_execution_at` date la shortlist figée, `shortlist_perimee` dit qu'un rejeu est dû.
     return {
         "id": p.id, "nom": p.nom, "statut": p.statut,
-        "fiche": p.fiche or {}, "filtres": p.filtres or {}, "programme": p.programme,
+        "cadrage": p.filtres or {}, "identite": p.identite or {},
+        "shortlist_perimee": bool(p.shortlist_perimee),
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
         "derniere_execution_at": (p.derniere_execution_at.isoformat()
@@ -259,94 +330,75 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
 
 
 class ApercuIn(BaseModel):
-    fiche: dict
+    cadrage: dict = {}
+    identite: dict = {}
     limit: int = 5
 
 
 @router.post("/apercu")
 def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
-    """Aperçu RELIÉ au projet : compteur SQL + top parcelles avec leur « pourquoi » SORTI DU
-    MOTEUR (SDP résiduelle vs besoin, hauteur PLU vérifiée, statut/score, carence SRU). Si un
-    programme est défini, le top vient de M22 (sens 2, trié par marge de capacité) ; sinon du
-    run q_v2 trié par score. Aucune valeur inventée."""
-    fiche = _valide_fiche(body.fiche or {})
-    filtres = derive_filtres(fiche)
-    programme = derive_programme(fiche)
-    sdp_besoin = derive_sdp_besoin(fiche)
-    communes = filtres.get("communes")
+    """M120 — Aperçu du CADRAGE : compteur exact (même filtrage que la carte) + top parcelles avec
+    leur « pourquoi » SORTI DU MOTEUR. Un seul système : le run applique le jeu de filtres (aucune
+    dérivation parallèle, aucun M22). Aucune valeur inventée."""
+    cadrage = clean_cadrage(body.cadrage)
+    identite = body.identite or {}
+    sdp_besoin = _sdp_besoin(cadrage)
     carencees = {r[0] for r in db.execute(text(
         "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).all()}
     lim = max(1, min(body.limit, 20))
-
-    if programme:
-        from .modules import ProgrammeIn, faisabilite_sens2
-        res = faisabilite_sens2(ProgrammeIn(**programme), db)
-        items = res.get("items", [])
-        if communes:                                   # secteur : M22 balaie l'île → on restreint
-            items = [it for it in items if it["commune"] in communes]
-        n = len(items)
-        top = items[:lim]
-        source = "m22"
-    else:
-        from .app import _q_v2_list, _q_v2_where
-        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
-        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
-        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
-        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
-        where, params = _q_v2_where(
-            RUN,
-            score_min=filtres.get("scoreMin"),
-            surface_min=filtres.get("surfaceMin"),
-            surface_max=filtres.get("surfaceMax"),
-            sdp_min=filtres.get("sdpMin"),
-            evenement=bool(filtres.get("evenement")),
-            flags=",".join(filtres.get("flags") or []) or None,
-            communes=",".join(communes) if communes else None,
-            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
-        n = db.execute(text(
-            "SELECT count(*) FROM parcels p JOIN dryrun_parcel_evaluations d "
-            "ON d.parcel_id = p.id AND d.run_label = :runref "
-            "AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser')" + where),
-            {**params, "runref": RUN}).scalar() or 0
-        top = _q_v2_list(db, None, lim, 0, run_label=RUN,
-                         extra_where=where, extra_params=params)
-        source = RUN
-
+    from .app import _q_v2_stats
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    stats = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)
+    n = stats["total"]                                # même compteur que la carte (compte = total)
+    top = _run_cadrage(db, cadrage, lim)
     top_out = [{
         "idu": it["idu"], "commune": it["commune"],
         "statut": it.get("statut") or it.get("status"),
         "q_score": it.get("q_score"),
         "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
     } for it in top]
-    return {"nom": derive_nom(fiche), "n": n, "sdp_besoin_m2": sdp_besoin,
-            "programme_defini": programme is not None, "source": source, "top": top_out}
+    return {"nom": _nom_repli(identite, cadrage), "n": n, "sdp_besoin_m2": sdp_besoin,
+            "source": RUN, "top": top_out}
 
 
 class ProjetIn(BaseModel):
-    fiche: dict
-    nom: str | None = None            # proposé par l'IA ; repli déterministe sinon
-    filtres_extra: dict | None = None  # filtres additionnels de l'entretien
+    cadrage: dict = {}                 # M120 : le jeu de filtres (les 44 facettes)
+    identite: dict = {}                # M120 : infos (budget_eur / type_logement / date_livraison)
+    nom: str | None = None            # éditable ; repli déterministe sinon
+    limit: int = 60                    # taille de la shortlist figée (best-first)
 
 
 class ProjetPatchIn(BaseModel):
     nom: str | None = None
     statut: str | None = None          # actif | archive
-    fiche: dict | None = None          # re-dérive filtres + programme
+    cadrage: dict | None = None        # M120 : modifier le cadrage → shortlist PÉRIMÉE (rejeu proposé)
+    identite: dict | None = None       # M120 : infos éditables (n'invalide pas la shortlist)
+
+
+#: M120 — l'identité informative : les seules clés servies (budget/type/date). Le budget et la date
+#: sont AFFICHÉS tels quels — ils n'alimentent AUCUN filtre (mesuré M119/M120). Le type de logement
+#: est INFORMATIF : le moteur ne distingue rien par type (mesuré : 0 effet sur la sélection).
+_IDENTITE_KEYS = {"budget_eur", "type_logement", "date_livraison"}
+
+
+def clean_identite(identite: dict | None) -> dict:
+    out: dict = {}
+    for k in _IDENTITE_KEYS:
+        v = (identite or {}).get(k)
+        if v not in (None, "", []):
+            out[k] = v
+    return out
 
 
 @router.post("/derive")
 def projet_derive(body: ProjetIn) -> dict:
-    """Dérive nom + filtres + programme d'une fiche SANS persister — « Lancer la recherche »
-    prévisualise avant que « Enregistrer ce projet » ne crée l'objet. Même dérivation
-    déterministe que la création (aucun chiffre produit par l'IA)."""
-    fiche = _valide_fiche(body.fiche or {})
-    return {
-        "nom": (body.nom or "").strip()[:160] or derive_nom(fiche),
-        "fiche": fiche,
-        "filtres": derive_filtres(fiche, body.filtres_extra),
-        "programme": derive_programme(fiche),
-        "sdp_besoin_m2": derive_sdp_besoin(fiche),
-    }
+    """Prévisualise le NOM de repli d'un cadrage SANS persister (le compteur vivant, lui, vient de
+    /apercu ou /filtre — même filtrage que la carte). M120 : plus de dérivation parallèle."""
+    cadrage = clean_cadrage(body.cadrage)
+    identite = clean_identite(body.identite)
+    return {"nom": (body.nom or "").strip()[:160] or _nom_repli(identite, cadrage),
+            "cadrage": cadrage, "identite": identite, "sdp_besoin_m2": _sdp_besoin(cadrage)}
 
 
 def _counts_by_projet(db: Session, projet_ids: list[int]) -> dict[int, dict]:
@@ -401,8 +453,8 @@ def _vignettes_by_projet(db: Session, projet_ids: list[int]) -> dict[int, list[d
 
 
 def _premiere_commune(p: models.Projet) -> str | None:
-    per = (p.fiche or {}).get("perimetre") or {}
-    communes = per.get("communes") or []
+    # M120 — le périmètre vit dans le cadrage (facette `communes`), plus dans la fiche.
+    communes = (p.filtres or {}).get("communes") or []
     return communes[0] if communes else None
 
 
@@ -441,23 +493,73 @@ def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> mode
     return None
 
 
+def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
+    """M120 · LE RUN, UNE FOIS — applique le cadrage, ÉCRIT la shortlist (statut `proposee`,
+    best-first) et la FIGE (date `derniere_execution_at`). Rejouable : c'est aussi le moteur du
+    rejeu. NON destructif — une parcelle déjà décidée (retenue/ecartee/a_analyser) n'est jamais
+    re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
+    RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
+    Rend le DIFF (entrées/sorties/tris conservés) pour que le rejeu DISE ce qui change."""
+    lim = max(1, min(limit or 60, 200))
+    avant = {r.idu: r.statut for r in db.execute(text(
+        "SELECT par.idu, pp.statut FROM projet_parcelles pp JOIN parcels par ON par.id = pp.parcel_id "
+        "WHERE pp.projet_id = :p"), {"p": p.id}).all()}
+    items = _search_items(db, p.filtres or {}, lim)   # point unique (monkeypatchable) → _run_cadrage
+    idus = [it["idu"] for it in items]
+    id_by_idu = {r.idu: r.id for r in db.execute(
+        text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
+    now = datetime.now(timezone.utc)
+    ajoutees = 0
+    for rang, it in enumerate(items):
+        pc = id_by_idu.get(it["idu"])
+        if not pc:
+            continue
+        res = db.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, rang, proposee_at, "
+            "created_at, updated_at) VALUES (:pj, :pc, 'proposee', :rg, :now, :now, :now) "
+            "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET rang = :rg, updated_at = :now "
+            "WHERE projet_parcelles.statut = 'proposee'"),   # ne réécrit QUE les non-décidées
+            {"pj": p.id, "pc": pc, "rg": rang, "now": now})
+        if res.rowcount and it["idu"] not in avant:
+            ajoutees += 1
+    # NON-PERTE : les décisions hors cadrage RESTENT, marquées ; celles qui rematchent sont nettoyées.
+    db.execute(text(
+        "UPDATE projet_parcelles pp SET hors_criteres = NOT (par.idu = ANY(:idus)), updated_at = :now "
+        "FROM parcels par WHERE par.id = pp.parcel_id AND pp.projet_id = :pj "
+        "AND pp.statut IN ('retenue', 'a_analyser', 'ecartee')"),
+        {"idus": idus, "pj": p.id, "now": now})
+    matched = set(idus)
+    sorties = sum(1 for idu, st in avant.items() if idu not in matched and st != "proposee")
+    # les 'proposee' d'avant qui ne matchent plus ne sont plus utiles → retirées (pas une décision)
+    db.execute(text(
+        "DELETE FROM projet_parcelles pp USING parcels par WHERE par.id = pp.parcel_id "
+        "AND pp.projet_id = :pj AND pp.statut = 'proposee' AND NOT (par.idu = ANY(:idus))"),
+        {"pj": p.id, "idus": idus})
+    tris_conserves = sum(1 for st in avant.values() if st in ("retenue", "ecartee", "a_analyser"))
+    p.derniere_execution_at = now
+    p.shortlist_perimee = False
+    db.flush()
+    return {"ajoutees": ajoutees, "sorties": sorties, "tris_conserves": tris_conserves,
+            "n_shortlist": len(idus)}
+
+
 @router.post("")
 def projet_create(body: ProjetIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Crée un projet — DÉDUP DOUCE : si un projet actif identique (mêmes critères ou même nom)
-    existe déjà, on le RENVOIE (`existing: true`) au lieu de créer un doublon silencieux. Les
-    doublons déjà en base ne sont jamais supprimés automatiquement (l'utilisateur archive)."""
-    fiche = _valide_fiche(body.fiche or {})
-    nom = (body.nom or "").strip()[:160] or derive_nom(fiche)
-    filtres = derive_filtres(fiche, body.filtres_extra)
+    """M120 — Crée un projet PUIS FIGE sa shortlist EN UNE FOIS (fin du cadrage = le run part une
+    fois). DÉDUP DOUCE : un projet actif au même cadrage OU même nom est RENVOYÉ (`existing: true`).
+    Le projet revient clôturé, prêt à ouvrir (plus de run à l'ouverture)."""
+    cadrage = clean_cadrage(body.cadrage)
+    identite = clean_identite(body.identite)
+    nom = (body.nom or "").strip()[:160] or _nom_repli(identite, cadrage)
     cid = current_compte(request)
-    dup = _find_doublon(db, nom, filtres, cid)
+    dup = _find_doublon(db, nom, cadrage, cid)
     if dup is not None:
         return {"ok": True, "existing": True, "projet": _projet_dict(dup)}
-    p = models.Projet(nom=nom, fiche=fiche, filtres=filtres, programme=derive_programme(fiche),
-                      compte_id=cid)
+    p = models.Projet(nom=nom, filtres=cadrage, identite=identite, compte_id=cid)
     db.add(p)
     db.flush()
-    return {"ok": True, "existing": False, "projet": _projet_dict(p)}
+    diff = _figer_shortlist(db, p, body.limit)     # LE RUN, une fois → shortlist figée + datée
+    return {"ok": True, "existing": False, "projet": _projet_dict(p), "shortlist": diff}
 
 
 # M2 — fusion des doublons : statut le plus AVANCÉ gagne (retenue > écartée > à analyser > proposée).
@@ -541,6 +643,9 @@ def projet_get(pid: int, request: Request, db: Session = Depends(get_db)) -> dic
 
 @router.patch("/{pid}")
 def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M120 — édite un projet. Modifier le CADRAGE n'invalide PAS la shortlist en silence : elle est
+    marquée PÉRIMÉE (`shortlist_perimee`) et le front propose un rejeu explicite (jamais un run
+    automatique). L'identité (infos) et le nom n'affectent pas la shortlist."""
     p = _projet_or_404(db, pid, current_compte(request))
     if body.nom is not None:
         nom = body.nom.strip()[:160]
@@ -551,10 +656,13 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
         if body.statut not in ("actif", "archive"):
             raise HTTPException(422, f"Statut invalide : {body.statut}")
         p.statut = body.statut
-    if body.fiche is not None:
-        p.fiche = _valide_fiche(body.fiche)
-        p.filtres = derive_filtres(p.fiche)
-        p.programme = derive_programme(p.fiche)
+    if body.identite is not None:
+        p.identite = clean_identite(body.identite)
+    if body.cadrage is not None:
+        nouveau = clean_cadrage(body.cadrage)
+        if nouveau != (p.filtres or {}):
+            p.filtres = nouveau
+            p.shortlist_perimee = True          # la shortlist ne bouge pas seule — rejeu proposé
     db.flush()
     return {"ok": True, "projet": _projet_dict(p)}
 
@@ -571,18 +679,18 @@ def projet_delete(pid: int, request: Request, db: Session = Depends(get_db)) -> 
 
 @router.post("/{pid}/rejouer")
 def projet_rejouer(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Ouvrir = REJOUER : horodate l'exécution et rend la recette (filtres + programme)
-    que le front réapplique sur les données ACTUELLES. Les chiffres peuvent avoir bougé
-    depuis le dernier rejeu — c'est le principe (et la matière du futur radar cron)."""
+    """M120 · REJOUER À LA DEMANDE (geste explicite) — relance le run du cadrage sur les données du
+    jour et DIT ce qui change : entrées, sorties du cadrage, tris conservés. Les décisions
+    (retenue/écartée/peut-être) SURVIVENT ; une parcelle sortie du cadrage le dit (`hors_criteres`)
+    au lieu de disparaître. La shortlist ne bouge JAMAIS seule — seul ce bouton la rafraîchit."""
     p = _projet_or_404(db, pid, current_compte(request))
-    p.derniere_execution_at = datetime.now(timezone.utc)
-    db.flush()
-    return {"ok": True, "projet": _projet_dict(p)}
+    diff = _figer_shortlist(db, p, 60)
+    return {"ok": True, "projet": _projet_dict(p), "shortlist": diff, **_counts(db, pid)}
 
 
-# ───────────────────────── Parcours de sélection (Tinder) — statuts parcelle×projet ─────────────────────────
-# Le projet reste piloté par les critères ; ces routes gèrent l'ÉTAT de tri (proposee/retenue/
-# ecartee/a_analyser). Zéro re-scoring : les parcelles viennent du run servi, on rattache un statut.
+# ─────────────────────────  M120 — Parcours de sélection : statuts parcelle×projet  ─────────────────────────
+# La shortlist est FIGÉE au cadrage ; ces routes gèrent l'ÉTAT de tri (proposee/retenue/ecartee/
+# a_analyser). Zéro re-scoring : les parcelles viennent du run servi, on rattache un statut.
 
 _STATUTS = {"proposee", "retenue", "ecartee", "a_analyser"}
 _RETENUE_CRM_STATUS = "contact_a_preparer"    # colonne « Contact à préparer » (cf config/pipeline.yaml)
@@ -627,76 +735,27 @@ def _counts(db: Session, pid: int) -> dict:
     return {"counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
 
 
-def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None = None) -> list[dict]:
-    """RÉUTILISE la recherche existante (M22 si programme, sinon run servi Q_A_RUN_LABEL) — même
-    source que /apercu, jamais un re-scoring. Renvoie les items ordonnés (best-first).
-    `overrides` assouplit les filtres dérivés (chercher plus : communes=None → île, surfaceMin↓)."""
-    filtres = derive_filtres(fiche)
-    if overrides:
-        filtres = {**filtres, **overrides}      # None efface un filtre (ex. communes → toute l'île)
-    programme = derive_programme(fiche)
-    communes = filtres.get("communes")
-    if programme:
-        from .modules import ProgrammeIn, faisabilite_sens2
-        res = faisabilite_sens2(ProgrammeIn(**programme), db)
-        items = res.get("items", [])
-        if communes:                                   # secteur : M22 balaie l'île → on restreint
-            items = [it for it in items if it["commune"] in communes]
-    else:
-        from .app import _q_v2_list, _q_v2_where
-        # M54-AB C9 : appel en ARGUMENTS NOMMÉS. L'ancien appel positionnel traînait un
-        # « statuts » mort (retiré de la signature en M45) → TOUT était décalé d'un cran : la
-        # valeur `communes` atterrissait dans `flags_exclus`, le filtre périmètre n'était JAMAIS
-        # appliqué (top 5 pris sur toute l'île, « 19 300 correspondent » = compte insulaire).
-        where, params = _q_v2_where(
-            RUN,
-            score_min=filtres.get("scoreMin"),
-            surface_min=filtres.get("surfaceMin"),
-            surface_max=filtres.get("surfaceMax"),
-            sdp_min=filtres.get("sdpMin"),
-            evenement=bool(filtres.get("evenement")),
-            flags=",".join(filtres.get("flags") or []) or None,
-            communes=",".join(communes) if communes else None,
-            flags_exclus=",".join(filtres.get("flagsExclus") or []) or None)
-        items = _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
-    return items[:limit]
+def _search_items(db: Session, cadrage: dict, limit: int, overrides: dict | None = None) -> list[dict]:
+    """M120 — applique le CADRAGE (jeu de filtres), best-first. `overrides` assouplit une facette
+    pour « chercher plus » (communes=None → toute l'île ; surfaceMin↓). Un seul moteur : le run
+    servi via `FiltreCriteres.where()` (le même filtrage que la carte)."""
+    c = {**(cadrage or {}), **(overrides or {})}
+    c = {k: v for k, v in c.items() if v is not None}   # None efface une facette (chercher-plus île)
+    return _run_cadrage(db, c, limit)
 
 
 class ProposerIn(BaseModel):
-    limit: int = 24
+    limit: int = 60
 
 
 @router.post("/{pid}/proposer")
 def projet_proposer(pid: int, body: ProposerIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Propose au projet les parcelles de la recherche (statut `proposee`, best-first). UPSERT
-    NON destructif : une parcelle déjà décidée (retenue/ecartee) n'est JAMAIS re-proposée
-    (ON CONFLICT DO NOTHING) — une écartée ne ressuscite pas. Rejoue les critères du jour."""
+    """M120 — (re)fige la shortlist du cadrage (idempotent, non destructif). Même moteur que la
+    création et le rejeu. Le front n'appelle PLUS ceci à l'ouverture — la shortlist est déjà figée."""
     p = _projet_or_404(db, pid, current_compte(request))
-    lim = max(1, min(body.limit, 60))
-    items = _search_items(db, p.fiche, lim)
-    idus = [it["idu"] for it in items]
-    id_by_idu = {r.idu: r.id for r in db.execute(
-        text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
-    now = datetime.now(timezone.utc)
-    for rang, it in enumerate(items):
-        pc = id_by_idu.get(it["idu"])
-        if not pc:
-            continue
-        db.execute(text(
-            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, rang, proposee_at, "
-            "created_at, updated_at) VALUES (:pj, :pc, 'proposee', :rg, :now, :now, :now) "
-            "ON CONFLICT (projet_id, parcel_id) DO NOTHING"),
-            {"pj": pid, "pc": pc, "rg": rang, "now": now})
-    # M2 — NON-PERTE AU REJEU : une décision (retenue / à analyser) qui ne matche plus les critères
-    # du jour RESTE (jamais évincée), marquée « hors critères actuels » ; celle qui rematche est nettoyée.
-    db.execute(text(
-        "UPDATE projet_parcelles pp SET hors_criteres = NOT (par.idu = ANY(:idus)), updated_at = :now "
-        "FROM parcels par WHERE par.id = pp.parcel_id AND pp.projet_id = :pj "
-        "AND pp.statut IN ('retenue', 'a_analyser')"),
-        {"idus": idus, "pj": pid, "now": now})
-    db.flush()
-    return {"ok": True, "propose": len(idus), "n_total": len(items),
-            "sdp_besoin_m2": derive_sdp_besoin(p.fiche), **_counts(db, pid)}
+    diff = _figer_shortlist(db, p, body.limit)
+    return {"ok": True, "propose": diff["n_shortlist"], "shortlist": diff,
+            "sdp_besoin_m2": _sdp_besoin(p.filtres or {}), **_counts(db, pid)}
 
 
 @router.get("/{pid}/parcelles")
@@ -743,7 +802,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
     from .app import _proprietaire_public
     for it in groups["retenue"]:
         it["proprietaire_public"] = _proprietaire_public(db, it["idu"])
-    return {"nom": p.nom, "sdp_besoin_m2": derive_sdp_besoin(p.fiche),
+    return {"nom": p.nom, "sdp_besoin_m2": _sdp_besoin(p.filtres or {}),
             "proposees": groups["proposee"], "retenues": groups["retenue"],
             "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"], **_counts(db, pid)}
 
@@ -824,7 +883,7 @@ def projet_chercher_plus(pid: int, body: ChercherPlusIn, request: Request, db: S
     if body.surface_min is not None:
         overrides["surfaceMin"] = body.surface_min
     lim = max(1, min(body.limit, 60))
-    items = _search_items(db, p.fiche, lim, overrides=overrides or None)
+    items = _search_items(db, p.filtres or {}, lim, overrides=overrides or None)
     idus = [it["idu"] for it in items]
     id_by_idu = {r.idu: r.id for r in db.execute(
         text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
@@ -869,7 +928,7 @@ def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db))
     from .export_commun import adresses_ban, format_adresse
     from .pdf_projet import render_projet_pdf
     p = _projet_or_404(db, pid, current_compte(request))   # SEC-IDOR : export borné au compte
-    apercu = projet_apercu(ApercuIn(fiche=p.fiche or {}, limit=5), db)
+    apercu = projet_apercu(ApercuIn(cadrage=p.filtres or {}, identite=p.identite or {}, limit=5), db)
     # M6 2a : adresse postale BAN de chaque parcelle du top (1 requête, page 1 du PDF)
     adrs = adresses_ban(db, [it["idu"] for it in apercu.get("top", [])])
     for it in apercu.get("top", []):
