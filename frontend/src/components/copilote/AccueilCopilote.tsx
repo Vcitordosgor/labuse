@@ -5,7 +5,8 @@
 // ne calcule rien ». Tokens cp-*/mint = palette de la maquette (--mint #4ADE80, --carte #101612).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { fmtInt, ilYA } from '../../lib/format'
-import { getBrief, type AccueilChiffres, type BriefMatin, type CopiloteMission } from '../../lib/api'
+import { getBrief, getScenarios, type AccueilChiffres, type BriefMatin, type CopiloteMission,
+  type CopiloteScenario } from '../../lib/api'
 
 type Carte = { past: string; titre: string; desc: (parc: string) => string }
 
@@ -37,7 +38,7 @@ const EXEMPLES: { intent: string; txt: string }[] = [
 ]
 
 export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, occupe, reponse,
-  missions, onReprendre }: {
+  scenario, onScenario, missions, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -45,11 +46,20 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
   chiffres: AccueilChiffres | null
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
+  scenario?: string | null    // M113 — chip de contexte choisi (null = texte libre)
+  onScenario?: (cle: string | null) => void
   missions?: CopiloteMission[]           // §2b — historique (« Vos dernières questions »)
   onReprendre?: (m: CopiloteMission) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
+  // M113 · Phase 2 — les CHIPS de contexte, servis par le serveur (jamais en dur). « Que souhaitez-vous
+  // faire ? » Un chip force le scénario ; le champ adapte son placeholder. Le texte libre reste possible
+  // (aucun chip sélectionné → le routeur décide, comportement M112). Échec du fetch → pas de chips, la
+  // voie libre suffit (dégradation propre).
+  const [scenarios, setScenarios] = useState<CopiloteScenario[]>([])
+  useEffect(() => { getScenarios().then(setScenarios).catch(() => {}) }, [])
+  const scenActif = scenarios.find((s) => s.cle === scenario) || null
   // M85 Phase 3 — le brief du matin (déterministe). Affiché en tête SEULEMENT s'il est frais (non vide) :
   // on ne remplit jamais l'accueil avec un brief creux (l'honnêteté du « rien de neuf »). Vert/neutre,
   // jamais mauve (ce n'est pas de l'IA — ce sont des faits datés). Fetch simple (motif AccueilChiffres
@@ -180,14 +190,38 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         </footer>
       </aside>
 
+      {/* M113 · Phase 2 — ÉTAPE 1 : « Que souhaitez-vous faire ? » Les chips servis par le serveur.
+          Un clic sélectionne (ou déselectionne) le scénario ; le champ adapte son placeholder. Aucun
+          chip = texte libre (le routeur décide). Servis dans l'ordre du serveur, jamais en dur ici. */}
+      {!reponse && scenarios.length > 0 && (
+        <div data-accueil-chips className="mb-3">
+          <p className="mb-2 text-center text-[11px] uppercase tracking-[.14em] text-cp-faint">Que souhaitez-vous faire ?</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {scenarios.map((s) => {
+              const on = s.cle === scenario
+              return (
+                <button key={s.cle} data-accueil-chip data-chip-cle={s.cle} aria-pressed={on}
+                  onClick={() => onScenario?.(on ? null : s.cle)}
+                  className={`rounded-full border px-3.5 py-1.5 font-display text-[12px] font-semibold transition-colors duration-quick ${
+                    on ? 'border-mint bg-mint/15 text-mint'
+                       : 'border-cp-line bg-transparent text-cp-muted hover:border-cp-line2 hover:text-cp-txt'}`}>
+                  {s.libelle}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* barre unique — M87 P2 : FOCUS sans contour vert. Le contour :focus-visible mint (index.css) est
           neutralisé sur le champ ; le focus reste PERCEPTIBLE au clavier via la barre (border renforcée +
-          fond #12170F, comme la maquette). On remplace le focus, on ne le supprime pas (accessibilité). */}
+          fond #12170F, comme la maquette). On remplace le focus, on ne le supprime pas (accessibilité).
+          M113 — ÉTAPE 2 : le placeholder s'adapte au scénario choisi (servi par le serveur). */}
       <div data-accueil-barre className="mb-3.5 flex items-center gap-3 rounded-xl border border-cp-line bg-cp-card/60 py-2 pl-[18px] pr-2 transition-colors duration-quick focus-within:border-cp-line2 focus-within:bg-[#12170F]">
         <textarea ref={ref} data-brief rows={1} value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (value.trim()) onSubmit() } }}
-          placeholder="15 logements à Saint-Denis, budget foncier 800 k€…"
+          placeholder={scenActif?.placeholder ?? '15 logements à Saint-Denis, budget foncier 800 k€…'}
           className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none focus-visible:outline-none placeholder:text-cp-faint" />
         <button data-accueil-envoyer onClick={() => value.trim() && onSubmit()} disabled={!value.trim() || occupe}
           className="shrink-0 rounded-lg bg-mint px-5 py-2.5 text-[13px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
@@ -195,7 +229,9 @@ export function AccueilCopilote({ value, onChange, onSubmit, onPick, chiffres, o
         </button>
       </div>
       <p className="mb-4 text-center text-[11px] text-cp-faint">
-        Écrivez librement — le Copilote comprend s'il faut chercher, vérifier ou veiller.
+        {scenActif ? <>Mode « {scenActif.libelle} » — <button data-chip-liberer onClick={() => onScenario?.(null)}
+          className="underline decoration-cp-faint/50 underline-offset-2 hover:text-cp-txt">écrire librement</button> à la place.</>
+          : 'Écrivez librement — ou choisissez ce que vous souhaitez faire ci-dessus.'}
       </p>
 
       {/* M87 P2 — SIX exemples FIXES (plus de rotation aléatoire), grille régulière 3×2 (1 colonne

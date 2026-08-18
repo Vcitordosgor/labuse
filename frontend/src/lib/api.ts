@@ -385,13 +385,26 @@ export interface CopiloteV2Reponse {
   // M107 — le BRIEF EFFECTIF composé du fil (serveur) : le récap et le run repartent de lui,
   // jamais de la réponse nue (« 15 logements » seul perdait la commune du tour d'avant).
   brief_effectif?: string
+  // M112 — GUIDAGE vers les surfaces (portes cliquables, jamais « rendez-vous dans X ») :
+  carte_filtre?: { commune: string | null; filtres: Record<string, unknown>; libelle: string } | null
+  surveillance?: { volet: 'parcelles' | 'secteurs' | 'criteres' } | null
+  document?: { kind: string; idu: string; libelle: string } | null
+  // M113 — le scénario (chip) qui a servi ce tour + le parcours projet guidé (Phase 3, jamais de
+  // création directe : le serveur renvoie le préremplissage compris, le front ouvre le formulaire).
+  scenario?: string | null
+  projet_form?: { prefill: Record<string, unknown> } | null
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
-  conversation_id?: number | null; confirme?: boolean }) =>
+  conversation_id?: number | null; confirme?: boolean; scenario?: string | null }) =>
   j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, ...opts }) })
+
+// M113 · Phase 2 — les chips de contexte, servis par le serveur (jamais en dur au front).
+export interface CopiloteScenario { cle: string; libelle: string; placeholder: string }
+export const getScenarios = () =>
+  j<{ scenarios: CopiloteScenario[] }>('/api/copilote-v2/scenarios').then((r) => r.scenarios)
 
 // §2b — l'historique : missions passées du compte + reprise d'une conversation.
 export interface CopiloteMission {

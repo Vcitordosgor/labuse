@@ -30,8 +30,11 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
   if (data.clarification_recap) {
     const cl = data.clarification_recap
     return (
-      <div data-recap-clarif className="rounded-2xl border border-cp-violet/35 bg-cp-card px-5 py-4">
-        <div className="mb-2 font-display text-[9.5px] uppercase tracking-[.2em] text-cp-violet">Précision</div>
+      /* M113 P1.2 — la carte PRÉCISION : UN seul cadre au thème mint (jamais mauve-dans-vert),
+         placeholder « Votre réponse… » (le « …ou » datait des deux voies d'avant M107). Bordure du
+         champ neutre au repos, accent mint au focus. */
+      <div data-recap-clarif className="rounded-2xl border border-mint/30 bg-cp-card px-5 py-4">
+        <div className="mb-2 font-display text-[9.5px] uppercase tracking-[.2em] text-mint">Précision</div>
         <p className="text-[13.5px] leading-snug text-cp-txt">{cl.question}</p>
         {cl.options.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -46,10 +49,10 @@ export function RecapConfirmation({ data, brief, onReask, onLancer, onCorriger, 
         <div className="mt-3 flex items-center gap-2">
           <input data-clarif-reponse autoFocus value={reponse} onChange={(e) => setReponse(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') envoyer(reponse, setReponse) }}
-            placeholder="…ou répondez librement ici"
-            className="min-w-0 flex-1 rounded-lg border border-cp-violet/30 bg-cp-card2 px-3.5 py-2 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-cp-violet" />
+            placeholder="Votre réponse…"
+            className="min-w-0 flex-1 rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-mint" />
           <button data-clarif-envoyer disabled={!reponse.trim()} onClick={() => envoyer(reponse, setReponse)}
-            className="rounded-lg border border-cp-violet/40 bg-cp-violet/10 px-3.5 py-2 font-display text-[12px] font-semibold text-cp-violet hover:bg-cp-violet/15 disabled:opacity-40">
+            className="rounded-lg border border-mint/40 bg-mint/10 px-3.5 py-2 font-display text-[12px] font-semibold text-mint hover:bg-mint/15 disabled:opacity-40">
             Répondre
           </button>
         </div>

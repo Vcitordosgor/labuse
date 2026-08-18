@@ -63,7 +63,10 @@ def preparer_veille(db: Session, params: dict, message: str = "") -> dict:
     if not commune:
         return {"text": f"Sur quelle commune veiller les {TYPES[vt]} ?", "intent": "VEILLE",
                 "clarification": True}
+    # M112 P2.2 — porte cliquable vers la SECTION Surveillance (volet Secteurs) : jamais un
+    # « rendez-vous dans X » sans bouton. Le volet où la veille posée devient visible/réglable.
     return {"text": "Pose de la veille…", "intent": "VEILLE",
+            "surveillance": {"volet": "secteurs"},
             "_action": {"type": "veille", "veille_type": vt, "commune": commune}}
 
 

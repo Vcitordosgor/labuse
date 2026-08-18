@@ -1,13 +1,15 @@
 """M78 · 1a — ROUTEUR D'INTENTION.
 
-Un appel Sonnet classe chaque message client en SEPT intentions et extrait des paramètres typés.
+Un appel modèle classe chaque message client en SEPT intentions et extrait des paramètres typés.
 Sortie JSON strict, validée par schéma (jsonschema) côté serveur ; invalide → une re-demande, puis
 erreur honnête. Le modèle ROUTE, il ne répond JAMAIS une donnée (doctrine RAPPORT_M78.md).
 
-Mirroir du motif éprouvé de `/ia/search` (core.complete + schéma garde-fou), mais en Sonnet
-(MODEL_REASONING) — le routage est un raisonnement, pas une extraction factuelle. Contexte de
-session : les N derniers tours sont passés au modèle ; une correction (« non, je voulais dire… »)
-re-classe SANS perdre les paramètres déjà extraits (fusion serveur `prior_params`).
+Mirroir du motif éprouvé de `/ia/search` (core.complete + schéma garde-fou), sur **MODEL_FACTUAL**
+(haiku) — M113 · Phase 0 a MESURÉ que le tri n'a pas besoin de sonnet : haiku fait 100 % au gate
+routeur (45 cas, mieux que 97,1 % sonnet), pour ⅓ du coût et ~2–4 s de moins par message. Le
+routage EST une extraction (intent + params dans un vocabulaire fermé), pas un raisonnement libre.
+Contexte de session : les N derniers tours sont passés au modèle ; une correction (« non, je voulais
+dire… ») re-classe SANS perdre les paramètres déjà extraits (fusion serveur `prior_params`).
 """
 from __future__ import annotations
 
@@ -107,7 +109,10 @@ LES SEPT INTENTIONS :
 
 RÈGLES :
 - RÈGLE DURE : tout message qui commence par « Combien » attend un NOMBRE → QUESTION, quel que soit le
-  sujet (« combien de parcelles brûlantes à X » = QUESTION, jamais RECHERCHE).
+  sujet (« combien de parcelles brûlantes à X » = QUESTION, jamais RECHERCHE). Une question « Combien de
+  … à [commune] ? » est CLAIRE : "clarification" = null. Ne demande JAMAIS de préciser la métrique
+  (« logements existants ou à construire ? », « quel indicateur ? ») — l'outil en aval sert le compte
+  naturel. « Combien de logements à Saint-Paul ? » = QUESTION, commune Saint-Paul, clarification null.
 - Frontière QUESTION vs RECHERCHE : une réponse BRÈVE et chiffrée (un compte, un prix, un délai) = QUESTION ;
   sortir un ENSEMBLE de parcelles à instruire = RECHERCHE. Une tournure « des parcelles [caractéristique]
   à [commune] », « des terrains [critère] », « donne/sors-moi des parcelles… » désigne un ENSEMBLE à lister
@@ -223,7 +228,7 @@ def classify(db: Session | None, message: str, *, history: list[dict] | None = N
     if prior_params:
         payload["parametres_connus"] = {k: v for k, v in prior_params.items() if v is not None}
 
-    res = core.complete(db, kind="copilote-route", model=core.MODEL_REASONING, max_tokens=400,
+    res = core.complete(db, kind="copilote-route", model=core.MODEL_FACTUAL, max_tokens=400,
                         system=ROUTER_SYSTEM, history=hist, context=payload)
     if res.degraded:
         return Route(intent="", degraded=True, error=res.reason or "no_key")
@@ -231,7 +236,7 @@ def classify(db: Session | None, message: str, *, history: list[dict] | None = N
     route = _normalise(data, prior_params) if data else None
     if route is None:
         # une re-demande, plus explicite — puis erreur honnête
-        res2 = core.complete(db, kind="copilote-route-retry", model=core.MODEL_REASONING, max_tokens=400,
+        res2 = core.complete(db, kind="copilote-route-retry", model=core.MODEL_FACTUAL, max_tokens=400,
                              system=ROUTER_SYSTEM + "\n\nRÉPONDS UNIQUEMENT L'OBJET JSON, sans aucun autre texte.",
                              history=hist, context=payload)
         data2 = _extract_json(res2.text)

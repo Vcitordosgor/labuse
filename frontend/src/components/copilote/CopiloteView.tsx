@@ -15,6 +15,7 @@ import { ReponseInline } from './ReponseInline'
 import { RecapConfirmation } from './RecapConfirmation'
 import { CopiloteEmbarque } from './CopiloteEmbarque'
 import { AccueilCopilote } from './AccueilCopilote'
+import { ParcoursProjet } from '../projets/ParcoursProjet'
 import { ChipsCompris } from './ChipsCompris'
 import { BlocLivrable } from './BlocLivrable'
 import { Entonnoir } from './Entonnoir'
@@ -108,6 +109,8 @@ export function CopiloteView() {
   const [dispatching, setDispatching] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
   const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
+  const [scenario, setScenario] = useState<string | null>(null)     // M113 — chip de contexte choisi
+  const [projetForm, setProjetForm] = useState<{ prefill: Record<string, unknown> } | null>(null)  // M113 P3
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
@@ -119,7 +122,7 @@ export function CopiloteView() {
   // M78 · 2a / M78-bis — dispatch : le routeur décide. RECHERCHE/VERIFICATION passent par un RÉCAP de
   // confirmation (péage §5 : le coût d'une mauvaise interprétation est élevé) AVANT d'instruire ;
   // QUESTION/OUTIL/PROJET/VEILLE/refus répondent immédiatement (la réponse inline).
-  const interroger = async (msg: string, opts?: { confirme?: boolean }) => {
+  const interroger = async (msg: string, opts?: { confirme?: boolean; scenario?: string | null }) => {
     const m = msg.trim()
     if (!m || dispatching) return
     setDispatching(true); setRecap(null)
@@ -131,10 +134,17 @@ export function CopiloteView() {
     derniereActivite.current = Date.now()
     if (!opts?.confirme) setRecapConfirme(null)        // nouveau brief = nouveau contexte
     try {
-      const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme })
+      // M113 — le chip choisi FORCE le scénario (web court-circuité, projet guidé, sinon intent forcé).
+      // Une réponse dans le fil (continuation) repart en texte libre : le scénario n'est passé qu'au
+      // message qui l'a explicitement choisi (opts.scenario), jamais collé aux tours suivants.
+      const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme,
+                                         scenario: opts?.scenario ?? null })
       if (r.conversation_id != null) setConvId(r.conversation_id)
       if (r.contexte_ttl_minutes) setTtlMin(r.contexte_ttl_minutes)
       void rafraichirMissions()
+      // M113 P3 — le parcours projet guidé : le serveur ne crée JAMAIS directement ; il renvoie le
+      // préremplissage compris et le front ouvre le formulaire (qui protège par construction).
+      if (r.projet_form) { setProjetForm(r.projet_form); setBrief(''); return }
       const lourde = r.intent === 'RECHERCHE' || r.intent === 'VERIFICATION'
       if (lourde && !opts?.confirme && (r.needs_confirmation || r.clarification_recap)) {
         // PÉAGE : on montre le récap, on n'instruit pas. M107 : le brief de travail est le
@@ -155,7 +165,7 @@ export function CopiloteView() {
       setFil((f) => [...f, { q: m, r: echec, echec: true }])
     } finally { setDispatching(false) }
   }
-  const soumettre = () => void interroger(brief)
+  const soumettre = () => void interroger(brief, { scenario })
 
   // M107 P3 — le minuteur d'inactivité : quand le fil dort plus de ttlMin, l'expiration est
   // ANNONCÉE (bandeau « nouvelle conversation ») et le contexte serveur est abandonné
@@ -218,6 +228,7 @@ export function CopiloteView() {
   const { entretienDirect, clearEntretienDirect } = useApp()
   const selectParcelle = useApp((s) => s.select)
   const setView = useApp((s) => s.setView)
+  const setOpenProjet = useApp((s) => s.setOpenProjet)   // M113 P3 — « Voir le projet → »
   // M78-bis — ouvrir la fiche existante d'une parcelle restituée (setView PUIS select, ordre respecté).
   const ouvrirFiche = (idu: string) => { setView('cartes'); selectParcelle(idu) }
   useEffect(() => {
@@ -287,8 +298,14 @@ export function CopiloteView() {
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
             onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
+            scenario={scenario} onScenario={setScenario}
             missions={missions} onReprendre={rouvrir}
-            reponse={recap
+            reponse={projetForm
+              ? /* M113 P3 — le parcours projet guidé, prérempli de ce que le Copilote a compris. */
+                <ParcoursProjet prefill={projetForm.prefill}
+                  onVoir={(p) => { setProjetForm(null); setOpenProjet(p) }}
+                  onFermer={() => setProjetForm(null)} />
+              : recap
               ? <RecapConfirmation data={recap} brief={recapBrief} onReask={reask}
                   onLancer={lancerRecap} onCorriger={corrigerRecap}
                   onRepondre={(t) => void interroger(t)} />
@@ -309,8 +326,7 @@ export function CopiloteView() {
                       <p data-fil-question className="self-end rounded-xl bg-cp-violet/10 px-3.5 py-1.5 text-[12.5px] text-cp-txt">
                         {t.q}
                       </p>
-                      <ReponseInline v2={t.r}
-                        onCorriger={() => { setBrief(t.q); briefRef.current?.focus() }} />
+                      <ReponseInline v2={t.r} />
                       {/* M107 — l'échec est récupérable SUR PLACE : un bouton, pas une consigne. */}
                       {t.echec && i === fil.length - 1 && !dispatching && (
                         <button data-fil-reessayer onClick={() => void interroger(t.q)}
@@ -340,10 +356,14 @@ export function CopiloteView() {
                     </div>
                   )}
                   {!dispatching && fil.length > 0 && (
+                    /* M113 P1.1 — « Nouveau fil » : VRAI bouton secondaire (dette M107-B), classes
+                       DA-ACCUEIL-BRIEF (bordure cp-line, cible confortable px-4 py-2, survol), à
+                       portée du champ juste au-dessus. Repart de zéro : vide le fil, la conversation
+                       et la barre, refocalise le brief. */
                     <button data-fil-nouveau
-                      onClick={() => { setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); briefRef.current?.focus() }}
-                      className="self-start text-[11px] text-cp-muted underline decoration-cp-muted/40 underline-offset-2 hover:text-cp-violet">
-                      Repartir de zéro (nouveau fil)
+                      onClick={() => { setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null); briefRef.current?.focus() }}
+                      className="self-start rounded-lg border border-cp-line bg-transparent px-4 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
+                      ↻ Nouveau fil
                     </button>
                   )}
                 </div>
