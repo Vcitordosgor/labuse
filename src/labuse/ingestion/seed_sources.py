@@ -105,7 +105,7 @@ SOURCES: list[dict] = [
          documentation_url="https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/",
          endpoint_url="https://files.data.gouv.fr/geo-dvf/latest/csv/",
          legal_notes="Licence Ouverte + art. L.112 A LPF : interdiction de réidentifier / d'indexer — agréger, jamais nominatif. Attribution : « Source : DGFiP, Demandes de valeurs foncières (DVF) géolocalisées, via files.data.gouv.fr (géo-DVF Etalab) ».",
-         technical_notes="✓ ingéré : géo-DVF Etalab (files.data.gouv.fr), CSV par département — le 974 EST couvert (dep=974, millésimes 2021–2025). Géolocalisé par id_mutation, agrégé par mutation réelle (layers_ingest.fetch_geo_dvf, fraicheur.refresh_dvf)."),
+         technical_notes="✓ ingéré : géo-DVF Etalab (files.data.gouv.fr), CSV par département — le 974 EST couvert (dep=974, millésimes 2021–2025). Géolocalisé par id_mutation, agrégé par mutation réelle (layers_ingest.fetch_geo_dvf, fraicheur.refresh_dvf). M124 — PROFONDEUR 2014-2020 : archives brutes DGFiP (miroir data.cquest.org/dgfip_dvf, Licence Ouverte, URL exacte par ligne) → dvf_mutations_histo (dvf_histo.py, M3.5) ; frontière 2020/2021 sans recouvrement (garde ≥2021 refusée)."),
     dict(name="RGE ALTI (altimétrie)", category="topographie", provider="IGN / Géoplateforme",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="5 req/s",
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-altimetrie",
