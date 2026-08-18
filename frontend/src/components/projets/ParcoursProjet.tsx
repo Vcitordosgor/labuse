@@ -1,46 +1,47 @@
-// M113 · Phase 3 — LE PARCOURS PROJET GUIDÉ. La création de projet quitte le langage naturel : un
-// parcours en étapes, champ par champ (nom → commune → programme → critères → récap → créer). La
-// commune vient du RÉFÉRENTIEL (/communes), jamais du texte libre. Le Copilote ne crée plus jamais
-// directement : il ouvre CE formulaire, prérempli de ce qu'il a compris ; l'utilisateur vérifie,
-// complète, valide. Le formulaire protège par construction (valeurs contrôlées, création explicite).
-// Même composant côté section Projets (accès direct, sans Copilote) : `onVoir` navigue vers le projet.
-import { useEffect, useMemo, useState } from 'react'
+// M113 · Phase 3 → M114 · Phase 1 — LE PARCOURS PROJET GUIDÉ, refondu d'après DA-PROJETS-v1 (font
+// foi). UNE question à la fois en 24 px, barre de progression en 5 segments (mint pour les faits),
+// compteur « 3 / 5 · PROGRAMME » en mono, cadre mint (seul bloc encadré = la tâche active). Clavier :
+// Entrée valide et avance, Échap ferme, Retour revient (« ↵ POUR CONTINUER » en mono discret). Le fil
+// des réponses déjà données reste en bas, en petit, avec une coche mint. La commune vient du
+// RÉFÉRENTIEL (/communes), jamais du texte libre. Le Copilote ne crée plus jamais directement : il
+// ouvre CE formulaire, prérempli de ce qu'il a compris. Même composant côté section Projets.
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { createProjet, getCommunes, type CommuneInfo, type FicheProjet } from '../../lib/api'
 
 type Mode = 'logements' | 'surface'
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
+const ETAPES = ['NOM', 'COMMUNE', 'PROGRAMME', 'CRITÈRES', 'RÉCAPITULATIF']
 
 export function ParcoursProjet({ prefill, onVoir, onFermer }: {
   prefill?: Record<string, unknown> | null
   onVoir: (projet: { id: number; nom: string }) => void   // « Voir le projet → » (mécanique M107-B)
   onFermer: () => void
+  plein?: boolean                                          // page Projets : occupe l'écran (layout géré au-dessus)
 }) {
   const [communes, setCommunes] = useState<CommuneInfo[]>([])
   useEffect(() => { getCommunes().then(setCommunes).catch(() => {}) }, [])
 
-  // préremplissage COMPRIS (texte libre → chip « Créer un projet ») : commune, logements, budget.
   const pf = prefill || {}
   const [nom, setNom] = useState('')
   const [commune, setCommune] = useState<string>(typeof pf.commune === 'string' ? pf.commune : '')
   const [mode, setMode] = useState<Mode>('logements')
-  const [logements, setLogements] = useState<string>(
-    typeof pf.programme_logements === 'number' ? String(pf.programme_logements) : '')
+  const [logements, setLogements] = useState<string>(typeof pf.programme_logements === 'number' ? String(pf.programme_logements) : '')
   const [surface, setSurface] = useState<string>('')
   const [budget, setBudget] = useState<string>(typeof pf.budget_eur === 'number' ? String(pf.budget_eur) : '')
   const [criteres, setCriteres] = useState<string>('')
 
-  const [etape, setEtape] = useState(0)   // 0 nom · 1 commune · 2 programme · 3 critères · 4 récap
+  const [etape, setEtape] = useState(0)
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [cree, setCree] = useState<{ id: number; nom: string; existing?: boolean } | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  // les étapes à champ ont un autofocus (le keydown remonte au conteneur) ; l'étape RÉCAP n'a pas
+  // de champ → on focalise le conteneur pour qu'Entrée y déclenche la création (clavier sans souris).
+  useEffect(() => { if (etape === 4) rootRef.current?.focus() }, [etape])
 
   const progNum = mode === 'logements' ? parseInt(logements || '0', 10) : parseInt(surface || '0', 10)
+  const progLabel = progNum > 0 ? (mode === 'logements' ? `${progNum} logements` : `${progNum} m² de plancher`) : null
   const nomEffectif = nom.trim() || (commune ? `Projet ${commune}` : 'Nouveau projet')
-  const etapes = ['Nom', 'Commune', 'Programme', 'Critères', 'Récapitulatif']
-  const peutAvancer = (
-    etape === 0 ? true :                                  // le nom est facultatif (dérivé sinon)
-    etape === 1 ? !!commune :                             // la commune est OBLIGATOIRE (référentiel)
-    etape === 2 ? progNum > 0 :                           // un programme chiffré est obligatoire
-    true)                                                 // critères facultatifs · récap
 
   const fiche: FicheProjet = useMemo(() => ({
     type_programme: 'logements',
@@ -50,140 +51,154 @@ export function ParcoursProjet({ prefill, onVoir, onFermer }: {
     ...(criteres.trim() ? { criteres_libres: criteres.trim() } : {}),
   }), [mode, progNum, commune, budget, criteres])
 
+  const peutAvancer = etape === 0 ? true : etape === 1 ? !!commune : etape === 2 ? progNum > 0 : true
+
   const creer = async () => {
     setEnvoi(true); setErreur(null)
     try {
       const r = await createProjet({ fiche, nom: nom.trim() || undefined })
       setCree({ id: r.projet.id, nom: r.projet.nom, existing: r.existing })
-    } catch {
-      setErreur("La création a échoué — vérifiez la commune et le programme, puis réessayez.")
-    } finally { setEnvoi(false) }
+    } catch { setErreur('La création a échoué — vérifiez la commune et le programme, puis réessayez.') }
+    finally { setEnvoi(false) }
+  }
+  const avancer = () => { if (etape < 4) { if (peutAvancer) setEtape(etape + 1) } else void creer() }
+  const reculer = () => { if (etape > 0) setEtape(etape - 1); else onFermer() }
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); avancer() }
+    else if (e.key === 'Escape') { e.preventDefault(); onFermer() }
   }
 
-  const champCls = 'w-full rounded-lg border border-cp-line2 bg-cp-card2 px-3.5 py-2.5 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:border-mint'
-  const primaire = 'rounded-lg bg-mint px-5 py-2.5 font-display text-[12.5px] font-bold text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40'
-  const secondaire = 'rounded-lg border border-cp-line px-4 py-2.5 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt'
-
-  // ── projet créé : la sortie porte « Voir le projet → » (ouvre CE projet) ──
+  // ── projet créé : « Voir le projet → » (ouvre CE projet) ──
   if (cree) {
     return (
-      <div data-parcours-projet-cree className="rounded-2xl border border-mint/30 bg-cp-card px-5 py-5">
-        <p className="text-[14px] text-cp-txt">
+      <div data-parcours-projet-cree style={{ background: '#0C1410', border: '.5px solid #4ADE80', borderRadius: 12, padding: 24 }}>
+        <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 16px' }}>
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
-        <div className="mt-3.5 flex gap-2">
-          <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })} className={primaire}>Voir le projet →</button>
-          <button onClick={onFermer} className={secondaire}>Fermer</button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
+            style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
+          <button onClick={onFermer} style={{ padding: '9px 18px', background: 'none', border: '.5px solid #1E2A23', color: '#8FA69A', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
         </div>
       </div>
     )
   }
 
+  const champ = { width: '100%', height: 52, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 8, padding: '0 16px', fontSize: 22, color: '#ECF5EF', outline: 'none' } as const
+  const QUESTIONS = [
+    ['Quel nom pour ce projet ?', 'Facultatif — un nom vous aide à le retrouver.'],
+    ['Sur quelle commune ?', 'Depuis le référentiel des communes — jamais une saisie libre.'],
+    ['Quel est le programme ?', 'Nombre de logements, ou surface de plancher cible.'],
+    ['Des critères particuliers ?', 'Budget foncier, contraintes — facultatif.'],
+    ['On récapitule.', 'Vérifiez avant de créer — vous pourrez tout rouvrir ensuite.'],
+  ]
+
+  // le fil des réponses déjà données (coche mint) — steps franchis, valeurs non vides.
+  const trail: string[] = []
+  if (etape > 0 && (nom.trim() || commune)) trail.push(nomEffectif)
+  if (etape > 1 && commune) trail.push(commune)
+  if (etape > 2 && progLabel) trail.push(progLabel)
+  if (etape > 3 && budget.trim()) trail.push(`budget ${parseInt(budget, 10).toLocaleString('fr-FR')} €`)
+
   return (
-    <div data-parcours-projet className="rounded-2xl border border-mint/25 bg-cp-card px-5 py-5">
-      {/* fil d'étapes */}
-      <div className="mb-4 flex items-center gap-2">
-        {etapes.map((e, i) => (
-          <div key={e} className="flex items-center gap-2">
-            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-              i < etape ? 'bg-mint text-mint-on' : i === etape ? 'border border-mint text-mint' : 'border border-cp-line text-cp-faint'}`}>
-              {i + 1}
-            </span>
-            <span className={`font-display text-[11px] ${i === etape ? 'text-cp-txt' : 'text-cp-faint'}`}>{e}</span>
-            {i < etapes.length - 1 && <span className="text-cp-faint">·</span>}
-          </div>
-        ))}
+    <div data-parcours-projet ref={rootRef} tabIndex={-1} onKeyDown={onKey}
+      style={{ background: '#0C1410', border: '.5px solid #4ADE80', borderRadius: 12, padding: 24, outline: 'none' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: '#4ADE80' }}>NOUVEAU PROJET</div>
+        <div data-parcours-step style={{ fontFamily: MONO, fontSize: 12, color: '#5F7267' }}>{etape + 1} / 5 · {ETAPES[etape]}</div>
+      </div>
+      {/* barre de progression — 5 segments (mint pour les faits) */}
+      <div data-parcours-progress style={{ display: 'flex', gap: 5, marginBottom: 28 }}>
+        {ETAPES.map((_, i) => <i key={i} style={{ flex: 1, height: 2, background: i <= etape ? '#4ADE80' : '#1E2A23' }} />)}
       </div>
 
-      {etape === 0 && (
-        <label className="block">
-          <span className="mb-1.5 block font-display text-[12px] font-semibold text-cp-txt">Nom du projet <span className="text-cp-faint">(facultatif)</span></span>
-          <input data-projet-nom autoFocus value={nom} onChange={(e) => setNom(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setEtape(1) }}
-            placeholder={`Ex. ${nomEffectif}`} className={champCls} />
-        </label>
-      )}
+      <h2 style={{ fontSize: 24, fontWeight: 500, color: '#ECF5EF', margin: '0 0 6px' }}>{QUESTIONS[etape][0]}</h2>
+      <p style={{ fontSize: 14, color: '#8FA69A', margin: '0 0 24px' }}>{QUESTIONS[etape][1]}</p>
 
+      {etape === 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <input data-projet-nom autoFocus value={nom} onChange={(e) => setNom(e.target.value)}
+            placeholder={`Ex. ${nomEffectif}`} style={champ} />
+        </div>
+      )}
       {etape === 1 && (
-        <label className="block">
-          <span className="mb-1.5 block font-display text-[12px] font-semibold text-cp-txt">Commune</span>
-          <select data-projet-commune autoFocus value={commune} onChange={(e) => setCommune(e.target.value)} className={champCls}>
+        <div style={{ marginBottom: 28 }}>
+          <select data-projet-commune autoFocus value={commune} onChange={(e) => setCommune(e.target.value)} style={champ}>
             <option value="">— choisir une commune —</option>
             {communes.map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
           </select>
-          <span className="mt-1.5 block text-[11px] text-cp-faint">Depuis le référentiel des communes — jamais une saisie libre.</span>
-        </label>
+        </div>
       )}
-
       {etape === 2 && (
-        <div>
-          <span className="mb-1.5 block font-display text-[12px] font-semibold text-cp-txt">Programme</span>
-          <div className="mb-2.5 flex gap-2">
-            <button data-projet-mode-logements onClick={() => setMode('logements')}
-              className={mode === 'logements' ? 'rounded-lg border border-mint bg-mint/15 px-3.5 py-1.5 text-[12px] font-semibold text-mint' : secondaire}>
-              Logements
-            </button>
-            <button data-projet-mode-surface onClick={() => setMode('surface')}
-              className={mode === 'surface' ? 'rounded-lg border border-mint bg-mint/15 px-3.5 py-1.5 text-[12px] font-semibold text-mint' : secondaire}>
-              Surface de plancher
-            </button>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            {(['logements', 'surface'] as Mode[]).map((m) => (
+              <button key={m} data-projet-mode={m} onClick={() => setMode(m)}
+                style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
+                  border: mode === m ? '.5px solid #4ADE80' : '.5px solid #1E2A23',
+                  background: mode === m ? '#12291D' : 'transparent', color: mode === m ? '#4ADE80' : '#8FA69A' }}>
+                {m === 'logements' ? 'Logements' : 'Surface de plancher'}
+              </button>
+            ))}
           </div>
-          {mode === 'logements' ? (
-            <input data-projet-logements autoFocus type="number" min="1" value={logements}
-              onChange={(e) => setLogements(e.target.value)} placeholder="Nombre de logements (ex. 15)" className={champCls} />
-          ) : (
-            <input data-projet-surface autoFocus type="number" min="1" value={surface}
-              onChange={(e) => setSurface(e.target.value)} placeholder="Surface de plancher en m² (ex. 2000)" className={champCls} />
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <input data-projet-programme autoFocus type="number" min="1"
+              value={mode === 'logements' ? logements : surface}
+              onChange={(e) => (mode === 'logements' ? setLogements : setSurface)(e.target.value)}
+              placeholder={mode === 'logements' ? 'Ex. 13' : 'Ex. 2000'} style={{ ...champ, flex: 1 }} />
+            <span style={{ fontSize: 14, color: '#6F8578' }}>{mode === 'logements' ? 'logements' : 'm² de plancher'}</span>
+          </div>
         </div>
       )}
-
       {etape === 3 && (
-        <div className="flex flex-col gap-3">
-          <label className="block">
-            <span className="mb-1.5 block font-display text-[12px] font-semibold text-cp-txt">Budget foncier <span className="text-cp-faint">(facultatif, €)</span></span>
-            <input data-projet-budget type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
-              placeholder="Ex. 800000" className={champCls} />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block font-display text-[12px] font-semibold text-cp-txt">Critères libres <span className="text-cp-faint">(facultatif)</span></span>
-            <input data-projet-criteres value={criteres} onChange={(e) => setCriteres(e.target.value)}
-              placeholder="Ex. proximité transport, hors PPR rouge…" className={champCls} />
-          </label>
+        <div style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <input data-projet-budget autoFocus type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
+            placeholder="Budget foncier en € (facultatif)" style={champ} />
+          <input data-projet-criteres value={criteres} onChange={(e) => setCriteres(e.target.value)}
+            placeholder="Critères libres (facultatif)" style={{ ...champ, fontSize: 16 }} />
         </div>
       )}
-
       {etape === 4 && (
-        <div data-projet-recap className="rounded-lg border border-cp-line bg-cp-card2 px-4 py-3 text-[13px] text-cp-txt">
-          <p className="mb-1.5 font-display text-[11px] uppercase tracking-[.14em] text-mint">Récapitulatif</p>
-          <ul className="flex flex-col gap-1 text-[12.5px]">
-            <li><span className="text-cp-muted">Nom :</span> {nomEffectif}</li>
-            <li><span className="text-cp-muted">Commune :</span> {commune || <em className="text-cp-amber">à choisir</em>}</li>
-            <li><span className="text-cp-muted">Programme :</span> {progNum > 0
-              ? (mode === 'logements' ? `${progNum} logements` : `${progNum} m² de plancher`)
-              : <em className="text-cp-amber">à renseigner</em>}</li>
-            {budget.trim() && <li><span className="text-cp-muted">Budget foncier :</span> {parseInt(budget, 10).toLocaleString('fr-FR')} €</li>}
-            {criteres.trim() && <li><span className="text-cp-muted">Critères :</span> {criteres.trim()}</li>}
+        <div data-projet-recap style={{ marginBottom: 28, border: '.5px solid #1E2A23', background: '#080D0A', borderRadius: 8, padding: '16px 18px' }}>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#ECF5EF' }}>
+            <li><span style={{ color: '#6F8578' }}>Nom : </span>{nomEffectif}</li>
+            <li><span style={{ color: '#6F8578' }}>Commune : </span>{commune || <em style={{ color: '#E0B341' }}>à choisir</em>}</li>
+            <li><span style={{ color: '#6F8578' }}>Programme : </span>{progLabel || <em style={{ color: '#E0B341' }}>à renseigner</em>}</li>
+            {budget.trim() && <li><span style={{ color: '#6F8578' }}>Budget foncier : </span>{parseInt(budget, 10).toLocaleString('fr-FR')} €</li>}
+            {criteres.trim() && <li><span style={{ color: '#6F8578' }}>Critères : </span>{criteres.trim()}</li>}
           </ul>
         </div>
       )}
 
-      {erreur && <p className="mt-3 text-[12px] text-cp-amber">{erreur}</p>}
+      {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '0 0 12px' }}>{erreur}</p>}
 
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <button onClick={etape === 0 ? onFermer : () => setEtape(etape - 1)} className={secondaire}>
-          {etape === 0 ? 'Annuler' : '← Retour'}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, borderTop: '.5px solid #1E2A23' }}>
+        <button data-projet-retour onClick={reculer} style={{ fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer' }}>
+          {etape === 0 ? '× Annuler' : '← Retour'}
         </button>
-        {etape < 4 ? (
-          <button data-projet-suivant disabled={!peutAvancer} onClick={() => setEtape(etape + 1)} className={primaire}>
-            Continuer →
-          </button>
-        ) : (
-          <button data-projet-creer disabled={envoi || !commune || progNum <= 0} onClick={() => void creer()} className={primaire}>
-            {envoi ? 'Création…' : 'Créer le projet'}
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <span style={{ fontFamily: MONO, fontSize: 12, color: '#4A5C52' }}>↵ POUR CONTINUER</span>
+          {etape < 4 ? (
+            <button data-projet-suivant disabled={!peutAvancer} onClick={avancer}
+              style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: peutAvancer ? 1 : 0.4 }}>Continuer →</button>
+          ) : (
+            <button data-projet-creer disabled={envoi || !commune || progNum <= 0} onClick={() => void creer()}
+              style={{ padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: (envoi || !commune || progNum <= 0) ? 0.4 : 1 }}>
+              {envoi ? 'Création…' : 'Créer le projet'}</button>
+          )}
+        </div>
       </div>
+
+      {trail.length > 0 && (
+        <div data-parcours-trail style={{ marginTop: 20, paddingTop: 16, borderTop: '.5px solid #1E2A23', fontSize: 12, color: '#6F8578', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {trail.map((t, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {i > 0 && <span style={{ color: '#2A3A31', marginRight: 4 }}>·</span>}
+              <span style={{ color: '#4ADE80' }}>✓</span>{t}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

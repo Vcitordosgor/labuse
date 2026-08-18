@@ -760,11 +760,15 @@ export type ProprietairePublic =
   | { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
   | { type: 'particulier' }
 export interface ProjetCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
+// M114 — la vignette d'emprise : centroïdes des parcelles normalisés 0–1 + drapeau retenue (aplat
+// mint) ; `commune` sert l'état vide (initiale) quand `points` est vide. Live depuis projet_parcelles.
+export interface ProjetVignette { commune: string | null; points: { x: number; y: number; r: boolean }[] }
 export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
   fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
+  vignette?: ProjetVignette   // M114 — schéma d'emprise (64/52 px)
 }
 // L'entretien de cadrage (réel uniquement — fallback si stub)
 export interface EntretienChip { label: string; value?: string }

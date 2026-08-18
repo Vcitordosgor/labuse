@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — DA Projets v1 (maquette de référence M114)</title>
+<style>
+  :root {
+    --bg:            #060A08;
+    --surface:       #0C1410;
+    --surface-dim:   #080D0A;
+    --mint:          #4ADE80;
+    --mint-on:       #05140B;
+    --mint-dim:      #12291D;
+    --vignette-bg:   #0A1F14;
+    --vignette-dim:  #0A150F;
+    --vignette-line: #2E6B4A;
+    --vignette-line-dim: #1E4030;
+    --border:        #1E2A23;
+    --border-mid:    #2A3A31;
+    --border-dim:    #1A241E;
+    --txt:           #ECF5EF;
+    --txt-2:         #C9DCD1;
+    --txt-3:         #A8BDB0;
+    --txt-mut:       #8FA69A;
+    --txt-mut-2:     #6F8578;
+    --txt-mut-3:     #5F7267;
+    --txt-mut-4:     #4A5C52;
+    --txt-mut-5:     #3A4A41;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font-family: var(--sans); padding: 40px 24px; }
+  .page { max-width: 900px; margin: 0 auto; }
+  .spec { font-family: var(--mono); font-size: 11px; color: var(--mint); letter-spacing: .12em; margin: 48px 0 12px; padding-top: 24px; border-top: .5px solid var(--border); }
+  .spec:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+  .note { font-size: 12px; color: var(--txt-mut-3); margin: 0 0 20px; line-height: 1.6; }
+
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+  .head h1 { font-size: 22px; font-weight: 500; color: var(--txt); margin: 0 0 5px; }
+  .head p { font-size: 13px; color: var(--txt-mut-2); margin: 0; }
+  .head-actions { display: flex; align-items: center; gap: 18px; white-space: nowrap; }
+  .link-secondary { font-size: 13px; color: var(--txt-mut); cursor: pointer; }
+  .btn-primary { padding: 9px 18px; background: var(--mint); color: var(--mint-on); border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+
+  .parcours { background: var(--surface); border: .5px solid var(--mint); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+  .parcours-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .parcours-kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--mint); }
+  .parcours-step { font-family: var(--mono); font-size: 12px; color: var(--txt-mut-3); }
+  .progress { display: flex; gap: 5px; margin-bottom: 28px; }
+  .progress i { flex: 1; height: 2px; background: var(--border); }
+  .progress i.done { background: var(--mint); }
+  .parcours h2 { font-size: 24px; font-weight: 500; color: var(--txt); margin: 0 0 6px; }
+  .parcours .aide { font-size: 14px; color: var(--txt-mut); margin: 0 0 24px; }
+  .choices { display: flex; gap: 8px; margin-bottom: 14px; }
+  .choice { padding: 9px 18px; border: .5px solid var(--border); color: var(--txt-mut); border-radius: 8px; font-size: 14px; cursor: pointer; }
+  .choice.on { border-color: var(--mint); background: var(--mint-dim); color: var(--mint); }
+  .field-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+  .field { flex: 1; height: 52px; background: var(--bg); border: .5px solid var(--border-mid); border-radius: 8px; display: flex; align-items: center; padding: 0 16px; font-size: 22px; color: var(--txt); }
+  .field-unit { font-size: 14px; color: var(--txt-mut-2); }
+  .parcours-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; border-top: .5px solid var(--border); }
+  .back { font-size: 13px; color: var(--txt-mut-2); cursor: pointer; }
+  .foot-right { display: flex; align-items: center; gap: 18px; }
+  .kbd-hint { font-family: var(--mono); font-size: 12px; color: var(--txt-mut-4); }
+  .trail { margin-top: 20px; padding-top: 16px; border-top: .5px solid var(--border); font-size: 12px; color: var(--txt-mut-2); display: flex; gap: 8px; align-items: center; }
+  .trail .ok { color: var(--mint); }
+  .trail .sep { color: var(--border-mid); margin: 0 4px; }
+
+  .tabs { display: inline-flex; gap: 4px; background: var(--surface); border-radius: 9px; padding: 4px; margin-bottom: 20px; }
+  .tab { padding: 7px 16px; color: var(--txt-mut); font-size: 13px; border-radius: 6px; cursor: pointer; }
+  .tab.on { background: var(--mint); color: var(--mint-on); font-weight: 500; }
+
+  .row { display: flex; background: var(--surface); border-radius: 10px; overflow: hidden; margin-bottom: 8px; cursor: pointer; }
+  .band { width: 3px; flex-shrink: 0; background: var(--border-dim); }
+  .row.todo .band { background: var(--mint); }
+  .vig-wrap { flex-shrink: 0; padding: 14px 0 14px 16px; }
+  .row.todo .vig-wrap { padding: 16px 0 16px 16px; }
+  .vig { width: 52px; height: 52px; border-radius: 6px; background: var(--vignette-dim); position: relative; overflow: hidden; }
+  .row.todo .vig { width: 64px; height: 64px; background: var(--vignette-bg); }
+  .vig b { position: absolute; border: .5px solid var(--vignette-line-dim); }
+  .row.todo .vig b { border-color: var(--vignette-line); }
+  .vig em { position: absolute; background: var(--mint); opacity: .9; border-radius: 2px; }
+  .body { flex: 1; min-width: 0; padding: 14px 18px; display: flex; align-items: center; gap: 20px; }
+  .row.todo .body { padding: 16px 18px; }
+  .title-line { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .row.todo .title-line { margin-bottom: 5px; }
+  .title { font-size: 16px; color: var(--txt-2); }
+  .row.todo .title { font-size: 17px; color: var(--txt); }
+  .commune { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); letter-spacing: .06em; }
+  .row.todo .commune { color: var(--txt-mut-3); }
+  .ctx { font-size: 12px; color: var(--txt-mut-3); }
+  .row.todo .ctx { color: var(--txt-mut-2); margin-bottom: 11px; }
+  .bar-line { display: flex; align-items: center; gap: 12px; }
+  .bar { width: 140px; height: 3px; background: var(--mint-dim); border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--mint); border-radius: 2px; }
+  .bar-lbl { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); }
+  .right { text-align: right; white-space: nowrap; }
+  .count { font-size: 28px; color: var(--mint); font-weight: 500; line-height: 1; }
+  .count-lbl { font-family: var(--mono); font-size: 10px; color: var(--txt-mut-2); margin-top: 4px; letter-spacing: .06em; }
+  .quiet-lbl { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); letter-spacing: .06em; }
+
+  .more { text-align: center; padding: 16px 0 4px; font-family: var(--mono); font-size: 12px; color: var(--txt-mut-3); letter-spacing: .06em; cursor: pointer; }
+
+  .empty { margin-top: 24px; padding: 32px; border: .5px dashed var(--border); border-radius: 12px; text-align: center; }
+  .empty h3 { font-size: 15px; color: var(--txt-mut); font-weight: 400; margin: 0 0 6px; }
+  .empty p { font-size: 13px; color: var(--txt-mut-3); margin: 0 0 16px; }
+  .empty .btn-primary { display: inline-block; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="spec">M114 · PAGE PROJETS — MAQUETTE DE RÉFÉRENCE</div>
+<p class="note">
+  Fond noir, mint <code>#4ADE80</code> en accent rare (action principale, progression,
+  reste à trier). Mono pour le statutaire. Un seul bouton plein par écran.
+  Les valeurs de cette maquette font foi : couleurs, tailles, espacements.
+</p>
+
+<div class="spec">1 · EN-TÊTE</div>
+<p class="note">
+  « Vos projets », pas « Mes projets ». Un seul bouton plein ;
+  « Décrire au copilote » devient un lien discret.
+</p>
+
+<div class="head">
+  <div>
+    <h1>Vos projets</h1>
+    <p>Chaque projet garde votre cadrage et vos parcelles retenues.</p>
+  </div>
+  <div class="head-actions">
+    <div class="link-secondary">Décrire au copilote</div>
+    <div class="btn-primary">Nouveau projet</div>
+  </div>
+</div>
+
+<div class="spec">2 · PARCOURS DE CRÉATION</div>
+<p class="note">
+  Occupe l'écran seul — la liste n'apparaît pas dessous quand il est ouvert.
+  Une question à la fois en 24 px. Barre de progression en 5 segments au lieu
+  des pastilles numérotées. Navigation clavier : Entrée valide, Échap ferme.
+  Le fil des réponses déjà données reste visible en bas, en petit.
+</p>
+
+<div class="parcours">
+  <div class="parcours-head">
+    <div class="parcours-kicker">NOUVEAU PROJET</div>
+    <div class="parcours-step">3 / 5 · PROGRAMME</div>
+  </div>
+  <div class="progress">
+    <i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i>
+  </div>
+  <h2>Quel est le programme ?</h2>
+  <p class="aide">Nombre de logements, ou surface de plancher cible.</p>
+  <div class="choices">
+    <div class="choice on">Logements</div>
+    <div class="choice">Surface de plancher</div>
+  </div>
+  <div class="field-row">
+    <div class="field">13</div>
+    <div class="field-unit">logements</div>
+  </div>
+  <div class="parcours-foot">
+    <div class="back">← Retour</div>
+    <div class="foot-right">
+      <div class="kbd-hint">↵ POUR CONTINUER</div>
+      <div class="btn-primary">Continuer →</div>
+    </div>
+  </div>
+  <div class="trail">
+    <span class="ok">✓</span><span>Résidence Barsac</span>
+    <span class="sep">·</span>
+    <span class="ok">✓</span><span>Sainte-Marie</span>
+  </div>
+</div>
+
+<div class="spec">3 · ONGLETS</div>
+<p class="note">
+  Deux onglets seulement — arbitrage Vic : l'ancien tri était le bon.
+  Aucun filtre supplémentaire.
+</p>
+
+<div class="tabs">
+  <div class="tab on">Actifs 9</div>
+  <div class="tab">Archivés 4</div>
+</div>
+
+<div class="spec">4 · LA LISTE — DEUX INTENSITÉS</div>
+<p class="note">
+  Une seule famille de lignes, deux intensités. Les projets à trier remontent
+  en haut (ordre par travail restant), sans intertitre : la différence se lit
+  dans le traitement. Bande mint contre bande grise, vignette 64 contre 52 px,
+  compteur mint contre mention mono discrète. Toute la ligne est cliquable.
+  Les chips qui répétaient le titre disparaissent ; la commune passe en mono.
+</p>
+
+<div class="row todo">
+  <div class="band"></div>
+  <div class="vig-wrap">
+    <div class="vig">
+      <b style="left:10%;top:16%;width:32%;height:28%"></b>
+      <b style="left:48%;top:14%;width:24%;height:36%"></b>
+      <b style="left:16%;top:52%;width:36%;height:30%"></b>
+      <b style="left:60%;top:58%;width:26%;height:24%"></b>
+      <em style="left:42%;top:44%;width:22%;height:22%"></em>
+    </div>
+  </div>
+  <div class="body">
+    <div style="flex:1;min-width:0">
+      <div class="title-line">
+        <div class="title">Projet Beta</div>
+        <div class="commune">SAINT-PAUL</div>
+      </div>
+      <div class="ctx">Cadrage à compléter</div>
+      <div class="bar-line">
+        <div class="bar"><i style="width:27%"></i></div>
+        <div class="bar-lbl">13 / 49 RETENUES</div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="count">36</div>
+      <div class="count-lbl">À TRIER</div>
+    </div>
+  </div>
+</div>
+
+<div class="row todo">
+  <div class="band"></div>
+  <div class="vig-wrap">
+    <div class="vig">
+      <b style="left:20%;top:12%;width:28%;height:32%"></b>
+      <b style="left:52%;top:22%;width:30%;height:24%"></b>
+      <b style="left:12%;top:50%;width:34%;height:34%"></b>
+      <em style="left:54%;top:54%;width:28%;height:28%"></em>
+    </div>
+  </div>
+  <div class="body">
+    <div style="flex:1;min-width:0">
+      <div class="title-line">
+        <div class="title">Logements ×20</div>
+        <div class="commune">SAINTE-MARIE</div>
+      </div>
+      <div class="ctx">20 logements · créé hier</div>
+      <div class="bar-line">
+        <div class="bar"></div>
+        <div class="bar-lbl">AUCUNE RETENUE</div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="count">24</div>
+      <div class="count-lbl">À TRIER</div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="band"></div>
+  <div class="vig-wrap">
+    <div class="vig">
+      <b style="left:18%;top:20%;width:30%;height:28%"></b>
+      <b style="left:52%;top:46%;width:28%;height:30%"></b>
+    </div>
+  </div>
+  <div class="body">
+    <div style="flex:1;min-width:0">
+      <div class="title-line">
+        <div class="title">Logements ×15</div>
+        <div class="commune">SAINT-PAUL</div>
+      </div>
+      <div class="ctx">15 logements</div>
+    </div>
+    <div class="right">
+      <div class="quiet-lbl">RIEN À TRIER</div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="band"></div>
+  <div class="vig-wrap">
+    <div class="vig">
+      <b style="left:14%;top:26%;width:34%;height:26%"></b>
+      <b style="left:56%;top:30%;width:26%;height:34%"></b>
+    </div>
+  </div>
+  <div class="body">
+    <div style="flex:1;min-width:0">
+      <div class="title-line">
+        <div class="title">Logements ×12</div>
+        <div class="commune">BRAS-PANON</div>
+      </div>
+      <div class="ctx">12 logements · budget 600 k€</div>
+    </div>
+    <div class="right">
+      <div class="quiet-lbl">RIEN À TRIER</div>
+    </div>
+  </div>
+</div>
+
+<div class="more">VOIR LES 5 AUTRES</div>
+
+<div class="spec">5 · ÉTAT VIDE</div>
+<p class="note">
+  Ce que verra le premier client. Il doit inviter, pas constater.
+</p>
+
+<div class="empty">
+  <h3>Aucun projet pour l'instant</h3>
+  <p>Un projet garde votre cadrage et vos parcelles retenues.</p>
+  <div class="btn-primary">Créer votre premier projet</div>
+</div>
+
+<div class="spec">6 · LA VIGNETTE — À ARBITRER (PHASE 0)</div>
+<p class="note">
+  La vignette montre l'emprise du projet : parcelles du secteur en contour,
+  parcelles retenues en aplat mint. 64 px pour les projets à trier, 52 px
+  pour les autres. Si la génération est trop coûteuse, le repli est un carré
+  neutre avec l'initiale de la commune — le reste de la refonte tient sans
+  elle. Un projet sans emprise doit avoir un état vide qui ne ressemble pas
+  à un chargement.
+</p>
+
+</div>
+</body>
+</html>
