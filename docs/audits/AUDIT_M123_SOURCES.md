@@ -233,6 +233,42 @@ nous ; 1 non-défaut (ENS) ; 1 hors périmètre (pv, modèle).
 
 ---
 
+## PHASE 2 — VÉRIF MANUELLE PLU × SUDOCUH (communes révisées depuis nos ingestions)
+
+**Méthode.** Le squelette Sudocuh (planification PLU/PLUi, 31/12/2024) vit dans le registre curaté
+`config/veille_plu.yaml` (24 communes, champ `procedure`/`stade`/`date_acte`/`confiance`). On le croise
+avec la date d'ingestion réelle de notre zonage (`spatial_layers kind='plu_gpu_zone'`, `max(created_at)`
+par commune, **~28/06 → 03/07/2026**). **Critère de staleness** : une procédure devenue **opposable**
+(date d'approbation) **postérieure** à notre ingestion → notre zonage GPU est en retard sur cette commune.
+
+**Résultat mesuré.** 11 communes portent une procédure au registre (13 = `aucune`) :
+
+| Commune | Procédure | Stade | date_acte | notre ingestion | Postérieur ? | Confiance |
+|---|---|---|---|---|---|---|
+| Saint-André | revision_plu | prescrite | 2022-06-22 | 2026-06-29 | **non** (antérieur) | SOURCE |
+| Saint-Leu | revision_plu | prescrite | 2022-05-17 | 2026-06-28 | **non** | SOURCE |
+| Trois-Bassins | revision_plu | prescrite | 2022-06-02 | 2026-06-29 | **non** | SOURCE |
+| Saint-Philippe | elaboration | prescrite_dormante | 2002-08-30 | — (RNU, 0 zone) | **non** | SOURCE |
+| Étang-Salé · Plaine-des-Palmistes · Saint-Denis · Saint-Louis · Saint-Paul · Sainte-Marie · Sainte-Suzanne | clôturée | approuvée_**probable** | **ABSENT** | 2026-06/07 | **indéterminable** | **DEDUIT** |
+
+**Verdict : 0 commune à réingérer sur preuve Sudocuh.** Raisons, source par source :
+- Les 3 `revision_plu` **SOURCE** sont des **prescriptions de 2022** — une révision prescrite n'est pas
+  encore opposable ; le GPU nous a servi le PLU en vigueur en 06/2026, postérieur aux prescriptions.
+- Les 7 `approuvée_probable` sont **DEDUIT** (`date_acte` ABSENT) : la doctrine veille interdit de servir
+  une inférence comme un fait, et **le GPU sert toujours l'opposable courant** — si l'approbation est
+  antérieure à 06/2026, elle est **déjà dans notre ingestion** ; aucune n'est datée après.
+- Saint-Philippe = RNU (0 zone ingérée) — concordant, pas de PLU à rafraîchir.
+
+**PPR hors périmètre Sudocuh.** Sudocuh ne couvre **que le PLU/PLUi**. La fraîcheur PPR/aléas (couche
+`ppr`, 44 764 exclues) relève du producteur **DEAL** — non datable auto (cf. section RETARDS), à vérifier
+sur ton geste dédié producteur. Aucune réingestion lancée ici.
+
+**Ce que ça déclenche.** Rien à réingérer aujourd'hui. Le registre reste la sentinelle : si une des 7
+`approuvée_probable` se voit **dater** (passe DEDUIT → SOURCE avec une approbation > 06/2026), elle devient
+candidate à réingestion — à ce moment-là, et sur ton arbitrage couche par couche.
+
+---
+
 ## CE QUI N'A PAS ÉTÉ TOUCHÉ
 
 Inspection strictement en lecture. Aucune réingestion, aucune correction, aucune suppression — tout
