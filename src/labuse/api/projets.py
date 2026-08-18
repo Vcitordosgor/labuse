@@ -329,6 +329,21 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
     return out
 
 
+def _pourquoi_court(tier: str | None, carencee: bool, evenement: bool, surface: float | None) -> list[str]:
+    """M120 · Phase 4 — le « pourquoi » COURT d'une carte de tri (1-2 lignes), assemblé de signaux
+    SOURCÉS (jamais un score interne servi nu) : événement foncier récent, carence SRU, grande
+    emprise. Le tier (badge) porte déjà le verdict — on ne le répète pas ici. Aucune ligne inventée :
+    liste vide si aucun signal → la carte renvoie à la fiche."""
+    out: list[str] = []
+    if evenement:
+        out.append("Mutation probable — événement foncier récent.")
+    if carencee:
+        out.append("Commune carencée SRU — forte demande de logement social.")
+    if len(out) < 2 and surface and surface >= 2000:
+        out.append(f"Grande emprise ({round(surface):,} m²).".replace(",", " "))
+    return out[:2]
+
+
 class ApercuIn(BaseModel):
     cadrage: dict = {}
     identite: dict = {}
@@ -788,11 +803,37 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
                         text(f"SELECT idu FROM {tbl} WHERE idu = ANY(:ids) {col}"), {"ids": all_idus}))
             except Exception:  # noqa: BLE001 - badge optionnel, jamais bloquant
                 pass
+    # M120 · Phase 4 — enrichissement BATCH de la carte de tri (jamais un calcul client) :
+    #  · adresse postale BAN ;  · événement rouge (mutation probable, run servi) ;
+    #  · prix marché médian de la COMMUNE (DVF bâti, dit « commune » — jamais présenté par parcelle) ;
+    #  · carence SRU. De ces signaux SOURCÉS on assemble un « pourquoi » COURT (_pourquoi_court).
+    from .export_commun import adresses_ban, format_adresse
+    adrs = {i: format_adresse(a) for i, a in adresses_ban(db, all_idus).items()} if all_idus else {}
+    event_set = set()
+    if all_idus:
+        event_set = {x[0] for x in db.execute(text(
+            "SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
+            "WHERE cr.run_label = :r AND cr.evenement = 'rouge' AND p.idu = ANY(:ids)"),
+            {"r": RUN, "ids": all_idus})}
+    communes_lst = list({r["commune"] for r in rows if r["commune"]})
+    marche = {r["commune"]: int(r["m"]) for r in db.execute(text(
+        "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
+        "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m "
+        "FROM dvf_mutations WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0 "
+        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 AND commune = ANY(:cs) "
+        "GROUP BY commune"), {"cs": communes_lst}).mappings() if r["m"]} if communes_lst else {}
+    carencees = {x[0] for x in db.execute(text(
+        "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).all()}
+
     groups: dict[str, list] = {s: [] for s in ("proposee", "retenue", "ecartee", "a_analyser")}
     for r in rows:
+        evt = r["idu"] in event_set
         groups.setdefault(r["statut"], []).append({
             "idu": r["idu"], "commune": r["commune"], "statut": r["statut"],
-            "q_score": r["q_score"], "tier": r["tier"], "surface_m2": r["surface_m2"],
+            "tier": r["tier"], "surface_m2": r["surface_m2"],
+            "adresse": adrs.get(r["idu"]), "evenement": evt,
+            "marche_eur_m2": marche.get(r["commune"]),
+            "pourquoi": _pourquoi_court(r["tier"], r["commune"] in carencees, evt, r["surface_m2"]),
             "hors_criteres": bool(r["hors_criteres"]),
             "defisc": r["idu"] in defisc_set, "caduc": r["idu"] in caduc_set,
             "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,

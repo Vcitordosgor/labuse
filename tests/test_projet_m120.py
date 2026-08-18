@@ -106,6 +106,20 @@ def test_rejeu_conserve_les_tris_et_dit_le_diff(db_session, monkeypatch):
     assert rr["shortlist"]["ajoutees"] >= 1 and rr["shortlist"]["tris_conserves"] == 2
 
 
+# ───────── Phase 4 — le « pourquoi » court : signaux sourcés, jamais un score interne nu ─────────
+def test_pourquoi_court_signaux_sources_et_borne():
+    # aucun signal → aucune ligne (la carte renverra à la fiche, jamais une ligne inventée)
+    assert projets._pourquoi_court("chaude", carencee=False, evenement=False, surface=600) == []
+    # événement rouge + carence SRU → deux lignes sourcées, dans l'ordre
+    r = projets._pourquoi_court("brulante", carencee=True, evenement=True, surface=3000)
+    assert len(r) == 2 and "événement" in r[0].lower() and "carenc" in r[1].lower()
+    # grande emprise seule → une ligne, jamais plus de 2
+    g = projets._pourquoi_court(None, carencee=False, evenement=False, surface=5000)
+    assert g == ["Grande emprise (5 000 m²)."]
+    # le tier n'est JAMAIS répété dans le pourquoi (c'est le badge) ; aucune mention « qualité »
+    assert not any("qualit" in l.lower() for l in projets._pourquoi_court("chaude", True, True, 9000))
+
+
 # ───────────────────────── nettoyage du cadrage : jamais un critère inventé ─────────────────────────
 def test_clean_cadrage_drop_inconnu_et_vide():
     c = projets.clean_cadrage({"communes": ["X"], "surfaceMin": 500, "evenement": False,

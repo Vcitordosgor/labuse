@@ -222,9 +222,9 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
   const Row = ({ p, actions }: { p: ParcoursItem; actions: React.ReactNode }) => (
     <div className="flex items-center gap-2 rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[11px] text-txt-hi">{iduComplet(p.idu)}
-          <span className="ml-1.5 font-sans text-[10px] text-txt-dim">{p.commune}</span></div>
-        <div className="tnum text-[10px] text-txt-mut">qualité {fmtInt(p.q_score)}/100 · {p.tier ?? '—'}</div>
+        <div className="text-[11px] text-txt-hi">{p.adresse || p.commune}
+          <span className="ml-1.5 font-mono text-[9.5px] text-txt-dim">{iduComplet(p.idu)}</span></div>
+        <div className="tnum text-[10px] text-txt-mut">{p.commune} · {p.tier ?? '—'}{p.surface_m2 != null ? ` · ${fmtM2(p.surface_m2)}` : ''}</div>
       </div>
       <button onClick={() => onFiche(p.idu)}
         className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt">fiche</button>

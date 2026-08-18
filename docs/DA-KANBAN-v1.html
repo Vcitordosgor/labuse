@@ -40,6 +40,9 @@
   .ktitle { font-size: 19px; font-weight: 600; color: var(--txt); margin: 6px 0 8px; }
   .kcrit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .chip { border-radius: 999px; background: var(--surface-3); padding: 2px 9px; font-size: 10.5px; color: var(--txt-mut); }
+  .indic { display: inline-flex; align-items: center; gap: 6px; padding-left: 8px; border-left: .5px solid var(--border); }
+  .indic-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--txt-mut-4); }
+  .chip-i { border-radius: 999px; border: .5px solid var(--border); padding: 1px 8px; font-size: 10px; color: var(--txt-mut-3); }
   .kdate { font-family: var(--mono); font-size: 10.5px; color: var(--txt-mut-3); white-space: nowrap; }
   .kactions { display: flex; gap: 6px; margin-top: 10px; }
   .btn { border-radius: 7px; padding: 5px 11px; font-size: 11px; cursor: pointer; border: .5px solid var(--border-mid); background: none; color: var(--txt-mut); }
@@ -95,28 +98,35 @@
 
 <div class="spec">M120 · PHASE 4 — KANBAN DE TRI, MAQUETTE DE RÉFÉRENCE (décisions Vic)</div>
 <p class="note">
-  <b>Décisions actées :</b> une <b>seule anatomie de carte</b> partout (À trier / Retenues / Écartées) ;
-  chaque carte surface le <b>« pourquoi »</b> (1-2 forces/attentions, source <code>/carte/{idu}</code>),
-  l'<b>adresse postale</b> (BAN, avec l'IDU en mono dessous) et un <b>signal marché / événement</b>
-  quand présent. Vignette ortho NON retenue partout (l'adresse + le pourquoi priment). Fond noir,
-  mint <code>#4ADE80</code> en accent rare (Retenir, cadrage modifié). Les boutons ✓ Retenir · ◑ Peut-être ·
-  ✕ Écarter · ↩ sont présents sur chaque carte (une anatomie = un jeu d'actions).
-  <br><b>Dépendance data à câbler :</b> <code>GET /projets/{pid}/parcelles</code> devra renvoyer par
-  parcelle l'<code>adresse</code> (BAN), 1-2 lignes <code>pourquoi</code> (forces/attentions) et le
-  <code>signal marché/événement</code> — aujourd'hui ces données sont dans <code>/carte/{idu}</code>
-  (à la demande) ; les remonter dans la liste, jamais un calcul client.
+  <b>Décisions actées (v1 + ajustements Vic) :</b> une <b>seule anatomie de carte</b>, en
+  <b>DEUX densités</b> (patron liste M114) — <b>« À trier » garde tout</b> (c'est là qu'on décide :
+  adresse, tier, le <b>pourquoi</b> sourcé, le <b>signal marché/événement</b>, 3 gestes ✓ Retenir ·
+  ◑ Peut-être · ✕ Écarter) ; <b>Retenues/Écartées s'allègent</b> (adresse, IDU, tier, action de
+  retour — le pourquoi et le marché n'y servent plus).
+  <br>Le score interne <b>« qualité N/100 » est RETIRÉ</b> : mesuré, c'est un score de contraintes
+  clampé 1-100 (pas une qualité, pas un rang de cadrage) — un score interne ne se sert pas nu ; le
+  <b>tier</b> porte le verdict, le <b>pourquoi</b> les raisons.
+  <br>En-tête : les chips qui <b>FILTRENT</b> (périmètre, surface, zonage, terrain, signaux) sont
+  <b>séparées</b> des <b>indicatifs</b> (budget, type, livraison), ces derniers <b>en retrait</b>.
+  <br><b>Data (câblé M120) :</b> <code>GET /projets/{pid}/parcelles</code> remonte par parcelle
+  <code>adresse</code> (BAN), <code>pourquoi</code> court (signaux sourcés : événement / carence /
+  emprise), <code>evenement</code> et <code>marche_eur_m2</code> (médiane DVF <b>commune</b>) — batch,
+  jamais un calcul client.
 </p>
 
 <div class="khead">
   <div class="kback">← Mes projets</div>
   <div class="ktitle">Résidence Saint-Leu ×18</div>
   <div class="kcrit">
+    <!-- ce qui FILTRE (fait le tri) -->
     <span class="chip">Saint-Leu</span>
     <span class="chip">surface 800–2000 m²</span>
     <span class="chip">zonage U/AU</span>
     <span class="chip">terrain nu</span>
     <span class="chip">2 signaux de vie</span>
-    <span class="chip">Logement social · indic.</span>
+    <!-- indicatifs, EN RETRAIT, séparés -->
+    <span class="indic"><span class="indic-lbl">indic.</span>
+      <span class="chip-i">Logement social</span><span class="chip-i">720 k€</span><span class="chip-i">livr. 2027-06</span></span>
     <span class="kdate">· cadrage du 18/08/2026</span>
   </div>
   <div class="kactions">
@@ -137,7 +147,7 @@
           <div><div class="addr">12 chemin Summer, Saint-Leu</div><div class="idu">97424 000 AH 0971</div></div>
           <span class="tier brulante">BRÛLANTE</span>
         </div>
-        <div class="meta">Saint-Leu · qualité 78/100 · 1 340 m²</div>
+        <div class="meta">Saint-Leu · 1 340 m²</div>
         <div class="pourquoi">
           <div class="pq force"><span class="ic">▲</span>Terrain nu en zone U — constructible sans démolition.</div>
           <div class="pq attn"><span class="ic">△</span>Hauteur PLU à instruire (zone U2).</div>
@@ -156,7 +166,7 @@
           <div><div class="addr">Lieu-dit Bois de Nèfles</div><div class="idu">97424 000 AC 0060</div></div>
           <span class="tier chaude">CHAUDE</span>
         </div>
-        <div class="meta">Saint-Leu · qualité 61/100 · 920 m²</div>
+        <div class="meta">Saint-Leu · 920 m²</div>
         <div class="pourquoi">
           <div class="pq force"><span class="ic">▲</span>Procédure collective en cours sur le propriétaire (BODACC).</div>
         </div>
@@ -175,9 +185,7 @@
           <div><div class="addr">45 rue du Général de Gaulle</div><div class="idu">97424 000 AI 0355</div></div>
           <span class="tier brulante">BRÛLANTE</span>
         </div>
-        <div class="meta">Saint-Leu · qualité 82/100 · 1 610 m²</div>
-        <div class="pourquoi"><div class="pq force"><span class="ic">▲</span>Grande emprise, zone AU ouverte à l'urbanisation.</div></div>
-        <div class="signals"><span class="sig marche">marché ~2 500 €/m²</span></div>
+        <div class="meta">Saint-Leu · 1 610 m² <span style="color:var(--txt-mut-4)">— allégée : pas de pourquoi/marché</span></div>
         <div class="crm">▸ dans le CRM · contact à préparer<div class="proprio">SCI FONCIÈRE DES HAUTS · SIREN 812 345 678</div></div>
         <div class="acts"><div class="act non">✕ Écarter</div><div class="act retour">↩ À trier</div></div>
       </div>
@@ -193,8 +201,7 @@
           <div><div class="addr">Ravine des Colimaçons</div><div class="idu">97424 000 AD 0409</div></div>
           <span class="tier creuser">À CREUSER</span>
         </div>
-        <div class="meta">Saint-Leu · qualité 34/100 · 640 m²</div>
-        <div class="pourquoi"><div class="pq attn"><span class="ic">△</span>Pente forte — terrassement lourd probable.</div></div>
+        <div class="meta">Saint-Leu · 640 m² <span style="color:var(--txt-mut-4)">— allégée</span></div>
         <div class="acts"><div class="act oui">✓ Retenir</div><div class="act retour">↩ Récupérer</div></div>
       </div>
     </div>

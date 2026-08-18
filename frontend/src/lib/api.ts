@@ -810,7 +810,15 @@ export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`,
 // ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
 export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
 export interface ParcoursCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null; proprietaire_public?: ProprietairePublic | null; surface_m2?: number | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean }
+// M120 · Phase 4 — la carte de tri : adresse + pourquoi COURT + signal marché/événement (servis
+// batch par /parcelles, jamais un calcul client). Le q_score interne N'EST PLUS servi (mesuré :
+// score de contraintes clampé 1-100, pas une « qualité » ni un rang de cadrage → ne se sert pas nu).
+export interface ParcoursItem {
+  idu: string; commune: string; statut: StatutParcelle; tier: string | null
+  center: [number, number] | null; surface_m2?: number | null
+  adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
+  proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
+}
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
 export const fusionnerProjets = (ids: number[]) => j<FusionResult>('/projets/fusionner', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) })
