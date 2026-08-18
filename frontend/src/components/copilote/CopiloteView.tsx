@@ -5,7 +5,7 @@
 // (le run REPREND, ne redémarre pas) · 4 zéro retenue (honnête, relances non chiffrées)
 // · 5 quota (aucun run créé). Un rafraîchissement en plein run retombe sur le même fil
 // (run épinglé + rejeu after_seq).
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
 import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
@@ -161,7 +161,7 @@ export function CopiloteView() {
       // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
       // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
       // M107 — l'échec est RÉCUPÉRABLE sur place : le tour porte un bouton Réessayer.
-      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null } as CopiloteV2Reponse
+      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null, erreur: true } as CopiloteV2Reponse
       setFil((f) => [...f, { q: m, r: echec, echec: true }])
     } finally { setDispatching(false) }
   }
@@ -192,6 +192,27 @@ export function CopiloteView() {
     else { setRecapConfirme(recap?.recap ?? finalBrief); void run.instruire(mission, finalBrief) }
   }
   const corrigerRecap = (b: string) => { setRecap(null); setBrief(b); setTimeout(() => briefRef.current?.focus(), 0) }
+  // M117 · D8 — « Nouveau fil » et l'annonce du TTL sur TOUS les chemins (fil, récap-péage, formulaire
+  // projet), plus seulement le fil. Repart de zéro : vide tout, refocalise le brief.
+  const nouveauFil = () => {
+    setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null)
+    setRecap(null); setProjetForm(null); briefRef.current?.focus()
+  }
+  const ttlNotice = filExpire ? (
+    <p data-fil-expire className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 text-[12px] text-cp-muted">
+      ⏱ <b className="text-cp-txt">Nouvelle conversation</b> — le fil précédent a expiré ({ttlMin} min d'inactivité). Votre prochain message repart de zéro.
+    </p>
+  ) : null
+  const boutonNouveauFil = (
+    <button data-fil-nouveau onClick={nouveauFil}
+      className="self-start rounded-lg border border-cp-line bg-transparent px-4 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
+      ↻ Nouveau fil
+    </button>
+  )
+  // enveloppe un gabarit d'action (récap-péage / formulaire projet) avec l'annonce TTL + « Nouveau fil ».
+  const avecChrome = (node: ReactNode) => (
+    <div className="flex flex-col gap-3 text-left">{ttlNotice}{node}{boutonNouveauFil}</div>
+  )
 
   // §2b — rouvrir une mission passée : RECHERCHE (run_id) rejoue le run ; sinon restaure la dernière
   // réponse Copilote de la conversation (inline). On reprend là où on s'est arrêté.
@@ -300,25 +321,20 @@ export function CopiloteView() {
             scenario={scenario} onScenario={setScenario}
             missions={missions} onReprendre={rouvrir}
             reponse={projetForm
-              ? /* M113 P3 — le parcours projet guidé, prérempli de ce que le Copilote a compris. */
-                <ParcoursProjet prefill={projetForm.prefill}
+              ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */
+                avecChrome(<ParcoursProjet prefill={projetForm.prefill}
                   onVoir={(p) => { setProjetForm(null); setOpenProjet(p) }}
-                  onFermer={() => setProjetForm(null)} />
+                  onFermer={() => setProjetForm(null)} />)
               : recap
-              ? <RecapConfirmation data={recap} brief={recapBrief} onReask={reask}
+              ? /* M117 D8 — le récap-péage porte aussi le TTL + « Nouveau fil ». */
+                avecChrome(<RecapConfirmation data={recap} brief={recapBrief} onReask={reask}
                   onLancer={lancerRecap} onCorriger={corrigerRecap}
-                  onRepondre={(t) => void interroger(t)} />
+                  onRepondre={(t) => void interroger(t)} />)
               : (fil.length > 0 || dispatching) ? (
                 /* M102-B2 — LE FIL : demandé / compris / répondu, tour par tour. */
                 <div data-fil className="flex flex-col gap-3 text-left">
-                  {/* M107 P3 — l'expiration est ANNONCÉE, le fil reste visible estompé jusqu'au
-                      message suivant (jamais vidé en silence au milieu d'un échange). */}
-                  {filExpire && (
-                    <p data-fil-expire className="rounded-xl border border-cp-line2 bg-cp-card px-4 py-2.5 text-[12px] text-cp-muted">
-                      ⏱ <b className="text-cp-txt">Nouvelle conversation</b> — le fil précédent a expiré
-                      ({ttlMin} min d'inactivité). Votre prochain message repart de zéro.
-                    </p>
-                  )}
+                  {/* M107 P3 / M117 D8 — l'expiration ANNONCÉE (helper partagé, présent sur tous les chemins). */}
+                  {ttlNotice}
                   <div className={filExpire ? 'flex flex-col gap-3 opacity-50' : 'flex flex-col gap-3'}>
                   {fil.map((t, i) => (
                     <div key={i} className="flex flex-col gap-1.5">
@@ -354,17 +370,7 @@ export function CopiloteView() {
                       </button>
                     </div>
                   )}
-                  {!dispatching && fil.length > 0 && (
-                    /* M113 P1.1 — « Nouveau fil » : VRAI bouton secondaire (dette M107-B), classes
-                       DA-ACCUEIL-BRIEF (bordure cp-line, cible confortable px-4 py-2, survol), à
-                       portée du champ juste au-dessus. Repart de zéro : vide le fil, la conversation
-                       et la barre, refocalise le brief. */
-                    <button data-fil-nouveau
-                      onClick={() => { setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null); briefRef.current?.focus() }}
-                      className="self-start rounded-lg border border-cp-line bg-transparent px-4 py-2 font-display text-[12px] font-semibold text-cp-muted transition-colors duration-quick hover:border-cp-line2 hover:text-cp-txt">
-                      ↻ Nouveau fil
-                    </button>
-                  )}
+                  {!dispatching && fil.length > 0 && boutonNouveauFil}
                 </div>
               ) : null} />
         ) : (

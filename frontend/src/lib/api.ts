@@ -370,6 +370,7 @@ export interface CopiloteV2Reponse {
   sources?: string[]
   clarification?: boolean
   degraded?: boolean
+  erreur?: boolean          // M102 garde générale /ask — incident serveur (gabarit erreur M117)
   en_construction?: boolean
   web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
   compris?: string | null               // M102-B2 — récap systématique : « J'ai compris : … » (une phrase)

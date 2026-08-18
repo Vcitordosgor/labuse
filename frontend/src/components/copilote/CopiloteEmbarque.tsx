@@ -43,7 +43,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
     <>
       <div className="mt-3">
         {/* M113 P4 — plus de bouton Corriger sur une réponse : on relance. Le récap M109 reste (phrase). */}
-        <ReponseInline v2={rep} ton={ton} />
+        <ReponseInline v2={rep} />
       </div>
       {rep.clarification && (
         /* M107 — la question posée a SON champ de réponse, au même endroit, autofocus. */
