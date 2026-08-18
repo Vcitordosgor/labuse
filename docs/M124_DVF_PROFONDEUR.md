@@ -118,5 +118,74 @@ reste, le modèle servi est intouché.
 
 ---
 
-**STOP — à ton arbitrage : (a) Option A ou B sur les 4 éditions ; (b) créer DALLE-ALGO.md ou tu le
-fournis ; (c) GO Phase 2 (catalogue+radar profondeur, tableau final, golden).**
+*(STOP Phase 1 rendu — arbitrage Vic : (a) Option A ; (b) DALLE-ALGO.md fourni sur main ; (c) GO.)*
+
+---
+
+# PHASE 2-3 — EXÉCUTION (arbitrage rendu)
+
+## Option A, corrigée par la vérification édition par édition
+
+Les listings complets du miroir (201904→202504) invalident le caveat Phase 1 « 4 millésimes » : les
+éditions d'**octobre ne portent l'année la plus ancienne qu'en `-s2`** (semestre 2 seul — ex. 202010 :
+`valeursfoncieres-2015-s2.txt` ; 202410 : `2019-s2`) et **202210/202310 n'existent pas** sur le miroir.
+La dernière édition **année-pleine** de chaque millésime :
+
+| Millésime | Dernière éd. pleine | Ingérée | Verdict |
+|---|---|---|---|
+| 2014 | 201910 | 201910 | ✓ déjà finale |
+| **2015** | **202004** | 201910 | **rafraîchi** |
+| 2016 | 202110 | 202110 | ✓ |
+| 2017 | 202204 | 202204 | ✓ (202210 n'existe pas) |
+| 2018 | 202304 | 202304 | ✓ (202310 n'existe pas) |
+| 2019 | 202404 | 202404 | ✓ (202410 = 2019-s2 seul) |
+| 2020 | 202504 | 202504 | ✓ |
+
+**2015 rafraîchi** (`ingest_millesime` idempotent, DELETE+réinsert, URL/édition par ligne) :
+12 017 → **12 031 lignes (+14)**, 5 953 → **5 963 mutations (+10)** — les transcriptions tardives
+attendues. Frontière 2020/2021 **re-prouvée après** : recouvrement 0.
+
+## Catalogue + radar
+
+La ligne DVF dit désormais : **« géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020 »** — appliqué
+par le geste standard `persist_millesime` (chaîne versionnée dans `fraicheur.py`, le cron réécrit la
+même) ; `seed_sources.py` dit le canal histo (cquest, Licence Ouverte, URL par ligne, frontière sans
+recouvrement).
+
+## Plausibilité (définitif)
+
+24/24 communes **chaque** millésime 2014-2020 · part « Vente » stable 85,8 → 93,6 % · 355 lignes
+VF NULL/≤0 (0,3 %) · 70 mutations > 10 M€ (grands ensembles).
+
+## LE TABLEAU FINAL — mutations 2014-2025
+
+| Année | Mutations | Lignes | Canal |
+|---|--:|--:|---|
+| 2014 | 5 647 | 11 541 | archives DGFiP (histo) |
+| 2015 | 5 963 | 12 031 | archives DGFiP (histo) — *rafraîchie éd.202004* |
+| 2016 | 6 770 | 13 549 | archives DGFiP (histo) |
+| 2017 | 7 475 | 15 597 | archives DGFiP (histo) |
+| 2018 | 7 185 | 16 631 | archives DGFiP (histo) |
+| 2019 | 7 969 | 19 171 | archives DGFiP (histo) |
+| 2020 | 7 733 | 21 957 | archives DGFiP (histo) |
+| 2021 | 9 954 | 24 198 | géo-DVF (prod) |
+| 2022 | 10 259 | 23 580 | géo-DVF (prod) |
+| 2023 | 8 836 | 20 999 | géo-DVF (prod) |
+| 2024 | 7 465 | 19 251 | géo-DVF (prod) |
+| 2025 | 7 184 | 14 523 | géo-DVF (prod, année en cours) |
+| **TOTAL 2014-2025** | **92 440** | **213 028** | **recouvrement dédupliqué : 0** |
+
+## Vérification (rien de servi ne bouge)
+
+- **Golden : 0 FAIL** (86 PASS, 33 INDÉTERMINÉ = quota env) — le run servi ne lit pas l'histo.
+- **Suite : 1 618 passed, 1 failed** — le failed (`test_demo_51e_appel_429`) est un **flake de fuseau
+  PRÉ-EXISTANT, sans lien M124** : `partners.py:458` compare `date.today()` (machine CEST, 18/08) au
+  `jour` PostgreSQL (TZ Indian/Reunion, déjà 19/08) → entre 20 h et minuit CEST la porte quota se
+  réinitialise au lieu de lever 429. Mesuré : PG `current_date`=2026-08-19 vs Python
+  `date.today()`=2026-08-18 au moment du run. Repassera vert au matin ; **défaut TZ réel à corriger
+  hors M124** (consigné, pas silencié — classe M90).
+- **DALLE-ALGO.md** (fourni par Vic sur main, `6ed75755`) : les points 1 (« sous 1 an ») et 2 (les
+  4 candidates M127) y étaient déjà ; point 3 mis à jour — **« profondeur DVF 2014-2025 ACQUISE
+  (M124), clamp 2021 à lever au réentraînement »** + la vérité des éditions.
+
+**Clamp 2021, modèle, features, run servi : INTOUCHÉS** (contrat du mandat tenu).

@@ -141,11 +141,14 @@ calibré 2025. RR@1158 hors copro = 6,73 (fold 2025). Dérive : 11× (2020)
 → 6,7× (2025).
 
 **Corrections arbitrées (18/08 soir)** :
-1. **Profondeur DVF** : les archives 2014-2020 sont EN BASE
-   (dvf_mutations_histo, 48 732 mutations, source cquest LO 2.0). Tenure
-   connue 8,6 % → 17,1 %. Clamp 2021 des features à lever au
-   réentraînement M127. Rafraîchir 4 millésimes sur l'édition finale
-   d'octobre (arbitré M124).
+1. **Profondeur DVF 2014-2025 ACQUISE (M124)** : archives 2014-2020 en base
+   (dvf_mutations_histo, 48 742 mutations, source cquest LO 2.0, URL par
+   ligne) ; frontière 2020/2021 sans recouvrement (prouvé) ; catalogue dit
+   la profondeur. Tenure connue 8,6 % → 17,1 %. **Clamp 2021 des features
+   à lever au réentraînement M127.** Éditions : vérification M124 — seule
+   2015 était rafraîchissable (éd.201910→202004, +10 mutations, exécuté) ;
+   2014/2016-2020 étaient déjà à leur dernière édition année-pleine (les
+   éditions d'octobre ne portent l'année la plus ancienne qu'en semestre 2).
 2. **Ménage** : les 7 features mortes/retirées sortent physiquement au
    réentraînement.
 3. **Trou parcel_residuel** (38,9 % manquant sur SDP/sous-densité/
