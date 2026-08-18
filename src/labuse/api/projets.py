@@ -367,21 +367,67 @@ def _counts_by_projet(db: Session, projet_ids: list[int]) -> dict[int, dict]:
     return out
 
 
-def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict]) -> dict:
+# M114 · Phase 0 (arbitré : vignette RÉELLE) — le SCHÉMA d'emprise de chaque projet : les centroïdes
+# des parcelles du projet, normalisés 0–1 dans la bbox du projet, avec le drapeau « retenue ». Le
+# front en tire un SVG (contour pour proposée/écartée, aplat mint pour retenue). Une SEULE requête
+# batchée pour toute la liste (mesuré ~27 ms/9 projets) ; aucun stockage, aucun cache — lecture live
+# de projet_parcelles (une parcelle retenue/écartée se voit au prochain fetch). Projet sans parcelle
+# → points vides → le front rend l'initiale de la commune (état vide, jamais un chargement).
+_VIGNETTE_MAX_POINTS = 14   # au-delà, un carré de 52–64 px n'est que du bruit
+
+
+def _vignettes_by_projet(db: Session, projet_ids: list[int]) -> dict[int, list[dict]]:
+    if not projet_ids:
+        return {}
+    rows = db.execute(text(
+        "SELECT pc.projet_id AS pid, pc.statut AS st, ST_X(p.centroid) AS x, ST_Y(p.centroid) AS y "
+        "FROM projet_parcelles pc JOIN parcels p ON p.id = pc.parcel_id "
+        "WHERE pc.projet_id = ANY(:ids) AND p.centroid IS NOT NULL"), {"ids": projet_ids}).all()
+    brut: dict[int, list] = {}
+    for r in rows:
+        brut.setdefault(r.pid, []).append((r.x, r.y, r.st == "retenue"))
+    out: dict[int, list[dict]] = {}
+    for pid, pts in brut.items():
+        xs = [x for x, _, _ in pts]
+        ys = [y for _, y, _ in pts]
+        x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+        dx = (x1 - x0) or 1.0
+        dy = (y1 - y0) or 1.0
+        # les RETENUES d'abord : garanties visibles si on tronque à _VIGNETTE_MAX_POINTS.
+        pts.sort(key=lambda t: not t[2])
+        out[pid] = [{"x": round((x - x0) / dx, 4), "y": round((y - y0) / dy, 4), "r": r}
+                    for x, y, r in pts[:_VIGNETTE_MAX_POINTS]]
+    return out
+
+
+def _premiere_commune(p: models.Projet) -> str | None:
+    per = (p.fiche or {}).get("perimetre") or {}
+    communes = per.get("communes") or []
+    return communes[0] if communes else None
+
+
+def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict],
+                        vignettes: dict[int, list[dict]] | None = None) -> dict:
     c = by_projet.get(p.id, {})
-    return {**_projet_dict(p),
-            "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
+    d = {**_projet_dict(p),
+         "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
+    # M114 — la vignette voyage avec la fiche (points normalisés + commune pour l'état vide).
+    d["vignette"] = {"commune": _premiere_commune(p),
+                     "points": (vignettes or {}).get(p.id, [])}
+    return d
 
 
 @router.get("")
 def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
-    """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4). Une seule source de vérité :
-    les compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche.
-    SEC-IDOR : bornée au compte de la session."""
+    """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4) et la VIGNETTE d'emprise (M114).
+    Une seule source de vérité : compteurs et vignette viennent de projet_parcelles (l'état réel du
+    tri), jamais d'un recompte de recherche. SEC-IDOR : bornée au compte de la session."""
     cid = current_compte(request)
     rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
-    by_projet = _counts_by_projet(db, [p.id for p in rows])
-    return [_projet_dict_counts(p, by_projet) for p in rows]
+    ids = [p.id for p in rows]
+    by_projet = _counts_by_projet(db, ids)
+    vignettes = _vignettes_by_projet(db, ids)
+    return [_projet_dict_counts(p, by_projet, vignettes) for p in rows]
 
 
 def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> models.Projet | None:
