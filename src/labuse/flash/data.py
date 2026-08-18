@@ -197,7 +197,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
         r = db.execute(text(
             """SELECT pr.taux_emprise_pct, pr.sdp_residuelle_m2
                FROM parcel_residuel pr JOIN parcels p ON p.id = pr.parcel_id
-               WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
+               WHERE p.idu = :idu AND pr.cause IS NULL"""), {"idu": idu}).mappings().first()
         if r:
             out["residuel"] = {"taux_emprise_pct": _f(r["taux_emprise_pct"]),
                                "sdp_residuelle_m2": _i(r["sdp_residuelle_m2"])}

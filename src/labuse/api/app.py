@@ -917,7 +917,7 @@ def _q_v2_where(run_label: str, score_min: int | None,
         params["f_smax"] = surface_max
     if sdp_min is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel r0 WHERE r0.parcel_id = p.id"
-                     " AND r0.sdp_residuelle_m2 >= :f_sdp)")
+                     " AND r0.cause IS NULL AND r0.sdp_residuelle_m2 >= :f_sdp)")  # M125 : lignes calculées seules
         params["f_sdp"] = sdp_min
     if evenement:
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c0 WHERE c0.parcel_id = p.id"
@@ -1005,7 +1005,7 @@ def _q_v2_where(run_label: str, score_min: int | None,
     # ── M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? » (facettes composables) ──
     if sdp_max is not None:   # SDP résiduelle plafonnée (barre niveau 1, borne haute)
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel r1 WHERE r1.parcel_id = p.id"
-                     " AND r1.sdp_residuelle_m2 <= :f_sdpmax)")
+                     " AND r1.cause IS NULL AND r1.sdp_residuelle_m2 <= :f_sdpmax)")  # M125
         params["f_sdpmax"] = sdp_max
     if constructibilite:
         # Constructibilité CALIBRÉE (le filtre différenciant) — dérivée du TIER effectif + zone,
@@ -1050,7 +1050,7 @@ def _q_v2_where(run_label: str, score_min: int | None,
         # Capacité logements ESTIMÉE ≥ N — dérivée de la SDP résiduelle (≈ 70 m² SDP / logement).
         # Étiquette Estimé portée par le front. Le seuil SDP est le point de calcul unique.
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rc WHERE rc.parcel_id = p.id"
-                     " AND rc.sdp_residuelle_m2 >= :f_capa)")
+                     " AND rc.cause IS NULL AND rc.sdp_residuelle_m2 >= :f_capa)")  # M125
         params["f_capa"] = capacite_min * SDP_PAR_LOGEMENT_M2
     if zone_plu:   # zone PLU EXACTE (tiroir droit).
         # M99 : le critère normalisé vit dans la TABLE (zone_filtre, écrit par
@@ -1148,7 +1148,7 @@ def _q_v2_where(run_label: str, score_min: int | None,
     if ca_min is not None:
         # bilan CA indicatif : prix de sortie neuf sectoriel × SDP résiduelle (Estimé, hors coûts).
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rca JOIN dvf_prix_sortie_neuf sn"
-                     " ON sn.cle = left(p.idu, 10) WHERE rca.parcel_id = p.id"
+                     " ON sn.cle = left(p.idu, 10) WHERE rca.parcel_id = p.id AND rca.cause IS NULL"  # M125
                      " AND rca.sdp_residuelle_m2 * sn.prix_m2_neuf >= :f_camin)")
         params["f_camin"] = ca_min
     if mode_b_rentable:
@@ -1960,7 +1960,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                      AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
-        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit.
@@ -2972,7 +2972,7 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
             """SELECT r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite, r.capacite_estimee,
                       rb.surelevation_possible, rb.hauteur_bati_m, rb.hauteur_max_m, rb.confiance
                  FROM parcels p
-                 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+                 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
                  LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
@@ -3282,7 +3282,7 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
                 SELECT detail FROM cascade_results
                 WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
             ) d ON true
-            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
             LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
             WHERE p.commune = :c
             """
