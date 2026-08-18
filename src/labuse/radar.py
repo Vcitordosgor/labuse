@@ -12,8 +12,16 @@ pas par ici : le radar est un THERMOMÈTRE, pas un déclencheur.
 Types de sonde :
   head     — HEAD sur un artefact stable (fichier « latest ») : Last-Modified/ETag.
   json     — GET d'une métadonnée légère (API catalogue) : un champ daté (qq Ko max).
-  (repli)  — HEAD sur endpoint_url de data_sources ; sans signal exploitable → non_sondable
-             (constat honnête, jamais une date inventée).
+  ods      — API catalogue Opendatasoft d'un dataset précis : metas.default.modified.
+  (repli)  — HEAD sur endpoint_url ; s'il expose Last-Modified → a_jour, SINON la source est
+             marquée `verification_manuelle` (M123 : plus de HEAD aveugle laissé en « cassé » —
+             une source sans sonde fiable est SUIVIE À LA MAIN, statut honnête + cadence, jamais
+             un faux « à jour » ni un « non_sondable » qui se lit comme une panne).
+
+M123 : `non_sondable` disparaît du vocabulaire servi. Trois états honnêtes :
+  a_jour / nouvelle_publication  — sonde fiable, état auto ;
+  verification_manuelle          — pas de sonde fiable : suivi humain à la cadence dite ;
+  erreur                         — une sonde qui DEVRAIT marcher a cassé (défaut à réparer).
 """
 from __future__ import annotations
 
@@ -91,6 +99,12 @@ SONDES: dict[str, dict] = {
         "url": ("https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/"
                 "datasets?text=sitadel&page=1&pageSize=10"),
         "champ": ("data", 0, "last_modified")},
+    # M123 — sonde Opendatasoft PAR DATASET (metas.default.modified) : signal fiable, pas un HEAD aveugle.
+    "ZNIEFF%": {
+        "kind": "json", "mode": "manuel", "cadence": "grande passe (gate environnemental)",
+        "url": ("https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/"
+                "zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion"),
+        "champ": ("metas", "default", "modified")},
 }
 
 
@@ -123,64 +137,68 @@ def ensure_table(db: Session) -> None:
             source_name text PRIMARY KEY,
             mode text NOT NULL,            -- auto (cron vivant) | manuel (grande passe / cascade gelée)
             cadence text,
-            sonde text NOT NULL,           -- head | json | endpoint | aucune
+            sonde text NOT NULL,           -- head | json | ods | manuelle
             url text,
             valeur text,                   -- Last-Modified / ETag / champ daté observé
             premiere_vue timestamptz,
             derniere_verif timestamptz,
             dernier_changement timestamptz,
-            statut text NOT NULL,          -- a_jour | nouvelle_publication | non_sondable | erreur
+            statut text NOT NULL,          -- M123 : a_jour | nouvelle_publication | verification_manuelle | erreur
             detail text
         )"""))
 
 
 def _sonde_pour(name: str, endpoint_url: str | None) -> dict | None:
+    # M123 — SEULES les sondes CURÉES (fiables, testées) probent. Plus de HEAD aveugle sur un
+    # endpoint quelconque (il ne renvoyait pas de date exploitable et laissait la source « cassée »).
+    # Une source sans sonde curée est SUIVIE À LA MAIN (verification_manuelle), état honnête.
     from fnmatch import fnmatch
     for motif, s in SONDES.items():
         if fnmatch(name.lower(), motif.lower().replace("%", "*")):
             return dict(s)
-    if endpoint_url and endpoint_url.startswith("http"):
-        return {"kind": "head", "mode": "manuel", "cadence": "grande passe (à la décision)",
-                "url": endpoint_url, "repli": True}
     return None
 
 
 def run_radar(db: Session) -> dict:
     """Passe de sonde sur TOUTES les sources — écrit source_radar, renvoie le résumé."""
     ensure_table(db)
-    rows = db.execute(text("SELECT name, endpoint_url FROM data_sources ORDER BY id")).mappings().all()
+    rows = db.execute(text("SELECT name, endpoint_url, source_cadence FROM data_sources ORDER BY id")).mappings().all()
     now = datetime.now(timezone.utc)
-    resume = {"sondees": 0, "changements": [], "non_sondables": 0, "erreurs": 0}
+    resume = {"sondees": 0, "changements": [], "manuelles": 0, "erreurs": 0}
+
+    def _manuelle(name, cadence, detail):
+        # M123 — état HONNÊTE d'une source sans sonde fiable : SUIVIE À LA MAIN (jamais « non_sondable »
+        # qui se lit comme une panne, jamais un faux « à jour »). La cadence dit à quel rythme on vérifie.
+        cad = cadence or "grande passe (à la décision)"
+        db.execute(text("""
+            INSERT INTO source_radar (source_name, mode, cadence, sonde, statut, detail, derniere_verif)
+            VALUES (:n, 'manuel', :c, 'manuelle', 'verification_manuelle', :d, :t)
+            ON CONFLICT (source_name) DO UPDATE SET
+                mode='manuel', cadence=:c, sonde='manuelle', statut='verification_manuelle',
+                detail=:d, derniere_verif=:t"""), {"n": name, "c": cad, "d": detail, "t": now})
+        resume["manuelles"] += 1
+
     for r in rows:
         name = r["name"]
         s = _sonde_pour(name, r["endpoint_url"])
         prev = db.execute(text("SELECT valeur, premiere_vue, dernier_changement FROM source_radar"
                                " WHERE source_name = :n"), {"n": name}).mappings().first()
         if s is None:
-            db.execute(text("""
-                INSERT INTO source_radar (source_name, mode, cadence, sonde, statut, detail, derniere_verif)
-                VALUES (:n, 'manuel', 'grande passe (à la décision)', 'aucune', 'non_sondable',
-                        'aucune URL sondable (accès manuel/convention)', :t)
-                ON CONFLICT (source_name) DO UPDATE SET derniere_verif = :t"""),
-                       {"n": name, "t": now})
-            resume["non_sondables"] += 1
+            _manuelle(name, r["source_cadence"], "aucune sonde automatique — suivi humain")
             continue
         valeur, err = _valeur_sonde(s)
         resume["sondees"] += 1
         if valeur is None:
-            statut = "non_sondable" if (err or "").startswith("HEAD") else "erreur"
-            if statut == "erreur":
-                resume["erreurs"] += 1
-            else:
-                resume["non_sondables"] += 1
+            # une sonde CURÉE (donc censée marcher) qui échoue = DÉFAUT à réparer (erreur), pas un
+            # état « manuel » — on veut la voir et la corriger.
+            resume["erreurs"] += 1
             db.execute(text("""
                 INSERT INTO source_radar (source_name, mode, cadence, sonde, url, statut, detail, derniere_verif)
-                VALUES (:n, :m, :c, :k, :u, :s, :d, :t)
+                VALUES (:n, :m, :c, :k, :u, 'erreur', :d, :t)
                 ON CONFLICT (source_name) DO UPDATE SET
-                    mode = :m, cadence = :c, sonde = :k, url = :u, statut = :s, detail = :d, derniere_verif = :t"""),
-                {"n": name, "m": s["mode"], "c": s["cadence"],
-                 "k": "endpoint" if s.get("repli") else s["kind"], "u": s["url"],
-                 "s": statut, "d": err, "t": now})
+                    mode=:m, cadence=:c, sonde=:k, url=:u, statut='erreur', detail=:d, derniere_verif=:t"""),
+                {"n": name, "m": s["mode"], "c": s["cadence"], "k": s["kind"], "u": s["url"],
+                 "d": err, "t": now})
             continue
         change = bool(prev and prev["valeur"] and prev["valeur"] != valeur)
         statut = "nouvelle_publication" if change else "a_jour"

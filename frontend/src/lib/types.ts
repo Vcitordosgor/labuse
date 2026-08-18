@@ -166,7 +166,7 @@ export interface SourceInfo {
     valeur: string | null
     derniere_verif: string | null
     dernier_changement: string | null
-    statut: 'a_jour' | 'nouvelle_publication' | 'non_sondable' | 'erreur'
+    statut: 'a_jour' | 'nouvelle_publication' | 'verification_manuelle' | 'non_sondable' | 'erreur'
     detail: string | null
   } | null
   // M71 BLOC A : ligne marquée DOUBLON au catalogue (même donnée qu'une autre ligne) —

@@ -57,6 +57,9 @@ function majReelle(s: SourceInfo): string | null {
 // le radar amont de radar.py). Ces prédicats nourrissent la barre d'état, les filtres ET les badges — un
 // seul jeu de règles, pas de chiffre en dur.
 const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.statut === 'nouvelle_publication'
+// M123 — état HONNÊTE d'une source sans sonde auto fiable : suivie À LA MAIN (cadence dite), ni
+// « à jour » automatique ni « cassé ». Distinct de `sondable` (radar auto).
+const suiviManuel = (s: SourceInfo) => s.radar?.statut === 'verification_manuelle'
 const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard'
 // M105 P2 — le verdict AMONT EN AVANCE (M96) : le radar a vu une publication plus récente que
 // ce que nous avons intégré. Distinct de « publication ancienne » (là, c'est le producteur).
@@ -128,6 +131,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
         {s.name}
         {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
+        {suiviManuel(s) && <Badge kind="dashed" title={`Pas de sonde automatique fiable : version vérifiée à la main. Cadence : ${s.radar?.cadence ?? 'grande passe'}.`}>suivi manuel</Badge>}
         {late && (
           <Badge kind="late" title="Le producteur n'a rien publié depuis plus longtemps que sa cadence habituelle — nous servons bien la dernière version publiée.">
             <span data-source-decroche>publication ancienne</span>
