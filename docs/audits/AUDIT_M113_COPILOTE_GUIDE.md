@@ -71,25 +71,33 @@ projet »), sans Copilote.
 |---|---|
 | Gate routeur (B1 haiku, `qa/m78/routeur_eval.py`) | **100 %** (gate_95 ✓), ambigu 5/5, corrections 5/5, coût ÷3 |
 | Gate véracité (`qa/m78/veracite.py`) | **33/33** (après correctif prompt B1) |
+| **Gate scénario chip** (`qa/m113/scenarios.py`, oracle SQL) | **6/6** — données(51 129)+récap · web court(134 car.)+source · parcelle=péage · surveillance=VEILLE+porte · outil=porte · projet=form prérempli |
+| **Gate fil** (`qa/m102/veracite_fil.py`) sous B1 | **6/6** |
+| **Gate facette** (`qa/m110/veracite_facette.py`) sous B1 | **11/11** |
 | Tests déterministes copilote (projet/guidage/rupture/facette/miscompte) | **43/43** |
-| Tests déterministes SCÉNARIO (`tests/test_copilote_scenario.py`) | **5/5** (registre · web court-circuit · projet sans création directe · intent forcé) |
+| Tests déterministes SCÉNARIO (`tests/test_copilote_scenario.py`) | **5/5** |
 | Suite complète | **1600 passed** (1 échec pré-existant `test_partners_api_v1`, confirmé par stash sur le tip M112 — hors périmètre) |
 | tsc · build | **0 · OK** |
-| Latence maire : structure du court-circuit | web-**libre** appelle classify (`degraded=True`) ; web-**chip** le SAUTE (`degraded=None`) — court-circuit confirmé |
-| Gate scénario chip (`qa/m113/scenarios.py`) · fil · facette · latence chiffrée | **à rejouer** — quota API épuisé (voir note) |
 
-> **Note quota (environnement).** À force de rejouer les gates aujourd'hui (vérification M112 + les
-> expériences Phase 0 + les re-runs B1), l'API modèle a atteint un plafond (429 « service
-> indisponible ») qui n'a pas récupéré après 15 min — vraisemblablement un plafond JOURNALIER. C'est
-> le même signal qui rend le golden « INDÉTERMINÉ » : panne d'environnement, PAS un écart métier.
-> Le **routeur (100 %)** et la **véracité (33/33)** — les deux gates critiques du changement de modèle
-> B1 — ont tourné VERT avant l'épuisement. Les gates **scénario / fil / facette** et la **latence
-> chiffrée** sont à REJOUER dès récupération du quota (aucune assertion assouplie). Couverture du
-> risque en attendant : (1) véracité 33/33 exerce le chemin complet route→select→formule, dont des
-> comptages facette (Q11/Q16/Q17) — le socle des scénarios `donnees`/`parcelle` ; (2) 5 tests
-> déterministes valident le forçage de scénario, le court-circuit web et le « jamais de création
-> directe » ; (3) les tests de rupture (M111) couvrent la logique du fil. Branche NON mergée : la
-> re-confirmation de ces trois gates est un prérequis au merge.
+### Latence du maire, PAR LEVIER (`qa/m113/chrono_leviers.py`, 2 passes)
+
+| levier | temps mesuré | gain vs BASE |
+|---|---|---|
+| BASE (libre, routeur **sonnet** — ni A ni B1) | 11,8 / 11,2 s | — |
+| **B1** seul (libre, routeur **haiku**) | 9,7 / 10,2 s | **≈ −1,9 s** (étage routage) |
+| **A+B1** (chip **web**) | 8,6 / 8,4 s | **≈ −3,3 s** (route + select ôtés) |
+
+Lecture : **A** (le chip web) court-circuite classify → route + select disparaissent (≈ −3,3 s
+aujourd'hui ; le jour de la mesure Phase 0, select seul valait 5–9 s → le gain y aurait été bien
+plus grand). **B1** accélère l'étage routage (≈ −1,9 s) sur la voie LIBRE et les chips non-web ;
+pour le maire (web), B1 n'ajoute rien AU chip (classify déjà sauté) — le gain du maire est porté par
+A. Le plancher restant (~8,5 s) est la **recherche web elle-même** (variable, jusqu'à 3 requêtes),
+hors de portée des leviers. La base du jour (11,8 s) est plus basse que celle de Phase 0 (15–16 s) :
+l'API était moins chargée — les GAINS RELATIFS tiennent, les absolus varient avec la charge amont.
+
+> Gates rejouées après recharge des crédits API (le blocage de la veille était un **solde de crédits
+> épuisé** — `invalid_request_error` « credit balance too low » — et non un quota qui se réinitialise).
+> Aucune assertion assouplie. Branche NON mergée.
 
 ## Interdits respectés
 
