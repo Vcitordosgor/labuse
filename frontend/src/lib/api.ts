@@ -393,6 +393,8 @@ export interface CopiloteV2Reponse {
   // création directe : le serveur renvoie le préremplissage compris, le front ouvre le formulaire).
   scenario?: string | null
   projet_form?: { prefill: Record<string, unknown> } | null
+  // M116 · D4 — « ouvrir un outil » sans outil précis → proposer la LISTE des outils (voie, pas refus).
+  outils_liste?: boolean
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>

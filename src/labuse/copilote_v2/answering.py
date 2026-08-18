@@ -248,15 +248,44 @@ def _clean_args(tool: str, args: dict) -> dict:
     return out
 
 
+def _et_fr(items: list[str]) -> str:
+    """« a », « b » et « c » — pour nommer les critères non appliqués dans l'aveu."""
+    qs = [f"« {x} »" for x in items]
+    return qs[0] if len(qs) == 1 else " et ".join([", ".join(qs[:-1]), qs[-1]])
+
+
 def _reply_compte(db: Session, message: str, res, faits_fil, intent: str) -> dict:
     """Réponse d'un comptage : la prose + le registre + la PORTE CARTE FILTRÉE (M112 P2.1) —
     partagée par la QUESTION « combien de… » et la demande VISUELLE « montre-moi les… »."""
-    text = _formuler(db, message, res, faits_fil)
     from . import registre_faits
+    cna = res.criteres_non_appliques or []
+    labels = (res.data or {}).get("criteres_labels") or []
+    # M116 · D11 — l'AVEU D'ABORD, jamais le COMPTE non filtré présenté comme la réponse. Scopé à
+    # `compter_parcelles` : c'est là qu'un critère lâché sans autre filtre transforme le résultat en
+    # total trompeur. Les autres outils (délai, taux, patrimoine…) servent leur chiffre AVEC leur
+    # réserve (M109 via _formuler) — leur nombre reste une vraie réponse, pas un total non filtré.
+    if cna and res.tool == "compter_parcelles":
+        aveu = "Le critère " + _et_fr(cna) + (" n'est pas encore interrogeable ici."
+                                              if len(cna) == 1 else " ne sont pas encore interrogeables ici.")
+        if not labels:
+            # aucun critère applicable n'a filtré : servir le total serait TROMPEUR → pas de chiffre,
+            # une voie (M112) plutôt qu'un mur. Pas de porte carte (elle montrerait le non-filtré).
+            voie = (" Je peux compter et croiser sur d'autres critères — surface, zonage PLU, procédure "
+                    "judiciaire, friche, copropriété, personne morale… Reformulez avec l'un d'eux.")
+            return _reply(aveu + voie, intent, refus="critere_non_applicable", tool=res.tool,
+                          criteres_non_appliques=cna, criteres_appliques=labels)
+        # des critères applicables ONT filtré : l'aveu d'abord, PUIS le sous-compte (qui les porte).
+        commune = (res.data or {}).get("criteres", {}).get("commune")
+        corps = (f" Sur les critères que je sais appliquer ({', '.join(labels)}), "
+                 f"{res.valeur} parcelle(s)" + (f" à {commune}" if commune else "") + f" ({res.source}).")
+        return _reply(aveu + corps, intent, refus=None, tool=res.tool, sources=[res.source],
+                      criteres_non_appliques=cna, criteres_appliques=labels,
+                      carte_filtre=_carte_depuis_compte(res),
+                      _faits_tour=registre_faits.extraire_faits(res))
+    text = _formuler(db, message, res, faits_fil)
     return _reply(text, intent, refus=None, tool=res.tool, sources=[res.source],
-                  partiel=res.partiel, criteres_non_appliques=res.criteres_non_appliques,
-                  criteres_appliques=(res.data or {}).get("criteres_labels") or [],
-                  carte_filtre=_carte_depuis_compte(res),
+                  partiel=res.partiel, criteres_non_appliques=cna,
+                  criteres_appliques=labels, carte_filtre=_carte_depuis_compte(res),
                   _faits_tour=registre_faits.extraire_faits(res))
 
 
@@ -475,7 +504,10 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
 
     # §M78-bis 2d : RECHERCHE/VERIFICATION ne court-circuitent PAS sur la clarification du routeur — elle
     # ALIMENTE leur récap (qui pose une clarification COURTE, ≤ 4 options). Pas de double question.
-    if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION"):
+    # M116 · D3 — PROJET non plus : l'intention PROJET doit OUVRIR le formulaire guidé (prérempli de ce
+    # qui est compris, même vide), en texte libre comme au chip — c'est ce que M113 promet. Avant, une
+    # clarification du routeur pré-emptait `_projet_form` et ré-servait l'ancienne question-texte.
+    if route.clarification and intent not in ("HORS_SUJET", "RECHERCHE", "VERIFICATION", "PROJET"):
         return _reply(route.clarification, intent, clarification=True)
 
     if intent == "HORS_SUJET":
@@ -491,6 +523,15 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
             telemetrie.refus(db, "projection", message, intent)
             return _reply(REFUS_PROJECTION, intent, refus="projection")
         if refus == "aucun_outil" or not sel.get("tool"):
+            # M116 · D2 — une question de COMPTAGE à qui il manque juste la commune : demander la
+            # commune (précision, son champ = le fil), jamais un refus « aucun outil ». La division
+            # garde sa voie (règlement) et n'est pas interceptée ici.
+            m = _fold_py(message.lower())
+            compte = ("combien" in m or "nombre de" in m) and "parcelle" in m
+            if compte and not params.get("commune") and not any(k in m for k in _SANS_OUTIL_KW):
+                telemetrie.refus(db, "manque_commune", message, intent)
+                return _reply("Sur quelle commune ? Je compte les parcelles commune par commune.",
+                              intent, clarification=True)
             return _sans_outil(db, message, params, intent)
         tool = sel["tool"]
         if tool not in OUTILS:
@@ -819,7 +860,14 @@ def _outil(db: Session, message: str, params: dict) -> dict:
     cible = _match_outil(message)
     idu = params.get("idu")
     if cible is None:
-        return _sans_outil(db, message, params, "OUTIL")
+        m = _fold_py(message.lower())
+        if any(k in m for k in _SANS_OUTIL_KW):     # division/découpe : renvoyer au règlement, pas la liste
+            return _sans_outil(db, message, params, "OUTIL")
+        # M116 · D4 — intention explicite « ouvrir un outil » sans outil précis → proposer la LISTE des
+        # outils (une voie cliquable, M112), jamais un refus sec « je n'ai pas d'outil dédié ».
+        telemetrie.refus(db, "outil_a_choisir", message, "OUTIL")
+        return _reply("Dites-moi ce que vous voulez faire, ou choisissez parmi les outils d'analyse.",
+                      "OUTIL", outils_liste=True)
     module, label, prefill = cible
     txt = f"Je peux ouvrir l'outil {label}"
     if idu and prefill in ("parcelPrefill", "calcPrefill", "idu", "pluPrefill"):

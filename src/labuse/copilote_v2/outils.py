@@ -105,6 +105,21 @@ _SIGNAUX_FR = {"procedure": "procédure judiciaire (BODACC)", "friche": "friche"
                "permis_caduc": "permis caduc", "defisc": "en défiscalisation",
                "nu_pm": "terrain nu détenu par une société", "assemblage": "candidate à l'assemblage"}
 
+# M116 · D1 — la SOURCE de chaque critère (défaut de véracité corrigé : ne plus créditer le cadastre
+# pour un critère qui vient d'ailleurs). La source servie est celle des DONNÉES qui fondent le compte,
+# pas l'inventaire parcellaire. Quand plusieurs critères concourent, toutes leurs sources sont nommées.
+# Provenances établies depuis la facette (api.app) : procédure/cession/événement = BODACC ; permis =
+# Sitadel ; adresse absente = BAN ; copropriété = RNIC ; personne morale = DGFiP (SIREN) ; zonage =
+# GPU ; friche/assemblage/défisc/renouvellement/tier = analyses dérivées LABUSE (sources multiples,
+# pas un référentiel unique — on le DIT plutôt que de fausser). Le cadastre ne reste crédité que pour
+# ce qu'il fonde réellement : l'inventaire et la surface des parcelles.
+_SOURCE_SIGNAL = {
+    "procedure": "BODACC", "cession": "BODACC",
+    "permis_actif": "Sitadel (permis de construire)", "permis_caduc": "Sitadel (permis de construire)",
+    "defisc": "défiscalisation (analyse LABUSE)", "nu_pm": "DGFiP (SIREN) · cadastre",
+    "friche": "signaux de vie (analyse LABUSE)", "assemblage": "signaux de vie (analyse LABUSE)",
+}
+
 
 def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: int | None = None,
                       surface_max: int | None = None, tier: str | None = None,
@@ -163,9 +178,41 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
         labels.append("en renouvellement urbain")
     if zon:
         labels.append("zone " + "/".join(zon.split(",")))
+    # M116 · D1 — la source servie est celle des critères interrogés, jamais un défaut de cadastre.
+    sources: list[str] = []
+    def _add(s: str) -> None:
+        if s and s not in sources:
+            sources.append(s)
+    if personne_morale:
+        _add("DGFiP (SIREN public)")
+    for s in (sig or "").split(","):
+        if s:
+            _add(_SOURCE_SIGNAL.get(s, "signaux de vie (analyse LABUSE)"))
+    if evenement:
+        _add("BODACC")
+    if adresse_absente:
+        _add("Base Adresse Nationale (BAN)")
+    if cp:
+        _add("RNIC (copropriétés)")
+    if defisc:
+        _add("défiscalisation (analyse LABUSE)")
+    if renouvellement:
+        _add("renouvellement urbain (analyse LABUSE)")
+    if zon:
+        _add("PLU (GPU)")
+    if tiers:
+        _add("classement LABUSE")
+    if surface_min is not None or surface_max is not None:
+        _add("cadastre")
+    if not sources:                       # commune / base seule → l'inventaire cadastral
+        _add("cadastre")
+    source = " · ".join(sources)
+    # le millésime ne vaut QUE pour un compte purement cadastral ; pour une source externe/dérivée on
+    # ne fabrique pas de date (D1 : « si la source ne peut pas être établie, le dire », ici on l'omet).
+    millesime = CADASTRE_MILLESIME if sources == ["cadastre"] else None
     return ToolResult("compter_parcelles", valeur=n,
                       data={"compte": n, "criteres": crit, "criteres_labels": labels},
-                      source="cadastre", millesime=CADASTRE_MILLESIME)
+                      source=source, millesime=millesime)
 
 
 # ───────────────────────── parcelles_par_entreprise ─────────────────────────

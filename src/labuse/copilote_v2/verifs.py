@@ -42,18 +42,24 @@ def juger(item: dict, rep: dict, oracle) -> tuple[bool, str]:
         return (True, "")
 
     if cat == "cna":
-        # M109 — critère non applicable : le sous-compte est servi, MAIS le critère lâché est
-        # NOMMÉ et marqué comme absent (jamais le sous-total muet). Trois conditions.
-        ok_num = oracle is None or _num_match(oracle, text)
+        # M116 · D11 (révise M109) — critère non applicable : l'AVEU D'ABORD, jamais le compte non
+        # filtré présenté comme la réponse. Le critère lâché reste NOMMÉ + marqué absent. Deux formes
+        # conformes : (a) AVEU SEUL (refus critere_non_applicable) quand aucun critère applicable n'a
+        # filtré → le total (oracle) doit être ABSENT ; (b) AVEU + SOUS-COMPTE quand des critères
+        # applicables ont filtré → le sous-compte (oracle) doit être servi, après l'aveu.
         manques = [m for m in item.get("manque", []) if _fold(m) not in ft]
         marqueur = any(w in ft for w in ("pas applique", "non applique", "pas interrogeable",
                                          "pas encore interrogeable", "n'est pas encore"))
-        if not ok_num:
-            return (False, f"sous-compte {oracle} absent de: {text[:90]}")
         if manques:
             return (False, f"critère lâché non nommé (manque {manques}): {text[:110]}")
         if not marqueur:
             return (False, f"critère lâché servi SANS marqueur d'absence (miscompte muet): {text[:110]}")
+        if rep.get("refus") == "critere_non_applicable":
+            if oracle is not None and _num_match(oracle, text):
+                return (False, f"total NON FILTRÉ {oracle} servi malgré l'aveu (D11): {text[:110]}")
+            return (True, "")
+        if oracle is not None and not _num_match(oracle, text):
+            return (False, f"sous-compte {oracle} attendu absent: {text[:110]}")
         return (True, "")
 
     if cat == "refus_pp":
