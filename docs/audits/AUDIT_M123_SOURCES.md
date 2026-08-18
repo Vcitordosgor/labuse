@@ -207,6 +207,32 @@ d'exclusion. Aucune réingestion lancée — geste dédié couche par couche, su
 
 ---
 
+## PHASE 2 — LES ~14 CASSÉES (résolution, preuve avant/après)
+
+| Cassée | Traitement | Avant → Après (preuve) |
+|---|---|---|
+| **Forêts ONF — doublons d'ingestion** | dedup EXACT (geom+name+subtype), cascade booléenne inchangée | `foret_publique` **227 → 65** (−162) · golden 0 FAIL avant ET après |
+| **OCS GE — doublons d'ingestion** | dedup EXACT | `ocs_ge` **3250 → 1643** (−1607) · golden 0 FAIL avant ET après |
+| **Géorisques PPR — sonde v1 404** | endpoint corrigé v1 → **v2 DEAL Lizmap** (la couche `ppr` en venait déjà ; seule l'URL de sonde était morte) | endpoint_url mis à jour ; donnée servie inchangée |
+| **Radar — 54 sondes mortes** | **corrigé Phase 2** : `verification_manuelle` honnête + sonde ODS | 54 non_sondable → 59 vérif manuelle + 8 sondées |
+| **DPE — geopoint faux** | **déjà géré** (`is_reunion_authentic`) ; réingestion : 235 métropole écartées | source quasi vide amont (17, 2 F/G) — mesuré, non un bug nôtre |
+| **BODACC — mojibake** | **déjà corrigé** (M103) à l'ingestion + filet cascade | historique |
+| **Fichiers fonciers — convention** | **RETIRÉ** (raison écrite) | hors vitrine |
+| **ABF — endpoint mort** | data.culture.gouv décommissionné : **non re-fetchable** ; 200 tampons en base, covisibilité non instruite | LIMITATION assumée (dite) |
+| **GPU assainissement — 4/24 SIG** | 20 communes en repli taux RP2022 : **couverture producteur partielle** | LIMITATION assumée (dite) |
+| **Classement sonore — PEB aéro.** | PDF préfecture, pas de SIG open data | LIMITATION assumée (dite) |
+| **PEIGEO — host down** | fallback Région ODS opérationnel | assumée (fallback) |
+| **SAFER — DAAF absent** | proxy RPG.LATEST (meilleure donnée disponible) | assumée (proxy dit) |
+| **ENS — 3 communes N/A** | Le Port/Saint-André/Sainte-Suzanne : **0 ENS réel** (donnée correcte, pas un bug) | non-défaut confirmé |
+| **pv_candidat — signal mort** | feature du MODÈLE (interdit ce mandat) → dit dormant | hors périmètre (algo) |
+
+**Bilan cassées** : 3 corrigées avec preuve avant/après (ONF, OCS, PPR endpoint) + 3 déjà réglées
+(radar, DPE geopoint, BODACC) + 1 retirée (Fichiers fonciers) ; 6 sont des **limitations amont
+assumées et dites** (endpoint mort, couverture producteur, PDF, proxy) — pas des bugs réparables chez
+nous ; 1 non-défaut (ENS) ; 1 hors périmètre (pv, modèle).
+
+---
+
 ## CE QUI N'A PAS ÉTÉ TOUCHÉ
 
 Inspection strictement en lecture. Aucune réingestion, aucune correction, aucune suppression — tout
