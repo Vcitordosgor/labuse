@@ -31,7 +31,7 @@ const S = CLIENT.copilote
 // halo discret de la maquette (radial mint en haut à droite, violet en bas à gauche)
 const FOND = {
   backgroundImage:
-    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(74,222,128,.06), transparent 62%), ' +
+    'radial-gradient(ellipse 900px 460px at 78% -10%, rgba(180,151,240,.06), transparent 62%), ' +
     'radial-gradient(ellipse 700px 460px at 5% 105%, rgba(180,151,240,.05), transparent 62%)',
 }
 
@@ -296,7 +296,6 @@ export function CopiloteView() {
         {!actif ? (
           /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
-            onPick={(e) => { setBrief(e); briefRef.current?.focus() }}
             chiffres={chiffres} occupe={dispatching}
             scenario={scenario} onScenario={setScenario}
             missions={missions} onReprendre={rouvrir}
@@ -380,12 +379,12 @@ export function CopiloteView() {
             {/* §M78-bis 2 — le récap validé RESTE en tête pendant l'instruction et sur les résultats :
                 le client qui revient (notification) relit son brief en une ligne. */}
             {recapConfirme && (
-              <div data-recap-confirme className="mb-4 rounded-xl border border-mint/20 bg-mint/[0.04] px-4 py-2 text-[12.5px] leading-snug text-cp-muted">
-                <span className="text-mint">✦</span> {recapConfirme}
+              <div data-recap-confirme className="mb-4 rounded-xl border border-cp-ia/20 bg-cp-ia/[0.04] px-4 py-2 text-[12.5px] leading-snug text-cp-muted">
+                <span className="text-cp-ia">✦</span> {recapConfirme}
               </div>
             )}
             {/* barre principale — JAMAIS verrouillée (§complément) : le client peut toujours écrire. */}
-            <div className="flex flex-wrap items-start gap-5 rounded-[18px] border border-mint/35 bg-gradient-to-b from-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(74,222,128,.06)]">
+            <div className="flex flex-wrap items-start gap-5 rounded-[18px] border border-cp-ia/35 bg-gradient-to-b from-cp-ia/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(180,151,240,.06)]">
               <div className="min-w-[250px] flex-1">
                 <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
                   placeholder={S.placeholder} rows={2}
@@ -400,12 +399,12 @@ export function CopiloteView() {
                 ) : (
                   <button data-instruire onClick={soumettre}
                     disabled={!brief.trim() || run.enCreation || dispatching}
-                    className="rounded-[13px] bg-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-mint-on shadow-[0_0_36px_rgba(74,222,128,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
+                    className="rounded-[13px] bg-cp-ia px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-ia-on shadow-[0_0_36px_rgba(180,151,240,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
                     {S.instruire} →
                   </button>
                 )}
                 <div className="flex items-center gap-2 text-[10.5px] text-cp-faint">
-                  <i className="h-1 w-1 rounded-full bg-mint" />
+                  <i className="h-1 w-1 rounded-full bg-cp-ia" />
                   {enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6) : S.serment}
                 </div>
               </div>
@@ -516,7 +515,7 @@ export function CopiloteView() {
                 <p className="mx-auto mt-2 max-w-[62ch] text-[13px] text-cp-muted">{S.resultats.zeroNote}</p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2.5">
                   <button data-relance onClick={relancer}
-                    className="rounded-xl bg-mint px-5 py-3 font-display text-[12px] font-bold text-mint-on">
+                    className="rounded-xl bg-cp-ia px-5 py-3 font-display text-[12px] font-bold text-cp-ia-on">
                     {S.resultats.relanceBudget}
                   </button>
                   <button data-relance onClick={relancer}

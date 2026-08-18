@@ -37,9 +37,9 @@ export function ReponseInline({ v2, ton = 'mint' }: {
   }
   const btnCls = mauve
     ? 'border-violet/40 bg-violet/10 text-violet hover:bg-violet/15'
-    : 'border-mint/40 bg-mint/10 text-mint hover:bg-mint/15'
+    : 'border-cp-ia/40 bg-cp-ia/10 text-cp-ia hover:bg-cp-ia/15'
   const bord = v2.refus && v2.refus !== 'hors_sujet' ? 'border-cp-amber/30'
-    : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : mauve ? 'border-violet/30' : 'border-mint/25'
+    : v2.intent === 'HORS_SUJET' ? 'border-cp-line2' : mauve ? 'border-violet/30' : 'border-cp-ia/25'
   return (
     <div data-reponse className={`rounded-2xl border ${bord} bg-cp-card px-5 py-4 text-left`}>
       {/* M102-B2 — récap systématique : une phrase, un bouton Corriger, jamais un formulaire. */}

@@ -324,32 +324,40 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
 # M113 · Phase 2 — REGISTRE des chips de contexte. Servi par le serveur (GET /scenarios), jamais en
 # dur au front. `intent` = l'intent FORCÉ quand le chip est choisi ; `placeholder` = la zone de texte
 # adaptée au scénario (étape 2). L'ordre est celui d'affichage. Les noms sont ceux arbitrés par Vic.
+# M117 · Phase 2.1 — `sub` = le sous-titre de chaque intention (grille d'accueil, maquette DA v2),
+# servi par le serveur. « {n} » dans le sous-titre outil = le compte des outils, substitué au front
+# par MODULES.length (aucun nombre en dur — le registre des outils vit côté front).
 SCENARIOS: dict[str, dict] = {
-    "donnees": {"libelle": "Interroger mes données", "intent": "QUESTION",
+    "donnees": {"libelle": "Interroger mes données", "intent": "QUESTION", "sub": "Compter, filtrer, croiser",
                 "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?"},
-    "parcelle": {"libelle": "Trouver une parcelle", "intent": "RECHERCHE",
+    "parcelle": {"libelle": "Trouver une parcelle", "intent": "RECHERCHE", "sub": "Selon votre programme",
                  "placeholder": "Ex. 15 logements à Saint-Paul, ≥ 2000 m², détenues par des personnes morales…"},
-    "projet": {"libelle": "Créer un projet", "intent": "PROJET",
+    "projet": {"libelle": "Créer un projet", "intent": "PROJET", "sub": "Cadrage guidé",
                "placeholder": "Ex. résidence 12 lots à Bras-Panon (facultatif — le formulaire s'ouvre)"},
-    "web": {"libelle": "Rechercher sur le web", "intent": "QUESTION",
+    "web": {"libelle": "Rechercher sur le web", "intent": "QUESTION", "sub": "Avec la source citée",
             "placeholder": "Ex. qui est le maire de Saint-Denis ?"},
-    "surveillance": {"libelle": "Mettre sous surveillance", "intent": "VEILLE",
+    "surveillance": {"libelle": "Mettre sous surveillance", "intent": "VEILLE", "sub": "Parcelle ou secteur",
                      "placeholder": "Ex. les nouveaux permis à Saint-Paul"},
-    "outil": {"libelle": "Ouvrir un outil", "intent": "OUTIL",
+    "outil": {"libelle": "Ouvrir un outil", "intent": "OUTIL", "sub": "{n} outils d'analyse",
               "placeholder": "Ex. le baromètre du foncier, écrire au propriétaire, la calculette foncière…"},
 }
 
 
 def scenarios_publies() -> list[dict]:
-    """Les chips à servir au front (clé + libellé + placeholder). Point unique."""
-    return [{"cle": k, "libelle": v["libelle"], "placeholder": v["placeholder"]} for k, v in SCENARIOS.items()]
+    """Les chips à servir au front (clé + libellé + sous-titre + placeholder). Point unique."""
+    return [{"cle": k, "libelle": v["libelle"], "sub": v["sub"], "placeholder": v["placeholder"]}
+            for k, v in SCENARIOS.items()]
 
 
-def _reply_web(db: Session, message: str) -> dict:
+def _reply_web(db: Session, message: str, history: list[dict] | None = None) -> dict:
     """Chip « Rechercher sur le web » — classify COURT-CIRCUITÉ (le scénario est connu) : la question
     verbatim part au web. Gain de latence majeur (ni route, ni sélection). Marquage web NON négociable,
-    jamais Sourcé/Estimé. Gabarit COURT (Phase 4) piloté par WEB_SYSTEM."""
-    res = OUTILS["recherche_web"](db, question=message)
+    jamais Sourcé/Estimé. Gabarit COURT (D5) : ≤ 2 phrases via _deux_phrases.
+
+    M117 · D9 — le fil est passé au web : un enchaînement (« et à Saint-Pierre ? ») se résout depuis
+    le contexte, sans réintroduire classify (le gain de latence reste). Le modèle RÉSOUT la référence,
+    il ne SOMME rien (cohérent M111 : le web répond une question, il n'hérite pas de paramètres)."""
+    res = OUTILS["recherche_web"](db, question=message, history=history)
     if not res.ok:
         telemetrie.refus(db, "web_rien_trouve", message, "QUESTION")
         return _reply("Je n'ai rien trouvé de fiable sur le web pour cette demande. Reformulez-la, "
@@ -399,7 +407,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # M113 — les deux scénarios qui NE passent pas par classify : le web (court-circuit total) et le
     # projet (parcours guidé, jamais de création directe). Les autres forcent l'intent après classify.
     if scenario == "web":
-        return _reply_web(db, message)
+        return _reply_web(db, message, history)
     if scenario == "projet":
         return _projet_form(db, message)
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
@@ -428,7 +436,10 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         compris = _compris_fr(route.intent, route.params or {})
         # M110 — le récap NOMME les critères de facette appliqués (au-delà des params du routeur :
         # friche, procédure, copropriété, zone U…) — « comme aujourd'hui » pour commune/surface.
-        appliques = rep.get("criteres_appliques") or []
+        # M117 · D7 — dédup : un critère déjà nommé dans la tête (mot commun) n'est pas répété.
+        base = (compris or "").lower()
+        appliques = [a for a in (rep.get("criteres_appliques") or [])
+                     if a.split()[0].lower().rstrip("s") not in base]
         if compris and appliques:
             compris = compris.rstrip(".") + " · " + " · ".join(appliques) + "."
         # M111 — un héritage DIT n'est pas une contamination : les paramètres VENUS DU FIL (continuation)
@@ -450,11 +461,16 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
 
 _COMPRIS_INTENT = {"QUESTION": "répondre à votre question", "OUTIL": "vous ouvrir un outil",
                    "PROJET": "cadrer votre projet", "VEILLE": "poser une veille"}
+# M117 · D7 — le récap dit chaque information UNE fois, jamais un slug. Le param `sujet` (une
+# paraphrase libre de la question — « friches à Cilaos ») est RETIRÉ : il répétait la commune et le
+# critère (« Cilaos · friches à Cilaos · friche »). Les descripteurs propres (commune, surface, zone,
+# entreprise…) + les critères de facette (« friche », « procédure judiciaire ») suffisent et ne se
+# recouvrent pas. Le sujet reste disponible pour le routage, il n'est simplement plus SERVI au récap.
 _COMPRIS_PARAM = {"commune": lambda v: str(v), "idu": lambda v: f"parcelle {v}",
                   "zone": lambda v: f"zone {v}", "surface_min": lambda v: f"≥ {v} m²",
                   "surface_max": lambda v: f"≤ {v} m²", "budget_eur": lambda v: f"budget {v} €",
                   "prix_eur": lambda v: f"prix {v} €", "entreprise": lambda v: str(v),
-                  "programme_logements": lambda v: f"{v} logements", "sujet": lambda v: str(v)}
+                  "programme_logements": lambda v: f"{v} logements"}
 
 
 def _compris_fr(intent: str, params: dict) -> str | None:

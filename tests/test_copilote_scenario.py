@@ -26,7 +26,7 @@ def test_web_court_circuite_classify(monkeypatch):
     appels = {"classify": 0}
     monkeypatch.setattr(answering, "classify", lambda *a, **k: (appels.__setitem__("classify", 1), Route("QUESTION"))[1])
     monkeypatch.setitem(answering.OUTILS, "recherche_web",
-                        lambda db, question: _Res(True, {"reponse": "Le maire est X.", "domaines": ["reunion.fr"], "date": "2026-08-17"}))
+                        lambda db, question, history=None: _Res(True, {"reponse": "Le maire est X.", "domaines": ["reunion.fr"], "date": "2026-08-17"}))
     monkeypatch.setattr(answering.telemetrie, "web", lambda *a, **k: None)
     r = answering.answer(db=None, message="Qui est le maire ?", scenario="web")
     assert appels["classify"] == 0                 # classify JAMAIS appelé (court-circuit)

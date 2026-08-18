@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 export function Etiquette({ v }: { v: string }) {
   const genre = v.startsWith('sourcé') ? 'source' : v.startsWith('estimé') ? 'estime' : 'absent'
   const cls = {
-    source: 'border-mint/25 bg-mint/10 text-mint',
+    source: 'border-cp-ia/25 bg-cp-ia/10 text-cp-ia',
     estime: 'border-cp-amber/25 bg-cp-amber/10 text-cp-amber',
     absent: 'border-cp-line2 bg-cp-muted/10 text-cp-muted',
   }[genre]
@@ -24,7 +24,7 @@ export function Badge({ ton, children, data }: { ton: 'mint' | 'ambre'; children
   return (
     <span data-badge={data}
       className={`rounded-[5px] border px-2.5 py-0.5 font-display text-[9px] font-bold uppercase tracking-[.1em] ${
-        ton === 'mint' ? 'border-mint/30 bg-mint/10 text-mint'
+        ton === 'mint' ? 'border-cp-ia/30 bg-cp-ia/10 text-cp-ia'
                        : 'border-cp-amber/35 bg-cp-amber/10 text-cp-amber'}`}>
       {children}
     </span>
@@ -45,12 +45,12 @@ export function SecHead({ titre, sousTitre, meta }: { titre: string; sousTitre?:
 export function PillStatut({ ton, pulse, children }: { ton: 'mint' | 'violet' | 'ambre' | 'rouge'
   pulse?: boolean; children: ReactNode }) {
   const teinte = {
-    mint: 'border-mint/30 bg-mint/10 text-mint',
+    mint: 'border-cp-ia/30 bg-cp-ia/10 text-cp-ia',
     violet: 'border-cp-violet/40 bg-cp-violet/10 text-cp-violet',
     ambre: 'border-cp-amber/40 bg-cp-amber/10 text-cp-amber',
     rouge: 'border-cp-red/40 bg-cp-red/10 text-cp-red',
   }[ton]
-  const point = { mint: 'bg-mint', violet: 'bg-cp-violet', ambre: 'bg-cp-amber', rouge: 'bg-cp-red' }[ton]
+  const point = { mint: 'bg-cp-ia', violet: 'bg-cp-violet', ambre: 'bg-cp-amber', rouge: 'bg-cp-red' }[ton]
   return (
     <span data-pill-statut
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-display text-[9.5px] font-bold uppercase tracking-[.14em] ${teinte}`}>

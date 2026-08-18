@@ -404,7 +404,7 @@ export const copiloteV2Ask = (message: string, opts?: {
     body: JSON.stringify({ message, ...opts }) })
 
 // M113 · Phase 2 — les chips de contexte, servis par le serveur (jamais en dur au front).
-export interface CopiloteScenario { cle: string; libelle: string; placeholder: string }
+export interface CopiloteScenario { cle: string; libelle: string; sub: string; placeholder: string }
 export const getScenarios = () =>
   j<{ scenarios: CopiloteScenario[] }>('/api/copilote-v2/scenarios').then((r) => r.scenarios)
 

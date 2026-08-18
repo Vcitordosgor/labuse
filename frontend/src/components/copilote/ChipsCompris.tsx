@@ -51,7 +51,7 @@ export function ChipsCompris({ briefJson, onRelancer, onCorriger, enCours }: {
           {enCours && <span className="ml-1.5 text-cp-faint normal-case tracking-normal">· modifier relance l'instruction</span>} :</span>
         {chips.map((ch) => (
           <span key={ch.cle} data-chip={ch.cle}
-            className="group inline-flex items-center gap-1.5 rounded-lg border border-mint/25 bg-mint/[0.07] px-2.5 py-1 text-[11.5px] text-cp-txt">
+            className="group inline-flex items-center gap-1.5 rounded-lg border border-cp-ia/25 bg-cp-ia/[0.07] px-2.5 py-1 text-[11.5px] text-cp-txt">
             {ch.label}
             {ch.traduction && <span data-chip-traduction className="text-cp-faint" title="Traduction appliquée par le moteur">→ {ch.traduction}</span>}
             <button data-chip-retirer aria-label={`Retirer ${ch.label}`}
@@ -68,7 +68,7 @@ export function ChipsCompris({ briefJson, onRelancer, onCorriger, enCours }: {
           </span>
         ))}
         <button data-chip-ajouter onClick={() => onCorriger(briefDepuisJson(briefJson))}
-          className="rounded-lg border border-dashed border-cp-line2 px-2.5 py-1 text-[11.5px] text-cp-muted hover:border-mint/40 hover:text-cp-txt">
+          className="rounded-lg border border-dashed border-cp-line2 px-2.5 py-1 text-[11.5px] text-cp-muted hover:border-cp-ia/40 hover:text-cp-txt">
           + corriger
         </button>
       </div>

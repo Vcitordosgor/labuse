@@ -52,16 +52,16 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
             onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void envoyer(reponse) }}
             placeholder="Votre réponse…"
             className={`min-w-0 flex-1 rounded-lg border bg-transparent px-3 py-1.5 text-[12.5px] text-txt outline-none placeholder:text-txt-faint ${
-              ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-mint/30 focus:border-mint'}`} />
+              ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-cp-ia/30 focus:border-cp-ia'}`} />
           <button data-embarque-repondre disabled={!reponse.trim()} onClick={() => void envoyer(reponse)}
             className={`shrink-0 text-[11.5px] font-medium hover:underline disabled:opacity-30 ${
-              ton === 'violet' ? 'text-violet' : 'text-mint'}`}>
+              ton === 'violet' ? 'text-violet' : 'text-cp-ia'}`}>
             Répondre
           </button>
         </div>
       )}
       <button data-embarque-plein onClick={() => ouvrirEntretien(derniereQ)}
-        className={`mt-2 text-[11px] font-medium hover:underline ${ton === 'violet' ? 'text-violet' : 'text-mint'}`}>
+        className={`mt-2 text-[11px] font-medium hover:underline ${ton === 'violet' ? 'text-violet' : 'text-cp-ia'}`}>
         Ouvrir dans le Copilote →
       </button>
     </>
@@ -89,15 +89,15 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
 
   // ── SHORTLIST / plein : panneau mint (idiome du Copilote) ──
   return (
-    <div data-copilote-embarque className="rounded-xl border border-mint/25 bg-mint/[0.04] p-3">
+    <div data-copilote-embarque className="rounded-xl border border-cp-ia/25 bg-cp-ia/[0.04] p-3">
       <div className="flex items-center gap-2">
-        <span aria-hidden className="shrink-0 text-[13px] text-mint">✦</span>
+        <span aria-hidden className="shrink-0 text-[13px] text-cp-ia">✦</span>
         <input data-embarque-bar value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void soumettre() }}
           placeholder={placeholder ?? 'Demander au Copilote…'}
           className="min-w-0 flex-1 bg-transparent text-[13px] text-txt outline-none placeholder:text-txt-faint" />
         <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
-          className="shrink-0 rounded-lg bg-mint px-3.5 py-1.5 text-[12px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="shrink-0 rounded-lg bg-cp-ia px-3.5 py-1.5 text-[12px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
           {busy ? '…' : 'Demander'}
         </button>
       </div>
