@@ -130,11 +130,12 @@ QUESTIONS: list[dict] = [
     {"id": 30, "cat": "refus_hs", "q": "Recommande-moi un bon restaurant créole à Saint-Pierre.",
      "manque": ["foncier"]},
 
-    # ══ 2 OUTIL ══
-    {"id": 31, "cat": "outil_porte", "q": f"Je veux calculer la charge foncière que je peux supporter sur {IDU}.",
-     "porte": "calculette-fonciere"},   # bonne porte (Calculette foncière), pré-remplie via calcPrefill
-    {"id": 32, "cat": "outil_sans", "q": f"Cette parcelle {IDU} est-elle divisible ?",
-     "porte": None},   # AUCUNE porte (division = découverte commune, décision M-ENTREE) ; répond sur le fond
+    # ══ 2 OUTIL → M118 REFUS-VOIE ══ ouvrir un outil / trancher une divisibilité QUITTE le chat : refus
+    # + voie « outils » (navigation, jamais exécution). Le Copilote resserré ne fait que 4 missions.
+    {"id": 31, "cat": "refus_voie", "q": f"Je veux calculer la charge foncière que je peux supporter sur {IDU}.",
+     "voie": "outils"},
+    {"id": 32, "cat": "refus_voie", "q": f"Cette parcelle {IDU} est-elle divisible ?",
+     "voie": "outils"},
 ]
 
 
@@ -179,12 +180,12 @@ def main() -> int:
         n_exacte = sum(1 for q in QUESTIONS if q["cat"] == "exacte")
         n_part = sum(1 for q in QUESTIONS if q["cat"] == "partielle")
         n_cna = sum(1 for q in QUESTIONS if q["cat"] == "cna")
-        n_refus = sum(1 for q in QUESTIONS if q["cat"].startswith("refus"))
-        n_outil = sum(1 for q in QUESTIONS if q["cat"].startswith("outil"))
+        n_refus = sum(1 for q in QUESTIONS if q["cat"] in ("refus_pp", "refus_proj", "refus_hs"))
+        n_voie = sum(1 for q in QUESTIONS if q["cat"] == "refus_voie")   # M118 — les 2 ex-OUTIL
         print(f"\nRépartition : {n_exacte} exactes · {n_part} partielles · {n_cna} critère-non-applicable "
-              f"· {n_refus} refus · {n_outil} outil (= {len(QUESTIONS)} questions)")
-        # M109 — +2 cas « critère non applicable » (le sous-compte servi AVEC l'aveu du critère lâché).
-        assert (n_exacte, n_part, n_cna, n_refus, n_outil) == (18, 6, 1, 6, 2), "répartition mandat non respectée"
+              f"· {n_refus} refus · {n_voie} refus-voie (= {len(QUESTIONS)} questions)")
+        # M118 — les 2 ex-OUTIL sont devenus des refus-voie (l'ouverture d'outil quitte le chat).
+        assert (n_exacte, n_part, n_cna, n_refus, n_voie) == (18, 6, 1, 6, 2), "répartition mandat non respectée"
 
         if not answering:
             print("\nMODE SPEC : oracle prêt et vérifié. Les réponses Copilote seront confrontées "

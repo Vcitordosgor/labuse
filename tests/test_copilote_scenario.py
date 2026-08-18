@@ -8,12 +8,13 @@ from labuse.copilote_v2.router import Route
 
 
 # ───────────────────────── le registre servi ─────────────────────────
-def test_scenarios_publies_six_chips():
+def test_scenarios_publies_quatre_missions():
+    # M118 — le Copilote resserré à 4 missions (le reste quitte le chat).
     sc = answering.scenarios_publies()
-    assert [s["cle"] for s in sc] == ["donnees", "parcelle", "projet", "web", "surveillance", "outil"]
-    assert all(s["libelle"] and s["placeholder"] for s in sc)   # jamais un chip nu
-    assert answering.SCENARIOS["web"]["intent"] == "QUESTION"
-    assert answering.SCENARIOS["surveillance"]["intent"] == "VEILLE"
+    assert [s["cle"] for s in sc] == ["donnees", "web", "expliquer", "preparer"]
+    assert all(s["libelle"] and s["sub"] and s["placeholder"] for s in sc)   # jamais un chip nu
+    assert answering.SCENARIOS["expliquer"]["intent"] == "EXPLIQUER"
+    assert answering.SCENARIOS["preparer"]["intent"] == "PREPARER"
 
 
 # ───────────────────────── web : court-circuit total ─────────────────────────
@@ -44,14 +45,15 @@ def test_projet_form_prerempli_sans_classify():
     assert "_action" not in r                       # RIEN qui déclenche une création serveur
 
 
-def test_projet_intent_ouvre_le_formulaire(monkeypatch):
-    # même en texte libre classé PROJET, on OUVRE le formulaire (jamais _executer_projet).
+def test_projet_intent_donne_une_voie_projets(monkeypatch):
+    # M118 — la création de projet QUITTE le chat : PROJET → refus + voie « projets » (jamais _projet_form).
+    monkeypatch.setattr(answering.telemetrie, "refus", lambda *a, **k: None)
     monkeypatch.setattr(answering, "classify",
                         lambda *a, **k: Route("PROJET", params={"commune": "Bras-Panon", "programme_logements": 12}))
     r = answering.answer(db=None, message="résidence 12 lots à Bras-Panon")
-    assert r.get("projet_form") is not None
-    assert r["projet_form"]["prefill"]["commune"] == "Bras-Panon"
-    assert "_action" not in r
+    assert r.get("refus") == "hors_mission"
+    assert (r.get("voie") or {}).get("cible") == "projets"
+    assert r.get("projet_form") is None
 
 
 # ───────────────────────── forçage du scénario ─────────────────────────
@@ -63,12 +65,12 @@ def test_scenario_force_intent_et_retire_clarif_intention(monkeypatch):
         capté["clarification"] = route.clarification
         return {"text": "ok", "intent": route.intent}
 
-    # le routeur aurait deviné QUESTION avec une clarification d'intention ; le chip « parcelle » force
-    # RECHERCHE et retire la clarification d'intention (la clarif de paramètre reste produite en aval).
+    # M118 — le routeur aurait deviné QUESTION avec une clarification d'intention ; le chip « expliquer »
+    # force EXPLIQUER et retire la clarification d'intention (la clarif de paramètre reste en aval).
     monkeypatch.setattr(answering, "classify",
                         lambda *a, **k: Route("QUESTION", params={"commune": "Saint-Leu"},
                                               clarification="Chercher ou vérifier ?"))
     monkeypatch.setattr(answering, "_answer_with_route", faux_route)
-    answering.answer(db=None, message="des terrains à Saint-Leu", scenario="parcelle")
-    assert capté["intent"] == "RECHERCHE"           # intent FORCÉ par le chip
+    answering.answer(db=None, message="explique la zone AU", scenario="expliquer")
+    assert capté["intent"] == "EXPLIQUER"           # intent FORCÉ par le chip
     assert capté["clarification"] is None           # clarification d'INTENTION retirée

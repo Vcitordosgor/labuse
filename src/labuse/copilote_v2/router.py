@@ -23,7 +23,11 @@ from sqlalchemy.orm import Session
 from ..ai import core
 
 # Les SEPT intentions — l'enum est le garde-fou dur du schéma.
-INTENTS = ["QUESTION", "OUTIL", "RECHERCHE", "VERIFICATION", "VEILLE", "PROJET", "HORS_SUJET"]
+# M118 — le Copilote resserré à 4 missions : QUESTION (donnée app / web), EXPLIQUER (notion),
+# PREPARER (script). OUTIL/RECHERCHE/VERIFICATION/VEILLE/PROJET restent CLASSÉS (l'aiguillage les
+# renvoie à leur voie cliquable — Projets/Surveillance/Outils/fiche — ils ne s'exécutent plus au chat).
+INTENTS = ["QUESTION", "EXPLIQUER", "PREPARER", "OUTIL", "RECHERCHE", "VERIFICATION", "VEILLE",
+           "PROJET", "HORS_SUJET"]
 
 # Paramètres typés extractibles (liste blanche — une clé hors liste est ÉLAGUÉE, jamais avalée).
 PARAM_KEYS = [
@@ -75,6 +79,17 @@ LES SEPT INTENTIONS :
   parcelles d'une société, le contenu d'une fiche parcelle). Ex : « combien de parcelles > 1000 m² à
   Saint-Paul ? », « prix du terrain nu à Saint-Pierre ? », « délai d'instruction à Saint-Benoît ? »,
   « quelles parcelles possède la SCI Dupont ? », « population de Cilaos ? ».
+- EXPLIQUER : le client veut comprendre une NOTION d'urbanisme/foncier/immobilier de La Réunion (zone AU,
+  ZFANG, charge foncière, ANRU, PPR, coefficient d'emprise, SRU, défiscalisation…) — une explication
+  pédagogique, PAS un chiffre ni un fait sur une commune/parcelle précise. Signal : « explique », « qu'est-ce
+  que », « c'est quoi », « à quoi sert », « définition de », « comment marche ». Ex : « qu'est-ce qu'une zone
+  AU ? », « explique la charge foncière », « c'est quoi la ZFANG ? ». (« population de Cilaos » reste QUESTION :
+  c'est un fait chiffré, pas une notion.)
+- PREPARER : le client veut qu'on lui PRÉPARE un SCRIPT d'appel ou un ARGUMENTAIRE pour aborder un
+  propriétaire/vendeur (ce qu'il va DIRE). Signal : « prépare un argumentaire », « script d'appel », « comment
+  aborder le propriétaire », « quoi dire au vendeur », « aide-moi à convaincre ». Ex : « prépare-moi un
+  argumentaire pour le propriétaire de cette parcelle ». (Un COURRIER écrit / un dossier formel N'EST PAS
+  PREPARER → OUTIL, l'aiguillage renvoie au générateur de la fiche/CRM.)
 - RECHERCHE : le client veut TROUVER/LISTER un ensemble de parcelles à instruire selon des critères, pour
   en sortir une shortlist classée (une mission, pas une réponse brève). Ex : « trouve des terrains à fort
   potentiel à Saint-Leu pour 15 logements », « montre les meilleures opportunités sous 500 000 € », « liste

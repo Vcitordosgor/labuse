@@ -396,6 +396,10 @@ export interface CopiloteV2Reponse {
   projet_form?: { prefill: Record<string, unknown> } | null
   // M116 · D4 — « ouvrir un outil » sans outil précis → proposer la LISTE des outils (voie, pas refus).
   outils_liste?: boolean
+  // M118 — le Copilote resserré à 4 missions : ce qui QUITTE le chat (instruire, créer un projet,
+  // surveiller, ouvrir un outil, rédiger un courrier, vérifier un prix) reçoit un refus + une VOIE
+  // cliquable (NAVIGATION pure vers la surface qui le fait). cible ∈ projets/surveillance/outils/fiche/courriers.
+  voie?: { cible: 'projets' | 'surveillance' | 'outils' | 'fiche' | 'courriers'; libelle: string; idu?: string } | null
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>

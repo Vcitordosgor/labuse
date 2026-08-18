@@ -145,12 +145,15 @@ export function CopiloteView() {
       // M113 P3 — le parcours projet guidé : le serveur ne crée JAMAIS directement ; il renvoie le
       // préremplissage compris et le front ouvre le formulaire (qui protège par construction).
       if (r.projet_form) { setProjetForm(r.projet_form); setBrief(''); return }
-      const lourde = r.intent === 'RECHERCHE' || r.intent === 'VERIFICATION'
+      // M118 — un REFUS-VOIE (refus="hors_mission", intent RECHERCHE/VERIFICATION conservé) N'EST PAS
+      // une mission lourde : il rejoint le fil comme une réponse (carte warn + voie), il NE lance
+      // JAMAIS le run. Le Copilote resserré n'instruit plus depuis le chat.
+      const lourde = (r.intent === 'RECHERCHE' || r.intent === 'VERIFICATION') && !r.refus
       if (lourde && !opts?.confirme && (r.needs_confirmation || r.clarification_recap)) {
         // PÉAGE : on montre le récap, on n'instruit pas. M107 : le brief de travail est le
         // BRIEF EFFECTIF servi (fil composé) — jamais la réponse nue du dernier tour.
         setRecap(r); setRecapBrief(r.brief_effectif ?? m)
-      } else if (r.intent === 'RECHERCHE') {           // confirmé → on lance le run M26-A
+      } else if (r.intent === 'RECHERCHE' && !r.refus) {   // confirmé → on lance le run M26-A (jamais un refus-voie)
         const bfr = r.brief_effectif ?? m
         setRecapConfirme(r.recap ?? bfr); void run.instruire(mission, bfr)
       } else {

@@ -177,7 +177,7 @@ const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B',
 /** Vue PROJETS — liste « Vos projets », ou (si un projet est ouvert) sa vue kanban, ou (si le
  *  parcours de création est ouvert) le parcours SEUL. */
 export function ProjetsPanel() {
-  const { ouvrirEntretien, openProjet, setOpenProjet } = useApp()
+  const { openProjet, setOpenProjet } = useApp()
   const [showArchived, setShowArchived] = useState(false)
   const [formOuvert, setFormOuvert] = useState(false)
   const [toutMontre, setToutMontre] = useState(false)
@@ -220,9 +220,9 @@ export function ProjetsPanel() {
             <h1 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 5px' }}>Vos projets</h1>
             <p style={{ fontSize: 13, color: '#6F8578', margin: 0 }}>Chaque projet garde votre cadrage et vos parcelles retenues.</p>
           </div>
+          {/* M118 — « Décrire au copilote » RETIRÉ : la création de projet quitte le Copilote, elle se
+              fait ici, par le parcours guidé. Un seul point d'entrée. */}
           <div className="flex items-center gap-[18px]" style={{ whiteSpace: 'nowrap' }}>
-            <button data-projet-decrire onClick={() => ouvrirEntretien()}
-              style={{ fontSize: 13, color: '#8FA69A', cursor: 'pointer', background: 'none', border: 0 }}>Décrire au copilote</button>
             <button data-projet-nouveau onClick={() => { setFormOuvert(true) }} style={btnPlein}>Nouveau projet</button>
           </div>
         </div>

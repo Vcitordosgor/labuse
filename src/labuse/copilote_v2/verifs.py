@@ -77,12 +77,11 @@ def juger(item: dict, rep: dict, oracle) -> tuple[bool, str]:
     if cat == "outil_porte":
         return (rep.get("porte") == item["porte"], f"porte {item['porte']} attendue, obtenu {rep.get('porte')}")
 
-    if cat == "outil_sans":
-        # ne tranche pas la divisibilité, mais renvoie au RÈGLEMENT / à la zone (arbitrage Vic) —
-        # jamais le mur « rien de plus ». Zone A/N → pas de porte ; zone constructible → Annuaire PLU.
-        ok = (rep.get("refus") == "aucun_outil"
-              and ("zone" in ft or "reglement" in ft or "regle" in ft)
-              and rep.get("porte") in (None, "plu-annuaire"))
-        return (ok, f"division: refus={rep.get('refus')} porte={rep.get('porte')} texte={text[:90]}")
+    if cat == "refus_voie":
+        # M118 — ce qui quitte le chat (ouvrir un outil, trancher une divisibilité…) : refus + voie
+        # cliquable (navigation) vers la surface qui le fait. Aucun chiffre LABUSE (gate négative).
+        got = (rep.get("voie") or {}).get("cible")
+        ok = rep.get("refus") == "hors_mission" and got == item["voie"]
+        return (ok, f"refus-voie {item['voie']} attendu, obtenu refus={rep.get('refus')} voie={got}")
 
     return (False, f"catégorie inconnue {cat}")

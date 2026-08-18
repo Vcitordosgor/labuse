@@ -89,15 +89,18 @@ def test_d11_scopé_compter_parcelles_seulement():
     assert calls.get("f") and rep.get("refus") != "critere_non_applicable"
 
 
-# ───────────────────────── D3 — PROJET texte libre ouvre le formulaire ─────────────────
-def test_d3_projet_texte_libre_ouvre_le_formulaire(monkeypatch):
+# ───────────────────────── D3 → M118 — PROJET quitte le chat (voie Projets) ─────────────
+def test_d3_projet_texte_libre_donne_une_voie(monkeypatch):
+    # M118 — la création de projet QUITTE le Copilote : PROJET → refus + voie « projets » (jamais le
+    # formulaire dans le chat ; il vit dans la section Projets, parcours guidé M114).
+    monkeypatch.setattr(answering.telemetrie, "refus", lambda *a, **k: None)
     monkeypatch.setattr(answering, "classify",
                         lambda *a, **k: Route("PROJET", params={"commune": "Saint-Leu"},
                                               clarification="Précisez le programme ?"))
     r = answering.answer(None, "je veux monter une opération immobilière à Saint-Leu")
-    assert r.get("projet_form") is not None                 # le formulaire s'ouvre malgré la clarification
-    assert r["projet_form"]["prefill"].get("commune") == "Saint-Leu"
-    assert not r.get("clarification")                       # plus l'ancienne question-texte
+    assert r.get("refus") == "hors_mission"
+    assert (r.get("voie") or {}).get("cible") == "projets"
+    assert r.get("projet_form") is None and not r.get("clarification")
 
 
 # ───────────────────────── D4 — outil vague propose la liste ─────────────────────────
