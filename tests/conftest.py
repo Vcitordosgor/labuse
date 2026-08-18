@@ -149,6 +149,9 @@ def engine():
     # M26-A — Copilote : agent_runs / agent_events / agent_run_parcels (après comptes, comme au boot).
     from labuse.copilote.tables import ensure_tables as _copilote_ens
     _copilote_ens(eng)
+    # M120 — projets : ALTER ADD COLUMN identite/shortlist_perimee + migration fiche→cadrage (comme au boot).
+    from labuse.api.projets import ensure_tables as _projets_ens
+    _projets_ens(eng)
     # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
     # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
     # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).

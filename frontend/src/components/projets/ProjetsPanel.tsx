@@ -5,7 +5,7 @@
 // (3) plus de chips qui répètent le titre — une ligne de contexte + la commune en mono suffisent.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type MouseEvent } from 'react'
-import { fusionnerProjets, getProjets, patchProjet, type FicheProjet, type Projet } from '../../lib/api'
+import { fusionnerProjets, getProjets, patchProjet, type Cadrage, type Projet } from '../../lib/api'
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
@@ -15,24 +15,20 @@ import { Vignette } from './Vignette'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
 
-/** Résumé lisible d'un périmètre de fiche (sans commune = toute l'île). */
-function perimetreLabel(f: FicheProjet): string {
-  const p = f.perimetre
-  if (!p || p.mode === 'ile') return "toute l'île"
-  if (p.mode === 'secteur') return `secteur ${p.secteur}`
-  const cs = p.communes ?? []
+/** M120 — le périmètre est une FACETTE du cadrage (`communes`) ; vide = toute l'île. */
+function perimetreLabel(c: Cadrage): string {
+  const cs = c.communes ?? []
+  if (!cs.length) return "toute l'île"
   return cs.length === 1 ? cs[0] : `${cs.length} communes`
 }
 
-/** La ligne de contexte SOUS le titre — programme + budget, ou « Cadrage à compléter ». Plus de
- *  chips qui répètent le titre, plus de date de création qui prend la place de l'info utile. */
+/** La ligne de contexte SOUS le titre — périmètre + budget indicatif. M120 : le cadrage porte les
+ *  facettes ; le budget est INFORMATIF (dit « indic. »). */
 function ctxLine(p: Projet): string {
-  const amp = p.fiche.ampleur ?? {}
-  const prog = amp.logements ? `${amp.logements} logements`
-    : amp.sdp_m2 ? `${amp.sdp_m2} m² de plancher` : null
-  if (!prog) return 'Cadrage à compléter'
-  const parts = [prog]
-  if (p.fiche.budget_foncier_eur) parts.push(`budget ${fmtEurCompact(p.fiche.budget_foncier_eur)}`)
+  const nFacettes = Object.keys(p.cadrage).filter((k) => k !== 'communes').length
+  const parts = [perimetreLabel(p.cadrage)]
+  if (nFacettes) parts.push(`${nFacettes} facette${nFacettes > 1 ? 's' : ''}`)
+  if (p.identite.budget_eur) parts.push(`budget ${fmtEurCompact(p.identite.budget_eur)} indic.`)
   return parts.join(' · ')
 }
 
@@ -40,9 +36,9 @@ function ctxLine(p: Projet): string {
 function communeMono(p: Projet): string {
   const c = p.vignette?.commune
   if (c) return c.toUpperCase()
-  const per = p.fiche.perimetre
-  if (per?.mode === 'communes' && per.communes?.length === 1) return per.communes[0].toUpperCase()
-  return perimetreLabel(p.fiche).toUpperCase()
+  const cs = p.cadrage.communes ?? []
+  if (cs.length === 1) return cs[0].toUpperCase()
+  return perimetreLabel(p.cadrage).toUpperCase()
 }
 
 /** Une LIGNE de projet, deux intensités : `à trier` (bande mint, vignette 64, barre, compteur mint)

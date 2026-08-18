@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import {
-  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
-  type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
+  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, rejouerProjet, setStatutParcelle,
+  type Cadrage, type Identite, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
+  type ShortlistDiff, type StatutParcelle,
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
@@ -13,26 +14,29 @@ import { TierBadge } from '../outils/TierBadge'
 import { Tip } from '../Tip'
 
 const TYPE_LABEL: Record<string, string> = {
-  logements: 'Logements', etudiant: 'Logement étudiant', bureaux: 'Bureaux', autre: 'Projet',
-}
-const CONTRAINTE_LABEL: Record<string, string> = {
-  eviter_ppr: 'hors PPR', eviter_pollution: 'sol sain', eviter_abf: 'hors ABF', eviter_icpe: 'hors ICPE',
+  libre: 'Logement libre', social: 'Logement social', etudiant: 'Logement étudiant',
+  bureaux: 'Bureaux', autre: 'Projet', logements: 'Logements',
 }
 
-/** Critères résumés de la fiche → chips lisibles (mêmes libellés que la liste projets). */
-function criteres(f: FicheProjet): string[] {
+/** M120 · Phase 4 — les critères qui FILTRENT (périmètre + facettes du cadrage). Ils font le tri. */
+function criteresFiltrants(c: Cadrage): string[] {
   const out: string[] = []
-  if (f.type_programme) {
-    const a = f.ampleur ?? {}
-    const n = a.logements ? ` ×${a.logements}` : a.sdp_m2 ? ` ${a.sdp_m2} m²` : ''
-    const g = a.niveaux ? ` R+${a.niveaux}` : ''
-    out.push(`${TYPE_LABEL[f.type_programme] ?? 'Projet'}${n}${g}`)
-  }
-  const p = f.perimetre
-  out.push(!p || p.mode === 'ile' ? "toute l'île" : p.mode === 'secteur' ? `secteur ${p.secteur}`
-    : (p.communes ?? []).length === 1 ? p.communes![0] : `${(p.communes ?? []).length} communes`)
-  if (f.contraintes?.length) out.push(f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · '))
-  if (f.budget_foncier_eur) out.push(fmtEurCompact(f.budget_foncier_eur))
+  const cs = c.communes ?? []
+  out.push(!cs.length ? "toute l'île" : cs.length === 1 ? cs[0] : `${cs.length} communes`)
+  if (c.surfaceMin != null || c.surfaceMax != null) out.push(`surface ${c.surfaceMin ?? 0}–${c.surfaceMax ?? '∞'} m²`)
+  if (c.zonagePlu?.length) out.push(`zonage ${c.zonagePlu.join('/')}`)
+  if (c.etatSol?.length) out.push(c.etatSol.map((e) => (e === 'nu' ? 'terrain nu' : 'terrain bâti')).join(' · '))
+  if (c.signaux?.length) out.push(`${c.signaux.length} signal${c.signaux.length > 1 ? 'aux' : ''} de vie`)
+  return out
+}
+
+/** M120 · Phase 4 — les infos INDICATIVES (type / budget / livraison). Elles ne filtrent PAS —
+ *  rendues en retrait pour ne pas les confondre avec les critères qui font le tri. */
+function criteresInformatifs(id: Identite): string[] {
+  const out: string[] = []
+  if (id.type_logement) out.push(TYPE_LABEL[id.type_logement] ?? id.type_logement)
+  if (id.budget_eur) out.push(fmtEurCompact(id.budget_eur))
+  if (id.date_livraison) out.push(`livr. ${id.date_livraison}`)
   return out
 }
 
@@ -81,24 +85,28 @@ function ProprioLine({ p }: { p?: ProprietairePublic | null }) {
 export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const qc = useQueryClient()
   const { setOpenProjet, openParcours, select } = useApp()
-  const proposed = useRef(false)
   const [drag, setDrag] = useState<{ idu: string; from: StatutParcelle } | null>(null)
   const [overCol, setOverCol] = useState<StatutParcelle | null>(null)
   const [expandCol, setExpandCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
   const [nomInput, setNomInput] = useState(nom)
   const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
+  const [dernierDiff, setDernierDiff] = useState<ShortlistDiff | null>(null)   // M120 : diff du dernier rejeu
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
 
-  // à l'ouverture : (re)proposer les parcelles du jour — idempotent, NON destructif (ON CONFLICT DO
-  // NOTHING). Garantit qu'« À trier » n'est jamais vide pour un projet jamais trié. Même source que le Tinder.
-  useEffect(() => {
-    if (!pid || proposed.current) return
-    proposed.current = true
-    proposerProjet(pid).then(() => qc.invalidateQueries({ queryKey: ['parcours', pid] }))
-  }, [pid, qc])
+  // M120 — PLUS DE RUN À L'OUVERTURE : la shortlist est FIGÉE au cadrage. On lit son état, on ne
+  // relance rien. Le seul rafraîchissement est le bouton « Rejouer » explicite ci-dessous.
+  const rejouer = useMutation({
+    mutationFn: () => rejouerProjet(pid),
+    onSuccess: (d) => {
+      setDernierDiff(d.shortlist)
+      qc.invalidateQueries({ queryKey: ['parcours', pid] })
+      qc.invalidateQueries({ queryKey: ['projet', pid] })
+      qc.invalidateQueries({ queryKey: ['projets'] })
+    },
+  })
 
   // LE geste de statut — UNE seule logique (drag, boutons, Tinder l'appellent tous). Optimiste +
   // resync CRM (retenue↔pipeline) + compteurs des fiches.
@@ -155,15 +163,29 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               <h1 data-kanban-nom className="truncate font-display text-lg font-bold text-txt-hi" title={projet?.nom ?? nom}>{projet?.nom ?? nom}</h1>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              {projet && criteres(projet.fiche).map((c, i) => (
-                <span key={i} className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
+              {/* critères qui FILTRENT — chips pleines */}
+              {projet && criteresFiltrants(projet.cadrage).map((c, i) => (
+                <span key={`f${i}`} data-crit-filtrant className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
               ))}
+              {/* infos INDICATIVES — en retrait, séparées, jamais confondues avec le tri */}
+              {projet && criteresInformatifs(projet.identite).length > 0 && (
+                <span className="ml-0.5 flex flex-wrap items-center gap-1.5 border-l border-line-2 pl-2">
+                  <span className="text-[9px] uppercase tracking-wide text-txt-dim">indic.</span>
+                  {criteresInformatifs(projet.identite).map((c, i) => (
+                    <span key={`i${i}`} data-crit-indic className="rounded-full border border-line-2/60 px-2 py-0.5 text-[10px] text-txt-dim">{c}</span>
+                  ))}
+                </span>
+              )}
               {projet?.derniere_execution_at && (
-                <span className="whitespace-nowrap text-[10.5px] text-txt-dim">· rejoué {fmtDate(projet.derniere_execution_at)}</span>
+                <span data-kanban-cadrage-date className="whitespace-nowrap text-[10.5px] text-txt-dim">· cadrage du {fmtDate(projet.derniere_execution_at)}</span>
               )}
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <button data-kanban-rejouer disabled={rejouer.isPending} onClick={() => rejouer.mutate()}
+              className={`min-h-7 rounded-md px-2.5 py-1 text-[11px] transition-colors duration-quick ${projet?.shortlist_perimee ? 'border border-mint bg-mint/15 font-semibold text-mint hover:brightness-110' : 'border border-line-2 text-txt-mut hover:border-mint hover:text-txt-hi'}`}
+              title="Rejouer le cadrage sur les données du jour — vos tris sont conservés">
+              {rejouer.isPending ? 'Rejeu…' : projet?.shortlist_perimee ? '↻ Rejouer (cadrage modifié)' : '↻ Rejouer'}</button>
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
               className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi">Exporter</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
@@ -172,6 +194,15 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
           </div>
         </div>
+        {/* M120 — bandeau « cadrage modifié » (périmée) et diff du dernier rejeu (jamais un run muet). */}
+        {projet?.shortlist_perimee && !dernierDiff && (
+          <p data-kanban-perimee className="mt-1.5 rounded-md bg-mint/10 px-2 py-1 text-[10.5px] text-mint">
+            Le cadrage a changé — rejouez pour rafraîchir la shortlist (vos tris seront conservés).</p>
+        )}
+        {dernierDiff && (
+          <p data-kanban-diff className="mt-1.5 text-[10.5px] text-txt-dim">
+            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.</p>
+        )}
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>
 
@@ -225,21 +256,14 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                     {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier pour l’instant') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
                 )}
-                {isProp
-                  /* variante B : liste dense (encaisse 52+ parcelles, file de travail) */
-                  ? apercu.map((it) => (
-                      <ProposeeRow key={it.idu} it={it}
-                        onDragStart={() => setDrag({ idu: it.idu, from: 'proposee' })}
-                        onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
-                        onFiche={() => select(it.idu)} />
-                    ))
-                  /* variante A : cartes visuelles (décisions peu nombreuses du client) */
-                  : apercu.map((it) => (
-                      <KanbanCard key={it.idu} it={it} col={col.key}
-                        onDragStart={() => setDrag({ idu: it.idu, from: col.key })}
-                        onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
-                        onFiche={() => select(it.idu)} />
-                    ))}
+                {/* M120 · Phase 4 — MÊME anatomie de carte, DEUX densités : « À trier » garde tout
+                    (pourquoi + signaux, c'est là qu'on décide) ; Retenues/Écartées s'allègent. */}
+                {apercu.map((it) => (
+                  <TriCard key={it.idu} it={it} col={col.key} dense={isProp}
+                    onDragStart={() => setDrag({ idu: it.idu, from: isProp ? 'proposee' : col.key })}
+                    onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
+                    onFiche={() => select(it.idu)} />
+                ))}
                 {!isProp && reste > 0 && (
                   <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
                     className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
@@ -259,18 +283,11 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   )
 }
 
-/** M2 — vignette ortho IGN en LAZY LOADING (jamais chargée hors écran). Placeholder si pas de centre. */
-function Vignette({ center }: { center: [number, number] | null | undefined }) {
-  if (!center) return <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-line-2 bg-surface-2 text-[8px] text-txt-dim">IGN</div>
-  const [lng, lat] = center; const d = 0.0009
-  const url = `https://data.geopf.fr/wms-r/wms?LAYERS=HR.ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&STYLES=&CRS=EPSG:4326&BBOX=${lat - d},${lng - d},${lat + d},${lng + d}&WIDTH=96&HEIGHT=96`
-  return <img loading="lazy" src={url} alt="" className="h-12 w-12 shrink-0 rounded-md border border-line-2 object-cover" />
-}
-
 /** M2 — badges parcelle (défisc / PC caduc / hors critères). */
 function Badges({ it }: { it: ParcoursItem }) {
+  if (!it.hors_criteres && !it.defisc && !it.caduc) return null
   return (
-    <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
+    <span className="inline-flex flex-wrap gap-1 align-middle">
       {it.hors_criteres && (
         <Tip tip="Décidée avant, hors des critères actuels — conservée (jamais évincée)">
           <span data-badge-hors className="rounded-full border border-st-creuser px-1.5 text-[8.5px] font-semibold text-st-creuser">hors critères actuels</span>
@@ -282,73 +299,75 @@ function Badges({ it }: { it: ParcoursItem }) {
   )
 }
 
-/** M2 — LIGNE DENSE de la file « proposées » (variante B) : encaisse 52+ parcelles, triée par rang,
- *  « à analyser » remonté en tête (badge). Draggable ; boutons de décision inline. */
-function ProposeeRow({ it, onDragStart, onAction, onFiche }: {
-  it: ParcoursItem; onDragStart: () => void; onAction: (s: StatutParcelle) => void; onFiche: () => void
-}) {
-  const analyse = it.statut === 'a_analyser'
-  return (
-    <div draggable onDragStart={onDragStart} data-proposee-row={it.idu}
-      onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className={`group flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors duration-quick hover:border-mint/30 ${analyse ? 'border-st-creuser/50 bg-st-creuser/5' : 'border-line-2 bg-surface-2'}`}
-      title="Ouvrir la fiche · glisser pour décider">
-      {analyse && <span className="text-[10px] text-st-creuser" title="à analyser (remonté en tête)">◑</span>}
-      <span title={iduComplet(it.idu)} className="w-[86px] shrink-0 truncate font-mono text-[10.5px] text-txt-hi">{iduCourt(it.idu)}</span>
-      <span className="min-w-0 flex-1 truncate text-[10.5px] text-txt-mut">{it.commune}<Badges it={it} /></span>
-      <TierBadge tier={it.tier} etage0={null} statut={null} />
-      {it.surface_m2 != null && <span className="tnum hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmtM2(it.surface_m2)}</span>}
-      <span className="flex shrink-0 gap-1 opacity-60 transition-opacity duration-quick group-hover:opacity-100">
-        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded border border-mint/60 px-1.5 py-1 text-[10px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15" title="Retenir" aria-label="Retenir">✓</button>
-        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-st-creuser/50 px-1.5 py-1 text-[10px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10" title="À analyser" aria-label="À analyser">◑</button>}
-        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-st-ecartee/50 px-1.5 py-1 text-[10px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10" title="Écarter" aria-label="Écarter">✕</button>
-      </span>
-    </div>
-  )
-}
-
-/** Carte de parcelle — draggable (DnD natif) ET boutons de repli (fallback accessible/mobile).
- *  Le corps ouvre la fiche ; les boutons appellent la mutation de statut (même logique partout). */
-function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
-  it: ParcoursItem; col: StatutParcelle
+/** M120 · Phase 4 — LA CARTE DE TRI, une SEULE anatomie, DEUX densités (patron liste M114) :
+ *  · dense (« À trier ») garde TOUT — adresse, tier, le POURQUOI (forces sourcées), le signal
+ *    marché/événement, et les 3 gestes (✓ Retenir · ◑ Peut-être · ✕ Écarter) ;
+ *  · light (Retenues/Écartées) s'allège — adresse, IDU, tier, l'action de retour. Le pourquoi et le
+ *    signal marché n'y servent plus (la décision est prise). Le q_score interne n'est PLUS servi. */
+function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
+  it: ParcoursItem; col: StatutParcelle; dense: boolean
   onDragStart: () => void; onAction: (s: StatutParcelle) => void; onFiche: () => void
 }) {
+  const analyse = it.statut === 'a_analyser'
+  const titre = it.adresse || it.commune
   return (
-    <div draggable onDragStart={onDragStart}
-      data-kanban-card={it.idu}
+    <div draggable onDragStart={onDragStart} data-tri-card={it.idu} data-tri-dense={dense ? '1' : '0'}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30"
-      title="Ouvrir la fiche · glisser pour changer de colonne">
-      <div className="flex gap-2.5">
-        <Vignette center={it.center} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span title={iduComplet(it.idu)} className="truncate font-mono text-[11px] font-medium text-txt-hi">{iduComplet(it.idu)}</span>
-            <TierBadge tier={it.tier} etage0={null} statut={null} />
+      className={`group cursor-pointer rounded-lg border p-2.5 transition-colors duration-quick active:cursor-grabbing hover:border-mint/30 ${analyse ? 'border-st-creuser/50 bg-st-creuser/5' : 'border-line-2 bg-surface-3'}`}
+      title="Ouvrir la fiche · glisser pour décider">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            {analyse && <span className="text-[10px] text-st-creuser" title="à analyser">◑</span>}
+            <span className="truncate text-[12px] text-txt-hi">{titre}</span>
           </div>
-          <div className="tnum mt-0.5 truncate text-[10.5px] text-txt-mut"
-            title="Tier = probabilité relative de mutation (facteur P) ; qualité = complétude du dossier (couches renseignées). Deux choses distinctes.">
-            {it.commune}{it.q_score != null ? ` · qualité ${fmtInt(it.q_score)}/100` : ''}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''}</div>
-          <div className="mt-1"><Badges it={it} /></div>
+          <span title={iduComplet(it.idu)} className="font-mono text-[9.5px] text-txt-dim">{it.adresse ? iduCourt(it.idu) : iduComplet(it.idu)}</span>
         </div>
+        <TierBadge tier={it.tier} etage0={null} statut={null} />
       </div>
+      <div className="tnum mt-1 truncate text-[10.5px] text-txt-mut">
+        {it.commune}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''} <Badges it={it} />
+      </div>
+
+      {/* dense uniquement — le POURQUOI (sourcé) + le signal marché/événement */}
+      {dense && it.pourquoi && it.pourquoi.length > 0 && (
+        <div className="mt-1.5 flex flex-col gap-0.5">
+          {it.pourquoi.map((l, i) => (
+            <p key={i} className="flex gap-1.5 text-[10.5px] leading-snug text-txt-2"><span className="shrink-0 text-mint">▲</span>{l}</p>
+          ))}
+        </div>
+      )}
+      {dense && (it.marche_eur_m2 != null || it.evenement) && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {it.marche_eur_m2 != null && (
+            <span className="rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut" title="Prix médian DVF bâti de la COMMUNE (€/m² habitable) — repère commune, pas une estimation par parcelle">marché commune ~{fmtInt(it.marche_eur_m2)} €/m²</span>
+          )}
+          {it.evenement && <span className="rounded-full border border-st-ecartee/50 px-2 py-0.5 text-[9.5px] text-st-ecartee" title="Événement foncier rouge (run servi) — mutation probable">événement</span>}
+        </div>
+      )}
+
       {col === 'retenue' && (
         <div className="mt-1.5 border-t border-line-2/60 pt-1.5">
           <div className="text-[10px] text-mint" title="Piste créée automatiquement dans le CRM — remettre à trier l'en retire">▸ dans le CRM · contact à préparer</div>
           <ProprioLine p={it.proprietaire_public} />
         </div>
       )}
-      {/* boutons de repli — accessibilité + mobile (le drag n'est pas la seule voie) */}
+
+      {/* gestes — dense : 3 décisions ; light : décision inverse + retour */}
       <div className="mt-2 flex gap-1.5">
         {col !== 'retenue' && (
           <button data-card-retenir onClick={() => onAction('retenue')}
             className="min-h-7 flex-1 rounded-md border border-mint/60 py-1 text-[10.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">✓ Retenir</button>
         )}
+        {dense && !analyse && (
+          <button data-card-analyser onClick={() => onAction('a_analyser')}
+            className="min-h-7 flex-1 rounded-md border border-st-creuser/50 py-1 text-[10.5px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10">◑ Peut-être</button>
+        )}
         {col !== 'ecartee' && (
           <button data-card-ecarter onClick={() => onAction('ecartee')}
             className="min-h-7 flex-1 rounded-md border border-st-ecartee/50 py-1 text-[10.5px] font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕ Écarter</button>
         )}
-        {col !== 'proposee' && (
+        {col !== 'proposee' && !dense && (
           <button data-card-retrier onClick={() => onAction('proposee')}
             className="min-h-7 flex-1 rounded-md border border-line-2 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
             title={col === 'ecartee' ? 'Récupérer (repasse à trier)' : 'Remettre à trier (retire du CRM)'}>↩ {col === 'ecartee' ? 'Récupérer' : 'À trier'}</button>

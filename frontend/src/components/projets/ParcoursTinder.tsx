@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
+  getCarteDecision, getParcoursEtat, setStatutParcelle,
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { fmtInt, fmtM2, iduComplet } from '../../lib/format'
@@ -21,16 +21,11 @@ export function ParcoursTinder() {
   const retourProjet = () => (parcours ? setOpenProjet({ id: parcours.id, nom: parcours.nom }) : setView('projets'))
   const qc = useQueryClient()
   const pid = parcours?.id ?? 0
-  const proposed = useRef(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
 
-  // À l'entrée : (re)proposer les parcelles du jour (idempotent, préserve les décisions) puis lire l'état.
+  // M120 — PLUS DE RUN À L'ENTRÉE : la shortlist est FIGÉE au cadrage. On lit l'état, on ne relance
+  // rien (le rejeu est un geste explicite, dans le kanban). On trie ce qui a été figé.
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
-  useEffect(() => {
-    if (!pid || proposed.current) return
-    proposed.current = true
-    proposerProjet(pid).then(() => qc.invalidateQueries({ queryKey: ['parcours', pid] }))
-  }, [pid, qc])
 
   const etat = etatQ.data
   const deck = etat?.proposees ?? []
@@ -227,9 +222,9 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
   const Row = ({ p, actions }: { p: ParcoursItem; actions: React.ReactNode }) => (
     <div className="flex items-center gap-2 rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[11px] text-txt-hi">{iduComplet(p.idu)}
-          <span className="ml-1.5 font-sans text-[10px] text-txt-dim">{p.commune}</span></div>
-        <div className="tnum text-[10px] text-txt-mut">qualité {fmtInt(p.q_score)}/100 · {p.tier ?? '—'}</div>
+        <div className="text-[11px] text-txt-hi">{p.adresse || p.commune}
+          <span className="ml-1.5 font-mono text-[9.5px] text-txt-dim">{iduComplet(p.idu)}</span></div>
+        <div className="tnum text-[10px] text-txt-mut">{p.commune} · {p.tier ?? '—'}{p.surface_m2 != null ? ` · ${fmtM2(p.surface_m2)}` : ''}</div>
       </div>
       <button onClick={() => onFiche(p.idu)}
         className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt">fiche</button>

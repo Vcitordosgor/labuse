@@ -37,11 +37,11 @@ def engine():
 
 
 def test_top5_dans_le_perimetre_commune(engine):
-    """Périmètre = une commune → le top 5 ET le compteur n restent dans cette commune."""
+    """M120 — le périmètre est une FACETTE du cadrage (`communes`) : top 5 ET compteur n
+    restent dans cette commune."""
     with Session(engine) as db:
-        commune = projet_apercu(ApercuIn(
-            fiche={"perimetre": {"mode": "communes", "communes": [COMMUNE]}}, limit=5), db)
-        ile = projet_apercu(ApercuIn(fiche={"perimetre": {"mode": "ile"}}, limit=5), db)
+        commune = projet_apercu(ApercuIn(cadrage={"communes": [COMMUNE]}, limit=5), db)
+        ile = projet_apercu(ApercuIn(cadrage={}, limit=5), db)   # aucune commune = toute l'île
     # top 5 ⊆ périmètre
     assert commune["top"], "aucune parcelle servie dans le périmètre"
     assert all(it["commune"] == COMMUNE for it in commune["top"]), \
@@ -51,11 +51,11 @@ def test_top5_dans_le_perimetre_commune(engine):
 
 
 def test_secteur_reste_dans_ses_communes(engine):
-    """Périmètre = secteur → le top 5 reste dans les communes du secteur (jamais hors)."""
+    """M120 — un « secteur » = ses communes, posées comme facette `communes` du cadrage : le top 5
+    reste dans ces communes (jamais hors)."""
     from labuse.api.ia import SECTEURS
+    communes_ouest = list(SECTEURS["Ouest"])
     with Session(engine) as db:
-        ap = projet_apercu(ApercuIn(
-            fiche={"perimetre": {"mode": "secteur", "secteur": "Ouest"}}, limit=5), db)
-    communes_ouest = set(SECTEURS["Ouest"])
-    assert all(it["commune"] in communes_ouest for it in ap["top"]), \
+        ap = projet_apercu(ApercuIn(cadrage={"communes": communes_ouest}, limit=5), db)
+    assert all(it["commune"] in set(communes_ouest) for it in ap["top"]), \
         f"top hors secteur : {[it['commune'] for it in ap['top']]}"

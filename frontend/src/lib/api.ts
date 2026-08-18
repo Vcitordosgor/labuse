@@ -754,14 +754,17 @@ export const postProgramme = (body: Record<string, unknown>) =>
   j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
-export interface FicheProjet {
-  type_programme?: 'logements' | 'etudiant' | 'bureaux' | 'autre'
-  ampleur?: { logements?: number; sdp_m2?: number; niveaux?: number }
-  perimetre?: { mode: 'ile' | 'secteur' | 'communes'; secteur?: string; communes?: string[] }
-  contraintes?: string[]
-  budget_foncier_eur?: number
-  criteres_libres?: string
+// M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ
+// porte les infos indicatives (budget/type/date) qui n'alimentent AUCUN filtre.
+export type Cadrage = Partial<Filters>
+export interface Identite {
+  budget_eur?: number | null          // indicatif — sans effet sur la sélection
+  type_logement?: string | null       // indicatif (le moteur ne distingue pas par type)
+  date_livraison?: string | null      // indicatif
 }
+export interface TypeLogement { cle: string; libelle: string }
+export const getProjetTypes = () =>
+  j<{ types: TypeLogement[]; informatif: boolean; note: string }>('/projets/types')
 // contact proprio (PRIVACY : PM publique nommée OU particulier masqué) — partagé CRM ↔ projet
 export type ProprietairePublic =
   | { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
@@ -772,49 +775,50 @@ export interface ProjetCounts { proposee: number; retenue: number; ecartee: numb
 export interface ProjetVignette { commune: string | null; points: { x: number; y: number; r: boolean }[] }
 export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
-  fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
+  cadrage: Cadrage; identite: Identite; shortlist_perimee: boolean   // M120
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
   vignette?: ProjetVignette   // M114 — schéma d'emprise (64/52 px)
 }
-// L'entretien de cadrage (réel uniquement — fallback si stub)
-export interface EntretienChip { label: string; value?: string }
-export interface EntretienQuestion { id: string; texte: string; dimension?: 'secteur' | 'commune'; defaut?: string; chips: EntretienChip[] }
-export interface EntretienRep {
-  stub: boolean; fallback?: boolean; message?: string
-  reformulation?: string; fiche?: FicheProjet; nom?: string; pret?: boolean
-  questions?: EntretienQuestion[]; doctrine_neutralise?: boolean
-}
-export const iaEntretien = (body: { text: string; fiche?: FicheProjet; history?: { role: string; content: string }[] }) =>
-  j<EntretienRep>('/ia/entretien', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-
-export interface RepereOption { key: string; label: string; nb_opportunites: number; dvf_median_eur_m2: number | null; communes_carencees: string[] }
-export const getReperes = (dimension: 'secteur' | 'commune') =>
-  j<{ dimension: string; options: RepereOption[]; note: string }>(`/projets/reperes?dimension=${dimension}`)
+// M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
+export interface ShortlistDiff { ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number }
+// M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
+// ses facettes (ParcoursProjet → FiltreFacettes), plus par une fiche remplie par l'IA. Le client
+// `/ia/entretien` et `/projets/reperes` est parti avec lui (endpoints backend conservés, non appelés).
 
 export const getProjets = () => j<Projet[]>('/projets')
 export const getProjet = (id: number) => j<Projet>(`/projets/${id}`)
-export interface ProjetDerive { nom: string; fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null; sdp_besoin_m2: number | null }
-export const deriveProjet = (body: { fiche: FicheProjet; nom?: string }) =>
+export interface ProjetDerive { nom: string; cadrage: Cadrage; identite: Identite; sdp_besoin_m2: number | null }
+export const deriveProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string }) =>
   j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
+// M120 — créer = FIGER la shortlist en une fois (le run part une fois ; plus de run à l'ouverture).
+export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number }) =>
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
-  j<{ ok: boolean; existing?: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
-export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; programme_defini: boolean; source: string; top: ApercuTop[] }
-export const getApercu = (fiche: FicheProjet, limit = 5) =>
-  j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fiche, limit }) })
+export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
+export const getApercu = (cadrage: Cadrage, identite: Identite = {}, limit = 5) =>
+  j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage, identite, limit }) })
 export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
-export const patchProjet = (id: number, body: { nom?: string; statut?: string; fiche?: FicheProjet }) =>
+export const patchProjet = (id: number, body: { nom?: string; statut?: string; cadrage?: Cadrage; identite?: Identite }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// M120 — rejouer À LA DEMANDE : rend le diff (entrées / sorties / tris conservés).
 export const rejouerProjet = (id: number) =>
-  j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })
+  j<{ ok: boolean; projet: Projet; shortlist: ShortlistDiff; counts: ProjetCounts }>(`/projets/${id}/rejouer`, { method: 'POST' })
 export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })
 
 // ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
 export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
 export interface ParcoursCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null; proprietaire_public?: ProprietairePublic | null; surface_m2?: number | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean }
+// M120 · Phase 4 — la carte de tri : adresse + pourquoi COURT + signal marché/événement (servis
+// batch par /parcelles, jamais un calcul client). Le q_score interne N'EST PLUS servi (mesuré :
+// score de contraintes clampé 1-100, pas une « qualité » ni un rang de cadrage → ne se sert pas nu).
+export interface ParcoursItem {
+  idu: string; commune: string; statut: StatutParcelle; tier: string | null
+  center: [number, number] | null; surface_m2?: number | null
+  adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
+  proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
+}
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
 export const fusionnerProjets = (ids: number[]) => j<FusionResult>('/projets/fusionner', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) })

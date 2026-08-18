@@ -68,7 +68,9 @@ function IaRestitution() {
     return () => cancelAnimationFrame(raf)
   }, [iaRestitution])
   const enregistrer = useMutation({
-    mutationFn: () => createProjet({ fiche: iaRestitution!.projet!.fiche, nom: iaRestitution!.projet!.nom }),
+    // M120 — chemin legacy (restitution copilote v1, `projet` jamais renseigné depuis M118) : un
+    // projet se crée par son CADRAGE (parcours Projets), plus par une fiche. Conservé compilable.
+    mutationFn: () => createProjet({ cadrage: {}, nom: iaRestitution!.projet!.nom }),
     // dédup douce : si un projet identique existait, le serveur le renvoie (existing) — on le REPREND
     // au lieu d'empiler un doublon ; le front le signale et propose de l'ouvrir.
     onSuccess: (d) => { setProjetId(d.projet.id); setReprisExistant(!!d.existing) },

@@ -16,13 +16,14 @@ import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
+import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
 // post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
 // M101 A2 (arbitrage Vic) : DEUX entrées — les tiers internes (saturé/révélé) sortent du
 // filtre (information de fiabilité, dite en fiche via le motif). Partition exacte sur
 // l'emprise bâtie (seuil 5 %, backend app.py etat_sol) : nu ∪ bâti = parc filtrable.
-const ETAT_SOL = [
+export const ETAT_SOL = [
   { k: 'nu', l: 'Terrain nu' },
   { k: 'bati', l: 'Terrain bâti' },
 ]
@@ -70,7 +71,7 @@ export const CP_COMMUNES: [string, string][] = [
 // point 11 n'auront vécu qu'une journée) : « Nu détenu par société » et « Cession de fonds »
 // SUPPRIMÉS de l'UI (clés URL ignorées proprement dans filters.ts, backend intact).
 // Libellés/« i » : CLIENT.signaux. OU de groupe et persistance URL (sv=) inchangés.
-const SIGNAUX_KEYS = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc',
+export const SIGNAUX_KEYS = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc',
   'friche', 'assemblage', 'defisc']
 
 
@@ -89,8 +90,8 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
   )
 }
 
-function ChipGroup({ field, options }: { field: keyof Filters; options: { k: string; l: string }[] }) {
-  const { filters, setFilter } = useApp()
+export function ChipGroup({ field, options }: { field: keyof Filters; options: { k: string; l: string }[] }) {
+  const { filters, setFilter } = useFiltre()
   const sel = (filters[field] as string[]) ?? []
   const toggle = (k: string) =>
     setFilter(field, (sel.includes(k) ? sel.filter((x) => x !== k) : [...sel, k]) as never)
@@ -123,8 +124,8 @@ function ChipGroup({ field, options }: { field: keyof Filters; options: { k: str
 // SORT de la portée est RETIRÉE du filtre et ANNONCÉE — jamais de filtre fantôme qui renvoie
 // zéro. Purge UNIQUEMENT sur données chargées (jamais sur erreur réseau : on ne vide pas un
 // filtre sur une panne).
-function ZoneSelector() {
-  const { filters, setFilter } = useApp()
+export function ZoneSelector() {
+  const { filters, setFilter } = useFiltre()
   const [openFam, setOpenFam] = useState<string | null>(null)
   const [retirees, setRetirees] = useState<string[]>([])
   const zq = useQuery({
@@ -228,8 +229,8 @@ function ZoneSelector() {
 }
 
 // M55-G point 11 : chip + « i » d'un signal de vie — partagé entre larges et niches
-function SignalChip({ k }: { k: string }) {
-  const { filters, setFilter } = useApp()
+export function SignalChip({ k }: { k: string }) {
+  const { filters, setFilter } = useFiltre()
   return (
     <span className="flex items-center gap-1">
       <Chip on={filters.signaux.includes(k)}
@@ -247,7 +248,7 @@ function SignalChip({ k }: { k: string }) {
 
 // M55-G suite point 7 : les titres de sections n'ont PLUS de sous-texte — l'explication vit
 // dans un « i » (même patron que les signaux), au survol.
-function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; cls?: string }) {
+export function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; cls?: string }) {
   return (
     <p className={`label-caps flex items-center gap-1.5 text-txt-mut ${cls}`}>{titre}
       <Tip side="top" tip={info}>
@@ -258,8 +259,8 @@ function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; 
   )
 }
 
-function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suffix?: string }) {
-  const { filters, setFilter } = useApp()
+export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suffix?: string }) {
+  const { filters, setFilter } = useFiltre()
   const v = filters[field] as number | null
   return (
     <div className="flex items-center gap-1">
