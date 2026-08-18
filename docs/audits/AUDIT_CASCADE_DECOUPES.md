@@ -232,15 +232,22 @@ bâti 3 830, périmètres divers…
 
 ---
 
-## 5. LA SYNTHÈSE CHIFFRÉE
+## 5. LA SYNTHÈSE CHIFFRÉE — FRONTIÈRES ARBITRÉES (Vic)
 
-Frontières retenues pour le calcul : **PPR** rouge (inchangé) · **foncier public** = public-seul libéré ·
-**pente** 45° (100 %) · **micro** 40 m² · **zonage** strict gardé (sous-zones = calibration à part) ·
-**prescription** ER libéré. Décisions actées SANS découpe (restent cascade) : parc national, eau/ravines,
-forêt publique, trait de côte, 50 pas, + les emprises voirie/OSM (impossibilité physique). « Bâti » reste.
+**Frontières fixées** : **PPR** rouge (inchangé, découpe déjà en place) · **foncier public** = les 9 002
+« public seul motif » deviennent visibles · **pente** falaise **45°** (au-delà = exclu) · **micro**
+plancher **40 m²** (en dessous = exclu, même en fusion ça ne pèse rien) · **prescription** ER → fait
+affiché (corridor/attente 15 → restent) · **zonage sous-zones** ~1 100 noté (calibration N/A plus tard,
+non bloquant). Décisions SANS découpe (restent cascade) : parc national, eau/ravines, forêt publique,
+trait de côte, 50 pas, emprises voirie/OSM, **bâti**.
+
+**« Saturé » N'EST PAS une exclusion (arbitrage Vic).** Une parcelle sans droits résiduels reste
+**VISIBLE** — on peut raser, on peut fusionner. « SDP résiduelle nulle » devient un **FAIT AFFICHÉ** en
+fiche et une **FACETTE** (« droits résiduels : oui / non ») : le score dit la probabilité, le client
+décide. **Aucune soustraction au vivier.**
 
 **Le NET n'est pas la somme des libérations** : une micro-parcelle aussi bâtie, ou un ER en zone A, reste
-exclu. Calcul ensembliste (`libérées = étage0 − toute-couche-gardée`), requête :
+exclu. Calcul ensembliste (`libérées = étage0 − toute-couche-gardée`) :
 ```
 KEEP = {eau, parc_national, foret_publique, trait_de_cote, bati, risques, osm_faux_positif,
         emprise_lineaire, emprise_routiere, zonage_plu_gpu, prescription(veto), pente≥100%, surface<40}
@@ -250,32 +257,26 @@ libérées = étage0(340 752) − KEEP ;  foncier_public & ER & pente<100% & sur
 | Étape | Parcelles |
 |---|--:|
 | Vivier figeable **actuel** | **90 911** |
-| + libérées par les 6 découpes (**net, dédoublonné**) | **+20 460** |
-| = vivier **après découpes** | **111 371** |
-| − décision « **saturé** » (SDP résiduelle < 100 m²) | **−29 107** |
-| = **VIVIER FINAL** (saturé appliqué) | **82 264** |
+| + libérées par les découpes (**net, dédoublonné**) | **+20 460** |
+| = **VIVIER CIBLE** (« saturé » reste visible) | **111 371** |
 
-**Sans la décision « saturé » : 111 371.** Avec « saturé » au plancher SDP < 100 m² : **82 264**.
+**✅ VIVIER FINAL CONFIRMÉ = 111 371.** C'est le nombre que le client verra.
 
-**⚠ « saturé » n'a pas de frontière définie dans le mandat.** Je l'ai mesuré au candidat le plus naturel
-— **parcelle sans droits à construire résiduels** (`parcel_residuel.sdp_residuelle_m2 < 100`, la borne
-« rien à construire » du barème socle `etage0_ext.py:37`). C'est **le seul levier qui RÉDUIT** le vivier :
-```sql
--- parmi les 90 911 figeables : SDP résiduelle < 100 = 26 692 ; sur le vivier post-découpes = 29 107
-SELECT count(*) FROM parcel_residuel r JOIN dryrun_parcel_evaluations d
-  ON d.parcel_id=r.parcel_id AND d.run_label='q_v9_m81'
-WHERE d.status IN ('a_creuser','opportunite') AND r.sdp_residuelle_m2 < 100;  -- 26 692
-```
-*Réserve : `parcel_residuel` couvre 23/24 communes — 14 516 figeables ont une SDP inconnue (ni saturé ni
-non-saturé mesurable). La frontière exacte du « saturé » (SDP < 100 ? < 50 ? taux d'emprise ?) est ton
-arbitrage — donne-la et je recalcule au chiffre près.*
+D'où viennent les **20 460** (motifs présents parmi les libérées — se chevauchent, l'union unique = 20 460) :
+| Motif libéré | Parcelles libérées le portant |
+|---|--:|
+| Foncier public (devenu négociable) | 11 468 |
+| Micro-parcelle 40-100 m² | 9 085 |
+| Emplacement réservé (fait affiché) | 2 147 |
+| Pente 31-45° | 797 |
 
-**Le nombre que le client verra** : entre **~82 000 (avec saturé)** et **~111 000 (sans saturé)**, selon
-la décision « saturé ». Les 4 découpes + foncier public, elles, sont fermes : **90 911 → 111 371**.
+**Enseignement honnête** : la pente ne pèse que **797 net** (sur 10 016 bruts) — la quasi-totalité des
+terrains en pente 31-45° sont AUSSI en zone N/A ou bâtis (gardés). De même l'ER : 2 147 net sur 5 125
+bruts. Les deux gros contributeurs réels sont le **foncier public** (11 468) et la **micro-parcelle**
+(9 085). Relâcher la pente seule ne libérerait presque rien.
 
-*Sensibilité aux frontières alternatives (net dédoublonné) : pente 35°/micro 50 → +18 319 (vivier
-109 230) · pente 45°/micro 40 → +20 460 (vivier 111 371). L'écart pente 35↔45° et micro 40↔50 ne pèse
-que ~2 000 sur le net — la variable dominante est « saturé ».*
+*Reste ouvert, non bloquant : la calibration des sous-zones N/A (4-bis) ajouterait ~1 100 (borne haute
+~2 600) une fois les STECAL/hameaux distingués commune par commune.*
 
 ---
 
