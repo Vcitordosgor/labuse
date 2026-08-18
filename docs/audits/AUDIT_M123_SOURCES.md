@@ -269,6 +269,32 @@ candidate à réingestion — à ce moment-là, et sur ton arbitrage couche par 
 
 ---
 
+## PHASE 2 — BPE / ZNIEFF : PÉRIMÈTRE (mandat propre recommandé)
+
+Tu m'as dit : *« si c'est plus qu'une session, dis-le et on le met dans un mandat propre »*. **Mesuré :
+c'est un mandat propre.** Voici pourquoi, source par source.
+
+**ZNIEFF** — connecteur présent (`connectors/__init__.py`, ODS `…/records`, endpoint vivant) mais
+**0 donnée ingérée** : ni ingester qui écrit une table, ni CLI, ni couverture. Le construire au standard
+du dépôt = un module ~ `amenites.py` (139 l.) : pagination ODS → géométries → `spatial_layers kind='znieff'`
+(index spatial) → mesure 24 communes → bascule catalogue `a_faire→connecte` + sonde radar + tests.
+
+**BPE** — **chevauche une feature DÉJÀ servie.** Le signal d'accès aux équipements existe et tourne :
+`acces_equipements` (`features.py:89`, `Σ exp(-dist/800 m)` école/santé/commerce) est alimenté par
+`parcel_amenites` (OSM) — **431 663 lignes, couverture pleine**. BPE INSEE n'est donc **pas un signal neuf** :
+c'est un **re-sourcing officiel** de cette même feature (CSV national à filtrer au 974, table, recalcul de
+distances par parcelle). Et le choix « BPE remplace-t-il ou complète-t-il OSM dans `acces_equipements` ? »
+est une **décision de feature = modèle = interdit ce mandat**.
+
+**Verdict.** Deux ingesters pleins (~130–240 l. chacun, cf. `amenites.py` 139 / `georisques_layers.py` 238),
+chacun avec download+parse, table+migration, CLI résumable, mesure de couverture, bascule catalogue+radar,
+tests — plus, pour BPE, une question de feature hors périmètre. **C'est au-delà du reste de cette session
+faite au standard.** Un ingester à moitié bâti laisserait un état pire que le marqueur `a_faire` propre
+actuel. **Recommandation : mandat dédié « BPE/ZNIEFF — ingesters + couverture », câblage algo en phase
+modèle.** Rien n'a été bâti à moitié ici.
+
+---
+
 ## CE QUI N'A PAS ÉTÉ TOUCHÉ
 
 Inspection strictement en lecture. Aucune réingestion, aucune correction, aucune suppression — tout
