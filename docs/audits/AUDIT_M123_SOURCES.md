@@ -181,6 +181,32 @@ Rien n'est réparé avant ta décision. Quatre paniers :
 
 ---
 
+## PHASE 2 — LES RETARDS (vérification amont, sans réingestion)
+
+Arbitrage Vic : vérifier l'amont MAINTENANT, rendre le tableau des retards avérés + l'impact estimé ;
+la réingestion des couches cascade attend un geste dédié couche par couche. Impact = parcelles
+actuellement HARD_EXCLUDE par la couche (mesuré `dryrun_cascade_results`) — ce qu'une réingestion
+POURRAIT faire bouger.
+
+| Couche / source | Millésime base | Amont vérifié | Retard ? | Impact (parcelles exclues auj.) |
+|---|---|---|---|---:|
+| **trait de côte** | 2018 | Cerema « Indicateur national de l'érosion côtière » = **maj 2018-06-28** (inchangé) | **NON** | 3 |
+| **Filosofi INSEE** | 2021 *(comment `features.py` dit 2019 — stale)* | INSEE Filosofi **2021 = dernier millésime** | **NON** (donnée) ; comment à corriger (hors ce mandat, dans le modèle) | contexte (non exclusion) |
+| **QPV** | génération 2024 | ANCT QPV 2024 (maj 2024-12/2025-07) = géographie courante | **NON** | fiscal (non exclusion) |
+| **classement sonore** | arrêtés déc. 2023 | cadence ~5 ans, 2023 récent | **NON** (présumé) | `bruit_route` (flag, non HARD) |
+| **zonage PLU/GPU** | GPU par commune | **NON DATABLE auto** — révisions PLU par commune (GPU) | **INCONNU** → vérif manuelle par commune requise | **103 722** |
+| **risques / PPR** | — | **NON DATABLE auto** — arrêtés DEAL Lizmap | **INCONNU** → vérif manuelle DEAL requise | **44 764** |
+| **foncier public** | suit le cadastre | à jour (suit le socle) | **NON** | 36 379 |
+| **forêts ONF / parc national** | 2021 | INPN/ONF, périmètres stables | **NON** (présumé) | 6 890 / 6 137 |
+
+**Verdict retards** : **AUCUN retard avéré** parmi les couches datables/vérifiables (trait de côte,
+Filosofi, QPV, sonore = à jour amont). Les DEUX couches à fort impact — **zonage PLU/GPU (103 722)** et
+**PPR/risques (44 764)** — sont NON DATABLES automatiquement (révisions par commune / arrêtés DEAL) :
+leur fraîcheur exige une **vérification manuelle producteur**, et un retard y serait à fort impact
+d'exclusion. Aucune réingestion lancée — geste dédié couche par couche, sur ton arbitrage.
+
+---
+
 ## CE QUI N'A PAS ÉTÉ TOUCHÉ
 
 Inspection strictement en lecture. Aucune réingestion, aucune correction, aucune suppression — tout

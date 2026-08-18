@@ -18,9 +18,13 @@ SOURCES_MASQUEES: frozenset[str] = frozenset()
 #: fonciers). Elle affiche désormais `connecte` ∪ `manuel`, et exclut explicitement les DOUBLON, les
 #: RETIRÉ (abandon arbitré, raison écrite) et les masquées. Une source retirée/vide porte son tag,
 #: elle n'est plus exclue « par son statut » en silence.
+#: RÈGLE VIC (M123) : « la vitrine ne montre que ce qui SERT ». Hors vitrine = DOUBLON (canal masqué),
+#: RETIRÉ (abandon arbitré), DORMANT (ingéré/déclaré mais servi nulle part) — tous restent en base
+#: avec leur note, seul l'écran les écarte.
 WHERE_AFFICHEES = ("status IN ('connecte', 'manuel') "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%' "
+                   "AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%' "
                    "AND name <> ALL(:masquees)")
 
 
@@ -32,7 +36,8 @@ def masquees_param() -> list[str]:
 def est_affichee(name: str, technical_notes: str | None) -> bool:
     """Une source data_sources est-elle AFFICHÉE (filtre Python, même règle que WHERE_AFFICHEES) ?"""
     tn = technical_notes or ""
-    return not tn.startswith("DOUBLON de") and not tn.startswith("RETIRÉ") and name not in SOURCES_MASQUEES
+    return (not tn.startswith("DOUBLON de") and not tn.startswith("RETIRÉ")
+            and not tn.startswith("DORMANT") and name not in SOURCES_MASQUEES)
 
 
 #: sources CURÉES MANUELLEMENT (arbitrage M86/M87) : la table n'est pas lue directement, mais elle est

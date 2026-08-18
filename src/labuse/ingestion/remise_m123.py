@@ -34,6 +34,9 @@ DORMANTES: dict[str, str] = {
     "PVGIS (Commission européenne)":
         "DORMANT — signal PV candidat mort (0 validé / 23 529, feature retirée M71 B2) ; conservé "
         "au catalogue, non servi.",
+    "VRD / assainissement (SPANC)":
+        "DORMANT — manuel EPCI, aucune table ni chemin servi (le 'VRD' du bilan est un poste de coût, "
+        "pas cette source) ; conservé au catalogue, hors vitrine tant qu'il ne sert pas.",
 }
 
 
