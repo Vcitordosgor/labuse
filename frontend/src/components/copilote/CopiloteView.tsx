@@ -322,7 +322,7 @@ export function CopiloteView() {
             missions={missions} onReprendre={rouvrir}
             reponse={projetForm
               ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */
-                avecChrome(<ParcoursProjet prefill={projetForm.prefill}
+                avecChrome(<ParcoursProjet prefill={projetForm.prefill} accent="ia"
                   onVoir={(p) => { setProjetForm(null); setOpenProjet(p) }}
                   onFermer={() => setProjetForm(null)} />)
               : recap
