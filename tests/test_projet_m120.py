@@ -40,11 +40,11 @@ def test_cadrage_est_le_point_unique_identite_informative(db_session, monkeypatc
         identite={"budget_eur": 300000, "type_logement": "social", "date_livraison": "2027-01"},
         nom="P"), None, s)
     p = s.get(models.Projet, r["projet"]["id"])
-    # le CADRAGE ne contient QUE des facettes — budget/type/date n'y sont JAMAIS (informatifs)
+    # le CADRAGE ne contient QUE des facettes — budget/type n'y sont JAMAIS (informatifs)
     assert not ({"budget_eur", "type_logement", "date_livraison"} & set(p.filtres))
     assert p.filtres["communes"] == ["X"] and p.filtres["surfaceMin"] == 500
-    # l'identité porte les infos, telles quelles
-    assert p.identite == {"budget_eur": 300000, "type_logement": "social", "date_livraison": "2027-01"}
+    # l'identité porte budget + type ; M120-B : date_livraison est RETIRÉE (clé écartée par clean_identite)
+    assert p.identite == {"budget_eur": 300000, "type_logement": "social"}
 
 
 # ───────────────────────── la shortlist est figée et datée ─────────────────────────

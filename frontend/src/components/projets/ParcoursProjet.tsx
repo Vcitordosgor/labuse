@@ -13,7 +13,7 @@ import { FiltreProvider } from '../panel/filtreContext'
 import { EMPTY_FILTERS, type Filters } from '../../store/useApp'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
-const ETAPES = ['NOM', 'PÉRIMÈTRE', 'BUDGET', 'TYPE', 'LIVRAISON', 'CADRAGE', 'RÉCAPITULATIF']
+const ETAPES = ['NOM', 'PÉRIMÈTRE', 'BUDGET', 'TYPE', 'CADRAGE', 'RÉCAPITULATIF']
 const N = ETAPES.length
 
 // M117 · gabarit 12 — accent THÉMÉ : MINT dans la section Projets, MAUVE dans le Copilote.
@@ -35,7 +35,6 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const [communes, setCommunes] = useState<string[]>(typeof pf.commune === 'string' ? [pf.commune] : [])
   const [budget, setBudget] = useState<string>(typeof pf.budget_eur === 'number' ? String(pf.budget_eur) : '')
   const [type, setType] = useState<string>('')
-  const [livraison, setLivraison] = useState<string>('')
   // le CADRAGE local (les facettes) — un jeu de filtres complet, isolé du store de la carte.
   const [cadrageFacettes, setCadrageFacettes] = useState<Filters>({ ...EMPTY_FILTERS })
   const [envoi, setEnvoi] = useState(false)
@@ -72,8 +71,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const identite: Identite = useMemo(() => ({
     ...(budget.trim() ? { budget_eur: parseInt(budget, 10) } : {}),
     ...(type ? { type_logement: type } : {}),
-    ...(livraison.trim() ? { date_livraison: livraison.trim() } : {}),
-  }), [budget, type, livraison])
+  }), [budget, type])
 
   const creer = async () => {
     setEnvoi(true); setErreur(null)
@@ -86,8 +84,8 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const avancer = () => { if (etape < N - 1) setEtape(etape + 1); else void creer() }
   const reculer = () => { if (etape > 0) setEtape(etape - 1); else onFermer() }
   const onKey = (e: KeyboardEvent) => {
-    // sur le CADRAGE, Entrée est laissée aux champs de facette (ne pas avancer par mégarde).
-    if (e.key === 'Enter' && etape !== 5) { e.preventDefault(); avancer() }
+    // sur le CADRAGE (étape 4), Entrée est laissée aux champs de facette (ne pas avancer par mégarde).
+    if (e.key === 'Enter' && etape !== 4) { e.preventDefault(); avancer() }
     else if (e.key === 'Escape') { e.preventDefault(); onFermer() }
   }
 
@@ -117,7 +115,6 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
     ['Sur quel périmètre ?', 'Une ou plusieurs communes, ou toute l’île.'],
     ['Un budget foncier ?', 'Indicatif — il figure sur le projet, sans effet sur la sélection.'],
     ['Quel type de logement ?', 'Indicatif — le moteur ne distingue pas les parcelles par type.'],
-    ['Une date de livraison visée ?', 'Indicatif — pour votre suivi, sans effet sur la sélection.'],
     ['Affinez le cadrage.', 'Les mêmes critères que la carte. La shortlist sera figée sur ce cadrage.'],
     ['On récapitule.', 'Vérifiez avant de créer — le cadrage restera modifiable.'],
   ]
@@ -197,19 +194,12 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         </div>
       )}
       {etape === 4 && (
-        <div style={{ marginBottom: 28 }}>
-          <input data-projet-livraison autoFocus type="month" value={livraison} onChange={(e) => setLivraison(e.target.value)}
-            style={champ} />
-          {noteInfo('Indicatif — pour votre suivi, sans effet sur la sélection.')}
-        </div>
-      )}
-      {etape === 5 && (
         <div data-projet-cadrage style={{ marginBottom: 28, maxHeight: '52vh', overflowY: 'auto' }}>
           <p style={{ fontSize: 12, color: '#6F8578', margin: '0 0 14px' }}>Périmètre : <b style={{ color: '#ECF5EF' }}>{perimetreLabel}</b> · modifiable à l’étape précédente.</p>
           <FiltreProvider value={binding}><FiltreFacettes /></FiltreProvider>
         </div>
       )}
-      {etape === 6 && (
+      {etape === 5 && (
         <div data-projet-recap style={{ marginBottom: 28, border: '.5px solid #1E2A23', background: '#080D0A', borderRadius: 8, padding: '16px 18px' }}>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#ECF5EF' }}>
             <li><span style={{ color: '#6F8578' }}>Nom : </span>{nomEffectif}</li>
@@ -217,7 +207,6 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
             <li><span style={{ color: '#6F8578' }}>Cadrage : </span>{Object.keys(cadrage).filter((k) => k !== 'communes').length} facette{Object.keys(cadrage).filter((k) => k !== 'communes').length > 1 ? 's' : ''} active{Object.keys(cadrage).filter((k) => k !== 'communes').length > 1 ? 's' : ''}</li>
             {budget.trim() && <li><span style={{ color: '#6F8578' }}>Budget foncier : </span>{parseInt(budget, 10).toLocaleString('fr-FR')} € <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
             {type && <li><span style={{ color: '#6F8578' }}>Type : </span>{types.find((t) => t.cle === type)?.libelle ?? type} <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
-            {livraison.trim() && <li><span style={{ color: '#6F8578' }}>Livraison : </span>{livraison} <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
           </ul>
         </div>
       )}

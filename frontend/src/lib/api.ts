@@ -755,12 +755,11 @@ export const postProgramme = (body: Record<string, unknown>) =>
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ
-// porte les infos indicatives (budget/type/date) qui n'alimentent AUCUN filtre.
+// porte les infos indicatives (budget/type) qui n'alimentent AUCUN filtre. M120-B : date retirée.
 export type Cadrage = Partial<Filters>
 export interface Identite {
   budget_eur?: number | null          // indicatif — sans effet sur la sélection
   type_logement?: string | null       // indicatif (le moteur ne distingue pas par type)
-  date_livraison?: string | null      // indicatif
 }
 export interface TypeLogement { cle: string; libelle: string }
 export const getProjetTypes = () =>
@@ -770,15 +769,11 @@ export type ProprietairePublic =
   | { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
   | { type: 'particulier' }
 export interface ProjetCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-// M114 — la vignette d'emprise : centroïdes des parcelles normalisés 0–1 + drapeau retenue (aplat
-// mint) ; `commune` sert l'état vide (initiale) quand `points` est vide. Live depuis projet_parcelles.
-export interface ProjetVignette { commune: string | null; points: { x: number; y: number; r: boolean }[] }
 export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
   cadrage: Cadrage; identite: Identite; shortlist_perimee: boolean   // M120
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
-  vignette?: ProjetVignette   // M114 — schéma d'emprise (64/52 px)
 }
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
 export interface ShortlistDiff { ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number }

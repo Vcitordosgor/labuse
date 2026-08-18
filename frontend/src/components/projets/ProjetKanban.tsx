@@ -36,7 +36,6 @@ function criteresInformatifs(id: Identite): string[] {
   const out: string[] = []
   if (id.type_logement) out.push(TYPE_LABEL[id.type_logement] ?? id.type_logement)
   if (id.budget_eur) out.push(fmtEurCompact(id.budget_eur))
-  if (id.date_livraison) out.push(`livr. ${id.date_livraison}`)
   return out
 }
 
