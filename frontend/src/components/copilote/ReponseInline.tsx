@@ -19,7 +19,7 @@ export function ReponseInline({ v2, ton = 'mint' }: {
   // mais comme une PHRASE d'information, jamais un bouton.
 }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill,
-    setView, setCommune, setFilters, openSurveillance } = useApp()
+    setView, setCommune, setFilters, openSurveillance, toggleOutils, outilsOpen } = useApp()
   const mauve = ton === 'violet'
   const ouvrir = () => {
     if (!v2.porte) return
@@ -73,6 +73,13 @@ export function ReponseInline({ v2, ton = 'mint' }: {
           className={`mt-3 inline-block rounded-lg border px-4 py-2 font-display text-[12px] font-semibold transition-colors duration-quick ${btnCls}`}>
           Éditer le {v2.document.libelle} →
         </a>
+      )}
+      {/* M116 · D4 — « ouvrir un outil » sans outil précis : la voie = la LISTE des outils (jamais un refus). */}
+      {v2.outils_liste && (
+        <button data-reponse-outils onClick={() => { if (!outilsOpen) toggleOutils() }}
+          className={`mt-3 rounded-lg border px-4 py-2 font-display text-[12px] font-semibold transition-colors duration-quick ${btnCls}`}>
+          Voir les outils d'analyse →
+        </button>
       )}
       {(v2.sources?.length ?? 0) > 0 && (
         <p className="mt-2.5 font-mono text-[10px] text-cp-faint">{v2.sources!.join(' · ')}</p>
