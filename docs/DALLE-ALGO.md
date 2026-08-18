@@ -151,8 +151,12 @@ calibré 2025. RR@1158 hors copro = 6,73 (fold 2025). Dérive : 11× (2020)
    éditions d'octobre ne portent l'année la plus ancienne qu'en semestre 2).
 2. **Ménage** : les 7 features mortes/retirées sortent physiquement au
    réentraînement.
-3. **Trou parcel_residuel** (38,9 % manquant sur SDP/sous-densité/
-   dormance) : à boucher AVANT réentraînement (M125).
+3. **Trou parcel_residuel : BOUCHÉ (M125)** — 100 % des parcelles ont une
+   ligne : 253 764 calculées + 177 899 avec cause structurée (sdp=0 vrai :
+   zone_non_constructible/terrain_exigu/… ; NULL dit : hors_plu 4 397 =
+   1,0 %). Le bin « manquant » passe de 38,9 % à ~1 % au dataset M127.
+   Lecteurs vivants gardés (cause IS NULL) — invariance des filtres prouvée,
+   golden 0 FAIL.
 4. **Pondération des années récentes** à l'entraînement + **cadence de
    réentraînement annuelle** gravée.
 5. **Mesure par segment au M127** : RR séparé sur le segment bâti (le

@@ -56,3 +56,50 @@ du moteur. Ta décision fixe aussi ce que `sous_densite`/`pct_potentiel` portent
 
 **STOP — arbitrage attendu : Option 1 ou 2 (ou variante), et le sort des exceptions avalées
 (`residuel.py:125` — proposé : compter et logger, jamais avaler).**
+
+---
+
+# PHASES 2-3 — EXÉCUTION (arbitrage Vic : Option 1 + causes lisibles + invariance des filtres)
+
+## Ce qui a été fait
+
+- **Colonne `cause`** (`models.ensure_residuel_cache`) : NULL = ligne CALCULÉE ; sinon le code
+  structuré. **Distinction C1/C2/D1 lisible** (exigence #1) : `zone_non_constructible:<zone>` (remap
+  du `zone_transition` moteur — nom trompeur émis à l'unique branche constructible_neuf=False),
+  `habitat_interdit:<zone>`, `terrain_exigu`, `redhibitoire`, `zone_non_resolue:<lib>`, `hors_plu`,
+  `capacite_nulle`, `hauteur_indispo`. Attribution par les MÊMES résolveurs — jamais une 2e formule.
+- **Le batch écrit TOUT** (`compute_residuel_batch`) : valeurs pleines si disponible ; sinon cause +
+  sdp **0** (vraie valeur) ou **NULL** (hors_plu seul) ; taux/pct/sous_densite NULL hors constructible.
+  **Exceptions comptées et loggées, jamais avalées** (`:125` corrigé).
+- **Gardes lecteurs vivants** (exigence #2) : app.py `sdp_min`/`sdp_max`/`capacite_min`/`ca_min`
+  (seuil 0 possible → flip sinon) + 3 LEFT JOIN d'affichage + `flash/data.py` + `score_e.py` ne
+  lisent que `cause IS NULL`. NULL-safe sans garde (prouvé) : nu_pm, etat_sol (COALESCE), sous_densite
+  (bool), mode_b/moteurs (`> 0` strict). `cascade/context.residuel_sdp` volontairement NON gardé :
+  hors_plu→NULL→UNKNOWN inchangé ; les 0 seront lus au run M128 (voulu).
+- **Run île : 178 312 manquants traités en 37,7 min · 0 erreur · 413 stales (D2) recalculées.**
+
+## Le taux AVANT → APRÈS
+
+| | Avant | Après |
+|---|--:|--:|
+| Parcelles sans ligne | **178 312 (41,3 %)** | **0 (0,00 %)** — dans les 24 communes |
+| Lignes calculées (cause NULL) | 253 351 | **253 764** (+413 D2) |
+| Lignes à cause (vérité dite) | 0 | **177 899** |
+| « Manquant » réel pour le modèle | 41,3 % muet | **hors_plu 4 397 (1,0 %), avec sa cause** |
+
+Familles de cause (mesuré) : `zone_non_constructible` **100 953** (tous sdp=0) · `terrain_exigu`
+**50 192** · `zone_non_resolue` **12 566** · `habitat_interdit` **5 645** · `hors_plu` **4 397**
+(seuls NULL) · `redhibitoire` **4 145** · `hauteur_indispo` 1.
+
+## Les preuves
+
+1. **Invariance des filtres (exigence #2) — PROUVÉE au chiffre près** : snapshot AVANT de 10 compteurs
+   (sous_densite 63 917, sdp_min 0/1/100/300, sdp_max, capacite, etat_sol nu/bâti, nu_pm) ; APRÈS,
+   les seuls écarts (+9 à +413) sont **à 100 % les 413 D2 arbitrées** — compteurs recalculés hors-D2 :
+   **tous IDENTIQUES à l'avant**. Les 177 899 lignes à cause ne fuient dans AUCUN filtre.
+2. **Golden : 0 FAIL** (86 PASS · 33 INDÉTERMINÉ quota env). Rien de servi ne bouge.
+3. **Plausibilité** : SDP > surface×4 = **0 ligne** ; suite 1 618 passed (seul failed = flake fuseau
+   pré-existant `partners.py:458`, hors mandat, consigné M124).
+
+**Le modèle M127 lira un VRAI zéro (avec sa nuance) sur 173 502 parcelles, et un « manquant » honnête
+sur 4 397.** Le bin « manquant » passe de 38,9 % à ~1 %.
