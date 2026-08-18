@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — DA Copilote v1 (maquette de référence)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg:            #060A08;
+    --surface:       #0C1410;
+    --surface-dim:   #080D0A;
+
+    --ia:            #A78BFA;
+    --ia-on:         #14091F;
+    --ia-bg:         #0F0C1A;
+    --ia-border:     #2A2340;
+    --ia-border-on:  #4C3F73;
+
+    --mint:          #4ADE80;
+    --mint-dim:      #12291D;
+
+    --border:        #1E2A23;
+    --border-mid:    #2A3A31;
+    --border-dim:    #141C18;
+
+    --txt:           #ECF5EF;
+    --txt-2:         #C9DCD1;
+    --txt-3:         #A8BDB0;
+    --txt-mut:       #8FA69A;
+    --txt-mut-2:     #6F8578;
+    --txt-mut-3:     #5F7267;
+    --txt-mut-4:     #4A5C52;
+
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font-family: var(--sans); padding: 40px 24px 80px; }
+  .page { max-width: 900px; margin: 0 auto; }
+  .col { max-width: 620px; margin: 0 auto; }
+
+  .spec { font-family: var(--mono); font-size: 11px; color: var(--ia); letter-spacing: .12em; margin: 56px 0 12px; padding-top: 24px; border-top: .5px solid var(--border); }
+  .spec:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+  .note { font-size: 12px; color: var(--txt-mut-3); margin: 0 0 24px; line-height: 1.65; max-width: 640px; }
+  .note code { font-family: var(--mono); color: var(--txt-mut-2); }
+
+  .hero { text-align: center; margin-bottom: 36px; }
+  .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; color: var(--ia); margin-bottom: 14px; }
+  .hero h1 { font-size: 30px; font-weight: 500; color: var(--txt); line-height: 1.25; margin: 0 0 10px; }
+  .hero p { font-size: 14px; color: var(--txt-mut-2); margin: 0; }
+
+  .intents { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .intent { background: var(--ia-bg); border: .5px solid var(--ia-border); border-radius: 10px; padding: 14px 14px 16px; cursor: pointer; transition: border-color .12s; }
+  .intent:hover { border-color: var(--ia-border-on); }
+  .intent i { color: var(--ia); font-size: 17px; display: block; margin-bottom: 8px; }
+  .intent .lbl { font-size: 14px; color: var(--txt); margin-bottom: 3px; }
+  .intent .sub { font-size: 12px; color: var(--txt-mut-2); line-height: 1.4; }
+
+  .composer { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  .composer .field { flex: 1; background: var(--surface); border: .5px solid var(--border-mid); border-radius: 10px; padding: 14px 16px; font-size: 15px; color: var(--txt-mut-4); }
+  .composer .send { padding: 0 22px; background: var(--ia); color: var(--ia-on); border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; cursor: pointer; }
+  .hint { text-align: center; font-size: 12px; color: var(--txt-mut-4); margin-bottom: 36px; }
+
+  .brief { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; background: var(--surface); border-radius: 10px; margin-bottom: 28px; cursor: pointer; }
+  .brief-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
+  .brief-lbl { font-size: 14px; color: var(--txt); }
+  .brief-state { font-family: var(--mono); font-size: 12px; color: var(--txt-mut-3); }
+  .brief-arrow { font-size: 15px; color: var(--txt-mut-3); }
+
+  .section-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--txt-mut-4); margin-bottom: 10px; }
+  .recent { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: .5px solid var(--border-dim); cursor: pointer; }
+  .recent .q { font-size: 14px; color: var(--txt-3); }
+  .recent .t { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); }
+  .see-all { padding-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); letter-spacing: .06em; cursor: pointer; }
+
+  .thread-user { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .thread-user div { background: var(--surface); border-radius: 10px; padding: 11px 16px; font-size: 14px; color: var(--txt-2); max-width: 80%; }
+  .answer { border: .5px solid var(--ia-border); background: var(--ia-bg); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+  .recap { font-size: 12px; color: var(--txt-mut-2); margin-bottom: 12px; line-height: 1.5; }
+  .answer .val { font-size: 15px; color: var(--txt); line-height: 1.6; margin-bottom: 14px; }
+  .answer .val strong { font-weight: 500; color: var(--ia); }
+  .src { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); letter-spacing: .04em; }
+  .porte { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 14px; border: .5px solid var(--ia-border-on); color: var(--ia); border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .reply { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  .reply .field { flex: 1; background: var(--surface); border: .5px solid var(--ia-border-on); border-radius: 10px; padding: 12px 16px; font-size: 14px; color: var(--txt-mut-4); }
+  .reply .send { padding: 0 20px; border: .5px solid var(--ia-border-on); color: var(--ia); border-radius: 10px; font-size: 13px; display: flex; align-items: center; cursor: pointer; }
+  .newthread { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: .5px solid var(--border-mid); color: var(--txt-mut); border-radius: 8px; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="spec">DA COPILOTE v1 — MAQUETTE DE RÉFÉRENCE</div>
+<p class="note">
+  Le Copilote est la surface IA du produit : le mauve <code>#A78BFA</code> y est
+  l'accent dominant, jamais le mint. Le mint <code>#4ADE80</code> ne subsiste que
+  sur le brief du matin — qui relève de la veille, pas de l'IA.<br><br>
+  Principe de la refonte : <strong>un seul point d'entrée</strong>. L'écran actuel
+  propose quatre façons de démarrer (chips, six exemples, dernières questions,
+  trois cartes explicatives) — toutes le même travail, empilées. Ici les six
+  intentions portent seules ce rôle, avec un sous-titre qui dit ce que chacune fait.
+</p>
+
+<div class="spec">1 · ACCUEIL</div>
+<p class="note">
+  Le bandeau de garanties (« chaque étape journalisée · sourcé, estimé ou absent ·
+  La Réunion uniquement ») est absorbé dans la ligne sous le titre : une ligne au
+  lieu de deux blocs. Le compte de sources est calculé, jamais en dur.
+</p>
+
+<div class="col">
+
+  <div class="hero">
+    <div class="kicker">COPILOTE</div>
+    <h1>Dites ce que vous cherchez.</h1>
+    <p>55 sources · chaque chiffre daté · La Réunion uniquement</p>
+  </div>
+
+  <div class="intents">
+    <div class="intent">
+      <i class="ti ti-database-search" aria-hidden="true"></i>
+      <div class="lbl">Interroger mes données</div>
+      <div class="sub">Compter, filtrer, croiser</div>
+    </div>
+    <div class="intent">
+      <i class="ti ti-map-search" aria-hidden="true"></i>
+      <div class="lbl">Trouver une parcelle</div>
+      <div class="sub">Selon votre programme</div>
+    </div>
+    <div class="intent">
+      <i class="ti ti-folder-plus" aria-hidden="true"></i>
+      <div class="lbl">Créer un projet</div>
+      <div class="sub">Cadrage guidé</div>
+    </div>
+    <div class="intent">
+      <i class="ti ti-world-search" aria-hidden="true"></i>
+      <div class="lbl">Rechercher sur le web</div>
+      <div class="sub">Avec la source citée</div>
+    </div>
+    <div class="intent">
+      <i class="ti ti-bell-plus" aria-hidden="true"></i>
+      <div class="lbl">Mettre sous surveillance</div>
+      <div class="sub">Parcelle ou secteur</div>
+    </div>
+    <div class="intent">
+      <i class="ti ti-tool" aria-hidden="true"></i>
+      <div class="lbl">Ouvrir un outil</div>
+      <div class="sub">28 outils d'analyse</div>
+    </div>
+  </div>
+
+  <div class="composer">
+    <div class="field">Ou écrivez directement…</div>
+    <div class="send">Envoyer</div>
+  </div>
+  <div class="hint">Le Copilote comprend s'il faut chercher, vérifier ou veiller.</div>
+
+  <div class="brief">
+    <div class="brief-left">
+      <div class="dot"></div>
+      <div class="brief-lbl">Votre brief du matin</div>
+      <div class="brief-state">RIEN DE NEUF DEPUIS HIER</div>
+    </div>
+    <div class="brief-arrow">→</div>
+  </div>
+
+  <div class="section-lbl">REPRENDRE</div>
+  <div class="recent"><div class="q">Je cherche des terrains à fort potentiel</div><div class="t">14 MIN</div></div>
+  <div class="recent"><div class="q">Résidence 12 lots à Bras-Panon</div><div class="t">14 MIN</div></div>
+  <div class="recent"><div class="q">Qui est le maire de Saint-Denis ?</div><div class="t">14 MIN</div></div>
+  <div class="see-all">VOIR TOUT · 13</div>
+
+</div>
+
+<div class="spec">2 · UNE RÉPONSE — DONNÉES DE L'APP</div>
+<p class="note">
+  Le récap M109 reste une <strong>phrase d'information</strong>, jamais un bouton :
+  il nomme les critères appliqués et ceux qui ne le sont pas. Aucun bouton de
+  confirmation nulle part — une réponse qui ne convient pas se relance.
+  Le chiffre est en mauve, la source en mono.
+</p>
+
+<div class="col">
+  <div class="thread-user"><div>Combien de parcelles en procédure judiciaire à Saint-Denis ?</div></div>
+  <div class="answer">
+    <div class="recap">J'ai compris : Saint-Denis · parcelles sous procédure judiciaire.</div>
+    <div class="val"><strong>126 parcelles</strong> à Saint-Denis appartiennent à un propriétaire sous procédure collective.</div>
+    <div class="src">SOURCE · BODACC — INGÉRÉ LE 16/08/2026</div>
+    <div class="porte"><i class="ti ti-map" aria-hidden="true"></i> Voir sur la carte</div>
+  </div>
+  <div class="reply">
+    <div class="field">Votre réponse…</div>
+    <div class="send">Répondre</div>
+  </div>
+  <div class="newthread"><i class="ti ti-refresh" aria-hidden="true"></i> Nouveau fil</div>
+</div>
+
+<div class="spec">3 · UNE RÉPONSE — RECHERCHE WEB</div>
+<p class="note">
+  Court par construction : le fait, la source, la date de consultation.
+  Pas de paragraphe d'enrobage.
+</p>
+
+<div class="col">
+  <div class="thread-user"><div>Qui est le maire de La Possession ?</div></div>
+  <div class="answer">
+    <div class="val">Le maire de La Possession est <strong>Vanessa Miranville</strong>.</div>
+    <div class="src">SOURCE · MON-MAIRE.FR — CONSULTÉ LE 18/08/2026</div>
+  </div>
+</div>
+
+<div class="spec">4 · UNE PRÉCISION</div>
+<p class="note">
+  Le champ de réponse est <strong>dans la carte</strong>, sous la question, avec
+  autofocus — jamais « répondez dans la barre au-dessus ». Placeholder simple
+  (« Votre réponse… »), un seul cadre : bordure mauve au repos, accent au focus.
+</p>
+
+<div class="col">
+  <div class="answer">
+    <div class="kicker" style="margin-bottom: 10px;">PRÉCISION</div>
+    <div class="val" style="margin-bottom: 16px;">Vous cherchez des parcelles d'au moins 1 000 m² à Saint-Benoît : quel est votre programme ?</div>
+    <div class="reply" style="margin-bottom: 0;">
+      <div class="field">Votre réponse…</div>
+      <div class="send">Répondre</div>
+    </div>
+  </div>
+</div>
+
+<div class="spec">5 · CE QUI DISPARAÎT DE L'ÉCRAN ACTUEL</div>
+<p class="note">
+  — Les <strong>six cartes d'exemples</strong> (« Quelles parcelles appartiennent à la
+  SIDR ? », etc.) : les intentions les remplacent.<br>
+  — Les <strong>trois cartes explicatives</strong> du bas (Chercher / Demander /
+  Vérifier) : elles redisent les intentions une troisième fois.<br>
+  — Le <strong>bandeau de garanties</strong> en pied : absorbé sous le titre.<br>
+  — Le <strong>brief remonté entre le titre et la saisie</strong> : ce n'est pas une
+  action de Copilote, il descend sous le point d'entrée.<br><br>
+  Résultat : quatre blocs de démarrage deviennent un seul.
+</p>
+
+</div>
+</body>
+</html>
