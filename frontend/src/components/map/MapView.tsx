@@ -388,6 +388,13 @@ function BoutonCarte({ onClick, title, children }: { onClick: () => void; title:
   )
 }
 
+// M129-D P2.2 — la glose de la palette NOMME son univers : le vivier servi (hors exclusions
+// légales et physiques, motifs consultables), jamais un « > 20 000 » nu.
+const getPaletteToast = (total?: number) =>
+  'Résultat trop large pour peindre parcelle à parcelle (> 20 000'
+  + (total ? ` sur ${total.toLocaleString('fr-FR')} parcelles servies — hors exclusions légales et physiques` : '')
+  + ') — la carte montre l’approximation par critères ; la liste reste exacte.'
+
 export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
@@ -474,10 +481,10 @@ export function MapView() {
   useEffect(() => {
     if (besoinIdus && idusQ.data?.idus_tronque) {
       useApp.getState().setToast(
-        'Résultat trop large pour peindre parcelle à parcelle (> 20 000) — la carte montre '
-        + 'l’approximation par critères carte ; la liste reste exacte.')
+        getPaletteToast(idusQ.data?.total))
     }
   }, [besoinIdus, idusQ.data])
+
   // le remplissage zonage n'est appliqué que si la source ACTIVE porte zone_fam :
   // geojson commune = toujours (jointure live) ; tuiles île = au prochain build-mvt
   // M12 C5 : DEUX portes vers cette recoloration — « Zonage PLU (par parcelle) » (avec étiquette

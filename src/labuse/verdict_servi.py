@@ -33,7 +33,10 @@ TIER_LABELS = {
     "chaude": "Chaude",
     "reserve_fonciere": "Potentiel long terme",
     "a_creuser": "À creuser",
-    "ecartee": "Écartée",
+    # M129-D P5 : le tier 'ecartee' est un MIROIR EXACT de l'étage 0 cascade (145 882 = 145 882
+    # mesuré au run q_v10) — il PRÉSENTE l'exclusion, il ne la JUGE pas : le juge est la cascade,
+    # le motif (français) vit dans ses verdicts, consultable en fiche.
+    "ecartee": "Écartée — exclusion légale ou physique (motif en fiche)",
     # M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » (verdict calculé,
     # pas un retrait). Codes techniques declasse_* INCHANGÉS — libellé client seulement.
     # M129-D P1 : DEUX états, français client (le fait M125 les distingue) — le libellé fin est

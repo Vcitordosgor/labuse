@@ -90,9 +90,9 @@ export const CLIENT = {
     // M55-H point 10 : « déclassées » → « en potentiel épuisé » (même famille partout)
     ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} en potentiel épuisé`,
     ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
-    ecarteesMotifs: 'domaine public, inconstructibles…',
+    ecarteesMotifs: 'zonage inconstructible, PPR rouge, impossibilités physiques…',
     voirPourquoi: 'voir pourquoi',
-    ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions dures de l’étage 0 (domaine public, RNU, inconstructible réglementaire…). Chaque parcelle garde son motif — visible en fiche, coupez l’analyse pour les explorer.',
+    ecarteesTip: 'Les écartées ne sont jamais masquées : exclusions LÉGALES et PHYSIQUES (zonage inconstructible, PPR rouge, emprise de voirie, eau…). Chaque parcelle garde son motif, consultable en fiche — coupez l’analyse pour les explorer.',
     voir: 'Voir les parcelles',
     // M55-M point 2 (décision Vic) : « Relancer l’analyse » → « Changer les filtres ». CONSTAT
     // documenté (rapport) : l'ancien bouton relançait le rituel sur des filtres FIGÉS (même
@@ -112,13 +112,13 @@ export const CLIENT = {
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
     defTiers: {
       brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
-      chaude: 'Chaude — forte probabilité de mutation, juste derrière les brûlantes.',
+      chaude: 'Chaude — forte probabilité de vente sous 1 an, juste derrière les brûlantes.',
       reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
       a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
       declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
       // M55-J point 5 : le palier écartée manquait à l'échelle verbale (defTiers) — ajouté ici
       // comme SOURCE UNIQUE (réutilisée par la carte d'analyse ET la modale scoring).
-      ecartee: 'Écartée — jamais analysée : exclusion dure de l’étage 0 (domaine public, forêt, RNU, inconstructible réglementaire…).',
+      ecartee: 'Écartée — exclusion légale ou physique (zonage inconstructible, PPR rouge, emprise, eau…), motif consultable en fiche.',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -152,7 +152,7 @@ export const CLIENT = {
   ventilation: {
     familles: 'Servables — les 4 tiers d’opportunité (brûlantes, chaudes, potentiel long terme, à creuser). '
       + 'Potentiel épuisé — analysée, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; les chiffres sont en fiche. '
-      + 'Écartées — jamais analysées : domaine public, forêt, exclusions de fait.',
+      + 'Écartées — exclusions légales et physiques, motifs consultables.',
   },
 
   // ── B1/B2 · métrique ×N et libellés de liste ──────────────────────────────
@@ -184,16 +184,16 @@ export const CLIENT = {
     // doublon prouvé du classement (top-50 identiques, aucune inversion sur 431 663, mesuré
     // M55-H). Restent deux tris ; « Opportunités » se renomme « Probabilité de vente » : c'est
     // honnêtement ce qu'il trie (la probabilité apprise, ex æquo départagés par la qualité).
-    rang: 'Probabilité de vente',
+    rang: 'Probabilité de vente sous 1 an',
     surface: 'Surface',
-    rangTip: 'Le classement LABUSE — la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur dix ans de ventes réelles, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
     // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
     // malentendu (« pourquoi ce n'est pas monotone ? » = parce que c'est groupé par tier).
     groupe: 'groupée par tier (brûlantes → épuisées) · trier par Surface pour un ordre global',
     // le « i » de la barre TRIER : les deux tris + leur sens
-    lunettes: 'Probabilité de vente = le classement LABUSE : la probabilité de vente apprise d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
+    lunettes: 'Probabilité de vente sous 1 an = le classement LABUSE : la probabilité apprise sur les ventes réelles d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
       + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
     // tooltip du badge ×N sur les cartes de résultat (une ligne)
     multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
@@ -310,7 +310,7 @@ export const CLIENT = {
       {
         h: 'Ce que mesure le classement',
         p: 'Une seule chose : la probabilité qu’une parcelle change de main à court terme. ' +
-          'Pas sa valeur, pas sa beauté — sa mutabilité.',
+          'Pas sa valeur, pas sa beauté — sa probabilité de vente.',
       },
       {
         h: 'Comment',
@@ -535,7 +535,7 @@ export const CLIENT = {
         risques: { nom: 'Risques', desc: 'signaux PPR, ABF et couches de risques' },
         marche_dvf: { nom: 'Charge foncière', desc: 'prix probable du foncier · comparables DVF' },
         filtre_budget: { nom: 'Filtre budget', desc: 'retenues confrontées au budget du brief' },
-        mutation: { nom: 'Mutation', desc: 'classement des retenues · modèle P' },
+        mutation: { nom: 'Probabilité de vente', desc: 'classement par probabilité de vente sous 1 an' },
         assemblage: { nom: 'Assemblage', desc: 'restitution motivée · journal joint' },
         assemblage_court: { nom: 'Assemblage', desc: 'restitution courte · journal joint' },
         scoreur_unitaire: { nom: 'Scoreur unitaire', desc: 'références retrouvées et scorées' },

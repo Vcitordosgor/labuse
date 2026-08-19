@@ -87,7 +87,7 @@ export interface Chip { token: string; label: string }
 // M55-D (phase 2) : le badge « Filtres (N) » du header compte TOUS les critères actifs, où qu'ils
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
-  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux']
+  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels']
 const F_NUMS: (keyof Filters)[] = ['scoreMin', 'surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin']
@@ -187,7 +187,7 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['flagsExclus', 'fx'], ['communes', 'cs'], ['zonagePlu', 'zf'],
   ['signaux', 'sv'],
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
-  ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'],
+  ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'], ['droitsResiduels', 'drr'],
 ]
 
 export function filtersToHash(f: Filters, zone: LngLat[] | null): string {

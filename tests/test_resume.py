@@ -100,7 +100,7 @@ def test_resume_ecartee():
     cascade = [{"layer_name": "foret_publique", "result": "HARD_EXCLUDE", "severity": None,
                 "detail": "Exclue : forêt domaniale (domaine public — terrain inacquérable)."}]
     r = build_resume(verdict, cascade, None, {})
-    assert r["statut_label"] == "Écartée"
+    assert r["statut_label"] == "Écartée — exclusion légale ou physique (motif en fiche)"
     assert "écartée" in r["synthese"].lower() and "forêt domaniale" in r["synthese"]
     _no_forbidden(r)
 

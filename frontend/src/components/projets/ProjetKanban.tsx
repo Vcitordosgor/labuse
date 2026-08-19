@@ -201,7 +201,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
         )}
         {dernierDiff && (
           <p data-kanban-diff className="mt-1.5 text-[10.5px] text-txt-dim">
-            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.</p>
+            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''}{(dernierDiff.ajoutees_refonte ?? 0) > 0 ? ` (dont ${dernierDiff.ajoutees_refonte} entrée${(dernierDiff.ajoutees_refonte ?? 0) > 1 ? 's' : ''} par refonte cascade — nouveau vivier, pas un mouvement de marché)` : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.</p>
         )}
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>

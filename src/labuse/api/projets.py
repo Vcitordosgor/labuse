@@ -196,6 +196,7 @@ _CADRAGE_MAP: dict[str, tuple[str, str]] = {
     "sousDensite": ("sous_densite", "bool"), "multMin": ("mult_min", "num"),
     "rangMax": ("rang_max", "num"), "renouvellement": ("renouvellement", "bool"),
     "divisionOr": ("division_or", "bool"), "proprietaireType": ("proprietaire_type", "csv"),
+    "droitsResiduels": ("droits_residuels", "csv"),
     "etatSociete": ("etat_societe", "csv"), "copro": ("copro", "csv"),
     "npnru": ("npnru", "bool"), "adresseAbsente": ("adresse_absente", "bool"),
     "budgetMax": ("budget_max", "num"), "chargeMin": ("charge_min", "num"),
@@ -537,6 +538,15 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
         text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
     now = datetime.now(timezone.utc)
     ajoutees = 0
+    ajoutees_refonte = 0
+    # M129-D P4 — une entrée due au NOUVEAU VIVIER se DIT (« entrée par refonte cascade »),
+    # jamais un « +N nouvelles » muet qui laisserait croire à un mouvement de marché : une
+    # parcelle est « par refonte » si elle était à l'étage 0 du run PRÉCÉDENT (run_precedent.txt).
+    from ..scoring.score_v_constants import RUN_PRECEDENT as _prev_run
+    _etait_exclue = {r.idu for r in db.execute(text(
+        "SELECT par.idu FROM dryrun_parcel_evaluations d JOIN parcels par ON par.id = d.parcel_id "
+        "WHERE d.run_label = :prev AND d.status IN ('exclue', 'faux_positif_probable') "
+        "AND par.idu = ANY(:idus)"), {"prev": _prev_run, "idus": idus})}
     for rang, it in enumerate(items):
         pc = id_by_idu.get(it["idu"])
         if not pc:
@@ -549,6 +559,8 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
             {"pj": p.id, "pc": pc, "rg": rang, "now": now})
         if res.rowcount and it["idu"] not in avant:
             ajoutees += 1
+            if it["idu"] in _etait_exclue:
+                ajoutees_refonte += 1
     # NON-PERTE : les décisions hors cadrage RESTENT, marquées ; celles qui rematchent sont nettoyées.
     db.execute(text(
         "UPDATE projet_parcelles pp SET hors_criteres = NOT (par.idu = ANY(:idus)), updated_at = :now "
@@ -566,7 +578,8 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     p.derniere_execution_at = now
     p.shortlist_perimee = False
     db.flush()
-    return {"ajoutees": ajoutees, "sorties": sorties, "tris_conserves": tris_conserves,
+    return {"ajoutees": ajoutees, "ajoutees_refonte": ajoutees_refonte,
+            "sorties": sorties, "tris_conserves": tris_conserves,
             "n_shortlist": len(idus)}
 
 

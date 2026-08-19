@@ -874,7 +874,8 @@ def _q_v2_where(run_label: str, score_min: int | None,
                 ca_min: int | None = None, mode_b_rentable: bool = False,
                 modeb_travaux_m2: float | None = None, modeb_loyer_m2: float | None = None,
                 modeb_rendement_pct: float | None = None,
-                signaux: str | None = None) -> tuple[str, dict]:
+                signaux: str | None = None,
+                droits_residuels: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1064,6 +1065,21 @@ def _q_v2_where(run_label: str, score_min: int | None,
                      " AND zx.zone_filtre = ANY(SELECT upper(v) FROM unnest(CAST(:f_zplu AS text[])) v))")
         params["f_zplu"] = [z.strip() for z in zone_plu.split(",") if z.strip()]
     # ── M45 (P2d) — tiroirs éco / mutation / propriété / veille (facettes composables) ──
+    if droits_residuels:
+        # M129-D P3 — facette « droits résiduels » (les DEUX états du bâti, fait M125) :
+        # 'encore' = on peut encore construire (SDP résiduelle > 0, ligne calculée) ;
+        # 'maximum' = construite au maximum (SDP = 0 vraie, ou cause structurée ≠ hors_plu).
+        dr = [x.strip() for x in droits_residuels.split(",") if x.strip()]
+        sub_dr = []
+        if "encore" in dr:
+            sub_dr.append("EXISTS (SELECT 1 FROM parcel_residuel dr1 WHERE dr1.parcel_id = p.id"
+                          " AND dr1.cause IS NULL AND dr1.sdp_residuelle_m2 > 0)")
+        if "maximum" in dr:
+            sub_dr.append("EXISTS (SELECT 1 FROM parcel_residuel dr2 WHERE dr2.parcel_id = p.id"
+                          " AND ((dr2.cause IS NULL AND dr2.sdp_residuelle_m2 = 0)"
+                          "      OR (dr2.cause IS NOT NULL AND dr2.cause <> 'hors_plu')))")
+        if sub_dr:
+            conds.append("(" + " OR ".join(sub_dr) + ")")
     if sous_densite:   # éco/risques : bâti en sous-densité (parcel_residuel)
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rd WHERE rd.parcel_id = p.id AND rd.sous_densite)")
     if mult_min is not None:   # mutation : probabilité relative ×N (mult_base du scoring v2)
@@ -1087,6 +1103,12 @@ def _q_v2_where(run_label: str, score_min: int | None,
                        " AND (pmb.groupe_label ILIKE '%HLM%' OR pmb.groupe_label ILIKE '%conomie mixte%'))")
         if "pp" in pt:
             sub.append("NOT EXISTS (SELECT 1 FROM parcelle_personne_morale pmp WHERE pmp.idu = p.idu)")
+        if "public" in pt:
+            # M129-D P3 (dalle : le public négociable est VISIBLE) — groupes DGFiP 1-4/9
+            # (État/Région/Département/Commune/établissements publics), la classification
+            # de proprietaire_type.py servie en facette.
+            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmu WHERE pmu.idu = p.idu"
+                       " AND pmu.groupe IN (1,2,3,4,9))")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
     if etat_societe:
@@ -1203,6 +1225,7 @@ class FiltreCriteres:
     renouvellement: bool = False
     division_or: bool = False
     proprietaire_type: str | None = None
+    droits_residuels: str | None = None   # M129-D P3 : 'encore' / 'maximum' (fait M125)
     etat_societe: str | None = None
     copro: str | None = None
     npnru: bool = False
@@ -1235,7 +1258,8 @@ class FiltreCriteres:
                            self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
                            self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
                            self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
-                           signaux=self.signaux)
+                           signaux=self.signaux,
+                           droits_residuels=self.droits_residuels)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
@@ -1248,7 +1272,7 @@ class FiltreCriteres:
                 self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
                 self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
-                self.signaux)
+                self.signaux, self.droits_residuels)
 
 
 @app.get("/parcels")

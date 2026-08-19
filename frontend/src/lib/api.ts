@@ -88,6 +88,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.renouvellement ? { renouvellement: 'true' } : {}),
   ...(f.divisionOr ? { division_or: 'true' } : {}),
   ...(f.proprietaireType.length ? { proprietaire_type: f.proprietaireType.join(',') } : {}),
+  ...(f.droitsResiduels?.length ? { droits_residuels: f.droitsResiduels.join(',') } : {}),
   ...(f.etatSociete.length ? { etat_societe: f.etatSociete.join(',') } : {}),
   ...(f.copro.length ? { copro: f.copro.join(',') } : {}),
   ...(f.npnru ? { npnru: 'true' } : {}),
@@ -781,7 +782,8 @@ export interface Projet {
   vignette?: ProjetVignette   // M114 — schéma d'emprise (64/52 px)
 }
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
-export interface ShortlistDiff { ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number }
+// M129-D P4 : ajoutees_refonte = entrées dues au nouveau vivier (refonte cascade), dites au rejeu.
+export interface ShortlistDiff { ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number }
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
 // ses facettes (ParcoursProjet → FiltreFacettes), plus par une fiche remplie par l'IA. Le client
 // `/ia/entretien` et `/projets/reperes` est parti avec lui (endpoints backend conservés, non appelés).
