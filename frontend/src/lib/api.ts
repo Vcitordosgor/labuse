@@ -63,7 +63,7 @@ const q = (extra: Record<string, string | number> = {}) => {
  *  M5.1 : `tiers` (v2) pilote. M45 (P1) : `v_signal` (Score V) retiré — anti-filtre acté. */
 export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.tiers.length ? { tiers: f.tiers.join(',') } : {}),
-  ...(f.scoreMin != null ? { score_min: f.scoreMin } : {}),
+  // M129-B : score_min (matrice morte) ne s'envoie plus — le rang/tier remplace.
   ...(f.surfaceMin != null ? { surface_min: f.surfaceMin } : {}),
   ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
   ...(f.sdpMin != null ? { sdp_min: f.sdpMin } : {}),

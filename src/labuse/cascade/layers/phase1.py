@@ -428,13 +428,16 @@ class PrescriptionPluLayer(Layer):
             if is_er:
                 num, objet = _er_split(lib)
                 if i.coverage >= er_seuil:
+                    # M129 P1.1 (arbitrage découpes) : l'ER N'EXCLUT PLUS — une servitude LEVABLE
+                    # n'est pas une impossibilité légale définitive. FAIT AFFICHÉ, flag FORT
+                    # (vigilance réelle : l'emprise est majoritairement grevée tant que l'ER vit).
                     titre = f"Emplacement réservé {num}" if num else "Emplacement réservé"
-                    verdicts.append(hard_exclude(
+                    verdicts.append(soft_flag(
                         self.name,
                         f"{titre} : {objet} ({i.coverage * 100:.0f} %) — emprise majoritairement "
                         "grevée au profit d'un projet public (servitude levable : à réévaluer si "
                         "l'ER est abandonné).",
-                        kind="faux_positif", source=SRC_GPU))
+                        Severity.FORT, source=SRC_GPU))
                 else:
                     verdicts.append(soft_flag(
                         self.name, f"Emplacement réservé : {lib}{pct} — emprise grevée au profit "
@@ -860,6 +863,10 @@ class BatiLayer(Layer):
         surface = sig.get("surface_m2")
         cls = _bati.classify(ratio, sig.get("bati_count") or 0, sig.get("bati_max_m2") or 0.0,
                              surface if surface is not None else parcel.surface_m2)
+        # M129 P1.1 (dalle §3, arbitrage Vic) : LE BÂTI N'EXCLUT PLUS — être construit n'est ni
+        # une impossibilité légale ni physique ; il entre au vivier, la facette nu/bâti décide,
+        # le score le juge (features bâti C_bati au prochain examen). L'occupation reste un FAIT
+        # AFFICHÉ : flag informatif (×0 point) au motif classify (source unique bati.py).
         if cls["declasse"] == "faux_positif":
-            return hard_exclude(self.name, cls["motif"], kind="faux_positif", source=_bati.SOURCE)
+            return soft_flag(self.name, cls["motif"], Severity.INFO, source=_bati.SOURCE)
         return passed(self.name, cls["label"], source=_bati.SOURCE)

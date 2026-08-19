@@ -56,15 +56,15 @@ class _CtxOwn:
 
 def test_f10_groupe9_institutionnel_hors_marche():
     v = FoncierPublicLayer().evaluate(P, _CtxOwn({"groupe": 9, "denomination": "TERRACOOP", "groupe_label": "Étab public"}), {})
-    assert v.result == CascadeVerdict.HARD_EXCLUDE                 # exclusion HARD inchangée
+    assert v.result == CascadeVerdict.SOFT_FLAG                    # M129 : fait dit, plus d'exclusion
     assert "Propriétaire institutionnel" in v.detail and "acquisition improbable" in v.detail
-    assert "Propriété publique" not in v.detail and "non acquérable" not in v.detail
+    assert "Propriété publique" not in v.detail
 
 
 def test_f10_groupe4_reste_propriete_publique():
     v = FoncierPublicLayer().evaluate(P, _CtxOwn({"groupe": 4, "denomination": "Commune X", "groupe_label": "Commune"}), {})
-    assert v.result == CascadeVerdict.HARD_EXCLUDE
-    assert "Propriété publique" in v.detail and "non acquérable" in v.detail
+    assert v.result == CascadeVerdict.SOFT_FLAG                    # M129 : fait dit (interlocuteur public)
+    assert "Propriété publique" in v.detail and "interlocuteur public" in v.detail
 
 
 # ───────────────────────── F9 : « non comparable » (pente °/%, eau aire/centroïde) ─────────────────────────

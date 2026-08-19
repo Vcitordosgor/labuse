@@ -203,8 +203,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                                "sdp_residuelle_m2": _i(r["sdp_residuelle_m2"])}
     if "dryrun_parcel_evaluations" in avail:
         r = db.execute(text(
-            """SELECT d.q_score, d.a_score, d.a_completude,
-                      (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+            """SELECT (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
                FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
                WHERE p.idu = :idu AND d.run_label = :run"""),
             {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()

@@ -628,6 +628,29 @@ def main() -> int:
         else:
             print(f"PASS {idu}" + (f"  [cohérence base↔API: {'; '.join(coh)}]" if coh else ""))
 
+    # M129 P1.5 — GARDE de la porte latente INNER JOIN (audit cascade-regles §3.3) : un run
+    # PARTIEL ne peut plus servir en silence. Le run servi doit évaluer TOUT le parc — sinon la
+    # carte/liste (INNER JOIN dryrun_parcel_evaluations, app.py) perdrait des parcelles sans motif.
+    try:
+        from sqlalchemy import text as _t
+
+        from labuse import db as _db
+        from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as _run
+        with _db.engine().connect() as _c:
+            _n_parc = _c.execute(_t("SELECT count(*) FROM parcels")).scalar()
+            _n_eval = _c.execute(_t(
+                "SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label = :r"),
+                {"r": _run}).scalar()
+        if _n_eval != _n_parc:
+            n_fail += 1
+            print(f"FAIL GARDE-RUN — run servi « {_run} » : {_n_eval:,} évaluées pour "
+                  f"{_n_parc:,} parcelles (un run partiel ne sert JAMAIS en silence — M129 P1.5)")
+        else:
+            print(f"GARDE-RUN OK — {_n_eval:,}/{_n_parc:,} parcelles évaluées ({_run})")
+    except Exception as _exc:  # noqa: BLE001 — base injoignable = indéterminé, pas un FAIL
+        n_indet += 1
+        print(f"INDÉTERMINÉ GARDE-RUN — {type(_exc).__name__}: {_exc}")
+
     print(f"\nBilan: {len(idus) - n_fail - n_indet - n_rafr}/{len(idus)} PASS, {n_fail} FAIL, "
           f"{n_rafr} À RAFRAÎCHIR (ancre transitoire périmée), "
           f"{n_indet} INDÉTERMINÉ (environnement), "

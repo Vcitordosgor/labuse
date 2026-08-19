@@ -232,6 +232,11 @@ def cascade_rules() -> dict[str, Any]:
     return load_yaml_config("cascade_rules")
 
 
+def seuils_geometrie() -> dict[str, Any]:
+    """M129 P1.4 — seuils géométriques sortis du dur (bati / etage0_ext / division_or)."""
+    return load_yaml_config("seuils_geometrie")
+
+
 def completeness_weights() -> dict[str, Any]:
     return load_yaml_config("completeness_weights")
 

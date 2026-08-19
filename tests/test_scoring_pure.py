@@ -73,9 +73,11 @@ def test_status_regle1_hard_exclude_exclue():
                          100, CFG) == EvaluationStatus.EXCLUE
 
 
-def test_status_regle1_hard_exclude_faux_positif():
+def test_status_regle1_hard_exclude_toujours_exclue_m129():
+    # M129 P1.3 : faux_positif_probable MEURT — tout HARD → EXCLUE (motif au verdict).
+    # L'enum reste lisible pour les runs anciens servis jusqu'à la bascule.
     assert decide_status(_opp(hard_exclude=True, exclude_kind="faux_positif"),
-                         100, CFG) == EvaluationStatus.FAUX_POSITIF_PROBABLE
+                         100, CFG) == EvaluationStatus.EXCLUE
 
 
 def test_status_regle2_completude_sous_plancher_a_creuser():

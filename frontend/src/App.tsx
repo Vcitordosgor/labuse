@@ -186,7 +186,7 @@ function IaRestitution() {
               className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-left hover:border-mint">
               <span className="font-mono text-[11px] text-mint"
                 title={t.mult_v2 != null ? '×N vs moyenne du parc (scoring)' : SCORE_TIP.q}>
-                #{i + 1}{t.mult_v2 != null ? ` · ×${t.mult_v2.toFixed(1)}` : ` · Q ${t.q_score}`}
+                #{i + 1}{t.mult_v2 != null ? ` · ×${t.mult_v2.toFixed(1)}` : ''}
               </span>
               <span className="block truncate font-mono text-[10.5px] tracking-tight text-txt-hi">{t.idu}</span>
               <span className="block truncate text-[11px] text-txt-dim">{t.commune}</span>

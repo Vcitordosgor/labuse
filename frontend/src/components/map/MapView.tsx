@@ -101,7 +101,7 @@ const EFFECTIVE_TIER: maplibregl.ExpressionSpecification = ['case', ETAGE0, 'eca
 function toExpr(f: Filters): maplibregl.FilterSpecification {
   const c: maplibregl.ExpressionSpecification[] = []
   if (f.tiers.length) c.push(['in', EFFECTIVE_TIER, ['literal', f.tiers]])
-  if (f.scoreMin != null) c.push(['>=', ['coalesce', ['get', 'q_score'], 0], f.scoreMin])
+  // M129-B : q_score (matrice) mort — plus de filtre carte scoreMin.
   if (f.surfaceMin != null) c.push(['>=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMin])
   if (f.surfaceMax != null) c.push(['<=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMax])
   if (f.sdpMin != null) c.push(['>=', ['coalesce', ['get', 'sdp_residuelle_m2'], -1], f.sdpMin])

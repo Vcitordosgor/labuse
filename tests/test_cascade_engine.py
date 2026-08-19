@@ -11,24 +11,26 @@ from labuse.cascade.context import ParcelRef
 from labuse.cascade.engine import is_promoted, run_cascade
 from labuse.enums import CascadeVerdict
 
+# M129 : foncier_public n'exclut plus (fait affiché) — le test-double d'exclusion phase 1
+# devient `emprise_lineaire` (toujours éliminatoire : impossibilité physique).
 _RULES = {"layers": [
-    {"name": "foncier_public", "phase": 1, "enabled": True, "params": {}},
+    {"name": "emprise_lineaire", "phase": 1, "enabled": True, "params": {}},
     {"name": "potentiel_foncier_region", "phase": 2, "enabled": True,
      "params": {"spatial_kind": "potentiel_foncier"}},
 ]}
 
 
 class _Ctx:
-    """EvalContext factice : `owner_pm` public pour les ids listés (→ HARD_EXCLUDE foncier_public),
-    `kind_present` False → potentiel_foncier_region PASS (pas d'exclusion, juste un verdict phase 2)."""
+    """EvalContext factice : enveloppe LINÉAIRE pour les ids listés (→ HARD_EXCLUDE
+    emprise_lineaire), `kind_present` False → potentiel_foncier_region PASS (verdict phase 2)."""
 
     def __init__(self, public_ids):
         self.rules = _RULES
-        self._public = set(public_ids)
+        self._public = set(public_ids)   # nom historique conservé (ids À EXCLURE)
 
-    def owner_pm(self, pid):
-        return ({"groupe": 4, "denomination": "COMMUNE", "groupe_label": "Commune"}
-                if pid in self._public else None)
+    def oriented_envelope_dims(self, pid):
+        return ({"largeur_m": 4.0, "allongement": 12.0} if pid in self._public
+                else {"largeur_m": 30.0, "allongement": 1.5})
 
     def kind_present(self, kind):
         return False
@@ -46,11 +48,11 @@ def test_hard_exclude_phase1_coupe_la_phase2():
     p_surv = ParcelRef(id=2, idu="B", commune="X")
     res = run_cascade([p_excl, p_surv], _Ctx(public_ids={1}))
     # EXCLUE : HARD_EXCLUDE en phase 1, AUCUNE couche phase 2 évaluée, non promue.
-    assert _v(res[1], "foncier_public").result == CascadeVerdict.HARD_EXCLUDE
+    assert _v(res[1], "emprise_lineaire").result == CascadeVerdict.HARD_EXCLUDE
     assert _v(res[1], "potentiel_foncier_region") is None
     assert is_promoted(res[1]) is False
     # SURVIVANTE : phase 1 PASS, phase 2 (potentiel) bien évaluée, promue.
-    assert _v(res[2], "foncier_public").result == CascadeVerdict.PASS
+    assert _v(res[2], "emprise_lineaire").result == CascadeVerdict.PASS
     assert _v(res[2], "potentiel_foncier_region") is not None
     assert is_promoted(res[2]) is True
 
@@ -64,7 +66,7 @@ def test_is_promoted_sur_verdicts_mixtes():
 def test_phases_1_seule_ne_lance_jamais_la_phase2():
     p = ParcelRef(id=3, idu="C", commune="X")
     res = run_cascade([p], _Ctx(public_ids=set()), phases=(1,))
-    assert _v(res[3], "foncier_public").result == CascadeVerdict.PASS
+    assert _v(res[3], "emprise_lineaire").result == CascadeVerdict.PASS
     assert _v(res[3], "potentiel_foncier_region") is None   # phase 2 non demandée
 
 
@@ -74,7 +76,7 @@ def test_m103_a_prime_bodacc_evalue_les_ecartees_sous_pression():
     ligne) ; une non-promue SANS pression n'est toujours PAS évaluée (le reste du périmètre
     est DIT à la facette, filet B patron M89) ; une promue garde son comportement."""
     rules = {"layers": [
-        {"name": "foncier_public", "phase": 1, "enabled": True, "params": {}},
+        {"name": "emprise_lineaire", "phase": 1, "enabled": True, "params": {}},
         {"name": "bodacc", "phase": 2, "enabled": True,
          "params": {"etats": {"rouge": ["Jugement d'ouverture de liquidation judiciaire"],
                               "orange": [], "gris": []}, "mojibake": {}}},

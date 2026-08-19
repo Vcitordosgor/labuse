@@ -1,0 +1,54 @@
+# M129 P1.4 — LES SEUILS SORTENT DU DUR (doctrine : un seuil nouveau en dur = interdit).
+# Trois foyers extraits tels quels (aucune valeur inventée) : bati.py, etage0_ext.py, division_or.py.
+# `non_calibre: true` = valeur héritée jamais validée par une mesure dédiée — à calibrer, pas à inventer.
+
+bati:                                # ex-constantes bati.py (mission R1 — classification graduée)
+  ratio_info: 0.05                   # en deçà : vacant
+  ratio_leger: 0.15                  # 5-15 % : information
+  ratio_significatif: 0.30           # 15-30 % : à creuser
+  ratio_deja_bati: 0.50              # ≥ 50 % : déjà bâtie
+  ensemble_min_batiments: 3
+  grand_batiment_m2: 400.0
+  ensemble_min_ratio: 0.15
+  restructuration_min_m2: 5000.0
+
+etage0_ext:                          # ex-constantes etage0_ext.py (gravées diff-zéro du run SP q_v2)
+  groupes_publics: {1: "État", 2: "Région", 3: "Département", 4: "Commune",
+                    9: "Établissements publics ou organismes associés"}
+  lineaire_largeur_max_m: 8.0
+  lineaire_allongement_min: 8.0
+  routiere_len_min_m: 30.0
+  routiere_largeur_nominale_m: 6.0
+  routiere_densite_min: 0.5
+  routiere_bati_ratio_max: 0.10
+  socle_tiers:                       # barème residuel_socle (bornes SDP inclusives basses)
+    - [5000, 30, "opération majeure"]
+    - [2000, 25, "belle opération"]
+    - [800, 15, "opération viable"]
+    - [300, 5, "petit collectif / 2-4 lots"]
+    - [100, -10, "une maison — hors cible collectif"]
+    - [0, -25, "rien à construire"]
+
+division_or:                         # ex-seuils division_or.py (2 familles ; origines à l'audit)
+  surface_min_m2: 1000
+  surface_max_m2: 6000
+  bati_ratio_min: 0.08
+  bati_ratio_max: 0.45
+  buffer_bati_m: 3
+  lot_min_m2: 500
+  reste_min_m2: 400
+  lot_part_max: 0.5
+  rayon_inscrit_min_m: 9
+  facade_min_m: 12
+  compacite_min: 0.25                # calibré (distribution île, P25=0.11 méd=0.21)
+  emprise_restante_max: 0.60         # plancher prudent (le PLU calibré prime quand il existe)
+  lot_decoupe_min_m2: 600
+  lot_decoupe_max_m2: 900
+  compacite_min_decoupe: 0.55        # revue 2 branche 2
+  solidite_min_decoupe: 0.85         # le plus haut préservant toutes les validées
+  ancre_largeur_m: 25
+  erosion_reste_m: 2
+  dist_bati_min_m: 1
+  pc_frais_depuis: "2023-01-01"      # fenêtre fraîcheur bâti (ortho DOM ~3 ans + chantier)
+  pente_max_pct: 45                  # M129 P4 — NOUVEAU branchement (parcel_terrain.pente_moy_deg) ;
+  non_calibre_pente: true            #   aligné sur la falaise cascade 45°, jamais validé en revue division

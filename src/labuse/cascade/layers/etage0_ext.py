@@ -20,34 +20,47 @@ from typing import Any
 from ..base import Layer, Verdict, hard_exclude, passed, positive, register, soft_flag, unknown
 from ...enums import Severity
 
+# M129 P1.4 — seuils SORTIS DU DUR (config/seuils_geometrie.yaml section `etage0_ext`,
+# valeurs héritées à l'identique — gravées diff-zéro du run SP q_v2 ; repli historique si
+# config absente, base de test nue).
+def _seuils_cfg() -> dict:
+    try:
+        from ... import config as _cfg
+        return _cfg.seuils_geometrie().get("etage0_ext", {})
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+_S = _seuils_cfg()
+
 #: libellés DGFiP des groupes PUBLICS (classification personnes morales, vérifiée sur les
 #: verdicts SP — le groupe 2 « Région » n'apparaît qu'une fois mais existe)
-GROUPES_PUBLICS: dict[int, str] = {
+GROUPES_PUBLICS: dict[int, str] = {int(k): str(v) for k, v in (_S.get("groupes_publics") or {
     1: "État", 2: "Région", 3: "Département", 4: "Commune",
     9: "Établissements publics ou organismes associés",
-}
+}).items()}
 
 #: barème residuel_socle (bornes SDP m² INCLUSIVES basses, extraites des 32 448 verdicts SP)
-SOCLE_TIERS: list[tuple[float, int, str]] = [
+SOCLE_TIERS: list[tuple[float, int, str]] = [tuple(t) for t in (_S.get("socle_tiers") or [
     (5000, 30, "opération majeure"),
     (2000, 25, "belle opération"),
     (800, 15, "opération viable"),
     (300, 5, "petit collectif / 2–4 lots"),
     (100, -10, "une maison — hors cible collectif"),
     (0, -25, "rien à construire"),
-]
+])]
 
-LINEAIRE_LARGEUR_MAX_M = 8.0
-LINEAIRE_ALLONGEMENT_MIN = 8.0
+LINEAIRE_LARGEUR_MAX_M = float(_S.get("lineaire_largeur_max_m", 8.0))
+LINEAIRE_ALLONGEMENT_MIN = float(_S.get("lineaire_allongement_min", 8.0))
 
 #: critère « emprise routière » (M6 Phase 2a, A-01 — validé sur échantillon de 20, cf.
 #: reports/m6-audit/REVIEW-PACK : 18/20 emprises viaires confirmées à l'ortho, les 2 faux
 #: positifs étaient des parcelles bâties → garde-fou bâti < 10 %, qui les sépare exactement
 #: de l'échantillon confirmé, tous ≤ 8,8 %)
-ROUTIERE_LEN_MIN_M = 30.0          # longueur cumulée d'axes clippés à la parcelle
-ROUTIERE_LARGEUR_NOMINALE_M = 6.0  # largeur nominale d'emprise par mètre d'axe
-ROUTIERE_DENSITE_MIN = 0.5         # (longueur × largeur nominale) / surface parcelle
-ROUTIERE_BATI_RATIO_MAX = 0.10     # emprise bâtie dédoublonnée / surface
+ROUTIERE_LEN_MIN_M = float(_S.get("routiere_len_min_m", 30.0))          # axes clippés cumulés
+ROUTIERE_LARGEUR_NOMINALE_M = float(_S.get("routiere_largeur_nominale_m", 6.0))
+ROUTIERE_DENSITE_MIN = float(_S.get("routiere_densite_min", 0.5))
+ROUTIERE_BATI_RATIO_MAX = float(_S.get("routiere_bati_ratio_max", 0.10))
 
 
 @register
@@ -63,17 +76,19 @@ class FoncierPublicLayer(Layer):
             return passed(self.name, "Propriétaire non public (personne physique ou PM privée).")
         groupe = own.get("groupe")
         if groupe in GROUPES_PUBLICS:
-            # F10 : l'exclusion HARD reste identique — seul le LIBELLÉ devient exact. Le groupe 9
-            # (établissements publics, coopératives, assimilés) PEUT vendre : « hors marché courant,
-            # acquisition improbable », pas « non acquérable ». Groupes 1-4 (État/collectivités) : inchangé.
+            # M129 P1.1 (arbitrage cascade-decoupes/dalle) : la propriété publique N'EXCLUT PLUS —
+            # le motif portait sur le PROPRIÉTAIRE, pas sur l'usage. Les emprises d'équipement
+            # restent écartées par les couches PHYSIQUES (voirie/OSM/zonage) ; le public
+            # « ordinaire » (délaissés, réserves — 9 002 seul-motif mesurés) entre au vivier.
+            # Le fait est DIT (flag informatif ×0 point) et filtrable (facette « public », P5).
             if groupe == 9:
-                detail = (f"Propriétaire institutionnel ({own.get('denomination')}) — hors marché courant, "
-                          f"acquisition improbable [classification DGFiP groupe 9 : établissements publics "
-                          f"et assimilés].")
+                detail = (f"Propriétaire institutionnel ({own.get('denomination')}) — hors marché "
+                          f"courant, acquisition improbable [DGFiP groupe 9 : établissements "
+                          f"publics et assimilés].")
             else:
-                detail = (f"Propriété publique ({own.get('denomination')}) — non acquérable "
-                          f"[classification DGFiP groupe {groupe} : {GROUPES_PUBLICS[groupe]}].")
-            return hard_exclude(self.name, detail, kind="exclue")
+                detail = (f"Propriété publique ({own.get('denomination')}) — cession/préemption : "
+                          f"interlocuteur public [DGFiP groupe {groupe} : {GROUPES_PUBLICS[groupe]}].")
+            return soft_flag(self.name, detail, Severity.INFO)
         return passed(self.name,
                       f"Propriétaire PM « {own.get('groupe_label')} » (groupe {groupe}) — acquérable.")
 

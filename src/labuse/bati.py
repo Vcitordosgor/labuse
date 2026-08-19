@@ -30,15 +30,26 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# ── Seuils (mission R1 §3 — tunables, documentés) ──
-RATIO_INFO = 0.05            # en deçà : vacant (aucun bâti significatif)
-RATIO_LEGER = 0.15           # 5–15 % : information, pas de déclassement
-RATIO_SIGNIFICATIF = 0.30    # 15–30 % : à creuser
-RATIO_DEJA_BATI = 0.50       # ≥ 50 % : déjà bâtie
-ENSEMBLE_MIN_BATIMENTS = 3   # ≥ 3 bâtiments…
-GRAND_BATIMENT_M2 = 400.0    # …ou un bâtiment ≥ 400 m² (échelle collectif)…
-ENSEMBLE_MIN_RATIO = 0.15    # …dès 15 % de couverture → ensemble bâti (cas BP0571)
-RESTRUCTURATION_MIN_M2 = 5000.0  # grande parcelle peu bâtie → potentiel de restructuration
+# ── Seuils (mission R1 §3) — M129 P1.4 : SORTIS DU DUR (config/seuils_geometrie.yaml,
+# section `bati`, valeurs héritées à l'identique ; repli sur les défauts historiques si la
+# config est absente — base de test nue). Un critère, un endroit : classify() reste le juge.
+def _seuils_cfg() -> dict:
+    try:
+        from . import config as _cfg
+        return _cfg.seuils_geometrie().get("bati", {})
+    except Exception:  # noqa: BLE001 — config absente → défauts historiques
+        return {}
+
+
+_S = _seuils_cfg()
+RATIO_INFO = float(_S.get("ratio_info", 0.05))            # en deçà : vacant
+RATIO_LEGER = float(_S.get("ratio_leger", 0.15))          # 5-15 % : information
+RATIO_SIGNIFICATIF = float(_S.get("ratio_significatif", 0.30))   # 15-30 % : à creuser
+RATIO_DEJA_BATI = float(_S.get("ratio_deja_bati", 0.50))  # ≥ 50 % : déjà bâtie
+ENSEMBLE_MIN_BATIMENTS = int(_S.get("ensemble_min_batiments", 3))
+GRAND_BATIMENT_M2 = float(_S.get("grand_batiment_m2", 400.0))
+ENSEMBLE_MIN_RATIO = float(_S.get("ensemble_min_ratio", 0.15))
+RESTRUCTURATION_MIN_M2 = float(_S.get("restructuration_min_m2", 5000.0))
 
 SOURCE = "BD TOPO IGN (bâtiments)"
 CONFIANCE = "haute"          # IGN cartographie l'exhaustif ; OSM resterait « moyenne »

@@ -907,8 +907,9 @@ def _q_v2_where(run_label: str, score_min: int | None,
     if veille:      # veille succession (radar patrimonial)
         conds.append("EXISTS (SELECT 1 FROM parcel_veille_succession vw0 WHERE vw0.parcelle_id = p.idu)")
     if score_min is not None:
-        conds.append("d.q_score >= :f_score")
-        params["f_score"] = score_min
+        # M129-B : la matrice (q_score) est MORTE — le paramètre est accepté et IGNORÉ (compat
+        # URL), jamais un filtre muet sur une colonne NULL. Le front n'envoie plus score_min.
+        pass
     if surface_min is not None:
         conds.append("p.surface_m2 >= :f_smin")
         params["f_smin"] = surface_min
@@ -1323,9 +1324,11 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
         {"r": v2run, "idus": [it["idu"] for it in items]}).all()} if v2run else {}
     buf = _io.StringIO()
     w = _csv.writer(buf, delimiter=";")          # Excel FR : point-virgule (standard maison)
+    # M129-B : statut_matrice/q_score/a_score retirés (matrice morte) — le statut servi est
+    # celui de la CASCADE (status), la présentation est le tier v2.
     w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
                 "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
-                "veille_succession", "statut_matrice", "q_score", "a_score",
+                "veille_succession", "statut_cascade",
                 "completeness", "icd", "confiance_donnees",
                 "proprio", "v_score", "v_band", "top_signaux"])
     for it in items:
@@ -1339,8 +1342,7 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
                     f"{it['mult_v2']:.1f}" if it.get("mult_v2") is not None else "",
                     "oui" if it.get("copro_v2") else "",
                     "oui" if it.get("veille") else "",
-                    it["status"], it["q_score"],
-                    it["a_score"], it["completeness_score"],
+                    it["status"], it["completeness_score"],
                     icd_val if icd_val is not None else "",
                     _icd.libelle_bande(icd_val) if icd_val is not None else "",
                     it["proprio"] or "",
@@ -1585,10 +1587,10 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
     rows = db.execute(text(
         f"""
-        SELECT s.idu, s.commune, s.status, s.q_score, s.a_score, s.tier_v2, s.rang_v2, s.etage0
+        SELECT s.idu, s.commune, s.status, s.tier_v2, s.rang_v2, s.etage0
                {ban_cols}
         FROM (
-            SELECT p.idu, p.commune, d.matrice_statut AS status, d.q_score, d.a_score,
+            SELECT p.idu, p.commune, d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
                    CASE WHEN {_ETAGE0_SQL} THEN 5
@@ -1607,7 +1609,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
     return [{"idu": r["idu"], "commune": r["commune"], "status": r["status"],
-             "q_score": r["q_score"], "a_score": r["a_score"], "tier_v2": r["tier_v2"],
+             "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 
@@ -1933,7 +1935,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                s2.copro AS copro_v2, s2.event_date,
                (vw.parcelle_id IS NOT NULL) AS veille,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+               d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
@@ -1994,7 +1996,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
               'status', b.status,
               'tier_v2', b.tier_v2, 'rang_v2', b.rang_v2, 'mult_v2', b.mult_v2,
               'etage0', b.etage0,
-              'q_score', b.q_score, 'a_score', b.a_score, 'a_completude', b.a_completude,
+              -- M129-B : q_score/a_score/a_completude retirés (matrice morte)
               'completeness_score', b.completeness_score,
               'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
               'evenement', CASE WHEN b.evenement_rouge THEN 'rouge' ELSE NULL END,
@@ -2028,7 +2030,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
 #: alias de la requête de page (p/d/s2/ev/vs) et sur la page matérialisée (pg).
 _Q_V2_ORDERS = {
     "rang": "s2.rang ASC NULLS LAST, s2.mult_base DESC NULLS LAST, "
-            "(ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC",
+            "(ev.parcel_id IS NOT NULL) DESC, d.opportunity_score DESC",  # M129-B
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
     "surface": "p.surface_m2 DESC NULLS LAST, s2.rang ASC NULLS LAST",
     # M55-H point 4 : le tri Surface gagne son sens INVERSE (re-clic sur la pill) —
@@ -2036,17 +2038,17 @@ _Q_V2_ORDERS = {
     "surface_asc": "p.surface_m2 ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
-         "(d.q_score + d.a_score) DESC",
+         "d.opportunity_score DESC",  # M129-B
 }
 _Q_V2_ORDERS_PAGE = {
     "rang": "pg.rang_v2 ASC NULLS LAST, pg.mult_v2 DESC NULLS LAST, "
-            "pg.evenement_rouge DESC, (pg.q_score + pg.a_score) DESC",
+            "pg.evenement_rouge DESC, pg.opportunity_score DESC",  # M129-B
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
-         "(pg.q_score + pg.a_score) DESC",
+         "pg.opportunity_score DESC",  # M129-B
 }
 
 # M55-H point 5 (décision Vic) — GROUPEMENT PAR TIER : la liste d'analyse se groupe
@@ -2108,7 +2110,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # que l'ancien plan laissait flotter sur les égalités de queue (constaté au garde-fou
     # avant/après). Les autres tris (mult/surface/commune/v) gardent la requête historique.
     _page_cols = """p.id, p.idu, p.commune, p.surface_m2, p.section,
-                   d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+                   d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                    s2.copro AS copro_v2, s2.event_date,
@@ -2138,10 +2140,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                 UNION ALL
                 (SELECT {_page_cols} {_fast_from} AND s2.rang IS NULL
                  ORDER BY s2.mult_base DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC,
-                          (d.q_score + d.a_score) DESC, p.idu ASC LIMIT :need)
+                          d.opportunity_score DESC, p.idu ASC LIMIT :need)  -- M129-B
             ) page_u
             ORDER BY rang_v2 ASC NULLS LAST, mult_v2 DESC NULLS LAST,
-                     evenement_rouge DESC, (q_score + a_score) DESC, idu ASC
+                     evenement_rouge DESC, opportunity_score DESC, idu ASC  -- M129-B
             LIMIT :lim OFFSET :off
         )"""
     else:
@@ -2199,8 +2201,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
         "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
-        "lieu_dit": r["commune"], "status": r["status"], "q_score": r["q_score"], "a_score": r["a_score"],
-        "a_completude": r["a_completude"], "completeness_score": r["completeness_score"],
+        "lieu_dit": r["commune"], "status": r["status"],  # M129-B : q/a (matrice morte) retirés
+        "completeness_score": r["completeness_score"],
         "evenement": "rouge" if r["evenement_rouge"] else None,
         "evenement_date": str(r["event_date"]) if r["event_date"] else None,
         "cluster": int(r["cluster"]) if r["cluster"] else None,
@@ -2272,22 +2274,8 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
         "opportunites_avec_dossier": int(dossiers["avec_dossier"] or 0),
         "opportunites_sans_identite": int(dossiers["sans_identite"] or 0),
     }
-    if legacy:  # ventilation matrice historique — deprecated (M5.1), servie sur demande
-        lrow = db.execute(text(
-            f"""
-            SELECT count(*) FILTER (WHERE matrice_statut = 'chaude')       AS chaude,
-                   count(*) FILTER (WHERE matrice_statut = 'a_surveiller') AS a_surveiller,
-                   count(*) FILTER (WHERE matrice_statut = 'a_creuser')    AS a_creuser,
-                   count(*) FILTER (WHERE matrice_statut = 'ecartee')      AS ecartee,
-                   count(*) FILTER (WHERE matrice_statut = 'chaude' AND EXISTS (
-                       SELECT 1 FROM parcel_v_score vs0 WHERE vs0.parcelle_id = p.idu
-                         AND vs0.v_score >= :vth))                         AS brulantes_v13
-            FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-            {join_v2}
-            WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-              {extra_where}
-            """), {**params, "vth": V_BRULANTE_THRESHOLD}).mappings().one()
-        out["legacy"] = {k: int(v or 0) for k, v in lrow.items()}
+    if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
+        out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out
 
 
@@ -2318,7 +2306,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         """SELECT p.id, p.idu, p.commune, p.surface_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
                   ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
-                  d.matrice_statut, d.q_score, d.a_score, d.a_completude, d.completeness_score,
+                  d.status AS status, d.completeness_score,  -- M129-B : matrice morte
                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
            FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
            WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
@@ -2534,8 +2522,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M48 (F4) : le champ mort `statut` (matrice_statut v1, éteinte M37) est RETIRÉ du payload —
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
-        "q_score": head["q_score"], "a_score": head["a_score"],
-        "score_v2": score_v2, "etage0": bool(head["etage0"]),
+        "score_v2": score_v2, "etage0": bool(head["etage0"]),  # M129-B : q/a retirés
         "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
         "data_sources": _data_sources_fiche(db, head["id"], run_label),   # M52 L3 — « Les données » (sources utilisées)
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
@@ -2546,7 +2533,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
-        "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
+        "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
@@ -4314,7 +4301,7 @@ def _proprietaire_public(db: Session, idu: str) -> dict:
 
 def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -> dict | None:
     r = db.execute(text(
-        "SELECT d.matrice_statut, d.q_score, d.a_score, d.completeness_score, "
+        "SELECT d.status AS status, d.completeness_score, "  # M129-B : matrice morte
         "       (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, "
         "       s2.tier AS tier_v2, s2.rang AS rang_v2 "
         "FROM dryrun_parcel_evaluations d "
@@ -4322,7 +4309,7 @@ def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -
         "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
         "WHERE d.run_label = :run AND d.parcel_id = :pid"),
         {"run": run_label, "pid": parcel_id, "v2run": _score_v2_run_id(db)}).mappings().first()
-    return ({"statut": r["matrice_statut"], "q_score": r["q_score"], "a_score": r["a_score"],
+    return ({"statut": r["status"],  # M129-B : matrice morte → statut cascade
              "completeness_score": r["completeness_score"], "etage0": bool(r["etage0"]),
              "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"]} if r else None)
 
