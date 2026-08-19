@@ -1,23 +1,23 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8000",
-  "genere_le": "2026-08-19T19:49:54",
+  "genere_le": "2026-08-19T20:04:03",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 32,
   "run_cascade": "q_v10_m129",
   "run_v2_servi": "q_v10_m129",
   "tiers_effectifs": {
-   "a_creuser": 63514,
-   "brulante": 105,
-   "chaude": 1284,
+   "a_creuser": 136763,
+   "brulante": 82,
+   "chaude": 1525,
    "declasse_au_fermee": 245,
    "declasse_au_statut_inconnu": 900,
    "declasse_bati_revele": 5475,
-   "declasse_bati_sature": 197850,
+   "declasse_bati_sature": 123066,
    "declasse_non_constructible": 6178,
    "declasse_zone_fermee": 2809,
    "ecartee": 145882,
-   "reserve_fonciere": 7421
+   "reserve_fonciere": 8738
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -910,7 +910,7 @@
       "couleur_hex": null,
       "declasse": false,
       "exception_registre": false,
-      "label": "Brûlante",
+      "label": "Chaude",
       "motif": null,
       "mult_base": 64.36,
       "percentile": 100.0,
@@ -958,7 +958,7 @@
       ],
       "rang": 1,
       "rang_total": 428239,
-      "tier": "brulante",
+      "tier": "chaude",
       "verbal": {
        "cle": "tres_forte",
        "frequence": {
@@ -966,7 +966,7 @@
         "fenetre": "2 ans",
         "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
         "sous_moyenne": false,
-        "sur_100": 20
+        "sur_100": 9
        },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
@@ -983,7 +983,7 @@
      "percentile": 100.0,
      "rang": 1,
      "run_id": "q_v10_m129",
-     "tier": "brulante"
+     "tier": "chaude"
     }
    },
    "coherence_db_api": [],
@@ -1038,7 +1038,7 @@
      "mult_base": 64.36,
      "percentile": 100.0,
      "rang": 1,
-     "tier": "brulante"
+     "tier": "chaude"
     },
     "section": "AP",
     "solaire": {
@@ -1082,11 +1082,11 @@
      },
      "score_v2": {
       "copro": false,
-      "couleur_hex": "#8C7468",
-      "declasse": true,
+      "couleur_hex": null,
+      "declasse": false,
       "exception_registre": false,
-      "label": "Potentiel épuisé · bâti saturé",
-      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
+      "label": "Potentiel long terme",
+      "motif": null,
       "mult_base": 0.85,
       "percentile": 38.02,
       "pourquoi": [
@@ -1133,9 +1133,16 @@
       ],
       "rang": 265430,
       "rang_total": 428239,
-      "tier": "declasse_bati_sature",
+      "tier": "reserve_fonciere",
       "verbal": {
        "cle": "en_dessous",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": true,
+        "sur_100": 1
+       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "en dessous de la moyenne",
        "reglette_pct": 1.0
@@ -1151,7 +1158,7 @@
      "percentile": 38.02,
      "rang": 265430,
      "run_id": "q_v10_m129",
-     "tier": "declasse_bati_sature"
+     "tier": "reserve_fonciere"
     }
    },
    "coherence_db_api": [],
@@ -1208,7 +1215,7 @@
      "mult_base": 0.85,
      "percentile": 38.0,
      "rang": 265430,
-     "tier": "declasse_bati_sature"
+     "tier": "reserve_fonciere"
     },
     "section": "AX",
     "solaire": {
@@ -2475,11 +2482,11 @@
      },
      "score_v2": {
       "copro": false,
-      "couleur_hex": "#8C7468",
-      "declasse": true,
+      "couleur_hex": null,
+      "declasse": false,
       "exception_registre": false,
-      "label": "Potentiel épuisé · bâti saturé",
-      "motif": "bâtie saturée — ratio 55 % (emprise 320 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
+      "label": "À creuser",
+      "motif": null,
       "mult_base": 2.65,
       "percentile": 98.84,
       "pourquoi": [
@@ -2526,9 +2533,16 @@
       ],
       "rang": 4955,
       "rang_total": 428239,
-      "tier": "declasse_bati_sature",
+      "tier": "a_creuser",
       "verbal": {
        "cle": "au_dessus",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 3
+       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "nettement au-dessus de la moyenne",
        "reglette_pct": 30.3
@@ -2544,7 +2558,7 @@
      "percentile": 98.84,
      "rang": 4955,
      "run_id": "q_v10_m129",
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     }
    },
    "coherence_db_api": [],
@@ -2599,7 +2613,7 @@
      "mult_base": 2.65,
      "percentile": 98.8,
      "rang": 4955,
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     },
     "section": "CS",
     "solaire": {
@@ -2650,11 +2664,11 @@
      },
      "score_v2": {
       "copro": false,
-      "couleur_hex": "#8C7468",
-      "declasse": true,
+      "couleur_hex": null,
+      "declasse": false,
       "exception_registre": false,
-      "label": "Potentiel épuisé · bâti saturé",
-      "motif": "bâtie saturée — ratio 41 % (emprise 285 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
+      "label": "À creuser",
+      "motif": null,
       "mult_base": 1.32,
       "percentile": 87.37,
       "pourquoi": [
@@ -2701,9 +2715,16 @@
       ],
       "rang": 54097,
       "rang_total": 428239,
-      "tier": "declasse_bati_sature",
+      "tier": "a_creuser",
       "verbal": {
        "cle": "proche",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 3
+       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "proche de la moyenne",
        "reglette_pct": 8.6
@@ -2719,7 +2740,7 @@
      "percentile": 87.37,
      "rang": 54097,
      "run_id": "q_v10_m129",
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     }
    },
    "coherence_db_api": [],
@@ -2771,7 +2792,7 @@
      "mult_base": 1.32,
      "percentile": 87.4,
      "rang": 54097,
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     },
     "section": "DM",
     "solaire": {
@@ -2987,11 +3008,11 @@
      },
      "score_v2": {
       "copro": false,
-      "couleur_hex": "#8C7468",
-      "declasse": true,
+      "couleur_hex": null,
+      "declasse": false,
       "exception_registre": false,
-      "label": "Potentiel épuisé · bâti saturé",
-      "motif": "bâtie saturée — ratio 42 % (emprise 254 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
+      "label": "Chaude",
+      "motif": null,
       "mult_base": 13.15,
       "percentile": 99.99,
       "pourquoi": [
@@ -3038,9 +3059,16 @@
       ],
       "rang": 57,
       "rang_total": 428239,
-      "tier": "declasse_bati_sature",
+      "tier": "chaude",
       "verbal": {
        "cle": "tres_forte",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 9
+       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
        "reglette_pct": 80.0
@@ -3056,7 +3084,7 @@
      "percentile": 99.99,
      "rang": 57,
      "run_id": "q_v10_m129",
-     "tier": "declasse_bati_sature"
+     "tier": "chaude"
     }
    },
    "coherence_db_api": [],
@@ -3111,7 +3139,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 57,
-     "tier": "declasse_bati_sature"
+     "tier": "chaude"
     },
     "section": "CX",
     "solaire": {
@@ -5403,11 +5431,11 @@
      },
      "score_v2": {
       "copro": false,
-      "couleur_hex": "#8C7468",
-      "declasse": true,
+      "couleur_hex": null,
+      "declasse": false,
       "exception_registre": false,
-      "label": "Potentiel épuisé · bâti saturé",
-      "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
+      "label": "À creuser",
+      "motif": null,
       "mult_base": 1.06,
       "percentile": 66.83,
       "pourquoi": [
@@ -5454,9 +5482,16 @@
       ],
       "rang": 142042,
       "rang_total": 428239,
-      "tier": "declasse_bati_sature",
+      "tier": "a_creuser",
       "verbal": {
        "cle": "proche",
+       "frequence": {
+        "base_sur_100": 1.5,
+        "fenetre": "2 ans",
+        "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
+        "sous_moyenne": false,
+        "sur_100": 3
+       },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "proche de la moyenne",
        "reglette_pct": 1.8
@@ -5472,7 +5507,7 @@
      "percentile": 66.83,
      "rang": 142042,
      "run_id": "q_v10_m129",
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     }
    },
    "coherence_db_api": [],
@@ -5524,7 +5559,7 @@
      "mult_base": 1.06,
      "percentile": 66.8,
      "rang": 142042,
-     "tier": "declasse_bati_sature"
+     "tier": "a_creuser"
     },
     "section": "AI",
     "solaire": {

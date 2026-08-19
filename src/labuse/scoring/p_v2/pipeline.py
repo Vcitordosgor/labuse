@@ -388,7 +388,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df["bati_sature"] = False
     if (os.environ.get("LABUSE_DISABLE_FILTRE_BATI") != "1"
             and session.execute(text("SELECT to_regclass('parcel_filtre_bati') IS NOT NULL")).scalar()):
-        fb = pd.read_sql(text("SELECT idu, true AS fbs FROM parcel_filtre_bati WHERE decision='saturee'"),
+        # M129-D (arbitrage Vic) : « saturée » ne déclasse QUE la bâtie SANS droits résiduels
+        # (« construite au maximum », fait M125). Une bâtie qui PEUT encore construire est le
+        # gisement renouvellement — le filtre nu/bâti dit l'intention du client, l'algo ne
+        # décide pas à sa place.
+        fb = pd.read_sql(text(
+            "SELECT f.idu, true AS fbs FROM parcel_filtre_bati f "
+            "WHERE f.decision='saturee' AND NOT EXISTS ("
+            "  SELECT 1 FROM parcels p JOIN parcel_residuel r ON r.parcel_id = p.id "
+            "  WHERE p.idu = f.idu AND r.cause IS NULL AND r.sdp_residuelle_m2 > 0)"),
                          session.connection())
         if len(fb):
             df = df.merge(fb, on="idu", how="left")
