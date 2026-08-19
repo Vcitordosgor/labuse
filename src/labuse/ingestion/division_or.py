@@ -69,6 +69,9 @@ def _cosia_guard_sql(session) -> str:
     """M129-C P1.1 — garde CoSIA conditionnelle : table absente (base de test) → 'false'."""
     if not session.execute(text("SELECT to_regclass('parcel_bati_revele') IS NOT NULL")).scalar():
         return "false"
+    # l'index de la garde (idu SANS index d'origine : seq-scan 16 k lignes PAR candidat —
+    # 29 min mesurées sur une commune) — idempotent, vit avec la garde qui l'exige.
+    session.execute(text("CREATE INDEX IF NOT EXISTS ix_bati_revele_idu ON parcel_bati_revele (idu)"))
     return ("EXISTS (SELECT 1 FROM parcel_bati_revele rbz WHERE rbz.idu = zon.idu "
             f"AND rbz.emprise_cosia_m2 >= {int(_S.get('cosia_min_m2', 50))})")
 
