@@ -91,8 +91,10 @@ def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dic
         "SELECT parcelle_id AS idu, tier FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = ANY(:idus)"),
         {"r": challenger, "idus": attendues}).mappings().all()}
-    evals = {r["idu"]: (r["status"], r["matrice_statut"]) for r in session.execute(text(
-        "SELECT p.idu, d.status, d.matrice_statut FROM dryrun_parcel_evaluations d "
+    # M129-D P5 : la MATRICE est morte (M129-B) — l'axe (3) de la boussole est retiré,
+    # l'arène garde ses deux axes vivants (tier v2 + statut cascade).
+    evals = {r["idu"]: (r["status"], None) for r in session.execute(text(
+        "SELECT p.idu, d.status FROM dryrun_parcel_evaluations d "
         "JOIN parcels p ON p.id = d.parcel_id WHERE d.run_label = :r AND p.idu = ANY(:idus)"),
         {"r": challenger, "idus": attendues}).mappings().all()}
     violations = []
@@ -105,7 +107,7 @@ def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dic
         elif s == "opportunite":
             violations.append((idu, "statut cascade opportunite"))  # (2) statut cascade
         elif m == "chaude":
-            violations.append((idu, "matrice_statut chaude"))       # (3) matrice Q×A (challengers matrice)
+            pass  # M129-D : axe matrice mort (jamais de violation fantôme)
     return {"n_attendues": len(attendues), "violations": violations, "compteur": len(violations)}
 
 

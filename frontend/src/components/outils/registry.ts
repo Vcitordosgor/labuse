@@ -39,7 +39,7 @@ export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
 export const MODULES: ModuleDef[] = [
   // ── Trouver — repérer le foncier, sans cible au départ ──
   { key: 'scoring-v2', num: 'M25', group: 'trouver', phare: true,
-    label: 'Radar des mutations', desc: 'Probabilité de mutation à 12 mois — brûlantes, potentiel long terme, top P' },
+    label: 'Radar des ventes', desc: 'Probabilité de vente sous 1 an — brûlantes, potentiel long terme, tête de classement' },
   { key: 'division', num: 'M01', group: 'trouver', phare: true,
     label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
   { key: 'fantome', num: 'M07', group: 'trouver', phare: true,

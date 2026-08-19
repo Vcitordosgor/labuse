@@ -391,7 +391,7 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
 const SIGNALEMENT_TYPES: [string, string][] = [
-  ['faux_positif', 'Faux positif (piscine, PV…)'], ['zonage', 'Zonage PLU'],
+  ['faux_positif', 'Erreur de détection (piscine, PV…)'], ['zonage', 'Zonage PLU'],
   ['bati', 'Bâti / occupation'], ['adresse', 'Adresse'], ['proprietaire', 'Propriétaire'],
   ['risque', 'Risque'], ['score', 'Score / verdict'], ['viabilisation', 'Viabilisation'], ['autre', 'Autre'],
 ]
@@ -1316,7 +1316,7 @@ export function Fiche({ idu }: { idu: string }) {
   // C1 : motif principal d'écartement, affiché À CÔTÉ du badge (plus de bandeau rouge séparé).
   // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
   const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
-  const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
+  const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? 'exclusion légale ou physique — motif détaillé dans l’analyse' : '')  // M129-D : plus de Q/q_score à l'écran
   // M52 L2 (correction #1) : parcelle écartée/déclassée MAIS à signal ×N fort → cadrage « signal
   // brut ». Sans lui, « Déclassée » + « très forte probabilité relative » côte à côte forment une
   // contradiction (famille M48 : un statut mort à côté d'une promesse). Le ×N reste (réel), il
