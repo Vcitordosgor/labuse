@@ -84,11 +84,15 @@ def test_emprise_lineaire_dims_absentes_pass():
 # ───────────────────── FoncierPublicLayer : groupe DGFiP public {1,2,3,4,9} ─────────────────────
 
 @pytest.mark.parametrize("groupe", sorted(GROUPES_PUBLICS))
-def test_foncier_public_groupes_publics_excluent(groupe):
+def test_foncier_public_groupes_publics_fait_dit_jamais_exclu(groupe):
+    # M129 P1.1 : la propriété publique N'EXCLUT PLUS — fait affiché (flag INFO ×0),
+    # le public « ordinaire » entre au vivier ; les équipements restent écartés par les
+    # couches physiques. Le test garde le CONTRAT : jamais un HARD, toujours le fait dit.
     v = FoncierPublicLayer().evaluate(
         P, _Ctx(owner_pm={"groupe": groupe, "denomination": "X", "groupe_label": GROUPES_PUBLICS[groupe]}), {})
-    assert v.result == CascadeVerdict.HARD_EXCLUDE
-    assert v.exclude_kind == "exclue"
+    assert v.result == CascadeVerdict.SOFT_FLAG
+    assert v.severity is not None and v.severity.value == "info"
+    assert "DGFiP groupe" in v.detail
 
 
 def test_foncier_public_groupe_prive_ne_exclut_pas():

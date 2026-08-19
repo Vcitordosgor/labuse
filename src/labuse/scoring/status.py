@@ -14,7 +14,10 @@ from .opportunity import OpportunityResult
 
 def decide_status(opp: OpportunityResult, completeness_score: int, cfg: dict | None = None) -> EvaluationStatus:
     if opp.hard_exclude:
-        return EvaluationStatus.EXCLUE if opp.exclude_kind == "exclue" else EvaluationStatus.FAUX_POSITIF_PROBABLE
+        # M129 P1.3 — le statut `faux_positif_probable` MEURT : toute exclusion est `exclue`,
+        # son motif (français) vit dans les verdicts. La valeur d'enum reste lisible pour les
+        # RUNS ANCIENS (q_v9/q_v8 servis jusqu'à la bascule) ; aucun run nouveau ne la produit.
+        return EvaluationStatus.EXCLUE
 
     rules = (cfg or opportunity_weights())["status_rules"]
     floor = rules["completeness_floor"]

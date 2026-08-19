@@ -40,10 +40,11 @@ def test_opportunity_soft_flag_fort_marque_et_penalise():
     assert r.score < base                                        # un flag fort pénalise le score
 
 
-def test_opportunity_faux_positif_prioritaire_sur_exclue_absent():
-    # deux hard_exclude 'faux_positif' → exclude_kind reste 'faux_positif' (aucun 'exclue').
+def test_opportunity_hard_toujours_exclue_m129():
+    # M129 P1.3 : le panier « faux_positif » est MORT — toute exclusion est 'exclue', le motif
+    # (français) vit dans le verdict. Le kind passé par la couche n'est plus lu.
     r = compute_opportunity([hard_exclude("emprise_lineaire", "voirie", kind="faux_positif")])
-    assert r.hard_exclude is True and r.exclude_kind == "faux_positif"
+    assert r.hard_exclude is True and r.exclude_kind == "exclue"
 
 
 # ───────────────────────── 2. compute_completeness ─────────────────────────

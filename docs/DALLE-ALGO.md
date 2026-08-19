@@ -82,9 +82,11 @@ gelantes (corridor, périmètre d'attente).
 | Emplacements réservés (ER) | 2 147 net | visible — fait affiché « ER » |
 | Pente 31-45° | 797 net | visible — seuil falaise 45° en config |
 
-**Vivier : 90 911 → 111 371** (confirmé, audit cascade-decoupes).
-Sous-zones N/A (STECAL/hameaux, ~1 100) : calibration commune par commune
-plus tard, non bloquant.
+**Vivier : 90 911 → 285 770** (arbitrage Vic M129 : le bâti entre au vivier —
+mesuré : étage 0 cible 145 893 ; le « 111 371 » des découpes était un chiffre
+PRÉ-arbitrage-bâti, il est mort). Composition et tenue des écrans au rapport
+d'impact M129. Sous-zones N/A (STECAL/hameaux, ~1 100) : calibration commune
+par commune plus tard, non bloquant.
 
 ### Dettes cascade à régler à la refonte
 - Seuils en dur (bati.py, etage0_ext.py) → config ; 6 PLACEHOLDER à

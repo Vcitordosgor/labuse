@@ -67,7 +67,13 @@ class StubProvider:
                 positives.append({"signal": v["detail"], "source": src})
                 confirmed.append({"fact": v["detail"], "source": src})
             elif res == "SOFT_FLAG":
-                risks.append({"risk": v["detail"], "severity": v.get("severity") or "moyen", "source": src})
+                # M129 — un flag INFO (×0 point : occupation bâtie, propriété publique, mvt…)
+                # est un FAIT AFFICHÉ, pas un signal de risque : il va aux faits confirmés.
+                # (Gap latent pré-M129 : le schéma IA n'a jamais accepté 'info'.)
+                if (v.get("severity") or "moyen") == "info":
+                    confirmed.append({"fact": v["detail"], "source": src})
+                else:
+                    risks.append({"risk": v["detail"], "severity": v.get("severity") or "moyen", "source": src})
             elif res == "HARD_EXCLUDE":
                 false_pos.append({"risk": v["detail"], "reason": "Couche éliminatoire de la cascade."})
             elif res == "PASS" and v.get("detail"):

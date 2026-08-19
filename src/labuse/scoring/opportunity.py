@@ -41,9 +41,12 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
 
     hard = [v for v in verdicts if v.result == CascadeVerdict.HARD_EXCLUDE]
     if hard:
-        exclude_kind = "exclue" if any(v.exclude_kind == "exclue" for v in hard) else "faux_positif"
+        # M129 P1.3 — « écartée » a UNE définition : exclue par la cascade, motif dit. Le panier
+        # « faux_positif » MEURT à l'agrégation : toute exclusion restante est une impossibilité
+        # légale ou physique et porte son motif propre (le detail du verdict, en français).
+        # `Verdict.exclude_kind` reste accepté en entrée (compat couches/tests) mais n'est plus lu.
         return OpportunityResult(
-            score=0, hard_exclude=True, exclude_kind=exclude_kind, has_fort_flag=False,
+            score=0, hard_exclude=True, exclude_kind="exclue", has_fort_flag=False,
             weights=weights, ai_adjustment=ai_adjustment,
         )
 

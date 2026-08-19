@@ -33,13 +33,16 @@ def _verdict(outcome, layer, result=None):
 
 
 def test_statuts_attendus(demo):
+    # M129 P1.3 : faux_positif_probable MEURT — toute exclusion est EXCLUE, motif au verdict.
+    # P2 (zone Ab), P4 (zone N), P6 (cimetière OSM) restent EXCLUES par leurs couches (motifs
+    # français inchangés) — seul le PANIER disparaît.
     expected = {
         1: EvaluationStatus.OPPORTUNITE,
-        2: EvaluationStatus.FAUX_POSITIF_PROBABLE,  # zone Ab agricole → HARD_EXCLUDE (non constructible au PLU)
+        2: EvaluationStatus.EXCLUE,   # zone Ab agricole → HARD_EXCLUDE (non constructible au PLU)
         3: EvaluationStatus.EXCLUE,
-        4: EvaluationStatus.FAUX_POSITIF_PROBABLE,
+        4: EvaluationStatus.EXCLUE,
         5: EvaluationStatus.EXCLUE,
-        6: EvaluationStatus.FAUX_POSITIF_PROBABLE,
+        6: EvaluationStatus.EXCLUE,
         7: EvaluationStatus.A_CREUSER,
         8: EvaluationStatus.A_CREUSER,
     }

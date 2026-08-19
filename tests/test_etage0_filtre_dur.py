@@ -71,9 +71,13 @@ def test_surface_normale_non_eliminee():
 # ───────────────────────── pente ─────────────────────────
 
 def test_pente_non_amenageable_eliminee_phase1():
+    # M129 : falaise à 45° = 100 % de pente (config). 94 % (43°) ne s'exclut plus ; 130 % oui.
     ctx = FakeCtx(inter=_inter("pente", 1.0, attrs={"slope_pct": 94}), present={"pente"})
     v = REGISTRY["pente"].evaluate(_parcel(), ctx, _params("pente"))
-    assert v.is_hard_exclude() and v.exclude_kind == "faux_positif" and "94" in v.detail
+    assert not v.is_hard_exclude() and v.result == CascadeVerdict.SOFT_FLAG
+    ctx = FakeCtx(inter=_inter("pente", 1.0, attrs={"slope_pct": 130}), present={"pente"})
+    v = REGISTRY["pente"].evaluate(_parcel(), ctx, _params("pente"))
+    assert v.is_hard_exclude() and "130" in v.detail
 
 
 def test_pente_forte_mais_amenageable_non_eliminee():
@@ -108,17 +112,19 @@ def test_osm_effleurement_de_bord_passe():
 
 # ───────────────────────── bâti franc (correctif R1) ─────────────────────────
 
-def test_bati_ensemble_bati_elimine_phase1():
+def test_bati_ensemble_bati_fait_dit_phase1():
     # Cas BP0571 : 18 % / 4 bâtiments / max 418 m² → « ensemble bâti » (franc) → éliminé.
+    # M129 : le bâti N'EXCLUT PLUS — l'ensemble bâti (BP0571) devient un FAIT (flag INFO)
+    # au motif classify inchangé ; la facette nu/bâti et le score décident.
     sig = {1: {"bati_ratio": 0.18, "bati_count": 4, "bati_max_m2": 418.0, "surface_m2": 9222.0}}
     v = REGISTRY["bati"].evaluate(_parcel(surface_m2=9222.0), FakeCtx(declass_signals=sig), _params("bati"))
-    assert v.is_hard_exclude() and v.exclude_kind == "faux_positif" and "ensemble bâti" in v.detail
+    assert not v.is_hard_exclude() and v.result == CascadeVerdict.SOFT_FLAG and "ensemble bâti" in v.detail
 
 
-def test_bati_deja_bati_elimine_phase1():
+def test_bati_deja_bati_fait_dit_phase1():
     sig = {1: {"bati_ratio": 0.55, "bati_count": 6, "bati_max_m2": 400.0, "surface_m2": 5000.0}}
     v = REGISTRY["bati"].evaluate(_parcel(surface_m2=5000.0), FakeCtx(declass_signals=sig), _params("bati"))
-    assert v.is_hard_exclude() and "déjà bâtie" in v.detail
+    assert not v.is_hard_exclude() and v.result == CascadeVerdict.SOFT_FLAG and "déjà bâtie" in v.detail
 
 
 def test_bati_partiellement_bati_non_elimine():

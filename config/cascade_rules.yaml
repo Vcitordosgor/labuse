@@ -76,9 +76,9 @@ layers:
       # DÉCISION 1 : exclusion SENSIBLE AU RECOUVREMENT. HARD_EXCLUDE seulement si la part
       # A+N de la parcelle atteint ce seuil ; en deçà avec une part U/AU → SOFT_FLAG
       # « zonage mixte » + emprise clippée à la portion U/AU dans la pré-faisabilité.
-      an_hard_exclude_pct: 90                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
+      an_hard_exclude_pct: 90                 # NON CALIBRÉ (défaut directive, jamais validé par une mesure — M129 P1.4)
       # plancher en deçà duquel une part A/N est traitée comme liséré géométrique GPU (ignorée) :
-      an_mixte_min_pct: 5                     # PLACEHOLDER — à calibrer par Vic
+      an_mixte_min_pct: 5                     # NON CALIBRÉ (jamais validé par une mesure — M129 P1.4)
       # préfixes de repli (sous-zones non couvertes par les listes ci-dessus) — vides par défaut :
       flag_fort_prefixes: []
       flag_prefixes: []
@@ -119,7 +119,7 @@ layers:
       # DÉCISION 3.a : recouvrement ER (en % de la parcelle) à partir duquel la parcelle est
       # exclue (emprise majoritairement grevée) ; en deçà → SOFT_FLAG + surface ER déduite de
       # l'emprise constructible dans la pré-faisabilité.
-      er_hard_exclude_pct: 50                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
+      er_hard_exclude_pct: 50                 # NON CALIBRÉ (défaut directive, jamais validé par une mesure — M129 P1.4)
 
   - name: safer
     phase: 1
@@ -162,7 +162,7 @@ layers:
     enabled: true
     params:
       spatial_kind: ravine
-      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer PLACEHOLDER (défaut Vic 10 m) :
+      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer NON CALIBRÉ (défaut Vic 10 m — M129 P1.4) :
       buffer_m: 10
       severity: moyen
       # 2.C — quand une SURFACE en eau existe (ravine large), on mesure au BORD (berge), plus proche
@@ -186,13 +186,13 @@ layers:
     enabled: true
     params:
       # 2.A : la pente est CALCULÉE et AFFICHÉE ; au-delà de `seuil_flag_pct` → SOFT_FLAG
-      # (driver de coût terrassement, jamais une exclusion). Seuil PLACEHOLDER (défaut Vic 30 %).
+      # (driver de coût terrassement, jamais une exclusion). Seuil NON CALIBRÉ (défaut Vic 30 % — M129 P1.4).
       exclude: false
-      seuil_flag_pct: 30      # PLACEHOLDER — au-delà : SOFT_FLAG « pente forte »
-      # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : au-delà de ce seuil le terrain n'est
-      # pas aménageable → HARD_EXCLUDE (faux positif). 40–60 % → « à creuser » (déclassement,
-      # étage 1). Ex-constante declassement.py PENTE_FAUX_PCT.
-      seuil_faux_positif_pct: 60
+      seuil_flag_pct: 30      # NON CALIBRÉ — au-delà : SOFT_FLAG « pente forte »
+      # ÉTAGE 0 (bloquant FRANC) : au-delà de ce seuil le terrain n'est pas aménageable →
+      # HARD_EXCLUDE. M129 (arbitrage découpes, frontière fixée) : falaise à 45° = 100 % de
+      # pente (ex-60 % = 31°, libère 797 net). Ex-constante declassement.py PENTE_FAUX_PCT.
+      seuil_faux_positif_pct: 100
       severity: moyen
       slope_labels:           # pente en %, bornes hautes
         faible: 10
@@ -276,11 +276,11 @@ layers:
       threshold_enabled: false
       min_surface_m2_bati: 500
       min_surface_m2_vierge: 200
-      # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : en deçà de ce seuil, aucun programme
-      # n'est possible → micro-parcelle → HARD_EXCLUDE (faux positif). 100–250 m² → « à creuser »
-      # (déclassement, étage 1). Ex-constante declassement.py SURFACE_FAUX_M2. Distinct du seuil
-      # dur de valorisation ci-dessus (désactivé) : celui-ci élimine, il n'est pas une pénalité.
-      faux_positif_max_m2: 100
+      # ÉTAGE 0 (bloquant FRANC) : en deçà, aucun programme n'est possible → micro-parcelle →
+      # HARD_EXCLUDE. M129 (arbitrage découpes, frontière fixée) : plancher 40 m² — « en dessous,
+      # même en fusion ça ne pèse rien » (ex-100 m², libère 19 686 net brut / 9 085 net).
+      # Ex-constante declassement.py SURFACE_FAUX_M2.
+      faux_positif_max_m2: 40
       # COURBE SATURANTE (bonus surface_utile, magnitude 0..1). Bornes pour la promotion réunionnaise :
       #   < 400 m²  : magnitude 0 (sous le seuil d'une opération de promotion utile)
       #   400→2500 m² : montée linéaire 0→1 (chaque m² ajoute de la capacité programme)

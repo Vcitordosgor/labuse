@@ -140,12 +140,15 @@ def test_d2_divergence_au_remontee_en_vigilance():
 
 # ───────────────────────── D3.a — emplacements réservés ─────────────────────────
 
-def test_d3a_er_majoritaire_hard_exclude_format_directive():
+def test_d3a_er_majoritaire_fait_fort_format_directive():
     ctx = _Ctx({"plu_gpu_prescription": [_i("05", 0.62, "ER 12 - Voie nouvelle à 8 m")]})
+    # M129 P1.1 : l'ER (servitude LEVABLE) n'exclut plus — FAIT affiché, flag FORT,
+    # motif au format directive INCHANGÉ.
     out = _as_list(PrescriptionPluLayer().evaluate(P, ctx, PRESC))
-    he = [v for v in out if v.result == CascadeVerdict.HARD_EXCLUDE]
-    assert len(he) == 1 and he[0].exclude_kind == "faux_positif"
-    assert "Emplacement réservé 12 : Voie nouvelle à 8 m (62 %)" in he[0].detail
+    ff = [v for v in out if v.result == CascadeVerdict.SOFT_FLAG]
+    assert len(ff) == 1 and ff[0].severity.value == "fort"
+    assert not any(v.result == CascadeVerdict.HARD_EXCLUDE for v in out)
+    assert "Emplacement réservé 12 : Voie nouvelle à 8 m (62 %)" in ff[0].detail
 
 
 def test_d3a_er_minoritaire_flag_moyen_et_deduction_annoncee():

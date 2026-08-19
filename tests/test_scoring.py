@@ -74,11 +74,12 @@ def test_unknown_ne_compte_pas():
 
 # ───────────────────────────── statut (§7C) ─────────────────────────────
 
-def test_statut_exclue_vs_faux_positif():
+def test_statut_hard_toujours_exclue_m129():
+    # M129 P1.3 : faux_positif_probable MEURT — les deux kinds historiques donnent EXCLUE.
     opp_excl = compute_opportunity([hard_exclude("ppr", "rouge", kind="exclue")])
     assert decide_status(opp_excl, 80) == EvaluationStatus.EXCLUE
     opp_fp = compute_opportunity([hard_exclude("foret_publique", "domaniale", kind="faux_positif")])
-    assert decide_status(opp_fp, 80) == EvaluationStatus.FAUX_POSITIF_PROBABLE
+    assert decide_status(opp_fp, 80) == EvaluationStatus.EXCLUE
 
 
 def test_completude_faible_plafonne_a_creuser():
