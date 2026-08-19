@@ -113,11 +113,11 @@ _CODE_CASE = """
 
 _FUNNEL_SQL = {
     # Chaque étape s'appuie sur la précédente — l'entonnoir complet est rapporté tel quel.
-    "1_bati_exclues": """
+    "1_bati_fait": """
         SELECT count(DISTINCT cr.parcel_id)
         FROM dryrun_cascade_results cr
         WHERE cr.run_label = :run AND cr.layer_name = 'bati'
-          AND cr.result = 'HARD_EXCLUDE' AND ({code}) IS NOT NULL
+          AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
     """,
     "2_zone_u_au": """
         SELECT count(*) FROM ({base}) b
@@ -134,11 +134,13 @@ _FUNNEL_SQL = {
     """,
 }
 
+# M129-D : le bâti n'exclut plus (M129 P1 — flag INFO, motif classify inchangé) : la MÊME
+# population « bâti franc » se lit sur le FAIT (SOFT_FLAG), plus jamais sur HARD_EXCLUDE.
 _BATI_BASE = """
     SELECT DISTINCT cr.parcel_id
     FROM dryrun_cascade_results cr
     WHERE cr.run_label = :run AND cr.layer_name = 'bati'
-      AND cr.result = 'HARD_EXCLUDE' AND ({code}) IS NOT NULL
+      AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
 """.replace("{code}", _CODE_CASE)
 
 _BUILD_SQL = """
@@ -147,7 +149,7 @@ WITH bati_x AS (
     FROM dryrun_cascade_results cr
     JOIN parcels p ON p.id = cr.parcel_id
     WHERE cr.run_label = :run AND cr.layer_name = 'bati'
-      AND cr.result = 'HARD_EXCLUDE' AND ({code}) IS NOT NULL
+      AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
     ORDER BY p.idu, cr.id DESC
 ),
 public_x AS (
@@ -155,7 +157,7 @@ public_x AS (
     FROM dryrun_cascade_results cr
     JOIN parcels p ON p.id = cr.parcel_id
     WHERE cr.run_label = :run AND cr.layer_name = 'foncier_public'
-      AND cr.result = 'HARD_EXCLUDE'
+      AND cr.result = 'SOFT_FLAG'
 ),
 seg AS (
     SELECT b.idu, b.code, left(b.idu, 5) AS commune, d.zone_plu,
@@ -217,8 +219,15 @@ def build(session: Session, *, run_label: str | None = None,
 
     # ── entonnoir (mesuré AVANT l'écriture, sur les mêmes définitions) ────────────
     funnel: dict[str, int] = {}
-    funnel["1_bati_exclues"] = int(session.execute(text(
-        _FUNNEL_SQL["1_bati_exclues"].replace("{code}", _CODE_CASE)), params).scalar() or 0)
+    funnel["1_bati_fait"] = int(session.execute(text(
+        _FUNNEL_SQL["1_bati_fait"].replace("{code}", _CODE_CASE)), params).scalar() or 0)
+    # M129-D (leçon de la bascule q_v10) : une BASE VIDE = un prédicat mort ou un run absent —
+    # on REFUSE, on n'écrit jamais un segment vide en silence (règle des trois fois M71-B3 :
+    # c'est un « segment Renouvellement à 0 » qui a servi une carte vide à la recette).
+    if funnel["1_bati_fait"] == 0:
+        raise RuntimeError(
+            f"Renouvellement : base « bâti (fait) » VIDE sur le run {run} — prédicat mort ou run "
+            "non calculé. Rien n'est écrit (un 0 silencieux a déjà servi une carte vide, M129-D).")
     for step in ("2_zone_u_au", "3_capacite"):
         funnel[step] = int(session.execute(text(
             _FUNNEL_SQL[step].replace("{base}", _BATI_BASE)), params).scalar() or 0)
