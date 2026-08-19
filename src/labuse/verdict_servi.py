@@ -36,7 +36,9 @@ TIER_LABELS = {
     "ecartee": "Écartée",
     # M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » (verdict calculé,
     # pas un retrait). Codes techniques declasse_* INCHANGÉS — libellé client seulement.
-    "declasse_bati_sature": "Potentiel épuisé · bâti saturé",
+    # M129-D P1 : DEUX états, français client (le fait M125 les distingue) — le libellé fin est
+    # choisi dans _traduire() selon la SDP résiduelle ; celui-ci est le repli générique.
+    "declasse_bati_sature": "Bâtie — construite au maximum",
     "declasse_non_constructible": "Potentiel épuisé · inconstructible (géométrie)",
     "declasse_bati_revele": "Potentiel épuisé · bâti révélé",
     "declasse_zone_fermee": "Potentiel épuisé · fermée à l'urbanisation",
@@ -112,9 +114,27 @@ def _sql(db: Session) -> str:
     else:
         ex_col = "NULL AS ex_motif_client, false AS ex_present"
         ex_join = ""
-    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, {fb_cols}, {ex_col} "
-            f"FROM parcel_p_score_v2 s {fb_join} {ex_join} "
+    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, rsd.sdp_residuelle_m2, {fb_cols}, {ex_col} "
+            f"FROM parcel_p_score_v2 s {fb_join} {ex_join}  "
+            "LEFT JOIN parcels prc ON prc.idu = s.parcelle_id "
+            "LEFT JOIN parcel_residuel rsd ON rsd.parcel_id = prc.id AND rsd.cause IS NULL "
             f"WHERE s.run_id = :run AND s.parcelle_id = ANY(:idus)")
+
+
+def _label_bati(tier: str, row) -> str | None:
+    """M129-D P1 — le bâti a DEUX états, jamais un slug : « on peut encore construire »
+    (SDP résiduelle > 0) / « construite au maximum ». Repli générique si la SDP n'est pas
+    dans la row (SELECT appelant non enrichi)."""
+    if tier != "declasse_bati_sature":
+        return None
+    try:
+        sdp = row["sdp_residuelle_m2"]
+    except (KeyError, TypeError):
+        return None
+    if sdp is None:
+        return None
+    return ("Bâtie — on peut encore construire" if float(sdp) > 0
+            else "Bâtie — construite au maximum")
 
 
 def _traduire(idu: str, row, run: str) -> dict:
@@ -142,7 +162,7 @@ def _traduire(idu: str, row, run: str) -> dict:
     elif tier == "declasse_bati_sature":
         motif = row["fb_motif"]
     return {
-        "statut": tier, "label": TIER_LABELS.get(tier, tier), "tier": tier,
+        "statut": tier, "label": _label_bati(tier, row) or TIER_LABELS.get(tier, tier), "tier": tier,
         "rang": row["rang"], "servable": servable, "declasse": declasse,
         "badge_division": badge, "badge_division_libelle": badge_lib,
         "motif": motif, "exception_registre": ex_present,

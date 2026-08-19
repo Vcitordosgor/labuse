@@ -138,7 +138,7 @@ def test_declassee_reste_declassee_avec_motif(db_session):
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0003")
     assert v["statut"] == "declasse_bati_sature"
-    assert v["label"] == "Potentiel épuisé · bâti saturé"
+    assert v["label"] == "Bâtie — construite au maximum"
     assert v["servable"] is False and v["declasse"] is True
     assert "saturée" in v["motif"]                      # motif du filtre, jamais remonté
 

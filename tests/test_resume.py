@@ -70,7 +70,7 @@ def test_resume_declassee_bati_sature():
     verdict = _verdict("declasse_bati_sature",
                        motif="bâtie saturée — ratio 55 % (emprise 440 m²)")
     r = build_resume(verdict, [], None, {})
-    assert r["statut_label"] == "Potentiel épuisé · bâti saturé"
+    assert r["statut_label"] == "Bâtie — construite au maximum"
     assert "déclassée" in r["synthese"].lower() and "saturée" in r["synthese"]
     _no_forbidden(r)
 
