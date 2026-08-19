@@ -1323,6 +1323,8 @@ export function Fiche({ idu }: { idu: string }) {
   // devient « signal brut » ; le mot passe en atténué ; un encadré dit que l'écartement PRIME et
   // pourquoi la fréquence est absente. Déclenché hors tiers servables (verdict.tier == null) et
   // seulement si le signal dépasse la moyenne (×N ≥ 2) — l'écartée simple ×1,3 reste sobre.
+  // M129-C P3 — LA ligne « Division » (Sourcé pour le lot ; le potentiel ~N est ESTIMÉ, dit)
+  const division = f?.division ?? null
   const multBase = f?.score_v2?.mult_base ?? null
   const signalEcarte = !!(f?.score_v2 && verdict && verdict.tier == null && (multBase ?? 0) >= 2)
   const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
@@ -1577,6 +1579,14 @@ export function Fiche({ idu }: { idu: string }) {
                   )}
                 </div>
               </div>
+              {division && (
+                <p data-division-ligne style={{ margin: '6px 0 0', fontSize: 12.5, color: 'var(--txt-mut, #5C7268)' }}>
+                  <b style={{ fontWeight: 600 }}>Division :</b> {division.ligne}
+                  <span title={division.potentiel_source} style={{ marginLeft: 6, fontSize: 10.5, border: '1px solid currentColor', borderRadius: 4, padding: '0 4px', opacity: 0.8 }}>
+                    {division.statut_revue}
+                  </span>
+                </p>
+              )}
               {f.score_v2?.mult_base != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>

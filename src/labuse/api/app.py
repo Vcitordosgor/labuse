@@ -1886,6 +1886,33 @@ def _qualite_commune(insee: str | None) -> dict | None:
     }
 
 
+def _division_fiche(db: Session, idu: str, surface_m2: float | None) -> dict | None:
+    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates)."""
+    r = db.execute(text(
+        "SELECT residuel_m2, residuel_facade_m, type_division, "
+        "       (coalesce(note_revue,'') <> '') AS revue "
+        "FROM division_or_candidates WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not r:
+        return None
+    try:
+        from .. import config as _cfg
+        lot_type = float(_cfg.seuils_geometrie()["division_or"].get("lot_type_m2_defaut", 350))
+    except Exception:  # noqa: BLE001
+        lot_type = 350.0
+    pot = max(1, int((surface_m2 or 0) // lot_type)) if surface_m2 else None
+    return {
+        "lot_m2": int(r["residuel_m2"]) if r["residuel_m2"] is not None else None,
+        "facade_m": float(r["residuel_facade_m"]) if r["residuel_facade_m"] is not None else None,
+        "type": r["type_division"],
+        "statut_revue": "vérifié" if r["revue"] else "calculé, non revu",
+        "potentiel_lots": pot,                       # ESTIMÉ — surface ÷ lot type (config)
+        "potentiel_source": "Estimé — surface ÷ lot type de la zone (config), pas une promesse",
+        "ligne": (f"1 lot détachable de {int(r['residuel_m2'])} m²"
+                  + (f" (façade {r['residuel_facade_m']:.0f} m)" if r["residuel_facade_m"] else "")
+                  + (f" · potentiel total ~{pot} lots (Estimé)" if pot else "")),
+    }
+
+
 def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dict]:
     """M52 L3 — « Les données » : sources RÉELLEMENT utilisées sur CETTE fiche (distinct des
     couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
@@ -2547,6 +2574,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
         "score_v2": score_v2, "etage0": bool(head["etage0"]),  # M129-B : q/a retirés
+        # M129-C P3 — LA ligne « Division » (UNE, unifiée) : le lot détachable = calcul
+        # division_or (Sourcé, géométrie vérifiée) ; le potentiel ~N lots = surface ÷ lot type
+        # (ESTIMÉ, dit — jamais une promesse). Badge revue : « vérifié » (note_revue humaine)
+        # / « calculé, non revu » — la revue est un badge, plus une porte.
+        "division": _division_fiche(db, idu, head["surface_m2"]),
         "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
         "data_sources": _data_sources_fiche(db, head["id"], run_label),   # M52 L3 — « Les données » (sources utilisées)
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
