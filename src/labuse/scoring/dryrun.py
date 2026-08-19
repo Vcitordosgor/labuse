@@ -13,6 +13,12 @@ from ..config import load_yaml_config
 
 
 def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
+    """M129-B — MORTE : la matrice fusionne dans la cascade (statut) + tier v2 (présentation).
+    Refus explicite — jamais un calcul fantôme. Le code reste lisible pour l'histoire des runs."""
+    raise RuntimeError("compute_matrice est MORTE (M129) — statut cascade + tier v2 la remplacent.")
+
+
+def _compute_matrice_morte_m129(session: Session, run_label: str, commune: str) -> dict:
     """Post-pass matrice Q×A sur un run existant (lit dryrun_cascade_results, écrit q/a/statut dans
     dryrun_parcel_evaluations). Aucune ré-évaluation. Seuils/couches-A/base en config (tunable).
 

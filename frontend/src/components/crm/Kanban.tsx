@@ -97,7 +97,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
         {prem && (
           <>
             <Tip tip={SCORE_TIP.q}>
-              <span className="font-display text-xs font-bold tnum" style={{ color: meta?.color }}>{prem.q_score}</span>
+              <span className="font-display text-xs font-bold tnum" style={{ color: meta?.color }}>{prem.rang_v2 != null ? `#${prem.rang_v2}` : ''}</span>
             </Tip>
             {/* M36 Lot B : point/pourcentage Complétude RETIRÉS (quasi-constante — M35 D3). */}
           </>

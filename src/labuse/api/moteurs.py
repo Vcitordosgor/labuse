@@ -58,7 +58,7 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
           AND cr.detail LIKE 'Zone PLU « U%'"""),
         {"c": commune, "run": RUN}).scalar() or 0.0
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel, d.q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel, d.opportunity_score AS q_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
@@ -109,7 +109,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(422, "Sélectionnez au moins 2 parcelles")
     rows = db.execute(text("""
         SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
-               s2.tier AS statut, d.q_score,
+               s2.tier AS statut, d.opportunity_score AS q_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                pm.denomination, pm.siren, pm.groupe_label
@@ -277,7 +277,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         GROUP BY sl.commune ORDER BY ha_artif DESC NULLS LAST"""), ).mappings().all()
     # parcelles « ZAN-compatibles » : artificialisées NON bâties, promues (bonus ocs_ge > 0 au run)
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.opportunity_score AS q_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
@@ -287,7 +287,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'ocs_ge' AND cr.weight_applied > 0
           AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
-        ORDER BY d.q_score DESC LIMIT 400"""), {"run": RUN, "v2run": _v2run(db)}).mappings().all()
+        ORDER BY d.opportunity_score DESC LIMIT 400"""), {"run": RUN, "v2run": _v2run(db)}).mappings().all()
     return {
         "bandeau": ("Signal parcelle robuste (OCS-GE + friches + zonage) + consommation ENAF OBSERVÉE "
                     "par commune. Le budget/reste ZAN est une ESTIMATION (règle -50 %) — pas un droit "

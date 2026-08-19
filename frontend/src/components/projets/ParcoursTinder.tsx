@@ -163,7 +163,7 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
 
       <div className="mt-3 flex gap-2">
         {/* M36 Lot B : la puce Complétude est retirée (quasi-constante — M35 D3). */}
-        {[['Qualité', d?.q_score], ['Accès', d?.a_score]].map(([lab, val]) => (
+        {([] as [string, number | undefined][]).map(([lab, val]) => (  /* M129-B : q/a morts */
           <div key={lab as string} className="flex-1 rounded-lg bg-surface-3 px-2 py-1.5 text-center">
             <div className="num-key text-base">{val == null ? '—' : fmtInt(val as number)}</div>
             <div className="label-caps text-[9px]">{lab}</div>

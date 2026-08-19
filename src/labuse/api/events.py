@@ -349,11 +349,11 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
 
     # 1. bascules de statut (jointure sur les parcelles présentes dans les DEUX runs)
     rows = db.execute(text("""
-        SELECT p.idu, a.matrice_statut AS de, b.matrice_statut AS vers
+        SELECT p.idu, a.status AS de, b.status AS vers  -- M129-B : matrice morte
         FROM dryrun_parcel_evaluations a
         JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
         JOIN parcels p ON p.id = a.parcel_id
-        WHERE a.run_label = :from AND a.matrice_statut <> b.matrice_statut"""),
+        WHERE a.run_label = :from AND a.status IS DISTINCT FROM b.status"""),
         {"from": run_from, "to": run_to}).mappings().all()
     for r in rows:
         up = r["vers"] == "chaude" or (r["vers"] == "a_surveiller" and r["de"] in ("a_creuser", "ecartee"))
@@ -401,7 +401,7 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
         JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
         JOIN parcels p ON p.id = a.parcel_id
         JOIN watched_parcels w ON w.idu = p.idu
-        WHERE a.run_label = :from AND a.matrice_statut <> b.matrice_statut
+        WHERE a.run_label = :from AND a.status IS DISTINCT FROM b.status
           AND 'chaude' IN (a.matrice_statut, b.matrice_statut)"""),
         {"from": run_from, "to": run_to}).mappings().all()
     for r in rows:

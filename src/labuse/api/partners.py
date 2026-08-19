@@ -487,14 +487,16 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
     # (zéro partenaire actif — gratuite aujourd'hui, coûteuse après le premier client).
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
-               d.q_score, d.a_score, d.completeness_score, r.sdp_residuelle_m2
+               d.opportunity_score AS q_score, d.opportunity_score AS a_score,  -- M129-B : matrice
+               -- morte — le contrat v1 garde ses CLÉS, alimentées par le score cascade (vivant).
+               d.completeness_score, r.sdp_residuelle_m2
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE p.commune = :c AND d.q_score >= :q
+        WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
-        ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
+        ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
         {"run": RUN, "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).

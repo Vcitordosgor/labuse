@@ -535,7 +535,7 @@ function M07() {
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
             sub={`${(i['denomination'] as string) ?? ''} · ${i['verrou']}`}
-            right={<V>{i['q_score'] as number}</V>}
+            right={<V>{(i['q_score'] ?? '') as number}</V>}
             fiche={[['▲ Gelé', String(i['verrou'])], ['Levier', String(i['levier'])],
               ['Propriétaire', `${i['denomination']} (${i['siren']})`]]} />
         ))}
