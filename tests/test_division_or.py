@@ -19,18 +19,18 @@ def test_expose_true():
 
 def test_seuils_conservateurs_dans_detect():
     q = d._DETECT
-    assert "BETWEEN 1000 AND 6000" in q            # parcelle assez grande pour DEUX lots
-    assert "BETWEEN 0.08 AND 0.45" in q            # bâti présent mais ne remplit pas
-    assert "free_m2 >= 500" in q and "surface_m2 - 400" in q   # les deux lots restent viables
-    assert "rad >= 9" in q                          # pas de lanière (largeur ~18 m)
-    assert "facade_free >= 12" in q                 # accès voirie indépendant
+    assert "BETWEEN {surface_min} AND {surface_max}" in q  # M129-C : seuils en CONFIG (seuils_geometrie.yaml)            # parcelle assez grande pour DEUX lots
+    assert "BETWEEN {ratio_min} AND {ratio_max}" in q            # bâti présent mais ne remplit pas
+    assert "free_m2 >= {lot_min}" in q and "surface_m2 - {reste_min}" in q   # les deux lots restent viables
+    assert "rad >= {rayon_min}" in q                          # pas de lanière (largeur ~18 m)
+    assert "facade_free >= {facade_min}" in q                 # accès voirie indépendant
 
 
 def test_correctifs_o12_ile_dans_detect():
     """Revue O12-ÎLE (20 cartes Entre-Deux + Bras-Panon) — trois défauts corrigés."""
     q = d._DETECT
     # démembrement ≠ division : le lot ne peut pas emporter plus de la moitié de la parcelle
-    assert "free_m2 <= surface_m2 * 0.5" in q
+    assert "free_m2 <= surface_m2 * {lot_part_max}" in q
     # division URBAINE : zone dominante du LOT en U/AU ; A et N exclus ; RNU → PAU estimée exigée
     assert "zone = 'U' OR zone LIKE 'AU%'" in q
     assert "zone IS NULL AND ({pau_pred})" in q
@@ -99,7 +99,7 @@ def test_lot_decoupe_o12_partiel():
     q = d._DETECT_PARTIEL
     # univers : écartées par le SEUL ratio > 50 % ; filtres parcelle inchangés (surface, bâti, activité)
     assert "ST_Area(lg.geom) > c.surface_m2 * 0.5" in q
-    assert "BETWEEN 1000 AND 6000" in q and "BETWEEN 0.08 AND 0.45" in q
+    assert "BETWEEN {surface_min} AND {surface_max}" in q  # M129-C : seuils en CONFIG (seuils_geometrie.yaml) and "BETWEEN 0.08 AND 0.45" in q
     assert "nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}" in q
     # bande ancrée sur le plus long segment CONTIGU de façade (LineMerge), bouts droits
     assert "ST_LineMerge" in q and "endcap=flat" in q and "ST_LineSubstring" in q

@@ -65,6 +65,22 @@ def _seuils_cfg() -> dict:
 
 _S = _seuils_cfg()
 
+def _cosia_guard_sql(session) -> str:
+    """M129-C P1.1 — garde CoSIA conditionnelle : table absente (base de test) → 'false'."""
+    if not session.execute(text("SELECT to_regclass('parcel_bati_revele') IS NOT NULL")).scalar():
+        return "false"
+    return ("EXISTS (SELECT 1 FROM parcel_bati_revele rbz WHERE rbz.idu = zon.idu "
+            f"AND rbz.emprise_cosia_m2 >= {int(_S.get('cosia_min_m2', 50))})")
+
+
+def _pente_guard_sql(session) -> str:
+    """M129-C P1.2 — garde PENTE conditionnelle (seuil config, degrés)."""
+    if not session.execute(text("SELECT to_regclass('parcel_terrain') IS NOT NULL")).scalar():
+        return "false"
+    return ("EXISTS (SELECT 1 FROM parcel_terrain ptz WHERE ptz.idu = zon.idu "
+            f"AND ptz.pente_moy_deg > {float(_S.get('pente_max_deg', 20))})")
+
+
 EXPOSE = True    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
                  # de calibrage PLU (pool 35, 0 faux positif connu). Le câblage client (encadré →
                  # chiffres) est fait par M22-D (section divisibilité du Rapport de potentiel).
@@ -266,12 +282,10 @@ FROM zon
 WHERE facade_free >= {facade_min}
   -- M129-C P1.1 — CoSIA branché : un bâti RÉVÉLÉ (que BD TOPO ne voit pas) invalide le lot
   -- calculé sur la couche aveugle. Le filet PC Sitadel reste (bâti récent AVEC permis).
-  AND NOT EXISTS (SELECT 1 FROM parcel_bati_revele rbz WHERE rbz.idu = zon.idu
-                    AND rbz.emprise_cosia_m2 >= {cosia_min_m2})
-  -- M129-C P1.2 — PENTE branchée (MNT jamais lu avant, audit) : seuil config {pente_max_deg}°
+  AND NOT ({cosia_guard})
+  -- M129-C P1.2 — PENTE branchée (MNT jamais lu avant, audit) : seuil config (degrés)
   -- (P95 du gabarit 1000-6000 m² = 19,4° ; max des 7 validées = 17,9° — non calibré par revue).
-  AND NOT EXISTS (SELECT 1 FROM parcel_terrain ptz WHERE ptz.idu = zon.idu
-                    AND ptz.pente_moy_deg > {pente_max_deg})
+  AND NOT ({pente_guard})
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   -- O12-GARDE (Vic 30/07) : garde de CONSTRUCTIBILITÉ EN AMONT. Un candidat dont la parcelle
   -- SUPPORT est écartée DÉFINITIVEMENT à l'étage 0 du RUN SERVI (`:served` = Q_A_RUN_LABEL → la
@@ -449,10 +463,8 @@ SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_
 FROM zon
 WHERE facade_lot >= 12
   -- M129-C P1 — mêmes gardes que la famille résiduelle : bâti RÉVÉLÉ (CoSIA) + PENTE (MNT)
-  AND NOT EXISTS (SELECT 1 FROM parcel_bati_revele rbz WHERE rbz.idu = zon.idu
-                    AND rbz.emprise_cosia_m2 >= {cosia_min_m2})
-  AND NOT EXISTS (SELECT 1 FROM parcel_terrain ptz WHERE ptz.idu = zon.idu
-                    AND ptz.pente_moy_deg > {pente_max_deg})
+  AND NOT ({cosia_guard})
+  AND NOT ({pente_guard})
   AND facade_reste >= 12
   -- C2 : le reste doit être D'UN SEUL TENANT (tolérance 1 m² pour les slivers cadastraux)
   AND nb_reste = 1
@@ -735,8 +747,8 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
                 "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
                 {"c": commune})
             detect = _DETECT_PARTIEL.format(
-                cosia_min_m2=int(_S.get('cosia_min_m2', 50)),
-                pente_max_deg=float(_S.get('pente_max_deg', 20)),
+                cosia_guard=_cosia_guard_sql(session),
+                pente_guard=_pente_guard_sql(session),
                 pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                 grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
                 lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
@@ -836,8 +848,8 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                                     lot_part_max=float(_S.get('lot_part_max', 0.5)),
                                     rayon_min=int(_S.get('rayon_inscrit_min_m', 9)),
                                     facade_min=int(_S.get('facade_min_m', 12)),
-                                    cosia_min_m2=int(_S.get('cosia_min_m2', 50)),
-                                    pente_max_deg=float(_S.get('pente_max_deg', 20)),
+                                    cosia_guard=_cosia_guard_sql(session),
+                                    pente_guard=_pente_guard_sql(session),
                                     emprise_max=_emprise_max_sql(commune),
                                     activite_pred=_activite_pred_sql(commune),
                                     descr_re=ACTIVITE_DESCR_RE,
