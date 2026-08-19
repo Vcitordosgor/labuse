@@ -2693,10 +2693,14 @@ def division_or_cmd(
         else:
             raise typer.BadParameter("préciser --communes <NOM|INSEE,...> ou --all")
         r = division_or.build_divisions(s, cibles, log=typer.echo)
-        if r.get("failures"):
-            typer.echo(f"⚠ {len(r['failures'])} commune(s) en échec (île poursuivie, non écrites) : "
-                       f"{', '.join(r['failures'])} — voir les lignes ÉCHEC ci-dessus.")
-        typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
+        # M129-C : la famille DÉCOUPE (O12-PARTIEL, bande de façade) rejoint le GESTE UNIQUE —
+        # elle n'avait JAMAIS été câblée au CLI (build_divisions_partiel orpheline, mesuré).
+        rp = division_or.build_divisions_partiel(s, cibles, log=typer.echo)
+        fails = (r.get("failures") or []) + (rp.get("failures") or [])
+        if fails:
+            typer.echo(f"⚠ {len(fails)} commune(s)/famille(s) en échec (île poursuivie, non "
+                       f"écrites) : {', '.join(fails)} — voir les lignes ÉCHEC ci-dessus.")
+        typer.echo(f"✓ division_or_candidates : {r['total']} résiduelle + {rp.get('total', 0)} découpe")
 
 
 @app.command("division-or-review")

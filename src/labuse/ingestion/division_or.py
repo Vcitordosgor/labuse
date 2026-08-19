@@ -749,6 +749,10 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             detect = _DETECT_PARTIEL.format(
                 cosia_guard=_cosia_guard_sql(session),
                 pente_guard=_pente_guard_sql(session),
+                surface_min=int(_S.get('surface_min_m2', 1000)),
+                surface_max=int(_S.get('surface_max_m2', 6000)),
+                ratio_min=float(_S.get('bati_ratio_min', 0.08)),
+                ratio_max=float(_S.get('bati_ratio_max', 0.45)),
                 pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                 grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
                 lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,

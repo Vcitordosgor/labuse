@@ -47,10 +47,10 @@ def test_resume_brulante():
 def test_resume_brulante_badge_division():
     # Bâtie marginale divisible SERVIE (étage 3) : le badge nuance, ne déclasse jamais (CY0197).
     verdict = _verdict("brulante", rang=163,
-                       badge_division_libelle="bâtie + division possible (bâtie à ~29 %)")
+                       badge_division_libelle="bâtie — emprise marginale (bâtie à ~29 %)")
     r = build_resume(verdict, [], None, {"has_manual_contact": False})
     assert r["statut_label"] == "Brûlante"
-    assert "bâtie + division possible" in r["synthese"]
+    assert "bâtie — emprise marginale" in r["synthese"]
     assert "déclass" not in r["synthese"].lower()   # jamais un déclassement silencieux
     _no_forbidden(r)
 
