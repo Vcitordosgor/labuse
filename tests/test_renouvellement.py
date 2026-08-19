@@ -87,13 +87,13 @@ def _seed_bati_exclude(s, pid, detail=None):
         detail = bati.classify(0.6, 2, 100, 800)["motif"]   # « déjà bâtie : 2 bâtiment(s) couvrant 60 % … »
     s.execute(text(
         "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
-        "VALUES (:r, :p, 'bati', 'HARD_EXCLUDE', :d)"), {"r": _RUN, "p": pid, "d": detail})
+        "VALUES (:r, :p, 'bati', 'SOFT_FLAG', :d)"), {"r": _RUN, "p": pid, "d": detail})
 
 
 def _seed_public_exclude(s, pid):
     s.execute(text(
         "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
-        "VALUES (:r, :p, 'foncier_public', 'HARD_EXCLUDE', 'domaine public — non acquérable')"),
+        "VALUES (:r, :p, 'foncier_public', 'SOFT_FLAG', 'domaine public — non acquérable')"),
         {"r": _RUN, "p": pid})
 
 
@@ -159,7 +159,7 @@ def test_build_definition_a1(db_session):
     assert sorted(x["rang_segment"] for x in rows.values()) == list(range(1, len(rows) + 1))
     # entonnoir cohérent : final = n
     assert r["funnel"]["5_hors_foncier_public_final"] == r["n"] == len(rows)
-    assert r["funnel"]["1_bati_exclues"] >= r["funnel"]["2_zone_u_au"] >= r["funnel"]["3_capacite"] \
+    assert r["funnel"]["1_bati_fait"] >= r["funnel"]["2_zone_u_au"] >= r["funnel"]["3_capacite"] \
         >= r["funnel"]["4_hors_copro"] >= r["n"]
 
 

@@ -1,9 +1,1 @@
-# LABUSE — POINT DE VÉRITÉ UNIQUE du run servi (M31, arbitrage Vic).
-# Ce fichier VERSIONNÉ est lu par les trois surfaces qui doivent raconter le même run :
-#   1. backend  : src/labuse/scoring/score_v_constants.py (Q_A_RUN_LABEL)
-#   2. bundle   : frontend/vite.config.ts injecte VITE_RUN_LABEL au build → api.ts SOURCE
-#   3. tuiles   : `labuse build-mvt` matérialise mvt_meta.run_label depuis Q_A_RUN_LABEL
-# Le test tests/test_run_serving_coherence.py vérifie que les trois == cette valeur.
-# Pour BASCULER le run servi : changer CETTE ligne, puis `npm run build` + `labuse build-mvt`.
-# (Première ligne non-commentée = la valeur. LABUSE_SERVED_RUN reste un override de DEV, loggé WARNING.)
-q_v9_m81
+q_v10_m129

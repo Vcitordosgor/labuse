@@ -45,7 +45,7 @@ export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; color: st
   // M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » — « déclassée »
   // suggérait un retrait ; c'est un VERDICT calculé (le potentiel résiduel ne paie plus
   // l'opération standard). Codes techniques declasse_* INCHANGÉS.
-  declasse_bati_sature: { label: 'Potentiel épuisé · bâti saturé', color: DECLASSE_COLOR },
+  declasse_bati_sature: { label: 'Bâtie — construite au maximum', color: DECLASSE_COLOR }, // M129-D : le libellé fin (« on peut encore construire ») vient du backend (SDP)
   declasse_non_constructible: { label: 'Potentiel épuisé · inconstructible (géométrie)', color: DECLASSE_COLOR },
   declasse_bati_revele: { label: 'Potentiel épuisé · bâti révélé', color: DECLASSE_COLOR },
   declasse_zone_fermee: { label: 'Potentiel épuisé · fermée à l\'urbanisation', color: DECLASSE_COLOR },

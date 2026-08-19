@@ -22,6 +22,16 @@ from .ia import SECTEURS
 from .tenant import current_compte
 
 
+
+def _caps_projets() -> dict:
+    """M129-D P0.2 — caps du flux Projet en CONFIG (config/projets.yaml), plus jamais en dur.
+    Repli sur les défauts historiques si la config est absente (base de test nue)."""
+    try:
+        from .. import config as _cfg
+        return _cfg.load_yaml_config("projets")
+    except Exception:  # noqa: BLE001
+        return {}
+
 def _scope(q, cid: int | None):
     """AUDIT PAIEMENT · SEC-IDOR — restreint une query ORM Projet au compte de la session
     (NULL = bucket pilote/démo). Explicite plutôt que magique : la cloison se lit."""
@@ -515,7 +525,9 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
     RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
     Rend le DIFF (entrées/sorties/tris conservés) pour que le rejeu DISE ce qui change."""
-    lim = max(1, min(limit or 60, 200))
+    caps = _caps_projets()
+    lim = max(1, min(limit or int(caps.get("shortlist_defaut", 60)),
+                     int(caps.get("shortlist_max", 200))))  # M129-D : caps en config
     avant = {r.idu: r.statut for r in db.execute(text(
         "SELECT par.idu, pp.statut FROM projet_parcelles pp JOIN parcels par ON par.id = pp.parcel_id "
         "WHERE pp.projet_id = :p"), {"p": p.id}).all()}
@@ -923,7 +935,10 @@ def projet_chercher_plus(pid: int, body: ChercherPlusIn, request: Request, db: S
         overrides["communes"] = None
     if body.surface_min is not None:
         overrides["surfaceMin"] = body.surface_min
-    lim = max(1, min(body.limit, 60))
+    caps = _caps_projets()
+    lim = max(1, min(body.limit, int(caps.get("shortlist_max", 200))))  # M129-D : chercher-plus
+    # rejoint shortlist_max — la dette M122 « cap 60 » est morte : un projet peut demander
+    # jusqu'au plafond CONFIG, et la shortlist DIT toujours son univers (M120-B).
     items = _search_items(db, p.filtres or {}, lim, overrides=overrides or None)
     idus = [it["idu"] for it in items]
     id_by_idu = {r.idu: r.id for r in db.execute(
