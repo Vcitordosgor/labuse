@@ -29,6 +29,16 @@ def _v2run(db: Session) -> str | None:
     return _score_v2_run_id(db)
 
 
+def _moteurs_cap(name: str, defaut: int) -> int:
+    """M137-O — plafonds des moteurs EN CONFIG (config/moteurs.yaml), plus jamais en dur.
+    Repli sur le défaut historique si la config est absente (base de test nue)."""
+    try:
+        from ..config import load_yaml_config
+        return int(load_yaml_config("moteurs").get(name, defaut))
+    except Exception:  # noqa: BLE001
+        return defaut
+
+
 # ───────────────────────── M15 — SIMULATEUR PLU ─────────────────────────
 # « Et si cette zone AU passait en U ? » — recalcul À BLANC, JAMAIS persisté.
 # Méthode (documentée, honnête) : ESTIMATION PAR ANALOGIE — la SDP estimée des parcelles AU
@@ -57,22 +67,27 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE 'Zone PLU « U%'"""),
         {"c": commune, "run": RUN}).scalar() or 0.0
+    # M137-O — le plafond de liste sort du DUR (config/moteurs.yaml) ; on sert AUSSI le total réel pour
+    # que l'écran DISE « les N premières sur M » (un plafond muet ment — leçon M120-B). Le total est tiré
+    # par `count(*) OVER ()` DANS le même scan que la liste (avant LIMIT) — pas de 2e balayage ILIKE.
+    cap = _moteurs_cap("simulplu_max", 400)
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel, d.opportunity_score AS q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
+               count(*) OVER () AS n_total,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM dryrun_cascade_results cr
         JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        -- M99 (périmètre point 4) : ILIKE — le seul comparateur de zone servi sensible à la casse ;
+        -- la graphie GPU brute est retrouvée quelle que soit sa casse.
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
-          -- M99 (périmètre point 4) : ILIKE — ce match sur le verbatim cascade était le seul
-          -- comparateur de zone servi SENSIBLE à la casse ; la liste /simulplu/zones sert la
-          -- graphie GPU brute, le match la retrouve désormais quelle que soit sa casse.
           AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
-        ORDER BY p.surface_m2 DESC LIMIT 400"""),
-        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db)}).mappings().all()
+        ORDER BY p.surface_m2 DESC LIMIT :cap"""),
+        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "cap": cap}).mappings().all()
+    n_total = int(rows[0]["n_total"]) if rows else 0
     items = []
     bascules = 0
     for r in rows:
@@ -82,7 +97,7 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         bascules += bascule
         items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "statut_actuel": r["statut_actuel"],
                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
-                      "q_actuel": r["q_score"], "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
+                      "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
                       "geom": json.loads(r["g"])})
     return {
         "zone": zone, "commune": commune or "Toute l'île", "ratio_analogie": round(float(ratio), 3),
@@ -90,7 +105,8 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
                     f"surface × ratio médian SDP/surface des parcelles U de {commune or 'toute l’île'} "
                     f"({round(float(ratio), 3)}). Le vrai recalcul = règlement U appliqué au moteur "
                     "de faisabilité (prochain cycle)."),
-        "n_parcelles": len(items), "bascules_potentielles": bascules,
+        "n_parcelles": len(items), "n_total": n_total, "cap": cap, "tronquee": n_total > len(items),
+        "bascules_potentielles": bascules,
         "sdp_totale_estimee_m2": sum(i["sdp_estimee_m2"] for i in items),
         "items": items,
     }
@@ -109,7 +125,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(422, "Sélectionnez au moins 2 parcelles")
     rows = db.execute(text("""
         SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
-               s2.tier AS statut, d.opportunity_score AS q_score,
+               s2.tier AS statut, d.opportunity_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                pm.denomination, pm.siren, pm.groupe_label
@@ -181,7 +197,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,
         "score_assemblage": score, "sans_potentiel": sans_potentiel,
-        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score")},
+        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "opportunity_score")},
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "proprio": pr}
                   for r, pr in zip(rows, proprios)],
@@ -277,7 +293,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         GROUP BY sl.commune ORDER BY ha_artif DESC NULLS LAST"""), ).mappings().all()
     # parcelles « ZAN-compatibles » : artificialisées NON bâties, promues (bonus ocs_ge > 0 au run)
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.opportunity_score AS q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.opportunity_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
@@ -295,7 +311,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         "caveat": _ZAN_CAVEAT, "source_conso": _ENAF_SOURCE,
         "indicateurs": _zan_indicateur(db),   # consommé Sourcé + budget/reste Estimé, par commune
         "communes": [dict(r) for r in communes],
-        "zan_compatibles": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score")},
+        "zan_compatibles": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "opportunity_score")},
                              "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                              "geom": json.loads(r["g"])} for r in rows],
     }

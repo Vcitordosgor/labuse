@@ -1,0 +1,4 @@
+# LA BUSE — plafonds des moteurs d'analyse (M15 Changement PLU, …). Tunables ICI, jamais en dur.
+# M137-O — le simulateur PLU liste au plus `simulplu_max` parcelles par zone ; au-delà, l'écran DIT
+# « les N premières sur M » (jamais un plafond MUET — un chiffre tronqué en silence ment, leçon M120-B).
+simulplu_max: 400

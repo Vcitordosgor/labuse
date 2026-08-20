@@ -49,7 +49,10 @@ export function M15() {
       {d && (
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            <div><b className="text-txt">{fmt(d.n_parcelles)}</b> parcelles en {d.zone} · ratio analogie <b className="text-txt">{d.ratio_analogie}</b></div>
+            {/* M137-O — plafond DIT, jamais muet : « les N premières sur M » quand la liste est tronquée. */}
+            <div>{d.tronquee
+              ? <>les <b className="text-txt">{fmt(d.n_parcelles)}</b> premières sur <b className="text-txt">{fmt(d.n_total)}</b> parcelles en {d.zone}</>
+              : <><b className="text-txt">{fmt(d.n_parcelles)}</b> parcelles en {d.zone}</>} · ratio analogie <b className="text-txt">{d.ratio_analogie}</b></div>
             <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(d.sdp_totale_estimee_m2)} m²</b> ·{' '}
               <b className="tnum text-mint">{fmt(d.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
           </div>
