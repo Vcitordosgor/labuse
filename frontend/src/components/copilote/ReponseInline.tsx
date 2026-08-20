@@ -20,7 +20,7 @@ const KICKER: Record<string, string> = {
 
 export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill,
-    setView, setCommune, setFilters, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
+    setView, setFilters, setVerdict, openListing, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
   // M118 — la VOIE d'un refus-voie : NAVIGATION pure vers la surface qui fait le travail (jamais une
   // exécution). Chaque cible mène à son écran ; la fiche/courrier ouvre la parcelle si l'IDU est connu.
   const allerVoie = () => {
@@ -42,8 +42,20 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   }
   const ouvrirCarte = () => {
     const cf = v2.carte_filtre!
-    setFilters({ ...EMPTY_FILTERS, ...(cf.filtres as Partial<typeof EMPTY_FILTERS>) })
-    if (cf.commune) setCommune(cf.commune)
+    // M137-I — à l'arrivée, le résultat est DÉJÀ VISIBLE : filtre appliqué + listing ouvert, pas un
+    // filtre à confirmer. Trois points :
+    //  • la commune passe par le FILTRE `communes` (et non `setCommune`) → on RESTE en mode ÎLE, dont
+    //    le listing est SERVEUR (getResults) et applique TOUS les critères, signaux compris. Le mode
+    //    commune, lui, liste le GeoJSON filtré CLIENT (matchAll) qui IGNORE les signaux → il aurait
+    //    montré toutes les parcelles de la commune, pas les {N} annoncées (mesuré : 33 910 vs 66).
+    //  • `analyseLabuse` reste FAUX (EMPTY_FILTERS) → mode FACTUEL : le compte = celui du Copilote
+    //    (facette `tiers=None` ≡ factuel « toute la trame » ; l'analyse LABUSE retirerait l'étage 0
+    //    et afficherait un compte plus petit → mentirait sur le nombre annoncé).
+    //  • `setVerdict(true)` monte ResultsSection ; `openListing()` ouvre le panneau sur la liste.
+    setFilters({ ...EMPTY_FILTERS, ...(cf.filtres as Partial<typeof EMPTY_FILTERS>),
+      ...(cf.commune ? { communes: [cf.commune] } : {}) })
+    setVerdict(true)
+    openListing()
     setView('cartes')
   }
 

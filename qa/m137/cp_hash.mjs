@@ -1,0 +1,13 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE = 'http://localhost:5173/socle/';
+const Q = 'combien de parcelles en procédure collective à Saint-Paul';
+const b = await chromium.launch({ channel: 'chrome' });
+const page = await b.newPage({ viewport: { width: 1440, height: 1024 } });
+const soft = async (fn, w) => { try { await fn() } catch (e) { console.log('WARN', w, String(e).slice(0,140)) } };
+await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(3500);
+await soft(async () => { await page.locator('button[title="IA"]').click(); await page.waitForTimeout(1200); }, 'copilote');
+await soft(async () => { const t=page.locator('[data-brief]').first(); await t.click(); await t.fill(Q); await page.waitForTimeout(300); const e=page.locator('[data-accueil-envoyer]'); if(await e.count()) await e.click(); else await t.press('Enter'); }, 'question');
+await page.waitForSelector('[data-reponse-carte]', { timeout: 45000 }).catch(()=>{});
+await soft(async () => { await page.locator('[data-reponse-carte]').click(); await page.waitForTimeout(2000); }, 'clic');
+console.log('hash après clic:', decodeURIComponent(await page.evaluate(() => location.hash)));
+await b.close();

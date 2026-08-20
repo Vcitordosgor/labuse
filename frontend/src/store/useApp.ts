@@ -170,6 +170,7 @@ interface AppState {
   mobilePanelOpen: boolean
   setMobilePanelOpen: (v: boolean) => void
   openFiltres: () => void
+  openListing: () => void
   // volet CONTEXTE COMMUNE (SRU/ANRU/PLH/marché) — ouvert depuis le sélecteur ou le header
   contexteCommune: string | null
   setContexteCommune: (c: string | null) => void
@@ -377,6 +378,10 @@ export const useApp = create<AppState>((set) => ({
   mobilePanelOpen: false,
   setMobilePanelOpen: (mobilePanelOpen) => set({ mobilePanelOpen }),
   openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true }),
+  // M137-I — le panneau OUVERT sur le LISTING (les parcelles retenues). Utilisé quand on arrive sur la
+  // carte avec un résultat DÉJÀ prêt à voir (ex. « Voir sur la carte » du Copilote) : plus de filtre à
+  // confirmer. Doit aller de pair avec `verdict: true` (c'est lui qui monte ResultsSection).
+  openListing: () => set({ panelOpen: true, panneauSection: 'listing', mobilePanelOpen: true, accueilVu: true }),
   toast: null,
   setToast: (toast) => set({ toast }),
   algoModale: null,
