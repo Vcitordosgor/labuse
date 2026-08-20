@@ -46,6 +46,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
     ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
   const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
+  // M134 — dispositifs : millésime servi (React Query dédoublonne avec la carte, aucun fetch en plus)
+  const qpvQ = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
+  const anruQ = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
   const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
   const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
   const fmtMill = (m?: string) => (m ? ` · intégré le ${m.split('-').reverse().join('/')}` : '')
@@ -63,8 +66,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const equipPeint = peint.equipements
   // 50 pas / Renouvellement / aléas : GeoJSON sans minzoom — peints dès que la couche est active
   const aleaActif = aleaActifHook
+  const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr   // M134
   const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
-    && !aleaActif && !layers.transport && !layers.lignes_ht
+    && !aleaActif && !layers.transport && !layers.lignes_ht && !dispoActif
   if (rien) return null
 
   return (
@@ -217,6 +221,53 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             </div>
           </Tip>
           <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN (Licence Ouverte){fmtMill(mill(htQ))}</p>
+        </div>
+      )}
+
+      {/* ── M134 : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal froid) ;
+          l'intensité d'un régime se lit à l'OPACITÉ (ZFANG renforcé, FRR totalité plus denses). ── */}
+      {dispoActif && (
+        <div data-legend-dispositifs className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <p className="label-caps mb-2">Dispositifs et périmètres</p>
+          <div className="flex flex-col gap-1.5 text-[11px] text-txt">
+            {layers.qpv && (
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />
+                QPV — quartier prioritaire{fmtMill(mill(qpvQ))}
+              </span>
+            )}
+            {layers.tva_primo && (
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tvaPrimo, opacity: tTheme.tvaPrimoOpacity + 0.35, borderColor: tTheme.tvaPrimo }} />
+                <span>TVA réduite primo-accédant (QPV + 500 m) — <i className="text-txt-dim">dérivé LABUSE</i></span>
+              </span>
+            )}
+            {layers.anru && (
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />
+                NPNRU / ANRU — renouvellement urbain{fmtMill(mill(anruQ))}
+              </span>
+            )}
+            {layers.zfang && (
+              <span className="flex items-center gap-2">
+                <span className="flex shrink-0 gap-0.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.zfang, opacity: tTheme.zfangOpRenforce + 0.3 }} />
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.zfang, opacity: tTheme.zfangOpStandard + 0.3 }} />
+                </span>
+                ZFANG — zone franche (renforcé ▸ standard)
+              </span>
+            )}
+            {layers.frr && (
+              <span className="flex items-center gap-2">
+                <span className="flex shrink-0 gap-0.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.frr, opacity: tTheme.frrOpTotalite + 0.3 }} />
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.frr, opacity: tTheme.frrOpPartie + 0.3 }} />
+                </span>
+                FRR — France Ruralités (totalité ▸ en partie)
+              </span>
+            )}
+          </div>
+          <p className="mt-1.5 text-[10px] text-txt-dim">ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).</p>
         </div>
       )}
 

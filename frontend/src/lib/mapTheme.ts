@@ -66,6 +66,20 @@ export type MapTokens = {
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
+  /** M134 — couche « Dispositifs ». DEUX familles à l'œil : opérationnel = teintes CHAUDES
+   *  (QPV orange, ANRU chartreuse déjà présent) ; fiscal = teintes FROIDES (TVA cyan, ZFANG bleu,
+   *  FRR teal). L'INTENSITÉ d'un régime se lit à l'OPACITÉ (ZFANG renforcé / FRR totalité plus
+   *  denses) — l'identité de teinte ne bouge jamais (doctrine M105-B). Contour = teinte pleine. */
+  qpv: string
+  qpvOpacity: number
+  tvaPrimo: string
+  tvaPrimoOpacity: number
+  zfang: string
+  zfangOpRenforce: number
+  zfangOpStandard: number
+  frr: string
+  frrOpTotalite: number
+  frrOpPartie: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -105,6 +119,11 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#E8EFEA',            // blanc cassé — 15,1
     axe: '#8FA6C4',             // bleu-gris — 7,06
     ht: '#B9C4C0',              // 9,83 sur fond sombre
+    // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
+    qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
+    tvaPrimo: '#56C5D0', tvaPrimoOpacity: 0.24,           // cyan (fiscal, dérivé)
+    zfang: '#6C9BE8', zfangOpRenforce: 0.36, zfangOpStandard: 0.20,   // bleu (fiscal)
+    frr: '#56C79E', frrOpTotalite: 0.36, frrOpPartie: 0.20,           // teal (fiscal)
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -142,6 +161,11 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#14181A',            // quasi-noir — 15,9
     axe: '#33506B',             // bleu-gris profond — 7,50
     ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
+    // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
+    qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
+    tvaPrimo: '#1487A0', tvaPrimoOpacity: 0.24,           // cyan — aplat 1,34 ✓ ; contour 3,75 ✓
+    zfang: '#2E5FB0', zfangOpRenforce: 0.36, zfangOpStandard: 0.20,   // bleu — aplat 1,70/1,32 ✓ ; contour 5,55 ✓
+    frr: '#0E7A5B', frrOpTotalite: 0.36, frrOpPartie: 0.20,           // teal — aplat 1,65/1,31 ✓ ; contour 4,74 ✓
   },
 }
 
