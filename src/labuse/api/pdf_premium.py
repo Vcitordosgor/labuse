@@ -140,8 +140,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pm = (fiche.get("proprietaire_moral") or {}).get("denomination")
         detail = (f"Priorité par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
                   f"procédure collective — {fiche.get('evenement_detail') or 'procédure BODACC ouverte'}. "
-                  f"Le score qualité ({fiche.get('q_score')}) n'a pas déclenché ce statut : "
-                  "l'urgence du dossier vendeur prime (doctrine bascule).")
+                  "L'urgence du dossier vendeur prime, indépendamment du potentiel du terrain "
+                  "(doctrine bascule).")
         # hauteur du bandeau = titre + détail wrap (mesuré avant de peindre le fond)
         pdf.set_font("inter", size=7)
         n_lines = max(1, len(pdf.multi_cell(pdf.w - 36, 3.6, detail, dry_run=True, output="LINES")))
@@ -220,26 +220,29 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_y(y + card_h + 2)
     # M-P (P2-62) : le second verdict issu de la matrice éteinte est SUPPRIMÉ — un seul verdict/document.
 
-    # ── Scores (Q / A — le score ne s'affiche jamais seul)
-    # M36 Lot B : la jauge COMPLÉTUDE est RETIRÉE (3 valeurs sur tout le parc — n'informe
-    # pas ; arbitrage Vic M35 D3). L'ICD ci-dessous est la vraie jauge par parcelle.
-    y = pdf.get_y()
-    cw = (pdf.w - 28 - 4) / 2
-    vals = [("QUALITÉ", fiche["q_score"], MINT), ("ACCESSIBILITÉ", fiche["a_score"], (23, 122, 88))]
-    for i, (k, v, c) in enumerate(vals):
-        x = 14 + i * (cw + 4)
-        pdf.set_fill_color(*SURFACE)
-        pdf.rect(x, y, cw, 17, style="F", round_corners=True, corner_radius=2.4)
-        pdf.set_xy(x + 5, y + 2.6)
-        pdf.set_font("grotesk", size=15)
-        pdf.set_text_color(*c)
-        pdf.cell(cw - 10, 7, str(v))
-        pdf.set_xy(x + 5, y + 10.6)
+    # ── POURQUOI CE CLASSEMENT (les 2-3 raisons dominantes)
+    # M136 — le bloc matrice Q/A est RETIRÉ (matrice éteinte M129-B, `q_score`/`a_score` ne sont
+    # PLUS servis par la fiche → il crashait le PDF, KeyError). À la place, le patron de la fiche
+    # M135 : le tier d'ACTION + la fraction (« 1/3 sous 1 an ») + le motif d'exclusion vivent déjà
+    # dans la carte VERDICT ci-dessus ; ici les 2-3 RAISONS dominantes (contributions POSITIVES
+    # traduites en français, `pourquoi` = libelles_client — jamais un juge mort ressuscité).
+    pourquoi = ([c for c in (s2.get("pourquoi") or [])
+                 if c.get("signe") == "+" and c.get("phrase")][:3]) if s2 else []
+    if pourquoi:
         pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
-        # M54-AB F8 : chiffre de tête étiqueté (doctrine Sourcé/Estimé du banquier) — Q/A = Estimé.
-        pdf.cell(cw - 10, 4, f"{k} / 100 · ESTIMÉ")
-    pdf.set_y(y + 21)
+        pdf.cell(0, 3.6, "POURQUOI CE CLASSEMENT", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(0.4)
+        for c in pourquoi:
+            yy = pdf.get_y()
+            pdf.set_xy(16, yy)
+            pdf.set_font("inter", size=8)
+            pdf.set_text_color(*MINT)
+            pdf.cell(4, 4, "▸")
+            pdf.set_text_color(*TXT)
+            pdf.set_xy(20, yy)
+            pdf.multi_cell(pdf.w - 40, 4, c["phrase"])
+        pdf.ln(1.5)
 
     # ── M9 lot 1 — INDICE DE CONFIANCE DONNÉES (ICD). Méta d'affichage CLOISONNÉE du
     # score : dit la complétude des données, pas l'opportunité. Mention OBLIGATOIRE si < 60.
