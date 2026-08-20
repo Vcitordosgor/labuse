@@ -1506,9 +1506,10 @@ export function Fiche({ idu }: { idu: string }) {
             // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
             // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
             { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
-            // M137-G — « SECTEUR · NU » : prix du TERRAIN NU seul (jamais du bâti). Le « i » dit la
-            // méthode ET le cas vide (« — » = aucune vente de terrain nu dans la section sur la période).
-            { l: 'Secteur · nu',
+            // M137-G — « NU » : prix du TERRAIN NU seul (jamais du bâti). Libellé court (tenait sur
+            // deux lignes en « Secteur · nu ») ; le « i » dit la méthode ET le cas vide (« — » =
+            // aucune vente de terrain nu dans la section sur la période).
+            { l: 'Nu',
               v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—',
               i: 'Médiane du prix du terrain nu au m² — ventes 2021-2025 (géo-DVF), sur la commune + la section cadastrale de la parcelle. Le bâti n’y entre jamais. « — » : aucune vente de terrain nu dans cette section sur la période.' },
           ]
