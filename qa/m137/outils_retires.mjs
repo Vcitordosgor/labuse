@@ -1,0 +1,15 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE='http://localhost:5173/socle/'; const OUT=new URL('./captures',import.meta.url).pathname;
+const b=await chromium.launch({channel:'chrome'}); const page=await b.newPage({viewport:{width:1440,height:1024}});
+const soft=async(fn,w)=>{try{await fn()}catch(e){console.log('WARN',w,String(e).slice(0,120))}};
+await page.goto(BASE,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(3500);
+await soft(async()=>{await page.locator('button[title="Outils"]').click(); await page.waitForTimeout(1000);},'outils');
+const fant=await page.locator('[data-outil="fantome"]').count();
+const bail=await page.locator('[data-outil="bailleur"]').count();
+const lblF=await page.getByText('Foncier fantôme',{exact:false}).count();
+const lblB=await page.getByText('Mode bailleur',{exact:false}).count();
+const n=await page.locator('[data-outil]').count();
+console.log(`[data-outil=fantome]:${fant} [data-outil=bailleur]:${bail} | "Foncier fantôme":${lblF} "Mode bailleur":${lblB} | total outils:${n}`);
+await page.screenshot({path:`${OUT}/outils_retires.png`, clip:{x:0,y:0,width:620,height:1024}});
+await b.close();
+console.log((fant===0&&bail===0&&lblF===0&&lblB===0)?'OK — aucune entrée fantome/bailleur':'À VÉRIFIER');

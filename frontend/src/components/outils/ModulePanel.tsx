@@ -423,8 +423,10 @@ function M05() {
 }
 
 /* ───────────────────────────── M06 — MODE BAILLEUR ───────────────────────────── */
-
-function M06() {
+// M137-N (Vic 20/08/2026) — RETIRÉ du produit le 20/08/2026 (DORMANT). Plus câblé au menu (registry +
+// COMPONENTS). Composant conservé au dépôt (exporté pour rester compilable) ; endpoint /modules/bailleur
+// + tests conservés.
+export function M06() {
   // M15-G : périmètre choisi DANS l'outil (état local), plus d'héritage du filtre commune global.
   const [commune, setCommune] = useState<string | null>(null)
   const q = useQuery({ queryKey: ['m06', commune], queryFn: () => modBailleur(commune) })
@@ -465,8 +467,11 @@ function M06() {
 }
 
 /* ───────────────────────────── M07 — FONCIER FANTÔME ───────────────────────────── */
-
-function M07() {
+// M137-N (Vic 20/08/2026) — RETIRÉ du produit le 20/08/2026 (DORMANT) : nom non fidèle au contenu
+// (74 % successions et structures collectives, pas des sociétés fantômes), levier « dirigeant inactif »
+// à 0. Le signal succession sera repris en facette. Plus câblé au menu ; composant conservé au dépôt
+// (exporté pour rester compilable) ; endpoint /modules/fantome + tests conservés.
+export function M07() {
   // M15-G : périmètre choisi DANS l'outil (état local), plus d'héritage du filtre commune global.
   const [commune, setCommune] = useState<string | null>(null)
   const q = useInfiniteQuery({
@@ -806,7 +811,9 @@ function M10() {
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
   patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
-  bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
+  // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
+  // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
+  temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —

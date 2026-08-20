@@ -41,11 +41,12 @@ export const MODULES: ModuleDef[] = [
   // M137-K (Vic 20/08/2026) : outil « Radar des ventes » (scoring-v2, M25) retiré du produit
   // (DORMANT) — recouvre l'Analyse LABUSE (même table parcel_p_score_v2, même run, même classement),
   // sans carte ni filtres. Composant + endpoints /v2/* + tests conservés au dépôt.
+  // M137-N (Vic 20/08/2026) : outil « Foncier fantôme » (fantome, M07) retiré du produit (DORMANT) —
+  // nom non fidèle au contenu (74 % successions et structures collectives, pas des sociétés fantômes),
+  // levier « dirigeant inactif » à 0. Le signal succession sera repris en facette. Composant M06/M07 +
+  // endpoints /modules/fantome & /modules/bailleur + tests conservés au dépôt.
+  // M137-N (Vic 20/08/2026) : outil « Mode bailleur » (bailleur, M06) retiré du produit (DORMANT).
   // M129-C (Vic 19/08/2026) : outil « division » retiré du produit (dormant) — code au dépôt.
-  { key: 'fantome', num: 'M07', group: 'trouver', phare: true,
-    label: 'Foncier fantôme', desc: 'Le constructible verrouillé que les autres ne voient pas' },
-  { key: 'bailleur', num: 'M06', group: 'trouver',
-    label: 'Mode bailleur', desc: 'Repérez le foncier taillé pour le logement social — quartiers prioritaires, TVA réduite, leviers du bailleur' },
 
   // ── Instruire — jauger CE terrain, ce projet ──
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,

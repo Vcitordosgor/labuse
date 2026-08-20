@@ -536,7 +536,10 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
 
 
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
-
+# ⚠️ DORMANT (M137-N, 20/08/2026) — l'outil « Foncier fantôme » (front M07) est RETIRÉ du produit :
+# nom non fidèle au contenu (74 % successions et structures collectives, pas des sociétés fantômes),
+# levier « dirigeant inactif » à 0. Cet endpoint RESTE servi (aucun autre consommateur mesuré : ni
+# partners, ni PDF, ni Copilote — le concept-route a été retiré) + testé. Signal succession → facette.
 @router.get("/fantome")
 def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
             db: Session = Depends(get_db)) -> dict:
@@ -585,7 +588,9 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
 
 
 # ───────────────────────── M06 — MODE BAILLEUR ─────────────────────────
-
+# ⚠️ DORMANT (M137-N, 20/08/2026) — l'outil « Mode bailleur » (front M06) est RETIRÉ du produit.
+# L'endpoint /modules/bailleur RESTE servi (aucun autre consommateur mesuré : ni partners, ni PDF, ni
+# Copilote — le concept-route a été retiré) + testé.
 def _sru_bloc(db: Session, commune: str) -> dict | None:
     """Contexte SRU d'une commune (données réelles commune_contexte_sru) : statut + déficit LLS
     DÉRIVÉ des chiffres sourcés (nb_lls, taux, objectif) — jamais inventé. None si pas de donnée."""

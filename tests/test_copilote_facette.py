@@ -65,7 +65,10 @@ def test_parcelles_par_entreprise_acronyme_prend_le_bon_siren(db_session, monkey
     assert r.ok and r.data["siren"] == "310863592" and r.valeur == 4183
 
 
-def test_match_concept_fantome_bailleur():
-    assert answering._match_concept("montre-moi les parcelles fantômes")[0] == "fantome"
-    assert answering._match_concept("quelles parcelles de bailleurs sociaux")[0] == "bailleur"
+def test_match_concept_fantome_bailleur_retires():
+    # M137-N — les outils « fantôme » et « bailleur » sont RETIRÉS du produit (DORMANT) : leurs
+    # concept-routes ont été retirés (router vers un module absent = lien mort). Ces demandes ne
+    # matchent plus un concept-outil → retombent sur le traitement normal du Copilote.
+    assert answering._match_concept("montre-moi les parcelles fantômes") is None
+    assert answering._match_concept("quelles parcelles de bailleurs sociaux") is None
     assert answering._match_concept("combien de parcelles à Saint-Paul") is None

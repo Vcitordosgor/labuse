@@ -31,8 +31,7 @@ from labuse.copilote_v2.answering import (
     ("les bascules du mois", "o10-bascules"),
     ("suivi de secteur", "o7-carnet"),
     ("scorer une adresse", "scoreur-adresse"),
-    ("les parcelles fantomes", "fantome"),
-    ("montre le patrimoine des bailleurs", "bailleur"),
+    # M137-N : « fantome » et « bailleur » retirés du produit → plus de concept-route (cf. ci-dessous).
 ])
 def test_concept_ouvre_une_porte(message, module):
     got = _match_concept(message)
@@ -41,12 +40,12 @@ def test_concept_ouvre_une_porte(message, module):
     assert got[1]  # un libellé lisible, jamais nu
 
 
-def test_bailleur_exige_un_mot_foncier():
-    # PIÈGE accueil #5 : « qui gère le financement des bailleurs sociaux » est une question d'org
-    # (réponse web), PAS une demande de l'outil bailleur (patrimoine/foncier).
-    assert _match_concept("qui gere les dossiers de financement des bailleurs sociaux a la Region") is None
-    # mais « parcelles de bailleurs sociaux » vise bien l'outil.
-    assert _match_concept("quelles parcelles de bailleurs sociaux a Saint-Denis")[0] == "bailleur"
+def test_fantome_bailleur_retires_plus_de_concept():
+    # M137-N — outils « fantôme » et « bailleur » RETIRÉS du produit (DORMANT) : plus de concept-route
+    # (router vers un module absent = lien mort). Ces demandes ne matchent plus aucune porte.
+    assert _match_concept("les parcelles fantomes") is None
+    assert _match_concept("montre le patrimoine des bailleurs") is None
+    assert _match_concept("quelles parcelles de bailleurs sociaux a Saint-Denis") is None
 
 
 def test_hors_concept_ne_devine_pas():

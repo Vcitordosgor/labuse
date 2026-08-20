@@ -725,15 +725,11 @@ _SANS_OUTIL_KW = ("divis", "decoup", "lotir", "detacher un lot")
 # Le routeur les envoyait en recherche vague (« je ne comprends pas ») ; ici ils deviennent une
 # porte cliquable vers l'outil qui existe. (module registre, libellé client.)
 _CONCEPT_MAP = [
-    # M110 — fantôme / bailleur
-    (("parcelle fantome", "parcelles fantomes", "parcelles fantome", "parcelle fantome",
-      "bien fantome", "biens fantomes"), ("fantome", "Parcelles fantômes")),
-    # NB : le concept-outil vise le FONCIER/PATRIMOINE des bailleurs — un mot foncier/parcelle est
-    # REQUIS. PAS « bailleurs sociaux » nu (= « qui gère le financement des bailleurs » → web,
-    # « taux de logements sociaux » → stats SRU). Piège écarté (accueil #5, audit M108).
-    (("parcelles des bailleurs", "parcelles de bailleur", "foncier des bailleurs", "foncier bailleur",
-      "patrimoine des bailleurs", "parc social bailleur", "mode bailleur", "foncier social bailleur"),
-     ("bailleur", "Bailleurs sociaux")),
+    # M137-N (Vic 20/08/2026) — les concepts « fantôme » et « bailleur » sont RETIRÉS : leurs outils
+    # (M07 fantome, M06 bailleur) ont quitté le produit (DORMANT). Router vers eux serait un LIEN MORT
+    # (porte vers un module absent). Le signal succession (ex-fantôme) sera repris en facette ; d'ici là
+    # ces demandes retombent sur le traitement normal du Copilote (facette/web/refus). Endpoints + tests
+    # conservés au dépôt.
     # M112 — les 11 outils invisibles du registre (mots-clés SPÉCIFIQUES, sans collision avec le
     # comptage/marché/délais : jamais « permis » nu, jamais « renouvellement » nu, jamais « marché »).
     # Marché & veille d'abord (valeur d'usage), reconnaissance depuis les libellés servis du registre.
