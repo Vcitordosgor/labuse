@@ -136,11 +136,15 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       onMouseUp={() => { dragging.current = false }}
       onMouseLeave={() => { dragging.current = false }}
     >
-      {/* h-full w-full : cf. MapView — maplibre-gl.css (`.maplibregl-map{position:relative}`, chargée
-          après l'app depuis le lazy-load M-V) écrase `.absolute` → conteneur en `relative`, inset-0
-          n'étire plus → hauteur 0 → noir. Dimensions explicites = immunité à l'ordre CSS. */}
-      <div ref={leftRef} className="absolute inset-0 h-full w-full" />
-      <div ref={rightRef} className="absolute inset-0 h-full w-full" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
+      {/* maplibre-gl.css (`.maplibregl-map{position:relative}`, chargée APRÈS l'app via le lazy-load
+          M-V) écrase la classe Tailwind `.absolute` posée sur ces conteneurs → les deux cartes
+          retombaient en FLUX NORMAL (empilées verticalement : « now » poussée hors écran sous
+          « past »), si bien qu'on ne voyait QUE le fond de gauche (1950) sur toute la largeur — le
+          comparateur montrait la MÊME image des deux côtés (bug M137). Correctif : `position`
+          + `inset` en STYLE INLINE (spécificité > règle de classe) → les cartes se superposent
+          bien, celle de droite rognée par la poignée. `h-full w-full` gardé pour la hauteur. */}
+      <div ref={leftRef} className="h-full w-full" style={{ position: 'absolute', inset: 0 }} />
+      <div ref={rightRef} className="h-full w-full" style={{ position: 'absolute', inset: 0, clipPath: `inset(0 0 0 ${split}%)` }} />
       {/* M15 D1 : la barre de contrôle « Comparer » (choix des deux fonds + Quitter) a été
           DÉPLACÉE dans le bandeau gauche (M08, ModulePanel). Seule la poignée reste sur la carte. */}
       {/* poignée */}

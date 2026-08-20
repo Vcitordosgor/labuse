@@ -2157,6 +2157,15 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
                 </div>
               )}
+              {/* M137-H — porte vers l'outil « Marché » PRÉFILTRÉ sur la commune de la parcelle : les
+                  indicateurs COMMUNAUX (9 lignes) vivent dans l'outil ; la fiche garde le parcelle/section.
+                  `setCommune` = le point d'entrée unique de l'app (le tool lit useApp.commune au montage) ;
+                  le nom est SERVI (`f.commune`), jamais en dur. */}
+              {f.commune && (
+                <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
+                  sous="Le bloc commune complet — prix, rythmes, offre, loyer (9 lignes sourcées et datées)"
+                  onClick={() => { useApp.getState().setCommune(f.commune!); setModule('marche') }} />
+              )}
               {/* M70 déc. 9 — PORTES Marché (grille terminale supprimée) : Comparer (cette parcelle
                   chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
               <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
