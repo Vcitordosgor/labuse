@@ -920,7 +920,9 @@ def _division(db: Session, idu: str | None, intent: str) -> dict:
     # la division sort du produit. Reste le refus honnête (réglementaire > géométrique) + la porte PLU.
     txt += mesure
     txt += " Je peux ouvrir l'Annuaire PLU pour le règlement applicable — à vous de conclure."
-    return _reply(txt, intent, refus="aucun_outil", porte="plu-annuaire", prefill="pluPrefill",
+    # M137-P — les 3 outils PLU (annuaire, procédure, changement) fusionnés dans l'outil unique « plu » ;
+    # le prefill_plu ouvre le hub directement sur l'Annuaire (règlement de la zone).
+    return _reply(txt, intent, refus="aucun_outil", porte="plu", prefill="pluPrefill",
                   prefill_plu=({"insee": idu[:5], "zone": zone} if idu else None))
 
 

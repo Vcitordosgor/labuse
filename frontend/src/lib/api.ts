@@ -259,6 +259,8 @@ export interface PluSearch {
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
+  // M137-P — le « PLU intégral » = pack officiel GPU (.zip) à télécharger (aucun PDF en base).
+  source_url?: string | null; document?: string | null
 }
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)

@@ -14,11 +14,11 @@ import { Loading } from '../Loading'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
 import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
-import { M15, M16, M17, M18, MarcheCommune } from './moteurs'
+import { M16, M17, M18, MarcheCommune } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
-import { VerifProcedure } from './VerifProcedure'
-import { PluAnnuaire } from './PluAnnuaire'
+// M137-P — outil PLU UNIFIÉ : le hub monte les 3 composants (VerifProcedure, PluAnnuaire, M15).
+import { Plu } from './Plu'
 // M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { RenouvellementModule } from './Renouvellement'
@@ -814,14 +814,14 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
   temps: M08, courriers: M09, duediligence: M10,
-  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, programme: M22,
+  assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,
+  // M137-P — les 3 outils PLU (simulplu · verif-procedure · plu-annuaire) fusionnés dans le hub « plu ».
+  plu: Plu,
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
-  'verif-procedure': VerifProcedure,
-  'plu-annuaire': PluAnnuaire,
   'o5-servitudes': O5Servitudes,
   'o6-comparateur': O6Comparateur,
   'o7-carnet': O7Carnet,

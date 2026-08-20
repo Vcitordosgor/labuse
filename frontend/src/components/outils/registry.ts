@@ -57,10 +57,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
   { key: 'duediligence', num: 'M10', group: 'instruire', phare: true,
     label: 'Contrôle avant achat', desc: 'Passez une liste de parcelles au crible avant d’acheter' },
-  { key: 'verif-procedure', num: 'O11', group: 'instruire',
-    label: 'Vérif procédure PLU', desc: 'Un IDU — la commune est-elle en procédure PLU (sursis à statuer possible, veille AU) ?' },
-  { key: 'plu-annuaire', num: 'O13', group: 'instruire',
-    label: 'Annuaire PLU', desc: 'Cherchez dans le règlement des communes — verbatim sourcé (article, page, lien), jamais un résumé' },
+  // M137-P — outil PLU UNIFIÉ : Annuaire PLU (O13) + Vérif procédure (O11) + Changement PLU (M15)
+  // fusionnés en une seule entrée. Le hub (Plu.tsx) monte les 3 composants inchangés.
+  { key: 'plu', num: 'O13', group: 'instruire', phare: true,
+    label: 'PLU', desc: 'Le PLU des 24 communes : consulter le règlement, vérifier une procédure en cours, simuler une bascule de zone' },
   { key: 'o5-servitudes', num: 'O5', group: 'instruire',
     label: 'Servitudes invisibles', desc: 'Les contraintes dormantes d’une parcelle — et ce que la base ne couvre pas' },
   { key: 'comparer', num: 'A8', group: 'instruire',
@@ -93,8 +93,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Renouvellement', desc: 'Le potentiel de renouvellement urbain d’un territoire : parcelles occupées en zone constructible à capacité restante (densifier, diviser, reconstruire)' },
   { key: 'o9-rarete', num: 'O9', group: 'marche',
     label: 'Rareté du foncier', desc: 'Où le foncier se raréfie : combien de constructible reste-t-il par commune, et pour combien de temps (horizon ZAN)' },
-  { key: 'simulplu', num: 'M15', group: 'marche',
-    label: 'Changement PLU', desc: 'Prospective de territoire — « et si cette zone passait constructible ? »' },
+  // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).
 
   // ── Suivre le temps — l'évolution, la veille ──
   { key: 'o10-bascules', num: 'O10', group: 'temps',
