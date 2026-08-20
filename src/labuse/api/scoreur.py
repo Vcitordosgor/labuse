@@ -28,8 +28,9 @@ router = APIRouter(prefix="/scoreur-adresse", tags=["scoreur-adresse"])
 BAN_URL = "https://api-adresse.data.gouv.fr/search/"
 
 # M135 — échelle d'action, mapping canonique unique (tiers_client)
+# M137 — le CHIP COURT (v[0]) : un seul vocabulaire servi partout, celui des chips.
 from ..scoring.tiers_client import TIERS_CLIENT as _TC
-_TIER_LABELS = {k: v[1] for k, v in _TC.items()}
+_TIER_LABELS = {k: v[0] for k, v in _TC.items()}
 
 
 class ScoreurIn(BaseModel):

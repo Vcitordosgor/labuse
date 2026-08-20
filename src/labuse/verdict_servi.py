@@ -28,11 +28,12 @@ from .scoring.score_v_constants import Q_A_RUN_LABEL
 TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 
 # M135 — les libellés client des tiers viennent du MAPPING CANONIQUE UNIQUE (tiers_client).
-# TIER_LABELS = les libellés LONGS (fiche, PDF, notifications). L'échelle est désormais une
-# échelle d'ACTION (Priorité → Faible) ; le motif fin d'une déclassée et l'état du bâti vivent
-# en fiche et sur le badge d'état (M131), plus dans le tier.
+# M137 — TIER_LABELS = le CHIP COURT (« Priorité », « À suivre »…), le mot SERVI PARTOUT : chips,
+# bande de résumé, cartes, fiche, PDF, exports, assistant. Un seul vocabulaire à l'écran, celui
+# des chips — le client relie toujours le même palier au même mot. Le libellé LONG (« À contacter
+# en priorité ») ne vit QUE dans l'explication du « i » des paliers (front), accolé à son chip.
 from .scoring.tiers_client import TIERS_CLIENT, court as tier_court, long as tier_long  # noqa: E402
-TIER_LABELS = {k: v[1] for k, v in TIERS_CLIENT.items()}
+TIER_LABELS = {k: v[0] for k, v in TIERS_CLIENT.items()}
 
 # M129-C P3 (réconciliation) : le badge M28 lisait `parcel_filtre_bati` et prétendait juger la
 # DIVISIBILITÉ — c'était un 2e juge (l'audit division_or l'a nommé). Il se RENOMME : il dit un

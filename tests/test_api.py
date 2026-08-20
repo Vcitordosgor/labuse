@@ -91,9 +91,9 @@ def test_fiche_verdict_traduit_le_tier_servi(client):
     try:
         f = client.get("/parcels/97415000AB0001").json()
         assert f["verdict"]["status"] == "brulante"
-        assert f["verdict"]["label"] == "À contacter en priorité" and f["verdict"]["rang"] == 7
+        assert f["verdict"]["label"] == "Priorité" and f["verdict"]["rang"] == 7   # M137 — chip court servi
         assert f["resume"]["statut"] == "brulante"
-        assert f["resume"]["synthese"].startswith("Classée À contacter en priorité")
+        assert f["resume"]["synthese"].startswith("Classée Priorité")
     finally:
         with session_scope() as s:
             s.execute(sqla_text(

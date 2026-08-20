@@ -293,7 +293,8 @@ def _projet_dict(p: models.Projet) -> dict:
 # M135 — libellés d'action, mapping CANONIQUE unique (tiers_client). Les clés internes ne bougent pas.
 from ..scoring.tiers_client import TIERS_CLIENT as _TC  # noqa: E402
 _STATUT_LABEL = {"chaude": "Priorité", "a_surveiller": "À suivre", "a_creuser": "Neutre"}
-_TIER_LABEL = {k: v[1] for k, v in _TC.items()}
+# M137 — le CHIP COURT (v[0]) : un seul vocabulaire servi partout, celui des chips.
+_TIER_LABEL = {k: v[0] for k, v in _TC.items()}
 
 
 def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) -> list[str]:

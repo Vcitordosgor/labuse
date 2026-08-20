@@ -70,7 +70,7 @@ def test_flux_adresse_verdict_et_prix(db_session, monkeypatch):
 
     out = scoreur.scoreur_adresse(scoreur.ScoreurIn(q="1 rue test", prix_demande_eur=80000), s)
     assert out["ok"] and out["idu"] == idu
-    assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Sans signal particulier"
+    assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Neutre"  # M137 chip court
     assert out["score_e"]["estimable"] is True
     # 80 000 € < charge supportable 300 000 € → opportunité
     assert out["prix"]["verdict"] == "opportunite" and out["prix"]["marge_a_ce_prix_eur"] == 220000
