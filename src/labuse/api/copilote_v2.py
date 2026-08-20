@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..copilote_v2.answering import answer, scenarios_publies
+from ..copilote_v2.answering import accueil_publie, answer, scenarios_publies
 from ..copilote_v2 import historique, telemetrie
 from .tenant import current_compte
 
@@ -116,9 +116,10 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/scenarios")
 def scenarios() -> dict:
-    """M113 · Phase 2 — les chips de contexte, servis par le serveur (jamais en dur au front). Le
-    front les affiche dans l'ordre reçu ; le chip choisi est renvoyé tel quel dans /ask (`scenario`)."""
-    return {"scenarios": scenarios_publies()}
+    """M113 · Phase 2 — les missions, servies par le serveur (jamais en dur au front). M133 · Accueil
+    v3 — la réponse porte AUSSI le hero (`accueil` : titre/sous-titre/placeholder/aide) + les 4
+    capacités en texte (libellé + exemple réel). L'accueil ne renvoie PLUS de `scenario` forcé."""
+    return {"scenarios": scenarios_publies(), "accueil": accueil_publie()}
 
 
 @router.get("/veilles")

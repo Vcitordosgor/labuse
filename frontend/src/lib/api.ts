@@ -408,10 +408,17 @@ export const copiloteV2Ask = (message: string, opts?: {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, ...opts }) })
 
-// M113 · Phase 2 — les chips de contexte, servis par le serveur (jamais en dur au front).
-export interface CopiloteScenario { cle: string; libelle: string; sub: string; placeholder: string }
-export const getScenarios = () =>
-  j<{ scenarios: CopiloteScenario[] }>('/api/copilote-v2/scenarios').then((r) => r.scenarios)
+// M113 · Phase 2 — les missions, servies par le serveur (jamais en dur au front).
+export interface CopiloteScenario { cle: string; libelle: string; sub: string; placeholder: string; exemple: string }
+// M133 · Accueil Copilote v3 — le hero (titre/sous-titre/placeholder/aide) + les 4 capacités en
+// TEXTE (libellé + exemple réel), servis. Plus aucun mode à choisir : le champ passe en premier.
+export interface CopiloteCapacite { cle: string; libelle: string; exemple: string }
+export interface AccueilCopiloteMeta {
+  titre: string; sous_titre: string; placeholder: string; aide: string; capacites: CopiloteCapacite[]
+}
+export const getAccueilCopilote = () =>
+  j<{ scenarios: CopiloteScenario[]; accueil: AccueilCopiloteMeta }>('/api/copilote-v2/scenarios')
+    .then((r) => r.accueil)
 
 // §2b — l'historique : missions passées du compte + reprise d'une conversation.
 export interface CopiloteMission {

@@ -466,12 +466,8 @@ export const CLIENT = {
       interpreting: 'Interprétation', awaiting_user: 'En pause', running: 'Instruction',
       paused: 'En pause', done: 'Terminé', failed: 'Échec', cancelled: 'Annulée',
     } as Record<string, string>,
-    h1Ligne1: 'Décrivez le besoin.',
-    h1Ligne2Avant: 'Le Copilote ',
-    h1Ligne2Em: 'instruit le dossier',
-    h1Ligne2Apres: '.',
-    lede: 'Il ne calcule rien. Il séquence les moteurs LABUSE, journalise chaque étape et étiquette chaque chiffre. ',
-    ledeFort: 'C’est pour ça que vous pouvez l’emmener en comité.',
+    // M133 — l'ancien hero (la promesse d'instruction) est RETIRÉ : mort depuis M118 et l'accueil
+    // v3 sert désormais son propre hero. Ces 6 clés (h1Ligne*/lede/ledeFort) n'étaient plus lues.
     placeholder: 'Décrivez le besoin — commune, programme, budget, contraintes…',
     instruire: 'Instruire',
     annuler: 'Annuler l’instruction',

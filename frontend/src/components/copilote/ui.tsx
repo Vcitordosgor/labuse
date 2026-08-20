@@ -73,7 +73,7 @@ export function TraitementEnCours() {
           <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-cp-violet [animation-delay:150ms]" />
           <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-cp-violet [animation-delay:300ms]" />
         </span>
-        Le Copilote instruit votre demande…
+        Le Copilote cherche votre réponse…
       </span>
     </div>
   )
