@@ -176,6 +176,16 @@ def territoire_fiscal_cmd() -> None:
         typer.echo(f"✓ territoire fiscal (ZFANG/FRR) : {load_territoire_fiscal(s)}")
 
 
+@app.command("dispositifs-build")
+def dispositifs_build_cmd() -> None:
+    """M134 — matérialise la couche « Dispositifs » dans spatial_layers : buffer TVA 500 m
+    (dérivé des QPV) + aplats commune ZFANG/FRR. QPV et NPNRU/ANRU sont déjà en base."""
+    from .ingestion.dispositifs import build_all
+
+    with session_scope() as s:
+        build_all(s, log=typer.echo)
+
+
 @app.command("entites-acronymes")
 def entites_acronymes_cmd() -> None:
     """M110 — (re)charge le référentiel des acronymes de personnes morales (SIDR, SHLMR…) depuis

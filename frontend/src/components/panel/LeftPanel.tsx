@@ -117,14 +117,18 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'equipements', label: 'Équipements' },
   { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
-  { key: 'anru', label: 'ANRU (NPNRU)' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
   // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
   { key: 'transport', label: 'Transport public' },
   { key: 'axes', label: 'Axes structurants' },
   { key: 'lignes_ht', label: 'Lignes haute tension' },
-  // M62-P1 (g) : entrée « Renouvellement » (renouv) retirée du panneau (cf. note plus haut).
+  // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
+  { key: 'qpv', label: 'QPV — quartier prioritaire' },
+  { key: 'tva_primo', label: 'TVA réduite primo-accédant (QPV + 500 m)' },
+  { key: 'anru', label: 'NPNRU / ANRU — renouvellement urbain' },
+  { key: 'zfang', label: 'ZFANG — zone franche d’activité' },
+  { key: 'frr', label: 'FRR — France Ruralités Revitalisation' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -134,9 +138,12 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
-  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'parc', 'anru', 'cinquante_pas'] },
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'parc', 'cinquante_pas'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
   { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
+  // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
+  // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
+  { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },
 ]
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 

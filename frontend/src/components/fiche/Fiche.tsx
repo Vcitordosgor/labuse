@@ -2220,8 +2220,17 @@ export function Fiche({ idu }: { idu: string }) {
                 value={f.territoire_fiscal.zfang.regime === 'renforce'
                   ? <span className="pill-mint">ZFANG renforcé</span> : 'ZFANG standard'}>
                 <div className="flex flex-col gap-2.5" data-territoire-fiscal>
-                  {([['ZFANG (zone franche d’activité)', f.territoire_fiscal.zfang],
-                     ['FRR — ex-ZRR (revitalisation rurale)', f.territoire_fiscal.frr]] as const).map(([titre, a]) => (
+                  {/* M134 — les périmètres FINS qui touchent LA parcelle (QPV / bande TVA 500 m),
+                      au-dessus des attributs de commune (ZFANG/FRR). Jamais un sigle nu. */}
+                  {(f.territoire_fiscal.perimetres ?? []).map((p) => (
+                    <div key={p.libelle} data-fiche-perimetre className="rounded-lg border border-mint/30 bg-mint/5 px-3 py-2">
+                      <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
+                      <p className="mt-0.5 text-[10.5px] text-txt-dim">{p.source}</p>
+                    </div>
+                  ))}
+                  {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
+                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const).map(([titre, a]) => (
                     <div key={titre}>
                       <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
                       <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a.libelle}</p>

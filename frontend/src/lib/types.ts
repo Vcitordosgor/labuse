@@ -328,6 +328,8 @@ export interface Fiche {
     zfang: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
     frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
     avertissement: string
+    // M134 — les périmètres FINS qui touchent la parcelle (QPV dedans, ou bande TVA 500 m dérivée)
+    perimetres?: { libelle: string; detail: string; source: string; derive: boolean }[]
   } | null
   // M106 P4 — PROXIMITÉS (distance, jamais un booléen) : transport + ligne HT (contrainte).
   proximites?: {

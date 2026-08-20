@@ -29,6 +29,11 @@ export interface LayerToggles {
   renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
   couleurs_verdict: boolean // M55-G point 8 : palette des tiers en COUCHE activable — imposée
                             // seulement en mode analyse ; en tri factuel rien n'est imposé
+  // M134 — couche « Dispositifs et périmètres » (anru y est déjà réuni)
+  qpv: boolean         // quartiers prioritaires (QPV 2024, géométrie)
+  tva_primo: boolean   // bande TVA réduite primo-accédant (QPV + 500 m, dérivé LABUSE)
+  zfang: boolean       // zone franche d'activité (aplat commune, régime renforcé/standard)
+  frr: boolean         // france ruralités revitalisation (aplat commune)
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -446,7 +451,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

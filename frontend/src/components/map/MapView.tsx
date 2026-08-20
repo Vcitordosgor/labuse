@@ -171,6 +171,15 @@ const OVERLAYS = {
   // M55-A-bis : chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
   // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
   anru: { paint: { 'fill-color': T_SOMBRE.anru, 'fill-opacity': T_SOMBRE.anruOpacity } },
+  // M134 — couche « Dispositifs ». Contour = teinte pleine (fill-outline-color, ≥3:1). ZFANG/FRR :
+  // l'intensité du régime (renforcé/totalité) se lit à l'OPACITÉ via un `match` sur le subtype
+  // (même teinte identitaire, doctrine M105-B) — comme `zonage` porte déjà une expression data-driven.
+  qpv: { paint: { 'fill-color': T_SOMBRE.qpv, 'fill-opacity': T_SOMBRE.qpvOpacity, 'fill-outline-color': T_SOMBRE.qpv } },
+  tva_primo: { paint: { 'fill-color': T_SOMBRE.tvaPrimo, 'fill-opacity': T_SOMBRE.tvaPrimoOpacity, 'fill-outline-color': T_SOMBRE.tvaPrimo } },
+  zfang: { paint: { 'fill-color': T_SOMBRE.zfang, 'fill-outline-color': T_SOMBRE.zfang,
+    'fill-opacity': ['match', ['get', 'subtype'], 'renforce', T_SOMBRE.zfangOpRenforce, T_SOMBRE.zfangOpStandard] } },
+  frr: { paint: { 'fill-color': T_SOMBRE.frr, 'fill-outline-color': T_SOMBRE.frr,
+    'fill-opacity': ['match', ['get', 'subtype'], 'totalite', T_SOMBRE.frrOpTotalite, T_SOMBRE.frrOpPartie] } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
@@ -233,6 +242,14 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', t.ppr); set(id, 'line-width', t.pprContourW) }
   set('ov-anru', 'fill-color', t.anru); set('ov-anru', 'fill-opacity', t.anruOpacity)
   set('ov-anru-trame', 'fill-opacity', t.anruTrameOpacity)
+  // M134 — dispositifs : la teinte suit le thème ; l'opacité de ZFANG/FRR est un `match` constant
+  // (l'intensité du régime ne dépend pas du thème), on ne met à jour que la couleur (aplat + contour).
+  set('ov-qpv', 'fill-color', t.qpv); set('ov-qpv', 'fill-opacity', t.qpvOpacity); set('ov-qpv', 'fill-outline-color', t.qpv)
+  set('ov-tva_primo', 'fill-color', t.tvaPrimo); set('ov-tva_primo', 'fill-opacity', t.tvaPrimoOpacity); set('ov-tva_primo', 'fill-outline-color', t.tvaPrimo)
+  set('ov-zfang', 'fill-color', t.zfang); set('ov-zfang', 'fill-outline-color', t.zfang)
+  set('ov-zfang', 'fill-opacity', ['match', ['get', 'subtype'], 'renforce', t.zfangOpRenforce, t.zfangOpStandard] as never)
+  set('ov-frr', 'fill-color', t.frr); set('ov-frr', 'fill-outline-color', t.frr)
+  set('ov-frr', 'fill-opacity', ['match', ['get', 'subtype'], 'totalite', t.frrOpTotalite, t.frrOpPartie] as never)
   set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
   set('ov-50pas-line', 'line-color', t.cinquantePas)
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
@@ -444,6 +461,11 @@ export function MapView() {
   // R6 : parc (8 Mo simplifiés, opt-in), ANRU (10 Ko) et équipements (2,3 Mo) servis ÎLE
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
   const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
+  // M134 — couche « Dispositifs » (servie île entière : QPV 57, buffer 13, ZFANG 24, FRR 23 — léger)
+  const qpv = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
+  const tvaPrimo = useQuery({ queryKey: ['layer', 'tva_primo', commune], queryFn: () => getMapLayer('tva_primo'), enabled: layers.tva_primo })
+  const zfang = useQuery({ queryKey: ['layer', 'zfang', commune], queryFn: () => getMapLayer('zfang'), enabled: layers.zfang })
+  const frr = useQuery({ queryKey: ['layer', 'frr', commune], queryFn: () => getMapLayer('frr'), enabled: layers.frr })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -867,7 +889,8 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt]]
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt],
+      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr]]   // M134 dispositifs
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
@@ -884,6 +907,15 @@ export function MapView() {
       useApp.getState().setToast(
         commune ? `Aucun périmètre ANRU (NPNRU) sur ${commune} — 6 communes en portent un.`
                 : 'Aucun périmètre ANRU (NPNRU) sur ce cadrage.')
+    }
+    // M134 — dispositifs activés mais vides sur le périmètre : le dire (jamais un silence).
+    if (layers.qpv && qpv.data && qpv.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucun quartier prioritaire (QPV) sur ${commune} — 13 communes en portent un.`
+                                         : 'Aucun quartier prioritaire (QPV) sur ce cadrage.')
+    }
+    if (layers.tva_primo && tvaPrimo.data && tvaPrimo.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucune bande TVA réduite (QPV + 500 m) sur ${commune}.`
+                                         : 'Aucune bande TVA réduite (QPV + 500 m) sur ce cadrage.')
     }
     // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
     // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
@@ -907,7 +939,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1003,6 +1035,11 @@ export function MapView() {
     m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
     m.setLayoutProperty('ov-anru-trame', 'visibility', vis(layers.anru))
+    // M134 — couche « Dispositifs »
+    m.setLayoutProperty('ov-qpv', 'visibility', vis(layers.qpv))
+    m.setLayoutProperty('ov-tva_primo', 'visibility', vis(layers.tva_primo))
+    m.setLayoutProperty('ov-zfang', 'visibility', vis(layers.zfang))
+    m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
     // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))

@@ -2636,7 +2636,46 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
 
 def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     from ..territoire_fiscal import attributs_commune
-    return attributs_commune(db, idu[:5])
+    base = attributs_commune(db, idu[:5])
+    # M134 — les PÉRIMÈTRES FINS qui touchent LA parcelle (ZFANG/FRR sont à la commune) : QPV
+    # (dedans) ou, à défaut, la bande des 500 m (dérivée). En français, sourcés, jamais un sigle nu.
+    qpv = db.execute(text(
+        "SELECT sl.name FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'qpv' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
+        {"idu": idu}).scalar()
+    tva = db.execute(text(
+        "SELECT 1 FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'tva_primo' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
+        {"idu": idu}).first()
+    anru = db.execute(text(
+        "SELECT sl.name FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'anru' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
+        {"idu": idu}).scalar()
+    perimetres = []
+    if anru:
+        perimetres.append({
+            "libelle": "Renouvellement urbain — NPNRU / ANRU",
+            "detail": f"La parcelle est dans le périmètre « {anru} » d'un programme national de "
+                      "renouvellement urbain : opérations d'aménagement pilotées par l'ANRU, "
+                      "maîtrise foncière publique active.",
+            "source": "DEAL Réunion / ANCT", "derive": False})
+    if qpv:
+        perimetres.append({
+            "libelle": "Quartier prioritaire — QPV",
+            "detail": f"La parcelle est dans le quartier « {qpv} » : un logement neuf destiné à "
+                      "l'accession y ouvre la TVA réduite pour l'accession sociale (sous conditions "
+                      "de ressources de l'acquéreur).",
+            "source": "ANCT — quartiers de génération 2024", "derive": False})
+    elif tva:
+        perimetres.append({
+            "libelle": "Bande des 500 m d'un quartier prioritaire",
+            "detail": "La parcelle est à moins de 500 m d'un QPV : la TVA réduite pour l'accession "
+                      "sociale peut s'y étendre. Périmètre DÉRIVÉ par LABUSE à partir des QPV "
+                      "(Estimé) — à confirmer, ce n'est pas une source officielle.",
+            "source": "LABUSE — dérivé des QPV (500 m)", "derive": True})
+    if base is None and not perimetres:
+        return None
+    return {**(base or {}), "perimetres": perimetres}
 
 
 def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
@@ -3163,7 +3202,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # lignes HT et axes structurants (BD TOPO, hiérarchie « importance » IGN 1-2).
                     # Les arrêts sont servis en couche depuis M106-B (petits points, minzoom front).
                     "transport_ligne", "transport_arret", "pole_echange", "telepherique",
-                    "ligne_ht", "axe_structurant"}
+                    "ligne_ht", "axe_structurant",
+                    # M134 — couche « Dispositifs et périmètres » : QPV + NPNRU/ANRU (géométrie),
+                    # TVA primo (buffer 500 m dérivé), ZFANG/FRR (aplat COMMUNE, subtype=régime).
+                    "qpv", "tva_primo", "zfang", "frr"}
 
 
 @app.get("/map/layers.geojson")

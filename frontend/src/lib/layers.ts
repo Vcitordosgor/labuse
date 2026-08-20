@@ -84,7 +84,17 @@ export const LAYER_INFO: Record<string, string> = {
   communes:
     'Les frontières officielles entre les 24 communes (le trait vert, source IGN / geo.api.gouv) — pour se repérer et savoir de quelle mairie dépend un terrain.',
   anru:
-    'Les quartiers inscrits dans un programme de renouvellement urbain (NPNRU, source ANRU) : secteurs prioritaires soutenus par l’État. Dispositif ciblé — présent sur 6 communes seulement (Le Port, Saint-André, Saint-Benoît, Saint-Denis, Saint-Louis, Saint-Pierre) ; ailleurs la couche est vide, et LABUSE vous le signale.',
+    'Les quartiers inscrits dans un programme national de renouvellement urbain (NPNRU, piloté par l’ANRU) : des secteurs soutenus par l’État pour rénover l’habitat et l’espace public. Ce que ça change pour un projet : maîtrise foncière publique active, opérations d’aménagement en cours, environnement immédiat en transformation. Dispositif ciblé — 8 emprises sur 6 communes (Le Port, Saint-André, Saint-Benoît, Saint-Denis, Saint-Louis, Saint-Pierre) ; ailleurs la couche est vide, et LABUSE vous le signale. Source : DEAL Réunion / ANCT.',
+  // M134 — couche « Dispositifs et périmètres ». Chaque « i » : ce que c'est · ce que ça change
+  // (le FAIT, jamais un conseil chiffré personnalisé) · la source et son millésime.
+  qpv:
+    'Les quartiers prioritaires de la politique de la ville (QPV) : les secteurs les plus fragiles, cibles des aides publiques à l’aménagement et à la rénovation. Ce que ça change pour un projet : un logement neuf destiné à l’accession y ouvre la TVA réduite (accession sociale, sous conditions de ressources de l’acquéreur), et le quartier concentre les crédits d’aménagement. Source : ANCT — quartiers de génération 2024, 57 quartiers sur 13 communes.',
+  tva_primo:
+    'La bande des 500 mètres autour des quartiers prioritaires : le périmètre où la TVA réduite pour l’accession sociale s’étend AU-DELÀ du quartier lui-même. PÉRIMÈTRE DÉRIVÉ, calculé par LABUSE à partir des QPV (Estimé) — ce n’est pas une source officielle : la limite exacte se vérifie au cas par cas. Le quartier lui-même est la couche « QPV — quartier prioritaire ».',
+  zfang:
+    'La zone franche d’activité nouvelle génération (ZFANG) : un régime fiscal de plein droit dans les DOM qui allège l’imposition des entreprises implantées dans la commune. Maille COMMUNE ENTIÈRE (pas un périmètre fin). Régime standard : abattements d’environ 50 %. Régime RENFORCÉ (6 communes de l’Est, teinte plus dense) : abattements majorés — 80 % sur les bénéfices et la taxe foncière bâtie, 100 % sur la CFE, jusqu’en 2030. Taux légaux du dispositif (art. 44 quaterdecies CGI · décret n° 2026-421 du 29 mai 2026), pas un calcul de votre avantage.',
+  frr:
+    'France Ruralités Revitalisation (FRR, ex-ZRR) : un régime d’exonérations fiscales et sociales pour soutenir les communes rurales. Maille COMMUNE ENTIÈRE. Une commune est classée en TOTALITÉ (teinte plus dense) ou EN PARTIE seulement — la zone spéciale d’action rurale des Hauts est infra-communale, la situation dépend alors de la localisation exacte du terrain. Source : art. 44 quindecies A CGI · zone spéciale d’action rurale (décret n° 78-690), FRR depuis le 1er juillet 2024.',
   cinquante_pas:
     'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée (source : cadastre). Elle ne longe que le rivage — normalement absente des communes sans littoral (les Hauts).',
   equipements:
