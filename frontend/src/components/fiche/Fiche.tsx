@@ -2421,12 +2421,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
               </div>
-              {/* M55-L point 8 — BARRE D'ACTIONS SUR DEUX LIGNES ÉQUILIBRÉES (décision Vic).
+              {/* M55-L point 8 — BARRE D'ACTIONS sur une GRILLE 4×2 (décision Vic).
                   Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
-                  One-pager · Pré-dossier PC. `gridAutoFlow:column + gridAutoColumns:1fr` → colonnes
-                  ÉGALES quel que soit le nombre de tuiles réellement rendues (les tuiles Cadastre /
-                  1950 / Maps sont conditionnées à f.coords → pas de trou). Mêmes hauteurs, mêmes
-                  séparateurs qu'avant. */}
+                  Pré-dossier PC. M137-F : Pré-dossier PC RENTRE dans la grille (4e case de la 2e
+                  ligne, ex-ligne pleine largeur retirée) — même gabarit `.exp` que les autres.
+                  Les tuiles Cadastre / 1950 / Maps restent conditionnées à f.coords. */}
               {/* M60 P1d — « EXPORTS ET OUTILS » SCINDÉ en deux groupes : EXPORTS (documents,
                   inchangés) puis « OUTILS SUR CETTE PARCELLE » (portes compactes, plus bas). */}
               <div className="sec"><span>EXPORTS</span><i /></div>
@@ -2460,8 +2459,8 @@ export function Fiche({ idu }: { idu: string }) {
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
                     <span>{CLIENT.fiche.export.courrier}</span>
                   </button>
+                  <PreDossierTile idu={idu} />
                 </div>
-                <PreDossierTile idu={idu} />
               </div>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
@@ -2565,12 +2564,12 @@ function PreDossierTile({ idu }: { idu: string }) {
   const integral = moi.data?.plan === 'integral'
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
   if (!integral) return (
-    <span className="exp-wide" data-predossier-gate aria-disabled style={{ opacity: 0.4, cursor: 'not-allowed', color: 'var(--txt)' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
+    <span className="exp" data-predossier-gate aria-disabled style={{ opacity: 0.4, cursor: 'not-allowed', color: 'var(--txt)' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
       {icon}<span>{CLIENT.fiche.export.preDossier}</span>
     </span>
   )
   return (
-    <a className="exp-wide" data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" title={CLIENT.fiche.export.preDossierTip}>
+    <a className="exp" data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" title={CLIENT.fiche.export.preDossierTip}>
       {icon}<span>{CLIENT.fiche.export.preDossier}</span>
     </a>
   )

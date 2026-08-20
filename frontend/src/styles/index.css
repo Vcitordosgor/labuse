@@ -297,5 +297,4 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .exp { min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-right:0.5px solid var(--line); border-bottom:0.5px solid var(--line); color:var(--f-icotxt); cursor:pointer; text-decoration:none; }
 .fiche-v6 .exp:nth-child(4n) { border-right:none; }
 .fiche-v6 .exp > span { font-size:10.5px; color:var(--txt-dim); }
-.fiche-v6 .exp-wide { min-height:42px; display:flex; align-items:center; justify-content:center; gap:7px; border-top:0.5px solid var(--line); font-size:12px; color:var(--txt); cursor:pointer; text-decoration:none; }
 .fiche-v6 .legal { font-size:9px; color:var(--txt-faint); line-height:1.5; margin-top:14px; }
