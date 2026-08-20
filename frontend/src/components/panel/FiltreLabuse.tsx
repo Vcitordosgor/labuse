@@ -111,16 +111,17 @@ export function ChipGroup({ field, options }: { field: keyof Filters; options: {
 // M99 Phase 3 (arbitrage Vic) — SÉLECTEUR DE ZONAGE PAR FAMILLE. Une déroulante RECHERCHABLE
 // par famille (386 zones normalisées : une liste plate est illisible), dans l'ordre du volume
 // RÉEL servi par /zonage/zones — comptes CALCULÉS, jamais en dur, ils suivent les recalibrages
-// PLU. Cocher la famille SANS ouvrir sa déroulante = toute la famille (champ zonagePlu,
-// sémantique inchangée) ; cocher des zones = filtre exact (champ zonePlu, graphie réglementaire
+// PLU. M137-B (Vic) — TOUTE la ligne de famille ouvre l'accordéon (pastille, compte, chevron à
+// droite ; plus de lien « zones… ») ; le PREMIER item du menu, « U seul », coche la famille
+// entière (champ zonagePlu, sémantique inchangée) ; cocher des zones = filtre exact (champ zonePlu, graphie réglementaire
 // MAJUSCULE = zone_filtre, le critère unique côté table). PORTÉE DYNAMIQUE : l'île par défaut,
 // les communes filtrées sinon — une zone à 0 parcelle dans la portée est ABSENTE de la liste,
 // et le bandeau de portée le dit (comportement explicite, pas un masquage silencieux). La
 // fiche, elle, garde la graphie officielle de sa commune (zone_lib, jamais écrasé).
 // M99-B — CHOIX PUR, AUCUNE FRAPPE (correctif Vic sur M99) : tout champ de saisie laisse taper
 // une valeur inexistante (uc, U-C, faute) → résultat vide inexpliqué. Ici, uniquement des clics :
-// la famille (= tout U, le geste par défaut), ou un menu déroulant de sous-zones (défilant,
-// « Toutes les zones U » en tête pour revenir au mode famille). Aucun <input> dans ce bloc.
+// « U seul » (tête du menu = toute la famille, le geste par défaut), ou des sous-zones (défilant,
+// « U seul » y revient au mode famille). Aucun <input> dans ce bloc.
 // EXCLUSIVITÉ familles/sous-zones (M99-B) : côté backend `zonage` (familles) et `zone_plu`
 // (zones) se combinent en ET — un mélange inter-familles (famille A + zone UC) rendrait ZÉRO
 // en silence. Le menu est donc exclusif : choisir une sous-zone passe le bloc en mode
@@ -182,24 +183,31 @@ export function ZoneSelector() {
         const enModeFamille = selFam.includes(f.fam)
         return (
           <div key={f.fam} className="rounded-lg border border-line-2 bg-surface-3/60">
-            <div className="flex items-center gap-2 px-2 py-1">
-              <Chip on={enModeFamille} onClick={() => choisirFamille(f.fam)}>{f.fam}</Chip>
+            {/* M137-B (Vic) — TOUTE la ligne ouvre l'accordéon (pastille, compte, chevron) : le lien
+                « zones… » disparaît, un chevron à droite dit ouvert/fermé. Le choix de la famille
+                entière n'est plus sur la ligne — il est le PREMIER item du menu (« U » seul). */}
+            <button data-zones-fam={f.fam} aria-expanded={ouverte} onClick={() => setOpenFam(ouverte ? null : f.fam)}
+              className="flex w-full items-center gap-2 px-2 py-1 text-left">
+              <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+                enModeFamille ? 'border-mint bg-mint/20 font-medium text-txt-hi' : 'border-line-2 bg-surface-3 text-txt-mut'}`}>
+                {f.fam}
+              </span>
               <span className="flex-1 text-[10.5px] text-txt-dim">
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
                 {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
-              <button data-zones-fam={f.fam} onClick={() => setOpenFam(ouverte ? null : f.fam)}
-                className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
-                {ouverte ? 'refermer' : 'zones…'}
-              </button>
-            </div>
+              <svg viewBox="0 0 12 12" aria-hidden="true"
+                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? 'rotate-180' : ''}`}>
+                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
             {ouverte && (
               <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-t border-line-2 px-2 py-1.5">
                 <button data-zone-toutes={f.fam} onClick={() => choisirFamille(f.fam)}
                   className={`flex items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3 ${
                     enModeFamille ? 'font-medium text-mint' : 'text-txt'}`}>
                   <span className="w-3 text-center">{enModeFamille ? '✓' : ''}</span>
-                  <span>Toutes les zones {f.fam}</span>
+                  <span>{f.fam}<span className="text-txt-dim"> seul · toute la famille</span></span>
                   <span className="ml-auto text-[10px] text-txt-dim">{zq.data ? nf.format(f.n) : '…'}</span>
                 </button>
                 {f.zones.map((z) => {

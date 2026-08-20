@@ -87,7 +87,7 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
       {v2.surveillance && (
         <button data-reponse-surveillance onClick={() => openSurveillance(v2.surveillance!.volet)}
           className={`mt-3.5 inline-flex rounded-lg border px-3.5 py-2 font-display text-[12.5px] transition-colors duration-quick ${porteCls}`}>
-          Ouvrir la Surveillance →
+          Ouvrir la Veille →
         </button>
       )}
       {v2.document && (

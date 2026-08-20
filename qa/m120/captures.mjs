@@ -23,39 +23,34 @@ await page.waitForSelector('[data-parcours-projet]');
 
 // 01 · identité — nom
 await page.fill('[data-projet-nom]', 'Recette Saint-Leu');
-await shot('01-identite-nom', 'étape 1/7 · nom');
+await shot('01-identite-nom', 'étape 1/6 · nom');
 await next();
 
 // 02 · identité — périmètre (communes précises)
 await page.click('[data-projet-communes-mode]').catch(() => {});
 await page.click('[data-projet-communes] >> text=Saint-Leu').catch(() => {});
-await shot('02-identite-perimetre', 'étape 2/7 · périmètre (commune)');
+await shot('02-identite-perimetre', 'étape 2/6 · périmètre (commune)');
 await next();
 
 // 03 · identité — budget (INDICATIF, l'écran le dit)
 await page.fill('[data-projet-budget]', '720000');
-await shot('03-identite-budget-indicatif', 'étape 3/7 · budget « indicatif — sans effet sur la sélection »');
+await shot('03-identite-budget-indicatif', 'étape 3/6 · budget « indicatif — sans effet sur la sélection »');
 await next();
 
-// 04 · identité — type (INFORMATIF, servi par référentiel)
+// 04 · identité — type (INFORMATIF, servi par référentiel) — M120-B : plus de date de livraison
 await page.click('[data-projet-type] >> text=Logement social').catch(() => {});
-await shot('04-identite-type-informatif', 'étape 4/7 · type « le moteur ne distingue pas par type »');
+await shot('04-identite-type-informatif', 'étape 4/6 · type « le moteur ne distingue pas par type »');
 await next();
 
-// 05 · identité — livraison (INDICATIF)
-await page.fill('[data-projet-livraison]', '2027-06').catch(() => {});
-await shot('05-identite-livraison', 'étape 5/7 · date de livraison (indicatif)');
-await next();
-
-// 06 · CADRAGE — les facettes de la carte réutilisées + compteur vivant
+// 05 · CADRAGE — les facettes de la carte réutilisées + compteur vivant
 await page.fill('[data-cadrage-facettes] input', '800').catch(() => {});
 await page.waitForTimeout(900);   // compteur vivant (debounce 400ms + /filtre)
-await shot('06-cadrage-facettes', 'étape 6/7 · cadrage (facettes carte réutilisées + compteur vivant)');
+await shot('05-cadrage-facettes', 'étape 5/6 · cadrage (facettes carte réutilisées + compteur vivant)');
 await next();
 
-// 07 · récap
+// 06 · récap
 await page.waitForSelector('[data-projet-recap]');
-await shot('07-recap', 'étape 7/7 · récapitulatif (facettes vs indicatifs)');
+await shot('06-recap', 'étape 6/6 · récapitulatif (facettes vs indicatifs)');
 
 // 08 · créer = le run part une fois → shortlist figée
 await page.click('[data-projet-creer]');

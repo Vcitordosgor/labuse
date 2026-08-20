@@ -40,11 +40,11 @@ def test_cadrage_est_le_point_unique_identite_informative(db_session, monkeypatc
         identite={"budget_eur": 300000, "type_logement": "social", "date_livraison": "2027-01"},
         nom="P"), None, s)
     p = s.get(models.Projet, r["projet"]["id"])
-    # le CADRAGE ne contient QUE des facettes — budget/type/date n'y sont JAMAIS (informatifs)
+    # le CADRAGE ne contient QUE des facettes — budget/type n'y sont JAMAIS (informatifs)
     assert not ({"budget_eur", "type_logement", "date_livraison"} & set(p.filtres))
     assert p.filtres["communes"] == ["X"] and p.filtres["surfaceMin"] == 500
-    # l'identité porte les infos, telles quelles
-    assert p.identite == {"budget_eur": 300000, "type_logement": "social", "date_livraison": "2027-01"}
+    # l'identité porte budget + type ; M120-B : date_livraison est RETIRÉE (clé écartée par clean_identite)
+    assert p.identite == {"budget_eur": 300000, "type_logement": "social"}
 
 
 # ───────────────────────── la shortlist est figée et datée ─────────────────────────
@@ -104,6 +104,28 @@ def test_rejeu_conserve_les_tris_et_dit_le_diff(db_session, monkeypatch):
     assert rows["97120000BB0003"][0] == "proposee"
     # le diff DIT ce qui change
     assert rr["shortlist"]["ajoutees"] >= 1 and rr["shortlist"]["tris_conserves"] == 2
+
+
+# ───────── M120-B — le cap vient de config, la shortlist DIT le vivier figeable ─────────
+@pytest.mark.db
+def test_cap_en_config_et_diff_dit_le_vivier(db_session, monkeypatch):
+    s = db_session
+    _parcelle(s, "97120000DD0001")
+    monkeypatch.setattr(projets, "_search_items", _fake_search(["97120000DD0001"]))
+    # le cap vient de config/projets.yaml (défaut Vic = 200) — plus aucun 60/200 en dur
+    assert projets._shortlist_max() == 200
+    r = projets.projet_create(projets.ProjetIn(cadrage={"communes": ["X"]}, nom="Cap"), None, s)
+    d = r["shortlist"]
+    # le diff PORTE le dénominateur honnête : cap + vivier figeable + tronquee (top-N vs tout le vivier)
+    assert d["cap"] == 200 and isinstance(d["vivier"], int) and isinstance(d["tronquee"], bool)
+
+
+def test_vivier_figeable_exclut_l_etage_0():
+    # garde de contrat : le vivier figeable interroge bien HORS exclusions dures (étage 0) — la
+    # requête assemble `AND NOT _ETAGE0_SQL` (status exclue/faux_positif_probable), pas le total carte.
+    import inspect
+    src = inspect.getsource(projets._vivier_figeable)
+    assert "_ETAGE0_SQL" in src and "NOT" in src
 
 
 # ───────── Phase 4 — le « pourquoi » court : signaux sourcés, jamais un score interne nu ─────────

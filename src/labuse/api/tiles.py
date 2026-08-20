@@ -345,9 +345,9 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     zone_props_full = "m.zone_lib, m.zone_fam, " if has_zone else ""
     # M48 (F4) : `m.status` (matrice morte) retiré des propriétés servies — la carte lit tier_v2/etage0.
     props = (f"{v2_props}{zone_props}m.commune" if z <= 11 else
-             "m.idu, m.commune, m.surface_m2, "  # M129-B : q/a retirés
+             "m.idu, m.commune, m.surface_m2, "  # M129-B : q/a retirés · M137-D : a_completude aussi (vestige matrice, absent de mvt_parcels)
              f"{v2_props_full}{zone_props_full}"
-             "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
+             "m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.evenement, m.flags")
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),

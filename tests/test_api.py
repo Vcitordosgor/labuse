@@ -423,3 +423,48 @@ def test_m136_exports_ne_crashent_pas(client):
             s.execute(sqla_text("DELETE FROM parcel_p_score_v2 WHERE run_id=:r AND parcelle_id=:i"),
                       {"r": Q_A_RUN_LABEL, "i": idu})
             s.execute(sqla_text("DELETE FROM share_links WHERE token='m136gate'"))
+
+
+def test_m137_tuiles_ne_crashent_pas(client):
+    """M137 — RÉGRESSION (même vestige que M136) : la requête MVT lisait `m.a_completude`, colonne
+    de la matrice morte ABSENTE de `mvt_parcels` depuis la reconstruction post-M129 → toute tuile
+    z≥12 levait un 500 (UndefinedColumn) et la carte était noire. Ce verrou casse si une tuile lève.
+    Postgres résout les colonnes au PLAN : une seule tuile suffit à rattraper un vestige, même sans
+    parcelle intersectée — on en sert quand même une qui COUVRE la démo pour prouver le rendu MVT."""
+    import math
+
+    from sqlalchemy import text as sqla_text
+
+    from labuse.api.tiles import build_mvt_table
+    from labuse.db import session_scope
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    try:
+        with session_scope() as s:
+            # garde de build_mvt : un run v2 servi DOIT exister (la fixture ne le peuple pas — le
+            # LEFT JOIN tolère 0 ligne v2, mais le garde-run lève sans cette entrée).
+            s.execute(sqla_text(
+                "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params, n_parcelles) "
+                "VALUES (:r, 'm137gate', 'sha', '{}', 0) ON CONFLICT (run_id) DO NOTHING"),
+                {"r": Q_A_RUN_LABEL})
+            n = build_mvt_table(s, run_label=Q_A_RUN_LABEL)
+            assert n > 0, "mvt_parcels vide — la démo Saint-Paul n'a pas été bâtie sous le run servi"
+            # tuile z12 qui COUVRE une parcelle réelle (calcul depuis son centroïde 4326)
+            lon, lat = s.execute(sqla_text(
+                "SELECT ST_X(c), ST_Y(c) FROM (SELECT ST_Transform(ST_Centroid(geom_3857), 4326) AS c "
+                "FROM mvt_parcels LIMIT 1) t")).one()
+        z = 12
+        x = int((lon + 180.0) / 360.0 * (2 ** z))
+        y = int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * (2 ** z))
+        # AVANT le correctif : 500 (m.a_completude). APRÈS : 200 + tuile NON vide (la démo est là).
+        r = client.get(f"/map/tiles/{z}/{x}/{y}.pbf")
+        assert r.status_code == 200, r.text[:300]
+        assert r.headers["content-type"] == "application/x-protobuf"
+        assert len(r.content) > 0, "tuile vide — elle devrait couvrir une parcelle de démo"
+        # une tuile z≥12 quelconque exécute la MÊME requête (colonnes résolues au plan) → jamais 500
+        assert client.get("/map/tiles/13/4000/4000.pbf").status_code == 200
+    finally:
+        with session_scope() as s:
+            s.execute(sqla_text("DROP TABLE IF EXISTS mvt_parcels"))
+            s.execute(sqla_text("DROP TABLE IF EXISTS mvt_meta"))
+            s.execute(sqla_text("DELETE FROM p_score_v2_runs WHERE run_id=:r AND model_version='m137gate'"),
+                      {"r": Q_A_RUN_LABEL})

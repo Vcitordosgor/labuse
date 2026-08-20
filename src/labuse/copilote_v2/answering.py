@@ -630,8 +630,8 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _refus_voie(db, message, intent, "L'évaluation d'une parcelle (avis, marché DVF) vit sur sa "
                            "fiche — pas dans le chat.", "fiche", "Ouvrir la fiche", idu)
     if intent == "VEILLE":
-        return _refus_voie(db, message, intent, "Les surveillances se posent et se règlent dans "
-                           "Surveillance.", "surveillance", "Ouvrir la Surveillance")
+        return _refus_voie(db, message, intent, "La veille se pose et se règle dans "
+                           "Veille.", "surveillance", "Ouvrir la Veille")
     if intent == "OUTIL":
         m = _fold_py(message.lower())
         if any(k in m for k in ("courrier", "ecrire au proprietaire", "ecrire au proprio", "lettre",

@@ -100,8 +100,6 @@ def render_projet_pdf(projet: dict, apercu: dict) -> bytes:
         remplies.append(("Surface", f"{lo or 0}–{hi or '∞'} m²"))
     if identite.get("budget_eur"):
         remplies.append(("Budget foncier", f"{identite['budget_eur'] / 1000:,.0f} k€ (indicatif)".replace(",", " ")))
-    if identite.get("date_livraison"):
-        remplies.append(("Livraison visée", f"{identite['date_livraison']} (indicatif)"))
     for k, v in remplies:
         ligne(k, v)
     pdf.ln(3)

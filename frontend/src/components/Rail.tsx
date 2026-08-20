@@ -136,15 +136,16 @@ export function Rail() {
         })}
 
         <div className="mt-auto flex flex-col items-center gap-2">
-          {/* M104 — « Surveillance » : parcelles suivies + secteurs dessinés + critères
-              enregistrés, une seule entrée (le mot « veille » est banni du vocabulaire servi). */}
+          {/* M104 — une seule entrée : parcelles suivies + secteurs dessinés + critères
+              enregistrés. M137-C (Vic) — le libellé SERVI devient « Veille » (les clés internes
+              `surveillance*` ne bougent pas). */}
           <button data-rail-surveillance onClick={() => toggleSurveillance()} className="group flex w-full flex-col items-center gap-1"
-            title="Surveillance — parcelles suivies, secteurs dessinés et critères enregistrés">
+            title="Veille — parcelles suivies, secteurs dessinés et critères enregistrés">
             <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
               surveillanceOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
             </span>
-            <span className={`text-[10.5px] ${surveillanceOpen ? 'text-mint' : 'text-txt-mut'}`}>Surveillance</span>
+            <span className={`text-[10.5px] ${surveillanceOpen ? 'text-mint' : 'text-txt-mut'}`}>Veille</span>
           </button>
           {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
               claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}

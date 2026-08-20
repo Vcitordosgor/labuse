@@ -11,7 +11,6 @@ import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
 import { ProjetKanban } from './ProjetKanban'
 import { ParcoursProjet } from './ParcoursProjet'
-import { Vignette } from './Vignette'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
 
@@ -32,18 +31,16 @@ function ctxLine(p: Projet): string {
   return parts.join(' · ')
 }
 
-/** La commune en MONO à côté du titre — repère de lecture, pas un chip. */
+/** La commune en MONO à côté du titre — repère de lecture, pas un chip. M120-B : depuis le cadrage. */
 function communeMono(p: Projet): string {
-  const c = p.vignette?.commune
-  if (c) return c.toUpperCase()
   const cs = p.cadrage.communes ?? []
   if (cs.length === 1) return cs[0].toUpperCase()
   return perimetreLabel(p.cadrage).toUpperCase()
 }
 
-/** Une LIGNE de projet, deux intensités : `à trier` (bande mint, vignette 64, barre, compteur mint)
- *  ou `à jour` (bande grise, vignette 52, mention discrète). Toute la ligne est cliquable ; le menu
- *  ⋯ (Renommer / Archiver) apparaît au survol et ne déclenche pas l'ouverture. */
+/** Une LIGNE de projet, deux intensités : `à trier` (bande mint, barre, compteur mint) ou `à jour`
+ *  (bande grise, mention discrète). M120-B : plus de vignette d'emprise. Toute la ligne est cliquable ;
+ *  le menu ⋯ (Renommer / Archiver) apparaît au survol et ne déclenche pas l'ouverture. */
 function ProjetRow({ p }: { p: Projet }) {
   const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
@@ -64,10 +61,8 @@ function ProjetRow({ p }: { p: Projet }) {
   return (
     <div data-projet-row data-intensite={todo ? 'todo' : 'ajour'} onClick={ouvrir}
       className="group" style={{ display: 'flex', background: '#0C1410', borderRadius: 10, overflow: 'hidden', marginBottom: 8, cursor: 'pointer' }}>
+      {/* M120-B — bande d'état conservée ; la vignette d'emprise (M114) est retirée (rien à la place). */}
       <div style={{ width: 3, flexShrink: 0, background: todo ? '#4ADE80' : '#1A241E' }} />
-      <div style={{ flexShrink: 0, padding: todo ? '16px 0 16px 16px' : '14px 0 14px 16px' }}>
-        <Vignette v={p.vignette} size={todo ? 64 : 52} />
-      </div>
       <div style={{ flex: 1, minWidth: 0, padding: todo ? '16px 18px' : '14px 18px', display: 'flex', alignItems: 'center', gap: 20 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: todo ? 5 : 4 }}>

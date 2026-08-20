@@ -22,7 +22,7 @@ export function SurveillancePanel() {
   return (
     <aside data-surveillance-panel className="absolute right-0 top-0 z-30 flex h-full w-[360px] flex-col overflow-hidden border-l border-line bg-bg">
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-        <p className="label-caps">Surveillance</p>
+        <p className="label-caps">Veille</p>
         <button onClick={() => { setSurveillanceOpen(false); if (drawing) setTool(null) }} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
       </div>
       {/* LA BOUCLE, dite — pas devinée : surveiller → alertes → cloche + brief. */}

@@ -255,6 +255,34 @@ def _run_cadrage(db: Session, cadrage: dict, limit: int) -> list[dict]:
     return _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
 
 
+#: M120-B — le cap de la shortlist figée vient de config/projets.yaml (jamais en dur). Défaut nommé
+#: en UN seul endroit, si le fichier manque (config error) — plus aucun 60/200 épars dans le code.
+_SHORTLIST_MAX_DEFAUT = 200
+
+
+def _shortlist_max() -> int:
+    from ..config import load_yaml_config
+    try:
+        return int(load_yaml_config("projets").get("shortlist_max", _SHORTLIST_MAX_DEFAUT))
+    except Exception:  # noqa: BLE001 — fichier absent/illisible : on retombe sur le défaut nommé
+        return _SHORTLIST_MAX_DEFAUT
+
+
+def _vivier_figeable(db: Session, cadrage: dict) -> int:
+    """M120-B — le VIVIER RÉELLEMENT FIGEABLE d'un cadrage : les parcelles qui peuvent entrer dans la
+    shortlist, c.-à-d. celles du cadrage HORS exclusions dures (non constructibles / faux positifs =
+    étage 0). C'est le dénominateur honnête (« top N sur M »), pas le total gonflé du compteur carte
+    (qui compte aussi les 79 % d'étage 0 — mesuré — qui ne peuvent jamais être triées)."""
+    from .app import _ETAGE0_SQL, _score_v2_run_id
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    return db.execute(text(
+        "SELECT count(*) FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id "
+        "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+        f"WHERE d.run_label = :run AND NOT {_ETAGE0_SQL}{where}"),
+        {"run": RUN, "v2run": _score_v2_run_id(db), **params}).scalar() or 0
+
+
 def _sdp_besoin(cadrage: dict) -> int | None:
     """La SDP besoin n'est plus dérivée d'un « programme » (M120) : c'est la facette `sdpMin` du
     cadrage, si le promoteur l'a posée. Un seul endroit."""
@@ -353,6 +381,26 @@ def _pourquoi_court(tier: str | None, carencee: bool, evenement: bool, surface: 
     return out[:2]
 
 
+class CadrageIn(BaseModel):
+    cadrage: dict = {}
+
+
+@router.post("/compteur")
+def projet_compteur(body: CadrageIn, db: Session = Depends(get_db)) -> dict:
+    """M120-B — le compteur du CADRAGE, ALIGNÉ sur ce qui est réellement figeable. `vivier` = les
+    parcelles triables (hors exclusions dures : non constructibles / faux positifs) ; `total` = le
+    compte carte brut (qui inclut ~79 % d'exclusions dures qui ne peuvent JAMAIS entrer dans la
+    shortlist — mesuré). Le front affiche `vivier` (l'univers réel), jamais `total` seul. `cap` = la
+    taille max de la shortlist figée (config). Léger : deux count(*), pas de top."""
+    cadrage = clean_cadrage(body.cadrage)
+    from .app import _q_v2_stats
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
+    vivier = _vivier_figeable(db, cadrage)
+    return {"vivier": vivier, "total": total, "cap": _shortlist_max()}
+
+
 class ApercuIn(BaseModel):
     cadrage: dict = {}
     identite: dict = {}
@@ -361,9 +409,10 @@ class ApercuIn(BaseModel):
 
 @router.post("/apercu")
 def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
-    """M120 — Aperçu du CADRAGE : compteur exact (même filtrage que la carte) + top parcelles avec
-    leur « pourquoi » SORTI DU MOTEUR. Un seul système : le run applique le jeu de filtres (aucune
-    dérivation parallèle, aucun M22). Aucune valeur inventée."""
+    """M120 — Aperçu du CADRAGE : compteur FIGEABLE (hors exclusions dures) + top parcelles avec leur
+    « pourquoi » SORTI DU MOTEUR. Un seul système : le run applique le jeu de filtres (aucune
+    dérivation parallèle, aucun M22). Aucune valeur inventée. M120-B : `n` = vivier figeable (pas le
+    total gonflé), `total` gardé à part pour la transparence."""
     cadrage = clean_cadrage(body.cadrage)
     identite = body.identite or {}
     sdp_besoin = _sdp_besoin(cadrage)
@@ -373,8 +422,8 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
     from .app import _q_v2_stats
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
-    stats = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)
-    n = stats["total"]                                # même compteur que la carte (compte = total)
+    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
+    n = _vivier_figeable(db, cadrage)                 # M120-B — le vivier RÉEL, hors exclusions dures
     top = _run_cadrage(db, cadrage, lim)
     top_out = [{
         "idu": it["idu"], "commune": it["commune"],
@@ -382,15 +431,15 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         "q_score": it.get("q_score"),
         "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
     } for it in top]
-    return {"nom": _nom_repli(identite, cadrage), "n": n, "sdp_besoin_m2": sdp_besoin,
-            "source": RUN, "top": top_out}
+    return {"nom": _nom_repli(identite, cadrage), "n": n, "total": total,
+            "cap": _shortlist_max(), "sdp_besoin_m2": sdp_besoin, "source": RUN, "top": top_out}
 
 
 class ProjetIn(BaseModel):
     cadrage: dict = {}                 # M120 : le jeu de filtres (les 44 facettes)
-    identite: dict = {}                # M120 : infos (budget_eur / type_logement / date_livraison)
+    identite: dict = {}                # M120 : infos (budget_eur / type_logement)
     nom: str | None = None            # éditable ; repli déterministe sinon
-    limit: int = 60                    # taille de la shortlist figée (best-first)
+    limit: int | None = None           # M120-B : None → cap de config (config/projets.yaml), plus de 60 en dur
 
 
 class ProjetPatchIn(BaseModel):
@@ -400,10 +449,10 @@ class ProjetPatchIn(BaseModel):
     identite: dict | None = None       # M120 : infos éditables (n'invalide pas la shortlist)
 
 
-#: M120 — l'identité informative : les seules clés servies (budget/type/date). Le budget et la date
-#: sont AFFICHÉS tels quels — ils n'alimentent AUCUN filtre (mesuré M119/M120). Le type de logement
-#: est INFORMATIF : le moteur ne distingue rien par type (mesuré : 0 effet sur la sélection).
-_IDENTITE_KEYS = {"budget_eur", "type_logement", "date_livraison"}
+#: M120 — l'identité informative : les seules clés servies (budget/type). Le budget est AFFICHÉ tel
+#: quel — il n'alimente AUCUN filtre (mesuré M119/M120). Le type de logement est INFORMATIF : le
+#: moteur ne distingue rien par type (mesuré : 0 effet). M120-B : `date_livraison` retirée du flux.
+_IDENTITE_KEYS = {"budget_eur", "type_logement"}
 
 
 def clean_identite(identite: dict | None) -> dict:
@@ -443,67 +492,24 @@ def _counts_by_projet(db: Session, projet_ids: list[int]) -> dict[int, dict]:
     return out
 
 
-# M114 · Phase 0 (arbitré : vignette RÉELLE) — le SCHÉMA d'emprise de chaque projet : les centroïdes
-# des parcelles du projet, normalisés 0–1 dans la bbox du projet, avec le drapeau « retenue ». Le
-# front en tire un SVG (contour pour proposée/écartée, aplat mint pour retenue). Une SEULE requête
-# batchée pour toute la liste (mesuré ~27 ms/9 projets) ; aucun stockage, aucun cache — lecture live
-# de projet_parcelles (une parcelle retenue/écartée se voit au prochain fetch). Projet sans parcelle
-# → points vides → le front rend l'initiale de la commune (état vide, jamais un chargement).
-_VIGNETTE_MAX_POINTS = 14   # au-delà, un carré de 52–64 px n'est que du bruit
-
-
-def _vignettes_by_projet(db: Session, projet_ids: list[int]) -> dict[int, list[dict]]:
-    if not projet_ids:
-        return {}
-    rows = db.execute(text(
-        "SELECT pc.projet_id AS pid, pc.statut AS st, ST_X(p.centroid) AS x, ST_Y(p.centroid) AS y "
-        "FROM projet_parcelles pc JOIN parcels p ON p.id = pc.parcel_id "
-        "WHERE pc.projet_id = ANY(:ids) AND p.centroid IS NOT NULL"), {"ids": projet_ids}).all()
-    brut: dict[int, list] = {}
-    for r in rows:
-        brut.setdefault(r.pid, []).append((r.x, r.y, r.st == "retenue"))
-    out: dict[int, list[dict]] = {}
-    for pid, pts in brut.items():
-        xs = [x for x, _, _ in pts]
-        ys = [y for _, y, _ in pts]
-        x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-        dx = (x1 - x0) or 1.0
-        dy = (y1 - y0) or 1.0
-        # les RETENUES d'abord : garanties visibles si on tronque à _VIGNETTE_MAX_POINTS.
-        pts.sort(key=lambda t: not t[2])
-        out[pid] = [{"x": round((x - x0) / dx, 4), "y": round((y - y0) / dy, 4), "r": r}
-                    for x, y, r in pts[:_VIGNETTE_MAX_POINTS]]
-    return out
-
-
-def _premiere_commune(p: models.Projet) -> str | None:
-    # M120 — le périmètre vit dans le cadrage (facette `communes`), plus dans la fiche.
-    communes = (p.filtres or {}).get("communes") or []
-    return communes[0] if communes else None
-
-
-def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict],
-                        vignettes: dict[int, list[dict]] | None = None) -> dict:
+def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict]) -> dict:
+    # M120-B — la vignette d'emprise (M114) est RETIRÉE de la liste : la ligne garde titre, commune,
+    # contexte, compteur à trier et bande d'état. Plus de schéma de centroïdes servi.
     c = by_projet.get(p.id, {})
-    d = {**_projet_dict(p),
-         "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
-    # M114 — la vignette voyage avec la fiche (points normalisés + commune pour l'état vide).
-    d["vignette"] = {"commune": _premiere_commune(p),
-                     "points": (vignettes or {}).get(p.id, [])}
-    return d
+    return {**_projet_dict(p),
+            "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
 
 
 @router.get("")
 def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
-    """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4) et la VIGNETTE d'emprise (M114).
-    Une seule source de vérité : compteurs et vignette viennent de projet_parcelles (l'état réel du
-    tri), jamais d'un recompte de recherche. SEC-IDOR : bornée au compte de la session."""
+    """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4). Une seule source de vérité : les
+    compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche.
+    SEC-IDOR : bornée au compte de la session. M120-B : plus de vignette d'emprise."""
     cid = current_compte(request)
     rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
     ids = [p.id for p in rows]
     by_projet = _counts_by_projet(db, ids)
-    vignettes = _vignettes_by_projet(db, ids)
-    return [_projet_dict_counts(p, by_projet, vignettes) for p in rows]
+    return [_projet_dict_counts(p, by_projet) for p in rows]
 
 
 def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> models.Projet | None:
@@ -524,9 +530,14 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
     RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
     Rend le DIFF (entrées/sorties/tris conservés) pour que le rejeu DISE ce qui change."""
+<<<<<<< HEAD
     caps = _caps_projets()
     lim = max(1, min(limit or int(caps.get("shortlist_defaut", 60)),
                      int(caps.get("shortlist_max", 200))))  # M129-D : caps en config
+=======
+    cap = _shortlist_max()                            # M120-B — cap en config, plus aucun 60/200 en dur
+    lim = max(1, min(limit or cap, cap))
+>>>>>>> audit/m122-barrieres
     avant = {r.idu: r.statut for r in db.execute(text(
         "SELECT par.idu, pp.statut FROM projet_parcelles pp JOIN parcels par ON par.id = pp.parcel_id "
         "WHERE pp.projet_id = :p"), {"p": p.id}).all()}
@@ -576,9 +587,18 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     p.derniere_execution_at = now
     p.shortlist_perimee = False
     db.flush()
+<<<<<<< HEAD
     return {"ajoutees": ajoutees, "ajoutees_refonte": ajoutees_refonte,
             "sorties": sorties, "tris_conserves": tris_conserves,
             "n_shortlist": len(idus)}
+=======
+    # M120-B — le DÉNOMINATEUR HONNÊTE : le vivier figeable (hors exclusions dures). La shortlist se
+    # DIT « top {n} sur {vivier} » (ou « c'est tout le vivier » si vivier ≤ cap) — jamais « tout ce
+    # qui matche ». `tronquee` : y a-t-il plus de figeables que le cap ?
+    vivier = _vivier_figeable(db, p.filtres or {})
+    return {"ajoutees": ajoutees, "sorties": sorties, "tris_conserves": tris_conserves,
+            "n_shortlist": len(idus), "vivier": vivier, "cap": cap, "tronquee": vivier > len(idus)}
+>>>>>>> audit/m122-barrieres
 
 
 @router.post("")
@@ -722,7 +742,7 @@ def projet_rejouer(pid: int, request: Request, db: Session = Depends(get_db)) ->
     (retenue/écartée/peut-être) SURVIVENT ; une parcelle sortie du cadrage le dit (`hors_criteres`)
     au lieu de disparaître. La shortlist ne bouge JAMAIS seule — seul ce bouton la rafraîchit."""
     p = _projet_or_404(db, pid, current_compte(request))
-    diff = _figer_shortlist(db, p, 60)
+    diff = _figer_shortlist(db, p, None)   # M120-B : cap de config
     return {"ok": True, "projet": _projet_dict(p), "shortlist": diff, **_counts(db, pid)}
 
 
@@ -783,7 +803,7 @@ def _search_items(db: Session, cadrage: dict, limit: int, overrides: dict | None
 
 
 class ProposerIn(BaseModel):
-    limit: int = 60
+    limit: int | None = None           # M120-B : None → cap de config
 
 
 @router.post("/{pid}/proposer")

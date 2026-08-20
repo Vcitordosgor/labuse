@@ -41,7 +41,6 @@ export interface ParcelResult {
   status?: Statut
   q_score: number
   a_score: number
-  a_completude: number | null
   completeness_score: number
   evenement: string | null
   evenement_date?: string | null   // événement daté v1.3 (badge secondaire)
@@ -250,7 +249,6 @@ export interface Fiche {
   mode_b?: ModeB
   q_score: number
   a_score: number
-  a_completude: number | null
   completeness_score: number
   coords: [number, number]
   evenement: string | null

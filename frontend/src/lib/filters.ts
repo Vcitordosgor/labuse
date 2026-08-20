@@ -10,7 +10,6 @@ export interface ParcelProps {
   status: Statut
   q_score: number
   a_score: number
-  a_completude: number | null
   completeness_score: number
   sdp_residuelle_m2: number | null
   sous_densite: number | null

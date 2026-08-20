@@ -23,8 +23,8 @@ REGISTRE: dict[str, dict] = {
         "cadence": "digest quotidien (J-1)", "desactivable": True, "priorite": 2, "gabarit": "digest",
     },
     "veille_zone": {
-        # M104 : « Vos secteurs » — le mot « veille » est saturé (6 objets, audit M104) ; le
-        # vocabulaire servi est UN : Surveillance / secteurs / critères.
+        # M104 : « Vos secteurs » — une seule entrée (6 objets, audit M104). M137-C : le libellé
+        # servi de la SECTION est « Veille » (clés internes `surveillance*` inchangées).
         "libelle": "Vos secteurs et critères",
         "chaine": 2, "producteur": "evaluer_tous_secteurs (DVF/permis/BODACC/zonage) + evaluer_toutes + saved_searches (SQL)",
         "canaux": ("cloche", "mail"), "canal_defaut": ("cloche", "mail"),

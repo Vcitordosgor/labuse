@@ -762,12 +762,11 @@ export const postProgramme = (body: Record<string, unknown>) =>
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ
-// porte les infos indicatives (budget/type/date) qui n'alimentent AUCUN filtre.
+// porte les infos indicatives (budget/type) qui n'alimentent AUCUN filtre. M120-B : date retirée.
 export type Cadrage = Partial<Filters>
 export interface Identite {
   budget_eur?: number | null          // indicatif — sans effet sur la sélection
   type_logement?: string | null       // indicatif (le moteur ne distingue pas par type)
-  date_livraison?: string | null      // indicatif
 }
 export interface TypeLogement { cle: string; libelle: string }
 export const getProjetTypes = () =>
@@ -777,19 +776,29 @@ export type ProprietairePublic =
   | { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
   | { type: 'particulier' }
 export interface ProjetCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-// M114 — la vignette d'emprise : centroïdes des parcelles normalisés 0–1 + drapeau retenue (aplat
-// mint) ; `commune` sert l'état vide (initiale) quand `points` est vide. Live depuis projet_parcelles.
-export interface ProjetVignette { commune: string | null; points: { x: number; y: number; r: boolean }[] }
 export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
   cadrage: Cadrage; identite: Identite; shortlist_perimee: boolean   // M120
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
-  vignette?: ProjetVignette   // M114 — schéma d'emprise (64/52 px)
 }
+<<<<<<< HEAD
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
 // M129-D P4 : ajoutees_refonte = entrées dues au nouveau vivier (refonte cascade), dites au rejeu.
 export interface ShortlistDiff { ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number }
+=======
+// M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client. M120-B : + le vivier
+// figeable (dénominateur honnête) + le cap (config) + `tronquee` (top-N vs tout le vivier).
+export interface ShortlistDiff {
+  ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number
+  vivier: number; cap: number; tronquee: boolean
+}
+// M120-B — le compteur du cadrage, ALIGNÉ sur le figeable : `vivier` (triable, hors exclusions
+// dures) est ce qu'on affiche ; `total` (compte carte brut) est gardé pour transparence ; `cap`.
+export interface CadrageCompteur { vivier: number; total: number; cap: number }
+export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
+  j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
+>>>>>>> audit/m122-barrieres
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
 // ses facettes (ParcoursProjet → FiltreFacettes), plus par une fiche remplie par l'IA. Le client
 // `/ia/entretien` et `/projets/reperes` est parti avec lui (endpoints backend conservés, non appelés).
@@ -804,7 +813,7 @@ export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
-export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
+export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
 export const getApercu = (cadrage: Cadrage, identite: Identite = {}, limit = 5) =>
   j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage, identite, limit }) })
 export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
