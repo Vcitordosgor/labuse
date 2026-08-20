@@ -1,13 +1,9 @@
-<<<<<<< HEAD
-# M129-D P0.2 — les caps du flux Projet SORTENT DU DUR (dette M122 « chercher-plus 60 »).
-# La shortlist DIT toujours son univers (« N meilleures sur {vivier} », M120-B).
-shortlist_max: 200        # plafond ABSOLU d'une shortlist figée (run + rejeu + chercher-plus)
-shortlist_defaut: 60      # taille servie sans demande explicite (chercher-plus l'étend jusqu'au max)
-=======
-# LA BUSE — paramètres du flux PROJET (M120-B). Tunables ICI, jamais en dur dans le code.
+# LA BUSE — paramètres du flux PROJET. Tunables ICI, jamais en dur dans le code.
 #
+# M129-D P0.2 — les caps du flux Projet SORTENT DU DUR (dette M122 « chercher-plus 60 »).
 # La shortlist figée d'un projet est un TOP-N best-first (classé par probabilité de mutation) du
 # VIVIER FIGEABLE — les parcelles réellement triables, HORS exclusions dures (non constructibles /
-# faux positifs). Le client est toujours informé qu'il trie un top-N, jamais « tout ce qui matche ».
-shortlist_max: 200          # taille max de la shortlist figée (ex-clamp/défaut en dur ; défaut Vic = 200)
->>>>>>> audit/m122-barrieres
+# faux positifs). Le client est toujours informé qu'il trie un top-N (« N meilleures sur {vivier} »,
+# M120-B), jamais « tout ce qui matche ».
+shortlist_max: 200        # plafond ABSOLU d'une shortlist figée (run + rejeu + chercher-plus)
+shortlist_defaut: 60      # taille servie sans demande explicite (chercher-plus l'étend jusqu'au max)

@@ -383,7 +383,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         "icpe": "ICPE", "mvt": "Mouvement de terrain", "pente": "Pente", "ravine": "Ravines",
         "trait_de_cote": "Trait de côte", "abf": "ABF / Monuments",
         "ens": "Espace naturel sensible", "eau": "Eau", "bruit_route": "Bruit routier",
-        "dvf": "Marché DVF", "sitadel": "Permis SITADEL", "amenites": "Aménités",
+        "dvf": "Marché DVF", "sitadel": "Permis SITADEL", "amenites": "Commerces et services à proximité",
         "potentiel_foncier_region": "Potentiel foncier Région", "ocs_ge": "Occupation du sol",
         "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
         "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",

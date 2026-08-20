@@ -34,7 +34,7 @@ export const LAYER_LABEL: Record<string, string> = {
   // marché
   dvf: 'Marché DVF',
   sitadel: 'Permis SITADEL',
-  amenites: 'Aménités',
+  amenites: 'Commerces et services à proximité',
   potentiel_foncier_region: 'Potentiel foncier Région',
   ocs_ge: 'Occupation du sol',
   friche: 'Friche',

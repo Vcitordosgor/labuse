@@ -238,7 +238,7 @@ class AmenitesLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         am = ctx.amenites(parcel.id)
         if am is None:
-            return unknown(self.name, "Aménités non calculées pour la parcelle.", source=SRC_OSM)
+            return unknown(self.name, "Commerces et services à proximité non calculés pour la parcelle.", source=SRC_OSM)
         defo, tcsp_b = params["bandes_defaut_m"], params["bandes_tcsp_m"]
         pond = params["ponderations"]
         mag = 0.0
@@ -257,7 +257,7 @@ class AmenitesLayer(Layer):
         def _m(col):
             v = am.get(col)
             return f"{int(v)}m" if v is not None else "—"
-        detail = (f"Aménités : école {_m('dist_ecole_m')}, commerce {_m('dist_commerce_m')}, "
+        detail = (f"Commerces et services à proximité : école {_m('dist_ecole_m')}, commerce {_m('dist_commerce_m')}, "
                   f"santé {_m('dist_sante_m')}, bus {_m('dist_tcsp_m')} (score {mag:.2f}).")
         return _trace(positive(self.name, detail, params["bonus_key"], magnitude=mag, source=SRC_OSM),
                       "parcel_amenites", parcel.id)

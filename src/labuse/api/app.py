@@ -2440,7 +2440,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
                   ds.name AS source, ds.source_millesime
            FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
            WHERE cr.run_label = :run AND cr.parcel_id = :pid
-           ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""),
+           -- `cr.id` : tiebreaker DÉTERMINISTE — une couche peut émettre 2 lignes de même |poids|
+           -- (ex. zonage mixte : « Zonage mixte… » + « Zone PLU U… », poids nul tous deux). Sans
+           -- lui, l'ordre des ex æquo suivait l'ordre physique (heap) → un gros UPDATE de la table
+           -- le rebattait. L'ordre d'émission (= id croissant) est stable et fixe le « premier ».
+           ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name, cr.id"""),
         {"pid": head["id"], "run": run_label}).mappings().all()
 
     lines, flags, evenement_detail = [], [], None
@@ -3556,7 +3560,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                       ds.name AS source
                FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
-               ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""
+               ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name, cr.id"""  # cr.id : tiebreaker déterministe (cf. _q_v2_fiche)
         ), {"pid": p.id, "run": Q_A_RUN_LABEL}
     ).mappings().all()
     from .risques_arbitrage import arbitrer_risques

@@ -782,15 +782,11 @@ export interface Projet {
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
 }
-<<<<<<< HEAD
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
 // M129-D P4 : ajoutees_refonte = entrées dues au nouveau vivier (refonte cascade), dites au rejeu.
-export interface ShortlistDiff { ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number }
-=======
-// M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client. M120-B : + le vivier
-// figeable (dénominateur honnête) + le cap (config) + `tronquee` (top-N vs tout le vivier).
+// M120-B : + le vivier figeable (dénominateur honnête) + le cap (config) + `tronquee` (top-N vs tout le vivier).
 export interface ShortlistDiff {
-  ajoutees: number; sorties: number; tris_conserves: number; n_shortlist: number
+  ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number
   vivier: number; cap: number; tronquee: boolean
 }
 // M120-B — le compteur du cadrage, ALIGNÉ sur le figeable : `vivier` (triable, hors exclusions
@@ -798,7 +794,6 @@ export interface ShortlistDiff {
 export interface CadrageCompteur { vivier: number; total: number; cap: number }
 export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
   j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
->>>>>>> audit/m122-barrieres
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
 // ses facettes (ParcoursProjet → FiltreFacettes), plus par une fiche remplie par l'IA. Le client
 // `/ia/entretien` et `/projets/reperes` est parti avec lui (endpoints backend conservés, non appelés).

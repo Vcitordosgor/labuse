@@ -530,14 +530,9 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
     RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
     Rend le DIFF (entrées/sorties/tris conservés) pour que le rejeu DISE ce qui change."""
-<<<<<<< HEAD
     caps = _caps_projets()
-    lim = max(1, min(limit or int(caps.get("shortlist_defaut", 60)),
-                     int(caps.get("shortlist_max", 200))))  # M129-D : caps en config
-=======
-    cap = _shortlist_max()                            # M120-B — cap en config, plus aucun 60/200 en dur
-    lim = max(1, min(limit or cap, cap))
->>>>>>> audit/m122-barrieres
+    cap = int(caps.get("shortlist_max", 200))         # M120-B — cap servi (dénominateur du « top N sur M »)
+    lim = max(1, min(limit or int(caps.get("shortlist_defaut", 60)), cap))  # M129-D — caps en config
     avant = {r.idu: r.statut for r in db.execute(text(
         "SELECT par.idu, pp.statut FROM projet_parcelles pp JOIN parcels par ON par.id = pp.parcel_id "
         "WHERE pp.projet_id = :p"), {"p": p.id}).all()}
@@ -587,18 +582,14 @@ def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     p.derniere_execution_at = now
     p.shortlist_perimee = False
     db.flush()
-<<<<<<< HEAD
-    return {"ajoutees": ajoutees, "ajoutees_refonte": ajoutees_refonte,
-            "sorties": sorties, "tris_conserves": tris_conserves,
-            "n_shortlist": len(idus)}
-=======
     # M120-B — le DÉNOMINATEUR HONNÊTE : le vivier figeable (hors exclusions dures). La shortlist se
     # DIT « top {n} sur {vivier} » (ou « c'est tout le vivier » si vivier ≤ cap) — jamais « tout ce
     # qui matche ». `tronquee` : y a-t-il plus de figeables que le cap ?
+    # M129-D P4 — `ajoutees_refonte` : les entrées dues au nouveau vivier (refonte cascade), dites au rejeu.
     vivier = _vivier_figeable(db, p.filtres or {})
-    return {"ajoutees": ajoutees, "sorties": sorties, "tris_conserves": tris_conserves,
+    return {"ajoutees": ajoutees, "ajoutees_refonte": ajoutees_refonte,
+            "sorties": sorties, "tris_conserves": tris_conserves,
             "n_shortlist": len(idus), "vivier": vivier, "cap": cap, "tronquee": vivier > len(idus)}
->>>>>>> audit/m122-barrieres
 
 
 @router.post("")

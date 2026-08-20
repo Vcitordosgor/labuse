@@ -447,7 +447,7 @@ export const CLIENT = {
     // P1.2 · explications de scores rendues VISIBLES (plus seulement en survol)
     scores: {
       q: 'Qualité du terrain au regard des règles PLU, des risques et de l’accès (0-100, 100 = idéal).',
-      a: 'Accès & desserte : voirie, réseaux et aménités à proximité (0-100).',
+      a: 'Accès & desserte : voirie, réseaux, commerces et services à proximité (0-100).',
       v: 'Indices publics qu’un propriétaire pourrait céder (procédures, détention longue, succession, dirigeant).',
       icd: 'Part des sources renseignées pour CETTE parcelle. Ce n’est pas une note de qualité du terrain.',
       completude: 'Part des couches de données disponibles pour cette parcelle.',

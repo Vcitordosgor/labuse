@@ -251,7 +251,7 @@ def share_list(idu: str, request: Request, db: Session = Depends(get_db)) -> lis
 # (les pénalités RÉELLES apparaissent — honnêteté : ex. residuel_socle « hors cible collectif »).
 _FORCE_TITLE = {
     "zonage_plu_gpu": "Terrain constructible", "sitadel": "Dynamique de construction active",
-    "dvf": "Marché porteur", "amenites": "Équipements à proximité", "acces": "Accès voirie",
+    "dvf": "Marché porteur", "amenites": "Commerces et services à proximité", "acces": "Accès voirie",
     "viabilisation": "Réseaux au contact", "residuel_socle": "Potentiel de densification",
     "assemblage": "Regroupement possible",
 }
