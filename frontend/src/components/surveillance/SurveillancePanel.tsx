@@ -217,7 +217,7 @@ function VoletCriteres() {
         <input data-nl-critere value={nlText}
           onChange={(e) => { setNlText(e.target.value); setNlRefus(null) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && nlText.trim().length >= 3) nl.mutate() }}
-          placeholder="Décrivez : « les grandes parcelles à Saint-Paul qui deviennent chaudes »"
+          placeholder="Décrivez : « les grandes parcelles à Saint-Paul qui passent en Priorité »"
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <button data-nl-go onClick={() => nlText.trim().length >= 3 && nl.mutate()} disabled={nlText.trim().length < 3 || nl.isPending}
           className="shrink-0 rounded border border-mint/50 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
@@ -241,8 +241,8 @@ function VoletCriteres() {
       {/* exemples = déclencheurs RÉELS uniquement (M16-B4, inchangé) */}
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <span className="text-[10px] text-txt-dim">Suivre, par exemple :</span>
-        <button data-critere-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, tiers: ['chaude'] }); setNomCritere('Parcelles qui basculent en chaude') }}
-          className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">parcelles qui deviennent chaudes</button>
+        <button data-critere-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, tiers: ['chaude'] }); setNomCritere('Parcelles qui passent en À suivre') }}
+          className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">parcelles qui passent en À suivre</button>
         <button data-critere-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, evenement: true }); setNomCritere('Nouvelles procédures BODACC') }}
           className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">nouvelle procédure BODACC</button>
       </div>

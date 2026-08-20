@@ -330,7 +330,7 @@ export function O10Bascules() {
   const items = (q.data?.items ?? []).filter((e) => !kind || e.kind.includes(kind))
   return (
     <>
-      <Banner>Les <b>bascules datées</b> du run — une parcelle qui passe chaude, un match de
+      <Banner>Les <b>bascules datées</b> du run — une parcelle qui passe en Priorité, un match de
         profil, un événement BODACC : chaque changement d'état avec sa date. Le « quoi de
         neuf » du lundi matin, en lecture (marquer lu reste dans la cloche).</Banner>
       <div className="flex flex-wrap gap-1.5">

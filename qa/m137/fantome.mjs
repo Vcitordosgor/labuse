@@ -1,0 +1,17 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE = 'http://localhost:5173/socle/';
+const OUT = new URL('./captures', import.meta.url).pathname;
+const b = await chromium.launch({ channel: 'chrome' });
+const page = await b.newPage({ viewport: { width: 1440, height: 1024 } });
+const soft = async (fn, w) => { try { await fn() } catch (e) { console.log('WARN', w, String(e).slice(0,140)) } };
+await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(3500);
+await soft(async () => { await page.locator('button[title="Outils"]').click(); await page.waitForTimeout(800); }, 'rail outils');
+await soft(async () => { await page.locator('[data-outil="fantome"]').click(); await page.waitForTimeout(3500); }, 'fantome');
+await page.waitForFunction(() => { const m=document.body.innerText.match(/([0-9][0-9 .,]*)\s+parcelles gel/); return m && m[1].replace(/[^0-9]/g,"") !== "0"; }, { timeout: 25000 }).catch(()=>console.log("WARN données non chargées"));
+const txt = await page.evaluate(() => { const m=document.body.innerText.match(/([\d\s.,]+)\s+parcelles gel/); return m?m[1].trim():'(?)'; });
+const nRows = await page.locator('[data-row], .flex-1 button').count().catch(()=>0);
+console.log('compteur affiché:', txt, '| lignes chargées ~', nRows);
+await page.screenshot({ path: `${OUT}/fantome.png` });
+await page.screenshot({ path: `${OUT}/fantome_zoom.png`, clip: { x: 0, y: 0, width: 430, height: 1024 } });
+await b.close();
+console.log(/4\s?409/.test(txt) ? 'OK — ~4 409 parcelles gelées' : `À VÉRIFIER (compteur=${txt})`);

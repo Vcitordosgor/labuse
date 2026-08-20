@@ -335,7 +335,7 @@ function VerdictHero() {
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}
               className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
-              title="Le sens des paliers : brûlante, chaude, potentiel long terme, à creuser, potentiel épuisé, écartée">
+              title="Le sens des paliers : Priorité, À suivre, Long terme, Neutre, Faible, Écartée">
               {CLIENT.algo.boutonScoring}
             </button>
           </div>

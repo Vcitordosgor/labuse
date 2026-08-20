@@ -64,3 +64,29 @@ def test_explain_parcel_rejet_sert_rules_summary(monkeypatch):
     assert out["available"] is False and out.get("stub") is True
     assert out["rules_summary"] and "explanation" not in out    # jamais la prose douteuse
     assert out["reason"] == "chiffre non ancré"
+
+
+# ── M137-M : le REPLI (stub) ne lit plus la matrice morte (q_score/a_score) → plus de KeyError ────
+def test_repli_synthese_pourquoi_sans_matrice_ne_leve_pas():
+    """Le payload fiche a PERDU q_score/a_score (M129-B) ; les anciens replis les lisaient en direct
+    → KeyError. Ils servent désormais le tier d'action (M135) + la fraction + les raisons."""
+    f = {
+        "idu": "97415000AB0001", "commune": "Saint-Paul", "surface_m2": 800,
+        "completeness_score": 92, "evenement": None,
+        "lines": [
+            {"axis": "q", "weight": 12, "result": "OK", "layer": "zonage", "detail": "zone U"},
+            {"axis": "a", "weight": -5, "result": "OK", "layer": "pente", "detail": "forte"},
+            {"axis": "q", "weight": None, "result": "UNKNOWN", "layer": "dpe", "detail": "-"},
+        ],
+        "score_v2": {"tier": "chaude", "label": "À suivre", "fraction": "1/10",
+                     "pourquoi": [{"signe": "+", "phrase": "permis de construire récent"},
+                                  {"signe": "+", "phrase": "rotation du foncier nu élevée"}]},
+    }
+    assert "q_score" not in f and "a_score" not in f          # la réalité post-M129
+    synth = ia_mod._stub_synthese(f)                          # ne lève pas
+    pourq = ia_mod._stub_pourquoi(f)                          # ne lève pas
+    assert "À suivre" in synth and "1/10" in synth and "/100" not in synth   # tier + fraction, plus de « /100 »
+    assert "À suivre" in pourq and "permis de construire récent" in pourq
+    # cas dégénéré : aucun score_v2 → toujours pas de crash
+    f2 = {k: v for k, v in f.items() if k != "score_v2"}
+    assert ia_mod._stub_synthese(f2) and ia_mod._stub_pourquoi(f2)

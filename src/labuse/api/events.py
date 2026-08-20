@@ -21,6 +21,24 @@ router = APIRouter(prefix="/events", tags=["events"])
 log = logging.getLogger("labuse.events")
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 
+# M137-M — la BASCULE = « notre verdict qui change » = le TIER V2 SERVI (parcel_p_score_v2.tier),
+# plus la matrice morte (matrice_statut/q_score, NULL depuis M129). Les tiers PRIORITAIRES sont ceux
+# dont l'entrée mérite une alerte ; le rang donne le sens (montée = vers un tier plus chaud).
+# VOCABULAIRE SERVI (M135/M137) : jamais « brûlante/chaude » à l'écran — tout libellé passe par le
+# mapping canonique tiers_client.court() (chips : Priorité / À suivre / Long terme / Neutre / Faible /
+# Écartée). Les clés internes (brulante, chaude) restent en base, jamais servies.
+from ..scoring.tiers_client import court as _tier_court   # noqa: E402
+_TIERS_PRIORITE = ("brulante", "chaude")
+_TIER_RANG = {"brulante": 0, "chaude": 1, "reserve_fonciere": 2, "a_creuser": 3,
+              "declasse_bati_revele": 4, "declasse_bati_sature": 5, "declasse_non_constructible": 6,
+              "declasse_zone_fermee": 7, "declasse_au_statut_inconnu": 8, "declasse_au_fermee": 9,
+              "ecartee": 10}
+
+
+def _monte(de: str | None, vers: str | None) -> bool:
+    """Bascule MONTANTE : le tier de destination est plus chaud que celui d'origine (rang plus bas)."""
+    return _TIER_RANG.get(vers or "", 99) < _TIER_RANG.get(de or "", 99)
+
 
 def get_db():
     from .app import get_db as _g
@@ -139,7 +157,8 @@ NOTIF_CAP_JOUR = 50           # plafond dur par (kind, compte, jour) — backsto
 def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None = None,
                        compte_id: int | None = None, source: str | None = None,
                        lien: str | None = None, idu: str | None = None,
-                       dedup: str | None = None, demo: bool = False) -> int:
+                       dedup: str | None = None, demo: bool = False,
+                       envoi_statut: str = "na") -> int:
     """Insère UNE notification dans event_log si dédup + plafond l'autorisent. Retourne l'id créé, ou
     0 si dédupliqué/plafonné. `dedup` : clé stable (ex. 'veille:12:2026-08-14') — même clé le même jour
     ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client).
@@ -163,10 +182,10 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
                     kind, compte_id, NOTIF_CAP_JOUR)
         return 0
     return db.execute(text(
-        "INSERT INTO event_log (kind, titre, detail, compte_id, source, lien, idu, dedup, demo) "
-        "VALUES (:k, :t, :d, :c, :s, :l, :i, :dd, :demo) RETURNING id"),
+        "INSERT INTO event_log (kind, titre, detail, compte_id, source, lien, idu, dedup, demo, envoi_statut) "
+        "VALUES (:k, :t, :d, :c, :s, :l, :i, :dd, :demo, :es) RETURNING id"),
         {"k": kind, "t": titre, "d": detail, "c": compte_id, "s": source, "l": lien,
-         "i": idu, "dd": dedup, "demo": demo}).scalar() or 0
+         "i": idu, "dd": dedup, "demo": demo, "es": envoi_statut}).scalar() or 0
 
 
 def notifier_fraicheur(db: Session) -> int:
@@ -343,28 +362,38 @@ def evaluer_suivis(db: Session) -> dict:
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
 
-def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -> dict:
-    """Diffe deux runs → événements. Idempotent par (kind, idu, run_from, run_to)."""
-    inserted = {"bascule": 0, "bodacc": 0, "permis": 0}
+def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False,
+                  rattrapage: bool = False) -> dict:
+    """Diffe deux runs → événements. Idempotent par (kind, idu, run_from, run_to).
 
-    # 1. bascules de statut (jointure sur les parcelles présentes dans les DEUX runs)
+    M137-M — `rattrapage` : les bascules d'un run PASSÉ rejoué (ex. rattrapage q_v9→q_v10 après un
+    correctif) sont marquées `envoi_statut='rattrapage'` → EXCLUES du digest e-mail (jamais 808 mails
+    « arrivés ce matin ») mais visibles à la cloche/page événements, étiquetées « (rattrapage) »."""
+    inserted = {"bascule": 0, "bodacc": 0, "permis": 0}
+    _es = "rattrapage" if rattrapage else "na"
+    _tag = " (rattrapage)" if rattrapage else ""
+
+    # 1. bascules de TIER V2 (M137-M) : « notre verdict qui change » = parcel_p_score_v2.tier, pas la
+    # matrice morte. Bornées aux bascules SIGNIFICATIVES (entrée/sortie d'un tier prioritaire) pour ne
+    # pas inonder la cloche du remue-ménage des declasse_*. Les DEUX runs vivent dans parcel_p_score_v2.
     rows = db.execute(text("""
-        SELECT p.idu, a.status AS de, b.status AS vers  -- M129-B : matrice morte
-        FROM dryrun_parcel_evaluations a
-        JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
-        JOIN parcels p ON p.id = a.parcel_id
-        WHERE a.run_label = :from AND a.status IS DISTINCT FROM b.status"""),
-        {"from": run_from, "to": run_to}).mappings().all()
+        SELECT p.idu, a.tier AS de, b.tier AS vers
+        FROM parcel_p_score_v2 a
+        JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :to
+        JOIN parcels p ON p.idu = a.parcelle_id
+        WHERE a.run_id = :from AND a.tier IS DISTINCT FROM b.tier
+          AND (a.tier = ANY(:prio) OR b.tier = ANY(:prio))"""),
+        {"from": run_from, "to": run_to, "prio": list(_TIERS_PRIORITE)}).mappings().all()
     for r in rows:
-        up = r["vers"] == "chaude" or (r["vers"] == "a_surveiller" and r["de"] in ("a_creuser", "ecartee"))
+        up = _monte(r["de"], r["vers"])
         n = db.execute(text("""
-            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo)
-            SELECT 'bascule', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean)
+            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo, envoi_statut)
+            SELECT 'bascule', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean), CAST(:es AS varchar)
             WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='bascule' AND idu=:idu
                               AND run_from=:from AND run_to=:to)"""),
-            {"idu": r["idu"], "titre": f"{'▲' if up else '▼'} {r['idu'][8:]} : {r['de']} → {r['vers']}",
-             "detail": f"Bascule de statut au recalcul ({run_from} → {run_to}).",
-             "from": run_from, "to": run_to, "demo": demo}).rowcount
+            {"idu": r["idu"], "titre": f"{'▲' if up else '▼'} {r['idu'][8:]} : {_tier_court(r['de'])} → {_tier_court(r['vers'])}",
+             "detail": f"Classement passé de « {_tier_court(r['de'])} » à « {_tier_court(r['vers'])} » au recalcul.{_tag}",
+             "from": run_from, "to": run_to, "demo": demo, "es": _es}).rowcount
         inserted["bascule"] += n
 
     # 2. nouveaux événements BODACC (rouge présent dans run_to, absent de run_from)
@@ -377,17 +406,18 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
         {"from": run_from, "to": run_to}).mappings().all()
     for r in rows:
         n = db.execute(text("""
-            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo)
-            SELECT 'bodacc', CAST(:idu AS varchar), CAST(:titre AS varchar), 'Procédure collective ouverte (BODACC) détectée au recalcul.', CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean)
+            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo, envoi_statut)
+            SELECT 'bodacc', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean), CAST(:es AS varchar)
             WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='bodacc' AND idu=:idu
                               AND run_from=:from AND run_to=:to)"""),
             {"idu": r["idu"], "titre": f"● BODACC : procédure ouverte sur {r['idu'][8:]}",
-             "from": run_from, "to": run_to, "demo": demo}).rowcount
+             "detail": f"Procédure collective ouverte (BODACC) détectée au recalcul.{_tag}",
+             "from": run_from, "to": run_to, "demo": demo, "es": _es}).rowcount
         inserted["bodacc"] += n
 
     # 2 bis. VEILLES : une bascule vers un statut « montant » qui MATCHE une recherche sauvegardée
     # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
-    _veilles_match(db, run_to, demo)
+    _veilles_match(db, run_to, demo, rattrapage=rattrapage)
 
     # 3. M85-B — BASCULE DE TIER sur une parcelle SUIVIE = NOTRE VERDICT qui change (jamais un fait du
     # monde réel). Seulement les bascules SIGNIFICATIVES (vers/depuis 'chaude', le tier prioritaire).
@@ -396,23 +426,24 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
     # Les changements SUR la parcelle (permis/mutation/BODACC/zonage) sont produits par evaluer_suivis
     # à chaque ingestion — ici, uniquement le verdict de classement (qui dépend d'un diff de run).
     rows = db.execute(text("""
-        SELECT p.idu, w.compte_id, a.matrice_statut AS de, b.matrice_statut AS vers
-        FROM dryrun_parcel_evaluations a
-        JOIN dryrun_parcel_evaluations b ON b.parcel_id = a.parcel_id AND b.run_label = :to
-        JOIN parcels p ON p.id = a.parcel_id
+        SELECT p.idu, w.compte_id, a.tier AS de, b.tier AS vers
+        FROM parcel_p_score_v2 a
+        JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :to
+        JOIN parcels p ON p.idu = a.parcelle_id
         JOIN watched_parcels w ON w.idu = p.idu
-        WHERE a.run_label = :from AND a.status IS DISTINCT FROM b.status
-          AND 'chaude' IN (a.matrice_statut, b.matrice_statut)"""),
-        {"from": run_from, "to": run_to}).mappings().all()
+        WHERE a.run_id = :from AND a.tier IS DISTINCT FROM b.tier
+          AND (a.tier = ANY(:prio) OR b.tier = ANY(:prio))"""),
+        {"from": run_from, "to": run_to, "prio": list(_TIERS_PRIORITE)}).mappings().all()
     for r in rows:
-        sens = "montée en" if r["vers"] == "chaude" else "sortie de"
+        sens = "passée en" if _monte(r["de"], r["vers"]) else "redescendue en"
         inserted["permis"] += creer_notification(
             db, kind="parcelle_suivie", compte_id=r["compte_id"], source="Classement", idu=r["idu"],
             titre=f"Le classement de votre parcelle {r['idu'][8:]} a évolué",
-            detail=("Suite à une mise à jour de NOS données, le classement est passé de "
-                    f"« {r['de']} » à « {r['vers']} » ({sens} tier prioritaire). Ce n'est pas un "
-                    "événement extérieur : c'est notre analyse qui a changé."),
-            lien=f"/socle/#parcelle={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo)
+            detail=("Suite à une mise à jour de NOS données, votre parcelle est "
+                    f"{sens} « {_tier_court(r['vers'])} » (auparavant « {_tier_court(r['de'])} »). Ce n'est pas "
+                    f"un événement extérieur : c'est notre analyse qui a changé.{_tag}"),
+            lien=f"/socle/#parcelle={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo,
+            envoi_statut=_es)
     db.flush()
     # M23-C : reprises de veille ÉCHUES → le MÊME canal que les veilles (event_log kind='veille',
     # cron detect-events existant) — jamais un second circuit de notification.
@@ -476,20 +507,23 @@ def _parse_hash_filters(h: str) -> dict:
             "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
 
 
-def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
+def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = False) -> int:
     # Batch : on parcourt TOUTES les veilles (tous comptes), et chaque événement produit est
     # attribué au COMPTE propriétaire de la veille (v["compte_id"]) — jamais partagé.
     veilles = db.execute(text("SELECT id, nom, hash, compte_id FROM saved_searches")).mappings().all()
     if not veilles:
         return 0
     # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
+    # M137-M : le statut servi lu ici = parcel_p_score_v2.tier au run_to (plus matrice_statut morte).
+    # q_score retiré (matrice morte) : le critère de veille `q` (seuil de score matrice) n'existe plus
+    # côté front (scoreMin retiré) → f["q"] est toujours None ; on ne lit ni ne filtre plus dessus.
     rows = db.execute(text("""
-        SELECT e.idu, p.commune, p.surface_m2, d.matrice_statut, d.q_score, r.sdp_residuelle_m2,
+        SELECT e.idu, p.commune, p.surface_m2, s2.tier, r.sdp_residuelle_m2,
                EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
                        AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
         FROM event_log e
         JOIN parcels p ON p.idu = e.idu
-        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :to
+        JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :to
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
         {"to": run_to}).mappings().all()
@@ -497,13 +531,11 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
     for v in veilles:
         f = _parse_hash_filters(v["hash"])
         for r in rows:
-            if f["st"] and r["matrice_statut"] not in f["st"]:
+            if f["st"] and r["tier"] not in f["st"]:
                 continue
             if f["cm"] and r["commune"] not in f["cm"]:   # M17-B : commune honorée
                 continue
             if f["ev"] and not r["a_evenement"]:
-                continue
-            if f["q"] is not None and (r["q_score"] or 0) < f["q"]:
                 continue
             if f["smin"] is not None and (r["surface_m2"] or 0) < f["smin"]:
                 continue
@@ -512,47 +544,41 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
             if f["sdp"] is not None and (r["sdp_residuelle_m2"] or 0) < f["sdp"]:
                 continue
             n += db.execute(text("""
-                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id)
+                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id, envoi_statut)
                 SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
-                       CAST(:to AS varchar), CAST(:demo AS boolean), :cid
+                       CAST(:to AS varchar), CAST(:demo AS boolean), :cid, CAST(:es AS varchar)
                 WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre
                                   AND compte_id IS NOT DISTINCT FROM :cid)"""),
                 {"idu": r["idu"], "titre": f"🔭 Veille « {v['nom']} » : {r['idu'][8:]} correspond",
-                 "detail": f"Bascule vers {r['matrice_statut']} qui matche votre veille (run {run_to}).",
-                 "to": run_to, "demo": demo, "cid": v["compte_id"]}).rowcount
+                 "detail": f"Passée en « {_tier_court(r['tier'])} » — correspond à votre veille."
+                           + (" (rattrapage)" if rattrapage else ""),
+                 "to": run_to, "demo": demo, "cid": v["compte_id"],
+                 "es": ("rattrapage" if rattrapage else "na")}).rowcount
     return n
 
 
 def seed_demo(db: Session) -> dict:
-    """Run de DÉMONSTRATION `q_v2_demo` : copie de q_v2 sur 8 parcelles avec statut modifié,
-    ÉTIQUETÉ démo — pour voir le système vivre avant le prochain run réel de scoring."""
+    """Run de DÉMONSTRATION `q_v2_demo` : copie du run servi sur 8 parcelles avec le TIER V2 modifié,
+    ÉTIQUETÉ démo — pour voir le système vivre avant le prochain run réel de scoring.
+    M137-M : la démo bâtit un run `parcel_p_score_v2` (le tier v2, source de la bascule), plus la
+    matrice morte — 5 montées (a_creuser → chaude, ▲) et 3 descentes (chaude → a_creuser, ▼)."""
     db.execute(text("DELETE FROM event_log WHERE demo"))  # démo REJOUABLE : la cloche se rallume
+    db.execute(text("DELETE FROM parcel_p_score_v2 WHERE run_id = 'q_v2_demo'"))
     db.execute(text("DELETE FROM dryrun_parcel_evaluations WHERE run_label = 'q_v2_demo'"))
-    db.execute(text("""
-        INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score,
-          opportunity_score, opportunity_base, status, q_score, a_score, a_completude, matrice_statut)
-        SELECT 'q_v2_demo', parcel_id, completeness_score, opportunity_score, opportunity_base,
-               status, q_score, a_score, a_completude,
-               CASE WHEN rn <= 5 THEN 'chaude' ELSE 'a_surveiller' END
-        FROM (
-          SELECT d.*, row_number() OVER (ORDER BY d.q_score DESC) AS rn
-          FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-          WHERE d.run_label = :run
-            AND d.matrice_statut = CASE WHEN true THEN 'a_surveiller' ELSE '' END
-          LIMIT 5
-        ) monte
-    """), {"run": RUN})
-    db.execute(text("""
-        INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score,
-          opportunity_score, opportunity_base, status, q_score, a_score, a_completude, matrice_statut)
-        SELECT 'q_v2_demo', parcel_id, completeness_score, opportunity_score, opportunity_base,
-               status, q_score, a_score, a_completude, 'a_surveiller'
-        FROM (
-          SELECT d.* FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-          WHERE d.run_label = :run AND d.matrice_statut = 'chaude'
-          ORDER BY d.q_score ASC LIMIT 3
-        ) descend
-    """), {"run": RUN})
+    _cols = ("parcelle_id, p_raw, mult_base, percentile, rang, contrib_z, contrib_d, "
+             "top5_contributions, copro, model_version, event_date")
+    # 5 MONTÉES : des a_creuser du run servi promues 'chaude' dans le run démo → bascule ▲
+    db.execute(text(f"""
+        INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
+        SELECT 'q_v2_demo', 'chaude', {_cols} FROM parcel_p_score_v2
+        WHERE run_id = :run AND tier = 'a_creuser' AND NOT copro
+        ORDER BY rang ASC LIMIT 5"""), {"run": RUN})
+    # 3 DESCENTES : des chaude du run servi rétrogradées 'a_creuser' → bascule ▼
+    db.execute(text(f"""
+        INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
+        SELECT 'q_v2_demo', 'a_creuser', {_cols} FROM parcel_p_score_v2
+        WHERE run_id = :run AND tier = 'chaude' AND NOT copro
+        ORDER BY rang DESC LIMIT 3"""), {"run": RUN})
     out = detect_events(db, RUN, "q_v2_demo", demo=True)
     db.flush()
     return {"run_demo": "q_v2_demo", "events": out,
@@ -803,9 +829,10 @@ _INDECLENCHABLE = [
      "un mouvement de prix / de valeur"),
     (("dpe", "énerg", "passoire"), ("chang", "amélior", "rénov"), "un changement de DPE"),
 ]
-_TRIGGERS_TXT = ("Aujourd'hui, une veille vous alerte quand une parcelle bascule (devient plus chaude), "
-                 "éventuellement filtrée par commune, surface, score, SDP ou procédure BODACC. "
-                 "Reformulez vers l'un de ces déclencheurs — ex. « les grandes parcelles à Saint-Paul qui deviennent chaudes ».")
+_TRIGGERS_TXT = ("Aujourd'hui, une veille vous alerte quand une parcelle MONTE dans le classement "
+                 "(passe en Priorité ou À suivre), éventuellement filtrée par commune, surface, SDP ou "
+                 "procédure BODACC. Reformulez vers l'un de ces déclencheurs — ex. « les grandes "
+                 "parcelles à Saint-Paul qui passent en Priorité ».")
 
 
 @router.post("/veille-nl")
@@ -838,13 +865,13 @@ def veille_nl(body: VeilleNLIn, db: Session = Depends(get_db)) -> dict:
     if not (tiers or communes or trig["evenement"] or trig["scoreMin"]
             or trig["surfaceMin"] or trig["surfaceMax"] or trig["sdpMin"]):
         return {"ok": False, "refus": f"Je n'ai pas su en tirer un critère déclenchable. {_TRIGGERS_TXT}"}
-    # 4) résumé lisible (ce que la veille fera VRAIMENT)
-    STA = {"brulante": "brûlante", "chaude": "chaude", "a_creuser": "à creuser", "ecartee": "écartée"}
+    # 4) résumé lisible (ce que la veille fera VRAIMENT) — vocabulaire SERVI = chips (M135/M137),
+    #    jamais « brûlante/chaude » : mapping canonique tiers_client.court().
     bits = []
     if tiers:
-        bits.append("devient " + " / ".join(STA.get(t, t) for t in tiers))
+        bits.append("passe en " + " / ".join(_tier_court(t) or t for t in tiers))
     else:
-        bits.append("bascule (devient plus chaude)")
+        bits.append("monte dans le classement (passe en Priorité ou À suivre)")
     if communes:
         bits.append("à " + ", ".join(communes))
     if trig["surfaceMin"]:
@@ -914,6 +941,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE e.ts >= now() - make_interval(days => :jours)
           AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
+          AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
         {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()

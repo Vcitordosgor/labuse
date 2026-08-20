@@ -542,7 +542,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
             db: Session = Depends(get_db)) -> dict:
     limit = max(1, min(limit, 600))  # « voir plus » pagine par offset
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut, d.q_score,
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
                pm.siren, pm.denomination,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
@@ -553,24 +553,31 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
+        -- M137-L : « constructible » = la parcelle PASSE LA CASCADE (tier v2 hors étage 0), la
+        -- définition qui fait foi depuis M129. Remplace le vestige matrice `d.q_score >= 50` (q_score
+        -- NULL sur le run servi q_v10_m129 → l'outil renvoyait 0 — cf. PDF M136 / tuiles M137-D).
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+          AND s2.tier IS NOT NULL AND NOT (d.status IN ('exclue', 'faux_positif_probable'))
+          AND pm.groupe NOT IN (1, 2, 3, 4, 9)
           AND pm.siren IS NOT NULL
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
-        ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
+        ORDER BY s2.rang ASC NULLS LAST LIMIT :lim OFFSET :off"""),
         {"c": commune, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     true_total = int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
            JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50
+           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+             AND s2.tier IS NOT NULL AND NOT (d.status IN ('exclue', 'faux_positif_probable'))
              AND pm.groupe NOT IN (1, 2, 3, 4, 9) AND pm.siren IS NOT NULL
              AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                   OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))"""),
-        {"c": commune, "run": RUN}).scalar() or 0)
+        {"c": commune, "run": RUN, "v2run": _v2run(db)}).scalar() or 0)
     return {"total": true_total, "affiches": offset + len(rows),
             "has_more": offset + len(rows) < true_total, "items": [{
-        **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
+        **{k: r[k] for k in ("idu", "surface_m2", "statut", "siren", "denomination")},
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
         "verrou": "société introuvable au registre" if r["inpi_introuvable"] else "dirigeant inactif (registre des entreprises)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",

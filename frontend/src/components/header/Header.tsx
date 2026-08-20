@@ -323,7 +323,7 @@ function NotifBell() {
               </h2>
               <div className="ml-auto flex items-center gap-3 whitespace-nowrap">
                 {/* M16-B2 : « Digest » (jargon) → le point du jour */}
-                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Aperçu du résumé e-mail (ce qui a bougé + top chaudes)">Le point du jour →</a>
+                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Aperçu du résumé e-mail (ce qui a bougé + les priorités)">Le point du jour →</a>
                 {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
                 <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt" title="Préférences de notification">{prefsOpen ? 'fermer' : 'préférences'}</button>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}

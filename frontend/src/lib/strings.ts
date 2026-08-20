@@ -152,7 +152,7 @@ export const CLIENT = {
 
   // ── M55-H point 10 · le « i » de la ventilation — les TROIS familles, une phrase chacune ──
   ventilation: {
-    familles: 'Servables — les 4 tiers d’opportunité (brûlantes, chaudes, potentiel long terme, à creuser). '
+    familles: 'Servables — les 4 tiers d’opportunité (Priorité, À suivre, Long terme, Neutre). '
       + 'Potentiel épuisé — analysée, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; les chiffres sont en fiche. '
       + 'Écartées — exclusions légales et physiques, motifs consultables.',
   },

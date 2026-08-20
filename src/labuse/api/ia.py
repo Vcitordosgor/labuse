@@ -606,13 +606,16 @@ def _stub_synthese(f: dict) -> str:
     pos = sorted([ln for ln in f["lines"] if (ln["weight"] or 0) > 0], key=lambda x: -x["weight"])[:3]
     neg = sorted([ln for ln in f["lines"] if (ln["weight"] or 0) < 0], key=lambda x: x["weight"])[:3]
     unk = [ln for ln in f["lines"] if ln["result"] == "UNKNOWN"]
-    # M-C (F1) : citer le VERDICT SERVI (score_v2.tier), pas la matrice morte M37. Le champ
-    # `statut` (matrice_statut) a été retiré du payload de fiche en M48/F4 ; le lire ici
-    # levait un KeyError et, avant M48, contredisait le tier servi.
-    tier = (f.get("score_v2") or {}).get("tier") or "non classée"
+    # M-C (F1) → M137-M : citer le VERDICT SERVI (score_v2), jamais la matrice morte. Les champs
+    # `q_score`/`a_score`/`statut` ont été RETIRÉS du payload de fiche (M48/M129-B) ; les lire ici
+    # levait un KeyError (repli IA plantant). On sert l'échelle d'ACTION (label M135) + la FRACTION
+    # de probabilité, jamais un « /100 » de matrice.
+    sv = f.get("score_v2") or {}
+    tier = sv.get("label") or sv.get("tier") or "non classée"
+    fraction = sv.get("fraction")
+    proba = f" · probabilité de vente {fraction} sous 1 an" if fraction else ""
     p = [f"Parcelle {f['idu']} ({f.get('surface_m2') or '?'} m², {f['commune']}) — verdict "
-         f"« {tier} » : qualité {f['q_score']}/100, accessibilité {f['a_score']}/100, "
-         f"complétude {f['completeness_score']} %."]
+         f"« {tier} »{proba} · complétude {f.get('completeness_score', '?')} %."]
     if f.get("evenement") == "rouge":
         p.append(f"⚠ Événement : {f.get('evenement_detail')}")
     if pos:
@@ -625,13 +628,23 @@ def _stub_synthese(f: dict) -> str:
 
 
 def _stub_pourquoi(f: dict) -> str:
-    def axe(name: str, key: str, score: int) -> str:
-        lines = sorted([ln for ln in f["lines"] if ln["axis"] == key and ln["weight"]],
-                       key=lambda x: -abs(x["weight"]))
-        detail = "\n".join(f"  {ln['weight']:+d}  {ln['layer']} — {ln['detail']}" for ln in lines) or "  (aucun signal chiffré)"
-        return f"{name} = base 50 {'+' if score >= 50 else '−'} signaux → {score}/100 :\n{detail}"
-    return (axe("QUALITÉ (le terrain vaut-il le coup ?)", "q", f["q_score"]) + "\n\n"
-            + axe("ACCESSIBILITÉ (peut-on l'acheter ?)", "a", f["a_score"])
+    # M137-M : les deux axes matrice (QUALITÉ q_score / ACCESSIBILITÉ a_score) sont MORTS (M129-B).
+    # On explique le CLASSEMENT servi : l'échelle d'action (label M135), la fraction de probabilité,
+    # puis les raisons dominantes (score_v2.pourquoi — mêmes phrases client que la fiche/PDF, M135/M136).
+    sv = f.get("score_v2") or {}
+    tier = sv.get("label") or sv.get("tier") or "non classée"
+    fraction = sv.get("fraction")
+    entete = (f"Classement « {tier} »"
+              + (f" — probabilité de vente {fraction} sous 1 an." if fraction else ".")
+              + "\n\nCe qui pèse dans ce classement (probabilité de mutation, modèle déterministe "
+                "backtesté sur les ventes DVF) :")
+    raisons = sv.get("pourquoi") or []
+    if raisons:
+        corps = "\n".join(f"  {r.get('signe') or '·'}  {r.get('phrase') or r.get('libelle') or ''}"
+                          for r in raisons[:6])
+    else:
+        corps = "  (aucun signal chiffré pour cette parcelle)"
+    return (entete + "\n" + corps
             + "\n\nChaque ligne est tracée à sa source (cliquable dans la fiche). "
               "Le score est 100 % déterministe — l'IA n'y contribue pas.")
 
