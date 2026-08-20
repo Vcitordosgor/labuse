@@ -110,14 +110,17 @@ export const CLIENT = {
     perime: 'Vos critères ont changé depuis cette analyse — les chiffres affichés ne les décrivent plus.',
     relancerCta: 'Relancer sur les nouveaux critères',
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
-    // M135 — échelle d'ACTION (le « i » explique le libellé long). Les nombres/couleurs ne changent pas.
+    // M137 — le « i » des paliers montre LE CHIP D'ABORD (le mot servi partout : chips, bande,
+    // cartes, fiche, PDF), PUIS son explication. `defTiers[key]` = l'explication (« libellé long :
+    // sens ») ; le CHIP est préfixé au rendu (tierChipLabel, source unique status.ts) → le client
+    // relie le « Priorité » qu'il voit sur les cartes à sa définition. Nombres/couleurs inchangés.
     defTiers: {
-      brulante: 'À contacter en priorité — la plus forte probabilité de vente sous 1 an, tête du classement.',
-      chaude: 'À suivre de près — forte probabilité de vente sous 1 an, juste derrière la priorité.',
-      reserve_fonciere: 'À revoir dans 1-2 ans — prometteuse mais à horizon plus lointain.',
-      a_creuser: 'Sans signal particulier — rien de marquant pour l’instant, à confirmer au cas par cas.',
-      declassees: 'Peu de potentiel — analysées et conservées ; le motif (bâti saturé, zone fermée…) et l’état du bien sont en fiche.',
-      ecartee: 'Écartée — exclusion légale ou physique (zonage inconstructible, PPR rouge, emprise, eau…), motif consultable en fiche.',
+      brulante: 'à contacter en priorité : la plus forte probabilité de vente sous 1 an, tête du classement.',
+      chaude: 'à suivre de près : forte probabilité de vente sous 1 an, juste derrière la priorité.',
+      reserve_fonciere: 'à revoir dans 1-2 ans : prometteuse, mais à horizon plus lointain.',
+      a_creuser: 'sans signal particulier : rien de marquant pour l’instant.',
+      declassees: 'peu de potentiel : analysée et conservée ; motif et état du bien en fiche.',
+      ecartee: 'exclusion légale ou physique : motif consultable en fiche.',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──

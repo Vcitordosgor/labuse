@@ -13,10 +13,16 @@ import { useEffect, useRef, useState } from 'react'
 
 import { getFiltre, getFiltreCount, getZonageZones } from '../../lib/api'
 import { countActiveFilters, resumeCriteres } from '../../lib/filters'
+import { tierChipLabel } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
+
+// M137 — le tooltip d'un palier de la bande de résumé s'ouvre sur SON CHIP (le mot visible dans
+// la bande : « priorité », « à suivre »…), PUIS l'explication (libellé long : sens). Le client
+// relie le chip qu'il lit à sa définition ; un seul vocabulaire, celui des chips.
+const defTip = (key: string) => `${tierChipLabel(key)} — ${CLIENT.revelation.defTiers[key]}`
 
 // M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
 // post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
@@ -598,18 +604,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
                 {t && phraseRetenues != null && (
                   <> — dont{' '}
-                    {/* M135 — échelle d'action (mêmes nombres, seuls les mots changent) */}
-                    <Tip side="top" tip={CLIENT.revelation.defTiers.brulante}>
+                    {/* M137 — mêmes nombres ; le tooltip s'ouvre sur le chip visible (defTip). */}
+                    <Tip side="top" tip={defTip('brulante')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'priorité')}</b></Tip>,{' '}
-                    <Tip side="top" tip={CLIENT.revelation.defTiers.chaude}>
+                    <Tip side="top" tip={defTip('chaude')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.chaude)} à suivre</b></Tip>,{' '}
-                    <Tip side="top" tip={CLIENT.revelation.defTiers.reserve_fonciere}>
+                    <Tip side="top" tip={defTip('reserve_fonciere')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} long terme</b></Tip>,{' '}
-                    <Tip side="top" tip={CLIENT.revelation.defTiers.a_creuser}>
+                    <Tip side="top" tip={defTip('a_creuser')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.a_creuser)} neutre</b></Tip>
                     {declassees > 0 && (
                       <>,{' '}
-                        <Tip side="top" tip={CLIENT.revelation.defTiers.declassees}>
+                        <Tip side="top" tip={defTip('declassees')}>
                           <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{CLIENT.revelation.ventDeclassees(declassees)}</b></Tip>
                       </>
                     )}

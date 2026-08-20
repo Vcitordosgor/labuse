@@ -11,7 +11,7 @@ import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
-import { TIER_DECLASSE_META, TIER_V2_META } from '../../lib/status'
+import { TIER_DECLASSE_META, TIER_V2_META, tierChipLabel } from '../../lib/status'
 
 // M55-J point 5 : COQUILLE de modale partagée (overlay + Échap + croix) — deux contenus
 // distincts s'y logent : « classement » (la méthode) et « scoring » (le sens des paliers).
@@ -75,7 +75,12 @@ function ScoringExplainer({ onClose }: { onClose: () => void }) {
         {SCORING_PALIERS.map(({ key, color }) => (
           <div key={key} className="flex items-start gap-2">
             <span className="mt-[5px] h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
-            <p className="text-[12px] leading-relaxed text-txt-mut">{CLIENT.revelation.defTiers[key]}</p>
+            {/* M137 — LE CHIP D'ABORD (mot servi partout), puis son explication ; le libellé long
+                ne vit que dans cette phrase, accolé à son chip. Le chip prend la couleur du palier. */}
+            <p className="text-[12px] leading-relaxed text-txt-mut">
+              <b className="font-semibold" style={{ color }}>{tierChipLabel(key)}</b>
+              {' — '}{CLIENT.revelation.defTiers[key]}
+            </p>
           </div>
         ))}
       </div>

@@ -40,14 +40,14 @@ AMBER = (168, 121, 22)
 # reste imprimé (document abonné, derrière auth, PM publique DGFiP) ; seule cette ligne est retirée.
 COUCHES_EXCLUES = {"age_dirigeant"}
 
-# M135 — échelle d'action (libellé long tiers_client) ; les COULEURS restent (chaud→froid).
-from ..scoring.tiers_client import long as _tier_long  # noqa: E402
-TIER_V2 = {
-    "brulante": (_tier_long("brulante"), RED),
-    "chaude": (_tier_long("chaude"), AMBER),
-    "a_creuser": (_tier_long("a_creuser"), (95, 108, 101)),
-    "reserve_fonciere": (_tier_long("reserve_fonciere"), (58, 100, 148)),
-    "ecartee": (_tier_long("ecartee"), RED),
+# M137 — la COULEUR du tier par palier (chaud→froid). Le libellé affiché vient de TIER_LABELS
+# (chip court, source unique écran=papier) ; ce dict ne porte plus que la couleur.
+TIER_V2_COLOR = {
+    "brulante": RED,
+    "chaude": AMBER,
+    "a_creuser": (95, 108, 101),
+    "reserve_fonciere": (58, 100, 148),
+    "ecartee": RED,
 }
 ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"), ("proprio", "PROPRIO")]
 
@@ -182,7 +182,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # M54-AB C1 : libellé CLIENT (source unique verdict_servi), JAMAIS le code technique ni « v2 ».
         label = s2.get("label") or TIER_LABELS.get(tier, tier)
         # couleur « terre » pour tout déclassement (palette M-Q) ; sinon la couleur du tier servable.
-        color = DECLASSE_RGB if is_declasse else TIER_V2.get(tier, ("", TXT_MUT))[1]
+        color = DECLASSE_RGB if is_declasse else TIER_V2_COLOR.get(tier, TXT_MUT)
         # rang AVEC son dénominateur (un rang seul ne dit rien) — pour tout tier classé.
         if s2.get("rang") is not None:
             label += f" · rang {s2['rang']:,}".replace(",", " ")

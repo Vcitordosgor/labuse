@@ -64,4 +64,6 @@ def test_pdf_verdict_pas_de_matrice_morte():
     # le verdict d'en-tête vient du tier v2 (palette complète, jamais de KeyError).
     from labuse.api import pdf_premium as pp
     assert not hasattr(pp, "STATUT"), "matrice morte encore présente dans pdf_premium"
-    assert set(pp.TIER_V2) == {"brulante", "chaude", "a_creuser", "reserve_fonciere", "ecartee"}
+    # M137 — le dict porte désormais la COULEUR seule (TIER_V2_COLOR) ; le libellé affiché vient
+    # de TIER_LABELS (chip court, source unique écran=papier). Palette complète, jamais de KeyError.
+    assert set(pp.TIER_V2_COLOR) == {"brulante", "chaude", "a_creuser", "reserve_fonciere", "ecartee"}

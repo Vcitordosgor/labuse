@@ -58,6 +58,16 @@ export const DECLASSE_ORDER = Object.keys(TIER_DECLASSE_META) as TierDeclasse[]
 export const ALL_TIER_META: Record<string, { label: string; color: string }> =
   { ...TIER_V2_META, ...TIER_DECLASSE_META }
 
+// M137 — le CHIP servi d'un palier de la légende (« i » des paliers), y compris le groupe
+// « declassees » (→ « Faible »). SOURCE UNIQUE : les mêmes META que les cartes/chips. Le « i »
+// préfixe l'explication avec CE mot → le client relie la définition au chip qu'il voit partout.
+// Un seul vocabulaire servi, celui des chips (le libellé long ne vit que dans l'explication).
+export function tierChipLabel(key: string): string {
+  if (key === 'declassees') return TIER_DECLASSE_META.declasse_bati_sature.label
+  const m = TIER_V2_META[key as TierV2]
+  return m ? m.label : key
+}
+
 // Correctif M5 (verdict d'en-tête) — règle UNIQUE, partout où un verdict s'affiche :
 // 1. exclusion dure étage 0 (run servi) → « Écartée » legacy, motifs sourcés (l'étage 0 prime) ;
 // 2. sinon, un run v2 existe → le TIER v2 est le verdict (avec rang/×N côté appelant) ;

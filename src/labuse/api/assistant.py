@@ -181,14 +181,16 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
 
 # ── Synthèse DÉTERMINISTE (sans clé) — 5 blocs, dérivée UNIQUEMENT des faits ──────────────────────
 # M135 — échelle d'action, mapping CANONIQUE unique (tiers_client) ; clés internes inchangées.
-from ..scoring.tiers_client import TIERS_CLIENT as _TC, long as _tier_long
-_STATUT_PHRASE = {k: v[1] for k, v in _TC.items()}
+# M137 — le CHIP COURT (« Priorité », « Faible »…) : un seul vocabulaire servi partout, celui des
+# chips. L'assistant nomme un palier comme la carte le nomme (le libellé long ne vit qu'au « i »).
+from ..scoring.tiers_client import TIERS_CLIENT as _TC, court as _tier_court
+_STATUT_PHRASE = {k: v[0] for k, v in _TC.items()}
 _STATUT_PHRASE["non_evaluee"] = "Non évaluée au run servi"
 
 
 def _statut_phrase(statut: str | None, libelle: str | None) -> str:
     if statut and statut.startswith("declasse_"):
-        return _tier_long(statut) or "Peu de potentiel"
+        return _tier_court(statut) or "Faible"
     return _STATUT_PHRASE.get(statut, "Statut non évalué")
 
 
