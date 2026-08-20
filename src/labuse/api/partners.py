@@ -366,6 +366,10 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     db.execute(text("UPDATE share_links SET views = views + 1 WHERE token = :t"), {"t": token})
     from .app import _q_v2_fiche
     f = _q_v2_fiche(db, link["idu"])
+    # M136 — le bloc matrice Q/A (q_score/a_score) est MORT (M129-B) et n'est plus servi par la
+    # fiche → il crashait cette page (KeyError). Patron M135 : le CLASSEMENT (tier d'action) + la
+    # PROBABILITÉ (fraction « 1/3 sous 1 an »). Jamais un juge mort ressuscité.
+    _sv = f.get("score_v2") or {}
     # M23-B (PRIORITÉ RELEVÉE — trou ACTUEL corrigé) : la page publique ne sert JAMAIS une
     # donnée PROPRIÉTAIRE (ni PM ni PP). Couches nominatives/patrimoniales EXCLUES du rendu
     # (détail sourcé ET points clés), et le bandeau événement BODACC (détail = dénomination,
@@ -418,11 +422,11 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
   {photo}
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
-      <div style="font:700 22px sans-serif;color:#5CE6A1">{f['q_score']}</div>
-      <div style="font:9px monospace;color:#5C7268">QUALITÉ /100</div></div>
+      <div style="font:700 17px sans-serif;color:#5CE6A1">{_sv.get('label') or '—'}</div>
+      <div style="font:9px monospace;color:#5C7268">CLASSEMENT</div></div>
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
-      <div style="font:700 22px sans-serif;color:#4ADE96">{f['a_score']}</div>
-      <div style="font:9px monospace;color:#5C7268">ACCESSIBILITÉ /100</div></div>
+      <div style="font:700 22px sans-serif;color:#4ADE96">{_sv.get('fraction') or '—'}</div>
+      <div style="font:9px monospace;color:#5C7268">{'PROBABILITÉ · SOUS 1 AN' if _sv.get('fraction') else 'PEU PROBABLE'}</div></div>
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['completeness_score']}</div>
       <div style="font:9px monospace;color:#5C7268">COMPLÉTUDE %</div></div>
@@ -503,8 +507,8 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "
                         f"{_DEMO_QUOTA} appels/jour. Clé complète sur convention partenaire."
                         if demo else
-                        "Données indicatives LABUSE (classement servi — tiers brûlante → à "
-                        "creuser) — usage selon convention partenaire."),
+                        "Données indicatives LABUSE (classement servi — priorité → faible) — "
+                        "usage selon convention partenaire."),
             "items": [dict(r) for r in rows]}
 
 

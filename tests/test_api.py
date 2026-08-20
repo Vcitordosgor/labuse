@@ -385,3 +385,41 @@ def test_pipeline_validation_jamais_500(client):
     assert client.patch("/pipeline/999999", json={"status": "chaud"}).status_code == 404
     assert client.delete("/pipeline/999999").status_code == 404
     client.delete(f"/pipeline/{eid}")
+
+
+def test_m136_exports_ne_crashent_pas(client):
+    """M136 — RÉGRESSION : le bloc matrice Q/A (q_score/a_score) a été retiré du payload en M129-B
+    mais les EXPORTS le référençaient encore → 500 (KeyError). Ce verrou casse si un export lève.
+    Couvre le PDF premium + la page de partage /p (les DEUX cassaient sur le même q_score)."""
+    from sqlalchemy import text as sqla_text
+
+    from labuse.db import session_scope
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    idu = "97415000AB0001"
+    top5 = ('[{"bin":"<2a","signe":"+","feature":"permis_bin","libelle":"ancienneté du dernier permis",'
+            '"log_hazard":1.3},{"bin":"true","signe":"+","feature":"piscine","libelle":"piscine",'
+            '"log_hazard":0.4}]')
+    with session_scope() as s:
+        s.execute(sqla_text(
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
+            "contrib_z, contrib_d, copro, tier, model_version, top5_contributions) "
+            "VALUES (:r, :i, 0.34, 22.1, 99, 7, 0, 0, false, 'brulante', 'm136', CAST(:t AS jsonb)) "
+            "ON CONFLICT (run_id, parcelle_id) DO UPDATE SET tier='brulante', p_raw=0.34, "
+            "top5_contributions=CAST(:t AS jsonb)"), {"r": Q_A_RUN_LABEL, "i": idu, "t": top5})
+        s.execute(sqla_text(
+            "INSERT INTO share_links (token, idu, created_by) VALUES ('m136gate', :i, 'm136') "
+            "ON CONFLICT (token) DO UPDATE SET idu = :i"), {"i": idu})
+    try:
+        # 1) le PDF premium : réparé (bloc Q/A → raisons M135). PLUS jamais 500.
+        r = client.get(f"/parcels/{idu}/export.pdf?source={Q_A_RUN_LABEL}")
+        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf", r.text[:200]
+        assert len(r.content) > 5000
+        # 2) la page de partage publique : même fiche, même piège q_score — réparée aussi.
+        r = client.get("/p/m136gate")
+        assert r.status_code == 200, r.text[:200]
+        assert "QUALITÉ /100" not in r.text and "CLASSEMENT" in r.text   # plus de bloc mort
+    finally:
+        with session_scope() as s:
+            s.execute(sqla_text("DELETE FROM parcel_p_score_v2 WHERE run_id=:r AND parcelle_id=:i"),
+                      {"r": Q_A_RUN_LABEL, "i": idu})
+            s.execute(sqla_text("DELETE FROM share_links WHERE token='m136gate'"))

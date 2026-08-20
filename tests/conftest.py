@@ -191,6 +191,23 @@ def engine():
             "  c100 integer, c200 integer, c100_recent integer, c100_acheve integer,"
             "  voie10 boolean, voie75 boolean, bati10 boolean, bati30 boolean, bati75 boolean,"
             "  assainissement_zonage varchar, computed_at timestamptz DEFAULT now())"))
+        # M136 — contexte commune (SRU/ANRU/PLH/marché INSEE) interrogé par /communes/{c}/contexte,
+        # lui-même appelé par l'export PDF premium. Même contrat data-gap : tables VIDES → l'export
+        # ne casse plus sur « relation inexistante » (0 ligne = section « non disponible » sourcée).
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS commune_contexte_sru ("
+            "  commune varchar, statut varchar, taux_lls numeric, objectif_pct numeric,"
+            "  millesime varchar, detail jsonb, importe_le timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS commune_insee_logement ("
+            "  commune varchar, importe_le timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS anru_quartiers ("
+            "  commune varchar, nom varchar, interet varchar, code_qpv varchar,"
+            "  source_nom varchar, source_url varchar)"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS plh_epci ("
+            "  epci varchar, importe_le timestamptz DEFAULT now())"))
     return eng
 
 
