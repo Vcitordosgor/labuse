@@ -109,6 +109,11 @@ def score_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     return _row_payload(r, run)
 
 
+# ⚠️ DORMANT (M137-K, 20/08/2026) — /v2/liste, /v2/brulantes et /v2/reserve-fonciere alimentaient
+# l'outil « Radar des ventes » (front ScoringV2.tsx), RETIRÉ du produit car il recouvre l'Analyse
+# LABUSE (même table, même run, même classement, sans carte ni filtres). Ces 3 endpoints RESTENT
+# servis (aucun autre consommateur mesuré : ni partners, ni PDF, ni Copilote) + testés
+# (test_p_v2_api.py). /v2/score/{idu} et /v2/modele, eux, restent CONSOMMÉS (fiche, scoreur).
 @router.get("/liste")
 def liste(tier: str | None = Query(None),
           commune: str | None = Query(None, description="code INSEE (5 chiffres)"),

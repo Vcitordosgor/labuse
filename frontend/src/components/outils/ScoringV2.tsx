@@ -1,7 +1,14 @@
 /**
- * Module « Scoring v2 (P) » — M5 lot 4.2, ADDITIF.
+ * Module « Radar des ventes » (Scoring v2 / P) — M5 lot 4.2, ADDITIF.
  * Trois onglets : Brûlantes v2 · Réserve foncière · Top P (avec toggle copro).
  * Lecture des endpoints /v2 précalculés uniquement. Jamais de probabilité brute.
+ *
+ * ⚠️ DORMANT — retiré du produit le 20/08/2026 (M137-K). Recouvre l'Analyse LABUSE (même table
+ *    parcel_p_score_v2, même run servi q_v10_m129, même classement tier/rang), sans carte ni filtres.
+ *    N'est plus référencé par le registre ni le panneau (aucune entrée à l'écran). Conservé au dépôt :
+ *    ce composant + les endpoints /v2/brulantes|reserve-fonciere|liste + les tests (test_p_v2_api.py).
+ *    La fraction « 1/5 » qu'il mettait en avant reste servie sur les cartes de résultat de l'Analyse
+ *    (M135 P2, ResultsSection `data-fraction`). Aucun autre consommateur des 3 endpoints (mesuré).
  */
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'

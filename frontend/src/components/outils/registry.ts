@@ -38,8 +38,9 @@ export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
 
 export const MODULES: ModuleDef[] = [
   // ── Trouver — repérer le foncier, sans cible au départ ──
-  { key: 'scoring-v2', num: 'M25', group: 'trouver', phare: true,
-    label: 'Radar des ventes', desc: 'Probabilité de vente sous 1 an — brûlantes, potentiel long terme, tête de classement' },
+  // M137-K (Vic 20/08/2026) : outil « Radar des ventes » (scoring-v2, M25) retiré du produit
+  // (DORMANT) — recouvre l'Analyse LABUSE (même table parcel_p_score_v2, même run, même classement),
+  // sans carte ni filtres. Composant + endpoints /v2/* + tests conservés au dépôt.
   // M129-C (Vic 19/08/2026) : outil « division » retiré du produit (dormant) — code au dépôt.
   { key: 'fantome', num: 'M07', group: 'trouver', phare: true,
     label: 'Foncier fantôme', desc: 'Le constructible verrouillé que les autres ne voient pas' },

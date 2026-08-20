@@ -19,7 +19,8 @@ import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
 import { VerifProcedure } from './VerifProcedure'
 import { PluAnnuaire } from './PluAnnuaire'
-import { ScoringV2Module } from './ScoringV2'
+// M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
+// le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { RenouvellementModule } from './Renouvellement'
 import { TierBadge } from './TierBadge'
 
@@ -808,7 +809,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,
-  'scoring-v2': ScoringV2Module,
+  // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
+  // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
   'verif-procedure': VerifProcedure,

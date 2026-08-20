@@ -1,0 +1,18 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE = 'http://localhost:5173/socle/';
+const OUT = new URL('./captures', import.meta.url).pathname;
+const b = await chromium.launch({ channel: 'chrome' });
+const page = await b.newPage({ viewport: { width: 1440, height: 1024 } });
+const soft = async (fn, w) => { try { await fn() } catch (e) { console.log('WARN', w, String(e).slice(0,140)) } };
+await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(3500);
+await soft(async () => { await page.locator('button[title="Outils"]').click(); await page.waitForTimeout(1000); }, 'rail outils');
+const nEntry = await page.locator('[data-outil="scoring-v2"]').count();
+const nLabel = await page.getByText('Radar des ventes', { exact: false }).count();
+const nMenuTotal = await page.locator('[data-outil]').count();
+console.log('entrée [data-outil="scoring-v2"] :', nEntry);
+console.log('libellé « Radar des ventes » à l\'écran :', nLabel);
+console.log('nb total d\'outils dans le menu :', nMenuTotal);
+await page.screenshot({ path: `${OUT}/radar_retire.png` });
+await page.screenshot({ path: `${OUT}/radar_retire_zoom.png`, clip: { x: 0, y: 0, width: 620, height: 1024 } });
+await b.close();
+console.log(nEntry === 0 && nLabel === 0 ? 'OK — aucune entrée Radar à l\'écran' : 'À VÉRIFIER');
