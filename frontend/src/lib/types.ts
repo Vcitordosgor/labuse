@@ -58,6 +58,7 @@ export interface ParcelResult {
   copro_v2?: boolean
   veille?: boolean
   etage0?: boolean
+  etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
 }
 
 // M5.1 : /stats ventile par TIERS v2 effectifs (l'étage 0 du run servi prime).

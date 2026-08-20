@@ -2116,6 +2116,15 @@ _TIER_GROUPE_PAGE_SQL = (
     "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 = 'a_creuser' THEN 3 "
     "WHEN pg.tier_v2 LIKE 'declasse%' THEN 4 ELSE 5 END")
 
+# M131 P3 — ÉTAT DU BIEN (affichage pur du FAIT M125/M129-D, aucun recalcul) : partition
+# EXACTE sur les colonnes existantes de parcel_residuel (1 ligne/parcelle, PK parcel_id).
+# nu = emprise bâtie < 5 % (même seuil que etat_sol=nu) ; sinon bâti, deux états par la SDP
+# résiduelle (cause NULL) : « encore construire » (>0) / « construite au maximum » (=0).
+# Mesuré sur le vivier servi : nu 67 250 · encore 110 053 · maximum 108 478 = 285 781.
+_ETAT_BIEN_SQL = (
+    "CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu' "
+    "WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore' ELSE 'bati_max' END")
+
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = Q_A_RUN_LABEL,
                extra_where: str = "", extra_params: dict | None = None,
@@ -2234,6 +2243,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
+               {_ETAT_BIEN_SQL} AS etat_bien,   -- M131 P3 : état du bien (affichage pur)
                -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal
@@ -2243,6 +2253,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = pg.idu
         LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
+        LEFT JOIN parcel_residuel rb ON rb.parcel_id = pg.id   -- M131 P3 : 1 ligne/parcelle
         LEFT JOIN cl ON cl.siren = own.siren
         ORDER BY {(_TIER_GROUPE_PAGE_SQL + ', ') if groupes else ''}{_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
@@ -2264,6 +2275,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
         "copro_v2": bool(r["copro_v2"]), "veille": bool(r["veille"]),
         "etage0": bool(r["etage0"]),
+        "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
     } for r in rows]
 
 

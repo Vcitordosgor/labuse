@@ -51,8 +51,16 @@ def _declared_dists() -> set[str]:
     return out
 
 
+def _local_module_names() -> set[str]:
+    """Basenames des .py sous les racines scannées — un script d'examen qui importe un
+    script SŒUR (ex. `from examen import fit_fold`, M127/M130/M131 via sys.path.insert) est
+    un import LOCAL, jamais une distribution tierce à déclarer."""
+    return {p.stem for rel in _SCANNED for p in (_ROOT / rel).rglob("*.py")}
+
+
 def _third_party_imports() -> set[str]:
     stdlib = set(sys.stdlib_module_names)
+    local = _local_module_names()
     found: set[str] = set()
     for rel in _SCANNED:
         for p in (_ROOT / rel).rglob("*.py"):
@@ -66,7 +74,7 @@ def _third_party_imports() -> set[str]:
                         found.add(a.name.split(".")[0])
                 elif isinstance(n, ast.ImportFrom) and n.level == 0 and n.module:
                     found.add(n.module.split(".")[0])
-    return {m for m in found if m and m not in stdlib and m != "labuse"}
+    return {m for m in found if m and m not in stdlib and m != "labuse" and m not in local}
 
 
 def _dist_for(mod: str) -> str:
