@@ -893,18 +893,9 @@ def _division(db: Session, idu: str | None, intent: str) -> dict:
            "règlement de la zone — surface minimale de terrain, accès, emprise au sol.")
     mesure = ((f" Cette parcelle mesure {surface} m²" + (f" en zone {zone}" if zone else "")
                + (f" à {commune}" if commune else "") + ".") if surface else "")
-    # M82 (cas A) : le score GÉOMÉTRIQUE précalculé (module_division, lookup par IDU) ENRICHIT la réponse
-    # sans trancher le réglementaire (doctrine réglementaire > géométrique). Candidate ≠ feu vert.
-    if idu:
-        from .outils import divisibilite
-        d = (divisibilite(db, idu=idu)).data or {}
-        if d.get("candidate"):
-            txt += (mesure + f" Géométriquement, elle est CANDIDATE au détachement d'un lot : facilité "
-                    f"{d['score']}/100 (place libre, forme, accès), lot estimé ~{d['lot_estime_m2']} m² — "
-                    "un repère de faisabilité géométrique, pas un feu vert réglementaire.")
-        else:
-            txt += (mesure + " Géométriquement, elle n'est pas repérée comme candidate au détachement "
-                    "(surface, bâti, emprise ou zone hors critères) — ce n'est pas un « non divisible ».")
+    # M129-C (Vic 19/08/2026) : l'enrichissement M82 (score géométrique module_division) est RETIRÉ —
+    # la division sort du produit. Reste le refus honnête (réglementaire > géométrique) + la porte PLU.
+    txt += mesure
     txt += " Je peux ouvrir l'Annuaire PLU pour le règlement applicable — à vous de conclure."
     return _reply(txt, intent, refus="aucun_outil", porte="plu-annuaire", prefill="pluPrefill",
                   prefill_plu=({"insee": idu[:5], "zone": zone} if idu else None))

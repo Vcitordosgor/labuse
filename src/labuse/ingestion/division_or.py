@@ -84,7 +84,12 @@ def _pente_guard_sql(session) -> str:
             f"AND ptz.pente_moy_deg > {float(_S.get('pente_max_deg', 20))})")
 
 
-EXPOSE = True    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
+EXPOSE = False   # M129-C (Vic 19/08/2026) — DORMANT : retiré du produit servi. Jamais demandé
+                 # par un client, ~40 résultats sur 285 781 parcelles, seuils jamais arbitrés —
+                 # il ne vaut pas le chantier. Le CODE, la table, les 7 candidates, les seuils en
+                 # config et le CLI restent (utilisables à la main). À reprendre si un client le
+                 # demande — les acquis M129-C (CoSIA branché+indexé, pente 20° config, seuils
+                 # sortis du dur) serviront alors.    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
                  # de calibrage PLU (pool 35, 0 faux positif connu). Le câblage client (encadré →
                  # chiffres) est fait par M22-D (section divisibilité du Rapport de potentiel).
                  # DÉPENDANCE RÉCURRENTE : relancer scripts/o12_emprise_recheck.py après chaque

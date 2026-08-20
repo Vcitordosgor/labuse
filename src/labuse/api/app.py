@@ -2574,11 +2574,6 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
         "score_v2": score_v2, "etage0": bool(head["etage0"]),  # M129-B : q/a retirés
-        # M129-C P3 — LA ligne « Division » (UNE, unifiée) : le lot détachable = calcul
-        # division_or (Sourcé, géométrie vérifiée) ; le potentiel ~N lots = surface ÷ lot type
-        # (ESTIMÉ, dit — jamais une promesse). Badge revue : « vérifié » (note_revue humaine)
-        # / « calculé, non revu » — la revue est un badge, plus une porte.
-        "division": _division_fiche(db, idu, head["surface_m2"]),
         "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
         "data_sources": _data_sources_fiche(db, head["id"], run_label),   # M52 L3 — « Les données » (sources utilisées)
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
@@ -2744,12 +2739,11 @@ def parcel_mode_b(idu: str, travaux_m2: float | None = Query(None, ge=500, le=40
 
 def _renouvellement_block(db: Session, idu: str) -> dict | None:
     """M-RENOUV lot B — segment Renouvellement (None si table absente ou parcelle hors
-    segment). DOCTRINE : « potentiel de renouvellement urbain », jamais « opportunité » ;
-    la divisibilité s'affiche « géométrie favorable », jamais une promesse de division."""
+    segment). DOCTRINE : « potentiel de renouvellement urbain », jamais « opportunité »."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
         return None
     r = db.execute(text(
-        "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite, "
+        "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, "
         "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
         # M47 (P2) : millésime/source de la couche servie — run servi + date de matérialisation.
@@ -2777,8 +2771,8 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "sdp_residuelle_m2": r["sdp_residuelle_m2"], "surface_m2": r["surface_m2"],
         "composantes": [
             {"cle": k, "points": r[k], "max": m, "libelle": LIBELLES_COMPOSANTES[k]}
-            for k, m in (("comp_potentiel", 40), ("comp_assiette", 25),
-                         ("comp_marche", 20), ("comp_divisibilite", 15))
+            for k, m in (("comp_potentiel", 47), ("comp_assiette", 29),
+                         ("comp_marche", 24))
         ],
     }
 
@@ -3425,7 +3419,7 @@ def renouvellement_liste(commune: str | None = None,
     where = "WHERE r.run_label = :run" + (" AND p.commune = :c" if commune else "")
     rows = db.execute(text(f"""
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
-               r.comp_potentiel, r.comp_assiette, r.comp_marche, r.comp_divisibilite,
+               r.comp_potentiel, r.comp_assiette, r.comp_marche,
                r.code_bati_origine, r.sdp_residuelle_m2, r.surface_m2, r.zone_plu,
                r.rang_segment, r.rang_commune
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu

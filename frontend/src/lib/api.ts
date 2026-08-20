@@ -86,7 +86,6 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.multMin != null ? { mult_min: f.multMin } : {}),
   ...(f.rangMax != null ? { rang_max: f.rangMax } : {}),
   ...(f.renouvellement ? { renouvellement: 'true' } : {}),
-  ...(f.divisionOr ? { division_or: 'true' } : {}),
   ...(f.proprietaireType.length ? { proprietaire_type: f.proprietaireType.join(',') } : {}),
   ...(f.droitsResiduels?.length ? { droits_residuels: f.droitsResiduels.join(',') } : {}),
   ...(f.etatSociete.length ? { etat_societe: f.etatSociete.join(',') } : {}),
@@ -456,7 +455,7 @@ export const getRenouvGeojson = () => {
 }
 export interface RenouvItem {
   idu: string; commune_nom: string; commune_insee: string; renouv_score: number
-  comp_potentiel: number; comp_assiette: number; comp_marche: number; comp_divisibilite: number
+  comp_potentiel: number; comp_assiette: number; comp_marche: number
   code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
   zone_plu: string | null; rang_segment: number; rang_commune: number
 }
@@ -594,7 +593,7 @@ export const resetCrmColumns = () =>
 export const getSources = () => j<SourceInfo[]>('/sources')
 
 // ── Modules outils (Vague 1) ──
-export const modDivision = (minScore = 0) => j<{ total: number; items: Record<string, unknown>[] }>(`/modules/division?min_score=${minScore}&limit=300&${cq()}`)
+// M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')

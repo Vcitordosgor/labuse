@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getFiche, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierPdf, getCommunes, getFiche, modBailleur, modCourriers, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
@@ -97,47 +97,7 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
   )
 }
 
-/* ───────────────────────────── M01 — DIVISION ───────────────────────────── */
-
-function M01() {
-  const [minScore, setMinScore] = useState(70)
-  const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m01', minScore, commune], queryFn: () => modDivision(minScore) })
-  const items = (q.data?.items ?? []) as Record<string, any>[]
-  useModuleMap(
-    items.map((i) => i['idu'] as string),
-    featureCollection(items.filter((i) => i['lot']).map((i) => ({ type: 'Feature', geometry: i['lot'], properties: { kind: 'lot' } }))),
-    [q.dataUpdatedAt],
-  )
-  return (
-    <>
-      {/* M15 E2 (RG2) : explication CLIENT — ce que fait l'outil, ce que vaut le score, et le fait
-          que le lot proposé est une estimation. */}
-      <Banner>Repère les <b className="text-txt">grands terrains où détacher un lot à bâtir</b>. Le
-        <b className="text-mint"> score (0-100)</b> — le nombre vert à droite — mesure la
-        <b> facilité à détacher un lot</b> (place libre, accès, forme). Le lot proposé est une
-        <b> estimation</b> : le plus grand espace constructible restant, à 3 m des bâtiments existants,
-        dessiné en pointillés. Les règles de division (PLU, accès, réseaux) restent à instruire.</Banner>
-      <label className="mt-1 flex items-center gap-2 text-[11px] text-txt-mut" title="Ne montrer que les parcelles dont le score de divisibilité dépasse ce seuil.">
-        Score de divisibilité ≥ <input type="range" min={0} max={95} step={5} value={minScore}
-          onChange={(e) => setMinScore(Number(e.target.value))} className="flex-1 accent-mint" />
-        <span className="font-mono text-txt">{minScore}</span>
-      </label>
-      <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Calcul des candidats" /> : `${fmt(q.data?.total)} candidats`}
-      </p>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-        {items.map((i) => (
-          <Row key={i['idu'] as string} idu={i['idu'] as string}
-            sub={`${fmt(i['surface_m2'] as number)} m² · emprise ${i['emprise_pct']}% · lot ~${fmt(i['lot_area_m2'] as number)} m²`}
-            right={<V>{i['score'] as number}</V>}
-            fiche={[['Score division', String(i['score'])], ['Lot détachable (approx.)', `~${fmt(i['lot_area_m2'] as number)} m²`],
-              ['Rayon libre', `${i['mic_radius_m']} m`], ['Emprise bâtie', `${i['emprise_pct']} %`], ['Zone', String(i['zone'])]]} />
-        ))}
-      </div>
-    </>
-  )
-}
+/* M129-C (Vic 19/08/2026) : M01 — Division retiré du produit (dormant) — code backend au dépôt. */
 
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
@@ -844,7 +804,7 @@ function M10() {
 
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
-  division: M01, patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
+  patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,

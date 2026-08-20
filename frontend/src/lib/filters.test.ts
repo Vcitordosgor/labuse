@@ -13,7 +13,7 @@ describe('filters URL persistence (M55-D)', () => {
       capaciteMin: 10, multMin: 2, rangMax: 100, budgetMax: 200000,
       chargeMin: 1000, chargeMax: 90000, prixMarcheMin: 100, prixMarcheMax: 900, caMin: 1_000_000,
       veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
-      renouvellement: true, divisionOr: true, npnru: true, adresseAbsente: true,
+      renouvellement: true, npnru: true, adresseAbsente: true,
       marcheFiable: true, modeBRentable: true,
       flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],

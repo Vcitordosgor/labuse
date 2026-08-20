@@ -2799,7 +2799,7 @@ def renouv_cmd(
                    f"as-of {r['annee']})")
         typer.echo("Entonnoir :")
         libelles = {
-            "1_bati_exclues": "écartées BatiLayer (codes francs)",
+            "1_bati_fait": "bâti franc (fait M129 — codes francs)",
             "2_zone_u_au": "∩ zone U/AU",
             "3_capacite": (f"∩ capacité (SDP > {r['seuils']['sdp_min_m2']} m² "
                            f"ou surface ≥ {r['seuils']['surface_min_m2']} m²)"),
@@ -2810,11 +2810,11 @@ def renouv_cmd(
             typer.echo(f"  {r['funnel'][k]:>7}  {lib}")
         rows = renouvellement.top(s, n=top_n, commune=commune)
         titre = f"commune {commune}" if commune else "île"
-        typer.echo(f"\nTop {len(rows)} ({titre}) — score /100 (pot+ass+mar+div) :")
+        typer.echo(f"\nTop {len(rows)} ({titre}) — score /100 (pot+ass+mar) :")
         for t in rows:
             typer.echo(
                 f"  #{t['rang_segment']:<5} {t['idu']}  {t['renouv_score']:>3} "
-                f"({t['comp_potentiel']}+{t['comp_assiette']}+{t['comp_marche']}+{t['comp_divisibilite']})  "
+                f"({t['comp_potentiel']}+{t['comp_assiette']}+{t['comp_marche']})  "
                 f"{t['zone_plu']:<3} sdp={t['sdp_residuelle_m2'] or 0:>5} surf={t['surface_m2']:>6}  "
                 f"{t['code_bati_origine']}")
 

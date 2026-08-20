@@ -19,13 +19,14 @@ from labuse import renouvellement as rn
 def test_config_poids_somment_a_100():
     cfg = rn.load_config()
     assert sum(cfg["poids"].values()) == 100
-    assert set(cfg["poids"]) == {"potentiel_residuel", "assiette", "contexte_marche", "divisibilite"}
+    # M129-C (Vic 19/08/2026) : `divisibilite` RETIRÉE (division_or sort du produit) — 3 composantes.
+    assert set(cfg["poids"]) == {"potentiel_residuel", "assiette", "contexte_marche"}
     assert cfg["seuils"]["sdp_min_m2"] == 100 and cfg["seuils"]["surface_min_m2"] == 600
 
 
 def test_config_refus_si_poids_faux(monkeypatch):
     monkeypatch.setattr(rn, "load_yaml_config", lambda _n: {
-        "poids": {"potentiel_residuel": 40, "assiette": 25, "contexte_marche": 20, "divisibilite": 20},
+        "poids": {"potentiel_residuel": 47, "assiette": 29, "contexte_marche": 30},
         "seuils": {"sdp_min_m2": 100, "surface_min_m2": 600}})
     with pytest.raises(ValueError, match="≠ 100"):
         rn.load_config()
@@ -62,8 +63,8 @@ def test_wording_jamais_opportunite():
         assert "opportunit" not in t.lower()
     assert "renouvellement" in rn.LIBELLE_SEGMENT.lower()
     assert "occupée" in rn.LIBELLE_SEGMENT
-    # divisibilité : « géométrie favorable », jamais une promesse de division
-    assert "division" not in rn.LIBELLES_COMPOSANTES["comp_divisibilite"].lower()
+    # M129-C : la divisibilité a QUITTÉ le segment — aucun libellé ne mentionne la division
+    assert all("division" not in t.lower() for t in rn.LIBELLES_COMPOSANTES.values())
 
 
 # ───────────────────────── build DB ─────────────────────────
@@ -122,9 +123,8 @@ def test_build_definition_a1(db_session):
     _ensure_ext_tables(s)
     IN1, IN2, COP, PUB, ZONE, CAP, PART = (f"97499000R{i}000{i}" for i in range(1, 8))
 
-    # IN1 : bati-exclue, U, sdp 500 → ENTRE (et divisible)
+    # IN1 : bati-exclue, U, sdp 500 → ENTRE (M129-C : la divisibilité ne compte plus)
     p = _seed_parcelle(s, IN1); _seed_bati_exclude(s, p); _seed_dataset(s, IN1, sdp=500, rot=0.02)
-    s.execute(text("INSERT INTO division_or_candidates (idu) VALUES (:i) ON CONFLICT DO NOTHING"), {"i": IN1})
     # IN2 : bati-exclue (ensemble), AU, sdp 0 mais surface 900 ≥ 600 → ENTRE par la surface
     p = _seed_parcelle(s, IN2, 900); _seed_bati_exclude(
         s, p, bati.classify(0.20, 4, 100, 800)["motif"])   # « ensemble bâti : 4 bâtiments … »
@@ -153,8 +153,7 @@ def test_build_definition_a1(db_session):
     for x in rows.values():
         assert 0 <= x["renouv_score"] <= 100
         assert x["renouv_score"] == min(100, x["comp_potentiel"] + x["comp_assiette"]
-                                        + x["comp_marche"] + x["comp_divisibilite"])
-    assert rows[IN1]["comp_divisibilite"] == 15 and rows[IN2]["comp_divisibilite"] == 0
+                                        + x["comp_marche"])
     # rangs : denses, déterministes (score DESC puis idu)
     assert sorted(x["rang_segment"] for x in rows.values()) == list(range(1, len(rows) + 1))
     # entonnoir cohérent : final = n

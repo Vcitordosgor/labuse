@@ -40,8 +40,7 @@ export const MODULES: ModuleDef[] = [
   // ── Trouver — repérer le foncier, sans cible au départ ──
   { key: 'scoring-v2', num: 'M25', group: 'trouver', phare: true,
     label: 'Radar des ventes', desc: 'Probabilité de vente sous 1 an — brûlantes, potentiel long terme, tête de classement' },
-  { key: 'division', num: 'M01', group: 'trouver', phare: true,
-    label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
+  // M129-C (Vic 19/08/2026) : outil « division » retiré du produit (dormant) — code au dépôt.
   { key: 'fantome', num: 'M07', group: 'trouver', phare: true,
     label: 'Foncier fantôme', desc: 'Le constructible verrouillé que les autres ne voient pas' },
   { key: 'bailleur', num: 'M06', group: 'trouver',

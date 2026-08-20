@@ -267,10 +267,6 @@ export interface Fiche {
     pourquoi?: { feature: string; libelle: string; phrase?: string; signe?: string }[]
   } | null
   etage0: boolean
-  // M129-C P3 — LA ligne « Division » (un seul juge : division_or_candidates)
-  division?: { lot_m2: number | null; facade_m: number | null; type: string;
-               statut_revue: string; potentiel_lots: number | null;
-               potentiel_source: string; ligne: string } | null
   parc_analysees?: number | null   // M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
   // M52 L3 — « Les données » : sources réellement utilisées sur cette fiche (0 nouvelle donnée).
   data_sources?: { nom: string; categorie: string | null; fournisseur: string | null; millesime: string | null; fiabilite: string | null }[]

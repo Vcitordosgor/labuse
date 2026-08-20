@@ -124,7 +124,7 @@ function hasCriteresHorsTuiles(f: Filters): boolean {
     || f.zonagePlu.length || f.zonePlu.length || f.capaciteMin != null || f.sdpMax != null
     || f.proprietaireType.length || f.etatSociete.length || f.copro.length
     || f.npnru || f.adresseAbsente || f.personneMorale || f.sousDensite
-    || f.multMin != null || f.rangMax != null || f.renouvellement || f.divisionOr
+    || f.multMin != null || f.rangMax != null || f.renouvellement
     || f.budgetMax != null || f.chargeMin != null || f.chargeMax != null
     || f.prixMarcheMin != null || f.prixMarcheMax != null || f.marcheFiable
     || f.caMin != null || f.modeBRentable)

@@ -61,7 +61,6 @@ export interface Filters {
   multMin: number | null
   rangMax: number | null
   renouvellement: boolean
-  divisionOr: boolean
   proprietaireType: string[]
   droitsResiduels: string[]   // M129-D P3 : 'encore' | 'maximum' (fait M125)         // pm / bailleur / pp
   etatSociete: string[]              // cessee / radiee / procedure (M43 factuel)
@@ -90,7 +89,7 @@ export const EMPTY_FILTERS: Filters = {
   personneMorale: false, zonagePlu: [],
   sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
   analyseLabuse: false,   // M55-D stage 4 : interrupteur « regard LABUSE » ÉTEINT par défaut (tri factuel)
-  sousDensite: false, multMin: null, rangMax: null, renouvellement: false, divisionOr: false,
+  sousDensite: false, multMin: null, rangMax: null, renouvellement: false,
   proprietaireType: [], droitsResiduels: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
   budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,
   marcheFiable: false, caMin: null, modeBRentable: false,
