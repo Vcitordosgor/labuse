@@ -1345,7 +1345,11 @@ export function Fiche({ idu }: { idu: string }) {
   const risquesClean = risquesLines.filter((l) => l.result === 'PASS').length
   // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
   const marcheLines = ongletLines('marche')
-  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain') ?? f?.dvf_parcelle?.secteur?.[0]
+  // M137-G — SECTEUR = prix du TERRAIN NU SEUL (mesuré : dvf_marche.py:107 `bati_m2=0`, médiane
+  // €/m² terrain, géo-DVF 2021-2025, emprise commune+section). PLUS de repli sur secteur[0] : une
+  // section sans vente de terrain nu affiche « — » — un prix bâti (~2 200 €/m²) dans une case
+  // « prix terrain » mentirait (arbitrage Vic). Le nu et le bâti ne se moyennent jamais.
+  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
   const proprioLines = ongletLines('proprio')
@@ -1494,7 +1498,7 @@ export function Fiche({ idu }: { idu: string }) {
             une valeur absente → « — » (jamais un zéro trompeur ni un blanc muet). Habillage affiné
             en phase 3. */}
         {f && (() => {
-          const cells = [
+          const cells: { l: string; v: string; i?: string }[] = [
             { l: 'Surface', v: fmtM2(f.surface_m2) },
             // M71 BLOC C — l'aveuglement se dit : zone absente = « Non publié au GPU » (jamais
             // un « — » muet). Saint-Philippe (RNU, bandeau f.rnu déjà affiché) + 91 rés. Saint-Leu.
@@ -1502,14 +1506,25 @@ export function Fiche({ idu }: { idu: string }) {
             // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
             // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
             { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
-            // M56-B5 : « Secteur » (et non « Prix secteur ») — tient sur UNE ligne à 400px ; la DA §4 emploie déjà « SECTEUR ».
-            { l: 'Secteur', v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—' },
+            // M137-G — « SECTEUR · NU » : prix du TERRAIN NU seul (jamais du bâti). Le « i » dit la
+            // méthode ET le cas vide (« — » = aucune vente de terrain nu dans la section sur la période).
+            { l: 'Secteur · nu',
+              v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—',
+              i: 'Médiane du prix du terrain nu au m² — ventes 2021-2025 (géo-DVF), sur la commune + la section cadastrale de la parcelle. Le bâti n’y entre jamais. « — » : aucune vente de terrain nu dans cette section sur la période.' },
           ]
           return (
             <div className="stats" data-bandeau-chiffres>
               {cells.map((c) => (
                 <div className="stat" key={c.l}>
-                  <div className="stat-l">{c.l.toUpperCase()}</div>
+                  <div className="stat-l flex items-center gap-1">
+                    {c.l.toUpperCase()}
+                    {c.i && (
+                      <Tip tip={c.i}>
+                        <span role="button" tabIndex={0} aria-label={`Méthode : ${c.l}`}
+                          className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                      </Tip>
+                    )}
+                  </div>
                   <div className={`stat-v${c.v === '—' ? ' vide' : ''}`}>{c.v}</div>
                 </div>
               ))}
