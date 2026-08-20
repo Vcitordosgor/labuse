@@ -504,10 +504,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         </div>
       </div>
 
-      {/* ═══════ M129-D P3 — LE BIEN : les trois facettes du nouveau vivier ═══════
+      {/* ═══════ M129-D P3 — LE BIEN : les facettes du nouveau vivier ═══════
           droits résiduels (les deux états du bâti, fait M125) · propriétaire public
-          (le négociable est visible — dalle) · divisible (calcul existant, M129-C
-          l'industrialisera). Mêmes libellés que la fiche, jamais un slug. */}
+          (le négociable est visible — dalle). Mêmes libellés que la fiche, jamais un
+          slug. M129-C (Vic 19/08/2026) : « Divisible » retirée — division hors produit. */}
       <div className="mt-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {([['encore', 'On peut encore construire'], ['maximum', 'Construite au maximum']] as const).map(([k, lbl]) => (
@@ -522,10 +522,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               ? filters.proprietaireType.filter((x) => x !== 'public') : [...filters.proprietaireType, 'public']) as never)}>
             Propriétaire public
           </Chip>
-          <Chip on={filters.divisionOr}
-            onClick={() => setFilter('divisionOr', !filters.divisionOr as never)}>
-            Divisible
-          </Chip>
+          {/* M129-C : « Divisible » retirée (division_or dormant, Vic 19/08/2026) */}
         </div>
       </div>
 

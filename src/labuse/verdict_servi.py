@@ -49,7 +49,11 @@ TIER_LABELS = {
     "declasse_au_fermee": "Potentiel épuisé · AU fermée",
 }
 
-BADGE_DIVISION = "bâtie + division possible"
+# M129-C P3 (réconciliation) : le badge M28 lisait `parcel_filtre_bati` et prétendait juger la
+# DIVISIBILITÉ — c'était un 2e juge (l'audit division_or l'a nommé). Il se RENOMME : il dit un
+# FAIT bâti (emprise marginale), le SEUL juge de divisibilité servi est division_or_candidates
+# (industrialisé M129-C), lu par la fiche (ligne « Division ») et la facette « Divisible ».
+BADGE_DIVISION = "bâtie — emprise marginale"
 
 #: couleur des déclassements — « terre éteinte », MIROIR de DECLASSE_COLOR (frontend/status.ts),
 #: hors palette thermique (jamais « chaude »). Une seule valeur écran / papier / carte M-Q.

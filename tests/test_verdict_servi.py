@@ -2,7 +2,7 @@
 
 Verrous :
 - servable → statut = tier, label client, jamais un déclassement silencieux ;
-- bâtie marginale DIVISIBLE servie (étage 3) → badge « bâtie + division possible » ;
+- bâtie marginale DIVISIBLE servie (étage 3) → badge « bâtie — emprise marginale » ;
 - déclassée bâti saturé → verdict de déclassement + motif du filtre (rien n'est remonté) ;
 - exception du registre servi → son motif prime ;
 - parcelle hors run → « non évaluée au run servi », JAMAIS un repli legacy muet ;

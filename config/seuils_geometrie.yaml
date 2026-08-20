@@ -50,5 +50,10 @@ division_or:                         # ex-seuils division_or.py (2 familles ; or
   erosion_reste_m: 2
   dist_bati_min_m: 1
   pc_frais_depuis: "2023-01-01"      # fenêtre fraîcheur bâti (ortho DOM ~3 ans + chantier)
-  pente_max_pct: 45                  # M129 P4 — NOUVEAU branchement (parcel_terrain.pente_moy_deg) ;
-  non_calibre_pente: true            #   aligné sur la falaise cascade 45°, jamais validé en revue division
+  pente_max_deg: 20                  # M129-C P1.2 — NOUVEAU branchement (parcel_terrain.pente_moy_deg,
+  #   en DEGRÉS) : P95 du gabarit 1000-6000 m² = 19,4° · max des 7 validées en revue = 17,9° ·
+  #   flag cascade 30 % = 16,7° — 20° couvre toutes les validées avec marge. NON CALIBRÉ PAR REVUE.
+  cosia_min_m2: 50                   # M129-C P1.1 — bâti RÉVÉLÉ (CoSIA) ≥ 50 m² invalide le lot
+  #   (7 551 parcelles île à ≥ 50 m² invisibles de BD TOPO — audit division_or)
+  lot_type_m2_defaut: 350            # M129-C P3 — « potentiel ~N lots » = surface ÷ lot type (ESTIMÉ,
+  #   jamais un fait) ; défaut île, ajustable par zone plus tard. NON CALIBRÉ.

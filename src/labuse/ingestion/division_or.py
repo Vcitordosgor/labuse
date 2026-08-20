@@ -52,7 +52,44 @@ from sqlalchemy.orm import Session
 
 from ..bati import ENSEMBLE_MIN_BATIMENTS, GRAND_BATIMENT_M2
 
-EXPOSE = True    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
+def _seuils_cfg() -> dict:
+    """M129-C — les ~20 seuils SORTENT DU DUR (config/seuils_geometrie.yaml section
+    `division_or`, valeurs héritées ; repli historique si config absente). Les seuils issus
+    des REVUES de Vic sont marqués dans le yaml — ajustables par commune plus tard."""
+    try:
+        from .. import config as _cfg
+        return _cfg.seuils_geometrie().get("division_or", {})
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+_S = _seuils_cfg()
+
+def _cosia_guard_sql(session) -> str:
+    """M129-C P1.1 — garde CoSIA conditionnelle : table absente (base de test) → 'false'."""
+    if not session.execute(text("SELECT to_regclass('parcel_bati_revele') IS NOT NULL")).scalar():
+        return "false"
+    # l'index de la garde (idu SANS index d'origine : seq-scan 16 k lignes PAR candidat —
+    # 29 min mesurées sur une commune) — idempotent, vit avec la garde qui l'exige.
+    session.execute(text("CREATE INDEX IF NOT EXISTS ix_bati_revele_idu ON parcel_bati_revele (idu)"))
+    return ("EXISTS (SELECT 1 FROM parcel_bati_revele rbz WHERE rbz.idu = zon.idu "
+            f"AND rbz.emprise_cosia_m2 >= {int(_S.get('cosia_min_m2', 50))})")
+
+
+def _pente_guard_sql(session) -> str:
+    """M129-C P1.2 — garde PENTE conditionnelle (seuil config, degrés)."""
+    if not session.execute(text("SELECT to_regclass('parcel_terrain') IS NOT NULL")).scalar():
+        return "false"
+    return ("EXISTS (SELECT 1 FROM parcel_terrain ptz WHERE ptz.idu = zon.idu "
+            f"AND ptz.pente_moy_deg > {float(_S.get('pente_max_deg', 20))})")
+
+
+EXPOSE = False   # M129-C (Vic 19/08/2026) — DORMANT : retiré du produit servi. Jamais demandé
+                 # par un client, ~40 résultats sur 285 781 parcelles, seuils jamais arbitrés —
+                 # il ne vaut pas le chantier. Le CODE, la table, les 7 candidates, les seuils en
+                 # config et le CLI restent (utilisables à la main). À reprendre si un client le
+                 # demande — les acquis M129-C (CoSIA branché+indexé, pente 20° config, seuils
+                 # sortis du dur) serviront alors.    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
                  # de calibrage PLU (pool 35, 0 faux positif connu). Le câblage client (encadré →
                  # chiffres) est fait par M22-D (section divisibilité du Rapport de potentiel).
                  # DÉPENDANCE RÉCURRENTE : relancer scripts/o12_emprise_recheck.py après chaque
@@ -63,14 +100,14 @@ EXPOSE = True    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaus
 # rectangle 1:10 ≈ 0.25). Revue O12-ÎLE (cartes 6/16/18 : lanières — le cercle inscrit mesure
 # le point le plus LARGE, pas la forme d'ensemble). Seuil fixé sur la distribution île entière
 # (P25=0.11, médiane=0.21 avant correctif) : 0.25 écarte les lots plus étirés qu'un 1:10.
-COMPACITE_MIN = 0.25
+COMPACITE_MIN = float(_S.get('compacite_min', 0.25))
 
 # Emprise bâtie maximale du LOT RESTANT après division (revue O12-ÎLE, 4e itération : la
 # division ne doit pas rendre la parcelle du PROPRIÉTAIRE non conforme — cartes 1 et 11 :
 # 80-81 % d'emprise résultante, au-delà de toute règle de zone U, sans pleine terre).
 # L'emprise max CALIBRÉE de la zone (config/plu_<commune>.yaml, emprise_sol_pct) prime
 # quand elle existe ; sinon ce plancher prudent s'applique.
-EMPRISE_RESTANTE_MAX = 0.60
+EMPRISE_RESTANTE_MAX = float(_S.get('emprise_restante_max', 0.60))
 
 # ── O12-PARTIEL : le LOT DÉCOUPÉ (méthode « bande de façade ») ─────────────────────────────
 # Sur les parcelles écartées par le ratio > 50 % (résiduel entier = démembrement), on cherche
@@ -83,10 +120,10 @@ EMPRISE_RESTANTE_MAX = 0.60
 # ANTI-ENCLAVEMENT (GO Vic) : le lot RESTANT garde lui aussi ≥ 12 m de façade voirie contiguë,
 # mesurée directement sur sa géométrie (parcelle − découpe) contre TOUTES les voiries — une
 # parcelle traversante dont le reste donne sur la deuxième rue passe ; sinon rejet.
-LOT_DECOUPE_MIN_M2 = 600
-LOT_DECOUPE_MAX_M2 = 900
-COMPACITE_MIN_DECOUPE = 0.55   # revue 2, branche 2 (0.28 d'origine ne filtrait pas les lots en U)
-ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de façade garantis)
+LOT_DECOUPE_MIN_M2 = int(_S.get('lot_decoupe_min_m2', 600))
+LOT_DECOUPE_MAX_M2 = int(_S.get('lot_decoupe_max_m2', 900))
+COMPACITE_MIN_DECOUPE = float(_S.get('compacite_min_decoupe', 0.55))   # revue 2, branche 2 (0.28 d'origine ne filtrait pas les lots en U)
+ANCRE_LARGEUR_M = int(_S.get('ancre_largeur_m', 25))           # largeur de la bande côté rue (≥ 12 m de façade garantis)
 
 # O12-PARTIEL-2 (arbitrages Vic 27/07/2026) :
 # · ÉROSION du reste : un reste relié par un COULOIR est un reste en deux morceaux dans la
@@ -99,8 +136,8 @@ ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de fa�
 #   constructibilité réglementaire (recul, prospect, servitudes), on ne la simule pas.
 # · Façade sur voirie QUALIFIÉE partout (plus seulement RNU) : une façade sur sentier, chemin
 #   ou route empierrée n'est pas un accès (BD TOPO, cf. VOIRIE_QUALIFIEE).
-EROSION_RESTE_M = 2
-DIST_BATI_MIN_M = 1
+EROSION_RESTE_M = int(_S.get('erosion_reste_m', 2))
+DIST_BATI_MIN_M = int(_S.get('dist_bati_min_m', 1))
 VOIRIE_QUALIFIEE = ("Route à 1 chaussée", "Route à 2 chaussées", "Rond-point")
 
 # Revue 2 (arbitrage « règle de décision », branche 2 déclenchée — cf. O12_PARTIEL_RAPPORT.md) :
@@ -120,8 +157,8 @@ VOIRIE_QUALIFIEE = ("Route à 1 chaussée", "Route à 2 chaussées", "Rond-point
 #   millésime exploitable ~2023) + 12-18 mois de chantier après PC : tout PC depuis début
 #   2023 peut être bâti mais invisible de la couche. « Lot nu » = nu au vu de BD TOPO
 #   (millésime), recoupé Sitadel — rien de plus n'est affirmé.
-SOLIDITE_MIN_DECOUPE = 0.85
-PC_FRAIS_DEPUIS = "2023-01-01"
+SOLIDITE_MIN_DECOUPE = float(_S.get('solidite_min_decoupe', 0.85))
+PC_FRAIS_DEPUIS = str(_S.get("pc_frais_depuis", "2023-01-01"))
 
 # Filtre par LIBELLÉ DESCRIPTIF de zone (finding BP0363 : « Ua — zone d'activités du
 # Chaudron » passait le filtre par code). Mots-clés d'activité dans l'intitulé GPU, avec
@@ -182,7 +219,7 @@ WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
   -- M50-SUITE : accepte le NOM (parcels.commune) OU le code INSEE (préfixe idu) — la CLI passait
   -- « 97415 » là où parcels.commune = « Saint-Paul » → 0 candidat (bug rebuild-à-0).
-  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
+  WHERE p.commune = :commune AND p.surface_m2 BETWEEN {surface_min} AND {surface_max}
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -202,9 +239,9 @@ freed AS (
          (ST_MaximumInscribedCircle(lg.geom)).radius AS rad
   FROM cand c JOIN bat ON bat.id = c.id JOIN princ ON princ.id = c.id
   CROSS JOIN LATERAL (VALUES ('libre', bat.bgeom), ('demolition', princ.pgeom)) AS v(variante, sub)
-  CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(v.sub, 3))) g
+  CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(v.sub, {buffer_bati}))) g
                       ORDER BY ST_Area(g.geom) DESC LIMIT 1) lg
-  WHERE bat.bat_m2 / c.surface_m2 BETWEEN 0.08 AND 0.45
+  WHERE bat.bat_m2 / c.surface_m2 BETWEEN {ratio_min} AND {ratio_max}
     AND NOT (v.variante = 'demolition' AND bat.nb_bat = 1)
     -- revue O12-ÎLE (2) : bâti d'ACTIVITÉ exclu — critère ensemble_bati de la cascade (bati.py)
     AND bat.nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}),
@@ -216,7 +253,7 @@ acces AS (
     (SELECT coalesce(sum(ST_Length(ST_Intersection(ST_Buffer(v.geom_2975,1.5), ST_Boundary(free_geom)))),0)
        FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, free_geom, 2)) AS facade_free
   FROM freed
-  WHERE free_m2 >= 500 AND free_m2 <= surface_m2 - 400 AND free_m2 <= surface_m2 * 0.5 AND rad >= 9
+  WHERE free_m2 >= {lot_min} AND free_m2 <= surface_m2 - {reste_min} AND free_m2 <= surface_m2 * {lot_part_max} AND rad >= {rayon_min}
     -- revue O12-ÎLE (3) : COMPACITÉ du lot — le cercle inscrit mesure le point le plus large,
     -- pas la forme d'ensemble (lanières) ; Polsby-Popper 4π·aire/périmètre² ≥ seuil
     AND 4 * pi() * free_m2 / power(ST_Perimeter(free_geom), 2) >= {compacite_min}),
@@ -250,7 +287,13 @@ SELECT DISTINCT ON (idu)
        bati_lot_m2, compacite,
        round(((bat_m2 - bati_lot_m2) / NULLIF(surface_m2 - free_m2, 0))::numeric, 3) AS emprise_restante
 FROM zon
-WHERE facade_free >= 12
+WHERE facade_free >= {facade_min}
+  -- M129-C P1.1 — CoSIA branché : un bâti RÉVÉLÉ (que BD TOPO ne voit pas) invalide le lot
+  -- calculé sur la couche aveugle. Le filet PC Sitadel reste (bâti récent AVEC permis).
+  AND NOT ({cosia_guard})
+  -- M129-C P1.2 — PENTE branchée (MNT jamais lu avant, audit) : seuil config (degrés)
+  -- (P95 du gabarit 1000-6000 m² = 19,4° ; max des 7 validées = 17,9° — non calibré par revue).
+  AND NOT ({pente_guard})
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   -- O12-GARDE (Vic 30/07) : garde de CONSTRUCTIBILITÉ EN AMONT. Un candidat dont la parcelle
   -- SUPPORT est écartée DÉFINITIVEMENT à l'étage 0 du RUN SERVI (`:served` = Q_A_RUN_LABEL → la
@@ -323,7 +366,7 @@ _DETECT_PARTIEL = """
 WITH cand AS (
   SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
   -- M50-SUITE : NOM (parcels.commune) OU code INSEE (préfixe idu) — cf. _DETECT.
-  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
+  WHERE p.commune = :commune AND p.surface_m2 BETWEEN {surface_min} AND {surface_max}
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
@@ -336,7 +379,7 @@ freed AS (
   FROM cand c JOIN bat ON bat.id = c.id
   CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(bat.bgeom, 3))) g
                       ORDER BY ST_Area(g.geom) DESC LIMIT 1) lg
-  WHERE bat.bat_m2 / c.surface_m2 BETWEEN 0.08 AND 0.45
+  WHERE bat.bat_m2 / c.surface_m2 BETWEEN {ratio_min} AND {ratio_max}
     AND bat.nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}
     AND ST_Area(lg.geom) > c.surface_m2 * 0.5),
 -- plus long segment CONTIGU de façade voirie du résiduel (ST_LineMerge) — l'ancre de la bande
@@ -427,6 +470,9 @@ SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_
        lot_geom, aire_bati_dans_lot_m2
 FROM zon
 WHERE facade_lot >= 12
+  -- M129-C P1 — mêmes gardes que la famille résiduelle : bâti RÉVÉLÉ (CoSIA) + PENTE (MNT)
+  AND NOT ({cosia_guard})
+  AND NOT ({pente_guard})
   AND facade_reste >= 12
   -- C2 : le reste doit être D'UN SEUL TENANT (tolérance 1 m² pour les slivers cadastraux)
   AND nb_reste = 1
@@ -709,6 +755,12 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
                 "AND type_division = 'decoupe' AND coalesce(note_revue,'') = ''"),
                 {"c": commune})
             detect = _DETECT_PARTIEL.format(
+                cosia_guard=_cosia_guard_sql(session),
+                pente_guard=_pente_guard_sql(session),
+                surface_min=int(_S.get('surface_min_m2', 1000)),
+                surface_max=int(_S.get('surface_max_m2', 6000)),
+                ratio_min=float(_S.get('bati_ratio_min', 0.08)),
+                ratio_max=float(_S.get('bati_ratio_max', 0.45)),
                 pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                 grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
                 lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
@@ -798,6 +850,18 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
             detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                                     grand_bat_m2=int(GRAND_BATIMENT_M2),
                                     compacite_min=COMPACITE_MIN,
+                                    surface_min=int(_S.get('surface_min_m2', 1000)),
+                                    surface_max=int(_S.get('surface_max_m2', 6000)),
+                                    buffer_bati=int(_S.get('buffer_bati_m', 3)),
+                                    ratio_min=float(_S.get('bati_ratio_min', 0.08)),
+                                    ratio_max=float(_S.get('bati_ratio_max', 0.45)),
+                                    lot_min=int(_S.get('lot_min_m2', 500)),
+                                    reste_min=int(_S.get('reste_min_m2', 400)),
+                                    lot_part_max=float(_S.get('lot_part_max', 0.5)),
+                                    rayon_min=int(_S.get('rayon_inscrit_min_m', 9)),
+                                    facade_min=int(_S.get('facade_min_m', 12)),
+                                    cosia_guard=_cosia_guard_sql(session),
+                                    pente_guard=_pente_guard_sql(session),
                                     emprise_max=_emprise_max_sql(commune),
                                     activite_pred=_activite_pred_sql(commune),
                                     descr_re=ACTIVITE_DESCR_RE,

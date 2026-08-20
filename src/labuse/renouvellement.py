@@ -49,13 +49,13 @@ BATI_CODE_PREFIXES: tuple[tuple[str, str], ...] = (
 #: Libellé produit du segment — wording DOCTRINAL (jamais « opportunité »).
 LIBELLE_SEGMENT = "Parcelle occupée — potentiel de renouvellement urbain"
 
-#: Libellés client des 4 composantes (affichage « pourquoi »). La divisibilité dit
-#: « géométrie favorable », JAMAIS une promesse de division (contrat O12).
+#: Libellés client des 3 composantes (affichage « pourquoi »).
+#: M129-C (Vic 19/08/2026) : `comp_divisibilite` RETIRÉE — division_or sort du produit.
+#: Impact mesuré avant retrait : 2 lignes/67 258 portaient le +15, 0 sortie du top 100.
 LIBELLES_COMPOSANTES = {
     "comp_potentiel": "droits à bâtir résiduels (SDP non consommée)",
     "comp_assiette": "taille de l'assiette foncière",
     "comp_marche": "rotation du bâti dans le secteur",
-    "comp_divisibilite": "géométrie favorable (résiduel d'un seul tenant)",
 }
 
 
@@ -84,11 +84,10 @@ def load_config() -> dict:
 DDL = """
 CREATE TABLE IF NOT EXISTS parcel_renouvellement (
   idu                varchar(14) PRIMARY KEY,
-  renouv_score       int  NOT NULL,      -- 0-100, somme des 4 composantes
-  comp_potentiel     int  NOT NULL,      -- 0-40  : SDP résiduelle (percent_rank segment)
-  comp_assiette      int  NOT NULL,      -- 0-25  : surface (percent_rank segment)
-  comp_marche        int  NOT NULL,      -- 0-20  : rotation bâti secteur (percent_rank)
-  comp_divisibilite  int  NOT NULL,      -- 0|15  : division_or_candidates (géométrie favorable)
+  renouv_score       int  NOT NULL,      -- 0-100, somme des 3 composantes
+  comp_potentiel     int  NOT NULL,      -- 0-47  : SDP résiduelle (percent_rank segment)
+  comp_assiette      int  NOT NULL,      -- 0-29  : surface (percent_rank segment)
+  comp_marche        int  NOT NULL,      -- 0-24  : rotation bâti secteur (percent_rank)
   code_bati_origine  text NOT NULL,      -- deja_bati | deja_bati_probable | ensemble_bati
   sdp_residuelle_m2  int,                -- dénormalisé pour l'affichage « pourquoi »
   surface_m2         int,
@@ -176,22 +175,19 @@ comp AS (
     SELECT s.*,
            round(:w_pot * percent_rank() OVER (ORDER BY s.sdp))::int          AS comp_potentiel,
            round(:w_ass * percent_rank() OVER (ORDER BY s.surface))::int      AS comp_assiette,
-           round(:w_mar * percent_rank() OVER (ORDER BY s.rot_bati))::int     AS comp_marche,
-           CASE WHEN dv.idu IS NOT NULL THEN :w_div ELSE 0 END                AS comp_divisibilite
+           round(:w_mar * percent_rank() OVER (ORDER BY s.rot_bati))::int     AS comp_marche
     FROM seg s
-    LEFT JOIN division_or_candidates dv ON dv.idu = s.idu
 ),
 scored AS (
     SELECT c.*,
-           LEAST(100, c.comp_potentiel + c.comp_assiette + c.comp_marche
-                       + c.comp_divisibilite) AS score
+           LEAST(100, c.comp_potentiel + c.comp_assiette + c.comp_marche) AS score
     FROM comp c
 )
 INSERT INTO parcel_renouvellement
-    (idu, renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite,
+    (idu, renouv_score, comp_potentiel, comp_assiette, comp_marche,
      code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune,
      rang_segment, rang_commune, run_label)
-SELECT idu, score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite,
+SELECT idu, score, comp_potentiel, comp_assiette, comp_marche,
        code, nullif(sdp, 0), surface, zone_plu, commune,
        rank() OVER (ORDER BY score DESC, idu),
        rank() OVER (PARTITION BY commune ORDER BY score DESC, idu),
@@ -239,7 +235,7 @@ def build(session: Session, *, run_label: str | None = None,
             session.execute(text(stmt))
     session.execute(text(_BUILD_SQL), {
         **params, "w_pot": poids["potentiel_residuel"], "w_ass": poids["assiette"],
-        "w_mar": poids["contexte_marche"], "w_div": poids["divisibilite"]})
+        "w_mar": poids["contexte_marche"]})
 
     n = int(session.execute(text("SELECT count(*) FROM parcel_renouvellement")).scalar() or 0)
     # 4/5 mesurés après coup (différences successives, mêmes définitions que le build)
@@ -263,7 +259,7 @@ def top(session: Session, n: int = 20, commune: str | None = None) -> list[dict]
     where = "WHERE commune = :c" if commune else ""
     return [dict(r) for r in session.execute(text(f"""
         SELECT idu, commune, renouv_score, rang_segment, rang_commune,
-               comp_potentiel, comp_assiette, comp_marche, comp_divisibilite,
+               comp_potentiel, comp_assiette, comp_marche,
                code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu
         FROM parcel_renouvellement {where}
         ORDER BY rang_segment LIMIT :n"""),

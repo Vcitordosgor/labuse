@@ -92,7 +92,7 @@ const F_NUMS: (keyof Filters)[] = ['scoreMin', 'surfaceMin', 'surfaceMax', 'sdpM
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin']
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
-  'sousDensite', 'renouvellement', 'divisionOr', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
+  'sousDensite', 'renouvellement', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
 
 export function countActiveFilters(f: Filters): number {
   let n = 0
@@ -177,7 +177,7 @@ const NUM_KEYS: [keyof Filters, string][] = [
 ]
 const BOOL_KEYS: [keyof Filters, string][] = [
   ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
-  ['sousDensite', 'sd'], ['renouvellement', 'rnv'], ['divisionOr', 'dor'], ['npnru', 'np'],
+  ['sousDensite', 'sd'], ['renouvellement', 'rnv'], ['npnru', 'np'],
   ['adresseAbsente', 'aa'], ['marcheFiable', 'mf'], ['modeBRentable', 'mb'],
 ]
 // M55-D stage 7 : la clé legacy `fl` (flags contraintes de secteur) n'est PLUS lue ni écrite —

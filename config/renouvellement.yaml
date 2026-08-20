@@ -26,16 +26,17 @@ seuils:
 # Les composantes continues sont normalisées par RANG (percent_rank) AU SEIN du
 # segment : pas d'échelle absolue à calibrer, robuste aux valeurs extrêmes, et le
 # classement est invariant par transformation monotone des entrées.
+# M129-C (Vic 19/08/2026) : la composante `divisibilite` (15 pts) est RETIRÉE — division_or
+# sort du produit (jamais demandé, ~40 résultats/285 781, seuils non arbitrés). Impact du
+# retrait MESURÉ avant : 2 lignes/67 258 portaient le +15, 0 sortie du top 100 — non
+# significatif. Les 15 pts sont redistribués PRO-RATA (40/25/20 → 47/29/24, Σ=100 gardée).
+# À reprendre si un client le demande.
 poids:
-  potentiel_residuel: 40   # sdp_residuelle_m2 (droits à bâtir non consommés) — le cœur du
+  potentiel_residuel: 47   # sdp_residuelle_m2 (droits à bâtir non consommés) — le cœur du
                            # renouvellement : ce qu'on peut ENCORE construire malgré le bâti.
-  assiette: 25             # surface_m2 — une grande assiette donne des options (division,
+  assiette: 29             # surface_m2 — une grande assiette donne des options (division,
                            # curetage, phasage) même à SDP modeste.
-  contexte_marche: 20      # rot_bati_brute du secteur (p_model_ext_dataset, année de scoring) :
+  contexte_marche: 24      # rot_bati_brute du secteur (p_model_ext_dataset, année de scoring) :
                            # un secteur où le bâti TOURNE favorise le renouvellement. On prend
                            # la rotation brute (le shrinkage gamma-Poisson vit dans le modèle P,
                            # hors de portée d'une heuristique lisible — assumé, cf. rapport).
-  divisibilite: 15         # présence dans division_or_candidates (signal O12, géométrie du
-                           # résiduel). Utilisé comme composante INTERNE de classement ;
-                           # le libellé affiché reste « géométrie favorable », JAMAIS une
-                           # promesse de division.

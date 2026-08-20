@@ -2693,10 +2693,14 @@ def division_or_cmd(
         else:
             raise typer.BadParameter("préciser --communes <NOM|INSEE,...> ou --all")
         r = division_or.build_divisions(s, cibles, log=typer.echo)
-        if r.get("failures"):
-            typer.echo(f"⚠ {len(r['failures'])} commune(s) en échec (île poursuivie, non écrites) : "
-                       f"{', '.join(r['failures'])} — voir les lignes ÉCHEC ci-dessus.")
-        typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
+        # M129-C : la famille DÉCOUPE (O12-PARTIEL, bande de façade) rejoint le GESTE UNIQUE —
+        # elle n'avait JAMAIS été câblée au CLI (build_divisions_partiel orpheline, mesuré).
+        rp = division_or.build_divisions_partiel(s, cibles, log=typer.echo)
+        fails = (r.get("failures") or []) + (rp.get("failures") or [])
+        if fails:
+            typer.echo(f"⚠ {len(fails)} commune(s)/famille(s) en échec (île poursuivie, non "
+                       f"écrites) : {', '.join(fails)} — voir les lignes ÉCHEC ci-dessus.")
+        typer.echo(f"✓ division_or_candidates : {r['total']} résiduelle + {rp.get('total', 0)} découpe")
 
 
 @app.command("division-or-review")
@@ -2795,7 +2799,7 @@ def renouv_cmd(
                    f"as-of {r['annee']})")
         typer.echo("Entonnoir :")
         libelles = {
-            "1_bati_exclues": "écartées BatiLayer (codes francs)",
+            "1_bati_fait": "bâti franc (fait M129 — codes francs)",
             "2_zone_u_au": "∩ zone U/AU",
             "3_capacite": (f"∩ capacité (SDP > {r['seuils']['sdp_min_m2']} m² "
                            f"ou surface ≥ {r['seuils']['surface_min_m2']} m²)"),
@@ -2806,11 +2810,11 @@ def renouv_cmd(
             typer.echo(f"  {r['funnel'][k]:>7}  {lib}")
         rows = renouvellement.top(s, n=top_n, commune=commune)
         titre = f"commune {commune}" if commune else "île"
-        typer.echo(f"\nTop {len(rows)} ({titre}) — score /100 (pot+ass+mar+div) :")
+        typer.echo(f"\nTop {len(rows)} ({titre}) — score /100 (pot+ass+mar) :")
         for t in rows:
             typer.echo(
                 f"  #{t['rang_segment']:<5} {t['idu']}  {t['renouv_score']:>3} "
-                f"({t['comp_potentiel']}+{t['comp_assiette']}+{t['comp_marche']}+{t['comp_divisibilite']})  "
+                f"({t['comp_potentiel']}+{t['comp_assiette']}+{t['comp_marche']})  "
                 f"{t['zone_plu']:<3} sdp={t['sdp_residuelle_m2'] or 0:>5} surf={t['surface_m2']:>6}  "
                 f"{t['code_bati_origine']}")
 

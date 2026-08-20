@@ -251,14 +251,14 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
         if db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
             rn = db.execute(text(
                 "SELECT renouv_score, rang_segment, comp_potentiel, comp_assiette, "
-                "       comp_marche, comp_divisibilite, "
+                "       comp_marche, "
                 "       (SELECT count(*) FROM parcel_renouvellement) AS total "
                 "FROM parcel_renouvellement WHERE idu = :idu"), {"idu": idu}).mappings().first()
             if rn:
                 from ..renouvellement import LIBELLES_COMPOSANTES
                 dominantes = sorted(
                     ((k, int(rn[k])) for k in ("comp_potentiel", "comp_assiette",
-                                               "comp_marche", "comp_divisibilite")),
+                                               "comp_marche")),
                     key=lambda kv: kv[1], reverse=True)[:2]
                 dom = " · ".join(f"{LIBELLES_COMPOSANTES[k]} ({v} pts)" for k, v in dominantes)
                 out["renouvellement_ligne"] = (

@@ -2467,8 +2467,7 @@ export function Fiche({ idu }: { idu: string }) {
                   Contrôle avant achat + Servitudes invisibles → Risques ; Courrier SPF + Scan
                   patrimoine → Propriétaire ; Faisabilité + Calculette + Assemblage → Constructibilité
                   (M-ENTREE : Faisabilité accepte un IDU en mode « par parcelle » ; Assemblage l'ajoute en
-                  1ʳᵉ du lot). Division : PAS de porte (outil de découverte à l'échelle commune, aucune
-                  entrée parcelle — BACKLOG produit « cette parcelle est-elle divisible ? »). */}
+                  1ʳᵉ du lot). */}
               {/* Mention légale conservée (présente aussi dans les PDF, back). */}
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>

@@ -1886,6 +1886,33 @@ def _qualite_commune(insee: str | None) -> dict | None:
     }
 
 
+def _division_fiche(db: Session, idu: str, surface_m2: float | None) -> dict | None:
+    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates)."""
+    r = db.execute(text(
+        "SELECT residuel_m2, residuel_facade_m, type_division, "
+        "       (coalesce(note_revue,'') <> '') AS revue "
+        "FROM division_or_candidates WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not r:
+        return None
+    try:
+        from .. import config as _cfg
+        lot_type = float(_cfg.seuils_geometrie()["division_or"].get("lot_type_m2_defaut", 350))
+    except Exception:  # noqa: BLE001
+        lot_type = 350.0
+    pot = max(1, int((surface_m2 or 0) // lot_type)) if surface_m2 else None
+    return {
+        "lot_m2": int(r["residuel_m2"]) if r["residuel_m2"] is not None else None,
+        "facade_m": float(r["residuel_facade_m"]) if r["residuel_facade_m"] is not None else None,
+        "type": r["type_division"],
+        "statut_revue": "vérifié" if r["revue"] else "calculé, non revu",
+        "potentiel_lots": pot,                       # ESTIMÉ — surface ÷ lot type (config)
+        "potentiel_source": "Estimé — surface ÷ lot type de la zone (config), pas une promesse",
+        "ligne": (f"1 lot détachable de {int(r['residuel_m2'])} m²"
+                  + (f" (façade {r['residuel_facade_m']:.0f} m)" if r["residuel_facade_m"] else "")
+                  + (f" · potentiel total ~{pot} lots (Estimé)" if pot else "")),
+    }
+
+
 def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dict]:
     """M52 L3 — « Les données » : sources RÉELLEMENT utilisées sur CETTE fiche (distinct des
     couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
@@ -2712,12 +2739,11 @@ def parcel_mode_b(idu: str, travaux_m2: float | None = Query(None, ge=500, le=40
 
 def _renouvellement_block(db: Session, idu: str) -> dict | None:
     """M-RENOUV lot B — segment Renouvellement (None si table absente ou parcelle hors
-    segment). DOCTRINE : « potentiel de renouvellement urbain », jamais « opportunité » ;
-    la divisibilité s'affiche « géométrie favorable », jamais une promesse de division."""
+    segment). DOCTRINE : « potentiel de renouvellement urbain », jamais « opportunité »."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
         return None
     r = db.execute(text(
-        "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite, "
+        "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, "
         "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
         # M47 (P2) : millésime/source de la couche servie — run servi + date de matérialisation.
@@ -2745,8 +2771,8 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "sdp_residuelle_m2": r["sdp_residuelle_m2"], "surface_m2": r["surface_m2"],
         "composantes": [
             {"cle": k, "points": r[k], "max": m, "libelle": LIBELLES_COMPOSANTES[k]}
-            for k, m in (("comp_potentiel", 40), ("comp_assiette", 25),
-                         ("comp_marche", 20), ("comp_divisibilite", 15))
+            for k, m in (("comp_potentiel", 47), ("comp_assiette", 29),
+                         ("comp_marche", 24))
         ],
     }
 
@@ -3393,7 +3419,7 @@ def renouvellement_liste(commune: str | None = None,
     where = "WHERE r.run_label = :run" + (" AND p.commune = :c" if commune else "")
     rows = db.execute(text(f"""
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
-               r.comp_potentiel, r.comp_assiette, r.comp_marche, r.comp_divisibilite,
+               r.comp_potentiel, r.comp_assiette, r.comp_marche,
                r.code_bati_origine, r.sdp_residuelle_m2, r.surface_m2, r.zone_plu,
                r.rang_segment, r.rang_commune
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
