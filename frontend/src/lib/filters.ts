@@ -31,6 +31,7 @@ export interface ParcelProps {
   copro_v2?: boolean
   veille?: boolean
   etage0?: boolean | number
+  etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
 }
 
 //: flags métier proposés au filtre (couches à drapeau) — libellés humains.

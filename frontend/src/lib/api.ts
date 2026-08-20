@@ -819,6 +819,7 @@ export interface ParcoursItem {
   center: [number, number] | null; surface_m2?: number | null
   adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
   proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
+  etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
 }
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }

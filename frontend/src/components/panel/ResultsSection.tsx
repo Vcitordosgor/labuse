@@ -4,7 +4,7 @@ import { csvExportUrl, getCommunes, getFiltre, getParcelsGeojson, getResults, ty
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
@@ -71,6 +71,15 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
               {meta.label}
             </span>
           </Tip>
+          {/* M131 P3 — badge d'état du bien (affichage pur du fait M125/M129-D) */}
+          {etatBienMeta(p.etat_bien) && (
+            <Tip tip={etatBienMeta(p.etat_bien)!.label} className="shrink-0">
+              <span data-etat-bien={p.etat_bien} className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium"
+                style={{ borderColor: `${etatBienMeta(p.etat_bien)!.color}55`, color: etatBienMeta(p.etat_bien)!.color }}>
+                {etatBienMeta(p.etat_bien)!.short}
+              </span>
+            </Tip>
+          )}
           {p.evenement === 'rouge' && (
             <Tip tip={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}
               className="shrink-0">

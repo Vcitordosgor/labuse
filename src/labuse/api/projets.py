@@ -803,17 +803,18 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
     """L'ÉTAT du parcours : les parcelles du projet groupées par statut (proposées best-first),
     avec centroïde pour la carte. Base de la reprise (fermer/rouvrir = relire cet état)."""
     p = _projet_or_404(db, pid, current_compte(request))
-    from .app import _score_v2_run_id
+    from .app import _score_v2_run_id, _ETAT_BIEN_SQL
     v2 = _score_v2_run_id(db)
     rows = db.execute(text(
-        """SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu, par.commune, par.surface_m2,
-                  d.q_score, s2.tier,
+        f"""SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu, par.commune, par.surface_m2,
+                  d.q_score, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
                   ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
                   ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
            FROM projet_parcelles pp
            JOIN parcels par ON par.id = pp.parcel_id
            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = par.id AND d.run_label = :run
            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = par.idu AND s2.run_id = :v2
+           LEFT JOIN parcel_residuel rb ON rb.parcel_id = par.id   -- M131 P3 : 1 ligne/parcelle
            WHERE pp.projet_id = :pid
            ORDER BY pp.rang NULLS LAST, pp.id"""),
         {"run": RUN, "v2": v2, "pid": pid}).mappings().all()
@@ -856,6 +857,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
         groups.setdefault(r["statut"], []).append({
             "idu": r["idu"], "commune": r["commune"], "statut": r["statut"],
             "tier": r["tier"], "surface_m2": r["surface_m2"],
+            "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
             "adresse": adrs.get(r["idu"]), "evenement": evt,
             "marche_eur_m2": marche.get(r["commune"]),
             "pourquoi": _pourquoi_court(r["tier"], r["commune"] in carencees, evt, r["surface_m2"]),

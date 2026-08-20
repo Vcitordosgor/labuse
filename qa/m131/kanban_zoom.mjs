@@ -1,0 +1,12 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const OUT = new URL('./captures', import.meta.url).pathname;
+const b = await chromium.launch({ channel:'chrome' });
+const page = await b.newPage({ viewport:{ width:1440, height:1024 }, deviceScaleFactor:2 });
+await page.goto('http://localhost:5173/', { waitUntil:'domcontentloaded' }); await page.waitForTimeout(2500);
+await page.click('[title="Projets"]'); await page.waitForSelector('[data-projets-liste]'); await page.waitForTimeout(500);
+await page.click('text=/VOIR LES \\d+ AUTRES/').catch(()=>{}); await page.waitForTimeout(400);
+await page.locator('text=Démo — 40 logements').first().click(); await page.waitForSelector('[data-projet-kanban]'); await page.waitForTimeout(1200);
+const bb = await page.locator('[data-tri-card]').first().boundingBox();
+await page.screenshot({ path: `${OUT}/02b-kanban-carte-zoom.png`, clip:{ x:bb.x-6, y:bb.y-6, width:360, height:260 } });
+console.log('📸 02b-kanban-carte-zoom');
+await b.close();

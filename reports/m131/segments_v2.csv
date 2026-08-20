@@ -1,0 +1,3 @@
+segment,n,k,top_pct,base_pct,rr_actuel,actuel_ic_bas,actuel_ic_haut,rr_C_bati,C_bati_ic_bas,C_bati_ic_haut,delta_median,delta_ic_bas,delta_ic_haut,statut
+nu,42838,171,0.4,2.8666,4.794,3.105,6.705,4.896,3.271,6.843,0.202,-0.862,1.227,dans le bruit
+bati,239795,959,0.4,1.5155,5.023,3.945,6.272,5.436,4.28,6.743,0.407,-0.272,1.071,dans le bruit

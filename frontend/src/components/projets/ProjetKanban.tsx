@@ -7,6 +7,7 @@ import {
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
+import { etatBienMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -325,8 +326,17 @@ function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
         </div>
         <TierBadge tier={it.tier} etage0={null} statut={null} />
       </div>
-      <div className="tnum mt-1 truncate text-[10.5px] text-txt-mut">
-        {it.commune}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''} <Badges it={it} />
+      <div className="tnum mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 truncate text-[10.5px] text-txt-mut">
+        <span>{it.commune}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''}</span>
+        {/* M131 P3 — badge d'état du bien (affichage pur du fait M125/M129-D) */}
+        {etatBienMeta(it.etat_bien) && (
+          <span data-etat-bien={it.etat_bien} title={etatBienMeta(it.etat_bien)!.label}
+            className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium"
+            style={{ borderColor: `${etatBienMeta(it.etat_bien)!.color}55`, color: etatBienMeta(it.etat_bien)!.color }}>
+            {etatBienMeta(it.etat_bien)!.short}
+          </span>
+        )}
+        <Badges it={it} />
       </div>
 
       {/* dense uniquement — le POURQUOI (sourcé) + le signal marché/événement */}

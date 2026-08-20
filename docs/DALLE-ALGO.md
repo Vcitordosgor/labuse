@@ -176,9 +176,41 @@ calibré 2025. RR@1158 hors copro = 6,73 (fold 2025). Dérive : 11× (2020)
    renommage) → M129 (cascade cible + mort des juges + restitution).
 2. Un run unique produit tout (features, cascade, score) — même millésime.
 3. Les golden de monotonie s'écrivent AVANT le nouveau modèle.
-4. L'examen (walk-forward) est le seul juge de promotion : le nouveau
-   modèle remplace l'ancien si et seulement si sa note dépasse 6,73 dans
-   les mêmes conditions de mesure.
+4. L'examen (walk-forward) est le seul juge de promotion — sous la
+   **métrique v2** ci-dessous (le juge « note globale > 6,73 » est mort :
+   M130 a montré qu'une note globale dilue les gains segmentés sur un
+   vivier à 85 % bâti).
+
+### La métrique de promotion (v2, arbitrée 19/08/2026)
+
+1. **Deux notes, une par segment.** Le RR (risk-ratio / enrichissement)
+   est mesuré SÉPARÉMENT sur le nu et sur le bâti, chacun sur SON propre
+   classement — les meilleures nues parmi les nues, les meilleures bâties
+   parmi les bâties. Jamais une note qui mélange les deux.
+2. **Le top est un pourcentage.** On note le **top 0,4 % de chaque
+   segment** (part de la population du segment), plus jamais un nombre
+   fixe (le « 1158 » était le budget d'un ancien univers ; il ne veut
+   plus rien dire sur un vivier restreint).
+3. **La double barre de promotion.** Un modèle candidat est promu si, et
+   seulement si, les trois conditions sont réunies — mécaniquement, sans
+   interprétation :
+   - (a) il n'est inférieur sur **AUCUN** segment au-delà du bruit
+     (l'IC 95 % de l'écart candidat − servi ne tombe entièrement sous 0
+     sur aucun segment) ;
+   - (b) il est supérieur hors bruit sur **AU MOINS UN** segment
+     (l'IC 95 % de l'écart tombe entièrement au-dessus de 0) ;
+   - (c) sa calibration (ECE) **ne se dégrade pas**.
+4. **Le 6,73 prend sa retraite.** Il n'y a plus de nombre-référence gravé
+   dans le marbre. Les références deviennent **les notes du modèle SERVI
+   sur le vivier réel, par segment** — recalculées à CHAQUE changement
+   d'univers, et DITES dans le rapport d'examen. Un modèle se compare
+   toujours à ce que sert LABUSE aujourd'hui, pas à un souvenir.
+5. **Le client ne voit jamais cette métrique.** Le score servi reste une
+   probabilité unique par parcelle, la liste reste classée ensemble
+   (nu et bâti mêlés). La double note est un instrument d'examen interne,
+   pas un affichage. (Le seul affichage lié : le badge d'état du bien —
+   Nu / Bâtie-encore-construire / Bâtie-au-maximum — qui DIT le segment,
+   sans rien recalculer.)
 
 ## 7. Préalables — état au 18/08 soir
 

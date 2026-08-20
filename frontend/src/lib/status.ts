@@ -60,6 +60,18 @@ export const ALL_TIER_META: Record<string, { label: string; color: string }> =
 // 1. exclusion dure étage 0 (run servi) → « Écartée » legacy, motifs sourcés (l'étage 0 prime) ;
 // 2. sinon, un run v2 existe → le TIER v2 est le verdict (avec rang/×N côté appelant) ;
 // 3. sinon → statut matrice legacy (parcs sans run v2).
+// M131 P3 — BADGE D'ÉTAT DU BIEN (affichage pur du fait M125/M129-D, aucun calcul côté
+// client : le serveur envoie `etat_bien` ∈ nu | bati_encore | bati_max). Trois états, jamais
+// un slug à l'écran. `short` pour les cartes denses, `label` complet en tooltip.
+export const ETAT_BIEN_META: Record<string, { label: string; short: string; color: string }> = {
+  nu: { label: 'Nu', short: 'Nu', color: '#6FA8DC' },
+  bati_encore: { label: 'Bâtie — on peut encore construire', short: 'Bâtie · encore', color: '#5CE6A1' },
+  bati_max: { label: 'Bâtie — construite au maximum', short: 'Bâtie · au max', color: '#8C7468' },
+}
+export function etatBienMeta(e: string | null | undefined) {
+  return (e && ETAT_BIEN_META[e]) || null
+}
+
 export function verdictMeta(
   statut: Statut | null | undefined,
   tierV2: string | null | undefined,
