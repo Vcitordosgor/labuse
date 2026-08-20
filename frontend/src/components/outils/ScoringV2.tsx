@@ -91,6 +91,9 @@ export function ScoringV2Module() {
             <span className="flex-1 truncate font-mono text-[10.5px] text-txt">{it.parcelle_id}</span>
             {it.badges.copro && <span className="text-[9.5px] text-txt-dim">copro</span>}
             {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude" title={`Événement BODACC — ${it.badges.evenement_date}`}>évén.</span>}
+            {/* M137-J — badge succession (signal fort, 7 129 parcelles) : dormait côté back (payload
+                servi), jamais affiché. Même patron que copro/événement ; signal d'ÉTAT patrimonial. */}
+            {it.badges.veille_succession && <span className="text-[9.5px] text-mint" title="Radar patrimonial — bien en cours de succession (signal d'état, pas un événement daté)">succession en cours</span>}
             {it.rang != null && <span className="font-mono text-[10px] text-txt-dim">#{it.rang}</span>}
           </button>
         ))}

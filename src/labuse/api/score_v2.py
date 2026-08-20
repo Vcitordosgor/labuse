@@ -3,8 +3,8 @@ précalculée UNIQUEMENT (parcel_p_score_v2, index run+rang / run+tier ; P95 < 2
 
 Décisions produit gravées : jamais de probabilité brute (mult_base « ×N » +
 percentile + rang), univers par défaut HORS copro (toggle include_copro),
-réserve foncière ≠ pipeline. Les champs matrice historiques restent servis par
-les endpoints existants — marqués deprecated (cf. GET /v2/modele).
+réserve foncière ≠ pipeline. Les champs matrice historiques (statut/q_score/a_score)
+sont RETIRÉS du produit (M129-B/M136) — plus servis nulle part (cf. GET /v2/modele).
 """
 from __future__ import annotations
 
@@ -162,7 +162,7 @@ def reserve(commune: str | None = Query(None), limit: int = Query(200, le=1000),
 @router.get("/modele")
 def modele(db: Session = Depends(get_db)) -> dict:
     """« Sources & fraîcheur » côté modèle : version, sha court, date de gel,
-    politique de recalibration, avertissement censure, note deprecated matrice."""
+    politique de recalibration, avertissement censure, note matrice RETIRÉE (M129-B/M136)."""
     _served_run(db)   # 404 explicite si aucun run servi (comportement inchangé)
     freeze = json.loads(Path(MODEL_FREEZE).read_text())
     # M55-H point 11 (décision Vic) : la DATE de gel (`gel`) et le NOM/date du run
@@ -174,7 +174,7 @@ def modele(db: Session = Depends(get_db)) -> dict:
         "provenance": freeze["provenance"],
         "politique_recalibration": freeze["politique"],
         "avertissement_censure": AVERTISSEMENT_CENSURE,
-        "matrice_legacy": "les champs matrice (statut, q_score, a_score) restent "
-                          "servis par les endpoints historiques — DEPRECATED, "
-                          "remplacés par tier/rang/mult_base v2",
+        "matrice_legacy": "les champs matrice (statut, q_score, a_score) sont "
+                          "RETIRÉS du produit (M129-B/M136) — plus servis nulle part ; "
+                          "le classement est tier/rang/mult_base v2",
     }
