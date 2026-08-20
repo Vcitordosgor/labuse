@@ -40,13 +40,14 @@ AMBER = (168, 121, 22)
 # reste imprimé (document abonné, derrière auth, PM publique DGFiP) ; seule cette ligne est retirée.
 COUCHES_EXCLUES = {"age_dirigeant"}
 
-# correctif M5 : tiers v2 (P×C) — verdict d'en-tête quand un run v2 existe (étage 0 prime)
+# M135 — échelle d'action (libellé long tiers_client) ; les COULEURS restent (chaud→froid).
+from ..scoring.tiers_client import long as _tier_long  # noqa: E402
 TIER_V2 = {
-    "brulante": ("Brûlante v2", RED),
-    "chaude": ("Chaude v2", AMBER),
-    "a_creuser": ("À creuser", (95, 108, 101)),
-    "reserve_fonciere": ("Potentiel long terme", (58, 100, 148)),
-    "ecartee": ("Écartée", RED),
+    "brulante": (_tier_long("brulante"), RED),
+    "chaude": (_tier_long("chaude"), AMBER),
+    "a_creuser": (_tier_long("a_creuser"), (95, 108, 101)),
+    "reserve_fonciere": (_tier_long("reserve_fonciere"), (58, 100, 148)),
+    "ecartee": (_tier_long("ecartee"), RED),
 }
 ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"), ("proprio", "PROPRIO")]
 
@@ -100,8 +101,11 @@ def _motif_verdict(s2: dict) -> str | None:
     (probabilité de mutation vs base + motif servi). Déterministe, pas d'IA ; c'est le MÊME
     motif que l'écran (verdict_servi). Borné pour tenir sur ~2 lignes."""
     bouts: list[str] = []
-    if s2.get("mult_base") is not None:
-        bouts.append(f"probabilité de mutation ×{s2['mult_base']:.1f} vs base")
+    # M135 — la MÊME fraction que la carte de tri et la fiche (jamais un « ×N »)
+    if s2.get("fraction"):
+        bouts.append(f"environ {s2['fraction']} de probabilité de vente sous 1 an")
+    else:
+        bouts.append("vente peu probable sous 1 an")
     if s2.get("motif"):
         bouts.append(str(s2["motif"]))
     phrase = " — ".join(bouts)
@@ -134,7 +138,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── Bandeau événement (héros) — C5 : il raconte SON histoire en une phrase
     if fiche.get("evenement") == "rouge":
         pm = (fiche.get("proprietaire_moral") or {}).get("denomination")
-        detail = (f"Chaude par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
+        detail = (f"Priorité par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
                   f"procédure collective — {fiche.get('evenement_detail') or 'procédure BODACC ouverte'}. "
                   f"Le score qualité ({fiche.get('q_score')}) n'a pas déclenché ce statut : "
                   "l'urgence du dossier vendeur prime (doctrine bascule).")

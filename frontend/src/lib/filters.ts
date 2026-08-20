@@ -32,6 +32,9 @@ export interface ParcelProps {
   veille?: boolean
   etage0?: boolean | number
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
+  fraction?: string | null    // M135 P2 : « 1/5 » ou null (« — »)
+  raison?: string | null      // M135 P3 : chip raison dominante (liste île, servi)
+  top5?: unknown[] | null      // M135 P3 : contributions (geojson → raison au front)
 }
 
 //: flags métier proposés au filtre (couches à drapeau) — libellés humains.

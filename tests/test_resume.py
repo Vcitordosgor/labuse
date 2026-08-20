@@ -36,10 +36,10 @@ def test_resume_brulante():
     ]
     fa = {"bilan": {"fiable": True, "fiabilite": "fiable"}}
     r = build_resume(verdict, cascade, fa, {"has_manual_contact": False})
-    assert r["statut_label"] == "Brûlante"
+    assert r["statut_label"] == "À contacter en priorité"
     assert 0 < len(r["positifs"]) <= 3
     assert "Propriétaire à identifier" in r["vigilance"]
-    assert r["synthese"].startswith("Classée Brûlante") and "rang 163" in r["synthese"]
+    assert r["synthese"].startswith("Classée À contacter en priorité") and "rang 163" in r["synthese"]
     assert r["prochaine_action"]
     _no_forbidden(r)
 
@@ -49,7 +49,7 @@ def test_resume_brulante_badge_division():
     verdict = _verdict("brulante", rang=163,
                        badge_division_libelle="bâtie — emprise marginale (bâtie à ~29 %)")
     r = build_resume(verdict, [], None, {"has_manual_contact": False})
-    assert r["statut_label"] == "Brûlante"
+    assert r["statut_label"] == "À contacter en priorité"
     assert "bâtie — emprise marginale" in r["synthese"]
     assert "déclass" not in r["synthese"].lower()   # jamais un déclassement silencieux
     _no_forbidden(r)
@@ -60,9 +60,9 @@ def test_resume_signal_nonfranc_en_vigilance_jamais_verdict():
     verdict = _verdict("chaude", rang=500,
                        downgrade_reason="bâti significatif : 22 % de la surface intersecte des bâtiments (BD TOPO) — occupation à vérifier")
     r = build_resume(verdict, [], None, {"has_manual_contact": False})
-    assert r["statut_label"] == "Chaude"
+    assert r["statut_label"] == "À suivre de près"
     assert any("bâti significatif" in v for v in r["vigilance"])
-    assert r["synthese"].startswith("Classée Chaude")
+    assert r["synthese"].startswith("Classée À suivre de près")
     _no_forbidden(r)
 
 
@@ -70,7 +70,7 @@ def test_resume_declassee_bati_sature():
     verdict = _verdict("declasse_bati_sature",
                        motif="bâtie saturée — ratio 55 % (emprise 440 m²)")
     r = build_resume(verdict, [], None, {})
-    assert r["statut_label"] == "Bâtie — construite au maximum"
+    assert r["statut_label"] == "Peu de potentiel"
     assert "déclassée" in r["synthese"].lower() and "saturée" in r["synthese"]
     _no_forbidden(r)
 
@@ -80,7 +80,7 @@ def test_resume_a_creuser_ppr():
     cascade = [{"layer_name": "risques", "result": "SOFT_FLAG", "severity": "fort",
                 "detail": "Périmètre PPR inondation — servitude approuvée"}]
     r = build_resume(verdict, cascade, None, {"has_manual_contact": False})
-    assert r["statut_label"] == "À creuser"
+    assert r["statut_label"] == "Sans signal particulier"
     assert any("PPR" in v for v in r["vigilance"])
     assert "à creuser" in r["synthese"].lower()
     _no_forbidden(r)
@@ -100,7 +100,7 @@ def test_resume_ecartee():
     cascade = [{"layer_name": "foret_publique", "result": "HARD_EXCLUDE", "severity": None,
                 "detail": "Exclue : forêt domaniale (domaine public — terrain inacquérable)."}]
     r = build_resume(verdict, cascade, None, {})
-    assert r["statut_label"] == "Écartée — exclusion légale ou physique (motif en fiche)"
+    assert r["statut_label"] == "Écartée — motif en fiche"
     assert "écartée" in r["synthese"].lower() and "forêt domaniale" in r["synthese"]
     _no_forbidden(r)
 

@@ -27,27 +27,12 @@ from .scoring.score_v_constants import Q_A_RUN_LABEL
 #: tiers actifs (servables) — même liste que le front (LEGEND_V2_ORDER).
 TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 
-#: libellés client — MIROIR de frontend/src/lib/status.ts (TIER_V2_META + TIER_DECLASSE_META).
-TIER_LABELS = {
-    "brulante": "Brûlante",
-    "chaude": "Chaude",
-    "reserve_fonciere": "Potentiel long terme",
-    "a_creuser": "À creuser",
-    # M129-D P5 : le tier 'ecartee' est un MIROIR EXACT de l'étage 0 cascade (145 882 = 145 882
-    # mesuré au run q_v10) — il PRÉSENTE l'exclusion, il ne la JUGE pas : le juge est la cascade,
-    # le motif (français) vit dans ses verdicts, consultable en fiche.
-    "ecartee": "Écartée — exclusion légale ou physique (motif en fiche)",
-    # M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » (verdict calculé,
-    # pas un retrait). Codes techniques declasse_* INCHANGÉS — libellé client seulement.
-    # M129-D P1 : DEUX états, français client (le fait M125 les distingue) — le libellé fin est
-    # choisi dans _traduire() selon la SDP résiduelle ; celui-ci est le repli générique.
-    "declasse_bati_sature": "Bâtie — construite au maximum",
-    "declasse_non_constructible": "Potentiel épuisé · inconstructible (géométrie)",
-    "declasse_bati_revele": "Potentiel épuisé · bâti révélé",
-    "declasse_zone_fermee": "Potentiel épuisé · fermée à l'urbanisation",
-    "declasse_au_statut_inconnu": "Potentiel épuisé · AU à statut inconnu",
-    "declasse_au_fermee": "Potentiel épuisé · AU fermée",
-}
+# M135 — les libellés client des tiers viennent du MAPPING CANONIQUE UNIQUE (tiers_client).
+# TIER_LABELS = les libellés LONGS (fiche, PDF, notifications). L'échelle est désormais une
+# échelle d'ACTION (Priorité → Faible) ; le motif fin d'une déclassée et l'état du bâti vivent
+# en fiche et sur le badge d'état (M131), plus dans le tier.
+from .scoring.tiers_client import TIERS_CLIENT, court as tier_court, long as tier_long  # noqa: E402
+TIER_LABELS = {k: v[1] for k, v in TIERS_CLIENT.items()}
 
 # M129-C P3 (réconciliation) : le badge M28 lisait `parcel_filtre_bati` et prétendait juger la
 # DIVISIBILITÉ — c'était un 2e juge (l'audit division_or l'a nommé). Il se RENOMME : il dit un
@@ -169,7 +154,10 @@ def _traduire(idu: str, row, run: str) -> dict:
     elif tier == "declasse_bati_sature":
         motif = row["fb_motif"]
     return {
-        "statut": tier, "label": _label_bati(tier, row) or TIER_LABELS.get(tier, tier), "tier": tier,
+        # M135 — le label du tier suit l'ÉCHELLE D'ACTION (tiers_client) ; l'état du bâti
+        # (« construite au maximum » / « on peut encore construire ») n'est plus dans le tier,
+        # il vit sur le badge d'état du bien (M131). Le motif fin reste en `motif`, consultable.
+        "statut": tier, "label": TIER_LABELS.get(tier, tier), "tier": tier,
         "rang": row["rang"], "servable": servable, "declasse": declasse,
         "badge_division": badge, "badge_division_libelle": badge_lib,
         "motif": motif, "exception_registre": ex_present,

@@ -1,0 +1,12 @@
+# M135 — RESTITUTION CLIENT du scoring (AUCUN calcul : les mêmes nombres, dits en langage client).
+# La probabilité calibrée servie (p_raw) → une FRACTION humaine (« 1/5 sous 1 an »).
+
+fraction:
+  # Les paliers humains (dénominateurs). Le palier choisi est celui dont la probabilité (1/d)
+  # est la PLUS PROCHE de p — règle simple, nearest-en-probabilité. Le plus grand palier (1/2)
+  # PLAFONNE : une p saturée à 1,0 (saturation isotonique connue aux extrêmes) donne « 1/2 »,
+  # JAMAIS « 1/1 ». Le plus petit (1/50) borne le bas.
+  paliers: [2, 3, 4, 5, 10, 20, 50]
+  # Sous ce seuil de probabilité (= sous le plus petit palier), on n'affiche pas de fraction
+  # ridicule : un tiret « — » et « peu probable ». 1/50 = 0,02.
+  seuil_bas_p: 0.02

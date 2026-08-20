@@ -27,13 +27,9 @@ router = APIRouter(prefix="/scoreur-adresse", tags=["scoreur-adresse"])
 
 BAN_URL = "https://api-adresse.data.gouv.fr/search/"
 
-_TIER_LABELS = {
-    "brulante": "Brûlante — signal de vendabilité fort",
-    "chaude": "Chaude — opportunité foncière",
-    "reserve_fonciere": "Potentiel long terme",
-    "a_creuser": "À creuser — potentiel partiel",
-    "ecartee": "Écartée — hors critères",
-}
+# M135 — échelle d'action, mapping canonique unique (tiers_client)
+from ..scoring.tiers_client import TIERS_CLIENT as _TC
+_TIER_LABELS = {k: v[1] for k, v in _TC.items()}
 
 
 class ScoreurIn(BaseModel):

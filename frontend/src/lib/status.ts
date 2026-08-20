@@ -7,12 +7,15 @@ import type { Statut } from './types'
 // thermiques concurrentes à l'écran.
 // Échelle descendante : priorité dossier (menthe la plus vive) → à surveiller (vert)
 // → à creuser (ambre) → écartée (rouge). « exclue » = étage 0, repliée dans écartée.
-export const STATUT_META: Record<Statut, { label: string; color: string }> = {
-  chaude: { label: 'Priorité dossier', color: '#5CE6A1' },
-  a_surveiller: { label: 'À surveiller', color: '#4ADE96' },
-  a_creuser: { label: 'À creuser', color: '#E8B44C' },
-  ecartee: { label: 'Écartée', color: '#E8695A' },
-  exclue: { label: 'Exclue', color: '#6B7A72' },
+// M135 — ÉCHELLE D'ACTION (chip court `label` + libellé long `long`), au registre CLIENT.
+// MÊME mapping que le backend src/labuse/scoring/tiers_client.py (test anti-dérive). Les
+// COULEURS ne bougent pas (la sémantique chaud→froid marche) ; seuls les MOTS changent.
+export const STATUT_META: Record<Statut, { label: string; long: string; color: string }> = {
+  chaude: { label: 'Priorité', long: 'À contacter en priorité', color: '#5CE6A1' },
+  a_surveiller: { label: 'À suivre', long: 'À suivre de près', color: '#4ADE96' },
+  a_creuser: { label: 'Neutre', long: 'Sans signal particulier', color: '#E8B44C' },
+  ecartee: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#E8695A' },
+  exclue: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#6B7A72' },
 }
 
 // Ordre d'affichage de la légende (les 4 statuts de la matrice).
@@ -21,12 +24,13 @@ export const LEGEND_ORDER: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'e
 // ── Scoring v2 (M5, P×C) — tiers et verdict effectif ─────────────────────────
 // Palette gravée au lot 4 (bloc « Pourquoi ce score ») : source de vérité UNIQUE ici.
 export type TierV2 = 'brulante' | 'chaude' | 'a_creuser' | 'reserve_fonciere' | 'ecartee'
-export const TIER_V2_META: Record<TierV2, { label: string; color: string }> = {
-  brulante: { label: 'Brûlante', color: '#E8695A' },
-  chaude: { label: 'Chaude', color: '#E8B44C' },
-  a_creuser: { label: 'À creuser', color: '#8FA69A' },
-  reserve_fonciere: { label: 'Potentiel long terme', color: '#6FA8DC' },
-  ecartee: { label: 'Écartée', color: '#4A5A52' },
+// M135 — `label` = chip COURT (écran), `long` = libellé long (« i », fiche). Couleurs INCHANGÉES.
+export const TIER_V2_META: Record<TierV2, { label: string; long: string; color: string }> = {
+  brulante: { label: 'Priorité', long: 'À contacter en priorité', color: '#E8695A' },
+  chaude: { label: 'À suivre', long: 'À suivre de près', color: '#E8B44C' },
+  a_creuser: { label: 'Neutre', long: 'Sans signal particulier', color: '#8FA69A' },
+  reserve_fonciere: { label: 'Long terme', long: 'À revoir dans 1-2 ans', color: '#6FA8DC' },
+  ecartee: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#4A5A52' },
 }
 export const LEGEND_V2_ORDER: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
 
@@ -38,19 +42,17 @@ export type TierDeclasse =
   | 'declasse_bati_sature' | 'declasse_non_constructible' | 'declasse_bati_revele'
   | 'declasse_zone_fermee' | 'declasse_au_statut_inconnu' | 'declasse_au_fermee'
 export type FilterTier = TierV2 | TierDeclasse
-const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique, jamais « chaude »
-export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; color: string }> = {
-  // M30-revue (arbitrage Vic) : « fermée à l'urbanisation » (fermée ≠ clôture) et
-  // « inconstructible (géométrie) » (physique ≠ réglementaire) — motifs sans ambiguïté.
-  // M55-H point 10 (décision Vic) : « Déclassée » → « Potentiel épuisé » — « déclassée »
-  // suggérait un retrait ; c'est un VERDICT calculé (le potentiel résiduel ne paie plus
-  // l'opération standard). Codes techniques declasse_* INCHANGÉS.
-  declasse_bati_sature: { label: 'Bâtie — construite au maximum', color: DECLASSE_COLOR }, // M129-D : le libellé fin (« on peut encore construire ») vient du backend (SDP)
-  declasse_non_constructible: { label: 'Potentiel épuisé · inconstructible (géométrie)', color: DECLASSE_COLOR },
-  declasse_bati_revele: { label: 'Potentiel épuisé · bâti révélé', color: DECLASSE_COLOR },
-  declasse_zone_fermee: { label: 'Potentiel épuisé · fermée à l\'urbanisation', color: DECLASSE_COLOR },
-  declasse_au_statut_inconnu: { label: 'Potentiel épuisé · AU à statut inconnu', color: DECLASSE_COLOR },
-  declasse_au_fermee: { label: 'Potentiel épuisé · AU fermée', color: DECLASSE_COLOR },
+const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique, jamais « priorité »
+// M135 — la famille declasse_* (« potentiel épuisé ») collapse sur UN niveau d'action « Faible » ;
+// le MOTIF fin (inconstructible, bâti révélé, zone fermée…) et l'état du bâti vivent en fiche et
+// sur le badge d'état du bien (M131). Codes techniques declasse_* INCHANGÉS.
+export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; long: string; color: string }> = {
+  declasse_bati_sature: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_non_constructible: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_bati_revele: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_zone_fermee: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_au_statut_inconnu: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_au_fermee: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
 }
 export const DECLASSE_ORDER = Object.keys(TIER_DECLASSE_META) as TierDeclasse[]
 export const ALL_TIER_META: Record<string, { label: string; color: string }> =
@@ -76,7 +78,7 @@ export function verdictMeta(
   statut: Statut | null | undefined,
   tierV2: string | null | undefined,
   etage0?: boolean | number | null,
-): { label: string; color: string; v2: boolean; tier: TierV2 | null } {
+): { label: string; long: string; color: string; v2: boolean; tier: TierV2 | null } {
   if (etage0) return { ...STATUT_META.ecartee, v2: false, tier: null }
   const t = tierV2 as TierV2 | null | undefined
   if (t && TIER_V2_META[t]) {
@@ -93,9 +95,9 @@ export function verdictMeta(
   // Legend.tsx « Classement historique »), jamais une teinte thermique ni un statut matriciel
   // indistinguable du vrai verdict. Le motif legacy reste lisible ailleurs (section Qualité).
   if (statut && STATUT_META[statut]) {
-    return { label: 'Classement historique', color: NONE_COLOR, v2: false, tier: null }
+    return { label: 'Classement historique', long: 'Classement historique', color: NONE_COLOR, v2: false, tier: null }
   }
-  return { label: '—', color: NONE_COLOR, v2: false, tier: null }
+  return { label: '—', long: '—', color: NONE_COLOR, v2: false, tier: null }
 }
 
 // M5.1 : le TIER EFFECTIF d'une parcelle — la même règle que verdictMeta, sous forme de

@@ -179,3 +179,42 @@ def enrichir_contributions(top5: list[dict] | None) -> list[dict] | None:
     return [{**c, "phrase": phrase_client(c.get("feature", ""), c.get("bin", ""),
                                           c.get("libelle", c.get("feature", "")))}
             for c in top5]
+
+
+# ── M135 P3 — LA RAISON DOMINANTE (chip court sur chaque carte de tête) ───────────────
+# Le reason code n°1 (contribution POSITIVE la plus forte) dit en 2-4 mots pourquoi la
+# parcelle monte. AFFICHAGE PUR (top5_contributions existe) — jamais un calcul. Les
+# interactions (feature « a*b ») n'ont pas de chip court propre → on passe à la suivante.
+_RAISON_COURTE: dict[str, "callable"] = {
+    "tenure_bin": lambda b: "détenu 3 ans et +" if b == "3+" else ("mutation récente" if b in ("<1", "1-2") else None),
+    "permis_bin": lambda b: "permis récent" if b in ("<2a", "2-5a") else None,
+    "permis_etat": lambda b: "permis en cours",
+    "pc_accorde_jamais_commence": lambda b: "permis jamais lancé" if b == "true" else None,
+    "proc_collective": lambda b: "procédure en cours" if b == "true" else None,
+    "succession_indivision": lambda b: "succession / indivision" if b == "true" else None,
+    "age_dirigeant_bin": lambda b: "dirigeant âgé",
+    "contagion_voisinage": lambda b: "secteur qui bouge",
+    "vente_tab_proximite": lambda b: "ventes juste à côté" if b == "true" else None,
+    "rot_nu": lambda b: "secteur qui bouge",
+    "rot_bati": lambda b: "secteur qui bouge",
+    "nu_constructible": lambda b: "terrain nu constructible" if b == "true" else None,
+    "friche": lambda b: "friche recensée" if b == "true" else None,
+    "piscine": lambda b: "piscine détectée" if b == "true" else None,
+    "pm_nue_dormante": lambda b: "société, terrain nu" if b == "true" else None,
+    "zone_plu": lambda b: {"U": "zone urbaine", "AU": "zone à urbaniser"}.get(b),
+    "sous_densite": lambda b: "sous-densité (bâti léger)" if b == "true" else None,
+}
+
+
+def raison_dominante(top5: list[dict] | None) -> str | None:
+    """Le chip court de la 1re contribution POSITIVE mappable (None si aucune)."""
+    for c in (top5 or []):
+        if c.get("signe") != "+":
+            continue
+        feat = (c.get("feature") or "").split("*")[0]   # interactions ignorées
+        fn = _RAISON_COURTE.get(feat)
+        if fn:
+            r = fn((c.get("bin") or "").strip())
+            if r:
+                return r
+    return None

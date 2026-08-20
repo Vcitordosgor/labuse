@@ -10,15 +10,15 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 
 type Item = {
-  parcelle_id: string; mult_base: number; percentile: number | null; rang: number | null
+  parcelle_id: string; mult_base: number; fraction?: string | null; percentile: number | null; rang: number | null
   tier: string; pourquoi: { libelle: string; bin: string; signe: string; log_hazard: number }[]
   badges: { copro: boolean; evenement_date: string | null; veille_succession: boolean }
 }
 type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertissement: string }
 
 const TABS = [
-  { key: 'brulantes', label: 'Brûlantes' },
-  { key: 'reserve', label: 'Potentiel long terme' },
+  { key: 'brulantes', label: 'Priorité' },
+  { key: 'reserve', label: 'Long terme' },
   { key: 'top', label: 'Classement' },   // M15 E1 : « Top P » (jargon) → « Classement »
 ] as const
 
@@ -45,13 +45,13 @@ export function ScoringV2Module() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      {/* M15 E1 (RG2) : bandeau client — dire ce que mesure le classement et ce qu'est le ×N. */}
+      {/* M135 — bandeau client : la probabilité en FRACTION, l'échelle d'ACTION. */}
       <div className="rounded-lg border border-mint/30 bg-mint/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
-        de vente</b> à 12 mois (changement de main). Le <b className="text-mint">×N</b> dit
-        combien la parcelle est <b>plus probable d'être vendue que la moyenne</b> de l'île (×13 = 13 fois
-        plus probable). <b>Brûlantes</b> = les plus chaudes ; <b>Potentiel long terme</b> = fort potentiel
-        mais vente peu probable à court terme ; <b>Classement</b> = toutes, par ordre de priorité.
+        de vente</b> sous 1 an. La <b className="text-mint">fraction</b> (« 1/5 ») dit la chance qu’une
+        vente intervienne dans l’année ; sous 1/50, un tiret « — » (<b>peu probable</b>). <b>Priorité</b> =
+        à contacter d’abord ; <b>Long terme</b> = fort potentiel mais vente peu probable à court terme ;
+        <b>Classement</b> = toutes, par ordre de priorité.
       </div>
       <div className="flex items-center gap-1">
         {TABS.map((t) => (
@@ -87,7 +87,7 @@ export function ScoringV2Module() {
         {data?.items.map((it) => (
           <button key={it.parcelle_id} onClick={() => select(it.parcelle_id)}
             className="mb-1 flex min-h-7 w-full items-center gap-2 rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left transition-colors duration-quick hover:border-mint/40">
-            <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de vente sous 1 an, vs moyenne du parc">×{it.mult_base.toFixed(1)}</span>
+            <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de vente sous 1 an (fraction humaine)">{it.fraction ?? '—'}</span>
             <span className="flex-1 truncate font-mono text-[10.5px] text-txt">{it.parcelle_id}</span>
             {it.badges.copro && <span className="text-[9.5px] text-txt-dim">copro</span>}
             {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude" title={`Événement BODACC — ${it.badges.evenement_date}`}>évén.</span>}

@@ -17,7 +17,7 @@ import { Tip } from '../Tip'
 
 type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number; phrase?: string }
 type ScoreV2 = {
-  parcelle_id: string; mult_base: number; percentile: number | null; rang: number | null
+  parcelle_id: string; mult_base: number; fraction?: string | null; percentile: number | null; rang: number | null
   hors_classement?: string | null   // M89 — copro : « hors univers de classement », à la place du rang
   tier: string; contrib_z: number; contrib_d: number; pourquoi: Contribution[]
   badges: { copro: boolean; evenement_date: string | null; veille_succession: boolean }
@@ -106,9 +106,9 @@ export function ScoreV2Block({ idu }: { idu: string }) {
       </div>
 
       <div className="mt-2 flex items-baseline gap-3">
-        {/* JAMAIS la probabilité brute : ×N vs moyenne, percentile, rang */}
-        <span className="font-mono text-xl font-semibold text-txt-hi">×{data.mult_base.toFixed(1)}</span>
-        <span className="text-[11px] text-txt-dim">vs moyenne du parc hors copro</span>
+        {/* M135 — la probabilité en FRACTION humaine (« 1/5 sous 1 an »), jamais un ×N. */}
+        <span className="font-mono text-xl font-semibold text-txt-hi">{data.fraction ?? '—'}</span>
+        <span className="text-[11px] text-txt-dim">{data.fraction ? 'de vente sous 1 an' : 'peu probable sous 1 an'}</span>
         {data.percentile != null && (
           <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
         )}

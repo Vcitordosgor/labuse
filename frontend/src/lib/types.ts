@@ -59,6 +59,9 @@ export interface ParcelResult {
   veille?: boolean
   etage0?: boolean
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
+  fraction?: string | null    // M135 P2 : probabilité en fraction humaine
+  raison?: string | null      // M135 P3 : raison dominante (chip)
+  top5?: unknown[] | null      // M135 P3 : contributions (raison front pour geojson)
 }
 
 // M5.1 : /stats ventile par TIERS v2 effectifs (l'étage 0 du run servi prime).
@@ -258,7 +261,7 @@ export interface Fiche {
   // correctif M5 : verdict d'en-tête piloté par le tier v2 quand un run existe ;
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
   score_v2: {
-    tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean
+    tier: string; rang: number | null; mult_base: number | null; fraction?: string | null; percentile: number | null; copro: boolean
     hors_classement?: string | null   // M89 — copro : motif « hors univers de classement » (fiche)
     // M52 Lot 1 (présentation) : mot verbal + ⓘ + fréquence par tier + « pourquoi » (top5 traduites).
     verbal?: {

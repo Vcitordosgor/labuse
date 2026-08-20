@@ -5,6 +5,7 @@ import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../l
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
 import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
@@ -60,17 +61,26 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           {/* M55-I point 5 (décision Vic) : le RANG quitte le badge (« Brûlante · 59 » →
-              « Brûlante ») — les ex æquo massifs du v8 (15 valeurs de ×N distinctes dans le
+              « Priorité ») — les ex æquo massifs du v8 (15 valeurs distinctes dans le
               top 500) ne portent pas cette précision, et la liste est déjà ordonnée. Restent
               le tier + le ×N (colonne droite, son tooltip). Le rang COMPLET avec dénominateur
               (rang N / total) reste en fiche parcelle et dans les exports (inchangés). */}
-          <Tip tip={`Verdict du classement servi${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
+          <Tip tip={`${meta.long}${p.fraction ? ` · ${p.fraction} de vente sous 1 an` : ''}${p.etage0 ? ' — exclusion dure (écartée d’office du classement)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>
               {meta.label}
             </span>
           </Tip>
+          {/* M135 P3 — LA RAISON DOMINANTE (reason code n°1, chip court). Un seul badge par carte.
+              Liste île : `raison` servie (Python) ; carte commune (geojson) : dérivée de top5 au front. */}
+          {(() => { const raison = p.raison ?? raisonDominante(p.top5 as Parameters<typeof raisonDominante>[0]); return raison && (
+            <Tip tip={`Raison principale de ce classement — ${raison}. Le détail (2-3 raisons) est en fiche.`} className="shrink-0">
+              <span data-raison className="rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">
+                {raison}
+              </span>
+            </Tip>
+          ) })()}
           {/* M131 P3 — badge d'état du bien (affichage pur du fait M125/M129-D) */}
           {etatBienMeta(p.etat_bien) && (
             <Tip tip={etatBienMeta(p.etat_bien)!.label} className="shrink-0">
@@ -118,16 +128,14 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end">
-        {/* B2 : ×N (affichage produit du scoring v2). JAMAIS le nombre nu — l'unité de sens
-            « plus probable » vit juste dessous, et l'infobulle porte le détail. Calcul inchangé (A3). */}
-        <Tip tip={p.mult_v2 != null ? CLIENT.tri.multBadge(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
-          <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
-            {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
+        {/* M135 P2 — la PROBABILITÉ en FRACTION humaine (« 1/5 sous 1 an »), jamais un « ×N ».
+            Servie depuis la proba calibrée (p) ; « — / peu probable » sous 1/50. Calcul inchangé. */}
+        <Tip tip={p.fraction ? CLIENT.mult.fractionBadge(p.fraction) : CLIENT.mult.absent}>
+          <span data-fraction className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
+            {p.fraction ?? '—'}
           </span>
         </Tip>
-        {p.mult_v2 != null && (
-          <span className="mt-0.5 text-[8.5px] leading-none text-txt-dim">{CLIENT.mult.unite}</span>
-        )}
+        <span className="mt-0.5 text-[8.5px] leading-none text-txt-dim">{p.fraction ? CLIENT.mult.unite : CLIENT.mult.faible}</span>
       </div>
     </button>
   )
@@ -392,12 +400,13 @@ export function ResultsSection() {
               épuisé = retenues − 4 tiers ; écartées = trame analysée − retenues). Le « i »
               raconte les trois familles. */}
           <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
-            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-            <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> potentiel long terme ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> à creuser ·{' '}
-            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> potentiel épuisé
+            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (priorité + à suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+            {/* M135 — bande de résumé : MÊMES NOMBRES, échelle d'action (labels de status.ts, jamais en dur) */}
+            <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> {TIER_V2_META.brulante.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> {TIER_V2_META.chaude.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> {TIER_V2_META.reserve_fonciere.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> {TIER_V2_META.a_creuser.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> faible
             {ecartees != null && (
               <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
             )}

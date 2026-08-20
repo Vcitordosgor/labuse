@@ -1176,7 +1176,7 @@ export function MapView() {
       // M36 Lot A : depuis M35 `c.chaudes` = TIERS du run servi (brûlantes + chaudes) — l'ancienne
       // étiquette « (matrice Q×A) » était devenue FAUSSE. L'échelle thermique est la bonne (R3).
       el.title = hot
-        ? `${c.commune} — ${c.chaudes} parcelles brûlantes ou chaudes au classement servi · ouvrir la fiche commune`
+        ? `${c.commune} — ${c.chaudes} parcelles prioritaires ou à suivre au classement servi · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
       const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
       // M62-P1 (e) : le libellé = le NOM SEUL (« · Fiche commune » retiré des 24). Le clic ouvre
