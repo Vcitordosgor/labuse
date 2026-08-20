@@ -329,22 +329,49 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
 # par MODULES.length (aucun nombre en dur — le registre des outils vit côté front).
 # M118 — le Copilote resserré à 4 MISSIONS. Le reste (trouver/instruire, créer un projet, surveiller,
 # ouvrir un outil, rédiger un courrier) quitte le chat et reçoit un REFUS avec voie cliquable.
+# M133 — chaque mission porte un `exemple` : une VRAIE phrase que le client taperait, dans la
+# formulation de cette mission. À l'accueil (v3) les 4 capacités deviennent du TEXTE (libellé +
+# exemple entre guillemets), plus un menu de modes — le routeur comprend seul, rien à choisir.
+# L'`intent` FORCÉ reste dans le registre (mécanisme M113 conservé pour les tests/API), mais
+# l'accueil ne l'envoie plus (M133 : aucune intention forcée depuis l'écran d'accueil).
 SCENARIOS: dict[str, dict] = {
     "donnees": {"libelle": "Trouver une donnée", "intent": "QUESTION", "sub": "Compter, filtrer, croiser",
-                "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?"},
+                "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?",
+                "exemple": "Combien de parcelles en procédure à Saint-Denis ?"},
     "web": {"libelle": "Renseigner par le web", "intent": "QUESTION", "sub": "Court, sourcé, daté",
-            "placeholder": "Ex. qui est le maire de Saint-Denis ?"},
+            "placeholder": "Ex. qui est le maire de Saint-Denis ?",
+            "exemple": "Qui est le maire de Saint-Benoît ?"},
     "expliquer": {"libelle": "Expliquer une notion", "intent": "EXPLIQUER", "sub": "AU, ZFANG, charge foncière…",
-                  "placeholder": "Ex. qu'est-ce qu'une zone AU ? c'est quoi la charge foncière ?"},
+                  "placeholder": "Ex. qu'est-ce qu'une zone AU ? c'est quoi la charge foncière ?",
+                  "exemple": "C'est quoi une zone AU stricte ?"},
     "preparer": {"libelle": "Préparer un script", "intent": "PREPARER", "sub": "Appel ou argumentaire",
-                 "placeholder": "Ex. prépare un argumentaire pour aborder le propriétaire"},
+                 "placeholder": "Ex. prépare un argumentaire pour aborder le propriétaire",
+                 "exemple": "Un argumentaire pour convaincre un propriétaire"},
+}
+
+# M133 · Accueil Copilote v3 — le HERO servi, jamais en dur au front (la promesse suit le produit :
+# plus d'« instruit », mort en M118). Le placeholder est un exemple d'une VRAIE mission (donnée).
+ACCUEIL: dict[str, str] = {
+    "titre": "Posez votre question.",
+    "sous_titre": "Réponse courte, sourcée, datée — La Réunion uniquement.",
+    "placeholder": "Ex. combien de parcelles en procédure à Saint-Denis ?",
+    "aide": "Le Copilote comprend ce que vous demandez — rien à choisir.",
 }
 
 
 def scenarios_publies() -> list[dict]:
-    """Les chips à servir au front (clé + libellé + sous-titre + placeholder). Point unique."""
-    return [{"cle": k, "libelle": v["libelle"], "sub": v["sub"], "placeholder": v["placeholder"]}
+    """Les missions à servir au front (clé + libellé + sous-titre + placeholder + exemple). Point unique."""
+    return [{"cle": k, "libelle": v["libelle"], "sub": v["sub"],
+             "placeholder": v["placeholder"], "exemple": v["exemple"]}
             for k, v in SCENARIOS.items()]
+
+
+def accueil_publie() -> dict:
+    """M133 — le hero de l'accueil (titre/sous-titre/placeholder/aide) + les 4 capacités en TEXTE
+    (libellé + exemple réel). Servi, jamais en dur ; ne promet que ce que les 4 missions font."""
+    return {**ACCUEIL,
+            "capacites": [{"cle": k, "libelle": v["libelle"], "exemple": v["exemple"]}
+                          for k, v in SCENARIOS.items()]}
 
 
 def _reply_web(db: Session, message: str, history: list[dict] | None = None) -> dict:

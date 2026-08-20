@@ -1,40 +1,33 @@
-// M78 · 2a → M117 · ACCUEIL Copilote v2 (maquette DA-COPILOTE-v2). Un SEUL point d'entrée : les six
-// intentions (grille, sous-titres servis par le serveur) remplacent les chips, les six exemples et
-// les trois cartes explicatives. Le bandeau de garanties est absorbé sous le titre ; le brief descend
-// sous le point d'entrée (ce n'est pas une action de Copilote). Surface IA → accent MAUVE (cp-ia) ;
-// le mint ne reste QUE sur le brief du matin (veille ≠ IA).
+// M78 → M133 · ACCUEIL Copilote v3 (maquette docs/DA-COPILOTE-ACCUEIL-v3.html). Corrige les 4 défauts
+// post-M118 : (1) le titre ne promet plus l'ancienne mission d'instruction (morte en M118) ; (2) le placeholder est une
+// VRAIE mission (donnée), plus l'exemple d'instruction morte ; (3) les 4 capacités deviennent du TEXTE
+// (libellé + exemple réel), non cliquables — le routeur comprend seul, rien à choisir ; (4) le champ
+// passe EN PREMIER, sous le hero. Titre/sous-titre/placeholder/aide + capacités SERVIS (jamais en dur).
+// Surface IA → accent MAUVE (cp-ia) ; le mint ne reste QUE sur le brief du matin (veille ≠ IA).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ilYA } from '../../lib/format'
-import { getBrief, getScenarios, type AccueilChiffres, type BriefMatin, type CopiloteMission,
-  type CopiloteScenario } from '../../lib/api'
-import { MODULES } from '../outils/registry'
+import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin,
+  type CopiloteMission } from '../../lib/api'
 
-export function AccueilCopilote({ value, onChange, onSubmit, chiffres, occupe, reponse,
-  scenario, onScenario, missions, onReprendre }: {
+export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
+  missions, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
-  chiffres: AccueilChiffres | null
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
-  scenario?: string | null    // M113 — chip de contexte choisi (null = texte libre)
-  onScenario?: (cle: string | null) => void
   missions?: CopiloteMission[]           // §2b — historique (« Vos dernières questions »)
   onReprendre?: (m: CopiloteMission) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
-  // M113 · Phase 2 — les CHIPS de contexte, servis par le serveur (jamais en dur). « Que souhaitez-vous
-  // faire ? » Un chip force le scénario ; le champ adapte son placeholder. Le texte libre reste possible
-  // (aucun chip sélectionné → le routeur décide, comportement M112). Échec du fetch → pas de chips, la
-  // voie libre suffit (dégradation propre).
-  const [scenarios, setScenarios] = useState<CopiloteScenario[]>([])
-  useEffect(() => { getScenarios().then(setScenarios).catch(() => {}) }, [])
-  const scenActif = scenarios.find((s) => s.cle === scenario) || null
+  // M133 — le HERO (titre/sous-titre/placeholder/aide) + les 4 capacités en TEXTE, servis par le
+  // serveur (jamais en dur). Échec du fetch → replis neutres (l'écran reste utilisable, le champ suffit).
+  const [meta, setMeta] = useState<AccueilCopiloteMeta | null>(null)
+  useEffect(() => { getAccueilCopilote().then(setMeta).catch(() => {}) }, [])
   // M85 Phase 3 — le brief du matin (déterministe). Affiché en tête SEULEMENT s'il est frais (non vide) :
   // on ne remplit jamais l'accueil avec un brief creux (l'honnêteté du « rien de neuf »). Vert/neutre,
-  // jamais mauve (ce n'est pas de l'IA — ce sont des faits datés). Fetch simple (motif AccueilChiffres
-  // de CopiloteView) — pas de QueryClient requis.
+  // jamais mauve (ce n'est pas de l'IA — ce sont des faits datés).
   const [brief, setBrief] = useState<BriefMatin | null>(null)
   useEffect(() => { getBrief().then(setBrief).catch(() => {}) }, [])
   // M87 P6 — le brief QUITTE le flux : une barre + un panneau latéral (scrim, Échap, clic-dehors, focus
@@ -78,25 +71,22 @@ export function AccueilCopilote({ value, onChange, onSubmit, chiffres, occupe, r
   }, [missions])
   const questionsVisibles = toutHisto ? questions : questions.slice(0, 4)
 
-  // [N] DYNAMIQUE — masqué (pas inventé) si le bandeau ne l'a pas encore. Aucun compte en dur.
-  const nSources = chiffres?.sources != null ? String(chiffres.sources) : null
-
   return (
     <div data-accueil className="mx-auto max-w-[620px] px-2 pt-6">
-      {/* HERO — le bandeau de garanties est ABSORBÉ sous le titre (M117). Kicker + « instruit » en mauve. */}
-      <div className="mb-9 text-center">
+      {/* HERO — titre + sous-titre SERVIS (M133). Kicker mauve. La promesse suit le produit (les 4
+          missions) — l'ancienne promesse d'instruction est morte en M118. */}
+      <div className="mb-8 text-center">
         <div className="mb-3.5 font-mono text-[11px] tracking-[.16em] text-cp-ia">COPILOTE</div>
-        <h1 className="mb-2.5 font-display text-[30px] font-medium leading-[1.25] tracking-[-.5px] text-cp-txt">
-          Dites ce que vous cherchez.<br />Le Copilote <span className="text-cp-ia">instruit</span>.
+        <h1 data-accueil-titre className="mb-2.5 font-display text-[30px] font-medium leading-[1.25] tracking-[-.5px] text-cp-txt">
+          {meta?.titre ?? 'Posez votre question.'}
         </h1>
         <p data-accueil-tagline className="text-[13px] text-cp-muted">
-          {nSources ? <><b className="text-cp-txt">{nSources}</b> sources · </> : null}chaque chiffre daté · La Réunion uniquement
+          {meta?.sous_titre ?? 'Réponse courte, sourcée, datée — La Réunion uniquement.'}
         </p>
       </div>
 
-      {/* M87 P6 — le SCRIM + le PANNEAU latéral (classes .scrim / .panel de la maquette). Clic-dehors et
-          Échap ferment (gérés plus haut) ; le focus est piégé. Contenu GROUPÉ par commune (brief.groupes),
-          même producteur que l'e-mail — pas de seconde fenêtre qui diverge. */}
+      {/* M87 P6 — le SCRIM + le PANNEAU latéral (fixed : hors flux ; leur place ici n'affecte pas
+          l'ordre visuel). Clic-dehors et Échap ferment ; le focus est piégé. */}
       <div onClick={() => setBriefOpen(false)}
         className={`fixed inset-0 z-40 bg-black/55 transition-opacity duration-quick ${briefOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`} />
       <aside ref={panelRef} aria-label="Brief du matin" aria-hidden={!briefOpen}
@@ -144,55 +134,45 @@ export function AccueilCopilote({ value, onChange, onSubmit, chiffres, occupe, r
         </footer>
       </aside>
 
-      {/* M117 · les SIX INTENTIONS en grille (remplacent chips + exemples + cartes). Sous-titre servi
-          par le serveur (« {n} outils » → MODULES.length, aucun compte en dur). Un clic sélectionne
-          (ou désélectionne) le scénario ; le champ adapte son placeholder. Surface IA → mauve. */}
-      {!reponse && scenarios.length > 0 && (
-        <div data-accueil-intents className="mb-3.5 grid grid-cols-1 gap-2 min-[520px]:grid-cols-2">
-          {scenarios.map((s) => {
-            const on = s.cle === scenario
-            const sub = (s.sub || '').replace('{n}', String(MODULES.length))
-            return (
-              <button key={s.cle} data-accueil-chip data-chip-cle={s.cle} aria-pressed={on}
-                onClick={() => onScenario?.(on ? null : s.cle)}
-                className={`rounded-[10px] border px-3.5 py-3.5 text-left transition-colors duration-quick ${
-                  on ? 'border-cp-ia bg-cp-ia-bg' : 'border-cp-ia-border bg-cp-ia-bg/40 hover:border-cp-ia-border-on'}`}>
-                <div className={`mb-[3px] text-[14px] ${on ? 'text-cp-ia' : 'text-cp-txt'}`}>{s.libelle}</div>
-                <div className="text-[12px] leading-[1.4] text-cp-muted">{sub}</div>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* barre unique — M87 P2 : FOCUS sans contour vert. Le contour :focus-visible mint (index.css) est
-          neutralisé sur le champ ; le focus reste PERCEPTIBLE au clavier via la barre (border renforcée +
-          fond #12170F, comme la maquette). On remplace le focus, on ne le supprime pas (accessibilité).
-          M113 — ÉTAPE 2 : le placeholder s'adapte au scénario choisi (servi par le serveur). */}
-      <div data-accueil-barre className="mb-3.5 flex items-center gap-3 rounded-xl border border-cp-line bg-cp-card/60 py-2 pl-[18px] pr-2 transition-colors duration-quick focus-within:border-cp-line2 focus-within:bg-[#12170F]">
+      {/* M133 — LE CHAMP EN PREMIER (l'action principale), sous le hero. Placeholder = un exemple
+          d'une VRAIE mission (donnée), servi ; jouer le placeholder tel quel aboutit à la mission 1,
+          jamais à un refus. FOCUS sans contour vert (M87 P2). */}
+      <div data-accueil-barre className="mb-3 flex items-center gap-3 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[18px] pr-2 transition-colors duration-quick focus-within:border-cp-ia-border-on focus-within:bg-[#12170F]">
         <textarea ref={ref} data-brief rows={1} value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (value.trim()) onSubmit() } }}
-          placeholder={scenActif?.placeholder ?? '15 logements à Saint-Denis, budget foncier 800 k€…'}
+          placeholder={meta?.placeholder ?? 'Écrivez ce dont vous avez besoin…'}
           className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none focus-visible:outline-none placeholder:text-cp-faint" />
         <button data-accueil-envoyer onClick={() => value.trim() && onSubmit()} disabled={!value.trim() || occupe}
           className="shrink-0 rounded-lg bg-cp-ia px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
-      <p className="mb-4 text-center text-[11px] text-cp-faint">
-        {scenActif ? <>Mode « {scenActif.libelle} » — <button data-chip-liberer onClick={() => onScenario?.(null)}
-          className="underline decoration-cp-faint/50 underline-offset-2 hover:text-cp-txt">écrire librement</button> à la place.</>
-          : 'Écrivez librement — ou choisissez ce que vous souhaitez faire ci-dessus.'}
+      <p data-accueil-aide className="mb-9 text-center text-[12px] text-cp-faint">
+        {meta?.aide ?? 'Le Copilote comprend ce que vous demandez — rien à choisir.'}
       </p>
 
-      {/* M117 — les six exemples et les trois cartes explicatives DISPARAISSENT (les six intentions
-           portent seules ce rôle). Le bandeau de garanties est absorbé dans la tagline. */}
+      {/* M133 — CE QU'IL SAIT FAIRE : les 4 capacités en TEXTE (libellé + exemple réel entre
+          guillemets). NON cliquables — pas de bordure, pas de fond, pas d'état, pas de curseur.
+          Des exemples qui enseignent, pas un menu. */}
+      {!reponse && meta && meta.capacites.length > 0 && (
+        <div data-accueil-capacites className="mb-9">
+          <p className="mb-3.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3 min-[520px]:grid-cols-2">
+            {meta.capacites.map((c) => (
+              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle}>
+                <div className="mb-[3px] text-[14px] text-cp-txt">{c.libelle}</div>
+                <div className="text-[12px] leading-[1.45] text-cp-muted">« {c.exemple} »</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
 
-      {/* M117 — LE BRIEF descend SOUS le point d'entrée (ce n'est pas une action de Copilote). Reste
-           en MINT : la veille n'est pas de l'IA (seule exception mint sur cette surface). */}
+      {/* M117 — LE BRIEF sous le point d'entrée (ce n'est pas une action de Copilote). Reste en MINT :
+           la veille n'est pas de l'IA (seule exception mint sur cette surface). */}
       {!reponse && brief && (
         <button data-brief-btn onClick={() => setBriefOpen(true)}
           className="mb-7 flex w-full items-center gap-3 rounded-[10px] bg-cp-card px-4 py-3 transition-colors duration-quick hover:bg-cp-card2">

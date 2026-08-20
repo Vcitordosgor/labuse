@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — DA Copilote Accueil v3 (référence M121)</title>
+<style>
+  :root {
+    --bg: #060A08;
+    --surface: #0C1410;
+    --ia: #B497F0;
+    --ia-on: #14091F;
+    --ia-border-on: #4C3F73;
+    --mint: #4ADE80;
+    --border-dim: #141C18;
+    --txt: #ECF5EF;
+    --txt-2: #C9DCD1;
+    --txt-3: #A8BDB0;
+    --txt-mut-2: #6F8578;
+    --txt-mut-3: #5F7267;
+    --txt-mut-4: #4A5C52;
+    --txt-mut-5: #3A4A41;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font-family: var(--sans); padding: 40px 24px 80px; }
+  .page { max-width: 900px; margin: 0 auto; }
+  .col { max-width: 620px; margin: 0 auto; }
+
+  .spec { font-family: var(--mono); font-size: 11px; color: var(--ia); letter-spacing: .12em; margin: 48px 0 12px; padding-top: 24px; border-top: .5px solid #1E2A23; }
+  .spec:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+  .note { font-size: 12px; color: var(--txt-mut-3); margin: 0 0 28px; line-height: 1.7; max-width: 640px; }
+  .note strong { color: var(--txt-mut); font-weight: 500; }
+  .note code { font-family: var(--mono); color: var(--txt-mut-2); }
+
+  .hero { text-align: center; margin-bottom: 32px; }
+  .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; color: var(--ia); margin-bottom: 14px; }
+  .hero h1 { font-size: 28px; font-weight: 500; color: var(--txt); line-height: 1.3; margin: 0 0 10px; }
+  .hero p { font-size: 14px; color: var(--txt-mut-2); margin: 0; }
+
+  .composer { display: flex; gap: 10px; align-items: stretch; margin-bottom: 12px; }
+  .composer .field { flex: 1; background: var(--surface); border: .5px solid var(--ia-border-on); border-radius: 10px; padding: 15px 18px; font-size: 15px; color: var(--txt-mut-4); }
+  .composer .send { padding: 0 24px; background: var(--ia); color: var(--ia-on); border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; cursor: pointer; }
+  .hint { text-align: center; font-size: 12px; color: var(--txt-mut-4); margin-bottom: 36px; }
+
+  .section-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--txt-mut-4); margin-bottom: 14px; }
+
+  .caps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-bottom: 36px; }
+  .cap .lbl { font-size: 14px; color: var(--txt-2); margin-bottom: 3px; }
+  .cap .ex { font-size: 12px; color: var(--txt-mut-3); line-height: 1.45; }
+
+  .brief { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; background: var(--surface); border-radius: 10px; margin-bottom: 32px; cursor: pointer; }
+  .brief-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
+  .brief-right { display: flex; align-items: center; gap: 12px; }
+  .brief-state { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); }
+
+  .recent { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: .5px solid var(--border-dim); cursor: pointer; }
+  .recent .q { font-size: 14px; color: var(--txt-3); }
+  .recent .t { font-family: var(--mono); font-size: 11px; color: var(--txt-mut-4); }
+  .see-all { padding-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--txt-mut-3); letter-spacing: .06em; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="spec">ACCUEIL COPILOTE v3 — RÉFÉRENCE</div>
+<p class="note">
+  Corrige trois défauts de l'écran actuel (post-M118).<br><br>
+  <strong>1. Le titre promet ce qui n'existe plus.</strong> « Le Copilote instruit »
+  — l'instruction est partie en M118. La promesse doit suivre le produit.<br>
+  <strong>2. Les 4 cartes ressemblent à un menu à choisir.</strong> Elles ont un
+  état sélectionné (bordure mauve) et le texte dit « Mode Renseigner par le web
+  — écrire librement à la place ». Un client croit devoir choisir un mode avant
+  d'écrire. Or le routeur comprend seul : il n'y a rien à choisir.<br>
+  <strong>3. Le champ arrive après quatre cartes.</strong> C'est l'action
+  principale, elle passe en premier.
+</p>
+
+<div class="col">
+
+  <div class="hero">
+    <div class="kicker">COPILOTE</div>
+    <h1>Posez votre question.</h1>
+    <p>Réponse courte, sourcée, datée — La Réunion uniquement.</p>
+  </div>
+
+  <div class="composer">
+    <div class="field">Écrivez ce dont vous avez besoin…</div>
+    <div class="send">Envoyer</div>
+  </div>
+  <div class="hint">Le Copilote comprend ce que vous demandez — rien à choisir.</div>
+
+  <div class="section-lbl">CE QU'IL SAIT FAIRE</div>
+  <div class="caps">
+    <div class="cap">
+      <div class="lbl">Trouver une donnée</div>
+      <div class="ex">« Combien de parcelles en procédure à Saint-Denis ? »</div>
+    </div>
+    <div class="cap">
+      <div class="lbl">Renseigner par le web</div>
+      <div class="ex">« Qui est le maire de Saint-Benoît ? »</div>
+    </div>
+    <div class="cap">
+      <div class="lbl">Expliquer une notion</div>
+      <div class="ex">« C'est quoi une zone AU stricte ? »</div>
+    </div>
+    <div class="cap">
+      <div class="lbl">Préparer un script</div>
+      <div class="ex">« Un argumentaire pour convaincre un propriétaire »</div>
+    </div>
+  </div>
+
+  <div class="brief">
+    <div class="brief-left">
+      <div class="dot"></div>
+      <div style="font-size:14px;color:var(--txt)">Votre brief du matin</div>
+    </div>
+    <div class="brief-right">
+      <div class="brief-state">RIEN DE NEUF DEPUIS HIER</div>
+      <div style="font-size:14px;color:var(--txt-mut-3)">→</div>
+    </div>
+  </div>
+
+  <div class="section-lbl">REPRENDRE</div>
+  <div class="recent"><div class="q">Qui est le maire de Saint-Benoît ?</div><div class="t">2 MIN</div></div>
+  <div class="recent"><div class="q">Nombre de parcelles détenues par une SCI</div><div class="t">3 MIN</div></div>
+  <div class="recent"><div class="q">Convaincre un particulier de nous donner un mandat</div><div class="t">4 MIN</div></div>
+  <div class="see-all">VOIR TOUT · 20</div>
+
+</div>
+
+<div class="spec">LES RÈGLES</div>
+<p class="note">
+  <strong>Les 4 capacités ne sont PAS cliquables.</strong> Pas de bordure, pas de
+  fond, pas d'état sélectionné, pas de curseur pointer. Ce sont des exemples
+  qui enseignent, pas un menu. Toute la sélection de mode (le
+  <code>Mode « X » — écrire librement à la place</code>) disparaît.<br><br>
+  <strong>Chaque capacité porte un exemple réel</strong>, entre guillemets, dans
+  la formulation qu'un client taperait. C'est ce qui apprend le plus vite.<br><br>
+  <strong>Le titre et le sous-titre sont servis</strong>, pas en dur — et ils ne
+  promettent que ce que les 4 missions font.<br><br>
+  <strong>Le mauve reste l'accent</strong> (<code>--violet #B497F0</code>) : kicker,
+  bordure du champ, bouton Envoyer. Le mint ne subsiste que sur la pastille du
+  brief du matin (la veille n'est pas de l'IA).
+</p>
+
+</div>
+</body>
+</html>

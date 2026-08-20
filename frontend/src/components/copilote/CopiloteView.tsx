@@ -9,8 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
 import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
-  getAccueilChiffres, type AccueilChiffres, type CopiloteMission,
-  type CopiloteV2Reponse } from '../../lib/api'
+  type CopiloteMission, type CopiloteV2Reponse } from '../../lib/api'
 import { ReponseInline } from './ReponseInline'
 import { RecapConfirmation } from './RecapConfirmation'
 import { CopiloteEmbarque } from './CopiloteEmbarque'
@@ -92,7 +91,6 @@ export function CopiloteView() {
   const [brief, setBrief] = useState('')
   const [mission] = useState<MissionActive>('instruire')   // v2 : le routeur décide, plus d'onglets
   const [journalOuvert, setJournalOuvert] = useState(false)
-  const [chiffres, setChiffres] = useState<AccueilChiffres | null>(null)
   // M102-B2 — LE FIL : ce qui a été demandé, compris, répondu — lisible tour par tour. Quand le
   // Copilote pose une question (clarification), le champ de réponse apparaît DANS le fil.
   const [fil, setFil] = useState<{ q: string; r: CopiloteV2Reponse; echec?: boolean }[]>([])
@@ -109,11 +107,11 @@ export function CopiloteView() {
   const [dispatching, setDispatching] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
   const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
-  const [scenario, setScenario] = useState<string | null>(null)     // M113 — chip de contexte choisi
+  // M133 — plus de `scenario` : l'accueil v3 ne force AUCUN mode (les chips sont partis). Le routeur
+  // comprend seul ; le serveur ne reçoit plus d'intention forcée depuis l'écran d'accueil.
   const [projetForm, setProjetForm] = useState<{ prefill: Record<string, unknown> } | null>(null)  // M113 P3
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
-  useEffect(() => { getAccueilChiffres().then(setChiffres).catch(() => {}) }, [])
   const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
   useEffect(() => { void rafraichirMissions() }, [])
   // M78-quater #3 — la veille n'est plus exposée sur cet écran (bloc retiré) ; le mécanisme (intention
@@ -122,7 +120,7 @@ export function CopiloteView() {
   // M78 · 2a / M78-bis — dispatch : le routeur décide. RECHERCHE/VERIFICATION passent par un RÉCAP de
   // confirmation (péage §5 : le coût d'une mauvaise interprétation est élevé) AVANT d'instruire ;
   // QUESTION/OUTIL/PROJET/VEILLE/refus répondent immédiatement (la réponse inline).
-  const interroger = async (msg: string, opts?: { confirme?: boolean; scenario?: string | null }) => {
+  const interroger = async (msg: string, opts?: { confirme?: boolean }) => {
     const m = msg.trim()
     if (!m || dispatching) return
     setDispatching(true); setRecap(null)
@@ -134,11 +132,8 @@ export function CopiloteView() {
     derniereActivite.current = Date.now()
     if (!opts?.confirme) setRecapConfirme(null)        // nouveau brief = nouveau contexte
     try {
-      // M113 — le chip choisi FORCE le scénario (web court-circuité, projet guidé, sinon intent forcé).
-      // Une réponse dans le fil (continuation) repart en texte libre : le scénario n'est passé qu'au
-      // message qui l'a explicitement choisi (opts.scenario), jamais collé aux tours suivants.
-      const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme,
-                                         scenario: opts?.scenario ?? null })
+      // M133 — aucun scénario forcé : le routeur classe le message en texte libre (comportement M112).
+      const r = await copiloteV2Ask(m, { conversation_id: convId, confirme: opts?.confirme })
       if (r.conversation_id != null) setConvId(r.conversation_id)
       if (r.contexte_ttl_minutes) setTtlMin(r.contexte_ttl_minutes)
       void rafraichirMissions()
@@ -168,7 +163,7 @@ export function CopiloteView() {
       setFil((f) => [...f, { q: m, r: echec, echec: true }])
     } finally { setDispatching(false) }
   }
-  const soumettre = () => void interroger(brief, { scenario })
+  const soumettre = () => void interroger(brief)
 
   // M107 P3 — le minuteur d'inactivité : quand le fil dort plus de ttlMin, l'expiration est
   // ANNONCÉE (bandeau « nouvelle conversation ») et le contexte serveur est abandonné
@@ -198,7 +193,7 @@ export function CopiloteView() {
   // M117 · D8 — « Nouveau fil » et l'annonce du TTL sur TOUS les chemins (fil, récap-péage, formulaire
   // projet), plus seulement le fil. Repart de zéro : vide tout, refocalise le brief.
   const nouveauFil = () => {
-    setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief(''); setScenario(null)
+    setFil([]); setConvId(null); setFilExpire(false); setReponseFil(''); setBrief('')
     setRecap(null); setProjetForm(null); briefRef.current?.focus()
   }
   const ttlNotice = filExpire ? (
@@ -320,8 +315,7 @@ export function CopiloteView() {
         {!actif ? (
           /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
-            chiffres={chiffres} occupe={dispatching}
-            scenario={scenario} onScenario={setScenario}
+            occupe={dispatching}
             missions={missions} onReprendre={rouvrir}
             reponse={projetForm
               ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */
