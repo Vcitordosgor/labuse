@@ -38,14 +38,16 @@ class PModel:
 
     # ------------------------------------------------------------------ fit
     def fit(self, df: pd.DataFrame, y: pd.Series, C: float = 1.0,
-            min_count: int = 200) -> "PModel":
+            min_count: int = 200, sample_weight=None) -> "PModel":
+        # M127 — `sample_weight` OPTIONNEL (pondération des années récentes, justifiée par le
+        # walk-forward). Additif : None = comportement historique exact ; predict/margin intacts.
         if self.encoder is None:  # un encodeur déjà fourni (mining) est réutilisé tel quel
             specs = [SPEC_BY_NAME[n] for n in self.feature_names]
             self.encoder = WoeEncoder(min_count=min_count).fit(df, y, specs)
         self.coefs, self.inter_coefs, self.year_coefs = {}, {}, {}
         X = self._design(df)
         lr = LogisticRegression(C=C, max_iter=2000, random_state=SEED)  # L2 par défaut
-        lr.fit(X.to_numpy(), y.to_numpy())
+        lr.fit(X.to_numpy(), y.to_numpy(), sample_weight=sample_weight)
         for col, c in zip(X.columns, lr.coef_[0]):
             if col.startswith("annee_"):
                 self.year_coefs[int(col.split("_")[1])] = float(c)

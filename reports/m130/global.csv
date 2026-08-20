@@ -1,0 +1,3 @@
+modele,rr_ancien_vivier,rr_ancien_min,rr_ancien_max,rr_ancien_ic_bas,rr_ancien_ic_haut,n_ancien,base_ancien_pct,rr_nouveau_vivier,rr_nouveau_min,rr_nouveau_max,rr_nouveau_ic_bas,rr_nouveau_ic_haut,n_nouveau,base_nouveau_pct,ece_ancien,ece_nouveau
+actuel,6.47,6.385,6.613,5.339,7.668,428239,1.5148,5.271,5.12,5.422,4.319,6.216,282633,1.7203,0.0009,0.0012
+C_bati,6.385,6.271,6.499,5.317,7.518,428239,1.5148,5.296,5.171,5.472,4.359,6.23,282633,1.7203,0.001,0.0012

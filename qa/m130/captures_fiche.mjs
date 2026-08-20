@@ -1,0 +1,18 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE = (process.env.BASE || 'http://localhost:5173/').replace(/\/?$/, '/');
+const IDU = process.env.IDU || '97411000IO0091';
+const OUT = new URL('./captures/2026-08-20-07-44', import.meta.url).pathname;
+const browser = await chromium.launch({ channel: 'chrome' });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1024 } });
+page.setDefaultTimeout(30000);
+const shot = async (n, note) => { await page.screenshot({ path: `${OUT}/${n}.png` }); console.log(`📸 ${n} — ${note}`); };
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(2500);
+await page.evaluate((idu) => window.__labuse.select(idu), IDU);
+await page.waitForTimeout(6000);
+await shot('03-fiche-parcelle', `fiche ${IDU}`);
+await page.evaluate(() => { const el = document.querySelector('[data-fiche-market-signal]'); el?.scrollIntoView({ block: 'center' }); });
+await page.waitForTimeout(800);
+await shot('03b-fiche-score', 'fiche — bloc score');
+await browser.close();
+console.log('OK');

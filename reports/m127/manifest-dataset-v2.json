@@ -1,0 +1,85 @@
+{
+  "table": "p_model_dataset_v2",
+  "grille": "p_model_ext_dataset (2017-2026, labels L2-F/L2, as-of M3.6)",
+  "profondeur_dvf": "2014-2025 (EXT_DVF_START=2014 — clamp DÉJÀ levé M3.5/M3.6 ; vérifié : tenure 2026 connue 17,1 % = mesure M124)",
+  "retraits_physiques": [
+    "qpv",
+    "friche",
+    "window_coverage(feature)",
+    "pv_candidat",
+    "permis_24m_norm",
+    "filo_dens_pop",
+    "dormance_droits"
+  ],
+  "zeros_m125": {
+    "couverture_sdp_v2": 0.9898,
+    "source": "parcel_residuel (cause portée ; hors_plu → NULL dit)"
+  },
+  "candidates_m126": {
+    "couverture_contagion": 0.9991,
+    "exclue": "division_recente (morte-née — filiation absente)"
+  },
+  "effectifs": [
+    {
+      "annee": 2017,
+      "n": 431663,
+      "positifs_l2f": 6840,
+      "positifs_l2": 7565
+    },
+    {
+      "annee": 2018,
+      "n": 431663,
+      "positifs_l2f": 6773,
+      "positifs_l2": 7513
+    },
+    {
+      "annee": 2019,
+      "n": 431663,
+      "positifs_l2f": 7219,
+      "positifs_l2": 7992
+    },
+    {
+      "annee": 2020,
+      "n": 431663,
+      "positifs_l2f": 7075,
+      "positifs_l2": 7864
+    },
+    {
+      "annee": 2021,
+      "n": 431663,
+      "positifs_l2f": 8459,
+      "positifs_l2": 9382
+    },
+    {
+      "annee": 2022,
+      "n": 431663,
+      "positifs_l2f": 8482,
+      "positifs_l2": 9387
+    },
+    {
+      "annee": 2023,
+      "n": 431663,
+      "positifs_l2f": 7440,
+      "positifs_l2": 8307
+    },
+    {
+      "annee": 2024,
+      "n": 431663,
+      "positifs_l2f": 6522,
+      "positifs_l2": 7316
+    },
+    {
+      "annee": 2025,
+      "n": 431663,
+      "positifs_l2f": 6659,
+      "positifs_l2": 7489
+    },
+    {
+      "annee": 2026,
+      "n": 431663,
+      "positifs_l2f": null,
+      "positifs_l2": null
+    }
+  ],
+  "duree_s": 60.5
+}
