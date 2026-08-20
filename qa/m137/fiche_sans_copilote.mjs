@@ -1,0 +1,30 @@
+import { chromium } from '../../frontend/node_modules/playwright/index.mjs';
+const BASE = 'http://localhost:5173/socle/';
+const OUT = new URL('./captures', import.meta.url).pathname;
+const IDU = process.argv[2] || '97421000AB0118';
+const b = await chromium.launch({ channel: 'chrome' });
+const page = await b.newPage({ viewport: { width: 1440, height: 1024 } });
+const soft = async (fn, w) => { try { await fn() } catch (e) { console.log('⚠', w, String(e).slice(0, 160)) } };
+await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(3500);
+await soft(async () => {
+  const box = page.locator('[data-omnibox]');
+  await box.click(); await box.fill(IDU); await page.waitForTimeout(700);
+  await box.press('Enter'); await page.waitForTimeout(3800);
+}, 'recherche IDU');
+await page.waitForSelector('[data-fiche-idu]', { timeout: 15000 }).catch(() => console.log('⚠ fiche non ouverte'));
+await page.waitForFunction(() => !document.body.innerText.includes('Chargement de la fiche'), { timeout: 20000 }).catch(() => console.log('⚠ encore en chargement'));
+await page.waitForTimeout(2000);
+// vérifs : section retirée, loupe + boutons IA présents
+const copiloteEmbarque = await page.locator('input[placeholder="Demander au Copilote sur cette parcelle…"]').count();
+const demanderLien = await page.getByText('demander →', { exact: false }).count();
+const loupe = await page.locator('button[title="Rechercher dans cette fiche"]').count();
+const poserQuestion = await page.locator('[data-askbar-open]').count();
+const syntheseBtn = await page.locator('[data-synthese-ia]').count();
+console.log(`section « Demander au Copilote » (champ): ${copiloteEmbarque} · lien « demander → »: ${demanderLien}`);
+console.log(`loupe: ${loupe} · « Poser une question »: ${poserQuestion} · « Synthèse IA »: ${syntheseBtn}`);
+const aside = page.locator('aside').filter({ has: page.locator('[data-fiche-idu]') }).first();
+await page.screenshot({ path: `${OUT}/fiche_sans_copilote.png` });
+await soft(async () => { const bx = await aside.boundingBox(); if (bx) await page.screenshot({ path: `${OUT}/fiche_sans_copilote_zoom.png`, clip: { x: bx.x, y: Math.max(0, bx.y), width: Math.min(bx.width, 640), height: Math.min(bx.height, 1024) } }); }, 'zoom aside');
+await b.close();
+const ok = copiloteEmbarque === 0 && demanderLien === 0 && loupe > 0 && poserQuestion > 0;
+console.log(ok ? 'OK — section retirée, loupe + boutons IA intacts' : 'À VÉRIFIER');

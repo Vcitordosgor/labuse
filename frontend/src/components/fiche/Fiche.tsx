@@ -11,7 +11,6 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { AvisIA } from '../AvisIA'
-import { CopiloteEmbarque } from '../copilote/CopiloteEmbarque'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
@@ -1884,14 +1883,8 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
-            {/* §5 surface 1 — le Copilote EMBARQUÉ, AVANT les tiroirs (arbitrage Vic) : après le verdict
-                et l'Analyse, c'est le moment où naît la question « et maintenant ? ». Pré-contextualisé
-                par l'IDU (« ce prix est-il correct ? » → VERIFICATION sans retaper la réf). DISCRET (une
-                ligne, pas un encart) et en MAUVE — le seul endroit de la fiche où l'IA parle. */}
-            <div className="mb-1 mt-3">
-              <CopiloteEmbarque contexte={{ idu }} ton="violet" compact
-                placeholder="Demander au Copilote sur cette parcelle…" />
-            </div>
+            {/* M137-E — le Copilote embarqué « Demander au Copilote sur cette parcelle… » est RETIRÉ :
+                la loupe (recherche intra-fiche) + « Poser une question » (AskBar) couvrent déjà le besoin. */}
 
             <GroupLabel>Le terrain</GroupLabel>
 
