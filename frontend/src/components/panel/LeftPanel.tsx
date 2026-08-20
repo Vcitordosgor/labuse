@@ -325,7 +325,7 @@ function VerdictHero() {
           <div className="flex gap-1.5">
             <button data-algo-open onClick={() => setAlgoModale('classement')}
               className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
-              title="La méthode : le tri, le « ×N plus probable », la validation">
+              title="La méthode : le tri, la fraction « 1/5 sous 1 an », la validation">
               {CLIENT.algo.bouton}
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}

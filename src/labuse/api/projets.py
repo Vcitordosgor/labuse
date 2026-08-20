@@ -290,13 +290,10 @@ def _projet_dict(p: models.Projet) -> dict:
     }
 
 
-_STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser": "À creuser"}
-#: M5.1 : le TIER v2 est le verdict énoncé au client (l'étage 0 du run servi prime) ;
-#: le statut matrice ne sert plus que de repli (item sans run v2).
-# M54-AB F11 : libellés client SANS suffixe « v2 » (jargon interne) — « Brûlante », pas « Brûlante v2 ».
-_TIER_LABEL = {"brulante": "Brûlante", "chaude": "Chaude",
-               "reserve_fonciere": "Potentiel long terme", "a_creuser": "À creuser",
-               "ecartee": "Écartée"}
+# M135 — libellés d'action, mapping CANONIQUE unique (tiers_client). Les clés internes ne bougent pas.
+from ..scoring.tiers_client import TIERS_CLIENT as _TC  # noqa: E402
+_STATUT_LABEL = {"chaude": "Priorité", "a_surveiller": "À suivre", "a_creuser": "Neutre"}
+_TIER_LABEL = {k: v[1] for k, v in _TC.items()}
 
 
 def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) -> list[str]:

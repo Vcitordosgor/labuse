@@ -209,7 +209,7 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
         items = "".join(f"<p style='margin:0 0 4px'>{(t.get('idu') or '')[8:]} — "
                         f"{t.get('commune') or ''}, {round(t.get('surface_m2') or 0)} m²</p>"
                         for t in top_chaudes[:5])
-        top = f"<p style='margin:16px 0 6px;font-weight:600'>Les plus chaudes</p>{items}"
+        top = f"<p style='margin:16px 0 6px;font-weight:600'>Les priorités</p>{items}"
     return (f"<!doctype html><html><body style=\"margin:0;background:#ffffff;color:#1a1a1a;"
             f"font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif\">"
             f"<div style=\"max-width:600px;padding:20px\">"

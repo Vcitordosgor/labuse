@@ -88,7 +88,7 @@ export const CLIENT = {
     // + écartées ; retenues = ventilation complète, à-creuser et déclassées inclus).
     retenuesLbl: (n: number) => `${n.toLocaleString('fr-FR')} retenues`,
     // M55-H point 10 : « déclassées » → « en potentiel épuisé » (même famille partout)
-    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} en potentiel épuisé`,
+    ventDeclassees: (n: number) => `${n.toLocaleString('fr-FR')} faible`,
     ecarteesLbl: (n: number) => `${n.toLocaleString('fr-FR')} écartées par l’analyse`,
     ecarteesMotifs: 'zonage inconstructible, PPR rouge, impossibilités physiques…',
     voirPourquoi: 'voir pourquoi',
@@ -110,14 +110,13 @@ export const CLIENT = {
     perime: 'Vos critères ont changé depuis cette analyse — les chiffres affichés ne les décrivent plus.',
     relancerCta: 'Relancer sur les nouveaux critères',
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
+    // M135 — échelle d'ACTION (le « i » explique le libellé long). Les nombres/couleurs ne changent pas.
     defTiers: {
-      brulante: 'Brûlante — la plus forte probabilité de changer de main à court terme, tête du classement.',
-      chaude: 'Chaude — forte probabilité de vente sous 1 an, juste derrière les brûlantes.',
-      reserve_fonciere: 'Potentiel long terme — prometteuse mais à horizon plus lointain (réserve foncière).',
-      a_creuser: 'À creuser — signal présent mais plus faible, à confirmer au cas par cas.',
-      declassees: 'Potentiel épuisé — analysées et conservées, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; le motif est en fiche (bâti saturé, zone fermée…).',
-      // M55-J point 5 : le palier écartée manquait à l'échelle verbale (defTiers) — ajouté ici
-      // comme SOURCE UNIQUE (réutilisée par la carte d'analyse ET la modale scoring).
+      brulante: 'À contacter en priorité — la plus forte probabilité de vente sous 1 an, tête du classement.',
+      chaude: 'À suivre de près — forte probabilité de vente sous 1 an, juste derrière la priorité.',
+      reserve_fonciere: 'À revoir dans 1-2 ans — prometteuse mais à horizon plus lointain.',
+      a_creuser: 'Sans signal particulier — rien de marquant pour l’instant, à confirmer au cas par cas.',
+      declassees: 'Peu de potentiel — analysées et conservées ; le motif (bâti saturé, zone fermée…) et l’état du bien sont en fiche.',
       ecartee: 'Écartée — exclusion légale ou physique (zonage inconstructible, PPR rouge, emprise, eau…), motif consultable en fiche.',
     } as Record<string, string>,
   },
@@ -156,16 +155,15 @@ export const CLIENT = {
   },
 
   // ── B1/B2 · métrique ×N et libellés de liste ──────────────────────────────
+  // M135 — la PROBABILITÉ en FRACTION humaine (« 1/5 sous 1 an »), plus jamais un « ×N ».
   mult: {
-    // le nombre nu (×13.1) ne s'affiche jamais sans cette unité de sens
-    unite: 'plus probable',
-    // infobulle carte (le détail, pas le sens de base)
-    // M55-G point 6 : « Plafond ×64 = certitude maximale » était FAUX — aucun plafond codé,
-    // ×64 est le sommet MESURÉ du run servi (3 parcelles). Même correction que la modale.
-    tip: (n: string) =>
-      `Cette parcelle est classée ${n} fois plus haut que la moyenne du parc analysé. ` +
-      `La tête du classement culmine à ×64 — un sommet mesuré, pas un plafond du modèle.`,
+    unite: 'sous 1 an',               // sous la fraction (« 1/5 »)
+    faible: 'peu probable',           // sous le « — » (proba sous 1/50)
     absent: 'Classement non disponible',
+    // infobulle carte : la lecture de la fraction (calibrée sur les ventes réelles)
+    fractionBadge: (f: string) =>
+      `${f} ≈ une chance sur ${f.split('/')[1]} qu’une vente intervienne dans l’année. ` +
+      `Estimation calibrée sur les ventes réelles 2017-2025.`,
   },
 
   // ── B1/B3 · barre de tri ──────────────────────────────────────────────────
@@ -191,12 +189,10 @@ export const CLIENT = {
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
     // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
     // malentendu (« pourquoi ce n'est pas monotone ? » = parce que c'est groupé par tier).
-    groupe: 'groupée par tier (brûlantes → épuisées) · trier par Surface pour un ordre global',
-    // le « i » de la barre TRIER : les deux tris + leur sens
-    lunettes: 'Probabilité de vente sous 1 an = le classement LABUSE : la probabilité apprise sur les ventes réelles d’abord, les ex æquo départagés par la qualité du terrain (copropriétés en queue). '
-      + 'Surface = la plus grande d’abord — re-cliquer inverse le sens.',
-    // tooltip du badge ×N sur les cartes de résultat (une ligne)
-    multBadge: (n: string) => `Cette parcelle a ${n} fois plus de chances de se vendre qu’une parcelle moyenne de l’île — estimation LABUSE d’après les ventes réelles.`,
+    groupe: 'groupée par priorité d’action (priorité → faible) · trier par Surface pour un ordre global',
+    // M135 — le « i » de la barre TRIER : la lecture de la fraction + les deux tris.
+    lunettes: '« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — estimation calibrée sur les ventes réelles 2017-2025. Sous 1/50, un tiret « — » (peu probable). '
+      + 'La liste est classée par cette probabilité (ex æquo départagés par la qualité du terrain, copropriétés en queue) ; Surface = la plus grande d’abord, re-cliquer inverse.',
   },
 
   // ── B1 · scores ───────────────────────────────────────────────────────────
@@ -320,10 +316,10 @@ export const CLIENT = {
           'parcelles d’aujourd’hui.',
       },
       {
-        h: 'Le « ×N »',
-        p: '×13 = 13 fois plus de chances de se vendre qu’une parcelle moyenne. La tête du ' +
-          'classement culmine à ×64 — trois parcelles sur toute l’île : un sommet mesuré, ' +
-          'pas un plafond fixé par le modèle.',
+        h: 'La probabilité en fraction',
+        p: '« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — ' +
+          'la probabilité calibrée sur les ventes réelles 2017-2025, arrondie à un palier humain ' +
+          '(1/2, 1/3, 1/4, 1/5, 1/10, 1/20, 1/50). Sous 1/50, un tiret « — » (peu probable).',
       },
       {
         h: 'Ce qu’il ne dit pas',

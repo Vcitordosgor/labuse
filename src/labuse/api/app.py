@@ -37,6 +37,8 @@ from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import DataSourceStatus, FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
+from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
+from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
 
 # Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
@@ -1976,6 +1978,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     # propriétaires. En mode COMMUNE (borné, usage normal de la carte), proprio/owner_type
     # restent exposés. Le front sert l'île en TUILES (les tuiles ne portent aucun propriétaire).
     _own_proprio = "b.proprio" if commune else "NULL"
+    _frac_case = _fraction_sql_case("b.p_raw")   # M135 — fraction humaine EN SQL (geojson caché), config-driven
     _own_type = "b.owner_type" if commune else "NULL"
     _geo_sql = text(
         f"""
@@ -1983,6 +1986,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+               s2.p_raw AS p_raw, s2.top5_contributions AS top5,   -- M135 : fraction + raison (carte)
                s2.copro AS copro_v2, s2.event_date,
                (vw.parcelle_id IS NOT NULL) AS veille,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
@@ -2046,6 +2050,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                                 THEN ', ' || concat_ws(' ', b.ban_cp, b.ban_commune) ELSE '' END END,
               'status', b.status,
               'tier_v2', b.tier_v2, 'rang_v2', b.rang_v2, 'mult_v2', b.mult_v2,
+              'fraction', {_frac_case}, 'top5', b.top5,   -- M135 : fraction (SQL) + top5 (raison au front)
               'etage0', b.etage0,
               -- M129-B : q_score/a_score/a_completude retirés (matrice morte)
               'completeness_score', b.completeness_score,
@@ -2172,7 +2177,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     _page_cols = """p.id, p.idu, p.commune, p.surface_m2, p.section,
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    d.completeness_score,
-                   s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+                   s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2, s2.p_raw AS p_raw,
+                   s2.top5_contributions AS top5,   -- M135 P3 : la raison dominante (affichage)
                    s2.copro AS copro_v2, s2.event_date,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                    (ev.parcel_id IS NOT NULL) AS evenement_rouge"""
@@ -2273,6 +2279,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "v_dernier_signal": r["v_dernier_signal"],
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
         "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
+        # M135 P2 — la fraction humaine (« 1/5 sous 1 an ») de la proba calibrée servie ; None = « — »
+        "fraction": (_fh(r["p_raw"]) or {}).get("texte"),
+        # M135 P3 — la raison dominante (chip court, reason code n°1 positif) ; None = pas de badge
+        "raison": _raison_dom(r["top5"]),
         "copro_v2": bool(r["copro_v2"]), "veille": bool(r["veille"]),
         "etage0": bool(r["etage0"]),
         "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
@@ -2383,7 +2393,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     # l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
     v2run = _score_v2_run_id(db)
     s2 = db.execute(text(
-        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail, top5_contributions "
+        "SELECT tier, rang, mult_base, p_raw, percentile, copro, icd, icd_detail, top5_contributions "
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = :idu"),
         {"r": v2run, "idu": idu}).mappings().first() if v2run else None
@@ -2392,6 +2402,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         from ..scoring.echelle_verbale import enrichir_verbal
         from ..scoring.p_v2.libelles_client import enrichir_contributions
         _mult = float(s2["mult_base"]) if s2["mult_base"] is not None else None
+        # M135 P2 — MÊME fraction que la carte de tri (calcul unique fraction_client)
+        _fraction = (_fh(s2["p_raw"]) or {}).get("texte")
         _top5 = s2["top5_contributions"]
         if isinstance(_top5, str):
             _top5 = json.loads(_top5)
@@ -2402,6 +2414,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
                                       DECLASSE_COLOR as _DECLASSE_COLOR, COPRO_MOTIF as _COPRO_MOTIF)
         _vs = _verdict_servi(db, idu, run=v2run)
         score_v2 = {"tier": s2["tier"], "rang": s2["rang"], "mult_base": _mult,
+                    "fraction": _fraction,   # M135 P2 — « 1/5 » ou None (« — »)
                     "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
                     "copro": bool(s2["copro"]),
                     # libellé/motif client = source unique verdict_servi (miroir de l'écran)

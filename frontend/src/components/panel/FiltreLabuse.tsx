@@ -598,14 +598,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                 <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
                 {t && phraseRetenues != null && (
                   <> — dont{' '}
+                    {/* M135 — échelle d'action (mêmes nombres, seuls les mots changent) */}
                     <Tip side="top" tip={CLIENT.revelation.defTiers.brulante}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'brûlante')}</b></Tip>,{' '}
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'priorité')}</b></Tip>,{' '}
                     <Tip side="top" tip={CLIENT.revelation.defTiers.chaude}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.chaude, 'chaude')}</b></Tip>,{' '}
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.chaude)} à suivre</b></Tip>,{' '}
                     <Tip side="top" tip={CLIENT.revelation.defTiers.reserve_fonciere}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} en potentiel long terme</b></Tip>,{' '}
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} long terme</b></Tip>,{' '}
                     <Tip side="top" tip={CLIENT.revelation.defTiers.a_creuser}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.a_creuser)} à creuser</b></Tip>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.a_creuser)} neutre</b></Tip>
                     {declassees > 0 && (
                       <>,{' '}
                         <Tip side="top" tip={CLIENT.revelation.defTiers.declassees}>

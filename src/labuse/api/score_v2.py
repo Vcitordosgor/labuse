@@ -64,9 +64,11 @@ def _row_payload(r, run: dict) -> dict:
     top5 = r["top5_contributions"]
     if isinstance(top5, str):
         top5 = json.loads(top5)
+    from ..scoring.fraction_client import fraction_humaine as _fh   # M135 P2
     return {
         "parcelle_id": r["parcelle_id"],
-        "mult_base": r["mult_base"],              # « ×N vs moyenne » — l'affichage produit
+        "mult_base": r["mult_base"],              # gardé pour l'audit interne (jamais affiché nu)
+        "fraction": (_fh(r["p_raw"]) or {}).get("texte"),   # M135 P2 — la fraction humaine servie
         "percentile": r["percentile"],
         "rang": r["rang"],
         # M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide.

@@ -89,7 +89,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
                 servi (tiers) ; le repli n'apparaît que si le classement servi est INJOIGNABLE
                 (avant M36 il s'affichait aussi en dev à cause du proxy /v2 manquant). */}
             {v2 ? (
-              <Tip block side="top" tip="Couleurs du classement servi (tiers Brûlante → Écartée).">
+              <Tip block side="top" tip="Couleurs du classement servi (tiers Priorité → Écartée).">
                 <span className="label-caps">Verdict · Classement servi</span>
               </Tip>
             ) : (

@@ -112,7 +112,7 @@ export const LAYER_INFO: Record<string, string> = {
   // elle peint TOUT le classement de l'île, sans tenir compte des filtres actifs (le libellé
   // le dit). En mode analyse (couche décochée), la palette suit le résultat courant.
   couleurs_verdict:
-    'Les couleurs du classement LABUSE (Brûlante → Écartée) sur TOUTES les parcelles de l’île, indépendamment des filtres actifs. En mode analyse, la carte ne colore que le résultat courant — cochez cette couche pour voir le classement entier.',
+    'Les couleurs du classement LABUSE (Priorité → Écartée) sur TOUTES les parcelles de l’île, indépendamment des filtres actifs. En mode analyse, la carte ne colore que le résultat courant — cochez cette couche pour voir le classement entier.',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

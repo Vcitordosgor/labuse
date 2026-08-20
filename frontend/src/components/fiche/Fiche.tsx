@@ -1577,11 +1577,12 @@ export function Fiche({ idu }: { idu: string }) {
                   )}
                 </div>
               </div>
-              {f.score_v2?.mult_base != null && (
+              {f.score_v2 != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
+                  {/* M135 — la MÊME fraction que la carte de tri (jamais un ×N). « — » = peu probable. */}
+                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>{f.score_v2.fraction ?? '—'}</p>
                   <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--lab)' }}>
-                    {signalEcarte ? 'signal brut' : 'plus probable d’être vendue'}
+                    {signalEcarte ? 'signal brut' : (f.score_v2.fraction ? 'sous 1 an' : 'peu probable')}
                     {f.score_v2.verbal?.info && (
                       <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                     )}
@@ -1615,8 +1616,8 @@ export function Fiche({ idu }: { idu: string }) {
                     est absente (doctrine étage 0 M5). Bordure « terre éteinte », pas de menthe. */}
                 {signalEcarte && (
                   <p data-signal-ecarte style={{ margin: '9px 0 0', fontSize: 11, color: '#b9a898', borderLeft: '3px solid #8C7468', paddingLeft: 8 }}>
-                    La parcelle porte {(multBase ?? 0) >= 4 ? 'un signal fort' : 'un signal au-dessus de la moyenne'} (×{f.score_v2.mult_base!.toFixed(1).replace('.', ',')}) <b>mais elle est écartée</b>{motifEcart ? <> : {motifEcart.toLowerCase()}</> : null} — l’écartement prime. La fréquence par tier ne s’affiche pas.
-                    <span title="Le ×N est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                    La parcelle porte {(multBase ?? 0) >= 4 ? 'un signal fort' : 'un signal au-dessus de la moyenne'}{f.score_v2.fraction ? <> ({f.score_v2.fraction} sous 1 an)</> : null} <b>mais elle est écartée</b>{motifEcart ? <> : {motifEcart.toLowerCase()}</> : null} — l’écartement prime. La fréquence par tier ne s’affiche pas.
+                    <span title="Le signal est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
                 {f.score_v2.verbal?.frequence && (

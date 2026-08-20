@@ -97,11 +97,12 @@ KANBAN_CRM = (ROOT / "frontend/src/components/crm/Kanban.tsx").read_text(encodin
 
 # Wordings servis VALIDÉS par Vic (arbitrage 07/2026) — tests remis à jour dessus, xfail retirés.
 
-def test_r3_tooltip_multiplicateur_de_rang():
-    # Wording servi validé : « ×N vs moyenne du parc » (plus court/clair que la formulation longue).
-    assert "data-mult-tip" in RESULTS
-    assert "vs moyenne du parc" in RESULTS
-    assert "RR" not in RESULTS                      # jamais un chiffre de perf in-sample en surface
+def test_m135_carte_fraction_pas_de_mult():
+    # M135 — la carte de tri sert la FRACTION (« 1/5 sous 1 an »), plus jamais un « ×N ».
+    assert "data-fraction" in RESULTS
+    assert "p.fraction" in RESULTS
+    assert "mult_v2.toFixed" not in RESULTS         # aucun ×N nu de scoring ne survit
+    assert "RR" not in RESULTS
 
 
 def test_r3_tooltip_jauge_completude():
@@ -111,13 +112,15 @@ def test_r3_tooltip_jauge_completude():
     assert "completeness_score" not in KANBAN_CRM
 
 
-def test_r3_matrice_non_thermique():
-    # Invariant DUR : le vocabulaire thermique est RÉSERVÉ au tier P ; la matrice Q×A ne l'emprunte jamais.
-    # Le statut 'chaude' de la MATRICE rend « Priorité dossier » ; le tier P 'chaude' rend « Chaude » (thermique).
-    # Retrait du « v2 » des libellés tier validé (un n° de version interne ne s'affiche pas côté client).
-    assert "chaude: { label: 'Priorité dossier'" in STATUS   # matrice Q×A → vocab dossier, jamais thermique
-    assert "chaude: { label: 'Chaude'" in STATUS             # tier P → thermique (réservé)
-    assert "brulante: { label: 'Brûlante'" in STATUS         # tier P → thermique (réservé)
+def test_m135_echelle_action():
+    # M135 — l'échelle SERVIE est une échelle d'ACTION (chip court `label`), plus jamais
+    # « brûlante/chaude/à creuser/potentiel long terme » servis comme label de tier.
+    assert "brulante: { label: 'Priorité'" in STATUS
+    assert "chaude: { label: 'À suivre'" in STATUS
+    assert "reserve_fonciere: { label: 'Long terme'" in STATUS
+    assert "a_creuser: { label: 'Neutre'" in STATUS
+    for mot in ("label: 'Brûlante'", "label: 'Chaude'", "label: 'À creuser'", "label: 'Potentiel long terme'"):
+        assert mot not in STATUS, f"ancien libellé servi : {mot}"
 
 
 def test_r3_desambiguisation_cote_a_cote():
@@ -136,7 +139,7 @@ def test_r3_desambiguisation_cote_a_cote():
 def test_r3_marqueur_commune_etiquette_vraie():
     # M35/M36 : le compteur commune sert les TIERS du run servi — le vocabulaire thermique
     # est désormais LE BON (réservé au tier P, règle R3 respectée) et l'étiquette est vraie.
-    assert "parcelles brûlantes ou chaudes au classement servi" in MAPVIEW
+    assert "parcelles prioritaires ou à suivre au classement servi" in MAPVIEW
     assert "en priorité dossier (matrice Q×A)" not in MAPVIEW   # l'étiquette AFFICHÉE fausse a disparu
 
 
@@ -194,3 +197,68 @@ def test_r5_pourquoi_pas_hierarchise_et_source():
 def test_r5_api_helpers():
     assert "scoreurAdresse" in API and "/scoreur-adresse" in API and "prix_demande_eur" in API
     assert "getAntiFiche" in API and "/anti-fiche/" in API
+
+
+def test_m135_tiers_front_back_alignes():
+    """M135 — le mapping des tiers vit à UN endroit canonique (backend tiers_client) ; le front
+    status.ts le reflète EXACTEMENT (TS/Python ne partagent pas un littéral → ce test est le
+    garde-fou anti-dérive). Chip court `label` + libellé `long`, pour chaque tier v2."""
+    import re
+    from labuse.scoring.tiers_client import TIERS_CLIENT
+    status = (ROOT / "frontend/src/lib/status.ts").read_text(encoding="utf-8")
+    # scoper au bloc TIER_V2_META (la matrice STATUT_META porte aussi une clé `chaude`)
+    blk = status.split("export const TIER_V2_META", 1)[1].split("LEGEND_V2_ORDER", 1)[0]
+    dblk = status.split("export const TIER_DECLASSE_META", 1)[1].split("DECLASSE_ORDER", 1)[0]
+
+    def meta(code: str, src: str) -> tuple[str, str]:
+        m = re.search(rf"\b{code}: {{ label: '([^']*)', long: '([^']*)'", src)
+        assert m, f"tier {code} introuvable (format label/long)"
+        return m.group(1), m.group(2)
+
+    for code in ("brulante", "chaude", "reserve_fonciere", "a_creuser", "ecartee"):
+        court, lng = meta(code, blk)
+        assert (court, lng) == TIERS_CLIENT[code], (
+            f"DÉRIVE front/back sur {code} : front={court!r}/{lng!r} ≠ back={TIERS_CLIENT[code]}")
+    # la famille declasse_* collapse sur « Faible / Peu de potentiel » des deux côtés
+    dc, dl = meta("declasse_bati_sature", dblk)
+    assert (dc, dl) == TIERS_CLIENT["declasse_bati_sature"] == ("Faible", "Peu de potentiel")
+
+
+def test_m135_fraction_sql_egale_python():
+    """M135 P2 — le CASE SQL (geojson caché) donne EXACTEMENT la même fraction que
+    fraction_humaine (Python) sur toute la plage : un seul arrondi, config-driven, zéro dérive."""
+    import re as _re
+    from labuse.scoring.fraction_client import fraction_sql_case, fraction_humaine
+    case = fraction_sql_case("P")
+    seuil = float(_re.search(r"P < ([\d.]+)", case).group(1))
+    bornes = [(m.group(2), float(m.group(1))) for m in _re.finditer(r"P >= ([\d.]+) THEN '(1/\d+)'", case)]
+
+    def sql(p: float):
+        if p is None or p < seuil:
+            return None
+        for txt, lo in bornes:                     # bornes décroissantes
+            if p >= lo:
+                return txt
+        return None
+
+    for i in range(0, 1001):
+        p = i / 1000
+        py = (fraction_humaine(p) or {}).get("texte")
+        if sql(p) == py:
+            continue
+        # tolérance UNIQUEMENT à l'ex æquo EXACT (milieu de deux paliers équidistants) : le choix
+        # y est arbitraire (le flottant tranche d'un côté, le seuil SQL de l'autre) — mesure-zéro.
+        ecart = min(abs(1.0 / d - p) for d in fraction_sql_case.__globals__["_cfg"]()["paliers"])
+        proches = [d for d in fraction_sql_case.__globals__["_cfg"]()["paliers"] if abs(abs(1.0 / d - p) - ecart) < 1e-9]
+        assert len(proches) >= 2, f"dérive SQL/Python à p={p} : sql={sql(p)} py={py}"
+
+
+def test_m135_raison_front_back_alignes():
+    """M135 P3 — le miroir TS raison.ts a les MÊMES clés (features) que le Python
+    _RAISON_COURTE (le geojson dérive la raison au front, la liste île la reçoit servie)."""
+    import re as _re
+    from labuse.scoring.p_v2.libelles_client import _RAISON_COURTE
+    ts = (ROOT / "frontend/src/lib/raison.ts").read_text(encoding="utf-8")
+    ts_keys = set(_re.findall(r"^  (\w+): \(", ts, _re.M))
+    assert ts_keys == set(_RAISON_COURTE), (
+        f"DÉRIVE raison front/back : front-back={ts_keys ^ set(_RAISON_COURTE)}")

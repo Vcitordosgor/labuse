@@ -120,7 +120,7 @@ def _seed(session) -> dict[str, int]:
 def test_servable_traduit_le_tier(db_session):
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0001")
-    assert v["statut"] == "brulante" and v["label"] == "Brûlante"
+    assert v["statut"] == "brulante" and v["label"] == "À contacter en priorité"
     assert v["servable"] is True and v["declasse"] is False
     assert v["rang"] == 3 and v["motif"] is None and v["badge_division"] is False
 
@@ -138,7 +138,7 @@ def test_declassee_reste_declassee_avec_motif(db_session):
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0003")
     assert v["statut"] == "declasse_bati_sature"
-    assert v["label"] == "Bâtie — construite au maximum"
+    assert v["label"] == "Peu de potentiel"
     assert v["servable"] is False and v["declasse"] is True
     assert "saturée" in v["motif"]                      # motif du filtre, jamais remonté
 

@@ -180,21 +180,15 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
 
 
 # ── Synthèse DÉTERMINISTE (sans clé) — 5 blocs, dérivée UNIQUEMENT des faits ──────────────────────
-# M34 : clés = tiers servis (traduction unique), plus jamais les statuts cascade legacy.
-_STATUT_PHRASE = {
-    "brulante": "Brûlante (tête du classement servi)",
-    "chaude": "Chaude (haut du classement servi)",
-    "reserve_fonciere": "Potentiel long terme (potentiel réel, horizon plus lointain)",
-    "a_creuser": "À creuser (signal à confirmer ou données incomplètes)",
-    "ecartee": "Écartée (hors classement servi)",
-    "non_evaluee": "Non évaluée au run servi",
-}
+# M135 — échelle d'action, mapping CANONIQUE unique (tiers_client) ; clés internes inchangées.
+from ..scoring.tiers_client import TIERS_CLIENT as _TC, long as _tier_long
+_STATUT_PHRASE = {k: v[1] for k, v in _TC.items()}
+_STATUT_PHRASE["non_evaluee"] = "Non évaluée au run servi"
 
 
 def _statut_phrase(statut: str | None, libelle: str | None) -> str:
     if statut and statut.startswith("declasse_"):
-        # M55-H point 10 : « Déclassée » → « Potentiel épuisé » (repli si libellé absent)
-        return f"{libelle or 'Potentiel épuisé'} (verdict motivé du classement)"
+        return _tier_long(statut) or "Peu de potentiel"
     return _STATUT_PHRASE.get(statut, "Statut non évalué")
 
 
