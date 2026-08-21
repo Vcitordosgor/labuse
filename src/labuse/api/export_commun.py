@@ -84,12 +84,25 @@ _PROXYS_NOM = [
     (re.compile(r"⚠ proxy SAR divergent"), "⚠ Potentiel foncier Région divergent"),
     (re.compile(r"proxy SAR divergent"), "Potentiel foncier Région divergent"),
     (re.compile(r"SAR \(proxy indicatif\)"), "Potentiel foncier Région (indicatif)"),
+    # M125-C4 — PHRASES entières d'abord (constats stockés) → texte NATUREL, pas un mot-à-mot cassé
+    # (« Hors zonage RPG » / « aucune contrainte potentiel foncier Région déduite »).
+    (re.compile(r"Hors zonage SAFER"), "Hors parcelle agricole déclarée (RPG)"),
+    (re.compile(r"aucune contrainte SAR déduite"), "aucune contrainte déduite"),
+    (re.compile(r"\bSAR : "), "Potentiel foncier Région : "),
     (re.compile(r"Zonage SAFER( \(DAAF\))?"), "Parcelle déclarée agricole (RPG)"),
     (re.compile(r"\bSAFER\b"), "RPG"),
     (re.compile(r"logique ZAN,\s*"), ""),                         # OCS proxy : pas un standard ZAN
     (re.compile(r"OCS ?GE"), "BD CARTO V5"),
     (re.compile(r"Espaces Naturels Sensibles"), "espaces protégés (INPN)"),
     (re.compile(r"\bENS\b"), "espace protégé (INPN)"),
+]
+
+#: M125-C6 — la couche « proprietaire » citait « Fichiers fonciers (Cerema) » (source NON branchée,
+#: retirée en M125-1ter au profit de DGFiP). On nettoie le détail stocké (la génération est corrigée
+#: en amont ; ceci couvre la donnée non re-jouée).
+_PROPRIO_NOM = [
+    (re.compile(r"\(Fichiers fonciers sous convention non branchés\)"), "(source propriétaire DGFiP non rattachée)"),
+    (re.compile(r"Fichiers fonciers sous convention non branchés"), "source propriétaire DGFiP non rattachée"),
 ]
 
 #: couches concernées par le filet anti-faux-constat de nom (ne touche pas les autres détails).
@@ -111,7 +124,10 @@ def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None
         for rx, repl in _PROXYS_NOM:
             d = rx.sub(repl, d)
         if layer == "sar":               # « SAR » résiduel (« Zonage SAR », « contrainte SAR »…)
-            d = re.sub(r"\bSAR\b", "potentiel foncier Région", d)
+            d = re.sub(r"\bSAR\b", "Potentiel foncier Région", d)
+    if layer == "proprietaire":          # M125-C6 — plus de « Fichiers fonciers » (source non branchée)
+        for rx, repl in _PROPRIO_NOM:
+            d = rx.sub(repl, d)
     d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
     d = re.sub(r"\s{2,}", " ", d)
     d = re.sub(r"\s+([.,;])", r"\1", d)

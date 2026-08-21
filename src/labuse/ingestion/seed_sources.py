@@ -553,6 +553,16 @@ def _migrer_renommages(session: Session) -> None:
         if has_old and not has_new:
             session.execute(text("UPDATE data_sources SET name = :new WHERE name = :old"),
                             {"new": new, "old": old})
+    # M125-C6 — la couche « proprietaire » ne doit plus CITER « Fichiers fonciers (Cerema) » (source
+    # NON branchée, retirée en M125-1ter → SRC_FF = DGFiP). Repointe les résultats cascade STOCKÉS de
+    # l'ancienne source vers DGFiP (la génération le fait déjà pour les runs futurs). Idempotent.
+    _ff = session.execute(text("SELECT id FROM data_sources WHERE name = 'Fichiers fonciers (Cerema)'")).first()
+    _dg = session.execute(text(
+        "SELECT id FROM data_sources WHERE name = 'DGFiP — parcelles des personnes morales'")).first()
+    if _ff and _dg:
+        for _tbl in ("cascade_results", "dryrun_cascade_results"):
+            session.execute(text(f"UPDATE {_tbl} SET data_source_id = :dg WHERE data_source_id = :ff"),
+                            {"dg": _dg[0], "ff": _ff[0]})
     session.flush()
 
 
