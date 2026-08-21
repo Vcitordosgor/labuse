@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import text
@@ -41,6 +42,51 @@ def sources_attribution(*, dpe: bool = False, inpi: bool = False) -> str:
 
 #: rétro-compat (rares appelants sans drapeau) — base sans DPE ni INPI (les deux faux positifs).
 SOURCES_ATTRIBUTION = sources_attribution()
+
+
+# ── M124-B (audit Claude) — NETTOYAGE des libellés servis au client. POINT UNIQUE (écran = papier).
+# Deux dettes, un seul endroit :
+#   B5 — RGPD : l'identité d'une PERSONNE PHYSIQUE (exploitant ICPE nommé « M. X Y », lu de
+#        spatial_layers.name) ne doit pas circuler dans un document (« un PDF va plus loin qu'un
+#        écran ») → anonymisée en « exploitant individuel ». Les personnes MORALES (dénomination
+#        d'une société, fait public DGFiP/INPI) ne sont pas touchées.
+#   B6 — codes techniques BRUTS qui échappent à la couche libellé : barème « (socle ±N) », renvoi
+#        de brief « (§7bis) », jeton interne « (pct_potentiel …) » / « même chemin A4 », et la
+#        MAGNITUDE de scoring « — gisement (valorisation N%) » (Task A : le PDF ne porte pas de score).
+# Read-time UNIQUEMENT : la sortie brute des couches (cascade) est inchangée (contrat testé), on
+# n'assainit qu'au moment de servir la fiche (donc écran ET pdf premium, même source _q_v2_fiche).
+
+#: civilité + nom(s) propre(s) — « M. CADIVEL Daniel », « Mme Martin » — jamais une raison sociale
+#: (pas de civilité). Restreinte à la couche ICPE par l'appelant (seule à exposer une personne physique).
+_NOM_PHYSIQUE = re.compile(
+    r"\bM(?:\.|me|lle|r|onsieur|adame)?\.?\s+"
+    r"[A-ZÀ-Ý][\wÀ-ÿ'’\-]+(?:\s+[A-ZÀ-Ý][\wÀ-ÿ'’\-]+){0,2}")
+
+#: fragments techniques bruts retirés du détail client (B6 + Task A : plus de magnitude de scoring).
+_PURGES_TECH = [
+    (re.compile(r"\s*\(socle\s*[+-]?\d+\)"), ""),                  # barème residuel_socle (« socle -25 »)
+    (re.compile(r"\s*\(§?\s*7\s*bis\)"), ""),                      # renvoi de brief « §7bis »
+    (re.compile(r"\s*\(pct_potentiel[^)]*\)"), ""),                # jeton interne « pct_potentiel ≥ 100 »
+    (re.compile(r"\s*—\s*même chemin A4"), ""),                    # renvoi interne « même chemin A4 »
+    (re.compile(r"\s*—\s*gisement\s*\(valorisation[^)]*\)"), ""),  # magnitude de scoring (surface)
+]
+
+
+def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None:
+    """Assainit UN détail de ligne cascade avant de le servir au client (fiche écran + pdf premium).
+    Idempotent, sûr sur None. Anonymise la personne physique (couche ICPE), purge les codes
+    techniques bruts et corrige le libellé OCS « artificialise » → « artificialisé » (M124-C10)."""
+    if not detail:
+        return detail
+    d = detail
+    if layer == "icpe":
+        d = _NOM_PHYSIQUE.sub("exploitant individuel", d)
+    for rx, repl in _PURGES_TECH:
+        d = rx.sub(repl, d)
+    d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
+    d = re.sub(r"\s{2,}", " ", d)
+    d = re.sub(r"\s+([.,;])", r"\1", d)
+    return d.strip()
 
 
 def pied_de_page_pdf(pdf, doc_label: str, *, dpe: bool = False, inpi: bool = False) -> None:

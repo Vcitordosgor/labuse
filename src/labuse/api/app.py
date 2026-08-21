@@ -2449,6 +2449,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
 
     lines, flags, evenement_detail = [], [], None
     _seen: set = set()
+    # M124-B (audit) — nettoyage CLIENT des libellés (RGPD personne physique + codes techniques
+    # bruts), au POINT UNIQUE de service de la fiche : écran ET pdf premium lisent ces `lines`.
+    from .export_commun import nettoyer_libelle_client
     for r in rows:
         # M46 (Lot D) : DÉDUP des contraintes servies — une même contrainte peut être produite en
         # double par la cascade (intersections multiples d'une même source, ex. « PPR zone rouge
@@ -2466,7 +2469,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "result": r["result"],
             "severity": r["severity"],
             "weight": round(w) if w is not None else None,
-            "detail": _relabel_dvf_terrain(r["layer_name"], r["detail"]),
+            "detail": nettoyer_libelle_client(
+                r["layer_name"], _relabel_dvf_terrain(r["layer_name"], r["detail"])),
             "source": r["source"],
             "source_table": r["source_table"],
             "source_id": r["source_id"],
@@ -3183,7 +3187,8 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
+                    # M124-A4 — nom de fichier {IDU}-labuse.pdf (IDU d'abord : tri/recherche par parcelle).
+                    headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})
 
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
