@@ -282,10 +282,12 @@ export interface ScoreurResult {
   commune?: string
   surface_m2?: number
   verdict?: { tier: string | null; libelle: string; rang: number | null; percentile: number | null }
-  score_e?: { estimable: boolean; marge_estimee: number | null; charge_supportable: number | null
-              prix_probable: number | null; niveau_prix: string | null; libelle_court: string } | null
-  prix?: { prix_demande_eur: number; prix_demande_m2_terrain?: number; marge_a_ce_prix_eur?: number
-           verdict: string; message: string; synthese?: string; avertissement: string }
+  // M128-6-§1 : plus de bloc `score_e` (marge barème sectoriel divergente, retirée aux tiers) ; le
+  // bloc `prix` est un CONSTAT chiffré nu (aucun verdict), charge issue de la méthode documents.
+  prix?: { prix_saisi_eur: number; prix_saisi_m2_terrain?: number
+           prix_probable_foncier_eur?: number; ecart_vs_prix_probable_pct?: number | null
+           charge_fonciere_supportable_eur?: number; marge_a_ce_prix_eur?: number
+           methode?: string; message?: string; avertissement: string }
 }
 export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null) =>
   j<ScoreurResult>('/scoreur-adresse', {

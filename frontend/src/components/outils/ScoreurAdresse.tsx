@@ -11,15 +11,9 @@ import { TierBadge } from './TierBadge'
 // M12-D) + prix demandé (SAISI À LA MAIN — jamais scrapé) → verdict de la parcelle déjà
 // scorée + confrontation du prix à la charge foncière supportable (Score É V2). Hors base →
 // réponse honnête. M12-D4 : cet outil vit désormais dans le tiroir Outils (module panel).
-// M137-S — le badge juge UN SEUL repère : la position sur le marché du foncier (prix probable du
-// terrain). Il ne juge plus l'opération (l'ancien « Opportunité » = prix ≤ charge = repère opération,
-// parti dans la ligne « marge »). Voir scoreur._prix_verdict.
-const PRIX_META: Record<string, { label: string; cls: string }> = {
-  sous_marche: { label: 'Prix du terrain : en dessous du marché', cls: 'text-mint border-mint/50 bg-mint/10' },
-  dans_marche: { label: 'Prix du terrain : dans le marché', cls: 'text-st-creuser border-st-creuser/50 bg-st-creuser/10' },
-  sur_marche: { label: 'Prix du terrain : au-dessus du marché', cls: 'text-st-ecartee border-st-ecartee/50 bg-st-ecartee/10' },
-  non_estimable: { label: 'Prix : non estimable', cls: 'text-txt-dim border-line-2 bg-surface-3' },
-}
+// M128-6-§1.3 — le prix saisi donne un CONSTAT chiffré NU : prix probable du foncier + écart,
+// et marge à ce prix (charge de la méthode DOCUMENTS − prix). AUCUN verdict (« bonne affaire »,
+// « au-dessus du marché », « rentable »…) : on affiche les nombres, le lecteur conclut.
 
 // Module Outils : rendu comme un `() => JSX.Element` dans ModulePanel (en-tête/fermeture
 // fournis par le panneau). D1 (AddressAutocomplete) garantit une adresse normalisée BAN.
@@ -82,31 +76,25 @@ export function ScoreurAdresse() {
               <p className="mt-0.5 text-[10.5px] text-txt-mut">
                 {d.commune} · {fmtM2(d.surface_m2)} · <span className="font-mono">{d.idu}</span>
               </p>
-              {d.score_e?.estimable && (
-                <p className="mt-1.5 text-[11px] text-txt" title={d.score_e.libelle_court}>
-                  {d.score_e.libelle_court}
-                </p>
-              )}
               {d.prix && (
-                <div className="mt-2 border-t border-line pt-2">
-                  {/* M137-S — deux repères NOMMÉS : le badge = position sur le marché du foncier ; */}
-                  <span data-scoreur-prix-verdict className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${PRIX_META[d.prix.verdict]?.cls ?? PRIX_META.non_estimable.cls}`}>
-                    {PRIX_META[d.prix.verdict]?.label ?? d.prix.verdict}
-                  </span>
-                  <p className="mt-1 text-[11px] leading-snug text-txt-mut">{d.prix.message}</p>
-                  {/* … la marge = rentabilité d'une OPÉRATION de promotion (repère explicite). */}
-                  {d.prix.marge_a_ce_prix_eur != null && (
+                <div data-scoreur-prix-constat className="mt-2 border-t border-line pt-2">
+                  {/* M128-6-§1.3 : CONSTAT chiffré NU — aucun badge, aucun verdict. */}
+                  {d.prix.prix_probable_foncier_eur != null && (
+                    <p className="text-[11px] leading-snug text-txt-mut">
+                      Prix probable du foncier : <span className="tnum text-txt">{fmtEur(d.prix.prix_probable_foncier_eur)}</span>
+                      {d.prix.ecart_vs_prix_probable_pct != null && (
+                        <> · écart du prix saisi : <span className="tnum text-txt">{d.prix.ecart_vs_prix_probable_pct > 0 ? '+' : ''}{d.prix.ecart_vs_prix_probable_pct} %</span></>
+                      )}
+                    </p>
+                  )}
+                  {d.prix.marge_a_ce_prix_eur != null ? (
                     <p className="mt-1.5 text-[11px] text-txt">
-                      Pour une opération de promotion :{' '}
-                      <b className={`tnum ${d.prix.marge_a_ce_prix_eur < 0 ? 'text-st-ecartee' : 'text-mint'}`}>marge {fmtEur(d.prix.marge_a_ce_prix_eur)}</b>{' '}à ce prix
+                      Marge à ce prix (méthode documents) : <b className="tnum">{fmtEur(d.prix.marge_a_ce_prix_eur)}</b>
                     </p>
+                  ) : (
+                    d.prix.message && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{d.prix.message}</p>
                   )}
-                  {/* verdict de synthèse : réconcilie badge (marché) et marge (opération) */}
-                  {d.prix.synthese && (
-                    <p data-scoreur-synthese className="mt-1.5 rounded-md bg-surface-3 px-2 py-1.5 text-[10.5px] leading-snug text-txt-mut">
-                      {d.prix.synthese}
-                    </p>
-                  )}
+                  {d.prix.methode && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{d.prix.methode}</p>}
                   <p className="mt-1 text-[9.5px] text-txt-dim">{d.prix.avertissement}</p>
                 </div>
               )}

@@ -78,11 +78,25 @@ donc **permanente jusqu'au mandat de fond**. En conséquence, dans ce mandat :
    (`build_score_e`), la colonne `detail` sera régénérée avec le libellé corrigé ; le filet read-time
    pourra alors être retiré de `app.py`.
 
-**Exposition résiduelle notée (non traitée)** : le verdict de prix opt-in du scoreur
-(`_prix_verdict`, uniquement quand un tiers SAISIT un prix) calcule `marge_a_ce_prix = charge − prix`
-avec la `charge` de `score_e` (méthode divergente) et emploie « charge foncière supportable ».
-C'est une fonctionnalité **distincte et testée** (M137-S) ; sa neutralisation dépasse M128-5.
-**Remonté ici pour arbitrage** au mandat de fond.
+**Exposition `_prix_verdict` — CLÔTURÉE par M128-6.** Le verdict de prix opt-in du scoreur (quand un
+tiers SAISIT un prix) calculait `marge_a_ce_prix = charge − prix` avec la `charge` de `score_e`
+(méthode divergente) et emettait des verdicts (« dans le marché », « rentable »…).
+Corrigé (commit M128-6) :
+- **Branché sur la charge de la méthode DOCUMENTS** (`compute_bilan_servi`, à la volée, 37–237 ms
+  mesurés — non prohibitif, éphémère, aucune bascule). Plus aucune charge `score_e` servie à un tiers.
+- **Renommé `_prix_constat`** et **vidé de tout verdict** (§1.3) : ne sert que des NOMBRES (prix saisi,
+  prix probable + écart, charge documents, marge à ce prix) + méthode. Front-end (`ScoreurAdresse.tsx`)
+  et harnais QA (`qa/m137s/…`) alignés.
+
+**Balayage complet des surfaces (M128-6-§1.4)** — aucune autre route ne sert un chiffre dérivé de
+`score_e` à un tiers :
+- `scoreur d'adresse` → charge **documents**, constat nu (fait ci-dessus) ;
+- `fiche premium / écran` (`score_e_block`) → **renommé** « barème sectoriel » (M128-5), surface
+  OPÉRATEUR, jamais un verdict ;
+- `radar` (`app.py`) → `score_e.marge_estimee` / `charge_supportable` en **prédicat de filtre**
+  (`EXISTS … WHERE`) uniquement, le nombre n'est pas servi ; route opérateur (authentifiée) ;
+- `argumentaire` → `score_e_affiche` lit la charge **documents** (`compute_bilan`), pas la table
+  `score_e` — méthode documents, pas divergente.
 
 ## Dette §2 (vendable > gabarit × rendement) — CLÔTURÉE par M128-5-§1
 
