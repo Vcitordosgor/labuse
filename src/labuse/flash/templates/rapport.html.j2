@@ -192,8 +192,9 @@
      {{ c.au_statut.motif }} <em>(Absent)</em></p>
   {% endif %}
 
-  {# M-RENOUV (M127-A2) : une ligne conditionnelle FACTUELLE — segment d'appartenance seul #}
+  {# M-RENOUV (M127-A2) : segment d'appartenance FACTUEL — sous son propre titre, jamais flottant #}
   {% if c.renouvellement_ligne %}
+  <h3>Renouvellement urbain</h3>
   <p class="note">{{ c.renouvellement_ligne }}</p>
   {% endif %}
 
@@ -253,7 +254,7 @@
   <h2><span class="num">04</span>Patrimoine &amp; environnement</h2>
   {% if pat.rien %}
   <p class="ok-vide">✓ La parcelle n'est concernée par aucun périmètre patrimonial ou
-     environnemental des couches analysées (ABF/Mérimée, espace protégé réglementaire (INPN),
+     environnemental des couches analysées (ABF/Mérimée, Espaces protégés (INPN),
      QPV, Cartofriches, Parc national, forêts publiques).</p>
   {% else %}
   {% if pat.couches %}

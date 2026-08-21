@@ -258,8 +258,8 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 {"idu": idu}).mappings().first()
             if rn:
                 out["renouvellement_ligne"] = (
-                    "Segment Renouvellement — parcelle occupée, potentiel de renouvellement "
-                    "urbain.")
+                    "Parcelle occupée — potentiel de renouvellement urbain (reconstruction "
+                    "ou densification sur le bâti existant).")
         # MANDAT RNU (B3) : étiquetage export — UNE ligne conditionnelle, flag commune-level
         # général (config/rnu_communes.yaml). Jamais d'affirmation de constructibilité RNU.
         from .. import rnu as _rnu
