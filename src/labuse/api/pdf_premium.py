@@ -265,28 +265,25 @@ def _ligne_signal(pdf: _Pdf, point: str, valeur: str, source: str = "") -> None:
 #   • REGROUPE seulement l'ABSENCE AVÉRÉE — le constat commence par « Hors…/Aucun(e)…/Pas une/de…/
 #     Sans objet », OU une donnée absente (« … non couverte/disponible/ingérée/renseignée/recensée »),
 #     OU « hors îlot » / « aucune contrainte … déduite ».
-_PORTEUR_RX = re.compile(
-    r"\b(fort\w*|modér\w*|moyen\w*|élevé\w*|faible\w*|impos\w+|rétention|infiltration|obligation|"
-    r"prescrit\w*|recul\b|respecter|vérifier|confirmer|instruire|présence|probable|possible|"
-    r"covisibil\w*|saturé\w*|surélévation|exclue\w*)\b", re.IGNORECASE)
+# M126-D — l'ABSENCE EN TÊTE prime : un constat qui COMMENCE par « Hors… / Aucun(e)… / Pas une/de… /
+# Sans objet » est une absence avérée, même s'il contient plus loin un mot qui ressemble à une
+# prescription (« Hors zone de RECUL du trait de côte » : « recul » ne la rend pas porteuse). Vérifié :
+# TOUS les constats débutant par ces mots sont de vraies absences (aucun « Aucun accès — enclavé »).
 _DATAGAP_RX = re.compile(r"\bnon (couvert|disponible|ingér|renseign|recens)\w*", re.IGNORECASE)
 _ABSENCE_DEBUT_RX = re.compile(r"^\s*(hors\b|aucun|sans objet|pas une |pas de |non concern)", re.IGNORECASE)
 
 
 def _sans_signal(ln: dict) -> bool:
-    """M126-C — vrai UNIQUEMENT si le CONTENU du constat est une absence avérée (à regrouper en fin de
-    document). Un constat porteur (valeur qualifiée, prescription, incertitude, finding) reste."""
+    """M126-C/D — vrai UNIQUEMENT si le CONTENU du constat est une absence avérée (regroupé en fin de
+    document) : absence EN TÊTE (« Hors… / Aucun… / Pas une… / Sans objet »), OU donnée absente
+    (« … non couverte/disponible/ingérée/renseignée/recensée »), OU « hors îlot » / « aucune contrainte
+    … déduite ». Tout le reste (valeur qualifiée, prescription, incertitude, finding) RESTE dans l'onglet."""
     d = (ln.get("detail") or "").strip()
     if not d:
         return True
-    if _PORTEUR_RX.search(d):           # prescription / valeur graduée / incertitude / exclusion → RESTE
-        return False
     dl = d.lower()
-    if _DATAGAP_RX.search(dl):           # donnée non couverte/disponible → rien à afficher
-        return True
-    if _ABSENCE_DEBUT_RX.search(d):      # absence avérée EN TÊTE du constat (« Hors… », « Aucun… »)
-        return True
-    return "hors îlot" in dl or ("aucune contrainte" in dl and "déduite" in dl)
+    return bool(_ABSENCE_DEBUT_RX.search(d) or _DATAGAP_RX.search(dl)
+                or "hors îlot" in dl or ("aucune contrainte" in dl and "déduite" in dl))
 
 
 def _bloc_plan(pdf: _Pdf, fiche: dict) -> None:
