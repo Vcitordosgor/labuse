@@ -164,7 +164,7 @@ def niveau_prix_label(niveau: str | None, n: int | None = None) -> str:
     if niveau == "override_bassin":
         return "Estimé — prix de bassin sourcé (observatoire)"
     if niveau == "ile_validee":
-        return "Estimé — estimation île, ± 12 %, validée sur cette commune"
+        return "Estimé — estimation à l'échelle de l'île (± 12 %)"
     if niveau == "ile_sans_operation":
         return "Estimé — estimation île, aucune opération de marché observée sur cette commune"
     return "Estimé"

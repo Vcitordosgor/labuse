@@ -60,10 +60,11 @@ def test_eur_format():
     assert bq.eur(None) == "—" and "M€" in bq.eur(2_500_000) and "k€" in bq.eur(350_000)
 
 
-def test_bilan_porte_score_e_et_estime():
+def test_bilan_porte_marge_fonciere_et_estime():
     html = bq.bilan(_out_complet())
-    assert "Score É" in html and "charge foncière" in html.lower()
-    assert "Estimé" in html and "250 k€" in html          # marge Score É rendue
+    assert "Marge foncière estimée" in html and "charge foncière" in html.lower()
+    assert "Estimé" in html and "250 k€" in html          # marge foncière estimée rendue
+    assert "Score É" not in html                           # M128-B7 — libellé interne retiré de la vitrine
     assert "RR" not in html and "percentile" not in html   # jamais de score interne en vitrine
 
 

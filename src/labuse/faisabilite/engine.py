@@ -281,14 +281,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     if _is_num(rules.he_m):
         niveaux = int(float(rules.he_m) // hyp.etage_m)
         steps.append(Step("Niveaux constructibles",
-                          f"hé {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",
+                          f"hauteur d'égout retenue {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",
                           f"R+{max(0, niveaux - 1)}", he_src))
     elif _is_num(rules.hf_m):
         niveaux = max(1, int((float(rules.hf_m) - hyp.etage_m) // hyp.etage_m))
         avert.append(f"Hauteur égout (hé) non précisée pour {rules.code} : niveaux estimés "
                      f"depuis hf {rules.hf_m:g} m (prudent).")
         steps.append(Step("Niveaux constructibles",
-                          f"hé non précisé → (hf {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
+                          f"hauteur d'égout non précisée → (hauteur faîtage {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
                           f"R+{max(0, niveaux - 1)}", he_src))
     else:
         return fini(False, "Hauteur non disponible (à_vérifier) — capacité non calculable.",

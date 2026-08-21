@@ -34,7 +34,8 @@ def test_niveau_label_client_visible():
     # mandat couverture prix (Vic 28/07/2026) : 4 niveaux de confiance, jamais de fausse précision.
     assert se.niveau_label("secteur") == "estimation niveau secteur"
     assert se.niveau_label("commune") == "estimation niveau commune"
-    assert "validée sur cette commune" in se.niveau_label("ile_validee")
+    assert se.niveau_label("ile_validee") == "estimation à l'échelle de l'île (± 12 %)"
+    assert "validée" not in se.niveau_label("ile_validee")   # M128-C10 — plus d'auto-validation commune
     assert "aucune opération de marché observée" in se.niveau_label("ile_sans_operation")
     assert "non déterminé" in se.niveau_label(None)
 

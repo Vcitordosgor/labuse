@@ -106,15 +106,17 @@ def _facts_synthese(out: dict, core_mod):
     # M54-AB C3 : la marge SYNTHÉTISÉE découle de la charge du bilan à rebours (point de calcul
     # unique), jamais de la charge Score É recalculée à 21 % — sinon la synthèse cite -18 k€ et le
     # bloc Score É -19 k€ dans le même dossier.
+    from ..ingestion.score_e import niveau_label
     from .briques_pdf import score_e_affiche
     sa = score_e_affiche(out)
     if sa:
         # M97 G2 : la provenance de la charge entre dans le FAIT synthétisé — la prose IA ne peut
-        # pas attribuer au bilan une charge qui vient du repli Score É (bilan indisponible).
+        # pas attribuer au bilan une charge qui vient du repli barème sectoriel (bilan indisponible).
+        # M128-B7 : plus de « Score É » (libellé interne) en vitrine ; niveau en clair, jamais le code.
         prov = ("charge du bilan à rebours" if sa["charge_du_bilan"]
-                else "charge estimée par le Score É, bilan complet indisponible")
+                else "charge estimée au barème sectoriel, bilan complet indisponible")
         facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} "
-                           f"({prov} ; prix de sortie neuf, niveau {sa['niveau_prix']})", "ESTIME")
+                           f"({prov} ; prix de sortie neuf, {niveau_label(sa['niveau_prix'])})", "ESTIME")
     perm = out.get("permits")
     if perm and perm.get("n"):
         facts["permis_voisins"] = F(f"{perm['n']} permis de construire dans le voisinage récent", "SOURCE")
