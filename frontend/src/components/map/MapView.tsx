@@ -178,10 +178,11 @@ const OVERLAYS = {
   // (même teinte identitaire, doctrine M105-B) — comme `zonage` porte déjà une expression data-driven.
   qpv: { paint: { 'fill-color': T_SOMBRE.qpv, 'fill-opacity': T_SOMBRE.qpvOpacity, 'fill-outline-color': T_SOMBRE.qpv } },
   tva_primo: { paint: { 'fill-color': T_SOMBRE.tvaPrimo, 'fill-opacity': T_SOMBRE.tvaPrimoOpacity, 'fill-outline-color': T_SOMBRE.tvaPrimo } },
-  zfang: { paint: { 'fill-color': T_SOMBRE.zfang, 'fill-outline-color': T_SOMBRE.zfang,
-    'fill-opacity': ['match', ['get', 'subtype'], 'renforce', T_SOMBRE.zfangOpRenforce, T_SOMBRE.zfangOpStandard] } },
-  frr: { paint: { 'fill-color': T_SOMBRE.frr, 'fill-outline-color': T_SOMBRE.frr,
-    'fill-opacity': ['match', ['get', 'subtype'], 'totalite', T_SOMBRE.frrOpTotalite, T_SOMBRE.frrOpPartie] } },
+  // M137-X — ZFANG/FRR : APLAT plein pour l'état de base ; l'AUTRE état (ZFANG renforcée / FRR en
+  // partie) est marqué par des HACHURES (couche `-trame` dédiée) — texture catégorielle, plus le
+  // dégradé d'opacité ambigu d'avant. Une seule opacité d'aplat par dispositif.
+  zfang: { paint: { 'fill-color': T_SOMBRE.zfang, 'fill-outline-color': T_SOMBRE.zfang, 'fill-opacity': T_SOMBRE.zfangOpStandard } },
+  frr: { paint: { 'fill-color': T_SOMBRE.frr, 'fill-outline-color': T_SOMBRE.frr, 'fill-opacity': T_SOMBRE.frrOpTotalite } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
@@ -248,10 +249,13 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   // (l'intensité du régime ne dépend pas du thème), on ne met à jour que la couleur (aplat + contour).
   set('ov-qpv', 'fill-color', t.qpv); set('ov-qpv', 'fill-opacity', t.qpvOpacity); set('ov-qpv', 'fill-outline-color', t.qpv)
   set('ov-tva_primo', 'fill-color', t.tvaPrimo); set('ov-tva_primo', 'fill-opacity', t.tvaPrimoOpacity); set('ov-tva_primo', 'fill-outline-color', t.tvaPrimo)
-  set('ov-zfang', 'fill-color', t.zfang); set('ov-zfang', 'fill-outline-color', t.zfang)
-  set('ov-zfang', 'fill-opacity', ['match', ['get', 'subtype'], 'renforce', t.zfangOpRenforce, t.zfangOpStandard] as never)
-  set('ov-frr', 'fill-color', t.frr); set('ov-frr', 'fill-outline-color', t.frr)
-  set('ov-frr', 'fill-opacity', ['match', ['get', 'subtype'], 'totalite', t.frrOpTotalite, t.frrOpPartie] as never)
+  // M137-X — aplat plein (une opacité) + hachure sur l'état « fort » ; le motif suit le thème.
+  set('ov-zfang', 'fill-color', t.zfang); set('ov-zfang', 'fill-outline-color', t.zfang); set('ov-zfang', 'fill-opacity', t.zfangOpStandard)
+  set('ov-frr', 'fill-color', t.frr); set('ov-frr', 'fill-outline-color', t.frr); set('ov-frr', 'fill-opacity', t.frrOpTotalite)
+  for (const [src, , tok] of DISPO_TRAMES) {
+    set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
+    set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
+  }
   set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
   set('ov-50pas-line', 'line-color', t.cinquantePas)
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
@@ -326,6 +330,12 @@ function makeTrame(m: maplibregl.Map, id: string, color: string, orient: 'slash'
 }
 // M105-B : trame ANRU (chartreuse claire — opacité 0 en Sombre, posée en Clair)
 const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.clair.anru, 'slash')
+// M137-X — les deux trames de dispositif : [source, subtype MARQUÉ par la hachure, token couleur, orientation].
+// ZFANG renforcée (slash) · FRR en partie (backslash) — orientations distinctes (superposables).
+const DISPO_TRAMES = [
+  ['ov-zfang', 'renforce', 'zfang', 'slash'],
+  ['ov-frr', 'partie', 'frr', 'backslash'],
+] as const
 // M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
 // partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
 const aleaOpacityExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
@@ -485,7 +495,8 @@ export function MapView() {
   // M106 P4 : transport public (tracés + pôles + Papang, 3 kinds servis île) et lignes HT
   const transLignes = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
   const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.transport })
-  const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.transport })
+  // M137-X — les pôles d'échange rejoignent « Axes structurants » (nœuds du réseau structurant).
+  const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
   // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
@@ -632,6 +643,15 @@ export function MapView() {
           paint: { 'fill-pattern': `${c.trame}-sombre`, 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
         m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
           paint: { 'line-color': T_SOMBRE[c.token], 'line-width': T_SOMBRE.aleaContourW, 'line-opacity': 0.9 } })
+      }
+      // M137-X — trame ZFANG/FRR : l'état « fort » (renforcée / en partie) se lit à la HACHURE
+      // (aplat = état de base), texture catégorielle plutôt qu'un dégradé d'opacité ambigu.
+      for (const [src, sub, tok, orient] of DISPO_TRAMES) {
+        makeTrame(m, `trame-${tok}-sombre`, MAP_THEME.sombre[tok], orient)
+        makeTrame(m, `trame-${tok}-clair`, MAP_THEME.clair[tok], orient)
+        m.addLayer({ id: `${src}-trame`, type: 'fill', source: src,
+          filter: ['==', ['get', 'subtype'], sub] as never, layout: { visibility: 'none' },
+          paint: { 'fill-pattern': 'trame-' + tok + '-sombre', 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
       }
       // M106 P4 / M106-B : TRANSPORT PUBLIC — LA COULEUR DIT LE RÉSEAU, LA FORME DIT LE TYPE :
       // tracé = trait · arrêt = petit point (minzoom 12, sinon 9 956 points noient l'île) ·
@@ -1061,18 +1081,22 @@ export function MapView() {
     m.setLayoutProperty('ov-qpv', 'visibility', vis(layers.qpv))
     m.setLayoutProperty('ov-tva_primo', 'visibility', vis(layers.tva_primo))
     m.setLayoutProperty('ov-zfang', 'visibility', vis(layers.zfang))
+    m.setLayoutProperty('ov-zfang-trame', 'visibility', vis(layers.zfang))   // M137-X — hachure ZFANG renforcée
     m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
+    m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-X — hachure FRR en partie
     // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))
       m.setLayoutProperty(`${id}-trame`, 'visibility', vis(on))
       m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
     }
-    // M106 P4 / M106-B : transport public (tracés + arrêts + pôles + Papang), axes et lignes HT
-    for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-tele-st']) {
+    // M106 P4 / M106-B : transport public (tracés + arrêts + Papang) — M137-X : les pôles d'échange
+    // ont quitté cette couche pour « Axes structurants » (leur vraie famille : nœuds du réseau).
+    for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-tele', 'ov-tele-st']) {
       m.setLayoutProperty(id, 'visibility', vis(layers.transport))
     }
     m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
+    m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
