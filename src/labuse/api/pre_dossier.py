@@ -244,8 +244,9 @@ def _pdf_a4():
     return pdf
 
 
-def _nord_echelle(pdf, y0: float, disp_w: float, disp_h: float, plan: dict) -> None:
-    """Barre d'échelle (bas-gauche, valeur ronde) + flèche Nord (haut-droite) — repris de premium."""
+def _nord_echelle(pdf, y0: float, disp_w: float, disp_h: float, plan: dict, x_img: float = 14) -> None:
+    """Barre d'échelle (bas-gauche, valeur ronde) + flèche Nord (haut-droite) — repris de premium.
+    `x_img` : bord gauche de l'image (l'image peut être recentrée si recadrée « portrait »)."""
     mm_par_srcpx = disp_w / plan["width"]
     mpp = plan.get("metres_par_px")
     if mpp:
@@ -254,7 +255,7 @@ def _nord_echelle(pdf, y0: float, disp_w: float, disp_h: float, plan: dict) -> N
         p = 10 ** math.floor(math.log10(cible_m)) if cible_m > 0 else 1
         nice = next((f * p for f in (5, 2, 1) if f * p <= cible_m), p)
         bar_mm = nice / m_par_mm
-        bx, by = 18, y0 + disp_h - 6
+        bx, by = x_img + 4, y0 + disp_h - 6
         pdf.set_fill_color(255, 255, 255)
         pdf.rect(bx - 2, by - 3.4, bar_mm + 4, 6.4, style="F")
         pdf.set_draw_color(*_ENCRE)
@@ -267,13 +268,14 @@ def _nord_echelle(pdf, y0: float, disp_w: float, disp_h: float, plan: dict) -> N
         pdf.set_xy(bx, by - 3.4)
         pdf.cell(bar_mm, 2.2, f"{round(nice)} m", align="C")
         pdf.set_line_width(0.2)
+    nx = x_img + disp_w - 8
     pdf.set_fill_color(255, 255, 255)
-    pdf.rect(pdf.w - 22, y0 + 2, 6, 8, style="F")
+    pdf.rect(nx, y0 + 2, 6, 8, style="F")
     pdf.set_font("mono", size=7)
     pdf.set_text_color(*_ENCRE)
-    pdf.set_xy(pdf.w - 22, y0 + 2.2)
+    pdf.set_xy(nx, y0 + 2.2)
     pdf.cell(6, 3.4, "N", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_xy(pdf.w - 22, y0 + 5.4)
+    pdf.set_xy(nx, y0 + 5.4)
     pdf.cell(6, 3.4, "^", align="C")
 
 
@@ -317,12 +319,20 @@ def _carte_page(pdf, titre: str, sous_titre: str, plan: dict, note: str,
     pdf.ln(1)
     disp_w = pdf.w - 28
     if plan.get("ok"):
-        disp_h = disp_w * (plan["height"] / plan["width"])
         y0 = pdf.get_y()
-        pdf.image(io.BytesIO(plan["jpeg"]), x=14, y=y0, w=disp_w, h=disp_h)
+        disp_h = disp_w * (plan["height"] / plan["width"])
+        x_img = 14
+        # M129-3 : borner par la HAUTEUR dispo (image recadrée parfois « portrait ») pour que Nord,
+        # échelle et note restent sur LA MÊME page — jamais de pages vides poussées par un débordement.
+        avail_h = pdf.h - y0 - 40
+        if disp_h > avail_h:
+            disp_h = avail_h
+            disp_w = disp_h * (plan["width"] / plan["height"])
+            x_img = (pdf.w - disp_w) / 2
+        pdf.image(io.BytesIO(plan["jpeg"]), x=x_img, y=y0, w=disp_w, h=disp_h)
         if cotes:
-            cotes(pdf, 14, y0, disp_w / plan["width"])
-        _nord_echelle(pdf, y0, disp_w, disp_h, plan)
+            cotes(pdf, x_img, y0, disp_w / plan["width"])
+        _nord_echelle(pdf, y0, disp_w, disp_h, plan, x_img=x_img)
         pdf.set_y(y0 + disp_h + 1.5)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(120, 130, 124)
@@ -474,7 +484,10 @@ def _pcmi2(db: Session, parcelle: dict) -> bytes:
         pdf.set_font("mono", size=7)
         pdf.set_text_color(*_ENCRE)
         pdf.set_xy(x1, yb + 3.4)
-        pdf.cell(draw_w, 3, f"{int(round(w_m))} m", align="C")
+        pdf.cell(draw_w, 3, f"{int(round(w_m))} m", align="C")             # cote largeur (horizontale)
+        # M129-3 §2 : la cote VERTICALE (profondeur) est LIBELLÉE, même style — à gauche du trait.
+        pdf.set_xy(x1 - 16, oy + draw_h / 2 - 1.5)
+        pdf.cell(11, 3, f"{int(round(h_m))} m", align="R")
         # barre d'échelle + Nord + mention d'échelle (sous la barre, sans chevauchement)
         _nord_echelle_mm(pdf, ox, oy, draw_w, draw_h, mm_par_m)
         pdf.set_xy(20, oy + draw_h + 16)
@@ -572,78 +585,85 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
     return _html_pdf(body, "PCMI4 — Notice décrivant le terrain")
 
 
-def _points_de_vue(db: Session, idu: str, rayon_m: float = 70.0, n_max: int = 4) -> list[tuple]:
+#: nombre de positions de prise de vue VISÉES (avant filtrage accessibilité)
+_PDV_VISE = 4
+
+
+def _points_de_vue(db: Session, idu: str, rayon_m: float = 70.0, n_max: int = _PDV_VISE) -> list[tuple]:
     """M129-2 G — positions de prise de vue ACCESSIBLES : points sur la VOIRIE publique proche
-    (spatial_layers kind='voirie', le point le plus proche de chaque tronçon voisin), donc jamais sur
-    du bâti. Renvoie [(lon, lat), …] triés par proximité ; vide si aucune voirie dans le rayon."""
+    (spatial_layers kind='voirie', point le plus proche de chaque tronçon voisin), donc jamais sur du
+    bâti. M129-3 : dédupliquées sur une grille 10 m (tronçons contigus d'une même rue). Renvoie
+    [(lon, lat), …] triées par proximité ; vide si aucune voirie dans le rayon."""
     rows = db.execute(text(
-        """WITH p AS (SELECT geom_2975 g, ST_Centroid(geom_2975) c FROM parcels WHERE idu = :idu)
+        """WITH p AS (SELECT geom_2975 g, ST_Centroid(geom_2975) c FROM parcels WHERE idu = :idu),
+                cand AS (SELECT ST_ClosestPoint(sl.geom_2975, (SELECT c FROM p)) AS pt,
+                                ST_Distance(sl.geom_2975, (SELECT c FROM p)) AS d
+                         FROM spatial_layers sl, p
+                         WHERE sl.kind = 'voirie' AND ST_DWithin(sl.geom_2975, p.g, :r)),
+                dedup AS (SELECT DISTINCT ON (ST_SnapToGrid(pt, 10)) pt, d FROM cand
+                          ORDER BY ST_SnapToGrid(pt, 10), d)
            SELECT ST_X(ST_Transform(pt, 4326)) AS lon, ST_Y(ST_Transform(pt, 4326)) AS lat
-           FROM (SELECT ST_ClosestPoint(sl.geom_2975, (SELECT c FROM p)) AS pt,
-                        ST_Distance(sl.geom_2975, (SELECT c FROM p)) AS d
-                 FROM spatial_layers sl, p
-                 WHERE sl.kind = 'voirie' AND ST_DWithin(sl.geom_2975, p.g, :r)
-                 ORDER BY d LIMIT :n) q"""),
+           FROM dedup ORDER BY d LIMIT :n"""),
         {"idu": idu, "r": rayon_m, "n": n_max}).mappings().all()
     return [(r["lon"], r["lat"]) for r in rows]
 
 
 def _pcmi78(db: Session, parcelle: dict) -> bytes:
     """D (PCMI7/8) — carte des prises de vue RECOMMANDÉES (proche + lointain), Nord + échelle.
-    M129-2 G : positions ACCESSIBLES (sur voirie publique, jamais sur du bâti) ; si aucune, le dit."""
+    M129-3 §1 : numérotation 1..N CONTINUE, titre DYNAMIQUE, cadrage qui CONTIENT la parcelle ET tous
+    les points retenus, cas dégradés explicites (0 point, ou moins que visé)."""
     from .plan_situation import plan_ortho
     cd = _tiles_dir()
     gj = parcelle["geojson"]
-    idu = parcelle["idu"]
-    # centroïde parcelle en lon/lat (pour projeter les points de vue dans le repère image)
-    c = db.execute(text("SELECT ST_X(ST_Transform(ST_Centroid(geom_2975),4326)) lon, "
-                        "ST_Y(ST_Transform(ST_Centroid(geom_2975),4326)) lat FROM parcels WHERE idu=:i"),
-                   {"i": idu}).mappings().first() or {}
-    lon0, lat0 = c.get("lon"), c.get("lat")
-    vues = _points_de_vue(db, idu)
+    vues = _points_de_vue(db, parcelle["idu"])
+    n = len(vues)
+    # titre/sous-titre dynamiques (M129-3 §1.2) + cas dégradés (§1.4)
+    if n == 0:
+        sous = "Aucune position accessible : pas de voirie publique relevée assez proche."
+        deg = ("Aucun point n'a pu être placé (pas de voirie publique à proximité) — le pétitionnaire "
+               "choisit ses prises de vue depuis la voie publique.")
+    else:
+        sous = (f"Point 1 sur la voirie publique proche (accessible), face à la parcelle." if n == 1
+                else f"Points 1 à {n} sur la voirie publique proche (accessibles), face à la parcelle.")
+        deg = ("" if n >= _PDV_VISE else
+               f" {n} position(s) placée(s) sur {_PDV_VISE} visées : les autres ont été écartées "
+               "(non accessibles depuis la voirie publique).")
 
     def _draw(pdf, x0, y0, scale, plan):
         rings = plan.get("parcel_px") or []
-        if not rings or lon0 is None:
+        fpx = plan.get("focus_px") or []
+        if not rings:
             return
-        mpp = plan.get("metres_par_px") or 0.5
         xs = [px for r in rings for px, _ in r]
         ys = [py for r in rings for _, py in r]
         cx, cy = (min(xs) + max(xs)) / 2 * scale + x0, (min(ys) + max(ys)) / 2 * scale + y0
-        if not vues:
-            pdf.set_font("inter", size=7.5)
+        if not fpx:                                          # §1.4 : aucun point → le dire, ne rien tracer
+            pdf.set_font("inter", size=8)
             pdf.set_text_color(150, 90, 40)
             pdf.set_xy(x0 + 4, y0 + 4)
-            pdf.cell(0, 4, "Aucune position accessible identifiée à proximité (pas de voirie publique "
-                     "relevée) — le pétitionnaire choisit ses prises de vue depuis la voie publique.")
+            pdf.multi_cell(90, 4, "Aucune position accessible identifiée à proximité.")
             return
-        for i, (lon, lat) in enumerate(vues, 1):
-            dxm = (lon - lon0) * 111320.0 * math.cos(math.radians(lat0))
-            dym = (lat - lat0) * 110540.0
-            px, py = cx + (dxm / mpp) * scale, cy - (dym / mpp) * scale
+        for i, (px0, py0) in enumerate(fpx, 1):              # §1.1 : 1..N continu, MÊME repère (focus_px)
+            px, py = px0 * scale + x0, py0 * scale + y0
             pdf.set_draw_color(*_ENCRE)
             pdf.set_line_width(0.4)
-            pdf.line(px, py, cx, cy)                       # visée vers la parcelle
+            pdf.line(px, py, cx, cy)                          # visée vers la parcelle
             pdf.set_fill_color(74, 222, 128)
             pdf.ellipse(px - 3.4, py - 3.4, 6.8, 6.8, style="DF")
             pdf.set_font("display", size=8)
             pdf.set_text_color(17, 24, 20)
             pdf.set_xy(px - 3.4, py - 2.4)
-            pdf.cell(6.8, 4, str(i), align="C")            # numéro lisible dans la pastille
+            pdf.cell(6.8, 4, str(i), align="C")              # §1.1 numéro lisible dans la pastille
 
-    prox = plan_ortho(gj, cd, zoom_delta=0, crop_margin_m=80.0)   # proche : parcelle + voirie visées
-    loin = plan_ortho(gj, cd, zoom_delta=-2)                      # lointain : paysage large
-    n = len(vues)
-    sous = (f"Points 1 à {n} sur la voirie publique proche (accessibles), face à la parcelle."
-            if n else "Aucune position accessible relevée à proximité (voir la carte).")
+    # §1.3 : le recadrage CONTIENT la parcelle ET tous les points (focus_points → crop élargi).
+    prox = plan_ortho(gj, cd, zoom_delta=0, crop_margin_m=25.0, focus_points=vues or None)
+    loin = plan_ortho(gj, cd, zoom_delta=-2, focus_points=vues or None)
     pdf = _pdf_a4()
     _carte_page(pdf, "PCMI7 — Prises de vue recommandées (environnement proche)", sous, prox,
-                "Positions RECOMMANDÉES (pas une prescription), placées sur la voirie publique — le "
-                "pétitionnaire ajuste selon l'accès réel et la végétation.",
+                "Positions RECOMMANDÉES (pas une prescription), placées sur la voirie publique." + deg,
                 cotes=lambda p, x, y, s: _draw(p, x, y, s, prox))
-    _carte_page(pdf, "PCMI8 — Prises de vue recommandées (paysage lointain)",
-                "Mêmes points, vus dans le paysage lointain.", loin,
-                "Positions RECOMMANDÉES (pas une prescription).",
+    _carte_page(pdf, "PCMI8 — Prises de vue recommandées (paysage lointain)", sous, loin,
+                "Mêmes points, vus dans le paysage lointain. Positions RECOMMANDÉES." + deg,
                 cotes=lambda p, x, y, s: _draw(p, x, y, s, loin))
     return bytes(pdf.output())
 

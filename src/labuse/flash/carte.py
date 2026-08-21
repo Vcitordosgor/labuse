@@ -73,7 +73,8 @@ IGN_ORTHO_ATTRIBUTION = "© IGN — BD ORTHO"
 def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float = 10.0,
                         tile_url: str = TILE_URL, tile_mime: str = "image/png",
                         cache_prefix: str = "osm", attribution: str = ATTRIBUTION,
-                        zoom_delta: int = 0, extra_geojson: str | None = None) -> dict | None:
+                        zoom_delta: int = 0, extra_geojson: str | None = None,
+                        focus_points: list | None = None) -> dict | None:
     """Prépare la carte de situation : tuiles positionnées + tracé SVG de la parcelle.
 
     Retourne un dict prêt pour le template (tiles, polygones en px, dimensions,
@@ -132,8 +133,12 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float =
             return out
         polygons = _project(rings)
         extra_polygons = _project(_rings(json.loads(extra_geojson))) if extra_geojson else []
+        # M129-3 : points d'intérêt (prises de vue) projetés dans le MÊME repère pixel, pour
+        # (a) élargir le cadrage/recadrage afin de les CONTENIR, (b) les dessiner à la bonne place.
+        focus_px = [(_lonlat_to_px(lon, lat, zoom)[0] - left, _lonlat_to_px(lon, lat, zoom)[1] - top)
+                    for lon, lat in (focus_points or [])]
         return {"width": VIEW_W, "height": VIEW_H, "tiles": tiles,
-                "polygons": polygons, "extra_polygons": extra_polygons,
+                "polygons": polygons, "extra_polygons": extra_polygons, "focus_px": focus_px,
                 "attribution": attribution, "zoom": zoom}
     except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
         log.warning("carte de situation indisponible (%s: %s) — rapport sans carte",

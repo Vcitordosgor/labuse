@@ -47,7 +47,7 @@ def _lat_repr(geojson_str: str) -> float | None:
 
 def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 10.0,
                zoom_delta: int = 0, extra_geojson: str | None = None,
-               crop_margin_m: float | None = None) -> dict:
+               crop_margin_m: float | None = None, focus_points: list | None = None) -> dict:
     """Composite l'ortho + contour → PNG. Renvoie toujours un dict :
     - succès : {ok:True, jpeg, width, height, zoom, metres_par_px, attribution}
     - échec  : {ok:False, echec:"<raison explicite>"} (jamais un cadre vide, jamais masqué).
@@ -59,7 +59,8 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
     m = build_situation_map(geojson_str, cache_dir=cache_dir, timeout_s=timeout_s,
                             tile_url=IGN_ORTHO_URL, tile_mime="image/jpeg",
                             cache_prefix="ortho", attribution=IGN_ORTHO_ATTRIBUTION,
-                            zoom_delta=zoom_delta, extra_geojson=extra_geojson)
+                            zoom_delta=zoom_delta, extra_geojson=extra_geojson,
+                            focus_points=focus_points)
     if m is None:
         return {"ok": False, "echec": "fond cartographique indisponible — service ortho ou réseau injoignable"}
     if not m.get("tiles"):
@@ -112,9 +113,12 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
     # la vue. Pour un PLAN DE MASSE lisible, on RECADRE l'image sur l'emprise de la parcelle + une
     # marge courte (mètres) : la parcelle remplit alors la feuille, à une échelle du domaine plan de
     # masse. Le mètre/px (échelle graphique) est INCHANGÉ (même zoom, simple recadrage).
+    focus_px = list(m.get("focus_px") or [])
     if crop_margin_m is not None and metres_par_px:
-        allpx = [pt for r in rings for pt in r]
-        xs, ys = [x for x, _ in allpx], [y for y, _ in allpx]
+        # M129-3 §1.3 : le recadrage CONTIENT la parcelle ET tous les points d'intérêt (prises de vue)
+        # + la marge — si un point sort, c'est le cadrage qui s'élargit, jamais le point qui déborde.
+        allpx = [pt for r in rings for pt in r] + focus_px
+        xs, ys = [x for x, _ in allpx], [y for _, y in allpx]
         mpx = crop_margin_m / metres_par_px
         l0, t0 = max(0, int(min(xs) - mpx)), max(0, int(min(ys) - mpx))
         r0, b0 = min(w, int(max(xs) + mpx)), min(h, int(max(ys) + mpx))
@@ -122,10 +126,12 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
             img = img.crop((l0, t0, r0, b0))
             w, h = r0 - l0, b0 - t0
             rings = [[(x - l0, y - t0) for x, y in r] for r in rings]
+            focus_px = [(x - l0, y - t0) for x, y in focus_px]
 
     # JPEG (photo aérienne) : ~10× plus léger que PNG pour le poids du PDF ; le contour mint survit à q78.
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=78, optimize=True)
     return {"ok": True, "jpeg": buf.getvalue(), "width": w, "height": h,
             "zoom": zoom, "metres_par_px": metres_par_px, "attribution": m.get("attribution"),
-            "parcel_px": rings}    # contour parcelle en pixels de l'image RENDUE (recadrée si crop)
+            "parcel_px": rings,          # contour parcelle en pixels de l'image RENDUE (recadrée si crop)
+            "focus_px": focus_px}        # points de vue projetés dans le MÊME repère (recadré)
