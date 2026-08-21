@@ -623,7 +623,7 @@ def _pcmi78(db: Session, parcelle: dict) -> bytes:
         deg = ("Aucun point n'a pu être placé (pas de voirie publique à proximité) — le pétitionnaire "
                "choisit ses prises de vue depuis la voie publique.")
     else:
-        sous = (f"Point 1 sur la voirie publique proche (accessible), face à la parcelle." if n == 1
+        sous = ("Point 1 sur la voirie publique proche (accessible), face à la parcelle." if n == 1
                 else f"Points 1 à {n} sur la voirie publique proche (accessibles), face à la parcelle.")
         deg = ("" if n >= _PDV_VISE else
                f" {n} position(s) placée(s) sur {_PDV_VISE} visées : les autres ont été écartées "
