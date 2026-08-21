@@ -256,6 +256,10 @@ interface AppState {
   setFicheTiroir: (idu: string, tiroir: string | null) => void
   layers: LayerToggles
   toggleLayer: (k: keyof LayerToggles) => void
+  // M137-V — filtre par domaine de la couche « Équipements (INSEE BPE) » : codes A..G visibles.
+  // Défaut = tous. Sans lui, à l'échelle île les ~16 k services (A) noient les autres domaines.
+  bpeDomains: string[]
+  toggleBpeDomain: (code: string) => void
   panelOpen: boolean
   togglePanel: () => void
   query: string
@@ -469,6 +473,13 @@ export const useApp = create<AppState>((set) => ({
     const next = { ...s.layers, [k]: !s.layers[k] }
     if (k === 'zonage_parcelle' && next.zonage_parcelle) next.parcelles = true
     return { layers: next }
+  }),
+  // M137-V — un domaine BPE ne peut jamais tomber à zéro visible : décocher le dernier les rallume tous.
+  bpeDomains: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+  toggleBpeDomain: (code) => set((s) => {
+    const has = s.bpeDomains.includes(code)
+    const next = has ? s.bpeDomains.filter((c) => c !== code) : [...s.bpeDomains, code]
+    return { bpeDomains: next.length ? next : ['A', 'B', 'C', 'D', 'E', 'F', 'G'] }
   }),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

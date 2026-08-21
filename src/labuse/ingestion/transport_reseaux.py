@@ -17,6 +17,13 @@ Quatre kinds nouveaux dans spatial_layers (île entière, commune=NULL — servi
 
 Ingestion versionnée (IngestionRun), idempotente (DELETE kind avant ré-insertion),
 millésimes amont écrits dans data_sources (jamais la date d'ingestion en dur).
+
+M137-V — BACKLOG (trou de couverture GTFS) : la mesure OSM famille E × GTFS (< 50 m) montre que
+6 464 arrêts de bus OSM sont à 92,6 % déjà dans `transport_arret` — ils ont donc été RETIRÉS de
+l'affichage de la couche Équipements (doublon visible). MAIS 478 arrêts OSM (les 24 communes)
+n'ont PAS d'équivalent GTFS : ce sont des trous du GTFS (réseaux/quais manquants au PAN), à
+traiter ICI — enrichir `transport_arret` depuis OSM — et NON à laisser dans Équipements. Non fait
+(demande de donnée / arbitrage réseau à ouvrir).
 """
 from __future__ import annotations
 

@@ -78,6 +78,37 @@ def test_compute_distances(db_session):
 
 
 @pytest.mark.db
+def test_tcsp_masque_a_l_affichage_mais_lu_par_le_modele(db_session):
+    # M137-V — GARDE D'INVARIANCE (patron M125) : masquer les arrêts de bus OSM (subtype 'tcsp') de la
+    # couche Équipements est un FILTRE D'AFFICHAGE. Aucune ligne supprimée ; le modèle lit spatial_layers
+    # en direct (compute_amenites_commune → parcel_amenites.dist_tcsp_m → feature de score p_model) → INCHANGÉ.
+    from labuse.api.app import map_layers_geojson
+    _parcel(db_session, "97415000TC0001", "Saint-Paul",
+            "POLYGON((55.27 -21.01, 55.271 -21.01, 55.271 -21.009, 55.27 -21.009, 55.27 -21.01))")
+    _poi(db_session, "tcsp", 55.2712, -21.0100)      # arrêt de bus, tout près
+    _poi(db_session, "ecole", 55.2711, -21.0100)     # école, tout près
+    db_session.flush()
+
+    # 1) AFFICHAGE — la couche 'amenite' NE SERT PAS les tcsp (masqués) ; l'école, oui.
+    out = map_layers_geojson(kind="amenite", commune="Saint-Paul", limit=6000, db=db_session)
+    subs = {f["properties"]["subtype"] for f in out["features"]}
+    assert "tcsp" not in subs and "ecole" in subs
+
+    # 2) MODÈLE — compute_amenites_commune LIT le tcsp en direct → dist_tcsp_m calculée (finie),
+    #    preuve que la ligne alimente TOUJOURS la feature d'accessibilité du score.
+    compute_amenites_commune(db_session, "Saint-Paul")
+    dist_tcsp = db_session.execute(text(
+        "SELECT dist_tcsp_m FROM parcel_amenites a JOIN parcels p ON p.id=a.parcel_id "
+        "WHERE p.commune='Saint-Paul'")).scalar()
+    assert dist_tcsp is not None and dist_tcsp < 300
+
+    # 3) INVARIANCE — la ligne tcsp est TOUJOURS en base (aucune suppression, retrait purement visuel).
+    n = db_session.execute(text(
+        "SELECT count(*) FROM spatial_layers WHERE kind='amenite' AND subtype='tcsp'")).scalar()
+    assert n == 1
+
+
+@pytest.mark.db
 def test_compute_idempotent(db_session):
     _parcel(db_session, "97415000AA0001", "Saint-Paul",
             "POLYGON((55.27 -21.01, 55.271 -21.01, 55.271 -21.009, 55.27 -21.009, 55.27 -21.01))")
