@@ -238,6 +238,13 @@ function IndicateurCommune({ ind, caveat }: { ind: Record<string, any>; caveat: 
   )
 }
 
+// DORMANT — outil « Simulateur ZAN » retiré du produit le 21/08/2026 (plus câblé au menu : registry +
+// ModulePanel COMPONENTS). Mesuré avant retrait : ses 3 briques étaient (1) une LISTE MORTE « parcelles
+// alignées ZAN » (filtre ocs_ge weight>0, jamais >0 → 0 en permanence — un mensonge silencieux), (2) un
+// SIGNAL PARCELLE déjà servi sur la fiche (doublon), (3) l'ENVELOPPE communale = même formule que la
+// section « Rareté & ZAN » de l'outil Communes. L'enveloppe (dont le budget en %) vit désormais dans
+// Communes. Composant conservé au dépôt (exporté, compilable) ; endpoints /moteurs/zan* vivants (lus par
+// briques_pdf). Le retrait de l'outil suffit à ne plus AFFICHER ni la liste morte ni le doublon.
 export function M17() {
   const q = useQuery({ queryKey: ['m17'], queryFn: motZan })
   const { setModuleMap, select, selectedIdu } = useApp()

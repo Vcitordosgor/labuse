@@ -89,8 +89,11 @@ export const MODULES: ModuleDef[] = [
     label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
   { key: 'promesses', num: 'M04', group: 'marche',
     label: 'Promesses mortes', desc: 'Les permis anciens jamais sortis de terre' },
-  { key: 'zan', num: 'M17', group: 'marche',
-    label: 'Simulateur ZAN', desc: 'La contrainte d’artificialisation, commune par commune' },
+  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Simulateur ZAN » (zan, M17). Mesuré : ses 3
+  // briques étaient soit MORTES (liste « parcelles alignées ZAN » = filtre ocs_ge weight>0, jamais >0 → 0),
+  // soit des DOUBLONS (signal parcelle déjà sur la fiche ; enveloppe communale = même formule que la
+  // section « Rareté & ZAN » de l'outil Communes, rarete.py). L'enveloppe (dont le budget en %) vit
+  // désormais dans Communes. Composant M17 + endpoints /moteurs/zan* + tests conservés au dépôt.
   { key: 'renouvellement', num: 'MR1', group: 'marche',
     label: 'Renouvellement', desc: 'Le potentiel de renouvellement urbain d’un territoire : parcelles occupées en zone constructible à capacité restante (densifier, diviser, reconstruire)' },
   // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).

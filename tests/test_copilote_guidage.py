@@ -26,7 +26,7 @@ from labuse.copilote_v2.answering import (
     ("ou investir a La Reunion", "communes"),
     ("qui construit quoi a Saint-Paul", "permis"),
     ("les promesses mortes", "promesses"),
-    ("le simulateur zan", "zan"),
+    ("le simulateur zan", "communes"),   # 21/08 : Simulateur ZAN retiré → enveloppe ZAN dans Communes
     ("la rarete du foncier", "communes"),
     ("potentiel de renouvellement", "renouvellement"),
     ("si cette zone passait constructible", "simulplu"),

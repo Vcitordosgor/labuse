@@ -25,7 +25,7 @@ CAS: list[tuple[str, str]] = [
     ("Où investir à La Réunion ?", "communes"),
     ("Qui construit quoi à Saint-Paul ?", "permis"),
     ("Montre-moi les promesses mortes", "promesses"),
-    ("Ouvre le simulateur ZAN", "zan"),
+    ("Ouvre le simulateur ZAN", "communes"),   # 21/08 : Simulateur ZAN retiré → enveloppe dans Communes
     ("Quelle est la rareté du foncier à Cilaos ?", "communes"),
     ("Le potentiel de renouvellement urbain à Saint-Denis", "renouvellement"),
     ("Et si cette zone passait constructible ?", "simulplu"),

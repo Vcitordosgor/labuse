@@ -744,8 +744,10 @@ _CONCEPT_MAP = [
       "quels permis dans la commune"), ("permis", "Radar permis")),
     (("promesses mortes", "permis jamais sortis", "permis jamais construits",
       "permis anciens jamais", "permis abandonnes"), ("promesses", "Promesses mortes")),
+    # 21/08/2026 — outil « Simulateur ZAN » retiré (DORMANT) : router vers lui = lien mort. L'enveloppe ZAN
+    # (budget/reste/%) vit désormais dans l'outil « Communes » → la concept-route y mène.
     (("simulateur zan", "artificialisation", "contrainte d'artificialisation", "contrainte zan",
-      "zan de la commune", "objectif zan"), ("zan", "Simulateur ZAN")),
+      "zan de la commune", "objectif zan"), ("communes", "Communes")),
     (("rarete du foncier", "rarete foncier", "le foncier se rarefie", "ou le foncier se rarefie",
       "combien de constructible reste"), ("communes", "Communes")),
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",

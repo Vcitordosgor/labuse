@@ -63,6 +63,30 @@ conso_2021_24 / budget), `pct_restant` = 100 − pct_consomme (± ; négatif = d
 (gros, coloré), les ha à côté (donnée source), le caveat ESTIMÉ **collé au %**. Idem sur la liste : chaque
 commune dit son % consommé (+ ha conso/budget). Saint-Paul : **41 % consommé · 59 % restant**.
 
+## Suite (2ᵉ passe) — les 2 retraits + mesure « ce qui reste » → l'outil aux dormants
+
+**Mesuré AVANT de retirer (comme demandé) :**
+- La liste « parcelles alignées ZAN » est **structurellement morte** : filtre `ocs_ge AND weight_applied > 0`,
+  or `ocs_ge` vaut NULL (366 408) ou **−5** (65 255, pénalité) — jamais > 0. Affichait « 0 » en permanence.
+- Le signal parcelle est un **doublon de la fiche** (couche cascade `ocs_ge`, `phase1.py:746`), en moins honnête.
+- L'enveloppe communale (budget/reste) = **MÊME formule** que la section « Rareté & ZAN » de l'outil Communes :
+  `rarete.py:41` `budget = conso 2011-21 × 0,5`, `rarete.py:42` `reste = budget − conso 2021-24` — identique à
+  `_zan_indicateur`. La fiche Communes montre déjà `reste_zan_ha`, rythme, horizon. **Rien d'unique ne reste.**
+
+**Donc, décision (le mandat le pré-autorise « s'il ne reste rien ») :**
+1. **Liste morte RETIRÉE** + **signal doublon RETIRÉ** : par le retrait de l'outil entier du produit (registry +
+   ModulePanel + import). Plus jamais affichés. Composant M17 conservé au dépôt (DORMANT), endpoints
+   `/moteurs/zan*` vivants (lus par `briques_pdf`).
+2. **Enveloppe déplacée dans Communes** : `pipeline-rarete` gagne `pct_budget_consomme`/`pct_budget_restant`
+   (= (budget − reste)/budget) ; la section « Rareté & ZAN » de la fiche Communes montre le **% D'ABORD**
+   (caveat ESTIMÉ « pas un droit à construire » collé au chiffre) + le budget en ha. Saint-Paul : **41 % / 59 %**.
+3. **Concept-route Copilote** « simulateur zan » → **`communes`** (plus de lien mort). Tests alignés
+   (guidage + m112 : `zan` → `communes`).
+
+Réponse au 4 : **il ne restait rien d'unique** → l'outil rejoint les dormants, sa donnée (dont le budget en %)
+vit dans Communes. Point de vérité unique respecté.
+
 ## Vérif
-Captures (`qa/audit-zan/`) : signal (proxy dit), enveloppe (% + caveat adjacent), liste 24 communes avec %.
-Backend : `/moteurs/zan` → 24 indicateurs, pct 41/59 · golden 119/119 · garde-run 431 663=431 663 · tsc 0 · build.
+Captures (`qa/audit-zan/`) : menu sans « Simulateur ZAN », fiche Communes avec le % budget ZAN + caveat adjacent.
+Backend : `/pipeline-rarete` → 24 communes avec pct 41/59 · Copilote guidage 26/26 · golden 119/119 ·
+garde-run 431 663=431 663 · tsc 0 · build.
