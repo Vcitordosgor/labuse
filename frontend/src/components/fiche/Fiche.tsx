@@ -21,7 +21,7 @@ import { GestionnairesBlock } from './GestionnairesBlock'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
-import { useApp } from '../../store/useApp'
+import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
 
@@ -2178,6 +2178,27 @@ export function Fiche({ idu }: { idu: string }) {
                 <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
                   sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
                   onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunePrefill(f.commune!); setModule('communes') }} />
+              )}
+              {/* fiche-secteur (ex-carnet) — le COMPTE d'opportunités de la section cadastrale. « opportunités »
+                  = parcelles Priorité + À suivre du run servi (rien de plus). CLIC → carte sur la commune,
+                  zoomée sur la section, filtrée sur ces deux tiers (jamais un chiffre mort). */}
+              {f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune && (
+                <button data-secteur-opp
+                  onClick={() => {
+                    const st = useApp.getState()
+                    st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude'] })
+                    st.setCommune(f.commune!)                                     // garde les tiers (spread), pose la commune-vue
+                    if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })     // zoom sur la section
+                    st.setView('cartes'); select(null)                           // carte + ferme la fiche
+                  }}
+                  className="card-elev flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors duration-quick hover:border-mint/50"
+                  title={`Voir les ${f.secteur_opportunites.n} parcelles Priorité ou À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
+                  <span className="text-[11px] leading-snug text-txt">
+                    <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
+                    <b>Priorité</b> ou <b>À suivre</b> dans cette section
+                    <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
+                  <span className="shrink-0 text-mint">→</span>
+                </button>
               )}
               {/* M125-2 — contexte socio-éco du secteur (Filosofi + parc social RPLS), hors scoring */}
               {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}

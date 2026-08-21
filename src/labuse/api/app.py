@@ -2378,6 +2378,18 @@ def _relabel_dvf_terrain(layer: str, detail: str | None) -> str | None:
     return detail
 
 
+def _secteur_opportunites(db: Session, idu: str) -> dict:
+    """fiche-secteur — le compte d'opportunités de la SECTION cadastrale (`left(idu,10)`, la même que
+    l'ex-carnet). Opportunités = parcelles des tiers `brulante` (chip « Priorité ») + `chaude` (chip
+    « À suivre ») du run servi — RIEN de plus (pas de score, pas de promesse). Run-scopé `Q_A_RUN_LABEL`."""
+    section = idu[:10]
+    n = db.execute(text(
+        "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude')) "
+        "FROM parcel_p_score_v2 WHERE run_id = :run AND left(parcelle_id, 10) = :s"),
+        {"run": Q_A_RUN_LABEL, "s": section}).scalar() or 0
+    return {"section": section, "n": int(n)}
+
+
 def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
@@ -2632,6 +2644,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "terrain": dict(terrain) if terrain else None,
         "coproprietes": copros,
         "marche_secteur": marche_secteur,
+        # fiche-secteur — le compte d'opportunités de la section (ex-carnet), cliquable côté front.
+        "secteur_opportunites": _secteur_opportunites(db, idu),
         # M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires.
         "viabilisation": _viabilisation_block(db, idu),
         # M86-B — assainissement (ANC / tout-à-l'égout) : contrainte de constructibilité, point de

@@ -367,6 +367,9 @@ export interface Fiche {
   coproprietes?: Copropriete[]
   // M125-2 — contexte socio-éco du secteur (Filosofi 200 m + parc social RPLS), hors scoring.
   marche_secteur?: MarcheSecteur | null
+  // fiche-secteur — compte d'opportunités de la SECTION cadastrale (ex-carnet) : parcelles des tiers
+  // « Priorité » (brulante) + « À suivre » (chaude) du run servi. Cliquable → carte sur la section.
+  secteur_opportunites?: { section: string; n: number } | null
 }
 
 // M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.
