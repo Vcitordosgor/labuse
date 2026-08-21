@@ -3222,7 +3222,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "ligne_ht", "axe_structurant",
                     # M134 — couche « Dispositifs et périmètres » : QPV + NPNRU/ANRU (géométrie),
                     # TVA primo (buffer 500 m dérivé), ZFANG/FRR (aplat COMMUNE, subtype=régime).
-                    "qpv", "tva_primo", "zfang", "frr"}
+                    "qpv", "tva_primo", "zfang", "frr",
+                    # M137-U — ZNIEFF (contrainte environnementale, subtype type I/II) + BPE INSEE
+                    # (équipements géolocalisés, couche DISTINCTE d'OSM 'amenite' — deux items par source).
+                    "znieff", "amenite_bpe"}
 
 
 @app.get("/map/layers.geojson")

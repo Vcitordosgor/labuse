@@ -38,6 +38,17 @@ def test_non_couvert_liste_les_manques():
     assert any("Canalisations" in x for x in sv._NON_COUVERT)
 
 
+def test_znieff_couverte_et_type_distingue():
+    # M137-U — ZNIEFF ingérée = couche servie (dans _KINDS, plus dans NON COUVERT) ; le libellé
+    # DISTINGUE type I / type II (ils ne pèsent pas pareil en instruction) et dit que ce n'est pas un blocage.
+    assert "znieff" in sv._KINDS
+    assert not any("ZNIEFF" in x for x in sv.NON_COUVERT)      # servie → sortie du NON COUVERT
+    d1 = sv._detail("znieff", "type I", "Pierrefonds", None)
+    d2 = sv._detail("znieff", "type II", "Grand Étang", None)
+    assert "type I" in d1 and "Pierrefonds" in d1 and "recours" in d1.lower() and "n'interdit pas" in d1
+    assert "type II" in d2 and "Grand Étang" in d2
+
+
 def test_peb_retire_des_couvertes_et_passe_en_non_couvert():
     # M137-T — couvert-vide corrigé : `peb` déclaré couvert mais 0 ligne en base = faux RAS sur le
     # bruit aérien. Retiré des couvertes, listé en NON COUVERT avec les autres manques de l'audit.

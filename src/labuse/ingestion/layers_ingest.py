@@ -71,6 +71,9 @@ KIND_SOURCE = {
     "telepherique": "OSM — transport (pôles d'échange & téléphérique)",
     "ligne_ht": "BD TOPO IGN",
     "axe_structurant": "BD TOPO IGN",   # M106-B P3 — importance IGN 1-2, jamais une hiérarchie inventée
+    # M137-U — couches écrites hors layers_ingest (znieff.py, bpe.py) — déclarées pour la garde.
+    "znieff": "ZNIEFF (INPN/MNHN)",
+    "amenite_bpe": "BPE INSEE",
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).

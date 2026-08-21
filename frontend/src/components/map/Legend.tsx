@@ -69,6 +69,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr   // M134
   const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
     && !aleaActif && !layers.transport && !layers.lignes_ht && !dispoActif
+    && !layers.znieff && !layers.equipements_bpe   // M137-U
   if (rien) return null
 
   return (
@@ -141,6 +142,30 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             <div data-legend-50pas className="flex items-center gap-2">
               <span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} />
               <span className="text-[11px] text-txt">50 pas géométriques</span>
+            </div>
+          </Tip>
+        </div>
+      )}
+
+      {/* ── M137-U : ZNIEFF (contrainte) — type I / type II distingués (ils ne pèsent pas pareil) ── */}
+      {layers.znieff && (
+        <div data-legend-znieff className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <Tip block side="top" tip="Inventaire du patrimoine naturel (INPN/MNHN, 2025). Type I : secteur à fort intérêt, plus sensible ; type II : grand ensemble naturel. Contrainte (étude d'impact, risque de recours), pas une interdiction. N'entre pas dans le classement.">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-4 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} />
+              <span className="text-[11px] text-txt">ZNIEFF — type I &amp; type II</span>
+            </div>
+          </Tip>
+        </div>
+      )}
+
+      {/* ── M137-U : équipements INSEE BPE — 2e source, cercles bleus (distincts des icônes OSM) ── */}
+      {layers.equipements_bpe && (
+        <div data-legend-bpe className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
+          <Tip block side="top" tip="Base Permanente des Équipements (INSEE, 2025). Source distincte d'OpenStreetMap — jamais fusionnée, vous voyez la provenance. Le modèle de LABUSE continue de lire OSM.">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: tTheme.bpe }} />
+              <span className="text-[11px] text-txt">Équipements (INSEE BPE)</span>
             </div>
           </Tip>
         </div>
