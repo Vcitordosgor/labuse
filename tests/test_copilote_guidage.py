@@ -30,10 +30,10 @@ from labuse.copilote_v2.answering import (
     ("la rarete du foncier", "communes"),
     ("potentiel de renouvellement", "renouvellement"),
     ("si cette zone passait constructible", "simulplu"),
-    ("les bascules du mois", "o10-bascules"),
     ("suivi de secteur", "o7-carnet"),
     ("scorer une adresse", "scoreur-adresse"),
     # M137-N : « fantome » et « bailleur » retirés du produit → plus de concept-route (cf. ci-dessous).
+    # 21/08/2026 : « quoi de neuf » (o10-bascules) retiré aussi (cf. ci-dessous).
 ])
 def test_concept_ouvre_une_porte(message, module):
     got = _match_concept(message)
@@ -48,6 +48,14 @@ def test_fantome_bailleur_retires_plus_de_concept():
     assert _match_concept("les parcelles fantomes") is None
     assert _match_concept("montre le patrimoine des bailleurs") is None
     assert _match_concept("quelles parcelles de bailleurs sociaux a Saint-Denis") is None
+
+
+def test_quoi_de_neuf_retire_plus_de_concept():
+    # 21/08/2026 — outil « Quoi de neuf » (o10-bascules) RETIRÉ du produit (DORMANT) : plus de
+    # concept-route (router vers un module absent = lien mort). Ces demandes ne matchent plus aucune porte.
+    assert _match_concept("quoi de neuf") is None
+    assert _match_concept("les bascules du mois") is None
+    assert _match_concept("qui a bascule ce mois") is None
 
 
 def test_hors_concept_ne_devine_pas():

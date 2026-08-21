@@ -13,7 +13,9 @@ import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
-import { O10Bascules, O5Servitudes, O7Carnet } from './blocB'
+// O10Bascules (Quoi de neuf) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
+// composant reste exporté dans ./blocB (endpoint /events vivant via la cloche de notifications).
+import { O5Servitudes, O7Carnet } from './blocB'
 import { M16, M17, M18 } from './moteurs'
 // M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté). O6Comparateur, O9Rarete et
 // MarcheCommune ne sont plus montés ici directement : Communes les réutilise.
@@ -872,7 +874,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
   'o7-carnet': O7Carnet,
-  'o10-bascules': O10Bascules,
+  // Retiré du produit le 21/08/2026 (DORMANT) : 'o10-bascules' (Quoi de neuf) — plus monté. Composant
+  // O10Bascules conservé au dépôt (exporté) ; son endpoint /events reste vivant (cloche de notifications).
   'calculette-fonciere': CalculetteFonciere,
 }
 

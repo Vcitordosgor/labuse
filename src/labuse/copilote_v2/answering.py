@@ -754,8 +754,10 @@ _CONCEPT_MAP = [
       "si cette zone devenait constructible", "zone devenait constructible",
       "prospective de territoire", "simuler un plu", "simuler un changement de zonage"),
      ("simulplu", "Changement PLU")),
-    (("quoi de neuf", "les bascules du mois", "bascules du secteur", "bascules du mois",
-      "evenements du secteur", "qui a bascule ce mois"), ("o10-bascules", "Quoi de neuf")),
+    # Retiré du produit le 21/08/2026 (DORMANT) : outil « Quoi de neuf » (o10-bascules). Sa concept-route
+    # est SUPPRIMÉE — router vers un module absent = lien mort (piège attrapé sur « Foncier fantôme »).
+    # Ces demandes retombent sur le traitement normal du Copilote. Le flux d'événements reste servi
+    # ailleurs (la cloche de notifications lit le même endpoint /events).
     (("suivi de secteur", "suivre le secteur", "portefeuille de secteur", "suivre un secteur comme"),
      ("o7-carnet", "Suivi de secteur")),
     (("scorer une adresse", "scorer un bien", "seconde opinion avant d'offrir", "avis sur cette adresse",

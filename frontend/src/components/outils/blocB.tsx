@@ -327,6 +327,10 @@ type Bascules = { unread: number; items: { id: number; date: string; kind: strin
   titre: string; detail: string | null; demo?: boolean }[] }
 const O10_FILTRES = [['', 'tout'], ['bascule', 'bascules'], ['match', 'matches'], ['bodacc', 'BODACC']] as const
 
+// DORMANT — outil « Quoi de neuf » retiré du produit le 21/08/2026 (plus câblé au menu : registry +
+// ModulePanel COMPONENTS). Composant conservé au dépôt (exporté pour rester compilable) ; son unique
+// source, l'endpoint /events, reste VIVANT (consommé par la cloche de notifications + « le point du
+// jour »). Concept-route Copilote (« quoi de neuf » / « bascules du mois ») retirée (answering.py).
 export function O10Bascules() {
   const { select, setView } = useApp()
   const [kind, setKind] = useState('')
