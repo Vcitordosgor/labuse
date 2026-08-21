@@ -350,10 +350,12 @@ function M03() {
   )
 }
 
-/* ───────────────────────────── M04 — PROMESSES MORTES ───────────────────────────── */
+/* ───────────────────────── M04 — PERMIS AU POINT MORT (ex-« Promesses mortes ») ───────────────────────── */
 
 function M04() {
-  const [months, setMonths] = useState(24)
+  // audit-promesses (add 1) — défaut 36 mois = la CADUCITÉ LÉGALE du PC. À 24 mois on listait des permis
+  // encore valides sous un nom qui disait le contraire. Le sélecteur garde 24/36/48/60 ; l'écran ouvre à 36.
+  const [months, setMonths] = useState(36)
   const commune = useApp((s) => s.commune)
   // audit-promesses (correction) — saisie DIRECTE d'un numéro de permis → son état, via le MÊME drawer
   // que le radar permis (PermitDrawer, chemin unique). Introuvable → message clair (branche erreur du drawer).
@@ -397,7 +399,7 @@ function M04() {
           {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
         </select>
       </label>
-      <p className="text-[11px] text-txt-dim">{total != null ? fmt(total) : '…'} promesses mortes{total != null && items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
+      <p className="text-[11px] text-txt-dim">{total != null ? fmt(total) : '…'} permis au point mort{total != null && items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}

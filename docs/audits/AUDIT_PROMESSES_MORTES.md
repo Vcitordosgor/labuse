@@ -20,8 +20,8 @@ toujours non bâtie… réalisation à vérifier »). **Écran ≡ calcul.**
 ⚠️ **Nuance nom vs calcul** : un PC est **caduc légalement à 3 ans (36 mois)**. Le **défaut de l'outil est
 24 mois** → il liste des permis pas encore caducs. « Mort » est plus fort que le calcul (= **au point mort**,
 pas juridiquement caduc). Le bandeau se rattrape honnêtement (« réalisation à vérifier sur place », codes
-d'état bruts non documentés). Piste : passer le défaut à 36 mois (alignement caducité) — **non fait**
-(hors correction demandée ; signalé).
+d'état bruts non documentés). **→ FAIT (ajout avant merge)** : défaut passé à **36 mois** (caducité PC ;
+sélecteur inchangé 24/36/48/60). Compte : **17 123 à 24 m → 15 415 à 36 m**.
 
 ### c. Un LIMIT caché ? → NON (le seul des 5 outils SANS plafond muet)
 La liste pagine (`limit` défaut 1000, plafond 2000/page, « voir plus » par offset) ; le **total est SERVI**
@@ -48,7 +48,14 @@ drawer détaillé (nature, statut, porteur, lots, surface, dates, délai, parcel
 **Introuvable (404)** → le drawer gagne une **branche d'erreur claire** (« Permis introuvable — aucun permis
 X dans SITADEL… ») au lieu d'un tiroir vide.
 
+## Ajouts avant merge
+1. **Défaut 36 mois** (caducité légale du PC) : l'écran ouvre sur ce que la loi dit. Sélecteur inchangé.
+2. **Renommage** « Promesses mortes » → **« Permis au point mort »** — le nom promettait la caducité, le
+   calcul dit « au point mort » (accordé, sans achèvement, parcelle non bâtie ; « à vérifier »). La CLÉ reste
+   `promesses` (URL/QA/concept-route inchangés) ; les anciens mots-clés Copilote sont conservés + le nouveau
+   nom ajouté. Renommé partout : menu (registry), en-tête, compteur, concept-route.
+
 ## Vérif
 Captures (`qa/audit-promesses/`) : recherche numéro → permis TROUVÉ (drawer détaillé) ; numéro bidon →
-INTROUVABLE (message clair). q_score retiré de `/modules/promesses` · golden 119/119 · garde-run
-431 663=431 663 · tsc 0 · build.
+INTROUVABLE (message clair) ; **renommage + défaut 36 mois (compte 15 415)**. q_score retiré de
+`/modules/promesses` · Copilote guidage 26/26 · golden 119/119 · garde-run 431 663=431 663 · tsc 0 · build.
