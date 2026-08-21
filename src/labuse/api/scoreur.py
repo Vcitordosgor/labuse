@@ -66,51 +66,31 @@ def _geocode(q: str) -> dict:
 _AVERT = "Estimé — ni un prix ni une promesse ; hypothèses de bilan génériques."
 
 
-def _prix_verdict(prix: float, charge, prix_probable, surface) -> dict:
-    """Confronte le prix demandé à DEUX repères DISTINCTS, chacun NOMMÉ à l'écran (M137-S) :
+def _prix_constat(prix: float, charge, prix_probable, surface) -> dict:
+    """M128-6-§1 — CONSTAT chiffré nu confronté à un prix SAISI par un tiers. Deux règles :
 
-      - le BADGE juge la position sur le MARCHÉ DU FONCIER (prix probable du terrain), ± 10 % —
-        un seul référentiel pour ses trois états (sous/dans/au-dessus du marché) ;
-      - la MARGE juge la rentabilité d'une OPÉRATION DE PROMOTION neuve (charge supportable).
+      - §1 : la `charge` vient de la MÉTHODE DOCUMENTS (bilan à rebours, `compute_bilan`), jamais de
+        `score_e` (barème sectoriel, systématiquement optimiste — cf. registre de dette M128).
+      - §1.3 : AUCUN verdict, aucune conclusion. « bonne affaire », « au-dessus du marché »,
+        « rentable », « validé » sont bannis — on sert les NOMBRES et leur méthode, le lecteur conclut.
 
-    Les deux DIVERGENT pour la majorité des parcelles estimables (~69 % : terrain vendu à son prix
-    de marché mais non rentable en promotion, SDP résiduelle faible). L'ancien badge mélangeait les
-    repères (« opportunité » = prix ≤ charge = opération ; « dans le marché »/« cher » = marché) →
-    deux verdicts contradictoires. Le seuil « opportunité » quitte le badge (il juge l'opération, pas
-    le marché) ; la `synthese` réconcilie explicitement badge et marge."""
-    out: dict = {"prix_demande_eur": round(prix)}
+    Le prix probable du foncier (médiane terrain sectorielle) est NON divergent : servi tel quel."""
+    out: dict = {"prix_saisi_eur": round(prix)}
     if surface and surface > 0:
-        out["prix_demande_m2_terrain"] = round(prix / surface)
-    if charge is None or prix_probable is None:
-        out["verdict"] = "non_estimable"
-        out["message"] = "Charge foncière / prix du foncier non estimables — le prix ne peut pas être qualifié."
-        out["avertissement"] = _AVERT
-        return out
-    marge = round(charge - prix)
-    out["marge_a_ce_prix_eur"] = marge                      # repère OPÉRATION (promotion neuve)
-    # 1) BADGE — repère UNIQUE : le marché du foncier (prix probable du terrain), bande ± 10 %.
-    if prix < prix_probable * 0.9:
-        out["verdict"] = "sous_marche"
-        out["message"] = "En dessous du prix probable du foncier pour ce secteur."
-    elif prix <= prix_probable * 1.1:
-        out["verdict"] = "dans_marche"
-        out["message"] = "Au niveau du prix probable du foncier pour ce secteur."
+        out["prix_saisi_m2_terrain"] = round(prix / surface)
+    if prix_probable is not None:
+        out["prix_probable_foncier_eur"] = round(prix_probable)
+        out["ecart_vs_prix_probable_pct"] = (round(100 * (prix - prix_probable) / prix_probable)
+                                             if prix_probable else None)
+    if charge is not None:
+        out["charge_fonciere_supportable_eur"] = round(charge)   # méthode documents (bilan à rebours)
+        out["marge_a_ce_prix_eur"] = round(charge - prix)
+        out["methode"] = ("Constat chiffré, aucun verdict. Marge à ce prix = charge foncière "
+                          "supportable (bilan à rebours, méthode documents) − prix saisi ; repère "
+                          "foncier = médiane terrain sectorielle.")
     else:
-        out["verdict"] = "sur_marche"
-        out["message"] = "Au-dessus du prix probable du foncier pour ce secteur."
-    # 2) SYNTHÈSE — réconcilie badge (marché) et marge (opération) quand ils divergent.
-    if marge >= 0:
-        out["synthese"] = ("À ce prix, une opération de promotion neuve reste rentable "
-                           "(sous la charge foncière supportable estimée).")
-    elif out["verdict"] == "dans_marche":
-        out["synthese"] = ("Ce terrain se vend à son prix, mais une opération de promotion neuve "
-                           "n'y est pas rentable (SDP résiduelle faible).")
-    elif out["verdict"] == "sous_marche":
-        out["synthese"] = ("Même sous le prix du marché, une opération de promotion neuve n'est pas "
-                           "rentable à ce prix (charge foncière supportable très faible).")
-    else:   # sur_marche
-        out["synthese"] = ("Au-dessus du marché ET au-dessus de ce qu'une opération de promotion "
-                           "neuve peut porter à ce prix.")
+        out["message"] = ("Charge foncière (méthode documents) non calculable pour cette parcelle — "
+                          "marge non chiffrable.")
     out["avertissement"] = _AVERT
     return out
 
@@ -149,25 +129,39 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     verdict = {"tier": tier, "libelle": _TIER_LABELS.get(tier, "Non évaluée"),
                "rang": row["rang"], "percentile": float(row["percentile"]) if row["percentile"] is not None else None}
 
-    # Score É (marge €) — guardé
-    score_e = None
-    charge = prix_probable = None
+    # M128-5-§2 / M128-6-§1 : aucune marge score_e (barème sectoriel) servie à un tiers. Le prix
+    # probable du foncier (médiane terrain sectorielle) est NON divergent → lu tel quel dans score_e.
+    # La CHARGE, elle, ne vient plus de score_e mais de la MÉTHODE DOCUMENTS (compute_bilan), et
+    # seulement si un prix est saisi (§1). Aucun chiffre de marge auto-affiché.
+    prix_probable = None
     try:
         if db.execute(text("SELECT to_regclass('score_e')")).scalar() is not None:
             se = db.execute(text(
-                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, libelle_court "
-                "FROM score_e WHERE idu = :i"), {"i": row["idu"]}).mappings().first()
-            if se:
-                score_e = dict(se)
-                if se["estimable"]:
-                    charge, prix_probable = se["charge_supportable"], se["prix_probable"]
+                "SELECT estimable, prix_probable FROM score_e WHERE idu = :i"),
+                {"i": row["idu"]}).mappings().first()
+            if se and se["estimable"]:
+                prix_probable = se["prix_probable"]
     except Exception:  # noqa: BLE001
         pass
 
     out = {"ok": True, "adresse": label, "idu": row["idu"], "commune": row["commune"],
            "section": row["section"], "numero": row["numero"], "surface_m2": row["surface_m2"],
-           "verdict": verdict, "score_e": score_e,
+           "verdict": verdict,
            "fiche_url": f"/parcels/{row['idu']}"}
     if body.prix_demande_eur is not None:
-        out["prix"] = _prix_verdict(float(body.prix_demande_eur), charge, prix_probable, row["surface_m2"])
+        # M128-6-§1 : charge = bilan à rebours (compute_bilan), calculé à la volée (37–237 ms mesurés,
+        # non prohibitif sur une route déjà géocodante). Éphémère : aucune bascule, aucun rebuild.
+        charge = None
+        try:
+            from ..faisabilite.bilan import compute_bilan_servi
+            from ..faisabilite.db import parcel_faisabilite
+            pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": row["idu"]}).scalar()
+            fa = parcel_faisabilite(db, pid) if pid else None
+            if fa:
+                b, ps = compute_bilan_servi(db, pid, fa)
+                if b is not None and not (ps or {}).get("non_calculable"):
+                    charge = (b.charge_fonciere or {}).get("central")
+        except Exception:  # noqa: BLE001
+            pass
+        out["prix"] = _prix_constat(float(body.prix_demande_eur), charge, prix_probable, row["surface_m2"])
     return out

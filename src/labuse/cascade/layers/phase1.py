@@ -337,9 +337,12 @@ class ZonagePluGpuLayer(Layer):
         if uau:
             lib = (_dominant(uau).subtype or "").strip()
             mag = uau_cov if mixte else 1.0
+            # M128-2-J : U = urbaine, AU = à urbaniser — jamais les deux. On dérive la famille du code
+            # de zone dominant (l'énoncé « urbaine / à urbaniser » les confondait pour toutes).
+            _fam = "à urbaniser" if lib.upper().startswith("AU") else "urbaine"
             verdicts.append(positive(
                 self.name,
-                f"Zone PLU « {lib} » (urbaine / à urbaniser — constructible"
+                f"Zone PLU « {lib} » ({_fam} — constructible"
                 + (f" sur ~{uau_cov * 100:.0f} % de la parcelle" if mixte else "") + ").",
                 params.get("positive_bonus_key", "zonage_u_au"),
                 magnitude=mag, source=SRC_GPU,

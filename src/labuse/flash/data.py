@@ -150,8 +150,15 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     zline = next((l for l in served_group(served_cascade_lines(db, idu), "regles")
                   if l["layer_name"] == "zonage_plu_gpu"), None)
     if zline:
-        out["zonage_verdict"] = {"result": zline["result"],
-                                 "detail": nettoyer_libelle_client(zline["layer_name"], zline["detail"])}
+        _zdet = nettoyer_libelle_client(zline["layer_name"], zline["detail"])
+        # M128-2-J : U = urbaine, AU = à urbaniser. Correction d'affichage des lignes servies AVANT
+        # re-run cascade (le fix de source vit dans cascade/layers/phase1.py) — on tranche la famille.
+        if _zdet and "urbaine / à urbaniser" in _zdet:
+            import re as _re_z
+            _mz = _re_z.search(r"«\s*([A-Za-z0-9]+)\s*»", _zdet)
+            _famz = "à urbaniser" if (_mz and _mz.group(1).upper().startswith("AU")) else "urbaine"
+            _zdet = _zdet.replace("urbaine / à urbaniser", _famz)
+        out["zonage_verdict"] = {"result": zline["result"], "detail": _zdet}
     if "spatial_layers" in avail:
         zones = db.execute(text(
             """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)

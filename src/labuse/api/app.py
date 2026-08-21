@@ -3833,6 +3833,20 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                 # Exigence Vic (flag levé) : le niveau du prix DOIT être visible côté client (tooltip/détail).
                 from ..ingestion.score_e import niveau_label
                 score_e_block["niveau_label"] = niveau_label(score_e_block.get("niveau_prix"))
+                # M128-5-§2.2 : RENOMMAGE read-time. Les termes « marge foncière estimée » et « charge
+                # foncière supportable » sont RÉSERVÉS à la méthode documents (bilan à rebours). Ce
+                # bloc vient de la méthode score_e (barème sectoriel), DISTINCTE — on nomme la méthode,
+                # pas un verdict. M128-5-§2.3 : « validée sur cette commune » (verdict live, non fondé)
+                # est masqué au rendu SANS attendre le rebuild de score_e (détail figé au build).
+                # Filet read-time consigné au registre de dette M128.
+                _rt = {"Marge estimée": "Repère sectoriel (barème)",
+                       "marge foncière": "repère sectoriel",
+                       "charge foncière supportable": "charge au barème sectoriel",
+                       "± 12 %, validée sur cette commune": "± 12 %"}
+                for _k in ("libelle_court", "detail"):
+                    if score_e_block.get(_k):
+                        for _a, _b in _rt.items():
+                            score_e_block[_k] = score_e_block[_k].replace(_a, _b)
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         score_e_block = None
 
