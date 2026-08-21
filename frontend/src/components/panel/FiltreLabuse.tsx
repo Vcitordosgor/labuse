@@ -77,8 +77,12 @@ export const CP_COMMUNES: [string, string][] = [
 // point 11 n'auront vécu qu'une journée) : « Nu détenu par société » et « Cession de fonds »
 // SUPPRIMÉS de l'UI (clés URL ignorées proprement dans filters.ts, backend intact).
 // Libellés/« i » : CLIENT.signaux. OU de groupe et persistance URL (sv=) inchangés.
+// FILTRE-NETTOYAGE #4 — « assemblage » QUITTE les Signaux de vie (c'est un état du bien, pas un
+// événement daté) → rendu dans la section « Le bien » ci-dessous. « succession » (veille patrimoniale,
+// parcel_veille_succession, 7 129 parcelles) rejoint les signaux. Backend : _SIG_SQL (app.py) gère les
+// deux clés ; la carte ET le cadrage projet (FiltreFacettes rend SIGNAUX_KEYS) les servent d'un coup.
 export const SIGNAUX_KEYS = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc',
-  'friche', 'assemblage', 'defisc']
+  'friche', 'defisc', 'succession']
 
 
 const nf = new Intl.NumberFormat('fr-FR')
@@ -163,14 +167,9 @@ export function ZoneSelector() {
     setFilter('zonePlu', selZones.includes(z) ? selZones.filter((x) => x !== z) : [...selZones, z])
     setRetirees([])
   }
-  const portee = filters.communes.length
-    ? `zones des ${filters.communes.length} commune${filters.communes.length > 1 ? 's' : ''} filtrée${filters.communes.length > 1 ? 's' : ''}`
-    : 'zones de toute l’île'
   return (
     <div className="mt-1 flex flex-col gap-1">
-      <p className="text-[10px] text-txt-dim">
-        Une famille = toutes ses zones · ou des zones précises au menu (l'un ou l'autre) · {portee}
-      </p>
+      {/* FILTRE-NETTOYAGE #3 — phrase d'aide « Une famille = toutes ses zones · … » retirée. */}
       {retirees.length > 0 && (
         <p data-zones-retirees className="rounded-md bg-surface-2/80 px-2 py-1 text-[10.5px] text-st-creuser">
           {retirees.length > 1 ? `Zones ${retirees.join(', ')} retirées du filtre` : `Zone ${retirees[0]} retirée du filtre`}
@@ -476,7 +475,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
             className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Ajouter tout</button>
           <button data-communes-aucune onClick={() => setCommunesFilter([])}
             className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Retirer tout</button>
-          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{`${nCom} commune${nCom > 1 ? 's' : ''} sur ${CP_COMMUNES.length}`}</span>}
+          {/* FILTRE-NETTOYAGE #2 — forme courte « 12/24 » ; tout coché = « Toute l'île » (cf. le sous-titre
+              de section) ; rien coché = pas de mention (aucune restriction, déjà toute l'île). */}
+          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{nCom === CP_COMMUNES.length ? 'Toute l’île' : `${nCom}/${CP_COMMUNES.length}`}</span>}
         </div>
         </div>
       </div>
@@ -510,20 +511,24 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       <div data-signaux-vie className="mt-4">
         <div className="flex items-baseline justify-between gap-2">
           <TitreSection titre="3 · Signaux de vie"
-            info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source et date)." />
-          {filters.signaux.length > 0 && <span className="shrink-0 text-[10.5px] text-txt-dim">{`${filters.signaux.length} actif${filters.signaux.length > 1 ? 's' : ''} sur ${SIGNAUX_KEYS.length}`}</span>}
+            info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source)." />
+          {(() => { const n = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
+            return n > 0 && <span className="shrink-0 text-[10.5px] text-txt-dim">{`${n} actif${n > 1 ? 's' : ''} sur ${SIGNAUX_KEYS.length}`}</span> })()}
         </div>
         <div className="gcard mt-2 flex flex-wrap gap-1.5 p-3">
           {SIGNAUX_KEYS.map((k) => <SignalChip key={k} k={k} />)}
         </div>
       </div>
 
-      {/* ═══════ M129-D P3 — LE BIEN : les facettes du nouveau vivier ═══════
-          droits résiduels (les deux états du bâti, fait M125) · propriétaire public
-          (le négociable est visible — dalle). Mêmes libellés que la fiche, jamais un
-          slug. M129-C (Vic 19/08/2026) : « Divisible » retirée — division hors produit. */}
-      <div className="mt-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+      {/* ═══════ 4 · LE BIEN (M129-D P3) — l'ÉTAT du bien et son propriétaire, pas des événements
+          datés : droits résiduels (les deux états du bâti, fait M125) · propriétaire public · assemblage
+          même proprio. FILTRE-NETTOYAGE #4 : ces 4 facettes QUITTENT « Signaux de vie » (elles y étaient
+          visuellement collées) et prennent leur propre titre — elles restent dans le produit, ici.
+          Mêmes libellés que la fiche, jamais un slug. M129-C : « Divisible » retirée (division hors produit). */}
+      <div data-le-bien className="mt-4">
+        <TitreSection titre="4 · Le bien"
+          info="L'état du bien et son propriétaire — des faits (pas des événements datés) : ce qu'il reste à construire, un propriétaire public, un même propriétaire sur plusieurs parcelles voisines." />
+        <div className="gcard mt-2 flex flex-wrap items-center gap-1.5 p-3">
           {([['encore', 'On peut encore construire'], ['maximum', 'Construite au maximum']] as const).map(([k, lbl]) => (
             <Chip key={k} on={filters.droitsResiduels.includes(k)}
               onClick={() => setFilter('droitsResiduels', (filters.droitsResiduels.includes(k)
@@ -536,6 +541,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
               ? filters.proprietaireType.filter((x) => x !== 'public') : [...filters.proprietaireType, 'public']) as never)}>
             Propriétaire public
           </Chip>
+          {/* « Assemblage même proprio » relocalisé ici (état du bien) — reste un signal backend
+              (filters.signaux), rendu via SignalChip pour garder son « i » et son câblage carte. */}
+          <SignalChip k="assemblage" />
           {/* M129-C : « Divisible » retirée (division_or dormant, Vic 19/08/2026) */}
         </div>
       </div>
@@ -666,6 +674,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
                   strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
+            {/* FILTRE-NETTOYAGE #5 — « Réinitialiser » remonte DANS le bloc d'actions (avec « Voir » et
+                « Analyser »), plus isolé en bas. Reste secondaire (action de recul) : lien discret centré,
+                teinte danger au survol — lisible, jamais un bouton de poids égal. */}
+            <button data-reinitialiser onClick={resetTout}
+              title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
+              className="mx-auto min-h-7 px-1 py-0.5 text-[11px] text-txt-dim underline decoration-txt-dim/30 underline-offset-2 transition-colors duration-quick hover:text-danger hover:decoration-danger-line">
+              Réinitialiser les filtres
+            </button>
           </div>
         ) : null}
         {analyseOn && phase === 'idle' && (
@@ -698,19 +714,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       {/* M55-D stage 7 (décision Vic) : plus AUCUNE section pédagogique dans le panneau —
           « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}
 
-      {/* M55-G point 9 / M55-H point 3 : danger SOBRE, SÉPARÉ du groupe d'action (filet +
-          respiration — jamais collé aux deux boutons). M55-J : masqué pendant l'analyse (les
-          filtres sont figés — Désactiver l'analyse d'abord pour retrouver le reset). */}
-      {!analyseActive && (
-        <div className="mt-4 border-t border-line-2/50 pt-3 text-center">
-          {/* DA §6 — le destructif en LIEN (b-danger), jamais un bloc de poids égal aux gestes. */}
-          <button onClick={resetTout}
-            title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
-            className="mx-auto min-h-8 border-b border-danger-line py-0.5 text-[12px] text-danger transition-colors duration-quick hover:text-txt-hi">
-            Réinitialiser les filtres
-          </button>
-        </div>
-      )}
+      {/* FILTRE-NETTOYAGE #5 — le bloc « Réinitialiser » isolé en bas (filet + respiration) est
+          RETIRÉ : le geste vit désormais dans le bloc d'actions (data-appel), avec « Voir » et
+          « Analyser ». Toujours masqué pendant l'analyse (les filtres sont figés — Désactiver d'abord). */}
     </div>
   )
 }

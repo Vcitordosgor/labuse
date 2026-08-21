@@ -23,15 +23,20 @@ export const CLIENT = {
       friche: 'Friche recensée',
       assemblage: 'Assemblage même proprio',
       defisc: 'Sortie de défisc',
+      succession: 'Succession',
     } as Record<string, string>,
+    // FILTRE-NETTOYAGE #1 — les « i » ne portent plus la date de mise à jour ni d'ingestion
+    // (« maj 07/2026 », « arrêté 06/2026 », « calcul 08/2026 », millésime « 2025 ») : la SOURCE reste,
+    // la date part (elle vit sur la page Sources). Le fond des libellés est inchangé.
     infos: {
-      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC 2025). 33 622 parcelles sur l’île.',
-      procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC, maj 07/2026). Ne couvre que les propriétaires personnes morales identifiés. L’événement BODACC du classement n’est évalué que sur les parcelles classées et, de façon ciblée, sur les écartées dont le propriétaire est sous procédure — une écartée sans procédure connue ne porte jamais d’événement (exclusion délibérée, M103).',
-      permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel, arrêté 06/2026 — rattachement à la parcelle tel que déclaré au permis).',
-      permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti, calcul 08/2026) ; à vérifier en mairie.',
-      defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE, maj 07/2026).',
-      friche: 'La parcelle touche une friche de l’inventaire national Cartofriches (maj 07/2026) — inventaire NON exhaustif : l’absence du signal ne prouve rien.',
-      assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC 2025) — négociation groupée possible.',
+      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC). 33 622 parcelles sur l’île.',
+      procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC). Ne couvre que les propriétaires personnes morales identifiés. L’événement BODACC du classement n’est évalué que sur les parcelles classées et, de façon ciblée, sur les écartées dont le propriétaire est sous procédure — une écartée sans procédure connue ne porte jamais d’événement (exclusion délibérée, M103).',
+      permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel — rattachement à la parcelle tel que déclaré au permis).',
+      permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti) ; à vérifier en mairie.',
+      defisc: 'La fenêtre de revente fiscale (défiscalisation estimée sur l’année d’achat neuf) est ouverte — le propriétaire peut vendre sans reprise d’avantage (ESTIMATION LABUSE).',
+      friche: 'La parcelle touche une friche de l’inventaire national Cartofriches — inventaire NON exhaustif : l’absence du signal ne prouve rien.',
+      assemblage: 'Le propriétaire (société privée) détient 3 parcelles ou plus sur l’île (MAJIC) — négociation groupée possible.',
+      succession: 'Le propriétaire est une société exposée à une succession — SCI dormante ou dirigeant âgé (registres RNE / fichiers fonciers). 7 129 parcelles. Signal patrimonial, pas un événement daté ; ne couvre que les propriétaires personnes morales identifiés.',
     } as Record<string, string>,
   },
   // ── M55-D stage 8 · PAGE D'ACCUEIL — présentation SOBRE et FACTUELLE (aucun superlatif :

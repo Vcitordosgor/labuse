@@ -997,6 +997,11 @@ def _q_v2_where(run_label: str, score_min: int | None,
                         "WHERE pmc.idu = p.idu)"),
             "assemblage": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv3 "
                            "WHERE sv3.idu = p.idu AND sv3.signal = 'assemblage_pm')"),
+            # FILTRE-NETTOYAGE #4 — succession (veille patrimoniale) : société au capital exposé à
+            # une succession (SCI dormante / dirigeant âgé). Table petite et indexée (PK parcelle_id,
+            # 7 129 lignes) → probe EXISTS direct, comme permis_caduc/defisc. Sert carte + cadrage projet.
+            "succession": ("EXISTS (SELECT 1 FROM parcel_veille_succession vsx "
+                           "WHERE vsx.parcelle_id = p.idu)"),
         }
         picked = [_SIG_SQL[s] for s in
                   (x.strip() for x in signaux.split(",")) if s in _SIG_SQL]
