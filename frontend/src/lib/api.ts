@@ -285,7 +285,7 @@ export interface ScoreurResult {
   score_e?: { estimable: boolean; marge_estimee: number | null; charge_supportable: number | null
               prix_probable: number | null; niveau_prix: string | null; libelle_court: string } | null
   prix?: { prix_demande_eur: number; prix_demande_m2_terrain?: number; marge_a_ce_prix_eur?: number
-           verdict: string; message: string; avertissement: string }
+           verdict: string; message: string; synthese?: string; avertissement: string }
 }
 export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null) =>
   j<ScoreurResult>('/scoreur-adresse', {
