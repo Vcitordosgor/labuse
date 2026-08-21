@@ -109,6 +109,40 @@ def test_tcsp_masque_a_l_affichage_mais_lu_par_le_modele(db_session):
 
 
 @pytest.mark.db
+def test_sport_resserre_a_l_affichage_sans_toucher_le_modele(db_session):
+    # M137-W — GARDE D'INVARIANCE : le resserrement du sport OSM (ne garder à l'écran que
+    # stade/gymnase/piscine/complexe) est un FILTRE D'AFFICHAGE. Aucune ligne supprimée ; le sport
+    # n'alimente AUCUNE feature (parcel_amenites n'a pas de colonne sport) → parcel_amenites inchangé.
+    from labuse.api.app import map_layers_geojson
+    _parcel(db_session, "97415000SP0001", "Saint-Paul",
+            "POLYGON((55.27 -21.01, 55.271 -21.01, 55.271 -21.009, 55.27 -21.009, 55.27 -21.01))")
+    _poi(db_session, "ecole", 55.2711, -21.0100)
+    db_session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom) VALUES "
+        "('amenite','sport','Stade Klébert Picard', ST_SetSRID(ST_Point(55.2712,-21.0100),4326)),"
+        "('amenite','sport', NULL,                   ST_SetSRID(ST_Point(55.2713,-21.0101),4326)),"
+        "('amenite','sport','Tennis',                ST_SetSRID(ST_Point(55.2714,-21.0102),4326))"))
+    db_session.flush()
+
+    # 1) AFFICHAGE — seul le stade NOMMÉ est servi ; le terrain sans nom (pitch) et le tennis sortent.
+    out = map_layers_geojson(kind="amenite", commune="Saint-Paul", limit=6000, db=db_session)
+    sport = sorted(f["properties"]["name"] for f in out["features"] if f["properties"]["subtype"] == "sport")
+    assert sport == ["Stade Klébert Picard"]
+
+    # 2) MODÈLE — parcel_amenites INCHANGÉ : le sport n'y entre pas ; dist_ecole calculée normalement.
+    compute_amenites_commune(db_session, "Saint-Paul")
+    dist_ecole = db_session.execute(text(
+        "SELECT dist_ecole_m FROM parcel_amenites a JOIN parcels p ON p.id=a.parcel_id "
+        "WHERE p.commune='Saint-Paul'")).scalar()
+    assert dist_ecole is not None
+
+    # 3) INVARIANCE — les 3 lignes sport sont TOUJOURS en base (retrait purement visuel).
+    n = db_session.execute(text(
+        "SELECT count(*) FROM spatial_layers WHERE kind='amenite' AND subtype='sport'")).scalar()
+    assert n == 3
+
+
+@pytest.mark.db
 def test_compute_idempotent(db_session):
     _parcel(db_session, "97415000AA0001", "Saint-Paul",
             "POLYGON((55.27 -21.01, 55.271 -21.01, 55.271 -21.009, 55.27 -21.009, 55.27 -21.01))")
