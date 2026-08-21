@@ -203,6 +203,19 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
       <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
         {q.isLoading && <Loading />}
+        {/* audit-promesses — un permis INTROUVABLE (404) dit clairement pourquoi (avant : drawer vide). */}
+        {q.isError && (
+          <div data-permis-introuvable className="flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-display text-sm font-bold text-txt-hi">Permis introuvable</div>
+              <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
+            </div>
+            <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
+              Aucun permis <span className="font-mono">{permitId}</span> dans la base SITADEL (dép. 974).
+              Vérifiez le numéro (référence exacte de l'autorisation) — la base couvre 2013 à aujourd'hui.
+            </p>
+          </div>
+        )}
         {d && (
           <>
             <div className="mb-2 flex items-start justify-between gap-2">
@@ -342,6 +355,10 @@ function M03() {
 function M04() {
   const [months, setMonths] = useState(24)
   const commune = useApp((s) => s.commune)
+  // audit-promesses (correction) — saisie DIRECTE d'un numéro de permis → son état, via le MÊME drawer
+  // que le radar permis (PermitDrawer, chemin unique). Introuvable → message clair (branche erreur du drawer).
+  const [permSearch, setPermSearch] = useState('')
+  const [openPermit, setOpenPermit] = useState<string | null>(null)
   const PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
   const q = useInfiniteQuery({
     queryKey: ['m04', months, commune],
@@ -362,6 +379,17 @@ function M04() {
         scoring — « réalisation à vérifier » sur place. Codes d'état de la source non documentés
         (affichés bruts).</Banner>
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
+      {/* audit-promesses (correction) — recherche DIRECTE par numéro de permis → son état dans le drawer.
+          Chemin unique : le MÊME PermitDrawer que le radar permis (aucune 2ᵉ fiche permis). */}
+      <form onSubmit={(e) => { e.preventDefault(); const v = permSearch.trim(); if (v) setOpenPermit(v) }}
+        className="flex items-center gap-1.5">
+        <input data-promesses-num value={permSearch} onChange={(e) => setPermSearch(e.target.value.trim())}
+          placeholder="Numéro de permis (ex. PC97…) → son état"
+          className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
+        <button type="submit" disabled={!permSearch.trim()}
+          className="shrink-0 rounded-lg border border-mint/50 bg-mint/15 px-2.5 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25 disabled:opacity-40">
+          Voir l'état →</button>
+      </form>
       <label className="flex items-center gap-2 text-[11px] text-txt-mut">
         Permis plus vieux que
         <select value={months} onChange={(e) => setMonths(Number(e.target.value))}
@@ -380,6 +408,7 @@ function M04() {
         ))}
         <MoreButton q={q} loaded={items.length} total={total} />
       </div>
+      {openPermit && <PermitDrawer permitId={openPermit} onClose={() => setOpenPermit(null)} />}
     </>
   )
 }
