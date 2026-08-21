@@ -123,7 +123,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
       'Papang': '#E87BB0',      // = Citalis (réseau CINOR) ; le tireté dit « téléphérique »
     },
     transportDefaut: '#E87BB0',
-    pole: '#E8EFEA',            // blanc cassé — 15,1
+    pole: '#FF6DB3',            // M137-X — magenta vif : les pôles RESSORTENT sur l'axe gris — 8,9
     axe: '#8FA6C4',             // bleu-gris — 7,06
     ht: '#B9C4C0',              // 9,83 sur fond sombre
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
@@ -167,7 +167,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
       'Papang': '#B01E63',      // = Citalis
     },
     transportDefaut: '#B01E63',
-    pole: '#14181A',            // quasi-noir — 15,9
+    pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
     axe: '#33506B',             // bleu-gris profond — 7,50
     ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)

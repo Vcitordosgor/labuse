@@ -43,7 +43,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const aleaActifHook = layers.alea_inondation || layers.alea_mvt
   const aleaQ = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: aleaActifHook })
   const transQ = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
-  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.transport })
+  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })   // M137-X — pôles sur Axes
   // le CRITÈRE du pôle dérivé voyage avec la donnée (config/transport.yaml) — jamais en dur ici
   const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
     ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
@@ -72,6 +72,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
     && !aleaActif && !layers.transport && !layers.lignes_ht && !dispoActif
     && !layers.znieff && !layers.equipements_bpe   // M137-U
+    && !layers.axes   // M137-X — la couche Axes (+ pôles d'échange) a sa propre entrée de légende
   if (rien) return null
 
   return (
@@ -226,17 +227,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
           <div className="flex flex-col gap-1 text-[11px] text-txt">
             <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded bg-txt-mut" />tracé de ligne (couleur du réseau)</span>
             <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tTheme.pole }} />pôle d’échange relevé sur le terrain (OSM — Sourcé)</span>
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
           </div>
           <p className="mt-1.5 text-[10px] text-txt-dim">
-            GTFS : réseaux officiels de La Réunion (Licence Ouverte) · pôles &amp; Papang : © les
-            contributeurs d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}
+            GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les
+            contributeurs d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}. Les pôles d’échange sont
+            désormais dans « Axes structurants ».
           </p>
         </div>
       )}
 
-      {/* ── M106-B P3 : axes structurants (BD TOPO, hiérarchie IGN) ── */}
+      {/* ── M106-B P3 / M137-X : axes structurants (BD TOPO) + PÔLES d'échange (leurs nœuds) ── */}
       {layers.axes && (
         <div data-legend-axes className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <Tip block side="top" tip="Double face : accessibilité ET nuisances (bruit, pollution, recul le long des axes classés). La fiche d'une parcelle donne la distance à l'axe le plus proche.">
@@ -245,7 +245,12 @@ export function Legend({ inline = false }: { inline?: boolean }) {
               <span className="text-[11px] text-txt">Axes structurants (route des Tamarins, nationales…)</span>
             </div>
           </Tip>
-          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN — hiérarchie officielle « importance » niveaux 1-2 (Licence Ouverte)</p>
+          {/* M137-X — les pôles d'échange (nœuds du réseau structurant) ressortent en magenta. */}
+          <div className="mt-1.5 flex flex-col gap-1 text-[11px] text-txt">
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tTheme.pole }} />pôle d’échange relevé sur le terrain (OSM — Sourcé)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
+          </div>
+          <p className="mt-1 text-[10px] text-txt-dim">Axes : BD TOPO IGN, importance 1-2 (Licence Ouverte) · pôles : © les contributeurs d’OpenStreetMap (ODbL)</p>
         </div>
       )}
 
@@ -262,8 +267,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         </div>
       )}
 
-      {/* ── M134 : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal froid) ;
-          l'intensité d'un régime se lit à l'OPACITÉ (ZFANG renforcé, FRR totalité plus denses). ── */}
+      {/* ── M134 / M137-X : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal
+          froid). L'état d'un régime se lit à la TEXTURE : aplat = base, hachures = renforcée / partie. ── */}
       {dispoActif && (
         <div data-legend-dispositifs className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <p className="label-caps mb-2">Dispositifs et périmètres</p>
@@ -286,23 +291,31 @@ export function Legend({ inline = false }: { inline?: boolean }) {
                 NPNRU / ANRU — renouvellement urbain{fmtMill(mill(anruQ))}
               </span>
             )}
+            {/* M137-X — 4 ENTRÉES distinctes : l'état se lit à la TEXTURE (aplat vs hachures),
+                plus à l'opacité. ZFANG renforcée = hachures / ; FRR en partie = hachures \. */}
             {layers.zfang && (
-              <span className="flex items-center gap-2">
-                <span className="flex shrink-0 gap-0.5">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.zfang, opacity: tTheme.zfangOpRenforce + 0.3 }} />
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.zfang, opacity: tTheme.zfangOpStandard + 0.3 }} />
+              <>
+                <span data-legend-zfang-renforce className="flex items-center gap-2">
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ borderColor: tTheme.zfang, backgroundColor: `${tTheme.zfang}22`, backgroundImage: `repeating-linear-gradient(45deg, ${tTheme.zfang} 0 1.5px, transparent 1.5px 4px)` }} />
+                  ZFANG renforcée — 6 communes de l’Est
                 </span>
-                ZFANG — zone franche (renforcé ▸ standard)
-              </span>
+                <span data-legend-zfang-standard className="flex items-center gap-2">
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfang, opacity: 0.55, borderColor: tTheme.zfang }} />
+                  ZFANG standard — 18 communes
+                </span>
+              </>
             )}
             {layers.frr && (
-              <span className="flex items-center gap-2">
-                <span className="flex shrink-0 gap-0.5">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.frr, opacity: tTheme.frrOpTotalite + 0.3 }} />
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: tTheme.frr, opacity: tTheme.frrOpPartie + 0.3 }} />
+              <>
+                <span data-legend-frr-totalite className="flex items-center gap-2">
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frr, opacity: 0.55, borderColor: tTheme.frr }} />
+                  FRR totalité — 3 communes
                 </span>
-                FRR — France Ruralités (totalité ▸ en partie)
-              </span>
+                <span data-legend-frr-partie className="flex items-center gap-2">
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ borderColor: tTheme.frr, backgroundColor: `${tTheme.frr}22`, backgroundImage: `repeating-linear-gradient(-45deg, ${tTheme.frr} 0 1.5px, transparent 1.5px 4px)` }} />
+                  FRR en partie — 20 communes
+                </span>
+              </>
             )}
           </div>
           <p className="mt-1.5 text-[10px] text-txt-dim">ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).</p>
