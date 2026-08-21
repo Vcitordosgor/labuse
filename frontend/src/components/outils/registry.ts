@@ -96,8 +96,10 @@ export const MODULES: ModuleDef[] = [
   // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).
 
   // ── Suivre le temps — l'évolution, la veille ──
-  { key: 'o10-bascules', num: 'O10', group: 'temps',
-    label: 'Quoi de neuf', desc: 'Le quoi-de-neuf daté — bascules, événements du secteur' },
+  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Quoi de neuf » (o10-bascules, O10) — plus câblé
+  // au menu (registry + COMPONENTS). Le composant O10Bascules reste au dépôt (exporté, cf. blocB.tsx) ;
+  // son unique source, l'endpoint /events, reste VIVANT (consommé par la cloche de notifications + le
+  // « point du jour »), donc rien d'orphelin. Concept-route Copilote retirée (answering.py).
   { key: 'o7-carnet', num: 'O7', group: 'temps',
     label: 'Suivi de secteur', desc: 'Un secteur suivi comme un portefeuille — stock, prix, permis, signaux' },
   { key: 'temps', num: 'M08', group: 'temps',
