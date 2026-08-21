@@ -45,15 +45,20 @@ def _lat_repr(geojson_str: str) -> float | None:
         return None
 
 
-def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 10.0) -> dict:
+def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 10.0,
+               zoom_delta: int = 0, extra_geojson: str | None = None) -> dict:
     """Composite l'ortho + contour → PNG. Renvoie toujours un dict :
-    - succès : {ok:True, png, width, height, zoom, metres_par_px, attribution}
-    - échec  : {ok:False, echec:"<raison explicite>"} (jamais un cadre vide, jamais masqué)."""
+    - succès : {ok:True, jpeg, width, height, zoom, metres_par_px, attribution}
+    - échec  : {ok:False, echec:"<raison explicite>"} (jamais un cadre vide, jamais masqué).
+
+    `zoom_delta` (M129) : vue plus large (< 0) ou serrée (> 0) — deux vues PCMI1. `extra_geojson`
+    (M129) : bâti existant, dessiné en aplat gris (plan de masse coté PCMI2)."""
     if not geojson_str:
         return {"ok": False, "echec": "parcelle sans géométrie — contour non projetable"}
     m = build_situation_map(geojson_str, cache_dir=cache_dir, timeout_s=timeout_s,
                             tile_url=IGN_ORTHO_URL, tile_mime="image/jpeg",
-                            cache_prefix="ortho", attribution=IGN_ORTHO_ATTRIBUTION)
+                            cache_prefix="ortho", attribution=IGN_ORTHO_ATTRIBUTION,
+                            zoom_delta=zoom_delta, extra_geojson=extra_geojson)
     if m is None:
         return {"ok": False, "echec": "fond cartographique indisponible — service ortho ou réseau injoignable"}
     if not m.get("tiles"):
@@ -79,6 +84,19 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
     if not rings:
         return {"ok": False, "echec": "parcelle hors emprise de la vue ortho — contour non projetable"}
 
+    # bâti existant (M129 PCMI2) : aplat gris semi-opaque + liseré sombre, SOUS le contour parcelle.
+    extra_rings: list[list[tuple[float, float]]] = []
+    for poly in (m.get("extra_polygons") or []):
+        pts = [(float(t.split(",")[0]), float(t.split(",")[1])) for t in poly.split() if "," in t]
+        if len(pts) >= 3:
+            extra_rings.append(pts)
+    if extra_rings:
+        overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        od = ImageDraw.Draw(overlay)
+        for pts in extra_rings:
+            od.polygon(pts, fill=(60, 66, 62, 130), outline=(20, 24, 22, 255))
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+
     draw = ImageDraw.Draw(img)
     for pts in rings:                                    # halo sombre épais D'ABORD
         draw.line(pts + [pts[0]], fill=_HALO, width=6, joint="curve")
@@ -93,4 +111,6 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=78, optimize=True)
     return {"ok": True, "jpeg": buf.getvalue(), "width": w, "height": h,
-            "zoom": zoom, "metres_par_px": metres_par_px, "attribution": m.get("attribution")}
+            "zoom": zoom, "metres_par_px": metres_par_px, "attribution": m.get("attribution"),
+            "parcel_px": [[(float(t.split(",")[0]), float(t.split(",")[1]))
+                           for t in poly.split() if "," in t] for poly in (m.get("polygons") or [])]}
