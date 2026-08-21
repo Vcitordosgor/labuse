@@ -46,12 +46,23 @@ class Bilan:
 
 
 def _eur(x: float) -> str:
+    # M128-A1 : format STRICTEMENT identique à api.briques_pdf.eur (M€ à 2 décimales, virgule
+    # française) — le bilan (texte des étapes) et le document (bandeau, fourchettes) affichent
+    # la MÊME valeur à l'identique ; jamais « 4.5 M€» ici et « 4,47 M€ » là.
     ax = abs(x)
     if ax >= 1_000_000:
-        return f"{x / 1_000_000:.1f} M€"
+        return f"{x / 1_000_000:.2f} M€".replace(".", ",")
     if ax >= 1_000:
         return f"{x / 1_000:.0f} k€"
     return f"{x:.0f} €"
+
+
+def _plage_txt(bas: float, cen: float, haut: float) -> str:
+    """M128-A3 — une fourchette DÉGÉNÉRÉE (bornes égales après arrondi) s'affiche en UNE
+    valeur, jamais « 954 k€ – 954 k€ (médiane 954 k€) ». Sinon : bas – haut (médiane cen)."""
+    if bas == haut:
+        return _eur(cen)
+    return f"{_eur(bas)} – {_eur(haut)} (médiane {_eur(cen)})"
 
 
 def _quartiles(xs: list[float]) -> tuple[float, float, float]:
@@ -329,8 +340,8 @@ def _fiabilite_prix_neuf(niveau: str | None) -> tuple[str, list[str]]:
     if niveau in ("override_bassin", "secteur", "commune"):
         return "fiable", []
     if niveau == "ile_validee":
-        return "fragile", ["prix de sortie neuf estimé par repli île (±12 %, validé sur cette "
-                           "commune) — montants arrondis"]
+        return "fragile", ["prix de sortie neuf estimé à l'échelle de l'île (± 12 %) — "
+                           "montants arrondis"]
     if niveau == "ile_sans_operation":
         return "fragile", ["prix de sortie neuf estimé par repli île — aucune opération de marché "
                            "observée sur cette commune ; ordre de grandeur"]
@@ -506,15 +517,20 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     cf_bas = ca_bas * coef - cc_haut - cout_vrd
     cf_cen = ca_cen * coef - (cc_bas + cc_haut) / 2 - cout_vrd
     cf_haut = ca_haut * coef - cc_bas - cout_vrd
-    par_m2 = cf_cen / surface_terrain_m2 if surface_terrain_m2 else 0.0
-
-    # Si prix fragile : on ARRONDIT (pas de fausse précision).
-    rnd = (lambda x: round(x / 100_000) * 100_000) if fragile else (lambda x: round(x))
+    # M128-A1 : le prix fragile est ARRONDI (pas de fausse précision), mais au k€ — jamais aux
+    # 100 k€ qui écrasaient une charge de ~40 k€ à « 0 € » (le bandeau disait 0, le texte 40).
+    # On calcule les valeurs arrondies UNE fois et on les sert PARTOUT (bandeau, fourchette,
+    # texte, Score É) : une seule voix. `_eur` bucketise déjà au k€/M€ à l'affichage.
+    rnd = (lambda x: round(x / 1_000) * 1_000) if fragile else (lambda x: round(x))
+    ca_bas_r, ca_cen_r, ca_haut_r = rnd(ca_bas), rnd(ca_cen), rnd(ca_haut)
+    cf_bas_r, cf_cen_r, cf_haut_r = rnd(cf_bas), rnd(cf_cen), rnd(cf_haut)
+    cf_bas_aff = max(0, cf_bas_r)   # bas borné à 0 pour l'affichage (audit O3)
+    par_m2 = round(cf_cen_r / surface_terrain_m2) if surface_terrain_m2 else 0
 
     ca_formule = (f"{surf:.0f} m² × {_px(q1):.0f}–{_px(q3):.0f} €/m² (prix mixés LLS)"
                   if pondere else f"{surf:.0f} m² × {q1}–{q3} €/m²")
     steps.append(Step("Chiffre d'affaires potentiel", ca_formule,
-                      f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé", prov="derive"))
+                      "~" + _plage_txt(ca_bas_r, ca_cen_r, ca_haut_r), "dérivé", prov="derive"))
     cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
                 else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
     steps.append(Step("Coût de construction",
@@ -527,10 +543,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       f"{(1 - coef) * 100:.0f} % du CA", "params marge/honoraires/frais", prov="estimee"))
     # Présentation : la MÉDIANE d'abord (le chiffre de référence), la fourchette ensuite,
     # bas borné à 0 (audit O3 : « entre −0,2 et 8 M€ » n'aide personne à décider).
+    charge_fourchette = ("" if cf_bas_aff == cf_haut_r
+                         else f" (fourchette {_eur(cf_bas_aff)} – {_eur(cf_haut_r)})")
     steps.append(Step("Charge foncière acceptable (bilan à rebours)",
                       f"CA×{coef:.2f} − coût construction" + (" − VRD" if vrd_base > 0 else ""),
-                      f"médiane {_eur(cf_cen)} ≈ {par_m2:.0f} €/m² terrain "
-                      f"(fourchette {_eur(max(0, cf_bas))} – {_eur(cf_haut)})",
+                      f"médiane {_eur(cf_cen_r)} ≈ {par_m2:.0f} €/m² terrain{charge_fourchette}",
                       "dérivé", prov="derive"))
 
     if neuf_actif:
@@ -556,14 +573,16 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                      "l'opération ne dégage pas de valeur pour le terrain.")
 
     # Le BILAN reste une « simulation indicative » dans tous les cas (il dépend d'hypothèses) ;
-    # seule la fiabilité du PRIX DE SORTIE varie (fiable / fragile).
+    # seule la fiabilité du PRIX DE SORTIE varie (fiable / fragile). M128-A1 : mêmes valeurs
+    # arrondies que le bandeau/la fourchette/le Score É — une seule voix, fourchette dégénérée pliée.
+    ca_txt = _eur(ca_bas_r) if ca_bas_r == ca_haut_r else f"{_eur(ca_bas_r)}–{_eur(ca_haut_r)}"
+    cf_txt = _eur(cf_cen_r) if cf_bas_aff == cf_haut_r else f"{_eur(cf_cen_r)} (fourchette {_eur(cf_bas_aff)}–{_eur(cf_haut_r)})"
     if fragile:
-        verdict = (f"Simulation indicative (prix de sortie fragile) — CA ≈ {_eur(rnd(ca_bas))}–{_eur(rnd(ca_haut))}, "
-                   f"charge foncière médiane ≈ {_eur(rnd(cf_cen))} (ordre de grandeur)")
+        verdict = (f"Simulation indicative (prix de sortie fragile) — CA ≈ {ca_txt}, "
+                   f"charge foncière médiane ≈ {cf_txt} (ordre de grandeur)")
     else:
-        verdict = (f"Simulation indicative (prix de sortie fiable) — CA ~{_eur(ca_bas)}–{_eur(ca_haut)} · "
-                   f"charge foncière médiane ~{_eur(cf_cen)} "
-                   f"(fourchette {_eur(max(0, cf_bas))}–{_eur(cf_haut)})")
+        verdict = (f"Simulation indicative (prix de sortie fiable) — CA ~{ca_txt} · "
+                   f"charge foncière médiane ~{cf_txt}")
 
     calc = {"surf": round(surf), "terrain_m2": round(surface_terrain_m2 or 0),
             "q1": q1, "median": med, "q3": q3, "coef": round(coef, 4),
@@ -576,11 +595,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
             "clause_critere": (clause or {}).get("critere"),
             "clause_detail": (clause or {}).get("detail")}
     return Bilan(True, niveau, verdict, prix,
-                 {"bas": rnd(ca_bas), "central": rnd(ca_cen), "haut": rnd(ca_haut)},
+                 {"bas": ca_bas_r, "central": ca_cen_r, "haut": ca_haut_r},
                  # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge
                  # foncière négative en bas de fourchette » reste émis quand c'est le cas.
-                 {"bas": max(0, rnd(cf_bas)), "central": rnd(cf_cen), "haut": rnd(cf_haut),
-                  "par_m2_terrain": round(par_m2)},
+                 {"bas": cf_bas_aff, "central": cf_cen_r, "haut": cf_haut_r,
+                  "par_m2_terrain": par_m2},
                  steps, hypotheses, avert, calc=calc)
 
 

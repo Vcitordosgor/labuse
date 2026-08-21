@@ -81,7 +81,7 @@ def test_repli_ile_preseance_et_etiquettes():
     assert not (dp.ILE_SANS_OPERATION_INSEE & dp.SOCIAL_DOMINANT_INSEE)
     # étiquettes à 4 niveaux (au mot près)
     assert dp.niveau_prix_label("commune", 54) == "Estimé — médiane locale, 54 ventes"
-    assert dp.niveau_prix_label("ile_validee") == "Estimé — estimation île, ± 12 %, validée sur cette commune"
+    assert dp.niveau_prix_label("ile_validee") == "Estimé — estimation à l'échelle de l'île (± 12 %)"
     assert dp.niveau_prix_label("ile_sans_operation") == (
         "Estimé — estimation île, aucune opération de marché observée sur cette commune")
 

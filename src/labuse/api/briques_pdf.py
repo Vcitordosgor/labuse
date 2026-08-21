@@ -296,15 +296,8 @@ def collect(db: Session, idu: str) -> dict:
                                                   ["tendance_12m", "liquidite", "offre_engagee"])
     except Exception:  # noqa: BLE001
         pass
-    # M54-AB F10 : verdict LABUSE servi (libellé client + rang + motif) — le financeur DOIT savoir
-    # si le scoring déclasse la parcelle (décision produit Vic 09/08). Source unique verdict_servi.
-    try:
-        from ..verdict_servi import verdict_servi, rang_total
-        vs = verdict_servi(db, idu)
-        if vs.get("tier"):
-            out["verdict"] = {**vs, "rang_total": rang_total(db)}
-    except Exception:  # noqa: BLE001
-        pass
+    # M128-B6 : le verdict LABUSE (tier/rang/motif) n'est PLUS collecté pour le dossier banquier —
+    # aucun classement interne en vitrine (retiré de la couverture, même règle que fiche et dossier).
     # M73-D — assainissement + réhabilitation, via les helpers UNIQUES (jamais recalculés ni lus depuis
     # zone_anc/proba_anc). L'absence est un état (statut_anc renvoie toujours un dict ; compute_mode_b
     # « non disponible »). Rendus par blocs_documents (écrit une fois).
@@ -387,30 +380,15 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
     if sa:
         # marge = charge (bilan à rebours, point de calcul unique) − prix probable du foncier.
         # M97 G2 : en repli (bilan indisponible), la provenance Score É est dite sur le cartouche.
-        label_marge = "Marge estimée · Estimé" if sa["charge_du_bilan"] else "Marge estimée · Score É"
+        label_marge = "Marge estimée · Estimé" if sa["charge_du_bilan"] else "Marge estimée · barème sectoriel"
         kpis.append(cartouche(label_marge, eur(sa["marge"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
-    # M54-AB F10 : encadré SOBRE du verdict LABUSE (libellé client + rang + motif), pour que le
-    # financeur sache si le scoring déclasse la parcelle. Bordure « terre » pour les déclassements.
-    vd = out.get("verdict")
-    verdict_box = ""
-    if vd and vd.get("tier"):
-        from ..verdict_servi import DECLASSE_COLOR
-        rg = ""
-        if vd.get("rang") is not None:
-            rg = f" · rang {vd['rang']:,}".replace(",", " ")
-            if vd.get("rang_total"):
-                # M89 — dénominateur NOMMÉ (jamais nu) : « / 428 239 classées » + le périmètre exclu.
-                from ..verdict_servi import RANG_PERIMETRE
-                rg += (f" / {vd['rang_total']:,} classées".replace(",", " ")
-                       + f" <span style='color:#8c9891'>({RANG_PERIMETRE})</span>")
-        motif = f"<div class='note' style='margin:1mm 0 0'>{esc(vd['motif'])}</div>" if vd.get("motif") else ""
-        col = DECLASSE_COLOR if vd.get("declasse") else "#5f6c65"
-        verdict_box = (f"<div style='border-left:3px solid {col};padding:2mm 3mm;margin:2mm 0;"
-                       f"background:#f7faf8'><b>Verdict LABUSE</b> : {esc(vd['label'])}{rg}{motif}</div>")
+    # M128-B6 : l'encadré « Verdict LABUSE » (verdict, rang île, motif copropriétés) est RETIRÉ du
+    # dossier banquier — aucun verdict, rang ni score sur ce document (même règle que fiche et dossier).
+    # Le financeur lit des attributs factuels et le bilan, pas un classement interne.
     return (f"<section class='garde'>"
             f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau, marque=marque)}"
-            f"{verdict_box}{synthese}"
+            f"{synthese}"
             f"{cartouches(kpis)}"
             f"<h2>Situation</h2>{photo}</section>")
 
@@ -479,14 +457,18 @@ def faisabilite(out: dict) -> str:
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
             parts.append(f"hauteur d'égout retenue ~{fo['hauteur_m']} m")
         synth = f"<p><b>Potentiel indicatif :</b> {esc(' · '.join(parts))} {s('E')}</p>"
-        # M54-AB C3 : la surface vendable retenue (capacité en logements, portée au bilan) et la
-        # dérivation de plancher ci-dessous peuvent différer de ~1-2 m² — même scénario, méthodes
-        # distinctes. On l'ÉTIQUETTE plutôt que de laisser deux chiffres nus se contredire.
+        # M54-AB C3 / M128-A4 : la surface vendable retenue (capacité en logements, portée au bilan)
+        # et la dérivation de plancher ci-dessous diffèrent de ~1-2 m² — même scénario, deux méthodes.
+        # On NOMME les DEUX chiffres et l'écart, plutôt que de laisser un lecteur buter sur 218 vs 216.
         if fo.get("shab_vendable_m2"):
+            shab_derive = next((st.valeur for st in (fais.steps or [])
+                                if "habitable" in (st.label or "").lower()), None)
+            derive_txt = (f"la dérivation de plancher ci-dessous aboutit à {esc(shab_derive)} "
+                          "(surface habitable au rendement)" if shab_derive
+                          else "la dérivation de plancher ci-dessous aboutit à la surface habitable au rendement")
             synth += (f"<p class='note'>Surface vendable retenue ~{fo['shab_vendable_m2']:.0f} m² "
-                      f"(capacité en logements, valeur portée au bilan) ; la dérivation de plancher "
-                      f"ci-dessous aboutit à la surface habitable au rendement — même scénario, "
-                      f"écart de méthode/arrondi.</p>")
+                      f"(capacité en logements, valeur portée au bilan) ; {derive_txt} — même "
+                      f"scénario, écart de méthode/arrondi (~1-2 m²).</p>")
     avert = "".join(f"<li>{esc(a)}</li>" for a in (fais.avertissements or []))
     # M54-AB C2 : NOMMER le scénario. Ce bloc chiffre le NEUF hors bâti existant (reculs, table
     # rase) — l'autre document (dossier/flash) chiffre le résiduel « bâti conservé ». L'avertissement
@@ -562,7 +544,7 @@ def bilan(out: dict) -> str:
                       f"probable du foncier = médiane terrain sectorielle × {terrain:.0f} m². Estimé — "
                       f"hors coûts spécifiques (démolition, dépollution, VRD, stationnement, TVA, "
                       f"aléas). N'est ni un prix ni une promesse.")
-        body += (f"<h3>Score É — marge foncière estimée {s('E')}</h3>"
+        body += (f"<h3>Marge foncière estimée {s('E')}</h3>"
                  f"{provenance}"
                  f"<p><b>{eur(sa['marge'])}</b> = charge supportable {eur(sa['charge'])} "
                  f"− prix probable du foncier {eur(sa['prix_probable'])} "
@@ -579,7 +561,7 @@ def bilan(out: dict) -> str:
             couleur = "#A87916" if gf["declenche"] else "#5F6C65"   # ambre (alerte) / gris (non mesurable)
             body += f"<p class='note' style='color:{couleur}'>{esc(gf['note'])}</p>"
     elif se:
-        body += f"<h3>Score É</h3><p class='note'>Marge {s('A')} — données de marché insuffisantes.</p>"
+        body += f"<h3>Marge foncière estimée</h3><p class='note'>Marge {s('A')} — données de marché insuffisantes.</p>"
     return body
 
 
@@ -618,25 +600,35 @@ def comparables(out: dict) -> str:
                      + (f"<p class='note'>Écart neuf / ancien : {esc(comp.get('ecart_vefa_ancien_pct'))} %.</p>"
                         if comp.get("ecart_vefa_ancien_pct") is not None else ""))
     if perm and perm.get("items"):
-        rows = "".join(f"<tr><td>{esc(it.get('date'))}</td><td>{esc(it.get('type_label') or it.get('type'))}</td>"
-                       f"<td class='n'>{esc(it.get('distance_m'))} m</td><td>{esc(it.get('statut') or '—')}</td></tr>"
-                       for it in perm["items"][:10])
-        body += (f"<h3>Permis de construire voisins (SITADEL) {s('S')}</h3>"
-                 f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>")
+        # M128-C8 : devant un financeur, les permis voisins sont filtrés à ≤ 5 ans — un dépôt de
+        # 2014-2018 n'est plus un signal de dynamique. Le compte « dynamique » du bloc reste, lui,
+        # borné en amont (nearby_permits) ; ici on borne la LISTE affichée.
+        from datetime import date as _date, timedelta as _td
+        _cut = (_date.today() - _td(days=5 * 365)).isoformat()
+        recents = [it for it in perm["items"] if (it.get("date") or "") >= _cut]
+        if recents:
+            rows = "".join(f"<tr><td>{esc(it.get('date'))}</td><td>{esc(it.get('type_label') or it.get('type'))}</td>"
+                           f"<td class='n'>{esc(it.get('distance_m'))} m</td><td>{esc(it.get('statut') or '—')}</td></tr>"
+                           for it in recents[:10])
+            body += (f"<h3>Permis de construire voisins (SITADEL, ≤ 5 ans) {s('S')}</h3>"
+                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>")
     return body
 
 
 def risques(out: dict) -> str:
+    # M128-C11 : même hygiène de libellé que la fiche/dossier (M125-1ter) — on nettoie les détails
+    # servis (codes techniques, proxys SAFER/SAR-couche/OCS GE/ENS) avant impression au financeur.
+    from .export_commun import nettoyer_libelle_client as _net
     rap = out.get("rapport") or {}
     risq, pat = rap.get("risques") or {}, rap.get("patrimoine") or {}
     items = []
     for it in risq.get("couches", []):
-        items.append(("Risque", it["label"], it.get("detail")))
+        items.append(("Risque", it["label"], _net(it.get("kind"), it.get("detail"))))
     for it in pat.get("couches", []):
-        items.append(("Servitude", it["label"], it.get("detail")))
+        items.append(("Servitude", it["label"], _net(it.get("kind"), it.get("detail"))))
     # M73 : ABF issu de la LIGNE SERVIE (arbitrée) — plus de « 0 m » distance-à-tampon.
     if pat.get("abf_note"):
-        items.append(("Patrimoine", "Abords de monument historique", pat["abf_note"]))
+        items.append(("Patrimoine", "Abords de monument historique", _net("abf", pat["abf_note"])))
     zan = out.get("zan")
     body = "<div class='pb'></div><h2>Risques, servitudes & sobriété foncière</h2>"
     if items:

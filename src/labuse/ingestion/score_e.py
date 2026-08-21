@@ -124,7 +124,7 @@ def niveau_label(niveau_prix: str | None) -> str:
     Tooltip/détail fiche + dossier banquier s'appuient dessus. Repli île = mandat couverture prix."""
     return {"secteur": "estimation niveau secteur",
             "commune": "estimation niveau commune",
-            "ile_validee": "estimation île, ± 12 %, validée sur cette commune",
+            "ile_validee": "estimation à l'échelle de l'île (± 12 %)",
             "ile_sans_operation": "estimation île, aucune opération de marché observée sur cette commune",
             }.get(niveau_prix, "estimation niveau non déterminé")
 
