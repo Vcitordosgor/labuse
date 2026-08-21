@@ -301,8 +301,8 @@ def rules_summary(facts: dict) -> str:
             reco = "Écarter, ou vérifier sur le terrain si le motif de déclassement semble erroné."
         else:
             reco = {
-                "brulante": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
-                "chaude": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
+                "brulante": "Vérifier le PLU/CU, croiser PPR/potentiel foncier, puis identifier le propriétaire avant de démarcher.",
+                "chaude": "Vérifier le PLU/CU, croiser PPR/potentiel foncier, puis identifier le propriétaire avant de démarcher.",
                 "reserve_fonciere": "Suivre la parcelle — potentiel réel à horizon plus lointain ; vérifier PLU et contraintes.",
                 "a_creuser": "Compléter les données manquantes (risques, pente, propriétaire) avant d'investir du temps.",
                 "ecartee": "Ne pas prospecter : hors classement servi.",

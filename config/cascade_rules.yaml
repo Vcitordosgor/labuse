@@ -127,7 +127,7 @@ layers:
     params:
       spatial_kind: safer
       severity: moyen
-      detail: "Parcelle en zone agricole (proxy RPG/IGN — préemption SAFER possible)."
+      detail: "Parcelle déclarée agricole au RPG (déclarations PAC) — usage agricole, à vérifier au PLU."
 
   - name: risques
     phase: 1

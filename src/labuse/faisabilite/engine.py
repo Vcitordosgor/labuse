@@ -396,7 +396,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     facteur = 1.0
     if c.agricole_sar:
         facteur = 0.0
-        modul.append("Zonage agricole / protection SAR → urbanisation non autorisée malgré le zonage U.")
+        modul.append("Parcelle déclarée agricole (RPG) — usage agricole à confirmer au PLU (indicatif, n'emporte pas d'interdiction automatique).")
     if c.alea_ppr == "fort":
         facteur = 0.0
         modul.append("Aléa FORT (PPR) → quasi inconstructible : étude/refus spécifique requis.")

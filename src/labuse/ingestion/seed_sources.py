@@ -12,7 +12,7 @@ de la cascade (cascade/layers/*.py) et par le jeu de démo — NE PAS renommer.
 """
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from ..enums import DataSourceStatus as S
@@ -23,12 +23,14 @@ from ..models import DataSource
 SOURCES: list[dict] = [
     # ── Cœur MVP — flux live confirmés au SPIKE (2026-06) ──
     dict(name="Cadastre (API Carto PCI)", category="cadastre", provider="IGN / API Carto",
+         source_millesime="PCI Parcellaire Express (DGFiP) — « latest » ingérée",   # M125-1bis : note licence PCI
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          rate_limit=None, documentation_url="https://apicarto.ign.fr/api/doc/cadastre",
          endpoint_url="https://apicarto.ign.fr/api/cadastre/parcelle",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — Plan Cadastral Informatisé, via API Carto (IGN) ». Parcellaire Express (PCI), MAJ semestrielle ; BD Parcellaire gelée depuis 2019.",
          technical_notes="✓ live (HTTP 200). Lookup unitaire (parcelle/section/geom). Ingestion EN MASSE via Cadastre Etalab (bulk), pas cette API en boucle (§4)."),
     dict(name="Cadastre Etalab (bulk DGFiP/Etalab)", category="cadastre", provider="DGFiP / Etalab",
+         source_millesime="Etalab cadastre — « latest » ingérée (DGFiP)",   # M125-1bis : endpoint /latest/
          access_type="téléchargement/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://cadastre.data.gouv.fr/datasets/cadastre-etalab",
          endpoint_url="https://cadastre.data.gouv.fr/data/etalab-cadastre/latest/geojson/communes/974/97415/cadastre-97415-parcelles.json.gz",
@@ -45,6 +47,7 @@ SOURCES: list[dict] = [
     # M-H — source des zonages d'assainissement (couches d'information CNIG typeinf 19) : distincte
     # du zonage d'urbanisme (zone-urba) bien que servie par le même Géoportail. Consommée par anc.py.
     dict(name="GPU — zonages d'assainissement", category="urbanisme", provider="IGN / Géoportail de l'urbanisme",
+         source_millesime="GPU — idurba par commune ; SIG 4/24 au 11/07/2026",   # M125-1bis : layers_ingest millesime=idurba
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://apicarto.ign.fr/api/doc/gpu",
          endpoint_url="https://apicarto.ign.fr/api/gpu/municipality/document/info-surf",
@@ -95,6 +98,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) ».",
          technical_notes="✓ live 05/07/2026 : /installations_classees (régime, statut Seveso, NAF), lon-lat → Point. spatial_layers kind='icpe'. Vague B (# TODO étage 1)."),
     dict(name="DEAL Réunion — PPR / aléas", category="risques", provider="DEAL Réunion (Lizmap)",
+         source_millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",   # M125-1bis : attrs.approbation min/max sur 164 zonages en base
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=01risque",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque",
@@ -107,6 +111,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte + art. L.112 A LPF : interdiction de réidentifier / d'indexer — agréger, jamais nominatif. Attribution : « Source : DGFiP, Demandes de valeurs foncières (DVF) géolocalisées, via files.data.gouv.fr (géo-DVF Etalab) ».",
          technical_notes="✓ ingéré : géo-DVF Etalab (files.data.gouv.fr), CSV par département — le 974 EST couvert (dep=974, millésimes 2021–2025). Géolocalisé par id_mutation, agrégé par mutation réelle (layers_ingest.fetch_geo_dvf, fraicheur.refresh_dvf). M124 — PROFONDEUR 2014-2020 : archives brutes DGFiP (miroir data.cquest.org/dgfip_dvf, Licence Ouverte, URL exacte par ligne) → dvf_mutations_histo (dvf_histo.py, M3.5) ; frontière 2020/2021 sans recouvrement (garde ≥2021 refusée)."),
     dict(name="RGE ALTI (altimétrie)", category="topographie", provider="IGN / Géoplateforme",
+         source_millesime="RGE ALTI® (IGN) — édition non enregistrée",   # M125-1bis : API alti Géoplateforme
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="5 req/s",
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-altimetrie",
          endpoint_url="https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json",
@@ -121,6 +126,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence à confirmer — jeu pnrun_2021 servi par la Région Réunion (ODS), licence du jeu à consigner (audit M6 §1.11 R8).",
          technical_notes="✓ live : pnrun_2021 champ `type` = « Coeur du Parc national » (HARD_EXCLUDE) vs « Aire d'Adhésion » (SOFT_FLAG). Aussi apicarto/nature/pn. INPN direct en maintenance au 2026-06-07."),
     dict(name="Forêts publiques (ONF)", category="environnement", provider="ONF / IGN (BD TOPO)",
+         source_millesime="BD TOPO® V3 — forêt publique (IGN)",   # M125-1bis : typename BDTOPO_V3:foret_publique
          access_type="WFS", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/bdtopo", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO, forêt publique ».",
@@ -129,19 +135,20 @@ SOURCES: list[dict] = [
                          "162 doublons d'ingestion par bbox commune (features à cheval sur 2 communes comptés 2×) — "
                          "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
                          "→ HARD_EXCLUDE, sinon flag fort."),
-    dict(name="SAR Réunion (PEIGEO)", category="urbanisme", provider="Région Réunion / AGORAH",
+    dict(name="Potentiel foncier Région (Région ODS)", category="urbanisme", provider="Région Réunion / AGORAH",
          access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
-         legal_notes="Licence à confirmer (jeu PEIGEO/AGORAH — audit M6 §1.11 R8). SAR juridiquement SUPÉRIEUR au PLU.",
+         legal_notes="Licence à confirmer (jeu Région ODS « potentiel foncier » — audit M6 §1.11 R8). Proxy de vocation INDICATIF ; ce n'est pas le zonage régional officiel (introuvable en open data), aucune portée réglementaire ni hiérarchie sur le PLU.",
          technical_notes="PROXY : le zonage SAR officiel PEIGEO est INTROUVABLE en public (data.gouv/ODS vides, "
                          "PEIGEO 503, DEAL injoignable). La vocation SAR est servie via le jeu Potentiel foncier "
                          "de la Région — 2 453 emprises intégrées (spatial_layers kind='sar'), verdicts réels sur "
                          "431 663 parcelles (couche cascade 'sar' = proxy indicatif, jamais une interdiction). "
                          "M74 A : requalifiée connecte (mesurée, intégrée) — l'ancienne note « UNKNOWN » était périmée."),
-    dict(name="Zonage SAFER (DAAF)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
+    dict(name="RPG — déclarations agricoles (IGN/ASP)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
+         source_millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",   # M125-1bis : attrs.src=RPG.LATEST (38 460)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion", endpoint_url="https://data.geopf.fr/wfs/ows",
-         legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Droit de préemption SAFER.",
+         legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Parcelle DÉCLARÉE agricole au RPG (déclarations PAC) — usage indicatif, aucune portée réglementaire.",
          technical_notes="PROXY : le zonage SAFER/DAAF officiel est INTROUVABLE en open data. ✓ proxy intégré : "
                          "RPG.LATEST (38 460 parcelles agricoles déclarées, Géoplateforme) en flag agricole du scoring. "
                          "M74 A : requalifiée connecte (mesurée, intégrée) — le proxy est le maximum publiable, jamais présenté comme la source officielle."),
@@ -158,6 +165,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence à confirmer par jeu (AGORAH/PEIGEO — audit M6 §1.11 R8).",
          technical_notes="⚠ Hôte injoignable depuis l'infra (HTTP 000, 2026-06-07). Fallback Région ODS / import."),
     dict(name="DEAL Réunion (WMS/WFS)", category="urbanisme", provider="DEAL Réunion",
+         source_millesime="NPNRU — QP génération 2024 (DEAL/ANCT)",   # M125-1bis : anru attrs code_qp_2024 (8 quartiers)
          access_type="WMS/WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://www.reunion.developpement-durable.gouv.fr", endpoint_url=None,
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion ». Licence à consigner couche par couche (audit M6 §1.11 R8).",
@@ -187,6 +195,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte — attribution : « Source : SDES, Sitadel ». Pétitionnaires personnes MORALES seulement (physiques anonymisées à la source).",
          technical_notes="✓ live 10/07/2026 (Wave Sitadel3). Flux national Dido (dataset 6513f0189d7d312c80ec5b5b), 4 datafiles (logements/locaux/PA/PD), filtre serveur DEP_CODE=eq:974, delta DATE_REELLE_AUTORISATION=gte:. MAJ mensuelle, historique 2013+. Ingestion : permits_sdes.py (upsert permit_id, refresh cron). ⚠ voie Région ODS morte 2023-09 (permits.py legacy). last_sync_at posé à l'ingestion."),
     dict(name="BD TOPO IGN", category="topographie", provider="IGN / Géoplateforme",
+         source_millesime="BD TOPO® V3 (IGN) — édition non enregistrée",   # M125-1bis : typename BDTOPO_V3 (config wfs_layers)
          access_type="WFS/téléchargement", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/bdtopo", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO ».",
@@ -253,6 +262,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN) ». Assiettes telles que téléversées par les gestionnaires — exhaustivité variable par catégorie.",
          technical_notes="✓ live 10/07/2026 (LOT 4 data-gap, Le Port : pm1/pm2/ac2/ac3/el10). Endpoints assiette-sup-s/l/p par bbox de commune → spatial_layers kind='sup' (subtype=suptype). Couche cascade `sup` : malus par catégorie (t5 fort ; t4/t7/i4/i1/i3 moyen ; défaut faible ; pm*/ac1-2/el10 info ×0 anti-double-compte). Plafond 1000 features/réponse loggé."),
     dict(name="Recherche d'entreprises (DINUM)", category="economie", provider="DINUM (api.gouv.fr)",
+         source_millesime="Sirene INSEE / RNE INPI (api.gouv.fr) — courant",   # M125-1bis : note seed
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~7 req/s (throttle 5 req/s)",
          documentation_url="https://recherche-entreprises.api.gouv.fr/docs/",
          endpoint_url="https://recherche-entreprises.api.gouv.fr/search",
@@ -278,11 +288,13 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte 2.0 — attribution : « Source : Cerema, Cartofriches ». MAJ trimestrielle.",
          technical_notes="✓ live 05/07/2026 (INSEE 97415) : host apidf-preprod.cerema.fr (apidf.cerema.fr ne résout pas), sans clé. /geofriches (GeoJSON MultiPolygon + unite_fonciere_refcad = IDU exacts), /friches/{id} (78 champs). Couverture 974 = 373 friches. spatial_layers kind='friche', rattachement EXACT via refcad. Vague C1 (# TODO étage 1/2). last_sync_at à l'ingestion."),
     dict(name="SIRENE", category="economie", provider="INSEE / annuaire-entreprises",
+         source_millesime="Sirene INSEE — état courant (non versionné)",   # M125-1bis : note seed
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://recherche-entreprises.api.gouv.fr/docs", endpoint_url="https://recherche-entreprises.api.gouv.fr/search",
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Sirene, via recherche-entreprises (DINUM) ».",
          technical_notes="✓ live : confirme une personne morale propriétaire en attendant les Fichiers fonciers."),
-    dict(name="OCS GE (IGN)", category="occupation_sol", provider="IGN / Géoplateforme",
+    dict(name="IGN BD CARTO V5 — occupation du sol", category="occupation_sol", provider="IGN / Géoplateforme",
+         source_millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)",   # M125-1bis : attrs.src=BDCARTO_V5 (1 643 objets)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/ocsge", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD CARTO (proxy OCS GE) ».",
@@ -318,10 +330,11 @@ SOURCES: list[dict] = [
                          "non mesuré. ⚠ ENDPOINT MORT : data.culture.gouv.fr (ODS) décommissionné (301→SPA, plus d'API) "
                          "— re-ingestion à re-sourcer via le dump data.gouv ; les 200 en base datent du dernier run "
                          "OK (05/07/2026). FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; « covisibilité à instruire »."),
-    dict(name="ENS (Département)", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
+    dict(name="INPN / patrinat — espaces protégés", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
+         source_millesime="INPN/patrinat espaces protégés — passe 05/07/2026",   # M125-1bis : note seed (proxy)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://inpn.mnhn.fr/", endpoint_url="https://data.geopf.fr/wfs/ows",
-         legal_notes="Licence à confirmer (couches espaces protégés INPN/patrinat — non tranché à l'audit M6 §1.11). Droit de préemption départemental.",
+         legal_notes="Licence à confirmer (couches espaces protégés INPN/patrinat — non tranché à l'audit M6 §1.11). Espaces protégés réglementaires (INPN) ; ce n'est PAS le zonage ENS départemental (introuvable en open data), aucun droit de préemption départemental déduit.",
          technical_notes="PROXY (M74 A : requalifiée connecte, mesurée). ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN) — 73 emprises, 21/24 communes. Les 3 restantes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07/2026 » — passe INPN a tourné (parc national + forêt présents) mais 0 espace protégé de ces types (port urbain / plaines côtières agricoles). Couche ENS départementale officielle À DEMANDER au mail AGORAH/DEAL en attente. Ne rien inventer."),
     dict(name="VRD / assainissement (SPANC)", category="reseaux", provider="EPCI",
          access_type="manuel", status=S.MANUEL, reliability_level=R.A_CONFIRMER,
@@ -333,6 +346,7 @@ SOURCES: list[dict] = [
     # parcelle↔PM lus par la fiche (bloc Propriétaire) — à ne pas confondre avec « Fichiers fonciers
     # (Cerema) » (conventionné, non branché, 100 % UNKNOWN). Ingérée par ingestion/personnes_morales.py.
     dict(name="DGFiP — parcelles des personnes morales", category="proprietaire", provider="DGFiP",
+         source_millesime="Parcelles des PM — situation 2025 (DGFiP)",   # M125-1bis : endpoint ..._situation_2025_...
          access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://data.economie.gouv.fr/explore/dataset/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/",
          endpoint_url="https://data.economie.gouv.fr/api/v2/catalog/datasets/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
@@ -352,7 +366,7 @@ SOURCES: list[dict] = [
                          "82 701 liens parcelle↔personne morale du produit viennent en réalité de « DGFiP — parcelles "
                          "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
                          "idprocpte / idprodroit → nb_droits_propriete = signal d'indivision, en attente de convention."),
-    dict(name="DEAL Réunion — trait de côte", category="risques", provider="Cerema / GéoLittoral",
+    dict(name="Cerema / GéoLittoral — indicateur d'érosion côtière", category="risques", provider="Cerema / GéoLittoral",
          source_millesime="millésime 2018",   # M86 — millésime centralisé
          access_type="import/SHP", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html",
@@ -372,6 +386,7 @@ SOURCES: list[dict] = [
                          "≈ 6 Go de cache temporaire vs ~50-80 Go de dalles JP2. Re-survol ~3-4 ans "
                          "→ pas de cron, commande --refresh (Lot 7)."),
     dict(name="RGE ALTI 5 m (IGN)", category="terrain", provider="IGN / Géoplateforme",
+         source_millesime="RGE ALTI® 5 m (IGN) — édition non enregistrée",   # M125-1bis : raster 5 m Géoplateforme
          access_type="import raster", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://geoservices.ign.fr/rgealti",
          endpoint_url=None,
@@ -395,6 +410,7 @@ SOURCES: list[dict] = [
                          "diffusée à l'IRIS (330 IRIS 974). Agrégé → anc_maille_taux (iris + commune) : "
                          "taux de non-raccordement du SECTEUR servi à la fiche. 148 307 rés. principales 974."),
     dict(name="GPU — zonages d'assainissement (info-surf typeinf 19)", category="assainissement",
+         source_millesime="GPU — idurba par commune ; SIG 4/24 au 11/07/2026",   # M125-1bis (doublon info-surf)
          provider="IGN / Géoportail de l'urbanisme", access_type="REST/GeoJSON",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://apicarto.ign.fr/api/doc/gpu",
@@ -428,6 +444,7 @@ SOURCES: list[dict] = [
                          "couleurs : PIR=canal R, rouge=canal G → pseudo-NDVI. Même grille "
                          "ortho_tiles (512 m), 0,4 m/px suffit (cache data/ortho_irc ≈ 2 Go)."),
     dict(name="LiDAR HD — MNH 50 cm (IGN)", category="terrain", provider="IGN / Géoplateforme",
+         source_millesime="LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",   # M125-1bis : note seed (2 665 dalles)
          access_type="WMS GeoTIFF", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://diffusion-lidarhd.ign.fr/mnx/",
          endpoint_url="https://data.geopf.fr/wms-r "
@@ -511,8 +528,37 @@ SOURCES: list[dict] = [
 ]
 
 
+# M125-1ter — RENOMMAGES de sources (faux constat de NOM). `seed()` clé par nom → un simple
+# changement de nom dans SOURCES créerait un DOUBLON (nouvelle ligne) et laisserait les résultats
+# cascade existants pointés sur l'ANCIEN nom (donc le faux nom s'afficherait encore). On renomme
+# donc EN PLACE avant l'upsert. Idempotent : si le nouveau nom existe déjà (ré-exécution), on
+# repointe les liens de l'orphelin puis on le supprime.
+_RENAMES = {
+    "SAR Réunion (PEIGEO)": "Potentiel foncier Région (Région ODS)",
+    "Zonage SAFER (DAAF)": "RPG — déclarations agricoles (IGN/ASP)",
+    "OCS GE (IGN)": "IGN BD CARTO V5 — occupation du sol",
+    "ENS (Département)": "INPN / patrinat — espaces protégés",
+    "DEAL Réunion — trait de côte": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+}
+
+
+def _migrer_renommages(session: Session) -> None:
+    """M125-1ter — renomme les sources EN PLACE (avant l'upsert clé-par-nom). Renommage seul
+    (`UPDATE name`) : l'id est conservé, toutes les FK (spatial_layers, cascade_results…) restent
+    valides, et les résultats cascade existants affichent le NOUVEAU nom sans re-run. Idempotent :
+    si le nouveau nom existe déjà, on n'écrase rien (le renommage a déjà eu lieu)."""
+    for old, new in _RENAMES.items():
+        has_old = session.execute(text("SELECT 1 FROM data_sources WHERE name = :n"), {"n": old}).first()
+        has_new = session.execute(text("SELECT 1 FROM data_sources WHERE name = :n"), {"n": new}).first()
+        if has_old and not has_new:
+            session.execute(text("UPDATE data_sources SET name = :new WHERE name = :old"),
+                            {"new": new, "old": old})
+    session.flush()
+
+
 def seed(session: Session) -> int:
     """Upsert idempotent du catalogue. Renvoie le nombre de sources présentes."""
+    _migrer_renommages(session)   # M125-1ter — rename EN PLACE avant l'upsert (sinon doublon)
     existing = {name for (name,) in session.execute(select(DataSource.name)).all()}
     for row in SOURCES:
         if row["name"] in existing:

@@ -3,9 +3,11 @@
 Le dark est pour l'écran ; un dossier comité s'imprime. L'identité LABUSE reste par la typo
 (Space Grotesk/Inter/JetBrains Mono) et la menthe en ACCENTS FINS (filets, puces, chip statut).
 Rendu fpdf2 (pur Python) avec les fontes du design system (OFL, embarquées dans api/fonts/).
-Contenu = la fiche complète : en-tête (IDU/statut/surface), bandeau événement, scores Q/A +
-complétude, lignes cascade TRACÉES par onglet (poids signé, détail, source, date), flags,
-footer non-garantie. Les données viennent de _q_v2_fiche — même source que l'écran.
+Contenu = DONNÉES PURES de la fiche (M124-A : plus de verdict/rang/score/complétude — l'analyse
+LABUSE reste à l'écran) : en-tête (IDU/adresse/surface), bandeau événement, droits à bâtir (SDP),
+contexte commune, lignes cascade TRACÉES par onglet, puis TOUS les blocs de données de la fiche
+(M125-A, exhaustif : règlement/fraîcheur PLU, procédures, dispositifs, réseaux, marché, copro,
+sources par-fiche…), footer non-garantie. Les données viennent de _q_v2_fiche — même source que l'écran.
 """
 from __future__ import annotations
 
@@ -14,7 +16,6 @@ from pathlib import Path
 
 from fpdf import FPDF
 
-from ..verdict_servi import TIER_LABELS, DECLASSE_RGB  # source unique des libellés client (écran = papier)
 
 FONTS = Path(__file__).resolve().parent / "fonts"
 
@@ -40,15 +41,6 @@ AMBER = (168, 121, 22)
 # reste imprimé (document abonné, derrière auth, PM publique DGFiP) ; seule cette ligne est retirée.
 COUCHES_EXCLUES = {"age_dirigeant"}
 
-# M137 — la COULEUR du tier par palier (chaud→froid). Le libellé affiché vient de TIER_LABELS
-# (chip court, source unique écran=papier) ; ce dict ne porte plus que la couleur.
-TIER_V2_COLOR = {
-    "brulante": RED,
-    "chaude": AMBER,
-    "a_creuser": (95, 108, 101),
-    "reserve_fonciere": (58, 100, 148),
-    "ecartee": RED,
-}
 ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"), ("proprio", "PROPRIO")]
 
 
@@ -96,22 +88,56 @@ def _chip(pdf: _Pdf, x: float, y: float, label: str, color: tuple) -> float:
     return w
 
 
-def _motif_verdict(s2: dict) -> str | None:
-    """UNE phrase de « pourquoi » sous le verdict — assemblée depuis les DONNÉES moteur
-    (probabilité de mutation vs base + motif servi). Déterministe, pas d'IA ; c'est le MÊME
-    motif que l'écran (verdict_servi). Borné pour tenir sur ~2 lignes."""
-    bouts: list[str] = []
-    # M135 — la MÊME fraction que la carte de tri et la fiche (jamais un « ×N »)
-    if s2.get("fraction"):
-        bouts.append(f"environ {s2['fraction']} de probabilité de vente sous 1 an")
-    else:
-        bouts.append("vente peu probable sous 1 an")
-    if s2.get("motif"):
-        bouts.append(str(s2["motif"]))
-    phrase = " — ".join(bouts)
-    if not phrase:
-        return None
-    return phrase if len(phrase) <= 190 else phrase[:187].rstrip() + "…"
+def _signaux(n: int) -> str:
+    """M124-C10 — accord singulier/pluriel : « 1 signal » / « 14 signaux » (fin de « signal(aux) »)."""
+    return f"{n} signal" if n == 1 else f"{n} signaux"
+
+
+def _indispo(pdf: _Pdf, titre: str) -> None:
+    """M125 (boussole) — bloc « donnée indisponible — erreur technique » : une PANNE d'un builder de
+    fiche ne s'imprime JAMAIS en absence sourcée. Rendu en clair (ambre), jamais un blanc muet."""
+    pdf.set_font("mono", size=7)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 4, titre, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("inter", size=7.6)
+    pdf.set_text_color(*AMBER)
+    pdf.multi_cell(pdf.w - 28, 3.8, "Donnée indisponible — erreur technique. Le calcul n'a pas abouti "
+                   "(incident) ; ce n'est pas une absence de donnée.", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1.2)
+
+
+def _is_indispo(bloc) -> bool:
+    """Vrai si un bloc de fiche porte l'état PANNE (M125) — à tester AVANT de lire ses champs."""
+    return isinstance(bloc, dict) and bool(bloc.get("indisponible"))
+
+
+def _section(pdf: _Pdf, titre: str, lignes, source: str | None = None) -> None:
+    """M125-A — SECTION sobre réutilisable : titre mono + lignes inter + ligne source/millésime dim.
+    `lignes` : itérable ; les valeurs vides sont ignorées. Rien n'est imprimé si tout est vide.
+    Saut de page anti-orphelin quand on est trop bas (le titre ne reste jamais seul en pied)."""
+    lignes = [str(x) for x in lignes if x]
+    if not lignes:
+        return
+    if pdf.get_y() > pdf.h - 30:
+        pdf.add_page()
+    pdf.set_font("mono", size=7)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 4, titre, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("inter", size=7.6)
+    pdf.set_text_color(40, 50, 45)
+    for ln in lignes:
+        pdf.multi_cell(pdf.w - 28, 3.8, ln, new_x="LMARGIN", new_y="NEXT")
+    if source:
+        pdf.set_font("inter", size=7)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.4, source, new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1.5)
+
+
+def _millesime(m) -> str:
+    """M125 — fraîcheur HONNÊTE : le vrai millésime, sinon « millésime non renseigné ».
+    Jamais une date de run, jamais « non communiqué par la source »."""
+    return str(m) if m else "millésime non renseigné"
 
 
 def render_fiche_pdf(fiche: dict) -> bytes:
@@ -138,10 +164,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── Bandeau événement (héros) — C5 : il raconte SON histoire en une phrase
     if fiche.get("evenement") == "rouge":
         pm = (fiche.get("proprietaire_moral") or {}).get("denomination")
-        detail = (f"Priorité par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
-                  f"procédure collective — {fiche.get('evenement_detail') or 'procédure BODACC ouverte'}. "
-                  "L'urgence du dossier vendeur prime, indépendamment du potentiel du terrain "
-                  "(doctrine bascule).")
+        # M124-A/B — FAIT public, sans cadrage de scoring : « priorité par événement », « force
+        # chaude », « l'urgence prime » et « doctrine bascule » sont RETIRÉS (le PDF porte la donnée,
+        # pas l'analyse LABUSE). Reste l'information vérifiable : procédure collective + source BODACC.
+        detail = (f"Le propriétaire{f' ({pm})' if pm else ''} fait l'objet d'une procédure "
+                  f"collective — {fiche.get('evenement_detail') or 'procédure ouverte'}. "
+                  "Source : BODACC (annonces commerciales).")
         # hauteur du bandeau = titre + détail wrap (mesuré avant de peindre le fond)
         pdf.set_font("inter", size=7)
         n_lines = max(1, len(pdf.multi_cell(pdf.w - 36, 3.6, detail, dry_run=True, output="LINES")))
@@ -152,7 +180,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(18, y + 1.6)
         pdf.set_font("inter", size=8.5)
         pdf.set_text_color(*RED)
-        pdf.cell(0, 4, "● ÉVÉNEMENT — force « chaude »", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 4, "● PROCÉDURE COLLECTIVE (BODACC)", new_x="LMARGIN", new_y="NEXT")
         pdf.set_xy(18, y + 7.2)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(120, 52, 44)
@@ -163,136 +191,67 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_font("mono", size=14)
     pdf.set_text_color(*TXT_HI)
     pdf.cell(0, 7, fiche["idu"], new_x="LMARGIN", new_y="NEXT")
-    # M6 2a : l'adresse BAN sous l'IDU — « Adresse non disponible » si aucune rattachée
-    adr = fiche.get("adresse_ban")
+    # M6 2a : l'adresse BAN sous l'IDU — « Adresse non disponible » si aucune rattachée.
+    # M125-B : UN SEUL résolveur d'adresse (celui de la fiche écran, `_ban_adresse` → `adresse`) —
+    # plus de `adresse_ban` (2e résolveur) : écran = papier au mot près, pas de divergence silencieuse.
+    adr = fiche.get("adresse")
     pdf.set_font("inter", size=8.5)
     pdf.set_text_color(*(TXT if adr else TXT_DIM))
     pdf.cell(0, 4.6, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(0.6)
-    # M-P (P2-62) : UN SEUL verdict. La matrice Q/A est ÉTEINTE (M37) — plus jamais imprimée en
-    # second verdict « historique » sur un document remis à un comité/banquier. étage 0 du run servi
-    # prime → Écartée ; sinon le tier v2 pilote ; sinon (aucun run v2 sur ce parc) libellé NEUTRE —
-    # jamais un statut matriciel mort présenté comme un verdict.
-    s2 = fiche.get("score_v2")
-    v2_pilote = bool(s2) and not fiche.get("etage0")
-    motif = None
-    if v2_pilote:
-        tier = s2["tier"]
-        is_declasse = bool(s2.get("declasse")) or (isinstance(tier, str) and tier.startswith("declasse_"))
-        # M54-AB C1 : libellé CLIENT (source unique verdict_servi), JAMAIS le code technique ni « v2 ».
-        label = s2.get("label") or TIER_LABELS.get(tier, tier)
-        # couleur « terre » pour tout déclassement (palette M-Q) ; sinon la couleur du tier servable.
-        color = DECLASSE_RGB if is_declasse else TIER_V2_COLOR.get(tier, TXT_MUT)
-        # rang AVEC son dénominateur (un rang seul ne dit rien) — pour tout tier classé.
-        if s2.get("rang") is not None:
-            label += f" · rang {s2['rang']:,}".replace(",", " ")
-            if s2.get("rang_total"):
-                label += f" / {s2['rang_total']:,}".replace(",", " ")
-        motif = _motif_verdict(s2)  # la « ×1.3 » migre du gros titre vers la phrase de motif
-    elif fiche.get("etage0"):
-        label, color = "Écartée", RED
-    else:
-        label, color = "Classement historique", TXT_MUT
-    # ── M22-F C4 : VERDICT EN TÊTE, hiérarchie M19 — carte pleine largeur, gros label + motif
+    # ── M124-A — PURGE de l'analyse LABUSE. Ce document ne porte plus NI verdict, NI rang, NI score,
+    # NI « pourquoi ce classement » : le PDF = données pures (l'écran, lui, garde le verdict — c'est
+    # le produit). En tête, seulement des FAITS parcellaires : surface, commune, coordonnées.
     surf = f"{fiche['surface_m2']:,} m²".replace(",", " ") if fiche.get("surface_m2") else "surface n/d"
     lon, lat = fiche.get("coords", [None, None])
-    y = pdf.get_y() + 1
-    card_h = 21.5 if motif else 15
-    pdf.set_fill_color(*SURFACE)
-    pdf.rect(14, y, pdf.w - 28, card_h, style="F", round_corners=True, corner_radius=2.4)
-    pdf.set_xy(19, y + 2.2)
-    pdf.set_font("mono", size=7)
-    pdf.set_text_color(*TXT_DIM)
-    pdf.cell(0, 3.6, "VERDICT LABUSE", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_xy(19, y + 6.6)
-    pdf.set_font("grotesk", size=14)
-    pdf.set_text_color(*color)
-    pdf.cell(110, 6.5, label)
-    pdf.set_font("inter", size=7.2)
+    pdf.ln(0.4)
+    pdf.set_font("inter", size=8.5)
     pdf.set_text_color(*TXT_MUT)
-    pdf.set_xy(14, y + 7.8)
-    pdf.cell(pdf.w - 33, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}", align="R")
-    if motif:
-        pdf.set_xy(19, y + 13.2)
-        pdf.set_font("inter", size=7.4)
-        pdf.set_text_color(*TXT_MUT)
-        pdf.multi_cell(pdf.w - 38, 3.4, motif)
-    pdf.set_y(y + card_h + 2)
-    # M-P (P2-62) : le second verdict issu de la matrice éteinte est SUPPRIMÉ — un seul verdict/document.
+    meta = f"{surf}  ·  {fiche.get('commune', '') or '—'}"
+    if lat is not None and lon is not None:
+        meta += f"  ·  {lat}, {lon}"
+    pdf.cell(0, 4.6, meta, new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1.5)
 
-    # ── POURQUOI CE CLASSEMENT (les 2-3 raisons dominantes)
-    # M136 — le bloc matrice Q/A est RETIRÉ (matrice éteinte M129-B, `q_score`/`a_score` ne sont
-    # PLUS servis par la fiche → il crashait le PDF, KeyError). À la place, le patron de la fiche
-    # M135 : le tier d'ACTION + la fraction (« 1/3 sous 1 an ») + le motif d'exclusion vivent déjà
-    # dans la carte VERDICT ci-dessus ; ici les 2-3 RAISONS dominantes (contributions POSITIVES
-    # traduites en français, `pourquoi` = libelles_client — jamais un juge mort ressuscité).
-    pourquoi = ([c for c in (s2.get("pourquoi") or [])
-                 if c.get("signe") == "+" and c.get("phrase")][:3]) if s2 else []
-    if pourquoi:
+    # ── M124-A2 — L'INDICE DE COMPLÉTUDE (« Confiance des données 90/100 ») est RETIRÉ : c'est une
+    # méta d'analyse, pas une donnée de la parcelle. Le PDF ne porte plus de score, complétude comprise.
+
+    # ── M124-B7 — DROITS À BÂTIR (SDP) : UN SEUL message hiérarchisé. Fin de la contradiction
+    # « SDP résiduelle 0 m² / rien à construire » vs « 1175 m² gisement 37% » vs « surélévation
+    # ~4,7 m » : le « 1175 m² » était la SURFACE de la parcelle (fait, gardé en couche « Surface »),
+    # jamais de la SDP. Ici, la seule vérité à bâtir : la SDP RÉSIDUELLE au sol, puis — à défaut —
+    # la surélévation, seule marge réelle. Les niveaux et le % de scoring de l'ancien « Potentiel de
+    # transformation » (Task A) sont RETIRÉS ; `pt` ne sert que de source de FAITS (SDP m², hauteur).
+    pt = fiche.get("potentiel_transformation") or {}
+    constructible = False   # C9 — pilote l'affichage du rappel RTAA (faux par défaut / si panne)
+    if _is_indispo(pt):
+        _indispo(pdf, "DROITS À BÂTIR (SDP)")   # M125 — panne ≠ absence ; RTAA restera masqué
+        sdp_res = surel = marge_h = None
+    else:
+        sdp_res = pt.get("sdp_residuelle_m2")
+        surel = bool(pt.get("surelevation_possible"))
+        marge_h = pt.get("hauteur_marge_m")
+        constructible = bool((sdp_res or 0) > 0 or surel)
+    if not _is_indispo(pt) and pt and (sdp_res is not None or surel):
         pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 3.6, "POURQUOI CE CLASSEMENT", new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(0.4)
-        for c in pourquoi:
-            yy = pdf.get_y()
-            pdf.set_xy(16, yy)
-            pdf.set_font("inter", size=8)
-            pdf.set_text_color(*MINT)
-            pdf.cell(4, 4, "▸")
-            pdf.set_text_color(*TXT)
-            pdf.set_xy(20, yy)
-            pdf.multi_cell(pdf.w - 40, 4, c["phrase"])
-        pdf.ln(1.5)
-
-    # ── M9 lot 1 — INDICE DE CONFIANCE DONNÉES (ICD). Méta d'affichage CLOISONNÉE du
-    # score : dit la complétude des données, pas l'opportunité. Mention OBLIGATOIRE si < 60.
-    icd = fiche.get("icd")
-    if icd and icd.get("score") is not None:
-        val, bande = icd["score"], icd.get("bande")
-        col = AMBER if bande == "faible" else (TXT_MUT if bande == "partielle" else (23, 122, 88))
-        pdf.set_font("inter", size=7.4)
-        pdf.set_text_color(*col)
-        # M54-AB F8 : « Confiance des DONNÉES » (complétude) — dit ce qu'elle mesure, à ne pas
-        # confondre avec la « Confiance du calibrage (règles PLU) » du dossier parcelle.
-        txt = f"Confiance des données (complétude) : {val}/100 — {icd.get('libelle', '')}"
-        manque = icd.get("manquants") or []
-        if manque:
-            txt += " · manque : " + ", ".join(manque[:4]) + ("…" if len(manque) > 4 else "")
-        # M54-AB F8 : X réinitialisé à la marge avant chaque multi_cell — sinon le cadre dérive et
-        # « L'indice mes… » était coupé au bord droit de la p.1. Largeur = pleine colonne (marges 14).
-        pdf.set_x(14)
-        pdf.multi_cell(pdf.w - 28, 3.8, txt)
-        if bande == "faible":
-            pdf.set_font("inter", size=7)
-            pdf.set_text_color(*AMBER)
-            pdf.set_x(14)
-            pdf.multi_cell(pdf.w - 28, 3.4,
-                           "⚠ Confiance faible : données de la parcelle incomplètes — "
-                           "verdict à confirmer par vérification terrain/CU.")
-        pdf.set_text_color(*TXT_DIM)
-        pdf.set_font("inter", size=7)
-        pdf.set_x(14)
-        pdf.multi_cell(pdf.w - 28, 3.2,
-                       "L'indice mesure la complétude des données ; il n'entre pas dans le score d'opportunité.")
-        pdf.ln(1.2)
-
-    # ── M9 lot 4 — POTENTIEL DE TRANSFORMATION (fond de l'ancien outil Mutabilité)
-    pt = fiche.get("potentiel_transformation")
-    if pt and pt.get("niveau") and pt["niveau"] != "indetermine":
-        pdf.set_font("mono", size=7)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 4, "POTENTIEL DE TRANSFORMATION", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 4, "DROITS À BÂTIR (SDP)", new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=7.6)
         pdf.set_text_color(40, 50, 45)
-        ligne = pt.get("libelle", "")
-        if pt.get("pct_consomme") is not None:
-            ligne += f" · SDP consommée {pt['pct_consomme']} % de l'autorisé"
-        if pt.get("sdp_residuelle_m2"):
-            ligne += f" · ~{pt['sdp_residuelle_m2']:,} m² SDP résiduelle".replace(",", " ")
-        if pt.get("surelevation_possible"):
-            marge = pt.get("hauteur_marge_m")
-            ligne += f" · surélévation possible" + (f" (marge ~{marge} m)" if marge else "")
-        pdf.multi_cell(pdf.w - 28, 3.8, ligne)
+        if sdp_res and sdp_res > 0:
+            msg = f"SDP résiduelle estimée : ~{sdp_res:,} m² au sol.".replace(",", " ")
+            if surel:
+                msg += " Surélévation également possible" + (f" (marge ~{marge_h} m)." if marge_h else ".")
+        elif surel:
+            msg = ("Aucun droit à bâtir résiduel au sol (densité autorisée atteinte). "
+                   "Seule marge : surélévation" + (f" (marge ~{marge_h} m)." if marge_h else " possible."))
+        else:
+            msg = "Aucun droit à bâtir résiduel au sol (densité autorisée atteinte)."
+        pdf.multi_cell(pdf.w - 28, 3.8, msg, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.2, "Estimation (règles PLU calibrées x bâti BD TOPO) — "
+                       "indicative, à confirmer au règlement et par un CU.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1.2)
 
     # ── CONTEXTE COMMUNE (mandat promotrice) — SRU · QPV/ANRU · marché, sourcé
@@ -313,8 +272,15 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                           + (f" (prélèvement 2025 : {int(sru['prelevement_eur']):,} €)".replace(",", " ")
                              if (sru.get("prelevement_eur") or 0) > 0 else ""))
         qpv, anru = ctx.get("qpv") or [], ctx.get("anru") or []
-        lignes.append(f"Politique de la ville : {len(qpv)} QPV (génération 2024)"
-                      + (f" · NPNRU : {', '.join(a['nom'] for a in anru)} (intérêt national)" if anru else " · aucun périmètre NPNRU"))
+        npnru = (f" · NPNRU : {', '.join(a['nom'] for a in anru)} (intérêt national)"
+                 if anru else " · aucun périmètre NPNRU")
+        # M125-2 — anru CONSOLIDÉ ici (pas de bloc séparé) : la position PARCELLAIRE (dans/adjacente
+        # au périmètre NPNRU) enrichit la ligne commune, au lieu d'un champ `anru` rendu nulle part.
+        pa = fiche.get("anru") or {}
+        if pa.get("quartier"):
+            pos = "dans le" if pa.get("position") == "dans" else "adjacente au"
+            npnru += f" · cette parcelle est {pos} périmètre « {pa['quartier']} »"
+        lignes.append(f"Politique de la ville : {len(qpv)} QPV (génération 2024)" + npnru)
         mar = ctx.get("marche")
         if mar:
             lignes.append(f"Marché (INSEE RP 2023) : {int(mar['logements']):,} logements — "
@@ -332,8 +298,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.ln(2)
 
     # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
+    # M124-C9 — n'a de sens que si la parcelle a un POTENTIEL CONSTRUCTIF (RTAA = construction neuve
+    # de logements). Sans droits à bâtir résiduels ni surélévation, ce rappel serait du bruit → masqué.
     rtaa = fiche.get("rtaa") or {}
-    if rtaa:
+    if rtaa and constructible:
         pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, "RTAA DOM — RAPPEL RÉGLEMENTAIRE (CONSTRUCTION NEUVE DE LOGEMENTS)",
@@ -376,15 +344,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         "zonage_plu_gpu": "Zonage PLU", "prescription_plu": "Prescriptions PLU",
         "foncier_public": "Foncier public", "emprise_lineaire": "Emprise linéaire",
         "emprise_routiere": "Emprise routière", "residuel_socle": "SDP résiduelle",
-        "safer": "SAFER", "sar": "SAR (aménagement régional)", "surface": "Surface parcelle",
+        "safer": "Parcelle déclarée agricole (RPG)",
+        "sar": "Potentiel foncier Région (indicatif)", "surface": "Surface parcelle",
         "parc_national": "Parc national", "foret_publique": "Forêt publique",
         "cinquante_pas": "50 pas géométriques", "sup": "Servitudes (SUP)",
         "risques": "Risques PPR", "sol_pollue": "Sols pollués", "cavite": "Cavités",
         "icpe": "ICPE", "mvt": "Mouvement de terrain", "pente": "Pente", "ravine": "Ravines",
-        "trait_de_cote": "Trait de côte", "abf": "ABF / Monuments",
-        "ens": "Espace naturel sensible", "eau": "Eau", "bruit_route": "Bruit routier",
+        "trait_de_cote": "Indicateur d'érosion côtière (Cerema)", "abf": "ABF / Monuments",
+        "ens": "Espace protégé réglementaire (INPN)", "eau": "Eau", "bruit_route": "Bruit routier",
         "dvf": "Marché DVF", "sitadel": "Permis SITADEL", "amenites": "Commerces et services à proximité",
-        "potentiel_foncier_region": "Potentiel foncier Région", "ocs_ge": "Occupation du sol",
+        "potentiel_foncier_region": "Potentiel foncier Région",
+        "ocs_ge": "Occupation du sol (BD CARTO V5 — grain grossier)",
         "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
         "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",
         "osm_faux_positif": "Contrôle géométrique OSM",     # M73 D — clé brute rendue avant
@@ -394,21 +364,23 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # M73 D — jamais la clé technique brute : à défaut de libellé mappé, on humanise
         # (underscores → espaces, capitale) plutôt que d'imprimer « osm_faux_positif ».
         return _LAYER_LABEL.get(key) or key.replace("_", " ").capitalize()
-    omises = 0
-    sections_omises: list[str] = []   # M-P (P2-64) : NOMMER la section tronquée, pas juste compter
     for key, titre in ONGLETS:
         # M-P (P2-63) : `age_dirigeant` (donnée personnelle) exclue du PDF (COUCHES_EXCLUES).
-        lines = [ln for ln in fiche["lines"] if ln["onglet"] == key and ln["layer"] not in COUCHES_EXCLUES]
+        # M124-B7 : `residuel_socle` n'est plus listé ici (il vit dans « DROITS À BÂTIR (SDP) », UN
+        # seul message) — ce qui supprime aussi le doublon d'étiquette « SDP résiduelle SDP résiduelle ».
+        lines = [ln for ln in fiche["lines"]
+                 if ln["onglet"] == key and ln["layer"] not in COUCHES_EXCLUES
+                 and ln["layer"] != "residuel_socle"]
         if not lines:
-            continue
-        if pdf.page >= 2 and pdf.get_y() > pdf.h - 60:
-            omises += len(lines)
-            sections_omises.append(TITRES_M19.get(key, titre))
             continue
         pdf.ln(1.5)
         # en-tête de section en CARTOUCHE (comme un tiroir M19) + résumé à droite
         # M70 décision 5 — plus de « somme +{poids} » (score brut) au client ; juste le compte.
-        resume = f"{len(lines)} signal(aux)"
+        # M125-A — le PLAFOND 2 PAGES est LEVÉ : le PDF est désormais EXHAUSTIF (= la fiche écran),
+        # multi-pages ; TOUS les signaux s'impriment (plus de troncature ni de compteur d'omis).
+        resume = _signaux(len(lines))   # M124-C10 — « 1 signal » / « 14 signaux » (plus de « signal(aux) »)
+        if pdf.get_y() > pdf.h - 24:     # anti-orphelin : l'en-tête de section ne reste pas seul en pied
+            pdf.add_page()
         y = pdf.get_y()
         pdf.set_fill_color(*SURFACE)
         pdf.rect(14, y, pdf.w - 28, 7, style="F", round_corners=True, corner_radius=2)
@@ -421,13 +393,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_xy(14, y + 1.8)
         pdf.cell(pdf.w - 32, 4, resume, align="R")
         pdf.set_y(y + 8.6)
-        titre_m19 = TITRES_M19.get(key, titre)
         for ln in lines:
-            if pdf.page >= 2 and pdf.get_y() > pdf.h - 44:
-                omises += 1
-                if titre_m19 not in sections_omises:   # section tronquée en cours d'impression
-                    sections_omises.append(titre_m19)
-                continue
             if pdf.get_y() > pdf.h - 34:
                 pdf.add_page()
             # M70 décisions 5+6 — plus de préfixe de poids signé, plus de clé technique de couche :
@@ -455,17 +421,216 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
 
-    if omises:
-        # plafond 2 pages (C4) — jamais silencieux : le compteur dit ce qui n'est pas imprimé,
-        # et M-P (P2-64) NOMME la/les section(s) tronquée(s) (souvent PROPRIO, la plus utile en
-        # prospection) — le lecteur sait EXACTEMENT ce qui manque, pas juste un total.
-        quoi = " · ".join(sections_omises)
-        pdf.set_font("inter", size=7)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.multi_cell(pdf.w - 28, 3.6,
-                       f"… {omises} signal(aux) non imprimé(s) (format 2 pages)"
-                       + (f" — section(s) : {quoi}" if quoi else "")
-                       + ". La fiche écran porte la liste complète.", new_x="LMARGIN", new_y="NEXT")
+    # ═══ M125-A — DONNÉES EXHAUSTIVES : tout champ de DONNÉES de la fiche écran est porté au PDF ;
+    #     seule l'ANALYSE LABUSE (verdict/rang/score/pourquoi/complétude/niveaux) reste exclue (M124-A1).
+    #     Blocs sobres via _section ; PANNE (_is_indispo) rendue en clair ; fraîcheur honnête (_millesime).
+    pdf.ln(1)
+
+    # ── RÈGLES D'URBANISME ───────────────────────────────────────────────────────────────────
+    rp = fiche.get("reglement_plu")
+    if _is_indispo(rp):
+        _indispo(pdf, "RÈGLEMENT PLU PAR ZONE")
+    elif rp and rp.get("zones"):
+        lignes = []
+        for z in rp["zones"]:
+            zcode = z.get("zone") or z.get("libelle") or "zone"
+            arts = z.get("articles") or z.get("note")
+            lignes.append(f"Zone « {zcode} »"
+                          + (f" — {z['libelle']}" if z.get("libelle") and z.get("libelle") != zcode else "")
+                          + (f" : {arts}" if arts else ""))
+        _section(pdf, "RÈGLEMENT PLU PAR ZONE", lignes, source=rp.get("disclaimer"))
+
+    pf = fiche.get("plu_fraicheur")
+    if pf:
+        _section(pdf, "FRAÎCHEUR DU ZONAGE (GPU vs mairie)",
+                 [pf.get("document_servi") or pf.get("libelle"), pf.get("fait_foi"),
+                  (f"En cours (non servi) : {pf['en_cours']}" if pf.get("en_cours") else None),
+                  (f"À faire : {pf['action']}" if pf.get("action") else None)],
+                 source=(f"Note : {pf['note']}" if pf.get("note") else None))
+
+    rpr = fiche.get("radar_procedure")
+    if _is_indispo(rpr):
+        _indispo(pdf, "PROCÉDURES PLU EN COURS")
+    elif rpr:
+        syn, sursis = rpr.get("synthese") or {}, rpr.get("sursis") or {}
+        _section(pdf, "PROCÉDURES PLU EN COURS",
+                 [syn.get("etat"),
+                  (f"Prochaine étape : {syn['prochaine_etape']}" if syn.get("prochaine_etape") else None),
+                  (f"Sursis à statuer : {sursis['texte']} ({sursis.get('base_legale', '')})" if sursis.get("texte") else None),
+                  (f"Veille zone AU : {rpr['veille_au']}" if rpr.get("veille_au") else None)])
+
+    rnu = fiche.get("rnu")
+    if rnu:
+        _section(pdf, "RNU — RÈGLEMENT NATIONAL D'URBANISME",
+                 [rnu.get("libelle"), rnu.get("detail"),
+                  ("Dans l'enveloppe urbanisée (PAU) — estimation." if rnu.get("dans_pau") is True
+                   else "Hors enveloppe urbanisée (PAU) — estimation." if rnu.get("dans_pau") is False else None),
+                  rnu.get("avertissement_pau")])
+
+    tf = fiche.get("territoire_fiscal")
+    if tf:
+        lignes, zf, frr = [], tf.get("zfang") or {}, tf.get("frr") or {}
+        if zf.get("libelle"):
+            lignes.append(f"ZFANG : {zf['libelle']} (réf. {zf.get('source_ref') or '—'})")
+        if frr.get("libelle"):
+            lignes.append(f"FRR (ex-ZRR) : {frr['libelle']} (réf. {frr.get('source_ref') or '—'})")
+        for per in tf.get("perimetres") or []:
+            lignes.append(f"{per.get('libelle', '')} — {per.get('detail', '')} ({per.get('source', '')})")
+        _section(pdf, "DISPOSITIFS TERRITORIAUX (fiscal)", lignes, source=tf.get("avertissement"))
+
+    aper = fiche.get("aper")
+    if aper and aper.get("note"):
+        _section(pdf, "OBLIGATION APER (ombrières photovoltaïques)", [aper["note"]],
+                 source=(f"État : {aper['etat']}" if aper.get("etat") else None))
+
+    # ── TERRAIN & RÉSEAUX ────────────────────────────────────────────────────────────────────
+    if (fiche.get("terrain") or {}).get("flag_terrassement_lourd"):
+        _section(pdf, "TERRAIN", ["Terrassement lourd probable (relief marqué) — RGE ALTI 5 m."])
+
+    via = fiche.get("viabilisation")
+    if _is_indispo(via):
+        _indispo(pdf, "VIABILISATION (réseaux)")
+    elif via:
+        lignes = [via.get("libelle")]
+        for c in via.get("contributions") or []:
+            lignes.append(f"· {c.get('libelle', '')}" + (f" — {c['detail']}" if c.get("detail") else ""))
+        if via.get("cout_raccordement"):
+            lignes.append(f"Coût de raccordement indicatif : {via['cout_raccordement']}")
+        for k in ("elec_pv", "solaire"):
+            v = via.get(k)
+            if isinstance(v, dict) and v.get("note"):
+                lignes.append(v["note"])
+        _section(pdf, "VIABILISATION (réseaux)", lignes, source=via.get("disclaimer"))
+
+    gest = fiche.get("gestionnaires")
+    if _is_indispo(gest):
+        _indispo(pdf, "GESTIONNAIRES (raccordement)")
+    elif gest:
+        epci = gest.get("epci") or {}
+        lignes = [(f"EPCI : {epci['nom']}" + (f" — {epci['contact']}" if epci.get("contact") else "")) if epci.get("nom") else None]
+        for lbl, key in (("Eau", "eau"), ("Assainissement", "assainissement"),
+                         ("SPANC", "spanc"), ("Électricité", "electricite")):
+            v = gest.get(key)
+            nom = (v.get("operateur") or v.get("gestionnaire")) if isinstance(v, dict) else v
+            if nom:
+                lignes.append(f"{lbl} : {nom}")
+        if gest.get("note"):
+            lignes.append(gest["note"])
+        _section(pdf, "GESTIONNAIRES (raccordement)", lignes, source=gest.get("disclaimer"))
+
+    prox = fiche.get("proximites")
+    if _is_indispo(prox):
+        _indispo(pdf, "PROXIMITÉS (transport, axes, réseaux)")
+    elif prox:
+        lignes, ar, po, te = [], prox.get("arret"), prox.get("pole"), prox.get("telepherique")
+        if ar:
+            lignes.append(f"Arrêt {ar.get('nom', '')} ({ar.get('reseau') or 'réseau n/d'}) — {ar.get('distance_m')} m")
+        if po:
+            lignes.append(f"Pôle d'échange {po.get('nom', '')} — {po.get('distance_m')} m ({po.get('statut', '')})")
+        if te:
+            lignes.append(f"Téléphérique {te.get('station', '')} — {te.get('distance_m')} m")
+        if prox.get("axe"):
+            lignes.append(prox["axe"].get("libelle"))
+        if prox.get("ligne_ht"):
+            lignes.append(prox["ligne_ht"].get("libelle"))
+        _section(pdf, "PROXIMITÉS (transport, axes, réseaux)", lignes)
+
+    # ── MARCHÉ & ACTIVITÉ ────────────────────────────────────────────────────────────────────
+    hs = fiche.get("historique_site")
+    if _is_indispo(hs):
+        _indispo(pdf, "SUR CETTE PARCELLE (historique)")
+    elif hs and (hs.get("permis") or hs.get("caducite")):
+        lignes = [f"{p.get('type') or 'Autorisation'} — {p.get('date_autorisation') or p.get('date_depot') or '?'}"
+                  for p in (hs.get("permis") or [])[:8]]
+        cad = hs.get("caducite")
+        if cad:
+            lignes.append(cad.get("libelle_court") or cad.get("detail") or "Caducité signalée.")
+        _section(pdf, "SUR CETTE PARCELLE (historique)", lignes, source=hs.get("honnetete"))
+
+    vp = fiche.get("voisinage_proche")
+    if _is_indispo(vp):
+        _indispo(pdf, "AUTOUR, À MOINS DE 100 M")
+    elif vp and (vp.get("ventes_dvf") or vp.get("permis")):
+        prix = (f" · prix médian ~{round(vp['prix_median_eur'] / 1000)} k€" if vp.get("prix_median_eur")
+                else (f" · {vp['prix_note']}" if vp.get("prix_note") else ""))
+        _section(pdf, "AUTOUR, À MOINS DE 100 M",
+                 [f"{vp.get('ventes_dvf', 0)} vente(s){prix} · {vp.get('permis', 0)} permis "
+                  f"(< {vp.get('rayon_m', 100)} m, {vp.get('fenetre_mois', 36)} mois)"],
+                 source=vp.get("honnetete"))
+
+    dvfp = fiche.get("dvf_parcelle")
+    if dvfp:
+        lignes, dm = [], dvfp.get("derniere_mutation")
+        if dm:
+            base_m = f"Dernière mutation : {dm.get('date_mutation') or '?'}"
+            lignes.append(base_m + (f" — {int(dm['valeur']):,} €".replace(",", " ") if dm.get("valeur") else ""))
+        for s in (dvfp.get("secteur") or [])[:4]:
+            lignes.append(f"Secteur — {s.get('type_bien', '')} : médiane {s.get('mediane_prix_m2') or '—'} €/m² "
+                          f"({s.get('n_ventes', '?')} ventes, {s.get('fenetre', '')})")
+        nv = dvfp.get("neuf_vefa")
+        if isinstance(nv, dict) and nv.get("mediane_prix_m2_bati"):
+            lignes.append(f"Neuf VEFA : {nv['mediane_prix_m2_bati']} €/m² (n {nv.get('n', '?')})")
+        _section(pdf, "MARCHÉ DVF — MUTATION & SECTEUR", lignes, source=dvfp.get("caveat"))
+
+    ms = fiche.get("marche_secteur")
+    if ms:
+        lignes, fi, rp2 = [], ms.get("filosofi_200m"), ms.get("rpls_commune")
+        if fi:
+            bits = []
+            if fi.get("nivvie_moyen_eur"):
+                bits.append(f"niveau de vie médian ~{int(fi['nivvie_moyen_eur']):,} €".replace(",", " "))
+            if fi.get("men") and fi.get("men_prop") is not None:
+                bits.append(f"{round(100 * fi['men_prop'] / fi['men'])} % propriétaires")
+            if fi.get("taux_pauvrete_pct") is not None:
+                bits.append(f"{fi['taux_pauvrete_pct']} % de pauvreté")
+            if bits:
+                lignes.append("Carreau 200 m : " + " · ".join(bits) + f" ({_millesime(fi.get('millesime'))})")
+        if rp2 and rp2.get("nb_logements") is not None:
+            lignes.append(f"Parc social commune : {int(rp2['nb_logements']):,} logements".replace(",", " ")
+                          + (f" · {rp2['pct_qpv']} % en QPV" if rp2.get("pct_qpv") is not None else "")
+                          + f" ({_millesime(rp2.get('millesime'))})")
+        _section(pdf, "CONTEXTE SOCIO-ÉCONOMIQUE (secteur)", lignes,
+                 source="INSEE Filosofi · RPLS — contexte informatif, hors scoring.")
+
+    dep = fiche.get("depots")
+    if _is_indispo(dep):
+        _indispo(pdf, "ACTIVITÉ DE DÉPÔT (Sitadel)")
+    elif dep:
+        par, sec = dep.get("parcelle") or {}, dep.get("secteur") or {}
+        lignes = [dep.get("libelle")]
+        if par.get("count"):
+            lignes.append(f"Sur cette parcelle : {par['count']} dépôt(s)" + (f" (dernier {par['dernier']})" if par.get("dernier") else ""))
+        if sec.get("count"):
+            lignes.append(f"Sur le secteur : {sec['count']} dépôt(s)" + (f" (dernier {sec['dernier']})" if sec.get("dernier") else ""))
+        _section(pdf, "ACTIVITÉ DE DÉPÔT (Sitadel)", lignes,
+                 source=(f"{dep.get('source', 'SITADEL')} — {dep.get('fenetre_mois', '')} mois, informatif"
+                         if dep.get("source") or dep.get("fenetre_mois") else None))
+
+    # ── PROPRIÉTAIRE & POTENTIEL ─────────────────────────────────────────────────────────────
+    copros = fiche.get("coproprietes") or []
+    if copros:
+        lignes = []
+        for c in copros[:6]:
+            nom = c.get("nom_usage") or c.get("numero_immatriculation") or "copropriété"
+            lots = f"{c['nb_lots_total']} lots" if c.get("nb_lots_total") is not None else ""
+            hab = f" (dont {c['nb_lots_habitation']} hab.)" if c.get("nb_lots_habitation") is not None else ""
+            per = f" · {c['periode_construction']}" if c.get("periode_construction") else ""
+            syn = (f" · syndic {c.get('syndic_type') or ''} {c.get('syndic_nom') or ''}".rstrip()
+                   if c.get("syndic_type") or c.get("syndic_nom") else "")
+            lignes.append(f"{nom} — {lots}{hab}{per}{syn}".strip(" —"))
+        _section(pdf, "COPROPRIÉTÉ(S) RATTACHÉE(S)", lignes,
+                 source="Source : RNIC (registre national des copropriétés) — information.")
+
+    ren = fiche.get("renouvellement")
+    if ren:
+        # M125-A — SEGMENT seul : le RANG (rang_segment/total_segment) est de l'ANALYSE → EXCLU (M124-A1).
+        _section(pdf, "SEGMENT RENOUVELLEMENT URBAIN",
+                 [ren.get("libelle"),
+                  (f"Bâti d'origine : {ren['code_bati_origine']}" if ren.get("code_bati_origine") else None),
+                  (f"Zone PLU : {ren['zone_plu']}" if ren.get("zone_plu") else None),
+                  (f"SDP résiduelle estimée : ~{ren['sdp_residuelle_m2']:,} m²".replace(",", " ") if ren.get("sdp_residuelle_m2") else None),
+                  (f"Surface parcelle : {ren['surface_m2']:,} m²".replace(",", " ") if ren.get("surface_m2") else None)],
+                 source=(f"{ren.get('source', 'Analyse LABUSE')}" + (f" · {ren['maj']}" if ren.get("maj") else "")))
 
     # ── A6 (mandat bilan-calculette) : CHARGE FONCIÈRE « selon vos hypothèses », si passée à l'export
     calc = fiche.get("calculette")
@@ -600,11 +765,21 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.ln(2)
     pdf.set_font("mono", size=7.5)
     pdf.set_text_color(*TXT_DIM)
-    pdf.cell(0, 5, f"COMPARABLES DVF — {cmp.get('n', 0)} VENTE(S) A MOINS DE {cmp.get('rayon_m', '?')} M "
-             f"({cmp.get('fenetre_ans', '?')} ANS)", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, f"COMPARABLES DVF — RAYON {cmp.get('rayon_m', '?')} M · {cmp.get('fenetre_ans', '?')} ANS",
+             new_x="LMARGIN", new_y="NEXT")
     pdf.set_draw_color(*LINE)
     pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
     pdf.ln(1.2)
+    # M124-C8 — le PÉRIMÈTRE est explicite : ces comparables sont LOCAUX (rayon), échantillon
+    # distinct de la synthèse marché COMMUNALE (« Contexte commune » ci-dessus). Le compte est
+    # dit avec sa réserve de plafond (max 12 affichées) — plus de « 12 » vs « 13 » sans repère.
+    _ncmp = cmp.get("n", 0)
+    _cap = " (12 plus récentes)" if _ncmp >= 12 else ""
+    pdf.set_font("inter", size=7)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.multi_cell(pdf.w - 28, 3.4, f"{_ncmp} vente(s) retenue(s){_cap} — périmètre local, "
+                   "distinct de la synthèse marché de la commune.", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(0.6)
     if not lst:
         pdf.set_font("inter", size=7.5)
         pdf.set_text_color(*TXT_MUT)
@@ -651,6 +826,15 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                        "les niveaux les plus récents sont provisoires, le classement reste fiable.",
                        new_x="LMARGIN", new_y="NEXT")
 
+    # ── M125-A — SOURCES UTILISÉES SUR CETTE FICHE (liste par-fiche, avec millésime réel + fiabilité).
+    # Distincte de l'attribution générique du pied de page : ici, seulement ce qui a PRODUIT un constat.
+    ds_list = fiche.get("data_sources") or []
+    if ds_list:
+        lignes = [f"{d.get('nom', '')} — {_millesime(d.get('millesime'))}"
+                  + (f" · fiabilité {d['fiabilite']}" if d.get("fiabilite") else "")
+                  for d in ds_list]
+        _section(pdf, "SOURCES UTILISÉES SUR CETTE FICHE", lignes)
+
     # ── M73-D — ASSAINISSEMENT + RÉHABILITATION : la forme NEUTRE partagée (blocs_documents), dessinée
     # en fpdf. Le premium POSE le MÊME texte que les 4 weasyprint (aucune reformulation — c'est la
     # divergence que M73-C/D réparent). Jamais recalculé, jamais masqué (l'absence est un état).
@@ -687,29 +871,6 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.set_text_color(*(etat_col if role == "phrase_forte" else TXT))
             pdf.multi_cell(inner_w, lh, texte, new_x="LMARGIN", new_y="NEXT")
         pdf.set_y(y0 + card_h + 1)
-
-    # ── M73 §5 — « Ce que ce document ne peut pas dire » : matérialisation du 3e terme de la
-    # doctrine (ce qui est absent + où le chercher). Source unique export_commun.limites_document.
-    from .export_commun import LIMITES_TITRE, limites_document
-    limites = limites_document("premium")
-    if limites:
-        if pdf.get_y() > pdf.h - 46:
-            pdf.add_page()
-        pdf.ln(2.5)
-        pdf.set_font("mono", size=7.5)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 5, LIMITES_TITRE.upper(), new_x="LMARGIN", new_y="NEXT")
-        pdf.set_draw_color(*LINE)
-        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
-        pdf.ln(1.4)
-        for absence, ou in limites:
-            pdf.set_font("inter", size=7.6)
-            pdf.set_text_color(*TXT)
-            pdf.cell(72, 4, f"{absence}", new_x="RIGHT", new_y="TOP")
-            pdf.set_font("inter", size=7.6)
-            pdf.set_text_color(*TXT_MUT)
-            pdf.set_x(88)
-            pdf.multi_cell(pdf.w - 14 - 88, 4, f"→ {ou}", new_x="LMARGIN", new_y="NEXT")
 
     out = pdf.output()
     return bytes(out)

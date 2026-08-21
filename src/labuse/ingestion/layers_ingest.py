@@ -47,9 +47,9 @@ KIND_SOURCE = {
     "parc_national": "Parc National de La Réunion (INPN)",
     "abf": "ABF / Monuments historiques",
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
-    "ocs_ge": "OCS GE (IGN)",
+    "ocs_ge": "IGN BD CARTO V5 — occupation du sol",
     "pente": "RGE ALTI (altimétrie)",
-    "trait_de_cote": "DEAL Réunion — trait de côte",
+    "trait_de_cote": "Cerema / GéoLittoral — indicateur d'érosion côtière",
     "osm_faux_positif": "OpenStreetMap / Overpass",
     "ppr": "DEAL Réunion — PPR / aléas",            # zonage rouge/bleu (fallback PM1 API Carto si commune sans PPR approuvé)
     "georisque_alea": "DEAL Réunion — PPR / aléas",
@@ -469,22 +469,22 @@ def _sar_vocation(espacesar: str | None) -> tuple[str, str, str]:
     s = (espacesar or "").lower()
     urb = any(k in s for k in ("urbanis", "densifier", "urbain"))
     if "protection forte" in s or "espace naturel" in s:
-        return ("vocation_mixte", "vocation mixte SAR (naturel + urbain) — à vérifier", "fort") if urb \
-            else ("vocation_naturelle", "espace naturel SAR (protection forte) — à vérifier", "fort")
+        return ("vocation_mixte", "vocation mixte (naturel + urbain) — à vérifier", "fort") if urb \
+            else ("vocation_naturelle", "vocation naturelle (protection forte) — à vérifier", "fort")
     if "coupure" in s:
-        return ("vocation_coupure", "coupure d'urbanisation SAR — à vérifier (bloquant potentiel)", "fort")
+        return ("vocation_coupure", "coupure d'urbanisation — à vérifier (bloquant potentiel)", "fort")
     if "continuit" in s:
-        return ("vocation_continuite", "continuité écologique SAR (trame verte/bleue) — à vérifier", "fort")
+        return ("vocation_continuite", "continuité écologique (trame verte/bleue) — à vérifier", "fort")
     if "agricole" in s:
-        return ("vocation_mixte", "vocation mixte SAR (agricole + urbain) — à vérifier", "fort") if urb \
-            else ("vocation_agricole", "espace agricole SAR (risque préemption SAFER) — à vérifier", "fort")
+        return ("vocation_mixte", "vocation mixte (agricole + urbain) — à vérifier", "fort") if urb \
+            else ("vocation_agricole", "vocation agricole — à vérifier", "fort")
     if "urbanisation prioritaire" in s:
-        return ("vocation_urbaine", "espace d'urbanisation prioritaire SAR — compatible", "faible")
+        return ("vocation_urbaine", "espace d'urbanisation prioritaire — compatible", "faible")
     if urb:
-        return ("vocation_urbaine", "espace urbanisé à densifier SAR — compatible", "faible")
+        return ("vocation_urbaine", "espace urbanisé à densifier — compatible", "faible")
     if "rur" in s:
-        return ("vocation_rurale", "territoires ruraux habités SAR", "faible")
-    return ("vocation_autre", espacesar or "vocation SAR non précisée", "faible")
+        return ("vocation_rurale", "territoires ruraux habités", "faible")
+    return ("vocation_autre", espacesar or "vocation non précisée", "faible")
 
 
 def ingest_sar(session, insee, commune, run_id, sids) -> int:
@@ -505,10 +505,10 @@ def ingest_sar(session, insee, commune, run_id, sids) -> int:
         if not geom or not rec.get("espacesar"):
             continue
         subtype, libelle, niveau = _sar_vocation(rec.get("espacesar"))
-        _insert_layer(session, "sar", subtype, f"SAR — {libelle}", geom,
+        _insert_layer(session, "sar", subtype, f"Potentiel foncier Région — {libelle}", geom,
                       sids.get(KIND_SOURCE["sar"]), commune, run_id,
                       {"libelle": libelle, "vocation": rec.get("espacesar"), "niveau": niveau,
-                       "statut": "strategique (orientation SAR — Région)",
+                       "statut": "orientation potentiel foncier (Région)",
                        "source": "data.regionreunion.com / potentiel-foncier",
                        "couverture": "partielle (îlots à potentiel foncier)"})
         n += 1
@@ -883,7 +883,7 @@ def ingest_rpg_agricole(session, bbox, commune, run_id, sids) -> int:
             continue
         p = f.get("properties") or {}
         _insert_layer(session, "safer", "rpg", f"Parcelle agricole RPG ({p.get('code_cultu') or '?'})",
-                      f["geometry"], sids.get("Zonage SAFER (DAAF)"), commune, run_id,
+                      f["geometry"], sids.get("RPG — déclarations agricoles (IGN/ASP)"), commune, run_id,
                       {"code_cultu": p.get("code_cultu"), "code_group": p.get("code_group"), "src": "RPG.LATEST"})
         n += 1
     return n
@@ -923,7 +923,7 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
                 continue
             nom = p.get("nom_site") or p.get("nom") or p.get("toponyme") or p.get("libelle") or label
             _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
-                          f["geometry"], sids.get("ENS (Département)"), commune, run_id,
+                          f["geometry"], sids.get("INPN / patrinat — espaces protégés"), commune, run_id,
                           {"type": label, "src": typename, "marin": p.get("marin")})
             n += 1
     return n

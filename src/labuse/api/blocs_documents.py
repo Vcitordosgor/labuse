@@ -77,6 +77,12 @@ def rehab_bloc(mode_b: dict | None) -> dict:
     jamais recalculé. L'absence de potentiel est un état AFFICHÉ (« Non évaluée »), le bloc ne se masque
     JAMAIS (un zéro n'est pas une absence)."""
     mb = mode_b or {}
+    if mb.get("indisponible"):
+        # M125 (boussole) — PANNE technique ≠ absence : ne jamais afficher « donnée manquante » quand
+        # la cause est une exception. État distinct, rendu en clair sur tous les médias.
+        return {"cls": "rehab", "titre": "Réhabilitation", "statut": "indisponible", "etat": "Indisponible",
+                "lignes": [("phrase", "Donnée indisponible — erreur technique. Le calcul n'a pas abouti "
+                                      "(incident) ; ce n'est pas une absence de donnée.")]}
     if not mb.get("disponible"):
         # M73-E — distinguer le PÉRIMÈTRE MÉTIER (hors population mode B, réservé au bâti déclassé : la
         # réhab est « sans objet », pas un trou) de la donnée manquante (« Absent »). Mesuré : 92 % des

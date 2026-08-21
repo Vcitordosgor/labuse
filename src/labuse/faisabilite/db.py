@@ -126,7 +126,7 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
         libelles=libelles,
     )
     if r.safer:
-        libelles.append("Parcelle en périmètre SAFER (préemption agricole possible).")
+        libelles.append("Parcelle déclarée agricole au RPG (usage agricole).")
     return ParcelContext(parcel_id, r.idu, r.commune, float(r.surface_m2), r.zone, c)
 
 

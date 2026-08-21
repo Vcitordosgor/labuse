@@ -182,7 +182,12 @@ export interface SourceInfo {
 }
 
 // M33 — mode B (réhabilitation) : lecture de fiche, TOUJOURS Estimé, jamais persisté.
-export interface ModeB {
+// M125 (boussole) — état PANNE d'un bloc de fiche : un builder back qui LÈVE renvoie
+// `{ indisponible: true, raison: 'erreur technique' }` au lieu de null. À rendre EN CLAIR
+// (« Donnée indisponible — erreur technique »), jamais en absence/« rien à signaler ».
+export interface Indisponible { indisponible?: boolean; raison?: string }
+
+export interface ModeB extends Indisponible {
   disponible: boolean
   motif?: string
   trop_petit?: boolean   // M59-P1 (Q4) : SHAB < 50 m² → thèse non pertinente, on le DIT
@@ -289,6 +294,7 @@ export interface Fiche {
   } | null
   // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
   radar_procedure?: {
+    indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     commune?: string; confiance?: string
     synthese?: { etat: string; prochaine_etape?: string | null; servi_en_vigilance?: boolean } | null
     sursis?: { texte: string; base_legale: string } | null
@@ -296,12 +302,14 @@ export interface Fiche {
   } | null
   // M42 : « Sur cette parcelle » (historique permis + caducité) — contexte, 0 tier.
   historique_site?: {
+    indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; n_permis: number; source: string; honnetete: string
     permis: { permit_id: string; type: string | null; date_autorisation: string | null; date_depot: string | null }[]
     caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
   } | null
   // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.
   voisinage_proche?: {
+    indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; rayon_m: number; fenetre_mois: number
     ventes_dvf: number; prix_median_eur: number | null; prix_note: string | null; permis: number
     source: string; honnetete: string
@@ -334,6 +342,7 @@ export interface Fiche {
   } | null
   // M106 P4 — PROXIMITÉS (distance, jamais un booléen) : transport + ligne HT (contrainte).
   proximites?: {
+    indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     arret?: { nom: string; reseau: string | null; distance_m: number }
     pole?: { nom: string; distance_m: number; statut: 'Sourcé' | 'Estimé'; source: string
       concordance: string | null; nb_lignes: number | null }
@@ -346,11 +355,41 @@ export interface Fiche {
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null
   // M38 — activité de dépôt (Sitadel3 date_depot), informatif seul ; null hors couverture.
+  // M125 — peut porter l'état PANNE `{ indisponible: true }` (≠ absence, ≠ null).
   depots?: {
+    indisponible?: boolean; raison?: string
     fenetre_mois: number; source: string; sourcage: string; millesime: string | null
     libelle: string; granularite: string
     parcelle: { count: number; dernier: string | null } | null
     secteur: { count: number; dernier: string | null; maille?: string } | null
+  } | null
+  // M125-2 — copropriété(s) RNIC rattachées (cible bailleur/copro) ; [] hors couverture.
+  coproprietes?: Copropriete[]
+  // M125-2 — contexte socio-éco du secteur (Filosofi 200 m + parc social RPLS), hors scoring.
+  marche_secteur?: MarcheSecteur | null
+}
+
+// M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.
+export interface Copropriete {
+  numero_immatriculation: string
+  nom_usage: string | null
+  adresse: string | null
+  nb_lots_total: number | null
+  nb_lots_habitation: number | null
+  periode_construction: string | null
+  syndic_type: string | null
+  syndic_nom: string | null
+  rattachement: string | null
+}
+
+// M125-2 — contexte socio-économique du secteur. Chaque sous-bloc porte SON millésime (daté).
+export interface MarcheSecteur {
+  filosofi_200m: {
+    ind: number; men: number; men_pauv: number; men_prop: number
+    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null; millesime: string
+  } | null
+  rpls_commune: {
+    nb_logements: number; construct_median: number | null; pct_qpv: number | null; millesime: string
   } | null
 }
 
@@ -412,9 +451,9 @@ export interface ReglementZone {
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
 }
-export interface ReglementPlu { zones: ReglementZone[]; disclaimer: string }
+export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string }
 
-export interface PotentielTransformation {
+export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'
   libelle: string
   pct_consomme: number | null
@@ -464,7 +503,7 @@ export interface Viabilisation {
   solaire?: { prod_kwh_kwc: number; qualite: string; ombrage: boolean; note: string; etat: string } | null
 }
 export interface GestOperateur { operateur: string; type?: string; confidence?: 'high' | 'med' | 'low' }
-export interface Gestionnaires {
+export interface Gestionnaires extends Indisponible {
   commune: string
   a_jour_au: string | null
   epci: { code: string | null; nom: string | null; contact: string | null }

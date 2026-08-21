@@ -576,10 +576,10 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("risques", "Géorisques — mouvements de terrain", "Géorisques — mouvements de terrain", None),
     ("risques", "PPR / aléas (DEAL Réunion)", "DEAL Réunion — PPR / aléas", None),
     ("risques", "Classement sonore ITT (Cerema)", "Classement sonore ITT (Cerema)", None),
-    ("risques", "Recul du trait de côte (Cerema / GéoLittoral)", "DEAL Réunion — trait de côte", None),
+    ("risques", "Recul du trait de côte (Cerema / GéoLittoral)", "Cerema / GéoLittoral — indicateur d'érosion côtière", None),
     ("risques", "50 pas géométriques (DEAL)", "50 pas géométriques — limite haute (DEAL)", None),
     ("patrimoine", "Base Mérimée / ABF (Ministère de la Culture)", "ABF / Monuments historiques", None),
-    ("patrimoine", "ENS (INPN / Département)", "ENS (Département)", None),
+    ("patrimoine", "ENS (INPN / Département)", "INPN / patrinat — espaces protégés", None),
     ("patrimoine", "QPV 2024 (ANCT)", "QPV 2024 (ANCT)", None),
     ("patrimoine", "Cartofriches (Cerema)", "Cartofriches (Cerema)", None),
     ("patrimoine", "Parc National de La Réunion (INPN)", "Parc National de La Réunion (INPN)", None),
@@ -600,7 +600,7 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
 def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> dict | None:
     """M18 — contexte COMMUNE (agrégats sourcés, JAMAIS d'identité de personne physique) :
     vélocité d'instruction PC (Sitadel, dossiers accordés), leviers social/bailleur (SRU + QPV),
-    consommation d'espace observée (Cerema ENAF). Le budget/horizon ZAN (estimé, SAR non
+    consommation d'espace observée (Cerema ENAF). Le budget/horizon ZAN (estimé, Schéma d'Aménagement Régional (SAR) non
     territorialisé) est VOLONTAIREMENT EXCLU — donnée trop incertaine (garde-fou : pas de champ faux)."""
     out: dict[str, Any] = {}
 

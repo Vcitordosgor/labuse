@@ -7,6 +7,7 @@
  * délégations changent aux renouvellements de contrat → confidence affichée.
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
+import { BlocIndisponible } from './BlocIndisponible'
 import { TOKENS } from '../../lib/tokens'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
 
@@ -33,6 +34,7 @@ function Row({ icon, label, op, extra }: { icon: string; label: string; op: Gest
 }
 
 export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
+  if (g.indisponible) return <BlocIndisponible titre="Gestionnaires (raccordement)" />   // M125 — panne ≠ absence
   return (
     <div data-gestionnaires className="card-elev px-3 py-2.5">
       {/* M70 point 4 — la date « à jour {millésime} » est retirée du bloc (bruit ; la donnée reste

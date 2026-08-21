@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 import time
@@ -44,11 +45,11 @@ from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
 # contrainte → bandeau d'avertissement + distinction "opportunité vérifiée".
 CRITICAL_LAYERS = {
-    "sar": ("SAR (zonage régional — supérieur au PLU)", ["sar"]),
+    "sar": ("Potentiel foncier Région (indicatif)", ["sar"]),
     "risques": ("Risques (Géorisques / PPR — inondation, mouvement de terrain)", ["ppr", "georisque_alea"]),
     "foret_publique": ("Forêts publiques / régime forestier (ONF)", ["foret_publique"]),
-    "ens": ("Espaces Naturels Sensibles (ENS)", ["ens"]),
-    "safer": ("Zonage agricole / SAFER", ["safer"]),
+    "ens": ("Espace protégé réglementaire (INPN)", ["ens"]),
+    "safer": ("Parcelle déclarée agricole (RPG)", ["safer"]),
     "trait_de_cote": ("Recul du trait de côte", ["trait_de_cote"]),
     "abf": ("ABF / périmètres Monuments historiques", ["abf"]),
 }
@@ -2449,6 +2450,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
 
     lines, flags, evenement_detail = [], [], None
     _seen: set = set()
+    # M124-B (audit) — nettoyage CLIENT des libellés (RGPD personne physique + codes techniques
+    # bruts), au POINT UNIQUE de service de la fiche : écran ET pdf premium lisent ces `lines`.
+    from .export_commun import nettoyer_libelle_client
     for r in rows:
         # M46 (Lot D) : DÉDUP des contraintes servies — une même contrainte peut être produite en
         # double par la cascade (intersections multiples d'une même source, ex. « PPR zone rouge
@@ -2466,7 +2470,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "result": r["result"],
             "severity": r["severity"],
             "weight": round(w) if w is not None else None,
-            "detail": _relabel_dvf_terrain(r["layer_name"], r["detail"]),
+            "detail": nettoyer_libelle_client(
+                r["layer_name"], _relabel_dvf_terrain(r["layer_name"], r["detail"])),
             "source": r["source"],
             "source_table": r["source_table"],
             "source_id": r["source_id"],
@@ -2648,6 +2653,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M106 P4 — PROXIMITÉS (arbitrage : distance, jamais un booléen) : arrêt, pôle
         # d'échange (statut + concordance OSM↔GTFS dite), téléphérique, ligne HT (contrainte).
         "proximites": _proximites_block(db, idu),
+        # M125-2 — activité de dépôt récente (Sitadel3), branchée à la premium (était legacy-only).
+        "depots": _depots_block(db, head["id"]),
     }
 
 
@@ -2710,6 +2717,29 @@ def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -
             "attrs": row["attrs"] or {}, "distance_m": row["d"]}
 
 
+_FICHE_LOG = logging.getLogger("labuse.fiche")
+
+
+def _bloc_indisponible(nom: str) -> dict:
+    """M125 (boussole : pas de constat non sourcé) — un bloc de fiche qui LÈVE (panne technique)
+    ne renvoie plus None (= « rien à signaler »). Il renvoie un ÉTAT DISTINCT, LOGGÉ (traceback),
+    que l'écran ET le PDF rendent en clair (« donnée indisponible — erreur technique »). À appeler
+    DEPUIS un `except` (log.exception lit la trace courante). L'ABSENCE réelle reste None."""
+    _FICHE_LOG.exception("fiche · bloc « %s » indisponible (erreur technique)", nom)
+    return {"indisponible": True, "raison": "erreur technique"}
+
+
+def _depots_block(db: Session, parcel_id: int) -> dict | None:
+    """M125-2 — activité de DÉPÔT récente (Sitadel3 `date_depot`) BRANCHÉE à la fiche premium (elle
+    n'était servie que par la fiche legacy). Informatif : lu par aucun calcul servi, ne touche ni
+    tier ni verdict. None = hors couverture (pas de bloc vide) ; PANNE = état distinct (M125)."""
+    try:
+        from ..ingestion.permits import depots_recents
+        return depots_recents(db, parcel_id)
+    except Exception:  # noqa: BLE001
+        return _bloc_indisponible("depots")
+
+
 def _proximites_block(db: Session, idu: str) -> dict | None:
     """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
     Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas."""
@@ -2720,7 +2750,7 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         ht = _plus_proche(db, idu, "ligne_ht")
     except Exception:
         db.rollback()
-        return None
+        return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
     if not any((arret, pole, tele, ht)):
         return None
     out: dict = {}
@@ -2751,6 +2781,9 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         axe = _plus_proche(db, idu, "axe_structurant")
     except Exception:
         db.rollback()
+        # M125 — sous-requête isolée : on ne masque plus l'échec en silence (log), mais le bloc
+        # garde ses autres proximités réelles ; l'axe est simplement omis (dégradation partielle).
+        _FICHE_LOG.exception("fiche · bloc « proximites.axe » indisponible (erreur technique)")
         axe = None
     if axe:
         nat = (axe["attrs"].get("nature") or "route")
@@ -2787,7 +2820,9 @@ def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:
         from ..faisabilite.bilan import compute_mode_b
         return compute_mode_b(db, idu, run=run_label)
     except Exception:  # noqa: BLE001 — le mode B ne casse jamais la fiche
-        return {"disponible": False, "motif": "mode B indisponible (erreur interne)"}
+        # M125 — PANNE distincte de l'absence : `disponible=False` (contrat existant) + `indisponible`
+        # pour que l'écran/PDF disent « erreur technique », jamais « rien à signaler ».
+        return {"disponible": False, **_bloc_indisponible("mode_b")}
 
 
 @app.get("/parcels/{idu}/mode-b")
@@ -2884,7 +2919,7 @@ def _gestionnaires_block(commune: str) -> dict | None:
     try:
         return V.resolve_gestionnaires(commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
-        return None
+        return _bloc_indisponible("gestionnaires")   # M125 — panne ≠ absence
 
 
 def _icd_block(s2) -> dict | None:
@@ -2985,7 +3020,7 @@ def _radar_proc(idu: str, tier: str | None) -> dict | None:
         from ..veille_plu import radar_parcelle
         return radar_parcelle(idu, tier)
     except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
-        return None
+        return _bloc_indisponible("radar_procedure")   # M125 — panne ≠ absence
 
 
 def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
@@ -3034,7 +3069,7 @@ def _historique_site(db: Session, idu: str) -> dict | None:
         with db.begin_nested():
             return historique_permis(db, idu)
     except Exception:  # noqa: BLE001
-        return None
+        return _bloc_indisponible("historique_site")   # M125 — panne ≠ absence
 
 
 def _voisinage_proche(db: Session, idu: str) -> dict | None:
@@ -3045,7 +3080,7 @@ def _voisinage_proche(db: Session, idu: str) -> dict | None:
         with db.begin_nested():
             return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_VOISINAGE_100M)
     except Exception:  # noqa: BLE001
-        return None
+        return _bloc_indisponible("voisinage_proche")   # M125 — panne ≠ absence
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -3062,7 +3097,7 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
     try:
         return reglement_block(zones, commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
-        return None
+        return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
 
 
 def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
@@ -3081,7 +3116,7 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
                  LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
-        return None
+        return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
     if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
         return None
     pct = row["pct_potentiel"]
@@ -3142,11 +3177,10 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
 
     A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
     la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
-    from .export_commun import adresse_ban_texte
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
-    # M6 2a : adresse postale BAN en tête du PDF (l'écran l'a, le papier doit l'avoir)
-    fiche["adresse_ban"] = adresse_ban_texte(db, idu)
+    # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
+    # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
     # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
@@ -3183,7 +3217,8 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
+                    # M124-A4 — nom de fichier {IDU}-labuse.pdf (IDU d'abord : tri/recherche par parcelle).
+                    headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})
 
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:

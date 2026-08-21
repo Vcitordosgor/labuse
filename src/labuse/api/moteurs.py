@@ -229,7 +229,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
 
 # Point 41 — RÈGLE D'OR : distinction Sourcé (observé) / Estimé (dérivé) stricte, caveat systématique.
 _ZAN_CAVEAT = ("Estimation — cadre ZAN en réforme (loi TRACE : échéance 2031 possiblement reportée à "
-               "2034). Le SAR de La Réunion n'a pas finalisé la territorialisation → règle par défaut de "
+               "2034). Le Schéma d'Aménagement Régional (SAR) de La Réunion n'a pas finalisé la territorialisation → règle par défaut de "
                "-50 % appliquée. À confirmer auprès des documents d'urbanisme.")
 _ENAF_SOURCE = "Portail national de l'artificialisation · Cerema · Fichiers fonciers (CONSOENAF 2009-2024)"
 

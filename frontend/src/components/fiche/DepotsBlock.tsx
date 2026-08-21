@@ -8,9 +8,12 @@
  * Étiquette d'honnêteté obligatoire : permis AUTORISÉS datés au dépôt, jamais « en instance ».
  * Le bloc n'est pas rendu hors couverture (payload `depots` = null).
  */
+import { BlocIndisponible } from './BlocIndisponible'
 
 type Ligne = { count: number; dernier: string | null; maille?: string }
 type Depots = {
+  indisponible?: boolean   // M125 — panne technique (≠ absence)
+  raison?: string
   fenetre_mois: number
   source: string
   sourcage: string
@@ -22,6 +25,7 @@ type Depots = {
 }
 
 export function DepotsBlock({ d }: { d: Depots }) {
+  if (d?.indisponible) return <BlocIndisponible titre="Activité de dépôt (Sitadel)" />   // M125 — panne ≠ absence
   if (!d || (!d.parcelle && !d.secteur)) return null
   const mois = d.fenetre_mois
   return (
