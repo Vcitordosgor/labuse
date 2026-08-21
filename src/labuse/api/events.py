@@ -1305,6 +1305,9 @@ def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
     from ..notif_registry import TYPES_CLIENT
     prefs = prefs_compte(db, c)
     lignes = ""
+    # M125-fix — HTML sorti de la f-string : un backslash (ici les guillemets échappés de l'attribut
+    # style) est INTERDIT dans une expression f-string avant Python 3.12. Constante = chaîne normale.
+    _span_actif = ' <span style="color:#888;font-size:12px">(toujours actif)</span>'
     for k in TYPES_CLIENT:
         p = prefs[k]
         verrou = p.get("verrou")
@@ -1314,7 +1317,7 @@ def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
                    f"<input type='checkbox' name='{k}_email'{' checked' if p['email'] else ''}>")
         lignes += (
             f"<tr><td style='padding:10px 8px;font:14px sans-serif'>{p['label']}"
-            f"{' <span style=\"color:#888;font-size:12px\">(toujours actif)</span>' if verrou else ''}</td>"
+            f"{_span_actif if verrou else ''}</td>"
             f"<td style='text-align:center;padding:10px 8px'><input type='checkbox' name='{k}_cloche'"
             f"{' checked' if p['cloche'] else ''}></td>"
             f"<td style='text-align:center;padding:10px 8px'>{em_cell}</td></tr>")
