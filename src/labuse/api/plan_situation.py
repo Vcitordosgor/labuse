@@ -47,7 +47,8 @@ def _lat_repr(geojson_str: str) -> float | None:
 
 def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 10.0,
                zoom_delta: int = 0, extra_geojson: str | None = None,
-               crop_margin_m: float | None = None, focus_points: list | None = None) -> dict:
+               crop_margin_m: float | None = None, focus_points: list | None = None,
+               target_aspect: float | None = None, min_px: int | None = None) -> dict:
     """Composite l'ortho + contour → PNG. Renvoie toujours un dict :
     - succès : {ok:True, jpeg, width, height, zoom, metres_par_px, attribution}
     - échec  : {ok:False, echec:"<raison explicite>"} (jamais un cadre vide, jamais masqué).
@@ -99,11 +100,15 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
             od.polygon(pts, fill=(60, 66, 62, 130), outline=(20, 24, 22, 255))
         img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
+    # M129-4 §3.1 : épaisseur du contour PROPORTIONNELLE à la taille image (sinon, à échelle
+    # rapprochée, un trait fixe de 3 px agrandi 4× donne un « double trait » épais). ~0,5 mm au rendu.
+    mint_w = max(2, round(w / 300))
+    halo_w = mint_w + 2
     draw = ImageDraw.Draw(img)
     for pts in rings:                                    # halo sombre épais D'ABORD
-        draw.line(pts + [pts[0]], fill=_HALO, width=6, joint="curve")
+        draw.line(pts + [pts[0]], fill=_HALO, width=halo_w, joint="curve")
     for pts in rings:                                    # trait mint net PAR-DESSUS
-        draw.line(pts + [pts[0]], fill=_MINT, width=3, joint="curve")
+        draw.line(pts + [pts[0]], fill=_MINT, width=mint_w, joint="curve")
 
     lat = _lat_repr(geojson_str)
     zoom = int(m.get("zoom") or 0)
@@ -120,8 +125,40 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
         allpx = [pt for r in rings for pt in r] + focus_px
         xs, ys = [x for x, _ in allpx], [y for _, y in allpx]
         mpx = crop_margin_m / metres_par_px
-        l0, t0 = max(0, int(min(xs) - mpx)), max(0, int(min(ys) - mpx))
-        r0, b0 = min(w, int(max(xs) + mpx)), min(h, int(max(ys) + mpx))
+        cw = (max(xs) - min(xs)) + 2 * mpx        # emprise du contenu (parcelle + points + marge)
+        ch = (max(ys) - min(ys)) + 2 * mpx
+        # M129-4 §3.2 : caler le recadrage sur le FORMAT de la page (portrait) pour REMPLIR la feuille
+        # au lieu d'une demi-page blanche — on agrandit l'axe déficient, jamais on ne rogne le contenu.
+        if target_aspect:
+            if cw / ch > target_aspect:
+                ch = cw / target_aspect
+            else:
+                cw = ch * target_aspect
+        # M129-4 §3.3 : plancher de résolution NATIVE — ne jamais sur-agrandir une petite emprise (ortho
+        # plafonnée à z18). Si le recadrage est plus petit que min_px, on l'élargit (plus de contexte,
+        # net) plutôt que de zoomer dans les pixels. On garde le format page.
+        if min_px and cw < min_px:
+            f = min_px / cw
+            cw, ch = min_px, ch * f
+        cw, ch = min(cw, w), min(ch, h)           # borné à l'image disponible
+        if target_aspect:                          # ré-imposer le format après bornage éventuel
+            if cw / ch > target_aspect:
+                cw = ch * target_aspect
+            else:
+                ch = cw / target_aspect
+
+        def _win(lo: float, hi: float, want: float, lim: int) -> tuple[int, int]:
+            """Fenêtre de longueur `want` centrée sur [lo,hi], décalée pour rester dans [0,lim]."""
+            c = (lo + hi) / 2
+            a, b = c - want / 2, c + want / 2
+            if a < 0:
+                a, b = 0, want
+            if b > lim:
+                a, b = lim - want, lim
+            return max(0, int(a)), min(lim, int(round(b)))
+
+        l0, r0 = _win(min(xs), max(xs), cw, w)
+        t0, b0 = _win(min(ys), max(ys), ch, h)
         if r0 - l0 >= 60 and b0 - t0 >= 60:
             img = img.crop((l0, t0, r0, b0))
             w, h = r0 - l0, b0 - t0

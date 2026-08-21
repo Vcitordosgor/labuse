@@ -587,13 +587,21 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
 
 #: nombre de positions de prise de vue VISÉES (avant filtrage accessibilité)
 _PDV_VISE = 4
+# M129-4 §3.2 : format ~portrait de la boîte-image d'une page A4 (largeur utile / hauteur dispo),
+# pour caler le recadrage ortho dessus et remplir la feuille au lieu d'une demi-page blanche.
+_PAGE_ASPECT = 0.84
+# M129-4 §2.4 : libellé EXACT et modeste (le rapport §2 démontre que « voirie publique » est faux —
+# axe BD TOPO, 53 % chemins/sentiers, aucun attribut public/privé). On dit ce qui est réellement fait.
+_PDV_SOURCE = ("Positions RECOMMANDÉES (pas une prescription), calées sur l'axe de la voie la plus "
+               "proche (BD TOPO IGN) — chemin ou route selon le lieu, à confirmer accessible et à "
+               "ajuster sur le terrain.")
 
 
 def _points_de_vue(db: Session, idu: str, rayon_m: float = 70.0, n_max: int = _PDV_VISE) -> list[tuple]:
-    """M129-2 G — positions de prise de vue ACCESSIBLES : points sur la VOIRIE publique proche
-    (spatial_layers kind='voirie', point le plus proche de chaque tronçon voisin), donc jamais sur du
-    bâti. M129-3 : dédupliquées sur une grille 10 m (tronçons contigus d'une même rue). Renvoie
-    [(lon, lat), …] triées par proximité ; vide si aucune voirie dans le rayon."""
+    """M129-2 G — positions de prise de vue proches : points calés sur l'AXE de la voie la plus proche
+    (spatial_layers kind='voirie', BD TOPO), donc jamais sur du bâti. M129-3 : dédupliquées sur une
+    grille 10 m (tronçons contigus d'une même rue). Renvoie [(lon, lat), …] triées par proximité ;
+    vide si aucune voirie dans le rayon."""
     rows = db.execute(text(
         """WITH p AS (SELECT geom_2975 g, ST_Centroid(geom_2975) c FROM parcels WHERE idu = :idu),
                 cand AS (SELECT ST_ClosestPoint(sl.geom_2975, (SELECT c FROM p)) AS pt,
@@ -608,63 +616,115 @@ def _points_de_vue(db: Session, idu: str, rayon_m: float = 70.0, n_max: int = _P
     return [(r["lon"], r["lat"]) for r in rows]
 
 
+def _points_lointains(db: Session, idu: str, rmin_m: float = 120.0, rmax_m: float = 500.0,
+                      n_max: int = _PDV_VISE) -> list[tuple]:
+    """M129-4 §1.1 — positions de prise de vue LOINTAINES (paysage) PROPRES à PCMI8 : points sur l'axe
+    de voie dans un anneau [rmin, rmax] autour de la parcelle, UN par secteur angulaire (quadrant) pour
+    ENTOURER le terrain et éviter tout chevauchement de pastilles (§1.3). Réutiliser les points de
+    PCMI7 (~10 m) affichés à l'échelle lointaine produirait une tache illisible — d'où des positions
+    dédiées. Renvoie [(lon, lat), …] triées par proximité ; vide si l'anneau ne contient aucune voie."""
+    rows = db.execute(text(
+        """WITH p AS (SELECT geom_2975 g, ST_Centroid(geom_2975) c FROM parcels WHERE idu = :idu),
+                cand AS (SELECT ST_ClosestPoint(sl.geom_2975, (SELECT c FROM p)) AS pt,
+                                ST_Distance(sl.geom_2975, (SELECT c FROM p)) AS d
+                         FROM spatial_layers sl, p
+                         WHERE sl.kind = 'voirie'
+                           AND ST_DWithin(sl.geom_2975, (SELECT c FROM p), :rmax)
+                           AND NOT ST_DWithin(sl.geom_2975, (SELECT c FROM p), :rmin)),
+                sect AS (SELECT pt, d,
+                                width_bucket(degrees(ST_Azimuth((SELECT c FROM p), pt)), 0, 360, 4) AS b
+                         FROM cand),
+                pick AS (SELECT DISTINCT ON (b) pt, d FROM sect ORDER BY b, d)
+           SELECT ST_X(ST_Transform(pt, 4326)) AS lon, ST_Y(ST_Transform(pt, 4326)) AS lat
+           FROM pick ORDER BY d LIMIT :n"""),
+        {"idu": idu, "rmin": rmin_m, "rmax": rmax_m, "n": n_max}).mappings().all()
+    return [(r["lon"], r["lat"]) for r in rows]
+
+
+def _pdv_libelles(n: int, portee: str) -> tuple[str, str]:
+    """Sous-titre + note dégradée pour une planche de prises de vue (M129-3 §1.2/§1.4, M129-4 §1.4).
+    `portee` : « proche » (PCMI7) ou « lointaine » (PCMI8) — numérotation PROPRE à chaque planche."""
+    if n == 0:
+        sous = f"Aucune position {portee} exploitable : pas de voie relevée à la bonne distance."
+        deg = (f" Aucune position {portee} n'a pu être placée — le pétitionnaire choisit ses prises de "
+               "vue depuis la voie.")
+        return sous, deg
+    sous = (f"Point 1 sur l'axe de la voie {portee}, orienté vers la parcelle." if n == 1
+            else f"Points 1 à {n} sur l'axe des voies {portee}s, orientés vers la parcelle.")
+    deg = ("" if n >= _PDV_VISE else
+           f" {n} position(s) retenue(s) sur {_PDV_VISE} visées : les autres écartées "
+           "(aucune voie exploitable dans le secteur correspondant).")
+    return sous, deg
+
+
+def _draw_pdv(pdf, x0, y0, scale, plan) -> None:
+    """Trace le repère parcelle (§1.2) + les pastilles numérotées 1..N et leurs visées (§1.1/§1.3).
+    Repère parcelle = losange sombre « Terrain » au centroïde, DISTINCT des pastilles vertes rondes."""
+    rings = plan.get("parcel_px") or []
+    fpx = plan.get("focus_px") or []
+    if not rings:
+        return
+    xs = [px for r in rings for px, _ in r]
+    ys = [py for r in rings for _, py in r]
+    cx, cy = (min(xs) + max(xs)) / 2 * scale + x0, (min(ys) + max(ys)) / 2 * scale + y0
+    if not fpx:                                              # §1.5 : aucun point → le dire, ne rien tracer
+        pdf.set_font("inter", size=8)
+        pdf.set_text_color(150, 90, 40)
+        pdf.set_xy(x0 + 4, y0 + 4)
+        pdf.multi_cell(90, 4, "Aucune position exploitable identifiée.")
+        return
+    for i, (px0, py0) in enumerate(fpx, 1):                  # §1.1 : 1..N continu, MÊME repère (focus_px)
+        px, py = px0 * scale + x0, py0 * scale + y0
+        pdf.set_draw_color(*_ENCRE)
+        pdf.set_line_width(0.4)
+        pdf.line(px, py, cx, cy)                             # visée vers la parcelle
+        pdf.set_fill_color(74, 222, 128)
+        pdf.ellipse(px - 3.4, py - 3.4, 6.8, 6.8, style="DF")
+        pdf.set_font("display", size=8)
+        pdf.set_text_color(17, 24, 20)
+        pdf.set_xy(px - 3.4, py - 2.4)
+        pdf.cell(6.8, 4, str(i), align="C")                 # §1.1 numéro lisible dans la pastille
+    # §1.2 : repère PARCELLE distinct — losange sombre + halo blanc + libellé « Terrain » au centroïde,
+    # pour situer le sujet à l'échelle lointaine où le contour est trop petit pour être identifié seul.
+    pdf.set_draw_color(220, 38, 38)
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_line_width(0.8)
+    r = 3.2
+    for (ax, ay, bx, by) in ((0, -r, r, 0), (r, 0, 0, r), (0, r, -r, 0), (-r, 0, 0, -r)):
+        pdf.line(cx + ax, cy + ay, cx + bx, cy + by)
+    pdf.set_line_width(0.2)
+    pdf.set_font("display", size=7)
+    pdf.set_text_color(220, 38, 38)
+    pdf.set_xy(cx - 12, cy + r + 0.4)
+    pdf.cell(24, 3, "Terrain", align="C")
+
+
 def _pcmi78(db: Session, parcelle: dict) -> bytes:
-    """D (PCMI7/8) — carte des prises de vue RECOMMANDÉES (proche + lointain), Nord + échelle.
-    M129-3 §1 : numérotation 1..N CONTINUE, titre DYNAMIQUE, cadrage qui CONTIENT la parcelle ET tous
-    les points retenus, cas dégradés explicites (0 point, ou moins que visé)."""
+    """D (PCMI7/8) — cartes des prises de vue RECOMMANDÉES. M129-4 §1 : PCMI8 a ses PROPRES points
+    LOINTAINS (anneau 120–500 m, un par quadrant), la parcelle est repérée (losange « Terrain »),
+    pastilles anti-chevauchement, numérotation et note « N sur X » PROPRES à chaque planche, cas
+    dégradés explicites. §3.2/§3.3 : recadrage au format page (remplit la feuille) et résolution native
+    bornée (pas de sur-agrandissement pixelisé)."""
     from .plan_situation import plan_ortho
     cd = _tiles_dir()
     gj = parcelle["geojson"]
-    vues = _points_de_vue(db, parcelle["idu"])
-    n = len(vues)
-    # titre/sous-titre dynamiques (M129-3 §1.2) + cas dégradés (§1.4)
-    if n == 0:
-        sous = "Aucune position accessible : pas de voirie publique relevée assez proche."
-        deg = ("Aucun point n'a pu être placé (pas de voirie publique à proximité) — le pétitionnaire "
-               "choisit ses prises de vue depuis la voie publique.")
-    else:
-        sous = ("Point 1 sur la voirie publique proche (accessible), face à la parcelle." if n == 1
-                else f"Points 1 à {n} sur la voirie publique proche (accessibles), face à la parcelle.")
-        deg = ("" if n >= _PDV_VISE else
-               f" {n} position(s) placée(s) sur {_PDV_VISE} visées : les autres ont été écartées "
-               "(non accessibles depuis la voirie publique).")
+    idu = parcelle["idu"]
+    vp = _points_de_vue(db, idu)          # PCMI7 : proche (~≤70 m)
+    vl = _points_lointains(db, idu)       # PCMI8 : lointain (120–500 m), positions PROPRES
+    sous_p, deg_p = _pdv_libelles(len(vp), "proche")
+    sous_l, deg_l = _pdv_libelles(len(vl), "lointaine")
 
-    def _draw(pdf, x0, y0, scale, plan):
-        rings = plan.get("parcel_px") or []
-        fpx = plan.get("focus_px") or []
-        if not rings:
-            return
-        xs = [px for r in rings for px, _ in r]
-        ys = [py for r in rings for _, py in r]
-        cx, cy = (min(xs) + max(xs)) / 2 * scale + x0, (min(ys) + max(ys)) / 2 * scale + y0
-        if not fpx:                                          # §1.4 : aucun point → le dire, ne rien tracer
-            pdf.set_font("inter", size=8)
-            pdf.set_text_color(150, 90, 40)
-            pdf.set_xy(x0 + 4, y0 + 4)
-            pdf.multi_cell(90, 4, "Aucune position accessible identifiée à proximité.")
-            return
-        for i, (px0, py0) in enumerate(fpx, 1):              # §1.1 : 1..N continu, MÊME repère (focus_px)
-            px, py = px0 * scale + x0, py0 * scale + y0
-            pdf.set_draw_color(*_ENCRE)
-            pdf.set_line_width(0.4)
-            pdf.line(px, py, cx, cy)                          # visée vers la parcelle
-            pdf.set_fill_color(74, 222, 128)
-            pdf.ellipse(px - 3.4, py - 3.4, 6.8, 6.8, style="DF")
-            pdf.set_font("display", size=8)
-            pdf.set_text_color(17, 24, 20)
-            pdf.set_xy(px - 3.4, py - 2.4)
-            pdf.cell(6.8, 4, str(i), align="C")              # §1.1 numéro lisible dans la pastille
-
-    # §1.3 : le recadrage CONTIENT la parcelle ET tous les points (focus_points → crop élargi).
-    prox = plan_ortho(gj, cd, zoom_delta=0, crop_margin_m=25.0, focus_points=vues or None)
-    loin = plan_ortho(gj, cd, zoom_delta=-2, focus_points=vues or None)
+    # §1.3 + §3.2/§3.3 : le recadrage CONTIENT la parcelle ET tous les points, au format page, en
+    # résolution native (min_px) pour ne pas pixeliser une petite emprise ni laisser de demi-page blanche.
+    prox = plan_ortho(gj, cd, zoom_delta=0, crop_margin_m=25.0, focus_points=vp or None,
+                      target_aspect=_PAGE_ASPECT, min_px=320)
+    loin = plan_ortho(gj, cd, zoom_delta=-2, crop_margin_m=45.0, focus_points=vl or None,
+                      target_aspect=_PAGE_ASPECT, min_px=340)
     pdf = _pdf_a4()
-    _carte_page(pdf, "PCMI7 — Prises de vue recommandées (environnement proche)", sous, prox,
-                "Positions RECOMMANDÉES (pas une prescription), placées sur la voirie publique." + deg,
-                cotes=lambda p, x, y, s: _draw(p, x, y, s, prox))
-    _carte_page(pdf, "PCMI8 — Prises de vue recommandées (paysage lointain)", sous, loin,
-                "Mêmes points, vus dans le paysage lointain. Positions RECOMMANDÉES." + deg,
-                cotes=lambda p, x, y, s: _draw(p, x, y, s, loin))
+    _carte_page(pdf, "PCMI7 — Prises de vue recommandées (environnement proche)", sous_p, prox,
+                _PDV_SOURCE + deg_p, cotes=lambda p, x, y, s: _draw_pdv(p, x, y, s, prox))
+    _carte_page(pdf, "PCMI8 — Prises de vue recommandées (paysage lointain)", sous_l, loin,
+                _PDV_SOURCE + deg_l, cotes=lambda p, x, y, s: _draw_pdv(p, x, y, s, loin))
     return bytes(pdf.output())
 
 
