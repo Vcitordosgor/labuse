@@ -38,6 +38,15 @@ def test_non_couvert_liste_les_manques():
     assert any("Canalisations" in x for x in sv._NON_COUVERT)
 
 
+def test_peb_retire_des_couvertes_et_passe_en_non_couvert():
+    # M137-T — couvert-vide corrigé : `peb` déclaré couvert mais 0 ligne en base = faux RAS sur le
+    # bruit aérien. Retiré des couvertes, listé en NON COUVERT avec les autres manques de l'audit.
+    assert "peb" not in sv._KINDS
+    joined = " · ".join(sv.NON_COUVERT)
+    for attendu in ("Exposition au Bruit", "Copropriété", "Procédures PLU", "Canalisations", "hors GPU"):
+        assert attendu in joined
+
+
 # ───────────────────────── flux DB ─────────────────────────
 
 _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
@@ -66,6 +75,25 @@ def test_flux_sup_sourcee_datee_et_dedup(db_session):
     it = out["servitudes"][0]
     assert "Risques naturels" in it["effet"] and it["source"] == "SUP test" and it["date"] == "2026-07-10"
     assert out["non_couvert"]                              # manques listés
+
+
+@pytest.mark.db
+def test_duediligence_reporte_non_couvert_sur_le_lot(db_session):
+    # M137-T (fusion outil Risques) — le bloc NON COUVERT (source unique servitudes.NON_COUVERT) est
+    # REPORTÉ sur l'entrée « un lot » : jamais un « RAS » muet, même sans flag cascade. + ménage q/a_score.
+    from labuse.api import modules
+    s = db_session
+    idu = "97499000DD0001"
+    s.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "(:i,'X','ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"), {"i": idu, "w": _WKT})
+    s.flush()
+    out = modules.duediligence(modules.DueDiligenceIn(refs=idu), s)
+    assert out["non_couvert"] == sv.NON_COUVERT
+    assert any("Exposition au Bruit" in x for x in out["non_couvert"])   # PEB dit, jamais silencieux
+    it = out["items"][0]
+    assert "q_score" not in it and "a_score" not in it                  # vestige mort retiré du SELECT
 
 
 @pytest.mark.db

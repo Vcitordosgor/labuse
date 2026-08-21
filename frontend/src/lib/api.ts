@@ -641,7 +641,7 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
   URL.revokeObjectURL(url)
 }
 export const modDueDiligence = (refs: string) =>
-  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[] }>('/modules/duediligence', {
+  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──

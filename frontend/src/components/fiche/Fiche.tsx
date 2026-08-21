@@ -2081,14 +2081,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.ligne_ht.source}</p>
                 </div>
               )}
-              {/* M70 déc. 9 — PORTES Risques (grille terminale supprimée) : Contrôle avant achat
-                  (due diligence) + Servitudes invisibles. Les deux lisent selectedIdu → pré-remplis. */}
-              <PorteOutil ico="✓" data="duediligence" titre="Contrôle avant achat"
-                sous="La check-list de due diligence, cette parcelle en tête"
-                onClick={() => setModule('duediligence')} />
-              <PorteOutil ico="⚑" data="o5-servitudes" titre="Servitudes invisibles"
-                sous="Les contraintes dormantes qui ne se voient pas sur la carte"
-                onClick={() => setModule('o5-servitudes')} />
+              {/* M137-T — PORTE Risques : « Contrôle avant achat » et « Servitudes invisibles » fusionnés
+                  en un outil « Pièges et risques » (entrée « une parcelle » ouverte par défaut, lit selectedIdu). */}
+              <PorteOutil ico="⚑" data="risques" titre="Pièges et risques"
+                sous="Servitudes dormantes, risques et propriétaire — cette parcelle en détail, ou un lot au crible"
+                onClick={() => setModule('risques')} />
             </RefDrawer>
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
