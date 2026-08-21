@@ -716,8 +716,21 @@ export const postSuggestion = (body: { categorie: string; texte: string; context
   j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
 // ── Moteurs (Vague 4) ──
-export const motSimulPluZones = () => j<{ zone: string; n_ilots: number }[]>(`/moteurs/simulplu/zones?${cq()}`)
-export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${cq()}`)
+// M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus
+// hérité muettement du filtre global). `commune === undefined` → repli sur le filtre global
+// (compat) ; `null`/'' → toute l'île ; sinon la commune passée.
+const communeQ = (c?: string | null) => c === undefined ? cq() : (c ? `commune=${encodeURIComponent(c)}` : '')
+export const motSimulPluZones = (commune?: string | null) =>
+  j<{ zone: string; n_ilots: number }[]>(`/moteurs/simulplu/zones?${communeQ(commune)}`)
+export const motSimulPlu = (zone: string, commune?: string | null) =>
+  j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${communeQ(commune)}`)
+export interface SimulPluProcedure {
+  insee: string; commune: string; commune_radar: string; type: string
+  stade: string | null; date_acte: string | null; etat: string | null; prochaine_etape: string | null
+  source: string | null; source_url: string | null; date_constat: string | null; confiance: string | null
+}
+export const motSimulPluProcedures = () =>
+  j<{ communes: SimulPluProcedure[]; source: string }>(`/moteurs/simulplu/procedures`)
 export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')

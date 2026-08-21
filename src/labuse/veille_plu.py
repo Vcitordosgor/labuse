@@ -214,3 +214,24 @@ def synthese_commune(insee: str | None) -> dict | None:
     return {"etat": etat, "prochaine_etape": padd if active else None,
             "confiance": e["confiance"], "source": e.get("source"),
             "date_constat": e.get("date_constat"), "servi_en_vigilance": active}
+
+
+def communes_en_procedure() -> list[dict]:
+    """Liste des communes en procédure PLU ACTIVE servie (SOURCE + révision/élaboration, non
+    dormante) — le radar reste le point de calcul UNIQUE, mêmes libellés que la fiche. Type +
+    date + synthèse par commune. Le nom servi est celui du registre ; l'API le rapproche du nom
+    canonique en base (INSEE) pour un préremplissage exact du périmètre de simulation."""
+    out: list[dict] = []
+    for insee, e in sorted(_registre().items()):
+        if not procedure_active(e):
+            continue
+        syn = synthese_commune(insee) or {}
+        out.append({
+            "insee": insee, "commune": e["commune"],
+            "type": _TYPE_LABEL.get(e["procedure"], e["procedure"]),
+            "stade": e.get("stade"), "date_acte": e.get("date_acte"),
+            "etat": syn.get("etat"), "prochaine_etape": syn.get("prochaine_etape"),
+            "source": e.get("source"), "source_url": e.get("source_url"),
+            "date_constat": e.get("date_constat"), "confiance": e.get("confiance"),
+        })
+    return out

@@ -17,7 +17,8 @@ import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './
 import { M16, M17, M18, MarcheCommune } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
-// M137-P — outil PLU UNIFIÉ : le hub monte les 3 composants (VerifProcedure, PluAnnuaire, M15).
+// M137-P/Q — outil PLU UNIFIÉ : le hub monte 2 voies — PluAnnuaire et ProcedureChangement (qui
+// réutilise VerifProcedure + M15/simulplu).
 import { Plu } from './Plu'
 // M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).

@@ -57,8 +57,9 @@ export const MODULES: ModuleDef[] = [
     label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
   { key: 'duediligence', num: 'M10', group: 'instruire', phare: true,
     label: 'Contrôle avant achat', desc: 'Passez une liste de parcelles au crible avant d’acheter' },
-  // M137-P — outil PLU UNIFIÉ : Annuaire PLU (O13) + Vérif procédure (O11) + Changement PLU (M15)
-  // fusionnés en une seule entrée. Le hub (Plu.tsx) monte les 3 composants inchangés.
+  // M137-P/Q — outil PLU UNIFIÉ : Annuaire PLU (O13) + « Procédure & changement » (M137-Q : Vérif
+  // procédure O11 + Changement PLU M15 fusionnés, communes en procédure reliées à leur simulation).
+  // Le hub (Plu.tsx) monte 2 voies ; les composants existants sont réutilisés inchangés.
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
     label: 'PLU', desc: 'Le PLU des 24 communes : consulter le règlement, vérifier une procédure en cours, simuler une bascule de zone' },
   { key: 'o5-servitudes', num: 'O5', group: 'instruire',

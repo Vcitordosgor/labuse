@@ -1,33 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
-import { M15 } from './moteurs'
 import { PluAnnuaire } from './PluAnnuaire'
-import { VerifProcedure } from './VerifProcedure'
+import { ProcedureChangement } from './ProcedureChangement'
 
-// M137-P — OUTIL PLU UNIFIÉ : les 3 anciens outils (Annuaire PLU, Vérif procédure, Changement PLU /
-// simulplu) fusionnent en UN. La page 1 propose les 3 voies ; chacune MONTE le composant existant
-// inchangé (aucun calcul ne change — c'est la navigation qui est refondue). Le hub s'ouvre directement
-// sur une vue quand la fiche/le Copilote le demande (pluVue), ou sur l'Annuaire si une zone est
-// pré-remplie (pluPrefill).
-type Vue = 'accueil' | 'annuaire' | 'procedure' | 'changement'
+// M137-P — OUTIL PLU UNIFIÉ. M137-Q : les voies « Procédure » et « Changement » (qui s'ignoraient)
+// fusionnent en UNE — « Procédure & changement » : les communes en procédure en tête, chacune reliée
+// à sa simulation AU→U préremplie (ProcedureChangement). Le hub passe donc à 2 voies. Chaque voie
+// MONTE le composant existant (aucun calcul ne change). Ouverture directe possible depuis la fiche /
+// le Copilote (pluVue), ou sur l'Annuaire si une zone est pré-remplie (pluPrefill).
+type Vue = 'accueil' | 'annuaire' | 'procchg'
+
+// M137-Q — les anciennes vues 'procedure'/'changement' (contrat store, portes fiche/Copilote)
+// pointent désormais vers la voie fusionnée.
+const mapVue = (v: 'annuaire' | 'procedure' | 'changement'): Exclude<Vue, 'accueil'> =>
+  v === 'annuaire' ? 'annuaire' : 'procchg'
 
 const VOIES: { vue: Exclude<Vue, 'accueil'>; titre: string; sous: string }[] = [
   { vue: 'annuaire', titre: 'Annuaire PLU',
     sous: 'Tous les PLU des 24 communes au même endroit — à télécharger ou à interroger' },
-  { vue: 'procedure', titre: 'Procédure PLU',
-    sous: 'Une procédure PLU est-elle en cours sur votre parcelle ? (sursis à statuer, veille AU)' },
-  { vue: 'changement', titre: 'Changement PLU',
-    sous: 'Et si cette zone AU devenait constructible ? Simulez la bascule' },
+  { vue: 'procchg', titre: 'Procédure & changement',
+    sous: 'Où le PLU est en révision — et simulez ce que la bascule d’une zone AU en U changerait' },
 ]
 
 export function Plu() {
   const pluVue = useApp((s) => s.pluVue)
   const setPluVue = useApp((s) => s.setPluVue)
   const pluPrefill = useApp((s) => s.pluPrefill)
-  // Ouverture directe : une vue explicite (fiche → procédure) prime ; sinon une zone pré-remplie ouvre
-  // l'Annuaire ; sinon la page d'accueil des 3 voies.
-  const [vue, setVue] = useState<Vue>(() => pluVue ?? (pluPrefill ? 'annuaire' : 'accueil'))
-  useEffect(() => { if (pluVue) { setVue(pluVue); setPluVue(null) } }, [pluVue, setPluVue])
+  // Ouverture directe : une vue explicite (fiche → procédure/changement) prime ; sinon une zone
+  // pré-remplie ouvre l'Annuaire ; sinon la page d'accueil des 2 voies.
+  const [vue, setVue] = useState<Vue>(() => (pluVue ? mapVue(pluVue) : pluPrefill ? 'annuaire' : 'accueil'))
+  useEffect(() => { if (pluVue) { setVue(mapVue(pluVue)); setPluVue(null) } }, [pluVue, setPluVue])
 
   if (vue === 'accueil') {
     return (
@@ -48,8 +50,7 @@ export function Plu() {
       <button data-plu-hub-retour onClick={() => setVue('accueil')}
         className="shrink-0 self-start text-[11px] text-mint hover:underline">‹ Choix PLU</button>
       {vue === 'annuaire' && <PluAnnuaire />}
-      {vue === 'procedure' && <VerifProcedure />}
-      {vue === 'changement' && <M15 />}
+      {vue === 'procchg' && <ProcedureChangement />}
     </div>
   )
 }
