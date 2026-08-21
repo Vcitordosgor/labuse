@@ -29,12 +29,12 @@ KIND_SOURCE = {
     "voirie": "BD TOPO IGN",
     "parc_national": "Parc National de La Réunion (INPN)",
     "foret_publique": "Forêts publiques (ONF)",
-    "sar": "SAR Réunion (PEIGEO)",
+    "sar": "Potentiel foncier Région (Région ODS)",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
-    "safer": "Zonage SAFER (DAAF)",
+    "safer": "RPG — déclarations agricoles (IGN/ASP)",
     "ppr": "Géorisques",
     "georisque_alea": "Géorisques",
-    "ocs_ge": "OCS GE (IGN)",
+    "ocs_ge": "IGN BD CARTO V5 — occupation du sol",
     "osm_faux_positif": "OpenStreetMap / Overpass",
     "pente": "RGE ALTI (altimétrie)",
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
@@ -147,8 +147,8 @@ def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str 
 
         # overlays propres couvrant exactement la parcelle
         add_layer("plu_gpu_zone", p["plu"], f"Zone PLU {p['plu']}", wkt)
-        add_layer("sar", p["sar"], f"SAR {p['sar']}", g.rect_wkt(xoff - 2, -2, W + 4, H + 4))
-        add_layer("ocs_ge", p["ocs"], f"OCS {p['ocs']}", wkt)
+        add_layer("sar", p["sar"], f"Potentiel foncier Région {p['sar']}", g.rect_wkt(xoff - 2, -2, W + 4, H + 4))
+        add_layer("ocs_ge", p["ocs"], f"Occupation du sol {p['ocs']}", wkt)
 
         # propriétaire personne morale DÉTERMINISTE (F2) — pilote foncier_public
         if p.get("pm"):
@@ -164,7 +164,7 @@ def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str 
         if p.get("parc_adhesion"):
             add_layer("parc_national", "adhesion", "Aire d'adhésion Parc National", big)
         if p.get("safer"):
-            add_layer("safer", "preemption", "Zonage SAFER", big)
+            add_layer("safer", "preemption", "Parcelle déclarée agricole (RPG)", big)
         if p.get("alea_moyen"):
             add_layer("georisque_alea", "mvt_terrain", "Aléa mouvement de terrain", big,
                       {"niveau": "moyen", "type": "mouvement de terrain"})

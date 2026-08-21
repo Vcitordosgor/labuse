@@ -45,11 +45,11 @@ from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
 # contrainte → bandeau d'avertissement + distinction "opportunité vérifiée".
 CRITICAL_LAYERS = {
-    "sar": ("SAR (zonage régional — supérieur au PLU)", ["sar"]),
+    "sar": ("Potentiel foncier Région (indicatif)", ["sar"]),
     "risques": ("Risques (Géorisques / PPR — inondation, mouvement de terrain)", ["ppr", "georisque_alea"]),
     "foret_publique": ("Forêts publiques / régime forestier (ONF)", ["foret_publique"]),
-    "ens": ("Espaces Naturels Sensibles (ENS)", ["ens"]),
-    "safer": ("Zonage agricole / SAFER", ["safer"]),
+    "ens": ("Espace protégé réglementaire (INPN)", ["ens"]),
+    "safer": ("Parcelle déclarée agricole (RPG)", ["safer"]),
     "trait_de_cote": ("Recul du trait de côte", ["trait_de_cote"]),
     "abf": ("ABF / périmètres Monuments historiques", ["abf"]),
 }

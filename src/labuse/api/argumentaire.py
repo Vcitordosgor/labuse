@@ -226,10 +226,10 @@ def _reductions(out: dict) -> str:
             "présentés comme des rabais sur le prix affiché : c'est la capacité qui baisse, "
             "le calcul de la partie 5 en tient compte.</p>")
     if modul:
-        rows = "".join(f"<tr><td>{esc(m)}</td><td>{s('S') if 'PPR' in m or 'SAR' in m or 'côte' in m else s('E')}</td></tr>"
+        rows = "".join(f"<tr><td>{esc(m)}</td><td>{s('S') if 'PPR' in m or 'RPG' in m or 'agricole' in m or 'côte' in m or 'érosion' in m else s('E')}</td></tr>"
                        for m in modul)
         body += f"<table><tr><th>Facteur (appliqué au calcul)</th><th>Nature</th></tr>{rows}</table>"
-        body += ("<p class='note'>Sources : PPR/aléas (DEAL), SAR (PEIGEO), trait de côte (Cerema), "
+        body += ("<p class='note'>Sources : PPR/aléas (DEAL), potentiel foncier Région (indicatif), indicateur d'érosion (Cerema), "
                  "pente (RGE ALTI 5 m) — telles qu'ingérées ; le détail figure dans la dérivation "
                  "de la partie 3.</p>")
     else:

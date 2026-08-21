@@ -27,7 +27,7 @@ def _confidence_from_band(band: str) -> str:
 def _reunion_flags(verdicts: list[dict]) -> list[str]:
     """Spécificités réunionnaises — UNIQUEMENT sur contraintes/exclusions réelles.
 
-    On ignore les verdicts PASS (« Hors Parc National », « Hors SAFER »…) : matcher
+    On ignore les verdicts PASS (« Hors Parc National », « Hors agricole (RPG) »…) : matcher
     un mot-clé dans un détail négatif produirait un faux signal (interdit, §9).
     """
     flags = []
@@ -35,10 +35,8 @@ def _reunion_flags(verdicts: list[dict]) -> list[str]:
         if v.get("result") not in ("SOFT_FLAG", "HARD_EXCLUDE"):
             continue
         d = (v.get("detail") or "").lower()
-        if "safer" in d:
-            flags.append("Risque de préemption SAFER (zone agricole).")
-        if "sar" in d and "supérieur" in d:
-            flags.append("SAR juridiquement supérieur au PLU.")
+        if "déclarée agricole" in d or "déclarée agricole au rpg" in d:
+            flags.append("Parcelle déclarée agricole (RPG) — usage à vérifier au PLU.")
         if "parc national" in d:
             flags.append("Parc National (cœur exclu / adhésion contrainte).")
         if "indivision" in d:

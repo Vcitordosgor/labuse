@@ -13,7 +13,7 @@ from ..context import EvalContext, ParcelRef
 SRC_DVF = "DVF / valeurs foncières"
 SRC_SITADEL = "SITADEL (autorisations d'urbanisme)"
 SRC_POTENTIEL = "data.regionreunion.com — Potentiel foncier"
-SRC_FF = "Fichiers fonciers (Cerema)"
+SRC_FF = "DGFiP — parcelles des personnes morales"
 
 
 @register
@@ -151,7 +151,7 @@ class ProprietaireLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> list[Verdict]:
         res = ctx.latest_source_result(parcel.id, SRC_FF)
         if not res or not res.get("raw_payload"):
-            return [unknown(self.name, "Propriétaire inconnu (Fichiers fonciers sous convention non branchés).", source=SRC_FF)]
+            return [unknown(self.name, "Propriétaire (personne morale) non renseigné pour cette parcelle.", source=SRC_FF)]
 
         payload = res["raw_payload"]
         verdicts: list[Verdict] = []

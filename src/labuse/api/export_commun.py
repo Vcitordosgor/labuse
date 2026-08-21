@@ -71,6 +71,30 @@ _PURGES_TECH = [
     (re.compile(r"\s*—\s*gisement\s*\(valorisation[^)]*\)"), ""),  # magnitude de scoring (surface)
 ]
 
+# M125-1ter — FAUX CONSTAT DE NOM : filet de sécurité read-time sur les DÉTAILS DÉJÀ STOCKÉS (runs
+# cascade antérieurs). Un proxy ne doit JAMAIS s'afficher sous le nom d'une couche officielle. La
+# génération est corrigée en amont (phase1/layers_ingest) ; ceci couvre la donnée non re-jouée.
+# Phrase-level (conservateur) — l'ordre compte (phrases longues d'abord).
+_PROXYS_NOM = [
+    (re.compile(r"\(risque préemption SAFER\)\s*"), ""),          # SAR proxy : réserve SAFER non fondée
+    (re.compile(r"\s*—\s*préemption agricole possible"), ""),     # SAFER proxy
+    (re.compile(r"préemption SAFER( possible)?"), "usage agricole (RPG)"),
+    (re.compile(r"espace agricole SAR"), "vocation agricole"),
+    (re.compile(r"espace naturel SAR"), "vocation naturelle"),
+    (re.compile(r"⚠ proxy SAR divergent"), "⚠ Potentiel foncier Région divergent"),
+    (re.compile(r"proxy SAR divergent"), "Potentiel foncier Région divergent"),
+    (re.compile(r"SAR \(proxy indicatif\)"), "Potentiel foncier Région (indicatif)"),
+    (re.compile(r"Zonage SAFER( \(DAAF\))?"), "Parcelle déclarée agricole (RPG)"),
+    (re.compile(r"\bSAFER\b"), "RPG"),
+    (re.compile(r"logique ZAN,\s*"), ""),                         # OCS proxy : pas un standard ZAN
+    (re.compile(r"OCS ?GE"), "BD CARTO V5"),
+    (re.compile(r"Espaces Naturels Sensibles"), "espaces protégés (INPN)"),
+    (re.compile(r"\bENS\b"), "espace protégé (INPN)"),
+]
+
+#: couches concernées par le filet anti-faux-constat de nom (ne touche pas les autres détails).
+_PROXY_LAYERS = {"sar", "safer", "ocs_ge", "ens"}
+
 
 def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None:
     """Assainit UN détail de ligne cascade avant de le servir au client (fiche écran + pdf premium).
@@ -83,6 +107,11 @@ def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None
         d = _NOM_PHYSIQUE.sub("exploitant individuel", d)
     for rx, repl in _PURGES_TECH:
         d = rx.sub(repl, d)
+    if layer in _PROXY_LAYERS:            # M125-1ter — jamais un proxy sous le nom d'une couche officielle
+        for rx, repl in _PROXYS_NOM:
+            d = rx.sub(repl, d)
+        if layer == "sar":               # « SAR » résiduel (« Zonage SAR », « contrainte SAR »…)
+            d = re.sub(r"\bSAR\b", "potentiel foncier Région", d)
     d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
     d = re.sub(r"\s{2,}", " ", d)
     d = re.sub(r"\s+([.,;])", r"\1", d)

@@ -20,20 +20,20 @@ from ..context import EvalContext, ParcelRef
 SRC_BDTOPO = "BD TOPO IGN"
 SRC_PARC = "Parc National de La Réunion (INPN)"
 SRC_FORET = "Forêts publiques (ONF)"
-SRC_SAR = "SAR Réunion (PEIGEO)"
+SRC_SAR = "Potentiel foncier Région (Région ODS)"
 SRC_GPU = "Urbanisme PLU/GPU (API Carto)"
-SRC_SAFER = "Zonage SAFER (DAAF)"
+SRC_SAFER = "RPG — déclarations agricoles (IGN/ASP)"
 SRC_GEORISQUES = "Géorisques"
 # M-G (P2) : les deux FLUX réels du kind='ppr' — le zoné rouge/bleu vient de DEAL Lizmap ; l'assiette
 # SUP PM1 (repli quand la commune n'a pas de PPR zoné dématérialisé) vient de l'API Carto GPU. La
 # source affichée doit nommer LE FLUX réel, jamais « GPU » pour du zoné DEAL.
 SRC_DEAL_PPR = "DEAL Réunion — PPR / aléas"
 SRC_SUP_GPU = "SUP — assiettes GPU (API Carto)"
-SRC_TRAIT = "DEAL Réunion — trait de côte"
+SRC_TRAIT = "Cerema / GéoLittoral — indicateur d'érosion côtière"
 SRC_ALTI = "RGE ALTI (altimétrie)"
 SRC_ABF = "ABF / Monuments historiques"
-SRC_ENS = "ENS (Département)"
-SRC_OCSGE = "OCS GE (IGN)"
+SRC_ENS = "INPN / patrinat — espaces protégés"
+SRC_OCSGE = "IGN BD CARTO V5 — occupation du sol"
 SRC_OSM = "OpenStreetMap / Overpass"
 
 
@@ -143,7 +143,7 @@ class ForetPubliqueLayer(Layer):
 class SarLayer(Layer):
     """SAR — DÉCISION 2 (directive post-1.A) : la seule donnée disponible est un PROXY de
     vocation (potentiel foncier Région), pas le SAR réglementaire → couche INFORMATIVE,
-    badge « SAR (proxy indicatif) ». ZÉRO pouvoir d'exclusion : ne produit plus jamais de
+    badge « Potentiel foncier Région (indicatif) ». ZÉRO pouvoir d'exclusion : ne produit plus jamais de
     HARD_EXCLUDE ni de SOFT_FLAG (la donnée est conservée et affichée).
 
     Émet un WARNING de divergence (PASS « ⚠ … », sans effet score/statut) quand le proxy
@@ -155,14 +155,14 @@ class SarLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(self.name, "Zonage SAR non ingéré.", source=SRC_SAR)
+            return unknown(self.name, "Jeu potentiel foncier Région non ingéré.", source=SRC_SAR)
         inter = ctx.intersections(parcel.id, kind)
         dom = _dominant(inter)
         if dom is None or dom.coverage <= 0:
             # Couverture SAR partielle (proxy de vocation) : « hors îlot » N'équivaut PAS à
             # « aucune contrainte SAR ». On ne conclut pas à la compatibilité.
             return passed(self.name,
-                          "SAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement.",
+                          "Hors îlot cartographié — aucune contrainte déduite automatiquement.",
                           source=SRC_SAR)
         lib = (dom.attrs or {}).get("libelle") or dom.subtype
         pct = f" (~{dom.coverage * 100:.0f}% de la parcelle)" if dom.coverage < 0.99 else ""
@@ -172,25 +172,25 @@ class SarLayer(Layer):
                 au = zone.upper().startswith("AU")
                 return passed(
                     self.name,
-                    "⚠ proxy SAR divergent du PLU — vigilance en cas de révision : "
-                    f"SAR (proxy indicatif) « {lib} »{pct} sur zone PLU « {zone} »"
+                    "⚠ Potentiel foncier Région divergent du PLU — vigilance en cas de révision : "
+                    f"potentiel foncier Région (indicatif) « {lib} »{pct} sur zone PLU « {zone} »"
                     + (" — zone AU : ouverture à l'urbanisation moins probable." if au else "."),
                     source=SRC_SAR,
                 )
             return passed(
                 self.name,
-                f"SAR (proxy indicatif) : « {lib} »{pct} — information de vocation, sans effet sur "
+                f"Potentiel foncier Région (indicatif) : « {lib} »{pct} — information de vocation, sans effet sur "
                 "le score (proxy : ne vaut ni interdiction ni constructibilité).",
                 source=SRC_SAR,
             )
         if dom.subtype in set(params.get("info_subtypes", [])):
             return passed(
                 self.name,
-                f"SAR (proxy indicatif) : « {lib} »{pct} — vocation sans a priori constructif (information).",
+                f"Potentiel foncier Région (indicatif) : « {lib} »{pct} — vocation sans a priori constructif (information).",
                 source=SRC_SAR,
             )
         return passed(self.name,
-                      f"SAR : vocation compatible détectée — {lib or 'territoire urbain'} — à croiser avec PLU/PPR.",
+                      f"Potentiel foncier Région : vocation compatible détectée — {lib or 'territoire urbain'} — à croiser avec PLU/PPR.",
                       source=SRC_SAR)
 
     @staticmethod
@@ -360,7 +360,7 @@ class ZonagePluGpuLayer(Layer):
         if any(up.startswith(p) for p in params.get("flag_fort_prefixes", [])):
             return [soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)]
         if any(up.startswith(p) for p in params.get("flag_prefixes", [])):
-            return [soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)]
+            return [soft_flag(self.name, f"Zone PLU « {libelle} » (agricole).", Severity.MOYEN, source=SRC_GPU)]
         return [passed(self.name, f"Zone PLU « {libelle} ».", source=SRC_GPU)]
 
 
@@ -480,11 +480,11 @@ class SaferLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(self.name, "Zonage SAFER (DAAF) non ingéré.", source=SRC_SAFER)
+            return unknown(self.name, "RPG (déclarations agricoles) non ingéré.", source=SRC_SAFER)
         inter = ctx.intersections(parcel.id, kind)
         if any(i.coverage > 0 for i in inter):
             return soft_flag(self.name, params["detail"], Severity(params.get("severity", "moyen")), source=SRC_SAFER)
-        return passed(self.name, "Hors zonage SAFER.", source=SRC_SAFER)
+        return passed(self.name, "Hors parcelle agricole déclarée (RPG).", source=SRC_SAFER)
 
 
 @register
@@ -710,15 +710,15 @@ class EnsLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(self.name, "Espaces Naturels Sensibles non ingérés.", source=SRC_ENS)
+            return unknown(self.name, "Espaces protégés (INPN) non ingérés.", source=SRC_ENS)
         # M70 décision 2 — ENS ne couvre que 21/24 communes (proxy INPN ; couche ENS départementale
         # non publiée). Sur une commune SANS aucune donnée ENS, « Hors ENS » (PASS) serait un FAUX
         # NÉGATIF : on ne conclut pas l'absence à partir d'une couche vide → UNKNOWN.
         if not ctx.kind_present_commune(kind, parcel.commune):
-            return unknown(self.name, "Donnée ENS non disponible sur cette commune.", source=SRC_ENS)
+            return unknown(self.name, "Donnée espaces protégés (INPN) non disponible sur cette commune.", source=SRC_ENS)
         if any(i.coverage > 0 for i in ctx.intersections(parcel.id, kind)):
             return soft_flag(self.name, params["detail"], Severity(params.get("severity", "moyen")), source=SRC_ENS)
-        return passed(self.name, "Hors ENS.", source=SRC_ENS)
+        return passed(self.name, "Hors espace protégé (INPN).", source=SRC_ENS)
 
 
 @register
@@ -728,7 +728,7 @@ class OcsGeLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(self.name, "OCS GE non ingéré.", source=SRC_OCSGE)
+            return unknown(self.name, "Occupation du sol (BD CARTO V5) non ingérée.", source=SRC_OCSGE)
         dom = _dominant(ctx.intersections(parcel.id, kind))
         if dom is None or dom.coverage <= 0:
             return passed(self.name, "Occupation du sol non couverte ici.", source=SRC_OCSGE)
@@ -737,14 +737,14 @@ class OcsGeLayer(Layer):
         if dom.subtype in set(params.get("naturel_subtypes", [])):
             return soft_flag(
                 self.name,
-                f"Sol classé {dom.subtype} — logique ZAN, artificialisation à justifier "
-                "(source d'occupation du sol, précision limitée à la parcelle).",
+                f"Sol classé {dom.subtype} — artificialisation à justifier "
+                "(occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).",
                 Severity(params.get("severity", "faible")), source=SRC_OCSGE,
             )
         return passed(
             self.name,
-            f"Sol classé {dom.subtype or 'artificialisé'} (source d'occupation du sol, "
-            "précision limitée à la parcelle).",
+            f"Sol classé {dom.subtype or 'artificialisé'} (occupation du sol BD CARTO V5, "
+            "grain grossier, précision limitée à la parcelle).",
             source=SRC_OCSGE)
 
 

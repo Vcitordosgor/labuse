@@ -43,7 +43,7 @@ _VIGILANCE_LABEL = {
     "risques": "Périmètre PPR — prescriptions à vérifier",
     "foret_publique": "Forêt publique — emprise à vérifier",
     "trait_de_cote": "Recul du trait de côte à vérifier",
-    "safer": "Zonage SAFER — préemption possible",
+    "safer": "Parcelle déclarée agricole (RPG)",
     "parc_national": "Aire d'adhésion du Parc national",
     "eau": "Hydrographie en bordure",
     "ens": "Espace naturel sensible à proximité",
@@ -64,7 +64,7 @@ def _positifs(cascade: list[dict], bilan: dict) -> list[str]:
                 out.append(lbl)
     if any(c.get("layer_name") == "sar" and c.get("result") == "PASS"
            and "compatible" in (c.get("detail") or "") for c in cascade):
-        out.append("Vocation SAR compatible (à croiser)")
+        out.append("Potentiel foncier Région compatible (indicatif)")
     if bilan.get("fiable") and bilan.get("fiabilite") == "fiable":
         out.append("Prix de marché fiable (DVF)")
     return out[:3]
@@ -105,9 +105,9 @@ def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dic
             lbl = _VIGILANCE_LABEL.get(c.get("layer_name"))
             if lbl and lbl not in out:
                 out.append(lbl)
-    if any(c.get("layer_name") == "sar" and (c.get("detail") or "").startswith("⚠ proxy SAR divergent")
+    if any(c.get("layer_name") == "sar" and "divergent du PLU" in (c.get("detail") or "")
            and "zone AU" in (c.get("detail") or "") for c in cascade):
-        out.append("Proxy SAR divergent du PLU (zone AU) — ouverture à l'urbanisation moins probable")
+        out.append("Potentiel foncier Région divergent du PLU (zone AU) — ouverture à l'urbanisation moins probable")
     if bilan.get("fiabilite") == "fragile":
         out.append("Prix de marché fragile (échantillon limité)")
     # Propriétaire : toujours à identifier tant qu'aucun contact n'a été saisi (parcelles servies).
@@ -167,12 +167,12 @@ def _prochaine_action(status: str, vigilance: list[str], prospection: dict) -> s
     if manual:
         return manual
     if status in _TIERS_HAUTS:
-        return "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher."
+        return "Vérifier le PLU/CU, croiser PPR/potentiel foncier, puis identifier le propriétaire avant de démarcher."
     if status == "reserve_fonciere":
         return "Suivre la parcelle — potentiel réel à horizon plus lointain ; vérifier PLU et contraintes."
     if status == "a_creuser":
         lever = vigilance[0] if vigilance else "la contrainte identifiée"
-        return f"Lever d'abord : {lever} (vérification PLU/PPR/SAR ou terrain)."
+        return f"Lever d'abord : {lever} (vérification PLU/PPR/potentiel foncier ou terrain)."
     if status and status.startswith("declasse_"):
         return "Écarter, ou vérifier sur le terrain si le motif de déclassement semble erroné."
     if status == "ecartee":

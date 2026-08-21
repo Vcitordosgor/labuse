@@ -259,7 +259,7 @@ _ATTENTION_TITLE = {
     "residuel_socle": "SDP résiduelle limitée", "parc_national": "Zonage protégé (Parc national)",
     "risques": "Aléa naturel", "abf": "Périmètre patrimonial (ABF)", "sol_pollue": "Sol à vérifier",
     "icpe": "Installation classée à proximité", "cinquante_pas": "Bande littorale (50 pas)",
-    "safer": "Vocation agricole (SAFER)", "foret_publique": "Forêt publique / régime forestier",
+    "safer": "Parcelle déclarée agricole (RPG)", "foret_publique": "Forêt publique / régime forestier",
 }
 
 

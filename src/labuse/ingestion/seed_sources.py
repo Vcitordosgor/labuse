@@ -12,7 +12,7 @@ de la cascade (cascade/layers/*.py) et par le jeu de démo — NE PAS renommer.
 """
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from ..enums import DataSourceStatus as S
@@ -135,20 +135,20 @@ SOURCES: list[dict] = [
                          "162 doublons d'ingestion par bbox commune (features à cheval sur 2 communes comptés 2×) — "
                          "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
                          "→ HARD_EXCLUDE, sinon flag fort."),
-    dict(name="SAR Réunion (PEIGEO)", category="urbanisme", provider="Région Réunion / AGORAH",
+    dict(name="Potentiel foncier Région (Région ODS)", category="urbanisme", provider="Région Réunion / AGORAH",
          access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
-         legal_notes="Licence à confirmer (jeu PEIGEO/AGORAH — audit M6 §1.11 R8). SAR juridiquement SUPÉRIEUR au PLU.",
+         legal_notes="Licence à confirmer (jeu Région ODS « potentiel foncier » — audit M6 §1.11 R8). Proxy de vocation INDICATIF ; ce n'est pas le zonage régional officiel (introuvable en open data), aucune portée réglementaire ni hiérarchie sur le PLU.",
          technical_notes="PROXY : le zonage SAR officiel PEIGEO est INTROUVABLE en public (data.gouv/ODS vides, "
                          "PEIGEO 503, DEAL injoignable). La vocation SAR est servie via le jeu Potentiel foncier "
                          "de la Région — 2 453 emprises intégrées (spatial_layers kind='sar'), verdicts réels sur "
                          "431 663 parcelles (couche cascade 'sar' = proxy indicatif, jamais une interdiction). "
                          "M74 A : requalifiée connecte (mesurée, intégrée) — l'ancienne note « UNKNOWN » était périmée."),
-    dict(name="Zonage SAFER (DAAF)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
+    dict(name="RPG — déclarations agricoles (IGN/ASP)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
          source_millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",   # M125-1bis : attrs.src=RPG.LATEST (38 460)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion", endpoint_url="https://data.geopf.fr/wfs/ows",
-         legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Droit de préemption SAFER.",
+         legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Parcelle DÉCLARÉE agricole au RPG (déclarations PAC) — usage indicatif, aucune portée réglementaire.",
          technical_notes="PROXY : le zonage SAFER/DAAF officiel est INTROUVABLE en open data. ✓ proxy intégré : "
                          "RPG.LATEST (38 460 parcelles agricoles déclarées, Géoplateforme) en flag agricole du scoring. "
                          "M74 A : requalifiée connecte (mesurée, intégrée) — le proxy est le maximum publiable, jamais présenté comme la source officielle."),
@@ -288,7 +288,7 @@ SOURCES: list[dict] = [
          documentation_url="https://recherche-entreprises.api.gouv.fr/docs", endpoint_url="https://recherche-entreprises.api.gouv.fr/search",
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Sirene, via recherche-entreprises (DINUM) ».",
          technical_notes="✓ live : confirme une personne morale propriétaire en attendant les Fichiers fonciers."),
-    dict(name="OCS GE (IGN)", category="occupation_sol", provider="IGN / Géoplateforme",
+    dict(name="IGN BD CARTO V5 — occupation du sol", category="occupation_sol", provider="IGN / Géoplateforme",
          source_millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)",   # M125-1bis : attrs.src=BDCARTO_V5 (1 643 objets)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/ocsge", endpoint_url="https://data.geopf.fr/wfs/ows",
@@ -318,11 +318,11 @@ SOURCES: list[dict] = [
                          "non mesuré. ⚠ ENDPOINT MORT : data.culture.gouv.fr (ODS) décommissionné (301→SPA, plus d'API) "
                          "— re-ingestion à re-sourcer via le dump data.gouv ; les 200 en base datent du dernier run "
                          "OK (05/07/2026). FLAG QUALITÉ étage 1, PAS exclusion étage 0 ; « covisibilité à instruire »."),
-    dict(name="ENS (Département)", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
+    dict(name="INPN / patrinat — espaces protégés", category="environnement", provider="INPN/MNHN (espaces protégés) · ENS dép. non public",
          source_millesime="INPN/patrinat espaces protégés — passe 05/07/2026",   # M125-1bis : note seed (proxy)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://inpn.mnhn.fr/", endpoint_url="https://data.geopf.fr/wfs/ows",
-         legal_notes="Licence à confirmer (couches espaces protégés INPN/patrinat — non tranché à l'audit M6 §1.11). Droit de préemption départemental.",
+         legal_notes="Licence à confirmer (couches espaces protégés INPN/patrinat — non tranché à l'audit M6 §1.11). Espaces protégés réglementaires (INPN) ; ce n'est PAS le zonage ENS départemental (introuvable en open data), aucun droit de préemption départemental déduit.",
          technical_notes="PROXY (M74 A : requalifiée connecte, mesurée). ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN) — 73 emprises, 21/24 communes. Les 3 restantes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07/2026 » — passe INPN a tourné (parc national + forêt présents) mais 0 espace protégé de ces types (port urbain / plaines côtières agricoles). Couche ENS départementale officielle À DEMANDER au mail AGORAH/DEAL en attente. Ne rien inventer."),
     dict(name="VRD / assainissement (SPANC)", category="reseaux", provider="EPCI",
          access_type="manuel", status=S.MANUEL, reliability_level=R.A_CONFIRMER,
@@ -354,7 +354,7 @@ SOURCES: list[dict] = [
                          "82 701 liens parcelle↔personne morale du produit viennent en réalité de « DGFiP — parcelles "
                          "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
                          "idprocpte / idprodroit → nb_droits_propriete = signal d'indivision, en attente de convention."),
-    dict(name="DEAL Réunion — trait de côte", category="risques", provider="Cerema / GéoLittoral",
+    dict(name="Cerema / GéoLittoral — indicateur d'érosion côtière", category="risques", provider="Cerema / GéoLittoral",
          source_millesime="millésime 2018",   # M86 — millésime centralisé
          access_type="import/SHP", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html",
@@ -516,8 +516,37 @@ SOURCES: list[dict] = [
 ]
 
 
+# M125-1ter — RENOMMAGES de sources (faux constat de NOM). `seed()` clé par nom → un simple
+# changement de nom dans SOURCES créerait un DOUBLON (nouvelle ligne) et laisserait les résultats
+# cascade existants pointés sur l'ANCIEN nom (donc le faux nom s'afficherait encore). On renomme
+# donc EN PLACE avant l'upsert. Idempotent : si le nouveau nom existe déjà (ré-exécution), on
+# repointe les liens de l'orphelin puis on le supprime.
+_RENAMES = {
+    "SAR Réunion (PEIGEO)": "Potentiel foncier Région (Région ODS)",
+    "Zonage SAFER (DAAF)": "RPG — déclarations agricoles (IGN/ASP)",
+    "OCS GE (IGN)": "IGN BD CARTO V5 — occupation du sol",
+    "ENS (Département)": "INPN / patrinat — espaces protégés",
+    "DEAL Réunion — trait de côte": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+}
+
+
+def _migrer_renommages(session: Session) -> None:
+    """M125-1ter — renomme les sources EN PLACE (avant l'upsert clé-par-nom). Renommage seul
+    (`UPDATE name`) : l'id est conservé, toutes les FK (spatial_layers, cascade_results…) restent
+    valides, et les résultats cascade existants affichent le NOUVEAU nom sans re-run. Idempotent :
+    si le nouveau nom existe déjà, on n'écrase rien (le renommage a déjà eu lieu)."""
+    for old, new in _RENAMES.items():
+        has_old = session.execute(text("SELECT 1 FROM data_sources WHERE name = :n"), {"n": old}).first()
+        has_new = session.execute(text("SELECT 1 FROM data_sources WHERE name = :n"), {"n": new}).first()
+        if has_old and not has_new:
+            session.execute(text("UPDATE data_sources SET name = :new WHERE name = :old"),
+                            {"new": new, "old": old})
+    session.flush()
+
+
 def seed(session: Session) -> int:
     """Upsert idempotent du catalogue. Renvoie le nombre de sources présentes."""
+    _migrer_renommages(session)   # M125-1ter — rename EN PLACE avant l'upsert (sinon doublon)
     existing = {name for (name,) in session.execute(select(DataSource.name)).all()}
     for row in SOURCES:
         if row["name"] in existing:
