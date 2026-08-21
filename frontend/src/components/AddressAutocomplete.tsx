@@ -27,6 +27,13 @@ interface Props {
   'data-testid'?: string
 }
 
+// Un IDU cadastral (14 car. : INSEE 5 + préfixe 3 + section 2 + numéro 4) N'EST PAS une adresse : plusieurs
+// champs (omnibox carte, Contrôle avant achat, Radar permis…) acceptent l'IDU EN PLUS de l'adresse. On NE
+// lance PAS la recherche d'adresse dessus — sinon la BAN répond 0 et affiche « Aucune adresse trouvée »
+// alors que la recherche par IDU fonctionne. On reconnaît aussi l'IDU EN COURS de frappe (suite contiguë
+// commençant par ≥ 5 chiffres, sans espace, ≥ 6 car.) pour ne pas faire clignoter le bandeau à la saisie.
+const looksLikeIdu = (s: string) => /^\d{5}[0-9A-Za-z]{1,9}$/.test(s)
+
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
   onClear, onEnterRaw, ...rest
@@ -70,7 +77,8 @@ export function AddressAutocomplete({
     // Une sélection vient de recopier le libellé dans `text` : ne pas re-chercher ni rouvrir le menu.
     if (skipSearchRef.current) { skipSearchRef.current = false; return }
     const needle = text.trim()
-    if (needle.length < 3) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
+    // < 3 car. = trop court ; un IDU (ou IDU en cours) = pas une adresse → aucune recherche, aucun bandeau.
+    if (needle.length < 3 || looksLikeIdu(needle)) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
     setLoading(true); setNoResults(false)
     const t = setTimeout(() => {
