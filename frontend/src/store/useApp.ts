@@ -413,7 +413,11 @@ export const useApp = create<AppState>((set) => ({
     s.mapPeint.parcelles === p.parcelles && s.mapPeint.equipements === p.equipements
       && s.mapPeint.zonage === p.zonage ? {} : { mapPeint: p }),
   verdict: false,
-  setVerdict: (verdict) => set({ verdict }),
+  // une-seule-recherche — allumer le listing (filtres, Copilote « voir sur la carte », rejeu) EFFACE
+  // la restitution flottante du Copilote (iaRestitution) : une seule recherche vivante, jamais deux
+  // listes concurrentes. Le Copilote R2 (useApplySearch) RE-POSE sa carte APRÈS son setVerdict(true),
+  // donc sa restitution survit ; tout autre producteur nettoie le résidu.
+  setVerdict: (verdict) => set({ verdict, iaRestitution: null }),
   retourFiltres: () => set((s) => ({
     verdict: false, panneauSection: 'filtres', analyseRecap: null,
     filters: { ...s.filters, analyseLabuse: false },
@@ -540,7 +544,8 @@ export const useApp = create<AppState>((set) => ({
   zone: null,
   setZone: (zone) => set({ zone }),
   module: null,
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null }),
+  // une-seule-recherche — ouvrir un outil (porte) prend la main : efface la restitution Copilote résiduelle.
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   cmpLeft: 'bm-ortho-1950',
