@@ -254,12 +254,12 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, surveillanceOpen, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, surveillanceOpen, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel }
-  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen }
+  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen])
 
   // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
   // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).

@@ -326,6 +326,10 @@ interface AppState {
   setModuleFiche: (f: Record<string, { module: string; lines: [string, string][] }>) => void
   flyTo: { center: [number, number]; zoom: number } | null
   setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
+  // radar-permis — clic sur un POINT permis de la carte → ouvre la fiche permis (drawer M03).
+  // Consommé-puis-reset par M03 (même idiome que parcelPrefill) : MapView écrit, M03 lit et remet à null.
+  permitToOpen: string | null
+  setPermitToOpen: (id: string | null) => void
   msel: string[] // sélection multi-parcelles (module assemblage M16)
   setMsel: (m: string[]) => void
   m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
@@ -547,6 +551,8 @@ export const useApp = create<AppState>((set) => ({
   setModuleFiche: (moduleFiche) => set({ moduleFiche }),
   flyTo: null,
   setFlyTo: (flyTo) => set({ flyTo }),
+  permitToOpen: null,
+  setPermitToOpen: (permitToOpen) => set({ permitToOpen }),
   msel: [],
   setMsel: (msel) => set({ msel }),
   m22Prefill: null,
