@@ -808,13 +808,29 @@ export function MapView() {
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'permis'],
-        paint: { 'circle-radius': 4, 'circle-color': '#4ADE80', 'circle-opacity': 0.85,
-                 'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
+        // Radar permis : points NETTEMENT plus grands et ADAPTÉS AU ZOOM — petits à faible zoom
+        // (limiter le chevauchement quand ils s'agrègent visuellement), larges au zoom de travail
+        // (z16-19) pour offrir une cible cliquable franche, indépendante de la parcelle dessous.
+        // Le contour foncé (+ épais) est CONSERVÉ : il détache les points l'un de l'autre quand ils
+        // se chevauchent à faible zoom (proposition « contour » du point 3).
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'],
+                   10, 5, 13, 7, 16, 10, 19, 14],
+                 'circle-color': '#4ADE80', 'circle-opacity': 0.9,
+                 'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.6 } })
       // radar-permis — les points permis sont CLIQUABLES : un clic ouvre la fiche permis (drawer M03,
       // détails + « localiser la parcelle »). Le permit_id voyage dans les properties de la feature.
       m.on('click', 'module-pts', (e) => {
-        const pid = e.features?.[0]?.properties?.permit_id
-        if (pid) { setPermitToOpen(String(pid)); e.originalEvent?.stopPropagation?.() }
+        const ev = e as maplibregl.MapLayerMouseEvent
+        const pid = ev.features?.[0]?.properties?.permit_id
+        if (pid == null) return
+        // La zone cliquable du POINT PRIME sur la parcelle : `preventDefault()` marque l'événement
+        // MapLibre (`defaultPrevented`) → les handlers `parcels-fill` / `ile-fill` / clic universel
+        // s'abstiennent (ils testent tous `defaultPrevented`), exactement comme les équipements. Le
+        // module-pts étant enregistré AVANT ces handlers, il est appelé en premier. `stopPropagation`
+        // seul ne suffisait PAS : il n'agit que sur l'événement DOM, pas sur la délégation MapLibre —
+        // la fiche parcelle s'ouvrait donc AUSSI sous le point.
+        ev.preventDefault()
+        setPermitToOpen(String(pid))
       })
       m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'module-pts', () => { m.getCanvas().style.cursor = '' })
