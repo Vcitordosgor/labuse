@@ -54,5 +54,41 @@ corrigé** (M128-4 §1.2).
 ## Résolution attendue
 
 Réconcilier `score_e` sur la méthode `vendable ÷ 0,8` **changerait la marge SERVIE** → bascule +
-mandat scoring dédié. Hors périmètre du chantier PDF (M128). Voir aussi la dette ouverte
-« vendable > gabarit × rendement » (M128-4 §2, en attente d'arbitrage).
+mandat scoring dédié. Hors périmètre du chantier PDF (M128).
+
+---
+
+## Mise à jour M128-5 (2026-08-21)
+
+**Arbitrage rendu (Vic)** : `score_e` reste sur sa méthode, **aucune bascule**. La divergence est
+donc **permanente jusqu'au mandat de fond**. En conséquence, dans ce mandat :
+
+1. **Marge `score_e` retirée du scoreur d'adresse** (`api/scoreur.py`) — la réponse ne sert plus
+   `score_e` (ni `libelle_court` ni les montants de marge). Seuls `charge_supportable` /
+   `prix_probable` restent lus en interne pour QUALIFIER un prix saisi (badge marché sur
+   `prix_probable`, repère **non divergent**). *Aucun chiffre de marge auto-affiché à un tiers.*
+2. **Libellé fiche premium / écran renommé** (`app.py`, `score_e_block`) — transformation
+   **read-time** : « Marge estimée » → « Repère sectoriel (barème) », « charge foncière
+   supportable » → « charge au barème sectoriel », « marge foncière » → « repère sectoriel ». Les
+   termes « marge foncière estimée » / « charge foncière supportable » restent **réservés à la
+   méthode documents**.
+3. **Filet read-time sur `score_e.detail`** — « ± 12 %, validée sur cette commune » (verdict *live*,
+   non fondé — cf. M128-2-C10 qui n'a corrigé que la fonction, pas la colonne figée) est **masqué au
+   rendu** → « ± 12 % ». **Condition de levée** : au prochain **rebuild de la table `score_e`**
+   (`build_score_e`), la colonne `detail` sera régénérée avec le libellé corrigé ; le filet read-time
+   pourra alors être retiré de `app.py`.
+
+**Exposition résiduelle notée (non traitée)** : le verdict de prix opt-in du scoreur
+(`_prix_verdict`, uniquement quand un tiers SAISIT un prix) calcule `marge_a_ce_prix = charge − prix`
+avec la `charge` de `score_e` (méthode divergente) et emploie « charge foncière supportable ».
+C'est une fonctionnalité **distincte et testée** (M137-S) ; sa neutralisation dépasse M128-5.
+**Remonté ici pour arbitrage** au mandat de fond.
+
+## Dette §2 (vendable > gabarit × rendement) — CLÔTURÉE par M128-5-§1
+
+Corrigée à la SOURCE dans `engine.py` (commit de ce mandat) : le vendable suit un **chemin central
+unique** (`habitable ÷ taille moyenne`, puis plafonds), au lieu de la moyenne d'une fourchette de
+comptes (qui surestimait de ~1 % par inégalité arithmético-harmonique). Sans plafond,
+`vendable = habitable` par construction. Mesure : overshoot systématique **62,6 % → rien au-delà de
+l'arrondi** (résidu ≤ 0,6 m² absolu = arrondi de `surface_plancher_m2` sur petites parcelles). Aucun
+`min()` contre le gabarit posé. Dette close.

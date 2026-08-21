@@ -324,6 +324,13 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       f"~{shab:.0f} m²", "hypothèse rendement"))
     hypotheses.append(f"Coefficient de rendement SDP→habitable supposé {hyp.coef_rendement:.0%}.")
 
+    # M128-5-§1 : le VENDABLE suit un chemin CENTRAL unique (habitable ÷ taille MOYENNE de logement),
+    # jamais la moyenne de la fourchette de COMPTES (shab/haut … shab/bas), qui surestimait le vendable
+    # de ~1 % par inégalité arithmético-harmonique — l'aller-retour compte↔surface ne se compensait pas.
+    # La fourchette 65–80 m²/logt reste AFFICHÉE (étapes ci-dessous) mais ne pilote plus le vendable :
+    # sans plafond, vendable = habitable PAR CONSTRUCTION (aucun min() contre le gabarit nécessaire).
+    logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
+    floor_central = shab / logt_moyen
     floor_lo, floor_hi = shab / hyp.logement_m2_haut, shab / hyp.logement_m2_bas
     # M58-P1 (Q1) : libellé — l'étape dit clairement qu'elle est AVANT le plafond de densité.
     steps.append(Step("Logements — avant plafond de densité",
@@ -339,6 +346,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     cap_logts_ha = hyp.densite_logts_ha_par_niveau * niveaux
     densite_cap = surface_ha * cap_logts_ha
     capped_lo, capped_hi = min(floor_lo, densite_cap), min(floor_hi, densite_cap)
+    capped_central = min(floor_central, densite_cap)     # M128-5-§1 : le central subit le MÊME plafond
     steps.append(Step(f"Logements — après plafond (≤ {densite_cap:.0f} logts)",
                       f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
                       f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
@@ -351,10 +359,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                      f"donnait ~{math.floor(floor_lo)}-{math.ceil(floor_hi)} → borné à "
                      f"~{round(densite_cap)} logts (enveloppe théorique trop optimiste).")
     floor_lo, floor_hi = capped_lo, capped_hi
+    floor_central = capped_central
 
     # ---- Stationnement : 2 scénarios ----
     ppl = rules.places_par_logement()
     sous_lo, sous_hi = floor_lo, floor_hi          # sous-sol/silo : non mangé au sol
+    sous_central = floor_central
     sol_lo, sol_hi = floor_lo, floor_hi
     if _is_num(ppl) and ppl > 0:
         regime = "borne"
@@ -419,6 +429,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
     sous_lo, sous_hi = sous_lo * facteur, sous_hi * facteur
+    sous_central = sous_central * facteur          # M128-5-§1 : le central subit la MÊME modulation
 
     # M128-2-I1 : ligne FINALE de logements = EXACTEMENT la fourchette portée au bandeau et au bilan
     # (plafond de densité ∩ stationnement au sol, puis modulation, arrondie plancher/plafond comme
@@ -430,8 +441,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       f"plafond de densité ∩ stationnement au sol{_mod_note}",
                       f"~{_fin_lo} à {_fin_hi}", "dérivé"))
 
-    rp = f"R+{max(0, niveaux - 1)}"
-    logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
+    rp = f"R+{max(0, niveaux - 1)}"     # logt_moyen défini plus haut (chemin central du vendable, §1)
     fourch = {"niveaux": rp, "niveaux_max": niveaux,
               # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
               "hauteur_m": round(niveaux * hyp.etage_m, 1),
@@ -442,8 +452,9 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
               "emprise_batie_max_m2": round(footprint),
               "surface_plancher_m2": round(sdp),
               # surface habitable VENDABLE (post-rendement, plafond densité, modulation) :
-              # base du chiffre d'affaires du bilan promoteur.
-              "shab_vendable_m2": round((sous_lo + sous_hi) / 2.0 * logt_moyen),
+              # base du chiffre d'affaires du bilan promoteur. M128-5-§1 : chemin CENTRAL unique
+              # (logements retenus central × taille moyenne) — plus d'aller-retour compte↔surface.
+              "shab_vendable_m2": round(sous_central * logt_moyen),
               "logements_au_sol": _rng(sol_lo, sol_hi),
               "logements_sous_sol": _rng(sous_lo, sous_hi),
               "stationnement_regime": regime}

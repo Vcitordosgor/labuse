@@ -149,24 +149,25 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     verdict = {"tier": tier, "libelle": _TIER_LABELS.get(tier, "Non évaluée"),
                "rang": row["rang"], "percentile": float(row["percentile"]) if row["percentile"] is not None else None}
 
-    # Score É (marge €) — guardé
-    score_e = None
+    # M128-5-§2 : la MARGE score_e (méthode barème sectoriel) n'est plus servie à un tiers dans la
+    # réponse du scoreur — elle est systématiquement plus optimiste que le document (bilan à rebours),
+    # jusqu'au signe opposé, et les deux méthodes divergent (registre de dette M128). On ne lit plus
+    # que la charge/prix probable pour QUALIFIER un prix saisi (badge marché, repère prix_probable
+    # non divergent) ; aucun chiffre de marge auto-affiché.
     charge = prix_probable = None
     try:
         if db.execute(text("SELECT to_regclass('score_e')")).scalar() is not None:
             se = db.execute(text(
-                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, libelle_court "
+                "SELECT estimable, charge_supportable, prix_probable "
                 "FROM score_e WHERE idu = :i"), {"i": row["idu"]}).mappings().first()
-            if se:
-                score_e = dict(se)
-                if se["estimable"]:
-                    charge, prix_probable = se["charge_supportable"], se["prix_probable"]
+            if se and se["estimable"]:
+                charge, prix_probable = se["charge_supportable"], se["prix_probable"]
     except Exception:  # noqa: BLE001
         pass
 
     out = {"ok": True, "adresse": label, "idu": row["idu"], "commune": row["commune"],
            "section": row["section"], "numero": row["numero"], "surface_m2": row["surface_m2"],
-           "verdict": verdict, "score_e": score_e,
+           "verdict": verdict,
            "fiche_url": f"/parcels/{row['idu']}"}
     if body.prix_demande_eur is not None:
         out["prix"] = _prix_verdict(float(body.prix_demande_eur), charge, prix_probable, row["surface_m2"])

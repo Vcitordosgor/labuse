@@ -89,7 +89,8 @@ def test_flux_adresse_verdict_et_prix(db_session, monkeypatch):
     out = scoreur.scoreur_adresse(scoreur.ScoreurIn(q="1 rue test", prix_demande_eur=80000), s)
     assert out["ok"] and out["idu"] == idu
     assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Neutre"  # M137 chip court
-    assert out["score_e"]["estimable"] is True
+    # M128-5-§2 : la marge score_e (barème sectoriel, méthode divergente) n'est plus servie au tiers.
+    assert "score_e" not in out
     # 80 000 € sous le prix probable du foncier (100 000) → badge « en dessous du marché » ;
     # la marge d'opération (charge 300 000 − 80 000 = +220 000) reste un repère distinct.
     assert out["prix"]["verdict"] == "sous_marche" and out["prix"]["marge_a_ce_prix_eur"] == 220000
