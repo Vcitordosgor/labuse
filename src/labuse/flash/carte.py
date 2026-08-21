@@ -72,12 +72,19 @@ IGN_ORTHO_ATTRIBUTION = "© IGN — BD ORTHO"
 
 def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float = 10.0,
                         tile_url: str = TILE_URL, tile_mime: str = "image/png",
-                        cache_prefix: str = "osm", attribution: str = ATTRIBUTION) -> dict | None:
+                        cache_prefix: str = "osm", attribution: str = ATTRIBUTION,
+                        zoom_delta: int = 0, extra_geojson: str | None = None,
+                        focus_points: list | None = None) -> dict | None:
     """Prépare la carte de situation : tuiles positionnées + tracé SVG de la parcelle.
 
     Retourne un dict prêt pour le template (tiles, polygones en px, dimensions,
     attribution), ou None si le fond de carte est indisponible (réseau) — le rapport
     se génère alors sans carte, jamais en erreur.
+
+    `zoom_delta` (M129) : décale le zoom AUTO (< 0 = vue plus large « d'ensemble », > 0 = plus serré),
+    borné à [ZOOM_MIN, ZOOM_MAX] — pour servir deux vues (ensemble / rapprochée) sans réécrire la
+    logique. `extra_geojson` (M129) : géométrie SUPPLÉMENTAIRE (bâti existant) projetée dans le MÊME
+    repère pixel et renvoyée sous `extra_polygons` (pour un plan de masse coté).
     """
     try:
         gj = json.loads(parcel_geojson)
@@ -96,6 +103,7 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float =
             if (x1 - x0) <= VIEW_W * 0.55 and (y1 - y0) <= VIEW_H * 0.55:
                 zoom = z
                 break
+        zoom = max(ZOOM_MIN, min(ZOOM_MAX, zoom + zoom_delta))    # M129 : décalage ensemble/rapprochée
 
         cx, cy = _lonlat_to_px((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2, zoom)
         left, top = cx - VIEW_W / 2, cy - VIEW_H / 2
@@ -116,15 +124,22 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float =
                         "top": round(ty * TILE_PX - top),
                         "data_uri": f"data:{tile_mime};base64," + base64.b64encode(png).decode(),
                     })
-        polygons = []
-        for ring in rings:
-            pts = []
-            for lon, lat in ring:
-                px, py = _lonlat_to_px(lon, lat, zoom)
-                pts.append(f"{px - left:.1f},{py - top:.1f}")
-            polygons.append(" ".join(pts))
+        def _project(rgs: list) -> list[str]:
+            out = []
+            for ring in rgs:
+                pts = [f"{_lonlat_to_px(lon, lat, zoom)[0] - left:.1f},"
+                       f"{_lonlat_to_px(lon, lat, zoom)[1] - top:.1f}" for lon, lat in ring]
+                out.append(" ".join(pts))
+            return out
+        polygons = _project(rings)
+        extra_polygons = _project(_rings(json.loads(extra_geojson))) if extra_geojson else []
+        # M129-3 : points d'intérêt (prises de vue) projetés dans le MÊME repère pixel, pour
+        # (a) élargir le cadrage/recadrage afin de les CONTENIR, (b) les dessiner à la bonne place.
+        focus_px = [(_lonlat_to_px(lon, lat, zoom)[0] - left, _lonlat_to_px(lon, lat, zoom)[1] - top)
+                    for lon, lat in (focus_points or [])]
         return {"width": VIEW_W, "height": VIEW_H, "tiles": tiles,
-                "polygons": polygons, "attribution": attribution, "zoom": zoom}
+                "polygons": polygons, "extra_polygons": extra_polygons, "focus_px": focus_px,
+                "attribution": attribution, "zoom": zoom}
     except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
         log.warning("carte de situation indisponible (%s: %s) — rapport sans carte",
                     type(exc).__name__, exc)
