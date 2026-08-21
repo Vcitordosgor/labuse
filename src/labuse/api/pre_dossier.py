@@ -63,6 +63,17 @@ PIECES_PCMI = [
 ]
 
 
+def _commune_de(commune: str) -> str:
+    """M129-2 H.1 — « commune de X » avec l'article contracté : Le Tampon → du Tampon, Les Avirons →
+    des Avirons ; La/L' (féminin, élidé) → « de La… » / « de L'… » sans contraction."""
+    c = (commune or "").strip()
+    if c.startswith("Le "):
+        return "du " + c[3:]
+    if c.startswith("Les "):
+        return "des " + c[4:]
+    return "de " + c
+
+
 def get_db():
     from .app import get_db as _g
     yield from _g()
@@ -173,10 +184,13 @@ def _regles_et_pieces(db: Session, idu: str) -> bytes:
         r = ident["regles"]
         if r.get("emprise_max_m2"):
             regles += f"<tr><td>Emprise au sol maximale (calibrée)</td><td>{r['emprise_max_m2']} m²</td></tr>"
-        if r.get("hauteur_max_m"):
-            regles += f"<tr><td>Hauteur maximale de la zone</td><td>{r['hauteur_max_m']} m</td></tr>"
-        if r.get("confiance"):
-            regles += f"<tr><td>Confiance du calibrage</td><td>{r['confiance']}</td></tr>"
+        # M129-2 A/A.3 : hauteur du PLU CALIBRÉ (source unique collect_report_data → resolve_zone),
+        # égout et faîtage nommés distinctement ; plus de « hauteur max » générique (9 m). D : plus de
+        # « Confiance du calibrage » (indice interne) sur un exportable.
+        if r.get("hauteur_egout_m"):
+            regles += f"<tr><td>Hauteur d'égout (PLU calibré)</td><td>{r['hauteur_egout_m']:g} m</td></tr>"
+        if r.get("hauteur_faitage_m"):
+            regles += f"<tr><td>Hauteur au faîtage (PLU calibré)</td><td>{r['hauteur_faitage_m']:g} m</td></tr>"
     presc = "".join(f"<li>{p['libelle']}</li>" for p in ident["prescriptions"])
     servitudes = []
     if pat and pat.get("abf"):
@@ -263,6 +277,30 @@ def _nord_echelle(pdf, y0: float, disp_w: float, disp_h: float, plan: dict) -> N
     pdf.cell(6, 3.4, "^", align="C")
 
 
+def _nord_echelle_mm(pdf, ox: float, oy: float, draw_w: float, draw_h: float, mm_par_m: float) -> None:
+    """Barre d'échelle + Nord pour un DESSIN VECTORIEL (échelle mm/m connue) — plan de masse PCMI2."""
+    cible_m = 28 / mm_par_m
+    p = 10 ** math.floor(math.log10(cible_m)) if cible_m > 0 else 1
+    nice = next((f * p for f in (5, 2, 1) if f * p <= cible_m), p)
+    bar_mm = nice * mm_par_m
+    bx, by = ox, oy + draw_h + 10
+    pdf.set_draw_color(*_ENCRE)
+    pdf.set_line_width(0.5)
+    pdf.line(bx, by, bx + bar_mm, by)
+    pdf.line(bx, by - 1.2, bx, by + 1.2)
+    pdf.line(bx + bar_mm, by - 1.2, bx + bar_mm, by + 1.2)
+    pdf.set_font("mono", size=6.5)
+    pdf.set_text_color(*_ENCRE)
+    pdf.set_xy(bx, by - 3.6)
+    pdf.cell(bar_mm, 2.4, f"{round(nice)} m", align="C")
+    pdf.set_line_width(0.2)
+    pdf.set_font("mono", size=8)
+    pdf.set_xy(ox + draw_w - 4, oy - 1)
+    pdf.cell(6, 3.4, "N", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_xy(ox + draw_w - 4, oy + 2.2)
+    pdf.cell(6, 3.4, "^", align="C")
+
+
 def _carte_page(pdf, titre: str, sous_titre: str, plan: dict, note: str,
                 cotes=None) -> None:
     """Une page : titre + sous-titre + carte (ortho + contour) + Nord + échelle + note de source.
@@ -317,16 +355,22 @@ def _bati_geojson(db: Session, idu: str) -> str | None:
 
 
 def _terrain_dims(db: Session, idu: str) -> dict:
-    """Dimensions hors-tout du terrain (bbox en mètres vrais, 2975) + emprise bâtie existante."""
+    """Enveloppe rectangulaire du terrain (bbox, mètres vrais 2975), surface réelle, et emprise
+    bâtie DANS la parcelle. M129-2 E : l'emprise est CLIPPÉE à la parcelle (ST_Intersection) — seule
+    la surface bâtie DANS le terrain a un sens sur un plan de masse (jamais l'emprise totale d'un
+    bâtiment qui déborde). F : la bbox est une ENVELOPPE, pas la surface (terrain non rectangulaire)."""
     r = db.execute(text(
         """SELECT round((ST_XMax(geom_2975) - ST_XMin(geom_2975))::numeric) AS larg,
-                  round((ST_YMax(geom_2975) - ST_YMin(geom_2975))::numeric) AS prof
+                  round((ST_YMax(geom_2975) - ST_YMin(geom_2975))::numeric) AS prof,
+                  round(ST_Area(geom_2975)::numeric) AS surface
            FROM parcels WHERE idu = :idu"""), {"idu": idu}).mappings().first() or {}
     emp = db.execute(text(
-        """SELECT round(coalesce(sum(ST_Area(sl.geom_2975)), 0)) AS emprise
+        """SELECT round(coalesce(sum(ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975))), 0)) AS emprise
            FROM spatial_layers sl JOIN parcels p ON ST_Intersects(sl.geom_2975, p.geom_2975)
            WHERE sl.kind = 'batiment' AND p.idu = :idu"""), {"idu": idu}).scalar()
-    return {"largeur_m": r.get("larg"), "profondeur_m": r.get("prof"), "emprise_batie_m2": emp}
+    _int = lambda v: int(v) if v is not None else None    # noqa: E731 — cast Decimal → int
+    return {"largeur_m": _int(r.get("larg")), "profondeur_m": _int(r.get("prof")),
+            "surface_m2": _int(r.get("surface")), "emprise_batie_m2": _int(emp)}
 
 
 def _pcmi1(parcelle: dict) -> bytes:
@@ -349,48 +393,116 @@ def _pcmi1(parcelle: dict) -> bytes:
     return bytes(pdf.output())
 
 
+def _rings_2975(gj_str: str | None) -> list[list[tuple[float, float]]]:
+    """Anneaux extérieurs (x, y en mètres 2975) d'un GeoJSON Polygon/MultiPolygon."""
+    if not gj_str:
+        return []
+    import json
+    g = json.loads(gj_str)
+    t = g.get("type")
+    coords = g.get("coordinates") or []
+    if t == "Polygon":
+        return [[(float(x), float(y)) for x, y in coords[0]]] if coords else []
+    if t == "MultiPolygon":
+        return [[(float(x), float(y)) for x, y in poly[0]] for poly in coords if poly]
+    return []
+
+
 def _pcmi2(db: Session, parcelle: dict) -> bytes:
-    """B (PCMI2) — plan de masse de l'ÉTAT EXISTANT, coté (contour + bâti + cotes hors-tout).
-    La partie PROJET reste vide : c'est au pétitionnaire de la dessiner."""
-    from .plan_situation import plan_ortho
+    """B (PCMI2) — plan de masse de l'ÉTAT EXISTANT, coté. M129-2 C : DESSIN VECTORIEL (contour
+    cadastral + bâti) à une ÉCHELLE du domaine plan de masse (1/200–1/500), qui remplit la feuille —
+    l'ortho plafonne à z18 (flou au recadrage serré). Cotes lisibles, Nord + barre d'échelle. La
+    partie PROJET reste vide : c'est au pétitionnaire de la dessiner."""
     idu = parcelle["idu"]
     dims = _terrain_dims(db, idu)
-    plan = plan_ortho(parcelle["geojson"], _tiles_dir(), zoom_delta=0,
-                      extra_geojson=_bati_geojson(db, idu))
+    pgj = db.execute(text("SELECT ST_AsGeoJSON(geom_2975, 2) FROM parcels WHERE idu = :i"),
+                     {"i": idu}).scalar()
+    bgj = db.execute(text(
+        """SELECT ST_AsGeoJSON(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975)), 2)
+           FROM spatial_layers sl JOIN parcels p ON ST_Intersects(sl.geom_2975, p.geom_2975)
+           WHERE sl.kind = 'batiment' AND p.idu = :i"""), {"i": idu}).scalar()
+    pr = _rings_2975(pgj)
+    br = _rings_2975(bgj)
+    pdf = _pdf_a4()
+    pdf.add_page()
+    pdf.set_font("display", size=13)
+    pdf.set_text_color(17, 24, 20)
+    pdf.set_x(14)
+    pdf.cell(0, 7, "PCMI2 — Plan de masse (état existant, indicatif)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("inter", size=9)
+    pdf.set_text_color(95, 108, 101)
+    pdf.set_x(14)
+    pdf.multi_cell(pdf.w - 28, 4, f"État EXISTANT : contour cadastral + bâti existant (BD TOPO). "
+                   f"Commune {_commune_de(parcelle['commune'])} · section {parcelle['section']} "
+                   f"n° {parcelle['numero']}.", new_x="LMARGIN", new_y="NEXT")
+    if pr:
+        pts = [q for r in pr for q in r]
+        minx, maxx = min(x for x, _ in pts), max(x for x, _ in pts)
+        miny, maxy = min(y for _, y in pts), max(y for _, y in pts)
+        w_m, h_m = max(1.0, maxx - minx), max(1.0, maxy - miny)
+        y_top = pdf.get_y() + 3
+        avail_w, avail_h = pdf.w - 40, pdf.h - y_top - 60      # marge pour cotes + bloc texte
+        # échelle : mm/m au plus proche palier normalisé (1/500=2, 1/250=4, 1/200=5, 1/100=10 mm/m)
+        fit = min(avail_w / w_m, avail_h / h_m) * 0.92
+        mm_par_m = next((s for s in (10, 5, 4, 2, 1) if s <= fit), 1)
+        denom = round(1000 / mm_par_m)
+        draw_w, draw_h = w_m * mm_par_m, h_m * mm_par_m
+        ox = 20 + max(0, (avail_w - draw_w) / 2)
+        oy = y_top + 4
 
-    def _cotes(pdf, x0, y0, scale):
-        rings = plan.get("parcel_px") or []
-        if not rings:
-            return
-        xs = [px for r in rings for px, _ in r]
-        ys = [py for r in rings for _, py in r]
-        x1, x2, ym, yb = min(xs) * scale + x0, max(xs) * scale + x0, min(ys) * scale + y0, max(ys) * scale + y0
+        def _P(x, y):                                          # mètres 2975 → mm page (Nord en haut)
+            return ox + (x - minx) * mm_par_m, oy + (maxy - y) * mm_par_m
+        # bâti (aplat gris) SOUS le contour
+        pdf.set_fill_color(150, 158, 152)
+        pdf.set_draw_color(90, 98, 92)
+        pdf.set_line_width(0.2)
+        for r in br:
+            pdf.polygon([_P(x, y) for x, y in r], style="DF")
+        # contour parcellaire (mint épais)
+        pdf.set_draw_color(30, 158, 88)
+        pdf.set_line_width(0.8)
+        for r in pr:
+            pts_mm = [_P(x, y) for x, y in r]
+            pdf.polygon(pts_mm, style="D")
+        # cotes hors-tout (largeur sous, profondeur à gauche) — lisibles, hors du bâti
         pdf.set_draw_color(*_ENCRE)
         pdf.set_line_width(0.3)
-        pdf.line(x1, yb + 2.5, x2, yb + 2.5)                 # cote largeur (sous la parcelle)
-        pdf.line(x1 - 2.5, ym, x1 - 2.5, yb)                 # cote profondeur (à gauche)
-        pdf.set_font("mono", size=6)
+        x1, x2 = ox, ox + draw_w
+        yb = oy + draw_h
+        pdf.line(x1, yb + 3, x2, yb + 3)
+        pdf.line(x1 - 3, oy, x1 - 3, yb)
+        pdf.set_font("mono", size=7)
         pdf.set_text_color(*_ENCRE)
-        if dims.get("largeur_m"):
-            pdf.set_xy(x1, yb + 2.7)
-            pdf.cell(x2 - x1, 2.6, f"~{int(dims['largeur_m'])} m", align="C")
-
-    pdf = _pdf_a4()
-    _carte_page(pdf, "PCMI2 — Plan de masse (état existant, indicatif)",
-                f"État EXISTANT coté : contour cadastral + bâti existant (BD TOPO). "
-                f"{parcelle['commune']} · section {parcelle['section']} n° {parcelle['numero']}.",
-                plan,
-                "Bâti existant en gris (BD TOPO), contour parcellaire (cadastre). Cotes hors-tout "
-                "indicatives — un relevé/géomètre fait foi.", cotes=_cotes)
+        pdf.set_xy(x1, yb + 3.4)
+        pdf.cell(draw_w, 3, f"{int(round(w_m))} m", align="C")
+        # barre d'échelle + Nord + mention d'échelle (sous la barre, sans chevauchement)
+        _nord_echelle_mm(pdf, ox, oy, draw_w, draw_h, mm_par_m)
+        pdf.set_xy(20, oy + draw_h + 16)
+        pdf.set_font("inter", size=7.5)
+        pdf.set_text_color(95, 108, 101)
+        pdf.cell(0, 4, f"Échelle ~1/{denom} (contour cadastral 2975). Bâti existant en gris (BD TOPO).",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_y(oy + draw_h + 22)
+    else:
+        pdf.set_font("inter", size=8)
+        pdf.set_text_color(150, 90, 40)
+        pdf.set_x(14)
+        pdf.multi_cell(pdf.w - 28, 4, "Contour cadastral indisponible — plan de masse non traçable.",
+                       new_x="LMARGIN", new_y="NEXT")
     # ce que la pièce EST / n'est PAS
     pdf.ln(2)
     pdf.set_font("inter", size=8.5)
     pdf.set_text_color(40, 50, 45)
     pdf.set_x(14)
     d = dims
-    faits = (f"Dimensions hors-tout du terrain : ~{int(d['largeur_m'])} × ~{int(d['profondeur_m'])} m "
+    # M129-2 F : la bbox est une ENVELOPPE rectangulaire — dite comme telle, avec la surface RÉELLE
+    # du terrain (non rectangulaire). M129-2 E : emprise bâtie CLIPPÉE à la parcelle.
+    faits = (f"Enveloppe rectangulaire du terrain (le terrain n'est pas rectangulaire) : "
+             f"~{int(d['largeur_m'])} × ~{int(d['profondeur_m'])} m"
+             + (f" ; surface réelle ~{int(d['surface_m2'])} m². " if d.get("surface_m2") else ". ")
              if d.get("largeur_m") and d.get("profondeur_m") else "")
-    emp = f"Emprise bâtie existante estimée : ~{int(d['emprise_batie_m2'])} m² (BD TOPO). " if d.get("emprise_batie_m2") else ""
+    emp = (f"Emprise bâtie existante DANS la parcelle : ~{int(d['emprise_batie_m2'])} m² (BD TOPO). "
+           if d.get("emprise_batie_m2") else "")
     pdf.multi_cell(pdf.w - 28, 4.2,
                    f"{faits}{emp}\n\nCE QUE CETTE PIÈCE EST : l'état EXISTANT du terrain (contour "
                    "cadastral et bâti relevé). CE QU'ELLE N'EST PAS : le plan de masse du PROJET "
@@ -410,8 +522,8 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
     zone = (ident.get("zones") or [{}])[0]
     if zone.get("libelle") or zone.get("classe"):
         lignes.append(("Situation et zonage",
-                       f"Parcelle {idu}, commune de {parcelle['commune']}, section {parcelle['section']} "
-                       f"n° {parcelle['numero']}. Zone du document d'urbanisme : "
+                       f"Parcelle {idu}, commune {_commune_de(parcelle['commune'])}, section "
+                       f"{parcelle['section']} n° {parcelle['numero']}. Zone du document d'urbanisme : "
                        f"{zone.get('libelle') or zone.get('classe')}.", "cadastre · PLU (GPU)"))
     pente = terr.get("pente") or {}
     if pente.get("moy_deg") is not None:
@@ -435,8 +547,12 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
                        "viabilisation LABUSE (voirie, bâti, permis, assainissement)"))
     anc = terr.get("anc") or {}
     if anc.get("libelle"):
+        # M129-2 B : la SOURCE réellement interrogée (souvent INSEE RP2022 EGOUL par IRIS, le zonage
+        # assainissement étant NON DISPONIBLE sur ces communes), et la PHRASE qui porte le garde-fou
+        # « taux de SECTEUR, pas la parcelle — à vérifier auprès du SPANC » (jamais un constat parcelle).
         lignes.append(("Assainissement",
-                       f"{anc['libelle']}.", "zonage assainissement / ANC"))
+                       anc.get("phrase") or f"{anc['libelle']}.",
+                       anc.get("source") or "assainissement (LABUSE)"))
     rows = "".join(
         f"<tr><td style='width:26%'><b>{titre}</b></td><td>{txt}<div class='src'>Source : {src}</div></td></tr>"
         for titre, txt, src in lignes) or "<tr><td colspan='2'>Données terrain non disponibles.</td></tr>"
@@ -456,49 +572,79 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
     return _html_pdf(body, "PCMI4 — Notice décrivant le terrain")
 
 
-def _pcmi78(parcelle: dict) -> bytes:
+def _points_de_vue(db: Session, idu: str, rayon_m: float = 70.0, n_max: int = 4) -> list[tuple]:
+    """M129-2 G — positions de prise de vue ACCESSIBLES : points sur la VOIRIE publique proche
+    (spatial_layers kind='voirie', le point le plus proche de chaque tronçon voisin), donc jamais sur
+    du bâti. Renvoie [(lon, lat), …] triés par proximité ; vide si aucune voirie dans le rayon."""
+    rows = db.execute(text(
+        """WITH p AS (SELECT geom_2975 g, ST_Centroid(geom_2975) c FROM parcels WHERE idu = :idu)
+           SELECT ST_X(ST_Transform(pt, 4326)) AS lon, ST_Y(ST_Transform(pt, 4326)) AS lat
+           FROM (SELECT ST_ClosestPoint(sl.geom_2975, (SELECT c FROM p)) AS pt,
+                        ST_Distance(sl.geom_2975, (SELECT c FROM p)) AS d
+                 FROM spatial_layers sl, p
+                 WHERE sl.kind = 'voirie' AND ST_DWithin(sl.geom_2975, p.g, :r)
+                 ORDER BY d LIMIT :n) q"""),
+        {"idu": idu, "r": rayon_m, "n": n_max}).mappings().all()
+    return [(r["lon"], r["lat"]) for r in rows]
+
+
+def _pcmi78(db: Session, parcelle: dict) -> bytes:
     """D (PCMI7/8) — carte des prises de vue RECOMMANDÉES (proche + lointain), Nord + échelle.
-    Recommandation, pas prescription."""
+    M129-2 G : positions ACCESSIBLES (sur voirie publique, jamais sur du bâti) ; si aucune, le dit."""
     from .plan_situation import plan_ortho
     cd = _tiles_dir()
     gj = parcelle["geojson"]
+    idu = parcelle["idu"]
+    # centroïde parcelle en lon/lat (pour projeter les points de vue dans le repère image)
+    c = db.execute(text("SELECT ST_X(ST_Transform(ST_Centroid(geom_2975),4326)) lon, "
+                        "ST_Y(ST_Transform(ST_Centroid(geom_2975),4326)) lat FROM parcels WHERE idu=:i"),
+                   {"i": idu}).mappings().first() or {}
+    lon0, lat0 = c.get("lon"), c.get("lat")
+    vues = _points_de_vue(db, idu)
 
-    def _points(pdf, x0, y0, scale, plan, labels):
+    def _draw(pdf, x0, y0, scale, plan):
         rings = plan.get("parcel_px") or []
-        if not rings:
+        if not rings or lon0 is None:
             return
+        mpp = plan.get("metres_par_px") or 0.5
         xs = [px for r in rings for px, _ in r]
         ys = [py for r in rings for _, py in r]
         cx, cy = (min(xs) + max(xs)) / 2 * scale + x0, (min(ys) + max(ys)) / 2 * scale + y0
-        rw = max(14.0, (max(xs) - min(xs)) * scale * 0.85)
-        rh = max(14.0, (max(ys) - min(ys)) * scale * 0.85)
-        import math as _m
-        for i, (ang, lab) in enumerate(labels, 1):
-            px = cx + rw * _m.cos(_m.radians(ang))
-            py = cy - rh * _m.sin(_m.radians(ang))
-            pdf.set_fill_color(74, 222, 128)
+        if not vues:
+            pdf.set_font("inter", size=7.5)
+            pdf.set_text_color(150, 90, 40)
+            pdf.set_xy(x0 + 4, y0 + 4)
+            pdf.cell(0, 4, "Aucune position accessible identifiée à proximité (pas de voirie publique "
+                     "relevée) — le pétitionnaire choisit ses prises de vue depuis la voie publique.")
+            return
+        for i, (lon, lat) in enumerate(vues, 1):
+            dxm = (lon - lon0) * 111320.0 * math.cos(math.radians(lat0))
+            dym = (lat - lat0) * 110540.0
+            px, py = cx + (dxm / mpp) * scale, cy - (dym / mpp) * scale
             pdf.set_draw_color(*_ENCRE)
             pdf.set_line_width(0.4)
-            pdf.ellipse(px - 2.6, py - 2.6, 5.2, 5.2, style="DF")
-            pdf.line(px, py, cx, cy)                       # visée vers la parcelle (angle indiqué)
-            pdf.set_font("mono", size=6.5)
-            pdf.set_text_color(*_ENCRE)
-            pdf.set_xy(px - 2.6, py - 1.6)
-            pdf.cell(5.2, 3, str(i), align="C")
+            pdf.line(px, py, cx, cy)                       # visée vers la parcelle
+            pdf.set_fill_color(74, 222, 128)
+            pdf.ellipse(px - 3.4, py - 3.4, 6.8, 6.8, style="DF")
+            pdf.set_font("display", size=8)
+            pdf.set_text_color(17, 24, 20)
+            pdf.set_xy(px - 3.4, py - 2.4)
+            pdf.cell(6.8, 4, str(i), align="C")            # numéro lisible dans la pastille
 
-    prox = plan_ortho(gj, cd, zoom_delta=0)
-    loin = plan_ortho(gj, cd, zoom_delta=-2)
-    labs = [(45, "NE"), (135, "NO"), (225, "SO"), (315, "SE")]
+    prox = plan_ortho(gj, cd, zoom_delta=0, crop_margin_m=80.0)   # proche : parcelle + voirie visées
+    loin = plan_ortho(gj, cd, zoom_delta=-2)                      # lointain : paysage large
+    n = len(vues)
+    sous = (f"Points 1 à {n} sur la voirie publique proche (accessibles), face à la parcelle."
+            if n else "Aucune position accessible relevée à proximité (voir la carte).")
     pdf = _pdf_a4()
-    _carte_page(pdf, "PCMI7 — Prises de vue recommandées (environnement proche)",
-                "Points 1 à 4 : où se placer pour photographier le terrain de PRÈS. Chaque trait "
-                "indique la visée vers la parcelle.", prox,
-                "Positions RECOMMANDÉES (pas une prescription) — le pétitionnaire ajuste selon "
-                "l'accessibilité et la végétation.", cotes=lambda p, x, y, s: _points(p, x, y, s, prox, labs))
+    _carte_page(pdf, "PCMI7 — Prises de vue recommandées (environnement proche)", sous, prox,
+                "Positions RECOMMANDÉES (pas une prescription), placées sur la voirie publique — le "
+                "pétitionnaire ajuste selon l'accès réel et la végétation.",
+                cotes=lambda p, x, y, s: _draw(p, x, y, s, prox))
     _carte_page(pdf, "PCMI8 — Prises de vue recommandées (paysage lointain)",
-                "Points 1 à 4 : où se placer pour situer le terrain dans le paysage LOINTAIN.", loin,
+                "Mêmes points, vus dans le paysage lointain.", loin,
                 "Positions RECOMMANDÉES (pas une prescription).",
-                cotes=lambda p, x, y, s: _points(p, x, y, s, loin, labs))
+                cotes=lambda p, x, y, s: _draw(p, x, y, s, loin))
     return bytes(pdf.output())
 
 
@@ -539,7 +685,7 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
             (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle)),
             (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle)),
-            (f"{pfx}-PCMI7-8-prises-de-vue.pdf", lambda: _pcmi78(parcelle)),
+            (f"{pfx}-PCMI7-8-prises-de-vue.pdf", lambda: _pcmi78(db, parcelle)),
             (f"{pfx}-regles-zonage.pdf", lambda: _regles_et_pieces(db, idu)),
         ):
             try:
@@ -585,4 +731,7 @@ def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool) -> str:
         f"[X] = fournie ou partielle dans ce pack · [ ] = à produire par le porteur.\n"
         f"Les pièces fournies sont INDICATIVES (à confirmer par le porteur ou son architecte) ; "
         f"aucune n'est garantie déposable en l'état.\n\n"
+        f"PIÈCE D'INFORMATION (hors bordereau PCMI)\n----------------------------------------\n"
+        f"  [X] Règles du zonage — fiche récapitulative (zonage, hauteurs PLU calibrées, servitudes "
+        f"connues) : {idu}-labuse-regles-zonage.pdf. Aide à la préparation, pas une pièce du dossier.\n\n"
         f"NOMMAGE\n-------\nToutes les pièces suivent la doctrine {{IDU}}-labuse : « {idu}-labuse-<pièce>.pdf ».\n")

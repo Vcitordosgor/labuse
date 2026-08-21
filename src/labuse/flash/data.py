@@ -183,8 +183,26 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
             "SELECT zone, emprise_max_m2, hauteur_max_m, confiance FROM parcel_residuel_bati "
             "WHERE idu = :idu"), {"idu": idu}).mappings().first()
         if r and (r["emprise_max_m2"] is not None or r["hauteur_max_m"] is not None):
-            out["regles"] = {"zone": r["zone"], "emprise_max_m2": _i(r["emprise_max_m2"]),
-                             "hauteur_max_m": _f(r["hauteur_max_m"]), "confiance": r["confiance"]}
+            out["regles"] = {"zone": r["zone"], "emprise_max_m2": _i(r["emprise_max_m2"])}
+            # M129-2 A : la HAUTEUR de zone vient du PLU CALIBRÉ (resolve_zone) — SOURCE UNIQUE, la
+            # même que le dossier banquier (M128-3), la lettre de zonage et le pack PC. On cesse de
+            # servir le `hauteur_max_m` GÉNÉRIQUE de parcel_residuel_bati (9 m sur 207 k parcelles,
+            # faux sur les communes calibrées). Égout et faîtage NOMMÉS distinctement (A.3).
+            _zc = next((z.get("libelle") or z.get("classe")
+                        for z in (out.get("zones") or []) if z.get("libelle") or z.get("classe")), None)
+            _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            try:
+                from ..faisabilite.plu_rules import resolve_zone
+                _zr = resolve_zone(_zc, _cm) if _zc else None
+            except Exception:  # noqa: BLE001
+                _zr = None
+            if _zr is not None:
+                _he, _hf = getattr(_zr, "he_m", None), getattr(_zr, "hf_m", None)
+                if isinstance(_he, (int, float)):
+                    out["regles"]["hauteur_egout_m"] = float(_he)
+                if isinstance(_hf, (int, float)):
+                    out["regles"]["hauteur_faitage_m"] = float(_hf)
+                out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
     return out
 
 

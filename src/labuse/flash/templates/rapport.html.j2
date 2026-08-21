@@ -70,11 +70,11 @@
         {% if ident.zones|length > 1 %}<small>+ {{ ident.zones|length - 1 }} zone(s)</small>{% endif %}
       </div></div>
     {% endif %}
-    {% if ident.regles and ident.regles.hauteur_max_m %}
-    {# M54-AB C6 : c'est la hauteur TOTALE de zone (plafond PLU) — le dossier banquier chiffre, lui,
-       la hauteur d'égout RETENUE (~9 m, R+2) pour le scénario neuf. Deux hauteurs, deux libellés. #}
-    <div class="cartouche"><div class="titre">Hauteur totale de zone (règle calibrée)</div>
-      <div class="valeur">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} <small>m</small></div></div>
+    {# M129-2 A : hauteur du PLU CALIBRÉ (source unique resolve_zone) — égout et faîtage NOMMÉS,
+       jamais une « hauteur max » ambiguë ni le 9 m générique de parcel_residuel_bati. #}
+    {% if ident.regles and ident.regles.hauteur_egout_m %}
+    <div class="cartouche"><div class="titre">Hauteur d'égout (PLU calibré)</div>
+      <div class="valeur">{{ (ident.regles.hauteur_egout_m | round(1)) | string | replace('.0', '') }} <small>m</small></div></div>
     {% endif %}
     {% endif %}
   </div>
@@ -106,15 +106,17 @@
     <tr><td>Emprise au sol maximale (appliquée à la parcelle)</td>
         <td class="num-cell">{{ ident.regles.emprise_max_m2 }} m²</td></tr>
     {% endif %}
-    {% if ident.regles.hauteur_max_m %}
-    <tr><td>Hauteur maximale de la zone</td>
-        <td class="num-cell">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} m</td></tr>
+    {# M129-2 A/A.3 : hauteur du PLU CALIBRÉ, égout et faîtage nommés distinctement (source unique). #}
+    {% if ident.regles.hauteur_egout_m %}
+    <tr><td>Hauteur d'égout (PLU calibré)</td>
+        <td class="num-cell">{{ (ident.regles.hauteur_egout_m | round(1)) | string | replace('.0', '') }} m</td></tr>
     {% endif %}
-    {% if ident.regles.confiance %}
-    {# M54-AB F8 : dire CE qu'elle mesure — la confiance du CALIBRAGE des règles PLU (retraits,
-       hauteurs…), distincte de la « confiance des données » (complétude) de la fiche premium. #}
-    <tr><td>Confiance du calibrage (règles PLU)</td><td>{{ ident.regles.confiance }}</td></tr>
+    {% if ident.regles.hauteur_faitage_m %}
+    <tr><td>Hauteur au faîtage (PLU calibré)</td>
+        <td class="num-cell">{{ (ident.regles.hauteur_faitage_m | round(1)) | string | replace('.0', '') }} m</td></tr>
     {% endif %}
+    {# M129-2 D : « Confiance du calibrage » (indice interne) RETIRÉE — aucun exportable ne porte
+       d'indice de complétude / score / verdict. #}
   </table>
   <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
      Les règles complètes du règlement (retraits, prospects, servitudes) peuvent
