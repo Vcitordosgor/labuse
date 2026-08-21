@@ -55,15 +55,16 @@ export const MODULES: ModuleDef[] = [
     label: 'Scorer une adresse', desc: 'Collez l’adresse d’un bien à vendre — seconde opinion avant d’offrir' },
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire',
     label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
-  { key: 'duediligence', num: 'M10', group: 'instruire', phare: true,
-    label: 'Contrôle avant achat', desc: 'Passez une liste de parcelles au crible avant d’acheter' },
+  // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
+  // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
+  // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».
+  { key: 'risques', num: 'M10', group: 'instruire', phare: true,
+    label: 'Pièges et risques', desc: 'Ce qui cloche sur une parcelle — servitudes dormantes, risques, propriétaire ; une parcelle en détail ou un lot au crible. Dit aussi ce que la base ne couvre pas' },
   // M137-P/Q — outil PLU UNIFIÉ : Annuaire PLU (O13) + « Procédure & changement » (M137-Q : Vérif
   // procédure O11 + Changement PLU M15 fusionnés, communes en procédure reliées à leur simulation).
   // Le hub (Plu.tsx) monte 2 voies ; les composants existants sont réutilisés inchangés.
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
     label: 'PLU', desc: 'Le PLU des 24 communes : consulter le règlement, vérifier une procédure en cours, simuler une bascule de zone' },
-  { key: 'o5-servitudes', num: 'O5', group: 'instruire',
-    label: 'Servitudes invisibles', desc: 'Les contraintes dormantes d’une parcelle — et ce que la base ne couvre pas' },
   { key: 'comparer', num: 'A8', group: 'instruire',
     label: 'Comparer des parcelles', desc: 'Mettez 2 à 3 parcelles côte à côte — verdict, contraintes, capacité, charge foncière, marché' },
   { key: 'assemblage', num: 'M16', group: 'instruire', phare: true,

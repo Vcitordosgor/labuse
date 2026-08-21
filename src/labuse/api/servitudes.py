@@ -2,11 +2,13 @@
 
 Ce qui ne « crie » pas sur la fiche mais peut tout bloquer : servitudes d'utilité publique (SUP),
 50 pas géométriques, classement sonore routier, secteurs d'information sur les sols (SIS/CASIAS),
-recul du trait de côte, plan d'exposition au bruit, zonage d'assainissement (ANC obligatoire)…
+recul du trait de côte, zonage d'assainissement (ANC obligatoire)…
 
 100 % LECTURE (couche `spatial_layers` déjà ingérée) — zéro donnée nouvelle. Chaque ligne porte sa
-**source** (`data_sources`) et sa **date** (dernier sync). Honnêteté : les couches non ingérées
-(canalisations de transport, RNIC copro) sont listées comme **non couvertes**, jamais faussement « RAS ».
+**source** (`data_sources`) et sa **date** (dernier sync). Honnêteté : ce que la base n'ingère PAS
+(PEB bruit aérien, RNIC copro, procédures PLU, canalisations de transport, SUP hors GPU) est listé
+comme **non couvert**, jamais faussement « RAS » — un couvert-vide (couche déclarée mais sans donnée)
+serait lui aussi un faux RAS, on n'en déclare aucune.
 """
 from __future__ import annotations
 
@@ -20,13 +22,15 @@ log = logging.getLogger("labuse.servitudes")
 router = APIRouter(prefix="/servitudes-invisibles", tags=["servitudes-invisibles"])
 
 # Couches « servitude dormante » lues (kind spatial_layers) → libellé.
+# M137-T — `peb` RETIRÉ des couvertes : déclaré autrefois mais 0 ligne en base (couvert-vide =
+# faux RAS sur le bruit aérien). Passé en NON COUVERT ci-dessous. On ne déclare QUE des couches
+# réellement peuplées.
 _KINDS = {
     "sup": "Servitude d'Utilité Publique",
     "cinquante_pas": "50 pas géométriques (bande littorale)",
     "bruit_route": "Classement sonore des voies (isolement acoustique)",
     "sol_pollue": "Secteur d'information sur les sols",
     "trait_de_cote": "Recul du trait de côte",
-    "peb": "Plan d'Exposition au Bruit (aérodrome)",
     "zonage_assainissement": "Zonage d'assainissement",
 }
 
@@ -46,9 +50,18 @@ _SUP = {
 _SOL_POLLUE = {"sis": "Secteur d'Information sur les Sols (SIS) — étude de sols obligatoire",
                "casias": "Ancien site industriel (CASIAS)", "instruction": "Site en cours d'instruction"}
 
-# Servitudes attendues mais NON ingérées (à dire, jamais faussement « RAS »).
-_NON_COUVERT = ["Canalisations de transport (matières dangereuses) — couche non ingérée",
-                "RNIC — registre des copropriétés (parcelle bâtie en copro) — hors périmètre servitude"]
+# Contraintes attendues mais NON ingérées / partiellement couvertes — À DIRE, jamais un « RAS »
+# silencieux (M137-T : liste étendue à tout ce que l'audit a trouvé). Bloc servi à l'entrée
+# « une parcelle » ET reporté sur l'entrée « un lot » (outil Risques) — c'est le point critique.
+NON_COUVERT = [
+    "Plan d'Exposition au Bruit (PEB, aérodrome) — couche non ingérée : le bruit aérien n'est pas détecté ici",
+    "Copropriété (RNIC, registre national des copropriétés) — hors périmètre ingéré (statut copro non vu)",
+    "Procédures PLU en cours (révision/élaboration) — voir l'outil PLU (radar Sudocuh) ; non reprises ici",
+    "Canalisations de transport de matières dangereuses (gaz, hydrocarbures) — couche non ingérée",
+    "Servitudes d'Utilité Publique hors GPU Réunion — ~17 familles SUP décodées sur 417 SUP ingérées ; "
+    "une SUP non publiée au Géoportail de l'urbanisme n'est pas vue (certificat d'urbanisme indispensable)",
+]
+_NON_COUVERT = NON_COUVERT   # rétro-compat (tests + anciens imports)
 
 
 def get_db():

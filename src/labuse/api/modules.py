@@ -743,7 +743,7 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     for t in tokens[:60]:
         row = db.execute(text("""
             SELECT p.id AS parcel_id, p.idu, p.commune, round(p.surface_m2) AS surface_m2,
-                   s2.tier AS statut, d.q_score, d.a_score, d.completeness_score,
+                   s2.tier AS statut, d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                    (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
@@ -763,7 +763,12 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
         else:
             items.append({"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
-    return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items}
+    # M137-T — le bloc NON COUVERT (source unique servitudes.NON_COUVERT) est REPORTÉ sur l'entrée
+    # « un lot » : un lot sans flag cascade ne doit JAMAIS afficher un « RAS » muet — il dit ce que
+    # la base ne couvre pas, à l'échelle des 60 parcelles comme sur une seule.
+    from .servitudes import NON_COUVERT
+    return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items,
+            "non_couvert": NON_COUVERT}
 
 
 # ───────────────── M22 + BILAN — ÉTUDE DE FAISABILITÉ BIDIRECTIONNELLE ─────────────────

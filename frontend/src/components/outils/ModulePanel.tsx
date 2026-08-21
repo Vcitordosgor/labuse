@@ -761,6 +761,16 @@ function M10() {
       {run.data && (
         <>
           <p className="text-[11px] text-txt-dim">{run.data.n_trouvees}/{run.data.n_demandes} références trouvées</p>
+          {/* M137-T — NON COUVERT reporté sur le LOT : un lot sans flag cascade ne doit jamais être un
+              « RAS » muet. Le bloc dit ce que la base ne couvre pas, à l'échelle des 60 parcelles. */}
+          {(run.data.non_couvert ?? []).length > 0 && (
+            <div data-diligence-noncouvert className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+              <p className="label-caps text-[9.5px]">Non couvert par la base — à vérifier ailleurs (vaut pour tout le lot)</p>
+              <div className="mt-1 space-y-0.5">
+                {(run.data.non_couvert as string[]).map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">○ {n}</p>)}
+              </div>
+            </div>
+          )}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i, k) => 'idu' in i ? (() => {
               const risque = i['risque'] as number
@@ -810,11 +820,41 @@ function M10() {
 }
 
 
+/* ───────────────────── OUTIL « RISQUES » (M137-T) — fusion O5 + M10 ─────────────────────
+   Deux outils répondaient à la MÊME question (« qu'est-ce qui cloche ? ») avec deux forces.
+   Ils fusionnent en UN, deux entrées :
+     A — « une parcelle » : lecture géométrique directe + SUP→effet + source/date + NON COUVERT (O5) ;
+     B — « un lot »        : jusqu'à 60 parcelles, risque + checklist + PDF + propriétaire (M10),
+                             avec le bloc NON COUVERT reporté (fin du RAS muet à l'échelle du lot).
+   Le nom ne promet pas l'exhaustivité (pas de « contrôle complet » / « due diligence »). */
+function Risques() {
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  // depuis une fiche (parcelle sélectionnée) → entrée détail ; sinon libre choix, détail par défaut.
+  const [entree, setEntree] = useState<'parcelle' | 'lot'>('parcelle')
+  return (
+    <>
+      <div data-risques-entrees className="flex gap-1">
+        {([['parcelle', 'Une parcelle'], ['lot', 'Un lot']] as const).map(([k, lbl]) => (
+          <button key={k} data-risques-entree={k} onClick={() => setEntree(k)}
+            className={`flex-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors duration-quick ${
+              entree === k ? 'border-mint/60 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+      {/* parcelle : servitudes détail + NON COUVERT ; lot : risque + checklist + NON COUVERT reporté */}
+      {entree === 'parcelle' ? <O5Servitudes key={selectedIdu ?? 'o5'} /> : <M10 />}
+    </>
+  )
+}
+
+
 const COMPONENTS: Record<string, () => JSX.Element> = {
   patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
-  temps: M08, courriers: M09, duediligence: M10,
+  // M137-T — 'duediligence' (M10) et 'o5-servitudes' (O5) fusionnés dans l'outil « risques ».
+  temps: M08, courriers: M09, risques: Risques,
   assemblage: M16, zan: M17, barometre: M18, programme: M22,
   marche: MarcheCommune,
   // M137-P — les 3 outils PLU (simulplu · verif-procedure · plu-annuaire) fusionnés dans le hub « plu ».
@@ -823,7 +863,6 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
-  'o5-servitudes': O5Servitudes,
   'o6-comparateur': O6Comparateur,
   'o7-carnet': O7Carnet,
   'o9-rarete': O9Rarete,
