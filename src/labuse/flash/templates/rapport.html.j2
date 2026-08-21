@@ -181,45 +181,20 @@
       habitable / vendable est ~15&nbsp;% inférieure (soit ~{{ (c.residuel.sdp_residuelle_m2 / 1.15) | round | int }} m²).</div></div>
   {% endif %}
 
-  {% if c.verdict_v2 %}
-  <h3>Verdict LABUSE</h3>
-  <div class="cartouches">
-    <div class="cartouche"><div class="titre">Verdict</div>
-      <div class="valeur">{{ c.verdict_v2.libelle }}</div></div>
-    {% if c.verdict_v2.rang %}
-    <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
-      <div class="valeur">{{ "{:,}".format(c.verdict_v2.rang).replace(",", " ") }}{% if c.verdict_v2.rang_total %} <small>/ {{ "{:,}".format(c.verdict_v2.rang_total).replace(",", " ") }}</small>{% endif %}</div></div>
-    {% endif %}
-    {% if c.verdict_v2.mult %}
-    <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
-      <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
-    {% endif %}
-  </div>
-  {# M54-AB C1 : UNE phrase de motif sous le verdict (le « pourquoi » déterministe servi) —
-     surtout pour les déclassements, pour qu'un code technique ne soit jamais le seul énoncé. #}
-  {% if c.verdict_v2.motif %}
-  <p class="note">{{ c.verdict_v2.motif }}</p>
-  {% endif %}
-  {# AU-OUVERTURE (Vic 30/07) : la mention d'ouverture non vérifiée est VUE — en tête, dans le
-     bloc Verdict, jamais reléguée en bas de fiche. Étiquette « Absent » (ni un fait, ni Estimé). #}
-  {% if c.verdict_v2.mention_ouverture %}
-  <p class="note"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> —
-     {{ c.verdict_v2.mention_ouverture }} <em>(Absent)</em></p>
-  {% endif %}
-  {% if c.verdict_v2.etage0 %}
-  <p class="note">Parcelle écartée par une exclusion dure (risques, zonage, foncier public…) —
-     le détail figure dans les sections risques et règles de ce rapport.</p>
-  {% endif %}
-  {% endif %}
+  {# M127-A1 — le bloc « Verdict LABUSE » (verdict, rang île, probabilité de mutation, motif de
+     scoring) est RETIRÉ du dossier parcelle : ce document présente des attributs FACTUELS, pas
+     l'analyse LABUSE (alignement sur la fiche). Les caveats factuels survivent hors verdict. #}
 
-  {# Motif d'ouverture AU TOUJOURS consultable, même sans verdict v2 (motif survit à la bascule). #}
-  {% if c.au_statut and not c.verdict_v2 %}
+  {# Ouverture à l'urbanisation non vérifiée — fait réglementaire (statut AU), TOUJOURS consultable
+     (le motif survit à la bascule). Étiquette « Absent » (ni un fait, ni Estimé). #}
+  {% if c.au_statut %}
   <p class="note"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> —
      {{ c.au_statut.motif }} <em>(Absent)</em></p>
   {% endif %}
 
-  {# M-RENOUV (B3) : une ligne conditionnelle — segment + rang + 2 composantes dominantes #}
+  {# M-RENOUV (M127-A2) : segment d'appartenance FACTUEL — sous son propre titre, jamais flottant #}
   {% if c.renouvellement_ligne %}
+  <h3>Renouvellement urbain</h3>
   <p class="note">{{ c.renouvellement_ligne }}</p>
   {% endif %}
 
@@ -279,8 +254,8 @@
   <h2><span class="num">04</span>Patrimoine &amp; environnement</h2>
   {% if pat.rien %}
   <p class="ok-vide">✓ La parcelle n'est concernée par aucun périmètre patrimonial ou
-     environnemental des couches analysées (ABF/Mérimée, ENS, QPV, Cartofriches,
-     Parc national, forêts publiques).</p>
+     environnemental des couches analysées (ABF/Mérimée, Espaces protégés (INPN),
+     QPV, Cartofriches, Parc national, forêts publiques).</p>
   {% else %}
   {% if pat.couches %}
   <table class="donnees">
@@ -324,19 +299,27 @@
   {% if m.methode %}<p class="note">{{ m.methode }}</p>{% endif %}
   {# MANDAT_DVF-B — la réserve de méthode accompagne le prix DVF, lisible (≥ 8 pt), jamais au pied. #}
   {% if m.reserve %}<p class="reserve-dvf">{{ m.reserve }}</p>{% endif %}
+  {# M127-D6 : ventes au prix/m² aberrant écartées du tableau (même doctrine que la fiche —
+     z-score modifié médiane/MAD > 3,5), mutations multi-parcelles probables. #}
+  {% if m.n_ecartees %}
+  <p class="note">{{ m.n_ecartees }} vente{{ "s" if m.n_ecartees > 1 else "" }} au prix/m² aberrant
+     écartée{{ "s" if m.n_ecartees > 1 else "" }} du tableau (prix incohérent avec la surface —
+     mutation multi-parcelles probable).</p>
+  {% endif %}
   <h3>Comparables récents (anonymisés)</h3>
   <table class="donnees">
-    <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>
+    <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>€/m² bâti</th><th>Mois</th></tr>
     {% for cp in m.comparables %}
     <tr><td>{{ cp.type_local }}</td>
         <td class="num-cell">{% if cp.surface_reelle_bati %}{{ cp.surface_reelle_bati|int }} m²{% else %}—{% endif %}</td>
         <td class="num-cell">{% if cp.surface_terrain %}{{ cp.surface_terrain|int }} m²{% else %}—{% endif %}</td>
         <td class="num-cell">{{ "{:,}".format(cp.valeur_fonciere|int).replace(",", " ") }} €</td>
+        <td class="num-cell">{% if cp.prix_m2_bati %}{{ "{:,}".format(cp.prix_m2_bati|int).replace(",", " ") }} €{% else %}—{% endif %}</td>
         <td class="num-cell">{{ cp.mois }}</td></tr>
     {% endfor %}
   </table>
-  <p class="note">Comparables anonymisés (type, surface, prix, mois) — l'adresse exacte des
-     biens n'est jamais communiquée.</p>
+  <p class="note">Comparables anonymisés (type, surface, prix, €/m² bâti, mois) — l'adresse exacte
+     des biens n'est jamais communiquée.</p>
   {% endif %}
 
   {% if m.derniere_mutation %}

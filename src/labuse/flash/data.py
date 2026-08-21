@@ -10,12 +10,14 @@ aucun percentile île, aucune comparaison multi-parcelles (mandat §2).
 from __future__ import annotations
 
 import logging
+import statistics
 from datetime import date
 from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
 from ..scoring.score_v_constants import Q_A_RUN_LABEL
 
 log = logging.getLogger("labuse.flash")
@@ -62,7 +64,7 @@ _LAYER_LABELS = {
     "bruit_route": "Classement sonore routier",
     "cinquante_pas": "50 pas géométriques",
     "abf": "Monument historique / ABF",
-    "ens": "Espace Naturel Sensible",
+    "ens": "Espace protégé réglementaire (INPN)",
     "qpv": "Quartier Prioritaire de la Ville",
     "friche": "Friche (Cartofriches)",
     "parc_national": "Parc National de La Réunion",
@@ -148,7 +150,8 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     zline = next((l for l in served_group(served_cascade_lines(db, idu), "regles")
                   if l["layer_name"] == "zonage_plu_gpu"), None)
     if zline:
-        out["zonage_verdict"] = {"result": zline["result"], "detail": zline["detail"]}
+        out["zonage_verdict"] = {"result": zline["result"],
+                                 "detail": nettoyer_libelle_client(zline["layer_name"], zline["detail"])}
     if "spatial_layers" in avail:
         zones = db.execute(text(
             """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
@@ -245,26 +248,18 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "rang_total": (None if etage0 or not v2 else rang_total(db)),
                     "mult": (None if etage0 or not v2 or v2["mult_base"] is None
                              else round(float(v2["mult_base"]), 1))}
-        # M-RENOUV (B3) : UNE ligne conditionnelle dans la synthèse — segment + rang +
-        # les 2 composantes dominantes. Pas de refonte du template ; wording doctrinal
-        # (« potentiel de renouvellement urbain », jamais « opportunité »).
+        # M-RENOUV (M127-A2) : UNE ligne conditionnelle FACTUELLE — segment d'appartenance
+        # seul (« parcelle occupée, potentiel de renouvellement urbain »). Le rang, le score
+        # et les composantes (analyse LABUSE) sont PURGÉS du dossier parcelle, aligné sur la
+        # fiche : ce document présente des attributs, pas un classement.
         if db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
             rn = db.execute(text(
-                "SELECT renouv_score, rang_segment, comp_potentiel, comp_assiette, "
-                "       comp_marche, "
-                "       (SELECT count(*) FROM parcel_renouvellement) AS total "
-                "FROM parcel_renouvellement WHERE idu = :idu"), {"idu": idu}).mappings().first()
+                "SELECT 1 FROM parcel_renouvellement WHERE idu = :idu"),
+                {"idu": idu}).mappings().first()
             if rn:
-                from ..renouvellement import LIBELLES_COMPOSANTES
-                dominantes = sorted(
-                    ((k, int(rn[k])) for k in ("comp_potentiel", "comp_assiette",
-                                               "comp_marche")),
-                    key=lambda kv: kv[1], reverse=True)[:2]
-                dom = " · ".join(f"{LIBELLES_COMPOSANTES[k]} ({v} pts)" for k, v in dominantes)
                 out["renouvellement_ligne"] = (
-                    f"Segment Renouvellement — parcelle occupée, potentiel de renouvellement "
-                    f"urbain : rang {rn['rang_segment']}/{rn['total']} "
-                    f"(score {rn['renouv_score']}/100). Composantes dominantes : {dom}.")
+                    "Parcelle occupée — potentiel de renouvellement urbain (reconstruction "
+                    "ou densification sur le bâti existant).")
         # MANDAT RNU (B3) : étiquetage export — UNE ligne conditionnelle, flag commune-level
         # général (config/rnu_communes.yaml). Jamais d'affirmation de constructibilité RNU.
         from .. import rnu as _rnu
@@ -286,7 +281,9 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             "JOIN parcels p ON p.id = c.parcel_id WHERE p.idu = :idu"),
             {"idu": idu}).mappings().first()
         if cst:
-            out["constructibilite"] = {"label": cst["label"], "motif": cst["motif"]}
+            out["constructibilite"] = {
+                "label": cst["label"],
+                "motif": nettoyer_libelle_client(None, cst["motif"])}
     # AU-OUVERTURE (Vic 30/07) — statut d'ouverture de la zone AU, LU INDÉPENDAMMENT du tier servi
     # (comme la constructibilité) → le motif SURVIT à la bascule et reste consultable AVANT elle.
     # Deux traitements selon la classe :
@@ -330,7 +327,7 @@ def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
             continue
         items.append({"kind": l["layer_name"],
                       "label": _LAYER_LABELS.get(l["layer_name"], l["layer_name"]),
-                      "detail": l["detail"]})
+                      "detail": nettoyer_libelle_client(l["layer_name"], l["detail"])})
     # Liste ICPE-proximité (5 plus proches, ST_Distance) : DÉTAIL non porté par le servi (une seule
     # ligne ICPE arbitrée) — conservée telle quelle (spatial_layers), pas une contradiction.
     icpe = db.execute(text(
@@ -358,14 +355,16 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
            WHERE sl.kind = ANY(ARRAY['ens', 'qpv', 'friche', 'parc_national', 'foret_publique'])
              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""), {"idu": idu}).mappings().all()
     items = [{"kind": r["kind"], "label": _LAYER_LABELS.get(r["kind"], r["kind"]),
-              "detail": r["name"] or r["subtype"] or ""} for r in rows]
+              "detail": nettoyer_libelle_client(r["kind"], r["name"] or r["subtype"] or "")}
+             for r in rows]
     # M73 « le dryrun servi fait foi » : l'ABF vient de la LIGNE SERVIE (result/detail), plus de
     # ST_Distance à un tampon 500 m → fini le « 0 m » (distance-à-tampon). La couche ABF = tampons
     # + endpoint décommissionné M74 : on ne re-source pas, on cesse d'afficher une distance-à-tampon.
     from ..api.served_cascade import served_cascade_lines, served_group
-    abf_note = next((l["detail"] for l in served_group(served_cascade_lines(db, idu), "risques")
-                     if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
-                                                                      "UNKNOWN")), None)
+    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu), "risques")
+                    if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
+                                                                     "UNKNOWN")), None)
+    abf_note = nettoyer_libelle_client("abf", abf_raw) if abf_raw else None
     return {"couches": sorted(items, key=lambda x: x["label"]), "abf_note": abf_note,
             "rien": not (items or abf_note)}
 
@@ -400,30 +399,56 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if not stats or not stats["n"]:
         return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
                 "commune_marche": commune_marche, "reserve": _reserve_dvf()}
-    # Comparables ANONYMISÉS : type, surface, prix, mois — JAMAIS d'adresse exacte (mandat).
+    # Comparables ANONYMISÉS : type, surface, prix, €/m² bâti, mois — JAMAIS d'adresse exacte (mandat).
+    # M127-D7 : colonne €/m² bâti (valeur / surface bâtie ≥ 20 m²). M127-D6 : exclusion des ventes au
+    # prix/m² ABERRANT, MÊME DOCTRINE que la fiche (z-score modifié médiane/MAD > 3,5) — écarte les
+    # mutations multi-parcelles (ex. 6,2 M€ / 70 m²). On lit un vivier (≤ 15), on filtre, on affiche 5.
     comps = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT dm.type_local, dm.surface_reelle_bati, dm.surface_terrain,
-                  dm.valeur_fonciere, to_char(dm.date_mutation, 'MM/YYYY') AS mois
+                  dm.valeur_fonciere, to_char(dm.date_mutation, 'MM/YYYY') AS mois,
+                  CASE WHEN dm.surface_reelle_bati >= 20
+                       THEN round((dm.valeur_fonciere / dm.surface_reelle_bati)::numeric)
+                       END AS prix_m2_bati
            FROM dvf_mutations dm, p
            WHERE dm.geom IS NOT NULL
              AND dm.date_mutation >= (CURRENT_DATE - make_interval(years => :annees))
              AND dm.nature_mutation ILIKE 'vente%'
              AND dm.valeur_fonciere > 0 AND dm.type_local IS NOT NULL
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)
-           ORDER BY dm.date_mutation DESC LIMIT 5"""),
+           ORDER BY dm.date_mutation DESC LIMIT 15"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().all()
+    vivier = [dict(c) for c in comps]
+    _pm = [float(c["prix_m2_bati"]) for c in vivier
+           if c["prix_m2_bati"] is not None and float(c["prix_m2_bati"]) > 0]
+    _med = statistics.median(_pm) if len(_pm) >= 4 else None
+    _mad = (statistics.median([abs(x - _med) for x in _pm]) or 1e-9) if _med is not None else None
+
+    def _aberrant(c) -> bool:
+        v = c["prix_m2_bati"]
+        return (_med is not None and v is not None and float(v) > 0
+                and abs(0.6745 * (float(v) - _med) / _mad) > 3.5)
+
+    gardees = [c for c in vivier if not _aberrant(c)]
+    n_ecartees = len(vivier) - len(gardees)
+    comparables = [{"type_local": c["type_local"],
+                    "surface_reelle_bati": _i(c["surface_reelle_bati"]),
+                    "surface_terrain": _i(c["surface_terrain"]),
+                    "valeur_fonciere": _i(c["valeur_fonciere"]),
+                    "prix_m2_bati": _i(c["prix_m2_bati"]),
+                    "mois": c["mois"]} for c in gardees[:5]]
     out = {"n": int(stats["n"]), "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
            "med_m2_bati": _i(stats["med_m2_bati"]), "med_m2_terrain": _i(stats["med_m2_terrain"]),
-           "comparables": [dict(c) for c in comps], "derniere_mutation": None, "secteur": [],
+           "comparables": comparables, "n_ecartees": n_ecartees,
+           "derniere_mutation": None, "secteur": [],
            # M-P (P2-66) : étiquette de MÉTHODE — ce bloc est un indicateur de marché LOCAL (tous
-           # types, rayon fixe, sans exclusion d'aberrants), DISTINCT du prix de sortie du bilan
-           # (sector_price : appartements, rayon adaptatif 500→1500→commune, aberrants exclus).
-           # Les deux médianes peuvent légitimement différer — la méthode l'explique, jamais un écart nu.
+           # types, rayon fixe), DISTINCT du prix de sortie du bilan (sector_price : appartements,
+           # rayon adaptatif 500→1500→commune). Les deux médianes peuvent légitimement différer —
+           # la méthode l'explique, jamais un écart nu. M127-D6 : aberrants écartés des deux côtés.
            "methode": (f"Médiane €/m² observée, tous types de biens, rayon {RAYON_MARCHE_M} m sur "
-                       f"{FENETRE_MARCHE_ANNEES} ans, sans exclusion d'aberrants — indicateur de marché "
-                       "local, distinct du prix de sortie du bilan (appartements, rayon adaptatif, "
-                       "aberrants exclus)."),
+                       f"{FENETRE_MARCHE_ANNEES} ans — indicateur de marché local, distinct du prix "
+                       "de sortie du bilan (appartements, rayon adaptatif). Ventes au prix/m² "
+                       "aberrant écartées du tableau des comparables."),
            # MANDAT_DVF-B — la réserve de méthode DVF voyage avec le chiffre (helper unique).
            "reserve": _reserve_dvf()}
     if "v_parcel_dvf_last" in avail:
@@ -579,7 +604,7 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("risques", "Recul du trait de côte (Cerema / GéoLittoral)", "Cerema / GéoLittoral — indicateur d'érosion côtière", None),
     ("risques", "50 pas géométriques (DEAL)", "50 pas géométriques — limite haute (DEAL)", None),
     ("patrimoine", "Base Mérimée / ABF (Ministère de la Culture)", "ABF / Monuments historiques", None),
-    ("patrimoine", "ENS (INPN / Département)", "INPN / patrinat — espaces protégés", None),
+    ("patrimoine", "Espace protégé réglementaire (INPN)", "INPN / patrinat — espaces protégés", None),
     ("patrimoine", "QPV 2024 (ANCT)", "QPV 2024 (ANCT)", None),
     ("patrimoine", "Cartofriches (Cerema)", "Cartofriches (Cerema)", None),
     ("patrimoine", "Parc National de La Réunion (INPN)", "Parc National de La Réunion (INPN)", None),
@@ -686,9 +711,9 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
         elif src_name and mill_amont.get(src_name):
             millesime = mill_amont[src_name]
         else:
-            # GPU/PLU, Géorisques… n'exposent pas d'horizon amont daté (NULL) — on le DIT, jamais un
-            # « — » muet ni une date d'ingestion déguisée en millésime.
-            millesime = "horizon amont non publié"
+            # GPU/PLU, Géorisques… n'exposent pas de millésime amont daté (NULL) — on le DIT, jamais
+            # un « — » muet ni une date d'ingestion déguisée en millésime. Même lexique que la fiche.
+            millesime = "millésime non renseigné"
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 
