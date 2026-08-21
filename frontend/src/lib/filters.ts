@@ -209,8 +209,10 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
 const TIER_KEYS = Object.keys(ALL_TIER_META)   // M30 : liens partagés avec declasse_* valides
 // M55-G suite point 4 : les 7 signaux SERVIS par l'UI (même liste que le panneau Filtres) —
 // toute autre clé sv= est ignorée à la lecture (nu_pm / cession supprimés de l'UI).
+// FILTRE-NETTOYAGE #4 — « succession » (parcel_veille_succession) rejoint les signaux servis ;
+// « assemblage » reste valide (relocalisé dans « Le bien », toujours un signal backend).
 const SIGNAUX_VALIDES = ['pm_privee', 'procedure', 'permis_actif', 'permis_caduc',
-  'friche', 'assemblage', 'defisc']
+  'friche', 'assemblage', 'defisc', 'succession']
 
 export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone: LngLat[] | null } | null {
   if (!hash.includes('f=1')) return null
