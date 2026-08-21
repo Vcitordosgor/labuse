@@ -429,10 +429,13 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         note_anc = (f" · comparables ancien : {prix.get('n', 0)} ventes "
                     f"({prix['periode'][0]}-{prix['periode'][1]})" if ancien_dispo
                     else " · comparables ancien indisponibles (échantillon insuffisant)")
+        # M128-2-G : le prix de sortie NEUF est une projection DÉRIVÉE (médiane locale ou repli
+        # île) → ESTIMÉ. Seul le prix de bassin d'observatoire (override_bassin) est vraiment SOURCÉ.
+        _prov_neuf = "sourcee" if prix_neuf.get("niveau") == "override_bassin" else "estimee"
         steps.append(Step("Prix de sortie neuf (marché)",
                           (prix_neuf.get("label") or "prix de sortie neuf") + note_anc,
-                          f"{med} €/m² (habitable, neuf)",
-                          f"prix de sortie neuf · {prix_neuf.get('niveau')}", prov="sourcee"))
+                          f"{med:g} €/m² (habitable, neuf)",
+                          f"prix de sortie neuf · {prix_neuf.get('niveau')}", prov=_prov_neuf))
     else:
         detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
                   f"dans {lieu}"
@@ -481,7 +484,9 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                 f"(seuils : {mixite_src}) → impact non chiffré.")
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
-    sdp = surf * hyp.coef_plancher_habitable
+    # M128-2-F2 : UNE seule SDP — celle de la faisabilité (footprint × niveaux, servie via `eco`),
+    # jamais une SDP reconstruite depuis le vendable (275 vs 270 sur le même dossier). Repli calc pur.
+    sdp = float((contexte_eco or {}).get("sdp_max_m2") or (surf * hyp.coef_plancher_habitable))
     maj_vrd_pluvial = float(hyp.majoration_vrd_pluvial) if pluvial else 0.0
     cm_bas = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_bas
     cm_haut = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_haut
@@ -524,7 +529,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     rnd = (lambda x: round(x / 1_000) * 1_000) if fragile else (lambda x: round(x))
     ca_bas_r, ca_cen_r, ca_haut_r = rnd(ca_bas), rnd(ca_cen), rnd(ca_haut)
     cf_bas_r, cf_cen_r, cf_haut_r = rnd(cf_bas), rnd(cf_cen), rnd(cf_haut)
-    cf_bas_aff = max(0, cf_bas_r)   # bas borné à 0 pour l'affichage (audit O3)
+    cf_bas_aff = cf_bas_r   # M128-2-D2(a) : borne basse RÉELLE (négative), plus d'écrêtage muet à 0
     par_m2 = round(cf_cen_r / surface_terrain_m2) if surface_terrain_m2 else 0
 
     ca_formule = (f"{surf:.0f} m² × {_px(q1):.0f}–{_px(q3):.0f} €/m² (prix mixés LLS)"
@@ -534,25 +539,24 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
                 else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
     steps.append(Step("Coût de construction",
-                      f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) {cout_lbl}",
+                      f"{sdp:.0f} m² de plancher (faisabilité) {cout_lbl}",
                       f"~{_eur(cc_bas)} – {_eur(cc_haut)}",
                       "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)",
                       prov="estimee"))
     steps.append(Step("Marge + frais (déduits du CA)",
                       f"marge {marge_pct:g} % + honoraires {honoraires_pct:g} % + frais financiers {frais_fin_pct:g} %",
                       f"{(1 - coef) * 100:.0f} % du CA", "params marge/honoraires/frais", prov="estimee"))
-    # Présentation : la MÉDIANE d'abord (le chiffre de référence), la fourchette ensuite,
-    # bas borné à 0 (audit O3 : « entre −0,2 et 8 M€ » n'aide personne à décider).
-    charge_fourchette = ("" if cf_bas_aff == cf_haut_r
-                         else f" (fourchette {_eur(cf_bas_aff)} – {_eur(cf_haut_r)})")
-    steps.append(Step("Charge foncière acceptable (bilan à rebours)",
+    # M128-2-D1 : la fourchette n'apparaît qu'UNE fois (le sous-tableau BASSE/MÉDIANE/HAUTE du
+    # document) — ici, seule la médiane, chiffre de référence. M128-2-E : terme unique « charge
+    # foncière supportable ».
+    steps.append(Step("Charge foncière supportable (bilan à rebours)",
                       f"CA×{coef:.2f} − coût construction" + (" − VRD" if vrd_base > 0 else ""),
-                      f"médiane {_eur(cf_cen_r)} ≈ {par_m2:.0f} €/m² terrain{charge_fourchette}",
+                      f"médiane {_eur(cf_cen_r)} ≈ {par_m2:.0f} €/m² terrain",
                       "dérivé", prov="derive"))
 
     if neuf_actif:
         prix_desc = (f"Prix de sortie = médiane du NEUF de marché "
-                     f"({prix_neuf.get('label') or prix_neuf.get('niveau')}) ≈ {med} €/m² habitable ; "
+                     f"({prix_neuf.get('label') or prix_neuf.get('niveau')}) ≈ {med:g} €/m² habitable ; "
                      "l'ancien DVF ne sert que de comparable documentaire.")
     else:
         prix_desc = (f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% "
@@ -586,6 +590,8 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
 
     calc = {"surf": round(surf), "terrain_m2": round(surface_terrain_m2 or 0),
             "q1": q1, "median": med, "q3": q3, "coef": round(coef, 4),
+            "sdp": round(sdp),                       # M128-2-F2 : SDP unique (= faisabilité)
+            "cm_bas": round(cm_bas), "cm_haut": round(cm_haut),   # M128-2-F1 : fourchette de coût réelle
             "cc_bas": round(cc_bas), "cc_haut": round(cc_haut), "cout_vrd": round(cout_vrd),
             "mixite": mixite, "pluvial": pluvial, "pondere": pondere,
             "pct_lls": float(hyp.pct_lls), "prix_m2_lls": prix_lls,

@@ -195,17 +195,22 @@ def cartouches(items: list[str]) -> str:
     return f"<div class='cartouches'>{''.join(items)}</div>"
 
 
-def hypotheses_encadre(cout_m2: float, marge_pct: float, composantes: str | None = None) -> str:
+def hypotheses_encadre(cout_m2: float, marge_pct: float, composantes: str | None = None,
+                       cout_m2_haut: float | None = None) -> str:
     """C1 — l'encadré « Hypothèses de calcul », IDENTIQUE en forme dans tous les documents
     qui chiffrent. Deux documents aux hypothèses différentes l'affichent chacun — le
     lecteur qui tient les deux comprend d'où vient tout écart.
 
     M54-AB C4 : `marge_pct` doit être le total RÉELLEMENT déduit par le bilan servi (24 % =
     marge + honoraires + frais financiers du secteur), pas le défaut global agrégé (21 %) —
-    sinon l'encadré dit 21 % et la ligne bilan 24 %. `composantes` nomme la décomposition."""
+    sinon l'encadré dit 21 % et la ligne bilan 24 %. `composantes` nomme la décomposition.
+    M128-2-F1 : le coût est annoncé en FOURCHETTE (celle réellement utilisée par le bilan,
+    ex. 2100–2550 €/m²), jamais une valeur unique qui contredit le CA calculé sur la fourchette."""
+    cout_txt = (f"{cout_m2:g}–{cout_m2_haut:g} €/m²"
+                if cout_m2_haut and round(cout_m2_haut) != round(cout_m2) else f"{cout_m2:g} €/m²")
     detail = f" (soit {composantes})" if composantes else ""
     return (f"<div class='hyp-encadre'><span class='titre'>Hypothèses de calcul</span>"
-            f"Coût de construction <b>{cout_m2:g} €/m²</b> de surface de plancher · "
+            f"Coût de construction <b>{cout_txt}</b> de surface de plancher · "
             f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires{detail} — hypothèses "
             f"à ajuster : LABUSE ne les estime pas. Les valeurs sourcées "
             f"(surface vendable, prix DVF) viennent du moteur.</div>")
@@ -370,7 +375,7 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
     kpis = []
     bilan_ = out.get("bilan")
     if bilan_ and bilan_.charge_fonciere:
-        kpis.append(cartouche("Charge foncière · Estimé", eur(bilan_.charge_fonciere.get("central")),
+        kpis.append(cartouche("Charge foncière supportable · Estimé", eur(bilan_.charge_fonciere.get("central")),
                               "médiane", hero=True))
     kpis.append(cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
     fo = (out.get("faisabilite").fourchette if out.get("faisabilite") else {}) or {}
@@ -409,12 +414,22 @@ def identite(out: dict) -> str:
     regles = ""
     r = ident.get("regles") or {}
     if r.get("emprise_max_m2"):
-        regles += f"<tr><td>Emprise au sol maximale</td><td class='n'>{r['emprise_max_m2']} m²</td><td>{s('E')}</td></tr>"
-    if r.get("hauteur_max_m"):
-        # M54-AB C6 : hauteur TOTALE de zone (plafond PLU) — à distinguer de la hauteur d'égout
-        # RETENUE (~9 m, R+2) du scénario neuf en Faisabilité ci-après.
-        regles += (f"<tr><td>Hauteur totale de zone</td><td class='n'>{r['hauteur_max_m']} m</td>"
-                   f"<td>{s('E')}</td></tr>")
+        regles += f"<tr><td>Emprise au sol maximale</td><td class='n'>{r['emprise_max_m2']:g} m²</td><td>{s('E')}</td></tr>"
+    # M128-2-A : la hauteur affichée vient du PLU CALIBRÉ (résolu par zone + commune) — EXACTEMENT
+    # la même source que le scénario de faisabilité ci-après. On cesse de servir la hauteur générique
+    # de parcel_residuel_bati (9 m sur 207 k parcelles, faux sur 66,7 %). Égout ET faîtage, Sourcé
+    # (article PLU) quand la calibration le porte.
+    from ..faisabilite.plu_rules import resolve_zone
+    # le code de zone précis est dans `libelle` (« Ua », « UB »), pas `classe` (famille « U »/« AU »).
+    _zone_code = next((z.get("libelle") or z.get("classe")
+                       for z in (ident.get("zones") or []) if (z.get("libelle") or z.get("classe"))), None)
+    _zr = resolve_zone(_zone_code, p["commune"]) if _zone_code else None
+    if _zr and isinstance(getattr(_zr, "he_m", None), (int, float)):
+        _src_h = (getattr(_zr, "sources", None) or {}).get("hauteur")
+        _nat = s("S") if _src_h else s("E")
+        regles += (f"<tr><td>Hauteur d'égout retenue (PLU)</td><td class='n'>{_zr.he_m:g} m</td><td>{_nat}</td></tr>")
+        if isinstance(getattr(_zr, "hf_m", None), (int, float)):
+            regles += (f"<tr><td>Hauteur au faîtage (PLU)</td><td class='n'>{_zr.hf_m:g} m</td><td>{_nat}</td></tr>")
     body = ("<table>" + "".join(
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td><td>{s(prov)}</td></tr>" for k, v, prov in rows) + "</table>"
         f"<h3>Zonage du document d'urbanisme</h3>"
@@ -426,8 +441,8 @@ def identite(out: dict) -> str:
         body += f"<p class='note'>{esc(zv['detail'])}</p>"
     if regles:
         body += (f"<h3>Règles calibrées</h3><table><tr><th>Règle</th><th class='n'>Valeur</th><th>Nature</th></tr>"
-                 f"{regles}</table><p class='note'>Règles calibrées LABUSE (Estimé) — le règlement complet "
-                 f"(retraits, prospects, servitudes) peut modifier ces valeurs.</p>")
+                 f"{regles}</table><p class='note'>Règles calibrées LABUSE (nature par ligne) — le règlement "
+                 f"complet (retraits, prospects, servitudes) peut modifier ces valeurs.</p>")
     return f"<div class='pb'></div><h2>Identité de la parcelle</h2>{body}"
 
 
@@ -455,20 +470,32 @@ def faisabilite(out: dict) -> str:
         if fo.get("hauteur_m"):
             # M54-AB C6 : hauteur d'égout RETENUE (R+2), distincte de la hauteur totale de zone
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
-            parts.append(f"hauteur d'égout retenue ~{fo['hauteur_m']} m")
+            parts.append(f"hauteur d'égout retenue ~{fo['hauteur_m']:g} m")
         synth = f"<p><b>Potentiel indicatif :</b> {esc(' · '.join(parts))} {s('E')}</p>"
-        # M54-AB C3 / M128-A4 : la surface vendable retenue (capacité en logements, portée au bilan)
-        # et la dérivation de plancher ci-dessous diffèrent de ~1-2 m² — même scénario, deux méthodes.
-        # On NOMME les DEUX chiffres et l'écart, plutôt que de laisser un lecteur buter sur 218 vs 216.
+        # M128-2-H : l'écart entre la surface vendable (dérivée des LOGEMENTS) et la dérivation de
+        # plancher (rendement × SDP) est CALCULÉ, jamais codé « ~1-2 m² ». Sous le seuil (5 m²) =
+        # arrondi ; au-delà = écart de MÉTHODE nommé (deux chemins pour le même scénario).
         if fo.get("shab_vendable_m2"):
-            shab_derive = next((st.valeur for st in (fais.steps or [])
-                                if "habitable" in (st.label or "").lower()), None)
-            derive_txt = (f"la dérivation de plancher ci-dessous aboutit à {esc(shab_derive)} "
-                          "(surface habitable au rendement)" if shab_derive
-                          else "la dérivation de plancher ci-dessous aboutit à la surface habitable au rendement")
-            synth += (f"<p class='note'>Surface vendable retenue ~{fo['shab_vendable_m2']:.0f} m² "
-                      f"(capacité en logements, valeur portée au bilan) ; {derive_txt} — même "
-                      f"scénario, écart de méthode/arrondi (~1-2 m²).</p>")
+            _vend = fo["shab_vendable_m2"]
+            _sh = next((st.valeur for st in (fais.steps or [])
+                        if "habitable" in (st.label or "").lower()), None)
+            _m = _re.search(r"(\d[\d\s ]*)", _sh) if _sh else None
+            _deriv = int(_re.sub(r"[\s ]", "", _m.group(1))) if _m else None
+            if _deriv:
+                _ecart = abs(round(_vend) - _deriv)
+                if _ecart <= 5:
+                    _cause = f"écart d'arrondi ({_ecart} m²)"
+                else:
+                    _pct = 100 * _ecart / max(_deriv, 1)
+                    _cause = (f"écart de méthode ({_ecart} m², {_pct:.0f} %) — la surface vendable dérive "
+                              f"du nombre de logements (capacité), la dérivation de plancher applique le "
+                              f"rendement à la SDP ; même scénario, deux chemins de calcul")
+                synth += (f"<p class='note'>Surface vendable retenue ~{_vend:.0f} m² (capacité en "
+                          f"logements, portée au bilan) ; dérivation de plancher ~{_deriv} m² (habitable "
+                          f"au rendement) — {_cause}.</p>")
+            else:
+                synth += (f"<p class='note'>Surface vendable retenue ~{_vend:.0f} m² (capacité en "
+                          f"logements, portée au bilan).</p>")
     avert = "".join(f"<li>{esc(a)}</li>" for a in (fais.avertissements or []))
     # M54-AB C2 : NOMMER le scénario. Ce bloc chiffre le NEUF hors bâti existant (reculs, table
     # rase) — l'autre document (dossier/flash) chiffre le résiduel « bâti conservé ». L'avertissement
@@ -504,51 +531,60 @@ def bilan(out: dict) -> str:
         # DÉDUIT du CA (24 % = marge + honoraires + frais financiers du secteur), avec ses composantes
         # nommées — jamais le défaut global agrégé (21 %) qui contredirait la ligne bilan.
         from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
-        _coef = (getattr(bilan_, "calc", None) or {}).get("coef")
+        _calc = getattr(bilan_, "calc", None) or {}
+        _coef = _calc.get("coef")
         _marge_frais = round((1 - _coef) * 100) if _coef is not None else CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
         _composantes = next((st.formule for st in (bilan_.steps or [])
                              if st.label.startswith("Marge + frais")), None)
-        body += hypotheses_encadre(CALCULETTE_COUT_DEFAUT_M2, _marge_frais, composantes=_composantes)
+        body += hypotheses_encadre(_calc.get("cm_bas", CALCULETTE_COUT_DEFAUT_M2), _marge_frais,
+                                   composantes=_composantes, cout_m2_haut=_calc.get("cm_haut"))
         steps = "".join(
             f"<tr><td>{esc(st.label)}</td><td class='n'>{esc(st.valeur)}</td>"
             f"<td>{s({'sourcee':'S'}.get(st.prov, 'E'))}</td></tr>" for st in bilan_.steps)
         body += (f"<table><tr><th>Poste</th><th class='n'>Valeur</th><th>Nature</th></tr>{steps}</table>")
         cf = bilan_.charge_fonciere or {}
         if cf:
-            body += (f"<h3>Charge foncière supportable (fourchette) — {s('E')}</h3>"
-                     f"<table><tr><th class='n'>Basse</th><th class='n'>Centrale</th><th class='n'>Haute</th>"
+            # M128-2-D : UNIQUE occurrence de la fourchette (retirée de la ligne d'étape). D2(a) : la
+            # borne basse RÉELLE (négative = plancher), la médiane au centre. Note « plancher » si < 0.
+            _bas = cf.get("bas")
+            _plancher = ""
+            if isinstance(_bas, (int, float)) and _bas < 0:
+                _plancher = ("<p class='note'>Borne basse négative : aux coûts hauts / prix bas, "
+                             "l'opération ne dégage aucune valeur pour le terrain (plancher de la "
+                             "fourchette, pas un prix). La médiane est au centre de la fourchette.</p>")
+            body += (f"<h3>Charge foncière supportable — fourchette {s('E')}</h3>"
+                     f"<table><tr><th class='n'>Basse (plancher)</th><th class='n'>Médiane</th><th class='n'>Haute</th>"
                      f"<th class='n'>Par m² terrain</th></tr>"
-                     f"<tr><td class='n'>{eur(cf.get('bas'))}</td><td class='n'>{eur(cf.get('central'))}</td>"
+                     f"<tr><td class='n'>{eur(_bas)}</td><td class='n'>{eur(cf.get('central'))}</td>"
                      f"<td class='n'>{eur(cf.get('haut'))}</td><td class='n'>{esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>"
+                     f"{_plancher}"
                      f"<p class='note'>Fiabilité du bilan : {esc(bilan_.fiabilite)}. {esc(bilan_.bandeau)}</p>")
     sa = score_e_affiche(out)
     if sa:
-        from ..ingestion.score_e import niveau_label
         # M54-AB C3 : la charge LUE ici = celle du bilan à rebours ci-dessus (point de calcul
-        # unique), jamais la charge Score É recalculée à 21 % — sinon 71 vs 69 k€ sur le même
-        # document. La marge en découle. On ne réutilise plus se['detail'] (il citait 71 k€ / ×0.79).
-        # M97 G2 : le REPLI Score É (bilan indisponible) reste légitime mais il est NOMMÉ, visible à
-        # côté du chiffre — une substitution silencieuse est un péché mortel (audit M96).
+        # unique). M128-2-C : CHAQUE montant porte la qualification de SA source — la charge vient du
+        # bilan à rebours, le prix PROBABLE du foncier est une médiane terrain sectorielle. Ne plus
+        # coller « prix de sortie neuf » sur le prix probable (deux objets marché différents).
+        # M128-2-E : terme unique « charge foncière supportable ». B7 : plus de « Score É » en vitrine.
         terrain = out["parcelle"]["surface_m2"]
         if sa["charge_du_bilan"]:
-            provenance = "<p><b>Charge foncière issue du bilan à rebours</b> (ci-dessus).</p>"
-            detail = (f"Charge supportable = charge foncière acceptable du bilan à rebours ci-dessus "
-                      f"({eur(sa['charge'])}) ; prix probable du foncier = médiane terrain sectorielle "
-                      f"× {terrain:.0f} m². Estimé — hors coûts spécifiques (démolition, dépollution, VRD, "
-                      f"stationnement, TVA, aléas). N'est ni un prix ni une promesse.")
+            provenance = "<p><b>Charge foncière supportable issue du bilan à rebours</b> (ci-dessus).</p>"
+            detail = (f"Charge foncière supportable = bilan à rebours ci-dessus ({eur(sa['charge'])}) ; "
+                      f"prix probable du foncier = médiane terrain sectorielle × {terrain:.0f} m². Estimé — "
+                      f"hors coûts spécifiques (démolition, dépollution, VRD, stationnement, TVA, aléas). "
+                      f"N'est ni un prix ni une promesse.")
         else:
-            provenance = ("<p><b>Charge estimée par le Score É — bilan complet indisponible sur "
-                          "cette parcelle.</b></p>")
-            detail = (f"Charge supportable = charge estimée par le Score É ({eur(sa['charge'])}, "
-                      f"barème sectoriel — le bilan à rebours n'a pas pu être calculé ici) ; prix "
-                      f"probable du foncier = médiane terrain sectorielle × {terrain:.0f} m². Estimé — "
-                      f"hors coûts spécifiques (démolition, dépollution, VRD, stationnement, TVA, "
-                      f"aléas). N'est ni un prix ni une promesse.")
+            provenance = ("<p><b>Charge foncière supportable estimée au barème sectoriel — bilan "
+                          "complet indisponible sur cette parcelle.</b></p>")
+            detail = (f"Charge foncière supportable = barème sectoriel ({eur(sa['charge'])}, le bilan à "
+                      f"rebours n'a pas pu être calculé ici) ; prix probable du foncier = médiane terrain "
+                      f"sectorielle × {terrain:.0f} m². Estimé — hors coûts spécifiques (démolition, "
+                      f"dépollution, VRD, stationnement, TVA, aléas). N'est ni un prix ni une promesse.")
         body += (f"<h3>Marge foncière estimée {s('E')}</h3>"
                  f"{provenance}"
-                 f"<p><b>{eur(sa['marge'])}</b> = charge supportable {eur(sa['charge'])} "
+                 f"<p><b>{eur(sa['marge'])}</b> = charge foncière supportable {eur(sa['charge'])} "
                  f"− prix probable du foncier {eur(sa['prix_probable'])} "
-                 f"(prix de sortie neuf — {esc(niveau_label(sa['niveau_prix']))}).</p>"
+                 f"(médiane terrain sectorielle × {terrain:.0f} m²).</p>"
                  f"<p class='note'>{esc(detail)}</p>")
         # MANDAT_DVF-B Phase 2 — le garde-fou du 2× : la charge foncière SUPPORTABLE (projection du
         # bilan à rebours) confrontée au prix PROBABLE du foncier (référence marché, médiane terrain
@@ -574,7 +610,12 @@ def comparables(out: dict) -> str:
     # M54-AB C5 : 3 lignes commune du bloc Marché M-U (tendance, liquidité, offre), chacune datée.
     cm = out.get("commune_marche") or []
     if cm:
-        lignes = "".join(f"<li>{esc(l['phrase'])}</li>" for l in cm)
+        import re as _re2
+        # M128-2-L2 : règle unique de séparateur — les €/m² s'écrivent sans espace de milliers,
+        # comme les tableaux du bilan (« 2192 €/m² », pas « 2 192 » ici et « 2192 » là).
+        def _sep(txt: str) -> str:
+            return _re2.sub(r"(?<=\d)\s(?=\d{3}\b)", "", txt or "")
+        lignes = "".join(f"<li>{esc(_sep(l['phrase']))}</li>" for l in cm)
         body += f"<h3>Marché de la commune {s('S')}</h3><ul>{lignes}</ul>"
     if prix and prix.get("median"):
         # Comparables DVF de l'EXISTANT (pas le prix de sortie neuf du bilan — mandat prix sortie
@@ -585,7 +626,7 @@ def comparables(out: dict) -> str:
                  f"<tr><td class='n'>{esc(prix.get('q1'))}</td><td class='n'>{esc(prix.get('median'))}</td>"
                  f"<td class='n'>{esc(prix.get('q3'))}</td><td class='n'>{esc(prix.get('n'))}</td>"
                  f"<td>{esc(prix.get('periode'))}</td><td>{esc(prix.get('fiabilite'))}</td></tr></table>"
-                 f"<p class='note'>€/m² habitable · rayon {esc(prix.get('radius_m'))} m adaptatif autour de la parcelle"
+                 f"<p class='note'>€/m² habitable · rayon {int(prix.get('radius_m') or 0)} m adaptatif autour de la parcelle"
                  + (" · repli commune" if prix.get("commune_fallback") else "") + ".</p>")
         # MANDAT_DVF-B — la RÉSERVE de méthode accompagne le chiffre (helper unique, écrite une fois).
         from ..marche_service import reserve_methode
@@ -620,31 +661,42 @@ def risques(out: dict) -> str:
     # servis (codes techniques, proxys SAFER/SAR-couche/OCS GE/ENS) avant impression au financeur.
     from .export_commun import nettoyer_libelle_client as _net
     rap = out.get("rapport") or {}
-    risq, pat = rap.get("risques") or {}, rap.get("patrimoine") or {}
-    items = []
-    for it in risq.get("couches", []):
-        items.append(("Risque", it["label"], _net(it.get("kind"), it.get("detail"))))
-    for it in pat.get("couches", []):
-        items.append(("Servitude", it["label"], _net(it.get("kind"), it.get("detail"))))
-    # M73 : ABF issu de la LIGNE SERVIE (arbitrée) — plus de « 0 m » distance-à-tampon.
-    if pat.get("abf_note"):
-        items.append(("Patrimoine", "Abords de monument historique", _net("abf", pat["abf_note"])))
+    risq, pat = rap.get("risques"), rap.get("patrimoine")
     zan = out.get("zan")
     body = "<div class='pb'></div><h2>Risques, servitudes & sobriété foncière</h2>"
-    if items:
-        rows = "".join(f"<tr><td>{esc(t)}</td><td>{esc(lbl)}</td><td>{esc(d or 'parcelle concernée')}</td></tr>"
-                       for t, lbl, d in items)
-        body += f"<table><tr><th>Nature</th><th>Élément</th><th>Détail</th></tr>{rows}</table>"
-    else:
-        body += "<p class='note'>Aucune servitude ni risque connu dans les couches analysées (à confirmer).</p>"
+
+    # M128-2-K : panne ≠ absence. CHAQUE famille annoncée par le titre porte un état EXPLICITE :
+    # constat listé, sinon « aucun constat » (couche interrogée, rien trouvé), sinon INDISPONIBLE
+    # (couche non interrogée). Un tableau vide ne doit jamais se lire « aucune servitude » par défaut.
+    def _famille(titre: str, data: dict | None, avec_abf: bool = False) -> str:
+        if data is None:
+            return (f"<h3>{titre}</h3><p class='note'><b>INDISPONIBLE</b> — couche non interrogée "
+                    f"pour cette parcelle (absence de donnée, pas absence de contrainte).</p>")
+        rows = [(c["label"], _net(c.get("kind"), c.get("detail"))) for c in (data.get("couches") or [])]
+        if avec_abf and data.get("abf_note"):
+            rows.append(("Abords de monument historique", _net("abf", data["abf_note"])))
+        if rows:
+            body_rows = "".join(f"<tr><td>{esc(lbl)}</td><td>{esc(d or 'parcelle concernée')}</td></tr>"
+                                for lbl, d in rows)
+            return (f"<h3>{titre}</h3><table><tr><th>Élément</th><th>Détail / niveau</th></tr>"
+                    f"{body_rows}</table>")
+        return (f"<h3>{titre}</h3><p class='note'>Aucun constat dans les couches analysées "
+                f"(état renseigné, pas « inconnu »).</p>")
+
+    body += _famille("Risques (aléas, PPR, pollution, mouvements de terrain, ICPE…)", risq)
+    body += _famille("Servitudes &amp; patrimoine (ABF, espaces protégés, QPV…)", pat, avec_abf=True)
     if zan:
         c2 = zan.get("conso_2021_2024_m2")
+        c1 = zan.get("conso_2011_2021_m2")
+        # M128-2-L1 : hectares sans décimale parasite (« 20 ha », pas « 20.0 ha »).
+        _ha1 = f"{round(c1 / 10000)} ha" if c1 else "—"
+        _ha2 = f"{round(c2 / 10000)} ha" if c2 else "—"
         # M54-AB C8 : le banquier montre le TOTAL consommé sur la période (ha) ; le dossier/flash
         # montre le RYTHME annuel (m²/an) sur les MÊMES périodes — chaque métrique est étiquetée.
         body += (f"<h3>ZAN — consommation d'espaces (commune) {s('S')}</h3>"
                  f"<table><tr><th>Période</th><th class='n'>ENAF consommé (total période)</th></tr>"
-                 f"<tr><td>2011–2021</td><td class='n'>{esc(round(zan['conso_2011_2021_m2']/10000, 1) if zan.get('conso_2011_2021_m2') else '—')} ha</td></tr>"
-                 f"<tr><td>2021–2024</td><td class='n'>{esc(round(c2/10000, 1) if c2 else '—')} ha</td></tr></table>"
+                 f"<tr><td>2011–2021</td><td class='n'>{esc(_ha1)}</td></tr>"
+                 f"<tr><td>2021–2024</td><td class='n'>{esc(_ha2)}</td></tr></table>"
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "
                  f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Voir la fiche commune pour budget/reste.</p>")
     return body

@@ -361,9 +361,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         sol_dispo = max(0.0, surface_m2 - footprint - pt_area)
         log_max_park = sol_dispo / (ppl * hyp.place_m2)
         steps.append(Step("Stationnement — scénario au sol",
-                          f"{ppl:g} pl./logt × {hyp.place_m2:g} m² ; sol restant {sol_dispo:.0f} m² "
-                          f"→ ≤ {log_max_park:.0f} logts", "plafond au sol",
-                          rules.sources.get("stationnement", "Art. 12")))
+                          f"sol restant = terrain {surface_m2:.0f} − emprise bâtie {footprint:.0f} "
+                          f"− pleine terre {pt_area:.0f} = {sol_dispo:.0f} m² ; "
+                          f"{ppl:g} pl./logt × {hyp.place_m2:g} m² → ≤ {log_max_park:.0f} logts",
+                          "plafond au sol", rules.sources.get("stationnement", "Art. 12")))
         steps.append(Step("Stationnement — scénario sous-sol/silo",
                           "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
                           f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12")))
@@ -418,6 +419,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
     sous_lo, sous_hi = sous_lo * facteur, sous_hi * facteur
+
+    # M128-2-I1 : ligne FINALE de logements = EXACTEMENT la fourchette portée au bandeau et au bilan
+    # (plafond de densité ∩ stationnement au sol, puis modulation, arrondie plancher/plafond comme
+    # `_rng`). Sans elle, le bandeau « 2 à 4 » ne se déduisait d'aucune ligne (le tableau montrait ~3,
+    # arrondi au plus proche — deux conventions d'arrondi pour un même nombre).
+    _fin_lo, _fin_hi = _rng(sol_lo, sol_hi)
+    _mod_note = " (après modulation réunionnaise)" if facteur < 1.0 else ""
+    steps.append(Step("Logements retenus au sol",
+                      f"plafond de densité ∩ stationnement au sol{_mod_note}",
+                      f"~{_fin_lo} à {_fin_hi}", "dérivé"))
 
     rp = f"R+{max(0, niveaux - 1)}"
     logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0

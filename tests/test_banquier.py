@@ -73,18 +73,18 @@ def test_comparables_ancien_vefa_sources():
     assert "Sourcé" in html and "VEFA" in html and "3900" in html and "SITADEL" in html
 
 
-def test_bilan_niveau_prix_visible_wording_vic():
-    # exigence Vic (flag Score É levé) : le niveau du prix visible en clair dans le dossier banquier.
-    # Repli île (mandat couverture prix, Vic 28/07/2026) : 4 niveaux de confiance visibles.
+def test_bilan_prix_probable_porte_sa_propre_source():
+    # M128-2-C : chaque montant porte la qualification de SA source. Le prix PROBABLE du foncier est
+    # une médiane terrain sectorielle — on ne lui colle plus « prix de sortie neuf — estimation île ».
+    # M128-2-C10 : plus de « validée sur cette commune » (auto-validation non fondée sur un repli île).
+    # Le niveau du prix de sortie neuf reste visible, à sa place : la ligne « Prix de sortie neuf » du
+    # bilan servi (niveau_prix_label), jamais recollé au prix probable du foncier.
     out = _out_complet()
-    out["score_e"]["niveau_prix"] = "commune"
-    assert "estimation niveau commune" in bq.bilan(out)
-    out["score_e"]["niveau_prix"] = "secteur"
-    assert "estimation niveau secteur" in bq.bilan(out)
     out["score_e"]["niveau_prix"] = "ile_validee"
-    assert "validée sur cette commune" in bq.bilan(out)
-    out["score_e"]["niveau_prix"] = "ile_sans_operation"
-    assert "aucune opération de marché observée" in bq.bilan(out)
+    html = bq.bilan(out)
+    assert "médiane terrain sectorielle" in html                 # prix probable = sa vraie source
+    assert "prix de sortie neuf — estimation" not in html        # plus de qualification empruntée
+    assert "validée sur cette commune" not in html               # M128-2-C10
 
 
 def test_score_e_non_estimable_pas_de_chiffre():

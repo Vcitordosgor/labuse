@@ -55,13 +55,32 @@ def get_db():
 
 # ───────────────────────── synthèse exécutive (socle IA, strict_numbers) ─────────────────────────
 
+# M128-2-B — verrou QUALITATIF (l'équivalent de strict_numbers pour les mots). Trois défauts
+# constatés : contresens sur le sens de la marge, verdicts sur l'opération, dramatisation d'un aléa
+# faible (jusqu'à inventer un « PPR applicable »). Le prompt (a) dicte le sens de la marge, (b)
+# interdit tout verdict, (c) interdit d'introduire un objet juridique / une conséquence absents des
+# faits, (d) borne les qualificatifs à une liste blanche. La liste blanche est le « gabarit à trous »
+# demandé : hors d'elle, aucun adjectif de valeur n'est autorisé.
+_QUALIFICATIFS_AUTORISES = ("estimé", "indicatif", "de l'ordre de", "sourcé")
 _SYSTEM_SYNTHESE = (
     "Tu es analyste foncier. Rédige une SYNTHÈSE EXÉCUTIVE de 4 à 6 phrases pour un dossier de "
-    "présentation à un banquier, à partir des SEULS faits fournis (chacun avec sa provenance). "
-    "Règles ABSOLUES : n'invente AUCUN chiffre ni fait absent du contexte ; ne cite pas de score "
-    "interne ni de classement ; reste factuel et prudent ; qualifie les estimations d'« estimé ». "
-    "Structure : le foncier et son potentiel, la charge foncière supportable, le marché de comparaison, "
-    "les points de vigilance. Pas de listes, un paragraphe."
+    "présentation à un banquier, à partir des SEULS faits fournis (chacun avec sa provenance).\n"
+    "RÈGLES ABSOLUES :\n"
+    "1. N'invente AUCUN chiffre ni fait absent du contexte ; ne cite ni score interne ni classement.\n"
+    "2. N'introduis AUCUN objet juridique, dispositif ou conséquence qui ne figure pas dans les faits. "
+    "Ne mentionne un « PPR », un « plan de prévention », une « servitude » ou des « conditions "
+    "d'assurance » QUE si un fait les nomme explicitement.\n"
+    "3. Ne porte AUCUN verdict ni appréciation sur l'opération : bannis « fragilise », « conforte », "
+    "« équilibre », « opportunité », « intéressant », « risqué », « solide ». Tu DÉCRIS, tu ne conclus pas.\n"
+    "4. La marge est DÉJÀ calculée et fournie. Une marge négative signifie EXACTEMENT : le prix "
+    "probable du foncier dépasse la charge foncière supportable. Reprends ce sens, ne le reformule pas.\n"
+    "5. Un aléa ou une contrainte n'est cité qu'au NIVEAU donné par le fait (ex. « aléa faible ») ; "
+    "n'élève jamais un signal faible au rang de « principal point de vigilance ».\n"
+    "6. Seuls ces qualificatifs d'estimation sont autorisés : « estimé », « indicatif », "
+    "« de l'ordre de ». Aucun autre adjectif de valeur.\n"
+    "7. Écris les nombres SANS séparateur de milliers (ex. « 4375 €/m² »), comme les tableaux.\n"
+    "Structure : le foncier et son potentiel ; la charge foncière supportable et la marge ; le marché "
+    "de comparaison ; les points de vigilance FACTUELS. Pas de listes, un paragraphe."
 )
 
 
@@ -69,7 +88,7 @@ def _facts_synthese(out: dict, core_mod):
     F = core_mod.Fact
     facts: dict = {}
     p = out["parcelle"]
-    facts["parcelle"] = F(f"parcelle {p['idu']} à {p['commune']}, {p['surface_m2']} m² de terrain", "SOURCE")
+    facts["parcelle"] = F(f"parcelle {p['idu']} à {p['commune']}, {p['surface_m2']:g} m² de terrain", "SOURCE")
     fais = out.get("faisabilite")
     if fais is not None:
         fo = fais.fourchette or {}
@@ -106,30 +125,40 @@ def _facts_synthese(out: dict, core_mod):
     # M54-AB C3 : la marge SYNTHÉTISÉE découle de la charge du bilan à rebours (point de calcul
     # unique), jamais de la charge Score É recalculée à 21 % — sinon la synthèse cite -18 k€ et le
     # bloc Score É -19 k€ dans le même dossier.
-    from ..ingestion.score_e import niveau_label
     from .briques_pdf import score_e_affiche
     sa = score_e_affiche(out)
     if sa:
         # M97 G2 : la provenance de la charge entre dans le FAIT synthétisé — la prose IA ne peut
         # pas attribuer au bilan une charge qui vient du repli barème sectoriel (bilan indisponible).
-        # M128-B7 : plus de « Score É » (libellé interne) en vitrine ; niveau en clair, jamais le code.
-        prov = ("charge du bilan à rebours" if sa["charge_du_bilan"]
+        # M128-2-B1 : le fait porte l'ARITHMÉTIQUE et le SENS de la marge (charge − prix probable),
+        # pour que le modèle ne le reformule pas à contresens. La qualification du prix de sortie neuf
+        # reste sur SON fait (prix_sortie_neuf) — le prix probable du foncier, lui, est une médiane
+        # terrain sectorielle (M128-2-C : chaque montant porte la qualification de SA source).
+        prov = ("charge issue du bilan à rebours" if sa["charge_du_bilan"]
                 else "charge estimée au barème sectoriel, bilan complet indisponible")
-        facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} "
-                           f"({prov} ; prix de sortie neuf, {niveau_label(sa['niveau_prix'])})", "ESTIME")
+        sens = ("le prix probable du foncier dépasse la charge foncière supportable" if sa["marge"] < 0
+                else "la charge foncière supportable dépasse le prix probable du foncier")
+        facts["marge"] = F(f"marge foncière estimée {_eur(sa['marge'])} = charge foncière supportable "
+                           f"{_eur(sa['charge'])} − prix probable du foncier (médiane terrain sectorielle) "
+                           f"{_eur(sa['prix_probable'])} ; {sens} ({prov})", "ESTIME")
     perm = out.get("permits")
     if perm and perm.get("n"):
         facts["permis_voisins"] = F(f"{perm['n']} permis de construire dans le voisinage récent", "SOURCE")
-    # points de vigilance : servitudes/risques
+    # points de vigilance : servitudes/risques — au NIVEAU indiqué par le constat (M128-2-B3/B5).
     rap = out.get("rapport") or {}
     vig = []
     for sec in ("risques", "patrimoine"):
         for it in (rap.get(sec) or {}).get("couches", []):
-            vig.append(it["label"])
-    if (rap.get("patrimoine") or {}).get("abf"):
+            d = (it.get("detail") or "").strip()
+            vig.append(f"{it['label']} — {d}" if d else it["label"])
+    if (rap.get("patrimoine") or {}).get("abf") or (rap.get("patrimoine") or {}).get("abf_note"):
         vig.append("abords de monument historique (avis ABF probable)")
     if vig:
-        facts["vigilance"] = F("points de vigilance : " + ", ".join(sorted(set(vig))[:6]), "SOURCE")
+        facts["vigilance"] = F("points de vigilance constatés, au niveau indiqué : "
+                               + " ; ".join(sorted(set(vig))[:6]), "SOURCE")
+    else:
+        # M128-2-B4 : aucun signal saillant → on le DIT, on n'élit rien comme point principal.
+        facts["vigilance"] = F("aucun point de vigilance saillant dans les couches analysées", "SOURCE")
     return facts
 
 
@@ -272,4 +301,4 @@ def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
         pdf = _build_pdf(db, idu, marque=marque)
         _cache_put(key, pdf)
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="dossier_banquier_{idu}.pdf"'})
+                    headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})
