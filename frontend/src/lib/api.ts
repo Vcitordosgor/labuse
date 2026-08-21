@@ -619,6 +619,9 @@ export const modPromessesCount = (months: number) =>
   j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
 export const modVelocite = (nature?: string | null) =>
   j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
+// M137-Z — Rareté (horizon ZAN + stock foncier par commune), pour la fiche commune de l'outil Communes.
+export const motRarete = () =>
+  j<{ communes: Record<string, unknown>[]; caveat: string; [k: string]: unknown }>('/pipeline-rarete')
 // M15-G — plus d'héritage du filtre commune global (cq) : le périmètre est choisi DANS l'outil.
 export const modBailleur = (commune?: string | null) =>
   j<Record<string, unknown>>(`/modules/bailleur${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)

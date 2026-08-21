@@ -733,9 +733,11 @@ _CONCEPT_MAP = [
     # M112 — les 11 outils invisibles du registre (mots-clés SPÉCIFIQUES, sans collision avec le
     # comptage/marché/délais : jamais « permis » nu, jamais « renouvellement » nu, jamais « marché »).
     # Marché & veille d'abord (valeur d'usage), reconnaissance depuis les libellés servis du registre.
+    # M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté). Les concepts
+    # « comparer les communes » et « rareté du foncier » y mènent (table des 24 → fiche commune).
     (("comparateur de communes", "comparer les communes", "comparer des communes", "ou investir",
       "quelle commune investir", "quelle commune pour investir", "meilleures communes ou investir"),
-     ("o6-comparateur", "Comparateur de communes")),
+     ("communes", "Communes")),
     (("barometre", "état du marché foncier", "etat du marche foncier", "barometre foncier"),
      ("barometre", "Baromètre foncier")),
     (("radar permis", "qui construit quoi", "qui construit a", "qui construit dans",
@@ -745,7 +747,7 @@ _CONCEPT_MAP = [
     (("simulateur zan", "artificialisation", "contrainte d'artificialisation", "contrainte zan",
       "zan de la commune", "objectif zan"), ("zan", "Simulateur ZAN")),
     (("rarete du foncier", "rarete foncier", "le foncier se rarefie", "ou le foncier se rarefie",
-      "combien de constructible reste"), ("o9-rarete", "Rareté du foncier")),
+      "combien de constructible reste"), ("communes", "Communes")),
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
       "vue renouvellement du"), ("renouvellement", "Renouvellement")),
     (("changement de plu", "si cette zone passait", "zone passait constructible",

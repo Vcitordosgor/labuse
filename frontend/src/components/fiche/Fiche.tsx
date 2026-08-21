@@ -2172,10 +2172,12 @@ export function Fiche({ idu }: { idu: string }) {
                   indicateurs COMMUNAUX (9 lignes) vivent dans l'outil ; la fiche garde le parcelle/section.
                   `setCommune` = le point d'entrée unique de l'app (le tool lit useApp.commune au montage) ;
                   le nom est SERVI (`f.commune`), jamais en dur. */}
+              {/* M137-Z — l'outil « Marché » a fusionné dans « Communes » : la porte ouvre directement la
+                  fiche commune (via communePrefill), qui porte le bloc marché complet + rareté + vélocité. */}
               {f.commune && (
                 <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
-                  sous="Le bloc commune complet — prix, rythmes, offre, loyer (9 lignes sourcées et datées)"
-                  onClick={() => { useApp.getState().setCommune(f.commune!); setModule('marche') }} />
+                  sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
+                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunePrefill(f.commune!); setModule('communes') }} />
               )}
               {/* M125-2 — contexte socio-éco du secteur (Filosofi + parc social RPLS), hors scoring */}
               {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}

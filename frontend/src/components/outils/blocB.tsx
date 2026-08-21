@@ -105,7 +105,8 @@ const PONDER_LABELS: Record<string, string> = {
   deficit_sru: 'Déficit SRU', pression_zan: 'Pression ZAN', prix_neuf: '€/m² neuf',
 }
 
-export function O6Comparateur() {
+// M137-Z — `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
+export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => void } = {}) {
   const [poids, setPoids] = useState<Record<string, number>>({
     stock: 30, velocite: 15, permis: 15, deficit_sru: 15, pression_zan: 10, prix_neuf: 15,
   })
@@ -157,16 +158,19 @@ export function O6Comparateur() {
                   Composite {tri === 'score_composite' ? '↓' : ''}</button>
                 <span className="text-right text-[9px] uppercase tracking-wide text-mint">{sel.label} ↓</span>
               </div>
-              {rows.map((c, i) => (
-                <div key={String(c['insee'])} data-o6-row className="grid grid-cols-[1fr_58px_74px] items-baseline gap-1 border-b border-line py-1.5 text-[11px]">
+              {rows.map((c, i) => {
+                const Cell = onSelect ? 'button' : 'div'
+                return (
+                <Cell key={String(c['insee'])} data-o6-row {...(onSelect ? { onClick: () => onSelect(String(c['commune'])), title: 'Voir la fiche commune →' } : {})}
+                  className={`grid w-full grid-cols-[1fr_58px_74px] items-baseline gap-1 border-b border-line py-1.5 text-left text-[11px] ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
                   <span className="min-w-0 truncate text-txt">
-                    <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}</span>
+                    <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}{onSelect ? ' →' : ''}</span>
                   <span className={`tnum text-right font-mono ${i < 3 ? 'font-semibold text-mint' : 'text-txt'}`}>
                     {c['score_composite'] == null ? '—' : Number(c['score_composite']).toLocaleString('fr-FR')}</span>
                   <span data-o6-metric className="tnum text-right font-mono text-txt-mut">
                     {c[sel.k] == null ? '—' : `${Number(c[sel.k]).toLocaleString('fr-FR')}${sel.unite ?? ''}`}</span>
-                </div>
-              ))}
+                </Cell>
+              )})}
             </>
           )
         })()}

@@ -21,11 +21,12 @@ IDU = "97415000AC0016"
 CAS: list[tuple[str, str]] = [
     # ── 11 outils invisibles → porte module ──
     ("Ouvre le baromètre du foncier", "barometre"),
-    ("Où investir à La Réunion ?", "o6-comparateur"),
+    # M137-Z — « où investir » et « rareté du foncier » → outil « Communes » (fusion).
+    ("Où investir à La Réunion ?", "communes"),
     ("Qui construit quoi à Saint-Paul ?", "permis"),
     ("Montre-moi les promesses mortes", "promesses"),
     ("Ouvre le simulateur ZAN", "zan"),
-    ("Quelle est la rareté du foncier à Cilaos ?", "o9-rarete"),
+    ("Quelle est la rareté du foncier à Cilaos ?", "communes"),
     ("Le potentiel de renouvellement urbain à Saint-Denis", "renouvellement"),
     ("Et si cette zone passait constructible ?", "simulplu"),
     ("Les bascules du mois", "o10-bascules"),

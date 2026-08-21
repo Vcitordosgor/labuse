@@ -468,3 +468,33 @@ def test_m137_tuiles_ne_crashent_pas(client):
             s.execute(sqla_text("DROP TABLE IF EXISTS mvt_meta"))
             s.execute(sqla_text("DELETE FROM p_score_v2_runs WHERE run_id=:r AND model_version='m137gate'"),
                       {"r": Q_A_RUN_LABEL})
+
+
+def test_outils_commune_ne_crashent_pas(client):
+    """M137-Z — LE TROU DU LOT : aucun des endpoints « échelle commune » n'avait de test « ne lève pas »
+    (audit AUDIT_OUTILS_COMMUNE §0). Même patron que test_m136_exports_ne_crashent_pas : sur le contrat
+    data-gap (tables contexte VIDES au conftest), chacun DOIT répondre 200, jamais un 500 « relation
+    inexistante ». Couvre aussi les 3 corrections de véracité (M137-Z)."""
+    # Rareté — garde table-absente déjà présente ; ici la table est vide.
+    r = client.get("/pipeline-rarete")
+    assert r.status_code == 200, r.text[:200]
+    assert "caveat" in r.json()   # le caveat monte à l'écran
+
+    # Vélocité — plus de rang_delai (correction 2) ; l'homogénéité est DITE ; tranche p25-p75.
+    r = client.get("/modules/velocite")
+    assert r.status_code == 200, r.text[:200]
+    v = r.json()
+    assert "communes_homogenes" in v and "tranche" in v["indicateur"].lower()
+    assert all("rang_delai" not in c for c in v["communes"])   # le classement par médiane a disparu
+
+    # Baromètre — le plafond DIT (correction 3) : « les N premières sur M ».
+    r = client.get("/moteurs/barometre")
+    assert r.status_code == 200, r.text[:200]
+    b = r.json()
+    assert "top_communes_cap" in b and "top_communes_total" in b
+    assert len(b["top_communes_prix"]) <= b["top_communes_cap"]
+
+    # Marché (une commune) · Comparateur · Carnet — ne lèvent pas sur la base data-gap.
+    assert client.get("/moteurs/marche/Saint-Paul").status_code == 200
+    assert client.get("/comparateur-communes").status_code == 200
+    assert client.get("/carnet-secteur").status_code == 200

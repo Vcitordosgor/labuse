@@ -21,11 +21,13 @@ from labuse.copilote_v2.answering import (
 # ───────────────────────── 1. concepts-outils → porte ─────────────────────────
 @pytest.mark.parametrize("message, module", [
     ("le barometre du foncier", "barometre"),
-    ("ou investir a La Reunion", "o6-comparateur"),
+    # M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté) : « où investir » et
+    # « rareté du foncier » ouvrent désormais la porte « communes » (table 24 → fiche commune).
+    ("ou investir a La Reunion", "communes"),
     ("qui construit quoi a Saint-Paul", "permis"),
     ("les promesses mortes", "promesses"),
     ("le simulateur zan", "zan"),
-    ("la rarete du foncier", "o9-rarete"),
+    ("la rarete du foncier", "communes"),
     ("potentiel de renouvellement", "renouvellement"),
     ("si cette zone passait constructible", "simulplu"),
     ("les bascules du mois", "o10-bascules"),

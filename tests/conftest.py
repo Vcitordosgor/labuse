@@ -196,8 +196,10 @@ def engine():
         # ne casse plus sur « relation inexistante » (0 ligne = section « non disponible » sourcée).
         _c.execute(text(
             "CREATE TABLE IF NOT EXISTS commune_contexte_sru ("
-            "  commune varchar, statut varchar, taux_lls numeric, objectif_pct numeric,"
+            "  insee varchar, commune varchar, statut varchar, taux_lls numeric, objectif_pct numeric,"
             "  millesime varchar, detail jsonb, importe_le timestamptz DEFAULT now())"))
+        # M137-Z — le Comparateur joint la SRU sur `insee` : l'ajouter aux bases de test antérieures.
+        _c.execute(text("ALTER TABLE commune_contexte_sru ADD COLUMN IF NOT EXISTS insee varchar"))
         _c.execute(text(
             "CREATE TABLE IF NOT EXISTS commune_insee_logement ("
             "  commune varchar, importe_le timestamptz DEFAULT now())"))
@@ -208,6 +210,44 @@ def engine():
         _c.execute(text(
             "CREATE TABLE IF NOT EXISTS plh_epci ("
             "  epci varchar, importe_le timestamptz DEFAULT now())"))
+        # M137-Z — les tables des OUTILS COMMUNE (Rareté/Vélocité/Marché/Comparateur/Carnet) hors ORM :
+        # matérialisées VIDES → les endpoints ne cassent plus sur « relation inexistante » (contrat
+        # data-gap = 0 ligne, jamais une erreur SQL). Verrou : test_outils_commune_ne_crashent_pas.
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS m10_permit_delais ("
+            "  permit_id varchar PRIMARY KEY, commune varchar, nature varchar, famille varchar,"
+            "  date_depot date, date_autorisation date, date_achevement date, delai_mois integer,"
+            "  valide boolean NOT NULL DEFAULT false, computed_at timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS commune_conso_enaf ("
+            "  insee varchar PRIMARY KEY, commune varchar, conso_2011_2021_m2 double precision,"
+            "  conso_2021_2024_m2 double precision, hab_2011_2021_m2 double precision,"
+            "  hab_2021_2024_m2 double precision, source_nom text, source_url text,"
+            "  millesime varchar, importe_le timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS dvf_prix_sortie_neuf ("
+            "  cle varchar, niveau text, prix_m2_neuf integer, n integer, computed_at timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS dvf_mutations_parcelle ("
+            "  id bigint, id_mutation text, date_mutation date, nature_mutation text,"
+            "  valeur_fonciere double precision, code_commune text, id_parcelle varchar, type_local text,"
+            "  surface_reelle_bati double precision, surface_terrain double precision, nature_culture text,"
+            "  longitude double precision, latitude double precision, millesime smallint)"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS dvf_secteur_medianes ("
+            "  secteur varchar, type_bien varchar, n_ventes integer, mediane_valeur integer,"
+            "  mediane_prix_m2 integer, fenetre text, computed_at timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS dpe_records ("
+            "  id integer, numero_dpe varchar, etiquette_dpe varchar, etiquette_ges varchar,"
+            "  type_batiment varchar, surface_habitable double precision, annee_construction integer,"
+            "  adresse text, code_insee varchar, code_postal varchar, date_etablissement date,"
+            "  lon double precision, lat double precision, geocode_score double precision,"
+            "  parcelle_idu varchar, rattachement varchar, raw jsonb, ingested_at timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS parcel_signals ("
+            "  id integer, parcel_id integer, signal_type varchar, payload jsonb,"
+            "  detected_at timestamptz, notified_at timestamptz)"))
     return eng
 
 

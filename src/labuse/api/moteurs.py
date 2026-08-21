@@ -391,13 +391,19 @@ def _barometre_data(db: Session) -> dict:
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
         FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+    # M137-Z — le plafond du classement prix sort du DUR (config/moteurs.yaml). Les 24 communes ont
+    # ≥ 100 ventes strictes (audit) : on sert AUSSI le total pour que l'écran DISE « les N sur M »
+    # (jamais un LIMIT muet — leçon M120-B/M137-O). count(*) OVER () = total DANS le même scan.
+    cap = _moteurs_cap("barometre_top_communes", 8)
     top_communes = db.execute(text(f"""
         SELECT commune, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (
-                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median_eur_m2
+                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median_eur_m2,
+               count(*) OVER () AS n_communes_total
         FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
         GROUP BY commune HAVING count(*) >= 100
-        ORDER BY median_eur_m2 DESC NULLS LAST LIMIT 8"""), ).mappings().all()
+        ORDER BY median_eur_m2 DESC NULLS LAST LIMIT :cap"""), {"cap": cap}).mappings().all()
+    n_communes = int(top_communes[0]["n_communes_total"]) if top_communes else 0
     ecartees = db.execute(text(f"""
         SELECT (count(*) - count(*) FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS total,
                count(*) FILTER (WHERE nature_mutation = 'Vente en l''état futur d''achèvement')::int AS vefa,
@@ -415,7 +421,11 @@ def _barometre_data(db: Session) -> dict:
                          "€/m² bâti dans [100, 12 000] — médianes ET volumes. Écartées : VEFA (neuf), "
                          "adjudications/échanges/expropriations, prix symboliques, ratios aberrants."),
             "dvf_trimestres": [dict(r) for r in dvf], "permis_trimestres": [dict(r) for r in permis],
-            "top_communes_prix": [dict(r) for r in top_communes], "ecartees": dict(ecartees)}
+            "top_communes_prix": [{k: r[k] for k in ("commune", "mutations", "median_eur_m2")} for r in top_communes],
+            # M137-Z — le plafond DIT, jamais muet : « les N premières sur M » (les M ont la donnée).
+            "top_communes_cap": cap, "top_communes_total": n_communes,
+            "top_communes_tronquee": n_communes > len(top_communes),
+            "ecartees": dict(ecartees)}
 
 
 @router.get("/barometre")

@@ -13,8 +13,11 @@ import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
-import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
-import { M16, M17, M18, MarcheCommune } from './moteurs'
+import { O10Bascules, O5Servitudes, O7Carnet } from './blocB'
+import { M16, M17, M18 } from './moteurs'
+// M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté). O6Comparateur, O9Rarete et
+// MarcheCommune ne sont plus montés ici directement : Communes les réutilise.
+import { Communes } from './Communes'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
 // M137-P/Q — outil PLU UNIFIÉ : le hub monte 2 voies — PluAnnuaire et ProcedureChangement (qui
@@ -362,8 +365,10 @@ function M04() {
 }
 
 /* ───────────────────────────── M05 — VÉLOCITÉ ADMIN ───────────────────────────── */
-
-function M05() {
+// M137-Z — ABSORBÉ dans l'outil « Communes » (fiche commune → tranche p25–p75). Plus câblé au menu ;
+// composant conservé au dépôt (exporté pour rester compilable). Note : le backend ne sert plus
+// `rang_delai` (classement par médiane retiré — délais homogènes) ; ce composant dormant dégrade sans.
+export function M05() {
   const [nature, setNature] = useState('PC')
   const q = useQuery({ queryKey: ['m05', nature], queryFn: () => modVelocite(nature || null) })
   const d = q.data as Record<string, any> | undefined
@@ -850,22 +855,23 @@ function Risques() {
 
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
-  patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
+  patrimoine: M02, permis: M03, promesses: M04,
   // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
   // M137-T — 'duediligence' (M10) et 'o5-servitudes' (O5) fusionnés dans l'outil « risques ».
   temps: M08, courriers: M09, risques: Risques,
   assemblage: M16, zan: M17, barometre: M18, programme: M22,
-  marche: MarcheCommune,
+  // M137-Z — outil « Communes » : fusion Marché (MU1) · Comparateur (O6) · Vélocité (M05) · Rareté (O9).
+  // Les 4 clés absorbées ('marche', 'o6-comparateur', 'velocite', 'o9-rarete') sont retirées du menu ;
+  // leurs composants (MarcheCommune, O6Comparateur, M05, O9Rarete) restent au dépôt, réutilisés par Communes.
+  communes: Communes,
   // M137-P — les 3 outils PLU (simulplu · verif-procedure · plu-annuaire) fusionnés dans le hub « plu ».
   plu: Plu,
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
-  'o6-comparateur': O6Comparateur,
   'o7-carnet': O7Carnet,
-  'o9-rarete': O9Rarete,
   'o10-bascules': O10Bascules,
   'calculette-fonciere': CalculetteFonciere,
 }

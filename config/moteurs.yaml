@@ -2,3 +2,6 @@
 # M137-O — le simulateur PLU liste au plus `simulplu_max` parcelles par zone ; au-delà, l'écran DIT
 # « les N premières sur M » (jamais un plafond MUET — un chiffre tronqué en silence ment, leçon M120-B).
 simulplu_max: 400
+# M137-Z — Baromètre : le classement prix par commune est plafonné (top N) ; l'écran DIT « les N
+# premières sur 24 » (les 24 ont la donnée — ≥ 100 ventes strictes chacune). Plus de LIMIT muet.
+barometre_top_communes: 8
