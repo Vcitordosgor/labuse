@@ -1258,6 +1258,7 @@ export function Fiche({ idu }: { idu: string }) {
   const setParcelPrefill = useApp((s) => s.setParcelPrefill) // M-ENTREE — portes Faisabilité + Assemblage (IDU)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
+  const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
@@ -1996,9 +1997,11 @@ export function Fiche({ idu }: { idu: string }) {
                   ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div> : null })()}
                 {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
                     REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
+                {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
+                    hub PRÉ-REMPLI sur l'Annuaire (pluPrefill : commune + zone servie). */}
                 <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
                   sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
-                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu-annuaire') }} />
+                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
                 <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
                   sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
                   onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
@@ -2006,7 +2009,7 @@ export function Fiche({ idu }: { idu: string }) {
                     L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
                 <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
                   sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => setModule('verif-procedure')} />
+                  onClick={() => { setPluVueF('procedure'); setModule('plu') }} />
               </div>
             </RefDrawer>
 

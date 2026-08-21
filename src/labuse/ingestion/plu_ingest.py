@@ -188,7 +188,8 @@ def corpus_status(session: Session) -> dict[str, dict]:
         SELECT insee, commune, min(idurba) AS idurba, to_char(max(millesime),'YYYY-MM-DD') AS millesime,
                count(*) AS extraits, count(*) FILTER (WHERE doute) AS doutes,
                bool_or(pagination_ambigue) AS pagination_ambigue,
-               string_agg(DISTINCT document, ', ') AS documents
+               string_agg(DISTINCT document, ', ') AS documents,
+               min(source_url) AS source_url  -- pack GPU (1 seul par commune) : le « PLU intégral » téléchargeable
         FROM plu_reglement_extrait GROUP BY insee, commune ORDER BY insee
     """)).mappings().all()
     return {r["insee"]: dict(r) for r in rows}

@@ -20,11 +20,15 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 /* ───────────── M15 — SIMULATEUR PLU ───────────── */
 
-export function M15() {
-  const commune = useApp((s) => s.commune)
-  const zones = useQuery({ queryKey: ['m15z', commune], queryFn: motSimulPluZones })
+// M137-Q — le périmètre est piloté par l'outil PLU unifié (choix EXPLICITE, `communeOverride`).
+// Sans prop, repli sur le filtre global (compat) — mais l'outil unifié passe toujours le choix.
+export function M15({ communeOverride }: { communeOverride?: string | null } = {}) {
+  const globalCommune = useApp((s) => s.commune)
+  const commune = communeOverride !== undefined ? communeOverride : globalCommune
+  const zones = useQuery({ queryKey: ['m15z', commune], queryFn: () => motSimulPluZones(commune) })
   const [zone, setZone] = useState<string | null>(null)
-  const sim = useQuery({ queryKey: ['m15', zone, commune], queryFn: () => motSimulPlu(zone!), enabled: !!zone })
+  const sim = useQuery({ queryKey: ['m15', zone, commune], queryFn: () => motSimulPlu(zone!, commune), enabled: !!zone })
+  useEffect(() => { setZone(null) }, [commune])   // les zones AU diffèrent par commune → on repart à zéro
   const { setModuleMap, select } = useApp()   // fix : la liste était inerte (select non branché)
   const d = sim.data
   useEffect(() => {

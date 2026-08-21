@@ -328,6 +328,9 @@ interface AppState {
   setM02Prefill: (s: string | null) => void
   pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
   setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
+  // M137-P — l'outil PLU unifié ouvre directement une de ses 3 vues (consommé-puis-remis-à-null par le hub).
+  pluVue: 'annuaire' | 'procedure' | 'changement' | null
+  setPluVue: (v: 'annuaire' | 'procedure' | 'changement' | null) => void
   // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
   calcPrefill: string | null
   setCalcPrefill: (s: string | null) => void
@@ -533,6 +536,8 @@ export const useApp = create<AppState>((set) => ({
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
   pluPrefill: null,
   setPluPrefill: (pluPrefill) => set({ pluPrefill }),
+  pluVue: null,
+  setPluVue: (pluVue) => set({ pluVue }),
   calcPrefill: null,
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   parcelPrefill: null,

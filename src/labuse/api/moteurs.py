@@ -112,6 +112,27 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
     }
 
 
+@router.get("/simulplu/procedures")
+def simulplu_procedures(db: Session = Depends(get_db)) -> dict:
+    """M137-Q — communes RÉELLEMENT en procédure PLU (radar Sudocuh via `veille_plu`, point de
+    calcul UNIQUE). Sert le nom de commune CANONIQUE (tel qu'en base) afin que « Simuler → »
+    préremplisse EXACTEMENT le périmètre : le registre dit « Trois-Bassins », la base « Les
+    Trois-Bassins ». Aucun calcul — on LIT le radar et on joint le nom base par INSEE."""
+    from .. import veille_plu as V
+    items = V.communes_en_procedure()
+    # nom canonique base par INSEE (table 24 lignes) — `to_regclass` évite de lever si la table
+    # de contexte n'est pas matérialisée (base de test nue) : on retombe alors sur le nom registre.
+    canon: dict[str, str] = {}
+    if db.execute(text("SELECT to_regclass('public.commune_conso_enaf')")).scalar():
+        canon = {r[0]: r[1] for r in
+                 db.execute(text("SELECT insee, commune FROM commune_conso_enaf")).all()}
+    for it in items:
+        it["commune_radar"] = it["commune"]
+        it["commune"] = canon.get(it["insee"]) or it["commune"]   # nom base = préremplissage exact
+    return {"communes": items,
+            "source": "Radar procédures PLU — SuDocUH (squelette) + registre curaté LABUSE"}
+
+
 # ───────────────────────── M16 — ASSEMBLAGE MULTI-PARCELLES ─────────────────────────
 
 class AssemblageIn(BaseModel):

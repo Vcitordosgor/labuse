@@ -92,3 +92,28 @@ def test_simulplu_zones_liste_les_au(db_session):
     _seed(db_session)
     # spatial_layers alimente /simulplu/zones — vide en base de test, l'endpoint ne doit pas lever.
     assert isinstance(moteurs.simulplu_zones(commune="Testville", db=db_session), list)
+
+
+# ── M137-Q — fusion « Procédure & changement » : le radar liste les communes en procédure ────────
+
+def test_communes_en_procedure_actives_seulement():
+    """Le radar (point de calcul unique) ne remonte QUE les procédures actives servies : SOURCE,
+    révision/élaboration, non dormantes. Chacune porte son type et sa date."""
+    from labuse import veille_plu as V
+    items = V.communes_en_procedure()
+    insees = {it["insee"] for it in items}
+    assert insees == {"97409", "97413", "97423"}       # Saint-André, Saint-Leu, Trois-Bassins
+    assert "97417" not in insees                        # Saint-Philippe = prescrite_dormante → exclue
+    for it in items:
+        assert it["type"] and it["date_acte"] and it["etat"]
+
+
+def test_simulplu_procedures_ne_leve_pas_sans_table_contexte(db_session):
+    """L'endpoint ne 500 JAMAIS quand la table de contexte n'est pas matérialisée (base de test nue,
+    même contrat data-gap que M136) : `to_regclass` garde, on retombe sur le nom registre. Le radar
+    liste bien les 3 procédures actives, chacune avec son type et son état."""
+    out = moteurs.simulplu_procedures(db=db_session)    # ne lève pas malgré commune_conso_enaf absente
+    assert {c["insee"] for c in out["communes"]} == {"97409", "97413", "97423"}
+    tb = next(c for c in out["communes"] if c["insee"] == "97423")
+    assert tb["commune"] == tb["commune_radar"] == "Trois-Bassins"   # repli nom registre (table absente)
+    assert tb["type"] and tb["etat"]

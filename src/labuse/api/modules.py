@@ -1248,7 +1248,10 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
         if e:
             out.append({"insee": insee, "commune": c["commune"], "statut": "servable",
                         "idurba": e["idurba"], "millesime": e["millesime"], "extraits": e["extraits"],
-                        "doutes": e["doutes"], "pagination_ambigue": e["pagination_ambigue"]})
+                        "doutes": e["doutes"], "pagination_ambigue": e["pagination_ambigue"],
+                        # M137-P — le « PLU intégral » = le pack officiel GPU (.zip) à télécharger ;
+                        # aucun PDF n'est stocké en base. document = nom du règlement PDF dans le pack.
+                        "source_url": e.get("source_url"), "document": e.get("documents")})
         elif c["statut"] == "rnu":
             out.append({"insee": insee, "commune": c["commune"], "statut": "rnu", "extraits": 0,
                         "message": "RNU (règlement national d'urbanisme) — pas de règlement communal."})
