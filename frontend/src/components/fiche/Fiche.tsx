@@ -18,6 +18,8 @@ import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { BlocIndisponible } from './BlocIndisponible'
 import { DepotsBlock } from './DepotsBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
+import { CoproprietesBlock } from './CoproprietesBlock'
+import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -2178,6 +2180,8 @@ export function Fiche({ idu }: { idu: string }) {
                   sous="Le bloc commune complet — prix, rythmes, offre, loyer (9 lignes sourcées et datées)"
                   onClick={() => { useApp.getState().setCommune(f.commune!); setModule('marche') }} />
               )}
+              {/* M125-2 — contexte socio-éco du secteur (Filosofi + parc social RPLS), hors scoring */}
+              {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}
               {/* M70 déc. 9 — PORTES Marché (grille terminale supprimée) : Comparer (cette parcelle
                   chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
               <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
@@ -2320,6 +2324,8 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
+                {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
+                {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
                     « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
                 {(() => {

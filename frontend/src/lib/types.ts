@@ -355,11 +355,41 @@ export interface Fiche {
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null
   // M38 — activité de dépôt (Sitadel3 date_depot), informatif seul ; null hors couverture.
+  // M125 — peut porter l'état PANNE `{ indisponible: true }` (≠ absence, ≠ null).
   depots?: {
+    indisponible?: boolean; raison?: string
     fenetre_mois: number; source: string; sourcage: string; millesime: string | null
     libelle: string; granularite: string
     parcelle: { count: number; dernier: string | null } | null
     secteur: { count: number; dernier: string | null; maille?: string } | null
+  } | null
+  // M125-2 — copropriété(s) RNIC rattachées (cible bailleur/copro) ; [] hors couverture.
+  coproprietes?: Copropriete[]
+  // M125-2 — contexte socio-éco du secteur (Filosofi 200 m + parc social RPLS), hors scoring.
+  marche_secteur?: MarcheSecteur | null
+}
+
+// M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.
+export interface Copropriete {
+  numero_immatriculation: string
+  nom_usage: string | null
+  adresse: string | null
+  nb_lots_total: number | null
+  nb_lots_habitation: number | null
+  periode_construction: string | null
+  syndic_type: string | null
+  syndic_nom: string | null
+  rattachement: string | null
+}
+
+// M125-2 — contexte socio-économique du secteur. Chaque sous-bloc porte SON millésime (daté).
+export interface MarcheSecteur {
+  filosofi_200m: {
+    ind: number; men: number; men_pauv: number; men_prop: number
+    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null; millesime: string
+  } | null
+  rpls_commune: {
+    nb_logements: number; construct_median: number | null; pct_qpv: number | null; millesime: string
   } | null
 }
 

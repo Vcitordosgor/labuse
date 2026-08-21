@@ -2653,6 +2653,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M106 P4 — PROXIMITÉS (arbitrage : distance, jamais un booléen) : arrêt, pôle
         # d'échange (statut + concordance OSM↔GTFS dite), téléphérique, ligne HT (contrainte).
         "proximites": _proximites_block(db, idu),
+        # M125-2 — activité de dépôt récente (Sitadel3), branchée à la premium (était legacy-only).
+        "depots": _depots_block(db, head["id"]),
     }
 
 
@@ -2725,6 +2727,17 @@ def _bloc_indisponible(nom: str) -> dict:
     DEPUIS un `except` (log.exception lit la trace courante). L'ABSENCE réelle reste None."""
     _FICHE_LOG.exception("fiche · bloc « %s » indisponible (erreur technique)", nom)
     return {"indisponible": True, "raison": "erreur technique"}
+
+
+def _depots_block(db: Session, parcel_id: int) -> dict | None:
+    """M125-2 — activité de DÉPÔT récente (Sitadel3 `date_depot`) BRANCHÉE à la fiche premium (elle
+    n'était servie que par la fiche legacy). Informatif : lu par aucun calcul servi, ne touche ni
+    tier ni verdict. None = hors couverture (pas de bloc vide) ; PANNE = état distinct (M125)."""
+    try:
+        from ..ingestion.permits import depots_recents
+        return depots_recents(db, parcel_id)
+    except Exception:  # noqa: BLE001
+        return _bloc_indisponible("depots")
 
 
 def _proximites_block(db: Session, idu: str) -> dict | None:
