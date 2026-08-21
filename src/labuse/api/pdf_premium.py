@@ -190,13 +190,17 @@ _COL_SRC = 0.18
 #: M126-B (B1b) — nom COURT du producteur pour la colonne source (le millésime détaillé vit dans
 #: « SOURCES UTILISÉES SUR CETTE FICHE » en fin de document). Priorité au 1er producteur rencontré.
 _PRODUCTEURS = [
-    ("Géorisques", "Géorisques"), ("Cerema", "Cerema"), ("INPN", "INPN"), ("DEAL", "DEAL"),
-    ("ONF", "ONF"), ("DGFiP", "DGFiP"), ("INPI", "INPI"), ("BODACC", "BODACC"), ("SDES", "SDES"),
-    ("Sitadel", "SDES"), ("ADEME", "ADEME"), ("BRGM", "BRGM"), ("Filosofi", "INSEE"),
-    ("INSEE", "INSEE"), ("RPLS", "RPLS"), ("Région", "Région"), ("Overpass", "OSM"),
-    ("OpenStreetMap", "OSM"), ("OSM", "OSM"), ("Base Adresse", "BAN"), ("BAN", "BAN"),
-    ("DINUM", "BAN"), ("API Carto", "IGN"), ("GPU", "IGN"), ("BD TOPO", "IGN"),
-    ("BD CARTO", "IGN"), ("RGE ALTI", "IGN"), ("RPG", "IGN"), ("IGN", "IGN"),
+    ("Géorisques", "Géorisques"), ("Cerema", "Cerema"), ("GéoLittoral", "Cerema"), ("INPN", "INPN"),
+    ("DEAL", "DEAL"), ("ONF", "ONF"), ("DGFiP", "DGFiP"), ("DVF", "DGFiP"), ("INPI", "INPI"),
+    ("BODACC", "BODACC"), ("SDES", "SDES"), ("Sitadel", "SDES"), ("ADEME", "ADEME"), ("BRGM", "BRGM"),
+    ("Filosofi", "INSEE"), ("INSEE", "INSEE"), ("RPLS", "RPLS"), ("Région", "Région"),
+    ("regionreunion", "Région"), ("Overpass", "OSM"), ("OpenStreetMap", "OSM"), ("OSM", "OSM"),
+    ("Base Adresse", "BAN"), ("BAN", "BAN"), ("DINUM", "BAN"),
+    # M126-C (C2) — « ABF / Monuments » est une couche, pas un producteur : le vrai est la base
+    # Mérimée (Ministère de la Culture).
+    ("Mérimée", "Mérimée"), ("Monuments", "Mérimée"), ("ABF", "Mérimée"),
+    ("API Carto", "IGN"), ("GPU", "IGN"), ("BD TOPO", "IGN"), ("BD CARTO", "IGN"),
+    ("RGE ALTI", "IGN"), ("RPG", "IGN"), ("IGN", "IGN"),
 ]
 
 
@@ -211,9 +215,9 @@ def _source_courte(source: str | None) -> str:
         m = re.search(r"\b" + re.escape(k) + r"\b", source, re.IGNORECASE)
         if m:
             trouve.append((m.start(), court))
-    if trouve:
-        return min(trouve)[1]
-    return re.split(r" — | \(", source)[0][:16]
+    # M126-C (C2) — jamais un NOM DE COUCHE déguisé en producteur : à défaut de producteur connu,
+    # colonne source VIDE (mieux que « ABF / Monuments » ou une URL).
+    return min(trouve)[1] if trouve else ""
 
 
 def _ligne_signal(pdf: _Pdf, point: str, valeur: str, source: str = "") -> None:
@@ -252,21 +256,37 @@ def _ligne_signal(pdf: _Pdf, point: str, valeur: str, source: str = "") -> None:
     pdf.set_y(yb + 0.7)
 
 
-#: M126 pt.9 — un signal « rien à signaler » : verdict PASS, ou détail d'absence (hors…/aucun…/sans objet).
-_SANS_SIGNAL_RX = re.compile(
-    r"^\s*(hors\b|aucun|non ingér|non couvert|non disponible|non recens|sans objet|"
-    r"pas de |donn[ée]e[s]? .* non |[ée]cart[ée]? au règlement)", re.IGNORECASE)
+# M126-C — le regroupement « rien à signaler » repose sur le CONTENU du constat, JAMAIS sur la couche
+# ni sur le résultat/score (le verdict PASS d'un moteur peut porter une info : « Pente forte », « Bâti
+# à vérifier », une prescription…). Règle (boussole : pas de faux négatif) :
+#   • RESTE dans son onglet tout constat PORTEUR — valeur qualifiée/graduée (forte/modérée/élevée/
+#     faible…), prescription/contrainte (imposée, rétention, recul…), incertitude (à vérifier/à
+#     instruire, présence, probable/possible), exclusion, ou tout constat POSITIF/présent ;
+#   • REGROUPE seulement l'ABSENCE AVÉRÉE — le constat commence par « Hors…/Aucun(e)…/Pas une/de…/
+#     Sans objet », OU une donnée absente (« … non couverte/disponible/ingérée/renseignée/recensée »),
+#     OU « hors îlot » / « aucune contrainte … déduite ».
+_PORTEUR_RX = re.compile(
+    r"\b(fort\w*|modér\w*|moyen\w*|élevé\w*|faible\w*|impos\w+|rétention|infiltration|obligation|"
+    r"prescrit\w*|recul\b|respecter|vérifier|confirmer|instruire|présence|probable|possible|"
+    r"covisibil\w*|saturé\w*|surélévation|exclue\w*)\b", re.IGNORECASE)
+_DATAGAP_RX = re.compile(r"\bnon (couvert|disponible|ingér|renseign|recens)\w*", re.IGNORECASE)
+_ABSENCE_DEBUT_RX = re.compile(r"^\s*(hors\b|aucun|sans objet|pas une |pas de |non concern)", re.IGNORECASE)
 
 
 def _sans_signal(ln: dict) -> bool:
-    """M126 pt.9 — vrai si la ligne ne porte AUCUNE information (à regrouper en fin de document)."""
-    if str(ln.get("result") or "").upper() == "PASS":
-        return True
+    """M126-C — vrai UNIQUEMENT si le CONTENU du constat est une absence avérée (à regrouper en fin de
+    document). Un constat porteur (valeur qualifiée, prescription, incertitude, finding) reste."""
     d = (ln.get("detail") or "").strip()
-    if _SANS_SIGNAL_RX.match(d):
+    if not d:
         return True
+    if _PORTEUR_RX.search(d):           # prescription / valeur graduée / incertitude / exclusion → RESTE
+        return False
     dl = d.lower()
-    return "aucune contrainte" in dl and "déduite" in dl
+    if _DATAGAP_RX.search(dl):           # donnée non couverte/disponible → rien à afficher
+        return True
+    if _ABSENCE_DEBUT_RX.search(d):      # absence avérée EN TÊTE du constat (« Hors… », « Aucun… »)
+        return True
+    return "hors îlot" in dl or ("aucune contrainte" in dl and "déduite" in dl)
 
 
 def _bloc_plan(pdf: _Pdf, fiche: dict) -> None:
