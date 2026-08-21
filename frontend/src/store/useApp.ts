@@ -348,6 +348,12 @@ interface AppState {
   // refactore pas ce qui marche pendant qu'on ajoute).
   parcelPrefill: string | null
   setParcelPrefill: (s: string | null) => void
+  // M137-Z — même idiome pour l'outil « Communes » : une porte (fiche « Voir le marché de X ») fait
+  // setCommunePrefill(commune)+setModule('communes') ; Communes lit communePrefill AU MONTAGE, ouvre
+  // directement la fiche de cette commune, puis setCommunePrefill(null). Menu (page Outils) → null →
+  // entrée sur la table des 24 communes (comportement par défaut).
+  communePrefill: string | null
+  setCommunePrefill: (s: string | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
   calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
@@ -555,6 +561,8 @@ export const useApp = create<AppState>((set) => ({
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
+  communePrefill: null,
+  setCommunePrefill: (communePrefill) => set({ communePrefill }),
   calculette: null,
   setCalculette: (calculette) => set({ calculette }),
 }))

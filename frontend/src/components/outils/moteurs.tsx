@@ -403,20 +403,26 @@ function muValeur(l: Record<string, any>): string {
   }
 }
 
-export function MarcheCommune() {
+// M137-Z — `communeProp` : quand l'outil Communes pilote la fiche, la commune vient de la table
+// (sélecteur interne masqué, bannière masquée). Sans prop = ancien comportement autonome.
+export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
   const appCommune = useApp((s) => s.commune)
-  const [commune, setCommune] = useState(appCommune && MU_COMMUNES.includes(appCommune) ? appCommune : 'Saint-Paul')
-  useEffect(() => { if (appCommune && MU_COMMUNES.includes(appCommune)) setCommune(appCommune) }, [appCommune])
+  const [commune, setCommune] = useState(communeProp ?? (appCommune && MU_COMMUNES.includes(appCommune) ? appCommune : 'Saint-Paul'))
+  useEffect(() => {
+    if (communeProp) setCommune(communeProp)
+    else if (appCommune && MU_COMMUNES.includes(appCommune)) setCommune(appCommune)
+  }, [communeProp, appCommune])
   const q = useQuery({ queryKey: ['mu-marche', commune], queryFn: () => motMarcheCommune(commune) })
   const d = q.data
   const groupes: [string, string][] = [['PRIX', 'Prix'], ['DYNAMIQUE', 'Dynamique'], ['OFFRE', 'Offre'], ['LOYER', 'Loyer']]
   return (
     <>
-      <Banner>{CLIENT.marche.banner}</Banner>
+      {!communeProp && <Banner>{CLIENT.marche.banner}</Banner>}
+      {!communeProp && (
       <select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
         className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>
+      </select>)}
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Marché…" big /></div>}
       {d && <>
         <MuSignal sig={d.market_signal} />

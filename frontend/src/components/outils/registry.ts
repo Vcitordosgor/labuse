@@ -77,24 +77,22 @@ export const MODULES: ModuleDef[] = [
     label: 'Scan patrimoine', desc: 'Un nom de propriétaire, et TOUT son foncier ressort d’un coup — repérez les gros détenteurs à approcher' },
 
   // ── Comprendre le marché — prix, rythmes, lecture de territoire ──
-  { key: 'marche', num: 'MU1', group: 'marche', phare: true,
-    label: 'Marché', desc: 'Le marché d’une commune, 9 lignes sourcées et datées : prix ancien, terrain nu par zone (U/AU), neuf, tendance, liquidité, offre engagée et potentielle, pression DPE, loyer' },
-  { key: 'o6-comparateur', num: 'O6', group: 'marche', phare: true,
-    label: 'Comparateur de communes', desc: 'Où investir : 24 communes, indicateurs sourcés, composite réglable' },
+  // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·
+  // Rareté (O9). Entrée = la table des 24 communes ; clic → fiche commune (tous ses indicateurs) +
+  // « Voir ses parcelles → ». Les 4 clés absorbées sont retirées du registre (composants au dépôt,
+  // endpoints /comparateur-communes, /moteurs/marche, /modules/velocite, /pipeline-rarete servis).
+  { key: 'communes', num: 'O6', group: 'marche', phare: true,
+    label: 'Communes', desc: 'Les 24 communes comparées, puis la fiche de chacune : marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction — et un saut vers ses parcelles' },
   { key: 'barometre', num: 'M18', group: 'marche',
     label: 'Baromètre foncier', desc: 'Un état du marché foncier prêt à distribuer (PDF)' },
   { key: 'permis', num: 'M03', group: 'marche',
     label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
-  { key: 'velocite', num: 'M05', group: 'marche',
-    label: 'Vélocité admin', desc: 'Comparez les rythmes d’instruction des 24 communes' },
   { key: 'promesses', num: 'M04', group: 'marche',
     label: 'Promesses mortes', desc: 'Les permis anciens jamais sortis de terre' },
   { key: 'zan', num: 'M17', group: 'marche',
     label: 'Simulateur ZAN', desc: 'La contrainte d’artificialisation, commune par commune' },
   { key: 'renouvellement', num: 'MR1', group: 'marche',
     label: 'Renouvellement', desc: 'Le potentiel de renouvellement urbain d’un territoire : parcelles occupées en zone constructible à capacité restante (densifier, diviser, reconstruire)' },
-  { key: 'o9-rarete', num: 'O9', group: 'marche',
-    label: 'Rareté du foncier', desc: 'Où le foncier se raréfie : combien de constructible reste-t-il par commune, et pour combien de temps (horizon ZAN)' },
   // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).
 
   // ── Suivre le temps — l'évolution, la veille ──

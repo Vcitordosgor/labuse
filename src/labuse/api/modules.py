@@ -485,10 +485,12 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
         ORDER BY n_valide DESC"""),
         {"cutoff": cutoff, "nat": nature}).mappings().all()
     data = [dict(r) for r in rows]
-    # Point 39 — CLASSEMENT : rang par délai médian croissant (1 = commune la plus rapide).
-    for rang, c in enumerate(sorted([c for c in data if c["delai_median_mois"] is not None],
-                                    key=lambda x: x["delai_median_mois"]), start=1):
-        c["rang_delai"] = rang
+    # M137-Z — plus de CLASSEMENT par médiane (le `rang_delai` disparaît) : avec des médianes de 8-9
+    # mois PARTOUT et un IQR ~6 mois, l'écart inter-communes est du BRUIT servi comme une info (audit
+    # AUDIT_OUTILS_COMMUNE §2.2). On MESURE l'homogénéité et on la DIT ; on sert la TRANCHE p25-p75.
+    meds = [c["delai_median_mois"] for c in data if c["delai_median_mois"] is not None]
+    spread = (max(meds) - min(meds)) if meds else None
+    homogene = spread is not None and spread <= 3   # écart des médianes ≤ 3 mois = communes semblables
     # Point 39 — TENDANCE : médiane des cohortes ANCIENNES vs RÉCENTES (coupe au milieu de la période).
     trend = {r["commune"]: r for r in db.execute(text("""
         WITH mid AS (SELECT (min(date_depot) + (max(date_depot) - min(date_depot)) / 2) AS m
@@ -524,11 +526,16 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
         return Response(buf.getvalue(), media_type="text/csv",
                         headers={"Content-Disposition": 'attachment; filename="velocite_admin.csv"'})
     return {
-        "indicateur": "Délai médian d'instruction dépôt → autorisation",
+        "indicateur": "Délai d'instruction dépôt → autorisation (tranche p25–p75)",
         "unite": "mois", "nature": nature, "cohortes": f"{an['lo']}–{an['hi']}",
         "maturite_cutoff": cutoff.isoformat() if cutoff else None,
-        "note": ("Médiane robuste (pas moyenne). Dépôts des 12 derniers mois exclus "
-                 "(cohortes non mûres, biais de survie). Lignes dépôt>autorisation exclues."),
+        # M137-Z — l'homogénéité DITE : les communes se ressemblent, ne pas les classer sur la médiane.
+        "communes_homogenes": homogene, "ecart_medianes_mois": spread,
+        "note_homogeneite": ("Les délais se ressemblent d'une commune à l'autre (écart des médianes "
+                             f"≈ {spread} mois) : pas de classement, la commune ne fait pas la différence."
+                             if homogene else None),
+        "note": ("Tranche p25–p75 (pas une médiane seule) : la moitié des dossiers y tombe. Dépôts des 12 "
+                 "derniers mois exclus (cohortes non mûres, biais de survie). Lignes dépôt>autorisation exclues."),
         "censure": ("Source Sitadel = dossiers ACCORDÉS uniquement : refusés et en cours "
                     "d'instruction non observables → taux de dossiers en cours non mesurable ici."),
         "disclaimer": "Indicateur HISTORIQUE (2013+), pas une promesse de délai futur.",
