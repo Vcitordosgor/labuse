@@ -63,26 +63,55 @@ def _geocode(q: str) -> dict:
     return {"lon": lon, "lat": lat, "label": feats[0].get("properties", {}).get("label", q)}
 
 
+_AVERT = "Estimé — ni un prix ni une promesse ; hypothèses de bilan génériques."
+
+
 def _prix_verdict(prix: float, charge, prix_probable, surface) -> dict:
-    """Confronte le prix demandé (Estimé du marché) à la charge foncière supportable et au prix probable."""
+    """Confronte le prix demandé à DEUX repères DISTINCTS, chacun NOMMÉ à l'écran (M137-S) :
+
+      - le BADGE juge la position sur le MARCHÉ DU FONCIER (prix probable du terrain), ± 10 % —
+        un seul référentiel pour ses trois états (sous/dans/au-dessus du marché) ;
+      - la MARGE juge la rentabilité d'une OPÉRATION DE PROMOTION neuve (charge supportable).
+
+    Les deux DIVERGENT pour la majorité des parcelles estimables (~69 % : terrain vendu à son prix
+    de marché mais non rentable en promotion, SDP résiduelle faible). L'ancien badge mélangeait les
+    repères (« opportunité » = prix ≤ charge = opération ; « dans le marché »/« cher » = marché) →
+    deux verdicts contradictoires. Le seuil « opportunité » quitte le badge (il juge l'opération, pas
+    le marché) ; la `synthese` réconcilie explicitement badge et marge."""
     out: dict = {"prix_demande_eur": round(prix)}
     if surface and surface > 0:
         out["prix_demande_m2_terrain"] = round(prix / surface)
-    if charge is not None:
-        out["marge_a_ce_prix_eur"] = round(charge - prix)   # >0 : reste de la marge sous la charge supportable
-        if prix <= charge:
-            out["verdict"] = "opportunite"
-            out["message"] = "Sous la charge foncière supportable estimée — marge résiduelle pour un opérateur."
-        elif prix_probable is not None and prix <= prix_probable * 1.1:
-            out["verdict"] = "dans_le_marche"
-            out["message"] = "Proche du prix probable du foncier — dans le marché, marge de promotion serrée."
-        else:
-            out["verdict"] = "cher"
-            out["message"] = "Au-dessus du prix probable et de la charge supportable estimés — cher pour un opérateur."
-    else:
+    if charge is None or prix_probable is None:
         out["verdict"] = "non_estimable"
-        out["message"] = "Charge foncière non estimable pour cette parcelle — le prix ne peut pas être qualifié."
-    out["avertissement"] = "Estimé — ni un prix ni une promesse ; hypothèses de bilan génériques."
+        out["message"] = "Charge foncière / prix du foncier non estimables — le prix ne peut pas être qualifié."
+        out["avertissement"] = _AVERT
+        return out
+    marge = round(charge - prix)
+    out["marge_a_ce_prix_eur"] = marge                      # repère OPÉRATION (promotion neuve)
+    # 1) BADGE — repère UNIQUE : le marché du foncier (prix probable du terrain), bande ± 10 %.
+    if prix < prix_probable * 0.9:
+        out["verdict"] = "sous_marche"
+        out["message"] = "En dessous du prix probable du foncier pour ce secteur."
+    elif prix <= prix_probable * 1.1:
+        out["verdict"] = "dans_marche"
+        out["message"] = "Au niveau du prix probable du foncier pour ce secteur."
+    else:
+        out["verdict"] = "sur_marche"
+        out["message"] = "Au-dessus du prix probable du foncier pour ce secteur."
+    # 2) SYNTHÈSE — réconcilie badge (marché) et marge (opération) quand ils divergent.
+    if marge >= 0:
+        out["synthese"] = ("À ce prix, une opération de promotion neuve reste rentable "
+                           "(sous la charge foncière supportable estimée).")
+    elif out["verdict"] == "dans_marche":
+        out["synthese"] = ("Ce terrain se vend à son prix, mais une opération de promotion neuve "
+                           "n'y est pas rentable (SDP résiduelle faible).")
+    elif out["verdict"] == "sous_marche":
+        out["synthese"] = ("Même sous le prix du marché, une opération de promotion neuve n'est pas "
+                           "rentable à ce prix (charge foncière supportable très faible).")
+    else:   # sur_marche
+        out["synthese"] = ("Au-dessus du marché ET au-dessus de ce qu'une opération de promotion "
+                           "neuve peut porter à ce prix.")
+    out["avertissement"] = _AVERT
     return out
 
 

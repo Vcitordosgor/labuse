@@ -168,10 +168,14 @@ def test_r5_scoreur_champs_et_prix_manuel():
 
 
 def test_r5_scoreur_verdicts_prix():
-    # confrontation prix demandé vs charge foncière : les 4 verdicts servis par l'API
-    for v in ("opportunite", "dans_le_marche", "cher", "non_estimable"):
+    # M137-S — le badge juge UN SEUL repère (marché du foncier) : sous/dans/au-dessus du marché ;
+    # « opportunité » (repère opération) est retiré du badge et migré vers la ligne « marge ».
+    for v in ("sous_marche", "dans_marche", "sur_marche", "non_estimable"):
         assert v in SCOREUR
+    assert "opportunite" not in SCOREUR                       # plus de repère opération dans le badge
     assert "data-scoreur-prix-verdict" in SCOREUR
+    # les deux repères sont NOMMÉS + la synthèse réconcilie
+    assert "opération de promotion" in SCOREUR and "data-scoreur-synthese" in SCOREUR
 
 
 def test_r5_scoreur_hors_base_honnete():

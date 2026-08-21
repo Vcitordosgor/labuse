@@ -12,25 +12,43 @@ from labuse.api import scoreur
 from labuse.scoring.score_v_constants import Q_A_RUN_LABEL  # M31 : seed sous le run SERVI, pas un littéral
 
 
-# ───────────────────────── logique prix (pur) ─────────────────────────
+# ───────────────────────── logique prix (pur) — M137-S : deux repères NOMMÉS ─────────────────────────
+# Le badge juge UN SEUL repère (marché du foncier) ; la marge juge l'opération de promotion, à part.
 
-def test_prix_opportunite_sous_charge():
+def test_badge_sous_marche_marge_operation_separee():
+    # 80 000 € sous le prix probable du foncier (100 000) → badge « en dessous du marché » ;
+    # la marge (charge 200 000 − 80 000 = +120 000) juge l'OPÉRATION, séparément.
     r = scoreur._prix_verdict(80000, charge=200000, prix_probable=100000, surface=1000)
-    assert r["verdict"] == "opportunite" and r["marge_a_ce_prix_eur"] == 120000
+    assert r["verdict"] == "sous_marche" and r["marge_a_ce_prix_eur"] == 120000
     assert r["prix_demande_m2_terrain"] == 80 and "Estimé" in r["avertissement"]
+    assert "rentable" in r["synthese"]                       # marge positive → opération rentable
 
 
-def test_prix_dans_le_marche():
-    assert scoreur._prix_verdict(105000, 100000, 100000, 1000)["verdict"] == "dans_le_marche"
+def test_badge_dans_marche_marge_negative_reconciliee():
+    # LE cas majoritaire (~69 %) : prix au niveau du marché MAIS marge négative
+    # (charge 90 000 − prix 100 000 = −10 000). Badge « dans le marché » + synthèse qui réconcilie.
+    r = scoreur._prix_verdict(100000, charge=90000, prix_probable=100000, surface=1000)
+    assert r["verdict"] == "dans_marche" and r["marge_a_ce_prix_eur"] == -10000
+    assert "se vend à son prix" in r["synthese"] and "pas rentable" in r["synthese"]
 
 
-def test_prix_cher():
-    assert scoreur._prix_verdict(500000, 200000, 100000, 1000)["verdict"] == "cher"
+def test_badge_sur_marche():
+    r = scoreur._prix_verdict(500000, 200000, 100000, 1000)
+    assert r["verdict"] == "sur_marche" and r["marge_a_ce_prix_eur"] == -300000
+
+
+def test_badge_ne_juge_jamais_l_operation():
+    # garde anti-régression : le badge ne sort JAMAIS un verdict d'opération (« opportunité » retiré) —
+    # ses trois états sont sur le seul repère marché, quel que soit le rapport prix/charge.
+    for prix in (10000, 80000, 100000, 500000):
+        assert scoreur._prix_verdict(prix, 200000, 100000, 1000)["verdict"] in (
+            "sous_marche", "dans_marche", "sur_marche")
 
 
 def test_prix_non_estimable_sans_charge():
     r = scoreur._prix_verdict(80000, charge=None, prix_probable=None, surface=1000)
     assert r["verdict"] == "non_estimable" and "non estimable" in r["message"].lower()
+    assert "marge_a_ce_prix_eur" not in r                    # pas de marge sans charge/prix probable
 
 
 # ───────────────────────── flux DB (adresse simulée → parcelle) ─────────────────────────
@@ -72,8 +90,10 @@ def test_flux_adresse_verdict_et_prix(db_session, monkeypatch):
     assert out["ok"] and out["idu"] == idu
     assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Neutre"  # M137 chip court
     assert out["score_e"]["estimable"] is True
-    # 80 000 € < charge supportable 300 000 € → opportunité
-    assert out["prix"]["verdict"] == "opportunite" and out["prix"]["marge_a_ce_prix_eur"] == 220000
+    # 80 000 € sous le prix probable du foncier (100 000) → badge « en dessous du marché » ;
+    # la marge d'opération (charge 300 000 − 80 000 = +220 000) reste un repère distinct.
+    assert out["prix"]["verdict"] == "sous_marche" and out["prix"]["marge_a_ce_prix_eur"] == 220000
+    assert "rentable" in out["prix"]["synthese"]
 
 
 @pytest.mark.db
