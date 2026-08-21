@@ -187,6 +187,34 @@ def _titre_section(pdf: _Pdf, texte: str) -> None:
 _COL_POINT = 0.32
 _COL_SRC = 0.18
 
+#: M126-B (B1b) — nom COURT du producteur pour la colonne source (le millésime détaillé vit dans
+#: « SOURCES UTILISÉES SUR CETTE FICHE » en fin de document). Priorité au 1er producteur rencontré.
+_PRODUCTEURS = [
+    ("Géorisques", "Géorisques"), ("Cerema", "Cerema"), ("INPN", "INPN"), ("DEAL", "DEAL"),
+    ("ONF", "ONF"), ("DGFiP", "DGFiP"), ("INPI", "INPI"), ("BODACC", "BODACC"), ("SDES", "SDES"),
+    ("Sitadel", "SDES"), ("ADEME", "ADEME"), ("BRGM", "BRGM"), ("Filosofi", "INSEE"),
+    ("INSEE", "INSEE"), ("RPLS", "RPLS"), ("Région", "Région"), ("Overpass", "OSM"),
+    ("OpenStreetMap", "OSM"), ("OSM", "OSM"), ("Base Adresse", "BAN"), ("BAN", "BAN"),
+    ("DINUM", "BAN"), ("API Carto", "IGN"), ("GPU", "IGN"), ("BD TOPO", "IGN"),
+    ("BD CARTO", "IGN"), ("RGE ALTI", "IGN"), ("RPG", "IGN"), ("IGN", "IGN"),
+]
+
+
+def _source_courte(source: str | None) -> str:
+    """M126-B (B1b) — abrège la source au NOM DU PRODUCTEUR (le premier rencontré), SANS millésime.
+    Le détail complet (millésime, jeu) reste dans « SOURCES UTILISÉES SUR CETTE FICHE ». Recherche
+    au MOT ENTIER (\\b) : « BAN » ne doit pas matcher « urBANisme », « IGN » pas « désIGNé »…"""
+    if not source:
+        return ""
+    trouve = []
+    for k, court in _PRODUCTEURS:
+        m = re.search(r"\b" + re.escape(k) + r"\b", source, re.IGNORECASE)
+        if m:
+            trouve.append((m.start(), court))
+    if trouve:
+        return min(trouve)[1]
+    return re.split(r" — | \(", source)[0][:16]
+
 
 def _ligne_signal(pdf: _Pdf, point: str, valeur: str, source: str = "") -> None:
     """M126 pt.6/7 — une ligne de signal en 3 COLONNES : point (32 %, TXT2) | valeur (TXT1) |
@@ -558,7 +586,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # (underscores → espaces, capitale) plutôt que d'imprimer « osm_faux_positif ».
         return _LAYER_LABEL.get(key) or key.replace("_", " ").capitalize()
     def _src_ligne(ln: dict) -> str:
-        return "  ".join(x for x in (ln.get("source") or "", ln.get("millesime_amont") or "") if x)
+        # M126-B (B1b) — nom court du producteur seul ; le millésime vit dans « SOURCES UTILISÉES ».
+        return _source_courte(ln.get("source"))
 
     def _detail_ligne(ln: dict) -> str:
         # M54-AB C7 : la pente client = RGE ALTI (parcel_terrain), MÊME source que dossier/flash.
@@ -586,7 +615,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.set_font("inter", size=7)
             pdf.set_text_color(*SRC)
             pdf.multi_cell(pdf.w - 28, 3.6,
-                           f"+ {_signaux(len(sans))} sans signal, regroupé{'s' if len(sans) > 1 else ''} "
+                           f"+ {len(sans)} sans signal, regroupé{'s' if len(sans) > 1 else ''} "
                            "en fin de document.", new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.6)
 
@@ -1015,12 +1044,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     #    REGROUPÉS ici en fin de document (aucun n'est supprimé — seulement déplacé). Même tableau
     #    3 colonnes ; les pages de tête restent réservées aux signaux porteurs d'information.
     if sans_signal_all:
+        # M126-B (B2) — anti-orphelin FORT : le bloc ne démarre pas si le titre + le résumé + ~2 lignes
+        # ne tiennent pas (sinon une page ne portait que le pied de page). Réserve ~34 mm.
+        if pdf.get_y() > pdf.h - 34:
+            pdf.add_page()
         _titre_section(pdf, "Points sans signal")
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*SRC)
+        _n = len(sans_signal_all)
         pdf.multi_cell(pdf.w - 28, 3.6,
-                       f"{_signaux(len(sans_signal_all))} sans information particulière, "
-                       "regroupé(s) ici pour l'exhaustivité (rien à signaler).",
+                       f"{_n} point{'s' if _n > 1 else ''} sans signal, regroupé{'s' if _n > 1 else ''} "
+                       "ici pour l'exhaustivité (rien à signaler).",
                        new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.6)
         for _onglet, ln in sans_signal_all:
