@@ -130,7 +130,11 @@ def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None
             d = rx.sub(repl, d)
     d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
     d = re.sub(r"\s{2,}", " ", d)
-    d = re.sub(r"\s+([.,;])", r"\1", d)
+    # M137-Z-fix — typographie FR : le point-virgule PREND un espace avant (contrairement à « . » et
+    # « , »). L'ancienne classe [.,;] retirait cet espace (« 47 % ; » → « 47 %; »), fautif en français
+    # et divergent de la donnée cascade servie + de la référence golden. On ne nettoie plus que « . » et
+    # « , ». Effet mesuré : SEUL l'espace avant « ; » est restauré (preuve : qa/m137z-fix/).
+    d = re.sub(r"\s+([.,])", r"\1", d)
     return d.strip()
 
 
