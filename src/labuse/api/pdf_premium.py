@@ -12,6 +12,7 @@ sources par-fiche…), footer non-garantie. Les données viennent de _q_v2_fiche
 from __future__ import annotations
 
 import math
+import statistics
 from pathlib import Path
 
 from fpdf import FPDF
@@ -109,6 +110,17 @@ def _indispo(pdf: _Pdf, titre: str) -> None:
 def _is_indispo(bloc) -> bool:
     """Vrai si un bloc de fiche porte l'état PANNE (M125) — à tester AVANT de lire ses champs."""
     return isinstance(bloc, dict) and bool(bloc.get("indisponible"))
+
+
+def _fit_label(pdf: _Pdf, s: str, w: float) -> str:
+    """M125-C3 — tient un libellé de couche dans `w` mm SANS jamais couper au milieu d'un mot :
+    rendu tel quel s'il tient ; sinon tronqué au dernier ESPACE + « … » (les libellés proxy renommés
+    ont des espaces). Font supposé déjà posé (get_string_width)."""
+    if pdf.get_string_width(s) <= w:
+        return s
+    while " " in s.rstrip() and pdf.get_string_width(s.rstrip() + "…") > w:
+        s = s.rsplit(" ", 1)[0]
+    return s.rstrip() + "…"
 
 
 def _section(pdf: _Pdf, titre: str, lignes, source: str | None = None) -> None:
@@ -398,9 +410,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                 pdf.add_page()
             # M70 décisions 5+6 — plus de préfixe de poids signé, plus de clé technique de couche :
             # libellé FR ferré à gauche (comme la fiche), le « pourquoi » chiffré vit ailleurs.
-            pdf.set_font("inter", size=8)
+            # M125-C3 — colonne ÉLARGIE (62 mm) + police 7.5 : les libellés renommés (« Potentiel
+            # foncier Région (indicatif) », « Occupation du sol (BD CARTO V5 — grain grossier) »)
+            # tiennent en entier ; à défaut, coupe au mot (jamais en milieu de mot).
+            pdf.set_font("inter", size=7.5)
             pdf.set_text_color(*TXT)
-            pdf.cell(51, 4.4, _layer_label(ln["layer"])[:34])
+            pdf.cell(62, 4.4, _fit_label(pdf, _layer_label(ln["layer"]), 60))
             pdf.set_font("inter", size=7.2)
             pdf.set_text_color(*TXT_MUT)
             x = pdf.get_x()
@@ -434,10 +449,19 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         lignes = []
         for z in rp["zones"]:
             zcode = z.get("zone") or z.get("libelle") or "zone"
-            arts = z.get("articles") or z.get("note")
-            lignes.append(f"Zone « {zcode} »"
-                          + (f" — {z['libelle']}" if z.get("libelle") and z.get("libelle") != zcode else "")
-                          + (f" : {arts}" if arts else ""))
+            entete = (f"Zone « {zcode} »"
+                      + (f" — {z['libelle']}" if z.get("libelle") and z.get("libelle") != zcode else ""))
+            arts = z.get("articles")
+            if isinstance(arts, list) and arts:   # M125-C1 — articles = liste de dicts : rendu texte, jamais un repr()
+                lignes.append(entete + " :")
+                for a in arts:
+                    ref = a.get("reference") or a.get("regle") if isinstance(a, dict) else a
+                    if ref:
+                        lignes.append(f"   · {ref}")
+            elif z.get("note"):
+                lignes.append(entete + f" : {z['note']}")
+            else:
+                lignes.append(entete)
         _section(pdf, "RÈGLEMENT PLU PAR ZONE", lignes, source=rp.get("disclaimer"))
 
     pf = fiche.get("plu_fraicheur")
@@ -494,8 +518,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         lignes = [via.get("libelle")]
         for c in via.get("contributions") or []:
             lignes.append(f"· {c.get('libelle', '')}" + (f" — {c['detail']}" if c.get("detail") else ""))
-        if via.get("cout_raccordement"):
-            lignes.append(f"Coût de raccordement indicatif : {via['cout_raccordement']}")
+        cr = via.get("cout_raccordement")
+        if isinstance(cr, dict):   # M125-C1 — dict {niveau, assainissement, disclaimer} : rendu texte
+            if cr.get("niveau"):
+                lignes.append(cr["niveau"])            # texte déjà auto-descriptif (« Raccordement a priori… »)
+            if cr.get("assainissement"):
+                lignes.append(cr["assainissement"])
+        elif cr:
+            lignes.append(f"Coût de raccordement indicatif : {cr}")
         for k in ("elec_pv", "solaire"):
             v = via.get(k)
             if isinstance(v, dict) and v.get("note"):
@@ -551,7 +581,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     if _is_indispo(vp):
         _indispo(pdf, "AUTOUR, À MOINS DE 100 M")
     elif vp and (vp.get("ventes_dvf") or vp.get("permis")):
-        prix = (f" · prix médian ~{round(vp['prix_median_eur'] / 1000)} k€" if vp.get("prix_median_eur")
+        # M125-C6 — ne JAMAIS afficher « ~0 k€ » : la médiane n'est montrée que si elle arrondit à
+        # ≥ 1 k€ (une valeur < 500 € sur N ventes n'est pas une médiane servable) ; sinon note ou rien.
+        _pmed = vp.get("prix_median_eur")
+        prix = (f" · prix médian ~{round(_pmed / 1000)} k€" if _pmed and round(_pmed / 1000) >= 1
                 else (f" · {vp['prix_note']}" if vp.get("prix_note") else ""))
         _section(pdf, "AUTOUR, À MOINS DE 100 M",
                  [f"{vp.get('ventes_dvf', 0)} vente(s){prix} · {vp.get('permis', 0)} permis "
@@ -629,8 +662,9 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                   (f"Bâti d'origine : {ren['code_bati_origine']}" if ren.get("code_bati_origine") else None),
                   (f"Zone PLU : {ren['zone_plu']}" if ren.get("zone_plu") else None),
                   (f"SDP résiduelle estimée : ~{ren['sdp_residuelle_m2']:,} m²".replace(",", " ") if ren.get("sdp_residuelle_m2") else None),
-                  (f"Surface parcelle : {ren['surface_m2']:,} m²".replace(",", " ") if ren.get("surface_m2") else None)],
-                 source=(f"{ren.get('source', 'Analyse LABUSE')}" + (f" · {ren['maj']}" if ren.get("maj") else "")))
+                  (f"Surface parcelle : {ren['surface_m2']:,} m²".replace(",", " ") if ren.get("surface_m2") else None)])
+        # M125-C2 — PAS de signature « Analyse LABUSE · {date} » (métadonnée d'analyse) : le PDF ne
+        # porte pas de trace du moteur. Le segment est une donnée ; le rang (analyse) reste exclu.
 
     # ── A6 (mandat bilan-calculette) : CHARGE FONCIÈRE « selon vos hypothèses », si passée à l'export
     calc = fiche.get("calculette")
@@ -800,6 +834,28 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.set_text_color(*TXT_DIM)
             pdf.multi_cell(pdf.w - 28, 3.4, f"Grandeur : {cmp['grandeur']}.", new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.4)
+        # M125-C5 — écarter les €/m² ABERRANTS (mutations multi-parcelles : ex. 6,2 M€ pour 70 m² =
+        # 88 749 €/m²). Seuil STATISTIQUE (z-score modifié médiane/MAD > 3.5), jamais un plafond en dur.
+        _pm = [c["prix_m2"] for c in lst if isinstance(c.get("prix_m2"), (int, float)) and c["prix_m2"] > 0]
+        _med = statistics.median(_pm) if len(_pm) >= 4 else None
+        _mad = (statistics.median([abs(x - _med) for x in _pm]) or 1e-9) if _med is not None else None
+
+        def _aberrant(c) -> bool:
+            v = c.get("prix_m2")
+            return (_med is not None and isinstance(v, (int, float)) and v > 0
+                    and abs(0.6745 * (v - _med) / _mad) > 3.5)
+        keep = [c for c in lst if not _aberrant(c)]
+        n_ab = len(lst) - len(keep)
+        if n_ab:
+            pdf.set_font("inter", size=7.5)
+            pdf.set_text_color(*AMBER)
+            pdf.multi_cell(pdf.w - 28, 3.6,
+                           f"{n_ab} vente{'s' if n_ab > 1 else ''} au prix/m² aberrant écartée"
+                           f"{'s' if n_ab > 1 else ''} du tableau "
+                           "(prix incohérent avec la surface — mutation multi-parcelles probable).",
+                           new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(0.4)
+        lst = keep
         # M73-G — chiffres alignés à DROITE (Date à gauche), unités présentes ; en-têtes assortis.
         cols = [("Date", 24, "L"), ("Distance", 20, "R"), ("Surface", 22, "R"),
                 ("Prix", 30, "R"), ("€/m²", 22, "R")]
