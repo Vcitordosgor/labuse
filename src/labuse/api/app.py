@@ -3177,11 +3177,10 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
 
     A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
     la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
-    from .export_commun import adresse_ban_texte
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
-    # M6 2a : adresse postale BAN en tête du PDF (l'écran l'a, le papier doit l'avoir)
-    fiche["adresse_ban"] = adresse_ban_texte(db, idu)
+    # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
+    # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
     # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.

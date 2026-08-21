@@ -191,8 +191,10 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_font("mono", size=14)
     pdf.set_text_color(*TXT_HI)
     pdf.cell(0, 7, fiche["idu"], new_x="LMARGIN", new_y="NEXT")
-    # M6 2a : l'adresse BAN sous l'IDU — « Adresse non disponible » si aucune rattachée
-    adr = fiche.get("adresse_ban")
+    # M6 2a : l'adresse BAN sous l'IDU — « Adresse non disponible » si aucune rattachée.
+    # M125-B : UN SEUL résolveur d'adresse (celui de la fiche écran, `_ban_adresse` → `adresse`) —
+    # plus de `adresse_ban` (2e résolveur) : écran = papier au mot près, pas de divergence silencieuse.
+    adr = fiche.get("adresse")
     pdf.set_font("inter", size=8.5)
     pdf.set_text_color(*(TXT if adr else TXT_DIM))
     pdf.cell(0, 4.6, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
