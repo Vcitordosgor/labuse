@@ -29,9 +29,8 @@ CAS: list[tuple[str, str]] = [
     ("Quelle est la rareté du foncier à Cilaos ?", "communes"),
     ("Le potentiel de renouvellement urbain à Saint-Denis", "renouvellement"),
     ("Et si cette zone passait constructible ?", "simulplu"),
-    # 21/08/2026 — « Quoi de neuf » (o10-bascules) retiré du produit : plus de concept-route (cf.
-    # test_quoi_de_neuf_retire_plus_de_concept). Le cas « Les bascules du mois » est donc retiré d'ici.
-    ("Ouvre le suivi de secteur", "o7-carnet"),
+    # 21/08/2026 — « Quoi de neuf » (o10-bascules) ET « Suivi de secteur » (o7-carnet) retirés du produit :
+    # plus de concept-route (cf. test_*_retire_plus_de_concept). Leurs cas sont retirés d'ici.
     ("Je veux scorer une adresse", "scoreur-adresse"),
     # ── guidages ──
     ("Montre les friches à Saint-Paul", "carte_filtre"),

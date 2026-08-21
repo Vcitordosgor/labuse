@@ -184,6 +184,11 @@ type CarnetSecteur = {
   note: string; avertissement: string | null
 }
 
+// DORMANT — outil « Suivi de secteur » retiré du produit le 21/08/2026 (plus câblé au menu : registry +
+// ModulePanel COMPONENTS). Mesuré : nom qui promettait un suivi non fait (le vrai suivi = la Veille),
+// 0 état, 0 usage, plafond muet 30/478. Vue en partie ailleurs (prix→fiche, ZAN→Communes, permis→radar) ;
+// seul le compte d'opportunités agrégé PAR SECTION reste sans autre foyer. Composant conservé au dépôt
+// (exporté) ; endpoints /carnet-secteur vivants. Concept-route Copilote retirée.
 export function O7Carnet() {
   const [secteur, setSecteur] = useState<string | null>(null)
   const liste = useQuery({ queryKey: ['o7-liste'], queryFn: () => jfetch<CarnetListe>('/carnet-secteur') })

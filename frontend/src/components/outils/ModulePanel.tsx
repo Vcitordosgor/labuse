@@ -15,7 +15,9 @@ import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
 // O10Bascules (Quoi de neuf) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
 // composant reste exporté dans ./blocB (endpoint /events vivant via la cloche de notifications).
-import { O5Servitudes, O7Carnet } from './blocB'
+// O7Carnet (Suivi de secteur) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
+// composant reste exporté dans ./blocB (endpoints /carnet-secteur vivants ; le vrai suivi = la Veille).
+import { O5Servitudes } from './blocB'
 // M17 (Simulateur ZAN) retiré du produit le 21/08/2026 (DORMANT) — plus monté ; composant exporté au
 // dépôt dans ./moteurs. Enveloppe ZAN déplacée dans Communes ; endpoints /moteurs/zan* vivants.
 import { M16, M18 } from './moteurs'
@@ -924,7 +926,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
-  'o7-carnet': O7Carnet,
+  // Retiré du produit le 21/08/2026 (DORMANT) : 'o7-carnet' (Suivi de secteur) — le vrai suivi = la
+  // Veille. Composant O7Carnet conservé au dépôt ; endpoints /carnet-secteur vivants.
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o10-bascules' (Quoi de neuf) — plus monté. Composant
   // O10Bascules conservé au dépôt (exporté) ; son endpoint /events reste vivant (cloche de notifications).
   'calculette-fonciere': CalculetteFonciere,
