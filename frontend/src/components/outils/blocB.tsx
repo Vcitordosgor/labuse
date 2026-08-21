@@ -281,7 +281,7 @@ export function O9Rarete() {
     <>
       <Banner>La <b>rareté</b> comme argument : au rythme de consommation observé
         (<b>Sourcé</b> Cerema), combien d'années de budget ZAN reste-t-il ? Horizon court =
-        foncier qui s'apprécie. <b>Estimé</b> : budget −50 % loi Climat, enveloppes SAR-SCOT
+        foncier qui s'apprécie. <b>Estimé</b> : budget −50 % loi Climat, enveloppes Schéma d'Aménagement Régional (SAR)/SCOT
         non publiées (caveat loi TRACE).</Banner>
       {q.isLoading && <Loading accent="mint" label="Calcul des horizons…" />}
       {q.isError && <ErrorState className="py-6" message="Pipeline rareté indisponible." retry={() => q.refetch()} />}

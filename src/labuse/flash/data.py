@@ -600,7 +600,7 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
 def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> dict | None:
     """M18 — contexte COMMUNE (agrégats sourcés, JAMAIS d'identité de personne physique) :
     vélocité d'instruction PC (Sitadel, dossiers accordés), leviers social/bailleur (SRU + QPV),
-    consommation d'espace observée (Cerema ENAF). Le budget/horizon ZAN (estimé, SAR non
+    consommation d'espace observée (Cerema ENAF). Le budget/horizon ZAN (estimé, Schéma d'Aménagement Régional (SAR) non
     territorialisé) est VOLONTAIREMENT EXCLU — donnée trop incertaine (garde-fou : pas de champ faux)."""
     out: dict[str, Any] = {}
 
