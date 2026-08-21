@@ -205,18 +205,33 @@ const SrcTag = ({ src }: { src: boolean }) => (
 
 /** Indicateur ZAN d'une commune : consommé (Sourcé) + budget/reste (Estimé) + caveat loi TRACE. */
 function IndicateurCommune({ ind, caveat }: { ind: Record<string, any>; caveat: string }) {
+  const dep = ind.depasse
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
       <div className="flex items-center justify-between">
         <span className="font-medium text-txt">{ind.commune} — enveloppe ZAN (estimée)</span>
       </div>
-      <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-txt-mut">
+      {/* audit-zan — le budget en POURCENTAGE d'abord (c'est lui qui parle) ; le caveat ESTIMÉ juste à
+          côté (un « % restant » se lit trop vite comme un droit ferme), pas seulement en bas de bloc. */}
+      {ind.pct_consomme != null && (
+        <div className="mt-1.5 rounded-md bg-surface-3 px-2.5 py-1.5">
+          <div className="flex items-baseline gap-1.5">
+            <b className={`tnum text-[16px] ${dep ? 'text-st-ecartee' : 'text-st-creuser'}`}>{ind.pct_consomme} %</b>
+            <span className="text-[10.5px] text-txt-mut">du budget consommé</span>
+            <span className={`ml-auto tnum text-[11.5px] ${dep ? 'text-st-ecartee' : 'text-txt'}`}>{ind.pct_restant} % restant</span>
+          </div>
+          <p className="mt-0.5 text-[9px] leading-snug text-st-creuser">
+            <b>Estimé</b> (budget = conso 2011-21 × 0,5, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
+        </div>
+      )}
+      {/* les hectares restent à côté — la donnée source */}
+      <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-txt-mut">
         <span>Consommé 2011-21 : <b className="text-txt">{ind.conso_2011_2021_ha}</b> ha<SrcTag src /></span>
         <span>Consommé 2021-24 : <b className="text-txt">{ind.conso_2021_2024_ha}</b> ha<SrcTag src /></span>
         <span>Budget 2021-31 : <b className="tnum text-st-creuser">{ind.budget_2021_2031_ha}</b> ha<SrcTag src={false} /></span>
-        <span>Reste théorique : <b className={`tnum ${ind.depasse ? 'text-st-ecartee' : 'text-st-creuser'}`}>{ind.reste_theorique_ha}</b> ha<SrcTag src={false} /></span>
+        <span>Reste (théorique) : <b className={`tnum ${dep ? 'text-st-ecartee' : 'text-st-creuser'}`}>{ind.reste_theorique_ha}</b> ha<SrcTag src={false} /></span>
       </div>
-      {ind.depasse && <p className="mt-1 text-[10.5px] text-st-ecartee">▲ Rythme déjà « dépassé » sur la période estimée (reste négatif).</p>}
+      {dep && <p className="mt-1 text-[10.5px] text-st-ecartee">▲ Rythme déjà « dépassé » sur la période estimée (reste négatif).</p>}
       <p className="mt-1 text-[10px] italic leading-snug text-st-creuser">{caveat}</p>
       <p className="mt-0.5 text-[9px] text-txt-dim">Observé : {ind.source} · {ind.millesime}</p>
     </div>
@@ -266,15 +281,19 @@ export function M17() {
       {/* CONTEXTE COMMUNE : indicateur estimé + caveat */}
       {s?.indicateur && <IndicateurCommune ind={s.indicateur} caveat={s.caveat as string} />}
 
-      {/* Communes les plus consommatrices (contexte île, observé) */}
-      <p className="label-caps mt-1">Consommation ENAF par commune (observé)<SrcTag src /></p>
-      <div className="flex max-h-32 shrink-0 flex-col overflow-y-auto">
-        {((d?.indicateurs ?? []) as Record<string, any>[]).slice(0, 8).map((c) => (
+      {/* audit-zan #1 — les 24 communes (la donnée est complète : commune_conso_enaf = 24/24). Le
+          « .slice(0, 8) » était un LIMIT d'affichage caché, comme celui du baromètre : retiré. Chaque
+          ligne dit son % de budget CONSOMMÉ (Estimé), avec les ha (consommé / budget) à côté. */}
+      <p className="label-caps mt-1">Budget ZAN par commune — les {((d?.indicateurs ?? []) as unknown[]).length}
+        <span className="ml-1 normal-case text-txt-dim">(% consommé <span className="text-st-creuser">Estimé</span> · ha observés)</span></p>
+      <div className="flex max-h-48 shrink-0 flex-col overflow-y-auto">
+        {((d?.indicateurs ?? []) as Record<string, any>[]).map((c) => (
           <button key={c.commune} onClick={() => setIdu('')}
-            className="flex items-center gap-2 border-b border-line py-1 text-left text-[11px]" title={`${c.commune} : reste théorique estimé ${c.reste_theorique_ha} ha`}>
+            className="flex items-center gap-2 border-b border-line py-1 text-left text-[11px]"
+            title={`${c.commune} : ${c.pct_consomme} % du budget estimé consommé (${c.conso_2021_2024_ha} sur ${c.budget_2021_2031_ha} ha) — estimation, pas un droit`}>
             <span className="min-w-0 flex-1 truncate text-txt">{c.commune}</span>
-            <span className="font-mono text-txt-dim">{c.conso_2011_2021_ha} ha (11-21)</span>
-            <span className={`font-mono tnum ${c.depasse ? 'text-st-ecartee' : 'text-st-creuser'}`}>{c.reste_theorique_ha} ha</span>
+            <span className={`w-12 text-right font-mono tnum ${c.depasse ? 'text-st-ecartee' : 'text-st-creuser'}`}>{c.pct_consomme != null ? `${c.pct_consomme} %` : '—'}</span>
+            <span className="w-[86px] text-right font-mono text-[10px] text-txt-dim">{c.conso_2021_2024_ha}/{c.budget_2021_2031_ha} ha</span>
           </button>
         ))}
       </div>

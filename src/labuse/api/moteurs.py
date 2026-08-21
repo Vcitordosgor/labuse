@@ -247,6 +247,10 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
         c1121, c2124 = float(r["c1121"] or 0), float(r["c2124"] or 0)
         budget = c1121 / 2.0                       # règle -50 % (Estimé)
         reste = budget - c2124                     # peut être négatif (commune ayant « dépassé »)
+        # audit-zan — le budget en POURCENTAGE (plus parlant que les ha bruts) : part du budget déjà
+        # consommée sur 2021-24, et part restante. HÉRITE du même caveat que le reste (ESTIMÉ, -50 %) ;
+        # « % restant » se lit encore plus vite comme un droit ferme → le caveat le suit à l'écran.
+        pct_consomme = round(100 * c2124 / budget) if budget > 0 else None
         out.append({
             "commune": r["commune"],
             "conso_2011_2021_ha": round(c1121 / 10000, 1),          # Sourcé
@@ -254,6 +258,8 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
             "conso_2021_2024_ha": round(c2124 / 10000, 1),          # Sourcé
             "budget_2021_2031_ha": round(budget / 10000, 1),        # Estimé (-50 %)
             "reste_theorique_ha": round(reste / 10000, 1),          # Estimé (± )
+            "pct_consomme": pct_consomme,                            # Estimé (% du budget estimé)
+            "pct_restant": (100 - pct_consomme) if pct_consomme is not None else None,  # ± (négatif = dépassé)
             "depasse": reste < 0,
             "millesime": r["millesime"], "source": r["source_nom"],
         })
@@ -281,17 +287,21 @@ def zan_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
                           {"i": idu}).scalar()
     sru = db.execute(text("SELECT statut FROM commune_contexte_sru WHERE commune = :c"),
                      {"c": p["commune"]}).scalar()
+    # audit-zan #2 — OCS-GE natif (974) n'est PAS exposé en WFS : la couche `ocs_ge` est un PROXY
+    # BD CARTO V5 (occupation du sol IGN), lu par le scoring. Un signal ZAN bâti dessus DOIT le dire —
+    # même honnêteté que la ligne cascade de la fiche (« occupation du sol BD CARTO V5 »).
+    _OCS_SRC = "occupation du sol BD CARTO V5, proxy OCS-GE"
     raisons: list[str] = []
     if ocs == "artificialise":
-        raisons.append("Sol déjà artificialisé (OCS-GE) — densification, le sens du ZAN")
+        raisons.append(f"Sol déjà artificialisé ({_OCS_SRC}) — densification, le sens du ZAN")
     if friche:
         raisons.append("Friche recensée (Cartofriches) — mobilisation bonifiée par la loi TRACE")
     if zone_fam == "U":
-        raisons.append("Zone U (renouvellement urbain)")
+        raisons.append("Zone U (renouvellement urbain, zonage PLU)")
     aligne = ocs == "artificialise" or bool(friche) or zone_fam == "U"
     contrainte = ocs in ("naturel", "agricole") and zone_fam == "AU"
     if contrainte:
-        raisons.append(f"Sol {ocs} (OCS-GE) en zone AU — extension qui consomme de l'ENAF")
+        raisons.append(f"Sol {ocs} ({_OCS_SRC}) en zone AU — extension qui consomme de l'ENAF")
     signal = "aligne" if aligne else "contrainte" if contrainte else "neutre"
     exemption_sru = None
     if sru == "carencee":
