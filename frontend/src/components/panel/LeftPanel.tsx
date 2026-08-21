@@ -125,7 +125,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
   // M137-U — ZNIEFF : contrainte (patrimoine naturel), à côté de Parc national / PPR.
-  { key: 'znieff', label: 'ZNIEFF — inventaire du patrimoine naturel' },
+  { key: 'znieff', label: 'ZNIEFF — patrimoine naturel' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
   // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)

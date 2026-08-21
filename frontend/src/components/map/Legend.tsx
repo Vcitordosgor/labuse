@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { BPE_DOM, CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { getMapLayer } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
@@ -34,6 +34,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const peint = useApp((s) => s.mapPeint)
   const commune = useApp((s) => s.commune)
   const basemap = useApp((s) => s.basemap)
+  const bpeDomains = useApp((s) => s.bpeDomains)           // M137-V — filtre par domaine BPE
+  const toggleBpeDomain = useApp((s) => s.toggleBpeDomain)
   const v2 = useV2Actif()
   // M106 : la légende des aléas dit le MILLÉSIME SERVI (jamais en dur) — même clé de requête
   // que la carte (React Query dédoublonne, aucun fetch supplémentaire) ; swatches à la teinte
@@ -159,15 +161,26 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         </div>
       )}
 
-      {/* ── M137-U : équipements INSEE BPE — 2e source, cercles bleus (distincts des icônes OSM) ── */}
+      {/* ── M137-U/V : équipements INSEE BPE — cercles colorés PAR DOMAINE (A..G) ; la légende EST
+             le filtre (cliquer un domaine l'affiche/le masque). Distincts des icônes OSM. ── */}
       {layers.equipements_bpe && (
         <div data-legend-bpe className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Base Permanente des Équipements (INSEE, 2025). Source distincte d'OpenStreetMap — jamais fusionnée, vous voyez la provenance. Le modèle de LABUSE continue de lire OSM.">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: tTheme.bpe }} />
-              <span className="text-[11px] text-txt">Équipements (INSEE BPE)</span>
-            </div>
+          <Tip block side="top" tip="Base Permanente des Équipements (INSEE, 2025), par domaine. Source distincte d'OpenStreetMap — jamais fusionnée. Cliquez un domaine pour l'afficher ou le masquer. Le modèle de LABUSE continue de lire OSM.">
+            <p className="label-caps mb-1.5">Équipements (INSEE BPE) — par domaine</p>
           </Tip>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            {BPE_DOM.map((d) => {
+              const on = bpeDomains.includes(d.code)
+              return (
+                <button key={d.code} data-legend-bpe-dom={d.code} onClick={() => toggleBpeDomain(d.code)}
+                  className={`flex items-center gap-1.5 rounded px-1 py-0.5 text-left transition-opacity duration-quick ${on ? '' : 'opacity-35'}`}
+                  title={on ? 'Masquer ce domaine' : 'Afficher ce domaine'}>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
+                  <span className="truncate text-[10.5px] text-txt">{d.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 

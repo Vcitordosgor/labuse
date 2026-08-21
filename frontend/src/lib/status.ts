@@ -84,6 +84,21 @@ export function etatBienMeta(e: string | null | undefined) {
   return (e && ETAT_BIEN_META[e]) || null
 }
 
+// M137-V — les 7 domaines BPE (INSEE) : code → libellé + couleur. Les cercles carte de la couche
+// « Équipements (INSEE BPE) » sont colorés par domaine (le bleu unique était illisible) ; la légende
+// et le filtre par domaine lisent la MÊME table. « A services » (le plus nombreux, ~16 k) en gris
+// neutre pour ne pas saturer ; les familles à enjeu (santé rouge, enseignement bleu) ressortent.
+export const BPE_DOM: { code: string; label: string; color: string }[] = [
+  { code: 'A', label: 'Services aux particuliers', color: '#7C8AA0' },
+  { code: 'B', label: 'Commerces', color: '#E0A23C' },
+  { code: 'C', label: 'Enseignement', color: '#4C8DD6' },
+  { code: 'D', label: 'Santé et social', color: '#D9534F' },
+  { code: 'E', label: 'Transports', color: '#3CB6A8' },
+  { code: 'F', label: 'Sport et loisirs', color: '#6FBF52' },
+  { code: 'G', label: 'Tourisme', color: '#B06FD6' },
+]
+export const BPE_DOM_CODES = BPE_DOM.map((d) => d.code)
+
 export function verdictMeta(
   statut: Statut | null | undefined,
   tierV2: string | null | undefined,

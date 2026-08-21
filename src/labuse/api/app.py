@@ -3243,6 +3243,12 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
+             -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype
+             -- 'tcsp') sont à 93 % un doublon visible de la couche GTFS dédiée « Transport public ».
+             -- On les MASQUE de la couche Équipements, on NE SUPPRIME AUCUNE LIGNE : le modèle lit
+             -- `spatial_layers` en direct (amenites.compute_amenites_commune → parcel_amenites.
+             -- dist_tcsp_m → feature de score p_model) — inchangé (garde d'invariance test_display_seul).
+             AND NOT (sl.kind = 'amenite' AND sl.subtype = 'tcsp')
            LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.

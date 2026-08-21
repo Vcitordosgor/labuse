@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
-import { ALL_TIER_META, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
@@ -420,6 +420,7 @@ export function MapView() {
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
   const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module, comparePicking } = useApp()
+  const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Les couleurs d'OPINION (palette tiers, lisérés promues/brûlantes, marqueurs « chauds »)
@@ -798,9 +799,12 @@ export function MapView() {
       // M137-U — équipements INSEE BPE : CERCLES BLEUS (pas d'icônes) → visuellement distincts d'OSM,
       // aucun doublon à l'écran quand les deux couches sont actives. Source et couche dédiées.
       m.addSource('ov-equip-bpe', { type: 'geojson', data: EMPTY_FC as never })
+      // M137-V — couleur par DOMAINE (A..G) via match sur le subtype (data-driven, comme zfang/frr).
+      const bpeColor = ['match', ['get', 'subtype'],
+        ...BPE_DOM.flatMap((d) => [d.code, d.color]), T_SOMBRE.bpe] as never
       m.addLayer({ id: 'ov-equip-bpe', type: 'circle', source: 'ov-equip-bpe', minzoom: 12,
         layout: { visibility: 'none' },
-        paint: { 'circle-color': T_SOMBRE.bpe, 'circle-opacity': 0.85,
+        paint: { 'circle-color': bpeColor, 'circle-opacity': 0.85,
                  'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 2.2, 16, 4, 20, 6],
                  'circle-stroke-color': '#0d1420', 'circle-stroke-width': 0.8 } })
       // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
@@ -1081,6 +1085,8 @@ export function MapView() {
     m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
     m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
     m.setLayoutProperty('ov-equip-bpe', 'visibility', vis(layers.equipements_bpe))   // M137-U — 2e source
+    // M137-V — filtre par domaine BPE (A..G) : n'afficher que les domaines cochés dans la légende.
+    if (m.getLayer('ov-equip-bpe')) m.setFilter('ov-equip-bpe', ['in', ['get', 'subtype'], ['literal', bpeDomains]] as never)
     m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
     // M55-G suite (point 1) — LE FILTRE DE PALETTE :
     //  · couche « Verdict — toute l'île » cochée → AUCUN filtre (peinture explicite du
@@ -1137,7 +1143,7 @@ export function MapView() {
     // M64-P1 (A) : `basemap` dans les deps — au changement de thème, cet effet (seul à connaître le
     // mode zonage/opinion/factuel/neutre) se ré-exécute et RE-POSE la bonne fill-color des parcelles.
     // Corrige la teinte rouge/brune au boot : la couleur des parcelles n'appartient plus à applyTheme.
-  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap])
+  }, [filters, layers, bpeDomains, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
