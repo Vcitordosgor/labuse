@@ -186,10 +186,8 @@ export function Rail() {
               if (!outils.length) return null
               return (
                 <section key={g.key} data-outil-group={g.key}>
-                  <div className="mb-2 flex items-baseline justify-between">
-                    <p className="label-caps">{g.label}</p>
-                    <p className="text-[11px] text-txt-dim">{g.hint}</p>
-                  </div>
+                  {/* menu-sous-titres — les sous-titres de groupe (g.hint) sont retirés ; le TITRE reste. */}
+                  <p className="label-caps mb-2">{g.label}</p>
                   <div className="flex flex-col gap-2">
                     {outils.map((m) => (
                       <OutilCard key={m.key} m={m} phare={!!m.phare} open={openOutil} />

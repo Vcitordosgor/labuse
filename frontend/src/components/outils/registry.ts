@@ -27,13 +27,15 @@ export interface ModuleDef {
   phare?: boolean      // outil à forte valeur → mis en avant
 }
 
-//: les 5 intentions, dans l'ordre du geste (affichage). Le client comprend en 5 s ce qui sert.
-export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
-  { key: 'trouver', label: 'Trouver', hint: 'repérer le foncier à potentiel, sans cible au départ' },
-  { key: 'instruire', label: 'Instruire', hint: 'jauger CE terrain, ce projet' },
-  { key: 'agir', label: 'Agir', hint: 'préparer et lancer l’approche' },
-  { key: 'marche', label: 'Comprendre le marché', hint: 'prix, rythmes, lecture de territoire' },
-  { key: 'temps', label: 'Suivre le temps', hint: 'l’évolution, la veille' },
+//: les 5 intentions, dans l'ordre du geste (affichage). menu-sous-titres — les sous-titres (hint) sont
+//: retirés du menu : seuls les TITRES de groupe restent. (Le groupe « trouver » est VIDE après les
+//: retraits de la semaine — Rail.tsx ne rend pas un groupe sans outil, il n'apparaît donc pas.)
+export const GROUPS: { key: OutilGroup; label: string }[] = [
+  { key: 'trouver', label: 'Trouver' },
+  { key: 'instruire', label: 'Instruire' },
+  { key: 'agir', label: 'Agir' },
+  { key: 'marche', label: 'Comprendre le marché' },
+  { key: 'temps', label: 'Suivre le temps' },
 ]
 
 export const MODULES: ModuleDef[] = [
