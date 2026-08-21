@@ -106,8 +106,12 @@ export const MODULES: ModuleDef[] = [
   // au menu (registry + COMPONENTS). Le composant O10Bascules reste au dépôt (exporté, cf. blocB.tsx) ;
   // son unique source, l'endpoint /events, reste VIVANT (consommé par la cloche de notifications + le
   // « point du jour »), donc rien d'orphelin. Concept-route Copilote retirée (answering.py).
-  { key: 'o7-carnet', num: 'O7', group: 'temps',
-    label: 'Suivi de secteur', desc: 'Un secteur suivi comme un portefeuille — stock, prix, permis, signaux' },
+  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Suivi de secteur » (o7-carnet, O7). Mesuré :
+  // son nom promettait un suivi qu'il ne faisait pas (consult-only ; le VRAI suivi = la Veille), 0 état,
+  // 0 usage, plafond muet 30/478. Sa vue existe en grande partie ailleurs (prix secteur → fiche parcelle ;
+  // ZAN → Communes ; permis → radar permis) ; SEUL le compte d'opportunités AGRÉGÉ par section n'a pas
+  // d'autre foyer (visible à l'œil sur la carte). Composant O7Carnet + endpoints /carnet-secteur + tests
+  // conservés au dépôt. Concept-route Copilote retirée (answering.py).
   { key: 'temps', num: 'M08', group: 'temps',
     label: 'Remonter le temps', desc: 'Comparez une année ancienne et aujourd’hui pour lire la mutation d’un terrain' },
 ]

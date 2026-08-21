@@ -763,8 +763,9 @@ _CONCEPT_MAP = [
     # est SUPPRIMÉE — router vers un module absent = lien mort (piège attrapé sur « Foncier fantôme »).
     # Ces demandes retombent sur le traitement normal du Copilote. Le flux d'événements reste servi
     # ailleurs (la cloche de notifications lit le même endpoint /events).
-    (("suivi de secteur", "suivre le secteur", "portefeuille de secteur", "suivre un secteur comme"),
-     ("o7-carnet", "Suivi de secteur")),
+    # 21/08/2026 — outil « Suivi de secteur » (o7-carnet) retiré (DORMANT) : concept-route SUPPRIMÉE
+    # (router vers un module absent = lien mort, piège Foncier fantôme). Le VRAI suivi = la Veille ;
+    # ces demandes retombent sur le traitement normal du Copilote (mission VEILLE / surveillance).
     (("scorer une adresse", "scorer un bien", "seconde opinion avant d'offrir", "avis sur cette adresse",
       "noter une adresse"), ("scoreur-adresse", "Scorer une adresse")),
 ]
