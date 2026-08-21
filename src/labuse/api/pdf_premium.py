@@ -91,6 +91,24 @@ def _signaux(n: int) -> str:
     return f"{n} signal" if n == 1 else f"{n} signaux"
 
 
+def _indispo(pdf: _Pdf, titre: str) -> None:
+    """M125 (boussole) — bloc « donnée indisponible — erreur technique » : une PANNE d'un builder de
+    fiche ne s'imprime JAMAIS en absence sourcée. Rendu en clair (ambre), jamais un blanc muet."""
+    pdf.set_font("mono", size=7)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 4, titre, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("inter", size=7.6)
+    pdf.set_text_color(*AMBER)
+    pdf.multi_cell(pdf.w - 28, 3.8, "Donnée indisponible — erreur technique. Le calcul n'a pas abouti "
+                   "(incident) ; ce n'est pas une absence de donnée.", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1.2)
+
+
+def _is_indispo(bloc) -> bool:
+    """Vrai si un bloc de fiche porte l'état PANNE (M125) — à tester AVANT de lire ses champs."""
+    return isinstance(bloc, dict) and bool(bloc.get("indisponible"))
+
+
 def render_fiche_pdf(fiche: dict) -> bytes:
     pdf = _Pdf(format="A4")
     pdf.set_auto_page_break(auto=True, margin=26)   # pied de page commun (4 lignes)
@@ -172,11 +190,16 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # la surélévation, seule marge réelle. Les niveaux et le % de scoring de l'ancien « Potentiel de
     # transformation » (Task A) sont RETIRÉS ; `pt` ne sert que de source de FAITS (SDP m², hauteur).
     pt = fiche.get("potentiel_transformation") or {}
-    sdp_res = pt.get("sdp_residuelle_m2")
-    surel = bool(pt.get("surelevation_possible"))
-    marge_h = pt.get("hauteur_marge_m")
-    constructible = bool((sdp_res or 0) > 0 or surel)   # C9 — pilote l'affichage du rappel RTAA
-    if pt and (sdp_res is not None or surel):
+    constructible = False   # C9 — pilote l'affichage du rappel RTAA (faux par défaut / si panne)
+    if _is_indispo(pt):
+        _indispo(pdf, "DROITS À BÂTIR (SDP)")   # M125 — panne ≠ absence ; RTAA restera masqué
+        sdp_res = surel = marge_h = None
+    else:
+        sdp_res = pt.get("sdp_residuelle_m2")
+        surel = bool(pt.get("surelevation_possible"))
+        marge_h = pt.get("hauteur_marge_m")
+        constructible = bool((sdp_res or 0) > 0 or surel)
+    if not _is_indispo(pt) and pt and (sdp_res is not None or surel):
         pdf.set_font("mono", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 4, "DROITS À BÂTIR (SDP)", new_x="LMARGIN", new_y="NEXT")

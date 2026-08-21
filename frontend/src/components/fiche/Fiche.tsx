@@ -15,6 +15,7 @@ import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
+import { BlocIndisponible } from './BlocIndisponible'
 import { DepotsBlock } from './DepotsBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
@@ -325,6 +326,7 @@ function PtRow({ k, v }: { k: string; v: string }) {
   return (<div className="flex justify-between gap-3"><span className="text-txt-dim">{k}</span><span className="text-right text-txt">{v}</span></div>)
 }
 function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
+  if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
   return (
     <div data-transformation className="card-elev px-3 py-2.5">
@@ -345,6 +347,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
+  if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
   // M76 pt5 : plus de lien-module ici — l'Annuaire PLU passe par sa porte (tiroir Urbanisme).
   // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
   // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
@@ -1963,6 +1966,7 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
                 {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables
                     (veille AU ; sursis si armé). Jamais l'issue de la procédure. */}
+                {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
                 {f.radar_procedure?.synthese?.etat && (
                   <div data-radar-procedure className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-txt">
                     <span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}
@@ -2060,7 +2064,10 @@ export function Fiche({ idu }: { idu: string }) {
                 rendu ; l'ancien dédoublement signalEcarte/servable est unifié). Reste un tiroir
                 distinct (ModeBDrawer = RefDrawer autonome avec son propre fetch ; l'inliner dans
                 Constructibilité casserait l'accordéon exclusif — signalé au rapport). */}
-            {f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+            {/* M125 — panne ≠ absence (et ≠ « hors population » du disponible=false normal) */}
+            {f.mode_b?.indisponible
+              ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
+              : f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
             {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
                 quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
@@ -2137,7 +2144,8 @@ export function Fiche({ idu }: { idu: string }) {
                 ) : null })()}
               {/* M55-O phase 2.1c — HYPER-LOCAL absorbé depuis l'ancien tiroir « Contexte » :
                   historique permis sur la parcelle + voisinage proche (ventes DVF + permis 36 mois). */}
-              {f.historique_site && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
+              {f.historique_site?.indisponible && <div className="mt-2"><BlocIndisponible titre="Sur cette parcelle (historique)" /></div>}
+              {f.historique_site && !f.historique_site.indisponible && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
                 <div data-historique-site className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
                   <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
                   <ul className="mt-1 list-disc pl-4 text-txt-mut">
@@ -2151,7 +2159,8 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
                 </div>
               )}
-              {f.voisinage_proche && (
+              {f.voisinage_proche?.indisponible && <div className="mt-2"><BlocIndisponible titre="Autour, à moins de 100 m" /></div>}
+              {f.voisinage_proche && !f.voisinage_proche.indisponible && (
                 <div data-voisinage-proche className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
                   <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
                   <div className="mt-1 text-txt-mut">
@@ -2192,7 +2201,8 @@ export function Fiche({ idu }: { idu: string }) {
                 <EquipementsBadges idu={idu} />
                 {/* M106 P4 — PROXIMITÉ transport (distance, jamais un booléen) : arrêt, pôle
                     d'échange (le statut DIT la source ; une discordance OSM↔GTFS se dit), Papang. */}
-                {f.proximites && (f.proximites.arret || f.proximites.pole || f.proximites.telepherique) && (
+                {f.proximites?.indisponible && <BlocIndisponible titre="Proximités (transport, axes)" />}
+                {f.proximites && !f.proximites.indisponible && (f.proximites.arret || f.proximites.pole || f.proximites.telepherique) && (
                   <div data-proximites-transport className="flex flex-col gap-1 text-[11.5px] leading-snug text-txt">
                     <p className="text-[12px] font-semibold text-txt-hi">Transport public — au plus proche</p>
                     {f.proximites.arret && (

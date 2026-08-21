@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 import time
@@ -2714,6 +2715,18 @@ def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -
             "attrs": row["attrs"] or {}, "distance_m": row["d"]}
 
 
+_FICHE_LOG = logging.getLogger("labuse.fiche")
+
+
+def _bloc_indisponible(nom: str) -> dict:
+    """M125 (boussole : pas de constat non sourcé) — un bloc de fiche qui LÈVE (panne technique)
+    ne renvoie plus None (= « rien à signaler »). Il renvoie un ÉTAT DISTINCT, LOGGÉ (traceback),
+    que l'écran ET le PDF rendent en clair (« donnée indisponible — erreur technique »). À appeler
+    DEPUIS un `except` (log.exception lit la trace courante). L'ABSENCE réelle reste None."""
+    _FICHE_LOG.exception("fiche · bloc « %s » indisponible (erreur technique)", nom)
+    return {"indisponible": True, "raison": "erreur technique"}
+
+
 def _proximites_block(db: Session, idu: str) -> dict | None:
     """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
     Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas."""
@@ -2724,7 +2737,7 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         ht = _plus_proche(db, idu, "ligne_ht")
     except Exception:
         db.rollback()
-        return None
+        return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
     if not any((arret, pole, tele, ht)):
         return None
     out: dict = {}
@@ -2755,6 +2768,9 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         axe = _plus_proche(db, idu, "axe_structurant")
     except Exception:
         db.rollback()
+        # M125 — sous-requête isolée : on ne masque plus l'échec en silence (log), mais le bloc
+        # garde ses autres proximités réelles ; l'axe est simplement omis (dégradation partielle).
+        _FICHE_LOG.exception("fiche · bloc « proximites.axe » indisponible (erreur technique)")
         axe = None
     if axe:
         nat = (axe["attrs"].get("nature") or "route")
@@ -2791,7 +2807,9 @@ def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:
         from ..faisabilite.bilan import compute_mode_b
         return compute_mode_b(db, idu, run=run_label)
     except Exception:  # noqa: BLE001 — le mode B ne casse jamais la fiche
-        return {"disponible": False, "motif": "mode B indisponible (erreur interne)"}
+        # M125 — PANNE distincte de l'absence : `disponible=False` (contrat existant) + `indisponible`
+        # pour que l'écran/PDF disent « erreur technique », jamais « rien à signaler ».
+        return {"disponible": False, **_bloc_indisponible("mode_b")}
 
 
 @app.get("/parcels/{idu}/mode-b")
@@ -2888,7 +2906,7 @@ def _gestionnaires_block(commune: str) -> dict | None:
     try:
         return V.resolve_gestionnaires(commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
-        return None
+        return _bloc_indisponible("gestionnaires")   # M125 — panne ≠ absence
 
 
 def _icd_block(s2) -> dict | None:
@@ -2989,7 +3007,7 @@ def _radar_proc(idu: str, tier: str | None) -> dict | None:
         from ..veille_plu import radar_parcelle
         return radar_parcelle(idu, tier)
     except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
-        return None
+        return _bloc_indisponible("radar_procedure")   # M125 — panne ≠ absence
 
 
 def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
@@ -3038,7 +3056,7 @@ def _historique_site(db: Session, idu: str) -> dict | None:
         with db.begin_nested():
             return historique_permis(db, idu)
     except Exception:  # noqa: BLE001
-        return None
+        return _bloc_indisponible("historique_site")   # M125 — panne ≠ absence
 
 
 def _voisinage_proche(db: Session, idu: str) -> dict | None:
@@ -3049,7 +3067,7 @@ def _voisinage_proche(db: Session, idu: str) -> dict | None:
         with db.begin_nested():
             return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_VOISINAGE_100M)
     except Exception:  # noqa: BLE001
-        return None
+        return _bloc_indisponible("voisinage_proche")   # M125 — panne ≠ absence
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -3066,7 +3084,7 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
     try:
         return reglement_block(zones, commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
-        return None
+        return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
 
 
 def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
@@ -3085,7 +3103,7 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
                  LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
-        return None
+        return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
     if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
         return None
     pct = row["pct_potentiel"]
