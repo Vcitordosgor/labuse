@@ -87,8 +87,11 @@ export const MODULES: ModuleDef[] = [
     label: 'Baromètre foncier', desc: 'Un état du marché foncier prêt à distribuer (PDF)' },
   { key: 'permis', num: 'M03', group: 'marche',
     label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
+  // audit-promesses (add 2) — renommé « Promesses mortes » → « Permis au point mort » : le calcul dit
+  // « au point mort » (accordé, sans achèvement, parcelle non bâtie), pas la caducité juridique certaine.
+  // La clé reste `promesses` (URL/QA/concept-route inchangés). Défaut passé à 36 mois (caducité PC).
   { key: 'promesses', num: 'M04', group: 'marche',
-    label: 'Promesses mortes', desc: 'Les permis anciens jamais sortis de terre' },
+    label: 'Permis au point mort', desc: 'Les PC accordés mais jamais réalisés — sans achèvement, parcelle toujours non bâtie (à partir de 3 ans, la caducité légale)' },
   // Retiré du produit le 21/08/2026 (DORMANT) : outil « Simulateur ZAN » (zan, M17). Mesuré : ses 3
   // briques étaient soit MORTES (liste « parcelles alignées ZAN » = filtre ocs_ge weight>0, jamais >0 → 0),
   // soit des DOUBLONS (signal parcelle déjà sur la fiche ; enveloppe communale = même formule que la

@@ -742,8 +742,11 @@ _CONCEPT_MAP = [
      ("barometre", "Baromètre foncier")),
     (("radar permis", "qui construit quoi", "qui construit a", "qui construit dans",
       "quels permis dans la commune"), ("permis", "Radar permis")),
-    (("promesses mortes", "permis jamais sortis", "permis jamais construits",
-      "permis anciens jamais", "permis abandonnes"), ("promesses", "Promesses mortes")),
+    # audit-promesses (add 2) — outil renommé « Permis au point mort » (clé `promesses` inchangée) ; on
+    # garde les anciens mots-clés (« promesses mortes ») ET on ajoute le nouveau nom.
+    (("permis au point mort", "permis non lancés", "permis non lances", "promesses mortes",
+      "permis jamais sortis", "permis jamais construits", "permis anciens jamais", "permis abandonnes"),
+     ("promesses", "Permis au point mort")),
     # 21/08/2026 — outil « Simulateur ZAN » retiré (DORMANT) : router vers lui = lien mort. L'enveloppe ZAN
     # (budget/reste/%) vit désormais dans l'outil « Communes » → la concept-route y mène.
     (("simulateur zan", "artificialisation", "contrainte d'artificialisation", "contrainte zan",
