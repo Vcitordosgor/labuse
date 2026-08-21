@@ -441,7 +441,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module, comparePicking } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -810,6 +810,14 @@ export function MapView() {
         filter: ['==', ['get', 'kind'], 'permis'],
         paint: { 'circle-radius': 4, 'circle-color': '#4ADE80', 'circle-opacity': 0.85,
                  'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
+      // radar-permis — les points permis sont CLIQUABLES : un clic ouvre la fiche permis (drawer M03,
+      // détails + « localiser la parcelle »). Le permit_id voyage dans les properties de la feature.
+      m.on('click', 'module-pts', (e) => {
+        const pid = e.features?.[0]?.properties?.permit_id
+        if (pid) { setPermitToOpen(String(pid)); e.originalEvent?.stopPropagation?.() }
+      })
+      m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'module-pts', () => { m.getCanvas().style.cursor = '' })
 
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
       // d'icônes par milliers à l'écran), clic = nom de l'équipement

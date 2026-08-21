@@ -251,6 +251,12 @@ function M03() {
   const [open, setOpen] = useState<string | null>(null)
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
+  // radar-permis #2a — un clic sur un point permis de la carte (MapView) demande l'ouverture du drawer
+  // via `permitToOpen` ; on le consomme puis on le remet à null (même idiome que parcelPrefill).
+  const permitToOpen = useApp((s) => s.permitToOpen)
+  const setPermitToOpen = useApp((s) => s.setPermitToOpen)
+  const setFlyTo = useApp((s) => s.setFlyTo)
+  useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
   const q = useInfiniteQuery({
     queryKey: ['m03', months, nature, commune],
     queryFn: ({ pageParam }) => modPermis(months, nature || null, 300, pageParam as number),
@@ -272,7 +278,7 @@ function M03() {
     return pointInPolygon(c, zone)
   })
   useModuleMap([],
-    featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', label: `${i['type']} ${i['date']}` } }))),
+    featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } }))),
     [q.dataUpdatedAt, zone])
   const total = (head?.['total'] as number) ?? 0
   const sansLoc = (head?.['sans_localisation'] as number) ?? 0
@@ -280,7 +286,13 @@ function M03() {
     <>
       <Banner>Géocodage {String(head?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
         Données jusqu'au <b>{String(head?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
-        Cliquez un permis pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>
+        Cliquez un permis (carte ou liste) pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>
+      {/* radar-permis #2b — recherche par rue / commune : MÊME autocomplétion BAN que « Scorer une
+          adresse » (chemin unique, AddressAutocomplete). La sélection fait voler la carte sur le lieu —
+          les permis géocodés de ce secteur y apparaissent (points cliquables). */}
+      <AddressAutocomplete placeholder="Aller à une rue, une commune…"
+        onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
+        className="w-full" />
       <div className="flex flex-wrap gap-1.5">
         {[12, 24, 48, 72].map((m) => (
           <button key={m} onClick={() => setMonths(m)}
@@ -298,6 +310,10 @@ function M03() {
       </div>
       <p className="text-[11px] text-txt-dim">
         {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total)} permis`} · {fmt(carte.length)} sur la carte
+        {/* radar-permis (audit) — la carte est plafonnée à 8 000 points (garde-fou perf). Sur une fenêtre
+            longue (48/72 mois) les géocodés dépassent ce seuil : on le DIT, jamais un plafond muet. */}
+        {carte.length < ((head?.['geocodes'] as number) ?? 0) && <span data-permis-carte-plafond className="text-mint/70"
+          title="Carte plafonnée à 8 000 points (performance) ; la liste, elle, n'est pas plafonnée (« voir plus »)."> sur {fmt(head?.['geocodes'] as number)} géocodés — carte plafonnée</span>}
         {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-mint/70"
           title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisables sur la carte."> · {fmt(sansLoc)} sans localisation précise</span>}
         {zone && <span className="text-mint/70"> · outil Zone actif</span>}
