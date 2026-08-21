@@ -16,9 +16,11 @@ export interface LayerToggles {
   parcelles: boolean
   ppr: boolean
   parc: boolean
+  znieff: boolean       // M137-U : ZNIEFF (inventaire patrimoine naturel, type I/II) — CONTRAINTE
   limites: boolean
   anru: boolean
-  equipements: boolean
+  equipements: boolean         // équipements OpenStreetMap (kind 'amenite')
+  equipements_bpe: boolean     // M137-U : équipements INSEE BPE (kind 'amenite_bpe') — item séparé
   communes: boolean   // P11 : limites communales (ligne verte, contours officiels)
   cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
   alea_inondation: boolean // M106 P1 : aléa inondation DEAL (kind=georisque_alea, subtype dédié) —
@@ -459,7 +461,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

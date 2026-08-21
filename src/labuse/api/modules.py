@@ -721,6 +721,16 @@ def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
         {"run": RUN, "pid": parcel_id}).mappings().all()
     checklist = [{"layer": c["layer_name"], "severity": c["severity"], "result": c["result"],
                   "detail": c["detail"]} for c in concerns]
+    # M137-U — ZNIEFF : contrainte HORS CASCADE (ne remonte pas dans dryrun_cascade_results) ; on la
+    # lit géométriquement dans spatial_layers pour qu'elle apparaisse AUSSI dans l'entrée « lot »
+    # (comme dans l'entrée « parcelle » / servitudes). Vigilance, jamais un blocage (severity faible).
+    for z in db.execute(text(
+            "SELECT sl.subtype, sl.name FROM spatial_layers sl JOIN parcels p ON p.id = :pid "
+            "WHERE sl.kind = 'znieff' AND sl.geom_2975 IS NOT NULL "
+            "  AND ST_Intersects(sl.geom_2975, p.geom_2975)"), {"pid": parcel_id}).mappings().all():
+        checklist.append({"layer": "ZNIEFF", "severity": "faible", "result": "SOFT_FLAG",
+                          "detail": f"{z['subtype'] or 'ZNIEFF'} — {z['name']} : contrainte "
+                                    "environnementale (études d'impact, risque de recours), n'interdit pas de construire"})
     pm = db.execute(text("SELECT denomination, siren FROM parcelle_personne_morale WHERE idu = :i"),
                     {"i": idu}).mappings().first()
     proprio = ({"type": "personne_morale", "denomination": pm["denomination"], "siren": pm["siren"]}

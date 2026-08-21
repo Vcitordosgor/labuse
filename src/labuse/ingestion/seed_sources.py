@@ -202,10 +202,15 @@ SOURCES: list[dict] = [
          legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap — données disponibles sous ODbL (openstreetmap.org/copyright) ». Couches dérivées d'OSM (aménités, faux positifs) = bases dérivées : disponibles sous ODbL sur demande (share-alike, ODbL §4.4-4.6). Signal complémentaire, JAMAIS vérité juridique.",
          technical_notes="✓ live (UA applicatif requis, sinon 406). Faux positifs géométriques (cemetery, pitch, parking, school). Cacher agressivement."),
     dict(name="BPE INSEE", category="attractivite", provider="INSEE",
-         access_type="import", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
-         documentation_url="https://www.insee.fr/fr/statistiques?theme=1&debut=0&categorie=3", endpoint_url=None,
+         access_type="import", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="millésime 2025 (géographie au 01/01/2025)",
+         documentation_url="https://www.insee.fr/fr/statistiques/8217525",
+         endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8217525/BPE25.zip",
          legal_notes="Licence Ouverte / Etalab 2.0 — attribution : « Source : Insee, Base permanente des équipements ».",
-         technical_notes="Base permanente des équipements (import millésime)."),
+         technical_notes="M137-U : ingéré → spatial_layers kind='amenite_bpe' (fichier national géolocalisé, "
+                         "filtre DEP=974, 36 821 équipements, subtype = domaine A..G). Couche ÉQUIPEMENTS "
+                         "DISTINCTE d'OSM (kind 'amenite') — deux items par source, jamais fusionnés. Le "
+                         "modèle (acces_equipements) lit toujours OSM."),
     dict(name="Filosofi INSEE (carreaux 200 m)", category="attractivite", provider="INSEE",
          source_millesime="millésime 2021",   # M86 — millésime centralisé (plus de date en dur au front)
          access_type="import GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -287,13 +292,20 @@ SOURCES: list[dict] = [
                          "1 643 au WFS BDCARTO 974 (numberMatched). ⚠ 3 250 LIGNES = 1 607 doublons d'ingestion par bbox "
                          "commune (dedup à passer, dette BACKLOG). Le proxy BDCARTO n'est PAS le plafond de l'OCS GE natif "
                          "(plus fin) — la couverture OCS GE réelle reste non mesurable sans exposition WFS. M74 A : connecte."),
-    dict(name="ZNIEFF (INPN / Région)", category="environnement", provider="INPN/MNHN · Région ODS",
-         access_type="REST/GeoJSON", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
-         documentation_url="https://data.regionreunion.com/explore/dataset/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/",
-         endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/zones-naturelles-d-interet-ecologique-faunistique-et-floristique-a-la-reunion/records",
-         legal_notes="Licence à confirmer (jeu servi par la Région Réunion ODS — audit M6 §1.11 R8) ; producteur : INPN/MNHN.",
-         technical_notes="M71 (audit M66/M66-B) : endpoint vivant mais 0 donnée ingérée, 0 usage — "
-                         "repassé a_faire. Signal environnemental (non éliminatoire) à ingérer."),
+    # M137-U — UNE seule ligne ZNIEFF, pointée sur la source COMPLÈTE (INPN via Géoplateforme WFS).
+    # L'ancien jeu Région Réunion ODS est un DOUBLON AMPUTÉ (type II seul) → écarté (dit ci-dessous),
+    # pas une 2e ligne. L'ancien nom « ZNIEFF (INPN / Région) » est purgé par la CLI znieff-build.
+    dict(name="ZNIEFF (INPN/MNHN)", category="environnement", provider="INPN/MNHN · PatriNat",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="INPN, mise à jour 29/08/2025",
+         documentation_url="https://www.data.gouv.fr/datasets/inventaire-des-zones-naturelles-dinteret-ecologique-faunistique-et-floristique-znieff",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte / Etalab — attribution : « Source : INPN/MNHN (PatriNat) ».",
+         technical_notes="M137-U : ingéré → spatial_layers kind='znieff' via Géoplateforme WFS "
+                         "(patrinat_znieff1/znieff2). CONTINENTAL type I (134) + type II (28) = 162. "
+                         "MARINES EXCLUES (znieff*_mer) : en mer, aucune intersection avec des parcelles "
+                         "constructibles. CONTRAINTE hors cascade (études d'impact, risque de recours). Le jeu "
+                         "Région Réunion ODS est un doublon amputé (28 = type II seul, sans champ type) → écarté."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,

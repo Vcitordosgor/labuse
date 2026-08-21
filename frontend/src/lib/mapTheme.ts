@@ -28,6 +28,11 @@ export type MapTokens = {
   ppr: string
   pprOpacity: number
   pprContourW: number
+  /** M137-U — ZNIEFF (contrainte patrimoine naturel) : vert olive, distinct du marron Parc et du rouge PPR */
+  znieff: string
+  znieffOpacity: number
+  /** M137-U — équipements INSEE BPE (points, cercles) : distinct des icônes OSM */
+  bpe: string
   anru: string
   anruOpacity: number
   /** trame diagonale ANRU (daltonisme : U vert vs ANRU chartreuse confondus en
@@ -92,6 +97,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     ppr: '#E8695A',
     pprOpacity: 0.14,
     pprContourW: 0,
+    znieff: '#8F9E4B', znieffOpacity: 0.20,                 // vert olive (contrainte naturelle)
+    bpe: '#5AA9E8',                                          // bleu — cercles BPE, distinct des icônes OSM
     anru: '#C6E82E',
     anruOpacity: 0.30,
     anruTrameOpacity: 0,
@@ -134,6 +141,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     ppr: '#D14432',            // rouge profond — aplat @0,20 → 1,31 ✓ ; contour 4,09 ✓
     pprOpacity: 0.20,
     pprContourW: 1,
+    znieff: '#6E7A2E', znieffOpacity: 0.24,                 // vert olive foncé (contrainte naturelle)
+    bpe: '#2E77C2',                                          // bleu foncé — cercles BPE (mode clair)
     anru: '#8FA818',           // chartreuse foncée — aplat @0,30 → 1,28 ✓ ; trame compense le trait 2,41
     anruOpacity: 0.30,
     anruTrameOpacity: 0.6,

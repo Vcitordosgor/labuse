@@ -119,9 +119,13 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
   { key: 'alea_inondation', label: 'Aléa inondation' },
   { key: 'alea_mvt', label: 'Aléa mouvement de terrain' },
-  { key: 'equipements', label: 'Équipements' },
+  // M137-U — deux items ÉQUIPEMENTS étiquetés par source (jamais fusionnés → pas de doublon caché).
+  { key: 'equipements', label: 'Équipements (OpenStreetMap)' },
+  { key: 'equipements_bpe', label: 'Équipements (INSEE BPE)' },
   { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
+  // M137-U — ZNIEFF : contrainte (patrimoine naturel), à côté de Parc national / PPR.
+  { key: 'znieff', label: 'ZNIEFF — inventaire du patrimoine naturel' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
   // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
@@ -143,7 +147,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
-  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'parc', 'cinquante_pas'] },
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'equipements_bpe', 'parc', 'znieff', 'cinquante_pas'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
   { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
@@ -224,6 +228,7 @@ function LayersSection({ open, onToggle, fill, closable }: {
                     return (
                       <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
                         <button
+                          data-layer={key}
                           onClick={() => toggleLayer(key)}
                           className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
                         >

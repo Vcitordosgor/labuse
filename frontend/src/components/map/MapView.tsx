@@ -168,6 +168,8 @@ const OVERLAYS = {
   // Hors mapTheme : 1,34:1 mesuré sur la terre claire (AUDIT_M105B) — conforme dans les deux thèmes.
   parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
   ppr: { paint: { 'fill-color': T_SOMBRE.ppr, 'fill-opacity': T_SOMBRE.pprOpacity } },
+  // M137-U — ZNIEFF (contrainte patrimoine naturel) : aplat vert olive, distinct du Parc (marron) et du PPR (rouge).
+  znieff: { paint: { 'fill-color': T_SOMBRE.znieff, 'fill-opacity': T_SOMBRE.znieffOpacity, 'fill-outline-color': T_SOMBRE.znieff } },
   // M55-A-bis : chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
   // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
   anru: { paint: { 'fill-color': T_SOMBRE.anru, 'fill-opacity': T_SOMBRE.anruOpacity } },
@@ -460,6 +462,8 @@ export function MapView() {
   // (mode île : zonage/PPR passent par les tuiles MVT overlays — sources posées à l'init)
   // R6 : parc (8 Mo simplifiés, opt-in), ANRU (10 Ko) et équipements (2,3 Mo) servis ÎLE
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
+  // M137-U — ZNIEFF (162 polygones île, commune NULL → servis partout) : contrainte, opt-in.
+  const znieff = useQuery({ queryKey: ['layer', 'znieff', commune], queryFn: () => getMapLayer('znieff'), enabled: layers.znieff })
   const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
   // M134 — couche « Dispositifs » (servie île entière : QPV 57, buffer 13, ZFANG 24, FRR 23 — léger)
   const qpv = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
@@ -470,6 +474,9 @@ export function MapView() {
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
   const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite', 20_000), enabled: layers.equipements })
+  // M137-U — équipements INSEE BPE (kind distinct 'amenite_bpe') : 2e item, servi comme OSM (limit 20000 ;
+  // 35 546 en base → tronqué en vue île, borné par commune). Cercles bleus (vs icônes OSM) = zéro doublon visuel.
+  const equipBpe = useQuery({ queryKey: ['layer', 'equip_bpe', commune], queryFn: () => getMapLayer('amenite_bpe', 20_000), enabled: layers.equipements_bpe })
   // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
   const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
   // M106 P1 : aléas DEAL (993 objets île, un seul fetch — les 2 couches filtrent par subtype)
@@ -788,6 +795,14 @@ export function MapView() {
                   'icon-size': ['interpolate', ['linear'], ['zoom'],
                     12, 0.45, 15, 0.825, 17, 1.275, 20, 1.95] as never,
                   'icon-allow-overlap': true } })
+      // M137-U — équipements INSEE BPE : CERCLES BLEUS (pas d'icônes) → visuellement distincts d'OSM,
+      // aucun doublon à l'écran quand les deux couches sont actives. Source et couche dédiées.
+      m.addSource('ov-equip-bpe', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-equip-bpe', type: 'circle', source: 'ov-equip-bpe', minzoom: 12,
+        layout: { visibility: 'none' },
+        paint: { 'circle-color': T_SOMBRE.bpe, 'circle-opacity': 0.85,
+                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 2.2, 16, 4, 20, 6],
+                 'circle-stroke-color': '#0d1420', 'circle-stroke-width': 0.8 } })
       // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
       // et distance à la parcelle sélectionnée si pertinent). `preventDefault()` empêche le clic
       // d'ouvrir AUSSI la fiche de la parcelle sous l'icône (les handlers parcels-fill / clic
@@ -888,10 +903,12 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru], ['alea', alea],
+    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt],
-      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr]]   // M134 dispositifs
+      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr]]   // M134 dispositifs · M137-U znieff
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
+    // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
+    if (equipBpe.data) (m.getSource('ov-equip-bpe') as maplibregl.GeoJSONSource | undefined)?.setData(equipBpe.data as never)
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
       ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
@@ -939,7 +956,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1033,6 +1050,7 @@ export function MapView() {
     m.setLayoutProperty('ovmvt-ppr-line', 'visibility', vis(layers.ppr && ile))
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
+    m.setLayoutProperty('ov-znieff', 'visibility', vis(layers.znieff))   // M137-U — contrainte ZNIEFF
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
     m.setLayoutProperty('ov-anru-trame', 'visibility', vis(layers.anru))
     // M134 — couche « Dispositifs »
@@ -1062,6 +1080,7 @@ export function MapView() {
     m.setLayoutProperty('parcels-zone-label', 'visibility', vis(layers.zonage_parcelle && !ile))
     m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
     m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
+    m.setLayoutProperty('ov-equip-bpe', 'visibility', vis(layers.equipements_bpe))   // M137-U — 2e source
     m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
     // M55-G suite (point 1) — LE FILTRE DE PALETTE :
     //  · couche « Verdict — toute l'île » cochée → AUCUN filtre (peinture explicite du

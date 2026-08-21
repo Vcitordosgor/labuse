@@ -186,6 +186,42 @@ def dispositifs_build_cmd() -> None:
         build_all(s, log=typer.echo)
 
 
+@app.command("znieff-build")
+def znieff_build_cmd() -> None:
+    """M137-U — ingère les ZNIEFF continentales (type I + II) de La Réunion → spatial_layers
+    kind='znieff' (INPN via Géoplateforme WFS, Licence Ouverte). Marines exclues. Contrainte hors cascade."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.znieff import build_znieff
+
+    with session_scope() as s:
+        seed_sources.seed(s)                                     # crée/actualise la source INPN/MNHN
+        # M137-U — purge l'ancienne ligne Région ODS renommée (doublon amputé) si elle traîne.
+        s.execute(text("DELETE FROM data_sources WHERE name = 'ZNIEFF (INPN / Région)' "
+                       "AND NOT EXISTS (SELECT 1 FROM spatial_layers sl "
+                       "                WHERE sl.data_source_id = data_sources.id)"))
+        counts = build_znieff(s, log=typer.echo)
+    models.ensure_geom_2975(engine())                            # remplit geom_2975 (intersections servitudes)
+    typer.echo(f"✓ ZNIEFF : {counts} (total {sum(counts.values())})")
+
+
+@app.command("bpe-build")
+def bpe_build_cmd() -> None:
+    """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers
+    kind='amenite_bpe' (Licence Ouverte, millésime 2025). Couche DISTINCTE d'OSM."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.bpe import build_bpe
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_bpe(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ BPE 974 : {counts} (total {sum(counts.values())})")
+
+
 @app.command("entites-acronymes")
 def entites_acronymes_cmd() -> None:
     """M110 — (re)charge le référentiel des acronymes de personnes morales (SIDR, SHLMR…) depuis

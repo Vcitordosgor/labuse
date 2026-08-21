@@ -32,6 +32,8 @@ _KINDS = {
     "sol_pollue": "Secteur d'information sur les sols",
     "trait_de_cote": "Recul du trait de côte",
     "zonage_assainissement": "Zonage d'assainissement",
+    # M137-U — ZNIEFF (inventaire du patrimoine naturel) : contrainte dormante, subtype = type I/II.
+    "znieff": "ZNIEFF — zone naturelle d'intérêt écologique",
 }
 
 # Codes SUP normalisés (Géoportail de l'urbanisme) → effet concret.
@@ -79,6 +81,11 @@ def _detail(kind: str, subtype: str | None, name: str | None, attrs: dict | None
         return _SOL_POLLUE.get(st, name or "site répertorié")
     if kind == "bruit_route":
         return f"catégorie {st.removeprefix('cat')}" if st else (name or "voie classée")
+    if kind == "znieff":
+        # distingue type I / type II : ils ne pèsent pas pareil en instruction.
+        t = subtype or "ZNIEFF"
+        return (f"{t} — {name} : contrainte environnementale (études d'impact renforcées, risque de "
+                f"recours) ; n'interdit pas de construire" if name else t)
     return name or subtype or "parcelle concernée"
 
 
