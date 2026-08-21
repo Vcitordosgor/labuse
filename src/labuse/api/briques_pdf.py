@@ -472,30 +472,22 @@ def faisabilite(out: dict) -> str:
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
             parts.append(f"hauteur d'égout retenue ~{fo['hauteur_m']:g} m")
         synth = f"<p><b>Potentiel indicatif :</b> {esc(' · '.join(parts))} {s('E')}</p>"
-        # M128-2-H : l'écart entre la surface vendable (dérivée des LOGEMENTS) et la dérivation de
-        # plancher (rendement × SDP) est CALCULÉ, jamais codé « ~1-2 m² ». Sous le seuil (5 m²) =
-        # arrondi ; au-delà = écart de MÉTHODE nommé (deux chemins pour le même scénario).
+        # M128-3-§1/H : depuis que la SDP du bilan = vendable ÷ rendement, vendable et plancher du
+        # bilan COÏNCIDENT par construction — l'écart « méthode/arrondi » a disparu. Reste seulement
+        # l'écart avec la surface habitable BRUTE du gabarit quand le PLAFOND DE DENSITÉ écrête les
+        # logements. Sous 5 m² : AUCUNE ligne (pas de « 0 m² » vide) ; au-delà, on l'affiche et on le nomme.
         if fo.get("shab_vendable_m2"):
             _vend = fo["shab_vendable_m2"]
             _sh = next((st.valeur for st in (fais.steps or [])
                         if "habitable" in (st.label or "").lower()), None)
             _m = _re.search(r"(\d[\d\s ]*)", _sh) if _sh else None
             _deriv = int(_re.sub(r"[\s ]", "", _m.group(1))) if _m else None
-            if _deriv:
-                _ecart = abs(round(_vend) - _deriv)
-                if _ecart <= 5:
-                    _cause = f"écart d'arrondi ({_ecart} m²)"
-                else:
-                    _pct = 100 * _ecart / max(_deriv, 1)
-                    _cause = (f"écart de méthode ({_ecart} m², {_pct:.0f} %) — la surface vendable dérive "
-                              f"du nombre de logements (capacité), la dérivation de plancher applique le "
-                              f"rendement à la SDP ; même scénario, deux chemins de calcul")
-                synth += (f"<p class='note'>Surface vendable retenue ~{_vend:.0f} m² (capacité en "
-                          f"logements, portée au bilan) ; dérivation de plancher ~{_deriv} m² (habitable "
-                          f"au rendement) — {_cause}.</p>")
-            else:
-                synth += (f"<p class='note'>Surface vendable retenue ~{_vend:.0f} m² (capacité en "
-                          f"logements, portée au bilan).</p>")
+            if _deriv and (_deriv - round(_vend)) > 5:      # plafond écrête sous le rendement du gabarit
+                _pct = 100 * (_deriv - round(_vend)) / max(_deriv, 1)
+                synth += (f"<p class='note'>Surface vendable retenue ~{_vend:.0f} m² &lt; surface habitable "
+                          f"au rendement du gabarit ~{_deriv} m² ({_deriv - round(_vend)} m², {_pct:.0f} %) : "
+                          f"le plafond de densité écrête le nombre de logements — c'est cette surface "
+                          f"vendable écrêtée qui est portée au bilan.</p>")
     avert = "".join(f"<li>{esc(a)}</li>" for a in (fais.avertissements or []))
     # M54-AB C2 : NOMMER le scénario. Ce bloc chiffre le NEUF hors bâti existant (reculs, table
     # rase) — l'autre document (dossier/flash) chiffre le résiduel « bâti conservé ». L'avertissement

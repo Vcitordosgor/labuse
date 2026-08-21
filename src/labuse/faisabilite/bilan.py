@@ -484,9 +484,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                 f"(seuils : {mixite_src}) → impact non chiffré.")
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
-    # M128-2-F2 : UNE seule SDP — celle de la faisabilité (footprint × niveaux, servie via `eco`),
-    # jamais une SDP reconstruite depuis le vendable (275 vs 270 sur le même dossier). Repli calc pur.
-    sdp = float((contexte_eco or {}).get("sdp_max_m2") or (surf * hyp.coef_plancher_habitable))
+    # M128-3-§1 : la SDP RETENUE au bilan = vendable retenu ÷ rendement (coef_rendement, SOURCE UNIQUE
+    # partagée avec la faisabilité, config/hypotheses_ile.yaml). On coûte le plancher qui produit le
+    # vendable EFFECTIVEMENT valorisé (post plafond de densité), pas le gabarit brut footprint × niveaux
+    # (qui surcoûte quand le plafond écrête). Aucun 1,15 / 1,25 en dur ; coef_rendement ∈ ]0,1].
+    sdp = surf / hyp.coef_rendement if hyp.coef_rendement else surf
     maj_vrd_pluvial = float(hyp.majoration_vrd_pluvial) if pluvial else 0.0
     cm_bas = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_bas
     cm_haut = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_haut
@@ -539,7 +541,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
                 else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
     steps.append(Step("Coût de construction",
-                      f"{sdp:.0f} m² de plancher (faisabilité) {cout_lbl}",
+                      f"{sdp:.0f} m² de plancher (vendable {surf:.0f} ÷ rendement {hyp.coef_rendement:.0%}) {cout_lbl}",
                       f"~{_eur(cc_bas)} – {_eur(cc_haut)}",
                       "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)",
                       prov="estimee"))
