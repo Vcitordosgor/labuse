@@ -3227,6 +3227,14 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # (équipements géolocalisés, couche DISTINCTE d'OSM 'amenite' — deux items par source).
                     "znieff", "amenite_bpe"}
 
+# M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
+# que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
+# n'ayant PAS été stocké (seul le nom l'est), le tri se fait par NOM : ~5 100 terrains sans nom
+# (pitch isolés) + pétanque/tennis sortent. FILTRE D'AFFICHAGE SEUL — aucune ligne supprimée ; le
+# sport n'est de toute façon pas lu par le modèle (parcel_amenites n'a pas de colonne sport).
+_SPORT_KEEP_RE = r'(stade|gymnase|piscine|nautique|complexe|omnisport|palais des sports|halle des sports)'
+_SPORT_DROP_RE = r'city.?stade|citystade'
+
 
 @app.get("/map/layers.geojson")
 def map_layers_geojson(kind: str, commune: str | None = None,
@@ -3249,7 +3257,13 @@ def map_layers_geojson(kind: str, commune: str | None = None,
              -- `spatial_layers` en direct (amenites.compute_amenites_commune → parcel_amenites.
              -- dist_tcsp_m → feature de score p_model) — inchangé (garde d'invariance test_display_seul).
              AND NOT (sl.kind = 'amenite' AND sl.subtype = 'tcsp')
-           LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
+             -- M137-W : sport OSM resserré à l'affichage (stade/gymnase/piscine/complexe) — même
+             -- doctrine display-only ; le sport n'alimente aucune feature (parcel_amenites sans sport).
+             AND NOT (sl.kind = 'amenite' AND sl.subtype = 'sport'
+                      AND NOT (COALESCE(sl.name, '') ~* :sport_keep AND COALESCE(sl.name, '') !~* :sport_drop))
+           LIMIT :lim"""),
+        {"k": kind, "c": commune, "lim": limit,
+         "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
