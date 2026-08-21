@@ -39,6 +39,10 @@ export function AddressAutocomplete({
   // M55-B point 1 : la source a répondu 0 adresse → on le DIT (état vide honnête) au lieu du
   // silence d'avant (menu simplement fermé), qui laissait croire à un composant inerte.
   const [noResults, setNoResults] = useState(false)
+  // M137-R (bug scoreur) : une SÉLECTION recopie le libellé normalisé dans `text`, ce qui relance
+  // l'effet de recherche — la BAN peut répondre 0 sur la chaîne complète (CP + commune) et rouvrait
+  // « Aucune adresse trouvée » PAR-DESSUS un résultat valide. On saute la recherche qu'un pick provoque.
+  const skipSearchRef = useRef(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -63,6 +67,8 @@ export function AddressAutocomplete({
 
   // Debounce + annulation : on ne garde que le dernier appel en vol.
   useEffect(() => {
+    // Une sélection vient de recopier le libellé dans `text` : ne pas re-chercher ni rouvrir le menu.
+    if (skipSearchRef.current) { skipSearchRef.current = false; return }
     const needle = text.trim()
     if (needle.length < 3) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
@@ -89,10 +95,12 @@ export function AddressAutocomplete({
   }, [open])
 
   const pick = (f: BanFeature) => {
+    skipSearchRef.current = true   // le setText ci-dessous ne doit PAS relancer la recherche
     setText(f.label)
     setItems([])
     setOpen(false)
     setActive(-1)
+    setNoResults(false)           // efface tout bandeau « aucune adresse » résiduel
     onSelect({ label: f.label, lon: f.lon, lat: f.lat, idu: f.idu })
   }
 
