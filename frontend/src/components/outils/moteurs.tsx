@@ -322,16 +322,11 @@ export function M18() {
           </div>
         ))}
       </div>
-      <p className="label-caps mt-1">Prix par commune (top)</p>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {((d?.top_communes_prix ?? []) as Record<string, any>[]).map((r) => (
-          <div key={r.commune} className="flex items-center gap-2 border-b border-line py-1 text-[11px]">
-            <span className="min-w-0 flex-1 truncate text-txt">{r.commune}</span>
-            <span className="font-mono text-txt-dim">{fmt(r.mutations)} mut.</span>
-            <span className="tnum font-mono text-mint">{fmt(r.median_eur_m2)} €/m²</span>
-          </div>
-        ))}
-      </div>
+      {/* communes-tableau (Part 2) — la section « Prix par commune (top) » a QUITTÉ l'écran : elle vit
+          désormais dans l'outil « Communes » (colonne « €/m² ancien », sur les 24 communes, pas un top 8).
+          Le baromètre garde ce qu'il a d'unique — l'évolution DVF par trimestre — et le Rapport PDF.
+          Le PDF, LUI, garde ses prix par commune (`_barometre_data` → `top_communes_prix` inchangé,
+          rendu dans barometre_pdf) : document de communication, pas un écran d'analyse. */}
     </>
   )
 }
