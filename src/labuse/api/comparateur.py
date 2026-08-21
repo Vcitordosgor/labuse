@@ -22,22 +22,26 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..scoring.score_v_constants import Q_A_RUN_LABEL
+# communes-tableau — le « €/m² ancien » vient de la MÊME source que le Baromètre (DVF ventes strictes,
+# toutes mutations) : on réutilise le filtre de retenue du baromètre, point de vérité unique.
+from .moteurs import _BAROMETRE_RETENUE
 
 log = logging.getLogger("labuse.comparateur")
 router = APIRouter(prefix="/comparateur-communes", tags=["comparateur-communes"])
 
 # Indicateur → (libellé, direction, poids par défaut, source, nature).
 # direction +1 = plus haut « mieux pour investir » ; -1 = plus bas mieux (on inverse à la normalisation).
+# NB communes-tableau : `prix_ancien` est une COLONNE d'affichage (pas un axe composite) — hors INDICATEURS.
 INDICATEURS = {
     "stock":     ("Stock d'opportunités (brûlantes + chaudes)", +1, 0.30, "run servi", "Sourcé"),
     "velocite":  ("Vélocité admin (délai médian dépôt→autorisation, mois)", -1, 0.15, "m10 / SITADEL", "Sourcé"),
-    "permis":    ("Dynamisme permis (SITADEL, 24 mois)", +1, 0.15, "SITADEL", "Sourcé"),
+    "permis":    ("Dynamisme permis (SITADEL, 5 ans)", +1, 0.15, "SITADEL", "Sourcé"),
     "deficit_sru": ("Déficit SRU (objectif − taux LLS, points)", +1, 0.15, "DHUP", "Sourcé"),
     "pression_zan": ("Pression ZAN (ENAF consommé 2021-2024, ha)", -1, 0.10, "Cerema", "Sourcé"),
     "prix_neuf": ("Prix de sortie neuf (DVF, €/m²)", +1, 0.15, "DVF", "Estimé"),
 }
 
-_SQL = """
+_SQL = f"""
 WITH base AS (SELECT DISTINCT left(idu, 5) AS insee, commune FROM parcels),
 stock AS (
   SELECT left(s.parcelle_id, 5) AS insee,
@@ -48,14 +52,22 @@ velo AS (
   FROM m10_permit_delais WHERE valide AND famille = 'logements' AND delai_mois >= 0 GROUP BY 1),
 permis AS (
   SELECT commune, count(*) AS n FROM sitadel_permits
-  WHERE date >= (CURRENT_DATE - INTERVAL '24 months') GROUP BY 1),
+  WHERE date >= (CURRENT_DATE - INTERVAL '5 years') GROUP BY 1),
 sru AS (SELECT insee, greatest(objectif_pct - taux_lls, 0) AS deficit, statut FROM commune_contexte_sru),
 zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf),
-prix AS (SELECT cle AS insee, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'commune')
+prix AS (SELECT cle AS insee, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'commune'),
+-- €/m² ANCIEN : médiane DVF des ventes strictes (même retenue que le baromètre) ; ≥ 100 ventes exigées
+-- (robustesse baromètre) sinon la commune reste NULL → « — » à l'écran, jamais un zéro inventé.
+prix_ancien AS (
+  SELECT commune, round(percentile_cont(0.5) WITHIN GROUP (
+           ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median
+  FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
+  GROUP BY commune HAVING count(*) >= 100)
 SELECT b.insee, b.commune,
        stock.n AS stock, velo.mois AS velocite, velo.n AS velocite_n, permis.n AS permis,
        sru.deficit AS deficit_sru, sru.statut AS sru_statut,
-       zan.ha AS pression_zan, prix.prix_m2_neuf AS prix_neuf
+       zan.ha AS pression_zan, prix.prix_m2_neuf AS prix_neuf,
+       prix_ancien.median AS prix_ancien
 FROM base b
 LEFT JOIN stock ON stock.insee = b.insee
 LEFT JOIN velo ON velo.commune = b.commune
@@ -63,6 +75,7 @@ LEFT JOIN permis ON permis.commune = b.commune
 LEFT JOIN sru ON sru.insee = b.insee
 LEFT JOIN zan ON zan.insee = b.insee
 LEFT JOIN prix ON prix.insee = b.insee
+LEFT JOIN prix_ancien ON prix_ancien.commune = b.commune
 ORDER BY b.commune;
 """
 

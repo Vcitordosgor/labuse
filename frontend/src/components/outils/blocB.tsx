@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
+import { Tip } from '../Tip'
 
 const jfetch = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url)
@@ -93,91 +94,80 @@ type Comparateur = {
   indicateurs: Record<string, { libelle: string; direction: string; poids: number; source: string; nature: string }>
   methode: string; avertissement: string
 }
-const O6_COLS: { k: string; label: string; unite?: string }[] = [
-  { k: 'score_composite', label: 'Composite' }, { k: 'stock', label: 'Stock opp.' },
-  { k: 'velocite', label: 'Vélocité', unite: ' m' }, { k: 'permis', label: 'Permis 5 ans' },
-  { k: 'deficit_sru', label: 'Déficit SRU', unite: ' %' }, { k: 'prix_neuf', label: '€/m² neuf' },
+// communes-tableau — UN SEUL tableau, toutes les colonnes visibles d'un coup, chacune triable par clic
+// sur son en-tête. Plus de composite ni de pondérations (ils n'existaient que l'un pour l'autre).
+// `tip` = « i » d'en-tête (les deux colonnes de prix DOIVENT se distinguer : ancien ≠ neuf).
+const O6_COLS: { k: string; head: string; title: string; tip?: string }[] = [
+  { k: 'stock', head: 'Stock', title: 'Stock d’opportunités — parcelles brûlantes + chaudes du run servi' },
+  { k: 'velocite', head: 'Vélo', title: 'Vélocité admin — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
+  { k: 'permis', head: 'Permis', title: 'Dynamisme permis — nombre de permis SITADEL sur 5 ans' },
+  { k: 'deficit_sru', head: 'SRU', title: 'Déficit SRU — objectif légal − taux de logement social (points)' },
+  { k: 'prix_ancien', head: '€ anc.', title: '€/m² ancien',
+    tip: '€/m² ANCIEN — médiane DVF des ventes strictes (l’ancien, toutes mutations), €/m² bâti. La donnée du Baromètre, servie ici sur les 24 communes.' },
+  { k: 'prix_neuf', head: '€ neuf', title: '€/m² neuf',
+    tip: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.' },
 ]
-// M82 #mots-coupés : libellés COURTS pour les curseurs de pondération (les libellés verbeux du backend
-// enveloppaient sur 2-3 lignes en coupant les mots dans une demi-colonne à 130 px).
-const PONDER_LABELS: Record<string, string> = {
-  stock: 'Stock opp.', velocite: 'Vélocité', permis: 'Permis 5 ans',
-  deficit_sru: 'Déficit SRU', pression_zan: 'Pression ZAN', prix_neuf: '€/m² neuf',
-}
+const O6_GRID = 'grid-cols-[minmax(0,1fr)_26px_22px_32px_26px_44px_44px] gap-x-0.5'
+const fmtFr = (v: unknown) => (v == null ? '—' : Number(v).toLocaleString('fr-FR'))
 
-// M137-Z — `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
+// `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
 export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => void } = {}) {
-  const [poids, setPoids] = useState<Record<string, number>>({
-    stock: 30, velocite: 15, permis: 15, deficit_sru: 15, pression_zan: 10, prix_neuf: 15,
+  // Tri par CLIC sur l'en-tête ; défaut = stock d'opportunités décroissant (l'entrée la plus parlante :
+  // où il y a le plus de foncier à travailler). Re-clic sur la même colonne inverse le sens.
+  const [tri, setTri] = useState<{ k: string; dir: 'desc' | 'asc' }>({ k: 'stock', dir: 'desc' })
+  const q = useQuery({ queryKey: ['o6'], queryFn: () => jfetch<Comparateur>('/comparateur-communes') })
+  const clicTri = (k: string) => setTri((t) => (t.k === k ? { k, dir: t.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: 'desc' }))
+  const rows = [...(q.data?.communes ?? [])].sort((a, b) => {
+    const av = a[tri.k], bv = b[tri.k]                    // NULL toujours en bas, quel que soit le sens
+    if (av == null && bv == null) return 0
+    if (av == null) return 1
+    if (bv == null) return -1
+    return tri.dir === 'desc' ? Number(bv) - Number(av) : Number(av) - Number(bv)
   })
-  const [tri, setTri] = useState('score_composite')
-  const qs = Object.entries(poids).map(([k, v]) => `w_${k}=${(v / 100).toFixed(2)}`).join('&')
-  const q = useQuery({ queryKey: ['o6', qs], queryFn: () => jfetch<Comparateur>(`/comparateur-communes?${qs}`) })
-  const d = q.data
-  const rows = [...(d?.communes ?? [])].sort((a, b) => Number(b[tri] ?? -1) - Number(a[tri] ?? -1))
+  const arrow = (k: string) => (tri.k === k ? (tri.dir === 'desc' ? ' ↓' : ' ↑') : '')
   return (
     <>
-      <Banner>Où investir : une ligne par commune, indicateurs <b>sourcés</b>, composite de
-        commodité à pondération réglable. {d?.avertissement ?? 'Les valeurs brutes restent la référence.'}</Banner>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <p className="label-caps text-[9.5px]">Pondérations — renormalisées si une donnée manque</p>
-        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
-          {Object.entries(poids).map(([k, v]) => (
-            <label key={k} className="whitespace-nowrap text-[10px] text-txt-mut">
-              {PONDER_LABELS[k] ?? k} · <b className="tnum text-txt">{v} %</b>
-              <input type="range" min={0} max={100} step={5} value={v} data-o6-poids={k}
-                onChange={(e) => setPoids({ ...poids, [k]: Number(e.target.value) })}
-                className="w-full accent-mint" />
-            </label>
+      <Banner>Où investir : les <b>24 communes</b>, tous les indicateurs sourcés d’un coup. Cliquez un
+        en-tête pour trier, une commune pour ouvrir sa fiche.</Banner>
+      {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
+      {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className={`sticky top-0 z-10 grid ${O6_GRID} items-end bg-surface-1 py-1`}>
+          <span className="label-caps text-[9px]">Commune</span>
+          {O6_COLS.map((c) => (
+            <span key={c.k} className="flex items-center justify-end gap-0.5">
+              <button data-o6-tri={c.k} onClick={() => clicTri(c.k)} title={c.tip ?? c.title}
+                className={`whitespace-nowrap text-right text-[8.5px] uppercase tracking-tight tabular-nums ${
+                  tri.k === c.k ? 'text-mint' : 'text-txt-dim hover:text-txt-mut'}`}>
+                {c.head}{arrow(c.k)}</button>
+              {c.tip && (
+                <Tip side="top" tip={c.tip}>
+                  <span role="button" tabIndex={0} aria-label={c.title}
+                    className="flex h-[11px] w-[11px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                </Tip>
+              )}
+            </span>
           ))}
         </div>
-      </div>
-      {q.isLoading && <Loading accent="mint" label="Calcul du comparatif…" />}
-      {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
-      {/* M15 E4 : plus de SCROLL HORIZONTAL (RG4) — les 6 métriques ne tenaient pas dans le volet,
-          poussant « €/m² neuf » hors champ (cause du « vide » vu par Vic ; la donnée existe bien).
-          On choisit la métrique à comparer via des chips (dont « €/m² neuf »), et le tableau montre
-          Commune · Composite · la métrique choisie. Le tri suit la métrique. */}
-      <div className="flex flex-wrap gap-1">
-        {O6_COLS.filter((c) => c.k !== 'score_composite').map((c) => (
-          <button key={c.k} data-o6-tri={c.k} onClick={() => setTri(c.k)}
-            className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors duration-quick ${
-              tri === c.k ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-            {c.label}</button>
-        ))}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {(() => {
-          const sel = O6_COLS.find((col) => col.k === tri && col.k !== 'score_composite') ?? O6_COLS[1]
+        {rows.map((c) => {
+          const Cell = onSelect ? 'button' : 'div'
           return (
-            <>
-              <div className="sticky top-0 grid grid-cols-[1fr_58px_74px] gap-1 bg-surface-1 py-1">
-                <span className="label-caps text-[9px]">Commune</span>
-                <button data-o6-tri="score_composite" onClick={() => setTri('score_composite')}
-                  className={`text-right text-[9px] uppercase tracking-wide ${tri === 'score_composite' ? 'text-mint' : 'text-txt-dim hover:text-txt-mut'}`}>
-                  Composite {tri === 'score_composite' ? '↓' : ''}</button>
-                <span className="text-right text-[9px] uppercase tracking-wide text-mint">{sel.label} ↓</span>
-              </div>
-              {rows.map((c, i) => {
-                const Cell = onSelect ? 'button' : 'div'
-                return (
-                <Cell key={String(c['insee'])} data-o6-row {...(onSelect ? { onClick: () => onSelect(String(c['commune'])), title: 'Voir la fiche commune →' } : {})}
-                  className={`grid w-full grid-cols-[1fr_58px_74px] items-baseline gap-1 border-b border-line py-1.5 text-left text-[11px] ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
-                  <span className="min-w-0 truncate text-txt">
-                    <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}{onSelect ? ' →' : ''}</span>
-                  <span className={`tnum text-right font-mono ${i < 3 ? 'font-semibold text-mint' : 'text-txt'}`}>
-                    {c['score_composite'] == null ? '—' : Number(c['score_composite']).toLocaleString('fr-FR')}</span>
-                  <span data-o6-metric className="tnum text-right font-mono text-txt-mut">
-                    {c[sel.k] == null ? '—' : `${Number(c[sel.k]).toLocaleString('fr-FR')}${sel.unite ?? ''}`}</span>
-                </Cell>
-              )})}
-            </>
+            <Cell key={String(c['insee'])} data-o6-row title={String(c['commune'])}
+              {...(onSelect ? { onClick: () => onSelect(String(c['commune'])) } : {})}
+              className={`grid w-full ${O6_GRID} items-baseline border-b border-line py-1.5 text-left ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
+              <span className="min-w-0 truncate text-[11px] text-txt">{String(c['commune'])}{onSelect ? ' →' : ''}</span>
+              {O6_COLS.map((col) => (
+                <span key={col.k} data-o6-cell={col.k}
+                  className={`tnum text-right font-mono text-[9.5px] ${tri.k === col.k ? 'font-semibold text-txt-hi' : 'text-txt-mut'}`}>
+                  {fmtFr(c[col.k])}</span>
+              ))}
+            </Cell>
           )
-        })()}
+        })}
       </div>
       <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">
-        Composite = aide de lecture (jamais un score de rendement) ; une donnée manquante reste « — »,
-        jamais un zéro inventé. Choisissez la métrique à comparer par les puces ci-dessus.</p>
+        <b>€/m² ancien</b> = médiane DVF des ventes strictes ; <b>€/m² neuf</b> = prix de sortie du neuf.
+        Une donnée absente reste « — », jamais un zéro inventé.</p>
     </>
   )
 }
