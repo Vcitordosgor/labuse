@@ -40,13 +40,26 @@ function CommuneFiche({ commune, onBack }: { commune: string; onBack: () => void
       </div>
       <h3 className="text-[15px] font-semibold text-txt-hi">{commune}</h3>
 
-      {/* RARETÉ & ZAN — M137-Z : le STOCK porte « foncier » ; « reste ZAN » = un droit à artificialiser. */}
+      {/* RARETÉ & ZAN — M137-Z : le STOCK porte « foncier » ; « reste ZAN » = un droit à artificialiser.
+          audit-zan : l'enveloppe ZAN de l'ex-Simulateur ZAN vit désormais ICI (budget en %). */}
       <section className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
         <p className="label-caps text-[9.5px]">Rareté &amp; ZAN</p>
         {r ? (
           <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
             <Row lbl="Foncier repéré — stock de parcelles promues" val={fmt(r['stock_opportunites_ha'], ' ha')} strong />
+            {/* Budget ZAN en % D'ABORD (c'est lui qui parle), caveat ESTIMÉ collé au chiffre. */}
+            {r['pct_budget_consomme'] != null && (
+              <div className="mt-0.5 rounded-md bg-surface-3 px-2 py-1">
+                <div className="flex items-baseline gap-1.5">
+                  <b className={`tnum text-[14px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-st-creuser'}`}>{r['pct_budget_consomme']} %</b>
+                  <span className="text-[10px] text-txt-mut">du budget ZAN consommé</span>
+                  <span className={`ml-auto tnum text-[11px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-txt'}`}>{r['pct_budget_restant']} % restant</span>
+                </div>
+                <p className="mt-0.5 text-[9px] leading-snug text-st-creuser"><b>Estimé</b> (règle -50 %, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
+              </div>
+            )}
             <Row lbl="Droit à artificialiser restant (ZAN, estimé)" val={fmt(r['reste_zan_ha'], ' ha')} />
+            <Row lbl="Budget ZAN 2021-31 (estimé)" val={fmt(r['budget_zan_ha'], ' ha')} />
             <Row lbl="Rythme de consommation" val={fmt(r['rythme_conso_ha_an'], ' ha/an')} />
             <Row lbl="Horizon d'épuisement de l'enveloppe ZAN" val={r['horizon_epuisement_ans'] == null ? 'non projetable' : `${r['horizon_epuisement_ans']} ans`} />
             <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{rar.data?.caveat}</p>

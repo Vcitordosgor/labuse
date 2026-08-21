@@ -70,11 +70,18 @@ def compute_rarete(db: Session) -> list[dict]:
     out = []
     for r in rows:
         horizon = _horizon(r["reste_zan_ha"], r["conso_ha_an"])
+        # audit-zan — le budget ZAN en POURCENTAGE (l'enveloppe de l'ex-Simulateur ZAN vit ici) : part du
+        # budget estimé déjà consommée = (budget − reste) / budget. HÉRITE du caveat ESTIMÉ (règle -50 %,
+        # SAR non territorialisé) ; un « % restant » se lit vite comme un droit → caveat servi à côté.
+        budget, reste = r["budget_zan_ha"], r["reste_zan_ha"]
+        pct_consomme = round(100 * (budget - reste) / budget) if budget else None
         out.append({
             "insee": r["insee"], "commune": r["commune"],
             "rythme_conso_ha_an": round(r["conso_ha_an"], 1) if r["conso_ha_an"] is not None else None,
             "budget_zan_ha": round(r["budget_zan_ha"], 1) if r["budget_zan_ha"] is not None else None,
             "reste_zan_ha": round(r["reste_zan_ha"], 1) if r["reste_zan_ha"] is not None else None,
+            "pct_budget_consomme": pct_consomme,                                        # Estimé
+            "pct_budget_restant": (100 - pct_consomme) if pct_consomme is not None else None,  # ± (négatif = dépassé)
             "horizon_epuisement_ans": horizon,
             "statut": ("budget dépassé" if horizon == 0 else
                        "non projetable" if horizon is None else
