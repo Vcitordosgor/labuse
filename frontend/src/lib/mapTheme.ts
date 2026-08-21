@@ -71,20 +71,21 @@ export type MapTokens = {
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
-  /** M134 — couche « Dispositifs ». DEUX familles à l'œil : opérationnel = teintes CHAUDES
-   *  (QPV orange, ANRU chartreuse déjà présent) ; fiscal = teintes FROIDES (TVA cyan, ZFANG bleu,
-   *  FRR teal). L'INTENSITÉ d'un régime se lit à l'OPACITÉ (ZFANG renforcé / FRR totalité plus
-   *  denses) — l'identité de teinte ne bouge jamais (doctrine M105-B). Contour = teinte pleine. */
+  /** M134 / M137-Y — couche « Dispositifs ». QPV orange · ANRU chartreuse · TVA cyan. Pour ZFANG et
+   *  FRR, l'ÉTAT se lit à la COULEUR (une par état, ci-dessous) + hachures en second signal sur
+   *  l'état moindre — plus une teinte déclinée en opacité (illisible à l'échelle île). */
   qpv: string
   qpvOpacity: number
   tvaPrimo: string
   tvaPrimoOpacity: number
-  zfang: string
-  zfangOpRenforce: number
-  zfangOpStandard: number
-  frr: string
-  frrOpTotalite: number
-  frrOpPartie: number
+  // M137-Y — ZFANG/FRR : une COULEUR PAR ÉTAT (plus une teinte déclinée en opacité). Aplat plein
+  // sur l'état avantageux (renforcée / totalité) ; aplat + hachures sur l'état moindre (standard /
+  // en partie). 4 hues franchement distinctes, contrastes M105-B mesurés dans les deux thèmes.
+  zfangRenforce: string   // bleu roi (avantageux, aplat plein)
+  zfangStandard: string   // sable désaturé (clair = version foncée pour passer M105-B)
+  frrTotalite: string     // émeraude (avantageux, aplat plein)
+  frrPartie: string       // améthyste
+  dispoFillOpacity: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -129,8 +130,10 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
     qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
     tvaPrimo: '#56C5D0', tvaPrimoOpacity: 0.24,           // cyan (fiscal, dérivé)
-    zfang: '#6C9BE8', zfangOpRenforce: 0.36, zfangOpStandard: 0.20,   // bleu (fiscal)
-    frr: '#56C79E', frrOpTotalite: 0.36, frrOpPartie: 0.20,           // teal (fiscal)
+    // M137-Y — 4 états, 4 couleurs (aplat @0,24) — contrastes M105-B mesurés sur fond sombre :
+    zfangRenforce: '#3E74F0', zfangStandard: '#C6B08A',   // bleu roi 1,33 · sable 1,62
+    frrTotalite: '#17B26A', frrPartie: '#9B6BE0',         // émeraude 1,48 · améthyste 1,37
+    dispoFillOpacity: 0.24,
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -173,8 +176,11 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
     qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
     tvaPrimo: '#1487A0', tvaPrimoOpacity: 0.24,           // cyan — aplat 1,34 ✓ ; contour 3,75 ✓
-    zfang: '#2E5FB0', zfangOpRenforce: 0.36, zfangOpStandard: 0.20,   // bleu — aplat 1,70/1,32 ✓ ; contour 5,55 ✓
-    frr: '#0E7A5B', frrOpTotalite: 0.36, frrOpPartie: 0.20,           // teal — aplat 1,65/1,31 ✓ ; contour 4,74 ✓
+    // M137-Y — clair : le SABLE est FONCÉ (#8A7A52) pour passer M105-B sur l'ortho (le clair #C6B08A
+    // échouait à 1,12) — « version plus foncée du même sable, pas un retour au chaud ».
+    zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
+    frrTotalite: '#0C8A50', frrPartie: '#6E3FB5',         // émeraude 1,35 · améthyste 1,44
+    dispoFillOpacity: 0.24,
   },
 }
 

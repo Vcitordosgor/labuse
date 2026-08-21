@@ -267,8 +267,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         </div>
       )}
 
-      {/* ── M134 / M137-X : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal
-          froid). L'état d'un régime se lit à la TEXTURE : aplat = base, hachures = renforcée / partie. ── */}
+      {/* ── M134 / M137-Y : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal
+          froid). ZFANG/FRR : l'état se lit à la COULEUR (une par état) ; hachures = second signal sur
+          l'état moindre (standard / en partie). L'état avantageux (renforcée / totalité) = aplat plein. ── */}
       {dispoActif && (
         <div data-legend-dispositifs className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
           <p className="label-caps mb-2">Dispositifs et périmètres</p>
@@ -296,11 +297,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             {layers.zfang && (
               <>
                 <span data-legend-zfang-renforce className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ borderColor: tTheme.zfang, backgroundColor: `${tTheme.zfang}22`, backgroundImage: `repeating-linear-gradient(45deg, ${tTheme.zfang} 0 1.5px, transparent 1.5px 4px)` }} />
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfangRenforce, borderColor: tTheme.zfangRenforce }} />
                   ZFANG renforcée — 6 communes de l’Est
                 </span>
                 <span data-legend-zfang-standard className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfang, opacity: 0.55, borderColor: tTheme.zfang }} />
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.zfangStandard, borderColor: tTheme.zfangStandard, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />
                   ZFANG standard — 18 communes
                 </span>
               </>
@@ -308,11 +309,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             {layers.frr && (
               <>
                 <span data-legend-frr-totalite className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frr, opacity: 0.55, borderColor: tTheme.frr }} />
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frrTotalite, borderColor: tTheme.frrTotalite }} />
                   FRR totalité — 3 communes
                 </span>
                 <span data-legend-frr-partie className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ borderColor: tTheme.frr, backgroundColor: `${tTheme.frr}22`, backgroundImage: `repeating-linear-gradient(-45deg, ${tTheme.frr} 0 1.5px, transparent 1.5px 4px)` }} />
+                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.frrPartie, borderColor: tTheme.frrPartie, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />
                   FRR en partie — 20 communes
                 </span>
               </>

@@ -160,6 +160,16 @@ const fitPadding = (w: number, h: number) => Math.max(8, Math.min(40, Math.floor
 const zonageFillExpr = (t: MapTokens) => ['case',
   ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
   t.zonageU, t.zonageAutre] as unknown as maplibregl.ExpressionSpecification
+// M137-Y — couleur ZFANG/FRR PAR ÉTAT (data-driven sur le subtype), comme zonageFillExpr.
+const dispoColorExpr = (t: MapTokens, kind: 'zfang' | 'frr') => (kind === 'zfang'
+  ? ['match', ['get', 'subtype'], 'renforce', t.zfangRenforce, t.zfangStandard]
+  : ['match', ['get', 'subtype'], 'totalite', t.frrTotalite, t.frrPartie]) as unknown as maplibregl.ExpressionSpecification
+// M137-Y — assombrit une teinte (hachure = shade plus foncé de l'aplat → visible sur toute couleur).
+const darken = (hex: string, f: number): string => {
+  const n = parseInt(hex.slice(1), 16)
+  const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f)
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
+}
 const T_SOMBRE = MAP_THEME.sombre
 const OVERLAYS = {
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
@@ -181,8 +191,8 @@ const OVERLAYS = {
   // M137-X — ZFANG/FRR : APLAT plein pour l'état de base ; l'AUTRE état (ZFANG renforcée / FRR en
   // partie) est marqué par des HACHURES (couche `-trame` dédiée) — texture catégorielle, plus le
   // dégradé d'opacité ambigu d'avant. Une seule opacité d'aplat par dispositif.
-  zfang: { paint: { 'fill-color': T_SOMBRE.zfang, 'fill-outline-color': T_SOMBRE.zfang, 'fill-opacity': T_SOMBRE.zfangOpStandard } },
-  frr: { paint: { 'fill-color': T_SOMBRE.frr, 'fill-outline-color': T_SOMBRE.frr, 'fill-opacity': T_SOMBRE.frrOpTotalite } },
+  zfang: { paint: { 'fill-color': dispoColorExpr(T_SOMBRE, 'zfang'), 'fill-outline-color': dispoColorExpr(T_SOMBRE, 'zfang'), 'fill-opacity': T_SOMBRE.dispoFillOpacity } },
+  frr: { paint: { 'fill-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-outline-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-opacity': T_SOMBRE.dispoFillOpacity } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
@@ -250,8 +260,8 @@ function applyClairMode(m: maplibregl.Map, clair: boolean) {
   set('ov-qpv', 'fill-color', t.qpv); set('ov-qpv', 'fill-opacity', t.qpvOpacity); set('ov-qpv', 'fill-outline-color', t.qpv)
   set('ov-tva_primo', 'fill-color', t.tvaPrimo); set('ov-tva_primo', 'fill-opacity', t.tvaPrimoOpacity); set('ov-tva_primo', 'fill-outline-color', t.tvaPrimo)
   // M137-X — aplat plein (une opacité) + hachure sur l'état « fort » ; le motif suit le thème.
-  set('ov-zfang', 'fill-color', t.zfang); set('ov-zfang', 'fill-outline-color', t.zfang); set('ov-zfang', 'fill-opacity', t.zfangOpStandard)
-  set('ov-frr', 'fill-color', t.frr); set('ov-frr', 'fill-outline-color', t.frr); set('ov-frr', 'fill-opacity', t.frrOpTotalite)
+  set('ov-zfang', 'fill-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-outline-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-opacity', t.dispoFillOpacity)
+  set('ov-frr', 'fill-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-outline-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-opacity', t.dispoFillOpacity)
   for (const [src, , tok] of DISPO_TRAMES) {
     set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
     set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
@@ -332,9 +342,11 @@ function makeTrame(m: maplibregl.Map, id: string, color: string, orient: 'slash'
 const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.clair.anru, 'slash')
 // M137-X — les deux trames de dispositif : [source, subtype MARQUÉ par la hachure, token couleur, orientation].
 // ZFANG renforcée (slash) · FRR en partie (backslash) — orientations distinctes (superposables).
+// M137-Y — la hachure (SECOND signal) marque l'état MOINDRE : ZFANG standard, FRR en partie.
+// [source, subtype hachuré, token couleur de l'état, orientation].
 const DISPO_TRAMES = [
-  ['ov-zfang', 'renforce', 'zfang', 'slash'],
-  ['ov-frr', 'partie', 'frr', 'backslash'],
+  ['ov-zfang', 'standard', 'zfangStandard', 'slash'],
+  ['ov-frr', 'partie', 'frrPartie', 'backslash'],
 ] as const
 // M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
 // partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
@@ -647,8 +659,9 @@ export function MapView() {
       // M137-X — trame ZFANG/FRR : l'état « fort » (renforcée / en partie) se lit à la HACHURE
       // (aplat = état de base), texture catégorielle plutôt qu'un dégradé d'opacité ambigu.
       for (const [src, sub, tok, orient] of DISPO_TRAMES) {
-        makeTrame(m, `trame-${tok}-sombre`, MAP_THEME.sombre[tok], orient)
-        makeTrame(m, `trame-${tok}-clair`, MAP_THEME.clair[tok], orient)
+        // hachure = shade PLUS FONCÉ de l'aplat → lisible quelle que soit la teinte de l'état.
+        makeTrame(m, `trame-${tok}-sombre`, darken(MAP_THEME.sombre[tok], 0.6), orient)
+        makeTrame(m, `trame-${tok}-clair`, darken(MAP_THEME.clair[tok], 0.55), orient)
         m.addLayer({ id: `${src}-trame`, type: 'fill', source: src,
           filter: ['==', ['get', 'subtype'], sub] as never, layout: { visibility: 'none' },
           paint: { 'fill-pattern': 'trame-' + tok + '-sombre', 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
@@ -1081,9 +1094,9 @@ export function MapView() {
     m.setLayoutProperty('ov-qpv', 'visibility', vis(layers.qpv))
     m.setLayoutProperty('ov-tva_primo', 'visibility', vis(layers.tva_primo))
     m.setLayoutProperty('ov-zfang', 'visibility', vis(layers.zfang))
-    m.setLayoutProperty('ov-zfang-trame', 'visibility', vis(layers.zfang))   // M137-X — hachure ZFANG renforcée
+    m.setLayoutProperty('ov-zfang-trame', 'visibility', vis(layers.zfang))   // M137-Y — hachure ZFANG standard (moindre)
     m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
-    m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-X — hachure FRR en partie
+    m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
     // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))
