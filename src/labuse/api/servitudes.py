@@ -31,16 +31,27 @@ _KINDS = {
     "bruit_route": "Classement sonore des voies (isolement acoustique)",
     "sol_pollue": "Secteur d'information sur les sols",
     "trait_de_cote": "Recul du trait de côte",
-    "zonage_assainissement": "Zonage d'assainissement",
+    # audit-risques — SEUL le NON-COLLECTIF (ANC) est une vigilance (dispositif individuel coûteux). Le
+    # COLLECTIF (raccordé au tout-à-l'égout) est le cas FAVORABLE → jamais listé (faux positif filtré au
+    # rendu). L'état d'assainissement complet vit déjà dans le bloc `anc` de la fiche (M86-B).
+    "zonage_assainissement": "Assainissement non collectif (ANC)",
     # M137-U — ZNIEFF (inventaire du patrimoine naturel) : contrainte dormante, subtype = type I/II.
     "znieff": "ZNIEFF — zone naturelle d'intérêt écologique",
 }
 
 # Codes SUP normalisés (Géoportail de l'urbanisme) → effet concret.
+# audit-risques : ac3/el10/pm2 sortaient bruts (« SUP xxx ») → mappés ici. Sens confirmé sur la donnée
+# et le code d'ingestion : el10 = Parc national de La Réunion (sup_gpu.py/etage1.py) ; pm2 = installations
+# classées / stockage de déchets ICPE (noms « Stockage_dechets… », layers_ingest.py:316) ; ac3 = réserves
+# naturelles (Marine de La Réunion, Étang de Saint-Paul). Vérifié : plus AUCUN sous-type présent en base
+# (ac1/ac2/ac3/ac4/el10/pm1/pm2/pm3) ne manque au mapping.
 _SUP = {
     "pm1": "Risques naturels (PPR) — prescriptions constructives", "pm3": "Risques technologiques (PPRT)",
+    "pm2": "Installation classée / stockage de déchets (ICPE) — périmètre de servitude",
     "ac1": "Abords de Monument historique — avis ABF", "ac2": "Site classé/inscrit — autorisation spéciale",
+    "ac3": "Réserve naturelle — protection réglementaire (autorisation spéciale)",
     "ac4": "ZPPAUP/AVAP — prescriptions patrimoniales",
+    "el10": "Parc national — réglementation (cœur / aire d'adhésion)",
     "i4": "Ligne électrique — surplomb/ancrage", "i3": "Canalisation de gaz — bande de servitude",
     "i1": "Canalisation d'hydrocarbures", "as1": "Captage d'eau potable — périmètre de protection",
     "el3": "Halage / marchepied (cours d'eau)", "el7": "Alignement de voirie",
@@ -79,6 +90,8 @@ def _detail(kind: str, subtype: str | None, name: str | None, attrs: dict | None
         return f"{base}" + (f" — {typeass}" if typeass else "")
     if kind == "sol_pollue":
         return _SOL_POLLUE.get(st, name or "site répertorié")
+    if kind == "zonage_assainissement":   # (déjà filtré au non-collectif en amont)
+        return "Dispositif individuel à prévoir (coût à anticiper au budget)"
     if kind == "bruit_route":
         return f"catégorie {st.removeprefix('cat')}" if st else (name or "voie classée")
     if kind == "znieff":
@@ -110,6 +123,11 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     # dédup (kind, detail) — une SUP répétée (enveloppes gen1/gen2) = une ligne
     seen, items = set(), []
     for r in rows:
+        # audit-risques — zonage d'assainissement : SEUL le non-collectif (ANC) est une vigilance ; le
+        # collectif (raccordé) est le cas FAVORABLE et n'est JAMAIS une servitude (faux positif sur
+        # 67 208 parcelles avant ce filtre). L'assainissement complet vit dans le bloc `anc` de la fiche.
+        if r["kind"] == "zonage_assainissement" and (r["subtype"] or "").lower() != "anc":
+            continue
         detail = _detail(r["kind"], r["subtype"], r["name"], r["attrs"])
         key = (r["kind"], detail)
         if key in seen:
