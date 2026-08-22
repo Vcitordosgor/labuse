@@ -34,13 +34,16 @@ def test_ens_commune_vide_unknown_jamais_hors_ens():
     v = EnsLayer().evaluate(_p("Le Port"), _Ctx(commune_present=False), ENS_P)
     assert v.result == CascadeVerdict.UNKNOWN
     assert "non disponible sur cette commune" in v.detail
-    assert "Hors ENS" not in v.detail
+    # wording servi actuel (phase1.EnsLayer) : le PASS dit « Hors espace protégé (INPN) » — l'UNKNOWN
+    # ne doit JAMAIS l'emprunter (faux négatif d'absence sur une couche vide).
+    assert "Hors espace protégé" not in v.detail
 
 
 def test_ens_commune_couverte_sans_intersection_pass():
-    # Saint-Paul (couverte) sans intersection → « Hors ENS » reste honnête (la commune EST mappée).
+    # Saint-Paul (couverte) sans intersection → PASS honnête (la commune EST mappée). Le wording
+    # servi est « Hors espace protégé (INPN) » (phase1.EnsLayer) — plus « Hors ENS ».
     v = EnsLayer().evaluate(_p("Saint-Paul"), _Ctx(commune_present=True, inter_cov=0.0), ENS_P)
-    assert v.result == CascadeVerdict.PASS and "Hors ENS" in v.detail
+    assert v.result == CascadeVerdict.PASS and "Hors espace protégé (INPN)" in v.detail
 
 
 def test_ens_intersection_soft_flag():

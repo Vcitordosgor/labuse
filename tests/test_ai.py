@@ -30,7 +30,10 @@ def test_stub_est_valide_et_ne_corrige_pas():
     assert out["confidence_level"] == "eleve"
     # cite les sources et reprend les signaux sans inventer
     assert any(s["source"] == "SAR Réunion (PEIGEO)" for s in out["blocking_or_risk_signals"])
-    assert "SAR juridiquement supérieur au PLU." in out["reunion_specific_flags"]
+    # Rename SAR → « Potentiel foncier Région » (proxy de vocation, PAS « juridiquement supérieur au
+    # PLU ») : le stub NE fabrique PLUS ce flag légal (surclaim retiré). Le signal SAR vit dans
+    # blocking_or_risk_signals (source PEIGEO, ci-dessus), jamais comme supériorité juridique inventée.
+    assert not any("supérieur au PLU" in f for f in out["reunion_specific_flags"])
     # PASS « Hors Parc National » NE DOIT PAS produire de faux flag (anti-hallucination).
     # (Le flag SAFER, lui, vient légitimement du SOFT_FLAG SAR agricole.)
     assert not any("Parc National" in f for f in out["reunion_specific_flags"])

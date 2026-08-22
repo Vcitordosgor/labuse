@@ -15,7 +15,9 @@ def test_pdf_premium_pas_de_matrice_morte_et_exclut_age_dirigeant():
     assert "age_dirigeant" in pp.COUCHES_EXCLUES, "age_dirigeant doit être exclu du PDF (circule loin)"
     src = inspect.getsource(pp.render_fiche_pdf)
     assert "Statut matrice (historique)" not in src, "second verdict (matrice) encore imprimé"
-    assert "sections_omises" in src, "la troncature 2 pages doit NOMMER la section omise (P2-64)"
+    # M126 (2026-08) : la fiche PDF ne tronque PLUS à 2 pages (colonnes qui passent à la ligne,
+    # « AUCUNE troncature », pdf_premium.py:225) — donc plus de section à nommer. Garde-fou inverse.
+    assert "sections_omises" not in src, "M126 : la fiche n'est plus tronquée (pas de section omise)"
 
 
 # ── point 5 — légal : identité EI + déclaration e-mails exacte (PUR) ──

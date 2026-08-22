@@ -60,10 +60,11 @@ def test_layers_whitelist():
 
 
 def test_pdf_verdict_pas_de_matrice_morte():
-    # M-P (P2-62) : la table STATUT (matrice Q/A morte, avec a_surveiller) est SUPPRIMÉE du PDF ;
-    # le verdict d'en-tête vient du tier v2 (palette complète, jamais de KeyError).
+    # M-P (P2-62) : la matrice STATUT (Q/A morte) est SUPPRIMÉE du PDF.
+    # M124-A (2026-08) : le PDF est DATA-ONLY — le verdict/tier ne s'imprime plus (il reste à
+    # l'écran). Donc pdf_premium ne porte PLUS de palette de tier (ni TIER_V2, ni TIER_V2_COLOR).
+    # Garde-fou : ni la matrice morte, ni une constante de tier ne doivent réapparaître au papier.
     from labuse.api import pdf_premium as pp
     assert not hasattr(pp, "STATUT"), "matrice morte encore présente dans pdf_premium"
-    # M137 — le dict porte désormais la COULEUR seule (TIER_V2_COLOR) ; le libellé affiché vient
-    # de TIER_LABELS (chip court, source unique écran=papier). Palette complète, jamais de KeyError.
-    assert set(pp.TIER_V2_COLOR) == {"brulante", "chaude", "a_creuser", "reserve_fonciere", "ecartee"}
+    assert not hasattr(pp, "TIER_V2"), "M124-A : le tier ne s'imprime plus au PDF"
+    assert not hasattr(pp, "TIER_V2_COLOR"), "M124-A : pas de palette de tier au PDF (data-only)"

@@ -167,15 +167,18 @@ def test_r5_scoreur_champs_et_prix_manuel():
     assert "data-scoreur-resultat" in SCOREUR and "data-scoreur-fiche" in SCOREUR
 
 
-def test_r5_scoreur_verdicts_prix():
-    # M137-S — le badge juge UN SEUL repère (marché du foncier) : sous/dans/au-dessus du marché ;
-    # « opportunité » (repère opération) est retiré du badge et migré vers la ligne « marge ».
-    for v in ("sous_marche", "dans_marche", "sur_marche", "non_estimable"):
-        assert v in SCOREUR
-    assert "opportunite" not in SCOREUR                       # plus de repère opération dans le badge
-    assert "data-scoreur-prix-verdict" in SCOREUR
-    # les deux repères sont NOMMÉS + la synthèse réconcilie
-    assert "opération de promotion" in SCOREUR and "data-scoreur-synthese" in SCOREUR
+def test_r5_scoreur_constat_nu_sans_verdict_marche():
+    # RÉ-ANCRÉ sur la décision SERVIE M128-6-§1.3 (2026-08) : le scoreur affiche un CONSTAT chiffré
+    # NU — prix probable du foncier, écart du prix saisi, marge à ce prix — et AUCUN verdict de
+    # marché (« sous / dans / au-dessus », « bonne affaire »…) : on montre les nombres, le lecteur
+    # conclut. Le badge « repère marché » M137-S n'a jamais été embarqué (décision INVERSE de
+    # M128-6 : ne pas juger à la place du client). Ce test garde cette décision.
+    assert "data-scoreur-prix-constat" in SCOREUR                       # le bloc constat existe
+    assert "prix_probable_foncier_eur" in SCOREUR and "ecart_vs_prix_probable_pct" in SCOREUR
+    assert "marge_a_ce_prix_eur" in SCOREUR                             # les 3 nombres servis
+    # AUCUN badge-verdict de marché (M128-6 : des nombres, pas un jugement) — ne doit pas réapparaître
+    for v in ("sous_marche", "dans_marche", "sur_marche", "data-scoreur-prix-verdict"):
+        assert v not in SCOREUR
 
 
 def test_r5_scoreur_hors_base_honnete():

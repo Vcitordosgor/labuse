@@ -1,9 +1,13 @@
-"""M54-AB Famille 1 (C1) — le verdict imprimé au client n'est JAMAIS un code technique.
+"""M54-AB Famille 1 (C1) — RÉ-ANCRÉ M124-A (2026-08, cf. docs/DETTE_SUITE.md §1).
 
-Rend la fiche premium pour TOUS les tiers (servables + 6 déclassements + écartée) et vérifie
-dans le TEXTE EXTRAIT du PDF : zéro code technique (`declasse_*`, tier brut), le libellé client
-présent, et — pour un tier classé — le rang AVEC son dénominateur. Source unique des libellés :
-verdict_servi.TIER_LABELS (le même dictionnaire que l'écran)."""
+Décision produit en vigueur : le PDF client est DATA-ONLY — il n'imprime PLUS de verdict
+(ni tier, ni rang, ni score/complétude) ; « l'analyse LABUSE reste à l'écran »
+(pdf_premium.py, docstring « M124-A : plus de verdict/rang/score »). Ce test GARDE cette
+décision : le texte extrait du PDF ne contient NI code technique NI libellé de tier NI le rang.
+
+Avant M124-A ce test exigeait le libellé court M137 imprimé au papier ; M124-A l'a retiré du
+PDF (le verdict vit à l'écran). On teste donc désormais l'ABSENCE, pour qu'une réintroduction
+accidentelle du verdict au PDF casse ce test."""
 from __future__ import annotations
 
 import pytest
@@ -31,22 +35,24 @@ def _texte(pdf: bytes) -> str:
 
 
 @pytest.mark.parametrize("tier", list(TIER_LABELS))
-def test_aucun_code_technique_par_tier(tier: str):
+def test_pdf_data_only_ni_code_ni_verdict_par_tier(tier: str):
+    """M124-A : le PDF n'imprime NI code technique NI libellé de tier, pour tous les tiers."""
     fiche = dict(_BASE)
-    # score_v2 SANS `label` : on prouve que le générateur retombe sur TIER_LABELS (pas le code brut).
     fiche["score_v2"] = {"tier": tier, "rang": 57643, "rang_total": 428239, "mult_base": 1.3,
                          "declasse": tier.startswith("declasse_"), "motif": None}
     txt = _texte(render_fiche_pdf(fiche))
     for code in _CODES:
         assert code not in txt, f"code technique « {code} » fuite au client pour le tier {tier}"
-    assert TIER_LABELS[tier] in txt, f"libellé client absent pour {tier}"
+    # M124-A : le libellé de tier NE DOIT PLUS être imprimé (verdict retiré du PDF, reste à l'écran).
+    assert TIER_LABELS[tier] not in txt, (
+        f"M124-A : le libellé « {TIER_LABELS[tier]} » ne doit plus figurer au PDF (data-only)")
 
 
-def test_rang_avec_denominateur():
+def test_pdf_data_only_pas_de_rang():
+    """M124-A : le rang/dénominateur n'est plus imprimé au PDF (il vit à l'écran)."""
     fiche = dict(_BASE)
     fiche["score_v2"] = {"tier": "declasse_bati_sature", "rang": 57643, "rang_total": 428239,
                          "mult_base": 1.3, "declasse": True,
                          "motif": "bâtie saturée — ratio 43 % (emprise 140 m²)"}
-    txt = _texte(render_fiche_pdf(fiche)).replace(" ", "").replace(" ", "").replace("\xa0", "")
-    # rang ET dénominateur présents (un rang seul ne dit rien) — comparaison sans espaces
-    assert "57643/428239" in txt
+    txt = _texte(render_fiche_pdf(fiche)).replace(" ", "").replace(" ", "").replace("\xa0", "")
+    assert "57643/428239" not in txt   # M124-A : aucun rang au PDF

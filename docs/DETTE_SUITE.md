@@ -1,7 +1,25 @@
 # Dette de la suite de tests — inventaire des ~30 rouges pré-existants
 
 Mesuré le 22/08/2026 sur `main` (branche `fix/dette-suite`) : **30 failed · 1613 passed · 43 skipped**.
-Phase 1 = INVENTAIRE seul (aucune correction). Groupé par CAUSE, **ordonné par gravité produit**.
+Phase 1 = INVENTAIRE (ci-dessous). Phase 2 = RÉPARÉ.
+
+## ✅ PHASE 2 — RÉSOLU (22/08/2026) : suite 0 failed (1643 passed · 43 skipped)
+- **Cluster 2 (cascade proprietaire)** : SEED corrigé (`demo_saint_paul.py` — nom de source aligné
+  sur `SRC_FF`), tests conservés. PM vérifiée LIVE sur parcelle réelle. Indivision = mock démo,
+  noté dans le seed ET §2 (jamais un signal client tant que Fichiers fonciers non ingérés).
+- **Les 27 autres** : tests RÉ-ANCRÉS sur la décision produit en vigueur, chacun portant en
+  commentaire le mandat + la date (M124-A PDF data-only, M126 troncature, M128 bilan, M129 §1
+  CERFA/superficie, M129-E nommage pack, rename SAR→Potentiel foncier Région, M128-6 scoreur
+  constat nu, division_or dormant).
+- **Point 3** : le test qui grep le source (`test_vocabulary` SAR) est réécrit sur la SORTIE
+  SERVIE (exécute `SarLayer`, lit le verdict). `test_front_reliquats`/`test_ens_commune`/
+  `test_decisions` étaient déjà sur la sortie servie (strings mises à jour).
+- **AUCUN code produit modifié** hors le seed démo : ce n'étaient pas des défauts, mais des
+  tests dérivés. Verdict Phase 1 confirmé (cf. cluster 2 : PM live, aucune régression).
+
+---
+
+## PHASE 1 — inventaire (au moment de la mesure). Groupé par CAUSE, **ordonné par gravité produit**.
 
 ## Cadre (corrige une idée reçue)
 Tous les mandats concernés (M124-A, M126, M128, M129, M129-C, M135/M136/M137, la bascule
@@ -33,16 +51,23 @@ mais **DRIFTED TEST**, pas de défaut : rien ne fuite, le verdict est volontaire
 - `test_aucun_code_technique_par_tier[×11]` (:42) — `TIER_LABELS[tier]` absent du PDF — DRIFTED — le PDF n'affiche aucun libellé de tier (M124-A).
 - `test_rang_avec_denominateur` (:52) — `57643/428239` absent (PDF finit « page 1/1 ») — DRIFTED — le rang n'est plus imprimé (M124-A).
 
-## 2. Cascade `proprietaire` (seed démo Saint-Paul) · 3 tests · `tests/test_cascade.py`
-**Cause** : les verdicts de la couche `proprietaire` attendus sur le seed démo manquent
-(P1 personne morale POSITIVE, P7 indivision SOFT_FLAG FORT, statut P7). La ligne SAR déjà
-renommée `potentiel_foncier_region` passe (:63) → ce n'est pas le SAR, c'est le **propriétaire**.
-**Surface** : signaux propriétaire affichés sur la FICHE (type de détenteur, indivision).
-**Gravité : HAUTE** — **À CONFIRMER** : seule zone où une régression client (signaux
-propriétaire manquants sur la fiche) ne peut pas être écartée par lecture ; à rejouer sur une
-parcelle réelle en Phase 2 (probable dérive du seed `parcelle_personne_morale` de la démo, mais
-non prouvé).
-- `test_statuts_attendus` (:50) — P7 attendu `a_creuser`, obtenu autre — À CONFIRMER — statut démo P7.
+## ⚠ SIGNAL DÉMO-SEULEMENT — l'indivision n'est pas sourçable sur du réel
+Le flag « indivision » de la couche `proprietaire` n'existe QUE dans le seed démo (mock). Sa
+seule source réelle possible serait les **Fichiers fonciers (Cerema)** = statut « manuel »
+(convention interdite, jamais ingérée) ; la table servie `parcelle_personne_morale` (DGFiP,
+82 701) ne porte NI indivision NI `nb_droits`. **Ne jamais présenter l'indivision comme un signal
+client disponible** tant que les Fichiers fonciers ne sont pas conventionnés/ingérés. (La
+personne morale, elle, EST réelle et servie — voir ci-dessous.)
+
+## 2. Cascade `proprietaire` (seed démo Saint-Paul) · 3 tests · `tests/test_cascade.py` — RÉSOLU
+**Vérifié sur parcelle RÉELLE** (`97411000DE0285`, COMMUNE DE SAINT DENIS) : la personne morale
+s'affiche bien (`_q_v2_fiche.proprietaire_moral` + cascade `foncier_public`) → **aucun défaut
+client**. **Cause = SEED DÉRIVÉ** : la couche lit `SRC_FF="DGFiP — parcelles des personnes
+morales"` (phase2.py:16, renommée M125-C6) mais le seed injectait encore le mock sous l'ancien
+« Fichiers fonciers (Cerema) » → `latest_source_result` ne trouvait rien → UNKNOWN.
+**Fix = seed corrigé** (`demo_saint_paul.py`, nom de source aligné) ; les 3 tests sont conservés
+(ils testent vraiment la couche, on ne les affaiblit pas). Indivision = mock démo (encart ci-dessus).
+- `test_statuts_attendus` (:50) — P7 attendu `a_creuser`, obtenu autre — SEED DÉRIVÉ — statut démo P7.
 - `test_opportunite_p1_signaux_positifs` (:64) — `proprietaire` POSITIVE (personne morale) = None sur P1 — À CONFIRMER.
 - `test_indivision_flag_fort` (:98) — `proprietaire` SOFT_FLAG « indivision » FORT = None sur P7 — À CONFIRMER.
 
