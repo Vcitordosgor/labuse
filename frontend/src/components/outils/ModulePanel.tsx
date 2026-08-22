@@ -7,7 +7,7 @@ import {
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
-import { fmtInt } from '../../lib/format'
+import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -113,7 +113,7 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
 function M02() {
-  const { m02Prefill, setM02Prefill } = useApp()
+  const { m02Prefill, setM02Prefill, setMsel, setModule, setCourrierPrefill } = useApp()
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
   useEffect(() => {
@@ -136,6 +136,10 @@ function M02() {
           <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
+      {/* garde : le typeahead plafonne à 12 — on le DIT (jamais une coupe muette). */}
+      {!siren && (sug.data?.length ?? 0) >= 12 && (
+        <p className="text-[10.5px] text-txt-dim">12 premiers résultats — affinez le nom ou le SIREN.</p>
+      )}
       {/* Fix pré-lancement : distinguer un « 0 résultat LÉGITIME » d'une panne — sans ça, une boîte
           absente des fichiers fonciers (ex. VISHOR MATERIAUX) donne un écran muet lu comme « cassé ». */}
       {!siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
@@ -147,25 +151,53 @@ function M02() {
       )}
       {d && (
         <>
+          {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
+              sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
           {d['bodacc'] != null && (
             <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
               ● BODACC — {(d['bodacc'] as Record<string, string>)['type_procedure']}
             </div>
           )}
+          {d['inpi_sans_dirigeant'] === true && (
+            <div data-m02-inpi className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">
+              ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
+            </div>
+          )}
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-xs">
             <div className="truncate font-medium text-txt-hi">{d['nom'] as string}</div>
-            <div className="mt-1 flex gap-4 text-[11px] text-txt-mut">
+            {/* #2 l'agrégat dit l'ACTIONNABLE (hors écartées) + SDP RÉSIDUELLE (c'en est) */}
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
               <span><V>{d['n_parcelles'] as number}</V> parcelles</span>
-              <span>SDP totale <V>{fmt(d['sdp_totale_m2'] as number)}</V> m²</span>
+              <span><V>{d['n_actionnables'] as number}</V> actionnables <span className="text-txt-dim">(hors écartées)</span></span>
+              <span>SDP résiduelle <V>{fmt(d['sdp_residuelle_m2'] as number)}</V> m²</span>
             </div>
+            {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
+            {d['valorisation_nu_eur'] != null && (
+              <div className="mt-1 text-[11px] text-txt-dim">Valorisation indicative du foncier nu <span className="text-txt-dim">(zones U/AU, DVF terrains)</span> : <b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></div>
+            )}
           </div>
+          {/* #5 assiette contiguë dans le portefeuille → « Analyser en assiette » (msel + Assemblage) */}
+          {(d['assiette_contigue'] as string[])?.length >= 2 && (
+            <button data-m02-assiette onClick={() => { setMsel(d['assiette_contigue'] as string[]); setModule('assemblage') }}
+              className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-1.5 text-left text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
+              {(d['assiette_contigue'] as string[]).length} parcelles contiguës dans ce portefeuille — Analyser en assiette →
+            </button>
+          )}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i) => (
-              <Row key={i['idu'] as string} idu={i['idu'] as string}
-                sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
-                fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
-                  ['Patrimoine', `${d['n_parcelles']} parcelles · SDP ${fmt(d['sdp_totale_m2'] as number)} m²`]]} />
+              <div key={i['idu'] as string} className="flex items-stretch gap-1">
+                <div className="min-w-0 flex-1">
+                  <Row idu={i['idu'] as string}
+                    sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
+                    right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
+                    fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
+                      ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
+                </div>
+                {/* #5 l'action au bout : courrier de CETTE parcelle, prérempli (patron Assemblage) */}
+                <button data-m02-courrier title="Préparer le courrier de cette parcelle"
+                  onClick={() => { setCourrierPrefill(i['idu'] as string); setModule('courriers') }}
+                  className="shrink-0 rounded-lg border border-mint/40 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">✉</button>
+              </div>
             ))}
           </div>
         </>
