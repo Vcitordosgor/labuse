@@ -339,16 +339,8 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
         # (« ecartee », « declasse_… ») dans le « pourquoi » du projet.
         from ..verdict_servi import TIER_LABELS
         st = _STATUT_LABEL.get(statut) or TIER_LABELS.get(statut) or statut or "—"
-    if item.get("q_score") is not None:
-        out.append(f"{st} · qualité {item['q_score']}/100")
-    else:
-        out.append(st)
-    # M54-AB F11 : ligne pédagogique quand P (proba de mutation) et Q (qualité intrinsèque)
-    # divergent fortement — le classement peut être « chaud » sur une parcelle de qualité limitée.
-    _mult, _q = item.get("mult_base"), item.get("q_score")
-    _p_eleve = (_mult is not None and _mult >= 1.3) or item.get("tier_v2") in ("brulante", "chaude")
-    if _p_eleve and _q is not None and _q < 40:
-        out.append("Probabilité de mutation élevée, qualité intrinsèque limitée — voir la fiche.")
+    out.append(st)   # M130-2 §2.4 : « qualité X/100 » et « Probabilité de mutation » retirés (code mort —
+                     # `q_score`/`mult_base` jamais servis par _q_v2_list ; et proscrits sur un exportable).
     sdp = item.get("sdp") or item.get("sdp_residuelle_m2")
     if sdp and sdp_besoin:
         pct = round(100 * sdp / sdp_besoin)
@@ -999,21 +991,107 @@ def projet_ajouter(pid: int, body: AjouterIn, request: Request, db: Session = De
     return {"ok": True, "added": added, "already": not added, "idu": body.idu, **_counts(db, pid)}
 
 
+def _zone_famille(code: str | None) -> str | None:
+    """M130-2 §3.3 — la FAMILLE de zone d'un code PLU, libellé correct (U = urbaine, AU = à
+    urbaniser…) — jamais le faux libellé « urbaine / à urbaniser » corrigé en M128-2-J. On teste AU
+    AVANT U (« 2AUe » commence par un chiffre puis AU) : on retire les indices numériques de tête."""
+    if not code:
+        return None
+    import re as _re
+    u = _re.sub(r"^\d+", "", str(code)).strip().upper()
+    if u.startswith("AU"):
+        return "à urbaniser"
+    if u.startswith("U"):
+        return "urbaine"
+    if u.startswith("N"):
+        return "naturelle"
+    if u.startswith("A"):
+        return "agricole"
+    return None
+
+
+def _plu_millesime(idurba: str | None) -> str | None:
+    """M130-2 §6 — le MILLÉSIME AMONT du zonage = la date d'approbation du PLU portée par `idurba`
+    (ex. « 97401_PLU_20241206 » → 06/12/2024). Jamais une date de run. None si non renseigné."""
+    if not idurba:
+        return None
+    import re as _re
+    m = _re.search(r"(\d{4})(\d{2})(\d{2})", str(idurba))
+    return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else None
+
+
+def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
+    """M130-2 §1/§3 — sert la SHORTLIST FIGÉE du projet (table projet_parcelles), JAMAIS un recalcul
+    live. Ordre NEUTRE (commune, section, n° — §2.3), aucun verdict/rang. Chaque parcelle enrichie de
+    DONNÉE pure : SDP résiduelle (Estimé), hauteurs égout/faîtage calibrées (resolve_zone — source
+    corrigée M128-2-A/M129-2), zone PLU + famille + millésime amont. `figee=False` si le projet n'a
+    pas de shortlist figée exploitable (date + parcelles) — on le DIT, on ne fabrique aucun run."""
+    from ..faisabilite.plu_rules import resolve_zone
+    from .export_commun import adresses_ban, format_adresse
+    rows = db.execute(text(
+        """SELECT par.idu, par.commune,
+                  substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
+                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause,
+                  z.libelle AS zone_libelle, z.idurba AS zone_idurba
+           FROM projet_parcelles pp
+           JOIN parcels par ON par.id = pp.parcel_id
+           LEFT JOIN parcel_residuel pr ON pr.parcel_id = par.id
+           LEFT JOIN LATERAL (
+                SELECT sl.attrs->>'libelle' AS libelle, sl.attrs->>'idurba' AS idurba
+                FROM spatial_layers sl
+                WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, par.geom_2975)
+                ORDER BY ST_Area(ST_Intersection(sl.geom_2975, par.geom_2975)) DESC LIMIT 1) z ON TRUE
+           WHERE pp.projet_id = :pid AND pp.statut <> 'ecartee'
+           ORDER BY par.commune, section, NULLIF(regexp_replace(numero, '\\D', '', 'g'), '')::int"""),
+        {"pid": p.id}).mappings().all()
+    figee = bool(p.derniere_execution_at) and bool(rows)
+    idus = [r["idu"] for r in rows]
+    adrs = {i: format_adresse(a) for i, a in adresses_ban(db, idus).items()} if idus else {}
+    parcelles = []
+    for r in rows:
+        zr = None
+        try:
+            zr = resolve_zone(r["zone_libelle"], r["commune"]) if r["zone_libelle"] else None
+        except Exception:  # noqa: BLE001 — une zone non résolue ne casse pas l'export
+            zr = None
+        he = getattr(zr, "he_m", None) if zr else None
+        hf = getattr(zr, "hf_m", None) if zr else None
+        parcelles.append({
+            "idu": r["idu"], "commune": r["commune"],
+            "section": r["section"], "numero": r["numero"],
+            "adresse_ban": adrs.get(r["idu"]),
+            # SDP : Estimé ; `cause` non nulle = non calculable → on dit la raison, jamais un « 0 » trompeur
+            "sdp_m2": int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None,
+            "sdp_indispo": r["cause"],
+            "zone_code": r["zone_libelle"],
+            "zone_famille": _zone_famille(r["zone_libelle"]),
+            "zone_millesime": _plu_millesime(r["zone_idurba"]),
+            "he_m": float(he) if isinstance(he, (int, float)) else None,
+            "hf_m": float(hf) if isinstance(hf, (int, float)) else None,
+            "hauteur_calibree": bool(getattr(zr, "calibree", False)) if zr else False,
+            "hauteur_source": (getattr(zr, "sources", None) or {}).get("hauteur") if zr else None,
+        })
+    return {
+        "figee": figee,
+        "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
+        "n": len(parcelles),
+        "parcelles": parcelles,
+    }
+
+
 @router.get("/{pid}/export.pdf")
 def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db)):
-    """Dossier PROJET en PDF : la fiche de cadrage + les meilleures parcelles avec leur
-    « pourquoi » (aperçu recalculé sur les données ACTUELLES). Mécanique fpdf2 existante."""
+    """Dossier PROJET en PDF — document de PRÉSENTATION. M130-2 : sert la SHORTLIST FIGÉE du projet
+    (jamais un recalcul live), datée par son figeage ; aucun verdict/rang/score ; chaque parcelle
+    porte de la DONNÉE (SDP estimée, hauteurs calibrées, zone). Mécanique fpdf2 existante."""
     from fastapi.responses import Response
 
-    from .export_commun import adresses_ban, format_adresse
     from .pdf_projet import render_projet_pdf
     p = _projet_or_404(db, pid, current_compte(request))   # SEC-IDOR : export borné au compte
-    apercu = projet_apercu(ApercuIn(cadrage=p.filtres or {}, identite=p.identite or {}, limit=5), db)
-    # M6 2a : adresse postale BAN de chaque parcelle du top (1 requête, page 1 du PDF)
-    adrs = adresses_ban(db, [it["idu"] for it in apercu.get("top", [])])
-    for it in apercu.get("top", []):
-        it["adresse_ban"] = format_adresse(adrs.get(it["idu"]))
-    pdf = render_projet_pdf(_projet_dict(p), apercu)
+    shortlist = _shortlist_pdf(db, p)
+    pdf = render_projet_pdf(_projet_dict(p), shortlist)
     slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
+    # M130-2 §5.3 — nommage doctrine : projet-{id}-{slug}-labuse.pdf (id stable = pas de collision)
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="projet-{slug or pid}.pdf"'})
+                    headers={"Content-Disposition":
+                             f'inline; filename="projet-{pid}-{slug or "projet"}-labuse.pdf"'})
