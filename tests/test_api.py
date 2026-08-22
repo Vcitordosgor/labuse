@@ -498,3 +498,34 @@ def test_outils_commune_ne_crashent_pas(client):
     assert client.get("/moteurs/marche/Saint-Paul").status_code == 200
     assert client.get("/comparateur-communes").status_code == 200
     assert client.get("/carnet-secteur").status_code == 200
+
+
+def test_permis_fusion_endpoints_contrat(client):
+    """§3 (23/08/2026) — FUSION « Radar permis » + « Permis au point mort » en un outil « Permis ».
+
+    Contrat backend verrouillé : les DEUX endpoints répondent 200 (jamais 500), et surtout
+    /modules/promesses renvoie désormais une clé `geom` par ligne — c'est ce qui permet au filtre
+    « Au point mort » de rendre les PC anciens en POINTS CLIQUABLES (comme le radar), plus en
+    surlignage de parcelle. Sur la base de démo les listes peuvent être courtes ; l'assertion porte
+    sur la FORME (présence de la clé geom), pas sur le volume."""
+    # Radar : items + carte (points géocodés)
+    r = client.get("/modules/permis?months=24&limit=5")
+    assert r.status_code == 200, r.text[:300]
+    d = r.json()
+    assert isinstance(d.get("items"), list) and isinstance(d.get("carte"), list)
+    for it in d["carte"]:
+        assert "permit_id" in it and "geom" in it   # la carte radar = des points
+
+    # Point mort : la clé `geom` est présente sur CHAQUE ligne (contrat §3 : point mort = des points)
+    r = client.get("/modules/promesses?months=36&limit=5")
+    assert r.status_code == 200, r.text[:300]
+    d = r.json()
+    assert isinstance(d.get("items"), list)
+    for it in d["items"]:
+        assert "geom" in it, "point mort doit porter la géom du permis (rendu en points, §3)"
+        assert "permit_id" in it
+
+    # Le count découplé répond aussi (chemin count_only)
+    r = client.get("/modules/promesses?months=36&count_only=true")
+    assert r.status_code == 200, r.text[:300]
+    assert "total" in r.json()

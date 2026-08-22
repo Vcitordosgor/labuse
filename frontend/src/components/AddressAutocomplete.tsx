@@ -29,7 +29,7 @@ interface Props {
 }
 
 // Un IDU cadastral (14 car. : INSEE 5 + préfixe 3 + section 2 + numéro 4) N'EST PAS une adresse : plusieurs
-// champs (omnibox carte, Contrôle avant achat, Radar permis…) acceptent l'IDU EN PLUS de l'adresse. On NE
+// champs (omnibox carte, Contrôle avant achat, Permis…) acceptent l'IDU EN PLUS de l'adresse. On NE
 // lance PAS la recherche d'adresse dessus — sinon la BAN répond 0 et affiche « Aucune adresse trouvée »
 // alors que la recherche par IDU fonctionne. On reconnaît aussi l'IDU EN COURS de frappe (suite contiguë
 // commençant par ≥ 5 chiffres, sans espace, ≥ 6 car.) pour ne pas faire clignoter le bandeau à la saisie.

@@ -96,13 +96,16 @@ export const MODULES: ModuleDef[] = [
   // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.
   { key: 'barometre', num: 'M18', group: 'marche', hidden: true,
     label: 'Communes', desc: 'L’évolution du marché et le Rapport PDF sont dans l’onglet « Évolution » de Communes' },
+  // §3 (Vic 23/08/2026) — FUSION « Radar permis » (M03) + « Permis au point mort » (M04) en UN outil
+  // « Permis » : le radar est l'entrée (carte + points cliquables + fiche + recherche rue/numéro) ;
+  // « au point mort » devient un FILTRE (PC anciens sans achèvement, rendus en points cliquables, plus
+  // en surlignage de parcelle). Même patron que les fusions précédentes : la clé `promesses` reste
+  // (URL/QA/concept-route inchangés) mais ALIASÉE (hidden) → pas de 2ᵉ carte au menu ; elle ouvre le
+  // filtre pré-actif.
   { key: 'permis', num: 'M03', group: 'marche',
-    label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
-  // audit-promesses (add 2) — renommé « Promesses mortes » → « Permis au point mort » : le calcul dit
-  // « au point mort » (accordé, sans achèvement, parcelle non bâtie), pas la caducité juridique certaine.
-  // La clé reste `promesses` (URL/QA/concept-route inchangés). Défaut passé à 36 mois (caducité PC).
-  { key: 'promesses', num: 'M04', group: 'marche',
-    label: 'Permis au point mort', desc: 'Les PC accordés mais jamais réalisés — sans achèvement, parcelle toujours non bâtie (à partir de 3 ans, la caducité légale)' },
+    label: 'Permis', desc: 'Qui construit quoi, commune par commune (Sitadel) — la carte des permis, cliquables ; filtre « Au point mort » pour les PC accordés jamais réalisés' },
+  { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
+    label: 'Permis', desc: 'Le « point mort » (PC accordés jamais réalisés) est un filtre de l’outil Permis' },
   // §5 — renommé « Densifier l'existant » côté client ; clé interne `renouvellement` INCHANGÉE
   // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',

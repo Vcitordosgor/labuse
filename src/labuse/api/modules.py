@@ -474,14 +474,18 @@ def promesses(commune: str | None = None, months: int = 24,
                                 AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
             {"c": commune, "m": months, "run": RUN}).scalar() or 0)}
     # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
-    # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond. carte pilotée par IDU
-    # (module-hl), pas par géométrie : ST_AsGeoJSON retiré (payload/latence).
+    # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond.
+    # §3 (23/08/2026) — la GÉOM du permis est RÉ-AJOUTÉE (ST_AsGeoJSON) : depuis la fusion Radar+Point
+    # mort, l'outil « Permis » rend le point mort en POINTS CLIQUABLES (comme le radar), plus en
+    # surlignage de parcelle (module-hl). Payload = la géom du permis (centroïde) par ligne — mesuré
+    # léger (une page 1000 ; les non-géocodés restent listés, geom NULL).
     rows = db.execute(text("""
         WITH cand AS MATERIALIZED (
             -- audit-promesses : `d.q_score` (matrice MORTE depuis M129-B) RETIRÉ — il était sélectionné
             -- et renvoyé mais aucun consommateur ne le lit (vestige). `d` reste utilisé pour `status`.
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                    p.idu, round(p.surface_m2) AS surface_m2,
+                   CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
             FROM sitadel_permits s
             JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
@@ -496,7 +500,7 @@ def promesses(commune: str | None = None, months: int = 24,
                                 AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
-               cand.idu, cand.surface_m2, s2.tier AS statut, cand.etage0,
+               cand.idu, cand.surface_m2, cand.g, s2.tier AS statut, cand.etage0,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
@@ -507,7 +511,8 @@ def promesses(commune: str | None = None, months: int = 24,
             "affiches": offset + len(rows), "has_more": len(rows) == limit,
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut")},
-                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"])}
+                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+                       "geom": json.loads(r["g"]) if r["g"] else None}
                       for r in rows]}
 
 
