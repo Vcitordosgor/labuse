@@ -4462,6 +4462,7 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
         "created_at": e.created_at.isoformat() if e.created_at else None,
+        "archived_at": e.archived_at.isoformat() if e.archived_at else None,   # M137
         "prospection": e.prospection or {},
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
@@ -4556,6 +4557,7 @@ def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]
     q = select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — actives seules (archivées cachées)
     entries = db.execute(q).scalars().all()
     return [_entry_dict(db, e) for e in entries]
 
@@ -4571,6 +4573,7 @@ def pipeline_for_parcel(idu: str, request: Request, db: Session = Depends(get_db
     q = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — une archivée ≠ « suivie » (ré-ajout = restaure)
     e = db.execute(q).scalar_one_or_none()
     return {"in_pipeline": bool(e), "entry": _entry_dict(db, e) if e else None}
 
@@ -4587,8 +4590,12 @@ def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(ge
     _ex = _ex.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                     else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     existing = db.execute(_ex).scalar_one_or_none()
-    if existing:                                            # déjà suivie → on renvoie son état courant
-        return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
+    if existing:
+        if existing.archived_at is not None:               # M137 — archivée → RESTAURE (garde notes/prospection)
+            existing.archived_at = None
+            db.flush()
+            return {"ok": True, "already": False, "restored": True, "entry": _entry_dict(db, existing)}
+        return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}   # déjà suivie (active)
 
     from . import crm_columns
     dfl = _pipeline_cfg().get("defaults", {})
@@ -4654,13 +4661,42 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: S
 
 @app.delete("/pipeline/{entry_id}")
 def pipeline_delete(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M137 — ARCHIVAGE (plus de suppression DURE) : pose `archived_at`, la carte + sa prospection
+    saisie sont conservées et RESTAURABLES (POST /pipeline/{id}/restore). « Aucune carte perdue »."""
+    from datetime import datetime, timezone
+
     from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
     if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
-    db.delete(e)
+    if e.archived_at is None:
+        e.archived_at = datetime.now(timezone.utc)
+        db.flush()
+    return {"ok": True, "archived": True}
+
+
+@app.post("/pipeline/{entry_id}/restore")
+def pipeline_restore(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M137 — restaure une carte archivée (archived_at → NULL). Idempotent."""
+    from .tenant import current_compte
+    e = db.get(models.PipelineEntry, entry_id)
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
+        raise HTTPException(404, "Entrée de pipeline inconnue")
+    e.archived_at = None
     db.flush()
-    return {"ok": True}
+    return {"ok": True, "entry": _entry_dict(db, e)}
+
+
+@app.get("/pipeline/archived")
+def pipeline_archived(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    """M137 — les cartes ARCHIVÉES du compte (pour les consulter / restaurer). Pas de purge auto."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    q = select(models.PipelineEntry).order_by(models.PipelineEntry.archived_at.desc())
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_not(None))
+    return [_entry_dict(db, e) for e in db.execute(q).scalars().all()]
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────

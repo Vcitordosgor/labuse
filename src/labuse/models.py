@@ -654,6 +654,9 @@ class PipelineEntry(Base, TimestampMixin):
     prospection: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     # référence du PROJET d'où vient la piste (copilote-projet) — le kanban sait « d'où vient »
     projet_id: Mapped[int | None] = mapped_column(ForeignKey("projets.id", ondelete="SET NULL"))
+    # M137 — ARCHIVAGE réversible (« aucune carte perdue ») : NULL = active ; sinon date d'archivage.
+    # Plus de suppression dure. Filtré partout (listes/compteurs), toujours conjoint à compte_id.
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     parcel: Mapped[Parcel] = relationship()
 
@@ -950,6 +953,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_watch_zones(engine)
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
+    ensure_pipeline_archived(engine)
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
@@ -1084,6 +1088,16 @@ def ensure_pipeline_prospection(engine) -> None:
     with engine.begin() as c:
         c.execute(_t("ALTER TABLE pipeline_entries "
                      "ADD COLUMN IF NOT EXISTS prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
+
+
+def ensure_pipeline_archived(engine) -> None:
+    """M137 — colonne `archived_at` sur pipeline_entries (archivage réversible, plus de DELETE dur).
+    Idempotent ; ADD COLUMN IF NOT EXISTS → durable au rebuild sur base existante."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS archived_at timestamptz"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_pipeline_archived ON pipeline_entries (archived_at)"))
 
 
 def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) -> None:

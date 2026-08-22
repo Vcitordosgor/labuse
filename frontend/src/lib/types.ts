@@ -126,6 +126,7 @@ export interface PipelineEntry {
   priority: string
   notes: string
   created_at: string | null
+  archived_at?: string | null   // M137 — archivage réversible (NULL = active)
   parcel: { commune: string; section: string; surface_m2: number | null }
   premium: { statut: Statut; q_score: number; a_score: number; completeness_score: number;
              etage0?: boolean; tier_v2?: string | null; rang_v2?: number | null } | null
