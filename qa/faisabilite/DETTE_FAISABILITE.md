@@ -88,24 +88,38 @@ pour y poser un bâtiment. Ce test géométrique exige de rejouer le moteur
 où l'outil rejoue le moteur par parcelle (coûteux) ou consomme une empreinte
 géométrique cachée.
 
-## 7. Divergence de zone sens1 ↔ sens2 sur parcelle multi-zones (M133 vérif V2)
+## 7. Conflit de source de zone étiquette ↔ SDP (M133 vérif V2 — chiffre étranger NEUTRALISÉ)
 
-Les deux onglets lisent la zone à deux endroits DIFFÉRENTS :
-- **sens1** (« Par parcelle », `parcel_faisabilite` → `parcel_context`,
-  `db.py:32-36`) : zone du polygone PLU le PLUS PETIT contenant le **centroïde**
-  (`ST_Contains` + `ORDER BY ST_Area(z.geom) ASC LIMIT 1`).
-- **sens2** (« Par critères », M133) : `parcel_zone_plu.zone_lib` (une ligne par
-  parcelle — table mono-zone, 0 multi).
+Les deux sources de zone diffèrent :
+- l'**étiquette** servie par « Par critères » = `parcel_zone_plu.zone_lib` (mono-zone,
+  0 multi) ;
+- la zone qui a **produit la SDP** du cache résiduel = celle du **centroïde**
+  (`parcel_context`, `db.py:32-36` : polygone PLU le plus petit contenant le
+  centroïde), qui est aussi celle de « Par parcelle » (sens1).
 
-Pour une parcelle qui **chevauche deux zones** dans l'espace, les deux sources
-peuvent DIVERGER. Cas mesuré : `97422000CN1677` — sens1 (centroïde) = **Uc**
-(constructible, R+2, SDP brute 6071) ; `parcel_zone_plu` = **Nco** (naturelle, non
-constructible). sens2 l'affiche donc « **Nco · estimée · 5900 m²** » : un chiffre de
-SDP issu de la lecture **Uc** (le cache résiduel vient du chemin sens1), servi sous
-l'étiquette **Nco**. Le flag « estimée » est correct (Nco non calibrée) mais la
-parcelle est un **conflit de source de zone**.
+Pour une parcelle qui **chevauche deux zones** dans l'espace, les deux divergent.
+Cas mesuré : `97422000CN1677` — centroïde = **Uc** (constructible, R+2, SDP 6071) ;
+étiquette = **Nco** (naturelle, non constructible). Le cache sert donc une SDP issue
+de **Uc** sous l'étiquette **Nco** — un **chiffre étranger sous une étiquette juste**
+(la forme exacte du 4 m de M130-12) ; le flag « estimée » aggravait en donnant l'air
+d'un traitement maîtrisé.
 
-À trancher (amont, hors périmètre outil) : quelle source fait foi pour
-l'attribution mono-zone — majorité de surface, centroïde, ou part U/AU dominante ?
-Consigné, **non corrigé** (mandat : « tout écart = divergence à remonter »). Sur la
-capture, **0** parcelle à zone NULL et 1/200 « estimée » à Le Tampon (ce CN1677).
+**Correctif M133 (local à l'outil, appliqué) :** le cache résiduel n'est POSITIF que
+si la zone du centroïde est constructible. Donc si l'étiquette résout en NON
+constructible (ou ne résout pas) alors que le résiduel est positif, la SDP est
+étrangère → la parcelle **ne sert plus de SDP**, elle sort **« à instruire »** (même
+sort que les parcelles sans étiquette — 0 servable). **Sans trancher** laquelle des
+deux sources a raison (c'est l'inconnu). Portée mesurée (run servi `q_v10_m129`,
+univers servable tier + résiduel>0 = 130 370) : **250 parcelles neutralisées**
+(0,19 %) — étiquettes `N` (110), `A` (85), `Nco` (44)… Faible → appliqué sans stop.
+Les zones GELÉES (Us/2AUc) ont, elles, un résiduel 0 : déjà écartées, gel intact.
+
+**Restent en dette (amont, hors périmètre outil) :**
+- **quelle source fait foi** pour l'attribution mono-zone (majorité de surface,
+  centroïde, part U/AU dominante ?) — c'est le vrai correctif de fond ;
+- le cas SUBTIL non capté par la règle locale : étiquette ET centroïde **tous deux
+  constructibles** mais **sous-zones différentes** (ex. étiquette `Uc` hé 9, centroïde
+  `Ua` hé 21). La SDP servie reste alors légèrement étrangère (hauteur/gabarit d'une
+  autre sous-zone). Le détecter exige de résoudre le centroïde par une requête
+  spatiale PAR PARCELLE au runtime — mesurée à **~60 s sur l'île**, inacceptable pour
+  un outil à la demande. Se règle en même temps que l'attribution de zone amont.

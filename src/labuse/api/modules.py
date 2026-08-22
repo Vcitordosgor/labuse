@@ -1157,14 +1157,13 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
           AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')"""),
         {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4}).mappings().all()
-    hcache: dict = {}   # (zone, commune) → (hauteur d'éligibilité, niveaux_max) — resolve_zone 1×/couple
-    items = []
-    for r in rows:
-        zone = (r["zone"] or "").strip()   # M133 : sous-zone FINE (parcel_zone_plu), pas la famille cascade
-        key = (zone, r["commune"])
+    hcache: dict = {}   # (zone, commune) → (hauteur éligibilité, niveaux_max, estimée, signature calcul)
+
+    def _zinfo(zone: str, commune):
+        key = (zone, commune)
         if key not in hcache:
             # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
-            rules = resolve_zone(zone, r["commune"]) if zone else None
+            rules = resolve_zone(zone, commune) if zone else None
             he = getattr(rules, "he_m", None) if rules else None
             hf = getattr(rules, "hf_m", None) if rules else None
             # éligibilité hauteur : faîtage prioritaire (comportement conservé)
@@ -1180,8 +1179,24 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
             # (engine.py:180 : `not rules.calibree`), lue en direct sur la sous-zone fine — pas le
             # flag du cache résiduel (antérieur à M131, incohérent). Zone non résolue → estimée.
             estimee = rules is None or not bool(getattr(rules, "calibree", False))
-            hcache[key] = (float(h) if h is not None else None, nmax, estimee)
-        h, niveaux_max, capacite_estimee = hcache[key]
+            # signature de CALCUL : ce qui distingue une zone d'une autre pour la capacité.
+            cn = getattr(rules, "constructible_neuf", None) if rules else None
+            hcache[key] = (float(h) if h is not None else None, nmax, estimee, (cn, he, hf))
+        return hcache[key]
+
+    items = []
+    for r in rows:
+        zone = (r["zone"] or "").strip()   # étiquette FINE (parcel_zone_plu), pas la famille cascade
+        h, niveaux_max, capacite_estimee, sig_label = _zinfo(zone, r["commune"])
+        # CONFLIT DE SOURCE DE ZONE (vérif V2, dette §7) : le cache résiduel n'est POSITIF que si la
+        # zone du CENTROÏDE (qui l'a produit, parcel_context db.py:32-36) est constructible. Si
+        # l'ÉTIQUETTE (parcel_zone_plu) résout en NON constructible — ou ne résout pas —, la SDP servie
+        # serait ÉTRANGÈRE à l'étiquette (la forme exacte du 4 m de M130-12 : chiffre juste, étiquette
+        # fausse). On NE sert PAS de SDP : la parcelle sort « à instruire », même sort que les zones sans
+        # étiquette — SANS trancher quelle source a raison (l'inconnu = dette §7). Les zones GELÉES
+        # (Us/2AUc) ont un résiduel 0 : déjà écartées par le filtre SDP, le gel tient.
+        if sig_label[0] is not True:
+            continue
         # (1) grille d'ÉLIGIBILITÉ hauteur (rôle conservé) : la zone autorise-t-elle R+N ?
         if h is not None and float(h) < hauteur_min:
             continue                       # filtre hauteur AVANT toute troncature (Fix A)
