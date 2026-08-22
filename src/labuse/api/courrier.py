@@ -15,6 +15,12 @@ from .. import courrier
 
 router = APIRouter(prefix="/courrier", tags=["courrier"])
 
+# Ponctuation typographique → équivalents latin-1 (fidélité du PDF au texte affiché ; « — »/« ’ »
+# ne doivent pas devenir « ? »). « « » » gardent leurs guillemets français (déjà latin-1).
+_LATIN1_PUNCT = {ord(a): b for a, b in {
+    "’": "'", "‘": "'", "“": '"', "”": '"', "—": "-", "–": "-", "…": "...", " ": " ", " ": " ",
+}.items()}
+
 
 def get_db():
     from .app import get_db as _g
@@ -81,8 +87,15 @@ def courrier_pdf(body: PdfIn) -> Response:
     pdf.set_font("Helvetica", "", 11)
     pdf.ln(4)
     for ligne in body.texte.split("\n"):
-        safe = ligne.encode("latin-1", "replace").decode("latin-1")   # polices de base = latin-1
-        pdf.multi_cell(0, 6, safe)
+        # Les polices de base fpdf sont latin-1 : la ponctuation typographique (’ — … « ») deviendrait
+        # « ? ». On la ramène à ses équivalents latin-1 AVANT l'encodage → le PDF reste FIDÈLE au
+        # courrier affiché (apostrophes, tirets), jamais un « ? » à la place.
+        safe = ligne.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
+        # LARGEUR EXPLICITE (epw = largeur utile) et JAMAIS w=0 : sous fpdf2 2.8.7, un
+        # multi_cell(w=0, "") sur une ligne VIDE (les \n\n entre paragraphes) laisse le curseur
+        # à la marge droite → le multi_cell suivant a 0 largeur → FPDFException « Not enough
+        # horizontal space ». Avec epw, la ligne vide avance proprement d'une ligne.
+        pdf.multi_cell(pdf.epw, 6, safe)
     data = bytes(pdf.output())
     nom = (body.idu or "parcelle").replace("/", "-")
     return Response(content=data, media_type="application/pdf",

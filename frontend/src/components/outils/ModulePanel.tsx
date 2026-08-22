@@ -677,9 +677,14 @@ function M09() {
     onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
   })
   const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfErr, setPdfErr] = useState<string | null>(null)
   const telecharger = async () => {
-    setPdfBusy(true)
-    try { await courrierPdf(idu.trim() || null, motif, texte) } catch { /* ignore */ } finally { setPdfBusy(false) }
+    setPdfBusy(true); setPdfErr(null)
+    // Un échec de génération se DIT à l'écran (avant : `catch {}` silencieux → le bouton ne faisait
+    // rien, sans message — c'est ce qui a masqué le PDF cassé). Jamais d'échec muet.
+    try { await courrierPdf(idu.trim() || null, motif, texte) }
+    catch { setPdfErr('Le téléchargement du PDF a échoué. Réessayez ; si le problème persiste, signalez-le.') }
+    finally { setPdfBusy(false) }
   }
   const Stepper = () => (
     <div className="flex items-center gap-1 text-[10px]">
@@ -760,6 +765,7 @@ function M09() {
           <button data-courrier-pdf onClick={telecharger} disabled={pdfBusy || texte.trim().length < 10}
             className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
             {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
+          {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
           <div className="flex gap-2">
             <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
             <button onClick={() => { setStep(1); setIdu(''); setTexte('') }}
