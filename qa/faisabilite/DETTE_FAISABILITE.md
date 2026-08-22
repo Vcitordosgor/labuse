@@ -42,10 +42,26 @@ Conséquences :
   touche le service. Mesure de dérive faisable **read-only** par échantillon
   (`compute_residuel()` est pure) — à l'arbitrage de Vic.
 
-**À faire (mandat data, arbitrage Vic en attente)** : soit versionner `parcel_residuel`
-par `run_id` (le rend comparable/rafraîchissable proprement), soit un recalcul
-sur table de travail pour mesurer la dérive avant toute bascule. **Ne touche pas**
-l'outil.
+**M134 — dérive MESURÉE (Phase C-échantillon, read-only, 0 écriture) :**
+- **La dérive redoutée n'existe pas** : recalcul frais de `compute_residuel()` sur
+  **5 583 parcelles** (7 ancres + 1027 zones M131 + 1497 lot×commune + 300 conso +
+  3000 constructibles) → **0 changement** (borne haute < 0,05 %). Cause : diff YAML
+  depuis le 29/07 = seuls ajouts M131 (`Us`, `2AUa-e`), tous **gelés** (résiduel 0) ;
+  aucune zone constructible n'a vu hé/hf/emprise/recul bouger. M131 est **inerte sur
+  le résiduel** (résultat attendu, pas échec), M130-12 aussi (4 m = hauteur sur gel).
+- **A.3bis — le cache est une MOSAÏQUE de trois états de code** (lots 29/07 : 245 319 ;
+  05/08 : 8 032, uniquement des constructibles ; 08-19 : 178 312). L'incohérence
+  interne (computed_at étalé, code hétérogène) est **un constat d'hygiène EN SOI,
+  séparé de la péremption** : aujourd'hui sans conséquence de VALEUR (les trois états
+  produisent le même résiduel), mais un futur mandat qui changerait vraiment le calcul
+  la rendrait dangereuse (drift hétérogène par parcelle selon son lot).
+- **Coût d'un refresh** (mesuré) : île ≈ 127 min séquentiel (20,9 ms/constructible,
+  16,1 ms/autre) ; par commune < 10 min.
+
+**À faire (mandat data, arbitrage Vic — NON urgent, la valeur ne dérive pas)** : un
+refresh peut attendre une **bascule planifiée**. Le vrai correctif d'hygiène = soit
+versionner `parcel_residuel` par `run_id` (comparable/rafraîchissable, tue la
+mosaïque), soit un recalcul atomique sur table de travail. **Ne touche pas** l'outil.
 
 ## 2. Deux systèmes de filtre « périmètre » (D.2 — dette structurelle)
 

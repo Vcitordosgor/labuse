@@ -163,5 +163,96 @@ Mon avis : **(1)** pour mesurer la dérive maintenant, sans risque ; **(2)** si 
 la mesure exhaustive île entière (mais c'est un petit code). **(3)** est une bascule,
 pas une mesure.
 
-**Je m'arrête ici. Aucun calcul lancé, aucune écriture, service intact.**
-CC ne bascule jamais, CC ne merge jamais.
+**Je m'arrête ici pour la Phase A. Aucune écriture, service intact.**
+
+---
+
+# Phase C-échantillon — mesure READ-ONLY de la dérive (go de Vic sur Option 1)
+
+Recalcul en direct de `compute_residuel()` (fonction PURE, aucune écriture) sur un
+échantillon, comparé au cache servi. **Aucune écriture, aucune bascule.** Script :
+`qa/faisabilite/m134_mesure_derive.py`. Dimensionnement proposé et validé : 7 ancres
++ 1027 zones M131 (Us + 2AUa-e, toutes) + 500/lot × commune (1497) + 300 conso
+vivier — puis **durcissement** de 3000 constructibles.
+
+## Résultat central : la dérive redoutée N'EXISTE PAS — 0 sur 5 583 parcelles
+
+| Strate | n | changées | % | Δ SDP |
+|---|---|---|---|---|
+| Ancres | 7 | **0** | 0 % | — |
+| Zones M131 (Us + 2AU) | 1027 | **0** | 0 % | — |
+| Lot 2026-07-29 (le + ancien) | 499 | **0** | 0 % | — |
+| Lot 2026-08-05 | 502 | **0** | 0 % | — |
+| Lot 2026-08-19 | 496 | **0** | 0 % | — |
+| Conso (vivier scoring) | 52 | **0** | 0 % | — |
+| **Durcissement constructibles** | 3000 | **0** | 0 % | — |
+| **TOTAL** | **5 583** | **0** | **0 %** | — |
+
+Borne haute (règle de trois, 0 succès sur 5 583) : dérive **< 0,05 %** à 95 %.
+
+**Cause racine (diff YAML `794f8d45`→HEAD, lecture seule)** : depuis le 29/07, les
+**seuls** champs d'entrée du résiduel modifiés sont les ajouts M131 `2AUa-e` + `Us`,
+**tous `constructible_neuf: false`**. **Aucune** zone constructible n'a vu son
+`he_m`/`hf_m`/`emprise`/`recul` changer. M94 (stationnement) n'entre pas dans le
+résiduel ; M-N/M-PLU-REF/M-PLU-REF-B n'ont pas bougé les valeurs qu'il consomme
+(prouvé : 0 dérive sur 2 865 constructibles du lot 29/07).
+
+## C.2 — Effet M131 : VÉRIFIÉ nul (résultat, pas échec)
+
+Us (787) et 2AUa-e (241) portent désormais une hauteur mais restent **gelées**
+(`constructible_neuf=False`) → leur résiduel reste **0**, avant comme après. **La
+gravure M131 ne change rien au résiduel — c'est le résultat attendu**, dit
+nettement. Idem C.3 (M130-12) : le repli 4 m était une **hauteur sur zone gelée**,
+jamais la SDP ; son retrait ne bouge aucun résiduel (toutes ces zones = 0).
+
+## C.4 — Ancres, une à une (avant → après, motif)
+
+| Ancre | Commune | Lot | SDP av.→ap. | Cause | Verdict |
+|---|---|---|---|---|---|
+| `97416000EP1044` | Saint-Pierre | 19/08 | 0 → 0 | `zone_non_constructible:Us` | = (gel Us) |
+| `97422000BI1097` | Le Tampon | 19/08 | 0 → 0 | `habitat_interdit:1AUe` | = |
+| `97415000CW1056` | Saint-Paul | 19/08 | 0 → 0 | `terrain_exigu` | = |
+| `97422000BV2471` | Le Tampon | 29/07 | 638 → 638 | disponible | = |
+| `97422000EL0368` | Le Tampon | 29/07 | 16 419 → 16 419 | disponible | = |
+| `97422000CN1677` | Le Tampon | 29/07 | 5 900 → 5 900 | disponible (Nco, cf. M133 §7) | = |
+| `97422000BT0960` | Le Tampon | 29/07 | 580 → 580 | disponible | = |
+
+Aucun écart, donc aucun motif à expliquer. `CN1677` recalcule 5 900 identique : la
+divergence M133 §7 est dans l'**attribution de zone**, pas dans le calcul du
+résiduel — orthogonale à cette dérive.
+
+## C.5 / C.6 — Vivier et Faisabilité : inchangés (inféré du 0 %)
+
+Le résiduel étant identique à < 0,05 % près, l'univers servable (130 370) ne
+gagne ni ne perd de parcelle de façon mesurable, et le jeu de la capture
+(1 bât · R+2 · 8 unités · 60 m² · circul. 20 %) rendrait le **même compte**. Un
+décompte île exact exigerait le recalcul complet (Option 2/3, écrasement/table de
+travail) — non fait (STOP). La mesure échantillon le rend **inutile en urgence**.
+
+## Coût (A.2, l'inconnue levée)
+
+Temps par parcelle mesuré sur l'échantillon : **médiane 20,9 ms** (constructible),
+**16,1 ms** (non-constructible). Extrapolation île entière (130 370 constructibles +
+301 293 autres, séquentiel, 1 process) : **≈ 127 min**. Un recompute par commune est
+proportionnellement court (< 10 min pour les plus grosses).
+
+## Le lot du 05/08 — ce que c'est
+
+Les 8 032 parcelles du 05/08 sont **exclusivement « disponible » (cause NULL)** —
+aucune non-constructible — et représentent **~3 % (2-4,4 %) des parcelles
+constructibles de CHAQUE commune**, réparties uniformément. C'est un **recalcul
+partiel des seules constructibles** (un sous-ensemble transverse, pas une commune ni
+une zone), probablement un lot/chunk isolé d'un run antérieur. Sans effet sur le
+constat : ces 129-2865 constructibles du 05/08 échantillonnées ne dérivent pas non plus.
+
+## Conclusion — la péremption est de DATE, pas de VALEUR
+
+Le cache est vieux (29/07-19/08) et **mosaïque de trois états de code** (A.3bis),
+mais ses **valeurs coïncident avec un recalcul frais** (0 dérive / 5 583). Rien
+n'appelle une bascule en urgence : **l'exhaustif île peut attendre une bascule
+planifiée**, comme Vic l'anticipait. L'incohérence interne (mosaïque) reste un
+constat d'hygiène à part (dette §1), sans conséquence de valeur aujourd'hui.
+
+**STOP après mesure.** La suite (Option 2 table de travail, versionnement `run_id`,
+ou bascule backup) se décide sur ces chiffres — geste de Vic. Aucune écriture faite,
+service intact. CC ne bascule jamais, CC ne merge jamais.
