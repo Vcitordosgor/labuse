@@ -1122,13 +1122,25 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     return out
 
 
+# M133 (B.1) — coefficient EXPLICITE surface utile/unité → SDP. Le champ « M²/UNITÉ » est une
+# surface UTILE (habitable) ; la SDP ajoute circulations, murs et parties communes. +20 % est le bas
+# de la fourchette 20-25 % du neuf collectif (M132 B.1 : l'ancien +15 % codé en dur sous-estimait le
+# besoin, dans le sens du faux positif). Paramétré et affiché (cf. `criteres.calcul` / bandeau).
+PROGRAMME_CIRCULATION_COEF = 1.20
+_PROGRAMME_ETAGE_M = 3.0            # hauteur/niveau (cohérent hauteur_min ; défaut moteur engine.Hypotheses)
+
+
 class ProgrammeIn(BaseModel):
-    type: str = "logements"          # logements | etudiant | bureaux
+    # M133 (contrôle 8) — le champ TYPE (logements/étudiant/bureaux) n'entrait dans AUCUN calcul :
+    # champ décoratif, retiré du formulaire. Le réintroduire suppose des normes PAR TYPE calibrées
+    # (surface/unité, coefficient circulations, stationnement) — consigné en dette, pas fabriqué ici.
     batiments: int = 1
     niveaux: int = 2                 # R+n → n
     logements_par_batiment: int = 8
-    surface_unite_m2: float = 60     # hypothèse AFFICHÉE (m² SDP par unité)
-    parking: bool = True
+    surface_unite_m2: float = 60     # M133 (B.1) : surface UTILE par unité (PAS de la SDP directe)
+    # M133 (arbitrage Vic) — coefficient utile→SDP ÉDITABLE par le promoteur (défaut 1,20 = bas de la
+    # fourchette 20-25 %). Laisser le défaut figé, c'est choisir à sa place le réglage le plus permissif.
+    coef_circulation: float = Field(PROGRAMME_CIRCULATION_COEF, ge=1.0, le=1.6)
     commune: str | None = None       # None = île entière (extension île)
 
 
@@ -1139,9 +1151,13 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     from ..faisabilite.plu_rules import resolve_zone
 
     unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
-    sdp_min = round(unites * body.surface_unite_m2 * 1.15)       # +15 % circulations (hypothèse)
-    parking_m2 = round(unites * 25) if body.parking else 0        # 25 m²/place (config PLU)
-    hauteur_min = (body.niveaux + 1) * 3.0                        # R+n → (n+1) niveaux × 3 m
+    # B.1 (+ arbitrage Vic) — besoin SDP = surface utile × coefficient utile→SDP ÉDITABLE (défaut 1,20),
+    # affiché et étiqueté hypothèse : le promoteur choisit son taux, pas un réglage figé permissif.
+    sdp_min = round(unites * body.surface_unite_m2 * body.coef_circulation)
+    # B.4 — le champ PARKING est RETIRÉ (M133) : convertir des places en emprise/SDP consommée exige
+    # un m²/place qui n'est SOURCÉ qu'à Cilaos (place_m2_source_ref) et MODÉLISÉ (25) ailleurs — une
+    # valeur fabriquée. Un contrôle décoratif est un chiffre fabriqué : on ne le garde pas. Dette consignée.
+    hauteur_min = (body.niveaux + 1) * _PROGRAMME_ETAGE_M        # R+n → (n+1) niveaux × 3 m
     # Fix LOT 3 : requête LÉGÈRE (sans la géométrie lourde) et SANS LIMIT prématuré — TOUTES les
     # parcelles satisfaisant les filtres SQL (SDP, surface, statut, run servi) sont ramenées, PUIS
     # le filtre HAUTEUR (résolu en Python via resolve_zone) s'applique, PUIS le tri marge, PUIS la
@@ -1149,42 +1165,90 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     # des parcelles valides (hors des 300 plus grosses SDP) étaient jetées sans être examinées.
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
-               s2.tier AS statut, d.q_score, cr.detail AS zonage,
-               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               s2.tier AS statut, zp.zone_lib AS zone,
+               s2.tier AS tier_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcels p
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-        LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
-          AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
+        -- M133 : zone FINE (Ua/Uc/2AUc…) via parcel_zone_plu (mono-zone), PAS la famille grossière
+        -- « U » de la sortie cascade — resolve_zone n'a de hauteur calibrée que sur la sous-zone fine.
+        LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
           AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')"""),
         {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
-         "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
-    import re as _re
-    hcache: dict = {}   # (zone, commune) → hauteur — resolve_zone n'est appelé qu'une fois par couple
-    items = []
-    for r in rows:
-        m = _re.search(r"« ([^»]+) »", r["zonage"] or "")
-        zone = (m.group(1) if m else "").strip()
-        key = (zone, r["commune"])
+         "smin": sdp_min * 0.4}).mappings().all()
+    hcache: dict = {}   # (zone, commune) → (hauteur éligibilité, niveaux_max, estimée, signature calcul)
+
+    def _zinfo(zone: str, commune):
+        key = (zone, commune)
         if key not in hcache:
             # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
-            rules = resolve_zone(zone, r["commune"]) if zone else None
-            h = getattr(rules, "hauteur_max_m", None) if rules else None
-            if h is None and rules is not None:
-                h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
-            hcache[key] = h
-        h = hcache[key]
-        hauteur_ok = (h is None) or (float(h) >= hauteur_min)
-        if not hauteur_ok:                # filtre hauteur AVANT toute troncature (Fix A)
+            rules = resolve_zone(zone, commune) if zone else None
+            he = getattr(rules, "he_m", None) if rules else None
+            hf = getattr(rules, "hf_m", None) if rules else None
+            # éligibilité hauteur : faîtage prioritaire (comportement conservé)
+            h = (hf if isinstance(hf, (int, float)) else None) or (he if isinstance(he, (int, float)) else None)
+            # niveaux_max FIDÈLE au moteur (engine.py:281-292) : hé prioritaire, sinon hf, sinon inconnu.
+            if isinstance(he, (int, float)):
+                nmax = int(float(he) // _PROGRAMME_ETAGE_M)
+            elif isinstance(hf, (int, float)):
+                nmax = max(1, int((float(hf) - _PROGRAMME_ETAGE_M) // _PROGRAMME_ETAGE_M))
+            else:
+                nmax = None
+            # B.5 — capacité ESTIMÉE = zone non calibrée finement. MÊME source que le moteur
+            # (engine.py:180 : `not rules.calibree`), lue en direct sur la sous-zone fine — pas le
+            # flag du cache résiduel (antérieur à M131, incohérent). Zone non résolue → estimée.
+            estimee = rules is None or not bool(getattr(rules, "calibree", False))
+            # signature de CALCUL : ce qui distingue une zone d'une autre pour la capacité.
+            cn = getattr(rules, "constructible_neuf", None) if rules else None
+            hcache[key] = (float(h) if h is not None else None, nmax, estimee, (cn, he, hf))
+        return hcache[key]
+
+    items = []
+    for r in rows:
+        zone = (r["zone"] or "").strip()   # étiquette FINE (parcel_zone_plu), pas la famille cascade
+        h, niveaux_max, capacite_estimee, sig_label = _zinfo(zone, r["commune"])
+        # CONFLIT DE SOURCE DE ZONE (vérif V2, dette §7) : le cache résiduel n'est POSITIF que si la
+        # zone du CENTROÏDE (qui l'a produit, parcel_context db.py:32-36) est constructible. Si
+        # l'ÉTIQUETTE (parcel_zone_plu) résout en NON constructible — ou ne résout pas —, la SDP servie
+        # serait ÉTRANGÈRE à l'étiquette (la forme exacte du 4 m de M130-12 : chiffre juste, étiquette
+        # fausse). On NE sert PAS de SDP : la parcelle sort « à instruire », même sort que les zones sans
+        # étiquette — SANS trancher quelle source a raison (l'inconnu = dette §7). Les zones GELÉES
+        # (Us/2AUc) ont un résiduel 0 : déjà écartées par le filtre SDP, le gel tient.
+        if sig_label[0] is not True:
             continue
-        marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
+        # (1) grille d'ÉLIGIBILITÉ hauteur (rôle conservé) : la zone autorise-t-elle R+N ?
+        if h is not None and float(h) < hauteur_min:
+            continue                       # filtre hauteur AVANT toute troncature (Fix A)
+        # (2) B.2 — SDP au GABARIT DEMANDÉ. Le résiduel est cumulé sur niveaux_max (plein gabarit) ;
+        #     on le plafonne au R+N : sdp_dispo = résiduel × min(N+1, niveaux_max)/niveaux_max. Sans
+        #     niveaux_max (zone sans hauteur calibrée), pas de plafond possible → résiduel brut, signalé.
+        sdp_resid = float(r["sdp_residuelle_m2"])
+        if niveaux_max:
+            niveaux_dem = min(body.niveaux + 1, niveaux_max)
+            sdp_dispo = sdp_resid * niveaux_dem / niveaux_max
+        else:
+            niveaux_dem, sdp_dispo = None, sdp_resid
+        if sdp_dispo < sdp_min:
+            continue
+        # (3) B.3 — EMPRISE au sol : l'emprise du programme au gabarit demandé (sdp_min/niveaux_dem)
+        #     tient-elle dans l'emprise bâtissable résiduelle (sdp_resid/niveaux_max) ? Contrôle explicite
+        #     (algébriquement lié à (2) au même gabarit ; écrit à part pour être lisible — la contrainte
+        #     géométrique de FORME/largeur, elle, exige le moteur → hors périmètre, consignée en dette).
+        emprise_dispo = (sdp_resid / niveaux_max) if niveaux_max else None
+        emprise_besoin = (sdp_min / niveaux_dem) if niveaux_dem else None
+        if emprise_dispo is not None and emprise_besoin is not None and emprise_besoin > emprise_dispo + 0.5:
+            continue
+        marge = round(sdp_dispo / sdp_min, 2)
         items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
-                      "sdp": round(r["sdp_residuelle_m2"]),
-                      "statut": r["statut"], "q_score": r["q_score"],
-                      "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+                      "sdp": round(sdp_dispo), "sdp_plein_gabarit_m2": round(sdp_resid),
+                      "niveaux_demandes": niveaux_dem, "niveaux_max_zone": niveaux_max,
+                      "emprise_besoin_m2": round(emprise_besoin) if emprise_besoin is not None else None,
+                      "emprise_dispo_m2": round(emprise_dispo) if emprise_dispo is not None else None,
+                      "capacite_estimee": capacite_estimee,
+                      "statut": r["statut"], "tier_v2": r["tier_v2"], "etage0": bool(r["etage0"]),
                       "zone": zone or None,
                       "hauteur_plu_m": float(h) if h is not None else None,
                       "hauteur_verifiee": h is not None, "marge_capacite": marge})
@@ -1197,14 +1261,18 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
             {"idus": [i["idu"] for i in top]}).mappings()}
         for i in top:
             i["geom"] = geoms.get(i["idu"])
+    _coef_pct = round((body.coef_circulation - 1) * 100)
     return {
-        "criteres": {"unites": unites, "sdp_min_m2": sdp_min,
-                     "calcul": f"{unites} unités × {body.surface_unite_m2} m² × 1,15 (circulations)",
-                     "parking_m2": parking_m2, "hauteur_min_m": hauteur_min,
-                     "hauteur_regle": f"R+{body.niveaux} → {hauteur_min:.0f} m ({body.niveaux + 1} niveaux × 3 m)"},
-        "bandeau": ("Estimation capacitaire — hypothèses affichées (m²/unité, +15 % circulations, "
-                    "25 m²/place) ; hauteur PLU vérifiée quand la zone est calibrée, sinon « à "
-                    "instruire ». Étude d'architecte requise."),
+        "criteres": {"unites": unites, "sdp_min_m2": sdp_min, "coef_circulation": body.coef_circulation,
+                     "calcul": f"{unites} unités × {body.surface_unite_m2:g} m² utiles × "
+                               f"{body.coef_circulation:g} (+{_coef_pct} % circulations/murs/communs, hypothèse)",
+                     "hauteur_min_m": hauteur_min,
+                     "hauteur_regle": f"R+{body.niveaux} → SDP plafonnée au gabarit demandé "
+                                      f"({body.niveaux + 1} niveaux, {hauteur_min:.0f} m)"},
+        "bandeau": (f"Estimation capacitaire — hypothèses affichées (surface utile/unité, +{_coef_pct} % "
+                    "SDP) ; SDP plafonnée au gabarit R+N demandé et emprise au sol vérifiée ; hauteur PLU "
+                    "vérifiée quand la zone est calibrée, sinon « à instruire » ; capacité « estimée » "
+                    "signalée hors PLU calibré. Étude d'architecte requise."),
         "n": len(items), "items": top,   # n = VRAI nombre de correspondances ; items = top 200 affichées
     }
 
