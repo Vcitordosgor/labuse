@@ -1116,6 +1116,9 @@ class ProgrammeIn(BaseModel):
     niveaux: int = 2                 # R+n → n
     logements_par_batiment: int = 8
     surface_unite_m2: float = 60     # M133 (B.1) : surface UTILE par unité (PAS de la SDP directe)
+    # M133 (arbitrage Vic) — coefficient utile→SDP ÉDITABLE par le promoteur (défaut 1,20 = bas de la
+    # fourchette 20-25 %). Laisser le défaut figé, c'est choisir à sa place le réglage le plus permissif.
+    coef_circulation: float = Field(PROGRAMME_CIRCULATION_COEF, ge=1.0, le=1.6)
     commune: str | None = None       # None = île entière (extension île)
 
 
@@ -1126,8 +1129,9 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     from ..faisabilite.plu_rules import resolve_zone
 
     unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
-    # B.1 — besoin SDP = surface utile × coefficient EXPLICITE (circulations/murs/communs), affiché.
-    sdp_min = round(unites * body.surface_unite_m2 * PROGRAMME_CIRCULATION_COEF)
+    # B.1 (+ arbitrage Vic) — besoin SDP = surface utile × coefficient utile→SDP ÉDITABLE (défaut 1,20),
+    # affiché et étiqueté hypothèse : le promoteur choisit son taux, pas un réglage figé permissif.
+    sdp_min = round(unites * body.surface_unite_m2 * body.coef_circulation)
     # B.4 — le champ PARKING est RETIRÉ (M133) : convertir des places en emprise/SDP consommée exige
     # un m²/place qui n'est SOURCÉ qu'à Cilaos (place_m2_source_ref) et MODÉLISÉ (25) ailleurs — une
     # valeur fabriquée. Un contrôle décoratif est un chiffre fabriqué : on ne le garde pas. Dette consignée.
@@ -1220,11 +1224,11 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
             {"idus": [i["idu"] for i in top]}).mappings()}
         for i in top:
             i["geom"] = geoms.get(i["idu"])
-    _coef_pct = round((PROGRAMME_CIRCULATION_COEF - 1) * 100)
+    _coef_pct = round((body.coef_circulation - 1) * 100)
     return {
-        "criteres": {"unites": unites, "sdp_min_m2": sdp_min,
+        "criteres": {"unites": unites, "sdp_min_m2": sdp_min, "coef_circulation": body.coef_circulation,
                      "calcul": f"{unites} unités × {body.surface_unite_m2:g} m² utiles × "
-                               f"{PROGRAMME_CIRCULATION_COEF:g} (+{_coef_pct} % circulations/murs/communs)",
+                               f"{body.coef_circulation:g} (+{_coef_pct} % circulations/murs/communs, hypothèse)",
                      "hauteur_min_m": hauteur_min,
                      "hauteur_regle": f"R+{body.niveaux} → SDP plafonnée au gabarit demandé "
                                       f"({body.niveaux + 1} niveaux, {hauteur_min:.0f} m)"},

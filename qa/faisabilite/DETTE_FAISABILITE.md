@@ -53,14 +53,20 @@ commune** (sourcé au règlement, pas 25 par défaut) ; (b) surface vs souterrai
 (consomme l'emprise ou non) ; (c) brancher `places_par_logement × place_m2 ×
 logements` sur l'emprise/SDP. Alors le champ pourra revenir.
 
-## 4. Champ TYPE retiré (contrôle 8)
+## 4. TYPE de programme — fonctionnalité à CONSTRUIRE (arbitrage Vic A)
 
 `TYPE` (logements / étudiant / bureaux) n'entrait dans **aucun** calcul de
 `faisabilite_sens2` — champ décoratif, **retiré** (M133, `ProgrammeIn` +
-`M22Programme.tsx`). **À calibrer pour le réintroduire** : normes **par type**
-(surface utile/unité, coefficient circulations, ratio stationnement) — non
-fabriquées ici. Tant qu'elles n'existent pas, un sélecteur de type ne ferait que
-promettre une différence que le calcul ne produit pas.
+`M22Programme.tsx`). En contrepartie, l'outil **annonce explicitement** qu'il porte
+sur du **logement** (intro `M22Programme.tsx`).
+
+Ce n'est PAS un champ mort à oublier mais une **fonctionnalité à construire** :
+étendre la recherche au **commerce / activité / bureaux / résidence étudiante**.
+Chantier : brancher des normes PAR destination — surface utile/unité, coefficient
+utile→SDP, ratio de stationnement (ex. « stationnement ≥ 50 % SHON » pour le
+commerce, `plu_cilaos.yaml:93`), destinations admises par zone (`ZoneRules.habitat`
+/ tableaux d'affectation). Alors TYPE pilotera un calcul différencié — sourcé, pas
+fabriqué — et le champ reviendra avec un sens.
 
 ## 5. Zone cascade grossière (corrigé côté outil, subsiste en amont)
 
@@ -81,3 +87,25 @@ pour y poser un bâtiment. Ce test géométrique exige de rejouer le moteur
 (`parcel_faisabilite`, `_EMPRISE`) — **hors périmètre outil**. À traiter le jour
 où l'outil rejoue le moteur par parcelle (coûteux) ou consomme une empreinte
 géométrique cachée.
+
+## 7. Divergence de zone sens1 ↔ sens2 sur parcelle multi-zones (M133 vérif V2)
+
+Les deux onglets lisent la zone à deux endroits DIFFÉRENTS :
+- **sens1** (« Par parcelle », `parcel_faisabilite` → `parcel_context`,
+  `db.py:32-36`) : zone du polygone PLU le PLUS PETIT contenant le **centroïde**
+  (`ST_Contains` + `ORDER BY ST_Area(z.geom) ASC LIMIT 1`).
+- **sens2** (« Par critères », M133) : `parcel_zone_plu.zone_lib` (une ligne par
+  parcelle — table mono-zone, 0 multi).
+
+Pour une parcelle qui **chevauche deux zones** dans l'espace, les deux sources
+peuvent DIVERGER. Cas mesuré : `97422000CN1677` — sens1 (centroïde) = **Uc**
+(constructible, R+2, SDP brute 6071) ; `parcel_zone_plu` = **Nco** (naturelle, non
+constructible). sens2 l'affiche donc « **Nco · estimée · 5900 m²** » : un chiffre de
+SDP issu de la lecture **Uc** (le cache résiduel vient du chemin sens1), servi sous
+l'étiquette **Nco**. Le flag « estimée » est correct (Nco non calibrée) mais la
+parcelle est un **conflit de source de zone**.
+
+À trancher (amont, hors périmètre outil) : quelle source fait foi pour
+l'attribution mono-zone — majorité de surface, centroïde, ou part U/AU dominante ?
+Consigné, **non corrigé** (mandat : « tout écart = divergence à remonter »). Sur la
+capture, **0** parcelle à zone NULL et 1/200 « estimée » à Le Tampon (ce CN1677).

@@ -19,8 +19,9 @@ export function M22() {
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
-  const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60 })
-  const run = useMutation({ mutationFn: () => postProgramme({ ...form, commune }) })
+  const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, circulation_pct: 20 })
+  // coef utile→SDP = 1 + circulations % (hypothèse éditable ; défaut 20 %, bas de fourchette 20-25 %)
+  const run = useMutation({ mutationFn: () => postProgramme({ ...form, commune, coef_circulation: 1 + form.circulation_pct / 100 }) })
 
   useEffect(() => {
     if (m22Prefill) {
@@ -79,8 +80,9 @@ export function M22() {
       {mode === 'criteres' && (
         <>
           <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Décrivez le programme — les critères sont <b>calculés et affichés</b> (SDP au gabarit R+N, hauteur PLU).
-            Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 de 8 logements ».
+            Recherche de foncier pour du <b>logement</b> — décrivez le programme, les critères sont
+            <b> calculés et affichés</b> (SDP au gabarit R+N, hauteur PLU). Le copilote sait pré-remplir :
+            « un terrain pour 3 immeubles R+3 de 8 logements ».
           </div>
           <CommuneScope commune={commune} onChange={setCommune} />
           <div className="flex gap-2">
@@ -90,6 +92,7 @@ export function M22() {
           <div className="flex gap-2">
             {F('logements_par_batiment', 'UNITÉS/BÂT')}
             {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
+            {F('circulation_pct', 'CIRCUL. % (hyp.)', { min: 0 })}
           </div>
           <button onClick={() => run.mutate()} disabled={run.isPending}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
