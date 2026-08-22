@@ -84,3 +84,38 @@ Dès qu'il est là : j'inspecte son schéma réel, j'écris `ingestion/cosia.py`
 câble `build_pau` (union + dédup dans le geste), le test des 2 390 partagés, la vérif
 avertissement PAU inchangé, et les cibles 2 655 / 47 / 1 145 / 0 sortant + golden/tsc/build.
 Le module sera écrit contre le schéma RÉEL du fichier (pas deviné).
+
+## SOURCE OFFICIELLE TROUVÉE (IGN Géoplateforme, vérifiée en ligne 22/08/2026)
+
+CoSIA v1.0, département **D974 La Réunion**, millésime **2025** (= celui déjà en base,
+« CoSIA 2025 PVA juil.-août 2025 »). C'est du **VECTEUR GPKG** (pas du raster) :
+`gpf_dl:mime_type = application/geopackage+sqlite3`, classe **« Bâtiment » = classe 1 des 15**
+de la nomenclature. Cohérent avec les polygones `qa_cosia_bati` déjà en base (mêmes footprints).
+
+| champ | valeur |
+|-------|--------|
+| Produit | CoSIA 1.0 — Couverture du Sol par IA (dérivé OCS GE, segmentation d'ortho) |
+| Zone | D974 La Réunion |
+| Millésimes dispo | 2017, 2022, **2025** (prendre 2025) |
+| Format | GPKG vecteur (polygones), archive **.7z** |
+| **CRS** | **EPSG:2975 (RGR92 / UTM 40S)** — identique à `geom_2975`, **aucune reprojection** |
+| Taille | **517 812 160 octets ≈ 494 Mio** (compressé .7z) |
+| MD5 | `e377864d3b75a45d28c0da11321e28f2` |
+| Licence | **Licence Ouverte 2.0 (Etalab)** |
+| URL directe | `https://data.geopf.fr/telechargement/download/COSIA/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01.7z` |
+| Catalogue | `https://geoservices.ign.fr/telechargement-api/COSIA` (filtre zone D974) |
+| API liste | `https://data.geopf.fr/telechargement/resource/COSIA?zone=D974` |
+
+HEAD vérifié vivant : `HTTP/2 200`, `content-type: application/x-7z-compressed`, `content-length: 517812160`.
+
+### Commande de téléchargement (depuis le dépôt)
+```
+mkdir -p data/cosia && cd data/cosia
+curl -L -o COSIA_D974_2025.7z \
+  "https://data.geopf.fr/telechargement/download/COSIA/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01.7z"
+md5 COSIA_D974_2025.7z   # attendu : e377864d3b75a45d28c0da11321e28f2
+7z x COSIA_D974_2025.7z  # nécessite p7zip : brew install p7zip
+```
+Prérequis outils Phase 2 (absents localement, mesuré) : **p7zip** (extraction) et **GDAL/ogr2ogr**
+(lecture GPKG → PostGIS) — `brew install p7zip gdal`. À défaut de GDAL, lecture possible via
+Python (fiona/geopandas dans le venv) — à vérifier au moment de l'ingestion.
