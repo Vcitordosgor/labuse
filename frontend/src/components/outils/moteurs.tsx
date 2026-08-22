@@ -39,7 +39,8 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sim.dataUpdatedAt])
   return (
-    <>
+    // §1a — un seul conteneur de défilement (wrapper ModulePanel = overflow-hidden).
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       <Banner>Recalcul <b>à blanc</b> — rien n'est persisté. SDP estimée par <b>analogie</b> aux
         parcelles U de la commune (méthode affichée). Le vrai recalcul règlementaire = prochain cycle.</Banner>
       <div className="flex flex-wrap gap-1.5">
@@ -61,7 +62,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
             <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(d.sdp_totale_estimee_m2)} m²</b> ·{' '}
               <b className="tnum text-mint">{fmt(d.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+          <div className="flex flex-col gap-1">
             {(d.items as Record<string, any>[]).slice(0, 120).map((i) => (
               <button key={i.idu} data-m15-item onClick={() => select(i.idu)}
                 title="Ouvrir la parcelle"
@@ -76,7 +77,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }
 
@@ -101,7 +102,9 @@ export function M16() {
   // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.
   const d = run.data
   return (
-    <>
+    // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden) : on accède à
+    // la suite (analyse, propriétaires, courriers) au lieu d'un bas d'écran coupé.
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
           chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
       <Banner><b>Zoomez sur le secteur</b> pour faire apparaître les contours des parcelles, puis
@@ -179,7 +182,7 @@ export function M16() {
             )}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+          <div className="flex flex-col gap-1">
             {(d.items as Record<string, any>[]).map((i) => {
               const pr = i.proprio as Record<string, any>
               return (
@@ -209,7 +212,7 @@ export function M16() {
           <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
         </>
       )}
-    </>
+    </div>
   )
 }
 

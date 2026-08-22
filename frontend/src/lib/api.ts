@@ -657,8 +657,10 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
   const url = URL.createObjectURL(await r.blob())
   const a = document.createElement('a')
   a.href = url; a.download = `courrier-${idu ?? 'parcelle'}.pdf`
-  document.body.appendChild(a); a.click(); a.remove()
-  URL.revokeObjectURL(url)
+  document.body.appendChild(a); a.click()
+  // §1c — NE PAS révoquer l'object URL de façon synchrone après click() : selon le navigateur, le
+  // téléchargement n'a pas encore lu le blob → « échoue » par intermittence. On diffère le nettoyage.
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url) }, 4000)
 }
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {

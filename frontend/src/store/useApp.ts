@@ -440,7 +440,7 @@ export const useApp = create<AppState>((set) => ({
   // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
-    entretienDirect: null, surveillanceOpen: false }),
+    entretienDirect: null, surveillanceOpen: false, compareOpen: false, comparePicking: false }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
@@ -549,7 +549,10 @@ export const useApp = create<AppState>((set) => ({
   setZone: (zone) => set({ zone }),
   module: null,
   // une-seule-recherche — ouvrir un outil (porte) prend la main : efface la restitution Copilote résiduelle.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null }),
+  // §1b — « une seule recherche vivante » : ouvrir un autre outil FERME le bandeau Comparer
+  // (compareOpen/comparePicking), qui sinon persistait. `comparer` s'ouvre par setCompareOpen
+  // (Rail, cas spécial), jamais par setModule → aucune course.
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, compareOpen: false, comparePicking: false }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   cmpLeft: 'bm-ortho-1950',
