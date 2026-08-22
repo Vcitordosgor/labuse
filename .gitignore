@@ -19,6 +19,8 @@ config/settings.yaml
 
 # Data (never commit ingested public data dumps / fixtures volumineuses)
 data/*
+# …CoSIA IGN (source brute .7z/.gpkg, ~494 Mio) — la donnée vit en base, jamais dans Git
+data/cosia/
 # …sauf le dataset Obsimmo fourni par le client (petit, versionné, requis par la fiche LOT 4-C)
 !data/obsimmo_vente_reunion.json
 # …et l'extrait La Réunion de la carte des loyers DHUP (open data, petit, requis par la fiche LOT 4-B)
