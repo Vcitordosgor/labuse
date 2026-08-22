@@ -66,3 +66,21 @@ source brute est irrécupérable.
 - Fournir la source brute CoSIA (Path A, recommandé), **ou** autoriser le Path B (promotion de
   l'artefact), **ou** trancher le réceptacle canonique (`spatial_layers kind='batiment_cosia'`
   vs table dédiée). Rien n'est construit tant que ce n'est pas tranché.
+
+## DÉCISION VIC (22/08/2026)
+- **Path A** — source brute CoSIA fournie, ingestion `cosia.py` écrite au standard.
+- Réceptacle : **`spatial_layers kind='batiment_cosia'`**.
+
+### Bloquant restant : le fichier source
+Vérifié : **aucune source brute CoSIA sur le système** (ni dans le dépôt, ni dans
+~/Desktop · ~/Downloads · ~/Documents · /tmp · /Volumes — seuls des PDF de QA survivent).
+`p_model_bati_cosia` et `qa_cosia_bati` ont été peuplés hors dépôt à partir d'un fichier qui
+n'est plus sur disque.
+
+**À fournir par Vic pour couler la Phase 2 :** le fichier CoSIA « bâtiment » PVA 2025 (Réunion),
+format vectoriel (`.gpkg` / `.shp` / `.parquet` / `.geojson`), déposé p. ex. dans `data/cosia/`.
+Dès qu'il est là : j'inspecte son schéma réel, j'écris `ingestion/cosia.py` (idempotent,
+`source_millesime`, CLI `labuse ingest-cosia`) → `spatial_layers kind='batiment_cosia'`, puis je
+câble `build_pau` (union + dédup dans le geste), le test des 2 390 partagés, la vérif
+avertissement PAU inchangé, et les cibles 2 655 / 47 / 1 145 / 0 sortant + golden/tsc/build.
+Le module sera écrit contre le schéma RÉEL du fichier (pas deviné).
