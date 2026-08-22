@@ -172,24 +172,33 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         n = shortlist.get("n", 0)
         pdf.cell(0, 5, f"PARCELLES DE LA SHORTLIST  ·  {n:,} parcelle(s), cadrage figé le {figee_le}"
                  .replace(",", " "), new_x="LMARGIN", new_y="NEXT")
-        # M130-4 §A — ligne d'état de la liste INCONDITIONNELLE (jamais d'omission) : 3 états selon le
-        # total retenu par le cadrage (vivier « à ce jour »). None/0 → état 3 (INDISPONIBLE). Un rang de
-        # sélection (proba de mutation) ne doit JAMAIS être servi muet.
-        vivier = shortlist.get("vivier")
+        # M130-4/5 §A — ligne d'état de la liste INCONDITIONNELLE (jamais d'omission) : 3 états sur le
+        # TOTAL de la population dont la shortlist est extraite (`total`, = `_run_cadrage`). None → État 3
+        # (échec RÉEL de requête) ; un 0 légitime n'est pas un échec. Rang de sélection jamais muet.
+        total = shortlist.get("total")
         neutre = ("Élargir la shortlist ne supprime pas ce rang : seule une liste complète ou un tri "
                   "explicite (surface) est neutre.")   # §B — plus de fausse issue « chercher plus »
-        if vivier is None or vivier == 0:
-            etat = ("Nombre total de parcelles retenues par le cadrage : INDISPONIBLE. Cette liste peut "
-                    "être tronquée ; si elle l'est, les parcelles ont été sélectionnées par probabilité "
-                    "de mutation — un rang non visible. " + neutre)
-        elif vivier > n:
-            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {vivier:,} retenues par le cadrage "
+        if total is None:
+            etat = ("Nombre total de parcelles retenues par le cadrage : INDISPONIBLE (requête en "
+                    "échec). Cette liste peut être tronquée ; si elle l'est, les parcelles ont été "
+                    "sélectionnées par probabilité de mutation — un rang non visible. " + neutre)
+        elif total > n:
+            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {total:,} retenues par le cadrage "
                     "(à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de mutation (critère "
                     "interne du moteur) — un rang non visible ; elles sont présentées ici par ordre "
                     "géographique. " + neutre).replace(",", " ")
         else:
             etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
                     "présentées. Aucune sélection, aucun rang.")
+        # M130-5 §B — l'ÉTAGE 0 servi doit être dit (état de la donnée, jamais un rang/score).
+        k0 = shortlist.get("etage0_count", 0)
+        if k0 and k0 >= n:
+            etat += (" Cette sélection est intégralement composée de parcelles classées à l'étage 0 du "
+                     "moteur (résidus cadastraux, emprises non exploitables, zones fermées à "
+                     "l'urbanisation). Elles n'ont pas vocation à être instruites en l'état.")
+        elif k0:
+            etat += (f" {k0} des {n} parcelles figées sont classées à l'étage 0 du moteur (résidus "
+                     "cadastraux, emprises non exploitables, zones fermées à l'urbanisation).")
         pdf.ln(0.5)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
@@ -307,6 +316,10 @@ def _lignes_donnees(it: dict) -> list[str]:
         parts = it.get("zones_parts") or []
         if parts and all(p[2] is not None for p in parts):
             liste = " · ".join(f"{lib} ({fam or '—'}) ~ {pct} %" for lib, fam, pct in parts)
+            # §C : reliquat non muet — zones sous le seuil d'affichage / trou de géométrie (≥ 2 %).
+            reste = it.get("zones_reste") or 0
+            if reste >= 2:
+                liste += f" · autres zones ~ {reste} %"
         else:
             liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
         tail = ("SDP calculée sur la partie constructible ; les autres parts restent à instruire."

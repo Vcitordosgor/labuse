@@ -283,6 +283,31 @@ def _vivier_figeable(db: Session, cadrage: dict) -> int:
         {"run": RUN, "v2run": _score_v2_run_id(db), **params}).scalar() or 0
 
 
+def _cadrage_total(db: Session, cadrage: dict) -> int | None:
+    """M130-5 §A — le CARDINAL de l'ensemble dont la shortlist est EXTRAITE : la même population que
+    `_run_cadrage` (donc `_q_v2_list`) sans la limite — MÊMES filtres (sliver < 2 m², base étage 0 sauf
+    filtre `tiers` explicite, cadrage). C'est le SEUL dénominateur honnête de la fraction « N figées sur
+    M » — jamais `_vivier_figeable`, qui compte une AUTRE population (toujours hors étage 0). Retourne
+    None uniquement sur échec réel (exception) — un 0 légitime n'est pas un échec."""
+    try:
+        from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
+        fc = _cadrage_to_filtre(cadrage)
+        where, params = fc.where()
+        # même règle de base que _q_v2_list : on exclut l'étage 0 SAUF si le cadrage l'a explicitement
+        # opté (filtre tiers → f_tiers / s2.tier / _ETAGE0_SQL dans le where).
+        base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
+            else f"AND NOT {_ETAGE0_SQL}"
+        return db.execute(text(
+            "SELECT count(*) FROM parcels p "
+            "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
+            "JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+            f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}"),
+            {"run": RUN, "v2run": _score_v2_run_id(db),
+             "minsurf": MIN_DISPLAY_SURFACE_M2, **params}).scalar()
+    except Exception:  # noqa: BLE001 — échec RÉEL de requête → None → État 3 (INDISPONIBLE) à l'affichage
+        return None
+
+
 def _sdp_besoin(cadrage: dict) -> int | None:
     """La SDP besoin n'est plus dérivée d'un « programme » (M120) : c'est la facette `sdpMin` du
     cadrage, si le promoteur l'a posée. Un seul endroit."""
@@ -1027,17 +1052,20 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     corrigée M128-2-A/M129-2), zone PLU + famille + millésime amont. `figee=False` si le projet n'a
     pas de shortlist figée exploitable (date + parcelles) — on le DIT, on ne fabrique aucun run."""
     from ..faisabilite.plu_rules import resolve_zone
+    from .app import _ETAGE0_SQL
     from .export_commun import adresses_ban, format_adresse
     rows = db.execute(text(
-        """SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
+        f"""SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
                   substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
-                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause
+                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause,
+                  {_ETAGE0_SQL} AS etage0
            FROM projet_parcelles pp
            JOIN parcels par ON par.id = pp.parcel_id
            LEFT JOIN parcel_residuel pr ON pr.parcel_id = par.id
+           LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = par.id AND d.run_label = :run
            WHERE pp.projet_id = :pid AND pp.statut <> 'ecartee'
            ORDER BY par.commune, section, NULLIF(regexp_replace(numero, '\\D', '', 'g'), '')::int"""),
-        {"pid": p.id}).mappings().all()
+        {"pid": p.id, "run": RUN}).mappings().all()
     figee = bool(p.derniere_execution_at) and bool(rows)
     idus = [r["idu"] for r in rows]
     adrs = {i: format_adresse(a) for i, a in adresses_ban(db, idus).items()} if idus else {}
@@ -1071,6 +1099,9 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         # §C : parts SIGNIFICATIVES (≥ 5 % — un liseré < 5 % n'est pas « multi-zones »).
         parts = [(lib, fam, pct) for (lib, fam, pct, _iu) in zs if pct is not None and pct >= 5]
         multi_zone = len(parts) >= 2
+        # M130-5 §C : reliquat = 100 − somme des parts affichées (zones sous le seuil / trou géométrie).
+        # Jamais muet : ≥ 2 → ligne « autres zones ~ X % » ; ±1 = arrondi (rien).
+        parts_reste = 100 - sum(pct for (_l, _f, pct) in parts) if parts else 0
         zr = None
         try:
             zr = resolve_zone(zone_libelle, r["commune"]) if zone_libelle else None
@@ -1092,8 +1123,10 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
             "sdp_indispo": r["cause"],
             # §C : SDP réellement chiffrée = constructible, sans cause, > 0
             "sdp_chiffree": bool(not non_constructible and not r["cause"] and sdp_m2),
+            "etage0": bool(r["etage0"]),                # M130-5 §B : état de donnée, pas un rang
             "multi_zone": multi_zone,
             "zones_parts": parts,       # [(lib, famille, pct), …] ≥ 5 %
+            "zones_reste": parts_reste,
             "zone_code": zone_libelle,
             "zone_famille": famille,
             "zone_millesime": _plu_millesime(zone_idurba),
@@ -1104,20 +1137,16 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
             "hauteur_renvoi": getattr(zr, "via_renvoi", None) if zr else None,   # §F.4
             "zone_resolue": zr is not None,
         })
-    # M130-3 §D.2 : le vivier figeable À CE JOUR (count, jamais la liste) — dénominateur honnête pour
-    # DIRE la troncature (« N figées sur ~V retenues »). La sélection des figées est un rang de proba
-    # de mutation (config projets.yaml) : rang caché à divulguer.
-    vivier = None
-    if figee:
-        try:
-            vivier = _vivier_figeable(db, p.filtres or {})
-        except Exception:  # noqa: BLE001 — le compteur de transparence ne casse jamais l'export
-            vivier = None
+    # M130-5 §A : le total AFFICHÉ est le cardinal de la population dont la shortlist est EXTRAITE
+    # (`_cadrage_total`, MÊME population que `_run_cadrage`), jamais `_vivier_figeable` (autre
+    # population). None = échec réel de requête → État 3.
+    total = _cadrage_total(db, p.filtres or {}) if figee else None
     return {
         "figee": figee,
         "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
         "n": len(parcelles),
-        "vivier": vivier,      # M130-4 §A : None / 0 → état 3 ; > n → état 1 ; <= n → état 2 (jamais d'omission)
+        "total": total,        # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
+        "etage0_count": sum(1 for it in parcelles if it["etage0"]),   # §B
         "parcelles": parcelles,
     }
 
