@@ -1,0 +1,12 @@
+{
+  "menu_densifier": true,
+  "menu_sans_renouvellement": true,
+  "entete_densifier": true,
+  "puce_action": true,
+  "compte_n_sur_m": true,
+  "tri_dit": true,
+  "colonne_classement": true,
+  "puce_chips": [
+    "Neutre"
+  ]
+}

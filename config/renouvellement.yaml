@@ -40,3 +40,7 @@ poids:
                            # un secteur où le bâti TOURNE favorise le renouvellement. On prend
                            # la rotation brute (le shrinkage gamma-Poisson vit dans le modèle P,
                            # hors de portée d'une heuristique lisible — assumé, cf. rapport).
+
+# ── Plafond de la LISTE servie (outil « Densifier l'existant ») ──────────────────
+# Le tri se fait côté serveur ; l'écran DIT « les N premières sur M » (jamais un LIMIT muet).
+liste_max: 400

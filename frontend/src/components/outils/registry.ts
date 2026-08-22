@@ -108,8 +108,10 @@ export const MODULES: ModuleDef[] = [
   // soit des DOUBLONS (signal parcelle déjà sur la fiche ; enveloppe communale = même formule que la
   // section « Rareté & ZAN » de l'outil Communes, rarete.py). L'enveloppe (dont le budget en %) vit
   // désormais dans Communes. Composant M17 + endpoints /moteurs/zan* + tests conservés au dépôt.
+  // §5 — renommé « Densifier l'existant » côté client ; clé interne `renouvellement` INCHANGÉE
+  // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',
-    label: 'Renouvellement', desc: 'Le potentiel de renouvellement urbain d’un territoire : parcelles occupées en zone constructible à capacité restante (densifier, diviser, reconstruire)' },
+    label: 'Densifier l’existant', desc: 'Le bâti qui peut porter davantage — extensions, surélévations : parcelles déjà occupées en zone constructible à capacité résiduelle réelle' },
   // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).
 
   // ── Suivre le temps — l'évolution, la veille ──

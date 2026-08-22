@@ -996,7 +996,7 @@ export function MapView() {
       ;(m.getSource('ov-renouv') as maplibregl.GeoJSONSource | undefined)?.setData(renouv.data as never)
       if (layers.renouv && renouv.data.total > renouv.data.servis) {
         useApp.getState().setToast(
-          `Renouvellement : ${renouv.data.servis.toLocaleString('fr-FR')} parcelles affichées sur ` +
+          `Densifier l'existant : ${renouv.data.servis.toLocaleString('fr-FR')} parcelles affichées sur ` +
           `${renouv.data.total.toLocaleString('fr-FR')} (meilleurs rangs)${commune ? ` — ${commune}` : ' — île entière'}.`)
       }
     }

@@ -300,7 +300,7 @@ export function SourcesPage() {
               classement relatif entre parcelles, lui, reste fiable.
             </p>
             <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
-              <strong className="font-semibold text-txt">Segment Renouvellement.</strong> Il identifie un
+              <strong className="font-semibold text-txt">Segment « Densifier l’existant ».</strong> Il identifie un
               potentiel physique et réglementaire sur des parcelles déjà bâties. Il ne prédit pas une mise en
               vente et ne constitue pas une opportunité qualifiée.
             </p>

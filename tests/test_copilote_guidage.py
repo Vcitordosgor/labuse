@@ -29,7 +29,10 @@ from labuse.copilote_v2.answering import (
     ("les promesses mortes", "promesses"),
     ("le simulateur zan", "communes"),   # 21/08 : Simulateur ZAN retiré → enveloppe ZAN dans Communes
     ("la rarete du foncier", "communes"),
+    # §5 — « Densifier l'existant » : anciens mots-clés conservés + nouveaux ; clé interne inchangée.
     ("potentiel de renouvellement", "renouvellement"),
+    ("densifier", "renouvellement"),
+    ("construire plus", "renouvellement"),
     ("si cette zone passait constructible", "simulplu"),
     ("scorer une adresse", "scoreur-adresse"),
     # M137-N : « fantome » et « bailleur » retirés du produit → plus de concept-route (cf. ci-dessous).

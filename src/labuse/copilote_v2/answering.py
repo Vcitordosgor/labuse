@@ -755,8 +755,11 @@ _CONCEPT_MAP = [
       "zan de la commune", "objectif zan"), ("communes", "Communes")),
     (("rarete du foncier", "rarete foncier", "le foncier se rarefie", "ou le foncier se rarefie",
       "combien de constructible reste"), ("communes", "Communes")),
+    # §5 — outil renommé « Densifier l'existant » (libellé client) ; clé interne `renouvellement`
+    # INCHANGÉE. Anciens mots-clés CONSERVÉS + nouveaux (« densifier »…) ajoutés.
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
-      "vue renouvellement du"), ("renouvellement", "Renouvellement")),
+      "vue renouvellement du", "densifier", "densification de l'existant", "densification de l existant",
+      "construire plus", "surelever", "surélever"), ("renouvellement", "Densifier l'existant")),
     (("changement de plu", "si cette zone passait", "zone passait constructible",
       "si cette zone devenait constructible", "zone devenait constructible",
       "prospective de territoire", "simuler un plu", "simuler un changement de zonage"),

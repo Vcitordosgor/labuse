@@ -3524,41 +3524,62 @@ def renouvellement_geojson(commune: str | None = None,
             "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"]}
 
 
+def _renouv_liste_cap() -> int:
+    """Plafond de la liste EN CONFIG (config/renouvellement.yaml `liste_max`, défaut 400) — jamais
+    un LIMIT en dur ; l'écran DIT « les N premières sur M »."""
+    try:
+        from ..config import load_yaml_config
+        return int(load_yaml_config("renouvellement").get("liste_max", 400))
+    except Exception:  # noqa: BLE001
+        return 400
+
+
 @app.get("/renouvellement/liste")
 def renouvellement_liste(commune: str | None = None,
                          sort: str = Query("score", pattern="^(score|sdp|surface|rang_commune)$"),
-                         limit: int = Query(200, ge=1, le=1000), offset: int = Query(0, ge=0),
+                         limit: int = Query(0, ge=0, le=2000), offset: int = Query(0, ge=0),
                          db: Session = Depends(get_db)) -> dict:
-    """Liste du segment Renouvellement, triable (score par défaut). Sert l'outil dédié —
-    JAMAIS le flux principal (doctrine : pas de mélange avec les tiers servis)."""
+    """Liste du segment (triable, score par défaut). Sert l'outil dédié — JAMAIS le flux principal
+    (doctrine : pas de mélange avec les tiers servis). Chaque ligne porte AUSSI son tier v2 servi
+    (run servi) → la puce d'action (verdictMeta) dit le vrai verdict, jamais « Classement historique »."""
     if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
-        raise HTTPException(503, "segment Renouvellement non calculé (table absente).")
+        raise HTTPException(503, "segment non calculé (table absente).")
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
+    cap = _renouv_liste_cap()
+    eff = cap if not limit else min(limit, cap)   # plafond EN CONFIG, jamais muet (cf. `cap` servi)
     orders = {"score": "r.renouv_score DESC, r.idu",
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
               "surface": "r.surface_m2 DESC NULLS LAST, r.idu",
               "rang_commune": "r.commune, r.rang_commune"}
     # M47 : TOUJOURS scopé sur le run servi (config/served_run.txt via Q_A_RUN_LABEL) ; commune en sus.
     where = "WHERE r.run_label = :run" + (" AND p.commune = :c" if commune else "")
+    # tier v2 + étage 0 du RUN SERVI (puce d'action M135/M137, même patron que le comparateur) ; jamais
+    # de statut matrice legacy servi → verdictMeta ne retombe jamais sur « Classement historique ».
     rows = db.execute(text(f"""
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
                r.comp_potentiel, r.comp_assiette, r.comp_marche,
                r.code_bati_origine, r.sdp_residuelle_m2, r.surface_m2, r.zone_plu,
-               r.rang_segment, r.rang_commune
-        FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
+               r.rang_segment, r.rang_commune,
+               s2.tier AS tier_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+        FROM parcel_renouvellement r
+        JOIN parcels p ON p.idu = r.idu
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = r.idu AND s2.run_id = :run
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
-        {"c": commune, "n": limit, "o": offset, "run": Q_A_RUN_LABEL}).mappings().all()
+        {"c": commune, "n": eff, "o": offset, "run": Q_A_RUN_LABEL}).mappings().all()
     meta = db.execute(text(f"""
         SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
         {"c": commune, "run": Q_A_RUN_LABEL}).mappings().first()
     total = int(meta["n"] or 0)
     # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
-    return {"total": total, "n": len(rows), "items": [dict(r) for r in rows],
+    return {"total": total, "n": len(rows), "cap": cap, "tronquee": total > len(rows),
+            "items": [dict(r) for r in rows],
             "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"],
             "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
-                              "renouvellement — ni une mise en vente prévisible, ni une "
+                              "densification — ni une mise en vente prévisible, ni une "
                               "opportunité qualifiée.")}
 
 

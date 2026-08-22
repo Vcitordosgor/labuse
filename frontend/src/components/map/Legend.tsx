@@ -326,10 +326,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
       {layers.renouv && (
         <div className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Parcelles occupées (bâties) en zone U/AU avec capacité restante — potentiel de renouvellement urbain, pas une opportunité qualifiée.">
+          <Tip block side="top" tip="Parcelles occupées (bâties) en zone U/AU avec capacité résiduelle — potentiel de densification, pas une opportunité qualifiée.">
             <div data-legend-renouv className="flex items-center gap-2">
               <span className="h-2.5 w-4 rounded-sm" style={{ background: TOKENS.renouv, opacity: 0.7 }} />
-              <span className="text-[11px] text-txt">Renouvellement — occupées, potentiel de renouvellement</span>
+              <span className="text-[11px] text-txt">Densifier l’existant — occupées, capacité résiduelle</span>
             </div>
           </Tip>
         </div>

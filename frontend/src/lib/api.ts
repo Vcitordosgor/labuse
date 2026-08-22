@@ -479,14 +479,17 @@ export interface RenouvItem {
   comp_potentiel: number; comp_assiette: number; comp_marche: number
   code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
   zone_plu: string | null; rang_segment: number; rang_commune: number
+  // puce d'action (verdictMeta) : tier v2 servi + étage 0 du run servi — jamais « Classement historique »
+  tier_v2: string | null; etage0: boolean
 }
 export interface RenouvListe {
-  total: number; n: number; items: RenouvItem[]
+  total: number; n: number; cap: number; tronquee: boolean; items: RenouvItem[]
   source: string; run_label: string; maj: string | null
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
+// le plafond vit côté serveur (config renouvellement.yaml) → on n'envoie plus de `limit` en dur.
 export const getRenouvListe = (sort: string, communeNom?: string | null) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=300${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`)
+  j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`)
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {
