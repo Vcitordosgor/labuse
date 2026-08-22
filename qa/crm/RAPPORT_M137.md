@@ -90,22 +90,29 @@ Pas de `LIMIT`/pagination (5 requêtes = O(1) en nb de cartes ; volume CRM faibl
    (app.py 16=16, models 0=0, projets 3=3, pré-existants). ✓
 7. Ce rapport. ✓
 
-## À PROPOSER (pas appliqué — arbitrage Vic)
+## Indicateur de relance — APPLIQUÉ (arbitrage Vic, `f3a9d072`)
 
-**Indicateur de relance échue sur la carte.** Utile, mais on vient de retirer les
-badges de coin (M136 P1) — je ne le rajoute pas d'office. Maquette sobre proposée :
-un point ambre discret + l'échéance, à gauche du titre, UNIQUEMENT si `reminder_date`
-est passée :
+Accepté avec contrainte : **conditionnel uniquement** — visible si la relance est
+**échue OU due aujourd'hui** (`reminder_date <= aujourd'hui`, date locale), **rien
+sinon**. Discret, **pas un badge permanent de coin** : un point ambre + l'échéance
+(JJ/MM) à gauche du titre, dans le groupe de gauche de la ligne d'en-tête.
+
+Trois états de rendu :
 
 ```
-┌────────────────────────────────┐
-│ 🔸 03/09  97416000AB1234    ✕ │   ← 🔸 ambre + date : relance échue (sinon rien)
-│ 1 240 m² · Saint-Pierre        │
-│ ▸ Projet Pierrefonds           │
-└────────────────────────────────┘
+reminder_date = hier (échue)        │ ● 22/08  97416000AB1234        ✕ │  ← point + date ambre
+reminder_date = aujourd'hui (due)   │ ● 23/08  97416000AB1234        ✕ │  ← point + date ambre
+reminder_date = demain / vide       │ 97416000AB1234                 ✕ │  ← RIEN (le titre seul)
 ```
 
-Zéro score/rang (respecte D1). Vic tranche au rendu.
+Token DA `amber` (#E0A94F, registré au thème) — **pas** `amber-500` (la classe
+n'existe pas : `extend.colors.amber` remplace la scale par un plat). Infobulle
+« Relance échue » / « Relance due aujourd'hui ». Zéro score/rang (respecte D1). `tsc` vert.
+
+**Persistance vérifiée comme le mandat la formule** — éditer note + priorité + relance,
+COMMIT, relire en **session fraîche** (= recharger la page) → `priority=haute`,
+`notes='rappeler mardi'`, `reminder_date=2026-09-01` tous présents. Entrée de test
+nettoyée (non destructif).
 
 ## Dette (à consigner)
 
