@@ -114,14 +114,54 @@ univers servable tier + résiduel>0 = 130 370) : **250 parcelles neutralisées**
 (0,19 %) — étiquettes `N` (110), `A` (85), `Nco` (44)… Faible → appliqué sans stop.
 Les zones GELÉES (Us/2AUc) ont, elles, un résiduel 0 : déjà écartées, gel intact.
 
-**Restent en dette (amont, hors périmètre outil) :**
-- **quelle source fait foi** pour l'attribution mono-zone (majorité de surface,
-  centroïde, part U/AU dominante ?) — c'est le vrai correctif de fond ;
-- le cas SUBTIL non capté par la règle locale : étiquette ET centroïde **tous deux
-  constructibles** mais **sous-zones différentes** (ex. étiquette `Uc` hé 9, centroïde
-  `Ua` hé 21). La SDP servie reste alors légèrement étrangère (hauteur/gabarit d'une
-  autre sous-zone). Mesuré : divergence résolue TOTALE = **288** parcelles, dont
-  **250 neutralisées** par la règle et **38 non captées** (ce cas subtil). Le détecter
-  exige de résoudre le centroïde par une requête spatiale PAR PARCELLE au runtime —
-  mesurée à **~60 s sur l'île**, inacceptable pour un outil à la demande. Se règle en
-  même temps que l'attribution de zone amont.
+### Les 38 non captées — un chiffre potentiellement étranger encore servi
+
+Divergence résolue TOTALE (run servi `q_v10_m129`, univers servable 130 370) =
+**288** parcelles, dont **250 neutralisées** par la règle ci-dessus (étiquette
+non-constructible) et **38 NON captées**.
+
+**Mécanisme des 38** : étiquette ET centroïde sont **tous deux CONSTRUCTIBLES**,
+mais de **sous-zones différentes** (ex. étiquette `Uc` hé 16 / centroïde `Ud` hé 22 ;
+`Ud` hé 15 / `Ug` hé 7 ; `U1`/`U2` ; couples mesurés : `Ud→Ug` ×7, `Uc→Ud`, `Ub→Uc`,
+`Uav→Ua`…). La règle locale ne les voit pas (elle ne teste que la constructibilité
+de l'étiquette, qui est vraie). Elles **servent donc aujourd'hui une SDP** bâtie sur
+le résiduel de la zone du **centroïde** mais plafonnée sur le `niveaux_max` de
+l'**étiquette** — le même vice que CN1677, en plus discret : chiffre d'une zone,
+étiquette d'une autre.
+
+**Borne haute de l'erreur** (calculable HORS runtime, mesure ponctuelle) : sur les
+38, le rapport `niveaux_max(centroïde)/niveaux_max(étiquette)` va de 1,0 à **5,0**
+(médiane 1,5). La SDP servie peut donc être **jusqu'à ~5× trop haute ou trop basse**
+selon laquelle des deux sous-zones fait foi. 38 sur 130 370 (0,03 %) ne justifient
+pas les ~60 s d'une requête spatiale de centroïde PAR PARCELLE au runtime — donc non
+neutralisées pour l'instant.
+
+**Correctif de fond (le seul vrai)** : l'**attribution de zone amont** — décider
+quelle source fait foi (`parcel_zone_plu` vs polygone-centroïde `parcel_context`),
+majorité de surface / centroïde / part U-AU dominante. Il règle d'un coup les 250 ET
+les 38, et supprime la divergence à la racine plutôt que de la neutraliser en aval.
+
+## 8. Piège `max(run_id)` — tri LEXICAL sur les labels de run (mécanisme, pas incident)
+
+Les `run_id` / `run_label` sont des **chaînes** (`q_v9_m81`, `q_v10_m129`), pas des
+entiers. Un `MAX(run_id)` (ou `ORDER BY run_id DESC LIMIT 1`, ou un `sorted()` Python)
+fait un tri **LEXICOGRAPHIQUE** : `'q_v9_m81' > 'q_v10_m129'` car le caractère `'9'`
+est supérieur à `'1'` à la 5ᵉ position. **`MAX(run_id)` rend donc `q_v9_m81`, PAS le
+run le plus récent `q_v10_m129`.**
+
+Le run SERVI ne se lit JAMAIS par `MAX(run_id)`. Il se lit par le point de vérité :
+- SQL/analyse : la constante `Q_A_RUN_LABEL` (`scoring/score_v_constants.py`) ;
+- scoring v2 : `_score_v2_run_id()` (`api/app.py`, exposé `_v2run` dans `modules.py`).
+
+**Où ça a déjà mordu (incident M133)** : des mesures QA en SQL direct joignaient
+`parcel_p_score_v2 ... run_id = (SELECT MAX(run_id))` → elles portaient sur
+`q_v9_m81` au lieu du run servi. D'où un C2 faux (`8479→7478` au lieu de
+`23812→19342`) et un comptage de divergence sur le mauvais univers. Le CODE de
+l'outil était juste (l'endpoint passe par `_v2run`) — seul le harnais de mesure
+était piégé.
+
+**Le mécanisme rejouera** partout où un run le plus récent est cherché par tri :
+requête QA, script d'analyse, futur audit, dashboard. Règle : **ne jamais** dériver
+le run servi d'un `MAX`/`ORDER BY DESC` sur le label ; toujours passer par
+`Q_A_RUN_LABEL` / `_score_v2_run_id`. (Correctif de fond éventuel, hors périmètre :
+un `run_seq` entier monotone, ou un flag `is_served`, pour qu'un tri redevienne sûr.)
