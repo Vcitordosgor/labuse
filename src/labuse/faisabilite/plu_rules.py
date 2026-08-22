@@ -197,13 +197,22 @@ def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
             return _zone_generique(code)
 
         # 2) zones AU*st (secteurs de transition) — pas de construction neuve. Match normalisé.
+        # M130-12 (rattrapage) : NE PAS FABRIQUER de hauteur. Le « H max 4 m » codé en dur était un
+        # repli que le schéma déclare lui-même INEXACTE (cf. commentaires YAML Saint-Pierre) — 4 m est
+        # la valeur-signature du mécanisme, pas une règle lue au règlement (aucune commune ne définit
+        # `hauteur_max_m`). Absence de `hauteur_max_m` au YAML = absence de règle de hauteur → he/hf None
+        # (remontés « non renseignée » à l'affichage), jamais un 4 m étranger. La CAPACITÉ (zéro
+        # construction neuve) reste EXACTE : constructible_neuf=False + note de portée. Une hauteur n'est
+        # servie QUE si la commune a LU et gravé `hauteur_max_m` au règlement (avec sa source).
         st = doc.get("zones_au_st", {})
         st_norm = {normalize_key(x) for x in st.get("liste", [])}
         if normalize_key(code) in st_norm or re.fullmatch(r"AU\w*st", code, re.I):
+            _hmax = st.get("hauteur_max_m")
             return ZoneRules(
-                code=code, constructible_neuf=False, hf_m=float(st.get("hauteur_max_m", 4)),
+                code=code, constructible_neuf=False,
+                hf_m=float(_hmax) if _hmax is not None else None,
                 notes=[st.get("portee", "Travaux mineurs uniquement")],
-                sources={"hauteur": st.get("source", "Art. 10 AU*st")},
+                sources=({"hauteur": st["source"]} if (_hmax is not None and st.get("source")) else {}),
             )
 
         # 3) renvoi AU<n><indice> → U<n><indice> (insensible à la casse)
