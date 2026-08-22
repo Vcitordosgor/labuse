@@ -63,3 +63,22 @@ def test_envoi_stub_et_plafond(client, monkeypatch, engine):
     # suivi
     suivi = client.get("/courrier/envois").json()
     assert suivi["n"] == 2 and suivi["envois"][0]["modele"] == "renovation"
+
+def test_courrier_pdf_ne_leve_pas_sur_les_3_modeles(client):
+    """Patron test_m136_exports_ne_crashent_pas : POST /courrier/pdf rend un PDF VALIDE (jamais de
+    FPDFException) sur les 3 modèles réels ; contenu fidèle au texte affiché (ponctuation → pas de
+    « ? », lignes vides des \\n\\n gérées). Le bug d'origine : multi_cell(w=0) sur une ligne vide."""
+    import io
+    from labuse.api.modules import _COURRIER
+    pypdf = pytest.importorskip("pypdf")
+    assert set(_COURRIER) == {"standard", "indivision", "succession"}   # les 3, pas un seul
+    for motif, tpl in _COURRIER.items():
+        texte = tpl.format(ref="BV 912", commune="Saint-Paul", surface=3948,
+                           signature="LABUSE — prospection foncière")
+        r = client.post("/courrier/pdf", json={"idu": "97415000BV0912", "motif": motif, "texte": texte})
+        assert r.status_code == 200, f"{motif}: HTTP {r.status_code}"
+        assert r.headers["content-type"] == "application/pdf"
+        assert r.content[:5] == b"%PDF-", f"{motif}: pas un PDF"
+        txt = "\n".join((p.extract_text() or "") for p in pypdf.PdfReader(io.BytesIO(r.content)).pages).replace("\n", " ")
+        assert "Saint-Paul" in txt and "BV 912" in txt, f"{motif}: contenu absent du PDF"
+        assert "?" not in txt, f"{motif}: ponctuation dégradée en « ? »"
