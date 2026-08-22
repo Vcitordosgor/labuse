@@ -135,5 +135,33 @@ sienne, une fois le nettoyage appliqué. Les 5 zones à contrôler :
 Toutes les autres zones servies sont soit **même famille** (`Uf→Uf3.5`,
 `Ug→Ug3.5`, `Ud→Ud3.5`…), soit **renvoi documenté** (`1AUb→Ub10.2 via renvoi`,
 `AU3a→U3a`…), soit **estimation générique** (communes non outillées, sans
-article). **Aucune incohérence ne sort → aucune zone à basculer en « non
-renseignée », aucun correctif code.**
+article). Aucune source servie ne cite l'article d'une autre zone.
+
+---
+
+## Rattrapage — le repli `zones_au_st` fabriquait un « faîtage 4 m » (corrigé amont)
+
+Après relecture : le défaut de fond n'était pas `Us` mais le **mécanisme
+`zones_au_st`** (`plu_rules.py:204`), qui servait `hf_m = float(st.get(
+"hauteur_max_m", 4))` — un **4 m codé en dur** quand le YAML ne définit pas
+`hauteur_max_m` (aucune commune ne le fait). Ce 4 m, que le YAML Saint-Pierre
+déclare lui-même **INEXACTE**, contaminait `Us` (Saint-Pierre) **ET** `2AU*`
+(Le Tampon) — même repli, deux communes.
+
+**Correctif amont** (pas en aval) : absence de `hauteur_max_m` = absence de règle
+→ `hf_m = None` (« non renseignée au PLU calibré »). La capacité
+(`constructible_neuf=False`) reste exacte. Vérifié sans casse en aval
+(`collect_report_data`, `parcel_faisabilite` OK sur 2AUd et Us).
+
+**Contrôle C (rattrapage), P1–P4** :
+
+| Contrôle | Obtenu |
+|---|---|
+| « faîtage 4 m » | **0** partout (aucune commune ne porte `hauteur_max_m: 4` sourcé) |
+| 2AU de P2 → « non renseignée » | **8 / 8** (AD0250, AK0945, AP1250, AX1253, AX1477, AX1478, AX1479, CX0670) |
+| EP 1044 (Us) → « non renseignée » | ✅ |
+| non-régression | sans objet=0 · peut exister=0 · restent=0 · « part X — »=5 · BI1097 & CW1056 intacts · incise P3 |
+
+Dette : `qa/m130/DETTE_HAUTEUR_PLU.md` — mécanisme + zones + **valeurs réelles
+connues non gravées** (`Us` = 6/11 au chap. 2 p.130 ; `2AU` Le Tampon à instruire),
+rejoint M130-6 F.2 ; + dette cosmétique renvois (`Uazi`, `Ucm`).
