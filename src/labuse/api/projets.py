@@ -1029,7 +1029,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     from ..faisabilite.plu_rules import resolve_zone
     from .export_commun import adresses_ban, format_adresse
     rows = db.execute(text(
-        """SELECT par.idu, par.commune,
+        """SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
                   substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
                   pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause,
                   z.libelle AS zone_libelle, z.idurba AS zone_idurba
@@ -1056,25 +1056,43 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
             zr = None
         he = getattr(zr, "he_m", None) if zr else None
         hf = getattr(zr, "hf_m", None) if zr else None
+        famille = _zone_famille(r["zone_libelle"])
+        # M130-3 §A.2/A.4 : la FAMILLE décide — A (agricole) / N (naturelle) = non constructible,
+        # JAMAIS de SDP chiffrée (indépendant du cache résiduel, qui peut avoir calculé sur une
+        # sous-zone U chevauchante et laissé « 2 149 m² sur du Nco »).
+        non_constructible = famille in ("agricole", "naturelle")
         parcelles.append({
-            "idu": r["idu"], "commune": r["commune"],
+            "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],   # §F.1
             "section": r["section"], "numero": r["numero"],
             "adresse_ban": adrs.get(r["idu"]),
-            # SDP : Estimé ; `cause` non nulle = non calculable → on dit la raison, jamais un « 0 » trompeur
+            "non_constructible": non_constructible,
             "sdp_m2": int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None,
             "sdp_indispo": r["cause"],
             "zone_code": r["zone_libelle"],
-            "zone_famille": _zone_famille(r["zone_libelle"]),
+            "zone_famille": famille,
             "zone_millesime": _plu_millesime(r["zone_idurba"]),
             "he_m": float(he) if isinstance(he, (int, float)) else None,
             "hf_m": float(hf) if isinstance(hf, (int, float)) else None,
             "hauteur_calibree": bool(getattr(zr, "calibree", False)) if zr else False,
             "hauteur_source": (getattr(zr, "sources", None) or {}).get("hauteur") if zr else None,
+            "hauteur_renvoi": getattr(zr, "via_renvoi", None) if zr else None,   # §F.4
+            "zone_resolue": zr is not None,
         })
+    # M130-3 §D.2 : le vivier figeable À CE JOUR (count, jamais la liste) — dénominateur honnête pour
+    # DIRE la troncature (« N figées sur ~V retenues »). La sélection des figées est un rang de proba
+    # de mutation (config projets.yaml) : rang caché à divulguer.
+    vivier = None
+    if figee:
+        try:
+            vivier = _vivier_figeable(db, p.filtres or {})
+        except Exception:  # noqa: BLE001 — le compteur de transparence ne casse jamais l'export
+            vivier = None
     return {
         "figee": figee,
         "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
         "n": len(parcelles),
+        "vivier": vivier,
+        "tronquee": bool(vivier is not None and vivier > len(parcelles)),
         "parcelles": parcelles,
     }
 

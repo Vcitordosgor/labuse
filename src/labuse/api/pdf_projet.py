@@ -17,17 +17,22 @@ from .pdf_premium import FONTS, LINE, MINT, MINT_SOFT, TXT, TXT_DIM, TXT_HI, TXT
 
 TYPE_LABEL = {"logements": "Logements", "etudiant": "Logement étudiant",
               "bureaux": "Bureaux", "autre": "Projet"}
-# M130-2 §3.1 — libellé HUMAIN de la cause de non-calcul de la SDP (parcel_residuel.cause, M125).
+# M130-3 §E — chaque libellé NOMME la contrainte réellement mesurée (parcel_residuel.cause, M125),
+# jamais une catégorie vague. terrain_exigu = le contour inseté des reculs se vide (résiduel nul, pas
+# le terrain) ; redhibitoire = une modulation ramène la capacité à 0 ; habitat_interdit = logement non
+# admis au règlement de la zone.
 _CAUSE_LABEL = {
     "zone_non_constructible": "zone non constructible",
-    "terrain_exigu": "terrain trop exigu",
-    "capacite_nulle": "capacité résiduelle nulle",
-    "hauteur_indispo": "hauteur PLU indisponible",
-    "habitat_interdit": "habitat non admis en zone",
-    "hors_plu": "hors PLU",
-    "zone_non_resolue": "zone PLU non résolue",
+    "terrain_exigu": "résiduel constructible nul après reculs",
+    "capacite_nulle": "capacité constructible nulle",
+    "hauteur_indispo": "hauteur PLU non renseignée au règlement",
+    "habitat_interdit": "logement non admis au règlement de la zone",
+    "hors_plu": "parcelle hors PLU",
+    "zone_non_resolue": "zone non outillée au règlement",
     "zone_non_constructible_neuf": "construction neuve non admise",
-    "redhibitoire": "contrainte rédhibitoire",
+    "redhibitoire": "capacité annulée par les modulations (risque/pente/servitude)",
+    "bati_non_ingere": "bâti non mesurable (donnée manquante)",
+    "indetermine": "indéterminée",
 }
 
 
@@ -36,6 +41,12 @@ def _cause_txt(cause: str | None) -> str:
     if not cause:
         return "non calculable"
     return _CAUSE_LABEL.get(str(cause).split(":", 1)[0], "non calculable")
+
+
+def _fr(x: float) -> str:
+    """M130-3 §F.2 — nombre en français : séparateur décimal VIRGULE, sans zéro parasite (3.5 → 3,5)."""
+    s = f"{x:g}"
+    return s.replace(".", ",")
 
 
 class _Pdf(FPDF):
@@ -146,6 +157,20 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         n = shortlist.get("n", 0)
         pdf.cell(0, 5, f"PARCELLES DE LA SHORTLIST  ·  {n:,} parcelle(s), cadrage figé le {figee_le}"
                  .replace(",", " "), new_x="LMARGIN", new_y="NEXT")
+        # M130-3 §D.2 — DIRE la troncature : combien retenues (vivier à ce jour), combien figées, et
+        # le critère de sélection (rang de proba de mutation = rang caché) + une alternative neutre.
+        if shortlist.get("tronquee"):
+            vivier = shortlist.get("vivier")
+            pdf.ln(0.5)
+            pdf.set_font("inter", size=7)
+            pdf.set_text_color(*TXT_DIM)
+            pdf.multi_cell(pdf.w - 28, 3.6,
+                           f"Liste plafonnée : {n} parcelles figées sur ~ {vivier:,} retenues par le "
+                           "cadrage (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de "
+                           "mutation (critère interne du moteur) — un rang non visible ; elles sont "
+                           "présentées ici par ordre géographique. Pour une sélection neutre, élargir "
+                           "la shortlist (« chercher plus ») ou trier par surface."
+                           .replace(",", " "), new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
         for it in shortlist.get("parcelles", []):
             pdf.set_font("mono", size=8.5)
@@ -183,10 +208,18 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     pdf.ln(0.5)
     pdf.set_font("inter", size=7)
     pdf.set_text_color(*TXT_DIM)
+    # M130-3 §C — la ligne « shortlist datée » s'ADAPTE : si pas de shortlist figée, ne pas affirmer un
+    # figeage inexistant ni afficher une date à trou.
+    ligne_shortlist = (
+        f"La shortlist est datée (figée le {figee_le}) : elle peut différer de l'état actuel du "
+        "cadrage si les critères ou les données ont changé depuis."
+        if shortlist.get("figee") else
+        "Ce projet n'a pas encore de shortlist figée : aucune parcelle n'est présentée tant que le "
+        "cadrage n'a pas été lancé et daté dans l'application."
+    )
     for lim in (
         "Le cadrage est un jeu de filtres géographiques et réglementaires, pas un avis d'opportunité.",
-        f"La shortlist est datée (figée le {figee_le or '—'}) : elle peut différer de l'état actuel "
-        "du cadrage si les critères ou les données ont changé depuis.",
+        ligne_shortlist,
         "Aucune parcelle n'est validée : la constructibilité et la faisabilité restent à instruire "
         "(fiche parcelle, règlement de zone, certificat d'urbanisme).",
     ):
@@ -199,21 +232,38 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
 
 
 def _lignes_donnees(it: dict) -> list[str]:
-    """Les lignes de DONNÉE d'une parcelle — chacune porte Sourcé ou Estimé (§3.5). Jamais un verdict."""
+    """Les lignes de DONNÉE d'une parcelle — chacune porte Sourcé ou Estimé (§3.5). Jamais un verdict.
+    M130-3 : famille A/N → aucune SDP chiffrée (§A) ; ligne Hauteur TOUJOURS présente avec état (§B) ;
+    surface parcelle (§F.1) ; virgule décimale (§F.2) ; « aucune » ≠ « ~ 0 » (§F.3) ; renvoi (§F.4)."""
     out: list[str] = []
-    # §3.1 SDP résiduelle (Estimé) — si non calculable (cause), on DIT la raison, jamais un « 0 » trompeur.
-    if it.get("sdp_indispo"):
-        out.append(f"SDP résiduelle : non calculable ({_cause_txt(it['sdp_indispo'])})")
-    elif it.get("sdp_m2") is not None:
+    # §F.1 surface de la parcelle (Sourcé — cadastre) : permet de vérifier un filtre de surface.
+    if it.get("surface_m2") is not None:
+        out.append(f"Surface parcelle : {int(it['surface_m2']):,} m² (Sourcé — cadastre)".replace(",", " "))
+    # §A / §3.1 SDP résiduelle. La FAMILLE décide : A/N = non constructible → jamais de chiffre.
+    if it.get("non_constructible"):
+        out.append(f"SDP résiduelle : aucune (zone {it.get('zone_famille') or 'non constructible'} "
+                   "non constructible)")
+    elif it.get("sdp_indispo"):
+        out.append(f"SDP résiduelle : aucune ({_cause_txt(it['sdp_indispo'])})")
+    elif it.get("sdp_m2"):                                    # §F.3 : 0 (ou None) → « aucune », pas « ~ 0 »
         out.append(f"SDP résiduelle ~ {it['sdp_m2']:,} m² (Estimé)".replace(",", " "))
-    # §3.2 hauteurs calibrées, égout et faîtage NOMMÉS (resolve_zone) — Sourcé si calibré, sinon Estimé.
+    else:
+        out.append("SDP résiduelle : aucune (résiduel nul)")
+    # §B / §3.2 Hauteur PLU : ligne TOUJOURS présente, avec état explicite (panne ≠ absence).
     he, hf = it.get("he_m"), it.get("hf_m")
+    renvoi = f" · via renvoi : {it['hauteur_renvoi']}" if it.get("hauteur_renvoi") else ""   # §F.4
     if he is not None or hf is not None:
         tag = "Sourcé — PLU calibré" if it.get("hauteur_calibree") else "Estimé — générique"
-        eg = f"égout {he:g} m" if he is not None else "égout —"
-        fa = f"faîtage {hf:g} m" if hf is not None else "faîtage —"
+        eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
+        fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
         src = it.get("hauteur_source")
-        out.append(f"Hauteur PLU : {eg} · {fa} ({tag}{(' · ' + src) if src else ''})")
+        out.append(f"Hauteur PLU : {eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
+    elif it.get("non_constructible"):
+        out.append("Hauteur PLU : non applicable (zone non constructible)")
+    elif it.get("zone_resolue"):
+        out.append("Hauteur PLU : non réglementée pour cette zone")
+    else:
+        out.append("Hauteur PLU : règlement non outillé pour cette zone (donnée indisponible)")
     # §3.3 zone PLU + famille correcte (U = urbaine, AU = à urbaniser) — Sourcé + millésime amont (§6).
     if it.get("zone_code"):
         fam = it.get("zone_famille")
