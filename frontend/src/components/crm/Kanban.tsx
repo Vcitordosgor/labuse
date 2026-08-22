@@ -5,7 +5,6 @@ import {
   patchPipeline, renameCrmColumn, reorderCrmColumns, resetCrmColumns,
 } from '../../lib/api'
 import { fmtM2 } from '../../lib/format'
-import { SCORE_TIP, verdictMeta } from '../../lib/status'
 import type { PipelineColumn, PipelineEntry } from '../../lib/types'
 import { Tip } from '../Tip'
 import { ErrorState } from '../States'
@@ -28,9 +27,6 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
       qc.invalidateQueries({ queryKey: ['pipeline-parcel', e.idu] })
     },
   })
-  const prem = e.premium
-  // correctif M5 : le badge de carte suit le verdict effectif (tier v2, étage 0 prime)
-  const meta = prem ? verdictMeta(prem.statut, prem.tier_v2, prem.etage0) : null
   return (
     <div
       draggable
@@ -89,22 +85,10 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
           </div>
         )
       )}
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        {meta && (
-          /* DA §8 — tier en TEXTE COLORÉ simple (plus de pastille à fond). */
-          <span className="text-[12px]" style={{ color: meta.color }}>{meta.label}</span>
-        )}
-        {prem && (
-          <>
-            <Tip tip={SCORE_TIP.q}>
-              <span className="font-display text-xs font-bold tnum" style={{ color: meta?.color }}>{prem.rang_v2 != null ? `#${prem.rang_v2}` : ''}</span>
-            </Tip>
-            {/* M36 Lot B : point/pourcentage Complétude RETIRÉS (quasi-constante — M35 D3). */}
-          </>
-        )}
-        {!prem && <span className="text-[11px] text-txt-dim">hors run de référence</span>}
-        <span className="ml-auto shrink-0 text-[11px] text-txt-dim" title="Priorité de suivi de la piste">{e.priority}</span>
-      </div>
+      {/* M136 P1 — infos de coin bas RETIRÉES (affichage seul) : coin bas-gauche (verdict
+          `meta.label` + rang `#rang_v2`) et coin bas-droite (priorité `e.priority`). Aucune
+          logique/endpoint/donnée touchés. Les champs restent au payload /pipeline
+          (premium.rang_v2, verdict.rang, priority) — purge = décision de Vic (cf. audit). */}
     </div>
   )
 }
