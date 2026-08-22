@@ -126,3 +126,7 @@ qa/m54ab_out/
 
 # vite.config.js = artefact tsc fantôme (masque vite.config.ts — incident M-W carte noire)
 frontend/vite.config.js
+
+# M130-10 §E — PDF de QA du dossier projet : artefacts régénérables (script generer_pdf_qa.py),
+# gitignorés pour ne plus provoquer de conflits binaires au merge.
+qa/m130/*.pdf

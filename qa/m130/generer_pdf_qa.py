@@ -49,7 +49,7 @@ PROJETS = [
     ("QA M130 · P4 non figé", {"communes": ["Le Tampon"]}, {"type_logement": "logements"}, False),
 ]
 # préfixe versionné du mandat courant (bump à chaque itération M130-x)
-PREFIXE = "M130-9"
+PREFIXE = "M130-10"
 FICHIER = {
     "QA M130 · P1 large île": f"{PREFIXE}-projet-P1-large-ile.pdf",
     "QA M130 · P2 étroit Tampon": f"{PREFIXE}-projet-P2-etroit-tampon.pdf",

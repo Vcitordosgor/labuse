@@ -1049,6 +1049,19 @@ def _part_ouverte(code: str | None) -> bool:
     return core.startswith("U")                    # U = urbaine ; A / N → False
 
 
+def _hauteur_src_dezone(zone_code: str | None, src: str | None) -> str | None:
+    """M130-10 §C — retire d'une source de hauteur la référence d'article qui désigne une AUTRE zone
+    (bavardage d'une entrée YAML PARTAGÉE, ex. `["Us","AU01",…]` : « … Art. Us1 p.130 ; Art. AU01,
+    p.200 » servi sur une parcelle Us). On coupe au « ; Art. AU0… » sauf si la zone EST une AU0.
+    Une source incomplète est acceptable ; une source qui pointe une autre zone ne l'est pas."""
+    if not src:
+        return src
+    import re as _re
+    if not str(zone_code or "").upper().startswith("AU0") and _re.search(r";\s*Art\.\s*AU0", src):
+        src = _re.split(r"\s*;\s*Art\.\s*AU0", src)[0]
+    return src
+
+
 def _plu_millesime(idurba: str | None) -> str | None:
     """M130-2 §6 — le MILLÉSIME AMONT du zonage = la date d'approbation du PLU portée par `idurba`
     (ex. « 97401_PLU_20241206 » → 06/12/2024). Jamais une date de run. None si non renseigné."""
@@ -1133,6 +1146,25 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         # sous-zone U chevauchante et laissé « 2 149 m² sur du Nco »).
         non_constructible = famille in ("agricole", "naturelle")
         sdp_m2 = int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None
+        # M130-10 §A — hauteur de la PART OUVERTE nommée (résolue sur SA zone, pas la majoritaire) :
+        # quand la dominante est fermée mais une part ouverte est nommée, la hauteur servie est celle
+        # de cette part. `None` si aucune part ouverte.
+        hauteur_part_ouverte = None
+        if part_constructible:
+            try:
+                zro = resolve_zone(part_constructible[0], r["commune"])
+            except Exception:  # noqa: BLE001
+                zro = None
+            _heo, _hfo = (getattr(zro, "he_m", None), getattr(zro, "hf_m", None)) if zro else (None, None)
+            hauteur_part_ouverte = {
+                "lib": part_constructible[0],
+                "he_m": float(_heo) if isinstance(_heo, (int, float)) else None,
+                "hf_m": float(_hfo) if isinstance(_hfo, (int, float)) else None,
+                "calibree": bool(getattr(zro, "calibree", False)) if zro else False,
+                "source": _hauteur_src_dezone(part_constructible[0],
+                                              (getattr(zro, "sources", None) or {}).get("hauteur") if zro else None),
+                "renvoi": getattr(zro, "via_renvoi", None) if zro else None,
+            }
         parcelles.append({
             "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],   # §F.1
             "section": r["section"], "numero": r["numero"],
@@ -1147,13 +1179,16 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
             "zones_parts": parts,       # [(lib, famille, pct), …] ≥ 5 %
             "zones_reste": parts_reste,
             "part_constructible": part_constructible,   # M130-7 §C : (libellé, pct) ou None
+            "hauteur_part_ouverte": hauteur_part_ouverte,   # M130-10 §A
             "zone_code": zone_libelle,
             "zone_famille": famille,
             "zone_millesime": _plu_millesime(zone_idurba),
             "he_m": float(he) if isinstance(he, (int, float)) else None,
             "hf_m": float(hf) if isinstance(hf, (int, float)) else None,
             "hauteur_calibree": bool(getattr(zr, "calibree", False)) if zr else False,
-            "hauteur_source": (getattr(zr, "sources", None) or {}).get("hauteur") if zr else None,
+            # M130-10 §C : source nettoyée d'une référence bavarde vers une autre zone (Us ← AU01)
+            "hauteur_source": _hauteur_src_dezone(
+                zone_libelle, (getattr(zr, "sources", None) or {}).get("hauteur") if zr else None),
             "hauteur_renvoi": getattr(zr, "via_renvoi", None) if zr else None,   # §F.4
             "zone_resolue": zr is not None,
         })

@@ -336,20 +336,28 @@ def _lignes_donnees(it: dict) -> list[str]:
     else:
         out.append("SDP résiduelle : aucune (résiduel nul après reculs et emprises)")
     # §B / §3.2 Hauteur PLU : ligne TOUJOURS présente, avec état explicite (panne ≠ absence).
-    he, hf = it.get("he_m"), it.get("hf_m")
-    renvoi = f" · via renvoi : {_src_propre(it['hauteur_renvoi'])}" if it.get("hauteur_renvoi") else ""  # §F.4/E.3
+    # M130-10 §A — si une part OUVERTE est nommée sur une parcelle multi-zones, la hauteur servie est
+    # celle de CETTE part (nommée), pas de la zone majoritaire (souvent fermée → « non renseignée »).
+    ho = it.get("hauteur_part_ouverte") if it.get("multi_zone") else None
+    if ho:
+        pfx, he, hf = f"part {ho['lib']} — ", ho["he_m"], ho["hf_m"]
+        calibree, src0, rv0 = ho["calibree"], ho["source"], ho["renvoi"]
+    else:
+        pfx, he, hf = "", it.get("he_m"), it.get("hf_m")
+        calibree, src0, rv0 = it.get("hauteur_calibree"), it.get("hauteur_source"), it.get("hauteur_renvoi")
+    renvoi = f" · via renvoi : {_src_propre(rv0)}" if rv0 else ""                  # §F.4/E.3
     if he is not None or hf is not None:
-        tag = "Sourcé — PLU calibré" if it.get("hauteur_calibree") else "Estimé — générique"
+        tag = "Sourcé — PLU calibré" if calibree else "Estimé — générique"
         eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
         fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
-        src = _src_propre(it.get("hauteur_source"))                        # §E.3 : point final retiré
-        out.append(f"Hauteur PLU : {eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
+        src = _src_propre(src0)                                            # §E.3 : point final retiré
+        out.append(f"Hauteur PLU : {pfx}{eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
     else:
         # M130-9 §C — UN MOTIF = UN TRAITEMENT. Si le règlement calibré porte une hauteur (même un
         # faîtage d'annexes, ex. 2AUd = 4 m), elle est affichée ci-dessus — pour A/N comme pour 2AU.
         # Sinon, l'état honnête est « non renseignée au PLU calibré » (la donnée n'y est pas), JAMAIS
         # « non applicable » qui prétendrait qu'aucune règle n'existe (on ne le sait pas). Ne rien inventer.
-        out.append("Hauteur PLU : non renseignée au PLU calibré")
+        out.append(f"Hauteur PLU : {pfx}non renseignée au PLU calibré")
     # §3.3 zone PLU + famille correcte (U = urbaine, AU = à urbaniser) — Sourcé + millésime amont (§6).
     if it.get("zone_code"):
         fam = it.get("zone_famille")
@@ -398,20 +406,30 @@ def _multizone_line(it: dict) -> str:
             head.append("la SDP n'est pas chiffrée")
         head.append(f"une part {pc[0]} (~ {pc[1]} %{_st(pc[1])}) est constructible et reste à instruire")
         head_lib = pc[0]
-    elif not e0:                                                        # aucune part ouverte (hors étage 0)
-        head.append("la SDP n'est pas chiffrée")
+    # cas 2 (aucune part ouverte) : pas de tête « SDP » — le constat « aucune part ouverte » (tail) suffit.
     # ── partition des parts RESTANTES (toutes sauf celle déjà nommée dans la tête)
     restantes = [(lib, pct) for (lib, fam, pct) in parts if lib != head_lib]
     ouvertes = [(lib, pct) for (lib, pct) in restantes if _part_ouverte(lib)]
     fermees = [(lib, pct) for (lib, pct) in restantes if not _part_ouverte(lib)]
+    principal_ouverte = _part_ouverte(dom)   # M130-10 §B : la principale ne doit JAMAIS être dite « autre »
     tail: list[str] = []
     for lib, pct in ouvertes:
         tail.append(f"une part {lib} (~ {pct} %{_st(pct)}) reste à instruire")
-    if len(fermees) == 1:
-        tail.append(f"la part {fermees[0][0]} (~ {fermees[0][1]} %) est fermée à l'urbanisation")
-    elif len(fermees) > 1:
+    if fermees:
         codes = ", ".join(lib for lib, _ in fermees)
-        tail.append(f"les autres parts ({codes}) sont fermées à l'urbanisation")
+        if principal_ouverte:
+            # la principale est ouverte (dans la tête) → les fermées sont bien « les autres parts »
+            if len(fermees) == 1:
+                tail.append(f"la part {fermees[0][0]} (~ {fermees[0][1]} %) est fermée à l'urbanisation")
+            else:
+                tail.append(f"les autres parts ({codes}) sont fermées à l'urbanisation")
+        elif head_lib is None:
+            # cas 2 : aucune part ouverte, la principale est fermée → jamais « les autres parts »
+            tail.append(f"aucune part n'est ouverte à l'urbanisation ({codes})")
+        else:
+            # une part ouverte est nommée (tête), mais la principale est FERMÉE et figure dans `codes` :
+            # « aucune AUTRE part n'est ouverte » (la principale n'est pas « autre » que la tête).
+            tail.append(f"aucune autre part n'est ouverte à l'urbanisation ({codes})")
     reste = it.get("zones_reste") or 0
     if reste >= 2:                                  # agrégat sous le seuil : ni ouvert ni fermé
         tail.append(f"~ {reste} % relèvent d'autres zones, non détaillées")
