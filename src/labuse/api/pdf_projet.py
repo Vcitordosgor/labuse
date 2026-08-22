@@ -329,6 +329,33 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     return bytes(pdf.output())
 
 
+def _ligne_hauteur(it: dict) -> str:
+    """M130-12 — la ligne « Hauteur PLU » ne dépend QUE des zones + PLU calibré, JAMAIS du résiduel :
+    « quelle hauteur le PLU autorise » est une donnée sourcée, indépendante de « peut-on construire »
+    (déjà répondu par la ligne SDP). Les modulations, l'admission du logement, l'ouverture à
+    l'urbanisation N'ENTRENT PAS. Trois sorties, et trois seulement :
+      1. règle trouvée (directe ou par renvoi) → hauteur servie, avec sa source exacte ;
+      2. règle servie depuis une part NON dominante → idem, préfixe « part X — » (M130-11 §A) ;
+      3. règle absente au PLU calibré → « non renseignée au PLU calibré ».
+    Aucun chemin ne produit « sans objet » (chaîne supprimée)."""
+    ho = it.get("hauteur_part_ouverte") if it.get("multi_zone") else None
+    # §A (M130-11) : préfixe UNIQUEMENT si la zone dont la règle est servie diffère de la principale.
+    if ho and ho["lib"] != it.get("zone_code"):
+        pfx, he, hf = f"part {ho['lib']} — ", ho["he_m"], ho["hf_m"]
+        calibree, src0, rv0 = ho["calibree"], ho["source"], ho["renvoi"]
+    else:
+        pfx, he, hf = "", it.get("he_m"), it.get("hf_m")
+        calibree, src0, rv0 = it.get("hauteur_calibree"), it.get("hauteur_source"), it.get("hauteur_renvoi")
+    if he is None and hf is None:                                          # sortie 3
+        return f"Hauteur PLU : {pfx}non renseignée au PLU calibré"
+    tag = "Sourcé — PLU calibré" if calibree else "Estimé — générique"
+    eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
+    fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
+    src = _src_propre(src0)                                                # §E.3 : point final retiré
+    renvoi = f" · via renvoi : {_src_propre(rv0)}" if rv0 else ""          # §F.4
+    return f"Hauteur PLU : {pfx}{eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})"
+
+
 def _lignes_donnees(it: dict) -> list[str]:
     """Les lignes de DONNÉE d'une parcelle — chacune porte Sourcé ou Estimé (§3.5). Jamais un verdict.
     M130-3 : famille A/N → aucune SDP chiffrée (§A) ; ligne Hauteur TOUJOURS présente avec état (§B) ;
@@ -347,36 +374,9 @@ def _lignes_donnees(it: dict) -> list[str]:
         out.append(f"SDP résiduelle ~ {it['sdp_m2']:,} m² (Estimé)".replace(",", " "))
     else:
         out.append("SDP résiduelle : aucune (résiduel nul après reculs et emprises)")
-    # §B / §3.2 Hauteur PLU — M130-11 :
-    #  §A : le préfixe « part X — » NE s'affiche QUE si la zone dont la règle est servie DIFFÈRE de la
-    #       zone principale de la parcelle (sinon redondant avec la ligne « Zone PLU »).
-    #  §B : on ne sert un CHIFFRE que si la parcelle a une part à la fois OUVERTE et constructible :
-    #       soit une SDP résiduelle > 0 sur la zone ouverte (dominante), soit une part ouverte
-    #       minoritaire nommée « constructible à instruire ». Sinon (résiduel nul, zone fermée) →
-    #       « sans objet » : on écrit l'état, pas une hauteur de construction là où rien ne se construit.
-    ho = it.get("hauteur_part_ouverte") if it.get("multi_zone") else None
-    prefix_case = bool(ho and ho["lib"] != it.get("zone_code"))   # part ouverte MINORITAIRE nommée
-    buildable = prefix_case or bool(it.get("sdp_chiffree"))
-    if buildable and prefix_case:
-        pfx, he, hf = f"part {ho['lib']} — ", ho["he_m"], ho["hf_m"]
-        calibree, src0, rv0 = ho["calibree"], ho["source"], ho["renvoi"]
-    else:
-        pfx, he, hf = "", it.get("he_m"), it.get("hf_m")
-        calibree, src0, rv0 = it.get("hauteur_calibree"), it.get("hauteur_source"), it.get("hauteur_renvoi")
-    renvoi = f" · via renvoi : {_src_propre(rv0)}" if rv0 else ""                  # §F.4/E.3
-    if buildable and (he is not None or hf is not None):
-        tag = "Sourcé — PLU calibré" if calibree else "Estimé — générique"
-        eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
-        fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
-        src = _src_propre(src0)                                            # §E.3 : point final retiré
-        out.append(f"Hauteur PLU : {pfx}{eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
-    elif (it.get("he_m") is not None or it.get("hf_m") is not None):
-        # §B : le PLU calibré porte une hauteur, mais rien n'est constructible en l'état (résiduel nul,
-        # zone fermée) → on ne sert pas le chiffre ; on écrit l'état.
-        out.append("Hauteur PLU : sans objet (aucune capacité constructible en l'état)")
-    else:
-        # M130-9 §C — aucune hauteur au PLU calibré (A / N) : état de DONNÉE, jamais « non applicable ».
-        out.append("Hauteur PLU : non renseignée au PLU calibré")
+    # §3.2 Hauteur PLU — M130-12 : DÉCOUPLÉE du résiduel (une donnée sourcée du PLU ≠ « peut-on
+    # construire »). Une seule entrée (zones + PLU calibré), trois sorties (cf. `_ligne_hauteur`).
+    out.append(_ligne_hauteur(it))
     # §3.3 zone PLU + famille correcte (U = urbaine, AU = à urbaniser) — Sourcé + millésime amont (§6).
     if it.get("zone_code"):
         fam = it.get("zone_famille")
