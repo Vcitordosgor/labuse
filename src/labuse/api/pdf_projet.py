@@ -141,14 +141,18 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     pdf.set_font("grotesk", size=16)
     pdf.set_text_color(*TXT_HI)
     pdf.multi_cell(0, 7, projet.get("nom") or "Projet", new_x="LMARGIN", new_y="NEXT")
-    # M130-2 §1.2 — DEUX dates distinctes, nommées : figeage du cadrage ET génération du document.
+    # M130-2 §1.2 / M139 Lot 2 (F2) — les dates NOMMÉES du dossier : figeage du CADRAGE (quelles
+    # parcelles), lecture des VALEURS (run résiduel servi — SDP/zone relues live, M135), et
+    # génération du document. La date des valeurs devient une DONNÉE (fini l'avertissement en prose).
     # M130-4 §D : jamais « figé le — » quand la date est absente → « Cadrage non figé ».
     figee_le = shortlist.get("figee_le")
     cadrage_txt = f"Cadrage figé le {figee_le}" if figee_le else "Cadrage non figé"
+    vr = shortlist.get("valeurs_run") or {}
+    valeurs_txt = f"   ·   Valeurs au {vr['date']} (run {vr['label']})" if vr.get("date") else ""
     pdf.set_font("inter", size=7.5)
     pdf.set_text_color(*TXT_MUT)
-    pdf.cell(0, 4.6, f"{cadrage_txt}   ·   Document généré le {date.today().isoformat()}",
-             new_x="LMARGIN", new_y="NEXT")
+    pdf.multi_cell(0, 4.6, f"{cadrage_txt}{valeurs_txt}   ·   Document généré le {date.today().isoformat()}",
+                   new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
     # ── Fiche de cadrage

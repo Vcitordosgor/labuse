@@ -306,6 +306,23 @@ def _cadrage_total(db: Session, cadrage: dict) -> dict:
         return {"total": None, "etage0": None}
 
 
+def _residuel_run_servi(db: Session) -> dict | None:
+    """M139 Lot 2 (F2) — le run résiduel SERVI (M135), source des valeurs (SDP/zone/cause) que le
+    dossier RELIT en live. Rend `{label, seq, date}` pour DATER ces valeurs au rendu (« valeurs au
+    JJ/MM (run N) ») : l'avertissement en prose devient une donnée. `None` si indisponible (table
+    absente / aucun run servi) → l'affichage retombe sur la seule date de cadrage, jamais un mensonge.
+    Aucun `MAX`/tri : lecture directe du flag `is_served` (doctrine run servi M135)."""
+    try:
+        r = db.execute(text("SELECT label, run_seq, created_at FROM residuel_runs "
+                            "WHERE is_served")).mappings().first()
+        if not r:
+            return None
+        return {"label": r["label"], "seq": int(r["run_seq"]),
+                "date": r["created_at"].date().isoformat() if r["created_at"] else None}
+    except Exception:  # noqa: BLE001 — migration résiduel non faite → pas de date de valeurs
+        return None
+
+
 def _sdp_besoin(cadrage: dict) -> int | None:
     """La SDP besoin n'est plus dérivée d'un « programme » (M120) : c'est la facette `sdpMin` du
     cadrage, si le promoteur l'a posée. Un seul endroit."""
@@ -443,7 +460,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
     top_out = [{
         "idu": it["idu"], "commune": it["commune"],
         "statut": it.get("statut") or it.get("status"),
-        "q_score": it.get("q_score"),
+        # M139 bricole : `q_score` retiré — jamais peuplé par `_q_v2_list` (toujours None) et non rendu.
         "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
     } for it in top]
     return {"nom": _nom_repli(identite, cadrage), "n": n, "total": total,
@@ -719,6 +736,8 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
     if body.statut is not None:
         if body.statut not in ("actif", "archive"):
             raise HTTPException(422, f"Statut invalide : {body.statut}")
+        if body.statut != p.statut:                 # M139 Lot 1 — les cartes CRM suivent la transition
+            _sync_crm_projet_statut(db, pid, body.statut, datetime.now(timezone.utc))
         p.statut = body.statut
     if body.identite is not None:
         p.identite = clean_identite(body.identite)
@@ -733,12 +752,17 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
 
 @router.delete("/{pid}")
 def projet_delete(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Supprime un projet (les pistes CRM rattachées gardent leur parcelle : projet_id → NULL
-    par la FK ON DELETE SET NULL)."""
+    """M139 Lot 1 (F1) — plus de suppression DURE. Ce endpoint ARCHIVE désormais le projet
+    (soft, réversible via PATCH statut=actif), exactement comme le PATCH statut=archive, et ses
+    cartes CRM SUIVENT l'archivage (plus d'orphelinage). Le travail de tri (`projet_parcelles`)
+    et le figeage sont CONSERVÉS. Aucun chemin ne détruit plus la shortlist ni les décisions.
+    Miroir du DELETE→archive du pipeline CRM (M137)."""
     p = _projet_or_404(db, pid, current_compte(request))
-    db.delete(p)
+    if p.statut != "archive":
+        _sync_crm_projet_statut(db, pid, "archive", datetime.now(timezone.utc))
+        p.statut = "archive"
     db.flush()
-    return {"ok": True}
+    return {"ok": True, "archived": True}
 
 
 @router.post("/{pid}/rejouer")
@@ -788,6 +812,21 @@ def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: d
         db.execute(text("UPDATE pipeline_entries SET archived_at = :now "
                         "WHERE parcel_id = :pc AND projet_id = :pid AND archived_at IS NULL"),
                    {"pc": parcel_id, "pid": pid, "now": now})
+
+
+def _sync_crm_projet_statut(db: Session, pid: int, statut: str, now: datetime) -> None:
+    """M139 Lot 1 (F1) — quand un PROJET est archivé/restauré, ses cartes CRM SUIVENT au lieu
+    d'être orphelinées ou perdues. `archive` ⇒ archive les entrées pipeline liées à CE projet
+    (réversible, prospection conservée) ; `actif` ⇒ les restaure. Ciblé `projet_id` : une carte
+    manuelle ou d'un autre projet n'est jamais touchée. Miroir de `_sync_crm_retenue` (M137)."""
+    if statut == "archive":
+        db.execute(text("UPDATE pipeline_entries SET archived_at = :now, updated_at = :now "
+                        "WHERE projet_id = :pid AND archived_at IS NULL"),
+                   {"pid": pid, "now": now})
+    elif statut == "actif":
+        db.execute(text("UPDATE pipeline_entries SET archived_at = NULL, updated_at = :now "
+                        "WHERE projet_id = :pid AND archived_at IS NOT NULL"),
+                   {"pid": pid, "now": now})
 
 
 def _projet_or_404(db: Session, pid: int, cid: int | None) -> models.Projet:
@@ -902,6 +941,10 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
     for it in groups["retenue"]:
         it["proprietaire_public"] = _proprietaire_public(db, it["idu"])
     return {"nom": p.nom, "sdp_besoin_m2": _sdp_besoin(p.filtres or {}),
+            # M139 Lot 2 (F2) — les deux dates à l'écran aussi : figeage du cadrage (porté par le
+            # projet, `derniere_execution_at`) + valeurs relues live au run résiduel servi.
+            "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
+            "valeurs_run": _residuel_run_servi(db),
             "proposees": groups["proposee"], "retenues": groups["retenue"],
             "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"], **_counts(db, pid)}
 
@@ -1091,7 +1134,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     rows = db.execute(text(
         f"""SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
                   substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
-                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause,
+                  pr.sdp_residuelle_m2, pr.cause,   -- M139 bricole : capacite_estimee était SELECTé mais jamais lu
                   {_ETAGE0_SQL} AS etage0
            FROM projet_parcelles pp
            JOIN parcels par ON par.id = pp.parcel_id
@@ -1206,6 +1249,9 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     return {
         "figee": figee,
         "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
+        # M139 Lot 2 (F2) — la SECONDE date : les valeurs (SDP/zone/cause) sont relues LIVE sur le
+        # run résiduel servi ; on la DIT (« valeurs au JJ/MM (run N) »), au lieu du seul avertissement.
+        "valeurs_run": _residuel_run_servi(db) if figee else None,
         "n": len(parcelles),
         "total": tot["total"],           # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
         "total_etage0": tot["etage0"],   # M130-6 §C : part étage 0 du total

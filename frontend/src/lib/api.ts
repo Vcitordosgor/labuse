@@ -846,7 +846,7 @@ export const deriveProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
 export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number }) =>
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
+export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
 export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
 export const getApercu = (cadrage: Cadrage, identite: Identite = {}, limit = 5) =>
   j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage, identite, limit }) })
@@ -856,7 +856,9 @@ export const patchProjet = (id: number, body: { nom?: string; statut?: string; c
 // M120 — rejouer À LA DEMANDE : rend le diff (entrées / sorties / tris conservés).
 export const rejouerProjet = (id: number) =>
   j<{ ok: boolean; projet: Projet; shortlist: ShortlistDiff; counts: ProjetCounts }>(`/projets/${id}/rejouer`, { method: 'POST' })
-export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })
+// M139 Lot 1 (F1) — plus de suppression de projet côté front : l'archivage (patchProjet
+// statut=archive/actif) est le SEUL chemin, réversible, et les cartes CRM suivent. Le wrapper
+// deleteProjet (jamais appelé) est retiré ; l'API DELETE archive désormais aussi (défense).
 
 // ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
 export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
@@ -876,6 +878,8 @@ export interface FusionResult { ok: boolean; cible: number; sources_archivees: n
 export const fusionnerProjets = (ids: number[]) => j<FusionResult>('/projets/fusionner', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) })
 export interface ParcoursEtat {
   nom: string; sdp_besoin_m2: number | null; counts: ParcoursCounts
+  // M139 Lot 2 (F2) — les deux dates : figeage du cadrage + run résiduel servi des valeurs.
+  figee_le?: string | null; valeurs_run?: { label: string; seq: number; date: string | null } | null
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {

@@ -179,6 +179,11 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               {projet?.derniere_execution_at && (
                 <span data-kanban-cadrage-date className="whitespace-nowrap text-[10.5px] text-txt-dim">· cadrage du {fmtDate(projet.derniere_execution_at)}</span>
               )}
+              {/* M139 Lot 2 (F2) — la SECONDE date : les valeurs (SDP/zone) sont relues live au run
+                  résiduel servi. On la DIT au lieu de la taire — l'avertissement devient une donnée. */}
+              {etatQ.data?.valeurs_run?.date && (
+                <span data-kanban-valeurs-date className="whitespace-nowrap text-[10.5px] text-txt-dim" title="Les valeurs (SDP, zone) sont lues sur le run résiduel servi ; elles peuvent évoluer si le run bascule.">· valeurs au {fmtDate(etatQ.data.valeurs_run.date)} (run {etatQ.data.valeurs_run.label})</span>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
