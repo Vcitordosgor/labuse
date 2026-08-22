@@ -17,27 +17,26 @@ from .pdf_premium import FONTS, LINE, MINT, MINT_SOFT, TXT, TXT_DIM, TXT_HI, TXT
 
 TYPE_LABEL = {"logements": "Logements", "etudiant": "Logement étudiant",
               "bureaux": "Bureaux", "autre": "Projet"}
-# M130-3 §E — chaque libellé NOMME la contrainte réellement mesurée (parcel_residuel.cause, M125),
-# jamais une catégorie vague. terrain_exigu = le contour inseté des reculs se vide (résiduel nul, pas
-# le terrain) ; redhibitoire = une modulation ramène la capacité à 0 ; habitat_interdit = logement non
-# admis au règlement de la zone.
+# M130-4 §E.2 — vocabulaire FERMÉ des causes d'absence de SDP (« résiduel nul » seul, ambigu, retiré).
+# Quatre familles de contrainte + les états de donnée indisponible (distincts, honnêtes).
 _CAUSE_LABEL = {
-    "zone_non_constructible": "zone non constructible",
-    "terrain_exigu": "résiduel constructible nul après reculs",
-    "capacite_nulle": "capacité constructible nulle",
-    "hauteur_indispo": "hauteur PLU non renseignée au règlement",
+    "zone_non_constructible": "zone fermée à l'urbanisation",
+    "zone_non_constructible_neuf": "zone fermée à l'urbanisation",
     "habitat_interdit": "logement non admis au règlement de la zone",
-    "hors_plu": "parcelle hors PLU",
-    "zone_non_resolue": "zone non outillée au règlement",
-    "zone_non_constructible_neuf": "construction neuve non admise",
-    "redhibitoire": "capacité annulée par les modulations (risque/pente/servitude)",
+    "terrain_exigu": "résiduel nul après reculs et emprises",
+    "capacite_nulle": "résiduel nul après reculs et emprises",
+    "redhibitoire": "capacité annulée par les modulations (risque / pente / servitude)",
+    # états de donnée indisponible (pas une contrainte de zone) — dits, jamais confondus avec un « 0 »
+    "hauteur_indispo": "hauteur PLU non renseignée au règlement",
+    "hors_plu": "parcelle hors PLU (donnée indisponible)",
+    "zone_non_resolue": "zone non outillée au règlement (donnée indisponible)",
     "bati_non_ingere": "bâti non mesurable (donnée manquante)",
     "indetermine": "indéterminée",
 }
 
 
 def _cause_txt(cause: str | None) -> str:
-    """« zone_non_constructible:2AUe » → « zone non constructible »."""
+    """« zone_non_constructible:2AUe » → « zone fermée à l'urbanisation » (vocabulaire fermé §E.2)."""
     if not cause:
         return "non calculable"
     return _CAUSE_LABEL.get(str(cause).split(":", 1)[0], "non calculable")
@@ -47,6 +46,13 @@ def _fr(x: float) -> str:
     """M130-3 §F.2 — nombre en français : séparateur décimal VIRGULE, sans zéro parasite (3.5 → 3,5)."""
     s = f"{x:g}"
     return s.replace(".", ",")
+
+
+def _src_propre(src: str | None) -> str | None:
+    """M130-4 §E.3 — retire le point final parasite d'une citation d'article (« p.84. » → « p.84 »)."""
+    if not src:
+        return src
+    return src.rstrip().rstrip(".")
 
 
 class _Pdf(FPDF):
@@ -100,11 +106,12 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     pdf.set_text_color(*TXT_HI)
     pdf.multi_cell(0, 7, projet.get("nom") or "Projet", new_x="LMARGIN", new_y="NEXT")
     # M130-2 §1.2 — DEUX dates distinctes, nommées : figeage du cadrage ET génération du document.
+    # M130-4 §D : jamais « figé le — » quand la date est absente → « Cadrage non figé ».
     figee_le = shortlist.get("figee_le")
+    cadrage_txt = f"Cadrage figé le {figee_le}" if figee_le else "Cadrage non figé"
     pdf.set_font("inter", size=7.5)
     pdf.set_text_color(*TXT_MUT)
-    pdf.cell(0, 4.6, f"Cadrage figé le {figee_le or '— (non figé)'}"
-                     f"   ·   Document généré le {date.today().isoformat()}",
+    pdf.cell(0, 4.6, f"{cadrage_txt}   ·   Document généré le {date.today().isoformat()}",
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
@@ -133,8 +140,16 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     if cadrage.get("sdpMin"):
         remplies.append(("SDP min.", f"{int(cadrage['sdpMin']):,} m² (facette du cadrage)".replace(",", " ")))
     if cadrage.get("surfaceMin") or cadrage.get("surfaceMax"):
+        # M130-4 §E.1 — pas d'« ∞ » : « X m² et plus » / « jusqu'à Y m² » / « X – Y m² », milliers espacés.
         lo, hi = cadrage.get("surfaceMin"), cadrage.get("surfaceMax")
-        remplies.append(("Surface", f"{lo or 0}–{hi or '∞'} m²"))
+        _sm = lambda v: f"{int(v):,}".replace(",", " ")   # noqa: E731 — milliers espacés
+        if lo and hi:
+            surf = f"{_sm(lo)} – {_sm(hi)} m²"
+        elif lo:
+            surf = f"{_sm(lo)} m² et plus"
+        else:
+            surf = f"jusqu'à {_sm(hi)} m²"
+        remplies.append(("Surface", surf))
     if identite.get("budget_eur"):
         remplies.append(("Budget foncier", f"{identite['budget_eur'] / 1000:,.0f} k€ (indicatif)".replace(",", " ")))
     for k, v in remplies:
@@ -157,22 +172,35 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         n = shortlist.get("n", 0)
         pdf.cell(0, 5, f"PARCELLES DE LA SHORTLIST  ·  {n:,} parcelle(s), cadrage figé le {figee_le}"
                  .replace(",", " "), new_x="LMARGIN", new_y="NEXT")
-        # M130-3 §D.2 — DIRE la troncature : combien retenues (vivier à ce jour), combien figées, et
-        # le critère de sélection (rang de proba de mutation = rang caché) + une alternative neutre.
-        if shortlist.get("tronquee"):
-            vivier = shortlist.get("vivier")
-            pdf.ln(0.5)
-            pdf.set_font("inter", size=7)
-            pdf.set_text_color(*TXT_DIM)
-            pdf.multi_cell(pdf.w - 28, 3.6,
-                           f"Liste plafonnée : {n} parcelles figées sur ~ {vivier:,} retenues par le "
-                           "cadrage (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de "
-                           "mutation (critère interne du moteur) — un rang non visible ; elles sont "
-                           "présentées ici par ordre géographique. Pour une sélection neutre, élargir "
-                           "la shortlist (« chercher plus ») ou trier par surface."
-                           .replace(",", " "), new_x="LMARGIN", new_y="NEXT")
+        # M130-4 §A — ligne d'état de la liste INCONDITIONNELLE (jamais d'omission) : 3 états selon le
+        # total retenu par le cadrage (vivier « à ce jour »). None/0 → état 3 (INDISPONIBLE). Un rang de
+        # sélection (proba de mutation) ne doit JAMAIS être servi muet.
+        vivier = shortlist.get("vivier")
+        neutre = ("Élargir la shortlist ne supprime pas ce rang : seule une liste complète ou un tri "
+                  "explicite (surface) est neutre.")   # §B — plus de fausse issue « chercher plus »
+        if vivier is None or vivier == 0:
+            etat = ("Nombre total de parcelles retenues par le cadrage : INDISPONIBLE. Cette liste peut "
+                    "être tronquée ; si elle l'est, les parcelles ont été sélectionnées par probabilité "
+                    "de mutation — un rang non visible. " + neutre)
+        elif vivier > n:
+            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {vivier:,} retenues par le cadrage "
+                    "(à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de mutation (critère "
+                    "interne du moteur) — un rang non visible ; elles sont présentées ici par ordre "
+                    "géographique. " + neutre).replace(",", " ")
+        else:
+            etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
+                    "présentées. Aucune sélection, aucun rang.")
+        pdf.ln(0.5)
+        pdf.set_font("inter", size=7)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.6, etat, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
         for it in shortlist.get("parcelles", []):
+            # M130-4 §E.4 — keep-together : un bloc parcelle (IDU + adresse + lignes) ne se coupe pas
+            # entre deux pages. On mesure la hauteur du bloc et on saute la page AVANT s'il déborde.
+            _bloc_h = 5 + 4.4 + 4.4 * len(_lignes_donnees(it)) + 1.5
+            if pdf.get_y() + _bloc_h > pdf.h - pdf.b_margin:
+                pdf.add_page()
             pdf.set_font("mono", size=8.5)
             pdf.set_text_color(*TXT_HI)
             pdf.cell(0, 5, f"{it['idu']}  ({it.get('section', '')} {it.get('numero', '')})"
@@ -198,7 +226,9 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     pdf.multi_cell(0, 4.4, "Les données par parcelle viennent du moteur déterministe : SDP résiduelle "
                    "(estimée), hauteurs du PLU calibré (égout et faîtage) et zone PLU. Aucun verdict, "
                    "score ni classement ; l'ordre est géographique (commune, section, numéro). L'IA ne "
-                   "produit aucun chiffre.", border=0, fill=True, new_x="LMARGIN", new_y="NEXT")
+                   "produit aucun chiffre. La SDP résiduelle est une surface de plancher cumulée sur "
+                   "plusieurs niveaux : elle peut dépasser la surface de la parcelle.",
+                   border=0, fill=True, new_x="LMARGIN", new_y="NEXT")
 
     # ── §5.2 — CE QUE CE DOCUMENT NE PEUT PAS DIRE (limites propres au projet)
     pdf.ln(2)
@@ -239,16 +269,16 @@ def _lignes_donnees(it: dict) -> list[str]:
     # §F.1 surface de la parcelle (Sourcé — cadastre) : permet de vérifier un filtre de surface.
     if it.get("surface_m2") is not None:
         out.append(f"Surface parcelle : {int(it['surface_m2']):,} m² (Sourcé — cadastre)".replace(",", " "))
-    # §A / §3.1 SDP résiduelle. La FAMILLE décide : A/N = non constructible → jamais de chiffre.
+    # §A / §3.1 SDP résiduelle. La FAMILLE décide : A/N = fermée à l'urbanisation → jamais de chiffre
+    # (§E.2 vocabulaire fermé). §F.3 : 0/None → « aucune », pas « ~ 0 ».
     if it.get("non_constructible"):
-        out.append(f"SDP résiduelle : aucune (zone {it.get('zone_famille') or 'non constructible'} "
-                   "non constructible)")
+        out.append("SDP résiduelle : aucune (zone fermée à l'urbanisation)")
     elif it.get("sdp_indispo"):
         out.append(f"SDP résiduelle : aucune ({_cause_txt(it['sdp_indispo'])})")
-    elif it.get("sdp_m2"):                                    # §F.3 : 0 (ou None) → « aucune », pas « ~ 0 »
+    elif it.get("sdp_m2"):
         out.append(f"SDP résiduelle ~ {it['sdp_m2']:,} m² (Estimé)".replace(",", " "))
     else:
-        out.append("SDP résiduelle : aucune (résiduel nul)")
+        out.append("SDP résiduelle : aucune (résiduel nul après reculs et emprises)")
     # §B / §3.2 Hauteur PLU : ligne TOUJOURS présente, avec état explicite (panne ≠ absence).
     he, hf = it.get("he_m"), it.get("hf_m")
     renvoi = f" · via renvoi : {it['hauteur_renvoi']}" if it.get("hauteur_renvoi") else ""   # §F.4
@@ -256,10 +286,10 @@ def _lignes_donnees(it: dict) -> list[str]:
         tag = "Sourcé — PLU calibré" if it.get("hauteur_calibree") else "Estimé — générique"
         eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
         fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
-        src = it.get("hauteur_source")
+        src = _src_propre(it.get("hauteur_source"))                        # §E.3 : point final retiré
         out.append(f"Hauteur PLU : {eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
     elif it.get("non_constructible"):
-        out.append("Hauteur PLU : non applicable (zone non constructible)")
+        out.append("Hauteur PLU : non applicable (zone fermée à l'urbanisation)")
     elif it.get("zone_resolue"):
         out.append("Hauteur PLU : non réglementée pour cette zone")
     else:
@@ -270,4 +300,17 @@ def _lignes_donnees(it: dict) -> list[str]:
         mil = it.get("zone_millesime")
         out.append(f"Zone PLU {it['zone_code']}{(' — ' + fam) if fam else ''} "
                    f"(Sourcé — GPU/PLU, {('millésime ' + mil) if mil else 'millésime non renseigné'})")
+    # §C — MULTI-ZONE dite (réserve M130-3) : une partie constructible ne se tait pas. Aucune SDP
+    # partielle chiffrée — on dit l'existence, pas la quantité. Vaut dans les DEUX sens (dominante
+    # constructible avec SDP chiffrée = SDP calculée sur une sous-zone → à signaler aussi).
+    if it.get("multi_zone"):
+        parts = it.get("zones_parts") or []
+        if parts and all(p[2] is not None for p in parts):
+            liste = " · ".join(f"{lib} ({fam or '—'}) ~ {pct} %" for lib, fam, pct in parts)
+        else:
+            liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
+        tail = ("SDP calculée sur la partie constructible ; les autres parts restent à instruire."
+                if it.get("sdp_chiffree") else
+                "la SDP n'est pas chiffrée ; une partie constructible peut exister et reste à instruire.")
+        out.append(f"Parcelle multi-zones : {liste} — {tail}")
     return out

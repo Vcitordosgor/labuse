@@ -1031,46 +1031,72 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     rows = db.execute(text(
         """SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
                   substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
-                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause,
-                  z.libelle AS zone_libelle, z.idurba AS zone_idurba
+                  pr.sdp_residuelle_m2, pr.capacite_estimee, pr.cause
            FROM projet_parcelles pp
            JOIN parcels par ON par.id = pp.parcel_id
            LEFT JOIN parcel_residuel pr ON pr.parcel_id = par.id
-           LEFT JOIN LATERAL (
-                SELECT sl.attrs->>'libelle' AS libelle, sl.attrs->>'idurba' AS idurba
-                FROM spatial_layers sl
-                WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, par.geom_2975)
-                ORDER BY ST_Area(ST_Intersection(sl.geom_2975, par.geom_2975)) DESC LIMIT 1) z ON TRUE
            WHERE pp.projet_id = :pid AND pp.statut <> 'ecartee'
            ORDER BY par.commune, section, NULLIF(regexp_replace(numero, '\\D', '', 'g'), '')::int"""),
         {"pid": p.id}).mappings().all()
     figee = bool(p.derniere_execution_at) and bool(rows)
     idus = [r["idu"] for r in rows]
     adrs = {i: format_adresse(a) for i, a in adresses_ban(db, idus).items()} if idus else {}
+    # M130-4 §C — PARTS de zone (décompte spatial direct, MÊME chemin que le tableau ZONE/PART du
+    # dossier banquier : spatial_layers plu_gpu_zone + pct = surface d'intersection / surface parcelle).
+    # Une seule requête batch pour toute la shortlist ; groupée par IDU ensuite.
+    # M130-4 : parts AGRÉGÉES PAR LIBELLÉ (une zone multipolygone ne doit pas apparaître deux fois —
+    # « Uav ~13 % · Uav ~7 % » → « Uav ~20 % »). GROUP BY libellé, somme des parts.
+    zones_par_idu: dict[str, list] = {}
+    if idus:
+        for zr_row in db.execute(text(
+                """SELECT par.idu, sl.attrs->>'libelle' AS lib, max(sl.attrs->>'idurba') AS idurba,
+                          round((100 * sum(ST_Area(ST_Intersection(sl.geom_2975, par.geom_2975)))
+                                 / NULLIF(ST_Area(par.geom_2975), 0))::numeric) AS pct
+                   FROM projet_parcelles pp
+                   JOIN parcels par ON par.id = pp.parcel_id
+                   JOIN spatial_layers sl ON sl.kind = 'plu_gpu_zone'
+                        AND ST_Intersects(sl.geom_2975, par.geom_2975)
+                   WHERE pp.projet_id = :pid AND pp.statut <> 'ecartee'
+                   GROUP BY par.idu, sl.attrs->>'libelle', par.geom_2975
+                   ORDER BY par.idu, pct DESC"""), {"pid": p.id}).mappings():
+            if zr_row["lib"]:
+                zones_par_idu.setdefault(zr_row["idu"], []).append(
+                    (zr_row["lib"], _zone_famille(zr_row["lib"]),
+                     int(zr_row["pct"]) if zr_row["pct"] is not None else None, zr_row["idurba"]))
     parcelles = []
     for r in rows:
+        zs = zones_par_idu.get(r["idu"], [])
+        dom = zs[0] if zs else (None, None, None, None)          # zone dominante = plus forte part
+        zone_libelle, famille, _dpct, zone_idurba = dom
+        # §C : parts SIGNIFICATIVES (≥ 5 % — un liseré < 5 % n'est pas « multi-zones »).
+        parts = [(lib, fam, pct) for (lib, fam, pct, _iu) in zs if pct is not None and pct >= 5]
+        multi_zone = len(parts) >= 2
         zr = None
         try:
-            zr = resolve_zone(r["zone_libelle"], r["commune"]) if r["zone_libelle"] else None
+            zr = resolve_zone(zone_libelle, r["commune"]) if zone_libelle else None
         except Exception:  # noqa: BLE001 — une zone non résolue ne casse pas l'export
             zr = None
         he = getattr(zr, "he_m", None) if zr else None
         hf = getattr(zr, "hf_m", None) if zr else None
-        famille = _zone_famille(r["zone_libelle"])
         # M130-3 §A.2/A.4 : la FAMILLE décide — A (agricole) / N (naturelle) = non constructible,
         # JAMAIS de SDP chiffrée (indépendant du cache résiduel, qui peut avoir calculé sur une
         # sous-zone U chevauchante et laissé « 2 149 m² sur du Nco »).
         non_constructible = famille in ("agricole", "naturelle")
+        sdp_m2 = int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None
         parcelles.append({
             "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],   # §F.1
             "section": r["section"], "numero": r["numero"],
             "adresse_ban": adrs.get(r["idu"]),
             "non_constructible": non_constructible,
-            "sdp_m2": int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None,
+            "sdp_m2": sdp_m2,
             "sdp_indispo": r["cause"],
-            "zone_code": r["zone_libelle"],
+            # §C : SDP réellement chiffrée = constructible, sans cause, > 0
+            "sdp_chiffree": bool(not non_constructible and not r["cause"] and sdp_m2),
+            "multi_zone": multi_zone,
+            "zones_parts": parts,       # [(lib, famille, pct), …] ≥ 5 %
+            "zone_code": zone_libelle,
             "zone_famille": famille,
-            "zone_millesime": _plu_millesime(r["zone_idurba"]),
+            "zone_millesime": _plu_millesime(zone_idurba),
             "he_m": float(he) if isinstance(he, (int, float)) else None,
             "hf_m": float(hf) if isinstance(hf, (int, float)) else None,
             "hauteur_calibree": bool(getattr(zr, "calibree", False)) if zr else False,
@@ -1091,8 +1117,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         "figee": figee,
         "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
         "n": len(parcelles),
-        "vivier": vivier,
-        "tronquee": bool(vivier is not None and vivier > len(parcelles)),
+        "vivier": vivier,      # M130-4 §A : None / 0 → état 3 ; > n → état 1 ; <= n → état 2 (jamais d'omission)
         "parcelles": parcelles,
     }
 
