@@ -120,6 +120,8 @@ Les zones GELÉES (Us/2AUc) ont, elles, un résiduel 0 : déjà écartées, gel 
 - le cas SUBTIL non capté par la règle locale : étiquette ET centroïde **tous deux
   constructibles** mais **sous-zones différentes** (ex. étiquette `Uc` hé 9, centroïde
   `Ua` hé 21). La SDP servie reste alors légèrement étrangère (hauteur/gabarit d'une
-  autre sous-zone). Le détecter exige de résoudre le centroïde par une requête
-  spatiale PAR PARCELLE au runtime — mesurée à **~60 s sur l'île**, inacceptable pour
-  un outil à la demande. Se règle en même temps que l'attribution de zone amont.
+  autre sous-zone). Mesuré : divergence résolue TOTALE = **288** parcelles, dont
+  **250 neutralisées** par la règle et **38 non captées** (ce cas subtil). Le détecter
+  exige de résoudre le centroïde par une requête spatiale PAR PARCELLE au runtime —
+  mesurée à **~60 s sur l'île**, inacceptable pour un outil à la demande. Se règle en
+  même temps que l'attribution de zone amont.
