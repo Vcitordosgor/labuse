@@ -164,10 +164,10 @@ def test_r5_etudier_trouvable_depuis_les_outils():
 
 
 def test_r5_etudier_champs_et_prix_manuel():
-    # entrée UNIFIÉE : adresse NORMALISÉE BAN (AddressAutocomplete) OU référence cadastrale (IDU) ;
-    # prix saisi à la main (jamais scrapé). Résultat + porte fiche présents.
-    assert "data-etudier-adresse" in ETUDIER and "AddressAutocomplete" in ETUDIER
-    assert "data-etudier-idu" in ETUDIER                                # 2e entrée : la parcelle
+    # PATRON OMNIBOX (M137) : UN SEUL champ (ParcelInput) accepte adresse OU IDU — plus de 2e champ
+    # IDU séparé. Prix saisi à la main (jamais scrapé). Résultat + porte fiche présents.
+    assert "ParcelInput" in ETUDIER and 'dataAttr="etudier-adresse"' in ETUDIER   # rendu data-etudier-adresse
+    assert "data-etudier-idu" not in ETUDIER                            # champ IDU séparé RETIRÉ (unifié)
     assert "data-etudier-prix" in ETUDIER and "jamais scrapé" in ETUDIER
     assert "data-etudier-resultat" in ETUDIER and "data-etudier-fiche" in ETUDIER
 
@@ -213,6 +213,29 @@ def test_fusion_deux_cles_resolvent_jamais_404():
     assert "setModule('calculette-fonciere')" in FICHE_TSX and "setCalcPrefill(idu)" in FICHE_TSX
     # le copilote route toujours les deux intentions (charge foncière → calculette-fonciere ; scorer → scoreur-adresse)
     assert "\"calculette-fonciere\"" in ANSWERING and "\"scoreur-adresse\"" in ANSWERING
+
+
+def test_omnibox_parcelinput_chemin_unique():
+    """PATRON OMNIBOX (M137) — un SEUL champ accepte adresse ET IDU, via le composant PARTAGÉ
+    ParcelInput. Chemin unique : la reconnaissance d'IDU vit à UN endroit (format.ts `estIdu`,
+    LOI-3), AddressAutocomplete la réutilise (plus de regex recopiée), et chaque outil à saisie de
+    parcelle passe par ParcelInput (plus de champ IDU brut ni d'onglet par écran)."""
+    root = ROOT / "frontend/src"
+    PI = (root / "components/ParcelInput.tsx").read_text(encoding="utf-8")
+    FORMAT = (root / "lib/format.ts").read_text(encoding="utf-8")
+    AAC = (root / "components/AddressAutocomplete.tsx").read_text(encoding="utf-8")
+    PP = (root / "components/outils/ParcelPicker.tsx").read_text(encoding="utf-8")
+    O5 = (root / "components/outils/blocB.tsx").read_text(encoding="utf-8")
+    # 1) la règle IDU a UN seul foyer (format.ts), AddressAutocomplete la réutilise (pas de regex copiée)
+    assert "export const estIdu" in FORMAT
+    assert "estIdu" in AAC and "d{5}[0-9A-Za-z]" not in AAC
+    # 2) ParcelInput = AddressAutocomplete + aiguillage estIdu sur Entrée — le composant unique
+    assert "AddressAutocomplete" in PI and "estIdu" in PI and "onEnterRaw" in PI
+    # 3) chaque outil à saisie de parcelle passe par ParcelInput (plus de champ IDU séparé / onglet)
+    assert "ParcelInput" in ETUDIER                       # Étudier un bien
+    assert "ParcelInput" in PP and "<input" not in PP     # ParcelPicker (→ Faisabilité M22) : plus d'input brut
+    assert 'dataAttr="o5-idu"' in O5 and "<input data-o5-idu" not in O5   # Risques « une parcelle »
+    assert 'dataAttr="courrier-idu"' in MODULEPANEL and 'dataAttr="temps-idu"' in MODULEPANEL  # Courrier + Remonter le temps
 
 
 def test_r5_pourquoi_pas_onglet_conditionnel():

@@ -1,0 +1,27 @@
+{
+  "etudier": {
+    "idu": true,
+    "adresse": true,
+    "champ_unique": true
+  },
+  "courrier": {
+    "idu": true,
+    "adresse": true,
+    "champ_unique": true
+  },
+  "temps": {
+    "idu": true,
+    "adresse": true,
+    "champ_unique": true
+  },
+  "faisabilite": {
+    "idu": true,
+    "adresse": true,
+    "champ_unique": true
+  },
+  "risques": {
+    "idu": true,
+    "adresse": true,
+    "champ_unique": true
+  }
+}

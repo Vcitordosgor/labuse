@@ -23,9 +23,9 @@ await page.click('[data-outil="scoreur-adresse"]');
 await page.waitForSelector('[data-etudier-form]', { state: 'visible' });
 await page.screenshot({ path: `${OUT}/1-entree.png` });
 
-// ENTRÉE par référence cadastrale (IDU) → CONSTAT
-await page.fill('[data-etudier-idu]', IDU);
-await page.click('[data-etudier-go]');
+// ENTRÉE UNIFIÉE (patron omnibox) : IDU dans le MÊME champ que l'adresse → Entrée → CONSTAT
+await page.fill('[data-etudier-adresse]', IDU);
+await page.press('[data-etudier-adresse]', 'Enter');
 await page.waitForSelector('[data-etudier-resultat]', { state: 'visible' });
 await page.waitForTimeout(600);
 await page.screenshot({ path: `${OUT}/2-constat.png` });

@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
+import { ParcelInput } from '../ParcelInput'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { Tip } from '../Tip'
@@ -45,9 +46,9 @@ export function O5Servitudes() {
       <Banner>Les contraintes <b>dormantes</b> qui ne se voient pas sur la carte — servitudes
         d'utilité publique, sols, bruit — ET ce que la base ne couvre pas (jamais un faux
         « RAS »). La due diligence notariale reste indispensable.</Banner>
-      <input data-o5-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
-        placeholder="IDU (ou sélectionnez une parcelle sur la carte)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
+      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
+          carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
+      <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse ou IDU (ou clic carte)" onPick={(id) => setIdu(id)} />
       {q.isLoading && <Loading accent="mint" label="Recherche des servitudes…" />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (

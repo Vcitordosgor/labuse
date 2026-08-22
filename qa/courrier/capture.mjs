@@ -21,9 +21,11 @@ await page.click('button[title="Outils"]');
 await page.click('[data-outil="courriers"]');
 
 async function unModele(motif, i) {
-  // étape 1 — parcelle
+  // étape 1 — parcelle (patron omnibox : IDU dans le champ unifié → Entrée pour valider)
   await page.waitForSelector('[data-courrier-idu]', { state: 'visible' });
   await page.fill('[data-courrier-idu]', IDU);
+  await page.press('[data-courrier-idu]', 'Enter');
+  await page.waitForSelector('[data-courrier-next]:not([disabled])');
   await page.click('[data-courrier-next]');
   // étape 2 — motif
   await page.waitForSelector(`[data-courrier-motif="${motif}"]`, { state: 'visible' });

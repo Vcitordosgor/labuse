@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { banAutocomplete, type BanFeature } from '../lib/api'
+import { estIdu } from '../lib/format'
 
 // M12-D1 — COMPOSANT D'AUTOCOMPLÉTION D'ADRESSE RÉUTILISABLE (mutualisé D2 + D3).
 // Suggestions au fil de la frappe, adossées à la BAN (api-adresse.data.gouv.fr, publique).
@@ -32,7 +33,8 @@ interface Props {
 // lance PAS la recherche d'adresse dessus — sinon la BAN répond 0 et affiche « Aucune adresse trouvée »
 // alors que la recherche par IDU fonctionne. On reconnaît aussi l'IDU EN COURS de frappe (suite contiguë
 // commençant par ≥ 5 chiffres, sans espace, ≥ 6 car.) pour ne pas faire clignoter le bandeau à la saisie.
-const looksLikeIdu = (s: string) => /^\d{5}[0-9A-Za-z]{1,9}$/.test(s)
+// La règle vit dans format.ts (`estIdu`, LOI-3 : un dessin, un seul endroit) — partagée avec ParcelInput.
+const looksLikeIdu = estIdu
 
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
