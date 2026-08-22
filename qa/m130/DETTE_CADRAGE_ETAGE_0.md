@@ -36,3 +36,16 @@ les compteurs « retenues » restent gonflés.
 
 Référence : `src/labuse/api/projets.py` (`_run_cadrage`, `_vivier_figeable`,
 `_figer_shortlist`), `src/labuse/api/app.py` (`_q_v2_list`, `_ETAGE0_SQL`).
+
+---
+
+## F.3 (M130-7) — `97422000AD1237` : `status = a_creuser` en zone 2AUd fermée
+
+Divergence cascade / zonage : la parcelle `97422000AD1237` (Le Tampon) est en
+**2AUd** (zone AU stricte, **fermée à l'urbanisation** — cause résiduel
+`zone_non_constructible:2AUd`, SDP nulle), mais son `status` du run est
+**`a_creuser`** (un tier « exploitable »), donc **hors étage 0**. Une zone fermée
+à l'urbanisation devrait être écartée (étage 0), pas classée en tier à creuser.
+À trancher côté **mandat app** (cascade de statut vs zonage PLU), pas dans le PDF.
+Référence : `dryrun_parcel_evaluations.status` vs `parcel_residuel.cause` /
+`resolve_zone(constructible_neuf=False)`.

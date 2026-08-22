@@ -1100,6 +1100,10 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         # M130-5 §C : reliquat = 100 − somme des parts affichées (zones sous le seuil / trou géométrie).
         # Jamais muet : ≥ 2 → ligne « autres zones ~ X % » ; ±1 = arrondi (rien).
         parts_reste = 100 - sum(pct for (_l, _f, pct) in parts) if parts else 0
+        # M130-7 §C : la plus grande part CONSTRUCTIBLE (U / AU) ≥ 5 % — pour dire l'exception d'une
+        # parcelle écartée du vivier qui garde une part constructible.
+        _constr = [(lib, pct) for (lib, fam, pct) in parts if fam in ("urbaine", "à urbaniser")]
+        part_constructible = _constr[0] if _constr else None
         zr = None
         try:
             zr = resolve_zone(zone_libelle, r["commune"]) if zone_libelle else None
@@ -1125,6 +1129,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
             "multi_zone": multi_zone,
             "zones_parts": parts,       # [(lib, famille, pct), …] ≥ 5 %
             "zones_reste": parts_reste,
+            "part_constructible": part_constructible,   # M130-7 §C : (libellé, pct) ou None
             "zone_code": zone_libelle,
             "zone_famille": famille,
             "zone_millesime": _plu_millesime(zone_idurba),
@@ -1146,6 +1151,8 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         "total": tot["total"],           # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
         "total_etage0": tot["etage0"],   # M130-6 §C : part étage 0 du total
         "etage0_count": sum(1 for it in parcelles if it["etage0"]),   # §B (part étage 0 des FIGÉES)
+        # M130-7 §C : parcelles étage 0 gardant une part constructible (exception au constat d'ensemble)
+        "etage0_constructible": sum(1 for it in parcelles if it["etage0"] and it["part_constructible"]),
         "parcelles": parcelles,
     }
 

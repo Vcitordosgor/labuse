@@ -48,11 +48,13 @@ PROJETS = [
      {"communes": ["Saint-Pierre"], "tiers": ["ecartee"]}, {"type_logement": "logements"}, True),
     ("QA M130 · P4 non figé", {"communes": ["Le Tampon"]}, {"type_logement": "logements"}, False),
 ]
+# préfixe versionné du mandat courant (bump à chaque itération M130-x)
+PREFIXE = "M130-7"
 FICHIER = {
-    "QA M130 · P1 large île": "M130-6-projet-P1-large-ile.pdf",
-    "QA M130 · P2 étroit Tampon": "M130-6-projet-P2-etroit-tampon.pdf",
-    "QA M130 · P3 écartées Saint-Pierre": "M130-6-projet-P3-ecartees-stpierre.pdf",
-    "QA M130 · P4 non figé": "M130-6-projet-P4-non-fige.pdf",
+    "QA M130 · P1 large île": f"{PREFIXE}-projet-P1-large-ile.pdf",
+    "QA M130 · P2 étroit Tampon": f"{PREFIXE}-projet-P2-etroit-tampon.pdf",
+    "QA M130 · P3 écartées Saint-Pierre": f"{PREFIXE}-projet-P3-ecartees-stpierre.pdf",
+    "QA M130 · P4 non figé": f"{PREFIXE}-projet-P4-non-fige.pdf",
 }
 
 

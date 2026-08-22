@@ -25,7 +25,7 @@ _CAUSE_LABEL = {
     "habitat_interdit": "logement non admis au règlement de la zone",
     "terrain_exigu": "résiduel nul après reculs et emprises",
     "capacite_nulle": "résiduel nul après reculs et emprises",
-    "redhibitoire": "capacité annulée par les modulations (risque / pente / servitude)",
+    "redhibitoire": "capacité annulée par les modulations : risque / pente / servitude",
     # états de donnée indisponible (pas une contrainte de zone) — dits, jamais confondus avec un « 0 »
     "hauteur_indispo": "hauteur PLU non renseignée au règlement",
     "hors_plu": "parcelle hors PLU (donnée indisponible)",
@@ -59,6 +59,21 @@ def _src_propre(src: str | None) -> str | None:
 # M130-6 §A — le CAS 3 (« résiduel calculé et NUL ») se reconnaît à la CAUSE, jamais à l'absence de
 # nombre : reculs / emprises / modulations / logement non admis. (Le zonage fermé = cas 2, la famille.)
 _CASE3_CAUSES = {"terrain_exigu", "capacite_nulle", "redhibitoire", "habitat_interdit"}
+
+
+def _sdp_calcul_nul(it: dict) -> bool:
+    """M130-7 §D — la SDP a été CALCULÉE et vaut zéro (≠ supprimée par la famille de zone, ≠ donnée
+    indisponible). Testé sur l'ÉTAT du résiduel, jamais sur la famille de la zone dominante :
+      · famille A/N → supprimée (pas calculée) → False ;
+      · cause ∈ {reculs, emprises, modulations, logement non admis} → True ;
+      · aucune cause, non chiffrée, pas A/N → résiduel nul calculé (cas de HY0897 : Ug, sdp 0) → True.
+    Aligne la variante multi-zones sur la ligne SDP, qui affiche déjà « résiduel nul » dans ces cas."""
+    if it.get("non_constructible"):
+        return False
+    cause0 = (it.get("sdp_indispo") or "").split(":", 1)[0]
+    if cause0:
+        return cause0 in _CASE3_CAUSES
+    return not it.get("sdp_chiffree")
 
 
 class _Pdf(FPDF):
@@ -199,39 +214,48 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         else:
             etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
                     "présentées. Aucune sélection, aucun rang.")
-        # M130-6 §B — l'ÉTAGE 0 servi doit être dit, en décrivant la couche RÉELLEMENT interrogée
-        # (`_ETAGE0_SQL` = statut « exclue » / « faux positif probable » du run), sans réemployer le
-        # vocabulaire des causes de SDP. C'est un état de la donnée, jamais un rang/score.
+        # M130-7 §A/§B — l'ÉTAGE 0 servi est dit par son EFFET SUR LA DONNÉE, sans nommer statut, run
+        # ni scoring (pas de verdict/probabilité dans un exportable). §C : incise vers l'exception
+        # multi-zones quand des parcelles écartées gardent une part constructible.
         k0 = shortlist.get("etage0_count", 0)
-        _e0def = ("écartées avant évaluation — statut « exclue » ou « faux positif probable » du run "
-                  "de scoring")
+        exc = " — voir toutefois les parcelles multi-zones ci-dessous" if \
+            shortlist.get("etage0_constructible") else ""
         if k0 and k0 >= n:
-            etat += (f" Cette sélection est intégralement composée de parcelles classées à l'étage 0 du "
-                     f"moteur ({_e0def}). Elles n'ont pas vocation à être instruites en l'état.")
+            etat += (" Cette sélection est intégralement composée de parcelles que le moteur a écartées "
+                     f"de son vivier exploitable. Elles n'ont pas vocation à être instruites en l'état{exc}.")
         elif k0:
-            etat += f" {k0} des {n} parcelles figées sont classées à l'étage 0 du moteur ({_e0def})."
+            etat += (f" {k0} des {n} parcelles figées ont été écartées du vivier exploitable par le "
+                     f"moteur ; elles n'ont pas vocation à être instruites en l'état{exc}.")
         pdf.ln(0.5)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.multi_cell(pdf.w - 28, 3.6, etat, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
         for it in shortlist.get("parcelles", []):
-            # M130-4 §E.4 — keep-together : un bloc parcelle (IDU + adresse + lignes) ne se coupe pas
-            # entre deux pages. On mesure la hauteur du bloc et on saute la page AVANT s'il déborde.
-            _bloc_h = 5 + 4.4 + 4.4 * len(_lignes_donnees(it)) + 1.5
+            lignes = _lignes_donnees(it)
+            # M130-7 §B — keep-together sur le bloc ENTIER (IDU + adresse + toutes les lignes, y compris
+            # la ligne multi-zones qui peut faire 2-3 lignes). On mesure la hauteur RÉELLE de chaque
+            # ligne (retours à la ligne compris, dry_run) — plus aucune veuve d'un mot en tête de page.
+            adr = it.get("adresse_ban") or "Adresse non disponible"
+            pdf.set_font("inter", size=7.5)
+            _bloc_h = 5.0 + 1.5
+            _bloc_h += pdf.multi_cell(pdf.epw - 4, 4.4, adr, dry_run=True, output="HEIGHT",
+                                      new_x="RIGHT", new_y="TOP")
+            for dl in lignes:
+                _bloc_h += pdf.multi_cell(pdf.epw - 4, 4.4, dl, dry_run=True, output="HEIGHT",
+                                          new_x="RIGHT", new_y="TOP")
             if pdf.get_y() + _bloc_h > pdf.h - pdf.b_margin:
                 pdf.add_page()
             pdf.set_font("mono", size=8.5)
             pdf.set_text_color(*TXT_HI)
             pdf.cell(0, 5, f"{it['idu']}  ({it.get('section', '')} {it.get('numero', '')})"
                            f"  ·  {it.get('commune', '')}", new_x="LMARGIN", new_y="NEXT")
-            adr = it.get("adresse_ban")
             pdf.set_font("inter", size=7.5)
-            pdf.set_text_color(*(TXT_MUT if adr else TXT_DIM))
+            pdf.set_text_color(*(TXT_MUT if it.get("adresse_ban") else TXT_DIM))
             pdf.cell(4, 4.4, "")
-            pdf.cell(0, 4.4, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 4.4, adr, new_x="LMARGIN", new_y="NEXT")
             # ── données par parcelle (chacune Sourcé ou Estimé — §3.5)
-            for dl in _lignes_donnees(it):
+            for dl in lignes:
                 pdf.set_text_color(*MINT)
                 pdf.cell(4, 4.4, "·")
                 pdf.set_text_color(*TXT)
@@ -333,14 +357,21 @@ def _lignes_donnees(it: dict) -> list[str]:
                 liste += f" · autres zones ~ {reste} %"
         else:
             liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
-        # M130-6 §A — la variante se choisit sur la CAUSE, jamais sur « le champ est vide ».
-        cause0 = (it.get("sdp_indispo") or "").split(":", 1)[0]
+        # M130-7 §C — EXCEPTION prioritaire : une parcelle écartée du vivier (étage 0) qui garde une
+        # part constructible le DIT, pour ne pas contredire le constat d'ensemble de l'en-tête.
+        pc = it.get("part_constructible")
+        if it.get("etage0") and pc:
+            out.append(f"Parcelle multi-zones : {liste} — écartée du vivier, mais une part {pc[0]} "
+                       f"(~ {pc[1]} %) est constructible : à instruire séparément.")
+            return out
+        # M130-6/7 §A/§D — la variante se choisit sur l'ÉTAT du résiduel, jamais sur « le champ est vide »
+        # ni sur la famille de la zone dominante.
         tout_constructible = bool(parts) and all(f in ("urbaine", "à urbaniser") for _l, f, _p in parts)
         if it.get("sdp_chiffree"):                                       # cas 1 : SDP > 0
             tail = ("SDP calculée sur la partie constructible ; les autres parts relèvent d'un autre "
                     "règlement de zone, à instruire." if tout_constructible else   # §E.1
                     "SDP calculée sur la partie constructible ; les autres parts restent à instruire.")
-        elif cause0 in _CASE3_CAUSES and not it.get("non_constructible"):  # cas 3 : calculé et NUL
+        elif _sdp_calcul_nul(it):                                         # cas 3 : calculé et NUL
             out.append(f"Parcelle multi-zones : {liste} — le résiduel calculé est nul sur la part "
                        f"{it.get('zone_code')} ; les autres parts restent à instruire.")
             return out
