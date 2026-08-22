@@ -1,0 +1,18 @@
+{
+  "idu": "97415000DK1044",
+  "present": {
+    "resultat": true,
+    "cout_plancher_dit": false,
+    "doublon_fourchette": false,
+    "ca_surface": false,
+    "terrain_zone_confrontation": false,
+    "vrd_note": false
+  },
+  "textes": {
+    "plancher": null,
+    "cf": "87 k€",
+    "ca": null,
+    "terrain_zone": null,
+    "vrd": null
+  }
+}

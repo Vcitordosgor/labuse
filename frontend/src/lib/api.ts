@@ -767,14 +767,15 @@ export const faisabiliteExplain = (idu: string) =>
 // M-Q P1-16 — défauts d'hypothèses de la calculette servis par l'API (source unique côté serveur,
 // dérivés du YAML). Le front ne grave plus 2500 : il seed ses champs depuis ici → calculette,
 // Dossier banquier et Note de financement portent le même coût par défaut sur la même parcelle.
-export interface CalculetteDefaults { cout_construction_m2: number; marge_frais_pct: number }
+// VRD servie en défaut DIT (jamais un 0 silencieux) — la calculette la seed comme le coût/la marge.
+export interface CalculetteDefaults { cout_construction_m2: number; marge_frais_pct: number; vrd_m2: number }
 export const getCalculetteDefaults = () =>
   j<CalculetteDefaults>('/bilan/calculette-defaults')
 
 // Calculette de charge foncière (mandat bilan-calculette) : LABUSE calcule le déterministe
-// (SDP, prix DVF) ; le coût de construction et la marge sont les hypothèses SAISIES.
+// (SDP, prix DVF) ; le coût de construction, la marge ET la VRD sont les hypothèses SAISIES.
 // M22-A : mode 'achat_max' = la même équation lue à l'envers (prix d'achat max admissible).
-export interface ChargeIn { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur?: number | null; mode?: 'charge' | 'achat_max' }
+export interface ChargeIn { cout_construction_m2: number; marge_frais_pct: number; vrd_m2?: number; prix_demande_eur?: number | null; mode?: 'charge' | 'achat_max' }
 export const postChargeFonciere = (idu: string, body: ChargeIn) =>
   j<Record<string, any>>(`/modules/faisabilite/${idu}/charge`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),

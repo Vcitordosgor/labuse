@@ -628,6 +628,12 @@ def _defauts_calculette() -> tuple[float, float]:
 
 CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = _defauts_calculette()
 
+# VRD / viabilisation — hypothèse par défaut DITE (jamais un 0 silencieux qui ment par omission),
+# DÉRIVÉE de la source unique (`hypotheses_ile.yaml` → cout_vrd_base_m2, comme le coût/la marge) :
+# plus de constante autonome ici. Ajustable dans la calculette comme le coût et la marge ; la fiche
+# servie garde SA VRD calibrée par secteur (registre bilan_params), c'est le même partage que le coût.
+CALCULETTE_VRD_DEFAUT_M2 = float(Hypotheses.charger().cout_vrd_base_m2)
+
 
 def bilan_params_defaut() -> dict:
     """M22-F C1 — LA source d'hypothèses par défaut, UNIQUE pour tous les documents
@@ -641,12 +647,17 @@ def bilan_params_defaut() -> dict:
         "marge_cible_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
         "honoraires_pct": 0.0,
         "frais_financiers_pct": 0.0,
+        # VRD / viabilisation : hypothèse par défaut DITE, jamais un 0 silencieux qui ment par
+        # omission. La même valeur alimente calculette, Dossier banquier et Argumentaire (source
+        # unique) ; la calculette la laisse saisir. Sans cette clé, compute_bilan retombait sur 0.
+        "cout_vrd_base": CALCULETTE_VRD_DEFAUT_M2,
     }
 
 
 def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix: dict,
                        cout_construction_m2: float, marge_frais_pct: float,
-                       prix_demande_eur: float | None = None, mode: str = "charge") -> dict:
+                       prix_demande_eur: float | None = None, mode: str = "charge",
+                       vrd_m2: float | None = None) -> dict:
     """Charge foncière supportable — PURE, testable en isolation (aucun accès DB : `prix` est
     fourni). LIGNE ROUGE : les valeurs SOURCÉES (SDP vendable, prix de sortie DVF) viennent du
     moteur ; le coût de construction et la marge sont les HYPOTHÈSES SAISIES par le promoteur —
@@ -665,9 +676,12 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
     demandé est rendu dans le sens de la négociation (demandé − max : + = surcoût, − = marge)."""
     # C1 — même squelette d'hypothèses que tous les documents (source unique), les saisies
     # de l'utilisateur remplacent les deux valeurs par défaut.
+    # VRD/aménagements : hypothèse SAISIE (défaut DIT CALCULETTE_VRD_DEFAUT_M2), jamais un 0 muet.
+    vrd = CALCULETTE_VRD_DEFAUT_M2 if vrd_m2 is None else float(vrd_m2)
     bp = {**bilan_params_defaut(),
           "cout_construction_m2_sdp": float(cout_construction_m2),
-          "marge_cible_pct": float(marge_frais_pct)}
+          "marge_cible_pct": float(marge_frais_pct),
+          "cout_vrd_base": vrd}
     b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix,
                       Hypotheses.charger(), bilan_params=bp)
     marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n")}
@@ -684,9 +698,15 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
             "prix_demande_eur": round(float(prix_demande_eur)) if prix_demande_eur else None,
         },
         "shab_vendable_m2": round(float(shab_vendable_m2)),
+        # DIRE LE COÛT-PLANCHER : le coût porte sur la SDP de PLANCHER (= vendable ÷ rendement),
+        # pas sur la surface vendable affichée → l'écran l'explique (sinon calcul de tête faux).
+        "sdp_plancher_m2": b.calc.get("sdp"),
+        "coef_rendement": float(Hypotheses.charger().coef_rendement),
         "terrain_m2": round(float(surface_terrain_m2 or 0)),
         "prix_sortie_median": prix.get("median"),
         "ca": b.ca,
+        # VRD/aménagements servis (hypothèse DITE) : base €/m² + total, jamais un 0 masqué.
+        "vrd_m2": round(vrd), "vrd_total_eur": b.calc.get("cout_vrd"),
         "charge_fonciere": cf,                  # {bas, central, haut, par_m2_terrain}
         "verdict": b.verdict,
         "avertissements": b.avertissements,

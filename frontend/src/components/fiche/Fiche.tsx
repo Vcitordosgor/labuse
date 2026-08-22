@@ -679,18 +679,20 @@ export function Calculette({ idu }: { idu: string }) {
 function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefaults }) {
   const [cout, setCout] = useState<number | null>(defauts.cout_construction_m2)
   const [marge, setMarge] = useState<number | null>(defauts.marge_frais_pct)
+  // VRD/aménagements : hypothèse SAISIE, seed du défaut DIT servi (jamais un 0 silencieux).
+  const [vrd, setVrd] = useState<number | null>(defauts.vrd_m2)
   const [prixDemande, setPrixDemande] = useState<number | null>(null)
   // M22-A : la même équation, deux lectures — charge supportable (historique) ou prix d'achat
   // max admissible (inverse). Le moteur garantit l'identité des totaux (aucun calcul en JS).
   const [mode, setMode] = useState<'charge' | 'achat_max'>('charge')
-  const [deb, setDeb] = useState({ cout: defauts.cout_construction_m2, marge: defauts.marge_frais_pct, prix: null as number | null })
+  const [deb, setDeb] = useState({ cout: defauts.cout_construction_m2, marge: defauts.marge_frais_pct, vrd: defauts.vrd_m2, prix: null as number | null })
   useEffect(() => {
-    const t = setTimeout(() => setDeb({ cout: cout ?? defauts.cout_construction_m2, marge: marge ?? defauts.marge_frais_pct, prix: prixDemande }), 350)
+    const t = setTimeout(() => setDeb({ cout: cout ?? defauts.cout_construction_m2, marge: marge ?? defauts.marge_frais_pct, vrd: vrd ?? defauts.vrd_m2, prix: prixDemande }), 350)
     return () => clearTimeout(t)
-  }, [cout, marge, prixDemande, defauts])
+  }, [cout, marge, vrd, prixDemande, defauts])
   const q = useQuery({
-    queryKey: ['charge', idu, deb.cout, deb.marge, deb.prix, mode],
-    queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix, mode }),
+    queryKey: ['charge', idu, deb.cout, deb.marge, deb.vrd, deb.prix, mode],
+    queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, vrd_m2: deb.vrd, prix_demande_eur: deb.prix, mode }),
     placeholderData: (prev) => prev,   // garde l'ancien résultat pendant le recalcul (pas de flash)
   })
   const d = q.data
@@ -735,11 +737,26 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
               prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
               terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
             </p>
-            {/* les HYPOTHÈSES — saisies par le promoteur */}
+            {/* DIRE LE COÛT-PLANCHER : le coût de construction porte sur la SDP de PLANCHER (vendable
+                ÷ rendement), pas sur la surface vendable affichée — sinon l'écart au calcul de tête
+                (coût × surface vendable) fait douter. On l'explicite noir sur blanc. */}
+            {d.sdp_plancher_m2 != null && (
+              <p data-calc-plancher className="mt-1 text-[10px] leading-snug text-txt-dim">
+                Le coût s'applique à <b className="tnum text-txt-mut">{fmtInt(Number(d.sdp_plancher_m2))} m² de surface plancher</b>
+                {' '}({fmtInt(Number(d.shab_vendable_m2))} m² vendables ÷ {d.coef_rendement != null ? Number(d.coef_rendement).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '0,8'}), pas sur la surface vendable.
+              </p>
+            )}
+            {/* les HYPOTHÈSES — saisies par le promoteur (coût, marge & frais, VRD/aménagements) */}
             <div className="mt-2 flex gap-2">
               <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
+              <HypInput label="VRD & aménagements" value={vrd} onChange={setVrd} suffix="€/m²" hint />
             </div>
+            {d.vrd_total_eur != null && (
+              <p data-calc-vrd className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+                VRD/aménagements : hypothèse par défaut {fmtInt(Number(d.vrd_m2))} €/m² de terrain (soit {fmtEurCompact(Number(d.vrd_total_eur))} sur {fmtInt(Number(d.terrain_m2))} m²) — à ajuster par devis local, jamais un coût à zéro masqué.
+              </p>
+            )}
             {/* M60 P1b — garde-fou IMMÉDIAT : coût de construction > prix de sortie DVF du secteur. */}
             {coutDepasse && (
               <p data-calc-gardefou className="mt-2 rounded-lg bg-st-ecartee/10 px-3 py-2 text-[11px] font-medium leading-snug text-st-ecartee">
@@ -773,8 +790,31 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
                     <b data-calc-cf className="num-key text-lg text-mint">{fmtEurCompact(principal)}</b>
                     <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
                   </p>
-                  {/* fourchette ORDONNÉE bas→haut (bornée à l'affichage) */}
-                  <p className="text-[11px] text-txt-dim">{fmtEurCompact(bornBas) === fmtEurCompact(bornHaut) ? `~${fmtEurCompact(bornBas)}` : `fourchette ${fmtEurCompact(bornBas)} – ${fmtEurCompact(bornHaut)}`}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+                  {/* fourchette ORDONNÉE bas→haut — n'est DITE que si c'est un vrai intervalle : quand le
+                      prix de sortie est un point unique (cas servi q1=median=q3), bornBas===bornHaut===central
+                      et répéter « ~119 k€ » sous le grand chiffre était LE DOUBLON (le central en double). */}
+                  {fmtEurCompact(bornBas) !== fmtEurCompact(bornHaut) && (
+                    <p data-calc-fourchette className="text-[11px] text-txt-dim">fourchette {fmtEurCompact(bornBas)} – {fmtEurCompact(bornHaut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+                  )}
+                  {fmtEurCompact(bornBas) === fmtEurCompact(bornHaut) && d.fiabilite === 'fragile' && (
+                    <p className="text-[11px] text-txt-dim">prix de sortie fragile (ordre de grandeur)</p>
+                  )}
+                  {/* SURFACER ce qui est déjà calculé (le geste du scoreur) : le CA visé et surtout LA
+                      CONFRONTATION — ce que le marché de la zone paie le terrain nu, à côté de la charge
+                      supportable en €/m². C'est ce qui rend l'outil utile (achat au prix du marché ou pas). */}
+                  {d.ca?.central != null && (
+                    <p data-calc-ca className="mt-1 text-[11px] text-txt-dim">CA visé <b className="tnum text-txt-mut">{fmtEurCompact(Number(d.ca.central))}</b> sur {fmtInt(Number(d.shab_vendable_m2))} m² vendables.</p>
+                  )}
+                  {mode === 'charge' && d.terrain_zone_eur_m2 != null && (
+                    <p data-calc-terrain-zone className="mt-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-dim">
+                      Confrontation — vous pouvez payer <b className="tnum text-mint">{fmtInt(Number(cf.par_m2_terrain))} €/m²</b> de terrain ;
+                      le marché de la zone vend le terrain nu à <b className="tnum text-txt">{fmtInt(Number(d.terrain_zone_eur_m2))} €/m²</b>
+                      {' '}<span className="text-txt-dim">(DVF terrains, fiabilité {String(d.terrain_zone_fiabilite ?? 'moyenne')})</span>.
+                      {Number(cf.par_m2_terrain) >= Number(d.terrain_zone_eur_m2)
+                        ? ' Votre charge couvre le prix du marché.'
+                        : ' Votre charge est sous le prix du marché — négociation ou densité à retrouver.'}
+                    </p>
+                  )}
                   {mode === 'achat_max' && (
                     <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
                       = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas

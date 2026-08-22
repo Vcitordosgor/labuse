@@ -4207,9 +4207,14 @@ def get_calculette_defaults() -> dict:
     CALCULETTE_MARGE_FRAIS_DEFAUT_PCT). Point unique servi au front : la calculette n'embarque plus
     sa propre constante (2500 gravé en React) qui divergeait du serveur (2550). Ainsi calculette,
     Dossier banquier et Note de financement portent le MÊME coût par défaut sur la même parcelle."""
-    from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
+    from ..faisabilite.bilan import (
+        CALCULETTE_COUT_DEFAUT_M2,
+        CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+        CALCULETTE_VRD_DEFAUT_M2,
+    )
     return {"cout_construction_m2": CALCULETTE_COUT_DEFAUT_M2,
-            "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT}
+            "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+            "vrd_m2": CALCULETTE_VRD_DEFAUT_M2}
 
 
 @app.get("/bilan/params")
