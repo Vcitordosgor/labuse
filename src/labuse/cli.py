@@ -186,6 +186,20 @@ def dispositifs_build_cmd() -> None:
         build_all(s, log=typer.echo)
 
 
+@app.command("ingest-cosia")
+def ingest_cosia_cmd(extract_dir: str = typer.Option(None, help="Dossier des tuiles .gpkg CoSIA "
+                     "(défaut : data/cosia/extract/COSIA_*)")) -> None:
+    """PAU-CoSIA — ingère les footprints bâti CoSIA (IGN, D974 2025) dans spatial_layers
+    kind='batiment_cosia'. Source GÉOMÉTRIQUE canonique du recalcul PAU (RNU). Idempotent.
+    Prérequis : lot .7z téléchargé + extrait (cf. docs/mandats/PAU_COSIA_PHASE2_BLOCAGE.md)."""
+    from .ingestion.cosia import build_cosia_batiment
+
+    with session_scope() as s:
+        r = build_cosia_batiment(s, extract_dir=extract_dir, log=typer.echo)
+    typer.echo(f"✓ CoSIA bâtiment : {r['inserted']} polygones, {r['communes_tagged']} tagués "
+               f"commune, {r['tiles']} tuiles — {r['source_millesime']}")
+
+
 @app.command("znieff-build")
 def znieff_build_cmd() -> None:
     """M137-U — ingère les ZNIEFF continentales (type I + II) de La Réunion → spatial_layers

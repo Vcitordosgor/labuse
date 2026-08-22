@@ -114,6 +114,18 @@ SOURCES = {
                       "detection": "DÉTECTION SEULE : re-survol IGN ~3-4 ans → commande --refresh "
                                    "(wave-ortho Lot 7), jamais un cron ; la couche nourrit une RÈGLE "
                                    "produit (piscine_signal), pas la cascade gelée."},
+    "cosia": {"label": "CoSIA (couverture du sol IA, IGN) — bâti vectorisé (PAU RNU)",
+              "cadence": "pluriannuelle (re-survol imagerie ~3-4 ans)",
+              # horizon = fait amont daté (editionDate du lot), porté au catalogue à l'ingestion
+              "date_sql": "SELECT source_horizon_at FROM data_sources "
+                          "WHERE name = 'CoSIA (couverture du sol IA, IGN)'",
+              "ds_name": "CoSIA (couverture du sol IA, IGN)", "auto": False,
+              # `cadence_norme` VOLONTAIREMENT absente (re-survol irrégulier → pas d'alerte de retard,
+              # comme ortho_piscine/gpu_plu). La couche nourrit le recalcul PAU, pas la cascade gelée.
+              "millesime": "CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+              "prochain": None,
+              "detection": "DÉTECTION SEULE : re-survol IGN ~3-4 ans → commande `labuse ingest-cosia` "
+                           "après re-téléchargement du lot D974, jamais un cron."},
 }
 
 # M-O P1-14 — noms EXACTS de `data_sources` par source, pour l'ÉCRITURE du millésime. Les patterns
@@ -134,6 +146,7 @@ DS_NAMES: dict[str, list[str]] = {
                    "Géorisques — mouvements de terrain", "Géorisques — sites et sols pollués"],
     "sudocuh": ["Sudocuh (procédures d'urbanisme)"],
     "ortho_piscine": ["BD ORTHO 20 cm (IGN)"],
+    "cosia": ["CoSIA (couverture du sol IA, IGN)"],
 }
 
 # M-O P1-14 — sources dont le `date_sql` lit max(created_at) de `spatial_layers` = la DATE

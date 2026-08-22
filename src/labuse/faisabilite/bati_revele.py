@@ -11,6 +11,14 @@ nu théorique tant que la chaîne résiduel n'est pas recalculée avec le bâti 
 
 Table clé parcel_id, INDÉPENDANTE du run (comme parcel_au_statut) : survit aux bascules.
 Peupler ≠ basculer — le pipeline la lit, kill-switch LABUSE_DISABLE_BATI_REVELE=1.
+
+DOUBLON MARQUÉ (PAU-CoSIA) : `p_model_bati_cosia` (emprise CoSIA PAR PARCELLE, sans géométrie,
+construite hors dépôt le 04/08/2026) est l'AGRÉGAT à la parcelle des MÊMES footprints CoSIA
+désormais ingérés canoniquement dans `spatial_layers kind='batiment_cosia'` (ingestion/cosia.py,
+source géométrique de vérité). Preuve d'équivalence : re-dérivation depuis batiment_cosia =
+521 936 m² vs p_model 521 918 m² à Saint-Philippe (0,003 %). Remplacement propre (re-dériver
+p_model_bati_cosia DEPUIS batiment_cosia) = follow-up hors mandat PAU (touche 9 consommateurs) ;
+cf. docs/mandats/PAU_COSIA_PHASE2.md.
 """
 from __future__ import annotations
 
