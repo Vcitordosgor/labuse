@@ -344,6 +344,10 @@ interface AppState {
   // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
   calcPrefill: string | null
   setCalcPrefill: (s: string | null) => void
+  // Assemblage → Courrier : une parcelle de l'assiette ouvre l'outil Courrier prérempli sur SON IDU
+  // (consommé-puis-reset au montage). Le « N particuliers » devient un geste, plus un cul-de-sac.
+  courrierPrefill: string | null
+  setCourrierPrefill: (s: string | null) => void
   // M-ENTREE — amorçage parcelle PARTAGÉ (un seul motif, plusieurs consommateurs) : Faisabilité
   // (M22, mode « par parcelle ») et Assemblage (M16, 1ʳᵉ du lot). Consommation-puis-reset : la porte
   // fait setParcelPrefill(idu)+setModule(clé) ; l'outil lit parcelPrefill AU MONTAGE, l'amorce à sa
@@ -570,6 +574,8 @@ export const useApp = create<AppState>((set) => ({
   setPluVue: (pluVue) => set({ pluVue }),
   calcPrefill: null,
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
+  courrierPrefill: null,
+  setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
   communePrefill: null,

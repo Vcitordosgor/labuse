@@ -141,29 +141,37 @@ class AssemblageIn(BaseModel):
 
 @router.post("/assemblage")
 def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
-    idus = [i.strip().upper() for i in body.idus if i.strip()][:30]
+    from types import SimpleNamespace
+
+    from ..assemblage import ADJ_BUFFER_M, aggregate_assiette
+    from ..faisabilite.marche_commune import prix_terrain_nu_zone
+    cap = _moteurs_cap("assemblage_max_parcelles", 30)   # M137-O : plafond EN CONFIG, plus jamais en dur
+    demandes = [i.strip().upper() for i in body.idus if i.strip()]
+    idus = demandes[:cap]
+    tronquee = len(demandes) > cap                        # on le DIRA, jamais une coupe muette
     if len(idus) < 2:
         raise HTTPException(422, "Sélectionnez au moins 2 parcelles")
+    # tier SERVI (parcel_p_score_v2) + étage 0 (dry-run servi) + propriétaire moral — plus de vestige
+    # de matrice (opportunity_score retiré) ni de champ `statut` doublon (= tier_v2).
     rows = db.execute(text("""
-        SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
-               s2.tier AS statut, d.opportunity_score,
+        SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, p.commune,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                pm.denomination, pm.siren, pm.groupe_label
         FROM parcels p
-        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     if len(rows) < 2:
         raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
-    # contiguïté : graphe des adjacences (≤ 1 m) → l'assiette est-elle d'un seul tenant ?
+    # contiguïté : graphe des adjacences (contact cadastral ADJ_BUFFER_M — MÊME seuil que la détection
+    # assemblage.py, plus de 1 m ad hoc) → l'assiette est-elle d'un seul tenant ?
     ids = [r["id"] for r in rows]
     pairs = db.execute(text("""
         SELECT a.id AS a, b.id AS b FROM parcels a JOIN parcels b
-          ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, 1)
-        WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)"""), {"ids": ids}).all()
+          ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
+        WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)"""), {"ids": ids, "buf": ADJ_BUFFER_M}).all()
     adj: dict[int, set[int]] = {i: set() for i in ids}
     for a, b in pairs:
         adj[a].add(b)
@@ -185,40 +193,52 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     n_particuliers = sum(1 for pr in proprios if pr["type"] == "particulier")
     tous_pm = n_particuliers == 0
     owners_pm = sorted({pr["denomination"] for pr in proprios if pr["type"] == "personne_morale"})
-    surface = sum(r["surface_m2"] or 0 for r in rows)
-    sdp_vals = [r["sdp_residuelle_m2"] or 0 for r in rows]
-    sdp = sum(sdp_vals)
-    # A — GAIN : SDP combinée (assiette) vs la meilleure parcelle SEULE → programme débloqué.
-    M2_PAR_LOGT = 70   # hypothèse AFFICHÉE (m² SDP / logement), cohérente avec M22
-    sdp_max_seule = max(sdp_vals) if sdp_vals else 0
+    # #1 — LE BILAN RÉEL : capacité + bilan CUMULÉS par agrégation des fiche_payload (source unique
+    # aggregate_assiette, partagée avec /assemblage/study). Plus jamais la somme frustre des résiduels.
+    parcels_lite = [SimpleNamespace(id=r["id"], surface_m2=r["surface_m2"], idu=r["idu"], commune=r["commune"])
+                    for r in rows]
+    agg = aggregate_assiette(db, parcels_lite)
+    sdp = agg["sdp_m2"]
+    sdp_par = agg["sdp_par_parcelle"]
+    sdp_max_seule = max(sdp_par.values()) if sdp_par else 0
     gain_ratio = round(sdp / sdp_max_seule, 1) if sdp_max_seule else None
-    # score : d'un seul tenant + interlocuteurs peu nombreux/moraux (B) + SDP cumulée.
-    # M82 #garde-fou (CAS I) : une assiette SANS SDP résiduelle, ou entièrement en étage 0 (parcelles
-    # écartées / faux positif probable), n'a AUCUN potentiel de projet — le score ne doit pas récompenser
-    # la seule géométrie (contiguïté = 45 pts). On le plancher à 0 et on le DIT.
+    # #2 — VALORISATION : prix du terrain nu de la zone (référentiel UNIQUE prix_terrain_nu_zone),
+    # sur la zone dominante de l'assiette. None si hors U/AU ou pas de vente terrain.
+    from collections import Counter
+    zc = Counter((c, z) for c, z in agg["zones"] if c and z)
+    terrain_zone = None
+    zones_mixtes = len({z for _, z in zc}) > 1
+    if zc:
+        (commune_dom, zone_dom), _ = zc.most_common(1)[0]
+        terrain_zone = prix_terrain_nu_zone(db, commune_dom, zone_dom)
+    # #3 — le SCORE reste calculé mais DORMANT (jamais servi à l'écran : doctrine M120, pas de
+    # « qualité N/100 »). Conservé pour un tri éventuel ; l'écran montre les FAITS qu'il agrégeait.
     sans_potentiel = sdp <= 0 or all(bool(r["etage0"]) for r in rows)
-    score = 0 if sans_potentiel else round(min(100, (45 if contigu else 10)
+    score_dormant = 0 if sans_potentiel else round(min(100, (45 if contigu else 10)
                   + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
                   + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
     return {
-        "n": len(rows), "contigu": contigu, "surface_totale_m2": round(surface),
-        "sdp_cumulee_m2": round(sdp),
-        # A — gain d'assemblage
-        "sdp_combinee_m2": round(sdp), "sdp_max_seule_m2": round(sdp_max_seule),
-        "gain_ratio": gain_ratio,
-        "logements_combine": round(sdp / M2_PAR_LOGT), "logements_max_seule": round(sdp_max_seule / M2_PAR_LOGT),
-        "m2_par_logement": M2_PAR_LOGT,
-        "note_sdp": "SDP combinée = SOMME des résiduels parcellaires — le règlement d'ensemble "
-                    "(assiette fusionnée) est à instruire : la vraie SDP peut différer. Le gain vient "
-                    "d'atteindre une taille de programme qu'aucune parcelle seule ne permet.",
+        "n": len(rows), "contigu": contigu, "surface_totale_m2": agg["surface_cumulee_m2"],
+        "tronquee": tronquee, "cap": cap,
+        # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
+        "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule, "gain_ratio": gain_ratio,
+        "logements_combine": agg["logements"], "n_chiffrables": agg["n_chiffrables"],
+        "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
+        "note_sdp": "Capacité et bilan CUMULÉS par agrégation des parcelles. À la fusion, les reculs "
+                    "INTERNES disparaissent — l'assiette réelle porte GÉNÉRALEMENT PLUS que cette "
+                    "estimation ; les seuils d'ensemble (mixité, pleine terre) restent à instruire.",
+        # #2 — valorisation (référentiel unique prix terrain nu de zone)
+        "terrain_zone_eur_m2": (terrain_zone or {}).get("eur_m2"),
+        "terrain_zone_fiabilite": (terrain_zone or {}).get("fiabilite"),
+        "terrain_zone_n": (terrain_zone or {}).get("n"), "zones_mixtes": zones_mixtes,
         # B — approche propriétaire (privacy)
         "proprietaires_pm": owners_pm, "n_proprietaires": len(owners_pm) + n_particuliers,
         "n_personnes_morales": len(owners_pm), "n_particuliers": n_particuliers,
         "tous_personnes_morales": tous_pm,
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,
-        "score_assemblage": score, "sans_potentiel": sans_potentiel,
-        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "opportunity_score")},
+        "score_assemblage": score_dormant, "sans_potentiel": sans_potentiel,
+        "items": [{"idu": r["idu"], "surface_m2": r["surface_m2"], "sdp_m2": sdp_par.get(r["id"], 0),
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "proprio": pr}
                   for r, pr in zip(rows, proprios)],

@@ -26,8 +26,9 @@ from ..ingestion.run_all import REUNION_COMMUNES
 from .prompts import SORTIE_SCHEMA, SYSTEM_EXTRACTION_REFS, SYSTEM_INTERPRETEUR
 
 #: Conversion programme : 1 logement collectif ≈ 70 m² de surface de plancher (SDP).
-#: Règle de pouce promoteur (logement + circulations + murs), alignée sur le
-#: m2_par_logement de /moteurs/assemblage. Modifiable ici, nulle part ailleurs.
+#: Règle de pouce promoteur (logement + circulations + murs). SOURCE UNIQUE de la conversion
+#: SDP→logements (l'assemblage lit désormais les logements du fiche_payload — plus de « 70 » en
+#: dur dans /moteurs/assemblage). Modifiable ici, nulle part ailleurs.
 SDP_PAR_LOGEMENT_M2 = 70
 
 MISSIONS = ("instruire", "shortlist", "verifier_adresse")

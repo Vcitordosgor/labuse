@@ -114,3 +114,52 @@ def find_assemblages(session: Session, commune: str, limit: int = 100) -> list[d
                     "meme_proprietaire": same})
     out.sort(key=lambda x: (x["meme_proprietaire"], x["surface_cumulee_m2"]), reverse=True)
     return out
+
+
+def aggregate_assiette(session: Session, parcels: list) -> dict:
+    """CAPACITÉ + BILAN cumulés d'une assiette — le VRAI bilan (agrégation des `fiche_payload` :
+    SDP de plancher, logements, CA, charge foncière servie), plus jamais une somme de résiduels.
+    SOURCE unique de l'étude d'assemblage : /assemblage/study ET l'outil /moteurs/assemblage la
+    lisent. `parcels` = objets Parcel (id, surface_m2, idu, commune). Renvoie aussi la SDP par
+    parcelle (pour le gain vs la meilleure seule) et les zones (pour la valorisation)."""
+    from .faisabilite.db import fiche_payload
+    surface = round(sum(p.surface_m2 or 0 for p in parcels))
+    sdp = 0.0
+    log_min = log_max = 0
+    ca = {"bas": 0, "central": 0, "haut": 0}
+    charge = {"bas": 0, "central": 0, "haut": 0}
+    n_chiffrables = 0
+    par_parcelle: dict[int, float] = {}
+    zones: list[tuple[str | None, str | None]] = []
+    for p in parcels:
+        try:
+            fa = fiche_payload(session, p.id)
+        except Exception:  # noqa: BLE001 — une parcelle illisible ne casse pas l'étude
+            fa = None
+        fr = (fa or {}).get("fourchette") or {}
+        p_sdp = fr.get("surface_plancher_m2") or 0
+        sdp += p_sdp
+        par_parcelle[p.id] = round(p_sdp)
+        zones.append((getattr(p, "commune", None), (fa or {}).get("zone")))
+        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+        log_min += rng[0] or 0
+        log_max += rng[1] or 0
+        bil = (fa or {}).get("bilan") or {}
+        if bil.get("ca"):
+            for k in ca:
+                ca[k] += bil["ca"].get(k) or 0
+            n_chiffrables += 1
+        if bil.get("charge_fonciere"):
+            for k in charge:
+                charge[k] += bil["charge_fonciere"].get(k) or 0
+    cf_m2 = round(charge["central"] / surface) if surface else None
+    return {
+        "surface_cumulee_m2": surface,
+        "sdp_m2": round(sdp),
+        "logements": [log_min, log_max],
+        "ca": ca if n_chiffrables else None,
+        "charge_fonciere": ({**charge, "par_m2_terrain": cf_m2} if n_chiffrables else None),
+        "n_chiffrables": n_chiffrables,
+        "sdp_par_parcelle": par_parcelle,
+        "zones": zones,
+    }

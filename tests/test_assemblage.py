@@ -42,3 +42,31 @@ def test_parcelles_non_contigues_pas_de_paire(db_session, monkeypatch):
     _p(db_session, "ASM00021", "POLYGON((55.70 -21.30,55.7003 -21.30,55.7003 -21.2997,55.70 -21.2997,55.70 -21.30))", 600)
     groups = assemblage.find_assemblages(db_session, "Asmville")
     assert not any(set(g["parcelles"]) == {"ASM00020", "ASM00021"} for g in groups)
+
+
+def test_endpoint_moteurs_assemblage_ne_leve_pas(db_session):
+    """L'ENDPOINT scoré (/moteurs/assemblage) n'était couvert par AUCUN test. Il ne doit pas lever :
+    422 si < 2 demandées, 404 si < 2 trouvées, et sur 2 parcelles contiguës il rend la structure —
+    base de test SANS faisabilité servie → sans_potentiel, JAMAIS une exception. Les vestiges de
+    matrice (opportunity_score / sdp_cumulee_m2 / statut / m2_par_logement) ont disparu du payload."""
+    from fastapi import HTTPException
+
+    from labuse.api.moteurs import AssemblageIn
+    from labuse.api.moteurs import assemblage as endpoint
+    with pytest.raises(HTTPException) as e1:
+        endpoint(AssemblageIn(idus=["ASM00099"]), db=db_session)
+    assert e1.value.status_code == 422
+    with pytest.raises(HTTPException) as e2:
+        endpoint(AssemblageIn(idus=["97499000ZZ9998", "97499000ZZ9999"]), db=db_session)
+    assert e2.value.status_code == 404
+    _p(db_session, "ASM00050", "POLYGON((55.40 -21.00,55.4003 -21.00,55.4003 -20.9997,55.40 -20.9997,55.40 -21.00))", 600)
+    _p(db_session, "ASM00051", "POLYGON((55.4003 -21.00,55.4006 -21.00,55.4006 -20.9997,55.4003 -20.9997,55.4003 -21.00))", 600)
+    out = endpoint(AssemblageIn(idus=["ASM00050", "ASM00051"]), db=db_session)   # ne lève pas
+    assert out["n"] == 2 and out["contigu"] is True
+    assert out["sans_potentiel"] is True and out["score_assemblage"] == 0   # aucune faisabilité servie
+    # vestiges retirés (payload + items)
+    for k in ("opportunity_score", "sdp_cumulee_m2", "m2_par_logement"):
+        assert k not in out
+    for it in out["items"]:
+        assert "sdp_m2" in it and "tier_v2" in it
+        assert "opportunity_score" not in it and "statut" not in it and "sdp_residuelle_m2" not in it

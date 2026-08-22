@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
-import { fmtInt } from '../../lib/format'
+import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -82,7 +82,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 /* ───────────── M16 — ASSEMBLAGE ───────────── */
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, setModule, setCourrierPrefill } = useApp()
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
@@ -104,8 +104,8 @@ export function M16() {
       {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
           chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
       <Banner><b>Zoomez sur le secteur</b> pour faire apparaître les contours des parcelles, puis
-        <b> cliquez-les</b> pour composer l'assiette (re-cliquer retire). SDP cumulée = somme des
-        résiduels — le <b>règlement d'ensemble reste à instruire</b>.</Banner>
+        <b> cliquez-les</b> pour composer l'assiette (re-cliquer retire). Le <b>bilan réel</b> de
+        l'assiette (capacité + charge foncière cumulées) — le <b>règlement d'ensemble reste à instruire</b>.</Banner>
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
@@ -128,29 +128,40 @@ export function M16() {
       {run.isError && <p className="text-[11px] text-st-ecartee">Erreur — au moins 2 parcelles valides ?</p>}
       {d && (
         <>
+          {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
+          {/* #3 — le SCORE a disparu (doctrine M120 : pas de « qualité N/100 »). À la place, les FAITS
+              qu'il agrégeait, dits séparément : d'un seul tenant · N interlocuteurs · ×gain. */}
+          <div data-asm-faits className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span className={`rounded-full px-2 py-0.5 ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
+              {d.contigu ? "d'un seul tenant" : 'NON contiguë'}</span>
+            <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
+            {d.gain_ratio && <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">×{d.gain_ratio} vs la meilleure seule</span>}
+          </div>
+
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className={`num-key text-lg ${d.score_assemblage > 0 ? 'text-mint' : 'text-txt-dim'}`}>{d.score_assemblage}</span>
-              <span className="text-txt-mut">score d'assemblage</span>
-              <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
-                {d.contigu ? "d'un seul tenant" : 'NON contiguë'}
-              </span>
-            </div>
-            {/* CAS I — assiette sans potentiel résiduel : on le DIT, pas de bloc gain trompeur. */}
+            {/* CAS I — assiette sans potentiel : on le DIT, pas de bloc gain trompeur. */}
             {d.sans_potentiel ? (
-              <div data-asm-sans-potentiel className="mt-1.5 rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
-                Assiette sans SDP résiduelle (ou parcelles écartées du run) — <b>aucun potentiel de projet en l'état</b>. La contiguïté seule ne fait pas une opération.
+              <div data-asm-sans-potentiel className="rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
+                Assiette sans capacité (ou parcelles écartées du run) — <b>aucun potentiel de projet en l'état</b>. La contiguïté seule ne fait pas une opération.
               </div>
             ) : (
               <>
-                {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
-                <div data-asm-gain className="mt-1.5 rounded-md bg-mint/[0.06] px-2 py-1.5">
-                  <div className="text-txt">Ensemble : <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
-                    {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+                {/* #1 — LE BILAN RÉEL : capacité + charge foncière cumulées (fiche_payload agrégé) */}
+                <div data-asm-gain className="rounded-md bg-mint/[0.06] px-2 py-1.5">
+                  <div className="text-txt">Assiette <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine?.[0])}–{fmt(d.logements_combine?.[1])} logements
+                    {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure seule = {fmt(d.sdp_max_seule_m2)} m²)</span>}
                   </div>
-                  <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
+                  {d.charge_fonciere && (
+                    <div data-asm-bilan className="mt-1 text-txt-dim">Bilan cumulé : CA ~<b className="text-txt">{fmtEurCompact(d.ca?.central)}</b> · charge foncière supportable ~<b className="text-txt">{fmtEurCompact(d.charge_fonciere.central)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² terrain)
+                      {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
+                    </div>
+                  )}
                 </div>
-                <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
+                {/* #2 — VALORISATION : prix du terrain nu de la zone (référentiel unique) */}
+                {d.terrain_zone_eur_m2 != null && (
+                  <div data-asm-valorisation className="mt-1 text-txt-dim">Le marché de la zone vend le terrain nu à <b className="tnum text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> <span className="text-txt-dim">(DVF terrains, fiabilité {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''})</span>.</div>
+                )}
+                <div className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.note_sdp}</div>
               </>
             )}
           </div>
@@ -174,16 +185,21 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2)}</span>
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_m2)}</span>
                   <span className="ml-auto">
-                    <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
+                    <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={null} />
                   </span>
                 </div>
-                {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
-                <div className="truncate text-[11px] text-txt-dim" title={pr.type === 'personne_morale' ? `SIREN ${pr.siren ?? '—'}${pr.groupe ? ' · ' + pr.groupe : ''}` : 'personne physique — non communiqué'}>
-                  {pr.type === 'personne_morale'
-                    ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN {pr.siren}</span> : null}</>
-                    : <span className="italic">propriétaire particulier — non communiqué</span>}
+                <div className="mt-0.5 flex items-center gap-2">
+                  {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
+                  <div className="min-w-0 flex-1 truncate text-[11px] text-txt-dim" title={pr.type === 'personne_morale' ? `SIREN ${pr.siren ?? '—'}${pr.groupe ? ' · ' + pr.groupe : ''}` : 'personne physique — non communiqué'}>
+                    {pr.type === 'personne_morale'
+                      ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN {pr.siren}</span> : null}</>
+                      : <span className="italic">propriétaire particulier — non communiqué</span>}
+                  </div>
+                  {/* #4 — L'ACTION au bout du constat : préparer le courrier de CETTE parcelle (prérempli) */}
+                  <button data-asm-courrier onClick={() => { setCourrierPrefill(i.idu as string); setModule('courriers') }}
+                    className="shrink-0 rounded border border-mint/40 px-1.5 py-0.5 text-[10.5px] text-mint transition-colors duration-quick hover:bg-mint/10">✉ courrier</button>
                 </div>
               </div>
             )})}
