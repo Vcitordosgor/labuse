@@ -217,11 +217,63 @@ run 1 → run 3 (copie) → **retour** run 1, service byte-identique à chaque �
 prod/CI) ; le chemin cœur (que le CLI enveloppe) et les garde-fous sont validés
 directement en Python contre la base.*
 
-# Phase C — premier run réel (en cours)
+# Phase C — premier run réel (terminé)
 
-Run **île entier dans run 2** lancé (`qa/faisabilite/m135_run_ile.py`, ~90 min,
-écrit run 2, **run servi 1 intact**). À sa fin : diff run 1 ↔ run 2 (attendu 0,
-M134), ancres une à une, bascule d'essai run 1 → run 2 → retour, puis **proposition**
-de bascule définitive à Vic (elle éteindrait la mosaïque). **Proposer, pas faire.**
+Run **île entier dans run 2** (`m135_run_ile.py`) : 431 663 parcelles (253 764
+calculées + 177 899 avec cause), **107 min** (12,4 → 15 ms/parcelle), commit
+`9cf08f98`, dates 22-23/08 (**fraîches, NON mosaïque**). **Run servi 1 intact tout
+du long.**
+
+## C.1 — Diff run 1 ↔ run 2 : PRESQUE nul, une seule colonne, ÉLUCIDÉE
+
+| Colonne | Diff |
+|---|---|
+| sdp_residuelle_m2 | **0** |
+| cause | **0** |
+| pct_potentiel | **0** |
+| sous_densite | **0** |
+| taux_emprise_pct | **0** |
+| **capacite_estimee** | **44 824** |
+| parcelles manquantes (un run, pas l'autre) | 0 / 0 |
+
+**Les 44 824 sont TOUS `False → True`, TOUS du lot 29/07** (le plus ancien de la
+mosaïque), concentrés en communes non/partiellement calibrées (Saint-André 16 712,
+Saint-Leu 12 594, Saint-Benoît 11 610, Saint-Denis 3 006…). **Ce n'est pas un bug de
+migration** (elle était byte-identique, prouvé) mais **la correction du flag stale**
+déjà nommé en M134 A.2 : le lot 29/07 précède M-PLU-REF (14/08, marquage `calibree`) ;
+le run 2 frais applique le marquage courant. La SDP, la cause, la sous-densité — tout
+ce qui pilote filtres/scoring/vivier — est **identique**. Le flag `capacite_estimee`
+est lu par **deux consommateurs d'AFFICHAGE seulement** (`app.py:3161` fiche,
+`projets.py:1087` dossier) — l'outil, lui, le résout en direct (M133 B.5). La
+correction rend l'affichage **plus juste** ; elle ne régresse rien.
+
+## C.2 — Les 7 ancres : identiques
+
+`EP1044`, `BI1097`, `CW1056`, `BV2471`, `EL0368`, `CN1677`, `BT0960` : SDP + cause
+**identiques** run 1 ↔ run 2. Aucune n'est touchée par le diff `capacite_estimee`
+(Le Tampon calibrée, ou non-constructible → flag NULL). `sens2` rend le **même**
+compte sous run 1 et run 2 (Le Tampon 3 326) — il ne lit que la SDP (identique).
+
+## C.3 — Bascule d'essai run 1 → run 2 → retour : réversible, prouvé
+
+- run 1 (initial) : 1 709 parcelles « estimées » servies.
+- **bascule → run 2** : 46 533 (Δ +44 824, les flags corrigés) ; `faisabilite_sens2`
+  fonctionne (Le Tampon n=3 326).
+- **RETOUR → run 1** : 1 709, **digest byte-identique à l'état initial** (réversibilité
+  ✓). Une réversibilité non testée n'existe pas — testée.
+
+Service **remis sur run 1**. Non-régression consommateurs (à travers la vue) :
+R+1≠R+7, gel Us/2AUc, PDF projet régénéré conforme M130-12/M131 (faîtage 4 m = 0,
+`part X —` = 5, EP1044 sert 6/11 « Us3 §5 p.134 », 2AU par renvoi).
+
+## C.4 — Proposition à Vic (proposer, pas faire)
+
+Le diff n'est pas strictement nul, mais **entièrement élucidé** : une correction
+d'affichage (`capacite_estimee`), pas une régression ; tout le reste identique ;
+mécanisme et réversibilité prouvés. **Proposition : basculer le service sur le run 2**
+(`residuel-serve 2`) — cela (a) sert des valeurs **fraîches et cohérentes** (code
+courant uniforme), (b) **corrige** le flag stale des 44 824, (c) **éteint la mosaïque
+A.3bis** (run 1 devient un run historique, épinglable puis purgeable). Retour en un
+geste (`residuel-serve 1`). **C'est le geste de Vic. CC ne bascule pas.**
 
 CC ne merge jamais, CC ne bascule jamais.
