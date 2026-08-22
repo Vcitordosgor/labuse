@@ -525,6 +525,24 @@ SOURCES: list[dict] = [
                          "délimitation infra-communale, on ne conclut JAMAIS à la parcelle) / HORS "
                          "(Le Port). À CONFIRMER : liste FRR 2024+ par commune entière (annexe de "
                          "l'arrêté du 19/06/2024, section 974 non consultable en ligne)."),
+    # PAU-CoSIA — footprints bâti vectorisés (IGN Géoplateforme). Source GÉOMÉTRIQUE canonique
+    # de la couche spatial_layers kind='batiment_cosia' (ingestion/cosia.py). Millésime porté ici
+    # (fait amont statique) ; last_sync_at est posé À L'INGESTION (jamais dans le seed).
+    dict(name="CoSIA (couverture du sol IA, IGN)", category="occupation_sol",
+         provider="IGN / Géoplateforme", access_type="téléchargement/GPKG",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+         documentation_url="https://geoservices.ign.fr/cosia",
+         endpoint_url=("https://data.geopf.fr/telechargement/download/COSIA/"
+                       "COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01/"
+                       "COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01.7z"),
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : IGN — CoSIA "
+                     "(Couverture du Sol par IA), D974 millésime 2025 ».",
+         technical_notes="Occupation du sol par IA (segmentation d'ortho 20 cm) VECTORISÉE, 15 classes ; "
+                         "on n'ingère QUE la classe « Bâtiment » (1/15) en footprints polygones. Lot D974 "
+                         "RGR92/UTM40S (EPSG:2975), 37 tuiles, ~494 Mio .7z, 445 190 bâtiments. Sert le "
+                         "recalcul PAU (RNU) en complément de BD TOPO. Doublon connu : p_model_bati_cosia "
+                         "(emprise MÊME donnée agrégée à la parcelle, sans géométrie)."),
 ]
 
 
