@@ -306,7 +306,7 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
     for lim in (
         "Le cadrage est un jeu de filtres géographiques et réglementaires, pas un avis d'opportunité.",
         ligne_shortlist,
-        "Aucune parcelle n'est validée : la constructibilité et la faisabilité restent à instruire "
+        "Aucune parcelle n'est validée : la constructibilité et la faisabilité restent à établir "
         "(fiche parcelle, règlement de zone, certificat d'urbanisme).",
     ):
         pdf.set_text_color(*TXT_MUT)
@@ -344,54 +344,75 @@ def _lignes_donnees(it: dict) -> list[str]:
         fa = f"faîtage {_fr(hf)} m" if hf is not None else "faîtage non réglementé"
         src = _src_propre(it.get("hauteur_source"))                        # §E.3 : point final retiré
         out.append(f"Hauteur PLU : {eg} · {fa} ({tag}{(' · ' + src) if src else ''}{renvoi})")
-    elif it.get("non_constructible"):
-        out.append("Hauteur PLU : non applicable (zone fermée à l'urbanisation)")
-    elif it.get("zone_resolue"):
-        out.append("Hauteur PLU : non réglementée pour cette zone")
     else:
-        out.append("Hauteur PLU : règlement non outillé pour cette zone (donnée indisponible)")
+        # M130-9 §C — UN MOTIF = UN TRAITEMENT. Si le règlement calibré porte une hauteur (même un
+        # faîtage d'annexes, ex. 2AUd = 4 m), elle est affichée ci-dessus — pour A/N comme pour 2AU.
+        # Sinon, l'état honnête est « non renseignée au PLU calibré » (la donnée n'y est pas), JAMAIS
+        # « non applicable » qui prétendrait qu'aucune règle n'existe (on ne le sait pas). Ne rien inventer.
+        out.append("Hauteur PLU : non renseignée au PLU calibré")
     # §3.3 zone PLU + famille correcte (U = urbaine, AU = à urbaniser) — Sourcé + millésime amont (§6).
     if it.get("zone_code"):
         fam = it.get("zone_famille")
         mil = it.get("zone_millesime")
         out.append(f"Zone PLU {it['zone_code']}{(' — ' + fam) if fam else ''} "
                    f"(Sourcé — GPU/PLU, {('millésime ' + mil) if mil else 'millésime non renseigné'})")
-    # §C — MULTI-ZONE dite (réserve M130-3) : une partie constructible ne se tait pas. Aucune SDP
-    # partielle chiffrée — on dit l'existence, pas la quantité. Vaut dans les DEUX sens (dominante
-    # constructible avec SDP chiffrée = SDP calculée sur une sous-zone → à signaler aussi).
+    # §C / M130-9 §A — MULTI-ZONE dite : la phrase finale se construit de la PARTITION des parts
+    # RESTANTES en OUVERTES (U / 1AU) / FERMÉES (A / N / 2AU) — jamais un texte fixe, jamais « les autres
+    # parts restent à instruire » sans nommer les zones. §B : l'incise « écartée du vivier » sur toute
+    # ligne d'un document dont la sélection entière est écartée (étage 0).
     if it.get("multi_zone"):
-        parts = it.get("zones_parts") or []
-        if parts and all(p[2] is not None for p in parts):
-            liste = " · ".join(f"{lib} ({fam or '—'}) ~ {pct} %" for lib, fam, pct in parts)
-            # §C : reliquat non muet — zones sous le seuil d'affichage / trou de géométrie (≥ 2 %).
-            reste = it.get("zones_reste") or 0
-            if reste >= 2:
-                liste += f" · autres zones ~ {reste} %"
-        else:
-            liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
-        # M130-8 §A — on ne PROMET JAMAIS une part constructible sans l'avoir vérifiée. `pc` = la plus
-        # grande part réellement OUVERTE (U / 1AU ; exclut A, N, 2AU) — calculée en amont par
-        # `_part_ouverte`. Quatre cas, choisis sur l'état du résiduel PUIS l'existence d'une part ouverte.
-        pc = it.get("part_constructible")   # (libellé, pct) ou None
-        if it.get("sdp_chiffree"):                                        # cas 3 (SDP > 0) — inchangé
-            from .projets import _part_ouverte
-            tout_ouvert = bool(parts) and all(_part_ouverte(lib) for lib, _f, _p in parts)
-            tail = ("SDP calculée sur la partie constructible ; les autres parts relèvent d'un autre "
-                    "règlement de zone, à instruire." if tout_ouvert else   # §E.1
-                    "SDP calculée sur la partie constructible ; les autres parts restent à instruire.")
-            out.append(f"Parcelle multi-zones : {liste} — {tail}")
-        elif _sdp_calcul_nul(it):                                         # cas 4 (calculé et NUL) — inchangé
-            out.append(f"Parcelle multi-zones : {liste} — le résiduel calculé est nul sur la part "
-                       f"{it.get('zone_code')} ; les autres parts restent à instruire.")
-        elif pc:                                                          # cas 1 : SDP supprimée + part OUVERTE
-            surf = round(pc[1] / 100 * (it.get("surface_m2") or 0))   # §B.2 surface de la part (Estimé)
-            surf_txt = f", soit ~ {_num(surf)} m² — Estimé" if surf else ""
-            if it.get("etage0"):     # sous-cas étage 0 (M130-7 §C), désormais gardé par pc non vide
-                out.append(f"Parcelle multi-zones : {liste} — écartée du vivier, mais une part {pc[0]} "
-                           f"(~ {pc[1]} %{surf_txt}) est constructible : à instruire séparément.")
-            else:
-                out.append(f"Parcelle multi-zones : {liste} — la SDP n'est pas chiffrée ; une part "
-                           f"{pc[0]} (~ {pc[1]} %{surf_txt}) est constructible et reste à instruire.")
-        else:                                                             # cas 2 : AUCUNE part ouverte
-            out.append(f"Parcelle multi-zones : {liste} — aucune des parts n'est ouverte à l'urbanisation.")
+        out.append(_multizone_line(it))
     return out
+
+
+def _multizone_line(it: dict) -> str:
+    """M130-9 §A/§B — construit la ligne « Parcelle multi-zones » : une TÊTE (état du résiduel, nomme
+    0 ou 1 part) puis la partition des parts RESTANTES en ouvertes / fermées / agrégat, chacune NOMMÉE."""
+    from .projets import _part_ouverte
+    parts = it.get("zones_parts") or []
+    liste = " · ".join(f"{lib} ({fam or '—'}) ~ {pct} %" for lib, fam, pct in parts)
+    if not (parts and all(p[2] is not None for p in parts)):
+        libs = ", ".join(p[0] for p in parts)
+        return f"Parcelle multi-zones : zones {libs} — parts non disponibles."
+    surface = it.get("surface_m2") or 0
+
+    def _st(pct: int) -> str:                      # §B.2 surface d'une part (Estimé), même helper partout
+        s = round(pct / 100 * surface)
+        return f", soit ~ {_num(s)} m² — Estimé" if s else ""
+
+    e0 = it.get("etage0")
+    pc = it.get("part_constructible")              # (libellé, pct) : plus grande part OUVERTE, ou None
+    dom = parts[0][0]
+    head: list[str] = []
+    head_lib = None
+    if e0:                                          # §B — incise sur TOUTE ligne du document écarté
+        head.append("écartée du vivier")
+    if it.get("sdp_chiffree"):                                          # résiduel chiffré > 0
+        head.append("SDP calculée sur la partie constructible")
+        head_lib = dom
+    elif _sdp_calcul_nul(it):                                           # résiduel calculé et NUL
+        head.append(f"le résiduel calculé est nul sur la part {dom}")
+        head_lib = dom
+    elif pc:                                                            # SDP supprimée + part OUVERTE
+        if not e0:
+            head.append("la SDP n'est pas chiffrée")
+        head.append(f"une part {pc[0]} (~ {pc[1]} %{_st(pc[1])}) est constructible et reste à instruire")
+        head_lib = pc[0]
+    elif not e0:                                                        # aucune part ouverte (hors étage 0)
+        head.append("la SDP n'est pas chiffrée")
+    # ── partition des parts RESTANTES (toutes sauf celle déjà nommée dans la tête)
+    restantes = [(lib, pct) for (lib, fam, pct) in parts if lib != head_lib]
+    ouvertes = [(lib, pct) for (lib, pct) in restantes if _part_ouverte(lib)]
+    fermees = [(lib, pct) for (lib, pct) in restantes if not _part_ouverte(lib)]
+    tail: list[str] = []
+    for lib, pct in ouvertes:
+        tail.append(f"une part {lib} (~ {pct} %{_st(pct)}) reste à instruire")
+    if len(fermees) == 1:
+        tail.append(f"la part {fermees[0][0]} (~ {fermees[0][1]} %) est fermée à l'urbanisation")
+    elif len(fermees) > 1:
+        codes = ", ".join(lib for lib, _ in fermees)
+        tail.append(f"les autres parts ({codes}) sont fermées à l'urbanisation")
+    reste = it.get("zones_reste") or 0
+    if reste >= 2:                                  # agrégat sous le seuil : ni ouvert ni fermé
+        tail.append(f"~ {reste} % relèvent d'autres zones, non détaillées")
+    return f"Parcelle multi-zones : {liste} — {' ; '.join(head + tail)}."
