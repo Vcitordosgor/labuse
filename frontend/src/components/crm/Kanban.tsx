@@ -19,6 +19,11 @@ const TONE_ACCENT: Record<string, string> = {
 
 function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number; onArchive: () => void; onEdit: () => void }) {
   const { select, setView } = useApp()
+  // M137 — indicateur de relance CONDITIONNEL : visible seulement si la relance est
+  // échue OU due aujourd'hui (reminder_date <= aujourd'hui). Sinon rien. Pas un badge
+  // permanent de coin — un point ambre discret + l'échéance, à gauche du titre.
+  const todayISO = new Date().toLocaleDateString('en-CA') // AAAA-MM-JJ local
+  const reminderDue = !!e.reminder_date && e.reminder_date <= todayISO
   return (
     <div
       draggable
@@ -33,13 +38,23 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
       title="Éditer la carte (note, priorité, relance) · glisser pour changer d'étape"
     >
       <div className="flex items-center justify-between gap-2">
-        <button
-          onClick={() => { setView('cartes'); select(e.idu) }}
-          className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
-          title="Ouvrir la fiche sur la carte"
-        >
-          {e.idu}
-        </button>
+        <div className="flex min-w-0 items-center gap-1.5">
+          {reminderDue && (
+            <Tip tip={e.reminder_date === todayISO ? 'Relance due aujourd’hui' : 'Relance échue'}>
+              <span className="flex shrink-0 items-center gap-1 text-[10px] font-medium text-amber" aria-label="Relance échue ou due aujourd’hui">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-hidden />
+                {e.reminder_date!.slice(8, 10)}/{e.reminder_date!.slice(5, 7)}
+              </span>
+            </Tip>
+          )}
+          <button
+            onClick={() => { setView('cartes'); select(e.idu) }}
+            className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
+            title="Ouvrir la fiche sur la carte"
+          >
+            {e.idu}
+          </button>
+        </div>
         {newEvents > 0 && (
           <Tip tip="Événements non lus sur cette parcelle (cloche)">
             <span className="shrink-0 rounded-full bg-violet/15 px-1.5 py-0.5 text-[9px] font-medium text-violet">
