@@ -4448,12 +4448,11 @@ def _prio_keys() -> list[str]:
 
 
 def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
+    # M137 Lot 2 — les blocs `verdict` et `premium` (score/rang : rang_v2, opportunity_score,
+    # verdict.rang, tier_v2, completeness_score…) sont RETIRÉS du payload CRM (M133 B.6 : zéro
+    # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1). Corollaire : plus
+    # de `verdict_servi`/`_latest_eval`/`_premium_head` PAR CARTE — allège aussi le N+1 (C4).
     p = e.parcel
-    ev = _latest_eval(db, e.parcel_id)
-    # M34 (dette #14) : le verdict des cartes CRM = traduction du tier servi (le front
-    # affiche déjà `premium` via verdictMeta — ce bloc API raconte désormais le même run).
-    from ..verdict_servi import verdict_servi
-    vs = verdict_servi(db, p.idu)
     return {
         "id": e.id,
         "idu": p.idu,
@@ -4469,12 +4468,6 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": _ban_adresse(db, p.idu)},
-        "verdict": {
-            "status": vs["statut"], "label": vs["label"], "rang": vs["rang"],
-            "opportunity_score": ev.opportunity_score if ev else None,
-        },
-        # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban
-        "premium": _premium_head(db, e.parcel_id),
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
         "projet": _projet_ref(db, e.projet_id),
         # contact proprio (PRIVACY : personne morale publique seulement, jamais un particulier)
