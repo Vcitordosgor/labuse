@@ -808,13 +808,22 @@ export function MapView() {
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'permis'],
-        paint: { 'circle-radius': 4, 'circle-color': '#4ADE80', 'circle-opacity': 0.85,
-                 'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
+        // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
+        // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
+        // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
+        // sombre : les points qui se recouvrent restent lisibles (densité visible, bords séparés).
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 13, 9, 15, 12, 18, 17],
+                 'circle-color': '#4ADE80', 'circle-opacity': 0.8,
+                 'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })
       // radar-permis — les points permis sont CLIQUABLES : un clic ouvre la fiche permis (drawer M03,
       // détails + « localiser la parcelle »). Le permit_id voyage dans les properties de la feature.
+      // La zone cliquable du point PRIME sur la parcelle : preventDefault() (comme les équipements,
+      // M55-A) → les handlers parcels-fill / ile-fill et le clic universel testent `defaultPrevented`
+      // et s'abstiennent (jamais la fiche parcelle sous le point). stopPropagation seul ne suffisait
+      // PAS (il n'arrête pas les autres abonnés maplibre du même clic).
       m.on('click', 'module-pts', (e) => {
         const pid = e.features?.[0]?.properties?.permit_id
-        if (pid) { setPermitToOpen(String(pid)); e.originalEvent?.stopPropagation?.() }
+        if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
       })
       m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'module-pts', () => { m.getCanvas().style.cursor = '' })
