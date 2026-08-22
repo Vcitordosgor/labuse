@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { scoreurAdresse, type ScoreurResult } from '../../lib/api'
 import { fmtEur, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
+import { ParcelInput } from '../ParcelInput'
 import { Calculette } from '../fiche/Fiche'
 import { TierBadge } from './TierBadge'
 
@@ -17,11 +17,9 @@ import { TierBadge } from './TierBadge'
 export function EtudierBien() {
   const calcPrefill = useApp((s) => s.calcPrefill)         // porte fiche/copilote (IDU pré-rempli)
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)
-  const selectedIdu = useApp((s) => s.selectedIdu)         // parcelle cliquée sur la carte
   const select = useApp((s) => s.select)
   const setModule = useApp((s) => s.setModule)
 
-  const [iduInput, setIduInput] = useState('')             // saisie manuelle d'une référence cadastrale
   const [prix, setPrix] = useState<number | null>(null)    // prix demandé, SAISI à la main — jamais scrapé
   const [showHyp, setShowHyp] = useState(false)
 
@@ -36,9 +34,6 @@ export function EtudierBien() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calcPrefill])
 
-  const onPickAdresse = (sel: AddressSelection) => lancer(sel.label, sel.idu ?? null)
-  const onVoirIdu = () => { const t = iduInput.trim(); if (t.length >= 10) lancer(t, t) }
-
   const d: ScoreurResult | undefined = m.data
   const c = d?.constat
   const cal = c?.charge_calibree
@@ -52,27 +47,12 @@ export function EtudierBien() {
         rend le <b>constat</b> (verdict + charge calibrée) ; réglez ensuite <b>vos hypothèses</b>.
       </div>
 
-      {/* ENTRÉE UNIFIÉE — adresse (phare) OU parcelle (IDU / carte) */}
+      {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte */}
       <div data-etudier-form className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <AddressAutocomplete
-          data-etudier-adresse
-          autoFocus
-          placeholder="Adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
-          onSelect={onPickAdresse}
-          onClear={() => m.reset()}
-        />
-        <div className="flex items-center gap-2">
-          <input data-etudier-idu value={iduInput} onChange={(e) => setIduInput(e.target.value.trim())}
-            onKeyDown={(e) => e.key === 'Enter' && onVoirIdu()}
-            placeholder="… ou une référence cadastrale (IDU)"
-            className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-          <button data-etudier-go onClick={onVoirIdu} disabled={iduInput.trim().length < 10}
-            className="shrink-0 rounded-lg border border-mint/40 px-2.5 py-1.5 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">voir</button>
-        </div>
-        {selectedIdu && selectedIdu !== resultIdu && (
-          <button data-etudier-carte onClick={() => lancer(selectedIdu, selectedIdu)}
-            className="self-start text-[10.5px] text-mint hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
-        )}
+        <ParcelInput dataAttr="etudier-adresse" autoFocus
+          placeholder="Adresse ou IDU (ex. 12 rue du Général de Gaulle, ou 97415000DK1044)"
+          onPick={(idu) => lancer(idu, idu)}
+          onAddress={(label) => lancer(label, null)} />
       </div>
 
       {m.isPending && <p className="text-[11px] text-txt-mut">Analyse…</p>}

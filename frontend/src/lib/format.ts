@@ -78,6 +78,13 @@ export const iduCourt = (idu: string | null | undefined): string => {
   return s.length >= 14 ? `${s.slice(8, 10)} ${s.slice(10)}` : s
 }
 
+/** RECONNAISSANCE D'UN IDU (patron omnibox M137) — LE SEUL endroit où vit cette règle (LOI-3).
+ *  Un IDU cadastral commence par ≥ 5 chiffres (code INSEE), suite contiguë sans espace, 6–14 car.
+ *  On l'utilise pour distinguer, DANS UN SEUL CHAMP, une référence cadastrale d'une adresse : sur un
+ *  IDU on N'interroge PAS la BAN (elle répondrait « aucune adresse » à tort). Partagé par
+ *  AddressAutocomplete (skip BAN) et ParcelInput (aiguillage IDU/adresse) — chemin unique. */
+export const estIdu = (s: string): boolean => /^\d{5}[0-9A-Za-z]{1,9}$/.test(iduComplet(s))
+
 /** B4 (BLOC B) — libellés BRUTS de source (PPR/Géorisques) : « INONDATION_MOUVEMENT_DE_TERRAIN »
  *  → « Inondation mouvement de terrain ». AFFICHAGE SEULEMENT, données intactes. Ne touche que
  *  les chaînes qui crient (tout-majuscules avec au moins un mot ≥ 4 lettres) ; les acronymes

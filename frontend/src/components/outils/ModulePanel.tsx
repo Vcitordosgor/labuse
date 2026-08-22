@@ -6,6 +6,7 @@ import {
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
+import { ParcelInput } from '../ParcelInput'
 import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
@@ -576,10 +577,8 @@ export function M07() {
 const TEMPS_AVANT = [{ key: 'bm-ortho-1950', label: '1950-1965' }, { key: 'bm-ortho-2000', label: '2000-2005' }]
 
 function M08() {
-  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, selectedIdu, setFlyTo } = useApp()
+  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, setFlyTo } = useApp()
   const [idu, setIdu] = useState('')
-  const [raw, setRaw] = useState('')
-  const [addrMsg, setAddrMsg] = useState<string | null>(null)
   // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si non-historique.
   useEffect(() => {
     setCmpRight('bm-ortho-now')
@@ -587,7 +586,7 @@ function M08() {
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   const designer = async (code: string, coords?: [number, number]) => {
     const c = code.trim(); if (c.length < 10) return
-    setIdu(c); setAddrMsg(null)
+    setIdu(c)
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
@@ -603,17 +602,9 @@ function M08() {
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
-        <input data-temps-idu value={raw} onChange={(e) => setRaw(e.target.value.trim())}
-          onKeyDown={(e) => { if (e.key === 'Enter') void designer(raw) }}
-          placeholder="IDU — 97415000CW0658"
-          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <AddressAutocomplete placeholder="… ou une adresse"
-          onSelect={(sel) => { if (sel.idu) void designer(sel.idu, [sel.lon, sel.lat]); else setAddrMsg("Adresse trouvée, mais aucune parcelle rattachée — saisissez l'IDU.") }} />
-        {addrMsg && <p className="text-[10.5px] text-st-creuser">{addrMsg}</p>}
-        {selectedIdu && (
-          <button onClick={() => void designer(selectedIdu)} className="self-start text-[10.5px] text-mint hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
-        )}
-        <p className="text-[10.5px] text-txt-dim">… ou cliquez une parcelle directement sur la carte.</p>
+        {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ, via ParcelInput partagé */}
+        <ParcelInput dataAttr="temps-idu" placeholder="Adresse ou IDU — 97415000CW0658"
+          onPick={(id) => void designer(id)} />
       </div>
       <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>
     </>
@@ -624,7 +615,7 @@ function M08() {
     <>
       <div className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
         <span className="font-mono text-[12px] text-txt">{idu}</span>
-        <button onClick={() => { setIdu(''); setRaw('') }} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
+        <button onClick={() => setIdu('')} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
       </div>
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
@@ -670,7 +661,6 @@ function M09() {
   useEffect(() => { if (selectedIdu && step === 1) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const [motif, setMotif] = useState('standard')
   const [texte, setTexte] = useState('')
-  const [addrMsg, setAddrMsg] = useState<string | null>(null)  // M15-G : retour entrée « adresse »
   const gen = useMutation({
     mutationFn: () => modCourriers([idu.trim()], motif),
     onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
@@ -706,18 +696,12 @@ function M09() {
 
       {step === 1 && (
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Parcelle concernée — <b>3 entrées</b> : saisissez l'IDU,
-            une adresse, ou cliquez une parcelle sur la carte.</p>
-          <input data-courrier-idu value={idu} onChange={(e) => { setIdu(e.target.value.trim()); setAddrMsg(null) }}
-            placeholder="IDU — 97415000CW0658"
-            className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
-          {/* M15-G — entrée « adresse » : autocomplétion → parcelle rattachée (source interne) */}
-          <AddressAutocomplete placeholder="… ou une adresse"
-            onSelect={(sel) => { if (sel.idu) { setIdu(sel.idu); setAddrMsg(null) } else setAddrMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.") }} />
-          {addrMsg && <p data-courrier-addrmsg className="text-[10.5px] text-st-creuser">{addrMsg}</p>}
-          {selectedIdu && selectedIdu !== idu && (
-            <button onClick={() => { setIdu(selectedIdu); setAddrMsg(null) }} className="self-start text-[10.5px] text-mint hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
-          )}
+          <p className="text-[11px] text-txt-mut">Parcelle concernée — <b>un seul champ</b> : une adresse
+            ou un IDU (ou cliquez une parcelle sur la carte).</p>
+          {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
+              carte est déjà capté par l'effet selectedIdu (étape 1) → withCarte inutile ici. */}
+          <ParcelInput dataAttr="courrier-idu" withCarte={false} placeholder="Adresse ou IDU — 97415000CW0658"
+            onPick={(id) => setIdu(id)} />
           <button data-courrier-next onClick={() => idu.trim().length >= 10 && setStep(2)} disabled={idu.trim().length < 10}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Suivant ›</button>
         </div>
