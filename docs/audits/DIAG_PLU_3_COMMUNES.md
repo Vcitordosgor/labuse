@@ -198,3 +198,54 @@ pas le cas « valeur inventée ».** Le seul point à noter est de langage : Sai
 Saint-Leu ne sont PAS « sans zonage » — elles ont leur PLU actuel servi et opposable ; ce qui
 n'est pas calibré/servi, c'est leur *révision en cours*. Seule Saint-Philippe est réellement
 sans zonage (RNU), et tout le produit le dit.
+
+---
+
+## ADDENDUM — La PAU de Saint-Philippe : substitut honnête, pas cécité
+
+Question de suivi : Saint-Philippe (RNU, 4 162 parcelles sans zonage) est-elle *réellement*
+aveugle, ou la PAU estimée (`parcel_pau`) lui donne-t-elle déjà un substitut ?
+**Réponse : elle a un substitut ESTIMÉ, honnête et branché — pas aveugle.**
+
+### 1. Couverture
+`parcel_pau` ne couvre QU'UNE commune : Saint-Philippe (97417). **2 373 des 4 162** parcelles
+(57 %) sont dans l'enveloppe PAU estimée. Enveloppe : 35 noyaux, 3 482 bâtiments clusterisés,
+268 ha (`commune_pau`).
+
+### 2. Méthode — **Estimé**, pas Sourcé
+`src/labuse/rnu.py:131-186` (`build_pau`, méthode « médiane » validée Vic 26/07/2026) :
+noyaux = `ST_ClusterDBSCAN` des centroïdes de bâtiments BD TOPO (eps 50 m, min 10) ; enveloppe
+= `ST_Union(ST_Buffer(bâtiment, 40 m))` ; parcelle dans la PAU ssi
+`ST_PointOnSurface ∈ enveloppe` (critère « centre »). Paramètres en **config**
+(`rnu_communes.yaml › pau`), jamais en dur. C'est une **ESTIMATION LABUSE** — assumée telle,
+jamais présentée comme la délimitation officielle.
+
+### 3. Servie à l'écran — oui, avec avertissement
+`rnu.rnu_block` (`src/labuse/rnu.py:82-108`, appelé fiche `app.py:2662`) sert `dans_pau`
+True/False + `AVERTISSEMENT_PAU` (`rnu.py:36`) :
+> « Enveloppe urbanisée estimée par LABUSE — la délimitation des parties actuellement
+>   urbanisées relève de l'appréciation du service instructeur. »
+Donc l'écran dit *à la fois* « dans/hors PAU » **et** que c'est une estimation.
+
+### 4. Entre-t-elle dans le score / la cascade ?
+- **Modèle de proba (WoE, `zone_plu` 3ᵉ prédicteur) : NON.** `parcel_pau` n'est pas une
+  feature (`features.py` ne la lit pas) ; la proba reste calculée sur `zone_plu='inconnu'`
+  (cf. §3 principal). La PAU **n'influence pas la probabilité de mutation.**
+- **Gate de tier p_v2 (`plancher_c`, `scoring/p_v2/statuts.py:55-70`) : OUI, comme substitut
+  d'U/AU.** Au RNU, U/AU n'existe pas et la branche SDP non plus (pas de règlement, pas de
+  droits calculables) ; l'équivalent validé est « parcelle DANS la PAU ∧ surface ≥ **même**
+  seuil (600 m²) ». Injectée par `pipeline.py:277-286`. **947** parcelles St-Philippe passent
+  ce plancher (PAU ∧ surface ≥ 600) — sans PAU elles seraient toutes recalées faute de zonage.
+- **Cascade Q (`phase1.py`) : NON** — la couche zonage reste `unknown` (§4 principal) ; la PAU
+  ne fabrique pas de verdict de zonage.
+- **division_or** (`ingestion/division_or.py:297,501,736-737`) : la PAU sert de repli quand
+  `zone IS NULL` (lot RNU gardé seulement si dans la PAU) — même logique, hors score/cascade.
+
+### Verdict addendum
+Saint-Philippe **n'est pas aveugle** : la PAU lui fournit un substitut d'urbanité **estimé,
+étiqueté comme tel, au même seuil que tout le monde**, qui débloque le *tiering* de 947
+parcelles (les 2 373 dans la PAU, filtrées à surface ≥ 600). Ce substitut agit **uniquement**
+sur l'éligibilité-capacité (gate de tier), **jamais** sur la probabilité de mutation ni sur un
+verdict de zonage — qui, eux, restent en `inconnu`/`unknown` honnêtes. Aucun faux positif : la
+seule chose « inventée » est une **enveloppe explicitement estimée**, affichée avec son
+avertissement, et bornée au même plancher de surface que les communes à PLU.
