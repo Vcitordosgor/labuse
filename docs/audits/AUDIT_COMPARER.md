@@ -111,3 +111,26 @@ La fiche à l'écran est correcte (elle, passe par `_q_v2_fiche`, `app.py:3185`)
 lui, lit une forme de verdict qui n'a plus les clés v2 → tout le reste (puce, rang, fraction,
 raison) en découle. Corriger la source (ou aligner `_compare_row` sur `verdict_servi`/`_q_v2_fiche`)
 règle §2 d'un coup. À arbitrer par Vic.
+
+---
+
+## CORRECTION (cause racine) — 22/08/2026
+Le comparateur passe désormais sur **`_q_v2_fiche`** (fiche servie) + **`fiche_payload`** (même
+bilan que la fiche), plus sur `_build_fiche`. `_compare_row(qv2, faisab)` réécrit.
+- Puce d'ACTION correcte (Priorité / À suivre / …) — plus « Classement historique » ; **rang**
+  affiché ; **fraction** (« 1/N sous 1 an ») + **raison** dominante (`raison_dominante`, comme la
+  carte/la liste).
+- **Charge morte retirée** : `opportunity_score`/`completeness_score` (matrice v1, non scopés) hors
+  payload.
+- **Tableau enrichi** : SDP résiduelle + Sous-densité ajoutés (déjà au payload, non affichés ; la
+  charge foncière /m² y était déjà). Ce sont des signaux de POTENTIEL restant, alignés côte à côte.
+- **Tests** : `test_lot_d` réécrit sur les VRAIES formes (score_v2/lines/fiche_payload) au lieu du
+  fiche fabriqué qui masquait le bug ; ajout de `test_compare_endpoint_ne_leve_pas` (il n'en
+  existait aucun).
+- Vérif : suite 1656 passed / 0 failed · golden 119/119 (GARDE-RUN 431 663) · tsc 0 · build ·
+  capture `qa/comparer/` (3 parcelles : puces d'action, rang, fraction, raison).
+
+### DIFFÉRÉ (noté, pas fait — décision Vic)
+- **Export PDF/CSV** de la comparaison : toujours absent.
+- **Ajout depuis un projet / le kanban** : toujours absent (ajout via fiche → « Comparer » et clic
+  carte seulement).

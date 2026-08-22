@@ -527,13 +527,15 @@ export const ackAlerte = (id?: number) =>
 
 // M54-EXPO-3 A8 — comparateur de parcelles (2 à 3 côte à côte).
 export interface CompareRow {
-  idu: string; commune?: string; section?: string; numero?: string; surface_m2?: number | null
+  idu: string; commune?: string; surface_m2?: number | null
+  // verdict SERVI (source _q_v2_fiche) — la puce dérive de tier_v2 + etage0 ; fraction + raison M135
   status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
-  zone?: string | null; constructible?: boolean | null; capacite?: string | null
+  label?: string | null; fraction?: string | null; raison?: string | null
+  zone?: string | null; constructible?: boolean | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
-  ca_bas?: number | null; ca_haut?: number | null; charge_fonciere_m2?: number | null
+  charge_fonciere_m2?: number | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
-  n_contraintes?: number; contraintes?: string[]; synthese?: string | null
+  n_contraintes?: number; contraintes?: string[]
 }
 export const getCompare = (idus: string[]) =>
   j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
