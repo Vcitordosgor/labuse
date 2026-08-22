@@ -49,10 +49,16 @@ def _fr(x: float) -> str:
 
 
 def _src_propre(src: str | None) -> str | None:
-    """M130-4 §E.3 — retire le point final parasite d'une citation d'article (« p.84. » → « p.84 »)."""
+    """M130-4/6 §E.3 — retire le point final parasite d'une citation (« p.84. » → « p.84 ») ET le point
+    avant une parenthèse fermante des libellés « via renvoi » (« Source: p.154.) » → « … p.154) »)."""
     if not src:
         return src
-    return src.rstrip().rstrip(".")
+    return src.rstrip().replace(".)", ")").rstrip(".")
+
+
+# M130-6 §A — le CAS 3 (« résiduel calculé et NUL ») se reconnaît à la CAUSE, jamais à l'absence de
+# nombre : reculs / emprises / modulations / logement non admis. (Le zonage fermé = cas 2, la famille.)
+_CASE3_CAUSES = {"terrain_exigu", "capacite_nulle", "redhibitoire", "habitat_interdit"}
 
 
 class _Pdf(FPDF):
@@ -178,27 +184,32 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         total = shortlist.get("total")
         neutre = ("Élargir la shortlist ne supprime pas ce rang : seule une liste complète ou un tri "
                   "explicite (surface) est neutre.")   # §B — plus de fausse issue « chercher plus »
+        # M130-6 §C — « ~ {total} retenues, dont ~ {t0} classées à l'étage 0 » (part étage 0 du total).
+        t0 = shortlist.get("total_etage0")
+        dont0 = f", dont ~ {t0:,} classées à l'étage 0".replace(",", " ") if t0 is not None else ""
         if total is None:
             etat = ("Nombre total de parcelles retenues par le cadrage : INDISPONIBLE (requête en "
                     "échec). Cette liste peut être tronquée ; si elle l'est, les parcelles ont été "
                     "sélectionnées par probabilité de mutation — un rang non visible. " + neutre)
         elif total > n:
-            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {total:,} retenues par le cadrage "
-                    "(à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de mutation (critère "
-                    "interne du moteur) — un rang non visible ; elles sont présentées ici par ordre "
-                    "géographique. " + neutre).replace(",", " ")
+            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {total:,} retenues par le cadrage"
+                    f"{dont0} (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de mutation "
+                    "(critère interne du moteur) — un rang non visible ; elles sont présentées ici par "
+                    "ordre géographique. " + neutre).replace(",", " ")
         else:
             etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
                     "présentées. Aucune sélection, aucun rang.")
-        # M130-5 §B — l'ÉTAGE 0 servi doit être dit (état de la donnée, jamais un rang/score).
+        # M130-6 §B — l'ÉTAGE 0 servi doit être dit, en décrivant la couche RÉELLEMENT interrogée
+        # (`_ETAGE0_SQL` = statut « exclue » / « faux positif probable » du run), sans réemployer le
+        # vocabulaire des causes de SDP. C'est un état de la donnée, jamais un rang/score.
         k0 = shortlist.get("etage0_count", 0)
+        _e0def = ("écartées avant évaluation — statut « exclue » ou « faux positif probable » du run "
+                  "de scoring")
         if k0 and k0 >= n:
-            etat += (" Cette sélection est intégralement composée de parcelles classées à l'étage 0 du "
-                     "moteur (résidus cadastraux, emprises non exploitables, zones fermées à "
-                     "l'urbanisation). Elles n'ont pas vocation à être instruites en l'état.")
+            etat += (f" Cette sélection est intégralement composée de parcelles classées à l'étage 0 du "
+                     f"moteur ({_e0def}). Elles n'ont pas vocation à être instruites en l'état.")
         elif k0:
-            etat += (f" {k0} des {n} parcelles figées sont classées à l'étage 0 du moteur (résidus "
-                     "cadastraux, emprises non exploitables, zones fermées à l'urbanisation).")
+            etat += f" {k0} des {n} parcelles figées sont classées à l'étage 0 du moteur ({_e0def})."
         pdf.ln(0.5)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
@@ -290,7 +301,7 @@ def _lignes_donnees(it: dict) -> list[str]:
         out.append("SDP résiduelle : aucune (résiduel nul après reculs et emprises)")
     # §B / §3.2 Hauteur PLU : ligne TOUJOURS présente, avec état explicite (panne ≠ absence).
     he, hf = it.get("he_m"), it.get("hf_m")
-    renvoi = f" · via renvoi : {it['hauteur_renvoi']}" if it.get("hauteur_renvoi") else ""   # §F.4
+    renvoi = f" · via renvoi : {_src_propre(it['hauteur_renvoi'])}" if it.get("hauteur_renvoi") else ""  # §F.4/E.3
     if he is not None or hf is not None:
         tag = "Sourcé — PLU calibré" if it.get("hauteur_calibree") else "Estimé — générique"
         eg = f"égout {_fr(he)} m" if he is not None else "égout non réglementé"
@@ -322,8 +333,18 @@ def _lignes_donnees(it: dict) -> list[str]:
                 liste += f" · autres zones ~ {reste} %"
         else:
             liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
-        tail = ("SDP calculée sur la partie constructible ; les autres parts restent à instruire."
-                if it.get("sdp_chiffree") else
-                "la SDP n'est pas chiffrée ; une partie constructible peut exister et reste à instruire.")
+        # M130-6 §A — la variante se choisit sur la CAUSE, jamais sur « le champ est vide ».
+        cause0 = (it.get("sdp_indispo") or "").split(":", 1)[0]
+        tout_constructible = bool(parts) and all(f in ("urbaine", "à urbaniser") for _l, f, _p in parts)
+        if it.get("sdp_chiffree"):                                       # cas 1 : SDP > 0
+            tail = ("SDP calculée sur la partie constructible ; les autres parts relèvent d'un autre "
+                    "règlement de zone, à instruire." if tout_constructible else   # §E.1
+                    "SDP calculée sur la partie constructible ; les autres parts restent à instruire.")
+        elif cause0 in _CASE3_CAUSES and not it.get("non_constructible"):  # cas 3 : calculé et NUL
+            out.append(f"Parcelle multi-zones : {liste} — le résiduel calculé est nul sur la part "
+                       f"{it.get('zone_code')} ; les autres parts restent à instruire.")
+            return out
+        else:                                                             # cas 2 : supprimé par famille
+            tail = "la SDP n'est pas chiffrée ; une partie constructible peut exister et reste à instruire."
         out.append(f"Parcelle multi-zones : {liste} — {tail}")
     return out

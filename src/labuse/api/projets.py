@@ -283,29 +283,27 @@ def _vivier_figeable(db: Session, cadrage: dict) -> int:
         {"run": RUN, "v2run": _score_v2_run_id(db), **params}).scalar() or 0
 
 
-def _cadrage_total(db: Session, cadrage: dict) -> int | None:
-    """M130-5 §A — le CARDINAL de l'ensemble dont la shortlist est EXTRAITE : la même population que
-    `_run_cadrage` (donc `_q_v2_list`) sans la limite — MÊMES filtres (sliver < 2 m², base étage 0 sauf
-    filtre `tiers` explicite, cadrage). C'est le SEUL dénominateur honnête de la fraction « N figées sur
-    M » — jamais `_vivier_figeable`, qui compte une AUTRE population (toujours hors étage 0). Retourne
-    None uniquement sur échec réel (exception) — un 0 légitime n'est pas un échec."""
+def _cadrage_total(db: Session, cadrage: dict) -> dict:
+    """M130-5 §A / M130-6 §C — cardinal de l'ensemble dont la shortlist est EXTRAITE (même population que
+    `_run_cadrage` / `_q_v2_list` sans la limite : sliver < 2 m², base étage 0 sauf filtre `tiers`
+    explicite, cadrage) ET sa part à l'étage 0. `{total, etage0}` ; `total=None` sur échec réel
+    (exception) — un 0 légitime n'est pas un échec ; jamais `_vivier_figeable` (autre population)."""
     try:
         from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
         fc = _cadrage_to_filtre(cadrage)
         where, params = fc.where()
-        # même règle de base que _q_v2_list : on exclut l'étage 0 SAUF si le cadrage l'a explicitement
-        # opté (filtre tiers → f_tiers / s2.tier / _ETAGE0_SQL dans le where).
         base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
             else f"AND NOT {_ETAGE0_SQL}"
-        return db.execute(text(
-            "SELECT count(*) FROM parcels p "
+        r = db.execute(text(
+            f"SELECT count(*) AS total, count(*) FILTER (WHERE {_ETAGE0_SQL}) AS etage0 FROM parcels p "
             "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
             "JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
             f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}"),
             {"run": RUN, "v2run": _score_v2_run_id(db),
-             "minsurf": MIN_DISPLAY_SURFACE_M2, **params}).scalar()
+             "minsurf": MIN_DISPLAY_SURFACE_M2, **params}).mappings().first()
+        return {"total": int(r["total"]), "etage0": int(r["etage0"])}
     except Exception:  # noqa: BLE001 — échec RÉEL de requête → None → État 3 (INDISPONIBLE) à l'affichage
-        return None
+        return {"total": None, "etage0": None}
 
 
 def _sdp_besoin(cadrage: dict) -> int | None:
@@ -1140,13 +1138,14 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     # M130-5 §A : le total AFFICHÉ est le cardinal de la population dont la shortlist est EXTRAITE
     # (`_cadrage_total`, MÊME population que `_run_cadrage`), jamais `_vivier_figeable` (autre
     # population). None = échec réel de requête → État 3.
-    total = _cadrage_total(db, p.filtres or {}) if figee else None
+    tot = _cadrage_total(db, p.filtres or {}) if figee else {"total": None, "etage0": None}
     return {
         "figee": figee,
         "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
         "n": len(parcelles),
-        "total": total,        # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
-        "etage0_count": sum(1 for it in parcelles if it["etage0"]),   # §B
+        "total": tot["total"],           # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
+        "total_etage0": tot["etage0"],   # M130-6 §C : part étage 0 du total
+        "etage0_count": sum(1 for it in parcelles if it["etage0"]),   # §B (part étage 0 des FIGÉES)
         "parcelles": parcelles,
     }
 
