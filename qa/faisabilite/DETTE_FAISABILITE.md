@@ -42,26 +42,29 @@ Conséquences :
   touche le service. Mesure de dérive faisable **read-only** par échantillon
   (`compute_residuel()` est pure) — à l'arbitrage de Vic.
 
-**M134 — dérive MESURÉE (Phase C-échantillon, read-only, 0 écriture) :**
-- **La dérive redoutée n'existe pas** : recalcul frais de `compute_residuel()` sur
-  **5 583 parcelles** (7 ancres + 1027 zones M131 + 1497 lot×commune + 300 conso +
-  3000 constructibles) → **0 changement** (borne haute < 0,05 %). Cause : diff YAML
-  depuis le 29/07 = seuls ajouts M131 (`Us`, `2AUa-e`), tous **gelés** (résiduel 0) ;
-  aucune zone constructible n'a vu hé/hf/emprise/recul bouger. M131 est **inerte sur
-  le résiduel** (résultat attendu, pas échec), M130-12 aussi (4 m = hauteur sur gel).
-- **A.3bis — le cache est une MOSAÏQUE de trois états de code** (lots 29/07 : 245 319 ;
-  05/08 : 8 032, uniquement des constructibles ; 08-19 : 178 312). L'incohérence
-  interne (computed_at étalé, code hétérogène) est **un constat d'hygiène EN SOI,
-  séparé de la péremption** : aujourd'hui sans conséquence de VALEUR (les trois états
-  produisent le même résiduel), mais un futur mandat qui changerait vraiment le calcul
-  la rendrait dangereuse (drift hétérogène par parcelle selon son lot).
-- **Coût d'un refresh** (mesuré) : île ≈ 127 min séquentiel (20,9 ms/constructible,
-  16,1 ms/autre) ; par commune < 10 min.
+**M134 — CLÔTURE (arbitrage Vic : aucune bascule — on ne remplace pas des valeurs
+identiques en prenant un risque sur les features scoring).**
 
-**À faire (mandat data, arbitrage Vic — NON urgent, la valeur ne dérive pas)** : un
-refresh peut attendre une **bascule planifiée**. Le vrai correctif d'hygiène = soit
-versionner `parcel_residuel` par `run_id` (comparable/rafraîchissable, tue la
-mosaïque), soit un recalcul atomique sur table de travail. **Ne touche pas** l'outil.
+- **Péremption de DATE, pas de VALEUR** — mesurée le **22/08 sur 5 583 parcelles,
+  0 changée, borne < 0,05 %** (Phase C-échantillon, read-only ; détail
+  `RAPPORT_M134_PHASE_A.md`, outil `m134_mesure_derive.py`).
+- **La mosaïque de trois états de code (A.3bis)** — lots 29/07 (245 319) / 05/08
+  (8 032, constructibles seules) / 19/08 (178 312) — reste un **défaut d'hygiène sans
+  conséquence de valeur AUJOURD'HUI**. **Cette garantie expire au premier mandat qui
+  touchera une entrée du calcul** (hé/hf/emprise/recul/risques d'une zone
+  **constructible**) : à ce moment, le drift redeviendra hétérogène par parcelle
+  selon son lot.
+- **Règle pour la suite** : **tout mandat touchant une entrée du résiduel déclenche un
+  recalcul mesuré**. Le script `qa/faisabilite/m134_mesure_derive.py` est l'outil ; il
+  **reste versionné** à cette fin.
+- **Correctif de fond nommé** : **versionnement de `parcel_residuel`** (`run_id` en
+  clé, comme le scoring) — c'est lui qui rend les bascules **sûres et réversibles**
+  (tue la mosaïque, permet un run neuf parallèle sans écraser le servi). **Mandat
+  schéma à venir.**
+
+*Coût d'un refresh, mesuré (pour le futur mandat)* : île ≈ 127 min séquentiel
+(20,9 ms/constructible, 16,1 ms/autre) ; par commune < 10 min. **Ne touche pas**
+l'outil.
 
 ## 2. Deux systèmes de filtre « périmètre » (D.2 — dette structurelle)
 
