@@ -61,7 +61,9 @@ def test_wording_jamais_opportunite():
     textes = [rn.LIBELLE_SEGMENT, *rn.LIBELLES_COMPOSANTES.values()]
     for t in textes:
         assert "opportunit" not in t.lower()
-    assert "renouvellement" in rn.LIBELLE_SEGMENT.lower()
+    # §5 (renommage « Densifier l'existant ») : le libellé produit dit « densification », plus
+    # « renouvellement » côté client ; la doctrine (jamais « opportunité », parcelle occupée) tient.
+    assert "densification" in rn.LIBELLE_SEGMENT.lower() and "renouvellement" not in rn.LIBELLE_SEGMENT.lower()
     assert "occupée" in rn.LIBELLE_SEGMENT
     # M129-C : la divisibilité a QUITTÉ le segment — aucun libellé ne mentionne la division
     assert all("division" not in t.lower() for t in rn.LIBELLES_COMPOSANTES.values())

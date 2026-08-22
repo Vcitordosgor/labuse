@@ -1,16 +1,18 @@
 /**
- * Module « Renouvellement » — M-RENOUV lot B, ADDITIF.
- * Liste triable du segment (score / SDP / surface / rang commune), lecture de
- * /renouvellement/liste uniquement. DOCTRINE : parcelles OCCUPÉES, « potentiel de
- * renouvellement urbain » — jamais « opportunité », jamais mélangé aux Chaudes/Brûlantes.
+ * Module « Densifier l'existant » — M-RENOUV lot B, ADDITIF (clé interne `renouvellement` inchangée :
+ * URL, QA, tests, endpoint /renouvellement/liste, table parcel_renouvellement — tous conservés).
+ * Liste triable du segment (score / SDP / surface / rang commune). DOCTRINE : parcelles OCCUPÉES,
+ * « potentiel de densification » — jamais « opportunité », jamais mélangé aux Chaudes/Brûlantes.
  */
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getRenouvListe } from '../../lib/api'
+import { verdictMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
+import { Tip } from '../Tip'
 
 const SORTS = [
   { key: 'score', label: 'Score' },
@@ -35,18 +37,21 @@ export function RenouvellementModule() {
     staleTime: 60_000,
   })
 
-  if (isLoading) return <Loading label="Segment Renouvellement…" />
-  if (error || !data) return <ErrorState message="Segment Renouvellement momentanément indisponible — réessayez." />
+  if (isLoading) return <Loading label="Densifier l'existant…" />
+  if (error || !data) return <ErrorState message="Segment momentanément indisponible — réessayez." />
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       {/* bandeau client — la définition ET la limite, toujours visibles (doctrine) */}
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.renouv}4d`, background: `${TOKENS.renouv}0f` }}>
-        Des parcelles <b className="text-txt">déjà occupées</b> (écartées du classement principal)
-        mais en zone constructible avec une <b className="text-txt">capacité restante réelle</b> :
-        un <b style={{ color: TOKENS.renouv }}>potentiel de renouvellement urbain</b> (densifier,
-        diviser, reconstruire). {data.avertissement}
+        Le <b style={{ color: TOKENS.renouv }}>bâti qui peut porter davantage</b> — extensions,
+        surélévations : des parcelles <b className="text-txt">déjà occupées</b> en zone constructible
+        avec une <b className="text-txt">capacité résiduelle réelle</b>. {data.avertissement}
+        {/* « i » — la MÉTHODE et sa limite (Estimé), toujours à portée */}
+        <Tip tip="Parcelles déjà bâties en zone U/AU dont la capacité résiduelle > 100 m² (ou surface ≥ 600 m²), hors copropriété et hors foncier public. Score = heuristique déterministe (percent_rank : SDP résiduelle · assiette · rotation du bâti). Estimé — règles PLU calibrées, pas une expertise.">
+          <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
+        </Tip>
         {/* M47 : étiquette source · millésime — comme toute couche servie. */}
         <span className="mt-1 block text-[9.5px] text-txt-dim">
           {data.source}
@@ -64,14 +69,21 @@ export function RenouvellementModule() {
           </button>
         ))}
         <span className="ml-auto text-[10px] text-txt-dim">
-          {data.n} affichées / {data.total.toLocaleString('fr-FR')} au total{commune ? ` — ${commune}` : ' — île'}
+          {data.tronquee
+            ? `les ${data.n} premières sur ${data.total.toLocaleString('fr-FR')}`
+            : `${data.n} sur ${data.total.toLocaleString('fr-FR')}`}{commune ? ` — ${commune}` : ' — île'}
         </span>
       </div>
+      {/* le tri est SERVEUR (l'ordre affiché = l'ordre servi) — on le DIT, pas d'ORDER BY décoratif */}
+      <p className="-mt-1 text-[9.5px] text-txt-dim">
+        Triées par <b className="text-txt-mut">{SORTS.find((s) => s.key === sort)?.label.toLowerCase()}</b> décroissant.
+      </p>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <table className="w-full text-[11px]">
           <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
             <tr>
               <th className="px-2 py-1.5">Parcelle</th>
+              <th className="px-2 py-1.5">Classement</th>
               <th className="px-2 py-1.5 text-right">Score</th>
               <th className="px-2 py-1.5 text-right">SDP rés.</th>
               <th className="px-2 py-1.5 text-right">Surface</th>
@@ -85,6 +97,14 @@ export function RenouvellementModule() {
               <tr key={it.idu} data-renouv-row className="cursor-pointer border-t border-line hover:bg-surface-2"
                 onClick={() => select(it.idu)}>
                 <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
+                {/* §1 — la puce d'action : le verdict SERVI (tier v2 + étage 0), M135/M137 ; jamais
+                    « Classement historique » (on ne sert pas le statut matrice legacy). */}
+                <td className="px-2 py-1.5">
+                  {(() => { const v = verdictMeta(null, it.tier_v2, it.etage0); return (
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                      style={{ background: `${v.color}22`, color: v.color }}>{v.label}</span>
+                  ) })()}
+                </td>
                 <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.renouv }}>{it.renouv_score}</td>
                 <td className="px-2 py-1.5 text-right text-txt-mut">{it.sdp_residuelle_m2 != null ? `${it.sdp_residuelle_m2.toLocaleString('fr-FR')} m²` : '—'}</td>
                 <td className="px-2 py-1.5 text-right text-txt-mut">{it.surface_m2 != null ? `${it.surface_m2.toLocaleString('fr-FR')} m²` : '—'}</td>

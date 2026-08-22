@@ -113,7 +113,7 @@ export const LAYER_INFO: Record<string, string> = {
   lignes_ht:
     'Les lignes électriques haute tension de l’île (source : BD TOPO IGN, tension indiquée — lignes aériennes uniquement). C’est une CONTRAINTE potentielle pour un projet (servitudes, reculs) : la servitude exacte n’est pas cartographiée en donnée ouverte et doit être vérifiée auprès du gestionnaire de réseau (EDF SEI). Sur la fiche d’une parcelle, LABUSE indique la distance à la ligne la plus proche.',
   renouv:
-    'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire). Segment calculé par LABUSE (68 445 parcelles sur l’île) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
+    'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité résiduelle : le bâti qui peut porter davantage (extensions, surélévations, division). Segment « Densifier l’existant » calculé par LABUSE — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
   // M55-G point 8 / suite point 1 : l'avis LABUSE (palette des tiers) en COUCHE explicite —
   // elle peint TOUT le classement de l'île, sans tenir compte des filtres actifs (le libellé
   // le dit). En mode analyse (couche décochée), la palette suit le résultat courant.

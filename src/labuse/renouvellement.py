@@ -46,8 +46,9 @@ BATI_CODE_PREFIXES: tuple[tuple[str, str], ...] = (
     ("ensemble bâti", "ensemble_bati"),
 )
 
-#: Libellé produit du segment — wording DOCTRINAL (jamais « opportunité »).
-LIBELLE_SEGMENT = "Parcelle occupée — potentiel de renouvellement urbain"
+#: Libellé produit du segment — wording DOCTRINAL (jamais « opportunité »). §5 : côté client
+#: « Densifier l'existant » (la clé interne, la table et l'endpoint gardent « renouvellement »).
+LIBELLE_SEGMENT = "Parcelle occupée — potentiel de densification"
 
 #: Libellés client des 3 composantes (affichage « pourquoi »).
 #: M129-C (Vic 19/08/2026) : `comp_divisibilite` RETIRÉE — division_or sort du produit.
