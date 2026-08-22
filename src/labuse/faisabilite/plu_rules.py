@@ -155,6 +155,11 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
         pleine_terre_pct=_num(v.get("pleine_terre_pct")),
         hauteur_mode=v.get("hauteur_mode"),
         habitat=v.get("habitat"),
+        # M131 : lit un gel EXPLICITE du YAML (défaut True). Permet une entrée `zones:` propre qui
+        # porte une hauteur PAR ZONE (renvoi) tout en gardant `constructible_neuf=False` (zone AU*st
+        # gelée : Us, 2AU). NE FABRIQUE aucune valeur numérique — honore une clé explicite. Piège
+        # consigné en dette : sur une zone gelée, OMETTRE cette clé la rend constructible en silence.
+        constructible_neuf=v.get("constructible_neuf", True),
         notes=[n for n in notes if n], sources=srcs, raw=v,
     )
 

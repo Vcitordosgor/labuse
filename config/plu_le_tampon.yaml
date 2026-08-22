@@ -106,7 +106,7 @@ zones:
        stat_logement: "1 place / logement", stat_src: "Art. Uc12.2 (tableau), p.50-51",
        pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (40 % perméable dont 30 % pleine terre)"}
   Ucm: {bassin: "Le Tampon",
-       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 (règles de la zone Uc — l'indice « m » n'ajoute aucune règle chiffrée)",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 via renvoi (indice « m » régi par les règles chiffrées de la zone Uc — « m » n'ajoute aucune règle de hauteur)",
        emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 : « Non réglementée »",
        recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44",
@@ -201,6 +201,26 @@ zones:
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. Uc2.2 (Ucto), p.40-42 (via renvoi)",
        pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (via renvoi)",
        habitat: interdit, habitat_src: "Règles du secteur Ucto via renvoi (activités touristiques uniquement)"}
+  # M131 — 2AU* : GEL conservé (constructible_neuf: false — ouverture conditionnée, Art. AUindicée 2.2.3,
+  # p.84) MAIS hauteur RÉELLE servie PAR RENVOI (ARTICLE AUindicée 10, p.86 : « se reporter au règlement
+  # de la zone U indiquée en indice »). Le 4 m de zones_au_st (supprimé M130-12) était le repli, pas la
+  # règle. Entrée PROPRE hors zones_au_st ; le gel ne tient QUE par la clé constructible_neuf: false
+  # (dette DETTE_HAUTEUR_PLU : l'omettre rendrait la zone constructible en silence).
+  2AUa: {bassin: "Le Tampon", constructible_neuf: false,
+       he_m: 21, hf_m: 25, hauteur_src: "Art. Ua10.2, p.16 via renvoi (ZONE AUindicée, p.83)",
+       note: "2AU d'extension urbaine — construction neuve non autorisée (ouverture conditionnée, Art. AUindicée 2.2.3, p.84). Hauteur par renvoi (AUindicée 10, p.86 -> zone Ua)."}
+  2AUb: {bassin: "Le Tampon", constructible_neuf: false,
+       he_m: 13, hf_m: 17, hauteur_src: "Art. Ub10.2, p.31 via renvoi (ZONE AUindicée, p.83)",
+       note: "2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10, p.86 -> zone Ub)."}
+  2AUc: {bassin: "Le Tampon", constructible_neuf: false,
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 via renvoi (ZONE AUindicée, p.83)",
+       note: "2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10, p.86 -> zone Uc)."}
+  2AUd: {bassin: "Le Tampon", constructible_neuf: false,
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ud10.2, p.61 via renvoi (ZONE AUindicée, p.83)",
+       note: "2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10, p.86 -> zone Ud)."}
+  2AUe: {bassin: "Le Tampon", constructible_neuf: false,
+       he_m: 12, hf_m: null, hauteur_src: "Art. Ue10.2, p.75-76 via renvoi (ZONE AUindicée, p.83)",
+       note: "2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10, p.86 -> zone Ue) : égout 12 m ; faîtage NON PRÉCISÉ au règlement (hf non gravé, rien inféré)."}
 
 zones_au_renvoi: {}
 
@@ -211,8 +231,11 @@ zones_au_renvoi: {}
 # Gel CONDITIONNEL porté par zones_au_st (constructible_neuf=False — étiquette moteur
 # « secteur de transition » inexacte, capacité zéro exacte : même friction F2 que le pilote).
 zones_au_st:
-  liste: ["2AUa", "2AUb", "2AUc", "2AUd", "2AUe"]
-  portee: "Construction neuve non autorisée en l'état : zones 2AU d'extension urbaine, ouverture conditionnée à l'engagement de l'aménagement de l'ensemble des 1AU du pôle SAR de référence (Art. AUindicée 2.2.3, p.84). Le manifeste ne compte AUCUN polygone 1AUd ni 2AUto."
+  # M131 — les 2AU* ont migré vers des entrées `zones:` propres (gel `constructible_neuf: false` +
+  # hauteur par renvoi AUindicée 10). Liste vidée : plus aucune zone du Tampon ne passe par ce
+  # mécanisme (le repli `hauteur_max_m` par défaut a été supprimé en M130-12, aucune valeur ici).
+  liste: []
+  portee: "Zones 2AU d'extension urbaine (construction neuve non autorisée, ouverture conditionnée Art. AUindicée 2.2.3, p.84) — désormais portées par des entrées `zones:` propres."
   source: "ZONE AUindicée, Art. 2.2.3, p.84."
 
 # Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
