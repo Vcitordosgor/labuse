@@ -306,8 +306,7 @@ function M03() {
           adresse » (chemin unique, AddressAutocomplete). La sélection fait voler la carte sur le lieu —
           les permis géocodés de ce secteur y apparaissent (points cliquables). */}
       <AddressAutocomplete placeholder="Aller à une rue, une commune…"
-        onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
-        className="w-full" />
+        onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })} />
       <div className="flex flex-wrap gap-1.5">
         {[12, 24, 48, 72].map((m) => (
           <button key={m} onClick={() => setMonths(m)}

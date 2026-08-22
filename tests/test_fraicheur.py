@@ -119,7 +119,7 @@ def test_check_fraicheur_non_bloquant(db_session):
                    "ON CONFLICT (name) DO UPDATE SET source_horizon_at='2020-01-01'"), {"n": name})
     r = bg.check_fraicheur(session=s)             # session de test (rollback) ; ne lève jamais
     assert any(x["source"] == "dvf" for x in r["retards"])  # retard vu, non bloquant
-    assert r["total"] == 10 and r["evaluees"] >= 1          # M-R : dénominateur honnête (N/total)
+    assert r["total"] == 11 and r["evaluees"] >= 1          # M-R : dénominateur honnête (N/total) — +cosia (PAU)
 
 
 @pytest.mark.db

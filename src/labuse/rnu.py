@@ -131,12 +131,19 @@ CREATE INDEX IF NOT EXISTS ix_parcel_pau_insee ON parcel_pau (insee);
 def build_pau(session, *, commit: bool = True, log=lambda *_: None) -> dict:
     """Matérialise les PAU des communes flaggées RNU (rebuild complet idempotent).
 
-    Méthode VALIDÉE : noyaux = ST_ClusterDBSCAN(centroïdes bâtiments BD TOPO,
-    eps=eps_m, minpoints=min_batiments) ; enveloppe = ST_Union(ST_Buffer(bâtiment,
-    buffer_m)) des bâtiments clusterisés ; parcelle dans la PAU ssi
-    ST_PointOnSurface ∈ enveloppe (critère « centre »). Paramètres en CONFIG,
-    jamais en dur. LECTURE SEULE des sources ; n'écrit que commune_pau/parcel_pau.
-    Les tiers ne bougent qu'au prochain `labuse score-v2` — jamais rétroactivement."""
+    Méthode VALIDÉE : noyaux = ST_ClusterDBSCAN(centroïdes bâtiments, eps=eps_m,
+    minpoints=min_batiments) ; enveloppe = ST_Union(ST_Buffer(bâtiment, buffer_m)) des
+    bâtiments clusterisés ; parcelle dans la PAU ssi ST_PointOnSurface ∈ enveloppe
+    (critère « centre »). Paramètres en CONFIG, jamais en dur.
+
+    SOURCE BÂTI = BD TOPO (ortho ~2023) ∪ CoSIA (imagerie 2025, kind='batiment_cosia'),
+    la seconde EN COMPLÉMENT et DÉDUPLIQUÉE DANS LE GESTE (les footprints CoSIA qui
+    recouvrent un bâti BD TOPO sont exclus — jamais comptés deux fois ; cf. test
+    test_pau_cosia). Si la couche CoSIA est absente/vide, l'union se réduit à BD TOPO
+    (comportement d'avant, aucune régression). Le jeu de paramètres est INCHANGÉ (médian).
+
+    LECTURE SEULE des sources ; n'écrit que commune_pau/parcel_pau. Les tiers ne bougent
+    qu'au prochain `labuse score-v2` — jamais rétroactivement."""
     p = pau_params()
     for stmt in DDL_PAU.strip().split(";"):
         if stmt.strip():
@@ -147,11 +154,26 @@ def build_pau(session, *, commit: bool = True, log=lambda *_: None) -> dict:
     for insee, e in _entries().items():
         nom = e.get("nom")
         row = session.execute(text("""
-            WITH bats AS (
-                SELECT geom_2975 AS g,
-                       ST_ClusterDBSCAN(ST_Centroid(geom_2975),
-                                        eps => :eps, minpoints => :minpts) OVER () AS cid
+            WITH src AS (
+                -- BD TOPO bâti (ortho ~2023)
+                SELECT geom_2975 AS g
                 FROM spatial_layers WHERE kind = 'batiment' AND commune = :nom
+                UNION ALL
+                -- CoSIA bâti (imagerie 2025) EN COMPLÉMENT, DÉDUPLIQUÉ DANS LE GESTE :
+                -- on n'ajoute QUE les footprints CoSIA sans recouvrement d'un bâti BD TOPO,
+                -- pour ne jamais compter deux fois un bâtiment vu par les deux sources.
+                SELECT c.geom_2975 AS g
+                FROM spatial_layers c
+                WHERE c.kind = 'batiment_cosia' AND c.commune = :nom
+                  AND NOT EXISTS (
+                      SELECT 1 FROM spatial_layers b
+                      WHERE b.kind = 'batiment' AND b.commune = :nom
+                        AND ST_Intersects(b.geom_2975, c.geom_2975))
+            ), bats AS (
+                SELECT g,
+                       ST_ClusterDBSCAN(ST_Centroid(g),
+                                        eps => :eps, minpoints => :minpts) OVER () AS cid
+                FROM src
             ), env AS (
                 SELECT count(DISTINCT cid) AS n_noyaux, count(*) AS n_bats,
                        ST_Union(ST_Buffer(g, :buf)) AS pau
