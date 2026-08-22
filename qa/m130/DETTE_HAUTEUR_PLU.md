@@ -14,15 +14,25 @@ un trou silencieux : consigné nommément (commune, zone, millésime).
 P1 (toute l'île, hors étage 0), P2 (Le Tampon), P4 : **aucune** zone « non
 renseignée » (toutes les zones servies portent une règle, directe ou par renvoi).
 
-## Lecture
+## Lecture — ce qu'on sait, ce qu'on ne sait pas (panne ≠ absence)
 
-Les zones **A / N** (agricole / naturelle) ne portent le plus souvent **aucune
-hauteur d'habitat** au règlement (vocation non résidentielle) : « non renseignée
-au PLU calibré » y est vraisemblablement **légitime**, pas une lacune de
-calibrage. À confirmer si l'on veut distinguer « non réglementée au PLU » (fait
-sourcé) de « non outillée dans notre YAML » (lacune) — cela suppose de lire le
-règlement A/N de chaque commune. Tant que ce n'est pas fait, l'état honnête reste
-« non renseignée au PLU calibré » (on ne prétend pas savoir).
+**On ne sait pas** si le règlement de Saint-Pierre chiffre une hauteur en A / N.
+Fait établi : `config/plu_saint_pierre.yaml` **ne calibre que les zones
+constructibles U / AU** (en-tête du fichier : « règles chiffrées par zone
+constructible (U / AU) »). Les zones A / N **n'y sont pas extraites** →
+`resolve_zone` retombe sur l'estimation générique (he = hf = None).
+
+Or le règlement de Saint-Pierre **contient bien des chapitres A et N** :
+`config/plu_saint_pierre.yaml` (commentaire) cite « N, Nr, Nc, Ncu, Nci, Np,
+Npnr, Nge (chap. p.212-221) » et une règle A (« logement de l'exploitant agricole
+limité à 1/exploitation »). Leur **hauteur n'a simplement pas été lue/extraite**.
+
+Donc : « non renseignée au PLU calibré » est **l'état honnête d'une donnée absente
+de notre calibrage** — pas une affirmation que le règlement ne porte pas de règle.
+On ne suppose rien. Pour lever la dette : lire le chap. A et le chap. N
+(p.212-221) du règlement Saint-Pierre (25/06/2024) et, si une hauteur y figure,
+l'ajouter au YAML ; sinon la marquer explicitement « non réglementée au règlement
+(chap. X, p.Y) » — fait sourcé, distinct de « non outillée dans le YAML ».
 
 Aucune zone **constructible** (U / AU) n'est sortie « non renseignée » sur les
 packs de QA : la couverture PLU calibré Le Tampon / Saint-Pierre est complète

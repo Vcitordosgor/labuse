@@ -76,7 +76,7 @@ La chaîne « sans objet (aucune capacité constructible en l'état) » est
 |---|---|---|
 | 1. « sans objet » | 0 partout | **0** (P1/P2/P3/P4) |
 | 2. P2 muettes → servies | ≥ 16 / 31 | **31 / 31** (P2 : 60 servies, 0 non renseignée) |
-| 3. P3 muettes → servies | ≥ 20 / 44 | **≥ 35** (P3 : 51 servies, 9 non renseignée = A/N) |
+| 3. P3 muettes → servies | ≥ 20 / 44 | **44 / 44** converties (P3 : 51 servies = 5 déjà servies + 2 parts + 44 converties ; 9 non renseignée = les 9 A/N pré-existantes) |
 | 4. BI 1097 (1AUe) | Ue10.2 via renvoi, sans préfixe | « égout 12 m · faîtage non réglementé (… **Art. Ue10.2, p.75-76 via renvoi** …) » ✅ |
 | 5. CW 1056 (AU3a→U3a) | non muette, 15/19 | « égout 15 m · faîtage 19 m (… Zone U3a, Art. 10.2, p.110-112 · via renvoi …) » ✅ |
 | 6. « part X — » | 5, inchangé | **5** (BV2471 Ua · CL1113 Uc · DH0211 Uc · CX1483 Uf · EX0280 Uf) |
@@ -103,3 +103,37 @@ score / rang ; l'IA ne produit aucun chiffre.
 
 **Critère de merge (arbitrage) : le document ne ment plus.** Le merge `--no-ff`
 reste à la main de Vic depuis `~/Desktop/labuse` ; CC ne merge jamais.
+
+---
+
+## Vérifications avant merge (demandées après M130-12)
+
+### 1. EP 1044 (P3, Us) — ligne « Hauteur PLU » intégrale, telle que rendue
+
+> Hauteur PLU : égout non réglementé · faîtage 4 m (Sourcé — PLU calibré ·
+> **Préambule Us p.129 + Art. Us1 (tableau) p.130**)
+
+**`Art. AU01, p.200` N'A PAS été réinjecté.** Le nettoyage M130-11
+(`_hauteur_src_dezone`) reste actif en M130-12 : 0 occurrence de « AU01 » dans P3.
+L'article cité (`Us1`) est celui de la zone `Us` → **pas de faux positif au niveau
+de la source**. (La question du *chiffre* 4 m — issu ou non des annexes AU0 —
+reste la dette data EP 1044 / M130-6 F.2, hors périmètre.)
+
+### 2. Table des sources servies (P1–P4) — recherche d'un article hors-zone
+
+**Aucune** source servie ne cite un article d'une **autre famille de zone** que la
+sienne, une fois le nettoyage appliqué. Les 5 zones à contrôler :
+
+| Zone | Source servie | Verdict |
+|---|---|---|
+| `Us` (St-Pierre) | Art. Us1 (tableau) p.130 | OK (AU01 retiré) |
+| `Uazi` (St-Pierre) | Art. Ua3.5, p.177 (règle générale) | OK — sous-secteur de la famille `Ua` |
+| `Ut` (St-Pierre) | Art. Ut3.5, p.162 | OK |
+| `Up` (St-Pierre) | Art. Up3.5, p.147 | OK |
+| `Ucm` (Le Tampon) | Art. Uc10.2, p.46 (indice « m ») | OK — sous-zone `Uc` documentée |
+
+Toutes les autres zones servies sont soit **même famille** (`Uf→Uf3.5`,
+`Ug→Ug3.5`, `Ud→Ud3.5`…), soit **renvoi documenté** (`1AUb→Ub10.2 via renvoi`,
+`AU3a→U3a`…), soit **estimation générique** (communes non outillées, sans
+article). **Aucune incohérence ne sort → aucune zone à basculer en « non
+renseignée », aucun correctif code.**
