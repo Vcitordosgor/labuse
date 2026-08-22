@@ -1,5 +1,5 @@
 import { useApp, type View } from '../store/useApp'
-import { GROUPS, MODULES } from './outils/registry'
+import { MODULES } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
@@ -67,25 +67,19 @@ const SOURCES_ICON = (
   </>
 )
 
-// P3 — une carte OUTIL : phare = mise en avant (bordure/point violet, bénéfice lisible) ;
-// secondaire = ligne compacte. Aucun code M à l'écran (gardé en interne seulement).
-function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boolean; open: (k: string) => void }) {
+// §2 (23/08/2026) — une carte OUTIL au GABARIT UNIQUE : plus de distinction « phare » (ni étoile,
+// ni graisse renforcée). Chaque carte porte la BARRE VERTICALE GAUCHE (door-hot = border-left mint).
+// Aucun code M à l'écran (gardé en interne seulement).
+function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string) => void }) {
   return (
     <button
       key={m.key}
       data-outil={m.key}
-      data-outil-phare={phare ? '1' : undefined}
       onClick={() => open(m.key)}
-      className={`door mb-0 w-full text-left transition-colors duration-quick hover:border-line-3 ${phare ? 'door-hot' : ''}`}
+      className="door door-hot mb-0 w-full text-left transition-colors duration-quick hover:border-line-3"
     >
-      {/* DA §7 — porte : les plus utilisés portent la TRANCHE VERTE (door-hot) + ÉTOILE AMBRE. */}
-      <div className="flex items-baseline justify-between gap-2">
-        <span className={`text-xs font-medium ${phare ? 'text-txt-hi' : 'text-txt'}`}>{m.label}</span>
-        {phare && <span className="shrink-0 text-[11px] text-amber" title="Parmi les plus utilisés">★</span>}
-      </div>
-      <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-txt-mut' : 'text-[10.5px] text-txt-dim'}`}>
-        {m.desc}
-      </div>
+      <div className="text-xs font-medium text-txt">{m.label}</div>
+      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
     </button>
   )
 }
@@ -169,8 +163,9 @@ export function Rail() {
         </div>
       </nav>
 
-      {/* P3 — Tiroir Outils CURÉ : regroupé par intention métier, les outils phares mis en avant.
-          Un promoteur voit d'abord ce qui lui fait dire « je paie », pas 16 cases identiques. */}
+      {/* §2 (23/08/2026) — Tiroir Outils EN LISTE PLATE : plus de catégories, plus d'étoile « phare ».
+          Une seule colonne, gabarit unique, dans l'ORDRE d'usage probable fixé par registry.ts
+          (instruire le bien → sourcer/approcher → lire le marché → analyse ponctuelle). */}
       {outilsOpen && (
         <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
           <div className="shrink-0 px-5 pb-2 pt-5">
@@ -180,26 +175,10 @@ export function Rail() {
               {MODULES.filter((m) => !m.hidden).length} outils fonciers, du repérage à l’action.
             </p>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
-            {GROUPS.map((g) => {
-              const outils = MODULES.filter((m) => m.group === g.key && !m.hidden)   // clés aliasées (hidden) : pas de carte en double
-              if (!outils.length) return null
-              return (
-                <section key={g.key} data-outil-group={g.key}>
-                  {/* menu-sous-titres — les sous-titres de groupe (g.hint) sont retirés ; le TITRE reste. */}
-                  <p className="label-caps mb-2">{g.label}</p>
-                  <div className="flex flex-col gap-2">
-                    {outils.map((m) => (
-                      <OutilCard key={m.key} m={m} phare={!!m.phare} open={openOutil} />
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
-            {/* DA §7 — légende en PIED (étoile ambre = les plus utilisés). */}
-            <p className="flex items-center gap-1.5 pt-1 text-[11px] text-txt-faint">
-              <span className="text-amber">★</span> les plus utilisés
-            </p>
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pb-5">
+            {MODULES.filter((m) => !m.hidden).map((m) => (   // clés aliasées (hidden) : pas de carte en double
+              <OutilCard key={m.key} m={m} open={openOutil} />
+            ))}
           </div>
         </aside>
       )}

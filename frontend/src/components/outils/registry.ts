@@ -42,27 +42,27 @@ export const GROUPS: { key: OutilGroup; label: string }[] = [
 ]
 
 export const MODULES: ModuleDef[] = [
-  // ── Trouver — repérer le foncier, sans cible au départ ──
-  // M137-K (Vic 20/08/2026) : outil « Radar des ventes » (scoring-v2, M25) retiré du produit
-  // (DORMANT) — recouvre l'Analyse LABUSE (même table parcel_p_score_v2, même run, même classement),
-  // sans carte ni filtres. Composant + endpoints /v2/* + tests conservés au dépôt.
-  // M137-N (Vic 20/08/2026) : outil « Foncier fantôme » (fantome, M07) retiré du produit (DORMANT) —
-  // nom non fidèle au contenu (74 % successions et structures collectives, pas des sociétés fantômes),
-  // levier « dirigeant inactif » à 0. Le signal succession sera repris en facette. Composant M06/M07 +
-  // endpoints /modules/fantome & /modules/bailleur + tests conservés au dépôt.
-  // M137-N (Vic 20/08/2026) : outil « Mode bailleur » (bailleur, M06) retiré du produit (DORMANT).
-  // M129-C (Vic 19/08/2026) : outil « division » retiré du produit (dormant) — code au dépôt.
+  // §2 (Vic 23/08/2026) — MENU PLAT. Les catégories (Trouver/Instruire/Agir/…) et la distinction
+  // « phare » (étoile) DISPARAISSENT de l'affichage : Rail rend la liste dans CET ordre, gabarit unique,
+  // barre verticale gauche pour CHAQUE outil. L'ORDRE ci-dessous EST l'ordre d'usage probable du
+  // promoteur (pas l'alphabet) :
+  //   1. instruire le bien qu'on regarde — Étudier → Faisabilité → Risques → PLU → Comparer → Assemblage ;
+  //   2. sourcer un propriétaire puis l'approcher — Scan patrimoine → Courrier ;
+  //   3. lire le marché — Communes → Permis → Densifier ;
+  //   4. l'analyse ponctuelle (rare) en dernier — Remonter le temps.
+  // Les champs `group`/`phare` RESTENT en donnée (internes, inertes à l'affichage depuis §2) ; les clés
+  // `hidden` sont des alias sans carte.
 
-  // ── Instruire — jauger CE terrain, ce projet ──
-  { key: 'programme', num: 'M22', group: 'instruire', phare: true,
-    label: 'Faisabilité', desc: 'Ce qu’une parcelle peut accueillir, ou par critères où poser un programme' },
+  // ── 1. Instruire le bien qu'on regarde ──
   // FUSION (Vic 21/08/2026) — scoreur d'adresse (O2) + calculette foncière (M23) = « Étudier un bien »,
-  // deux entrées (adresse OU parcelle), un moteur. Le créneau PHARE O2 est conservé (clé inchangée) ;
-  // la clé M23 est ALIASÉE (hidden : résout la porte fiche/copilote sans carte en double, jamais un 404).
+  // deux entrées (adresse OU parcelle), un moteur. La clé M23 est ALIASÉE (hidden : résout la porte
+  // fiche/copilote sans carte en double, jamais un 404).
   { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
     label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
     label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
+  { key: 'programme', num: 'M22', group: 'instruire', phare: true,
+    label: 'Faisabilité', desc: 'Ce qu’une parcelle peut accueillir, ou par critères où poser un programme' },
   // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
   // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
   // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».
@@ -78,13 +78,13 @@ export const MODULES: ModuleDef[] = [
   { key: 'assemblage', num: 'M16', group: 'instruire', phare: true,
     label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
 
-  // ── Agir — préparer et lancer l'approche ──
-  { key: 'courriers', num: 'M09', group: 'agir',
-    label: 'Courrier propriétaire', desc: 'Générez vos courriers d’approche, prêts à télécharger et envoyer' },
+  // ── 2. Sourcer un propriétaire, puis l'approcher ──
   { key: 'patrimoine', num: 'M02', group: 'agir', phare: true,
     label: 'Scan patrimoine', desc: 'Un nom de propriétaire, et TOUT son foncier ressort d’un coup — repérez les gros détenteurs à approcher' },
+  { key: 'courriers', num: 'M09', group: 'agir',
+    label: 'Courrier propriétaire', desc: 'Générez vos courriers d’approche, prêts à télécharger et envoyer' },
 
-  // ── Comprendre le marché — prix, rythmes, lecture de territoire ──
+  // ── 3. Lire le marché et le territoire ──
   // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·
   // Rareté (O9). Entrée = la table des 24 communes ; clic → fiche commune (tous ses indicateurs) +
   // « Voir ses parcelles → ». Les 4 clés absorbées sont retirées du registre (composants au dépôt,
@@ -103,28 +103,19 @@ export const MODULES: ModuleDef[] = [
   // La clé reste `promesses` (URL/QA/concept-route inchangés). Défaut passé à 36 mois (caducité PC).
   { key: 'promesses', num: 'M04', group: 'marche',
     label: 'Permis au point mort', desc: 'Les PC accordés mais jamais réalisés — sans achèvement, parcelle toujours non bâtie (à partir de 3 ans, la caducité légale)' },
-  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Simulateur ZAN » (zan, M17). Mesuré : ses 3
-  // briques étaient soit MORTES (liste « parcelles alignées ZAN » = filtre ocs_ge weight>0, jamais >0 → 0),
-  // soit des DOUBLONS (signal parcelle déjà sur la fiche ; enveloppe communale = même formule que la
-  // section « Rareté & ZAN » de l'outil Communes, rarete.py). L'enveloppe (dont le budget en %) vit
-  // désormais dans Communes. Composant M17 + endpoints /moteurs/zan* + tests conservés au dépôt.
   // §5 — renommé « Densifier l'existant » côté client ; clé interne `renouvellement` INCHANGÉE
   // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',
     label: 'Densifier l’existant', desc: 'Le bâti qui peut porter davantage — extensions, surélévations : parcelles déjà occupées en zone constructible à capacité résiduelle réelle' },
-  // M137-P — « Changement PLU » (M15/simulplu) a rejoint l'outil PLU unifié (groupe Instruire).
 
-  // ── Suivre le temps — l'évolution, la veille ──
-  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Quoi de neuf » (o10-bascules, O10) — plus câblé
-  // au menu (registry + COMPONENTS). Le composant O10Bascules reste au dépôt (exporté, cf. blocB.tsx) ;
-  // son unique source, l'endpoint /events, reste VIVANT (consommé par la cloche de notifications + le
-  // « point du jour »), donc rien d'orphelin. Concept-route Copilote retirée (answering.py).
-  // Retiré du produit le 21/08/2026 (DORMANT) : outil « Suivi de secteur » (o7-carnet, O7). Mesuré :
-  // son nom promettait un suivi qu'il ne faisait pas (consult-only ; le VRAI suivi = la Veille), 0 état,
-  // 0 usage, plafond muet 30/478. Sa vue existe en grande partie ailleurs (prix secteur → fiche parcelle ;
-  // ZAN → Communes ; permis → radar permis) ; SEUL le compte d'opportunités AGRÉGÉ par section n'a pas
-  // d'autre foyer (visible à l'œil sur la carte). Composant O7Carnet + endpoints /carnet-secteur + tests
-  // conservés au dépôt. Concept-route Copilote retirée (answering.py).
+  // ── 4. Analyse ponctuelle (usage rare) ──
   { key: 'temps', num: 'M08', group: 'temps',
     label: 'Remonter le temps', desc: 'Comparez une année ancienne et aujourd’hui pour lire la mutation d’un terrain' },
+
+  // ── RETIRÉS DU PRODUIT (dormants — composants, endpoints et tests conservés au dépôt) ──
+  // M137-K : « Radar des ventes » (M25 — recouvre l'Analyse LABUSE). · M137-N : « Foncier fantôme » (M07,
+  // nom non fidèle) & « Mode bailleur » (M06). · M129-C : « division ». · 21/08/2026 : « Simulateur ZAN »
+  // (M17 — enveloppe reprise dans Communes), « Quoi de neuf » (O10 — endpoint /events VIVANT : cloche +
+  // point du jour), « Suivi de secteur » (O7 — vues reprises ailleurs). · M137-P : « Changement PLU »
+  // (M15) rejoint l'outil PLU unifié. Concept-routes Copilote des dormants retirées (answering.py).
 ]
