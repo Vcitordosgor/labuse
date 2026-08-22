@@ -4033,40 +4033,44 @@ def spf_letter(idu: str, db: Session = Depends(get_db)):
     return PlainTextResponse(letter, media_type="text/plain; charset=utf-8")
 
 
-def _compare_row(fiche: dict) -> dict:
-    """Résumé COMPARABLE d'une parcelle (Lot D2) — champs alignés pour la vue côte à côte."""
-    p, v = fiche["parcel"], fiche["verdict"]
-    fa = fiche.get("faisabilite") or {}
+def _compare_row(qv2: dict, faisab: dict | None) -> dict:
+    """Résumé COMPARABLE d'une parcelle — SOURCE = la fiche SERVIE `_q_v2_fiche` (verdict, rang,
+    fraction, raison M135/M137 — miroir exact de la fiche à l'écran) + la faisabilité du MÊME point
+    de calcul (`fiche_payload` : zone/SDP/résiduel/bilan). Avant, le comparateur passait par la
+    fiche legacy `_build_fiche` → `tier_v2`/`rang_v2` absents → puce « Classement historique » et
+    rang muet ; ni fraction ni raison. Corrigé : on lit la source servie, comme la carte/la liste."""
+    s2 = qv2.get("score_v2") or {}
+    fa = faisab or {}
     fr = fa.get("fourchette") or {}
     res = fa.get("residuel") or {}
-    bilan = fa.get("bilan") or {}
-    ca = bilan.get("ca") or {}
-    cf = bilan.get("charge_fonciere") or {}
-    contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
-    # M82 — la contrainte MAJEURE explicite (la plus sévère) pour la vue côte à côte : HARD_EXCLUDE
-    # d'abord, sinon le 1er SOFT_FLAG (ABF…), sinon rien.
+    cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
+    lignes = qv2.get("lines") or []
+    contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    # contrainte MAJEURE explicite : HARD_EXCLUDE d'abord, sinon le 1er SOFT_FLAG, sinon rien.
     majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
                    next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
+    # M135 — la RAISON dominante = même point de calcul que la carte/la liste (raison_dominante,
+    # chip court de la 1re contribution positive). `pourquoi` porte signe/feature/bin requis.
+    raison = _raison_dom(s2.get("pourquoi"))
     return {
-        "contrainte_majeure": majeure,
-        "idu": p["idu"], "commune": p.get("commune"), "section": p.get("section"), "numero": p.get("numero"),
-        "surface_m2": round(p["surface_m2"]) if p.get("surface_m2") else None,
-        "status": v.get("status"),
-        # M54-EXPO-3 A8 — le verdict CLIENT côté front dérive du tier v2 + étage 0 (verdictMeta).
-        "tier_v2": v.get("tier_v2"), "etage0": v.get("etage0"), "rang_v2": v.get("rang_v2"),
-        "opportunity_score": v.get("opportunity_score"),
-        "completeness_score": v.get("completeness_score"),
+        "idu": qv2["idu"], "commune": qv2.get("commune"),
+        "surface_m2": qv2.get("surface_m2"),
+        # verdict SERVI (M135/M137) : la puce d'action dérive de tier_v2 + étage 0 (verdictMeta) ;
+        # rang + fraction (« 1/5 sous 1 an ») + raison dominante, comme partout ailleurs.
+        "tier_v2": s2.get("tier"), "rang_v2": s2.get("rang"), "etage0": bool(qv2.get("etage0")),
+        "status": s2.get("tier"),          # miroir (front dérive la puce du tier v2)
+        "label": s2.get("label"),
+        "fraction": s2.get("fraction"),    # M135 P2 — « 1/5 » ou None
+        "raison": raison,                  # M135 P3 — chip court, ou None
+        # faisabilité (fiche_payload — même bilan que la fiche)
         "zone": fa.get("zone"), "constructible": fa.get("constructible"),
-        "capacite": fa.get("verdict") if fa.get("constructible") else None,
         "sdp_max_m2": fr.get("surface_plancher_m2"),
         "taux_emprise_pct": res.get("taux_emprise_pct") if res.get("disponible") else None,
         "sdp_residuelle_m2": res.get("sdp_residuelle_m2") if res.get("disponible") else None,
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
-        "ca_bas": ca.get("bas"), "ca_haut": ca.get("haut"),
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),
         "contraintes": [c["detail"] for c in contraintes[:4]],
-        "synthese": (fiche.get("resume") or {}).get("synthese"),
     }
 
 
@@ -4239,12 +4243,18 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     """Comparateur de parcelles (Lot D2) : 2-3 parcelles côte à côte (verdict, capacité,
     résiduel, bilan, contraintes). Ignore silencieusement un IDU introuvable."""
     ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
+    from ..faisabilite.db import fiche_payload
     from ..faisabilite.marche_commune import build_marche_commune
     out: list[dict] = []
     marche_cache: dict[str, dict] = {}
     for idu in ids:
+        pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if pid is None:                       # IDU introuvable → ignoré silencieusement (contrat D2)
+            continue
         try:
-            row = _compare_row(_build_fiche(db, idu, with_assistant=False))
+            # SOURCE SERVIE : la fiche premium (verdict/rang/fraction/raison M135/M137) + la
+            # faisabilité du même point de calcul — plus la fiche legacy `_build_fiche`.
+            row = _compare_row(_q_v2_fiche(db, idu), fiche_payload(db, pid))
         except HTTPException:
             continue
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).

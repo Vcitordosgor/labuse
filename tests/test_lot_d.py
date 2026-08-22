@@ -4,32 +4,55 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
-# ── Fiche minimale réutilisable (forme du payload _build_fiche) ──
-_FICHE = {
-    "parcel": {"idu": "97415000BV0912", "commune": "Saint-Paul", "section": "BV", "numero": "912",
-               "surface_m2": 3948, "centroid": {"lon": 55.285, "lat": -21.01}},
-    "verdict": {"status": "opportunite", "opportunity_score": 67, "completeness_score": 84, "reasons": []},
-    "resume": {"synthese": "Ressort comme opportunité.", "vigilance": ["Propriétaire à identifier"],
-               "prochaine_action": "Vérifier le PLU."},
-    "faisabilite": {"zone": "U6c", "constructible": True, "verdict": "R+1 · ~16-17 logts",
-                    "fourchette": {"surface_plancher_m2": 2555},
-                    "residuel": {"disponible": True, "taux_emprise_pct": 10, "sdp_residuelle_m2": 2259, "sous_densite": True},
-                    "bilan": {"fiable": True, "ca": {"bas": 2200000, "haut": 3400000},
-                              "charge_fonciere": {"central": 300000, "par_m2_terrain": 76}}},
-    "cascade": [{"layer_name": "zonage_plu_gpu", "result": "POSITIVE", "severity": None, "detail": "Zone U", "source": "GPU"},
-                {"layer_name": "ravine", "result": "SOFT_FLAG", "severity": "moyen", "detail": "Proximité ravine", "source": "BD TOPO"}],
-    "disclaimer": "Pré-analyse.",
+# ── Miroirs de la VRAIE source servie (formes RÉELLES de _q_v2_fiche + fiche_payload) ──
+# Le comparateur lit désormais la fiche SERVIE `_q_v2_fiche` (verdict/rang/fraction/raison M135/M137)
+# + la faisabilité `fiche_payload` — plus la fiche legacy `_build_fiche`. L'ANCIEN test passait un
+# fiche fabriqué à la forme _build_fiche (verdict.status v1, SANS tier_v2) qui MASQUAIT le bug
+# (tier_v2/rang_v2 toujours None → puce « Classement historique », rang muet). On teste les VRAIES clés.
+_QV2 = {   # forme de _q_v2_fiche (score_v2 = verdict servi ; lines = cascade servie ; etage0)
+    "idu": "97415000BV0912", "commune": "Saint-Paul", "surface_m2": 3948, "etage0": False,
+    "score_v2": {"tier": "chaude", "rang": 15, "rang_total": 428239, "label": "À suivre",
+                 "fraction": "1/4", "motif": None, "declasse": False,
+                 "pourquoi": [{"signe": "+", "feature": "permis_recent", "bin": "oui",
+                               "phrase": "permis récent à proximité"}]},
+    "lines": [{"layer": "zonage_plu_gpu", "result": "POSITIVE", "detail": "Zone U", "weight": 3},
+              {"layer": "ravine", "result": "SOFT_FLAG", "detail": "Proximité ravine", "weight": 0}],
+}
+_FAISAB = {   # forme de fiche_payload (faisabilité + bilan servi)
+    "zone": "U6c", "constructible": True, "verdict": "R+1 · ~16-17 logts",
+    "fourchette": {"surface_plancher_m2": 2555},
+    "residuel": {"disponible": True, "taux_emprise_pct": 10, "sdp_residuelle_m2": 2259, "sous_densite": True},
+    "bilan": {"fiable": True, "ca": {"bas": 2200000, "haut": 3400000},
+              "charge_fonciere": {"central": 300000, "par_m2_terrain": 76}},
 }
 
 
-# ── D2 — _compare_row ──
+# ── D2 — _compare_row lit la source SERVIE (M135/M137), pas la fiche legacy ──
 
-def test_compare_row_extrait_les_champs_alignes():
+def test_compare_row_source_servie():
     from labuse.api.app import _compare_row
-    r = _compare_row(_FICHE)
-    assert r["idu"] == "97415000BV0912" and r["status"] == "opportunite"
+    from labuse.scoring.p_v2.libelles_client import raison_dominante
+    r = _compare_row(_QV2, _FAISAB)
+    # verdict SERVI : la puce dérive de tier_v2 + étage 0 ; rang + fraction + raison M135
+    assert r["tier_v2"] == "chaude" and r["rang_v2"] == 15 and r["etage0"] is False
+    assert r["label"] == "À suivre" and r["fraction"] == "1/4"
+    assert r["raison"] == raison_dominante(_QV2["score_v2"]["pourquoi"])   # même calcul que la carte
+    # faisabilité (fiche_payload) : SDP max/résiduelle + sous-densité + charge foncière
     assert r["sdp_max_m2"] == 2555 and r["sdp_residuelle_m2"] == 2259 and r["sous_densite"] is True
-    assert r["ca_bas"] == 2200000 and r["n_contraintes"] == 1   # 1 SOFT_FLAG (le POSITIVE ne compte pas)
+    assert r["charge_fonciere_m2"] == 76 and r["zone"] == "U6c" and r["constructible"] is True
+    # contraintes depuis les lignes servies (le POSITIVE ne compte pas)
+    assert r["n_contraintes"] == 1 and r["contraintes"] == ["Proximité ravine"]
+    # charge morte RETIRÉE : plus de scores de matrice v1 dans le payload
+    assert "opportunity_score" not in r and "completeness_score" not in r
+
+
+@pytest.mark.db
+def test_compare_endpoint_ne_leve_pas(db_session):
+    """Il n'existait AUCUN test de l'endpoint /compare. Un IDU introuvable est ignoré (jamais une
+    exception) et la structure {count, parcels} est toujours renvoyée."""
+    from labuse.api.app import compare
+    out = compare(idus="97499000ZZ9999,,  ", db=db_session)   # bogus + vides → 0 résultat, 0 crash
+    assert isinstance(out, dict) and out["count"] == 0 and out["parcels"] == []
 
 
 # ── D3 — filtres sauvegardés (DB) ──

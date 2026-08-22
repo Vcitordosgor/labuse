@@ -22,6 +22,9 @@ const ROWS: { label: string; val: (r: CompareRow) => string }[] = [
   { label: 'Zone PLU', val: (r) => r.zone || '—' },
   { label: 'Constructible', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
   { label: 'SDP max estimée', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—' },
+  // ajoutés — déjà dans le payload, non affichés jusqu'ici : le résiduel dit le POTENTIEL restant.
+  { label: 'SDP résiduelle', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—' },
+  { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non' },
   { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—' },
   { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—' },
   { label: 'Contrainte majeure', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
@@ -98,8 +101,14 @@ export function ComparePanel() {
                           <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
                           <button onClick={() => removeFromCompare(r.idu)} title="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                         </div>
-                        <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px]" style={{ color: v.color, border: `1px solid ${v.color}55` }}>{v.label}</span>
-                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.rang_v2 != null ? ` · rang ${fmtInt(r.rang_v2)}` : ''}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          {/* puce d'ACTION servie (M137) — dérivée de tier_v2 + étage 0, plus « Classement historique » */}
+                          <span className="inline-block rounded-full px-2 py-0.5 text-[10px]" style={{ color: v.color, border: `1px solid ${v.color}55` }}>{v.label}</span>
+                          {/* raison dominante M135 (chip court), comme sur la carte/la liste */}
+                          {r.raison && <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>}
+                        </div>
+                        {/* commune · rang servi · fraction M135 (« 1/5 sous 1 an ») */}
+                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.rang_v2 != null ? ` · rang ${fmtInt(r.rang_v2)}` : ''}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
                       </th>
                     )
                   })}
