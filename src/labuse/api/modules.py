@@ -207,15 +207,21 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+_TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+
+
 @router.get("/patrimoine")
 def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
-    """M5.1 lot 3.1 : le TIER v2 effectif (étage 0 du run servi prime) est le label
-    principal de chaque parcelle du patrimoine ; le statut matrice reste servi en
-    secondaire (« (matrice : X) » côté UI). Tri par rang P."""
+    """Inventaire du foncier d'une PERSONNE MORALE (SIREN) : ses parcelles, le TIER v2 servi de
+    chacune (étage 0 du run prime), le résiduel, les signaux d'approche (BODACC procédure + INPI
+    dirigeants), la valorisation indicative du foncier nu, et — si des parcelles sont contiguës —
+    l'assiette à étudier en assemblage. PM UNIQUEMENT (RGPD : jamais un particulier). Tri par rang P.
+    M137 : plus de vestige de matrice (q_score/a_score/completeness_score MORTS retirés du fil)."""
     from .app import _score_v2_run_id
+    from ..assemblage import ADJ_BUFFER_M
+    from ..faisabilite.marche_commune import ligne2_terrain_zone
     rows = db.execute(text("""
-        SELECT p.idu, p.commune, p.surface_m2, s2.tier AS statut, d.q_score, d.a_score,
-               d.completeness_score, r.sdp_residuelle_m2,
+        SELECT p.id, p.idu, p.commune, p.surface_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
@@ -224,18 +230,79 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST, d.q_score DESC NULLS LAST"""),
+        LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
+        WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": RUN, "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
         {"s": siren}).mappings().first()
     nom = db.execute(text(
         "SELECT max(denomination) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar()
+    # #4 SIGNAL INPI (brique dormante de « Foncier fantôme ») : société ABSENTE du registre des
+    # dirigeants = signal d'approche fort (succession / société en sommeil). Libellé FACTUEL.
+    inpi_sans_dirigeant = bool(siren) and not db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
+    # #2 l'agrégat dit l'ACTIONNABLE (hors écartées / étage 0), et « SDP RÉSIDUELLE » (c'en est).
+    n_actionnables = sum(1 for r in rows if r["tier_v2"] in _TIERS_ACTIONNABLES and not r["etage0"])
+    sdp_residuelle = round(sum(r["sdp_residuelle_m2"] or 0 for r in rows))
+    # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
+    # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
+    prix_zone: dict[tuple[str, str], float] = {}
+    for c in {r["commune"] for r in rows if r["commune"]}:
+        try:
+            cellules = (ligne2_terrain_zone(db, c).get("valeurs") or {}).get("par_zone") or {}
+            for fam, cell in cellules.items():
+                if cell.get("calculable"):
+                    prix_zone[(c, fam)] = cell["median_eur_m2"]
+        except Exception:  # noqa: BLE001 — la valorisation est un bonus, jamais un 500
+            pass
+    val_nu = 0.0
+    n_valorisables = 0
+    for r in rows:
+        px = prix_zone.get((r["commune"], r["zone_fam"])) if r["zone_fam"] in ("U", "AU") else None
+        if px and r["surface_m2"]:
+            val_nu += r["surface_m2"] * px
+            n_valorisables += 1
+    # #5 ASSIETTE CONTIGUË : parcelles du portefeuille d'un seul tenant (contact cadastral ADJ_BUFFER_M)
+    # → « Analyser en assiette ». Fréquent (79 % des portefeuilles multi-parcelles). Plus gros bloc ≥ 2.
+    assiette_contigue: list[str] = []
+    ids = [r["id"] for r in rows]
+    if len(ids) >= 2:
+        pairs = db.execute(text("""
+            SELECT a.id AS a, b.id AS b FROM parcels a JOIN parcels b
+              ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
+            WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)"""), {"ids": ids, "buf": ADJ_BUFFER_M}).all()
+        if pairs:
+            adj: dict[int, set[int]] = {i: set() for i in ids}
+            for a, b in pairs:
+                adj[a].add(b)
+                adj[b].add(a)
+            vus: set[int] = set()
+            best: list[int] = []
+            for start in ids:
+                if start in vus or not adj[start]:
+                    continue
+                comp, stack = {start}, [start]
+                while stack:
+                    for nb in adj[stack.pop()]:
+                        if nb not in comp:
+                            comp.add(nb)
+                            stack.append(nb)
+                vus |= comp
+                if len(comp) > len(best):
+                    best = list(comp)
+            id2idu = {r["id"]: r["idu"] for r in rows}
+            assiette_contigue = [id2idu[i] for i in best] if len(best) >= 2 else []
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
-        "sdp_totale_m2": round(sum(r["sdp_residuelle_m2"] or 0 for r in rows)),
+        "n_actionnables": n_actionnables,
+        "sdp_residuelle_m2": sdp_residuelle,
+        "valorisation_nu_eur": round(val_nu) if n_valorisables else None,
+        "n_valorisables": n_valorisables,
         "bodacc": dict(bodacc) if bodacc else None,
-        "items": [{**{k: r[k] for k in ("idu", "commune", "statut", "q_score", "a_score", "completeness_score")},
+        "inpi_sans_dirigeant": inpi_sans_dirigeant,
+        "assiette_contigue": assiette_contigue,
+        "items": [{"idu": r["idu"], "commune": r["commune"],
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "surface_m2": round(r["surface_m2"] or 0), "sdp": r["sdp_residuelle_m2"],
                    "geom": json.loads(r["g"])} for r in rows],
