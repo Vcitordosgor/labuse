@@ -106,6 +106,7 @@ export interface PipelineMeta {
   columns: PipelineColumn[]
   priorities: { key: string; label: string }[]
   defaults: { status?: string; priority?: string }
+  proprietaire_statuts?: { key: string; label: string }[]   // M137 — pour l'écran d'édition de carte
 }
 
 // M12 LOT H — colonnes CRM personnalisables (par tenant)
@@ -125,6 +126,10 @@ export interface PipelineEntry {
   status: string
   priority: string
   notes: string
+  reminder_date?: string | null   // M137 — date de relance (éditable via l'écran de carte)
+  prospection?: Record<string, string>   // M137 — statut proprio + contact manuel (édité via PATCH)
+  proprietaire_label?: string
+  has_manual_contact?: boolean
   created_at: string | null
   archived_at?: string | null   // M137 — archivage réversible (NULL = active)
   parcel: { commune: string; section: string; surface_m2: number | null }

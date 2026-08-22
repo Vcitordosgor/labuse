@@ -4531,6 +4531,7 @@ class PipelinePatchIn(BaseModel):
 def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
     """Colonnes (PAR TENANT en base, M12 LOT H) + priorités (config) pour piloter le Kanban.
     Les colonnes sont semées au kanban LABUSE par défaut au premier accès d'un compte."""
+    from .. import prospection as _prosp
     from . import crm_columns
     from .tenant import current_compte
     cfg = _pipeline_cfg()
@@ -4538,9 +4539,13 @@ def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
     cols = crm_columns.columns_for(db, cid)
     dfl = dict(cfg.get("defaults", {}))
     dfl["status"] = crm_columns.default_status(db, cid)
+    # M137 — statuts propriétaire (prospection) pour l'écran d'édition de carte (source unique).
+    _statut_order = ["inconnu", "a_identifier", "identifie_manuellement", "public_probable",
+                     "institutionnel_probable", "indivision_probable", "copropriete_probable"]
     return {"columns": [{"key": c["key"], "label": c["label"], "tone": c["tone"], "id": c["id"]}
                         for c in cols],
-            "priorities": cfg.get("priorities", []), "defaults": dfl}
+            "priorities": cfg.get("priorities", []), "defaults": dfl,
+            "proprietaire_statuts": [{"key": s, "label": _prosp.statut_label(s)} for s in _statut_order]}
 
 
 @app.get("/pipeline")
