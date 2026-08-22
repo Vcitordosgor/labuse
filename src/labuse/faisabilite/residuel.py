@@ -149,21 +149,27 @@ def compute_residuel(session: Session, parcel_id: int,
     }
 
 
+# M135 — l'écriture cible un RUN versionné (parcel_residuel_runs, clé run_seq+parcel_id),
+# jamais la table servie (devenue une VUE). Le run est désigné à l'appel.
 _UPSERT = text(
-    """INSERT INTO parcel_residuel
-         (parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
+    """INSERT INTO parcel_residuel_runs
+         (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
           capacite_estimee, cause, computed_at)
-       VALUES (:p, :t, :pp, :sd, :sr, :ce, :cz, now())
-       ON CONFLICT (parcel_id) DO UPDATE SET
+       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, now())
+       ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
          taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
          sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
          capacite_estimee=EXCLUDED.capacite_estimee, cause=EXCLUDED.cause, computed_at=now()""")
 
 
-def compute_residuel_batch(session: Session, parcel_ids: list[int],
+def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int,
                            log=None) -> dict:
-    """Calcule et CACHE le résiduel (table parcel_residuel) pour alimenter le filtre carte
-    ET le dataset M127.
+    """Calcule et CACHE le résiduel dans le RUN `run_seq` (parcel_residuel_runs) pour alimenter
+    le filtre carte ET le dataset M127.
+
+    M135 — GARDE-FOU B.4 : écrire dans le run SERVI est une ERREUR (`ServedRunWriteError`), pas un
+    warning. `compute_residuel()` (la LOGIQUE) reste byte-identique ; seul le chemin d'écriture
+    change (run désigné à l'appel, jamais le servi).
 
     M125 (arbitrage Vic, Option 1) — le batch écrit TOUTES les parcelles, la vérité de chacune :
       · disponible → valeurs pleines, cause NULL (les lecteurs VIVANTS ne lisent que celles-ci) ;
@@ -173,6 +179,8 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int],
       · exception → COMPTÉE et LOGGÉE, jamais avalée (une exception muette = un manquant sans
         cause, même famille de défaut). Elle n'écrit rien (on ne devine pas une cause).
     Renvoie {"calcules", "causes": {cause: n}, "erreurs", "erreurs_detail": [(pid, msg)…]}."""
+    from .residuel_runs import assert_writable
+    assert_writable(session, run_seq)   # ERREUR (pas warning) si run_seq == run servi
     res = {"calcules": 0, "causes": {}, "erreurs": 0, "erreurs_detail": []}
     for pid in parcel_ids:
         try:
@@ -186,7 +194,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int],
             continue
         if r.get("disponible"):
             session.execute(_UPSERT, {
-                "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
+                "rs": run_seq, "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
                 "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
                 "ce": r["capacite_estimee"], "cz": None})
             res["calcules"] += 1
@@ -195,11 +203,31 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int],
         if cause == "bati_non_ingere":     # panne d'environnement, pas un état de parcelle
             res["causes"][cause] = res["causes"].get(cause, 0) + 1
             continue
-        session.execute(_UPSERT, {"p": pid, "t": None, "pp": None, "sd": None,
+        session.execute(_UPSERT, {"rs": run_seq, "p": pid, "t": None, "pp": None, "sd": None,
                                   "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause})
         res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
     return res
+
+
+def compare_residuel_servi(session: Session, parcel_ids: list[int]) -> list[dict]:
+    """M135 — READ-ONLY : compare le calcul FRAIS de `compute_residuel()` au run SERVI
+    (vue `parcel_residuel`). Renvoie les écarts [{parcel_id, servi, frais}]. N'écrit RIEN —
+    remplace l'ancien rapiéçage in-place de l'audit (la machine à mosaïque, lot 05/08).
+    Un écart déclenche la règle de dette §1 (recalcul mesuré, run neuf)."""
+    ecarts = []
+    for pid in parcel_ids:
+        try:
+            d = compute_residuel(session, pid)
+        except Exception:  # noqa: BLE001 - une parcelle ne casse pas la comparaison
+            continue
+        frais = d.get("sdp_residuelle_m2") if d.get("disponible") else d.get("sdp_ecrite")
+        servi = session.execute(
+            text("SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id=:p"),
+            {"p": pid}).scalar()
+        if frais != servi:
+            ecarts.append({"parcel_id": pid, "servi": servi, "frais": frais})
+    return ecarts
 
 
 def _libelle(taux: float, sdp_res: float, niveaux_reels: bool) -> str:

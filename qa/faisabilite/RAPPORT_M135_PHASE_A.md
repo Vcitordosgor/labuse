@@ -164,3 +164,64 @@ qui épingle). Sur ton go, Phase B (migration ordonnée, service inchangé) puis
 
 **Aucune écriture, aucun code touché, service intact.** CC ne merge jamais, CC ne
 bascule jamais.
+
+---
+
+# Phase B — Migration (exécutée sur go de Vic : VUE, audit→lecture-seule, rétention 4 + is_pinned)
+
+Code : `faisabilite/residuel_runs.py` (schéma, résolution du run servi, migration,
+garde-fous, bascule), `faisabilite/residuel.py` (writer ciblé + garde-fou),
+`cli.py` (commandes), `audit.py` (compare read-only), `models.py` (ensure view-aware),
+`tests/test_residuel_runs.py`. **`compute_residuel()` byte-identique** (l.80-150,
+diff prouvé nul — non-négociable #1).
+
+## 1. Schéma + copie run 1 + vue — service byte-identique
+
+`migrate_to_runs()` (une transaction) : crée `parcel_residuel_runs` (clé
+`run_seq,parcel_id`) + `residuel_runs` (pointeur), copie l'existant en **run 1
+« legacy-mosaïque 29/07·05/08·19/08 » servi**, renomme la table de base en
+`parcel_residuel_base_legacy`, crée la **VUE** `parcel_residuel`. Vérifié :
+- 431 663 lignes, **digest identique**, `EXCEPT` bidirectionnel base↔vue **0/0** ;
+- run 1 servi, `parcel_residuel` = vue (relkind `v`).
+
+## 2. Contrôles Phase B (les deux ajoutés par Vic)
+
+- **Perf vue** : `faisabilite_sens2` île (benchmark M133 = 3 s) → après `ANALYZE`
+  (tables neuves = pas de stats) **1,8 → 1,1 → 0,7 s** ; lecture mono-parcelle
+  **0,14 ms**. **Pas de dégradation** (meilleur, même). Plan : index PK
+  `(run_seq,parcel_id)`, run servi résolu par sous-requête `is_served` — **aucun
+  MAX ni tri de chaîne**.
+- **7 colonnes** : la vue expose **noms + types + ORDRE à l'identique** (l'ordre
+  `computed_at`/`capacite_estimee` corrigé pour matcher la table historique).
+
+## 3. Lecteurs — inchangés (option VUE)
+
+Zéro modification des ~35 lecteurs. La vue leur sert exactement le run servi.
+
+## 4. Écrivain — run désigné à l'appel, garde-fou B.4
+
+`compute_residuel_batch(session, ids, run_seq)` écrit dans `parcel_residuel_runs`.
+`assert_writable()` **lève `ServedRunWriteError`** si `run_seq` == run servi
+(prouvé). `cli.py` : `compute-residuel --new-run/--into-run` (jamais le servi),
+`residuel-migrate`, `residuel-runs`, `residuel-serve` (bascule), `residuel-purge`
+(refuse servi/épinglé), `residuel-pin`. **`audit.py`** ne rapièce plus : il
+**compare** frais ↔ servi et rapporte l'écart (décision 2a) — la machine à mosaïque
+(lot 05/08) est **éteinte à la racine**.
+
+Validé sur **Les Trois-Bassins** (5 314 parcelles, run neuf 2) : écrit en 66 s
+(**12,4 ms/parcelle**), **diff run 1 ↔ run 2 = 0**. Bascule testée entièrement :
+run 1 → run 3 (copie) → **retour** run 1, service byte-identique à chaque état ;
+écriture/purge du run servi refusées, purge d'un run épinglé refusée.
+
+*NB env local : `typer`/`pytest` non installés ici (CLI + tests tournent en
+prod/CI) ; le chemin cœur (que le CLI enveloppe) et les garde-fous sont validés
+directement en Python contre la base.*
+
+# Phase C — premier run réel (en cours)
+
+Run **île entier dans run 2** lancé (`qa/faisabilite/m135_run_ile.py`, ~90 min,
+écrit run 2, **run servi 1 intact**). À sa fin : diff run 1 ↔ run 2 (attendu 0,
+M134), ancres une à une, bascule d'essai run 1 → run 2 → retour, puis **proposition**
+de bascule définitive à Vic (elle éteindrait la mosaïque). **Proposer, pas faire.**
+
+CC ne merge jamais, CC ne bascule jamais.

@@ -66,6 +66,17 @@ identiques en prenant un risque sur les features scoring).**
 (20,9 ms/constructible, 16,1 ms/autre) ; par commune < 10 min. **Ne touche pas**
 l'outil.
 
+**M135 — le versionnement EXISTE (correctif de fond livré).** `parcel_residuel` est
+désormais une **VUE** sur `parcel_residuel_runs` (clé `run_seq, parcel_id`), pointeur
+`residuel_runs.is_served`. Un recalcul est un **run parallèle** (jamais d'écrasement
+du servi — garde-fou en code), la mise en service un **pointeur** atomique et
+réversible (geste de Vic). Le cache historique est le **run 1 « legacy-mosaïque »**,
+servi tel quel — la mosaïque A.3bis est **conservée en métadonnée**, prête à être
+**éteinte** dès la bascule sur le run 2 (île fraîche, Phase C). La **machine à
+mosaïque est débranchée** : `audit.py` ne rapièce plus le cache, il compare frais ↔
+servi et rapporte l'écart (règle ci-dessus). Rétention 4 runs, `is_pinned` pour la
+reproductibilité scoring, purge = geste de Vic (refuse servi/épinglé).
+
 ## 2. Deux systèmes de filtre « périmètre » (D.2 — dette structurelle)
 
 - **`FiltreCriteres`** (`app.py:1200`) : point d'entrée unifié (~50 facettes) de la
@@ -206,3 +217,9 @@ requête QA, script d'analyse, futur audit, dashboard. Règle : **ne jamais** d�
 le run servi d'un `MAX`/`ORDER BY DESC` sur le label ; toujours passer par
 `Q_A_RUN_LABEL` / `_score_v2_run_id`. (Correctif de fond éventuel, hors périmètre :
 un `run_seq` entier monotone, ou un flag `is_served`, pour qu'un tri redevienne sûr.)
+
+**M135 — le chemin résiduel est désormais HORS D'ATTEINTE du tri lexical.** Le run
+servi de `parcel_residuel` se désigne par `residuel_runs.is_served` (booléen) et
+`run_seq` (**entier monotone**), jamais par `MAX` ni tri de chaîne. Le correctif de
+fond « `run_seq` entier / flag `is_served` » évoqué ci-dessus est **appliqué** à
+cette table (reste à généraliser au scoring si besoin).
