@@ -31,7 +31,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
 from .. import rnu as _rnu
@@ -4447,12 +4447,19 @@ def _prio_keys() -> list[str]:
     return [p["key"] for p in _pipeline_cfg().get("priorities", [])]
 
 
-def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
+def _entry_dict(db: Session, e: models.PipelineEntry, *,
+                adr_map: dict | None = None, pm_map: dict | None = None,
+                projet_map: dict | None = None) -> dict:
     # M137 Lot 2 — les blocs `verdict` et `premium` (score/rang : rang_v2, opportunity_score,
     # verdict.rang, tier_v2, completeness_score…) sont RETIRÉS du payload CRM (M133 B.6 : zéro
-    # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1). Corollaire : plus
-    # de `verdict_servi`/`_latest_eval`/`_premium_head` PAR CARTE — allège aussi le N+1 (C4).
+    # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1).
+    # M137 Lot 4 (C4) — les endpoints LISTE passent des maps PRÉ-CHARGÉS (adresse/proprio/projet) :
+    # 3 requêtes batch au lieu de 3 PAR carte (N+1 → O(1)). Les endpoints mono-entrée (add/patch/
+    # parcel/restore) n'en passent pas → repli par-carte (1 seule carte, sans coût).
     p = e.parcel
+    adresse = adr_map.get(p.idu) if adr_map is not None else _ban_adresse(db, p.idu)
+    proprietaire = (pm_map.get(p.idu) or {"type": "particulier"}) if pm_map is not None else _proprietaire_public(db, p.idu)
+    projet = (projet_map.get(e.projet_id) if e.projet_id else None) if projet_map is not None else _projet_ref(db, e.projet_id)
     return {
         "id": e.id,
         "idu": p.idu,
@@ -4467,12 +4474,41 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
-                   "adresse": _ban_adresse(db, p.idu)},
+                   "adresse": adresse},
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
-        "projet": _projet_ref(db, e.projet_id),
+        "projet": projet,
         # contact proprio (PRIVACY : personne morale publique seulement, jamais un particulier)
-        "proprietaire_public": _proprietaire_public(db, p.idu),
+        "proprietaire_public": proprietaire,
     }
+
+
+def _prefetch_maps(db: Session, entries: list) -> tuple[dict, dict, dict]:
+    """M137 Lot 4 (C4) — pré-charge adresse BAN / proprio public / projet pour un LOT d'entrées en
+    3 requêtes batch (au lieu de 3 PAR carte). Repli sain : maps vides si tables non prêtes."""
+    idus = list({e.parcel.idu for e in entries})
+    pids = list({e.projet_id for e in entries if e.projet_id})
+    adr: dict = {}
+    pm: dict = {}
+    projet: dict = {}
+    if idus and _ban_ready(db):
+        for r in db.execute(text(
+                "SELECT DISTINCT ON (ap.idu) ap.idu AS idu, "
+                "trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS voie, a.code_postal AS cp, a.commune AS com "
+                "FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+                f"WHERE ap.idu = ANY(:idus) ORDER BY ap.idu, {_BAN_ORDER}"), {"idus": idus}).mappings():
+            adr[r["idu"]] = _fmt_ban(r["voie"], r["cp"], r["com"])
+    if idus:
+        for r in db.execute(text(
+                "SELECT idu, denomination, siren, groupe_label FROM parcelle_personne_morale "
+                "WHERE idu = ANY(:idus)"), {"idus": idus}).mappings():
+            if r["denomination"]:
+                pm[r["idu"]] = {"type": "personne_morale", "denomination": r["denomination"],
+                                "siren": r["siren"], "groupe": r["groupe_label"]}
+    if pids:
+        for r in db.execute(text("SELECT id, nom FROM projets WHERE id = ANY(:pids)"),
+                            {"pids": pids}).mappings():
+            projet[r["id"]] = {"id": r["id"], "nom": r["nom"]}
+    return adr, pm, projet
 
 
 def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
@@ -4552,12 +4588,14 @@ def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
 def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     from .tenant import current_compte
     cid = current_compte(request)
-    q = select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
+    q = select(models.PipelineEntry).options(joinedload(models.PipelineEntry.parcel))\
+        .order_by(models.PipelineEntry.created_at.desc())   # M137 Lot 4 — parcel eager (plus de lazy N+1)
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — actives seules (archivées cachées)
     entries = db.execute(q).scalars().all()
-    return [_entry_dict(db, e) for e in entries]
+    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch (N+1 → O(1))
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
@@ -4690,11 +4728,14 @@ def pipeline_archived(request: Request, db: Session = Depends(get_db)) -> list[d
     """M137 — les cartes ARCHIVÉES du compte (pour les consulter / restaurer). Pas de purge auto."""
     from .tenant import current_compte
     cid = current_compte(request)
-    q = select(models.PipelineEntry).order_by(models.PipelineEntry.archived_at.desc())
+    q = select(models.PipelineEntry).options(joinedload(models.PipelineEntry.parcel))\
+        .order_by(models.PipelineEntry.archived_at.desc())   # M137 Lot 4 — parcel eager
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     q = q.where(models.PipelineEntry.archived_at.is_not(None))
-    return [_entry_dict(db, e) for e in db.execute(q).scalars().all()]
+    entries = db.execute(q).scalars().all()
+    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
