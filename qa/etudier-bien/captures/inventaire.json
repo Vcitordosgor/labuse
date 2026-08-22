@@ -1,0 +1,13 @@
+{
+  "idu": "97415000DK1044",
+  "tier": "97415000DK1044",
+  "charge_calibree": "5 349 €",
+  "terrain_zone_confrontation": "Confrontation — aux hypothèses calibrées vous pouvez payer 13 €/m² de terrain ; le marché de la zone vend le terrain nu à 328 €/m² (DVF terrains, fiabilité moyenne). Votre charge est sous le prix du marché — négociation ou densité à retrouver.",
+  "marge_calibree": "À 200 000 €, le prix dépasse de 195 k€ ce que la charge calibrée supporte.",
+  "cout_plancher": "Le coût s'applique à 199 m² de surface plancher (159 m² vendables ÷ 0,8), pas sur la surface vendable.",
+  "vrd": "VRD/aménagements : hypothèse par défaut 90 €/m² de terrain (soit 38 k€ sur 426 m²) — à ajuster par devis local, jamais un coût à zéro masqué.",
+  "ca_reglee": "CA visé 752 k€ sur 159 m² vendables.",
+  "terrain_zone_reglee": "Confrontation — vous pouvez payer 115 €/m² de terrain ; le marché de la zone vend le terrain nu à 328 €/m² (DVF terrains, fiabilité moyenne). Votre charge est sous le prix du marché — négociation ou densité à retrouver.",
+  "source_masquee_dans_hypotheses": true,
+  "prix_input_unique": 2
+}

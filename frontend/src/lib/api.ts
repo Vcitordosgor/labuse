@@ -288,11 +288,21 @@ export interface ScoreurResult {
            prix_probable_foncier_eur?: number; ecart_vs_prix_probable_pct?: number | null
            charge_fonciere_supportable_eur?: number; marge_a_ce_prix_eur?: number
            methode?: string; message?: string; avertissement: string }
+  // FUSION « Étudier un bien » — le CONSTAT servi (with_constat=true) : charge CALIBRÉE (méthode
+  // documents, « aux hypothèses calibrées ») + faits sourcés + prix terrain nu de zone (réf. unique).
+  constat?: {
+    charge_calibree: { central: number; par_m2_terrain: number; ca_central: number | null } | null
+    sourced: { shab_vendable_m2: number | null; sdp_plancher_m2: number | null; coef_rendement: number
+               terrain_m2: number | null; prix_sortie_median: number | null; prix_neuf_label: string | null } | null
+    terrain_zone: { eur_m2: number; fiabilite: string; n: number } | null
+    motif: string | null
+  }
 }
-export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null) =>
+export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null,
+                               withConstat = false) =>
   j<ScoreurResult>('/scoreur-adresse', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null }),
+    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null, with_constat: withConstat }),
   })
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN

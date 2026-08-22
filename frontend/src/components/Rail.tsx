@@ -177,12 +177,12 @@ export function Rail() {
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
             {/* M82 : compte DYNAMIQUE (le nombre d'outils bouge) ; « métier » retiré (hors sujet). */}
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              {MODULES.length} outils fonciers, du repérage à l’action.
+              {MODULES.filter((m) => !m.hidden).length} outils fonciers, du repérage à l’action.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
             {GROUPS.map((g) => {
-              const outils = MODULES.filter((m) => m.group === g.key)
+              const outils = MODULES.filter((m) => m.group === g.key && !m.hidden)   // clés aliasées (hidden) : pas de carte en double
               if (!outils.length) return null
               return (
                 <section key={g.key} data-outil-group={g.key}>

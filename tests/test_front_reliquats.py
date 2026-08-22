@@ -146,44 +146,73 @@ def test_r3_marqueur_commune_etiquette_vraie():
 # ───────────── R5 — UI des outils O2 (scoreur d'adresse) et O3 (anti-fiche) ─────────────
 
 HEADER = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
-SCOREUR = (ROOT / "frontend/src/components/outils/ScoreurAdresse.tsx").read_text(encoding="utf-8")
+# FUSION (Vic 21/08/2026) — scoreur d'adresse + calculette = « Étudier un bien ». Les anciens composants
+# ScoreurAdresse.tsx / CalculetteFonciere.tsx sont SUPPRIMÉS ; la logique vit dans EtudierBien.tsx.
+ETUDIER = (ROOT / "frontend/src/components/outils/EtudierBien.tsx").read_text(encoding="utf-8")
+MODULEPANEL = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
+FICHE_TSX = (ROOT / "frontend/src/components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+ANSWERING = (ROOT / "src/labuse/copilote_v2/answering.py").read_text(encoding="utf-8")
 POURQUOI = (ROOT / "frontend/src/components/fiche/PourquoiPas.tsx").read_text(encoding="utf-8")
 API = (ROOT / "frontend/src/lib/api.ts").read_text(encoding="utf-8")
-# M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registre des outils).
 REGISTRY = (ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
 
 
-def test_r5_scoreur_trouvable_depuis_les_outils():
-    # M12-D4 : l'outil « seconde opinion » quitte l'en-tête et rejoint les Outils (registre) —
-    # surfacé comme outil PHARE du groupe « analyser », donc trouvable rapidement.
-    assert "'scoreur-adresse'" in REGISTRY and "Scorer une adresse" in REGISTRY
+def test_r5_etudier_trouvable_depuis_les_outils():
+    # Le créneau PHARE O2 est conservé (clé 'scoreur-adresse' inchangée), relabellisé « Étudier un bien ».
+    assert "'scoreur-adresse'" in REGISTRY and "Étudier un bien" in REGISTRY
     assert "phare: true" in REGISTRY.split("scoreur-adresse")[1][:200]
 
 
-def test_r5_scoreur_champs_et_prix_manuel():
-    # adresse NORMALISÉE BAN (jamais libre → AddressAutocomplete) + prix saisi à la main (jamais scrapé)
-    assert "data-scoreur-adresse" in SCOREUR and "AddressAutocomplete" in SCOREUR
-    assert "data-scoreur-prix" in SCOREUR and "jamais scrapé" in SCOREUR   # prix saisi à la main
-    assert "data-scoreur-resultat" in SCOREUR and "data-scoreur-fiche" in SCOREUR
+def test_r5_etudier_champs_et_prix_manuel():
+    # entrée UNIFIÉE : adresse NORMALISÉE BAN (AddressAutocomplete) OU référence cadastrale (IDU) ;
+    # prix saisi à la main (jamais scrapé). Résultat + porte fiche présents.
+    assert "data-etudier-adresse" in ETUDIER and "AddressAutocomplete" in ETUDIER
+    assert "data-etudier-idu" in ETUDIER                                # 2e entrée : la parcelle
+    assert "data-etudier-prix" in ETUDIER and "jamais scrapé" in ETUDIER
+    assert "data-etudier-resultat" in ETUDIER and "data-etudier-fiche" in ETUDIER
 
 
-def test_r5_scoreur_constat_nu_sans_verdict_marche():
-    # RÉ-ANCRÉ sur la décision SERVIE M128-6-§1.3 (2026-08) : le scoreur affiche un CONSTAT chiffré
-    # NU — prix probable du foncier, écart du prix saisi, marge à ce prix — et AUCUN verdict de
-    # marché (« sous / dans / au-dessus », « bonne affaire »…) : on montre les nombres, le lecteur
-    # conclut. Le badge « repère marché » M137-S n'a jamais été embarqué (décision INVERSE de
-    # M128-6 : ne pas juger à la place du client). Ce test garde cette décision.
-    assert "data-scoreur-prix-constat" in SCOREUR                       # le bloc constat existe
-    assert "prix_probable_foncier_eur" in SCOREUR and "ecart_vs_prix_probable_pct" in SCOREUR
-    assert "marge_a_ce_prix_eur" in SCOREUR                             # les 3 nombres servis
-    # AUCUN badge-verdict de marché (M128-6 : des nombres, pas un jugement) — ne doit pas réapparaître
-    for v in ("sous_marche", "dans_marche", "sur_marche", "data-scoreur-prix-verdict"):
-        assert v not in SCOREUR
+def test_r5_etudier_constat_nu_sans_verdict_marche():
+    # M128-6-§1.3 TIENT après la fusion : le constat est chiffré NU — AUCUN badge/verdict de marché.
+    # Le badge « repère marché » M137-S reste NON embarqué (ne pas juger à la place du client).
+    assert "data-etudier-constat" in ETUDIER                            # le bloc constat existe
+    # AUCUN badge-verdict de marché — ne doit pas réapparaître (ni ancien nom scoreur, ni nouveau)
+    for v in ("sous_marche", "dans_marche", "sur_marche", "data-scoreur-prix-verdict",
+              "data-etudier-prix-verdict"):
+        assert v not in ETUDIER
 
 
-def test_r5_scoreur_hors_base_honnete():
+def test_r5_etudier_referentiel_marche_unique():
+    # Arbitrage fusion : LE référentiel marché = prix terrain nu de zone (data-etudier-terrain-zone).
+    # `score_e.prix_probable` reste vivant côté serveur mais N'EST PLUS AFFICHÉ dans l'outil fusionné.
+    assert "data-etudier-terrain-zone" in ETUDIER
+    assert "prix_probable" not in ETUDIER                               # score_e retiré de la surface UI
+
+
+def test_r5_etudier_deux_marges_chacune_dit_son_referentiel():
+    # La marge apparaît deux fois, chacune DIT son référentiel : constat « aux hypothèses calibrées »
+    # (bilan servi par secteur) ; calculette « selon vos hypothèses » (réglable, dans Fiche.tsx).
+    assert "aux hypothèses calibrées" in ETUDIER and "data-etudier-charge-calibree" in ETUDIER
+    assert "data-etudier-marge-calibree" in ETUDIER
+    assert "selon vos hypothèses" in FICHE_TSX
+
+
+def test_r5_etudier_hors_base_honnete():
     # ok:false → le message honnête de l'API est affiché, jamais un verdict inventé
-    assert "!d.ok" in SCOREUR and "d.message" in SCOREUR
+    assert "!d.ok" in ETUDIER and "d.message" in ETUDIER
+
+
+def test_fusion_deux_cles_resolvent_jamais_404():
+    # PIÈGE DES RETRAITS : les DEUX clés doivent résoudre le composant fusionné (aucun 404 sur une
+    # porte / un deep-link / le copilote). Créneau phare O2 conservé, clé M23 ALIASÉE (hidden).
+    assert "'scoreur-adresse': EtudierBien" in MODULEPANEL
+    assert "'calculette-fonciere': EtudierBien" in MODULEPANEL
+    # registre : M23 aliasée = hidden (résout l'en-tête, pas de carte en double)
+    assert "hidden: true" in REGISTRY.split("calculette-fonciere")[1][:200]
+    # la porte fiche ouvre toujours l'outil pré-rempli via la clé M23 (alias) — jamais un 404
+    assert "setModule('calculette-fonciere')" in FICHE_TSX and "setCalcPrefill(idu)" in FICHE_TSX
+    # le copilote route toujours les deux intentions (charge foncière → calculette-fonciere ; scorer → scoreur-adresse)
+    assert "\"calculette-fonciere\"" in ANSWERING and "\"scoreur-adresse\"" in ANSWERING
 
 
 def test_r5_pourquoi_pas_onglet_conditionnel():

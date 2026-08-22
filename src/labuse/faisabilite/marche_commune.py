@@ -84,6 +84,26 @@ def ligne1_prix_ancien(db: Session, commune: str) -> dict:
                   fiabilite=sp.get("fiabilite", "moyenne"), etiquette="Sourcé · millésime DVF")
 
 
+def prix_terrain_nu_zone(db: Session, commune: str | None, zone: str | None) -> dict | None:
+    """LE référentiel UNIQUE du prix marché du terrain nu, pour UNE zone (fusion « Étudier un bien »,
+    Vic 21/08/2026). Point de calcul unique déjà partagé par la fiche / l'outil Marché / le
+    comparateur (M79) — la calculette (/charge) ET le constat servi le lisent ICI, jamais deux
+    sources divergentes (l'ancien `score_e.prix_probable` reste vivant pour banquier/argu/PDF/copilote,
+    mais n'alimente plus l'outil fusionné). Retourne {eur_m2, fiabilite, n} ou None (zone hors U/AU,
+    commune inconnue, ou aucune vente terrain calculable). Réutilise `ligne2_terrain_zone` (mêmes
+    chiffres que le bloc Marché) — aucun calcul parallèle."""
+    if not commune or not zone:
+        return None
+    fam = "AU" if str(zone).upper().startswith("AU") else str(zone)[:1].upper()
+    if fam not in ("U", "AU"):
+        return None
+    l = ligne2_terrain_zone(db, commune)
+    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
+    if pz and pz.get("calculable"):
+        return {"eur_m2": pz.get("median_eur_m2"), "fiabilite": l.get("fiabilite"), "n": pz.get("n")}
+    return None
+
+
 def ligne2_terrain_zone(db: Session, commune: str) -> dict:
     """LIGNE EXCLUSIVE — médiane €/m² du terrain NU par zone PLU CALIBRÉE (U vs AU), voie A.
     Source = dvf_mutations_parcelle (ventes terrain nu) × parcel_zone_plu (zonage calibré LABUSE).

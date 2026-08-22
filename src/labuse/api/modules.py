@@ -996,23 +996,17 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     res["prix_neuf_repli_ile"] = ps["repli_ile"]
     res["defaults"] = defaults
     # LA CONFRONTATION (le geste du scoreur) : le prix TERRAIN NU observé de la ZONE, à côté de la
-    # charge supportable. Point de calcul UNIQUE (prix_terrain_nu_par_zone, M79) — même source que
-    # la fiche, l'outil Marché et le comparateur. Absent (zone hors U/AU, ou pas de vente) → None.
-    zone = (fz[0].zone or "") if fz else ""
-    fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
-    if row["commune"] and fam in ("U", "AU"):
-        try:
-            from ..faisabilite.marche_commune import build_marche_commune
-            for l in (build_marche_commune(db, row["commune"]).get("lignes") or []):
-                if isinstance(l, dict) and l.get("cle") == "prix_terrain_nu_par_zone":
-                    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
-                    if pz and pz.get("calculable"):
-                        res["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
-                        res["terrain_zone_fiabilite"] = l.get("fiabilite")
-                        res["terrain_zone_n"] = pz.get("n")
-                    break
-        except Exception:  # noqa: BLE001 — la confrontation est un bonus, ne casse jamais la charge
-            pass
+    # charge supportable. RÉFÉRENTIEL UNIQUE `prix_terrain_nu_zone` (M79) — le MÊME code que le constat
+    # servi (Étudier un bien) et le comparateur. Absent (zone hors U/AU, ou pas de vente) → None.
+    try:
+        from ..faisabilite.marche_commune import prix_terrain_nu_zone
+        tz = prix_terrain_nu_zone(db, row["commune"], (fz[0].zone if fz else None))
+        if tz:
+            res["terrain_zone_eur_m2"] = tz["eur_m2"]
+            res["terrain_zone_fiabilite"] = tz["fiabilite"]
+            res["terrain_zone_n"] = tz["n"]
+    except Exception:  # noqa: BLE001 — la confrontation est un bonus, ne casse jamais la charge
+        pass
     if not res.get("calculable"):
         # prix de sortie insuffisant → au mieux, on rend le prix secteur (déjà dans `marche`)
         res["raison"] = res.get("raison") or "prix_insuffisant"
