@@ -25,6 +25,9 @@ export interface ModuleDef {
   desc: string         // bénéfice, orienté « pourquoi je paie »
   group: OutilGroup
   phare?: boolean      // outil à forte valeur → mis en avant
+  hidden?: boolean     // clé RÉSOLVANTE (en-tête + composant) mais PAS de carte au menu — pour une clé
+                       // ALIASÉE vers un outil fusionné (ex. M23 calculette → « Étudier un bien »),
+                       // qu'une porte/deep-link/copilote ouvre sans jamais 404, sans doublonner la carte.
 }
 
 //: les 5 intentions, dans l'ordre du geste (affichage). menu-sous-titres — les sous-titres (hint) sont
@@ -53,10 +56,13 @@ export const MODULES: ModuleDef[] = [
   // ── Instruire — jauger CE terrain, ce projet ──
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
     label: 'Faisabilité', desc: 'Ce qu’une parcelle peut accueillir, ou par critères où poser un programme' },
+  // FUSION (Vic 21/08/2026) — scoreur d'adresse (O2) + calculette foncière (M23) = « Étudier un bien »,
+  // deux entrées (adresse OU parcelle), un moteur. Le créneau PHARE O2 est conservé (clé inchangée) ;
+  // la clé M23 est ALIASÉE (hidden : résout la porte fiche/copilote sans carte en double, jamais un 404).
   { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
-    label: 'Scorer une adresse', desc: 'Collez l’adresse d’un bien à vendre — seconde opinion avant d’offrir' },
-  { key: 'calculette-fonciere', num: 'M23', group: 'instruire',
-    label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
+    label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
+  { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
+    label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
   // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
   // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
   // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».

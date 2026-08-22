@@ -94,3 +94,25 @@ def test_adresse_hors_base_reponse_honnete(db_session, monkeypatch):
     monkeypatch.setattr(scoreur, "_geocode", lambda q: {"lon": 2.35, "lat": 48.85, "label": "Paris"})
     out = scoreur.scoreur_adresse(scoreur.ScoreurIn(q="paris"), s)
     assert out["ok"] is False and "Aucune parcelle" in out["message"]
+
+
+# ───── FUSION « Étudier un bien » — le CONSTAT servi (with_constat) « ne lève pas » + additif ─────
+
+@pytest.mark.db
+def test_with_constat_ne_leve_pas_et_additif(db_session):
+    """Le flag `with_constat` attache le CONSTAT servi (charge CALIBRÉE + faits sourcés + prix terrain
+    nu de zone = référentiel UNIQUE), sans jamais lever : parcelle non calibrée → charge_calibree None
+    + motif honnête. Et il est ADDITIF : sans le flag, aucun constat (copilote v1 non alourdi)."""
+    s = db_session
+    idu = "97499000ZS0007"
+    _seed(s, idu)
+    out = scoreur.scoreur_adresse(scoreur.ScoreurIn(q=idu, idu=idu, with_constat=True), s)   # aucune exception
+    assert out["ok"] and "constat" in out
+    c = out["constat"]
+    # commune 'X' non calibrée → pas de charge chiffrée, JAMAIS un faux chiffre ni un crash
+    assert c["charge_calibree"] is None and c["motif"] is not None
+    # le référentiel marché servi est terrain_zone (jamais score_e) — la clé existe (None ici, pas de DVF terrain)
+    assert "terrain_zone" in c
+    # ADDITIF : sans le flag, aucun constat (comportement historique préservé)
+    out2 = scoreur.scoreur_adresse(scoreur.ScoreurIn(q=idu, idu=idu), s)
+    assert "constat" not in out2

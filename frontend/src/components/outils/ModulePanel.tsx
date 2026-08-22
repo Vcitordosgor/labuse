@@ -11,7 +11,7 @@ import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { CalculetteFonciere } from './CalculetteFonciere'
+import { EtudierBien } from './EtudierBien'
 import { M22 } from './M22Programme'
 // O10Bascules (Quoi de neuf) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
 // composant reste exporté dans ./blocB (endpoint /events vivant via la cloche de notifications).
@@ -25,7 +25,6 @@ import { M16, M18 } from './moteurs'
 // MarcheCommune ne sont plus montés ici directement : Communes les réutilise.
 import { Communes } from './Communes'
 import { MODULES, VIOLET } from './registry'
-import { ScoreurAdresse } from './ScoreurAdresse'
 // M137-P/Q — outil PLU UNIFIÉ : le hub monte 2 voies — PluAnnuaire et ProcedureChangement (qui
 // réutilise VerifProcedure + M15/simulplu).
 import { Plu } from './Plu'
@@ -930,12 +929,16 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
-  'scoreur-adresse': ScoreurAdresse,
+  // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné
+  // — 'scoreur-adresse' (créneau phare O2, carte au menu) ET 'calculette-fonciere' (M23 aliasée, hidden :
+  // ouverte par la porte fiche/copilote via calcPrefill, jamais un 404). Anciens composants
+  // ScoreurAdresse + CalculetteFonciere supprimés (logique absorbée ; endpoint /scoreur-adresse vivant).
+  'scoreur-adresse': EtudierBien,
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o7-carnet' (Suivi de secteur) — le vrai suivi = la
   // Veille. Composant O7Carnet conservé au dépôt ; endpoints /carnet-secteur vivants.
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o10-bascules' (Quoi de neuf) — plus monté. Composant
   // O10Bascules conservé au dépôt (exporté) ; son endpoint /events reste vivant (cloche de notifications).
-  'calculette-fonciere': CalculetteFonciere,
+  'calculette-fonciere': EtudierBien,
 }
 
 export function ModulePanel() {

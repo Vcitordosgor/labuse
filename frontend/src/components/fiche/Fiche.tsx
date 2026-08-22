@@ -649,7 +649,8 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
  *  YAML), plus d'une constante 2500 gravée ici qui divergeait du 2550 serveur (donc du PDF « Note
  *  de financement »). On seed les champs une fois les défauts connus : calculette et PDF portent le
  *  même coût par défaut sur la même parcelle. */
-export function Calculette({ idu }: { idu: string }) {
+export function Calculette({ idu, hideSource, prixDemandeExterne }:
+  { idu: string; hideSource?: boolean; prixDemandeExterne?: number | null }) {
   // M58-P1 (Q5) : `staleTime:Infinity` SANS retry laissait la calculette en « Chargement »
   // DÉFINITIF si /bilan/calculette-defaults échouait une fois. On ajoute un retry et surtout un
   // ÉTAT D'ERREUR explicite avec « Réessayer » (règle DA « les états parlent » — jamais de zone muette).
@@ -673,15 +674,20 @@ export function Calculette({ idu }: { idu: string }) {
       </div>
     )
   }
-  return <CalculetteBody idu={idu} defauts={defs.data} />
+  return <CalculetteBody idu={idu} defauts={defs.data} hideSource={hideSource} prixDemandeExterne={prixDemandeExterne} />
 }
 
-function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefaults }) {
+function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }:
+  { idu: string; defauts: CalculetteDefaults; hideSource?: boolean; prixDemandeExterne?: number | null }) {
   const [cout, setCout] = useState<number | null>(defauts.cout_construction_m2)
   const [marge, setMarge] = useState<number | null>(defauts.marge_frais_pct)
   // VRD/aménagements : hypothèse SAISIE, seed du défaut DIT servi (jamais un 0 silencieux).
   const [vrd, setVrd] = useState<number | null>(defauts.vrd_m2)
   const [prixDemande, setPrixDemande] = useState<number | null>(null)
+  // FUSION « Étudier un bien » : quand le prix demandé est piloté par le parent (constat), on le
+  // reçoit ici — UN seul champ de saisie, pas deux. `undefined` = mode autonome (fiche/outil hérité).
+  const prixPilote = prixDemandeExterne !== undefined
+  useEffect(() => { if (prixPilote) setPrixDemande(prixDemandeExterne ?? null) }, [prixPilote, prixDemandeExterne])
   // M22-A : la même équation, deux lectures — charge supportable (historique) ou prix d'achat
   // max admissible (inverse). Le moteur garantit l'identité des totaux (aucun calcul en JS).
   const [mode, setMode] = useState<'charge' | 'achat_max'>('charge')
@@ -731,12 +737,15 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
         )}
         {d && d.calculable && cf && (
           <>
-            {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
-            <p className="text-[11px] text-txt-dim">
-              LABUSE (sourcé) : SDP vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
-              prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
-              terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
-            </p>
+            {/* le SOURCÉ (lecture seule) — ce que LABUSE sait. Masqué quand le CONSTAT l'a déjà dit
+                (fusion « Étudier un bien ») : pas deux fois les mêmes faits. */}
+            {!hideSource && (
+              <p className="text-[11px] text-txt-dim">
+                LABUSE (sourcé) : SDP vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+                prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+                terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
+              </p>
+            )}
             {/* DIRE LE COÛT-PLANCHER : le coût de construction porte sur la SDP de PLANCHER (vendable
                 ÷ rendement), pas sur la surface vendable affichée — sinon l'écart au calcul de tête
                 (coût × surface vendable) fait douter. On l'explicite noir sur blanc. */}
@@ -825,10 +834,13 @@ function CalculetteBody({ idu, defauts }: { idu: string; defauts: CalculetteDefa
                 </>
               )}
             </div>
-            {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
-            <div className="mt-2 flex items-end gap-2">
-              <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
-            </div>
+            {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel. Masqué quand le parent (constat)
+                pilote le prix : UN seul champ dans le parcours fusionné, jamais deux. */}
+            {!prixPilote && (
+              <div className="mt-2 flex items-end gap-2">
+                <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
+              </div>
+            )}
             {mode === 'achat_max' && d.ecart_negociation && (
               <div data-calc-ecart className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${d.ecart_negociation.sens === 'marge' ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {d.ecart_negociation.sens === 'surcout'

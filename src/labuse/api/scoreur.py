@@ -37,6 +37,11 @@ class ScoreurIn(BaseModel):
     q: str                              # adresse libre
     prix_demande_eur: float | None = None   # prix affiché/demandé, saisi manuellement
     idu: str | None = None              # M82 (CAS E) : parcelle DÉJÀ résolue par l'autocomplétion interne
+    # FUSION « Étudier un bien » (Vic 21/08/2026) : le CONSTAT servi (tier + charge CALIBRÉE + faits
+    # sourcés + prix terrain nu de zone). ADDITIF, défaut False → les appelants historiques (copilote
+    # v1) ne paient pas le compute_bilan_servi. Le prix probable `score_e` reste servi (legacy), mais
+    # l'outil fusionné ne l'affiche pas : il lit `terrain_zone` (référentiel unique).
+    with_constat: bool = False
 
 
 def _geocode(q: str) -> dict:
@@ -164,4 +169,52 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
         except Exception:  # noqa: BLE001
             pass
         out["prix"] = _prix_constat(float(body.prix_demande_eur), charge, prix_probable, row["surface_m2"])
+
+    if body.with_constat:
+        # CONSTAT servi (fusion « Étudier un bien ») : la charge CALIBRÉE (bilan à rebours par
+        # secteur — méthode documents, « aux hypothèses calibrées ») + les faits sourcés + le prix
+        # terrain nu de zone (référentiel UNIQUE). Éphémère, aucune bascule. Jamais un faux chiffre :
+        # capacité non résolue / prix social-dominant → `charge_calibree=None` + motif honnête.
+        out["constat"] = _constat_servi(db, row["idu"], row["commune"])
+    return out
+
+
+def _constat_servi(db: Session, idu: str, commune: str | None) -> dict:
+    """Le CONSTAT calibré d'une parcelle : verdict déjà porté par le tier (lu en amont), ici la
+    charge foncière CALIBRÉE (compute_bilan_servi — par secteur, non réglable) + les faits sourcés
+    (SDP vendable, SDP plancher, prix de sortie neuf, terrain) + le prix terrain nu de la ZONE
+    (référentiel unique `prix_terrain_nu_zone`). Aucun verdict marché (M128-6 tient)."""
+    from ..faisabilite.bilan import compute_bilan_servi, resolve_prix_sortie_servi  # noqa: F401
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+    from ..faisabilite.marche_commune import prix_terrain_nu_zone
+    out: dict = {"charge_calibree": None, "sourced": None, "terrain_zone": None, "motif": None}
+    try:
+        pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        fa = parcel_faisabilite(db, pid) if pid else None
+        if not fa or not fa[1].constructible:
+            out["motif"] = "capacite_non_resolue"
+            return out
+        ctx, f = fa
+        out["terrain_zone"] = prix_terrain_nu_zone(db, commune, ctx.zone)
+        shab = (f.fourchette or {}).get("shab_vendable_m2")
+        coef = float(Hypotheses.charger(commune).coef_rendement)
+        b, ps = compute_bilan_servi(db, pid, fa)
+        out["sourced"] = {
+            "shab_vendable_m2": round(shab) if shab else None,
+            "sdp_plancher_m2": round(shab / coef) if (shab and coef) else None,
+            "coef_rendement": coef,
+            "terrain_m2": round(ctx.surface_m2) if ctx.surface_m2 else None,
+            "prix_sortie_median": (ps["prix"] if ps and not ps.get("non_calculable") else None),
+            "prix_neuf_label": (ps.get("label") if ps else None),
+        }
+        if ps and ps.get("non_calculable"):
+            out["motif"] = "prix_sortie_non_calculable"
+        elif b is not None and b.fiable and b.charge_fonciere:
+            out["charge_calibree"] = {"central": b.charge_fonciere.get("central"),
+                                      "par_m2_terrain": b.charge_fonciere.get("par_m2_terrain"),
+                                      "ca_central": (b.ca or {}).get("central")}
+    except Exception as exc:  # noqa: BLE001 — le constat est un bonus, jamais un 500
+        log.warning("constat servi %s : %s", idu, exc)
+        out["motif"] = out["motif"] or "indisponible"
     return out
