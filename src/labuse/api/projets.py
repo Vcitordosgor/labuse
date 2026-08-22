@@ -1033,6 +1033,22 @@ def _zone_famille(code: str | None) -> str | None:
     return None
 
 
+def _part_ouverte(code: str | None) -> bool:
+    """M130-8 §A — une part de zone est OUVERTE à l'urbanisation (constructible) ssi U ou 1AU (ou AU
+    sans indice). A, N, et 2AU / 3AU… (zones AU FERMÉES, à ouvrir par révision) → False. C'est ce test
+    — et lui seul — qui autorise à annoncer une part constructible ; jamais la seule famille dominante."""
+    if not code:
+        return False
+    import re as _re
+    u = str(code).strip().upper()
+    m = _re.match(r"^(\d+)", u)
+    lead = int(m.group(1)) if m else None
+    core = _re.sub(r"^\d+", "", u)
+    if core.startswith("AU"):
+        return lead is None or lead == 1           # AU / 1AU ouvertes ; 2AU+ fermées
+    return core.startswith("U")                    # U = urbaine ; A / N → False
+
+
 def _plu_millesime(idurba: str | None) -> str | None:
     """M130-2 §6 — le MILLÉSIME AMONT du zonage = la date d'approbation du PLU portée par `idurba`
     (ex. « 97401_PLU_20241206 » → 06/12/2024). Jamais une date de run. None si non renseigné."""
@@ -1100,9 +1116,10 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         # M130-5 §C : reliquat = 100 − somme des parts affichées (zones sous le seuil / trou géométrie).
         # Jamais muet : ≥ 2 → ligne « autres zones ~ X % » ; ±1 = arrondi (rien).
         parts_reste = 100 - sum(pct for (_l, _f, pct) in parts) if parts else 0
-        # M130-7 §C : la plus grande part CONSTRUCTIBLE (U / AU) ≥ 5 % — pour dire l'exception d'une
-        # parcelle écartée du vivier qui garde une part constructible.
-        _constr = [(lib, pct) for (lib, fam, pct) in parts if fam in ("urbaine", "à urbaniser")]
+        # M130-8 §A : la plus grande part réellement OUVERTE à l'urbanisation (U / 1AU) ≥ 5 % — seule
+        # base qui autorise à annoncer une part constructible (exclut A, N, 2AU). Remplace le test
+        # M130-7 sur la famille (« à urbaniser » incluait 2AU → faux positif).
+        _constr = [(lib, pct) for (lib, fam, pct) in parts if _part_ouverte(lib)]
         part_constructible = _constr[0] if _constr else None
         zr = None
         try:
@@ -1151,8 +1168,10 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
         "total": tot["total"],           # M130-5 §A : None → État 3 (échec) ; > n → État 1 ; <= n → État 2
         "total_etage0": tot["etage0"],   # M130-6 §C : part étage 0 du total
         "etage0_count": sum(1 for it in parcelles if it["etage0"]),   # §B (part étage 0 des FIGÉES)
-        # M130-7 §C : parcelles étage 0 gardant une part constructible (exception au constat d'ensemble)
-        "etage0_constructible": sum(1 for it in parcelles if it["etage0"] and it["part_constructible"]),
+        # M130-8 §C.1 : parcelles MULTI-ZONES étage 0 gardant une part OUVERTE (= les lignes d'exception
+        # réellement rendues). On ne compte plus les mono-zones urbaines (métrique ≠ libellé, cf. C.1).
+        "etage0_constructible": sum(
+            1 for it in parcelles if it["etage0"] and it["multi_zone"] and it["part_constructible"]),
         "parcelles": parcelles,
     }
 

@@ -48,6 +48,12 @@ def _fr(x: float) -> str:
     return s.replace(".", ",")
 
 
+def _num(v: int) -> str:
+    """Entier à MILLIERS espacés (« 10 725 ») — sans manger les virgules LITTÉRALES d'une phrase
+    (M130-8 §B.1/§B.2 : un `.replace(',', ' ')` global effaçait « , toutes » / « , soit »)."""
+    return f"{v:,}".replace(",", " ")
+
+
 def _src_propre(src: str | None) -> str | None:
     """M130-4/6 §E.3 — retire le point final parasite d'une citation (« p.84. » → « p.84 ») ET le point
     avant une parenthèse fermante des libellés « via renvoi » (« Source: p.154.) » → « … p.154) »)."""
@@ -199,18 +205,24 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         total = shortlist.get("total")
         neutre = ("Élargir la shortlist ne supprime pas ce rang : seule une liste complète ou un tri "
                   "explicite (surface) est neutre.")   # §B — plus de fausse issue « chercher plus »
-        # M130-6 §C — « ~ {total} retenues, dont ~ {t0} classées à l'étage 0 » (part étage 0 du total).
+        # M130-6/8 §C/§B.1 — « dont ~ {t0} classées à l'étage 0 » ; quand t0 vaut EXACTEMENT le total,
+        # « toutes classées à l'étage 0 » (pas de tilde+valeur redondants).
         t0 = shortlist.get("total_etage0")
-        dont0 = f", dont ~ {t0:,} classées à l'étage 0".replace(",", " ") if t0 is not None else ""
+        if t0 is not None and total is not None and t0 == total:
+            dont0 = ", toutes classées à l'étage 0"
+        elif t0:
+            dont0 = f", dont ~ {_num(t0)} classées à l'étage 0"
+        else:
+            dont0 = ""
         if total is None:
             etat = ("Nombre total de parcelles retenues par le cadrage : INDISPONIBLE (requête en "
                     "échec). Cette liste peut être tronquée ; si elle l'est, les parcelles ont été "
                     "sélectionnées par probabilité de mutation — un rang non visible. " + neutre)
         elif total > n:
-            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {total:,} retenues par le cadrage"
-                    f"{dont0} (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de mutation "
-                    "(critère interne du moteur) — un rang non visible ; elles sont présentées ici par "
-                    "ordre géographique. " + neutre).replace(",", " ")
+            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {_num(total)} retenues par le "
+                    f"cadrage{dont0} (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de "
+                    "mutation (critère interne du moteur) — un rang non visible ; elles sont présentées "
+                    "ici par ordre géographique. " + neutre)
         else:
             etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
                     "présentées. Aucune sélection, aucun rang.")
@@ -357,25 +369,29 @@ def _lignes_donnees(it: dict) -> list[str]:
                 liste += f" · autres zones ~ {reste} %"
         else:
             liste = "zones " + ", ".join(p[0] for p in parts) + " — parts non disponibles"
-        # M130-7 §C — EXCEPTION prioritaire : une parcelle écartée du vivier (étage 0) qui garde une
-        # part constructible le DIT, pour ne pas contredire le constat d'ensemble de l'en-tête.
-        pc = it.get("part_constructible")
-        if it.get("etage0") and pc:
-            out.append(f"Parcelle multi-zones : {liste} — écartée du vivier, mais une part {pc[0]} "
-                       f"(~ {pc[1]} %) est constructible : à instruire séparément.")
-            return out
-        # M130-6/7 §A/§D — la variante se choisit sur l'ÉTAT du résiduel, jamais sur « le champ est vide »
-        # ni sur la famille de la zone dominante.
-        tout_constructible = bool(parts) and all(f in ("urbaine", "à urbaniser") for _l, f, _p in parts)
-        if it.get("sdp_chiffree"):                                       # cas 1 : SDP > 0
+        # M130-8 §A — on ne PROMET JAMAIS une part constructible sans l'avoir vérifiée. `pc` = la plus
+        # grande part réellement OUVERTE (U / 1AU ; exclut A, N, 2AU) — calculée en amont par
+        # `_part_ouverte`. Quatre cas, choisis sur l'état du résiduel PUIS l'existence d'une part ouverte.
+        pc = it.get("part_constructible")   # (libellé, pct) ou None
+        if it.get("sdp_chiffree"):                                        # cas 3 (SDP > 0) — inchangé
+            from .projets import _part_ouverte
+            tout_ouvert = bool(parts) and all(_part_ouverte(lib) for lib, _f, _p in parts)
             tail = ("SDP calculée sur la partie constructible ; les autres parts relèvent d'un autre "
-                    "règlement de zone, à instruire." if tout_constructible else   # §E.1
+                    "règlement de zone, à instruire." if tout_ouvert else   # §E.1
                     "SDP calculée sur la partie constructible ; les autres parts restent à instruire.")
-        elif _sdp_calcul_nul(it):                                         # cas 3 : calculé et NUL
+            out.append(f"Parcelle multi-zones : {liste} — {tail}")
+        elif _sdp_calcul_nul(it):                                         # cas 4 (calculé et NUL) — inchangé
             out.append(f"Parcelle multi-zones : {liste} — le résiduel calculé est nul sur la part "
                        f"{it.get('zone_code')} ; les autres parts restent à instruire.")
-            return out
-        else:                                                             # cas 2 : supprimé par famille
-            tail = "la SDP n'est pas chiffrée ; une partie constructible peut exister et reste à instruire."
-        out.append(f"Parcelle multi-zones : {liste} — {tail}")
+        elif pc:                                                          # cas 1 : SDP supprimée + part OUVERTE
+            surf = round(pc[1] / 100 * (it.get("surface_m2") or 0))   # §B.2 surface de la part (Estimé)
+            surf_txt = f", soit ~ {_num(surf)} m² — Estimé" if surf else ""
+            if it.get("etage0"):     # sous-cas étage 0 (M130-7 §C), désormais gardé par pc non vide
+                out.append(f"Parcelle multi-zones : {liste} — écartée du vivier, mais une part {pc[0]} "
+                           f"(~ {pc[1]} %{surf_txt}) est constructible : à instruire séparément.")
+            else:
+                out.append(f"Parcelle multi-zones : {liste} — la SDP n'est pas chiffrée ; une part "
+                           f"{pc[0]} (~ {pc[1]} %{surf_txt}) est constructible et reste à instruire.")
+        else:                                                             # cas 2 : AUCUNE part ouverte
+            out.append(f"Parcelle multi-zones : {liste} — aucune des parts n'est ouverte à l'urbanisation.")
     return out
