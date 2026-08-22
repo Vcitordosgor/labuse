@@ -653,12 +653,17 @@ const MOTIFS: { key: string; label: string; desc: string }[] = [
  *  module M09 vit. Rend visible ce que le silence cachait : provider actif et suivi des envois. */
 function M09() {
   const selectedIdu = useApp((s) => s.selectedIdu)
+  const courrierPrefill = useApp((s) => s.courrierPrefill)
+  const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)
   const [step, setStep] = useState(1)
-  const [idu, setIdu] = useState(selectedIdu ?? '')
+  const [idu, setIdu] = useState(courrierPrefill ?? selectedIdu ?? '')
+  // Assemblage → Courrier : IDU pré-rempli d'une parcelle de l'assiette (consommé-puis-reset AU
+  // MONTAGE, prioritaire sur selectedIdu qui peut pointer une autre parcelle du lot).
+  useEffect(() => { if (courrierPrefill) { setIdu(courrierPrefill); setCourrierPrefill(null) } }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // M20-A : le module reflète la parcelle sélectionnée tant qu'on est à l'étape « Parcelle »
   // (ouverture depuis la tuile Courrier d'une fiche déjà affichée, ou clic d'une autre parcelle
   // sur la carte). Vaut pour LES DEUX points d'entrée (fiche + Outils) — aucune divergence.
-  useEffect(() => { if (selectedIdu && step === 1) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (selectedIdu && step === 1 && !courrierPrefill) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const [motif, setMotif] = useState('standard')
   const [texte, setTexte] = useState('')
   const gen = useMutation({

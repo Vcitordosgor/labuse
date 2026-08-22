@@ -5,3 +5,6 @@ simulplu_max: 400
 # M137-Z — Baromètre : le classement prix par commune est plafonné (top N) ; l'écran DIT « les N
 # premières sur 24 » (les 24 ont la donnée — ≥ 100 ventes strictes chacune). Plus de LIMIT muet.
 barometre_top_communes: 8
+# Assemblage : nombre max de parcelles dans une assiette étudiée. Au-delà, l'écran DIT « les N
+# premières » (jamais une coupe muette). L'agrégation lit un fiche_payload par parcelle → borné.
+assemblage_max_parcelles: 30
