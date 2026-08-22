@@ -211,12 +211,21 @@ def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str 
          "raw": json.dumps({"synthetique": True, "rattachement": "zone"})},
     )
 
-    # ── Propriétaire (Fichiers fonciers — manuel/mock) : P1 morale, P7 indivision ──
-    ff_id = src_id["Fichiers fonciers (Cerema)"]
+    # ── Propriétaire : mock pour la couche `proprietaire` (P1 morale, P7 indivision) ──
+    # La couche lit `SRC_FF = "DGFiP — parcelles des personnes morales"` (phase2.py:16, renommée
+    # M125-C6). Le mock DOIT être injecté sous CE nom — sinon `latest_source_result` ne le trouve
+    # pas (dérive corrigée : le seed citait encore l'ancien « Fichiers fonciers (Cerema) »).
+    #
+    # ⚠ SIGNAL DÉMO-SEULEMENT — L'INDIVISION N'EST PAS SOURÇABLE SUR DU RÉEL. Le seul gisement
+    # d'indivision / `nb_droits_propriete` serait les Fichiers fonciers (Cerema), source « manuel »
+    # (convention interdite, non ingérée) ; `parcelle_personne_morale` (DGFiP, servie) ne porte NI
+    # indivision NI nb_droits. Le flag indivision de la couche `proprietaire` n'existe donc QUE via
+    # ce mock démo — ne jamais le présenter comme un signal client disponible (cf. DETTE_SUITE.md §2).
+    ff_id = src_id["DGFiP — parcelles des personnes morales"]
     _add_owner(session, parcel_ids[1], ff_id, {"personne_morale": True, "categorie": "SCI", "indivision": False},
                "Propriétaire personne morale (SCI) — acquérable.")
     _add_owner(session, parcel_ids[7], ff_id, {"personne_morale": False, "nb_droits_propriete": 7, "indivision": True},
-               "Indivision successorale : 7 droits de propriété sur le compte.")
+               "Indivision successorale : 7 droits de propriété sur le compte (mock démo — non sourçable sur du réel).")
 
     session.flush()
     return {"ingestion_run_id": run.id, "parcels": len(PARCELS), "parcel_ids": parcel_ids}

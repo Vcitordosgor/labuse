@@ -50,18 +50,24 @@ def test_pack_cerfa_prerempli_et_libelle(client_parcelle):
     assert r.status_code == 200
     z = zipfile.ZipFile(io.BytesIO(r.content))
     noms = z.namelist()
-    cerfa = next(n for n in noms if n.startswith("cerfa_13406-17"))
-    assert "regles_du_zonage_et_pieces.pdf" in noms and "LISEZMOI.txt" in noms
-    assert LIBELLE in z.read("LISEZMOI.txt").decode("utf-8")
+    # M129 E (2026-08) : nommage {IDU}-labuse-<pièce> (préfixe commun) — plus d'anciens noms nus
+    # (cerfa_… / regles_du_zonage_et_pieces.pdf / LISEZMOI.txt). Le contenu du pack est inchangé.
+    cerfa = next(n for n in noms if "CERFA-13406-17-prerempli.pdf" in n)
+    lisezmoi = next(n for n in noms if n.endswith("LISEZMOI.txt"))
+    assert any("regles-zonage.pdf" in n for n in noms)
+    assert LIBELLE in z.read(lisezmoi).decode("utf-8")
 
     from pypdf import PdfReader
     rd = PdfReader(io.BytesIO(z.read(cerfa)))
     f = rd.get_fields()
-    # champs TERRAIN pré-remplis…
+    # champs TERRAIN pré-remplis (section / numéro / localité)…
     assert f["T2S_section"].get("/V") == "PD"
     assert f["T2N_numero"].get("/V") == "0001"
-    assert f["T2T_superficie"].get("/V") == "815"
     assert f["T2L_localite"].get("/V") == "Saint-Pierre"
+    # M129 §1 (2026-08, arbitrage Vic) : la SUPERFICIE n'est PLUS pré-remplie — ST_Area(geom) n'est
+    # pas la contenance cadastrale officielle, et « un champ faux est pire qu'un champ vide » : le
+    # CERFA fait CERTIFIER la superficie par le déposant. On vérifie donc qu'elle reste VIDE.
+    assert not (f["T2T_superficie"].get("/V") or "")
     # …champs PROJET laissés VIDES (mandat) — le pack ne préjuge de rien
     assert not (f["H1N_nom"].get("/V") or "")
     # libellé préparatoire tamponné sur CHAQUE page

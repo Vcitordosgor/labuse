@@ -62,12 +62,13 @@ def test_comparables_sans_vefa_affiche_seulement_ancien():
 
 def test_charge_fonciere_a_rebours_formule():
     b = compute_bilan(1000, 1000, _prix(3000, 3000, 3000), H)
-    # Formule PRUDENTE (audit O2) : coût sur SURFACE DE PLANCHER (hab. × coef), coûts Réunion.
-    # CA = 3,0 M€ ; coef CA = 1 − marge − frais annexes (calé sur la calibration, pas en dur).
-    # Le « central » reste le chiffre VRAI (peut être négatif) ; seul l'affichage du BAS
-    # de fourchette est borné à 0 (audit O3).
+    # M128-3-§1 (2026-08) : la SDP coûtée = vendable ÷ coef_rendement (SOURCE UNIQUE, partagée avec
+    # la faisabilité) — PLUS de « × coef_plancher_habitable » (1,15) en dur. Le coût porte sur le
+    # plancher qui produit le vendable effectivement valorisé. CA = 3,0 M€ ; coef = 1 − marge −
+    # frais annexes (frais financiers = 0 par défaut). Le « central » reste le chiffre VRAI.
     coef = 1 - H.marge_promoteur_pct - H.frais_annexes_pct
-    cout_central = 1000 * H.coef_plancher_habitable * (H.cout_construction_m2_bas + H.cout_construction_m2_haut) / 2
+    sdp = 1000 / H.coef_rendement
+    cout_central = sdp * (H.cout_construction_m2_bas + H.cout_construction_m2_haut) / 2
     attendu = 3_000_000 * coef - cout_central
     assert abs(b.charge_fonciere["central"] - attendu) < 5_000
 
@@ -82,10 +83,11 @@ def test_dvf_trop_maigre_ne_chiffre_pas():
 
 
 def test_charge_fonciere_negative_signalee():
-    # prix bas + grande surface → CF basse négative : AFFICHÉE bornée à 0 (audit O3)
-    # mais l'avertissement « négative » est toujours émis (l'information n'est pas cachée).
+    # M128-2-D2(a) (2026-08) : la borne basse est désormais AFFICHÉE RÉELLE (négative), plus
+    # d'écrêtage muet à 0 (le « 0 » masquait une charge infaisable). L'avertissement « négative »
+    # est toujours émis (l'information reste visible).
     b = compute_bilan(2000, 2000, _prix(1500, 1700, 1900), H)
-    assert b.charge_fonciere["bas"] == 0
+    assert b.charge_fonciere["bas"] < 0
     assert any("négative" in a.lower() for a in b.avertissements)
 
 
@@ -100,8 +102,9 @@ def test_prix_fragile_arrondi_et_simulation_indicative():
                                         raisons=["ventes anciennes (2021)"]), H)
     assert b.fiable is True
     assert b.fiabilite == "fragile"
-    # montants arrondis à la centaine de milliers d'euros
-    assert b.ca["central"] % 100_000 == 0
+    # M128-A1 (2026-08) : un prix fragile est arrondi au k€ — PLUS aux 100 k€ (qui écrasaient une
+    # charge ~40 k€ à « 0 € », bandeau contredisant le texte). Le k€ tue la fausse précision sans mentir.
+    assert b.ca["central"] % 1_000 == 0
     assert "simulation indicative" in b.verdict.lower()
     assert any("fragile" in a.lower() for a in b.avertissements)
 
@@ -118,14 +121,14 @@ def test_hypotheses_et_bandeau():
 def test_calculette_arithmetique_independante():
     """Vérifie L'ARITHMÉTIQUE en isolation : entrées connues → charge foncière attendue.
     shab 6344 m², terrain 9723 m², prix médian 5310 €/m², coût 2500 €/m² SDP, marge+frais 21 %.
-    CA médian = 6344×5310 ; coef = 1−0,21 ; SDP = shab×1,15 ; construction = SDP×2500 ;
-    CF médiane = CA×coef − construction (VRD nulle hors secteur calibré)."""
+    CA médian = 6344×5310 ; coef = 1−0,21 ; M128-3-§1 : SDP = vendable ÷ coef_rendement (plus de
+    ×1,15) ; construction = SDP×2500 ; CF médiane = CA×coef − construction (VRD nulle hors secteur)."""
     prix = _prix(5310, 5310, 5310, n=14)
     res = compute_calculette(6344, 9723, prix, cout_construction_m2=2500, marge_frais_pct=21)
     assert res["calculable"] is True
     ca = 6344 * 5310
     coef = 1 - 21 / 100
-    construction = 6344 * H.coef_plancher_habitable * 2500
+    construction = 6344 / H.coef_rendement * 2500   # M128-3 : SDP = vendable ÷ rendement
     attendu = ca * coef - construction
     assert res["ca"]["central"] == round(ca)
     assert abs(res["charge_fonciere"]["central"] - attendu) < 2          # arrondi à l'euro

@@ -102,7 +102,9 @@ def test_d2_divergence_sur_zone_u():
                 "plu_gpu_zone": [_i("U1b", 1.0)]})
     v = SarLayer().evaluate(P, ctx, SAR)
     assert v.result == CascadeVerdict.PASS
-    assert v.detail.startswith("⚠ proxy SAR divergent du PLU — vigilance en cas de révision")
+    # Rename SAR → « Potentiel foncier Région » (M125-C6 / bascule vocabulaire 2026) : le SAR est un
+    # PROXY DE VOCATION, jamais « juridiquement supérieur ». Wording servi mis à jour.
+    assert v.detail.startswith("⚠ Potentiel foncier Région divergent du PLU — vigilance en cas de révision")
     assert "zone AU" not in v.detail
 
 
@@ -130,12 +132,14 @@ def test_d2_jamais_excluant_ni_penalisant():
 
 
 def test_d2_divergence_au_remontee_en_vigilance():
+    # Rename SAR → « Potentiel foncier Région » (bascule vocabulaire 2026) : detail servi + libellé
+    # de vigilance mis à jour (resume.py). Reste une assertion sur la SORTIE servie (build_resume).
     cascade = [{"layer_name": "sar", "result": "PASS", "severity": None,
-                "detail": "⚠ proxy SAR divergent du PLU — vigilance en cas de révision : "
-                          "SAR (proxy indicatif) « espace naturel » sur zone PLU « AU6c » "
+                "detail": "⚠ Potentiel foncier Région divergent du PLU — vigilance en cas de révision : "
+                          "potentiel foncier Région (indicatif) « espace naturel » sur zone PLU « AU6c » "
                           "— zone AU : ouverture à l'urbanisation moins probable."}]
     r = build_resume({"status": "a_creuser"}, cascade, None, {"has_manual_contact": True})
-    assert any("Proxy SAR divergent du PLU (zone AU)" in v for v in r["vigilance"])
+    assert any("Potentiel foncier Région divergent du PLU (zone AU)" in v for v in r["vigilance"])
 
 
 # ───────────────────────── D3.a — emplacements réservés ─────────────────────────

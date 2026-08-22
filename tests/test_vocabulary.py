@@ -9,7 +9,6 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_JS = (ROOT / "frontend/src/components/fiche/Fiche.tsx").read_text(encoding="utf-8")
 EXPORT = (ROOT / "src/labuse/api/export.py").read_text(encoding="utf-8")
 ASSISTANT = (ROOT / "src/labuse/api/assistant.py").read_text(encoding="utf-8")
-PHASE1 = (ROOT / "src/labuse/cascade/layers/phase1.py").read_text(encoding="utf-8")
 
 
 def test_badge_opportunite_n_est_plus_fiable():
@@ -41,9 +40,46 @@ def test_export_pas_d_opportunite_fiable():
 
 
 def test_sar_libelles_honnetes_dans_la_cascade():
-    # hors îlot / compatible / proxy indicatif (Décision 2) : formulations prudentes exactes.
-    assert "hors îlot cartographié — aucune contrainte SAR déduite automatiquement" in PHASE1
-    assert "vocation compatible détectée" in PHASE1 and "à croiser avec PLU/PPR" in PHASE1
-    assert "⚠ proxy SAR divergent du PLU — vigilance en cas de révision" in PHASE1
-    assert "SAR (proxy indicatif)" in PHASE1
-    assert "ne vaut ni interdiction ni constructibilité" in PHASE1
+    """SORTIE SERVIE, plus un grep du .py — on EXÉCUTE SarLayer et on lit le VERDICT rendu.
+    Un test qui grep le source cassait à chaque renommage (ici SAR → « Potentiel foncier Région »,
+    bascule vocabulaire 2026, M125-C6). Doctrine : le SAR est un PROXY DE VOCATION, jamais une
+    interdiction ni une constructibilité, et jamais « juridiquement supérieur au PLU »."""
+    from labuse.cascade.context import Intersection, ParcelRef
+    from labuse.cascade.layers.phase1 import SarLayer
+    from labuse.enums import CascadeVerdict
+
+    P = ParcelRef(id=1, idu="97415000TT0001", commune="Test", surface_m2=1000.0)
+    SAR = {"spatial_kind": "sar", "plu_kind": "plu_gpu_zone", "uau_prefixes": ["U", "AU"],
+           "divergent_subtypes": ["vocation_naturelle"], "info_subtypes": ["vocation_mixte"]}
+
+    class _Ctx:
+        def __init__(self, by): self.by = by
+        def kind_present(self, k): return k in self.by
+        def intersections(self, _p, k): return self.by.get(k, [])
+
+    def _i(sub, cov, lib=None):
+        return Intersection(sub, None, cov, {"libelle": lib} if lib else {}, None)
+
+    def _run(by):
+        return SarLayer().evaluate(P, _Ctx(by), SAR)
+
+    # hors îlot cartographié (couverture nulle) : on ne conclut PAS à « aucune contrainte »
+    v = _run({"sar": [_i("vocation_naturelle", 0.0)]})
+    assert v.result == CascadeVerdict.PASS
+    assert "hors îlot cartographié — aucune contrainte déduite automatiquement" in v.detail.lower()
+    # vocation compatible (urbaine) : information, à croiser avec PLU/PPR
+    v = _run({"sar": [_i("vocation_urbaine", 1.0, "territoire urbain")]})
+    assert v.result == CascadeVerdict.PASS
+    assert "vocation compatible détectée" in v.detail and "à croiser avec PLU/PPR" in v.detail
+    # proxy indicatif (naturel, sans zone U/AU) : ne vaut ni interdiction ni constructibilité
+    v = _run({"sar": [_i("vocation_naturelle", 1.0, "espace naturel")]})
+    assert v.result == CascadeVerdict.PASS
+    assert "ne vaut ni interdiction ni constructibilité" in v.detail
+    # divergent du PLU (naturel sur zone U) : ⚠ vigilance, wording « Potentiel foncier Région »
+    v = _run({"sar": [_i("vocation_naturelle", 0.98, "espace naturel")], "plu_gpu_zone": [_i("U1b", 1.0)]})
+    assert v.result == CascadeVerdict.PASS
+    assert v.detail.startswith("⚠ Potentiel foncier Région divergent du PLU")
+    # HONNÊTETÉ servie : jamais « juridiquement supérieur », toujours nommé « Potentiel foncier Région »
+    for by in ({"sar": [_i("vocation_urbaine", 1.0)]}, {"sar": [_i("vocation_naturelle", 1.0)]}):
+        d = _run(by).detail
+        assert "juridiquement supérieur" not in d.lower() and "Potentiel foncier Région" in d
