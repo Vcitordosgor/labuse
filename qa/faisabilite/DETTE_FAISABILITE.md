@@ -22,8 +22,49 @@ Conséquences :
   **M133 a contourné** ce flag en lisant `resolve_zone(fine).calibree` en direct
   (B.5, `modules.py`) — le cache reste à rafraîchir pour la **SDP** elle-même.
 
-**À faire (mandat data)** : recalculer `parcel_residuel` après chaque bascule PLU
-(lier au run servi, ou exposer une péremption). **Ne touche pas** l'outil.
+**M134 — état des lieux (Phase A, cf. `RAPPORT_M134_PHASE_A.md`) :**
+- La dérive n'est PAS « le cache ne voit pas M131 » : le cache **mélange trois
+  états** — `computed_at` en 3 lots (2026-07-29 : 245 319 parcelles ; 08-05 : 8 032 ;
+  08-19 : 178 312). Le lot 29/07 (57 %) précède **six** mandats d'entrée (M-N 08/08,
+  M-PLU-REF 14/08, M-PLU-REF-B + M94 15/08, M130-12 + M131 22/08) ; le lot 19/08
+  reflète M-N/M-PLU-REF/M94 mais **pas** M130-12/M131. Dérive **hétérogène par
+  parcelle**.
+- **Écrasable, pas versionné** : PK = `parcel_id` seul, aucun `run_id` ; UPSERT
+  `ON CONFLICT (parcel_id)`. Un recalcul **écrase** la donnée servie → **aucun run
+  neuf parallèle possible** sans changement de schéma (STOP du mandat M134). Éditer
+  `served_run.txt` (bascule de run) **ne touche pas** ce cache : ce n'est pas une
+  bascule mais un recalcul-écrasement.
+- **Entrée du scoring ET de la cascade**, pas seulement des 3 écrans : `p_model`,
+  `p_v2`, `cascade/context`, `etage0_ext` le lisent — un écrasement change les
+  features du prochain run.
+- **Aucun run neuf disponible** en attente : impossible à produire sans (2) une ligne
+  de code pour rediriger vers une table de travail, ou (3) un backup+overwrite qui
+  touche le service. Mesure de dérive faisable **read-only** par échantillon
+  (`compute_residuel()` est pure) — à l'arbitrage de Vic.
+
+**M134 — CLÔTURE (arbitrage Vic : aucune bascule — on ne remplace pas des valeurs
+identiques en prenant un risque sur les features scoring).**
+
+- **Péremption de DATE, pas de VALEUR** — mesurée le **22/08 sur 5 583 parcelles,
+  0 changée, borne < 0,05 %** (Phase C-échantillon, read-only ; détail
+  `RAPPORT_M134_PHASE_A.md`, outil `m134_mesure_derive.py`).
+- **La mosaïque de trois états de code (A.3bis)** — lots 29/07 (245 319) / 05/08
+  (8 032, constructibles seules) / 19/08 (178 312) — reste un **défaut d'hygiène sans
+  conséquence de valeur AUJOURD'HUI**. **Cette garantie expire au premier mandat qui
+  touchera une entrée du calcul** (hé/hf/emprise/recul/risques d'une zone
+  **constructible**) : à ce moment, le drift redeviendra hétérogène par parcelle
+  selon son lot.
+- **Règle pour la suite** : **tout mandat touchant une entrée du résiduel déclenche un
+  recalcul mesuré**. Le script `qa/faisabilite/m134_mesure_derive.py` est l'outil ; il
+  **reste versionné** à cette fin.
+- **Correctif de fond nommé** : **versionnement de `parcel_residuel`** (`run_id` en
+  clé, comme le scoring) — c'est lui qui rend les bascules **sûres et réversibles**
+  (tue la mosaïque, permet un run neuf parallèle sans écraser le servi). **Mandat
+  schéma à venir.**
+
+*Coût d'un refresh, mesuré (pour le futur mandat)* : île ≈ 127 min séquentiel
+(20,9 ms/constructible, 16,1 ms/autre) ; par commune < 10 min. **Ne touche pas**
+l'outil.
 
 ## 2. Deux systèmes de filtre « périmètre » (D.2 — dette structurelle)
 
