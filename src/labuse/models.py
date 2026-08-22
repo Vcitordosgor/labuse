@@ -1449,10 +1449,21 @@ def ensure_watch_zones(engine) -> None:
 
 def ensure_residuel_cache(engine) -> None:
     """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
-    relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent."""
+    relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent.
+
+    M135 — le schéma de versionnement (`parcel_residuel_runs` + `residuel_runs`) est
+    toujours assuré. Si `parcel_residuel` est déjà une VUE (migration M135 faite), on
+    n'y touche pas (un `ALTER` sur une vue casserait). Sinon (pré-migration / base
+    fraîche), on garde la table de base historique — la migration vue est explicite
+    (`residuel-migrate`)."""
     from sqlalchemy import text as _t
 
+    from .faisabilite.residuel_runs import ensure_runs_schema
+
     with engine.begin() as c:
+        ensure_runs_schema(c)
+        if c.execute(_t("SELECT relkind FROM pg_class WHERE relname='parcel_residuel'")).scalar() == "v":
+            return  # M135 : déjà migré en vue — rien à faire sur la vue
         c.execute(_t(
             "CREATE TABLE IF NOT EXISTS parcel_residuel ("
             " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"

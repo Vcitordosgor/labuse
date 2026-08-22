@@ -59,10 +59,19 @@ def _evaluate(session: Session, parcels: list[dict]) -> AuditResult:
 
     from .cascade import evaluate_parcels
     outs = {o.idu: o for o in evaluate_parcels(ids, session, persist=True)}
-    # Potentiel résiduel (Lot B) : caché aussi pour la parcelle auditée → visible au filtre.
+    # M135 — l'audit ne RAPIÈCE plus le cache (c'était la machine à mosaïque : le lot 05/08 = lui,
+    # cf. M134). Il COMPARE le calcul frais au run SERVI et RAPPORTE l'écart, même mécanique que
+    # m134_mesure_derive.py — read-only. Un écart déclenche la règle de dette §1 (recalcul mesuré,
+    # run neuf), il ne se corrige plus en douce parcelle par parcelle.
     try:
-        from .faisabilite.residuel import compute_residuel_batch
-        compute_residuel_batch(session, ids)
+        from .faisabilite.residuel import compare_residuel_servi
+        _ecarts = compare_residuel_servi(session, ids)
+        if _ecarts:
+            import logging
+            logging.getLogger("labuse").warning(
+                "M135 audit : %d parcelle(s) au résiduel dérivé du run servi (ex. %s) — "
+                "dette §1 : recalcul mesuré / run neuf requis, pas de rapiéçage.",
+                len(_ecarts), _ecarts[0])
     except Exception:  # noqa: BLE001 - n'empêche jamais l'audit
         pass
 

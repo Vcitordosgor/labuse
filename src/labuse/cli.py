@@ -1239,35 +1239,118 @@ def ingest_abf_cmd() -> None:
 
 @app.command("compute-residuel")
 def compute_residuel_cmd(
-    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    commune: str = typer.Option(None, help="Commune (nom/INSEE ; défaut pilote). Ignoré si --ile."),
+    ile: bool = typer.Option(False, "--ile", help="Toute l'île (toutes les parcelles)."),
     chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+    new_run: str = typer.Option(None, "--new-run", help="Crée un run NEUF (libellé) et y écrit."),
+    into_run: int = typer.Option(None, "--into-run", help="Écrit dans un run existant NON servi."),
 ) -> None:
-    """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) — alimente le filtre « sous-densité »."""
-    from .faisabilite.residuel import compute_residuel_batch
+    """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) dans un RUN désigné — M135. Écrit dans
+    --new-run <label> OU --into-run <seq> ; JAMAIS le run servi (garde-fou : erreur)."""
+    import subprocess
+    import time
 
-    commune = _resolve_commune(commune)
-    models.ensure_residuel_cache(engine())   # idempotent : crée/migre la colonne capacite_estimee
+    from .faisabilite.residuel import compute_residuel_batch
+    from .faisabilite.residuel_runs import ServedRunWriteError, assert_writable, create_run
+
+    if (new_run is None) == (into_run is None):
+        typer.echo("Désigner UN run cible : --new-run <label> OU --into-run <seq> (jamais le servi).")
+        raise typer.Exit(2)
+    resolved = None if ile else _resolve_commune(commune)
+    models.ensure_residuel_cache(engine())   # assure aussi le schéma de versionnement
     with session_scope() as session:
-        ids = _parcel_ids(session, commune)
+        ids = _parcel_ids(session, resolved)
     if not ids:
         typer.echo("Aucune parcelle ingérée.")
         raise typer.Exit(1)
-    # M125 — le batch écrit TOUTES les parcelles (calculées + causes structurées) et DIT ses erreurs.
+    with session_scope() as s:
+        if new_run is not None:
+            sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                                 capture_output=True, text=True).stdout.strip() or None
+            run_seq = create_run(s, new_run, communes=(None if ile else resolved), code_commit=sha)
+            typer.echo(f"run neuf : run_seq={run_seq} « {new_run} » (commit {sha})")
+        else:
+            run_seq = into_run
+        try:
+            assert_writable(s, run_seq)   # ERREUR si run_seq == run servi
+        except ServedRunWriteError as e:
+            typer.echo(f"REFUSÉ : {e}")
+            raise typer.Exit(3) from None
+    t0 = time.time()
     total = 0
     causes: dict = {}
     erreurs = 0
     for k in range(0, len(ids), chunk):
         with session_scope() as s:
-            r = compute_residuel_batch(s, ids[k:k + chunk], log=typer.echo)
+            r = compute_residuel_batch(s, ids[k:k + chunk], run_seq, log=typer.echo)
         total += r["calcules"]
         erreurs += r["erreurs"]
         for cz, n in r["causes"].items():
             causes[cz] = causes.get(cz, 0) + n
         typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
-    typer.echo(f"✓ Potentiel résiduel : {total} calculées · {sum(causes.values())} avec cause · "
-               f"{erreurs} erreur(s) ({commune})")
+    with session_scope() as s:   # métadonnées du run
+        s.execute(text(
+            "UPDATE residuel_runs SET duree_s=:d,"
+            " computed_at_min=(SELECT min(computed_at) FROM parcel_residuel_runs WHERE run_seq=:rs),"
+            " computed_at_max=(SELECT max(computed_at) FROM parcel_residuel_runs WHERE run_seq=:rs)"
+            " WHERE run_seq=:rs"), {"d": int(time.time() - t0), "rs": run_seq})
+    with engine().begin() as c:
+        c.execute(text("ANALYZE parcel_residuel_runs"))   # stats pour le planificateur
+    typer.echo(f"✓ run {run_seq} : {total} calculées · {sum(causes.values())} avec cause · "
+               f"{erreurs} erreur(s) · {int(time.time() - t0)}s ({'île' if ile else resolved})")
     for cz, n in sorted(causes.items(), key=lambda kv: -kv[1]):
         typer.echo(f"    cause {cz}: {n}")
+
+
+@app.command("residuel-migrate")
+def residuel_migrate_cmd() -> None:
+    """M135 — migration one-time : parcel_residuel (table) → run 1 « legacy » + VUE (idempotent)."""
+    from .faisabilite.residuel_runs import migrate_to_runs
+    typer.echo(f"migration : {migrate_to_runs(engine())}")
+
+
+@app.command("residuel-runs")
+def residuel_runs_cmd() -> None:
+    """M135 — liste les runs résiduels (servi ★, épinglé 📌)."""
+    with session_scope() as s:
+        rows = s.execute(text(
+            "SELECT r.run_seq, r.label, r.is_served, r.is_pinned, r.communes, r.code_commit,"
+            " r.duree_s, (SELECT count(*) FROM parcel_residuel_runs pr WHERE pr.run_seq=r.run_seq) n"
+            " FROM residuel_runs r ORDER BY r.run_seq")).all()
+    for rs, label, served, pinned, com, sha, dur, n in rows:
+        typer.echo(f"  {'★' if served else ' '}{'📌' if pinned else ' '} run {rs}: « {label} » "
+                   f"n={n} {com or 'île'} commit={sha or '?'} {dur or '?'}s")
+
+
+@app.command("residuel-serve")
+def residuel_serve_cmd(run_seq: int = typer.Argument(..., help="run_seq à SERVIR (bascule).")) -> None:
+    """M135 — BASCULE le service sur `run_seq` (geste de Vic). Réversible : rappeler avec l'ancien."""
+    from .faisabilite.residuel_runs import served_run_seq, set_served
+    with engine().begin() as c:
+        avant = served_run_seq(c)
+        set_served(c, run_seq)
+    typer.echo(f"✓ bascule : run servi {avant} → {run_seq} (retour : residuel-serve {avant})")
+
+
+@app.command("residuel-purge")
+def residuel_purge_cmd(run_seq: int = typer.Argument(..., help="run_seq à PURGER.")) -> None:
+    """M135 — purge un run (geste de Vic). REFUSE un run servi ou épinglé."""
+    from .faisabilite.residuel_runs import purge_run
+    with engine().begin() as c:
+        purge_run(c, run_seq)
+    typer.echo(f"✓ run {run_seq} purgé.")
+
+
+@app.command("residuel-pin")
+def residuel_pin_cmd(
+    run_seq: int = typer.Argument(..., help="run_seq à épingler/désépingler."),
+    unpin: bool = typer.Option(False, "--unpin", help="Désépingle au lieu d'épingler."),
+) -> None:
+    """M135 — épingle un run (reproductibilité entraînement scoring) : la purge le refusera."""
+    with engine().begin() as c:
+        c.execute(text("UPDATE residuel_runs SET is_pinned=:v WHERE run_seq=:s"),
+                  {"v": not unpin, "s": run_seq})
+    typer.echo(f"✓ run {run_seq} {'désépinglé' if unpin else 'épinglé 📌'}.")
 
 
 @app.command("compute-constructibilite")
