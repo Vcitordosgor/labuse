@@ -14,6 +14,7 @@ import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
+import { CommunesTablePanel } from './components/outils/Communes'
 import { filtersFromHash, filtersToHash, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
@@ -329,6 +330,9 @@ export default function App() {
                   donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
                   (ComparePanel gère l'état vide). */}
               {compareOpen && <ComparePanel />}
+              {/* §4 — la table des 24 communes de l'outil « Communes » s'ouvre en grand (patron
+                  ex-Comparateur) ; le composant se rend lui-même selon `communesTableOpen`. */}
+              <CommunesTablePanel />
             </>
           )}
           {view === 'crm' && <Kanban />}

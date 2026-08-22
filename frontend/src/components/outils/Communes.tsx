@@ -96,12 +96,21 @@ export function Communes() {
   // puis reset. Sans prefill (menu) → entrée sur la table des 24 communes.
   const communePrefill = useApp((s) => s.communePrefill)
   const setCommunePrefill = useApp((s) => s.setCommunePrefill)
+  const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const [sel, setSel] = useState<string | null>(() => useApp.getState().communePrefill)
   useEffect(() => {
     if (communePrefill) { setSel(communePrefill); setCommunePrefill(null) }
   }, [communePrefill, setCommunePrefill])
   // onglet au niveau de la table : « Les 24 » (comparateur) · « Évolution » (ex-Baromètre, île entière).
   const [vue, setVue] = useState<'table' | 'evolution'>('table')
+  // §4 — la table des 24 communes s'ouvre en GRAND (section flottante plein écran, patron ex-Comparateur),
+  // pas dans le panneau étroit. Elle est ouverte ssi on est sur l'onglet « table » ET pas sur une fiche ;
+  // la fiche commune et l'onglet « Évolution » restent dans le panneau. Nettoyage au démontage de l'outil.
+  useEffect(() => {
+    setCommunesTableOpen(vue === 'table' && !sel)
+    return () => setCommunesTableOpen(false)
+  }, [vue, sel, setCommunesTableOpen])
+
   if (sel) return <CommuneFiche commune={sel} onBack={() => setSel(null)} />
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
@@ -111,7 +120,49 @@ export function Communes() {
             className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${vue === k ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>{lbl}</button>
         ))}
       </div>
-      {vue === 'table' ? <O6Comparateur onSelect={setSel} /> : <M18 />}
+      {vue === 'table' ? (
+        // La table est en grand (overlay CommunesTablePanel, monté au niveau App). Le panneau garde un
+        // rappel + un bouton pour la rouvrir si on l'a fermée ; cliquer une commune dans la table ouvre
+        // sa fiche ICI (via communePrefill).
+        <div className="flex min-h-0 flex-1 flex-col items-start gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-3 text-[11px] leading-snug text-txt-mut">
+          <p>Les <b className="text-txt">24 communes</b> s'affichent en grand, à droite — comparez-les d'un coup d'œil.
+            Cliquez une commune pour ouvrir sa fiche <b>ici</b> (marché, rareté, ZAN, délais).</p>
+          <button data-communes-rouvrir onClick={() => setCommunesTableOpen(true)}
+            className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+            Rouvrir le tableau ↗
+          </button>
+        </div>
+      ) : <M18 />}
+    </div>
+  )
+}
+
+/** §4 — SECTION FLOTTANTE plein écran de la table des 24 communes (patron ex-Comparateur : overlay
+ *  `absolute inset-0 z-40 bg-black/50` + carte `floating`). Montée au niveau App tant que l'outil
+ *  Communes est ouvert sur l'onglet table (drapeau `communesTableOpen`). Cliquer une commune pose son
+ *  prefill → le panneau ouvre sa fiche, et la table se referme. La table n'est PLUS bridée par les
+ *  320 px du panneau. */
+export function CommunesTablePanel() {
+  const module = useApp((s) => s.module)
+  const communesTableOpen = useApp((s) => s.communesTableOpen)
+  const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
+  const setCommunePrefill = useApp((s) => s.setCommunePrefill)
+  if (module !== 'communes' || !communesTableOpen) return null
+  return (
+    <div data-communes-table-panel className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6"
+      onClick={() => setCommunesTableOpen(false)}>
+      <div className="floating flex max-h-full w-full max-w-[1100px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+          <div>
+            <h2 className="text-sm font-medium text-txt-hi">Les 24 communes</h2>
+            <p className="text-[10.5px] text-txt-dim">Comparez-les, puis cliquez pour ouvrir une fiche.</p>
+          </div>
+          <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto p-3">
+          <O6Comparateur onSelect={(c) => { setCommunePrefill(c); setCommunesTableOpen(false) }} />
+        </div>
+      </div>
     </div>
   )
 }

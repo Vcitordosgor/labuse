@@ -294,6 +294,11 @@ interface AppState {
   // une parcelle à la comparaison (motif du clic-sélection d'Assemblage).
   comparePicking: boolean
   setComparePicking: (v: boolean) => void
+  // §4 (23/08/2026) — l'outil « Communes » ouvre sa table des 24 communes en SECTION FLOTTANTE plein
+  // écran (patron ex-Comparateur), pilotée par ce drapeau. La fiche commune et l'onglet « Évolution »
+  // restent dans le panneau ; seule la table déborde en grand. Communes.tsx est le seul contrôleur.
+  communesTableOpen: boolean
+  setCommunesTableOpen: (v: boolean) => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
   sourceLine: FicheLine | null
   openSourceDrawer: (line: FicheLine) => void
@@ -440,7 +445,8 @@ export const useApp = create<AppState>((set) => ({
   // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
-    entretienDirect: null, surveillanceOpen: false, compareOpen: false, comparePicking: false }),
+    entretienDirect: null, surveillanceOpen: false, compareOpen: false, comparePicking: false,
+    communesTableOpen: false }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
@@ -534,6 +540,8 @@ export const useApp = create<AppState>((set) => ({
   setCompareOpen: (v) => set((s) => ({ compareOpen: v, comparePicking: v ? s.comparePicking : false })),
   comparePicking: false,
   setComparePicking: (comparePicking) => set({ comparePicking }),
+  communesTableOpen: false,
+  setCommunesTableOpen: (communesTableOpen) => set({ communesTableOpen }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
@@ -552,7 +560,7 @@ export const useApp = create<AppState>((set) => ({
   // §1b — « une seule recherche vivante » : ouvrir un autre outil FERME le bandeau Comparer
   // (compareOpen/comparePicking), qui sinon persistait. `comparer` s'ouvre par setCompareOpen
   // (Rail, cas spécial), jamais par setModule → aucune course.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, compareOpen: false, comparePicking: false }),
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, compareOpen: false, comparePicking: false, communesTableOpen: false }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   cmpLeft: 'bm-ortho-1950',
