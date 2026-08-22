@@ -6,6 +6,7 @@ import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { Tip } from '../Tip'
 import { TierBadge } from './TierBadge'
 
 const fmt = fmtInt
@@ -337,39 +338,63 @@ export function M17() {
   )
 }
 
-/* ───────────── M18 — BAROMÈTRE ───────────── */
+/* ───────────── M18 — BAROMÈTRE → onglet « Évolution » de Communes ─────────────
+   L'outil autonome a disparu du menu ; ce composant est l'onglet « Évolution » du hub Communes.
+   Trois séries (ancien bâti, terrain nu, permis) + tendance annuelle + neuf en référence + PDF. */
+
+// une série trimestrielle : barres (volume) + médiane ; un trimestre PARTIEL est GRISÉ et dit
+// « données partielles (délai DVF) » — jamais une barre courte muette (§1a véracité).
+function SerieTrim({ titre, tip, rows, volKey, medKey, unite, pct }:
+  { titre: string; tip: string; rows: Record<string, any>[]; volKey: string; medKey?: string; unite?: string; pct?: number | null }) {
+  const max = Math.max(1, ...rows.map((r) => Number(r[volKey]) || 0))
+  return (
+    <div className="flex shrink-0 flex-col gap-1">
+      <p className="label-caps flex items-center gap-1.5">
+        {titre}
+        <Tip tip={tip}><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
+        {pct != null && <span className={`ml-auto text-[10.5px] font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} % / an</span>}
+      </p>
+      {rows.map((r) => (
+        <div key={r.trimestre} className={`flex items-center gap-2 text-[11px] ${r.partiel ? 'opacity-45' : ''}`}>
+          <span className="w-24 font-mono text-txt-dim">{r.trimestre}{r.partiel && <span className="text-st-creuser"> ·partiel</span>}</span>
+          <span className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+            <span className={`absolute left-0 top-0 h-full rounded-full ${r.partiel ? 'bg-txt-dim' : 'bg-mint'}`} style={{ width: `${(100 * (Number(r[volKey]) || 0)) / max}%` }} />
+          </span>
+          <span className="w-12 text-right font-mono text-txt-mut">{fmt(r[volKey])}</span>
+          {medKey && <span className="w-20 text-right font-mono text-txt-dim">{fmt(r[medKey])} {unite}</span>}
+        </div>
+      ))}
+      {rows.some((r) => r.partiel) && <p className="text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
+    </div>
+  )
+}
 
 export function M18() {
   const q = useQuery({ queryKey: ['m18'], queryFn: motBarometre })
-  const d = q.data
-  const max = Math.max(1, ...((d?.dvf_trimestres ?? []) as Record<string, any>[]).map((r) => Number(r.mutations)))
+  const d = q.data as Record<string, any> | undefined
+  const nr = d?.neuf_reference as Record<string, any> | undefined
   return (
-    <>
-      <Banner>Île entière (DVF 24 communes, Sitadel régional). Le PDF est le rapport
-        distribuable — canal marketing.</Banner>
-      <a href="/moteurs/barometre.pdf" target="_blank" rel="noreferrer"
-        className="self-start rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
-        ⬇ Rapport PDF
-      </a>
-      <p className="label-caps">DVF par trimestre</p>
-      <div className="flex shrink-0 flex-col gap-1">
-        {((d?.dvf_trimestres ?? []) as Record<string, any>[]).map((r) => (
-          <div key={r.trimestre} className="flex items-center gap-2 text-[11px]">
-            <span className="w-14 font-mono text-txt-dim">{r.trimestre}</span>
-            <span className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-              <span className="absolute left-0 top-0 h-full rounded-full bg-mint" style={{ width: `${(100 * r.mutations) / max}%` }} />
-            </span>
-            <span className="w-12 text-right font-mono text-txt-mut">{fmt(r.mutations)}</span>
-            <span className="w-20 text-right font-mono text-txt-dim">{fmt(r.median_eur_m2_bati)} €/m²</span>
-          </div>
-        ))}
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <div className="flex items-center gap-2">
+        <span className="text-[10.5px] text-txt-mut">Île entière (DVF 24 communes, Sitadel régional) — 8 derniers trimestres.</span>
+        <a href="/moteurs/barometre.pdf" target="_blank" rel="noreferrer"
+          className="ml-auto shrink-0 rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">⬇ Rapport PDF</a>
       </div>
-      {/* communes-tableau (Part 2) — la section « Prix par commune (top) » a QUITTÉ l'écran : elle vit
-          désormais dans l'outil « Communes » (colonne « €/m² ancien », sur les 24 communes, pas un top 8).
-          Le baromètre garde ce qu'il a d'unique — l'évolution DVF par trimestre — et le Rapport PDF.
-          Le PDF, LUI, garde ses prix par commune (`_barometre_data` → `top_communes_prix` inchangé,
-          rendu dans barometre_pdf) : document de communication, pas un écran d'analyse. */}
-    </>
+      {nr && (
+        <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
+          <Tip tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
+        </p>
+      )}
+      {d && <SerieTrim titre="Ancien bâti · €/m²" pct={d.tendance_ancien_pct}
+        tip="Médiane €/m² BÂTI, ventes strictes DVF (nature 'Vente', prix > 1 000 €, €/m² ∈ [100, 12 000] ; VEFA/neuf exclu). Volume = nombre de ventes retenues."
+        rows={d.dvf_trimestres} volKey="mutations" medKey="median_eur_m2_bati" unite="€/m²" />}
+      {d && <SerieTrim titre="Terrain nu · €/m²" pct={d.tendance_terrain_pct}
+        tip="Médiane €/m² TERRAIN, ventes de terrain nu (bâti = 0), €/m² dédupliqué par mutation (valeur ÷ terrain total). Source dvf_mutations_parcelle."
+        rows={d.terrain_trimestres ?? []} volKey="mutations" medKey="median_eur_m2_terrain" unite="€/m²" />}
+      {d && <SerieTrim titre="Permis autorisés (Sitadel)" pct={d.tendance_permis_pct}
+        tip="Nombre de permis autorisés par trimestre (Sitadel régional, toutes destinations)."
+        rows={d.permis_trimestres ?? []} volKey="permis" />}
+    </div>
   )
 }
 

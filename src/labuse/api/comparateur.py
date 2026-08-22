@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from ..scoring.score_v_constants import Q_A_RUN_LABEL
 # communes-tableau — le « €/m² ancien » vient de la MÊME source que le Baromètre (DVF ventes strictes,
 # toutes mutations) : on réutilise le filtre de retenue du baromètre, point de vérité unique.
-from .moteurs import _BAROMETRE_RETENUE
+from .moteurs import prix_ancien_communes
 
 log = logging.getLogger("labuse.comparateur")
 router = APIRouter(prefix="/comparateur-communes", tags=["comparateur-communes"])
@@ -55,19 +55,13 @@ permis AS (
   WHERE date >= (CURRENT_DATE - INTERVAL '5 years') GROUP BY 1),
 sru AS (SELECT insee, greatest(objectif_pct - taux_lls, 0) AS deficit, statut FROM commune_contexte_sru),
 zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf),
-prix AS (SELECT cle AS insee, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'commune'),
--- €/m² ANCIEN : médiane DVF des ventes strictes (même retenue que le baromètre) ; ≥ 100 ventes exigées
--- (robustesse baromètre) sinon la commune reste NULL → « — » à l'écran, jamais un zéro inventé.
-prix_ancien AS (
-  SELECT commune, round(percentile_cont(0.5) WITHIN GROUP (
-           ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median
-  FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
-  GROUP BY commune HAVING count(*) >= 100)
+prix AS (SELECT cle AS insee, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'commune')
+-- €/m² ANCIEN : SOURCE UNIQUE `prix_ancien_communes` (moteurs), mappée en Python (cf. _compute) —
+-- plus de CTE recopiée : le tableau Communes et le PDF baromètre lisent la MÊME fonction (§1b).
 SELECT b.insee, b.commune,
        stock.n AS stock, velo.mois AS velocite, velo.n AS velocite_n, permis.n AS permis,
        sru.deficit AS deficit_sru, sru.statut AS sru_statut,
-       zan.ha AS pression_zan, prix.prix_m2_neuf AS prix_neuf,
-       prix_ancien.median AS prix_ancien
+       zan.ha AS pression_zan, prix.prix_m2_neuf AS prix_neuf
 FROM base b
 LEFT JOIN stock ON stock.insee = b.insee
 LEFT JOIN velo ON velo.commune = b.commune
@@ -75,7 +69,6 @@ LEFT JOIN permis ON permis.commune = b.commune
 LEFT JOIN sru ON sru.insee = b.insee
 LEFT JOIN zan ON zan.insee = b.insee
 LEFT JOIN prix ON prix.insee = b.insee
-LEFT JOIN prix_ancien ON prix_ancien.commune = b.commune
 ORDER BY b.commune;
 """
 
@@ -121,6 +114,9 @@ def _normalize(rows: list[dict], poids: dict) -> list[dict]:
 def _compute(db: Session, poids: dict) -> dict:
     """Cœur testable : assemble les indicateurs par commune, normalise, compose. `poids` = dict d'axes→poids."""
     rows = [dict(r) for r in db.execute(text(_SQL), {"run": Q_A_RUN_LABEL}).mappings().all()]
+    pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
+    for r in rows:
+        r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
     for r in rows:   # arrondis lisibles (les valeurs brutes restent la vérité)
         if r.get("velocite") is not None:
             r["velocite"] = round(float(r["velocite"]), 1)

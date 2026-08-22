@@ -21,7 +21,7 @@ import { M22 } from './M22Programme'
 import { O5Servitudes } from './blocB'
 // M17 (Simulateur ZAN) retiré du produit le 21/08/2026 (DORMANT) — plus monté ; composant exporté au
 // dépôt dans ./moteurs. Enveloppe ZAN déplacée dans Communes ; endpoints /moteurs/zan* vivants.
-import { M16, M18 } from './moteurs'
+import { M16 } from './moteurs'
 // M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté). O6Comparateur, O9Rarete et
 // MarcheCommune ne sont plus montés ici directement : Communes les réutilise.
 import { Communes } from './Communes'
@@ -940,7 +940,10 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   temps: M08, courriers: M09, risques: Risques,
   // Retiré du produit le 21/08/2026 (DORMANT) : 'zan' (M17, Simulateur ZAN) — enveloppe communale
   // (+ budget en %) déplacée dans l'outil Communes ; signal parcelle = doublon fiche ; liste morte.
-  assemblage: M16, barometre: M18, programme: M22,
+  assemblage: M16, programme: M22,
+  // Baromètre retiré du menu → clé 'barometre' ALIASÉE vers Communes (l'onglet Évolution y vit) :
+  // aucun lien mort (deep-link/copilote historique). M18 reste importé, réutilisé par cet onglet.
+  barometre: Communes,
   // M137-Z — outil « Communes » : fusion Marché (MU1) · Comparateur (O6) · Vélocité (M05) · Rareté (O9).
   // Les 4 clés absorbées ('marche', 'o6-comparateur', 'velocite', 'o9-rarete') sont retirées du menu ;
   // leurs composants (MarcheCommune, O6Comparateur, M05, O9Rarete) restent au dépôt, réutilisés par Communes.

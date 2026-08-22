@@ -381,6 +381,50 @@ _BAROMETRE_RETENUE = """nature_mutation = 'Vente'
                  AND valeur_fonciere / NULLIF(surface_reelle_bati, 0) BETWEEN 100 AND 12000"""
 
 
+def prix_ancien_communes(db: Session, min_ventes: int = 100) -> dict[str, dict]:
+    """SOURCE UNIQUE du « €/m² ancien » PAR COMMUNE (médiane DVF des ventes strictes `_BAROMETRE_RETENUE`,
+    ≥ `min_ventes`). LUE par le tableau Communes (comparateur) ET le Rapport PDF (baromètre) → un seul
+    chiffre par commune dans tout le produit, plus une formule recopiée. À NE PAS confondre avec le
+    `sector_price` de la fiche commune (ligne1_prix_ancien) : celui-là est un AUTRE métrique — des
+    comparables au RAYON d'une parcelle représentative (valorisation), pas un baromètre commune-entière.
+    None (< min_ventes) → « — » à l'écran, jamais un zéro inventé."""
+    rows = db.execute(text(f"""
+        SELECT commune, count(*) AS n,
+               round(percentile_cont(0.5) WITHIN GROUP (
+                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median
+        FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
+        GROUP BY commune HAVING count(*) >= :mv"""), {"mv": min_ventes}).mappings().all()
+    return {r["commune"]: {"median": r["median"], "n": int(r["n"])} for r in rows}
+
+
+def _marque_partiel(serie: list[dict], vol_key: str = "mutations") -> None:
+    """§1a VÉRACITÉ — un trimestre partiel (délai de publication DVF) ne doit PAS s'afficher comme
+    une barre courte muette (baisse artificielle en fin de série). Règle : le trimestre le PLUS
+    RÉCENT (serie[0], la liste est DESC) est marqué `partiel` si son volume < 60 % de la MÉDIANE des
+    4 trimestres précédents. Le front le grise et dit « données partielles (délai DVF) »."""
+    if len(serie) < 2:
+        return
+    for r in serie:
+        r["partiel"] = False
+    precedents = sorted(int(x[vol_key] or 0) for x in serie[1:5])
+    if precedents:
+        n = len(precedents)
+        med = precedents[n // 2] if n % 2 else (precedents[n // 2 - 1] + precedents[n // 2]) / 2
+        if med > 0 and int(serie[0][vol_key] or 0) < 0.6 * med:
+            serie[0]["partiel"] = True
+
+
+def _tendance_pct(serie: list[dict], med_key: str) -> int | None:
+    """Tendance en % : dernier trimestre COMPLET vs le MÊME trimestre un an avant (glissement annuel,
+    neutralise la saisonnalité). None si l'un manque. On saute un dernier trimestre partiel."""
+    pts = [r for r in serie if not r.get("partiel")]   # DESC ; on ignore le partiel en tête
+    if len(pts) < 5:
+        return None
+    dernier, an_avant = pts[0], pts[4]                 # 4 trimestres = 1 an
+    a, b = dernier.get(med_key), an_avant.get(med_key)
+    return round(100 * (a - b) / b) if (a and b) else None
+
+
 def _barometre_data(db: Session) -> dict:
     """Baromètre foncier M18 — séries DVF et Sitadel, île entière (JSON + PDF marketing).
 
@@ -421,19 +465,35 @@ def _barometre_data(db: Session) -> dict:
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
         FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
-    # M137-Z — le plafond du classement prix sort du DUR (config/moteurs.yaml). Les 24 communes ont
-    # ≥ 100 ventes strictes (audit) : on sert AUSSI le total pour que l'écran DISE « les N sur M »
-    # (jamais un LIMIT muet — leçon M120-B/M137-O). count(*) OVER () = total DANS le même scan.
+    # §2 — SÉRIE TERRAIN NU par trimestre (dvf_mutations_parcelle, ventes terrain, €/m² dédupliqué
+    # par mutation comme ligne2_terrain_zone : val / terrain TOTAL de la mutation, jamais val÷un-bout).
+    # Échantillon robuste (~600-770 ventes/trim) — contrairement à la VEFA (neuf), trop rare pour une série.
+    terrain = db.execute(text("""
+        WITH parc AS (
+          SELECT DISTINCT m.id_mutation, m.id_parcelle, m.valeur_fonciere AS val, m.date_mutation AS dm,
+                 max(COALESCE(m.surface_terrain, 0)) OVER (PARTITION BY m.id_mutation, m.id_parcelle) AS terr_parc
+          FROM dvf_mutations_parcelle m
+          WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati, 0) = 0 AND m.surface_terrain > 0
+            AND m.valeur_fonciere > 1000 AND m.date_mutation IS NOT NULL
+            AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)),
+        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(dm) AS dm
+                FROM parc GROUP BY id_mutation)
+        SELECT to_char(date_trunc('quarter', dm), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
+               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot, 0)))::int AS median_eur_m2_terrain
+        FROM tot WHERE terr_tot > 0 AND val / NULLIF(terr_tot, 0) BETWEEN 5 AND 5000
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+    # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
+    # mentirait). On sert la RÉFÉRENCE actuelle île (dvf_prix_sortie_neuf, la même que la calculette).
+    neuf_ref = db.execute(text(
+        "SELECT prix_m2_neuf, n FROM dvf_prix_sortie_neuf WHERE niveau = 'ile' LIMIT 1")).mappings().first()
+    # M137-Z — le plafond du classement prix sort du DUR (config/moteurs.yaml). §1b — le « prix par
+    # commune » du PDF lit la SOURCE UNIQUE `prix_ancien_communes` (la même que le tableau Communes) :
+    # un seul chiffre par commune dans tout le produit, plus une 2ᵉ requête qui pourrait dériver.
     cap = _moteurs_cap("barometre_top_communes", 8)
-    top_communes = db.execute(text(f"""
-        SELECT commune, count(*) AS mutations,
-               round(percentile_cont(0.5) WITHIN GROUP (
-                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median_eur_m2,
-               count(*) OVER () AS n_communes_total
-        FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
-        GROUP BY commune HAVING count(*) >= 100
-        ORDER BY median_eur_m2 DESC NULLS LAST LIMIT :cap"""), {"cap": cap}).mappings().all()
-    n_communes = int(top_communes[0]["n_communes_total"]) if top_communes else 0
+    pa = prix_ancien_communes(db)                       # {commune: {median, n}} — ≥ 100 ventes
+    top_ordonne = sorted(pa.items(), key=lambda kv: (kv[1]["median"] is not None, kv[1]["median"]), reverse=True)
+    top_communes = [{"commune": c, "mutations": v["n"], "median_eur_m2": v["median"]} for c, v in top_ordonne[:cap]]
+    n_communes = len(pa)
     ecartees = db.execute(text(f"""
         SELECT (count(*) - count(*) FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS total,
                count(*) FILTER (WHERE nature_mutation = 'Vente en l''état futur d''achèvement')::int AS vefa,
@@ -446,11 +506,22 @@ def _barometre_data(db: Session) -> dict:
                       OR valeur_fonciere / NULLIF(surface_reelle_bati, 0)
                          NOT BETWEEN 100 AND 12000))::int AS ratio_hors_bande
         FROM dvf_mutations"""), ).mappings().one()
+    # listes MUTABLES (RowMapping = lecture seule) pour poser `partiel` + calculer la tendance YoY.
+    dvf_l = [dict(r) for r in dvf]
+    terrain_l = [dict(r) for r in terrain]
+    permis_l = [dict(r) for r in permis]
+    for s in (dvf_l, terrain_l, permis_l):
+        _marque_partiel(s, "mutations" if s is not permis_l else "permis")
     return {"perimetre": "île entière (24 communes DVF, flux Sitadel régional)",
             "criteres": ("Ventes strictes uniquement (P1-03) : nature 'Vente', prix > 1 000 €, "
                          "€/m² bâti dans [100, 12 000] — médianes ET volumes. Écartées : VEFA (neuf), "
                          "adjudications/échanges/expropriations, prix symboliques, ratios aberrants."),
-            "dvf_trimestres": [dict(r) for r in dvf], "permis_trimestres": [dict(r) for r in permis],
+            # §2 — TROIS séries (ancien bâti, terrain nu) + neuf en RÉFÉRENCE (VEFA trop rare pour une série).
+            "dvf_trimestres": dvf_l, "terrain_trimestres": terrain_l, "permis_trimestres": permis_l,
+            "tendance_ancien_pct": _tendance_pct(dvf_l, "median_eur_m2_bati"),
+            "tendance_terrain_pct": _tendance_pct(terrain_l, "median_eur_m2_terrain"),
+            "tendance_permis_pct": _tendance_pct(permis_l, "permis"),
+            "neuf_reference": ({"prix_m2_neuf": neuf_ref["prix_m2_neuf"], "n": neuf_ref["n"]} if neuf_ref else None),
             "top_communes_prix": [{k: r[k] for k in ("commune", "mutations", "median_eur_m2")} for r in top_communes],
             # M137-Z — le plafond DIT, jamais muet : « les N premières sur M » (les M ont la donnée).
             "top_communes_cap": cap, "top_communes_total": n_communes,
@@ -515,11 +586,29 @@ def barometre_pdf(db: Session = Depends(get_db)) -> Response:
             pdf.ln()
         pdf.ln(4)
 
-    table("MARCHÉ DVF PAR TRIMESTRE (VENTES STRICTES)", ["Trimestre", "Ventes", "Écartées", "Médiane €/m² bâti"],
-          [[r["trimestre"], r["mutations"], r["ecartees"], r["median_eur_m2_bati"]] for r in d["dvf_trimestres"]],
-          [40, 35, 30, 55])
+    def _tri(r: dict) -> str:   # §1a — un trimestre partiel est DIT, jamais une barre courte muette
+        return f"{r['trimestre']} (partiel)" if r.get("partiel") else r["trimestre"]
+
+    def _pct(v) -> str:
+        return "—" if v is None else (f"+{v} %" if v > 0 else f"{v} %")
+
+    # §2 — tendances (glissement annuel) + neuf en référence (VEFA trop rare pour une série)
+    nr = d.get("neuf_reference")
+    pdf.set_font("inter", size=8)
+    pdf.set_text_color(*TXT_MUT)
+    pdf.multi_cell(0, 5, f"Tendance sur un an — ancien bâti : {_pct(d.get('tendance_ancien_pct'))} · "
+                         f"terrain nu : {_pct(d.get('tendance_terrain_pct'))} · permis : {_pct(d.get('tendance_permis_pct'))}."
+                         + (f"  Neuf (référence actuelle, VEFA DVF trop rare pour une série) : "
+                            f"~{nr['prix_m2_neuf']} €/m² sur {nr['n']} ventes." if nr else ""),
+                   new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    table("MARCHÉ ANCIEN BÂTI PAR TRIMESTRE (VENTES STRICTES)", ["Trimestre", "Ventes", "Écartées", "Médiane €/m² bâti"],
+          [[_tri(r), r["mutations"], r["ecartees"], r["median_eur_m2_bati"]] for r in d["dvf_trimestres"]],
+          [48, 30, 27, 55])
+    table("TERRAIN NU PAR TRIMESTRE (VENTES TERRAIN)", ["Trimestre", "Ventes", "Médiane €/m² terrain"],
+          [[_tri(r), r["mutations"], r["median_eur_m2_terrain"]] for r in d["terrain_trimestres"]], [48, 35, 55])
     table("PERMIS (SITADEL) PAR TRIMESTRE", ["Trimestre", "Permis"],
-          [[r["trimestre"], r["permis"]] for r in d["permis_trimestres"]], [50, 40])
+          [[_tri(r), r["permis"]] for r in d["permis_trimestres"]], [50, 40])
     table("PRIX PAR COMMUNE (TOP)", ["Commune", "Mutations", "Médiane €/m²"],
           [[r["commune"], r["mutations"], r["median_eur_m2"]] for r in d["top_communes_prix"]],
           [70, 40, 50])

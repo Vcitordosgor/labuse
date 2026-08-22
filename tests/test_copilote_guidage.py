@@ -20,7 +20,8 @@ from labuse.copilote_v2.answering import (
 
 # ───────────────────────── 1. concepts-outils → porte ─────────────────────────
 @pytest.mark.parametrize("message, module", [
-    ("le barometre du foncier", "barometre"),
+    # Baromètre retiré du menu → l'évolution du marché vit dans l'onglet « Évolution » de Communes.
+    ("le barometre du foncier", "communes"),
     # M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté) : « où investir » et
     # « rareté du foncier » ouvrent désormais la porte « communes » (table 24 → fiche commune).
     ("ou investir a La Reunion", "communes"),

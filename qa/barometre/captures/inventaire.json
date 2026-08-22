@@ -1,0 +1,9 @@
+{
+  "serie_ancien": true,
+  "serie_terrain": true,
+  "serie_permis": true,
+  "tendance_pct": true,
+  "neuf_reference": true,
+  "bouton_pdf": true,
+  "trimestre_partiel_grise": true
+}

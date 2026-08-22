@@ -91,8 +91,11 @@ export const MODULES: ModuleDef[] = [
   // endpoints /comparateur-communes, /moteurs/marche, /modules/velocite, /pipeline-rarete servis).
   { key: 'communes', num: 'O6', group: 'marche', phare: true,
     label: 'Communes', desc: 'Les 24 communes comparées, puis la fiche de chacune : marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction — et un saut vers ses parcelles' },
-  { key: 'barometre', num: 'M18', group: 'marche',
-    label: 'Baromètre foncier', desc: 'Un état du marché foncier prêt à distribuer (PDF)' },
+  // L'outil « Baromètre foncier » a QUITTÉ le menu : l'évolution du marché (île, 8 trimestres) + le
+  // Rapport PDF vivent désormais dans l'onglet « Évolution » de Communes. Clé ALIASÉE (hidden) →
+  // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.
+  { key: 'barometre', num: 'M18', group: 'marche', hidden: true,
+    label: 'Communes', desc: 'L’évolution du marché et le Rapport PDF sont dans l’onglet « Évolution » de Communes' },
   { key: 'permis', num: 'M03', group: 'marche',
     label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
   // audit-promesses (add 2) — renommé « Promesses mortes » → « Permis au point mort » : le calcul dit

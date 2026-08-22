@@ -738,8 +738,10 @@ _CONCEPT_MAP = [
     (("comparateur de communes", "comparer les communes", "comparer des communes", "ou investir",
       "quelle commune investir", "quelle commune pour investir", "meilleures communes ou investir"),
      ("communes", "Communes")),
+    # Baromètre retiré du menu → l'évolution du marché + le Rapport PDF vivent dans l'onglet
+    # « Évolution » de Communes. La concept-route y mène (plus de lien vers un outil absent).
     (("barometre", "état du marché foncier", "etat du marche foncier", "barometre foncier"),
-     ("barometre", "Baromètre foncier")),
+     ("communes", "Communes")),
     (("radar permis", "qui construit quoi", "qui construit a", "qui construit dans",
       "quels permis dans la commune"), ("permis", "Radar permis")),
     # audit-promesses (add 2) — outil renommé « Permis au point mort » (clé `promesses` inchangée) ; on

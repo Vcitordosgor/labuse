@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { modVelocite, motRarete } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { O6Comparateur } from './blocB'
-import { MarcheCommune } from './moteurs'
+import { M18, MarcheCommune } from './moteurs'
 
 // M137-Z — OUTIL « COMMUNES » : fusion des 4 outils échelle-commune (Rareté · Vélocité · Marché ·
 // Comparateur). Entrée = la table des 24 communes (le Comparateur). Clic → fiche commune (tous ses
@@ -100,10 +100,18 @@ export function Communes() {
   useEffect(() => {
     if (communePrefill) { setSel(communePrefill); setCommunePrefill(null) }
   }, [communePrefill, setCommunePrefill])
+  // onglet au niveau de la table : « Les 24 » (comparateur) · « Évolution » (ex-Baromètre, île entière).
+  const [vue, setVue] = useState<'table' | 'evolution'>('table')
   if (sel) return <CommuneFiche commune={sel} onBack={() => setSel(null)} />
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <O6Comparateur onSelect={setSel} />
+      <div className="flex shrink-0 gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
+        {([['table', 'Les 24 communes'], ['evolution', 'Évolution du marché']] as const).map(([k, lbl]) => (
+          <button key={k} data-communes-vue={k} onClick={() => setVue(k)}
+            className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${vue === k ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>{lbl}</button>
+        ))}
+      </div>
+      {vue === 'table' ? <O6Comparateur onSelect={setSel} /> : <M18 />}
     </div>
   )
 }
