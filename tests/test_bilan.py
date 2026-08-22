@@ -1,4 +1,7 @@
-"""Tests du bilan promoteur (PARTIE 1). Cœur pur, sans DB."""
+"""Tests du bilan promoteur (PARTIE 1). Cœur pur, sans DB (+ 1 test d'endpoint /charge en DB)."""
+import pytest
+from sqlalchemy import text
+
 from labuse.faisabilite.bilan import _comparables, compute_bilan, compute_calculette
 from labuse.faisabilite.engine import Hypotheses
 
@@ -122,15 +125,19 @@ def test_calculette_arithmetique_independante():
     """Vérifie L'ARITHMÉTIQUE en isolation : entrées connues → charge foncière attendue.
     shab 6344 m², terrain 9723 m², prix médian 5310 €/m², coût 2500 €/m² SDP, marge+frais 21 %.
     CA médian = 6344×5310 ; coef = 1−0,21 ; M128-3-§1 : SDP = vendable ÷ coef_rendement (plus de
-    ×1,15) ; construction = SDP×2500 ; CF médiane = CA×coef − construction (VRD nulle hors secteur)."""
+    ×1,15) ; construction = SDP×2500 ; VRD = hypothèse par défaut DITE (jamais un 0 silencieux) ×
+    terrain ; CF médiane = CA×coef − construction − VRD."""
+    from labuse.faisabilite.bilan import CALCULETTE_VRD_DEFAUT_M2
     prix = _prix(5310, 5310, 5310, n=14)
     res = compute_calculette(6344, 9723, prix, cout_construction_m2=2500, marge_frais_pct=21)
     assert res["calculable"] is True
     ca = 6344 * 5310
     coef = 1 - 21 / 100
     construction = 6344 / H.coef_rendement * 2500   # M128-3 : SDP = vendable ÷ rendement
-    attendu = ca * coef - construction
+    vrd = CALCULETTE_VRD_DEFAUT_M2 * 9723            # VRD par défaut DITE, jamais 0 muet
+    attendu = ca * coef - construction - vrd
     assert res["ca"]["central"] == round(ca)
+    assert res["vrd_m2"] == round(CALCULETTE_VRD_DEFAUT_M2) and res["vrd_total_eur"] == round(vrd)
     assert abs(res["charge_fonciere"]["central"] - attendu) < 2          # arrondi à l'euro
     assert res["charge_fonciere"]["par_m2_terrain"] == round(attendu / 9723)
 
@@ -242,3 +249,28 @@ def test_c1_encadre_hypotheses_identique_en_forme():
     assert hypotheses_encadre(2500, 21) == hypotheses_encadre(2500.0, 21.0)
     html = hypotheses_encadre(2500, 21)
     assert "Hypothèses de calcul" in html and "2500" in html and "21" in html
+
+
+# ── Endpoint /faisabilite/{idu}/charge — « ne lève pas » (cas honnête calculable:false) ──
+
+@pytest.mark.db
+def test_charge_endpoint_ne_leve_pas(db_session):
+    """Il n'existait AUCUN test de l'endpoint /charge. Sur une parcelle SANS capacité résolue
+    (zone PLU non calibrée), l'endpoint ne DOIT PAS lever : il renvoie proprement
+    `calculable:false` + une raison, jamais une exception ni un faux chiffre. Les défauts servis
+    (dont la VRD DITE) sont toujours présents pour que l'écran puisse les afficher."""
+    from labuse.api.modules import ChargeIn, faisabilite_charge
+    idu = "97415000BL0001"
+    db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES"
+        " (:i, 'Saint-Paul', 800,"
+        "  ST_SetSRID(ST_GeomFromText('POLYGON((55.2 -21.0,55.2001 -21.0,"
+        "  55.2001 -21.0001,55.2 -21.0001,55.2 -21.0))'), 4326))"
+        " ON CONFLICT (idu) DO NOTHING"), {"i": idu})
+    out = faisabilite_charge(idu, ChargeIn(), db=db_session)   # aucune exception
+    assert out["calculable"] is False and out["raison"] == "capacite_non_resolue"
+    # les défauts sont servis même en cas non calculable (dont la VRD par défaut DITE)
+    assert out["defaults"]["vrd_m2"] and "message" in out
+    # un IDU inconnu → 404 propre (jamais un 500), toujours « ne lève pas » côté client
+    with pytest.raises(Exception):
+        faisabilite_charge("97415000ZZ9999", ChargeIn(), db=db_session)

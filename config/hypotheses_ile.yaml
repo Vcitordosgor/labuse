@@ -19,5 +19,6 @@ hypotheses_ile:
   cout_construction_m2_haut: 2800.0
   marge_promoteur_pct: 0.09         # marge promoteur (% du CA) — 8–10 %
   frais_annexes_pct: 0.12           # honoraires, commercialisation, financier, aléas (% du CA)
+  cout_vrd_base_m2: 90.0            # VRD/viabilisation de base (€/m² terrain) — défaut DIT calculette (Estimé)
   dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables
   dvf_min_ventes: 8                 # en deçà, prix DVF jugé non fiable

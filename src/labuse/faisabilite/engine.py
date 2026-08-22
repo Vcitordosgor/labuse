@@ -48,6 +48,11 @@ class Hypotheses:
     coef_plancher_habitable: float = 1.15
     marge_promoteur_pct: float = 0.09           # marge promoteur (% du CA) — 8–10 %, à affiner
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
+    # VRD / viabilisation de base (€/m² de terrain) — hypothèse par défaut DITE de la calculette
+    # (source unique YAML, comme le coût/la marge), jamais un 0 silencieux. La fiche servie garde SA
+    # VRD calibrée par secteur (registre bilan_params) ; cette valeur-ci ne pilote QUE les défauts
+    # de la calculette/Banquier/Argumentaire (générique, « estimée, à confirmer par devis local »).
+    cout_vrd_base_m2: float = 90.0
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
     # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---

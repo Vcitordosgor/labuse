@@ -36,6 +36,7 @@ def _check_idu(idu: str) -> str:
 from ..faisabilite.bilan import (  # défauts calculette dérivés de la source unique (mandat hypothèses bilan)
     CALCULETTE_COUT_DEFAUT_M2,
     CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+    CALCULETTE_VRD_DEFAUT_M2,
 )
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 
@@ -940,6 +941,7 @@ class ChargeIn(BaseModel):
     # DÉRIVÉS de la source unique (mandat hypothèses bilan : plus de 2500 gravé ici).
     cout_construction_m2: float = Field(CALCULETTE_COUT_DEFAUT_M2, ge=500, le=8000)   # €/m² de plancher
     marge_frais_pct: float = Field(CALCULETTE_MARGE_FRAIS_DEFAUT_PCT, ge=0, le=60)    # marge + frais (% du CA)
+    vrd_m2: float = Field(CALCULETTE_VRD_DEFAUT_M2, ge=0, le=2000)                    # VRD/aménagements €/m² terrain (défaut DIT)
     prix_demande_eur: float | None = Field(None, ge=0, le=500_000_000)
     # M22-A : "charge" (sens historique) | "achat_max" (lecture inverse — prix d'achat max
     # admissible : même équation, dérivation ligne à ligne + écart de négociation demandé − max)
@@ -956,6 +958,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     from ..faisabilite.bilan import (
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+        CALCULETTE_VRD_DEFAUT_M2,
         compute_calculette,
         resolve_prix_sortie_servi,
         sector_price,
@@ -964,8 +967,9 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     from ..faisabilite.engine import Hypotheses
 
     defaults = {"cout_construction_m2": CALCULETTE_COUT_DEFAUT_M2,
-                "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT}
-    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+                "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+                "vrd_m2": CALCULETTE_VRD_DEFAUT_M2}
+    row = db.execute(text("SELECT id, commune, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
     fz = parcel_faisabilite(db, row["id"])
@@ -987,10 +991,28 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
             "niveau_prix_neuf": ps["niveau"], "prix_neuf_label": ps["label"]}
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
                              body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
-                             mode=body.mode)
+                             mode=body.mode, vrd_m2=body.vrd_m2)
     res["prix_neuf_label"] = ps["label"]
     res["prix_neuf_repli_ile"] = ps["repli_ile"]
     res["defaults"] = defaults
+    # LA CONFRONTATION (le geste du scoreur) : le prix TERRAIN NU observé de la ZONE, à côté de la
+    # charge supportable. Point de calcul UNIQUE (prix_terrain_nu_par_zone, M79) — même source que
+    # la fiche, l'outil Marché et le comparateur. Absent (zone hors U/AU, ou pas de vente) → None.
+    zone = (fz[0].zone or "") if fz else ""
+    fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
+    if row["commune"] and fam in ("U", "AU"):
+        try:
+            from ..faisabilite.marche_commune import build_marche_commune
+            for l in (build_marche_commune(db, row["commune"]).get("lignes") or []):
+                if isinstance(l, dict) and l.get("cle") == "prix_terrain_nu_par_zone":
+                    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
+                    if pz and pz.get("calculable"):
+                        res["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
+                        res["terrain_zone_fiabilite"] = l.get("fiabilite")
+                        res["terrain_zone_n"] = pz.get("n")
+                    break
+        except Exception:  # noqa: BLE001 — la confrontation est un bonus, ne casse jamais la charge
+            pass
     if not res.get("calculable"):
         # prix de sortie insuffisant → au mieux, on rend le prix secteur (déjà dans `marche`)
         res["raison"] = res.get("raison") or "prix_insuffisant"
