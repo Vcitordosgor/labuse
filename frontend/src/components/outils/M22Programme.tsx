@@ -19,7 +19,7 @@ export function M22() {
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
-  const [form, setForm] = useState({ type: 'logements', batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, parking: true })
+  const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60 })
   const run = useMutation({ mutationFn: () => postProgramme({ ...form, commune }) })
 
   useEffect(() => {
@@ -79,31 +79,17 @@ export function M22() {
       {mode === 'criteres' && (
         <>
           <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Décrivez le programme — les critères sont <b>calculés et affichés</b> (SDP, hauteur PLU).
-            Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 avec parking ».
+            Décrivez le programme — les critères sont <b>calculés et affichés</b> (SDP au gabarit R+N, hauteur PLU).
+            Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 de 8 logements ».
           </div>
           <CommuneScope commune={commune} onChange={setCommune} />
           <div className="flex gap-2">
-            <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">TYPE
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}
-                className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-1 py-1 text-xs text-txt">
-                <option value="logements">logements</option>
-                <option value="etudiant">rés. étudiante</option>
-                <option value="bureaux">bureaux</option>
-              </select>
-            </label>
             {F('batiments', 'BÂTIMENTS')}
             {F('niveaux', 'R+N', { min: 0 })}
           </div>
           <div className="flex gap-2">
             {F('logements_par_batiment', 'UNITÉS/BÂT')}
-            {F('surface_unite_m2', 'M²/UNITÉ (hyp.)', { min: 15 })}
-            <label className="flex min-w-0 flex-1 flex-col text-[11px] tracking-wide text-txt-dim">PARKING
-              <button onClick={() => setForm({ ...form, parking: !form.parking })}
-                className={`mt-0.5 w-full rounded border py-1 text-xs transition-colors duration-quick ${form.parking ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-                {form.parking ? 'oui' : 'non'}
-              </button>
-            </label>
+            {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
           </div>
           <button onClick={() => run.mutate()} disabled={run.isPending}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
@@ -114,7 +100,7 @@ export function M22() {
               <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
                 <div><b className="text-txt">{d.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-mint">{fmtInt(d.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim"> ({d.criteres.calcul})</span></div>
-                <div className="mt-0.5">{d.criteres.hauteur_regle}{form.parking ? ` · parking ~${fmtInt(d.criteres.parking_m2)} m²` : ''}</div>
+                <div className="mt-0.5">{d.criteres.hauteur_regle}</div>
                 <div className="mt-1 text-[11px] leading-snug text-txt-dim">{d.bandeau}</div>
               </div>
               <div data-prog-count className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2">
@@ -139,6 +125,8 @@ export function M22() {
                       </div>
                       <div className="truncate text-[10.5px] text-txt-mut">
                         SDP {fmtInt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
+                        {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500"
+                          title="Capacité ESTIMÉE — zone non calibrée finement (hypothèses génériques)">estimée</span>}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
