@@ -773,14 +773,21 @@ def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: d
         from . import crm_columns
         keys = crm_columns.col_keys(db, cid)
         st = _RETENUE_CRM_STATUS if _RETENUE_CRM_STATUS in keys else crm_columns.default_status(db, cid)
+        # M137 — si l'entrée auto de CE projet avait été ARCHIVÉE (quitter/revenir en retenue), la
+        # RESTAURER ; jamais toucher une entrée manuelle/d'un autre projet (WHERE projet_id = :pid).
         db.execute(text(
             "INSERT INTO pipeline_entries (parcel_id, status, priority, notes, prospection, "
             "projet_id, compte_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', "
-            "'{}'::jsonb, :pid, :cid, :now, :now) ON CONFLICT (compte_id, parcel_id) DO NOTHING"),
+            "'{}'::jsonb, :pid, :cid, :now, :now) ON CONFLICT (compte_id, parcel_id) DO UPDATE "
+            "SET archived_at = NULL WHERE pipeline_entries.projet_id = :pid "
+            "AND pipeline_entries.archived_at IS NOT NULL"),
             {"pc": parcel_id, "st": st, "pid": pid, "cid": cid, "now": now})
     else:
-        db.execute(text("DELETE FROM pipeline_entries WHERE parcel_id = :pc AND projet_id = :pid"),
-                   {"pc": parcel_id, "pid": pid})
+        # M137 — plus de suppression DURE : on ARCHIVE l'entrée auto-liée (réversible, prospection
+        # conservée). « Aucune carte perdue » — même la synchro projet ne détruit plus rien.
+        db.execute(text("UPDATE pipeline_entries SET archived_at = :now "
+                        "WHERE parcel_id = :pc AND projet_id = :pid AND archived_at IS NULL"),
+                   {"pc": parcel_id, "pid": pid, "now": now})
 
 
 def _projet_or_404(db: Session, pid: int, cid: int | None) -> models.Projet:

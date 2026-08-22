@@ -597,7 +597,10 @@ export const patchPipeline = (id: number, body: Record<string, unknown>) =>
   j<{ ok: boolean; entry: PipelineEntry }>(`/pipeline/${id}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
-export const deletePipeline = (id: number) => j<{ ok: boolean }>(`/pipeline/${id}`, { method: 'DELETE' })
+// M137 — plus de suppression DURE : DELETE archive (réversible). + restauration + liste des archivées.
+export const archivePipeline = (id: number) => j<{ ok: boolean; archived: boolean }>(`/pipeline/${id}`, { method: 'DELETE' })
+export const restorePipeline = (id: number) => j<{ ok: boolean; entry: PipelineEntry }>(`/pipeline/${id}/restore`, { method: 'POST' })
+export const getArchivedPipeline = () => j<PipelineEntry[]>('/pipeline/archived')
 
 // ── M12 LOT H — colonnes CRM personnalisables (par tenant) ──
 const _jsonInit = (method: string, body?: unknown): RequestInit => ({

@@ -31,7 +31,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
 from .. import rnu as _rnu
@@ -4468,13 +4468,19 @@ def _prio_keys() -> list[str]:
     return [p["key"] for p in _pipeline_cfg().get("priorities", [])]
 
 
-def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
+def _entry_dict(db: Session, e: models.PipelineEntry, *,
+                adr_map: dict | None = None, pm_map: dict | None = None,
+                projet_map: dict | None = None) -> dict:
+    # M137 Lot 2 — les blocs `verdict` et `premium` (score/rang : rang_v2, opportunity_score,
+    # verdict.rang, tier_v2, completeness_score…) sont RETIRÉS du payload CRM (M133 B.6 : zéro
+    # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1).
+    # M137 Lot 4 (C4) — les endpoints LISTE passent des maps PRÉ-CHARGÉS (adresse/proprio/projet) :
+    # 3 requêtes batch au lieu de 3 PAR carte (N+1 → O(1)). Les endpoints mono-entrée (add/patch/
+    # parcel/restore) n'en passent pas → repli par-carte (1 seule carte, sans coût).
     p = e.parcel
-    ev = _latest_eval(db, e.parcel_id)
-    # M34 (dette #14) : le verdict des cartes CRM = traduction du tier servi (le front
-    # affiche déjà `premium` via verdictMeta — ce bloc API raconte désormais le même run).
-    from ..verdict_servi import verdict_servi
-    vs = verdict_servi(db, p.idu)
+    adresse = adr_map.get(p.idu) if adr_map is not None else _ban_adresse(db, p.idu)
+    proprietaire = (pm_map.get(p.idu) or {"type": "particulier"}) if pm_map is not None else _proprietaire_public(db, p.idu)
+    projet = (projet_map.get(e.projet_id) if e.projet_id else None) if projet_map is not None else _projet_ref(db, e.projet_id)
     return {
         "id": e.id,
         "idu": p.idu,
@@ -4483,23 +4489,47 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
         "created_at": e.created_at.isoformat() if e.created_at else None,
+        "archived_at": e.archived_at.isoformat() if e.archived_at else None,   # M137
         "prospection": e.prospection or {},
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
-                   "adresse": _ban_adresse(db, p.idu)},
-        "verdict": {
-            "status": vs["statut"], "label": vs["label"], "rang": vs["rang"],
-            "opportunity_score": ev.opportunity_score if ev else None,
-        },
-        # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban
-        "premium": _premium_head(db, e.parcel_id),
+                   "adresse": adresse},
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
-        "projet": _projet_ref(db, e.projet_id),
+        "projet": projet,
         # contact proprio (PRIVACY : personne morale publique seulement, jamais un particulier)
-        "proprietaire_public": _proprietaire_public(db, p.idu),
+        "proprietaire_public": proprietaire,
     }
+
+
+def _prefetch_maps(db: Session, entries: list) -> tuple[dict, dict, dict]:
+    """M137 Lot 4 (C4) — pré-charge adresse BAN / proprio public / projet pour un LOT d'entrées en
+    3 requêtes batch (au lieu de 3 PAR carte). Repli sain : maps vides si tables non prêtes."""
+    idus = list({e.parcel.idu for e in entries})
+    pids = list({e.projet_id for e in entries if e.projet_id})
+    adr: dict = {}
+    pm: dict = {}
+    projet: dict = {}
+    if idus and _ban_ready(db):
+        for r in db.execute(text(
+                "SELECT DISTINCT ON (ap.idu) ap.idu AS idu, "
+                "trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS voie, a.code_postal AS cp, a.commune AS com "
+                "FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+                f"WHERE ap.idu = ANY(:idus) ORDER BY ap.idu, {_BAN_ORDER}"), {"idus": idus}).mappings():
+            adr[r["idu"]] = _fmt_ban(r["voie"], r["cp"], r["com"])
+    if idus:
+        for r in db.execute(text(
+                "SELECT idu, denomination, siren, groupe_label FROM parcelle_personne_morale "
+                "WHERE idu = ANY(:idus)"), {"idus": idus}).mappings():
+            if r["denomination"]:
+                pm[r["idu"]] = {"type": "personne_morale", "denomination": r["denomination"],
+                                "siren": r["siren"], "groupe": r["groupe_label"]}
+    if pids:
+        for r in db.execute(text("SELECT id, nom FROM projets WHERE id = ANY(:pids)"),
+                            {"pids": pids}).mappings():
+            projet[r["id"]] = {"id": r["id"], "nom": r["nom"]}
+    return adr, pm, projet
 
 
 def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
@@ -4558,6 +4588,7 @@ class PipelinePatchIn(BaseModel):
 def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
     """Colonnes (PAR TENANT en base, M12 LOT H) + priorités (config) pour piloter le Kanban.
     Les colonnes sont semées au kanban LABUSE par défaut au premier accès d'un compte."""
+    from .. import prospection as _prosp
     from . import crm_columns
     from .tenant import current_compte
     cfg = _pipeline_cfg()
@@ -4565,20 +4596,27 @@ def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
     cols = crm_columns.columns_for(db, cid)
     dfl = dict(cfg.get("defaults", {}))
     dfl["status"] = crm_columns.default_status(db, cid)
+    # M137 — statuts propriétaire (prospection) pour l'écran d'édition de carte (source unique).
+    _statut_order = ["inconnu", "a_identifier", "identifie_manuellement", "public_probable",
+                     "institutionnel_probable", "indivision_probable", "copropriete_probable"]
     return {"columns": [{"key": c["key"], "label": c["label"], "tone": c["tone"], "id": c["id"]}
                         for c in cols],
-            "priorities": cfg.get("priorities", []), "defaults": dfl}
+            "priorities": cfg.get("priorities", []), "defaults": dfl,
+            "proprietaire_statuts": [{"key": s, "label": _prosp.statut_label(s)} for s in _statut_order]}
 
 
 @app.get("/pipeline")
 def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     from .tenant import current_compte
     cid = current_compte(request)
-    q = select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
+    q = select(models.PipelineEntry).options(joinedload(models.PipelineEntry.parcel))\
+        .order_by(models.PipelineEntry.created_at.desc())   # M137 Lot 4 — parcel eager (plus de lazy N+1)
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — actives seules (archivées cachées)
     entries = db.execute(q).scalars().all()
-    return [_entry_dict(db, e) for e in entries]
+    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch (N+1 → O(1))
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
@@ -4592,6 +4630,7 @@ def pipeline_for_parcel(idu: str, request: Request, db: Session = Depends(get_db
     q = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
     q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — une archivée ≠ « suivie » (ré-ajout = restaure)
     e = db.execute(q).scalar_one_or_none()
     return {"in_pipeline": bool(e), "entry": _entry_dict(db, e) if e else None}
 
@@ -4608,8 +4647,12 @@ def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(ge
     _ex = _ex.where(models.PipelineEntry.compte_id.is_(None) if cid is None
                     else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     existing = db.execute(_ex).scalar_one_or_none()
-    if existing:                                            # déjà suivie → on renvoie son état courant
-        return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
+    if existing:
+        if existing.archived_at is not None:               # M137 — archivée → RESTAURE (garde notes/prospection)
+            existing.archived_at = None
+            db.flush()
+            return {"ok": True, "already": False, "restored": True, "entry": _entry_dict(db, existing)}
+        return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}   # déjà suivie (active)
 
     from . import crm_columns
     dfl = _pipeline_cfg().get("defaults", {})
@@ -4675,13 +4718,45 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: S
 
 @app.delete("/pipeline/{entry_id}")
 def pipeline_delete(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M137 — ARCHIVAGE (plus de suppression DURE) : pose `archived_at`, la carte + sa prospection
+    saisie sont conservées et RESTAURABLES (POST /pipeline/{id}/restore). « Aucune carte perdue »."""
+    from datetime import datetime, timezone
+
     from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
     if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
-    db.delete(e)
+    if e.archived_at is None:
+        e.archived_at = datetime.now(timezone.utc)
+        db.flush()
+    return {"ok": True, "archived": True}
+
+
+@app.post("/pipeline/{entry_id}/restore")
+def pipeline_restore(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M137 — restaure une carte archivée (archived_at → NULL). Idempotent."""
+    from .tenant import current_compte
+    e = db.get(models.PipelineEntry, entry_id)
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
+        raise HTTPException(404, "Entrée de pipeline inconnue")
+    e.archived_at = None
     db.flush()
-    return {"ok": True}
+    return {"ok": True, "entry": _entry_dict(db, e)}
+
+
+@app.get("/pipeline/archived")
+def pipeline_archived(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    """M137 — les cartes ARCHIVÉES du compte (pour les consulter / restaurer). Pas de purge auto."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    q = select(models.PipelineEntry).options(joinedload(models.PipelineEntry.parcel))\
+        .order_by(models.PipelineEntry.archived_at.desc())   # M137 Lot 4 — parcel eager
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    q = q.where(models.PipelineEntry.archived_at.is_not(None))
+    entries = db.execute(q).scalars().all()
+    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
