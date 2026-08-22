@@ -268,7 +268,7 @@ zones:
        pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
        habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZAC Canabady, haut ZAC des Casernes, Condé Concession, Ravine des Cafres"}
   Uazi: {bassin: "Saint-Pierre",
-       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale)",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale) via renvoi (secteur Uazi régi par le chapitre « zone Ua et AUazi »)",
        hauteur_note: "Installations d'extraction de matériaux (ZI n°4) : pas de règle de hauteur. ZI n°4 parcelles 1,9,11,21-24 : 8 m max dans la bande de 15 m longeant la Ravine des Cabris.",
        emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
        recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
@@ -381,6 +381,14 @@ zones:
        pleine_terre_pct: null, pleine_terre_src: "Art. Ut5.1, p.164 (« Non réglementé »)",
        habitat: interdit, habitat_src: "Art. Ut1 (tableau), p.157-158 : Logement X, Hébergement X",
        note: "Préambule p.156 : AUt2 sous OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+  # M131 — Us : GEL conservé (constructible_neuf: false — zone urbaine GELÉE provisoirement : préambule
+  # p.129, Art. Us1 p.130) MAIS hauteur RÉELLE servie : Art. Us3 §5 « Hauteur — Règle générale », p.134.
+  # Le 4 m de zones_au_st (supprimé M130-12) était le repli inexact ; la vraie règle est 6/11 (chap. 2).
+  # Entrée PROPRE hors zones_au_st ; le gel ne tient QUE par constructible_neuf: false (dette).
+  Us: {bassin: "Saint-Pierre", constructible_neuf: false,
+       he_m: 6, hf_m: 11, hauteur_src: "Art. Us3 §5 (« 5/ Hauteur — Règle générale »), p.134",
+       hauteur_note: "Règle générale LOGEMENT : 6 m égout/acrotère, 11 m faîtage (Art. Us3 §5, p.134). Équipements publics 8/13 m ÉCARTÉS (destination ≠ logement — convention Uf3.5). Limites séparatives 4 m dans la bande de 3 m ; PPRN +surélévation ; pente +1,5 m aval ; surtoiture +0,5 m. Gravable telle quelle dès réouverture de la zone.",
+       note: "Zone urbaine peu dense GELÉE provisoirement (construction neuve non autorisée, extensions <=25 % SDP — préambule p.129, Art. Us1 p.130). Hauteur servie ; capacité = aucune (gel)."}
 
 # Zones AU « génériques » : à Saint-Pierre, chaque zone AU jumelle est régie par le
 # chapitre de sa zone U (« Dispositions applicables à la zone Ux et AUx ») : entrées
