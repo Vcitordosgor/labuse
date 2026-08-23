@@ -360,8 +360,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       "filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune "
                       "commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.")
     if densite_cap < floor_hi:
+        # M144 Lot 5.3 — séparateur unifié « à » (comme §3 « Ce que le terrain permet ») : l'écart
+        # 121/122 n'est pas une divergence d'arrondi mais le PLAFOND (pré-cap → borné), dit explicitement.
         modul.append(f"Plafond de densité {cap_logts_ha:.0f} logts/ha appliqué : le calcul détaillé "
-                     f"donnait ~{math.floor(floor_lo)}-{math.ceil(floor_hi)} → borné à "
+                     f"donnait ~{math.floor(floor_lo)} à {math.ceil(floor_hi)} → borné à "
                      f"~{round(densite_cap)} logts (enveloppe théorique trop optimiste).")
     floor_lo, floor_hi = capped_lo, capped_hi
     floor_central = capped_central
@@ -371,6 +373,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     sous_lo, sous_hi = floor_lo, floor_hi          # sous-sol/silo : non mangé au sol
     sous_central = floor_central
     sol_lo, sol_hi = floor_lo, floor_hi
+    sol_central = floor_central                    # M144 Lot 1 — le central du scénario RETENU (au sol)
     if _is_num(ppl) and ppl > 0:
         regime = "borne"
         sol_dispo = max(0.0, surface_m2 - footprint - pt_area)
@@ -384,6 +387,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
                           f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12")))
         sol_lo, sol_hi = min(floor_lo, log_max_park), min(floor_hi, log_max_park)
+        sol_central = min(floor_central, log_max_park)   # M144 Lot 1 — le central plafonné au sol
         if hyp.place_m2_source_ref:
             hypotheses.append(f"1 place de stationnement = {hyp.place_m2:g} m² (Sourcé — {hyp.place_m2_source_ref}).")
         else:
@@ -433,6 +437,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     modul.extend(c.libelles)
 
     sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
+    sol_central = sol_central * facteur            # M144 Lot 1 — le central retenu subit la MÊME modulation
     sous_lo, sous_hi = sous_lo * facteur, sous_hi * facteur
     sous_central = sous_central * facteur          # M128-5-§1 : le central subit la MÊME modulation
 
@@ -456,10 +461,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
               "emprise_constructible_m2": round(emprise),
               "emprise_batie_max_m2": round(footprint),
               "surface_plancher_m2": round(sdp),
-              # surface habitable VENDABLE (post-rendement, plafond densité, modulation) :
-              # base du chiffre d'affaires du bilan promoteur. M128-5-§1 : chemin CENTRAL unique
-              # (logements retenus central × taille moyenne) — plus d'aller-retour compte↔surface.
-              "shab_vendable_m2": round(sous_central * logt_moyen),
+              # surface habitable VENDABLE — base du CA du bilan promoteur. M144 Lot 1 : le vendable
+              # est celui du scénario RETENU (au sol, `sol_central` = plafond densité ∩ stationnement au
+              # sol, modulé) — le MÊME scénario que « Logements retenus au sol ». Le bilan ne chiffre plus
+              # le silo optimiste (`sous_central`) sans en payer le parking enterré : une seule source de
+              # scénario, faisabilité et bilan alignés (corrige le mélange encaissé sans son coût).
+              "shab_vendable_m2": round(sol_central * logt_moyen),
+              # vendable du scénario SILO (parking en ouvrage) — sert la MENTION de prose du bilan
+              # (« porterait la surface vendable à ~X m² »), jamais chiffré sans son coût (doctrine).
+              "shab_vendable_silo_m2": round(sous_central * logt_moyen),
               "logements_au_sol": _rng(sol_lo, sol_hi),
               "logements_sous_sol": _rng(sous_lo, sous_hi),
               "stationnement_regime": regime}

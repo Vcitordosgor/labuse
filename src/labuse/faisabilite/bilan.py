@@ -94,7 +94,8 @@ def _marche_dynamique(kept: list[dict], q1: float, med: float, q3: float, min_n:
             if ma:
                 tr = round(100 * (mr - ma) / ma)
                 out["tendance_pct"] = tr
-                out["tendance"] = "hausse" if tr >= 5 else "baisse" if tr <= -5 else "stable"
+                # M144 Lot 5.1 — seuil ±2 % (aligné marche_commune) : le mot ne contredit plus le signe.
+                out["tendance"] = "hausse" if tr >= 2 else "baisse" if tr <= -2 else "stable"
     return out
 
 
@@ -439,7 +440,9 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     else:
         detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
                   f"dans {lieu}"
-                  + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")
+                  # M144 Lot 5.4 — la règle d'exclusion se DIT (méthode + seuil), pas une boîte noire.
+                  + (f" · {prix['n_exclus']} vente(s) aberrante(s) écartée(s) (méthode de Tukey : "
+                     f"hors [Q1−1,5×IQR ; Q3+1,5×IQR], bornée 100–12 000 €/m²)" if prix["n_exclus"] else "")
                   + (f" · {prix['n_doublons']} doublon(s) écarté(s)" if prix.get("n_doublons") else ""))
         steps.append(Step("Prix de vente (DVF secteur)", detail,
                           f"{q1}–{q3} €/m² (médiane {med} ; min {prix['min']} / max {prix['max']})",
@@ -540,9 +543,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       "~" + _plage_txt(ca_bas_r, ca_cen_r, ca_haut_r), "dérivé", prov="derive"))
     cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
                 else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
+    # M144 Lot 5.2 — fourchette à bornes égales = valeur unique (pas « X – X »).
+    _cc_txt = f"~{_eur(cc_bas)}" if round(cc_bas) == round(cc_haut) else f"~{_eur(cc_bas)} – {_eur(cc_haut)}"
     steps.append(Step("Coût de construction",
                       f"{sdp:.0f} m² de plancher (vendable {surf:.0f} ÷ rendement {hyp.coef_rendement:.0%}) {cout_lbl}",
-                      f"~{_eur(cc_bas)} – {_eur(cc_haut)}",
+                      _cc_txt,
                       "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)",
                       prov="estimee"))
     steps.append(Step("Marge + frais (déduits du CA)",

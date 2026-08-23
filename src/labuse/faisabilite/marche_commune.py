@@ -198,7 +198,9 @@ def ligne4_tendance(db: Session, commune: str) -> dict:
                       fiabilite="insuffisant", etiquette="Sourcé · DVF",
                       calculable=False, motif=f"tendance non calculable — n < {SEUIL_TENDANCE_N} par fenêtre")
     delta = (r["med12"] - r["medprev"]) / r["medprev"] * 100
-    sens = "hausse" if delta >= 5 else "baisse" if delta <= -5 else "stable"
+    # M144 Lot 5.1 — seuil resserré à ±2 % : « stable −4,2 % » (mot ⟂ chiffre) était faux. Sous ±2 %/an
+    # (bruit de la médiane DVF communale) = stable ; au-delà, hausse/baisse, cohérent avec le signe.
+    sens = "hausse" if delta >= 2 else "baisse" if delta <= -2 else "stable"
     return _ligne("tendance_12m", "DYNAMIQUE",
                   valeurs={"delta_pct": round(delta, 1), "sens": sens,
                            "median_12m": round(r["med12"]), "median_prec": round(r["medprev"]),
