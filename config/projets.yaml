@@ -6,4 +6,8 @@
 # faux positifs). Le client est toujours informé qu'il trie un top-N (« N meilleures sur {vivier} »,
 # M120-B), jamais « tout ce qui matche ».
 shortlist_max: 200        # plafond ABSOLU d'une shortlist figée (run + rejeu + chercher-plus)
-shortlist_defaut: 60      # taille servie sans demande explicite (chercher-plus l'étend jusqu'au max)
+# M140 Lot C — le figeage passe de 60 à 200 (= shortlist_max, le mur MESURÉ : 200 parcelles ≈ 24
+# pages PDF, sûr). NON RÉTROACTIF : shortlist_defaut n'est lu qu'AU figeage — les projets déjà
+# figés gardent leur compte (60), seuls les figeages FUTURS prennent 200. La liste COMPLÈTE des
+# retenues (au-delà de l'extrait figé) est servie en direct : écran paginé + export CSV (M140 A/B).
+shortlist_defaut: 200     # taille de l'EXTRAIT figé sans demande explicite (= plafond ; liste complète = requête vive)

@@ -125,6 +125,12 @@ export function ParcoursTinder() {
 
 /** retire l'item de son groupe et le pousse dans le groupe cible — maj optimiste de l'état. */
 function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): ParcoursEtat {
+  // colonne d'origine (avant déplacement) — calculée AVANT le strip pour rester bien typée
+  const from: StatutParcelle | null =
+    etat.proposees.some((x) => x.idu === idu) ? 'proposee'
+      : etat.retenues.some((x) => x.idu === idu) ? 'retenue'
+        : etat.ecartees.some((x) => x.idu === idu) ? 'ecartee'
+          : etat.a_analyser.some((x) => x.idu === idu) ? 'a_analyser' : null
   let moved: ParcoursItem | null = null
   const strip = (arr: ParcoursItem[]) => arr.filter((x) => {
     if (x.idu === idu) { moved = { ...x, statut }; return false }
@@ -140,10 +146,14 @@ function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): Parc
     else if (statut === 'a_analyser') a_analyser.push(moved)
     else proposees.push(moved)
   }
-  return {
-    ...etat, proposees, retenues, ecartees, a_analyser,
-    counts: { proposee: proposees.length, retenue: retenues.length, ecartee: ecartees.length, a_analyser: a_analyser.length },
+  // M140 Lot A — counts par DELTA : `proposee` est le TOTAL serveur (liste complète VIVE, paginée),
+  // jamais recompté depuis le deck chargé (.length ≠ N). On décale seulement source → cible.
+  const counts = { ...etat.counts }
+  if (moved && from && from !== statut) {
+    counts[from] = Math.max(0, (counts[from] ?? 0) - 1)
+    counts[statut] = (counts[statut] ?? 0) + 1
   }
+  return { ...etat, proposees, retenues, ecartees, a_analyser, counts }
 }
 
 function DecisionCard({ pid, item, onDecide, onFiche }: {
