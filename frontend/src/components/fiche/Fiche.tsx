@@ -848,14 +848,10 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
                   : <>Écart : prix demandé {fmtEurCompact(d.ecart_negociation.prix_demande_eur)} est <b>sous votre prix d'achat max</b> ({fmtEurCompact(d.ecart_negociation.prix_achat_max_eur)}) — marge de {fmtEurCompact(Math.abs(d.ecart_negociation.demande_moins_max_eur))}.</>}
               </div>
             )}
-            {/* M22-C : l'argumentaire PDF reprend LES MÊMES hypothèses que la calculette */}
-            {mode === 'achat_max' && d.calculable && (
-              <a data-argumentaire href={`/argumentaire/${idu}.pdf?cout_construction_m2=${deb.cout}&marge_frais_pct=${deb.marge}${deb.prix ? `&prix_demande_eur=${deb.prix}` : ''}`}
-                target="_blank" rel="noreferrer"
-                className="mt-1.5 inline-block text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
-                Éditer l'argumentaire de négociation (PDF)
-              </a>
-            )}
+            {/* M143 Lot 2 — bouton « Éditer l'argumentaire de négociation (PDF) » RETIRÉ (décision Vic,
+                affichage seul). La route et le Copilote NE bougent pas dans ce mandat :
+                l'argumentaire reste servi sur demande explicite (ReponseInline.tsx). Fermer la route
+                est une décision séparée, liée à l'arbitrage de posture d'exposition (dette F4). */}
             {mode === 'charge' && achat && (
               <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable

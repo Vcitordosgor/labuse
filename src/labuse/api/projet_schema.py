@@ -29,7 +29,13 @@ CONTRAINTE_LABEL = {
 SECTEUR_KEYS = ["Nord", "Ouest", "Sud", "Est"]
 
 #: hypothèse M22 par défaut (surface_unite_m2 du formulaire M22Programme — la vérité reste
-#: le formulaire, pré-rempli et éditable) ; +15 % de circulations comme faisabilite_sens2
+#: le formulaire, pré-rempli et éditable).
+#: M143 Lot 4 — commentaire rectifié : ce coefficient est le MÊME objet physique que
+#: `PROGRAMME_CIRCULATION_COEF` (modules.py) — la circulation surface utile → SDP — mais les DEUX
+#: valeurs ont divergé : M133 a porté faisabilite_sens2 de +15 % à +20 % (le +15 % « sous-estimait
+#: le besoin »), SANS toucher ce M22_CIRCULATION resté à +15 %. Ils ne sont donc PLUS alignés (l'ancien
+#: commentaire « comme faisabilite_sens2 » était devenu faux). Valeur laissée à 1,15 : l'unification
+#: (1,15 → 1,20, +4,3 % de SDP-besoin au cadrage projet) est un arbitrage Vic, pas un correctif d'audit.
 M22_SURFACE_UNITE_M2 = 60.0
 M22_CIRCULATION = 1.15
 

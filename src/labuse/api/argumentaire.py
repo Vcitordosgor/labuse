@@ -44,6 +44,32 @@ def get_db():
 
 # ───────────────────────── assemblage ─────────────────────────
 
+def _regime(calc: dict) -> dict:
+    """M143 Lot 1 (F1) — LE point de décision unique, en amont, consommé par TOUTES les sections.
+    Quand la charge foncière centrale est ≤ 0, l'opération n'est pas ÉQUILIBRÉE sous les hypothèses :
+    il n'existe pas de prix d'achat maximum. Ce n'est PAS « 0 € » (qui se lirait « le terrain ne vaut
+    rien », faux) — c'est l'ABSENCE de prix, un signal sur le programme. On expose alors les deux
+    termes qui le montrent (CA prévisionnel vs coût de construction) et le manque, jamais un négatif.
+    `equilibre=None` = non chiffrable (régime propre déjà géré). `bas_negatif` = central > 0 mais
+    borne basse ≤ 0 : la fourchette est clampée et le scénario bas est dit non équilibré (cas partiel)."""
+    if not calc.get("calculable"):
+        return {"equilibre": None}
+    cf = calc.get("prix_achat_max") or {}
+    c = calc.get("calc") or {}
+    central = cf.get("central")
+    ca = (calc.get("ca") or {}).get("central")
+    cc = (float(c.get("cc_bas") or 0) + float(c.get("cc_haut") or 0)) / 2
+    return {
+        "equilibre": central is not None and central > 0,
+        "central": central,
+        "ca": ca,
+        "construction": cc if cc > 0 else None,
+        "vrd": float(c.get("cout_vrd") or 0),
+        "manque_eur": abs(central) if (central is not None and central <= 0) else None,
+        "bas_negatif": cf.get("bas") is not None and cf.get("bas") <= 0,
+    }
+
+
 def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
              prix_demande: float | None) -> dict:
     """Briques banquier (bq.collect) + calculette en MODE INVERSE (M22-A) + viabilisation."""
@@ -59,6 +85,11 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
     else:
         out["calc"] = {"calculable": False,
                        "raison": "capacité constructible ou prix de sortie non résolus"}
+    out["regime"] = _regime(out["calc"])   # M143 Lot 1 — décidé UNE fois, lu par toutes les sections
+    # M143 Lot 3 (F2) — le millésime de la DONNÉE, pas seulement la date d'édition : run résiduel
+    # SERVI (lecture directe du flag `is_served`, aucun MAX/tri — mécanisme M139 lot 2, dette §8).
+    from .projets import _residuel_run_servi
+    out["valeurs_run"] = _residuel_run_servi(db)
     out["hyp_saisies"] = {"cout_m2": cout_m2, "marge_pct": marge_pct}
     try:
         from .app import _viabilisation_block
@@ -109,10 +140,12 @@ def _svg_cascade(calc: dict) -> str:
     coef = c.get("coef")
     if not (ca and coef and cf):
         return ""
+    terrain = float(cf.get("central") or 0)
+    if terrain <= 0:                 # M143 Lot 1 — opération non équilibrée : aucune cascade (défense)
+        return ""
     marge = ca * (1.0 - float(coef))
     construction = (float(c.get("cc_bas") or 0) + float(c.get("cc_haut") or 0)) / 2
     vrd = float(c.get("cout_vrd") or 0)
-    terrain = float(cf.get("central") or 0)
     etapes = [("Chiffre d'affaires", ca, "#1E9E58"), ("− Marge & frais", -marge, "#A87916"),
               ("− Construction", -construction, "#A87916")]
     if vrd:
@@ -164,16 +197,17 @@ def _synthese(out: dict, marque: dict | None = None) -> str:
     if zone and len(str(zone)) > 12:
         zone = str(fais.zone) if fais and fais.zone else str(zone).split(" ", 1)[0]
     prix = out.get("prix_dvf") or {}
+    reg = out.get("regime") or {}
     phrases: list[str] = []
     kpis: list[str] = []
-    if calc.get("calculable"):
+    if calc.get("calculable") and reg.get("equilibre"):
         cf = calc["prix_achat_max"]
-        # C3 — borne basse à 0 INTERDITE dans la phrase : si le scénario bas ne supporte
-        # rien, on le DIT (honnêteté) au lieu d'écrire « entre 0 € et X ».
-        if cf["bas"] <= 0:
+        # M143 Lot 1 §5 — cas partiel : central > 0 mais borne basse ≤ 0. La fourchette ne descend
+        # PAS sous 0 à l'affichage ; on DIT que le scénario bas n'est pas équilibré (sans borne inventée).
+        if reg.get("bas_negatif"):
             fourchette_txt = (f"s'établit à {eur(cf['central'])} en médiane (haut de fourchette "
-                              f"{eur(cf['haut'])}) ; dans le scénario bas, l'opération ne "
-                              f"supporte aucune charge foncière")
+                              f"{eur(cf['haut'])}) ; dans le scénario bas (prix bas / coûts hauts), "
+                              f"l'opération n'est pas équilibrée")
         else:
             fourchette_txt = (f"s'établit entre {eur(cf['bas'])} et {eur(cf['haut'])} "
                               f"(médiane {eur(cf['central'])})")
@@ -201,16 +235,39 @@ def _synthese(out: dict, marque: dict | None = None) -> str:
                     f"Le prix demandé ({eur(e['prix_demande_eur'])}) s'inscrit sous ce maximum "
                     f"(marge {eur(abs(e['demande_moins_max_eur']))}) : l'opération reste "
                     f"finançable à ce prix selon ces hypothèses.")
+    elif calc.get("calculable") and not reg.get("equilibre"):
+        # M143 Lot 1 (F1) — CHANGEMENT DE RÉGIME : charge centrale ≤ 0. AUCUN chiffre-héros, aucune
+        # fourchette, aucun €/m². Un énoncé factuel + les deux termes + le manque ; puis les leviers
+        # (énoncer, jamais conseiller). Ce n'est pas la valeur du terrain, c'est un signal programme.
+        kpis.append(bq.cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
+        vrd_txt = f" et les VRD ({eur(reg['vrd'])})" if reg.get("vrd") else ""
+        phrases.append(
+            f"Sous les hypothèses retenues (coût {int(out['hyp_saisies']['cout_m2'])} €/m², "
+            f"marge {out['hyp_saisies']['marge_pct']:.0f} %), l'opération n'est pas équilibrée : le "
+            f"chiffre d'affaires prévisionnel ({eur(reg['ca'])}), une fois la marge et les frais "
+            f"couverts, ne suffit pas à financer la construction ({eur(reg['construction'])})"
+            f"{vrd_txt} — il manque {eur(reg['manque_eur'])} pour l'équilibrer. Il n'existe donc "
+            f"pas de prix d'achat maximum : ce constat porte sur le programme et les hypothèses "
+            f"retenues, pas sur la valeur du terrain.")
+        phrases.append("Les hypothèses saisies (coût de construction, marge) et le programme retenu "
+                       "sont ce qui détermine ce résultat ; les faire varier peut le changer.")
     else:
         kpis.append(bq.cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
         phrases.append("La charge foncière supportable n'est pas chiffrable sur cette parcelle "
                        f"({esc(calc.get('raison') or 'données insuffisantes')}) — l'argumentaire "
                        "se limite aux faits qualitatifs des parties suivantes.")
+    # M143 Lot 3 (F2) — les deux dates : le document DIT de quand datent ses chiffres (millésime de
+    # donnée du run résiduel servi), pas seulement sa date d'édition (portée par la garde). Indéfendable
+    # sinon, opposé à un vendeur trois semaines plus tard. Période DVF + millésimes PLU restent (part. 7).
+    vr = out.get("valeurs_run") or {}
+    dates_note = (f"<p class='note'>Valeurs (surface constructible, résiduel) au {esc(vr['date'])} "
+                  f"— run {esc(vr['label'])}. Marché DVF et millésimes PLU : voir partie 7.</p>"
+                  if vr.get("date") else "")
     return (f"<section class='garde'>"
             f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE, marque=marque)}"
             f"<h2>1 · Synthèse</h2>"
             f"<div class='exec'>{esc(' '.join(phrases))}</div>"
-            f"{bq.cartouches(kpis)}"
+            f"{bq.cartouches(kpis)}{dates_note}"
             f"<h2>Situation</h2>{bq.map_html(p['geojson'])}</section>")
 
 
@@ -250,18 +307,37 @@ def _bilan_rebours(out: dict) -> str:
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
                        "n'est fabriqué (doctrine).</p>")
+    reg = out.get("regime") or {}
+    if not reg.get("equilibre"):
+        # M143 Lot 1 (F1) — opération NON équilibrée : aucun tableau de prix, aucun montant négatif,
+        # aucune cascade, aucun écart de négociation (il n'existe pas de max). Les deux termes + le manque.
+        vrd_txt = f" · VRD {eur(reg['vrd'])}" if reg.get("vrd") else ""
+        body += (f"<p><b>Opération non équilibrée sous ces hypothèses.</b> Chiffre d'affaires "
+                 f"prévisionnel {eur(reg['ca'])} · coût de construction {eur(reg['construction'])}"
+                 f"{vrd_txt} — après marge et frais, il manque {eur(reg['manque_eur'])} pour "
+                 f"l'équilibrer. Il n'existe pas de prix d'achat maximum : le résultat dépend du "
+                 f"programme et des hypothèses (coût/m², marge), pas de la valeur du terrain.</p>")
+        for a in calc.get("avertissements", []):
+            body += f"<p class='note'>{esc(a)}</p>"
+        return body
+    # ÉQUILIBRÉ — dérivation ligne à ligne. UNIQUEMENT si la borne basse est ≤ 0 (M143 Lot 1 §5), on
+    # retire le pas de synthèse redondant (« Prix d'achat maximal admissible ») : il porte la
+    # fourchette et laisserait passer une borne basse négative ; le tableau dédié ci-dessous la porte
+    # et CLAMPE cette borne. Cas nominal (borne basse > 0) : tous les pas rendus, inchangé au centime.
     rows = "".join(
         f"<tr><td>{esc(st['label'])}</td><td>{esc(st['formule'])}</td>"
         f"<td class='n'>{esc(st['valeur'])}</td>"
         f"<td>{s({'sourcee': 'S', 'estimee': 'E'}.get(st.get('prov'), 'E'))}</td></tr>"
-        for st in calc.get("steps", []))
+        for st in calc.get("steps", [])
+        if not (reg.get("bas_negatif") and st.get("label") == "Prix d'achat maximal admissible"))
     body += (f"<table><tr><th>Étape</th><th>Calcul</th><th class='n'>Valeur</th><th>Nature</th></tr>"
              f"{rows}</table>")
     cf = calc["prix_achat_max"]
+    bas_cell = "non équilibré" if reg.get("bas_negatif") else eur(cf["bas"])
     body += (f"<h3>Prix d'achat maximal admissible {s('E')}</h3>"
              f"<table><tr><th class='n'>Bas</th><th class='n'>Médiane</th><th class='n'>Haut</th>"
              f"<th class='n'>Par m² terrain</th></tr>"
-             f"<tr><td class='n'>{eur(cf['bas'])}</td><td class='n'><b>{eur(cf['central'])}</b></td>"
+             f"<tr><td class='n'>{bas_cell}</td><td class='n'><b>{eur(cf['central'])}</b></td>"
              f"<td class='n'>{eur(cf['haut'])}</td>"
              f"<td class='n'>{esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>")
     # MANDAT_DVF-B Phase 2 — le garde-fou du 2× : le prix d'achat MAX admissible (projection du bilan
@@ -278,7 +354,7 @@ def _bilan_rebours(out: dict) -> str:
     # C9 — le même bilan, en cascade (CA → coûts → marge → terrain), scénario médian
     cascade = _svg_cascade(calc)
     if cascade:
-        body += f"<h3>Le même calcul, en un coup d'œil</h3>{cascade}"
+        body += f"<h3>Le même calcul, en un coup d'œil {s('E')}</h3>{cascade}"   # M143 Lot 5 — étiqueté Estimé comme le reste
     e = calc.get("ecart_negociation")
     if e:
         if e["sens"] == "surcout":
@@ -306,7 +382,10 @@ def _vigilance(out: dict) -> str:
     if viab:
         cr = viab.get("cout_raccordement") or {}
         body += (f"<h3>Viabilisation et raccordements</h3>"
-                 f"<p>Indicateur de viabilisation : <b>{esc(viab.get('score'))}/100</b> — "
+                 # M143 Lot 5 — dire ce que l'indicateur MESURE (au lieu d'un /100 décoratif) :
+                 # proximité et disponibilité des réseaux (eau, électricité, voirie, assainissement).
+                 f"<p>Indicateur de viabilisation (proximité des réseaux — eau, électricité, voirie, "
+                 f"assainissement ; 100 = tout à pied d'œuvre) : <b>{esc(viab.get('score'))}/100</b> — "
                  f"{esc(viab.get('libelle'))}.</p>"
                  f"<p class='note'>{esc(cr.get('niveau'))}</p>"
                  f"<p class='note'>{esc(cr.get('assainissement'))}</p>")
