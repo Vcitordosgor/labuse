@@ -37,7 +37,10 @@ from .ortho_tiles import MILLESIME, tile_path
 DDL = """
 CREATE TABLE IF NOT EXISTS ortho_detections (
   id            serial PRIMARY KEY,
-  type          varchar(12) NOT NULL,           -- 'piscine' | 'pv'
+  type          varchar(12) NOT NULL,           -- 'piscine' | 'pv' (⚰️ 'pv' ABANDONNÉ, SOLAIRE M2 :
+                                                 -- détection colorimétrique V0 précision 0 %, candidats
+                                                 -- purgés ; ne relancer ortho_pv.py qu'avec un modèle
+                                                 -- entraîné + jeu étiqueté — cf. qa/solaire/PV_PHASE1.md)
   geom          geometry(Polygon, 4326) NOT NULL,
   geom_2975     geometry(Polygon, 2975),
   surface_m2    double precision,

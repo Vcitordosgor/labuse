@@ -1,0 +1,474 @@
+[
+ {
+  "crop_idx": 0,
+  "idu": "97401000AR0856",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.37,
+  "surf": 4.0
+ },
+ {
+  "crop_idx": 1,
+  "idu": "97401000AN0149",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.41,
+  "surf": 4.0
+ },
+ {
+  "crop_idx": 2,
+  "idu": "97401000AD0659",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.43,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 3,
+  "idu": "97401000AM1721",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.44,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 4,
+  "idu": "97401000AM1409",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.45,
+  "surf": 6.0
+ },
+ {
+  "crop_idx": 5,
+  "idu": "97401000AR0233",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.46,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 6,
+  "idu": "97401000AD1212",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.48,
+  "surf": 6.0
+ },
+ {
+  "crop_idx": 7,
+  "idu": "97401000AM1645",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.49,
+  "surf": 6.0
+ },
+ {
+  "crop_idx": 8,
+  "idu": "97401000AH0134",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.5,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 9,
+  "idu": "97401000AM0773",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.51,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 10,
+  "idu": "97401000AR1237",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.53,
+  "surf": 6.0
+ },
+ {
+  "crop_idx": 11,
+  "idu": "97401000AI0546",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.55,
+  "surf": 8.0
+ },
+ {
+  "crop_idx": 12,
+  "idu": "97401000AS0436",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.56,
+  "surf": 20.0
+ },
+ {
+  "crop_idx": 13,
+  "idu": "97401000AR0439",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.57,
+  "surf": 15.0
+ },
+ {
+  "crop_idx": 14,
+  "idu": "97401000AN0671",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.58,
+  "surf": 7.0
+ },
+ {
+  "crop_idx": 15,
+  "idu": "97401000AS0453",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.59,
+  "surf": 5.0
+ },
+ {
+  "crop_idx": 16,
+  "idu": "97401000AD1001",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.61,
+  "surf": 29.0
+ },
+ {
+  "crop_idx": 17,
+  "idu": "97401000AS0938",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.61,
+  "surf": 14.0
+ },
+ {
+  "crop_idx": 18,
+  "idu": "97401000AR0196",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.62,
+  "surf": 11.0
+ },
+ {
+  "crop_idx": 19,
+  "idu": "97401000AM1122",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.63,
+  "surf": 21.0
+ },
+ {
+  "crop_idx": 20,
+  "idu": "97401000AR0943",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.64,
+  "surf": 16.0
+ },
+ {
+  "crop_idx": 21,
+  "idu": "97401000AP1193",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.65,
+  "surf": 12.0
+ },
+ {
+  "crop_idx": 22,
+  "idu": "97401000AT0026",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.66,
+  "surf": 18.0
+ },
+ {
+  "crop_idx": 23,
+  "idu": "97401000AD0113",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.68,
+  "surf": 35.0
+ },
+ {
+  "crop_idx": 24,
+  "idu": "97401000AT0738",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.68,
+  "surf": 10.0
+ },
+ {
+  "crop_idx": 25,
+  "idu": "97402000AB0842",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.69,
+  "surf": 10.0
+ },
+ {
+  "crop_idx": 26,
+  "idu": "97401000AI0758",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.71,
+  "surf": 11.0
+ },
+ {
+  "crop_idx": 27,
+  "idu": "97401000AR1077",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.72,
+  "surf": 18.0
+ },
+ {
+  "crop_idx": 28,
+  "idu": "97401000AN1003",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.74,
+  "surf": 24.0
+ },
+ {
+  "crop_idx": 29,
+  "idu": "97401000AD1062",
+  "grp": "A_detecte",
+  "detecte": true,
+  "conf": 0.76,
+  "surf": 32.0
+ },
+ {
+  "crop_idx": 30,
+  "idu": "97422000AH0343",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 31,
+  "idu": "97410000AR1469",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 32,
+  "idu": "97422000BW1695",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 33,
+  "idu": "97416000EN1472",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 34,
+  "idu": "97421000AL0275",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 35,
+  "idu": "97414000EL1464",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 36,
+  "idu": "97418000AY0749",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 37,
+  "idu": "97409000AB0284",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 38,
+  "idu": "97411000HM0103",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 39,
+  "idu": "97415000AB0480",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 40,
+  "idu": "97415000AD0044",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 41,
+  "idu": "97411000HR0060",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 42,
+  "idu": "97412000BK1693",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 43,
+  "idu": "97416000DO0273",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 44,
+  "idu": "97415000AX0886",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 45,
+  "idu": "97408000AX0177",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 46,
+  "idu": "97422000EM0261",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 47,
+  "idu": "97418000AZ0451",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 48,
+  "idu": "97415000EO0742",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 49,
+  "idu": "97416000CR1231",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 50,
+  "idu": "97402000AM0027",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 51,
+  "idu": "97411000HL0032",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 52,
+  "idu": "97412000BK1696",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 53,
+  "idu": "97415000EY0375",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 54,
+  "idu": "97414000CV0223",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 55,
+  "idu": "97415000DH0174",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 56,
+  "idu": "97402000AC0317",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 57,
+  "idu": "97411000CD1083",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ },
+ {
+  "crop_idx": 58,
+  "idu": "97411000CE0780",
+  "grp": "B_grandtoit",
+  "detecte": false,
+  "conf": null,
+  "surf": null
+ }
+]

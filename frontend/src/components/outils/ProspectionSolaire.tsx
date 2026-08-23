@@ -82,6 +82,12 @@ export function ProspectionSolaire() {
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
         Les parcelles au <b style={{ color: TOKENS.mint }}>meilleur potentiel solaire</b> — pour
         démarcher l'installation photovoltaïque. {data?.bandeau ?? GEL}
+        {/* SOLAIRE M2 (renoncement) — le manque ASSUMÉ : pas de détection PV fiable, on le DIT plutôt
+            que de servir un filtre faux (essai V0 : précision 0 %, qa/solaire/PV_PHASE1.md). */}
+        <span className="mt-1 block text-[9.5px] text-txt-dim">
+          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span>{' '}
+          Présence de panneaux existants <b>non détectée</b> — vérification sur photo aérienne à la charge du démarcheur.
+        </span>
         {data && <span className="mt-1 block text-[9.5px] text-txt-dim">{data.source} · maj {data.maj}</span>}
       </div>
 

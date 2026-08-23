@@ -887,8 +887,9 @@ function EquipementsBadges({ idu }: { idu: string }) {
   const b: [string, string, string][] = []
   if (e['piscine']) b.push([`Piscine ~${e['piscine_m2']} m²`, '#4fc3d9',
     `détection ortho — confiance ${e['piscine_confiance']}`])
-  if (e['pv_detecte']) b.push([`PV détecté${e['pv_m2'] ? ` ~${e['pv_m2']} m²` : ''}`, '#5CE6A1', 'panneaux photovoltaïques (candidat scoré)'])
-  if (e['pv_probable_ces']) b.push(['CES probable', '#e8b84d', 'chauffe-eau solaire probable (4-8 m²)'])
+  // SOLAIRE M2 (renoncement) : badges « PV détecté » / « CES probable » RETIRÉS — la détection PV V0
+  // (colorimétrie) est abandonnée (précision 0 % mesurée, cf. qa/solaire/PV_PHASE1.md). Le back ne sert
+  // plus pv_detecte/pv_probable_ces ; aucun panneau n'est affirmé faute de détecteur fiable.
   if (e['pente_moy_deg'] != null) b.push([`Pente ${Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}°`,
     e['flag_terrassement_lourd'] ? '#e8734d' : 'var(--lab)',
     `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}`])

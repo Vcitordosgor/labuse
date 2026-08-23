@@ -26,10 +26,17 @@ CREATE TABLE IF NOT EXISTS parcel_equipements (
   piscine             boolean,
   piscine_surface_m2  double precision,
   piscine_confiance   double precision,
-  pv_detecte          boolean,
-  pv_surface_m2       double precision,
-  pv_confiance        double precision,
-  pv_probable_ces     boolean,          -- chauffe-eau solaire probable (Lot 4, 4-8 m²)
+  -- ⚰️ PV MORT DEUX FOIS — ne PAS ressusciter ces colonnes sans un jeu ÉTIQUETÉ :
+  --   1) proxy communal 'commune_forte_densite' (jamais une détection) ;
+  --   2) détection colorimétrique V0 (ortho_pv.py) — précision 0 % mesurée (SOLAIRE M2, essai 51
+  --      parcelles : 28 faux positifs / 0 vrai — piscines, toits bleutés, serres, terrains de sport).
+  -- Renoncement acté : pv_detecte n'est plus matérialisé ni servi (cf. qa/solaire/PV_PHASE1.md).
+  -- Colonnes conservées inertes (aucune migration destructive) ; le seul feu vert = un modèle de
+  -- segmentation entraîné sur ~500 toits PV annotés (mandat DONNÉE), pas une heuristique.
+  pv_detecte          boolean,          -- INERTE (renoncement SOLAIRE M2)
+  pv_surface_m2       double precision,  -- INERTE
+  pv_confiance        double precision,  -- INERTE
+  pv_probable_ces     boolean,          -- INERTE (ex chauffe-eau solaire probable, Lot 4)
   updated_at          timestamptz DEFAULT now()
 );
 """
@@ -111,34 +118,14 @@ def precision_validee(session: Session, type_: str) -> float | None:
 
 
 def materialiser_pv(session: Session, log=print) -> dict[str, Any]:
-    """PV : matérialisé UNIQUEMENT si la précision validée ≥ 75 % (règle mandat) —
-    sinon les candidats restent en base (confiance) sans remonter."""
-    session.execute(text(DDL))
-    cfg = load_yaml_config("detection_ortho")["materialisation"]
-    prec = precision_validee(session, "pv")
-    if prec is None or prec < float(cfg["precision_min_pv"]):
-        return {"pv_materialise": False, "precision_pv": prec,
-                "note": "candidats en base, non matérialisés (validation < 75 % ou "
-                        "insuffisante — /ortho/validation?type=pv, échantillon 150)"}
-    seuil = float(cfg["seuil_confiance_pv"])
-    n = session.execute(text("""
-        WITH retenues AS (
-          SELECT d.idu, d.surface_m2, d.confiance, (d.criteres ->> 'ces') = 'true' AS ces
-          FROM ortho_detections d
-          WHERE d.type = 'pv' AND d.idu IS NOT NULL
-            AND (d.validation = 'ok' OR (d.validation IS NULL AND d.confiance >= :seuil))
-        )
-        INSERT INTO parcel_equipements (idu, pv_detecte, pv_surface_m2, pv_confiance,
-                                        pv_probable_ces, updated_at)
-        SELECT idu, bool_or(NOT ces), sum(surface_m2) FILTER (WHERE NOT ces),
-               max(confiance) FILTER (WHERE NOT ces), bool_or(ces), now()
-        FROM retenues GROUP BY idu
-        ON CONFLICT (idu) DO UPDATE SET
-          pv_detecte = EXCLUDED.pv_detecte, pv_surface_m2 = EXCLUDED.pv_surface_m2,
-          pv_confiance = EXCLUDED.pv_confiance,
-          pv_probable_ces = EXCLUDED.pv_probable_ces, updated_at = now()
-    """), {"seuil": seuil}).rowcount
-    return {"pv_materialise": True, "precision_pv": round(prec, 3), "parcelles_pv": n}
+    """SOLAIRE M2 — RENONCEMENT : la matérialisation PV est DÉSACTIVÉE (no-op).
+
+    La détection PV V0 (colorimétrie, ortho_pv.py) a une précision mesurée de 0 % (essai empirique,
+    qa/solaire/PV_PHASE1.md) : on ne sert pas un filtre qui ment. Les 23 529 candidats V0 ont été
+    purgés. Ce point ne se ré-arme que sur un MODÈLE ENTRAÎNÉ (segmentation + jeu étiqueté ~500 toits),
+    pas sur l'heuristique — d'où le no-op ici (ne réécrit jamais parcel_equipements.pv_*)."""
+    return {"pv_materialise": False, "precision_pv": None,
+            "note": "détection PV V0 abandonnée (précision 0 % ; renoncement SOLAIRE M2)"}
 
 
 def branchements_solaire(session: Session, log=print) -> dict[str, Any]:
