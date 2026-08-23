@@ -278,3 +278,6 @@ Critères d'acceptation. La légende apparaît dès qu'une zone non couverte est
 - Permis : servir un glissant 12 mois en plus du cumul 5 ans (comparateur.py) si Vic préfère lire la dynamique.
 - Densifier : dénormaliser emprise_bati_m2 dans parcel_renouvellement pour afficher un vrai m² bâti en colonne.
 - Densifier : endpoint CSV serveur si l'export complet devient un usage courant.
+- PLU : précalcul nocturne différé (le recalcul est déjà à ~2 s via dryrun_cascade_results). À rouvrir seulement si « toute l'île » s'avère lente en prod, avec le patron residuel_runs + commande labuse plu-precalcul.
+- Courrier : page admin UI (liste des demandes + changement de statut) — les endpoints existent, l'UI reste à faire.
+- Courrier (déploiement) : vérifier si une ancienne table courrier_demandes (déclarée morte en M82) traîne avec des colonnes NOT NULL incompatibles → la dropper en maintenance avant mise en service.
