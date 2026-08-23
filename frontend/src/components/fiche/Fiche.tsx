@@ -649,8 +649,14 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
  *  YAML), plus d'une constante 2500 gravée ici qui divergeait du 2550 serveur (donc du PDF « Note
  *  de financement »). On seed les champs une fois les défauts connus : calculette et PDF portent le
  *  même coût par défaut sur la même parcelle. */
-export function Calculette({ idu, hideSource, prixDemandeExterne }:
-  { idu: string; hideSource?: boolean; prixDemandeExterne?: number | null }) {
+// onResult / hideResult (mandat ETUDIER) : « Étudier un bien » hisse la charge « vos hypothèses » dans
+// SON verdict unique (bascule calibré/hypothèses). Il passe `hideResult` (la calculette ne rend alors
+// que ses RÉGLAGES — coût/marge/VRD — pas son propre bloc-verdict, fini les deux bandeaux) et `onResult`
+// (elle remonte la charge calculée). Défaut = props absentes → usage fiche INCHANGÉ.
+export interface CalcResult { central: number; par_m2_terrain: number; ca_central: number | null; negatif: boolean }
+export function Calculette({ idu, hideSource, prixDemandeExterne, onResult, hideResult }:
+  { idu: string; hideSource?: boolean; prixDemandeExterne?: number | null
+    onResult?: (r: CalcResult | null) => void; hideResult?: boolean }) {
   // M58-P1 (Q5) : `staleTime:Infinity` SANS retry laissait la calculette en « Chargement »
   // DÉFINITIF si /bilan/calculette-defaults échouait une fois. On ajoute un retry et surtout un
   // ÉTAT D'ERREUR explicite avec « Réessayer » (règle DA « les états parlent » — jamais de zone muette).
@@ -674,11 +680,12 @@ export function Calculette({ idu, hideSource, prixDemandeExterne }:
       </div>
     )
   }
-  return <CalculetteBody idu={idu} defauts={defs.data} hideSource={hideSource} prixDemandeExterne={prixDemandeExterne} />
+  return <CalculetteBody idu={idu} defauts={defs.data} hideSource={hideSource} prixDemandeExterne={prixDemandeExterne} onResult={onResult} hideResult={hideResult} />
 }
 
-function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }:
-  { idu: string; defauts: CalculetteDefaults; hideSource?: boolean; prixDemandeExterne?: number | null }) {
+function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, onResult, hideResult = false }:
+  { idu: string; defauts: CalculetteDefaults; hideSource?: boolean; prixDemandeExterne?: number | null
+    onResult?: (r: CalcResult | null) => void; hideResult?: boolean }) {
   const [cout, setCout] = useState<number | null>(defauts.cout_construction_m2)
   const [marge, setMarge] = useState<number | null>(defauts.marge_frais_pct)
   // VRD/aménagements : hypothèse SAISIE, seed du défaut DIT servi (jamais un 0 silencieux).
@@ -719,6 +726,13 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
   const negatif = cf != null && central <= 0                        // l'opération ne dégage aucune valeur
   const principal = Math.max(0, central)                           // borné à 0 en principal
   const [bornBas, bornHaut] = cf != null ? [Number(cf.bas), Number(cf.haut)].sort((a, b) => a - b) : [0, 0]
+  // Mandat ETUDIER : remonter la charge « vos hypothèses » au parent (verdict unique). On rapporte la
+  // CHARGE (mode 'charge') ; en mode embarqué (hideResult) la bascule de mode reste sur 'charge'.
+  useEffect(() => {
+    onResult?.(d?.calculable && cf
+      ? { central, par_m2_terrain: Number(cf.par_m2_terrain), ca_central: d.ca?.central != null ? Number(d.ca.central) : null, negatif }
+      : null)
+  }, [onResult, d, cf, central, negatif])
   return (
     <div data-calculette>
       <p className="label-caps mb-1 flex items-center gap-2">
@@ -741,7 +755,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
                 (fusion « Étudier un bien ») : pas deux fois les mêmes faits. */}
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
-                LABUSE (sourcé) : SDP vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
                 prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
@@ -772,17 +786,22 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
                 ⚠ Coût de construction ({fmtInt(coutSaisi)} €/m²) au-dessus du prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²) — à ces hypothèses, l'opération ne peut pas dégager de valeur pour le terrain.
               </p>
             )}
-            {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte) */}
-            <div className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
-              {([['charge', 'Charge supportable'], ['achat_max', "Prix d'achat max"]] as const).map(([m, l]) => (
-                <button key={m} data-calc-mode={m} onClick={() => setMode(m)}
-                  className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${mode === m ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
+            {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte).
+                Masquée en mode embarqué (hideResult) : le verdict unique du parent porte la charge. */}
+            {!hideResult && (
+              <div className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
+                {([['charge', 'Charge supportable'], ['achat_max', "Prix d'achat max"]] as const).map(([m, l]) => (
+                  <button key={m} data-calc-mode={m} onClick={() => setMode(m)}
+                    className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${mode === m ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
             {/* le RÉSULTAT — M60 P1b : NÉGATIF → verdict en clair (le détail chiffré reste accessible,
-                il ne mène plus) ; sinon principal BORNÉ à 0, fourchette ORDONNÉE bas→haut. */}
+                il ne mène plus) ; sinon principal BORNÉ à 0, fourchette ORDONNÉE bas→haut.
+                Masqué en mode embarqué (hideResult) : le parent (« Étudier un bien ») rend LE verdict. */}
+            {!hideResult && (
             <div data-calc-resultat className={`mt-2.5 rounded-lg border px-3 py-2 ${negatif ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
               {negatif ? (
                 <>
@@ -834,6 +853,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
                 </>
               )}
             </div>
+            )}
             {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel. Masqué quand le parent (constat)
                 pilote le prix : UN seul champ dans le parcours fusionné, jamais deux. */}
             {!prixPilote && (
@@ -852,7 +872,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
                 affichage seul). La route et le Copilote NE bougent pas dans ce mandat :
                 l'argumentaire reste servi sur demande explicite (ReponseInline.tsx). Fermer la route
                 est une décision séparée, liée à l'arbitrage de posture d'exposition (dette F4). */}
-            {mode === 'charge' && achat && (
+            {!hideResult && mode === 'charge' && achat && (
               <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
                   ? <>✓ Supportable — le terrain peut valoir {fmtEurCompact(achat.prix_demande_eur)} ; marge de {fmtEurCompact(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{Math.round(achat.ecart_pct)} %) sous votre charge foncière.</>
