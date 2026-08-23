@@ -1,0 +1,133 @@
+==============================================================================
+NOMINAL — mono-U calibrée   —   97422000AD0675
+==============================================================================
+1 · Identification : Le Tampon, section AD n°675, 1969 m²
+
+  -- 2 . Zonage applicable --
+     Uc       | 100% | PLU de Le Tampon, approuvé le 2023-08-11
+  -- 3 . Règles principales (avec articles) --
+     Zone Uc   [moteur dit: constructible_neuf=True]
+        Hauteur maximale            : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46)
+        Emprise au sol              : non réglementé          (Art. Uc9, p.46 : « Non réglementée »)
+        Recul / voirie              : 4 m                     (Art. Uc6.2, p.43 (4 m min, PAS d'optio)
+        Recul / limites séparatives : 3 m                     (Art. Uc7.1, p.44)
+        Pleine terre                : 30 %                    (Art. Uc13.2, p.52 (40 % perméable dont)
+        Stationnement               : 1 place / logement      (Art. Uc12.2 (tableau), p.50-51)
+        > NOTE IMPRIMEE : Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+        > NOTE IMPRIMEE : Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+
+==============================================================================
+B1 multi-zones   —   97422000BV2471
+==============================================================================
+1 · Identification : Le Tampon, section BV n°2471, 4236 m²
+
+  -- 2 . Zonage applicable --
+     Nco      |  50% | PLU de Le Tampon, approuvé le 2023-08-11
+     Ua       |  48% | PLU de Le Tampon, approuvé le 2023-08-11
+     Uav      |   2% | PLU de Le Tampon, approuvé le 2023-08-11
+  -- 3 . Règles principales (avec articles) --
+     Zone Nco: « Règlement non calibré pour cette zone/commune :
+                  règles non vérifiées — se reporter au règlement écrit. »
+     Zone Ua   [moteur dit: constructible_neuf=True]
+        Hauteur maximale            : égout 21 m · faîtage 25 m  (Art. Ua10.2, p.16)
+        Emprise au sol              : non réglementé          (Art. Ua9, p.16 : « Non réglementée »)
+        Recul / voirie              : 4 m                     (Art. Ua6.2, p.13)
+        Recul / limites séparatives : 3 m                     (Art. Ua7.1, p.14)
+        Pleine terre                : 15 %                    (Art. Ua13.2, p.22)
+        Stationnement               : 1 place / logement      (Art. Ua12.2 (tableau), p.20-21)
+        > NOTE IMPRIMEE : Annexes/dépendances : 3,5 m. Bande de 3,60 m en limite séparative : 18 m max
+        > NOTE IMPRIMEE : Annexes/dépendances : 3,5 m. Bande de 3,60 m en limite séparative : 18 m max
+        [X NON IMPRIMEE (coupe [:2]) : Alignement possible (0) OU 4 m min. RD3 (RN3-Ravine Blanche)]
+        [X NON IMPRIMEE (coupe [:2]) : 1 ou 2 limites autorisées (18 m de profondeur max) OU retrai]
+        [X NON IMPRIMEE (coupe [:2]) : Habitat individuel. Collectif hors LLS : 0,5 place par chamb]
+        [X NON IMPRIMEE (coupe [:2]) : 20 % perméable dont 15 % pleine terre plantée (3 strates).]
+     Zone Uav   [moteur dit: constructible_neuf=True]
+        Hauteur maximale            : égout 16 m · faîtage 20 m  (Art. Ua10.2, p.16 (« Dans le secteur U)
+        Emprise au sol              : non réglementé          (Art. Ua9, p.16 : « Non réglementée »)
+        Recul / voirie              : 4 m                     (Art. Ua6.2, p.13)
+        Recul / limites séparatives : 3 m                     (Art. Ua7.1, p.14)
+        Pleine terre                : 20 %                    (Art. Ua13.2, p.23 (« En secteur Uav, c)
+        Stationnement               : 1 place / logement      (Art. Ua12.2 (tableau), p.20-21)
+        > NOTE IMPRIMEE : Secteur d'habitation de densité moyenne (caractère de zone p.9). Bande 3,60 
+        > NOTE IMPRIMEE : Secteur d'habitation de densité moyenne (caractère de zone p.9). Bande 3,60 
+        [X NON IMPRIMEE (coupe [:2]) : 30 % perméable dont 20 % pleine terre.]
+
+==============================================================================
+B2 conflit de source   —   97422000CN1677
+==============================================================================
+1 · Identification : Le Tampon, section CN n°1677, 14287 m²
+
+  -- 2 . Zonage applicable --
+     Nco      |  64% | PLU de Le Tampon, approuvé le 2023-08-11
+     Uc       |  35% | PLU de Le Tampon, approuvé le 2023-08-11
+  -- 3 . Règles principales (avec articles) --
+     Zone Nco: « Règlement non calibré pour cette zone/commune :
+                  règles non vérifiées — se reporter au règlement écrit. »
+     Zone Uc   [moteur dit: constructible_neuf=True]
+        Hauteur maximale            : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46)
+        Emprise au sol              : non réglementé          (Art. Uc9, p.46 : « Non réglementée »)
+        Recul / voirie              : 4 m                     (Art. Uc6.2, p.43 (4 m min, PAS d'optio)
+        Recul / limites séparatives : 3 m                     (Art. Uc7.1, p.44)
+        Pleine terre                : 30 %                    (Art. Uc13.2, p.52 (40 % perméable dont)
+        Stationnement               : 1 place / logement      (Art. Uc12.2 (tableau), p.50-51)
+        > NOTE IMPRIMEE : Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+        > NOTE IMPRIMEE : Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+
+==============================================================================
+B3 RNU Saint-Philippe   —   97417000AC0003
+==============================================================================
+1 · Identification : Saint-Philippe, section AC n°3, 5808914 m²
+
+  -- 2 . Zonage applicable --
+     « Zonage non résolu dans les couches numérisées (GPU) à la date
+       d'édition — vérification en mairie indispensable. »
+  -- 3 . Règles principales (avec articles) --
+
+==============================================================================
+B4 commune non calibrée (Saint-André)   —   97409000AB0876
+==============================================================================
+1 · Identification : Saint-André, section AB n°876, 468 m²
+
+  -- 2 . Zonage applicable --
+     UC       | 100% | GPU 97409_20190228
+  -- 3 . Règles principales (avec articles) --
+     Zone UC: « Règlement non calibré pour cette zone/commune :
+                  règles non vérifiées — se reporter au règlement écrit. »
+
+==============================================================================
+B5 zone gelée Us (6/11 gravé)   —   97416000EP1044
+==============================================================================
+1 · Identification : Saint-Pierre, section EP n°1044, 16 m²
+
+  -- 2 . Zonage applicable --
+     Us       | 100% | PLU de Saint-Pierre, approuvé le 2024-06-25
+  -- 3 . Règles principales (avec articles) --
+     Zone Us   [moteur dit: constructible_neuf=False]
+        Hauteur maximale            : égout 6 m · faîtage 11 m  (Art. Us3 §5 (« 5/ Hauteur — Règle géné)
+        > NOTE IMPRIMEE : Règle générale LOGEMENT : 6 m égout/acrotère, 11 m faîtage (Art. Us3 §5, p.1
+        > NOTE IMPRIMEE : Règle générale LOGEMENT : 6 m égout/acrotère, 11 m faîtage (Art. Us3 §5, p.1
+        [X NON IMPRIMEE (coupe [:2]) : Zone urbaine peu dense GELÉE provisoirement (construction ne]
+
+==============================================================================
+B6 ZAC Renaissance III   —   97415000CW1073
+==============================================================================
+1 · Identification : Saint-Paul, section CW n°1073, 5469 m²
+
+  -- 2 . Zonage applicable --
+     AU3a     |  99% | PLU de Saint-Paul, approuvé le 2012-09-27
+     Nto      |   1% | PLU de Saint-Paul, approuvé le 2012-09-27
+  -- 3 . Règles principales (avec articles) --
+     Zone AU3a   [moteur dit: constructible_neuf=True]
+        Hauteur maximale            : égout 15 m · faîtage 19 m  (Zone U3a, Art. 10.2, p.110-112)
+        Emprise au sol              : non réglementé          (Art. 9, p.110)
+        Recul / voirie              : 0 m                     (Art. 6, zone U3a, p.106)
+        Recul / limites séparatives : 3 m                     (Art. 7.2, p.107-108)
+        Pleine terre                : 20 %                    (Art. 13.1, p.119-121 — « pourcentage m)
+        Stationnement               : 1,5 place / logement    (Art. 12.2, p.116-118 (U3a, U3b : 1,5 p)
+        > NOTE IMPRIMEE : Sous-cas : hé 18 / hf 22 (secteur spécifique).
+        > NOTE IMPRIMEE : Sous-cas : hé 18 / hf 22 (secteur spécifique).
+        [X NON IMPRIMEE (coupe [:2]) : à l'alignement ; ZAC Savane des Tamarins : retrait 3 m possi]
+        [X NON IMPRIMEE (coupe [:2]) : CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité). ]
+     Zone Nto: « Règlement non calibré pour cette zone/commune :
+                  règles non vérifiées — se reporter au règlement écrit. »
+
