@@ -30,12 +30,14 @@ SECTEUR_KEYS = ["Nord", "Ouest", "Sud", "Est"]
 
 #: hypothèse M22 par défaut (surface_unite_m2 du formulaire M22Programme — la vérité reste
 #: le formulaire, pré-rempli et éditable).
-#: M143 Lot 4 — commentaire rectifié : ce coefficient est le MÊME objet physique que
-#: `PROGRAMME_CIRCULATION_COEF` (modules.py) — la circulation surface utile → SDP — mais les DEUX
-#: valeurs ont divergé : M133 a porté faisabilite_sens2 de +15 % à +20 % (le +15 % « sous-estimait
-#: le besoin »), SANS toucher ce M22_CIRCULATION resté à +15 %. Ils ne sont donc PLUS alignés (l'ancien
-#: commentaire « comme faisabilite_sens2 » était devenu faux). Valeur laissée à 1,15 : l'unification
-#: (1,15 → 1,20, +4,3 % de SDP-besoin au cadrage projet) est un arbitrage Vic, pas un correctif d'audit.
+#: M143 Lot 4 (arbitrage) — commentaire rectifié à l'ÉTAT RÉEL : ce coefficient est le MÊME objet
+#: physique que `PROGRAMME_CIRCULATION_COEF` (modules.py, 1,20) — la circulation surface utile → SDP.
+#: MAIS `derive_sdp_besoin` (son seul usage) n'est appelé NULLE PART (repo entier) : depuis M120 le
+#: cadrage filtre sur la FACETTE `sdpMin` saisie (sdp_residuelle ≥ sdpMin), jamais un besoin dérivé
+#: d'un programme. `M22_CIRCULATION` (+ `M22_SURFACE_UNITE_M2`, `derive_sdp_besoin`) sont donc du CODE
+#: MORT : la valeur 1,15 n'entre dans aucune requête servie → l'écart 1,15/1,20 a ZÉRO effet runtime
+#: (mesuré : 0 parcelle quitte le vivier, 0 projet existant change). Décision Vic remontée (M143 Lot 4) :
+#: supprimer le mort, ou faire lire 1,20 par référence. Non modifié ici (STOP chiffré : mesure = zéro).
 M22_SURFACE_UNITE_M2 = 60.0
 M22_CIRCULATION = 1.15
 

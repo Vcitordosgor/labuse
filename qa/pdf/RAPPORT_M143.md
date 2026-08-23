@@ -90,13 +90,41 @@ Même grandeur, même sens, **valeurs divergentes** : M133 (arbitrage Vic) a por
 `M22_CIRCULATION` resté à +15 %. Le commentaire `projet_schema.py:32` (« +15 % … **comme
 faisabilite_sens2** ») était donc devenu **faux**.
 
-- **Commentaire rectifié** (`projet_schema.py`) : dit l'état réel (même objet, divergence depuis M133,
-  valeur laissée à 1,15 en attente d'arbitrage). **La valeur 1,15 n'est PAS changée.**
-- **STOP sur l'unification, remonté à Vic** : si l'on aligne `M22_CIRCULATION` sur 1,20 (la valeur
-  jugée juste par M133), le **SDP-besoin du cadrage projet monte de +4,3 %** (1,20/1,15). Effet
-  concret : à programme égal, le `sdpMin` dérivé est plus élevé → **moins de parcelles** satisfont le
-  cadrage (le cadrage devient plus sélectif). Ce n'est pas un correctif d'audit — c'est un arbitrage
-  produit. **Vic tranche.**
+- **Commentaire rectifié** (`projet_schema.py`) : dit l'état réel. **La valeur 1,15 n'est PAS changée.**
+
+### Arbitrage (mandat suite) — unifier à 1,20 : les deux mesures → **STOP, zéro impact (code mort)**
+
+Avant d'appliquer, les deux mesures demandées. **La surprise : `M22_CIRCULATION` (1,15) est du CODE
+MORT.** `derive_sdp_besoin` — son seul usage — n'est appelé **NULLE PART** (grep repo entier :
+`src`, `tests`, `qa`, `frontend` = 0 appelant). Depuis M120, le cadrage filtre sur la **facette
+`sdpMin` saisie** (`sdp_residuelle ≥ sdpMin`, `filters.ts:63`, `projets.py:358`), jamais un besoin
+dérivé d'un programme. Le coefficient 1,15 n'entre donc dans **aucune requête servie**.
+
+| Mesure | Attendu (prémisse mandat) | **Mesuré** |
+|---|---|---|
+| 1 · parcelles quittant le vivier (île) | « combien » | **0** — le coef n'est dans aucune requête de cadrage |
+| 1 · QA P1-P4 (N avant/après) | N avant / N après | **identique** — P132-135 / P181-184 n'ont même **pas** de facette `sdpMin` (`None`) |
+| 2 · projets existants (N relu live) | « chiffre-le, signaler à l'écran ? » | **0 change** — les 13 projets à `sdpMin` filtrent sur la facette stockée, pas le coef |
+
+Preuve directe : `derive_sdp_besoin(40 logts)` répond bien 2 760 m² (1,15) → 2 880 m² (1,20), **mais
+0 appelant** ⇒ effet runtime nul. Le seul coefficient de circulation **vivant** est
+`PROGRAMME_CIRCULATION_COEF` (1,20), déjà la valeur cible, alimenté explicitement par le front
+(`M22Programme.tsx:24`, `coef_circulation = 1 + circulation_pct/100`, défaut 1,20) sur `POST /programme`.
+
+**Le « deux valeurs pour un objet » est un mensonge de SOURCE, à effet runtime ZÉRO.** L'unification
+ne retire donc aucun faux positif du cadrage (le cadrage n'utilise ni 1,15 ni 1,20). **Je n'applique
+rien : STOP chiffré, la mesure surprend (mandat).** Deux options propres pour Vic — même résultat
+runtime (rien ne consomme 1,15) :
+
+- **A · supprimer le code mort** (`derive_sdp_besoin` + `M22_SURFACE_UNITE_M2` + `M22_CIRCULATION`) →
+  source unique = `PROGRAMME_CIRCULATION_COEF`. Le plus propre : le mensonge disparaît avec sa moitié
+  morte. **Recommandé** (rien ne le consomme, aucune « raison de portée » ne le fait survivre).
+- **B · lire 1,20 par référence** (`M22_CIRCULATION = PROGRAMME_CIRCULATION_COEF`) si la fonction doit
+  survivre pour une reprise future → une seule valeur, aucune duplication, mais garde du code mort.
+
+Le contrôle « les deux chemins donnent le même besoin sur la même parcelle » n'est pas applicable en
+l'état : le cadrage projet ne dérive **pas** de besoin d'un programme (facette directe) ; seul
+`POST /programme` le fait, et il est déjà à 1,20. **Vic tranche A ou B.**
 
 ---
 
