@@ -158,10 +158,15 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
                        compte_id: int | None = None, source: str | None = None,
                        lien: str | None = None, idu: str | None = None,
                        dedup: str | None = None, demo: bool = False,
-                       envoi_statut: str = "na") -> int:
+                       envoi_statut: str = "na", permanent: bool = False) -> int:
     """Insère UNE notification dans event_log si dédup + plafond l'autorisent. Retourne l'id créé, ou
     0 si dédupliqué/plafonné. `dedup` : clé stable (ex. 'veille:12:2026-08-14') — même clé le même jour
     ne s'empile pas. `kind` hors _MARKET_KINDS = cloisonné au compte (NULL = pilote/admin, jamais client).
+
+    `permanent` (fix veille-notifs #3) : pour un FAIT UNIQUE (ex. un permis, clé (idu, permit_id)), la
+    dédup est PERMANENTE (NOT EXISTS sur la clé, toutes dates) — un rejeu N'EMPILE JAMAIS un doublon,
+    comme les kinds bascule/bodacc (NOT EXISTS sur le tuple de run). Défaut = fenêtre jour (rappels
+    récurrents, ex. fraîcheur `source:date`).
 
     M85-B — LE REGISTRE fait loi : un `kind` non déclaré (ni type de registre, ni kind historique connu)
     est REFUSÉ (ValueError). Personne n'ajoute un envoi hors inventaire."""
@@ -170,9 +175,10 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
         log.error("NOTIF REFUSÉE — kind/type « %s » non déclaré au registre (M85-B).", kind)
         raise ValueError(f"type de notification non déclaré au registre : {kind!r}")
     _ensure_cols(db)
+    _fenetre = "" if permanent else "AND ts::date = now()::date "   # #3 : permanent = toutes dates
     if dedup and db.execute(text(
             "SELECT 1 FROM event_log WHERE dedup = :d AND compte_id IS NOT DISTINCT FROM :c "
-            "AND ts::date = now()::date LIMIT 1"), {"d": dedup, "c": compte_id}).scalar():
+            + _fenetre + "LIMIT 1"), {"d": dedup, "c": compte_id}).scalar():
         return 0
     n_jour = db.execute(text(
         "SELECT count(*) FROM event_log WHERE kind = :k AND compte_id IS NOT DISTINCT FROM :c "
@@ -332,7 +338,9 @@ def evaluer_suivis(db: Session) -> dict:
                 db, kind="parcelle_suivie", compte_id=cid, source="Permis", idu=idu,
                 titre=f"Nouveau permis sur votre parcelle {court(idu)}",
                 detail=f"{p['type']} {p['permit_id']} déposé le {p['date_depot']}.",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:permis:{idu}:{p['permit_id']}") else 0
+                lien=f"/socle/#parcelle={idu}",
+                # #3 — fait UNIQUE (idu, permit_id) : dédup PERMANENTE, un rejeu ne recrée jamais le doublon.
+                dedup=f"suivi:permis:{idu}:{p['permit_id']}", permanent=True) else 0
         # 3) BODACC sur le propriétaire (personne morale) de la parcelle.
         for b in db.execute(text(
                 "SELECT bp.annonce_id, bp.type_procedure, bp.date_annonce, pm.denomination "
@@ -361,6 +369,15 @@ def evaluer_suivis(db: Session) -> dict:
 
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
+
+def run_precedent_servi(db: Session, servi: str = RUN) -> str | None:
+    """Fix veille-notifs #4 — le run de référence du REJEU vient de la TABLE DES RUNS (le dernier run
+    calculé AVANT le servi), JAMAIS d'une constante (fini le q_v9_m81 codé en dur du rejeu). None si le
+    servi est le seul run connu."""
+    return db.execute(text(
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id <> :s ORDER BY computed_at DESC LIMIT 1"),
+        {"s": servi}).scalar()
+
 
 def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False,
                   rattrapage: bool = False) -> dict:
@@ -1098,7 +1115,8 @@ def _adresse_placeholder(email: str | None) -> bool:
     return (not dom) or dom in _DOMAINES_PLACEHOLDER or e.startswith("ton-email@")
 
 
-def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien", force: bool = False) -> dict:
+def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien", force: bool = False,
+                    dry_run: bool = False) -> dict:
     """Envoie le digest aux comptes actifs, FILTRÉ par préférence e-mail (par type/canal). Garanties :
     anti-double-envoi (last_digest_at + intervalle mini), un digest VIDE ne part pas, désinscription +
     préférences dans chaque e-mail (légal), statut d'envoi tracé (jamais silencieux — motif M84).
@@ -1117,11 +1135,14 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
         "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
         "WHERE c.statut = 'actif' GROUP BY c.id ORDER BY c.id")).mappings().all()
-    envoyes = ignores = echecs = 0
+    envoyes = ignores = echecs = simules = 0
     details: list[dict] = []
 
-    def _note(cid, email, statut, motif):
-        details.append({"compte": cid, "email": email, "statut": statut, "motif": motif})
+    def _note(cid, email, statut, motif, corps=None):
+        d = {"compte": cid, "email": email, "statut": statut, "motif": motif}
+        if corps is not None:
+            d["corps"] = corps[:600]   # #2 — aperçu du corps réel (dry-run : ce qui SERAIT envoyé)
+        details.append(d)
 
     for r in recipients:
         cid, email = r["cid"], r["email"]
@@ -1172,20 +1193,30 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
         # RFC 8058 — désinscription EN UN CLIC (mieux traitée par Gmail qu'un simple lien) : l'URL
         # accepte le POST `List-Unsubscribe=One-Click`. AUCUN en-tête de campagne (X-Campaign, List-ID
         # marketing…) : ce mail est TRANSACTIONNEL, pas une newsletter.
+        if dry_run:
+            # #2 — DRY-RUN : rend ce qui SERAIT envoyé (destinataire, sujet, corps) SANS appeler Brevo
+            # ni avancer last_digest_at. C'est la brique de recette VPS (tester ≠ envoyer).
+            simules += 1
+            _note(cid, email, "simulé", f"{len(evs)} événement(s) — sujet « {sujet} »", corps=corps)
+            continue
         res = send_email(email, sujet, corps, body_html=html,
                          headers={"List-Unsubscribe": f"<{lien_desabo}>",
                                   "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"})
         if res.ok:
             envoyes += 1
             _note(cid, email, "envoyé", f"{len(evs)} événement(s)" + (f" + {marche['total']} marché" if marche.get("total") else ""))
-        else:                                                  # échec tracé, jamais silencieux
+            # #5 — last_digest_at n'avance QUE si l'envoi a RÉUSSI : un échec Brevo ne se déguise plus en
+            # « déjà envoyé » (l'anti-double-envoi laisse donc le prochain cron réessayer).
+            db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
+                            "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
+        else:                                                  # #5 — échec VISIBLE : loggé en clair + compté, jamais avalé
             echecs += 1
             _note(cid, email, "échec", f"envoi refusé : {res.detail}")
-            log.warning("DIGEST non envoyé — compte=%s cause=%s", cid, res.detail)
-        db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
-                        "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
+            log.error("DIGEST ÉCHEC ENVOI — compte=%s email=%s cause=%s (last_digest_at NON avancé → réessai)",
+                      cid, email, res.detail)
     db.commit()
-    return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "details": details}
+    return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "simules": simules,
+            "dry_run": dry_run, "details": details}
 
 
 # ─────────────── M85-B · l'ANNONCE (chaîne 3) : aperçu obligatoire, test à soi, trace ───────────────

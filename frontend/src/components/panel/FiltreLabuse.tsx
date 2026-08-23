@@ -8,11 +8,11 @@
  * Le compteur est SQL-exact (endpoint unifié /filtre) — jamais un calcul client. Chaque facette
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getZonageZones } from '../../lib/api'
-import { countActiveFilters, resumeCriteres } from '../../lib/filters'
+import { getFiltre, getFiltreCount, getZonageZones, saveSearch } from '../../lib/api'
+import { countActiveFilters, filtersToHash, resumeCriteres } from '../../lib/filters'
 import { tierChipLabel } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
@@ -290,7 +290,22 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // store — la fiche continue de le lire).
 
 export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
-  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap } = useApp()
+  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap,
+          zone, setToast, openSurveillance } = useApp()
+  const qc = useQueryClient()
+  // #1 (fix veille-notifs) — LE GESTE MANQUANT : créer une veille de critères DEPUIS les filtres posés.
+  // Enregistre la recherche courante (même chemin que Veille › Critères : saveSearch + filtersToHash),
+  // puis ouvre le volet Critères pour la montrer (au même niveau que Parcelles/Secteurs).
+  const creerVeille = useMutation({
+    mutationFn: () => saveSearch(
+      (resumeCriteres(filters, CLIENT.signaux.labels, 6) || 'Ma veille').slice(0, 80),
+      filtersToHash(filters, zone) || '#f=1'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['searches'] })
+      setToast('Veille créée — retrouvez-la dans Veille › Critères.')
+      openSurveillance('criteres')
+    },
+  })
   const analyseOn = filters.analyseLabuse
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
@@ -540,6 +555,14 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           {live == null ? '…' : live === 0 ? CLIENT.compteur.zero
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
+      )}
+      {/* #1 — « Créer une veille sur cette recherche » : le geste manquant, offert dès qu'un critère
+          est posé. On alerte à la bascule d'une parcelle qui matche (Veille › Critères). */}
+      {nActifs > 0 && (
+        <button data-creer-veille onClick={() => creerVeille.mutate()} disabled={creerVeille.isPending}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/50 bg-mint/[0.08] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-40">
+          {creerVeille.isPending ? 'Création…' : '🔔 Créer une veille sur cette recherche'}
+        </button>
       )}
       </>
       )}
