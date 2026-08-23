@@ -266,3 +266,10 @@ Changements.
 4. Conserver l'accès direct depuis toute fiche (bouton « 1950 »).
 
 Critères d'acceptation. La légende apparaît dès qu'une zone non couverte est visible ; le contour reste visible des deux côtés du curseur ; la frise n'expose que des millésimes qui servent réellement des dalles.
+
+---
+
+## Addendum post-SOCLE (23/08/2026) — où sont les composants
+- « Barre unique parcelle (SOCLE) » = `ParcelInput` (composant existant, omnibox M137) : détection IDU/adresse, autocomplete BAN, IDU résolu via onPick. Ne pas créer de doublon — PIEGES / DENSIFIER / SOLAIRE / COURRIER branchent celui-là.
+- « Pagination (SOCLE) » = `frontend/src/components/ListPagination.tsx` : usePagination(total) + ListPaginationFooter (slot children pour l'export CSV).
+- Cycle de vie overlays = constante `CLOSE_OVERLAYS` dans `store/useApp.ts` : tout nouvel overlay plein écran (ex. tableau Densifier) s'ajoute à cette constante et s'ouvre via une action dédiée façon openCompare().
