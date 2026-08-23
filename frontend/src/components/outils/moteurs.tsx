@@ -490,12 +490,18 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
       </select>)}
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Marché…" big /></div>}
       {d && <>
-        <MuSignal sig={d.market_signal} />
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {/* M137-Z : le signal est HISSÉ dans l'en-tête sticky de la fiche commune (Communes) — on ne le
+            re-rend ici que dans l'usage AUTONOME (sans communeProp) pour ne pas le doublonner. */}
+        {!communeProp && <MuSignal sig={d.market_signal} />}
+        {/* Mandat COMMUNES (fix scroll) : embarqué dans la fiche (communeProp), on NE crée PAS de
+            conteneur de défilement propre — la fiche a un scroll unique et ce div interne le bridait
+            (flex-1 collapsé → contenu sous la ligne de flottaison inatteignable). Autonome = inchangé. */}
+        <div className={communeProp ? 'flex flex-col' : 'flex min-h-0 flex-1 flex-col overflow-y-auto'}>
           {groupes.map(([g, titre]) => {
             const lignes = (d.lignes as Record<string, any>[]).filter((l) => l.groupe === g)
             if (!lignes.length) return null
-            return <div key={g}>
+            // data-anchor : cible des ancres du header sticky de la fiche (prix / dynamique / offre / loyer).
+            return <div key={g} data-anchor={g.toLowerCase()}>
               <p className="label-caps mt-1">{titre}</p>
               {lignes.map((l) => <MuLigne key={l.cle} l={l} />)}
             </div>

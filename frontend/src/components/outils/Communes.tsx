@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { modVelocite, motRarete } from '../../lib/api'
+import { useEffect, useRef, useState } from 'react'
+import { modVelocite, motMarcheCommune, motRarete } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { TOKENS } from '../../lib/tokens'
 import { O6Comparateur } from './blocB'
 import { M18, MarcheCommune } from './moteurs'
 
@@ -20,73 +21,121 @@ function Row({ lbl, val, strong }: { lbl: string; val: string; strong?: boolean 
   )
 }
 
+// Ancres du header sticky (mandat COMMUNES) : sautent aux sections/sous-groupes du corps défilant.
+// prix/dynamique/offre/loyer = sous-groupes de MarcheCommune (data-anchor posé là) ; zan = section ZAN.
+const FICHE_ANCRES: [string, string][] = [
+  ['marche', 'Marché'], ['prix', 'Prix'], ['dynamique', 'Dynamique'],
+  ['offre', 'Offre'], ['zan', 'ZAN'], ['loyer', 'Loyer'],
+]
+
 function CommuneFiche({ commune, onBack }: { commune: string; onBack: () => void }) {
   const setCommune = useApp((s) => s.setCommune)
   const setModule = useApp((s) => s.setModule)
   const rar = useQuery({ queryKey: ['communes-rarete'], queryFn: motRarete })
   const vel = useQuery({ queryKey: ['communes-velocite'], queryFn: () => modVelocite() })
+  // Signal marché pour l'en-tête sticky — MÊME clé que MarcheCommune (React Query dédoublonne, 0 fetch en plus).
+  const mar = useQuery({ queryKey: ['mu-marche', commune], queryFn: () => motMarcheCommune(commune) })
   const r = (rar.data?.communes ?? []).find((c) => c['commune'] === commune) as Record<string, any> | undefined
   const v = (vel.data?.communes ?? []).find((c) => c['commune'] === commune) as Record<string, any> | undefined
   const homogene = vel.data?.['communes_homogenes'] as boolean | undefined
+  const sig = mar.data?.['market_signal'] as Record<string, any> | undefined
+  const sigLabel = sig?.['disponible'] ? String(sig['label']) : null
+  const sigCol = sigLabel === 'favorable' ? TOKENS.mint : sigLabel === 'prudence' ? TOKENS.stEcartee : TOKENS.stCreuser
+
+  // Fix du scroll (mandat) : le corps est le SEUL conteneur défilant ; le header reste (sticky/shrink-0),
+  // les ancres y sautent via scrollIntoView sur le corps.
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const jump = (id: string) => {
+    const el = bodyRef.current?.querySelector(`[data-anchor="${id}"]`)
+    if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <div className="flex items-center justify-between gap-2">
-        <button data-communes-retour onClick={onBack} className="text-[11px] text-mint hover:underline">‹ Toutes les communes</button>
-        <button data-communes-parcelles onClick={() => { setCommune(commune); setModule(null) }}
-          className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
-          Voir ses parcelles →
-        </button>
-      </div>
-      <h3 className="text-[15px] font-semibold text-txt-hi">{commune}</h3>
-
-      {/* RARETÉ & ZAN — M137-Z : le STOCK porte « foncier » ; « reste ZAN » = un droit à artificialiser.
-          audit-zan : l'enveloppe ZAN de l'ex-Simulateur ZAN vit désormais ICI (budget en %). */}
-      <section className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <p className="label-caps text-[9.5px]">Rareté &amp; ZAN</p>
-        {r ? (
-          <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
-            <Row lbl="Foncier repéré — stock de parcelles promues" val={fmt(r['stock_opportunites_ha'], ' ha')} strong />
-            {/* Budget ZAN en % D'ABORD (c'est lui qui parle), caveat ESTIMÉ collé au chiffre. */}
-            {r['pct_budget_consomme'] != null && (
-              <div className="mt-0.5 rounded-md bg-surface-3 px-2 py-1">
-                <div className="flex items-baseline gap-1.5">
-                  <b className={`tnum text-[14px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-st-creuser'}`}>{r['pct_budget_consomme']} %</b>
-                  <span className="text-[10px] text-txt-mut">du budget ZAN consommé</span>
-                  <span className={`ml-auto tnum text-[11px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-txt'}`}>{r['pct_budget_restant']} % restant</span>
-                </div>
-                <p className="mt-0.5 text-[9px] leading-snug text-st-creuser"><b>Estimé</b> (règle -50 %, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
-              </div>
-            )}
-            <Row lbl="Droit à artificialiser restant (ZAN, estimé)" val={fmt(r['reste_zan_ha'], ' ha')} />
-            <Row lbl="Budget ZAN 2021-31 (estimé)" val={fmt(r['budget_zan_ha'], ' ha')} />
-            <Row lbl="Rythme de consommation" val={fmt(r['rythme_conso_ha_an'], ' ha/an')} />
-            <Row lbl="Horizon d'épuisement de l'enveloppe ZAN" val={r['horizon_epuisement_ans'] == null ? 'non projetable' : `${r['horizon_epuisement_ans']} ans`} />
-            <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{rar.data?.caveat}</p>
-          </div>
-        ) : <p className="mt-1 text-[11px] text-txt-dim">Donnée ENAF/ZAN indisponible pour cette commune.</p>}
-      </section>
-
-      {/* VÉLOCITÉ — M137-Z : TRANCHE p25-p75 (plus de médiane classée), homogénéité dite. */}
-      <section className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <p className="label-caps text-[9.5px]">Vélocité administrative</p>
-        {v ? (
-          <div className="mt-1 text-[11px] text-txt">
-            <p>Délai d'instruction (dépôt → autorisation) :{' '}
-              <b className="tnum">{fmt(v['delai_p25_mois'])} à {fmt(v['delai_p75_mois'])} mois</b>{' '}
-              <span className="text-txt-dim">(tranche p25–p75, {fmt(v['n_valide'])} dossiers)</span></p>
-            {homogene && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{vel.data?.['note_homogeneite'] as string}</p>}
-          </div>
-        ) : <p className="mt-1 text-[11px] text-txt-dim">Donnée délais indisponible pour cette commune.</p>}
-      </section>
-
-      {/* MARCHÉ — les 9 lignes sourcées, réutilisées via communeProp (une seule source de vérité). */}
-      <section className="flex min-h-0 flex-col">
-        <p className="label-caps text-[9.5px]">Marché</p>
-        <div className="flex min-h-0 flex-col gap-1.5">
-          <MarcheCommune communeProp={commune} />
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* HEADER STICKY — nom + signal marché + ancres. Reste visible pendant le défilement du corps. */}
+      <div className="shrink-0 border-b border-line pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <button data-communes-retour onClick={onBack} className="text-[11px] text-mint hover:underline">‹ Toutes les communes</button>
+          <button data-communes-parcelles onClick={() => { setCommune(commune); setModule(null) }}
+            className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+            Voir ses parcelles →
+          </button>
         </div>
-      </section>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <h3 className="text-[15px] font-semibold text-txt-hi">{commune}</h3>
+          {sigLabel && (
+            <span data-fiche-signal className="rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
+              style={{ color: sigCol, borderColor: `${sigCol}55`, background: `${sigCol}22` }}>
+              signal : {sigLabel}
+            </span>
+          )}
+        </div>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {FICHE_ANCRES.map(([id, lbl]) => (
+            <button key={id} data-fiche-ancre={id} onClick={() => jump(id)}
+              className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">
+              {lbl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CORPS — scroll UNIQUE : toute l'info atteignable à zoom 100 % (le nested-scroll de MarcheCommune,
+          qui bridait, est désactivé en mode embarqué). */}
+      <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pt-2">
+        {/* MARCHÉ — les 9 lignes sourcées (Prix / Dynamique / Offre / Loyer), via communeProp. */}
+        <section data-anchor="marche" className="flex flex-col">
+          <p className="label-caps text-[9.5px]">Marché</p>
+          {/* Réconciliation € ancien (mandat, point 3) : ICI = prix LOCAL (secteur autour de la parcelle
+              centrale, appartements priorisés) ; le tableau des 24 communes = médiane COMMUNE ENTIÈRE.
+              Deux séries légitimes → un écart est normal, pas une erreur. */}
+          <p className="mb-1 text-[9px] leading-snug text-txt-dim">
+            Prix ancien = médiane <b>locale</b> (secteur autour de la parcelle centrale). Le tableau des
+            24 communes affiche la médiane <b>commune entière</b> — les deux diffèrent normalement.
+          </p>
+          <MarcheCommune communeProp={commune} />
+        </section>
+
+        {/* RARETÉ & ZAN — M137-Z : le STOCK porte « foncier » ; « reste ZAN » = un droit à artificialiser.
+            audit-zan : l'enveloppe ZAN de l'ex-Simulateur ZAN vit désormais ICI (budget en %). */}
+        <section data-anchor="zan" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+          <p className="label-caps text-[9.5px]">Rareté &amp; ZAN</p>
+          {r ? (
+            <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
+              <Row lbl="Foncier repéré — stock de parcelles promues" val={fmt(r['stock_opportunites_ha'], ' ha')} strong />
+              {/* Budget ZAN en % D'ABORD (c'est lui qui parle), caveat ESTIMÉ collé au chiffre. */}
+              {r['pct_budget_consomme'] != null && (
+                <div className="mt-0.5 rounded-md bg-surface-3 px-2 py-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <b className={`tnum text-[14px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-st-creuser'}`}>{r['pct_budget_consomme']} %</b>
+                    <span className="text-[10px] text-txt-mut">du budget ZAN consommé</span>
+                    <span className={`ml-auto tnum text-[11px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-txt'}`}>{r['pct_budget_restant']} % restant</span>
+                  </div>
+                  <p className="mt-0.5 text-[9px] leading-snug text-st-creuser"><b>Estimé</b> (règle -50 %, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
+                </div>
+              )}
+              <Row lbl="Droit à artificialiser restant (ZAN, estimé)" val={fmt(r['reste_zan_ha'], ' ha')} />
+              <Row lbl="Budget ZAN 2021-31 (estimé)" val={fmt(r['budget_zan_ha'], ' ha')} />
+              <Row lbl="Rythme de consommation" val={fmt(r['rythme_conso_ha_an'], ' ha/an')} />
+              <Row lbl="Horizon d'épuisement de l'enveloppe ZAN" val={r['horizon_epuisement_ans'] == null ? 'non projetable' : `${r['horizon_epuisement_ans']} ans`} />
+              <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{rar.data?.caveat}</p>
+            </div>
+          ) : <p className="mt-1 text-[11px] text-txt-dim">Donnée ENAF/ZAN indisponible pour cette commune.</p>}
+        </section>
+
+        {/* VÉLOCITÉ — M137-Z : TRANCHE p25-p75 (plus de médiane classée), homogénéité dite. */}
+        <section className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+          <p className="label-caps text-[9.5px]">Vélocité administrative</p>
+          {v ? (
+            <div className="mt-1 text-[11px] text-txt">
+              <p>Délai d'instruction (dépôt → autorisation) :{' '}
+                <b className="tnum">{fmt(v['delai_p25_mois'])} à {fmt(v['delai_p75_mois'])} mois</b>{' '}
+                <span className="text-txt-dim">(tranche p25–p75, {fmt(v['n_valide'])} dossiers)</span></p>
+              {homogene && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{vel.data?.['note_homogeneite'] as string}</p>}
+            </div>
+          ) : <p className="mt-1 text-[11px] text-txt-dim">Donnée délais indisponible pour cette commune.</p>}
+        </section>
+      </div>
     </div>
   )
 }
@@ -159,7 +208,9 @@ export function CommunesTablePanel() {
           </div>
           <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto p-3">
+        {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs) + légende permanente.
+            Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
+        <div className="flex min-h-0 flex-1 flex-col p-3">
           <O6Comparateur onSelect={(c) => { setCommunePrefill(c); setCommunesTableOpen(false) }} />
         </div>
       </div>

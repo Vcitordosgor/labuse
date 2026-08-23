@@ -2,7 +2,7 @@
  *  Chaque module vit dans le shell violet du registre ; tokens seulement, wording boussole
  *  (Sourcé/Estimé, « non couvert » dit — jamais un faux RAS). */
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Loading } from '../Loading'
@@ -95,25 +95,39 @@ type Comparateur = {
   indicateurs: Record<string, { libelle: string; direction: string; poids: number; source: string; nature: string }>
   methode: string; avertissement: string
 }
-// communes-tableau — UN SEUL tableau, toutes les colonnes visibles d'un coup, chacune triable par clic
-// sur son en-tête. Plus de composite ni de pondérations (ils n'existaient que l'un pour l'autre).
-// `tip` = « i » d'en-tête (les deux colonnes de prix DOIVENT se distinguer : ancien ≠ neuf).
-const O6_COLS: { k: string; head: string; title: string; tip?: string }[] = [
-  { k: 'stock', head: 'Stock', title: 'Stock d’opportunités — parcelles brûlantes + chaudes du run servi' },
-  { k: 'velocite', head: 'Vélo', title: 'Vélocité admin — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
-  { k: 'permis', head: 'Permis', title: 'Dynamisme permis — nombre de permis SITADEL sur 5 ans' },
-  { k: 'deficit_sru', head: 'SRU', title: 'Déficit SRU — objectif légal − taux de logement social (points)' },
-  { k: 'prix_ancien', head: '€ anc.', title: '€/m² ancien',
-    tip: '€/m² ANCIEN — médiane DVF des ventes strictes (l’ancien, toutes mutations), €/m² bâti. La donnée du Baromètre, servie ici sur les 24 communes.' },
-  { k: 'prix_neuf', head: '€ neuf', title: '€/m² neuf',
+// communes-tableau — UN SEUL tableau, toutes les colonnes visibles d'un coup (rendu en GRAND, overlay
+// plein écran), chacune triable par clic sur son en-tête. Plus de composite ni de pondérations.
+//  • `head` = intitulé LISIBLE (fini « Vélo »/« SRU » cryptiques : le mandat COMMUNES renomme).
+//  • `title`/`tip` = « i » d'en-tête (les deux prix DOIVENT se distinguer : ancien ≠ neuf).
+//  • `best` = sens de la « meilleure » valeur, mis en VERT pour guider l'œil — seulement là où « mieux »
+//    est NON ambigu pour l'investisseur : plus de foncier (max) et instruction plus rapide (min). Les
+//    prix et le déficit SRU restent neutres (pas de faux signal « bon/mauvais »).
+// PERMIS : la donnée servie est un CUMUL SUR 5 ANS (comparateur.py : INTERVAL '5 years'), PAS un
+// glissant 12 mois — la maquette disait « Permis 12 m », c'était illustratif et faux. On étiquette vrai.
+const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
+  { k: 'stock', head: 'Stock foncier', best: 'max',
+    title: 'Stock foncier — parcelles promues LABUSE (brûlantes + chaudes du run servi)' },
+  { k: 'velocite', head: 'Instruction (mois)', best: 'min',
+    title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
+  { k: 'permis', head: 'Permis (5 ans)',
+    title: 'Dynamisme permis — permis SITADEL cumulés sur 5 ans (glissants)' },
+  { k: 'deficit_sru', head: 'Déficit SRU (pts)',
+    title: 'Déficit SRU — objectif légal − taux de logement social, en points' },
+  { k: 'prix_ancien', head: '€/m² ancien',
+    title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre.',
+    tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, appartements priorisés) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
+  { k: 'prix_neuf', head: '€/m² neuf',
+    title: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.',
     tip: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.' },
 ]
-const O6_GRID = 'grid-cols-[minmax(0,1fr)_26px_22px_32px_26px_44px_44px] gap-x-0.5'
+// Rendu en GRAND (overlay ≤ 1100 px) : colonnes larges, tout lisible, zéro scroll horizontal. Dernière
+// piste = affordance de clic (chevron › / « Ouvrir la fiche → » au survol).
+const O6_GRID = 'grid-cols-[minmax(150px,1.6fr)_repeat(6,minmax(78px,1fr))_minmax(104px,0.8fr)] gap-x-2'
 const fmtFr = (v: unknown) => (v == null ? '—' : Number(v).toLocaleString('fr-FR'))
 
 // `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
 export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => void } = {}) {
-  // Tri par CLIC sur l'en-tête ; défaut = stock d'opportunités décroissant (l'entrée la plus parlante :
+  // Tri par CLIC sur l'en-tête ; défaut = stock foncier décroissant (l'entrée la plus parlante :
   // où il y a le plus de foncier à travailler). Re-clic sur la même colonne inverse le sens.
   const [tri, setTri] = useState<{ k: string; dir: 'desc' | 'asc' }>({ k: 'stock', dir: 'desc' })
   const q = useQuery({ queryKey: ['o6'], queryFn: () => jfetch<Comparateur>('/comparateur-communes') })
@@ -125,51 +139,83 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
     if (bv == null) return -1
     return tri.dir === 'desc' ? Number(bv) - Number(av) : Number(av) - Number(bv)
   })
+  // « meilleure valeur » par colonne (invariante au tri) — seulement pour les colonnes à sens clair.
+  const best = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const col of O6_COLS) {
+      if (!col.best) continue
+      const vals = (q.data?.communes ?? []).map((c) => c[col.k]).filter((v) => v != null).map(Number)
+      if (vals.length) m[col.k] = col.best === 'max' ? Math.max(...vals) : Math.min(...vals)
+    }
+    return m
+  }, [q.data])
   const arrow = (k: string) => (tri.k === k ? (tri.dir === 'desc' ? ' ↓' : ' ↑') : '')
+  // Colonne FLEX : bannière (haut) + rangs qui défilent (milieu, scroll unique) + légende PERMANENTE
+  // (bas, jamais poussée hors écran). Le parent (CommunesTablePanel) donne la hauteur bornée.
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <Banner>Où investir : les <b>24 communes</b>, tous les indicateurs sourcés d’un coup. Cliquez un
-        en-tête pour trier, une commune pour ouvrir sa fiche.</Banner>
+        <b> en-tête</b> pour trier, une <b>ligne</b> pour ouvrir sa fiche.</Banner>
       {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className={`sticky top-0 z-10 grid ${O6_GRID} items-end bg-surface-1 py-1`}>
-          <span className="label-caps text-[9px]">Commune</span>
+        <div className={`sticky top-0 z-10 grid ${O6_GRID} items-end border-b border-line-2 bg-bg-3 py-1.5`}>
+          <span className="label-caps text-[10px] text-txt-mut">Commune</span>
           {O6_COLS.map((c) => (
-            <span key={c.k} className="flex items-center justify-end gap-0.5">
+            <span key={c.k} className="flex items-center justify-end gap-1">
               <button data-o6-tri={c.k} onClick={() => clicTri(c.k)} title={c.tip ?? c.title}
-                className={`whitespace-nowrap text-right text-[8.5px] uppercase tracking-tight tabular-nums ${
+                className={`text-right text-[10px] font-medium uppercase leading-tight tracking-tight ${
                   tri.k === c.k ? 'text-mint' : 'text-txt-dim hover:text-txt-mut'}`}>
                 {c.head}{arrow(c.k)}</button>
-              {c.tip && (
-                <Tip side="top" tip={c.tip}>
-                  <span role="button" tabIndex={0} aria-label={c.title}
-                    className="flex h-[11px] w-[11px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-                </Tip>
-              )}
+              <Tip side="top" tip={c.tip ?? c.title}>
+                <span role="button" tabIndex={0} aria-label={c.title}
+                  className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
             </span>
           ))}
+          {/* consigne d'affordance dans l'en-tête (dernière piste = « ouvrir ») */}
+          <span className="text-right text-[9px] normal-case text-txt-dim">cliquez une ligne →</span>
         </div>
         {rows.map((c) => {
           const Cell = onSelect ? 'button' : 'div'
           return (
             <Cell key={String(c['insee'])} data-o6-row title={String(c['commune'])}
               {...(onSelect ? { onClick: () => onSelect(String(c['commune'])) } : {})}
-              className={`grid w-full ${O6_GRID} items-baseline border-b border-line py-1.5 text-left ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
-              <span className="min-w-0 truncate text-[11px] text-txt">{String(c['commune'])}{onSelect ? ' →' : ''}</span>
-              {O6_COLS.map((col) => (
-                <span key={col.k} data-o6-cell={col.k}
-                  className={`tnum text-right font-mono text-[9.5px] ${tri.k === col.k ? 'font-semibold text-txt-hi' : 'text-txt-mut'}`}>
-                  {fmtFr(c[col.k])}</span>
-              ))}
+              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
+              <span className="min-w-0 truncate text-[12px] font-medium text-txt group-hover:text-txt-hi">{String(c['commune'])}</span>
+              {O6_COLS.map((col) => {
+                const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]
+                return (
+                  <span key={col.k} data-o6-cell={col.k}
+                    className={`tnum text-right font-mono text-[11px] ${
+                      isBest ? 'font-semibold text-mint' : tri.k === col.k ? 'font-semibold text-txt-hi' : 'text-txt-mut'}`}>
+                    {fmtFr(c[col.k])}</span>
+                )
+              })}
+              {/* affordance : chevron discret, remplacé par « Ouvrir la fiche → » au survol de la ligne */}
+              {onSelect && (
+                <span className="text-right text-[11px] text-txt-dim">
+                  <span className="group-hover:hidden">›</span>
+                  <span className="hidden whitespace-nowrap text-mint group-hover:inline">Ouvrir la fiche →</span>
+                </span>
+              )}
             </Cell>
           )
         })}
       </div>
-      <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">
-        <b>€/m² ancien</b> = médiane DVF des ventes strictes ; <b>€/m² neuf</b> = prix de sortie du neuf.
-        Une donnée absente reste « — », jamais un zéro inventé.</p>
-    </>
+      {/* LÉGENDE PERMANENTE en pied — plus d'en-tête à deviner. */}
+      <div data-o6-legende className="shrink-0 border-t border-line-2 pt-2 text-[10px] leading-relaxed text-txt-dim">
+        <b className="text-txt-mut">Légende :</b>{' '}
+        <b>Stock foncier</b> = parcelles promues LABUSE ·{' '}
+        <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
+        <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
+        <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
+        <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
+        <b>€/m² neuf</b> = prix de sortie du neuf.
+        <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
+          Une donnée absente reste « — », jamais un zéro inventé.</span>
+      </div>
+    </div>
   )
 }
 
