@@ -336,12 +336,15 @@ def test_pipeline_meta(client):
 
 
 def test_pipeline_crud_flow(client):
-    # Ajout (statut "Repérée" par défaut) ; la carte porte le verdict/score.
+    # Ajout (statut "Repérée" par défaut).
     r = client.post("/pipeline", json={"idu": "97415000AB0002"}).json()
     assert r["ok"] and r["already"] is False
     eid = r["entry"]["id"]
     assert r["entry"]["status"] == "reperee" and r["entry"]["priority"] == "moyenne"
-    assert r["entry"]["verdict"]["opportunity_score"] is not None
+    # M137 Lot 2 / M133 B.6 — les blocs `verdict` et `premium` (score/rang) ne sont PLUS servis dans le
+    # payload CRM (« zéro verdict/score/rang hors application », cf. app.py::_entry_dict). On verrouille
+    # cette absence VOULUE (le test historique attendait entry.verdict.opportunity_score, retiré).
+    assert "verdict" not in r["entry"] and "premium" not in r["entry"]
     # Présente dans la liste et la recherche par parcelle.
     assert any(e["id"] == eid for e in client.get("/pipeline").json())
     look = client.get("/pipeline/parcel/97415000AB0002").json()
