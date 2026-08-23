@@ -705,9 +705,9 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne }
   // A6 : partager les hypothèses courantes avec le bouton PDF (l'export les reflète)
   const setCalculette = useApp((s) => s.setCalculette)
   useEffect(() => {
-    setCalculette(d?.calculable ? { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix } : null)
+    setCalculette(d?.calculable ? { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, vrd_m2: deb.vrd, prix_demande_eur: deb.prix } : null)
     return () => setCalculette(null)
-  }, [d?.calculable, deb.cout, deb.marge, deb.prix, setCalculette])
+  }, [d?.calculable, deb.cout, deb.marge, deb.vrd, deb.prix, setCalculette])
   const cf = d?.charge_fonciere
   const achat = d?.achat
   // M60 P1b — présentation : (1) résultat NÉGATIF → verdict en clair, le détail chiffré ne mène plus ;
@@ -1315,7 +1315,7 @@ export function Fiche({ idu }: { idu: string }) {
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
-  const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
+  const setFlyTo = useApp((s) => s.setFlyTo)        // recentre la carte (porte « Remonter le temps », zoom section)
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
@@ -2557,12 +2557,15 @@ export function Fiche({ idu }: { idu: string }) {
                       <span>Cadastre</span>
                     </a>
                   )}
-                  {f.coords && (
-                    <button className="exp" onClick={() => { setParcelPrefill(idu); setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} title="Ce terrain en 1950 — comparateur temporel">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
-                      <span>1950</span>
-                    </button>
-                  )}
+                  {/* fix/fiche-argumentaire — « 1950 » (simple lanceur du module temporel, DOUBLON de la
+                      porte « Remonter le temps » du tiroir Marché, ligne ~2263) remplacé par
+                      « Argumentaire » : PDF de négociation avec les hypothèses de la calculette (mêmes que
+                      le bouton retiré en M143 lot 2) + VRD saisie (M144). Le module temporel reste
+                      atteignable par la porte Marché — rien perdu. */}
+                  <a className="exp" data-argumentaire href={`/argumentaire/${idu}.pdf${calculette ? `?cout_construction_m2=${calculette.cout_construction_m2}&marge_frais_pct=${calculette.marge_frais_pct}${calculette.vrd_m2 != null ? `&vrd_m2=${calculette.vrd_m2}` : ''}${calculette.prix_demande_eur ? `&prix_demande_eur=${calculette.prix_demande_eur}` : ''}` : ''}`} target="_blank" rel="noreferrer" title="Argumentaire de négociation (PDF) — avec les hypothèses de la calculette">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>
+                    <span>Argumentaire</span>
+                  </a>
                   {f.coords && (
                     <a className="exp" data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" title="Ouvrir dans Google Maps (épingle sur la parcelle)">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
