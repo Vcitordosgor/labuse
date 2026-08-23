@@ -573,24 +573,32 @@ export const useApp = create<AppState>((set) => ({
   compareTouchedAt: null,
   // SOCLE : un ajout sur une sélection PÉRIMÉE (> 15 min) repart de zéro plutôt que d'empiler sur du
   // vieux — sinon « revenir sous 15 min » et « recommencer après » se mélangeraient. On restampe.
+  // COMPARAISON (refonte) : un ajout N'OUVRE PLUS le tableau — l'outil est ancré dans Outils, le
+  // panneau montre les chips et c'est le bouton « Comparer (n/3) » qui ouvre l'overlay. Le clic-carte
+  // (picking) ne fait qu'alimenter la sélection.
   addToCompare: (idu) => set((s) => {
     const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
     const base = frais ? s.compareIdus : []
     const next = base.includes(idu) ? base : [...base, idu].slice(0, 3)
-    return { compareIdus: next, compareOpen: true, view: 'cartes', compareTouchedAt: Date.now() }
+    return { compareIdus: next, view: 'cartes', compareTouchedAt: Date.now() }
   }),
   removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen, compareTouchedAt: Date.now() } }),
-  clearCompare: () => set({ compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null }),
-  setCompareOpen: (v) => set((s) => ({ compareOpen: v, comparePicking: v ? s.comparePicking : false })),
+  // vider NE coupe PAS le picking : on reste dans l'outil, prêt à recliquer la carte.
+  clearCompare: () => set({ compareIdus: [], compareOpen: false, compareTouchedAt: null }),
+  setCompareOpen: (v) => set({ compareOpen: v }),   // le picking reste piloté par l'outil (CompareModule)
+  // COMPARAISON (refonte) : openCompare ouvre désormais l'OUTIL « comparer » (panneau gauche hôte),
+  // ancré dans Outils, carte active à droite — plus l'overlay direct. TTL 15 min appliqué à la
+  // sélection ; picking ON (le clic-carte ajoute). Le tableau, lui, s'ouvre via « Comparer (n/3) ».
   openCompare: () => set((s) => {
     const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
     const ids = frais ? s.compareIdus : []
     return {
-      ...CLOSE_OVERLAYS,                    // ferme la table Communes si elle traînait
+      module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
+      moduleMap: { idus: [], extra: null }, moduleFiche: {},
+      parcours: null, openProjet: null, iaRestitution: null,
+      ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
+      comparePicking: true,                 // le panneau est là → clic-carte ajoute
       compareIdus: ids,
-      compareOpen: true,
-      comparePicking: ids.length === 0,    // vide/périmée → on ajoute par la carte
-      view: 'cartes',
       compareTouchedAt: ids.length ? s.compareTouchedAt : null,
     }
   }),

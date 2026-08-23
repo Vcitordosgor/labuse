@@ -94,12 +94,11 @@ export function Rail() {
   // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
   // un outil ne peut pas récupérer la parcelle regardée). Ferme le tiroir Outils.
   const openOutil = (k: string) => {
-    if (k !== 'comparer') { setModule(k); return }
-    // SOCLE : openCompare applique le TTL 15 min (sélection retrouvée si fraîche, sinon repart en
-    // picking) et ferme les autres overlays. toggleOutils referme ENSUITE le tiroir (branche de
-    // fermeture — elle ne touche pas la comparaison qu'on vient d'ouvrir).
-    useApp.getState().openCompare()
-    toggleOutils()
+    // COMPARAISON (refonte) : « comparer » est un outil ANCRÉ dans Outils — openCompare ouvre son
+    // panneau gauche (module='comparer', outilsOpen:false, picking ON, TTL 15 min), la carte reste
+    // active à droite. Plus de bascule surprise vers « Cartes » ni de tiroir à refermer à la main.
+    if (k === 'comparer') { useApp.getState().openCompare(); return }
+    setModule(k)
   }
 
   return (

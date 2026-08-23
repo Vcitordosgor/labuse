@@ -1335,7 +1335,6 @@ export function Fiche({ idu }: { idu: string }) {
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
-  const setCompareOpen = useApp((s) => s.setCompareOpen)   // M60 P1d — porte Comparer (pré-chargée)
   const setFlyTo = useApp((s) => s.setFlyTo)        // recentre la carte (porte « Remonter le temps », zoom section)
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -2277,7 +2276,7 @@ export function Fiche({ idu }: { idu: string }) {
                   chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
               <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
                 sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"
-                onClick={() => { useApp.getState().addToCompare(idu); setCompareOpen(true) }} />
+                onClick={() => { const st = useApp.getState(); st.openCompare(); st.addToCompare(idu) }} />
               {f.coords && (
                 <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
                   sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"

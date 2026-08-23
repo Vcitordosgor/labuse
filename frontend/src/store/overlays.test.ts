@@ -17,7 +17,8 @@ afterEach(() => vi.restoreAllMocks())
 
 describe('cleanup on-leave centralisé', () => {
   it('ouvrir le tiroir Outils ferme l\'overlay Comparaison, la sélection SURVIT', () => {
-    st().addToCompare('97411000BZ1065')
+    st().addToCompare('97411000BZ1065')       // sélection
+    st().setCompareOpen(true)                 // tableau ouvert (bouton « Comparer »)
     expect(st().compareOpen).toBe(true)
     st().toggleOutils()                       // outilsOpen était false → branche d'OUVERTURE
     expect(st().outilsOpen).toBe(true)
@@ -65,17 +66,20 @@ describe('TTL 15 min de la sélection de comparaison', () => {
     ;(Date.now as unknown as { mockReturnValue: (v: number) => void }).mockReturnValue(t0 + 14 * 60 * 1000)
     st().openCompare()                         // retour 14 min plus tard
     expect(st().compareIdus).toEqual(['97411000BZ1065', '97411000BZ1044'])
-    expect(st().compareOpen).toBe(true)
-    expect(st().comparePicking).toBe(false)    // sélection non vide → pas de picking
+    // COMPARAISON (refonte) : openCompare ouvre l'OUTIL (panneau), pas le tableau — picking ON, table fermée.
+    expect(st().module).toBe('comparer')
+    expect(st().compareOpen).toBe(false)
+    expect(st().comparePicking).toBe(true)
   })
 
-  it('vide une sélection périmée (> 15 min) et rouvre en mode picking', () => {
+  it('vide une sélection périmée (> 15 min) et rouvre l\'outil en picking', () => {
     const t0 = 1_700_000_000_000
     vi.spyOn(Date, 'now').mockReturnValue(t0)
     st().addToCompare('97411000BZ1065')
     ;(Date.now as unknown as { mockReturnValue: (v: number) => void }).mockReturnValue(t0 + 16 * 60 * 1000)
     st().openCompare()                         // retour 16 min plus tard
     expect(st().compareIdus).toEqual([])
+    expect(st().module).toBe('comparer')
     expect(st().comparePicking).toBe(true)
   })
 
