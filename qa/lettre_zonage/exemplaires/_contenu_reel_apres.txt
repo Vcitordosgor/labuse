@@ -1,0 +1,152 @@
+==============================================================================
+NOMINAL - mono-U calibrée   —   97422000AD0675
+==============================================================================
+== 2 · Zonage applicable ==
+     | Uc : 100 %PLU de Le Tampon, approuvé le 11/08/2023
+     > NOTE: PLU de Le Tampon, approuvé le 11/08/2023 — fichier du règlement écrit : 97422_reglement_20230811.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone Uc --
+     | Hauteur maximale : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46)
+     | Emprise au sol : non réglementé  (Art. Uc9, p.46 : « Non réglementée »)
+     | Recul / voirie : 4 m  (Art. Uc6.2, p.43 (4 m min, PAS d&#x27;option alignement))
+     | Recul / limites séparatives : 3 m  (Art. Uc7.1, p.44)
+     | Pleine terre : 30 %  (Art. Uc13.2, p.52 (40 % perméable dont 30 % pleine terre))
+     | Stationnement : 1 place / logement  (Art. Uc12.2 (tableau), p.50-51)
+     > NOTE: Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+
+==============================================================================
+B1 multi-zones   —   97422000BV2471
+==============================================================================
+== 2 · Zonage applicable ==
+     | Nco50 % : PLU de Le Tampon, approuvé le 11/08/2023
+     | Ua  (48 % : PLU de Le Tampon, approuvé le 11/08/2023)Uav2 %PLU de Le Tampon, approuvé le 11/08/2023
+     > NOTE: PLU de Le Tampon, approuvé le 11/08/2023 — fichier du règlement écrit : 97422_reglement_20230811.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone Nco --
+     > NOTE: Règlement non calibré pour cette zone/commune : règles non vérifiées — se reporter au règlement écrit (consultable sur le Géoportail de l'urbanisme).
+  -- Zone Ua --
+     | Hauteur maximale : égout 21 m · faîtage 25 m  (Art. Ua10.2, p.16)
+     | Emprise au sol : non réglementé  (Art. Ua9, p.16 : « Non réglementée »)
+     | Recul / voirie : 4 m  (Art. Ua6.2, p.13)
+     | Recul / limites séparatives : 3 m  (Art. Ua7.1, p.14)
+     | Pleine terre : 15 %  (Art. Ua13.2, p.22)
+     | Stationnement : 1 place / logement  (Art. Ua12.2 (tableau), p.20-21)
+     > NOTE: Annexes/dépendances : 3,5 m. Bande de 3,60 m en limite séparative : 18 m max (Art. Ua10.3).
+     > NOTE: Alignement possible (0) OU 4 m min. RD3 (RN3-Ravine Blanche) : 10,50 m de l&#x27;axe.
+     > NOTE: 1 ou 2 limites autorisées (18 m de profondeur max) OU retrait 3 m.
+     > NOTE: Habitat individuel. Collectif hors LLS : 0,5 place par chambre et studio ; LLS : 1 place max (cf. regles_transverses).
+     > NOTE: 20 % perméable dont 15 % pleine terre plantée (3 strates).
+  -- Zone Uav --
+     | Hauteur maximale : égout 16 m · faîtage 20 m  (Art. Ua10.2, p.16 (« Dans le secteur Uav, ce seuil est limité à 16 mètres … et 20 mètres au faîtage »))
+     | Emprise au sol : non réglementé  (Art. Ua9, p.16 : « Non réglementée »)
+     | Recul / voirie : 4 m  (Art. Ua6.2, p.13)
+     | Recul / limites séparatives : 3 m  (Art. Ua7.1, p.14)
+     | Pleine terre : 20 %  (Art. Ua13.2, p.23 (« En secteur Uav, ces seuils sont respectivement portés à 30% et 20% »))
+     | Stationnement : 1 place / logement  (Art. Ua12.2 (tableau), p.20-21)
+     > NOTE: Secteur d&#x27;habitation de densité moyenne (caractère de zone p.9). Bande 3,60 m : 13 m max.
+     > NOTE: 30 % perméable dont 20 % pleine terre.
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+
+==============================================================================
+B2 conflit de source   —   97422000CN1677
+==============================================================================
+== 2 · Zonage applicable ==
+     | Nco64 % : PLU de Le Tampon, approuvé le 11/08/2023Uc  (35 %PLU de Le Tampon, approuvé le 11/08/2023)
+     > NOTE: PLU de Le Tampon, approuvé le 11/08/2023 — fichier du règlement écrit : 97422_reglement_20230811.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone Nco --
+     > NOTE: Règlement non calibré pour cette zone/commune : règles non vérifiées — se reporter au règlement écrit (consultable sur le Géoportail de l'urbanisme).
+  -- Zone Uc --
+     | Hauteur maximale : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46)
+     | Emprise au sol : non réglementé  (Art. Uc9, p.46 : « Non réglementée »)
+     | Recul / voirie : 4 m  (Art. Uc6.2, p.43 (4 m min, PAS d&#x27;option alignement))
+     | Recul / limites séparatives : 3 m  (Art. Uc7.1, p.44)
+     | Pleine terre : 30 %  (Art. Uc13.2, p.52 (40 % perméable dont 30 % pleine terre))
+     | Stationnement : 1 place / logement  (Art. Uc12.2 (tableau), p.50-51)
+     > NOTE: Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+
+==============================================================================
+B3 RNU Saint-Philippe   —   97417000AC0003
+==============================================================================
+== 2 · Zonage applicable ==
+  [BANDEAU] Commune au règlement national d&#x27;urbanisme — pas de PLU local. Aucun document local approuvé : les règles nationales s&#x27;appliquent (constructibilité limitée aux parties actuellement urbanisées — analyse au cas par cas, non couverte par le zonage LABUSE).
+     > NOTE: Commune : Saint-Philippe (statut vérifié le 2026-07-26). Il n'existe donc pas de zone ni de règlement de PLU à attester pour cette parcelle — les règles nationales d'urbanisme s'appliquent.
+== 3 · Règles principales des zones (avec leurs articles) ==
+     > NOTE: Règles de zone du PLU : non applicable — RNU. En l'absence de document local, la constructibilité relève des règles nationales d'urbanisme (parties actuellement urbanisées, appréciation au cas par cas du service instructeur) — non couverte par la présente lettre.
+
+==============================================================================
+B4 commune non calibrée (Saint-André)   —   97409000AB0876
+==============================================================================
+== 2 · Zonage applicable ==
+     | UC : 100 %GPU 97409_20190228
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone UC --
+     > NOTE: Règlement non calibré pour cette zone/commune : règles non vérifiées — se reporter au règlement écrit (consultable sur le Géoportail de l'urbanisme).
+
+==============================================================================
+B5 zone gelée Us (6/11 gravé)   —   97416000EP1044
+==============================================================================
+== 2 · Zonage applicable ==
+     | Us : 100 %PLU de Saint-Pierre, approuvé le 25/06/2024
+     > NOTE: PLU de Saint-Pierre, approuvé le 25/06/2024 — fichier du règlement écrit : data/reglements/97416_reglement_20240625.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone Us — zone gelée --
+  [BANDEAU] ⚠ Zone gelée à la date d'édition : construction neuve non autorisée. Les valeurs ci-dessous sont les règles qui s'appliqueraient si la zone était ouverte à l'urbanisation ; elles ne valent pas autorisation de construire.
+     | Hauteur maximale : égout 6 m · faîtage 11 m  (Art. Us3 §5 (« 5/ Hauteur — Règle générale »), p.134)
+     > NOTE: Règle générale LOGEMENT : 6 m égout/acrotère, 11 m faîtage (Art. Us3 §5, p.134). Équipements publics 8/13 m ÉCARTÉS (destination ≠ logement — convention Uf3.5). Limites séparatives 4 m dans la bande de 3 m ; PPRN +surélévation ; pente +1,5 m aval ; surtoiture +0,5 m. Gravable telle quelle dès réouverture de la zone.
+     > NOTE: Zone urbaine peu dense GELÉE provisoirement (construction neuve non autorisée, extensions <=25 % SDP — préambule p.129, Art. Us1 p.130). Hauteur servie ; capacité = aucune (gel).
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+
+==============================================================================
+B5bis zone gelée 2AU Le Tampon (renvoi 9/13)   —   97422000AK0771
+==============================================================================
+== 2 · Zonage applicable ==
+     | 2AUc76 % : PLU de Le Tampon, approuvé le 11/08/2023Uc  (24 %PLU de Le Tampon, approuvé le 11/08/2023)
+     > NOTE: PLU de Le Tampon, approuvé le 11/08/2023 — fichier du règlement écrit : 97422_reglement_20230811.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone 2AUc — zone gelée --
+  [BANDEAU] ⚠ Zone gelée à la date d'édition : construction neuve non autorisée. Les valeurs ci-dessous sont les règles qui s'appliqueraient si la zone était ouverte à l'urbanisation ; elles ne valent pas autorisation de construire.
+     | Hauteur maximale : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46 via renvoi (ZONE AUindicée, p.83))
+     > NOTE: 2AU d&#x27;extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10, p.86 -> zone Uc).
+     > NOTE: Zone d'urbanisation future : l'ouverture à la construction est conditionnée à une opération d'aménagement d'ensemble. Un périmètre d'aménagement (ZAC) peut s'y appliquer, avec un règlement propre — à vérifier auprès de la commune ; il n'est pas modélisé dans la présente lettre.
+  -- Zone Uc --
+     | Hauteur maximale : égout 9 m · faîtage 13 m  (Art. Uc10.2, p.46)
+     | Emprise au sol : non réglementé  (Art. Uc9, p.46 : « Non réglementée »)
+     | Recul / voirie : 4 m  (Art. Uc6.2, p.43 (4 m min, PAS d&#x27;option alignement))
+     | Recul / limites séparatives : 3 m  (Art. Uc7.1, p.44)
+     | Pleine terre : 30 %  (Art. Uc13.2, p.52 (40 % perméable dont 30 % pleine terre))
+     | Stationnement : 1 place / logement  (Art. Uc12.2 (tableau), p.50-51)
+     > NOTE: Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+
+==============================================================================
+B6 ZAC Renaissance III (AU3a)   —   97415000CW1073
+==============================================================================
+== 2 · Zonage applicable ==
+     | AU3a99 % : PLU de Saint-Paul, approuvé le 27/09/2012Nto  (1 %PLU de Saint-Paul, approuvé le 27/09/2012)
+     > NOTE: PLU de Saint-Paul, approuvé le 27/09/2012 — fichier du règlement écrit : 04_REGLT_PLU_st_paul_approuve_27septembre2012__Edition_mars2026.pdf.
+     > NOTE: Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée intersectée avec la géométrie cadastrale de la parcelle.
+== 3 · Règles principales des zones (avec leurs articles) ==
+  -- Zone AU3a --
+     | Hauteur maximale : égout 15 m · faîtage 19 m  (Zone U3a, Art. 10.2, p.110-112)
+     | Emprise au sol : non réglementé  (Art. 9, p.110)
+     | Recul / voirie : 0 m  (Art. 6, zone U3a, p.106)
+     | Recul / limites séparatives : 3 m  (Art. 7.2, p.107-108)
+     | Pleine terre : 20 %  (Art. 13.1, p.119-121 — « pourcentage minimal d&#x27;espaces libres perméables », sans sous-minimum de pleine terre (doctrine a))
+     | Stationnement : 1,5 place / logement  (Art. 12.2, p.116-118 (U3a, U3b : 1,5 pl./logt))
+     > NOTE: Sous-cas : hé 18 / hf 22 (secteur spécifique).
+     > NOTE: à l&#x27;alignement ; ZAC Savane des Tamarins : retrait 3 m possible
+     > NOTE: CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité). Parking sous-sol totalité : 20 % min en pleine terre.
+     > NOTE: Zone d'urbanisation future : l'ouverture à la construction est conditionnée à une opération d'aménagement d'ensemble. Un périmètre d'aménagement (ZAC) peut s'y appliquer, avec un règlement propre — à vérifier auprès de la commune ; il n'est pas modélisé dans la présente lettre.
+  -- Zone Nto --
+     > NOTE: Règlement non calibré pour cette zone/commune : règles non vérifiées — se reporter au règlement écrit (consultable sur le Géoportail de l'urbanisme).
+     > NOTE: Valeurs calibrées par LABUSE depuis le règlement écrit cité — le règlement complet (dispositions générales, renvois, annexes) peut les compléter.
+

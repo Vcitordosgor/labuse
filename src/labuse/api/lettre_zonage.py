@@ -75,7 +75,8 @@ def _regles_zone(code: str, commune: str | None) -> dict:
     from ..faisabilite.plu_rules import resolve_zone
     r = resolve_zone(code, commune)
     if r is None or not r.calibree:
-        return {"calibree": False, "code": code, "lignes": [], "notes": [], "prospect": False}
+        return {"calibree": False, "code": code, "lignes": [], "notes": [], "prospect": False,
+                "gel": False}
     src = r.sources or {}
     lignes: list[tuple[str, str, str]] = []          # (règle, valeur, article)
     hauteur = None
@@ -96,11 +97,15 @@ def _regles_zone(code: str, commune: str | None) -> dict:
     ]:
         if item:
             lignes.append((label, item[0], item[1]))
+    # M147 L1 : PAS de notes.insert(hauteur_note) — ZoneRules.notes contient DÉJÀ toute clé finissant
+    # par `_note` (dont hauteur_note). L'insertion la dupliquait, et le `[:2]` de _regles (supprimé
+    # aussi) faisait alors tomber toute note suivante — le GEL de Us, l'alignement de Ua, le retrait
+    # ZAC de AU3a. Aucune note matérielle ne doit disparaître pour une raison de gabarit.
     notes = list(r.notes or [])
-    if r.raw.get("hauteur_note"):
-        notes.insert(0, str(r.raw["hauteur_note"]))
+    # M147 L2 : le GEL (construction neuve non autorisée : Us, 2AU) est remonté STRUCTURELLEMENT, plus
+    # seulement via une note en prose — la condition gouverne le chiffre (doctrine M143 L1 / M145 B.1.4).
     return {"calibree": True, "code": code, "lignes": lignes, "notes": notes,
-            "prospect": r.hauteur_mode == "prospect"}
+            "prospect": r.hauteur_mode == "prospect", "gel": not r.constructible_neuf}
 
 
 # ───────────────────────── référence d'attestation (C8) ─────────────────────────
@@ -157,8 +162,18 @@ def _identification(p: dict, rap: dict, ref: str, marque: dict | None = None) ->
             f"{bq.map_html(p['geojson'])}</section>")
 
 
-def _zonage(zones: list[dict], commune: str | None) -> str:
+def _zonage(zones: list[dict], commune: str | None, rnu: dict | None = None) -> str:
     from ..plu_reglement import resolve_reglement
+    # M147 L3 — RNU : une commune au règlement national n'a PAS de PLU local. Dire le RNU (statut
+    # légal), pas « zonage non résolu » (qui imputerait à un défaut de numérisation un fait de droit).
+    # rnu.rnu_block existait mais n'était jamais appelé (constat M146 §B3).
+    if rnu:
+        verif = f" (statut vérifié le {esc(rnu['verifie_le'])})" if rnu.get("verifie_le") else ""
+        return (f"<h2>2 · Zonage applicable</h2>"
+                f"<div class='bandeau'><b>{esc(rnu['libelle'])}.</b> {esc(rnu['detail'])}</div>"
+                f"<p class='note'>Commune : {esc(rnu.get('commune_nom') or commune)}{verif}. "
+                f"Il n'existe donc pas de zone ni de règlement de PLU à attester pour cette "
+                f"parcelle — les règles nationales d'urbanisme s'appliquent.</p>")
     if not zones:
         return ("<h2>2 · Zonage applicable</h2><p class='note'>Zonage non résolu dans les couches "
                 "numérisées (GPU) à la date d'édition — vérification en mairie indispensable.</p>")
@@ -192,8 +207,24 @@ def _zonage(zones: list[dict], commune: str | None) -> str:
     return body
 
 
-def _regles(zones: list[dict], commune: str | None) -> str:
+def _est_zone_au(z: dict) -> bool:
+    """Zone d'urbanisation future (AU) : ouverture conditionnée à une opération d'aménagement
+    d'ensemble (M147 L4). Détectée sur le SUBTYPE GPU (`classe` = 'AUc', 'AU3a'…) — pas sur le
+    libellé, pour ne pas confondre 'Uav' (zone U) avec de l'AU."""
+    classe = str(z.get("classe") or "")
+    return classe.upper().startswith("AU")
+
+
+def _regles(zones: list[dict], commune: str | None, rnu: dict | None = None) -> str:
     body = "<h2>3 · Règles principales des zones (avec leurs articles)</h2>"
+    # M147 L3 — RNU : pas de règlement de zone à servir (les règles nationales s'appliquent au cas
+    # par cas). Mention explicite plutôt qu'un en-tête vide (wording rnu.NON_APPLICABLE_RNU).
+    if rnu:
+        from ..rnu import NON_APPLICABLE_RNU
+        return (body + f"<p class='note'>Règles de zone du PLU : {esc(NON_APPLICABLE_RNU)}. "
+                f"En l'absence de document local, la constructibilité relève des règles nationales "
+                f"d'urbanisme (parties actuellement urbanisées, appréciation au cas par cas du service "
+                f"instructeur) — non couverte par la présente lettre.</p>")
     imprimees = 0
     for z in zones[:3]:
         code = z.get("libelle") or z.get("classe")
@@ -207,16 +238,35 @@ def _regles(zones: list[dict], commune: str | None) -> str:
             continue
         if not rz["lignes"]:
             continue
+        # M147 L2 — GEL : la condition AVANT le chiffre. Le tableau est présenté pour ce qu'il est —
+        # la règle applicable SI la zone s'ouvre, jamais une autorisation de construire.
+        titre_valeur = "Valeur calibrée"
+        if rz["gel"]:
+            body += (f"<h3>Zone {esc(code)} — zone gelée</h3>"
+                     f"<div class='bandeau'>⚠ <b>Zone gelée à la date d'édition : construction neuve "
+                     f"non autorisée.</b> Les valeurs ci-dessous sont les règles qui s'appliqueraient "
+                     f"<b>si</b> la zone était ouverte à l'urbanisation ; elles ne valent pas "
+                     f"autorisation de construire.</div>")
+            titre_valeur = "Règle si ouverture"
+        else:
+            body += f"<h3>Zone {esc(code)}</h3>"
         rows = "".join(f"<tr><td>{esc(l)}</td><td>{esc(v)}</td><td class='note'>{esc(a)}</td></tr>"
                        for l, v, a in rz["lignes"])
-        body += (f"<h3>Zone {esc(code)}</h3>"
-                 f"<table><tr><th>Règle</th><th>Valeur calibrée</th><th>Article / page du règlement</th></tr>"
+        body += (f"<table><tr><th>Règle</th><th>{titre_valeur}</th><th>Article / page du règlement</th></tr>"
                  f"{rows}</table>")
         if rz["prospect"]:
             body += ("<p class='note'>Hauteur en prospect : la hauteur admissible dépend de la largeur "
                      "de la voie au droit de la parcelle (L ≥ H) — valeur par parcelle, pas par zone.</p>")
-        for n in rz["notes"][:2]:
+        # M147 L1 — TOUTES les notes matérielles (plus de coupe [:2] : fpdf2 pagine, ne tronque pas).
+        for n in rz["notes"]:
             body += f"<p class='note'>{esc(n)}</p>"
+        # M147 L4 — caveat ZAC générique et VRAI sur zone AU (aucune couche ZAC : dette M144, on
+        # n'affirme rien par parcelle, on rappelle le régime).
+        if _est_zone_au(z):
+            body += ("<p class='note'>Zone d'urbanisation future : l'ouverture à la construction est "
+                     "conditionnée à une opération d'aménagement d'ensemble. Un périmètre d'aménagement "
+                     "(ZAC) peut s'y appliquer, avec un règlement propre — à vérifier auprès de la "
+                     "commune ; il n'est pas modélisé dans la présente lettre.</p>")
         imprimees += 1
     if imprimees:
         body += ("<p class='note'>Valeurs calibrées par LABUSE depuis le règlement écrit cité — le "
@@ -291,11 +341,14 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     p = dict(row)
     rap = collect_report_data(db, idu) or {}
     zones = (rap.get("identite") or {}).get("zones", [])
+    # M147 L3 — RNU : bloc calculé une fois (None hors commune RNU), gouverne les sections 2 et 3.
+    from ..rnu import rnu_block
+    rnu = rnu_block(idu, db)
     ref = _ref_attestation(db, idu)                      # C8 : référence unique, tracée
     sections = [
         _identification(p, rap, ref, marque),
-        _zonage(zones, p.get("commune")),
-        _regles(zones, p.get("commune")),
+        _zonage(zones, p.get("commune"), rnu),
+        _regles(zones, p.get("commune"), rnu),
         _servitudes(rap),
         _limites(rap),
         _cloture(ref),
