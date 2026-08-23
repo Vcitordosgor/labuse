@@ -162,7 +162,9 @@ def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
         db.execute(text(
             "UPDATE flash_commandes SET statut = 'generee', pdf_path = :p, token_hash = NULL,"
             " expire_at = now() + make_interval(days => :j), updated_at = now() WHERE id = :i"),
-            {"p": str(pdf), "j": get_settings().flash_token_days, "i": row["id"]})
+            # M145 C.3 — pdf_path stocké RELATIF (nom de fichier) à flash_storage_dir, jamais un chemin
+            # absolu de dossier de dev (non portable). Résolu à la LECTURE via storage_dir().
+            {"p": pdf.name, "j": get_settings().flash_token_days, "i": row["id"]})
         audit(db, "flash_genere", None, None, f"idu={row['idu']} cmd={row['id']}")
         db.commit()
     except Exception as e:  # noqa: BLE001
@@ -183,6 +185,11 @@ def flash_statut(db: Session, session_id: str) -> dict:
                      {"s": session_id}).mappings().first()
     if not row:
         return {"statut": "inconnue"}
+    # M145 C.1 — FILET ROB-B : une commande `en_attente` ne pouvait sortir que par webhook (piège en
+    # local / incident). Le poll se donne le droit d'interroger Stripe : payée → fulfillment.
+    if row["statut"] == "en_attente" and reconcile_flash(db, session_id):
+        row = db.execute(text("SELECT id, statut, expire_at FROM flash_commandes WHERE stripe_session_id = :s"),
+                         {"s": session_id}).mappings().first()
     if row["statut"] in ("payee", "erreur"):
         _flash_fulfill(db, session_id, None)   # reprise (idempotent)
         row = db.execute(text("SELECT id, statut, expire_at FROM flash_commandes WHERE stripe_session_id = :s"),
@@ -201,12 +208,21 @@ def flash_statut(db: Session, session_id: str) -> dict:
 
 
 def flash_pdf_par_token(db: Session, token: str):
-    """Token de téléchargement → chemin PDF (None si inconnu/expiré)."""
+    """Token de téléchargement → chemin PDF ABSOLU résolu (None si inconnu/expiré/fichier absent)."""
     import hashlib
+    from pathlib import Path
     row = db.execute(text("SELECT pdf_path FROM flash_commandes WHERE token_hash = :h"
                           " AND expire_at > now() AND statut = 'generee'"),
                      {"h": hashlib.sha256(token.encode()).hexdigest()}).mappings().first()
-    return row["pdf_path"] if row else None
+    if not row or not row["pdf_path"]:
+        return None
+    # M145 C.3 — RÉSOLUTION à la lecture : pdf_path est désormais RELATIF (nom de fichier). Les lignes
+    # anciennes (juillet, chemin ABSOLU de dev) survivent — on les résout par leur NOM dans le
+    # répertoire courant `storage_dir()` si l'absolu n'existe plus (autre machine/conteneur).
+    from .flash.report import storage_dir
+    p = Path(row["pdf_path"])
+    resolved = p if (p.is_absolute() and p.exists()) else (storage_dir() / p.name)
+    return str(resolved) if resolved.exists() else None
 
 
 def reconcile_abonnement(db: Session, compte_id: int, email: str) -> bool:
@@ -233,6 +249,33 @@ def reconcile_abonnement(db: Session, compte_id: int, email: str) -> bool:
                 return True
     except Exception as e:  # noqa: BLE001 — indispo Stripe : pas de filet, mais on n'échoue pas
         log.warning("réconciliation Stripe compte %s impossible : %s", compte_id, e)
+    return False
+
+
+def reconcile_flash(db: Session, session_id: str) -> bool:
+    """ROB-B pour FLASH (le produit qui encaisse) : Stripe dit `paid`/`complete` mais le webhook n'est
+    jamais arrivé (dev local, incident) → la commande reste `en_attente`, le client a payé sans rien
+    recevoir. Ce filet interroge Stripe DIRECTEMENT (la session est déjà stockée) et, si elle est
+    payée, déclenche le fulfillment idempotent (`_flash_fulfill` : `payee` puis génération). « A payé
+    ⇒ a son rapport », toujours. Le webhook reste le chemin NOMINAL ; ceci est le FILET. Sans clé
+    Stripe → False (jamais un crash). Miroir de `reconcile_abonnement`."""
+    try:
+        stripe = _stripe()
+    except ConfigError:
+        return False
+    try:
+        sess = stripe.checkout.Session.retrieve(session_id)
+        paid = (getattr(sess, "payment_status", None) == "paid"
+                or getattr(sess, "status", None) == "complete")
+        if not paid:
+            return False
+        cd = getattr(sess, "customer_details", None)
+        email = getattr(cd, "email", None) if cd else None
+        log.warning("réconciliation Flash %s : session payée sans webhook → fulfillment", session_id)
+        _flash_fulfill(db, session_id, email)     # idempotent : payee + génération (ou no-op si déjà)
+        return True
+    except Exception as e:  # noqa: BLE001 — indispo Stripe : pas de filet, mais on n'échoue pas
+        log.warning("réconciliation Flash %s impossible : %s", session_id, e)
     return False
 
 

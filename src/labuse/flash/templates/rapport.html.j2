@@ -166,33 +166,38 @@
   {# MANDAT RNU : pas de règlement local → pas de SDP calculable — on le DIT. #}
   <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
     <div class="valeur"><small>non applicable — RNU</small></div></div>
-  {% elif c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
-  {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
-     on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
-  {# M54-AB C2 : NOMMER le scénario — ici on CONSERVE le bâti existant (SDP résiduelle = droits
-     PLU − emprise déjà bâtie). Le dossier banquier chiffre l'autre scénario (table rase, neuf). #}
-  <h3>Potentiel résiduel — bâti conservé</h3>
-  <p class="note">Ce qu'il reste à construire au regard du PLU en gardant le bâti existant (le
-    dossier banquier chiffre l'hypothèse « faisabilité neuve », bâti démoli).</p>
-  <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
-    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div>
-    {# Clôture cycle 2 (fix N8) : la SDP n'est PAS l'habitable — surface de plancher au sens PLU
-       (hors murs/circulations) ; l'habitable/vendable est ~15 % inférieure. Le client ne doit pas
-       lire « constructible » comme « exploitable ». #}
-    <div class="note-sdp">surface de plancher au sens PLU (hors murs et circulations) — la surface
-      habitable / vendable est ~15&nbsp;% inférieure (soit ~{{ (c.residuel.sdp_residuelle_m2 / 1.15) | round | int }} m²).</div></div>
+  {% elif c.faisa %}
+  {# M145 — le potentiel constructible vient du MOTEUR COMMUN (scénario retenu au sol, post-M144) :
+     MÊMES surfaces que la fiche, le dossier banquier et l'argumentaire. Une seule source, un seul
+     coefficient (rendement 0,80). Le résiduel brut plein gabarit ne pilote plus le héros. #}
+  {# B.1.4 — le ⚠ GOUVERNE le chiffre : le TITRE lui-même porte la condition quand l'ouverture n'est
+     pas vérifiée (jamais « constructible » asserté en tête avec le doute trois lignes plus bas). #}
+  {% if c.au_statut %}
+  <h3>Potentiel constructible <em>sous réserve de l'ouverture à l'urbanisation</em> — scénario retenu</h3>
+  {% else %}
+  <h3>Potentiel constructible — scénario retenu (neuf, stationnement au sol)</h3>
+  {% endif %}
+  {% if c.au_statut %}
+  <p class="note avert"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> — {{ c.au_statut.motif }}
+     Le potentiel ci-dessous est <strong>conditionné</strong> à cette ouverture : il ne se lit pas comme un droit acquis.</p>
+  {% endif %}
+  <div class="cartouche"><div class="titre">Surface vendable — scénario retenu</div>
+    <div class="valeur">{{ c.faisa.vendable_m2 }} <small>m² · plancher (SDP) ~{{ c.faisa.plancher_m2 }} m² = vendable ÷ rendement {{ c.faisa.rendement_pct }}&nbsp;%</small></div>
+    {% if c.faisa.logements_au_sol %}
+    <div class="note-sdp">Scénario retenu : {{ c.faisa.logements_au_sol[0] }}{% if c.faisa.logements_au_sol[1] != c.faisa.logements_au_sol[0] %}–{{ c.faisa.logements_au_sol[1] }}{% endif %} logements, stationnement AU SOL (le stationnement plafonne la capacité).{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
+    {% endif %}
+    {% if c.faisa.run and c.faisa.run.date %}
+    <div class="note-sdp">Valeurs au {{ c.faisa.run.date }} — run {{ c.faisa.run.label }}.</div>
+    {% endif %}
+  </div>
+  {% else %}
+  {# faisabilité commune non résolue : on le DIT, on ne fabrique aucun chiffre parallèle (doctrine). #}
+  <p class="note">Capacité constructible non résolue pour cette parcelle — non estimable en l'état.</p>
   {% endif %}
 
   {# M127-A1 — le bloc « Verdict LABUSE » (verdict, rang île, probabilité de mutation, motif de
      scoring) est RETIRÉ du dossier parcelle : ce document présente des attributs FACTUELS, pas
      l'analyse LABUSE (alignement sur la fiche). Les caveats factuels survivent hors verdict. #}
-
-  {# Ouverture à l'urbanisation non vérifiée — fait réglementaire (statut AU), TOUJOURS consultable
-     (le motif survit à la bascule). Étiquette « Absent » (ni un fait, ni Estimé). #}
-  {% if c.au_statut %}
-  <p class="note"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> —
-     {{ c.au_statut.motif }} <em>(Absent)</em></p>
-  {% endif %}
 
   {# M-RENOUV (M127-A2) : segment d'appartenance FACTUEL — sous son propre titre, jamais flottant #}
   {% if c.renouvellement_ligne %}
@@ -289,6 +294,12 @@
   <ul class="marche-commune">
     {% for l in m.commune_marche %}<li>{{ l.phrase }}</li>{% endfor %}
   </ul>
+  {# M145 B.2.2 — l'effectif « n » n'est pas une boîte noire : c'est le NOMBRE de ventes DVF retenues
+     (appartements/maisons du secteur, ≥ 20 m² bâti, prix > 20 k€) par le point de calcul commun. Un
+     petit n reflète un marché peu liquide — l'indicateur reste indicatif, pas une erreur. #}
+  <p class="note">L'effectif « n » cité est le nombre de ventes DVF retenues (appartements/maisons du
+     secteur, surface bâtie ≥ 20 m², prix > 20 000 €). Un petit effectif signale un marché peu liquide,
+     pas une donnée erronée.</p>
   {% endif %}
   {% if m.rien %}
   <p class="note">Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les

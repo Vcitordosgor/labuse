@@ -30,7 +30,10 @@ log = logging.getLogger("labuse.flash")
 #: template a changé ; la version suit pour rester traçable).
 #: 1.2 (M22-F C3) — titre de garde = LE PRODUIT (« Rapport Flash » / « Dossier
 #: parcelle ») pour différencier les deux documents ; descriptif en sous-titre.
-TEMPLATE_VERSION = "1.2"
+#: 1.3 (M145) — la SÉMANTIQUE des chiffres change : Flash cesse d'être un générateur parallèle,
+#: chaque valeur vient du moteur commun (faisabilité post-M144 : vendable au sol, rendement 0,80,
+#: deux dates). Les rapports 1.2 archivés restent des instantanés de l'ancien modèle.
+TEMPLATE_VERSION = "1.3"
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 #: Fonts du design system (OFL) — déjà embarquées pour les exports PDF existants.
