@@ -1998,21 +1998,34 @@ if __name__ == "__main__":
 
 
 @app.command("detect-events")
-def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") -> None:
+def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo",
+                      rattrapage: bool = typer.Option(
+                          False, "--rattrapage",
+                          help="Rejeu : run_from = run PRÉCÉDENT lu de la table des runs (jamais une "
+                               "constante), run_to = servi, événements marqués 'rattrapage'.")) -> None:
     """Diffe deux runs de scoring → événements (bascules, BODACC, permis proches). Cronable.
-    Défaut run_from = run servi (Q_A_RUN_LABEL), plus « q_v2 » codé en dur (bascule M8)."""
+    Défaut run_from = run servi (Q_A_RUN_LABEL), plus « q_v2 » codé en dur (bascule M8).
+    `--rattrapage` : le run de référence vient de p_score_v2_runs (précédent du servi), pas d'un q_v9 en dur."""
     from sqlalchemy.orm import Session
 
-    from .api.events import detect_events, ensure_tables
+    from .api.events import detect_events, ensure_tables, run_precedent_servi
     from .api.tiles import RUN
     from .db import engine
 
-    run_from = run_from or RUN
     ensure_tables(engine())
     with Session(engine()) as s:
-        out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
+        if rattrapage:
+            prev = run_precedent_servi(s, RUN)   # #4 — précédent LU DE LA TABLE
+            if not prev:
+                typer.echo("Rejeu impossible : aucun run précédent dans p_score_v2_runs.")
+                raise typer.Exit(1)
+            run_from, run_to = prev, RUN
+            out = detect_events(s, run_from, run_to, demo=False, rattrapage=True)
+        else:
+            run_from = run_from or RUN
+            out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
         s.commit()
-    typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
+    typer.echo(f"Événements émis {run_from} → {run_to}{' (rattrapage)' if rattrapage else ''} : {out}")
 
 
 @app.command("migrer-prefs")
@@ -2161,10 +2174,13 @@ def purge_notifications_cmd(jours: int = typer.Option(90, help="Rétention (jour
 
 @app.command("digest")
 def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
-               force: bool = typer.Option(False, help="ignore l'intervalle mini (test)")) -> None:
+               force: bool = typer.Option(False, help="ignore l'intervalle mini (test)"),
+               dry_run: bool = typer.Option(False, "--dry-run",
+                   help="Rend ce qui SERAIT envoyé (destinataire, sujet, corps) SANS appeler Brevo — recette VPS.")) -> None:
     """M85 : envoie le DIGEST e-mail QUOTIDIEN (7h00 Réunion via le cron) aux comptes actifs, FILTRÉ
     par préférence e-mail/type. Anti-double-envoi ; digest vide ne part pas ; désinscription +
-    préférences dans chaque e-mail ; statut d'envoi tracé (jamais silencieux)."""
+    préférences dans chaque e-mail ; statut d'envoi tracé (jamais silencieux).
+    `--dry-run` (fix #2) : aucun envoi, aucun last_digest_at bougé — le corps prévu est affiché."""
     from sqlalchemy.orm import Session
 
     from .api.events import ensure_tables, envoyer_digests
@@ -2173,14 +2189,20 @@ def digest_cmd(freq: str = typer.Option("quotidien", help="quotidien | hebdo"),
     ensure_tables(engine())
     base = get_settings().public_base_url or ""
     with Session(engine()) as s:
-        out = envoyer_digests(s, base_url=base, freq=freq, force=force)
+        out = envoyer_digests(s, base_url=base, freq=freq, force=force, dry_run=dry_run)
     # M85 — un MOTIF par compte : jamais un « ignoré » muet (le silence qu'on interdit partout).
     for d in out.get("details", []):
-        marque = {"envoyé": "✓", "ignoré": "•", "échec": "⚠"}.get(d["statut"], "·")
+        marque = {"envoyé": "✓", "simulé": "◇", "ignoré": "•", "échec": "⚠"}.get(d["statut"], "·")
         typer.echo(f"  {marque} compte {d['compte']} ({d.get('email') or 'sans e-mail'}) — "
                    f"{d['statut']} : {d['motif']}")
-    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s), "
-               f"{out['echecs']} échec(s).")
+        if dry_run and d.get("corps"):
+            typer.echo("    ┌─ corps (aperçu) ─\n    │ " + d["corps"].replace("\n", "\n    │ "))
+    if dry_run:
+        typer.echo(f"◇ Digest DRY-RUN ({freq}) : {out['simules']} simulé(s), {out['ignores']} ignoré(s) — "
+                   "AUCUN envoi, aucun last_digest_at modifié.")
+    else:
+        typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s), "
+                   f"{out['echecs']} échec(s).")
 
 
 @app.command("annonce")
