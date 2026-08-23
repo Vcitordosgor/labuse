@@ -57,8 +57,8 @@ export function M22() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, d, picked])
 
-  const F = (k: keyof typeof form, label: string, opts?: { min?: number }) => (
-    <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
+  const F = (k: keyof typeof form, label: string, opts?: { min?: number; title?: string }) => (
+    <label title={opts?.title} className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
       <input type="number" min={opts?.min ?? 1} value={form[k] as number}
         onChange={(e) => setForm({ ...form, [k]: Number(e.target.value) })}
         className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
@@ -66,7 +66,9 @@ export function M22() {
   )
 
   return (
-    <>
+    // §1a — UN SEUL conteneur de défilement (le wrapper ModulePanel est overflow-hidden) : le
+    // formulaire haut ne peut plus écraser la liste à 0 → on peut descendre voir les parcelles.
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       {/* SÉLECTEUR DE MODE — deux façons d'entrer une parcelle */}
       <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
         {([['criteres', 'Par critères'], ['parcelle', 'Par parcelle']] as const).map(([m, l]) => (
@@ -92,7 +94,7 @@ export function M22() {
           <div className="flex gap-2">
             {F('logements_par_batiment', 'UNITÉS/BÂT')}
             {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
-            {F('circulation_pct', 'CIRCUL. % (hyp.)', { min: 0 })}
+            {F('circulation_pct', 'Circulations & murs %', { min: 0, title: 'Surface perdue en circulations, murs et parties communes, ajoutée à la surface habitable pour obtenir la SDP (hypothèse ; défaut 20 %, bas de la fourchette 20-25 %).' })}
           </div>
           <button onClick={() => run.mutate()} disabled={run.isPending}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
@@ -118,7 +120,7 @@ export function M22() {
                     : 'Triées par marge de capacité décroissante.'}
                 </p>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+              <div className="flex flex-col gap-1.5">
                 {(d.items as Record<string, any>[]).map((i) => (
                   <button key={i.idu} onClick={() => select(i.idu)}
                     className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-mint/50">
@@ -161,13 +163,13 @@ export function M22() {
                 <button data-faisa-changer onClick={() => setPicked(null)}
                   className="ml-auto rounded border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt">changer</button>
               </div>
-              <div data-faisa-parcelle className="min-h-0 flex-1 overflow-y-auto pr-0.5">
+              <div data-faisa-parcelle className="pr-0.5">
                 <FaisabiliteTab idu={picked} />
               </div>
             </>
           )}
         </>
       )}
-    </>
+    </div>
   )
 }

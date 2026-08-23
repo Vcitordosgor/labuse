@@ -18,6 +18,7 @@ export function ProcedureChangement() {
   const globalCommune = useApp((s) => s.commune)
   // périmètre explicite de l'outil — amorcé sur le filtre global, puis piloté ICI.
   const [commune, setCommune] = useState<string | null>(globalCommune)
+  const [openProc, setOpenProc] = useState(false)   // §5 — bandeau replié par défaut (compact)
   const proc = useQuery({ queryKey: ['simulplu-procedures'], queryFn: motSimulPluProcedures })
   const communes = proc.data?.communes ?? []
   const enProcedure: SimulPluProcedure | undefined = commune
@@ -33,11 +34,10 @@ export function ProcedureChangement() {
 
   return (
     <div data-plu-procchg className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* 1. COMMUNES EN PROCÉDURE (radar) */}
+      {/* 1. COMMUNES EN PROCÉDURE (radar) — §5 : REPLIÉES sous un BANDEAU cliquable « ⚠ N communes en
+          procédure PLU » (compact par défaut). Le déplié garde TOUT (type/état, date, source, bouton
+          Simuler). 0 procédure → message factuel, pas de bandeau ; loading/erreur inchangés. */}
       <div className="flex flex-col gap-1.5">
-        <div className="text-[10px] font-medium uppercase tracking-wide text-txt-dim">
-          Communes en procédure PLU
-        </div>
         {proc.isLoading && <div className="py-3"><Loading accent="mint" label="Radar procédures…" /></div>}
         {proc.isError && (
           <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
@@ -49,24 +49,36 @@ export function ProcedureChangement() {
             Aucune procédure PLU lourde active au radar à ce jour.
           </div>
         )}
-        {communes.map((c) => (
-          <div key={c.insee} data-procchg-commune={c.commune}
-            className="flex flex-col gap-1 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-medium text-txt-hi">{c.commune}</span>
-              <span className="rounded-full bg-st-creuser/15 px-2 py-0.5 text-[10px] text-st-creuser">▲ en procédure</span>
-            </div>
-            <div className="text-[10.5px] leading-snug text-txt-mut">{c.etat}</div>
-            <div className="text-[9.5px] text-txt-dim">
-              Sourcé {c.source} · constaté le {c.date_constat}
-              {c.source_url && <> · <a href={c.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
-            </div>
-            <button data-procchg-simuler onClick={() => choisir(c.commune)}
-              className="mt-0.5 self-start rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
-              Simuler ce que ça changerait →
+        {communes.length > 0 && (
+          <>
+            <button data-procchg-banner aria-expanded={openProc} onClick={() => setOpenProc((o) => !o)}
+              className="flex w-full items-center gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2 text-left transition-colors duration-quick hover:bg-st-creuser/[0.14]">
+              <span className="text-st-creuser">⚠</span>
+              <span className="text-[12px] font-medium text-txt-hi">
+                {communes.length} commune{communes.length > 1 ? 's' : ''} en procédure PLU
+              </span>
+              <span className="ml-auto text-[11px] text-st-creuser">{openProc ? 'Replier ▾' : 'Voir le détail ▸'}</span>
             </button>
-          </div>
-        ))}
+            {openProc && communes.map((c) => (
+              <div key={c.insee} data-procchg-commune={c.commune}
+                className="ml-2 flex flex-col gap-1 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-medium text-txt-hi">{c.commune}</span>
+                  <span className="rounded-full bg-st-creuser/15 px-2 py-0.5 text-[10px] text-st-creuser">▲ {c.type}</span>
+                </div>
+                <div className="text-[10.5px] leading-snug text-txt-mut">{c.etat}</div>
+                <div className="text-[9.5px] text-txt-dim">
+                  Prescrite le {c.date_acte} · sourcé {c.source} · constaté le {c.date_constat}
+                  {c.source_url && <> · <a href={c.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
+                </div>
+                <button data-procchg-simuler onClick={() => choisir(c.commune)}
+                  className="mt-0.5 self-start rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+                  Simuler ce que ça changerait →
+                </button>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {/* 2. PÉRIMÈTRE EXPLICITE + statut procédure */}

@@ -742,10 +742,12 @@ _CONCEPT_MAP = [
     # « Évolution » de Communes. La concept-route y mène (plus de lien vers un outil absent).
     (("barometre", "état du marché foncier", "etat du marche foncier", "barometre foncier"),
      ("communes", "Communes")),
+    # §3 (23/08/2026) — « Radar permis » + « Permis au point mort » fusionnés en UN outil « Permis ».
+    # Le radar : la clé `permis` ouvre la carte des permis. Label recablé « Radar permis » → « Permis ».
     (("radar permis", "qui construit quoi", "qui construit a", "qui construit dans",
-      "quels permis dans la commune"), ("permis", "Radar permis")),
-    # audit-promesses (add 2) — outil renommé « Permis au point mort » (clé `promesses` inchangée) ; on
-    # garde les anciens mots-clés (« promesses mortes ») ET on ajoute le nouveau nom.
+      "quels permis dans la commune"), ("permis", "Permis")),
+    # Le « point mort » est désormais un FILTRE de l'outil Permis : la clé `promesses` reste (ALIASÉE) et
+    # ouvre l'outil avec le filtre déjà actif. On GARDE tous les anciens mots-clés (« promesses mortes »…).
     (("permis au point mort", "permis non lancés", "permis non lances", "promesses mortes",
       "permis jamais sortis", "permis jamais construits", "permis anciens jamais", "permis abandonnes"),
      ("promesses", "Permis au point mort")),

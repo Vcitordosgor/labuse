@@ -292,10 +292,18 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   )
 }
 
+// §3 (23/08/2026) — outil « PERMIS » UNIFIÉ : fusion de « Radar permis » (M03) et « Permis au point
+// mort » (M04). Le radar est l'ENTRÉE (tous les permis Sitadel, points cliquables + fiche) ; « Au point
+// mort » est un FILTRE qui ne garde que les PC anciens sans achèvement — désormais rendus en POINTS
+// CLIQUABLES (comme le radar), plus en surlignage de parcelle. Les DEUX clés internes vivent : `promesses`
+// ouvre l'outil avec le filtre déjà actif (deep-link/copilote/QA inchangés, aucun 404).
 function M03() {
-  const [months, setMonths] = useState(24)
+  const moduleKey = useApp((s) => s.module)
+  const [pointMort, setPointMort] = useState(moduleKey === 'promesses')
+  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
   const [open, setOpen] = useState<string | null>(null)
+  const [permSearch, setPermSearch] = useState('')
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
   // radar-permis #2a — un clic sur un point permis de la carte (MapView) demande l'ouverture du drawer
@@ -304,65 +312,118 @@ function M03() {
   const setPermitToOpen = useApp((s) => s.setPermitToOpen)
   const setFlyTo = useApp((s) => s.setFlyTo)
   useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
-  const q = useInfiniteQuery({
+  // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
+  // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
+  useEffect(() => { setPointMort(moduleKey === 'promesses'); setMonths(moduleKey === 'promesses' ? 36 : 24) }, [moduleKey])
+
+  const MONTHS_RADAR = [12, 24, 48, 72]
+  const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
+  const togglePm = (on: boolean) => { setPointMort(on); setMonths(on ? 36 : 24) }
+
+  // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
+  // anciens sans achèvement (l'endpoint /promesses renvoie désormais aussi la géom → des points).
+  const qRadar = useInfiniteQuery({
     queryKey: ['m03', months, nature, commune],
     queryFn: ({ pageParam }) => modPermis(months, nature || null, 300, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
+    enabled: !pointMort,
   })
+  const PM_PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
+  const qPm = useInfiniteQuery({
+    queryKey: ['m04', months, commune],
+    queryFn: ({ pageParam }) => modPromesses(months, PM_PAGE, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PM_PAGE : undefined,
+    enabled: pointMort,
+  })
+  // total point mort (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
+  const qPmCount = useQuery({ queryKey: ['m04-count', months, commune], queryFn: () => modPromessesCount(months), staleTime: 60_000, enabled: pointMort })
+
+  const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
-  const head = pages[0]  // carte (tous les géocodés) + compteurs viennent de la page 0
-  // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre aussi côté client
-  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => {
-    if (!zone || !i['geom']) return true
-    const c = (i['geom'] as { coordinates: [number, number] }).coordinates
-    return pointInPolygon(c, zone)
-  })
-  // CARTE = TOUS les géocodés (décision Vic), filtrée par la zone si active
-  const carte = ((head?.['carte'] ?? []) as Record<string, any>[]).filter((i) => {
-    if (!zone) return true
-    const c = (i['geom'] as { coordinates: [number, number] }).coordinates
-    return pointInPolygon(c, zone)
-  })
+  const head = pages[0]  // radar : carte (tous géocodés) + compteurs viennent de la page 0
+  const inZone = (i: Record<string, any>) => {
+    if (!zone || !i['geom']) return true   // non géocodé → toujours listé
+    return pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
+  }
+  // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone)
+  // CARTE = points cliquables. Radar : TOUS les géocodés (page 0, plafond 8 000). Point mort : les items
+  // géocodés EUX-MÊMES (chaque PC au point mort est un point, exactement comme le radar).
+  const carte = (pointMort
+    ? items.filter((i) => i['geom'])
+    : ((head?.['carte'] ?? []) as Record<string, any>[])
+  ).filter((i) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone))
   useModuleMap([],
     featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } }))),
-    [q.dataUpdatedAt, zone])
-  const total = (head?.['total'] as number) ?? 0
-  const sansLoc = (head?.['sans_localisation'] as number) ?? 0
+    [pointMort, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
+  const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
+  const sansLoc = pointMort ? 0 : ((head?.['sans_localisation'] as number) ?? 0)
+  const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
+
   return (
     <>
-      <Banner>Géocodage {String(head?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
-        Données jusqu'au <b>{String(head?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
-        Cliquez un permis (carte ou liste) pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>
-      {/* radar-permis #2b — recherche par rue / commune : MÊME autocomplétion BAN que « Scorer une
-          adresse » (chemin unique, AddressAutocomplete). La sélection fait voler la carte sur le lieu —
-          les permis géocodés de ce secteur y apparaissent (points cliquables). */}
+      {pointMort
+        ? <Banner>PC accordé, <b>aucune déclaration d'achèvement</b>, parcelle toujours non bâtie au
+            scoring — « réalisation à vérifier » sur place. Chaque permis est un <b>point cliquable</b> (sa
+            fiche : porteur, lots, délai). Codes d'état de la source non documentés (affichés bruts).</Banner>
+        : <Banner>Géocodage {String(head?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
+            Données jusqu'au <b>{String(head?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
+            Cliquez un permis (carte ou liste) pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>}
+      {/* recherche par rue / commune : MÊME autocomplétion BAN que « Étudier un bien » (chemin unique).
+          La sélection fait voler la carte sur le lieu — les permis géocodés y apparaissent (cliquables). */}
       <AddressAutocomplete placeholder="Aller à une rue, une commune…"
         onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })} />
+      {/* saisie DIRECTE d'un numéro de permis → sa fiche, via le MÊME PermitDrawer (aucune 2ᵉ fiche). */}
+      <form onSubmit={(e) => { e.preventDefault(); const v = permSearch.trim(); if (v) setOpen(v) }}
+        className="flex items-center gap-1.5">
+        <input data-permis-num data-promesses-num value={permSearch} onChange={(e) => setPermSearch(e.target.value.trim())}
+          placeholder="Numéro de permis (ex. PC97…) → sa fiche"
+          className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
+        <button type="submit" disabled={!permSearch.trim()}
+          className="shrink-0 rounded-lg border border-mint/50 bg-mint/15 px-2.5 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25 disabled:opacity-40">
+          Voir →</button>
+      </form>
+      {/* FILTRE « Au point mort » — le cœur de la fusion : bascule radar ↔ PC anciens sans achèvement. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button data-permis-pointmort={pointMort ? '1' : '0'} onClick={() => togglePm(!pointMort)}
+          className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors duration-quick ${pointMort ? 'border-amber-500/60 bg-amber-500/15 text-amber-500' : 'border-line-2 text-txt-mut hover:border-mint/50'}`}>
+          ⏸ Au point mort {pointMort ? '✓' : ''}
+        </button>
+        <span className="text-[10.5px] text-txt-dim">{pointMort ? 'PC anciens jamais réalisés' : 'filtrer les PC jamais réalisés'}</span>
+      </div>
+      {/* fenêtre : radar 12/24/48/72 ; point mort 24/36/48/60 (la caducité). Nature : radar seul. */}
       <div className="flex flex-wrap gap-1.5">
-        {[12, 24, 48, 72].map((m) => (
+        {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m) => (
           <button key={m} onClick={() => setMonths(m)}
             className={`rounded-full border px-2.5 py-1 text-[11px] ${months === m ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-            {m} mois
+            {m} mois{pointMort ? '+' : ''}
           </button>
         ))}
-        <span className="mx-1 self-center text-line-2">|</span>
-        {NATURES.map(([v, l]) => (
-          <button key={v} onClick={() => setNature(v)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-            {l}
-          </button>
-        ))}
+        {!pointMort && (
+          <>
+            <span className="mx-1 self-center text-line-2">|</span>
+            {NATURES.map(([v, l]) => (
+              <button key={v} onClick={() => setNature(v)}
+                className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
+                {l}
+              </button>
+            ))}
+          </>
+        )}
       </div>
+      {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
       <p className="text-[11px] text-txt-dim">
-        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total)} permis`} · {fmt(carte.length)} sur la carte
-        {/* radar-permis (audit) — la carte est plafonnée à 8 000 points (garde-fou perf). Sur une fenêtre
-            longue (48/72 mois) les géocodés dépassent ce seuil : on le DIT, jamais un plafond muet. */}
-        {carte.length < ((head?.['geocodes'] as number) ?? 0) && <span data-permis-carte-plafond className="text-mint/70"
-          title="Carte plafonnée à 8 000 points (performance) ; la liste, elle, n'est pas plafonnée (« voir plus »)."> sur {fmt(head?.['geocodes'] as number)} géocodés — carte plafonnée</span>}
-        {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-mint/70"
-          title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisables sur la carte."> · {fmt(sansLoc)} sans localisation précise</span>}
-        {zone && <span className="text-mint/70"> · outil Zone actif</span>}
+        {pointMort
+          ? <>{total != null ? fmt(total) : '…'} permis au point mort · {fmt(carte.length)} sur la carte{total != null && loaded < total ? ` · ${fmt(loaded)} chargés` : ''}</>
+          : <>{zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total ?? 0)} permis`} · {fmt(carte.length)} sur la carte
+              {/* radar (audit) — carte plafonnée à 8 000 points (perf) ; on le DIT, jamais un plafond muet. */}
+              {carte.length < ((head?.['geocodes'] as number) ?? 0) && <span data-permis-carte-plafond className="text-mint/70"
+                title="Carte plafonnée à 8 000 points (performance) ; la liste, elle, n'est pas plafonnée (« voir plus »)."> sur {fmt(head?.['geocodes'] as number)} géocodés — carte plafonnée</span>}
+              {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-mint/70"
+                title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisables sur la carte."> · {fmt(sansLoc)} sans localisation précise</span>}
+              {zone && <span className="text-mint/70"> · outil Zone actif</span>}</>}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.map((i, k) => (
@@ -370,83 +431,35 @@ function M03() {
             className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/50 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
             <span className="font-mono text-txt">{i['type'] as string}</span>
             <span className="text-txt-mut">{i['date'] as string}</span>
-            {i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
-            {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
-            {!i['geom'] && <span className="ml-auto text-[11px] text-mint/70"
-              title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+            {pointMort ? (
+              <>
+                {i['surface_m2'] != null && <span className="text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
+                <span className="text-txt-dim">état {String(i['etat'])}</span>
+                <span className="ml-auto flex items-center gap-1.5">
+                  {!i['geom'] && <span className="text-mint/70" title="Non rattaché à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+                  <TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />
+                </span>
+              </>
+            ) : (
+              <>
+                {i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
+                {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
+                {!i['geom'] && <span className="ml-auto text-[11px] text-mint/70"
+                  title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+              </>
+            )}
           </button>
         ))}
-        <MoreButton q={q} loaded={pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length} total={total} />
+        <MoreButton q={q} loaded={loaded} total={total ?? undefined} />
       </div>
       {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
     </>
   )
 }
 
-/* ───────────────────────── M04 — PERMIS AU POINT MORT (ex-« Promesses mortes ») ───────────────────────── */
-
-function M04() {
-  // audit-promesses (add 1) — défaut 36 mois = la CADUCITÉ LÉGALE du PC. À 24 mois on listait des permis
-  // encore valides sous un nom qui disait le contraire. Le sélecteur garde 24/36/48/60 ; l'écran ouvre à 36.
-  const [months, setMonths] = useState(36)
-  const commune = useApp((s) => s.commune)
-  // audit-promesses (correction) — saisie DIRECTE d'un numéro de permis → son état, via le MÊME drawer
-  // que le radar permis (PermitDrawer, chemin unique). Introuvable → message clair (branche erreur du drawer).
-  const [permSearch, setPermSearch] = useState('')
-  const [openPermit, setOpenPermit] = useState<string | null>(null)
-  const PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
-  const q = useInfiniteQuery({
-    queryKey: ['m04', months, commune],
-    queryFn: ({ pageParam }) => modPromesses(months, PAGE, pageParam as number),
-    initialPageParam: 0,
-    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PAGE : undefined,
-  })
-  // total (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
-  const countQ = useQuery({ queryKey: ['m04-count', months, commune], queryFn: () => modPromessesCount(months), staleTime: 60_000 })
-  const pages = (q.data?.pages ?? []) as Record<string, any>[]
-  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
-  const total = countQ.data?.total
-  // tous géocodés → mappables au fil du chargement (la carte grandit à chaque « voir plus »)
-  useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
-  return (
-    <>
-      <Banner>PC accordé, <b>aucune déclaration d'achèvement</b>, parcelle toujours non bâtie au
-        scoring — « réalisation à vérifier » sur place. Codes d'état de la source non documentés
-        (affichés bruts).</Banner>
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
-      {/* audit-promesses (correction) — recherche DIRECTE par numéro de permis → son état dans le drawer.
-          Chemin unique : le MÊME PermitDrawer que le radar permis (aucune 2ᵉ fiche permis). */}
-      <form onSubmit={(e) => { e.preventDefault(); const v = permSearch.trim(); if (v) setOpenPermit(v) }}
-        className="flex items-center gap-1.5">
-        <input data-promesses-num value={permSearch} onChange={(e) => setPermSearch(e.target.value.trim())}
-          placeholder="Numéro de permis (ex. PC97…) → son état"
-          className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <button type="submit" disabled={!permSearch.trim()}
-          className="shrink-0 rounded-lg border border-mint/50 bg-mint/15 px-2.5 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25 disabled:opacity-40">
-          Voir l'état →</button>
-      </form>
-      <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-        Permis plus vieux que
-        <select value={months} onChange={(e) => setMonths(Number(e.target.value))}
-          className="rounded border border-line-2 bg-surface-3 px-1 py-0.5 text-txt">
-          {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
-        </select>
-      </label>
-      <p className="text-[11px] text-txt-dim">{total != null ? fmt(total) : '…'} permis au point mort{total != null && items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-        {items.map((i, k) => (
-          <Row key={k} idu={i['idu'] as string}
-            sub={`PC ${i['date']} · ${fmt(i['surface_m2'] as number)} m² · état ${i['etat']}`}
-            right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
-            fiche={[['Permis', `${i['permit_id']} (${i['date']})`], ['État source', `code ${i['etat']} — sans achèvement déclaré`],
-              ['Lecture', 'PC ancien jamais réalisé — réalisation à vérifier']]} />
-        ))}
-        <MoreButton q={q} loaded={items.length} total={total} />
-      </div>
-      {openPermit && <PermitDrawer permitId={openPermit} onClose={() => setOpenPermit(null)} />}
-    </>
-  )
-}
+/* ── M04 — PERMIS AU POINT MORT : FUSIONNÉ dans l'outil « Permis » (M03 ci-dessus) le 23/08/2026 (§3).
+   Devenu un FILTRE (« Au point mort ») du radar, rendu en points cliquables. Le composant M04 autonome
+   est supprimé ; la clé `promesses` résout désormais M03 (filtre pré-actif). Endpoint /promesses vivant. */
 
 /* ───────────────────────────── M05 — VÉLOCITÉ ADMIN ───────────────────────────── */
 // M137-Z — ABSORBÉ dans l'outil « Communes » (fiche commune → tranche p25–p75). Plus câblé au menu ;
@@ -933,7 +946,10 @@ function Risques() {
 
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
-  patrimoine: M02, permis: M03, promesses: M04,
+  // §3 — outil « Permis » unifié : `permis` (radar, carte au menu) ET `promesses` (filtre « Au point
+  // mort », clé ALIASÉE hidden) résolvent le MÊME composant M03. `promesses` ouvre le filtre pré-actif
+  // (deep-link/copilote/QA inchangés). Composant M04 autonome supprimé (absorbé).
+  patrimoine: M02, permis: M03, promesses: M03,
   // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
   // M137-T — 'duediligence' (M10) et 'o5-servitudes' (O5) fusionnés dans l'outil « risques ».

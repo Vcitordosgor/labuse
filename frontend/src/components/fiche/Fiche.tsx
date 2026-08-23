@@ -970,7 +970,9 @@ function PorteOutil({ ico, titre, sous, onClick, data, compacte }: {
  *  le bilan en LECTURE (capacité, gabarit, SDP) + une PORTE pré-remplie (rendue au pied du tiroir). */
 export function FaisabiliteTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  const [showSteps, setShowSteps] = useState(false)  // M58-P1 (h) : le calcul étape par étape est REPLIÉ par défaut
+  // §1e — le calcul étape par étape est OUVERT par défaut (on passait à côté quand il était replié) ;
+  // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
+  const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
@@ -1015,11 +1017,11 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) ── */}
+      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) — §1e : encadré mis en valeur, ouvert par défaut ── */}
       {steps.length > 0 && (
-        <div>
-          <button onClick={() => setShowSteps((s) => !s)} className="label-caps mb-1 flex w-full items-center justify-between transition-colors duration-quick hover:text-txt">
-            <span>Le calcul, étape par étape ({steps.length})</span>
+        <div className="rounded-lg border border-mint/40 bg-mint/[0.05] p-2">
+          <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
+            <span>▾ Le calcul, étape par étape ({steps.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
