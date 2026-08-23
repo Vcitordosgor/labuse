@@ -498,7 +498,7 @@ export interface SolaireItem {
   idu: string; commune: string; productible: number | null
   azimut: number | null; azimut_confiance: string | null
   pente: number | null; toit_m2: number | null
-  piscine: boolean; abf: boolean; proba_occ: number | null
+  piscine: boolean; piscine_m2: number | null; abf: boolean; proba_occ: number | null
   tier_v2: string | null; etage0: boolean; classement: string
 }
 export interface ProspectionSolaireResp {
@@ -507,7 +507,7 @@ export interface ProspectionSolaireResp {
 }
 export interface SolaireFiltres {
   commune?: string | null; potentielMin?: number; probaOccMin?: number
-  piscine?: 'tous' | 'oui' | 'non'; sort?: 'potentiel' | 'toiture' | 'proba'
+  piscine?: 'tous' | 'oui' | 'non'; piscineSurfMin?: number; sort?: 'potentiel' | 'toiture' | 'proba'
 }
 const solaireQs = (f: SolaireFiltres) => {
   const p: Record<string, string | number> = {}
@@ -515,6 +515,7 @@ const solaireQs = (f: SolaireFiltres) => {
   if (f.potentielMin) p.potentiel_min = f.potentielMin
   if (f.probaOccMin) p.proba_occ_min = f.probaOccMin
   if (f.piscine && f.piscine !== 'tous') p.piscine = f.piscine
+  if (f.piscineSurfMin) p.piscine_surf_min = f.piscineSurfMin
   if (f.sort) p.sort = f.sort
   return qf(p)   // qf ajoute source=SOURCE (convention)
 }
@@ -523,6 +524,23 @@ export const getProspectionSolaire = (f: SolaireFiltres) =>
 // export CSV de démarchage — MÊMES colonnes que l'écran, mentions Sourcé/Estimé en en-tête (lien direct).
 export const prospectionSolaireCsvUrl = (f: SolaireFiltres) =>
   `/modules/prospection-solaire?${solaireQs(f)}&fmt=csv`
+// SOLAIRE (refonte) — mode Ensoleillement : la FICHE SOLEIL d'une parcelle (barre unique → IDU). Le
+// profil mensuel (12 valeurs) + le mois optimal, non servis par la liste. Données gelées, lecture seule.
+export interface SolaireFiche {
+  ok: boolean; idu: string; message?: string; commune?: string
+  productible?: number | null; prod_mensuel?: number[] | null; mois_optimal?: number | null
+  azimut?: number | null; azimut_confiance?: string | null; pente?: number | null
+  toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
+  ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
+}
+export const getSolaireFiche = (idu: string) =>
+  j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)
+// SOLAIRE (refonte) — mode Piscines : AGRÉGATS de la détection (île + par commune). Décomptes, jamais recalcul.
+export interface PiscinesAgregat {
+  total: number; communes: { commune: string; n: number }[]; source: string; maj: string
+}
+export const getPiscinesAgregat = (commune?: string | null, surfMin = 0) =>
+  j<PiscinesAgregat>(`/modules/prospection-piscines?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}) })}`)
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {
