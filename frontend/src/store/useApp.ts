@@ -349,6 +349,10 @@ interface AppState {
   // Consommé-puis-reset par M03 (même idiome que parcelPrefill) : MapView écrit, M03 lit et remet à null.
   permitToOpen: string | null
   setPermitToOpen: (id: string | null) => void
+  // PERMIS (refonte) — SURVOL d'une ligne de la liste = le point s'allume sur la carte. La liste écrit
+  // la géométrie du permis survolé ; MapView la rend en anneau surligné (source dédiée, léger).
+  permitHover: unknown | null
+  setPermitHover: (g: unknown | null) => void
   msel: string[] // sélection multi-parcelles (module assemblage M16)
   setMsel: (m: string[]) => void
   m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
@@ -641,6 +645,8 @@ export const useApp = create<AppState>((set) => ({
   setFlyTo: (flyTo) => set({ flyTo }),
   permitToOpen: null,
   setPermitToOpen: (permitToOpen) => set({ permitToOpen }),
+  permitHover: null,
+  setPermitHover: (permitHover) => set({ permitHover }),
   msel: [],
   setMsel: (msel) => set({ msel }),
   m22Prefill: null,
