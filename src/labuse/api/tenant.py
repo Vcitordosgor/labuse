@@ -31,7 +31,8 @@ from sqlalchemy.orm import Session
 # commerciale d'un compte — elles ne doivent jamais fuiter à un autre. compte_id + FK cascade
 # comme les autres ; la dédup permis passe à (compte_id, parcel_id, source_ref), cf. models.
 SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
-                 "signalements", "event_log", "watched_parcels", "watch_zones", "alertes")
+                 "signalements", "event_log", "watched_parcels", "watch_zones", "alertes",
+                 "courrier_demandes")
 
 
 def ensure_scoping(db: Session) -> None:

@@ -17,6 +17,7 @@ brancher quand Stripe sera en production côté Flash).
 """
 from __future__ import annotations
 
+import json
 import logging
 
 from sqlalchemy import text
@@ -37,7 +38,27 @@ CREATE TABLE IF NOT EXISTS courrier_envois (
   modele varchar(40)
 );
 CREATE INDEX IF NOT EXISTS courrier_envois_sujet_idx ON courrier_envois (sujet, ts);
+
+-- COURRIER-SERVICE (refonte 13 outils) — la table des DEMANDES d'envoi REVIENT À LA VIE : le client
+-- prépare, LABUSE envoie. M82 l'avait déclarée morte (aucun consommateur) ; elle a désormais cloche +
+-- Brevo + vue admin. CREATE + ALTER idempotents pour réconcilier une éventuelle table héritée d'un
+-- ancien schéma (colonnes ajoutées sans casser ; anciennes lignes = corps NULL, filtrées à la lecture).
+CREATE TABLE IF NOT EXISTS courrier_demandes (
+  id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS compte_id integer;
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS parcelles jsonb;
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS n integer;
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS communes text;
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS modele varchar(40);
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS corps text;
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS statut varchar(24) DEFAULT 'demande';
+ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+CREATE INDEX IF NOT EXISTS courrier_demandes_compte_idx ON courrier_demandes (compte_id, ts);
 """
+
+# Cycle de vie visible côté client (mandat) : Demandé → Tarif confirmé → Envoyé.
+STATUTS_DEMANDE = ("demande", "tarif_confirme", "envoye")
 
 
 def ensure_tables(engine) -> None:
@@ -45,6 +66,50 @@ def ensure_tables(engine) -> None:
         for stmt in DDL.strip().split(";"):
             if stmt.strip():
                 c.execute(text(stmt))
+
+
+def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
+                  communes: str | None, modele: str | None, corps: str) -> dict:
+    """Enregistre une demande d'envoi (le client prépare, LABUSE envoie). Une ligne = une demande de
+    N courriers. `parcelles` = liste d'IDU (jsonb) ; `communes` = récap lisible fourni par le front."""
+    r = db.execute(text("""
+        INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut)
+        VALUES (:c, cast(:p AS jsonb), :n, :com, :m, :corps, 'demande')
+        RETURNING id, ts, n, communes, statut"""),
+        {"c": compte_id, "p": json.dumps(parcelles), "n": len(parcelles),
+         "com": communes, "m": modele, "corps": corps}).mappings().one()
+    return dict(r)
+
+
+def demandes_de(db, compte_id: int | None) -> list[dict]:
+    """Les demandes DU client (cloison), pour la timeline de statut. `corps IS NOT NULL` écarte les
+    lignes héritées de l'ancien schéma M82."""
+    return [dict(r) for r in db.execute(text("""
+        SELECT id, ts, n, communes, modele, statut, updated_at
+        FROM courrier_demandes
+        WHERE corps IS NOT NULL AND compte_id IS NOT DISTINCT FROM :c
+        ORDER BY ts DESC LIMIT 100"""), {"c": compte_id}).mappings()]
+
+
+def demandes_admin(db, statut: str | None = None) -> list[dict]:
+    """Vue admin (Vic) : toutes les demandes, filtrable par statut."""
+    where = "WHERE corps IS NOT NULL" + (" AND statut = :s" if statut else "")
+    return [dict(r) for r in db.execute(text(
+        f"SELECT id, ts, compte_id, n, communes, modele, corps, statut, updated_at "
+        f"FROM courrier_demandes {where} ORDER BY ts DESC LIMIT 300"),
+        ({"s": statut} if statut else {})).mappings()]
+
+
+def set_statut_demande(db, demande_id: int, statut: str) -> dict:
+    if statut not in STATUTS_DEMANDE:
+        raise ValueError(f"statut invalide : {statut} (attendu {', '.join(STATUTS_DEMANDE)})")
+    r = db.execute(text(
+        "UPDATE courrier_demandes SET statut = :s, updated_at = now() WHERE id = :id "
+        "RETURNING id, compte_id, n, communes, statut"),
+        {"s": statut, "id": demande_id}).mappings().first()
+    if not r:
+        raise ValueError("demande introuvable")
+    return dict(r)
 
 
 def provider_actif() -> str:
