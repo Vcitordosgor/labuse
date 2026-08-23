@@ -110,34 +110,47 @@ def _regles_zone(code: str, commune: str | None) -> dict:
 
 # ───────────────────────── référence d'attestation (C8) ─────────────────────────
 
-def _ref_attestation(db: Session, idu: str) -> str:
-    """M22-F C8 — numéro de référence UNIQUE de l'attestation, LZ-AAAA-NNNN, stocké en base
-    (table `lettre_zonage_refs`, additive). Une référence par ÉDITION : chaque génération
-    est tracée. Petit retry sur collision (concurrence faible, contrainte UNIQUE fait foi)."""
+def _ref_attestation(db: Session, idu: str, compte_id: int | None) -> str | None:
+    """M22-F C8 — numéro de référence UNIQUE de l'attestation, LZ-AAAA-NNNN, tracé en base.
+
+    M149 L1 (audit M148, reco E) — deux durcissements :
+    - CLOISON : la référence officielle n'est émise QU'AVEC une session (`compte_id`). Sans compte,
+      on renvoie None : le PDF se rend quand même, mais SANS numéro officiel (cf. _identification /
+      _cloture, mention dégradée). Une attestation numérotée au nom de LABUSE ne s'émet plus par
+      accident (ni anonyme, ni si `LABUSE_ENV` est mal posé).
+    - SÉQUENCE Postgres dédiée, atomique et NON réutilisable : `nextval` ne recule jamais, deux
+      générations concurrentes obtiennent deux numéros distincts, et une ligne supprimée ne libère
+      pas son numéro. Remplace le `count(*) + 1` collisionnable/débordant du constat M148.
+    """
+    if compte_id is None:
+        return None                                       # pas de compte → pas de numéro officiel
     from sqlalchemy import text as _t
     db.execute(_t(
         "CREATE TABLE IF NOT EXISTS lettre_zonage_refs ("
         "  id serial PRIMARY KEY, ref text UNIQUE NOT NULL, idu text NOT NULL,"
         "  created_at timestamptz NOT NULL DEFAULT now())"))
+    db.execute(_t("ALTER TABLE lettre_zonage_refs ADD COLUMN IF NOT EXISTS compte_id bigint"))
+    db.execute(_t("CREATE SEQUENCE IF NOT EXISTS lettre_zonage_ref_seq"))
+    # Alignement UNIQUE (à la création, is_called=false) au-dessus de l'espace de numérotation
+    # hérité (réfs count(*) déjà en base) → aucune collision avec l'ancien schéma. Ne se rejoue
+    # jamais une fois la séquence appelée (is_called devient true).
+    db.execute(_t(
+        "SELECT setval('lettre_zonage_ref_seq', "
+        "  GREATEST(1, COALESCE((SELECT max(split_part(ref, '-', 3)::int) "
+        "                        FROM lettre_zonage_refs), 0)), true) "
+        "WHERE (SELECT is_called FROM lettre_zonage_ref_seq) = false"))
     annee = date.today().year
-    for _essai in range(3):
-        n = db.execute(_t(
-            "SELECT count(*) FROM lettre_zonage_refs WHERE ref LIKE :p"),
-            {"p": f"LZ-{annee}-%"}).scalar() or 0
-        ref = f"LZ-{annee}-{n + 1:04d}"
-        try:
-            db.execute(_t("INSERT INTO lettre_zonage_refs (ref, idu) VALUES (:r, :i)"),
-                       {"r": ref, "i": idu})
-            db.commit()
-            return ref
-        except Exception:  # noqa: BLE001 — collision UNIQUE : on recompte
-            db.rollback()
-    return f"LZ-{annee}-XXXX"  # repli improbable : la lettre sort, la réf est dégradée
+    n = db.execute(_t("SELECT nextval('lettre_zonage_ref_seq')")).scalar()
+    ref = f"LZ-{annee}-{n:04d}"
+    db.execute(_t("INSERT INTO lettre_zonage_refs (ref, idu, compte_id) VALUES (:r, :i, :c)"),
+               {"r": ref, "i": idu, "c": compte_id})
+    db.commit()
+    return ref
 
 
 # ───────────────────────── sections HTML (layout attestation) ─────────────────────────
 
-def _identification(p: dict, rap: dict, ref: str, marque: dict | None = None) -> str:
+def _identification(p: dict, rap: dict, ref: str | None, marque: dict | None = None) -> str:
     """Couverture d'ATTESTATION (C8) : marque, titre, RÉFÉRENCE et DATE D'ÉDITION en tête,
     identification, plan cadastral clair (C2).
 
@@ -152,10 +165,13 @@ def _identification(p: dict, rap: dict, ref: str, marque: dict | None = None) ->
     if rap.get("adresse"):
         rows.append(("Adresse (Base Adresse Nationale)", rap["adresse"]))
     table = "".join(f"<tr><td style='width:38%'>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in rows)
+    # M149 L1 — sans compte (ref None), la lettre se rend mais SANS numéro officiel : mention claire.
+    ref_txt = (f"Référence <b>{esc(ref)}</b>" if ref
+               else "Édition <b>sans référence enregistrée</b> (générée sans compte)")
     return (f"<section class='garde'>"
             f"{_marque_bloc(marque)}{bq.wordmark_html('LETTRE DE VÉRIFICATION DE ZONAGE · attestation documentaire')}"
             f"<h1>Lettre de vérification de zonage</h1>"
-            f"<div class='refs'>Référence <b>{esc(ref)}</b> · éditée le <b>{esc(edition)}</b> · "
+            f"<div class='refs'>{ref_txt} · éditée le <b>{esc(edition)}</b> · "
             f"parcelle <b>{esc(p['idu'])}</b> — {esc(p['commune'])}</div>"
             f"<div class='bandeau'>{LIBELLE}</div>"
             f"<h2>1 · Identification</h2><table>{table}</table>"
@@ -312,22 +328,30 @@ def _limites(rap: dict) -> str:
     return body
 
 
-def _cloture(ref: str) -> str:
+def _cloture(ref: str | None) -> str:
     """C8 — bloc de clôture d'attestation : qui édite, sous quelle référence, quand.
     Codes d'un document formel — aucun engagement au-delà du libellé légal du pied."""
     edition = date.today().strftime("%d/%m/%Y")
+    # M149 L1 — sans référence (édition sans compte), la clôture DIT que ce n'est pas une
+    # attestation numérotée : pas d'authenticité vérifiable, pas d'émission par accident.
+    if ref:
+        corps = (f"Attestation documentaire n° <b>{esc(ref)}</b>, éditée le <b>{esc(edition)}</b> "
+                 f"par LABUSE (radar foncier — La Réunion) sur données publiques numérisées. "
+                 f"Document généré électroniquement, valable en l'état de ses sources ; la référence "
+                 f"ci-dessus est enregistrée par LABUSE et permet de vérifier l'authenticité de "
+                 f"l'édition sur simple demande.")
+    else:
+        corps = (f"Édition générée le <b>{esc(edition)}</b> par LABUSE (radar foncier — La Réunion) "
+                 f"sur données publiques numérisées, <b>sans référence enregistrée</b> (générée sans "
+                 f"compte) : cette copie n'est pas une attestation numérotée et son authenticité "
+                 f"n'est pas vérifiable auprès de LABUSE.")
     return (f"<div class='hyp-encadre' style='margin-top:6mm'>"
-            f"<span class='titre'>Édité par LABUSE</span>"
-            f"Attestation documentaire n° <b>{esc(ref)}</b>, éditée le <b>{esc(edition)}</b> "
-            f"par LABUSE (radar foncier — La Réunion) sur données publiques numérisées. "
-            f"Document généré électroniquement, valable en l'état de ses sources ; la référence "
-            f"ci-dessus est enregistrée par LABUSE et permet de vérifier l'authenticité de "
-            f"l'édition sur simple demande.</div>")
+            f"<span class='titre'>Édité par LABUSE</span>{corps}</div>")
 
 
 # ───────────────────────── endpoint ─────────────────────────
 
-def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
+def _build_pdf(db: Session, idu: str, marque: dict | None = None, compte_id: int | None = None) -> bytes:
     # M31 PC1 : import _marque_bloc retiré d'ici (mort — utilisé dans _identification qui
     # l'importe désormais localement, avec `marque` reçue en paramètre).
     from ..flash.data import collect_report_data
@@ -344,7 +368,7 @@ def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     # M147 L3 — RNU : bloc calculé une fois (None hors commune RNU), gouverne les sections 2 et 3.
     from ..rnu import rnu_block
     rnu = rnu_block(idu, db)
-    ref = _ref_attestation(db, idu)                      # C8 : référence unique, tracée
+    ref = _ref_attestation(db, idu, compte_id)           # C8 : réf unique (None sans compte — M149 L1)
     sections = [
         _identification(p, rap, ref, marque),
         _zonage(zones, p.get("commune"), rnu),
@@ -368,6 +392,9 @@ def lettre_zonage_pdf(idu: str, request: Request, db: Session = Depends(get_db))
     from ..quota import porte_export
     porte_export(request, db)
     from ..marque import charger as _charger_marque
-    pdf = _build_pdf(db, idu, marque=_charger_marque(db, request))
+    # M149 L1 — compte de la session (posé par _auth_guard sur request.state) : gouverne l'émission
+    # de la référence officielle. None (anonyme / pilote sans session) → PDF rendu sans numéro.
+    compte_id = getattr(request.state, "compte_id", None)
+    pdf = _build_pdf(db, idu, marque=_charger_marque(db, request), compte_id=compte_id)
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="lettre_zonage_{idu}.pdf"'})

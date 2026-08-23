@@ -149,7 +149,10 @@ _TUILE_FLUSH = 25          # écritures DB par lots (les tuiles sont volumineuse
 # rate-limiterait). Les tuiles gardent leur régime carto dédié (jamais le 60/min).
 PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/map/parcels",
                      "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier",
-                     "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse")
+                     "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse",
+                     # M149 L3 (audit M148) : les deux routes document lourdes ET sans rate-limit
+                     # rejoignent le régime 60/min (calcul résiduel/faisabilité + fpdf2 par appel).
+                     "/lettre-zonage", "/argumentaire")
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 

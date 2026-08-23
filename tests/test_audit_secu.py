@@ -646,6 +646,30 @@ def test_secret_key_exigee_hors_local(monkeypatch):
     config.get_settings.cache_clear()
 
 
+def test_env_local_avec_secret_key_refuse_le_boot(monkeypatch):
+    """M149 L2 (audit M148 F4) : garde symétrique de exiger_secret_prod. Une clé de signature
+    posée en env='local' trahit un déploiement laissé en dev (auth désactivée = routes ouvertes) →
+    le démarrage DOIT échouer, pas ouvrir. Le dev pur (local, clé éphémère) démarre normalement."""
+    from labuse import config
+    from labuse.api import auth
+    # local + clé de signature posée = misconfig de déploiement → refus de démarrer
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "cle-persistante-de-deploiement-000")
+    config.get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="local.*SECRET_KEY|SECRET_KEY.*local|déploiement"):
+        auth.exiger_env_deploiement()
+    # dev pur : local SANS clé (éphémère, défaut documenté) → ne lève pas
+    monkeypatch.delenv("LABUSE_SECRET_KEY", raising=False)
+    config.get_settings.cache_clear()
+    auth.exiger_env_deploiement()
+    # déploiement correct : pilot AVEC clé → ne lève pas
+    monkeypatch.setenv("LABUSE_ENV", "pilot")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "cle-persistante-de-deploiement-000")
+    config.get_settings.cache_clear()
+    auth.exiger_env_deploiement()
+    config.get_settings.cache_clear()
+
+
 def test_pay_token_sans_secret_en_dur(monkeypatch):
     """Le jeton de bascule paiement ne repose plus sur une constante en dur : un jeton forgé
     avec l'ancien secret « labuse-dev-secret » est REFUSÉ ; un vrai jeton est accepté."""

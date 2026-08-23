@@ -139,6 +139,9 @@ async def _lifespan(app: FastAPI):
     # Fail-closed (P0-3) : hors 'local', LABUSE_SECRET_KEY est OBLIGATOIRE (sinon jeton de
     # paiement forgeable). Absente en prod/pilote → on refuse de démarrer, message clair.
     auth.exiger_secret_prod()
+    # M149 L2 (audit M148 F4) : garde SYMÉTRIQUE — une clé de signature posée en env='local' trahit
+    # un déploiement laissé en dev (auth désactivée = routes ouvertes). Boot refusé, pas ouvert.
+    auth.exiger_env_deploiement()
     if not s.secret_key:  # ici forcément 'local' : clé éphémère (sessions perdues au reboot)
         log.warning("LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère "
                     "(les sessions ne survivront pas à un redémarrage).")
