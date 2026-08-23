@@ -95,9 +95,10 @@ export function Rail() {
   // un outil ne peut pas récupérer la parcelle regardée). Ferme le tiroir Outils.
   const openOutil = (k: string) => {
     if (k !== 'comparer') { setModule(k); return }
-    const st = useApp.getState()
-    st.setCompareOpen(true)
-    if (st.compareIdus.length === 0) st.setComparePicking(true)   // M82 : vide → on ajoute par la carte
+    // SOCLE : openCompare applique le TTL 15 min (sélection retrouvée si fraîche, sinon repart en
+    // picking) et ferme les autres overlays. toggleOutils referme ENSUITE le tiroir (branche de
+    // fermeture — elle ne touche pas la comparaison qu'on vient d'ouvrir).
+    useApp.getState().openCompare()
     toggleOutils()
   }
 
