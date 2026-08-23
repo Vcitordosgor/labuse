@@ -29,7 +29,7 @@ try {
   await page.waitForTimeout(600)
   const rows = await page.locator('[data-solaire-row]').count()
   const compte = await page.locator('.overflow-hidden >> text=/sur/').first().innerText().catch(() => '')
-  const bandeau = await page.locator('text=/masque solaire du relief non calculé/').count()
+  const bandeau = await page.locator('text=/ombrage de proximité.*non modélisé/').count()
   const zeroLeak = await page.locator('[data-solaire-row] td', { hasText: /^0( m²|°|)$/ }).count()
   console.log(`(1) lignes=${rows} · compte="${compte.replace(/\n/g, ' ')}" · bandeau=${bandeau} · cellules « 0 » nues=${zeroLeak}`)
   if (rows < 1 || bandeau < 1) ok = false

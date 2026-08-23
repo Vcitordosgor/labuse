@@ -596,9 +596,15 @@ def prospection_solaire(commune: str | None = None,
         d["etage0"] = bool(r["etage0"])
         d["classement"] = _classement_court(r["tier_v2"], d["etage0"])
         items.append(d)
-    maj = "2026-07-11"
-    bandeau = ("Données au 11/07/2026 · masque solaire du relief non calculé · "
-               "potentiel théorique à confirmer sur site.")
+    # SOLAIRE M1 — millésime LU en base (source_millesime, posé par le builder ingestion/solaire.py) :
+    # le bandeau suit la donnée fraîche au lieu d'une date en dur. L'horizon topographique est intégré
+    # par PVGIS (usehorizon=1) ; seul l'ombrage de PROXIMITÉ (bâti/arbres) reste non modélisé.
+    meta = db.execute(text("SELECT max(source_millesime) AS mil, to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
+                           "FROM parcel_solar WHERE prod_spec_kwh_kwc IS NOT NULL")).mappings().first()
+    maj = (meta and meta["maj"]) or "—"
+    mil = (meta and meta["mil"]) or "PVGIS SARAH3"
+    bandeau = (f"Données {mil} · horizon topographique intégré (PVGIS), ombrage de proximité "
+               f"(bâti, arbres) non modélisé · potentiel théorique à confirmer sur site.")
     if fmt == "csv":
         # export démarchage : MÊMES colonnes que l'écran, mention Sourcé/Estimé en en-tête (mandat).
         cols = [("idu", "Parcelle (IDU)"),

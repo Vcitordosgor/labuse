@@ -21,6 +21,9 @@ config/settings.yaml
 data/*
 # …CoSIA IGN (source brute .7z/.gpkg, ~494 Mio) — la donnée vit en base, jamais dans Git
 data/cosia/
+# …SOLAIRE M1 (Plein Sud) — réservé aux sorties raster éventuelles ; couvert par data/* déjà, explicite
+#    par exigence (la V1 stocke le mensuel EN BASE, pas de raster disque — dossier a priori vide)
+data/plein_sud/
 # …sauf le dataset Obsimmo fourni par le client (petit, versionné, requis par la fiche LOT 4-C)
 !data/obsimmo_vente_reunion.json
 # …et l'extrait La Réunion de la carte des loyers DHUP (open data, petit, requis par la fiche LOT 4-B)

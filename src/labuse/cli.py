@@ -2482,6 +2482,24 @@ def ortho_detect_cmd(
             typer.echo(f"✓ post-traitement : {post}")
 
 
+@app.command("solaire-build")
+def solaire_build_cmd(
+    rps: float = typer.Option(None, help="Débit PVGIS (défaut config, 10 req/s)."),
+    fetch_limit: int = typer.Option(None, help="Nb max de points PVGIS à récupérer (tests)."),
+    skip_fetch: bool = typer.Option(False, "--skip-fetch", help="Sauter le fetch PVGIS (interpolation/flags seuls sur la grille déjà récupérée)."),
+    rebuild_grid: bool = typer.Option(False, "--rebuild-grid", help="Reconstruire la grille solar_grid (efface les points existants)."),
+) -> None:
+    """SOLAIRE M1 — reconstruit parcel_solar depuis les sources (PVGIS + bâti + cascade + Filosofi).
+    Idempotent et RÉSUMABLE (checkpoint = solar_grid.prod_spec NULL). Mensuel EN DB (12 + annuel +
+    mois_optimal), azimut du bâti (Estimé), schéma 14 colonnes. Voir ingestion/solaire.py."""
+    from .ingestion import solaire
+
+    with session_scope() as s:
+        res = solaire.run(s, rps=rps, rebuild_grid=rebuild_grid, skip_fetch=skip_fetch,
+                          fetch_limit=fetch_limit, log=typer.echo)
+        typer.echo(f"✓ solaire-build : {res}")
+
+
 @app.command("ortho-materialise")
 def ortho_materialise_cmd() -> None:
     """Lot 5 (wave-ortho) : matérialise parcel_equipements depuis les détections

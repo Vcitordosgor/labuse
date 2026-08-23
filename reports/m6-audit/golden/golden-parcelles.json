@@ -194,7 +194,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1428,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 54
     },
     "surface_m2": 169715,
@@ -368,7 +367,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1423,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 53
     },
     "surface_m2": 108456,
@@ -534,7 +532,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1329,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 25
     },
     "surface_m2": 5013,
@@ -703,7 +700,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1342,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 29
     },
     "surface_m2": 113,
@@ -876,7 +872,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1342,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 29
     },
     "surface_m2": 435,
@@ -1045,7 +1040,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1340,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 28
     },
     "surface_m2": 735,
@@ -1217,7 +1211,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1326,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 22
     },
     "surface_m2": 178,
@@ -1389,7 +1382,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1327,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 24
     },
     "surface_m2": 71,
@@ -1563,7 +1555,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1342,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 29
     },
     "surface_m2": 411,
@@ -1725,7 +1716,6 @@
     "section": "AI",
     "solaire": {
      "prod_spec_kwh_kwc": 1323,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 21
     },
     "surface_m2": 1317,
@@ -1894,7 +1884,6 @@
     "section": "AM",
     "solaire": {
      "prod_spec_kwh_kwc": 1299,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 12
     },
     "surface_m2": 380,
@@ -2067,7 +2056,6 @@
     "section": "AM",
     "solaire": {
      "prod_spec_kwh_kwc": 1298,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 12
     },
     "surface_m2": 375,
@@ -2248,7 +2236,6 @@
     "section": "AM",
     "solaire": {
      "prod_spec_kwh_kwc": 1301,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 14
     },
     "surface_m2": 4804,
@@ -2419,7 +2406,6 @@
     "section": "AN",
     "solaire": {
      "prod_spec_kwh_kwc": 1301,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 14
     },
     "surface_m2": 600,
@@ -2590,7 +2576,6 @@
     "section": "AN",
     "solaire": {
      "prod_spec_kwh_kwc": 1301,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 13
     },
     "surface_m2": 5717,
@@ -2760,7 +2745,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1504,
-     "pv_existant": null,
      "score_solaire": 78
     },
     "surface_m2": 23197,
@@ -2930,7 +2914,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1507,
-     "pv_existant": null,
      "score_solaire": 79
     },
     "surface_m2": 1771,
@@ -3106,7 +3089,6 @@
     "section": "AI",
     "solaire": {
      "prod_spec_kwh_kwc": 1533,
-     "pv_existant": null,
      "score_solaire": 87
     },
     "surface_m2": 10985,
@@ -3282,7 +3264,6 @@
     "section": "AK",
     "solaire": {
      "prod_spec_kwh_kwc": 1501,
-     "pv_existant": null,
      "score_solaire": 76
     },
     "surface_m2": 735,
@@ -3456,7 +3437,6 @@
     "section": "AH",
     "solaire": {
      "prod_spec_kwh_kwc": 1343,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 29
     },
     "surface_m2": 114,
@@ -3623,7 +3603,6 @@
     "section": "AK",
     "solaire": {
      "prod_spec_kwh_kwc": 1346,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 30
     },
     "surface_m2": 128,
@@ -3795,7 +3774,6 @@
     "section": "AR",
     "solaire": {
      "prod_spec_kwh_kwc": 1341,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 28
     },
     "surface_m2": 298,
@@ -3960,7 +3938,6 @@
     "section": "AR",
     "solaire": {
      "prod_spec_kwh_kwc": 1341,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 28
     },
     "surface_m2": 140,
@@ -4130,7 +4107,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1339,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 27
     },
     "surface_m2": 72,
@@ -4299,7 +4275,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1340,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 28
     },
     "surface_m2": 2825,
@@ -4470,7 +4445,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1450,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 67
     },
     "surface_m2": 1439,
@@ -4647,7 +4621,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1368,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 36
     },
     "surface_m2": 7065,
@@ -4816,7 +4789,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1373,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 38
     },
     "surface_m2": 4403,
@@ -4983,7 +4955,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1373,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 37
     },
     "surface_m2": 3856,
@@ -5159,7 +5130,6 @@
     "section": "AR",
     "solaire": {
      "prod_spec_kwh_kwc": 1468,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 68
     },
     "surface_m2": 344,
@@ -5340,7 +5310,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1229,
-     "pv_existant": null,
      "score_solaire": 2
     },
     "surface_m2": 472721,
@@ -5508,7 +5477,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1225,
-     "pv_existant": null,
      "score_solaire": 1
     },
     "surface_m2": 69,
@@ -5677,7 +5645,6 @@
     "section": "AW",
     "solaire": {
      "prod_spec_kwh_kwc": 1287,
-     "pv_existant": null,
      "score_solaire": 8
     },
     "surface_m2": 152,
@@ -5856,7 +5823,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1354,
-     "pv_existant": null,
      "score_solaire": 32
     },
     "surface_m2": 1706,
@@ -6028,7 +5994,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1354,
-     "pv_existant": null,
      "score_solaire": 32
     },
     "surface_m2": 405,
@@ -6205,7 +6170,6 @@
     "section": "AV",
     "solaire": {
      "prod_spec_kwh_kwc": 1261,
-     "pv_existant": null,
      "score_solaire": 4
     },
     "surface_m2": 4923,
@@ -6377,7 +6341,6 @@
     "section": "BI",
     "solaire": {
      "prod_spec_kwh_kwc": 1383,
-     "pv_existant": null,
      "score_solaire": 44
     },
     "surface_m2": 683,
@@ -6551,7 +6514,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1301,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 14
     },
     "surface_m2": 5731,
@@ -6722,7 +6684,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1325,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 22
     },
     "surface_m2": 220,
@@ -6891,7 +6852,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1324,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 22
     },
     "surface_m2": 3462,
@@ -7074,7 +7034,6 @@
     "section": "AP",
     "solaire": {
      "prod_spec_kwh_kwc": 1382,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 42
     },
     "surface_m2": 426,
@@ -7250,7 +7209,6 @@
     "section": "AP",
     "solaire": {
      "prod_spec_kwh_kwc": 1382,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 42
     },
     "surface_m2": 382,
@@ -7428,7 +7386,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1527,
-     "pv_existant": null,
      "score_solaire": 82
     },
     "surface_m2": 295846,
@@ -7608,7 +7565,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1527,
-     "pv_existant": null,
      "score_solaire": 82
     },
     "surface_m2": 36,
@@ -7790,7 +7746,6 @@
     "section": "AR",
     "solaire": {
      "prod_spec_kwh_kwc": 1533,
-     "pv_existant": null,
      "score_solaire": 85
     },
     "surface_m2": 438,
@@ -7972,7 +7927,6 @@
     "section": "AX",
     "solaire": {
      "prod_spec_kwh_kwc": 1533,
-     "pv_existant": null,
      "score_solaire": 86
     },
     "surface_m2": 2599,
@@ -8151,7 +8105,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1535,
-     "pv_existant": null,
      "score_solaire": 89
     },
     "surface_m2": 4374,
@@ -8319,7 +8272,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1501,
-     "pv_existant": null,
      "score_solaire": 76
     },
     "surface_m2": 368,
@@ -8495,7 +8447,6 @@
     "section": "AS",
     "solaire": {
      "prod_spec_kwh_kwc": 1541,
-     "pv_existant": null,
      "score_solaire": 92
     },
     "surface_m2": 300,
@@ -8674,7 +8625,6 @@
     "section": "AS",
     "solaire": {
      "prod_spec_kwh_kwc": 1541,
-     "pv_existant": null,
      "score_solaire": 92
     },
     "surface_m2": 477,
@@ -8850,7 +8800,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1313,
-     "pv_existant": null,
      "score_solaire": 17
     },
     "surface_m2": 334,
@@ -9019,7 +8968,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1313,
-     "pv_existant": null,
      "score_solaire": 17
     },
     "surface_m2": 499,
@@ -9192,7 +9140,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1530,
-     "pv_existant": null,
      "score_solaire": 82
     },
     "surface_m2": 14856,
@@ -9364,7 +9311,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1526,
-     "pv_existant": null,
      "score_solaire": 82
     },
     "surface_m2": 4039,
@@ -9537,7 +9483,6 @@
     "section": "AL",
     "solaire": {
      "prod_spec_kwh_kwc": 1553,
-     "pv_existant": null,
      "score_solaire": 96
     },
     "surface_m2": 439,
@@ -9708,7 +9653,6 @@
     "section": "AO",
     "solaire": {
      "prod_spec_kwh_kwc": 1553,
-     "pv_existant": null,
      "score_solaire": 96
     },
     "surface_m2": 7483,
@@ -9884,7 +9828,6 @@
     "section": "HK",
     "solaire": {
      "prod_spec_kwh_kwc": 1437,
-     "pv_existant": null,
      "score_solaire": 61
     },
     "surface_m2": 3214,
@@ -10060,7 +10003,6 @@
     "section": "KA",
     "solaire": {
      "prod_spec_kwh_kwc": 1445,
-     "pv_existant": null,
      "score_solaire": 64
     },
     "surface_m2": 300,
@@ -10240,7 +10182,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1297,
-     "pv_existant": null,
      "score_solaire": 11
     },
     "surface_m2": 2831724,
@@ -10414,7 +10355,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1231,
-     "pv_existant": null,
      "score_solaire": 2
     },
     "surface_m2": 157151,
@@ -10586,7 +10526,6 @@
     "section": "CP",
     "solaire": {
      "prod_spec_kwh_kwc": 1376,
-     "pv_existant": null,
      "score_solaire": 39
     },
     "surface_m2": 343,
@@ -10753,7 +10692,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1451,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 67
     },
     "surface_m2": 265,
@@ -10921,7 +10859,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1376,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 39
     },
     "surface_m2": 45,
@@ -11096,7 +11033,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1336,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 26
     },
     "surface_m2": 337,
@@ -11265,7 +11201,6 @@
     "section": "CR",
     "solaire": {
      "prod_spec_kwh_kwc": 1323,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 21
     },
     "surface_m2": 147,
@@ -11441,7 +11376,6 @@
     "section": "CS",
     "solaire": {
      "prod_spec_kwh_kwc": 1376,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 39
     },
     "surface_m2": 581,
@@ -11621,7 +11555,6 @@
     "section": "DM",
     "solaire": {
      "prod_spec_kwh_kwc": 1365,
-     "pv_existant": "commune_forte_densite",
      "score_solaire": 35
     },
     "surface_m2": 687,
@@ -11805,7 +11738,6 @@
     "section": "CH",
     "solaire": {
      "prod_spec_kwh_kwc": 1362,
-     "pv_existant": null,
      "score_solaire": 35
     },
     "surface_m2": 5035,
@@ -11972,7 +11904,6 @@
     "section": "CI",
     "solaire": {
      "prod_spec_kwh_kwc": 1349,
-     "pv_existant": null,
      "score_solaire": 31
     },
     "surface_m2": 162,
@@ -12139,7 +12070,6 @@
     "section": "CV",
     "solaire": {
      "prod_spec_kwh_kwc": 1355,
-     "pv_existant": null,
      "score_solaire": 33
     },
     "surface_m2": 417,
@@ -12308,7 +12238,6 @@
     "section": "CV",
     "solaire": {
      "prod_spec_kwh_kwc": 1356,
-     "pv_existant": null,
      "score_solaire": 34
     },
     "surface_m2": 194,
@@ -12483,7 +12412,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1367,
-     "pv_existant": null,
      "score_solaire": 36
     },
     "surface_m2": 1815,
@@ -12658,7 +12586,6 @@
     "section": "AH",
     "solaire": {
      "prod_spec_kwh_kwc": 1383,
-     "pv_existant": null,
      "score_solaire": 42
     },
     "surface_m2": 83,
@@ -12828,7 +12755,6 @@
     "section": "AI",
     "solaire": {
      "prod_spec_kwh_kwc": 1282,
-     "pv_existant": null,
      "score_solaire": 7
     },
     "surface_m2": 6232,
@@ -12997,7 +12923,6 @@
     "section": "BW",
     "solaire": {
      "prod_spec_kwh_kwc": 1286,
-     "pv_existant": null,
      "score_solaire": 8
     },
     "surface_m2": 2750,
@@ -13162,7 +13087,6 @@
     "section": "CW",
     "solaire": {
      "prod_spec_kwh_kwc": 1277,
-     "pv_existant": null,
      "score_solaire": 6
     },
     "surface_m2": 130,
@@ -13342,7 +13266,6 @@
     "section": "CX",
     "solaire": {
      "prod_spec_kwh_kwc": 1277,
-     "pv_existant": null,
      "score_solaire": 6
     },
     "surface_m2": 608,
@@ -13514,7 +13437,6 @@
     "section": "CY",
     "solaire": {
      "prod_spec_kwh_kwc": 1395,
-     "pv_existant": null,
      "score_solaire": 49
     },
     "surface_m2": 943,
@@ -13694,7 +13616,6 @@
     "section": "EY",
     "solaire": {
      "prod_spec_kwh_kwc": 1277,
-     "pv_existant": null,
      "score_solaire": 6
     },
     "surface_m2": 1352,
@@ -13862,7 +13783,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1393,
-     "pv_existant": null,
      "score_solaire": 47
     },
     "surface_m2": 4654,
@@ -14031,7 +13951,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1397,
-     "pv_existant": null,
      "score_solaire": 49
     },
     "surface_m2": 8851,
@@ -14193,7 +14112,6 @@
     "section": "CD",
     "solaire": {
      "prod_spec_kwh_kwc": 1393,
-     "pv_existant": null,
      "score_solaire": 48
     },
     "surface_m2": 95,
@@ -14358,7 +14276,6 @@
     "section": "CR",
     "solaire": {
      "prod_spec_kwh_kwc": 1537,
-     "pv_existant": null,
      "score_solaire": 90
     },
     "surface_m2": 3562,
@@ -14527,7 +14444,6 @@
     "section": "EY",
     "solaire": {
      "prod_spec_kwh_kwc": 1448,
-     "pv_existant": null,
      "score_solaire": 66
     },
     "surface_m2": 345,
@@ -14697,7 +14613,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1435,
-     "pv_existant": null,
      "score_solaire": 59
     },
     "surface_m2": 5808914,
@@ -14869,7 +14784,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1437,
-     "pv_existant": null,
      "score_solaire": 60
     },
     "surface_m2": 308124,
@@ -15056,7 +14970,6 @@
     "section": "BC",
     "solaire": {
      "prod_spec_kwh_kwc": 1442,
-     "pv_existant": null,
      "score_solaire": 64
     },
     "surface_m2": 31438,
@@ -15229,7 +15142,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1559,
-     "pv_existant": null,
      "score_solaire": 98
     },
     "surface_m2": 628,
@@ -15414,7 +15326,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1559,
-     "pv_existant": null,
      "score_solaire": 98
     },
     "surface_m2": 84,
@@ -15597,7 +15508,6 @@
     "section": "AT",
     "solaire": {
      "prod_spec_kwh_kwc": 1501,
-     "pv_existant": null,
      "score_solaire": 74
     },
     "surface_m2": 253,
@@ -15773,7 +15683,6 @@
     "section": "AT",
     "solaire": {
      "prod_spec_kwh_kwc": 1500,
-     "pv_existant": null,
      "score_solaire": 74
     },
     "surface_m2": 314,
@@ -15940,7 +15849,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1482,
-     "pv_existant": null,
      "score_solaire": 71
     },
     "surface_m2": 110,
@@ -16108,7 +16016,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1482,
-     "pv_existant": null,
      "score_solaire": 71
     },
     "surface_m2": 43,
@@ -16280,7 +16187,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1482,
-     "pv_existant": null,
      "score_solaire": 71
     },
     "surface_m2": 772,
@@ -16457,7 +16363,6 @@
     "section": "AH",
     "solaire": {
      "prod_spec_kwh_kwc": 1482,
-     "pv_existant": null,
      "score_solaire": 71
     },
     "surface_m2": 1452,
@@ -16635,7 +16540,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1516,
-     "pv_existant": null,
      "score_solaire": 80
     },
     "surface_m2": 23577,
@@ -16804,7 +16708,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1504,
-     "pv_existant": null,
      "score_solaire": 78
     },
     "surface_m2": 31880,
@@ -16983,7 +16886,6 @@
     "section": "AO",
     "solaire": {
      "prod_spec_kwh_kwc": 1519,
-     "pv_existant": null,
      "score_solaire": 81
     },
     "surface_m2": 366,
@@ -17163,7 +17065,6 @@
     "section": "BD",
     "solaire": {
      "prod_spec_kwh_kwc": 1526,
-     "pv_existant": null,
      "score_solaire": 82
     },
     "surface_m2": 438,
@@ -17339,7 +17240,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1258,
-     "pv_existant": null,
      "score_solaire": 3
     },
     "surface_m2": 263154,
@@ -17514,7 +17414,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1238,
-     "pv_existant": null,
      "score_solaire": 2
     },
     "surface_m2": 784392,
@@ -17692,7 +17591,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1275,
-     "pv_existant": null,
      "score_solaire": 5
     },
     "surface_m2": 1092,
@@ -17864,7 +17762,6 @@
     "section": "AV",
     "solaire": {
      "prod_spec_kwh_kwc": 1262,
-     "pv_existant": null,
      "score_solaire": 4
     },
     "surface_m2": 378,
@@ -18050,7 +17947,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1235,
-     "pv_existant": null,
      "score_solaire": 2
     },
     "surface_m2": 3394516,
@@ -18225,7 +18121,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1235,
-     "pv_existant": null,
      "score_solaire": 2
     },
     "surface_m2": 475606,
@@ -18394,7 +18289,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1470,
-     "pv_existant": null,
      "score_solaire": 69
     },
     "surface_m2": 599,
@@ -18559,7 +18453,6 @@
     "section": "AS",
     "solaire": {
      "prod_spec_kwh_kwc": 1391,
-     "pv_existant": null,
      "score_solaire": 45
     },
     "surface_m2": 296,
@@ -18728,7 +18621,6 @@
     "section": "AX",
     "solaire": {
      "prod_spec_kwh_kwc": 1391,
-     "pv_existant": null,
      "score_solaire": 45
     },
     "surface_m2": 27084,
@@ -18903,7 +18795,6 @@
     "section": "BY",
     "solaire": {
      "prod_spec_kwh_kwc": 1321,
-     "pv_existant": null,
      "score_solaire": 19
     },
     "surface_m2": 481,
@@ -19071,7 +18962,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1337,
-     "pv_existant": null,
      "score_solaire": 27
     },
     "surface_m2": 1392,
@@ -19244,7 +19134,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1311,
-     "pv_existant": null,
      "score_solaire": 16
     },
     "surface_m2": 1050,
@@ -19432,7 +19321,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1337,
-     "pv_existant": null,
      "score_solaire": 27
     },
     "surface_m2": 355,
@@ -19606,7 +19494,6 @@
     "section": "AB",
     "solaire": {
      "prod_spec_kwh_kwc": 1337,
-     "pv_existant": null,
      "score_solaire": 27
     },
     "surface_m2": 313,
@@ -19784,7 +19671,6 @@
     "section": "AH",
     "solaire": {
      "prod_spec_kwh_kwc": 1339,
-     "pv_existant": null,
      "score_solaire": 27
     },
     "surface_m2": 1873,
@@ -19950,7 +19836,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1427,
-     "pv_existant": null,
      "score_solaire": 54
     },
     "surface_m2": 52,
@@ -20119,7 +20004,6 @@
     "section": "AC",
     "solaire": {
      "prod_spec_kwh_kwc": 1403,
-     "pv_existant": null,
      "score_solaire": 50
     },
     "surface_m2": 5109,
@@ -20286,7 +20170,6 @@
     "section": "AD",
     "solaire": {
      "prod_spec_kwh_kwc": 1378,
-     "pv_existant": null,
      "score_solaire": 40
     },
     "surface_m2": 8,
@@ -20451,7 +20334,6 @@
     "section": "AH",
     "solaire": {
      "prod_spec_kwh_kwc": 1292,
-     "pv_existant": null,
      "score_solaire": 10
     },
     "surface_m2": 243,
@@ -20624,7 +20506,6 @@
     "section": "AI",
     "solaire": {
      "prod_spec_kwh_kwc": 1289,
-     "pv_existant": null,
      "score_solaire": 9
     },
     "surface_m2": 679,

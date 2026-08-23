@@ -543,6 +543,19 @@ SOURCES: list[dict] = [
                          "RGR92/UTM40S (EPSG:2975), 37 tuiles, ~494 Mio .7z, 445 190 bâtiments. Sert le "
                          "recalcul PAU (RNU) en complément de BD TOPO. Doublon connu : p_model_bati_cosia "
                          "(emprise MÊME donnée agrégée à la parcelle, sans géométrie)."),
+    # SOLAIRE M1 — PVGIS REQUALIFIÉE « servie » : le builder reconstruit parcel_solar (le catalogue
+    # disait « DORMANT / non servi » depuis le spin-off Plein Sud ; il est de nouveau alimenté ici).
+    dict(name="PVGIS (Commission européenne)", category="energie", provider="CE / JRC",
+         access_type="REST/JSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)",
+         endpoint_url="https://re.jrc.ec.europa.eu/api/v5_3/PVcalc",
+         legal_notes="CC BY 4.0 (décision 2011/833/UE) — attribution : « Source : Commission européenne, "
+                     "Joint Research Centre — PVGIS », modifications indiquées (calculs dérivés LABUSE). "
+                     "Gratuit, sans clé.",
+         technical_notes="✓ SERVI (SOLAIRE M1) : builder ingestion/solaire.py reconstruit parcel_solar — "
+                         "productible mensuel (12 E_m) + annuel + GHI, grille ST_SquareGrid 400 m "
+                         "(~15 680 points) → IDW 4-NN, aspect 180° (plein nord, hémisphère sud), "
+                         "usehorizon=1 (horizon topo intégré). ~10 req/s, résumable (`labuse solaire-build`)."),
 ]
 
 

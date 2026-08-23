@@ -1,0 +1,20 @@
+# Builder « Prospection solaire » (SOLAIRE M1) — reconstruit parcel_solar depuis les sources.
+# Reprend les coefficients du builder d'origine (spin-off Plein Sud) au standard du dépôt.
+# Décisions Vic (Phase 1) : mensuel EN DB (12 + annuel + mois_optimal, pas de GeoTIFF disque) ;
+# orientation = azimut du bâti (Estimé, ST_OrientedEnvelope) — pas d'aspect RGE ALTI (pas de MNT en base).
+pvgis:
+  version: v5_3
+  peakpower_kwc: 1
+  loss_pct: 14
+  angle_deg: 15
+  aspect_deg: 180          # 180 = plein NORD (convention PVGIS 0 = sud) — hémisphère sud
+  grid_step_m: 400         # pas de la grille ST_SquareGrid (emprise cadastrale terrestre)
+  rps: 10.0                # politesse PVGIS : 1 départ / (1/rps) s, backoff sur 429/5xx
+  ombrage_seuil_mediane: 0.80   # flag_topo_ombrage : prod du point < seuil × médiane de sa commune
+flags:
+  azimut_elongation_min: 1.4        # ratio L/l au-delà duquel l'orientation du bâti est significative → 'haute'
+  ombrage_vegetal_canopee_pct_min: 40   # flag_ombrage_vegetal : canopée sur le bâti > seuil (parcel_vegetation)
+  proprio_bonus_mutation_pts: 15    # +15 pts si mutation DVF « Maison » < fenêtre
+  proprio_bonus_fenetre_mois: 24
+  proprio_min: 5                    # borne du score (jamais 0 ni 100 : c'est statistique)
+  proprio_max: 95

@@ -1,8 +1,10 @@
 /**
- * Outil « Prospection solaire » (V1 restitution) — sert la donnée solaire DÉJÀ en base, GELÉE au
- * 11/07/2026 : productible PVGIS (Sourcé dérivé), pente RGE ALTI (Sourcé), azimut du bâti (Estimé),
- * emprise toiture (Estimé), piscine détectée (Estimé ortho 2025), proba propriétaire-occupant (Estimé
- * statistique). AUCUN recalcul, aucun appel externe, masque solaire du relief NON calculé.
+ * Outil « Prospection solaire » — sert la donnée solaire de `parcel_solar`, désormais RECONSTRUITE
+ * depuis les sources par le builder (SOLAIRE M1, ingestion/solaire.py) : productible PVGIS (Sourcé
+ * dérivé, mensuel + mois_optimal), pente RGE ALTI (Sourcé), azimut du bâti (Estimé), emprise toiture
+ * (Estimé), piscine détectée (Estimé ortho 2025), proba propriétaire-occupant (Estimé statistique).
+ * Le millésime vit dans le bandeau (servi par l'API). Horizon topographique intégré (PVGIS) ; ombrage
+ * de proximité (bâti/arbres) non modélisé.
  * RGPD : aucune donnée nominative — des parcelles et des caractéristiques, jamais des personnes.
  * Outil de démarchage → export CSV. Vocabulaire M135/M137 (le verdict = verdictMeta).
  */
@@ -26,7 +28,10 @@ const POTENTIELS = [[0, 'Tous'], [1300, '≥ 1 300'], [1400, '≥ 1 400'], [1500
 const PROBAS = [[0, 'Toutes'], [50, '≥ 50 %'], [70, '≥ 70 %'], [80, '≥ 80 %']] as const
 const PISCINES = [['tous', 'Peu importe'], ['oui', 'Piscine détectée'], ['non', 'Sans piscine détectée']] as const
 
-const GEL = 'Données gelées au 11/07/2026 ; masque solaire du relief non calculé.'
+// SOLAIRE M1 — la donnée est reconstruite depuis les sources (builder ingestion/solaire.py). Le
+// millésime exact vit dans le bandeau (servi par l'API, source_millesime). Ici, la réserve de méthode :
+// l'horizon topographique est intégré par PVGIS, seul l'ombrage de PROXIMITÉ (bâti/arbres) reste non modélisé.
+const GEL = 'Millésime au bandeau ci-dessus ; horizon topographique intégré (PVGIS), ombrage de proximité (bâti, arbres) non modélisé.'
 // une valeur absente s'affiche « — », jamais un zéro (mandat)
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${v.toLocaleString('fr-FR')}${unit}`)
 // proba occupant : intervalle indicatif (± ~10 pts) autour de l'estimation statistique
