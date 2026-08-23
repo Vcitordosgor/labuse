@@ -28,18 +28,9 @@ CONTRAINTE_LABEL = {
 #: les 4 microrégions (les communes de chacune vivent dans ia.SECTEURS)
 SECTEUR_KEYS = ["Nord", "Ouest", "Sud", "Est"]
 
-#: hypothèse M22 par défaut (surface_unite_m2 du formulaire M22Programme — la vérité reste
-#: le formulaire, pré-rempli et éditable).
-#: M143 Lot 4 (arbitrage) — commentaire rectifié à l'ÉTAT RÉEL : ce coefficient est le MÊME objet
-#: physique que `PROGRAMME_CIRCULATION_COEF` (modules.py, 1,20) — la circulation surface utile → SDP.
-#: MAIS `derive_sdp_besoin` (son seul usage) n'est appelé NULLE PART (repo entier) : depuis M120 le
-#: cadrage filtre sur la FACETTE `sdpMin` saisie (sdp_residuelle ≥ sdpMin), jamais un besoin dérivé
-#: d'un programme. `M22_CIRCULATION` (+ `M22_SURFACE_UNITE_M2`, `derive_sdp_besoin`) sont donc du CODE
-#: MORT : la valeur 1,15 n'entre dans aucune requête servie → l'écart 1,15/1,20 a ZÉRO effet runtime
-#: (mesuré : 0 parcelle quitte le vivier, 0 projet existant change). Décision Vic remontée (M143 Lot 4) :
-#: supprimer le mort, ou faire lire 1,20 par référence. Non modifié ici (STOP chiffré : mesure = zéro).
-M22_SURFACE_UNITE_M2 = 60.0
-M22_CIRCULATION = 1.15
+# M120 — le cadrage projet ne dérive AUCUN besoin de SDP d'un programme : il filtre sur la facette
+# `sdpMin` SAISIE (sdp_residuelle ≥ sdpMin). Le seul coefficient de circulation utile→SDP vivant est
+# `PROGRAMME_CIRCULATION_COEF` (modules.py) — source unique (M143 Lot 4).
 
 #: la fiche de cadrage — ce que le promoteur A DIT (validé, vocabulaire fermé). Tous les
 #: champs sont OPTIONNELS : l'entretien construit la fiche par touches successives.
@@ -137,14 +128,3 @@ def prune_to_schema(data, schema, _path: str = "") -> tuple[object, list[str]]:
             dropped += d
         return out_l, dropped
     return data, dropped
-
-
-def derive_sdp_besoin(fiche: dict) -> int | None:
-    """SDP besoin (m²) — formule M22 EXISTANTE (unités × surface_unité × 1,15), jamais l'IA.
-    `sdp_m2` explicite prime sur `logements`."""
-    amp = fiche.get("ampleur") or {}
-    if amp.get("sdp_m2") is not None:
-        return round(amp["sdp_m2"])
-    if amp.get("logements"):
-        return round(amp["logements"] * M22_SURFACE_UNITE_M2 * M22_CIRCULATION)
-    return None

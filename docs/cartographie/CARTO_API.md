@@ -398,7 +398,7 @@ pose explicitement `opportunity_score_adjustment: 0` (« le stub ne corrige pas 
 | `pdf_premium.py` | 408 | rendu PDF de la fiche premium (fpdf2, design system, `render_fiche_pdf`, `_LOGO_PTS`, palette MINT). |
 | `segments.py` | 402 | API du moteur de segments Habitat : galerie de presets, query builder, export CSV/publipostage, admin presets. Mentions légales vérifiées Légifrance. Aucun SQL depuis texte client (registry). |
 | `events.py` | 365 | événements/veille : flux, compteurs, détection de bascules, suivi de cible, veilles sauvegardées, digest hebdo (JSON + HTML email). |
-| `projets.py` | 694 | **Projets (copilote-projet)** : objet persistant de l'entretien ; l'IA remplit la fiche, le serveur DÉRIVE filtres+programme (`derive_filtres`, `derive_programme`, `derive_sdp_besoin`). Parcours Tinder (statuts parcelle×projet), auto-CRM. Ouvrir = rejouer. |
+| `projets.py` | 694 | **Projets (copilote-projet)** : objet persistant de l'entretien ; l'IA remplit la fiche, le serveur DÉRIVE filtres+programme (`derive_filtres`, `derive_programme`). Parcours Tinder (statuts parcelle×projet), auto-CRM. Ouvrir = rejouer. |
 | `ortho.py` | 305 | validation humaine des détections ortho (piscines/PV/végétation) : tirage de vignette, image OpenCV, verdict avec quota dur, page HTML. Badges équipements de fiche. |
 | `assistant.py` | 293 | assistant « expliquer cette parcelle » : synthèse NL des forces/faiblesses. Clé `ANTHROPIC_API_KEY`, modèle surchargeable `LABUSE_ASSISTANT_MODEL` (défaut `core.MODEL_REASONING`). `is_configured`, `explain_parcel`. |
 | `tiles.py` | 287 | tuiles vectorielles MVT (`ST_AsMVT`) : couche `parcels` (cache LRU, simplification par palier de zoom), overlays zonage PLU/PPR. `build_overlay_mvt`. |
@@ -409,7 +409,7 @@ pose explicitement `opportunity_score_adjustment: 0` (« le stub ne corrige pas 
 | `auth.py` | 162 | auth pilote (mono-utilisateur) : cookie de session, `enabled`/`configured`/`token_ok`/`is_public`, page de login, anti-force-brute. Pas de route (utilisé par `_auth_guard`). |
 | `pdf_projet.py` | 153 | rendu PDF du dossier projet (fpdf2, réutilise la palette de `pdf_premium`). `render_projet_pdf`. |
 | `score_v2.py` | 153 | endpoints ADDITIFS lecture seule de `parcel_p_score_v2` (P95 < 200 ms) : score, liste, brûlantes, réserve, modèle. |
-| `projet_schema.py` | 142 | module NEUTRE (casse le cycle `ia`↔`projets`) : `FICHE_SCHEMA`, `clean_fiche`, `derive_sdp_besoin`, `prune_to_schema`, constantes `CONTRAINTE_FLAG`/`TYPE_LABEL`/`M22_SURFACE_UNITE_M2`. |
+| `projet_schema.py` | 142 | module NEUTRE (casse le cycle `ia`↔`projets`) : `FICHE_SCHEMA`, `clean_fiche`, `prune_to_schema`, constantes `CONTRAINTE_FLAG`/`TYPE_LABEL`. |
 | `nl_aggregate.py` | 137 | questions AGRÉGÉES (« combien de brûlantes à X ») → COUNT/GROUP BY SQL sourcé. `is_aggregate`, `answer_aggregate`. |
 | `dossier.py` | 115 | « dossier parcelle » PDF pour abonnés (dépend du module Flash, sinon 501). Quota mensuel. |
 | `nl_semantics.py` | 98 | validation SÉMANTIQUE (schéma ≠ sens) : anti-mistraduction (passoire → risques), `criteres_non_appliques`. `check_semantics`. |

@@ -111,20 +111,34 @@ Preuve directe : `derive_sdp_besoin(40 logts)` répond bien 2 760 m² (1,15) →
 `PROGRAMME_CIRCULATION_COEF` (1,20), déjà la valeur cible, alimenté explicitement par le front
 (`M22Programme.tsx:24`, `coef_circulation = 1 + circulation_pct/100`, défaut 1,20) sur `POST /programme`.
 
-**Le « deux valeurs pour un objet » est un mensonge de SOURCE, à effet runtime ZÉRO.** L'unification
-ne retire donc aucun faux positif du cadrage (le cadrage n'utilise ni 1,15 ni 1,20). **Je n'applique
-rien : STOP chiffré, la mesure surprend (mandat).** Deux options propres pour Vic — même résultat
-runtime (rien ne consomme 1,15) :
+**Le « deux valeurs pour un objet » était un mensonge de SOURCE, à effet runtime ZÉRO.**
 
-- **A · supprimer le code mort** (`derive_sdp_besoin` + `M22_SURFACE_UNITE_M2` + `M22_CIRCULATION`) →
-  source unique = `PROGRAMME_CIRCULATION_COEF`. Le plus propre : le mensonge disparaît avec sa moitié
-  morte. **Recommandé** (rien ne le consomme, aucune « raison de portée » ne le fait survivre).
-- **B · lire 1,20 par référence** (`M22_CIRCULATION = PROGRAMME_CIRCULATION_COEF`) si la fonction doit
-  survivre pour une reprise future → une seule valeur, aucune duplication, mais garde du code mort.
+### Décision Vic : option A — code mort supprimé (source unique)
 
-Le contrôle « les deux chemins donnent le même besoin sur la même parcelle » n'est pas applicable en
-l'état : le cadrage projet ne dérive **pas** de besoin d'un programme (facette directe) ; seul
-`POST /programme` le fait, et il est déjà à 1,20. **Vic tranche A ou B.**
+**Le vrai constat du lot 4 n'était pas une divergence de valeur, mais un COMMENTAIRE FAUX sur du CODE
+MORT.** `derive_sdp_besoin` + `M22_SURFACE_UNITE_M2` + le coefficient 1,15 sont **supprimés** de
+`projet_schema.py`. Source unique de la circulation utile→SDP : `PROGRAMME_CIRCULATION_COEF` (1,20,
+`modules.py`), le seul chemin vivant (`POST /programme`). Aucune conservation « pour reprise future » :
+une fonction inappelée dont l'inertie est ignorée est précisément le piège trouvé ici.
+
+**À consigner pour plus tard (information utile) :** le **cadrage projet ne dérive AUCUN besoin d'un
+programme** — depuis M120 il filtre sur la **facette `sdpMin` saisie** (`sdp_residuelle ≥ sdpMin`).
+Il n'y a donc pas « deux chemins qui doivent donner le même besoin » : le contrôle homonyme **tombe**
+(le cadrage n'a pas de besoin dérivé ; seul `POST /programme` en calcule un, déjà à 1,20).
+
+**Nettoyage des références (aucun orphelin vivant) :**
+- Supprimé : les 3 symboles dans `projet_schema.py` ; commentaire remplacé par une note POSITIVE (le
+  cadrage filtre sur la facette, source unique = `PROGRAMME_CIRCULATION_COEF`) — sans nommer de symbole
+  disparu.
+- Corrigé : `docs/cartographie/CARTO_API.md` (cartographie VIVANTE) — mentions retirées des lignes
+  projets.py et projet_schema.py.
+- **Laissés intacts, signalés** : trois **audits DATÉS historiques** qui les mentionnent au passé
+  (`docs/audits/AUDIT_M119_PROJET.md:75`, `reports/m11-ia/AUDIT-EXISTANT-IA.md:43`,
+  `reports/m11-ia/AUDIT-SURFACE-C.md:100`) — ce sont des instantanés corrects à leur date ; les
+  réécrire falsifierait le registre. Ils ne décrivent pas l'état courant, ne recréent pas le défaut.
+
+Vérifié : `derive_sdp_besoin`/`M22_CIRCULATION` **absents du module** (import OK), `ruff` All checks
+passed. Non-régression M143 (régime non équilibré, deux dates, cas nominal) : aucun autre fichier touché.
 
 ---
 
