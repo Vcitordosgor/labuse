@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { ListPaginationFooter } from '../ListPagination'
 import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
@@ -26,18 +27,42 @@ function Banner({ children }: { children: React.ReactNode }) {
 export function M15({ communeOverride }: { communeOverride?: string | null } = {}) {
   const globalCommune = useApp((s) => s.commune)
   const commune = communeOverride !== undefined ? communeOverride : globalCommune
+  const qc = useQueryClient()
   const zones = useQuery({ queryKey: ['m15z', commune], queryFn: () => motSimulPluZones(commune) })
   const [zone, setZone] = useState<string | null>(null)
-  const sim = useQuery({ queryKey: ['m15', zone, commune], queryFn: () => motSimulPlu(zone!, commune), enabled: !!zone })
-  useEffect(() => { setZone(null) }, [commune])   // les zones AU diffèrent par commune → on repart à zéro
+  // PLU Lot A — pagination SOCLE : le recalcul à blanc se pagine par `offset` (cap serveur par page)
+  // jusqu'à épuisement ; les totaux (n_total, SDP estimée, bascules) sont servis STABLES par le back.
+  const sim = useInfiniteQuery({
+    queryKey: ['m15', zone, commune],
+    queryFn: ({ pageParam, signal }) => motSimulPlu(zone!, commune, pageParam, signal),
+    initialPageParam: 0,
+    getNextPageParam: (last: any, pages) => { const n = pages.reduce((s, p: any) => s + (p.items?.length ?? 0), 0); return n < (last.n_total ?? 0) ? n : undefined },
+    enabled: !!zone,
+  })
+  const [chargeTout, setChargeTout] = useState(false)
+  useEffect(() => { setZone(null); setChargeTout(false) }, [commune])   // les zones AU diffèrent par commune → on repart à zéro
   const { setModuleMap, select } = useApp()   // fix : la liste était inerte (select non branché)
-  const d = sim.data
+  const pages = (sim.data?.pages ?? []) as Record<string, any>[]
+  const meta = pages[0]
+  const items = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
+  const total = meta?.n_total ?? 0
+
+  // « Tout charger » : enchaîne les pages jusqu'à épuisement.
   useEffect(() => {
-    const items = (d?.items ?? []) as Record<string, any>[]
+    if (!chargeTout) return
+    if (sim.hasNextPage && !sim.isFetchingNextPage) sim.fetchNextPage()
+    else if (!sim.hasNextPage) setChargeTout(false)
+  }, [chargeTout, sim.hasNextPage, sim.isFetchingNextPage, sim])
+
+  useEffect(() => {
     setModuleMap({ idus: items.filter((i) => i.bascule_potentielle).map((i) => i.idu), extra: null })
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sim.dataUpdatedAt])
+
+  // Annulation EFFECTIVE (Lot B, UI honnête) : abort la requête en vol + retour au choix de zone.
+  const annuler = () => { qc.cancelQueries({ queryKey: ['m15', zone, commune] }); setChargeTout(false); setZone(null) }
+
   return (
     // §1a — un seul conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
@@ -51,19 +76,30 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
           </button>
         ))}
       </div>
-      {sim.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Recalcul à blanc en cours…" big /></div>}
-      {d && (
+
+      {/* UI DE CHARGEMENT HONNÊTE (Lot B) — squelettes de lignes + Annuler pendant le recalcul (~2 s). */}
+      {sim.isLoading && (
+        <div data-m15-loading className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-txt-mut">Recalcul à blanc en cours…</p>
+            <button data-m15-annuler onClick={annuler} className="text-[11px] text-txt-mut hover:text-st-ecartee">Annuler</button>
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 animate-pulse rounded-lg bg-surface-3" style={{ opacity: 1 - i * 0.12 }} />
+          ))}
+        </div>
+      )}
+      {sim.isError && <p className="text-[11px] text-st-ecartee">Recalcul indisponible — réessayez.</p>}
+
+      {meta && !sim.isLoading && (
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            {/* M137-O — plafond DIT, jamais muet : « les N premières sur M » quand la liste est tronquée. */}
-            <div>{d.tronquee
-              ? <>les <b className="text-txt">{fmt(d.n_parcelles)}</b> premières sur <b className="text-txt">{fmt(d.n_total)}</b> parcelles en {d.zone}</>
-              : <><b className="text-txt">{fmt(d.n_parcelles)}</b> parcelles en {d.zone}</>} · ratio analogie <b className="text-txt">{d.ratio_analogie}</b></div>
-            <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(d.sdp_totale_estimee_m2)} m²</b> ·{' '}
-              <b className="tnum text-mint">{fmt(d.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
+            <div><b className="text-txt">{fmt(total)}</b> parcelles en {meta.zone} · ratio analogie <b className="text-txt">{meta.ratio_analogie}</b></div>
+            <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(meta.sdp_totale_estimee_m2)} m²</b> ·{' '}
+              <b className="tnum text-mint">{fmt(meta.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
           </div>
           <div className="flex flex-col gap-1">
-            {(d.items as Record<string, any>[]).slice(0, 120).map((i) => (
+            {items.map((i) => (
               <button key={i.idu} data-m15-item onClick={() => select(i.idu)}
                 title="Ouvrir la parcelle"
                 className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60">
@@ -75,6 +111,14 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
               </button>
             ))}
           </div>
+          {/* PAGINATION SOCLE — « Voir N de plus » + « Tout charger (total) », compteur toujours visible. */}
+          <ListPaginationFooter
+            className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut"
+            shown={items.length} total={total} step={meta.cap ?? 400}
+            onMore={() => sim.fetchNextPage()} onAll={() => setChargeTout(true)}
+            allLabel={`Tout charger (${fmt(total)})`}>
+            {sim.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
+          </ListPaginationFooter>
         </>
       )}
     </div>
