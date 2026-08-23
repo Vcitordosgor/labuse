@@ -14,6 +14,7 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { EtudierBien } from './EtudierBien'
+import { CompareModule } from '../compare/ComparePanel'
 import { M22 } from './M22Programme'
 // O10Bascules (Quoi de neuf) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
 // composant reste exporté dans ./blocB (endpoint /events vivant via la cloche de notifications).
@@ -1057,6 +1058,9 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
   // M137-T — 'duediligence' (M10) et 'o5-servitudes' (O5) fusionnés dans l'outil « risques ».
   temps: M08, courriers: M09, risques: Risques,
+  // COMPARAISON (refonte) — « comparer » devient un outil ANCRÉ : ModulePanel monte son panneau gauche
+  // (stepper + chips + « Comparer (n/3) »), la carte reste active à droite, le tableau s'ouvre en overlay.
+  comparer: CompareModule,
   // Retiré du produit le 21/08/2026 (DORMANT) : 'zan' (M17, Simulateur ZAN) — enveloppe communale
   // (+ budget en %) déplacée dans l'outil Communes ; signal parcelle = doublon fiche ; liste morte.
   assemblage: M16, programme: M22,
@@ -1097,7 +1101,9 @@ export function ModulePanel() {
     const h = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       const st = useApp.getState()
-      if (st.selectedIdu || st.sourceLine || st.tool) return
+      // COMPARAISON : tant que le TABLEAU est ouvert, Échap le ferme (ComparePanel) — on ne ferme pas
+      // l'outil par-dessous. Le 2ᵉ Échap (tableau fermé) fermera l'outil.
+      if (st.selectedIdu || st.sourceLine || st.tool || st.compareOpen) return
       st.setModule(null)
     }
     window.addEventListener('keydown', h, true)
