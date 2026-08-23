@@ -1408,6 +1408,7 @@ class ProgrammeIn(BaseModel):
     # fourchette 20-25 %). Laisser le défaut figé, c'est choisir à sa place le réglage le plus permissif.
     coef_circulation: float = Field(PROGRAMME_CIRCULATION_COEF, ge=1.0, le=1.6)
     commune: str | None = None       # None = île entière (extension île)
+    offset: int = 0                  # FAISABILITE (pagination SOCLE) : fenêtre d'affichage (par page)
 
 
 @router.post("/programme")
@@ -1519,8 +1520,12 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
                       "hauteur_plu_m": float(h) if h is not None else None,
                       "hauteur_verifiee": h is not None, "marge_capacite": marge})
     items.sort(key=lambda x: -x["marge_capacite"])
-    top = items[:200]                     # troncature d'AFFICHAGE seulement — `n` reste le vrai total
-    if top:                               # géométries ramenées UNIQUEMENT pour les 200 affichées
+    # FAISABILITE (pagination SOCLE) : `offset` fenêtre l'affichage (page de `cap`) ; `n` reste le VRAI
+    # total. Le tri (marge décroissante) est stable → paginer ne fait que faire glisser la fenêtre.
+    cap = _moteurs_cap("programme_max", 200)
+    off = max(0, body.offset)
+    top = items[off:off + cap]            # troncature d'AFFICHAGE seulement — `n` reste le vrai total
+    if top:                               # géométries ramenées UNIQUEMENT pour la page affichée
         geoms = {gr["idu"]: json.loads(gr["g"]) for gr in db.execute(text(
             "SELECT idu, ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) AS g "
             "FROM parcels WHERE idu = ANY(:idus)"),
@@ -1539,7 +1544,8 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
                     "SDP) ; SDP plafonnée au gabarit R+N demandé et emprise au sol vérifiée ; hauteur PLU "
                     "vérifiée quand la zone est calibrée, sinon « à instruire » ; capacité « estimée » "
                     "signalée hors PLU calibré. Étude d'architecte requise."),
-        "n": len(items), "items": top,   # n = VRAI nombre de correspondances ; items = top 200 affichées
+        "n": len(items), "items": top,   # n = VRAI nombre de correspondances ; items = la page servie
+        "cap": cap, "offset": off,        # pagination SOCLE (par page + offset)
     }
 
 

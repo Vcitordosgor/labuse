@@ -997,6 +997,20 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
   const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
+  // FAISABILITE (mandat) — ÉTAPE MANQUANTE tracée : le saut « SHAB brute ~175 m² » (une étape) →
+  // « SHAB vendable ~123 m² » (en-tête) n'était pas dans la trace. Le vendable est calculé par le
+  // moteur (engine.py: shab_vendable_m2 = sol_central × logt_moyen) : c'est le nombre de logements
+  // RETENUS au sol (après plafond de densité ∩ stationnement ∩ modulation réunionnaise) reconverti en
+  // surface habitable (~72,5 m²/logt) — PAS un simple plafond appliqué à la SHAB brute. On expose la
+  // valeur SERVIE (fo.shab_vendable_m2), avec la vraie raison. Provenance « Dérivé » (cohérente moteur).
+  const stepsAff = steps.length > 0 && fo.shab_vendable_m2 != null
+    ? [...steps, {
+        label: 'SHAB vendable retenue',
+        valeur: `~${fmtM2(fo.shab_vendable_m2)}`,
+        source: 'logements retenus au sol × surface moyenne/logement — base du CA (la SHAB brute est théorique)',
+        prov: 'dérivé',
+      }]
+    : steps
   const ex = explain.data
   // M58-P1 (c) : « un zéro n'est pas une absence ». Capacité réelle = fourchette logements > 0.
   const logAuSol = Array.isArray(fo.logements_au_sol) ? fo.logements_au_sol : null
@@ -1019,8 +1033,9 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
                 <div>Logements : <b className="text-txt">{`${logAuSol![0]}–${logAuSol![1]}`}</b></div>
                 <div>SHAB vendable : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
               </div>
-              {/* M58-P1 (Q1) : lever l'apparente contradiction avant/après plafond. */}
-              <div className="mt-1 text-[10.5px] text-txt-dim">La fourchette retenue est celle après plafond de densité.</div>
+              {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
+                  nombre de logements RETENUS reconverti en surface, pas un plafond sur la brute (théorique). */}
+              <div className="mt-1 text-[10.5px] text-txt-dim">SHAB vendable = logements retenus au sol × surface moyenne/logement (fourchette après plafond de densité). La SHAB brute est théorique, hors bâti existant.</div>
             </>
           ) : (
             <div className="mt-1.5 text-[11px] text-txt-faint">Capacité logements non calculable pour cette parcelle.</div>
@@ -1035,15 +1050,15 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
       )}
 
       {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) — §1e : encadré mis en valeur, ouvert par défaut ── */}
-      {steps.length > 0 && (
+      {stepsAff.length > 0 && (
         <div className="rounded-lg border border-mint/40 bg-mint/[0.05] p-2">
           <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
-            <span>▾ Le calcul, étape par étape ({steps.length})</span>
+            <span>▾ Le calcul, étape par étape ({stepsAff.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
             <ol data-faisa-steps className="card-elev overflow-hidden">
-              {steps.map((s, i) => (
+              {stepsAff.map((s, i) => (
                 <li key={i} className={`flex items-start gap-2 px-3 py-1.5 text-[11px] ${i % 2 ? 'bg-surface-2' : 'bg-surface-1'}`}>
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
                   <div className="min-w-0 flex-1">
