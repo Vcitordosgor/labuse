@@ -337,6 +337,10 @@ interface AppState {
   cmpRight: string
   setCmpLeft: (k: string) => void
   setCmpRight: (k: string) => void
+  // TEMPS (refonte) — la parcelle DÉSIGNÉE, épinglée sur LES DEUX fonds du comparateur (contour mint)
+  // pour ne jamais la perdre en glissant la poignée. Posée par M08, lue par TimeMachine.
+  tempsPinIdu: string | null
+  setTempsPinIdu: (idu: string | null) => void
   // ce que le module affiche sur la carte : parcelles surlignées (idus) + géométries propres (lots, permis)
   moduleMap: { idus: string[]; extra: unknown | null }
   setModuleMap: (m: { idus: string[]; extra: unknown | null }) => void
@@ -639,6 +643,8 @@ export const useApp = create<AppState>((set) => ({
   cmpRight: 'bm-ortho-now',
   setCmpLeft: (cmpLeft) => set({ cmpLeft }),
   setCmpRight: (cmpRight) => set({ cmpRight }),
+  tempsPinIdu: null,
+  setTempsPinIdu: (tempsPinIdu) => set({ tempsPinIdu }),
   moduleFiche: {},
   setModuleFiche: (moduleFiche) => set({ moduleFiche }),
   flyTo: null,
