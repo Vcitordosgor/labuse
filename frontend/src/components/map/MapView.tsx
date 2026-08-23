@@ -815,6 +815,13 @@ export function MapView() {
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 13, 9, 15, 12, 18, 17],
                  'circle-color': '#4ADE80', 'circle-opacity': 0.8,
                  'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })
+      // PERMIS (refonte) — anneau de SURVOL : le point du permis survolé dans la liste « s'allume »
+      // (source dédiée à UN point → aucun re-render des 8 000 points de la couche radar).
+      m.addSource('permit-hover', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'permit-hover-ring', type: 'circle', source: 'permit-hover',
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 9, 13, 14, 15, 18, 18, 24],
+                 'circle-color': 'transparent', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5,
+                 'circle-stroke-opacity': 0.95 } })
       // radar-permis — les points permis sont CLIQUABLES : un clic ouvre la fiche permis (drawer M03,
       // détails + « localiser la parcelle »). Le permit_id voyage dans les properties de la feature.
       // La zone cliquable du point PRIME sur la parcelle : preventDefault() (comme les équipements,
@@ -1355,6 +1362,17 @@ export function MapView() {
     if (m.getLayer('ile-hl')) m.setFilter('ile-hl', f)
     ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
   }, [moduleMap, mapReady])
+
+  // PERMIS (refonte) — surligne le point du permis survolé dans la liste (source dédiée à un point).
+  const permitHover = useApp((s) => s.permitHover)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current || !m.getSource('permit-hover')) return
+    const fc = permitHover
+      ? { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: permitHover, properties: {} }] }
+      : EMPTY_FC
+    ;(m.getSource('permit-hover') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
+  }, [permitHover, mapReady])
 
   // flyTo demandé (fiche → « 1950 », modules…)
   useEffect(() => {
