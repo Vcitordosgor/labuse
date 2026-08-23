@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Audit &amp; maquettes · 13 outils · 23/08/2026</title>
+<style>
+:root{
+  --bg:#0a0e0b; --bg2:#0c110d; --panel:#10160f; --panel2:#0d130e; --card:#141b14; --card2:#171f17;
+  --line:#233027; --line2:#2f4033;
+  --txt:#e8f0e9; --mut:#9aab9d; --dim:#67766a;
+  --mint:#4ade80; --mint-dim:#2ea35c; --mint-bg:rgba(74,222,128,.10); --mint-line:rgba(74,222,128,.35);
+  --red:#ff9d93; --red-bg:rgba(248,81,73,.10); --red-line:rgba(248,113,103,.4);
+  --amb:#e8c468; --amb-bg:rgba(216,160,50,.10); --amb-line:rgba(216,160,50,.4);
+  --blu:#8ab4ff; --blu-bg:rgba(100,140,255,.10); --blu-line:rgba(100,140,255,.35);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.55}
+::selection{background:rgba(74,222,128,.25)}
+a{color:var(--mint);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1220px;margin:0 auto;padding:0 28px 120px}
+
+/* ---------- chrome du document ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(10,14,11,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1220px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-family:var(--mono);font-weight:700;letter-spacing:.12em;color:var(--mint);font-size:15px}
+.topbar .doc{font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.jump{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+.jump a{font-family:var(--mono);font-size:10.5px;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+.jump a:hover{color:var(--mint);border-color:var(--mint-line);text-decoration:none}
+.hero{padding:64px 0 20px}
+.hero h1{font-size:30px;font-weight:650;letter-spacing:-.01em}
+.hero h1 em{font-style:normal;color:var(--mint)}
+.hero .meta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--mut);letter-spacing:.04em}
+.method{margin-top:18px;border:1px solid var(--mint-line);background:var(--mint-bg);border-radius:12px;padding:14px 16px;font-size:13.5px;color:var(--txt)}
+.method b{color:var(--mint)}
+
+/* ---------- sections outil ---------- */
+.tool{margin-top:72px;scroll-margin-top:80px}
+.thead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
+.tnum{font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:.1em}
+.thead h2{font-size:22px;font-weight:650}
+.vdt{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;border-radius:6px;padding:4px 9px;border:1px solid}
+.v-ok{color:var(--mint);border-color:var(--mint-line);background:var(--mint-bg)}
+.v-warn{color:var(--amb);border-color:var(--amb-line);background:var(--amb-bg)}
+.v-bad{color:var(--red);border-color:var(--red-line);background:var(--red-bg)}
+.v-na{color:var(--blu);border-color:var(--blu-line);background:var(--blu-bg)}
+.cols{display:grid;grid-template-columns:minmax(340px,1fr) minmax(0,1.55fr);gap:28px;margin-top:22px;align-items:start}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.audit h3,.mocks h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.audit .ln{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13.5px;color:var(--txt)}
+.audit .ln:last-of-type{border-bottom:0}
+.audit .ic{font-family:var(--mono);flex:0 0 18px;text-align:center;font-size:13px}
+.ok .ic{color:var(--mint)} .wr .ic{color:var(--amb)} .bd .ic{color:var(--red)} .nb .ic{color:var(--blu)}
+.audit .ln small{display:block;color:var(--mut);margin-top:2px}
+.recalc{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px 12px}
+.recalc .rt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.recalc code{display:block;font-family:var(--mono);font-size:11.5px;color:var(--mut);padding:2px 0}
+.recalc code b{color:var(--mint);font-weight:600}
+.recalc code i{color:var(--amb);font-style:normal}
+.reqs{margin-top:14px}
+.reqs .rq{display:flex;gap:8px;align-items:baseline;font-size:12.5px;color:var(--mut);padding:4px 0}
+.reqs .rq::before{content:"→";color:var(--mint);font-family:var(--mono)}
+.reqs .rq b{color:var(--txt);font-weight:550}
+
+/* ---------- maquettes ---------- */
+.mockrow{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.cap{width:100%;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em;margin:-6px 0 4px}
+.panel{width:390px;max-width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.ph{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.ph .crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--mut)}
+.ph .crumb b{color:var(--mint);font-weight:600;border:1px solid var(--mint-line);border-radius:6px;padding:2px 7px;margin-right:6px}
+.ph .x{margin-left:auto;color:var(--dim);font-size:14px}
+.pb{padding:14px}
+.pt{font-size:16.5px;font-weight:650;margin-bottom:2px}
+.ps{font-size:12px;color:var(--mut);margin-bottom:12px}
+.note{border:1px solid var(--mint-line);background:var(--mint-bg);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--txt);margin-bottom:12px}
+.note b{color:var(--mint)}
+.wnote{border:1px solid var(--amb-line);background:var(--amb-bg);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px}
+.wnote b{color:var(--amb)}
+.rnote{border:1px solid var(--red-line);background:var(--red-bg);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px}
+.rnote b{color:var(--red)}
+.inp{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);background:var(--bg2);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--dim);margin-bottom:10px;font-family:var(--mono)}
+.inp.on{border-color:var(--mint-line);color:var(--txt)}
+.btn{display:block;width:100%;text-align:center;background:var(--mint);color:#08130b;font-weight:650;font-size:13px;border-radius:9px;padding:10px;margin:10px 0;border:0}
+.btn.ghost{background:transparent;color:var(--mut);border:1px solid var(--line2);font-weight:500}
+.btn.dis{background:rgba(74,222,128,.18);color:rgba(74,222,128,.5)}
+.seg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:12px}
+.seg span{flex:1;text-align:center;font-size:12px;color:var(--mut);padding:8px 6px}
+.seg .on{background:var(--mint-bg);color:var(--mint);font-weight:600;border:1px solid var(--mint-line);border-radius:8px;margin:-1px}
+.chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-family:var(--mono);font-size:11px;color:var(--txt);border:1px solid var(--line2);background:var(--card);border-radius:7px;padding:4px 8px}
+.chip .x{color:var(--dim);margin-left:5px}
+.chip.mint{border-color:var(--mint-line);color:var(--mint)}
+.chip.empty{border-style:dashed;color:var(--dim)}
+.li{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+.li .r1{display:flex;align-items:center;gap:8px}
+.idu{font-family:var(--mono);font-size:12px;color:var(--txt);font-weight:600}
+.meta{font-size:11px;color:var(--mut);margin-top:2px}
+.rgt{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--mint);font-weight:600}
+.bdg{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;border-radius:5px;padding:2px 6px;border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+.b-src{color:var(--mint);border-color:var(--mint-line);background:var(--mint-bg)}
+.b-est{color:var(--amb);border-color:var(--amb-line);background:var(--amb-bg)}
+.b-der{color:var(--mut)}
+.b-ecart{color:var(--red);border-color:var(--red-line);background:var(--red-bg)}
+.b-lt{color:var(--blu);border-color:var(--blu-line);background:var(--blu-bg)}
+.b-fbl{color:var(--amb);border-color:var(--amb-line)}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px}
+.kpi .kl{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.kpi .kv{font-family:var(--mono);font-size:15px;font-weight:650;color:var(--txt);margin-top:3px}
+.kpi .kv small{font-size:10px;color:var(--mut);font-weight:400}
+.kvrow{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kvrow:last-child{border-bottom:0}
+.kvrow .k{color:var(--mut)} .kvrow .v{font-family:var(--mono);color:var(--txt);text-align:right}
+.co{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--amb);color:#100c02;font-family:var(--mono);font-size:10px;font-weight:700;vertical-align:2px;margin:0 2px}
+.legend{width:100%;margin-top:2px;border-top:1px dashed var(--line);padding-top:10px}
+.legend .lg{display:flex;gap:8px;font-size:12px;color:var(--mut);padding:3px 0}
+.legend .lg .co{flex:0 0 16px;margin-top:2px}
+.legend .lg b{color:var(--txt);font-weight:550}
+
+/* verdict / jauge (T1) */
+.verdict{border:1px solid var(--red-line);background:var(--red-bg);border-radius:12px;padding:12px;margin-bottom:12px}
+.verdict .vh{display:flex;align-items:baseline;gap:8px}
+.verdict .vh .big{font-size:15px;font-weight:700;color:var(--red)}
+.verdict .sub{font-size:11.5px;color:var(--mut);margin-top:3px}
+.verdict .sub b{color:var(--txt)}
+.gauge{position:relative;height:34px;margin:14px 4px 26px}
+.gtrack{position:absolute;top:14px;left:0;right:0;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(248,81,73,.55) 0 30%,var(--line2) 30% 100%)}
+.gzero{position:absolute;top:8px;left:30%;width:2px;height:18px;background:var(--txt);opacity:.7}
+.gzl{position:absolute;top:28px;left:30%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--dim)}
+.gm{position:absolute;top:6px;width:10px;height:22px;border-radius:3px}
+.gm.neg{left:12%;background:var(--red)}
+.gm.ask{left:88%;background:var(--txt)}
+.gml{position:absolute;top:-9px;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;white-space:nowrap}
+.gml.neg{left:12%;color:var(--red)}
+.gml.ask{left:88%;color:var(--txt)}
+.gspan{position:absolute;top:36px;left:12%;right:6%;border-top:1px dashed var(--amb);opacity:.8}
+.gspanl{position:absolute;top:38px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--amb)}
+
+/* étapes numérotées */
+.steps{margin-bottom:10px}
+.step{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.step:last-child{border-bottom:0}
+.step .n{flex:0 0 20px;height:20px;border:1px solid var(--mint-line);border-radius:50%;color:var(--mint);font-family:var(--mono);font-size:10.5px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.step .st b{font-size:12.5px;font-weight:600}
+.step .st div{font-size:11.5px;color:var(--mut)}
+.step.dim .n{border-color:var(--line2);color:var(--dim)}
+.step.dim .st b{color:var(--mut)}
+
+/* grands tableaux plein écran */
+.wide{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.wh{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);background:var(--panel2);flex-wrap:wrap}
+.wh .wt{font-size:15px;font-weight:650}
+.wh .ws{font-size:12px;color:var(--mut)}
+.wh .x{margin-left:auto;color:var(--dim)}
+.tblwrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th .i{display:inline-flex;width:12px;height:12px;border:1px solid var(--line2);border-radius:50%;font-size:8px;align-items:center;justify-content:center;color:var(--dim);margin-left:4px;vertical-align:1px}
+.tbl th.sort{color:var(--mint)}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--txt);vertical-align:top}
+.tbl td.num,.tbl th.num{text-align:right;font-family:var(--mono)}
+.tbl tr.hov td{background:var(--mint-bg)}
+.tbl .pos{color:var(--mint)} .tbl .negv{color:var(--red)}
+.tfoot{display:flex;align-items:center;gap:12px;padding:12px 18px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+.pgbtn{font-family:var(--mono);font-size:11px;color:var(--mint);border:1px solid var(--mint-line);border-radius:7px;padding:5px 10px;background:var(--mint-bg)}
+.pgbtn.ghost{color:var(--mut);border-color:var(--line2);background:transparent}
+
+/* barre de progression (T4) */
+.prog{margin:10px 0 12px}
+.prog .pl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--mut);margin-bottom:5px}
+.prog .pt2{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog .pf{height:100%;width:42%;background:var(--mint);border-radius:3px}
+.skel{height:38px;border-radius:9px;background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:400% 100%;margin-bottom:8px;animation:sh 1.4s infinite}
+@keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
+@media(prefers-reduced-motion:reduce){.skel{animation:none}}
+
+/* mini graphe mensuel (T9) */
+.bars{display:flex;align-items:flex-end;gap:3px;height:52px;margin:8px 0 2px}
+.bars i{flex:1;background:var(--mint-dim);border-radius:2px 2px 0 0;opacity:.85}
+.bars i.hi{background:var(--mint)}
+.barsl{display:flex;gap:3px;font-family:var(--mono);font-size:8px;color:var(--dim)}
+.barsl span{flex:1;text-align:center}
+
+/* timeline millésimes (T13) */
+.years{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.years .y{font-family:var(--mono);font-size:10.5px;color:var(--mut);border:1px solid var(--line2);border-radius:7px;padding:4px 8px}
+.years .on{color:var(--mint);border-color:var(--mint-line);background:var(--mint-bg)}
+.split{display:flex;height:150px;border-radius:10px;overflow:hidden;border:1px solid var(--line2);position:relative;margin-bottom:10px}
+.split .old{flex:1;background:repeating-linear-gradient(45deg,#20241f 0 8px,#262b25 8px 16px)}
+.split .new{flex:1;background:repeating-linear-gradient(-45deg,#12261a 0 8px,#173021 8px 16px)}
+.split .hdl{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--mint)}
+.split .knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--panel);border:1px solid var(--mint);color:var(--mint);display:flex;align-items:center;justify-content:center;font-size:11px}
+.split .pc{position:absolute;top:34%;width:34px;height:26px;border:1.5px solid var(--mint);border-radius:3px;box-shadow:0 0 12px rgba(74,222,128,.35)}
+.split .pc.l{left:22%}.split .pc.r{right:22%}
+.split .tag{position:absolute;bottom:8px;font-family:var(--mono);font-size:9px;color:var(--mut);background:rgba(10,14,11,.8);border:1px solid var(--line2);border-radius:5px;padding:2px 6px}
+.split .tag.l{left:8px}.split .tag.r{right:8px}
+
+/* synthèse */
+.syn .tbl td{vertical-align:middle}
+.mystery{margin-top:26px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.mystery{grid-template-columns:1fr}}
+.mcard{border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:18px}
+.mcard h3{font-size:15px;font-weight:650;margin-bottom:10px}
+.mcard h3 .co{margin-right:6px}
+.mcard p{font-size:13px;color:var(--mut);margin-bottom:8px}
+.mcard p b{color:var(--txt)}
+.mcard p b.m{color:var(--mint)} .mcard p b.r{color:var(--red)}
+.check{margin-top:34px}
+.check h3{font-size:16px;font-weight:650;margin-bottom:6px}
+.check .sub{font-size:12.5px;color:var(--mut);margin-bottom:14px}
+.check .ck{display:flex;gap:10px;align-items:baseline;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.check .ck .st{font-family:var(--mono);font-size:10px;color:var(--mint);border:1px solid var(--mint-line);background:var(--mint-bg);border-radius:5px;padding:2px 7px;white-space:nowrap}
+.check .ck a{font-family:var(--mono);font-size:11px;margin-left:auto;white-space:nowrap}
+.foot{margin-top:80px;border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-in">
+  <span class="logo">◤ LABUSE</span><span class="doc">Audit &amp; maquettes — 13 outils</span>
+  <nav class="jump">
+    <a href="#synthese">Synthèse</a><a href="#t01">01</a><a href="#t02">02</a><a href="#t03">03</a><a href="#t04">04</a><a href="#t05">05</a><a href="#t06">06</a><a href="#t07">07</a><a href="#t08">08</a><a href="#t09">09</a><a href="#t10">10</a><a href="#t11">11</a><a href="#t12">12</a><a href="#t13">13</a>
+  </nav>
+</div></div>
+
+<div class="wrap">
+<header class="hero">
+  <h1>Les 13 outils, <em>audités un par un</em> — et redessinés.</h1>
+  <div class="meta">Audit sur pièces · écrans du 23/08/2026 · DA existante conservée (vert #4ADE80, « le relief se mérite », Sourcé/Estimé/Dérivé)</div>
+  <div class="method"><b>Méthode.</b> Je ne vois pas ton code depuis ici : cet audit se fait sur les écrans — chiffres recalculés à la main (les reçus de calcul sont affichés), croisements entre outils, fraîcheur et sources affichées, bugs que tu signales. Quand un point doit se vérifier côté code, il est marqué comme tel. Les valeurs dans les maquettes sont illustratives. Chaque outil a son bloc « Demandé → traité » : rien de ta liste n'est oublié.</div>
+</header>
+
+<!-- ============================ SYNTHÈSE ============================ -->
+<section class="tool syn" id="synthese">
+  <div class="thead"><span class="tnum">◆</span><h2>Synthèse — état des 13 outils</h2></div>
+  <div class="wide" style="margin-top:20px">
+    <div class="tblwrap"><table class="tbl">
+      <tr><th>Outil</th><th>État</th><th>Priorité</th><th>L'essentiel</th></tr>
+      <tr><td><a href="#t01">01 · Étudier un bien</a></td><td><span class="vdt v-warn">À corriger</span></td><td class="num">P1</td><td>Calculs justes, affichage illisible : la charge négative apparaît « 0 € », deux verdicts se contredisent en apparence. Refonte visuelle.</td></tr>
+      <tr><td><a href="#t02">02 · Faisabilité</a></td><td><span class="vdt v-ok">Solide</span></td><td class="num">P3</td><td>Le meilleur pattern de l'app (11 étapes sourcées). Une étape manquante (175 → 123 m²) et un « voir plus ».</td></tr>
+      <tr><td><a href="#t03">03 · Pièges et risques</a></td><td><span class="vdt v-warn">Bugs « Un lot »</span></td><td class="num">P2</td><td>« + ajouter » n'alimente pas la liste, deux champs au lieu d'un, PDF à retirer, règle âge dirigeant qui tourne sur un particulier.</td></tr>
+      <tr><td><a href="#t04">04 · PLU</a></td><td><span class="vdt v-warn">Perf + pagination</span></td><td class="num">P2</td><td>Recalcul à blanc trop long, liste bloquée à 400/1 451. Précalcul nocturne + « voir 400 de plus ».</td></tr>
+      <tr><td><a href="#t05">05 · Comparaison</a></td><td><span class="vdt v-warn">UX à replacer</span></td><td class="num">P2</td><td>Bascule vers Cartes au lieu de rester dans Outils ; panneau fantôme quand on change d'outil sans fermer.</td></tr>
+      <tr><td><a href="#t06">06 · Assemblage</a></td><td><span class="vdt v-ok">Solide</span></td><td class="num">P3</td><td>« 11 065 m² SDP » ambigu (c'est la SDP cumulée, la surface d'assiette fait 14 111 m²). Afficher les deux.</td></tr>
+      <tr><td><a href="#t07">07 · Scan patrimoine</a></td><td><span class="vdt v-na">Écran manquant</span></td><td class="num">P3</td><td>Le screenshot n'est pas dans le lot. Tes deux retraits (badges priorité, courrier) sont appliqués dans la maquette de principe.</td></tr>
+      <tr><td><a href="#t08">08 · Courrier propriétaire</a></td><td><span class="vdt v-bad">Cassé + à repenser</span></td><td class="num">P1</td><td>PDF exporté vide (corps non injecté) et proposition de valeur faible. Refonte : demande d'envoi → notification LABUSE → rappel tarif.</td></tr>
+      <tr><td><a href="#t09">09 · Prospection solaire</a></td><td><span class="vdt v-bad">Illisible</span></td><td class="num">P1</td><td>Colonnes coupées, tri noyé d'« Écartée ». Refonte en deux modes : Piscines / Ensoleillement + fiche parcelle.</td></tr>
+      <tr><td><a href="#t10">10 · Communes</a></td><td><span class="vdt v-warn">Lisibilité</span></td><td class="num">P1</td><td>En-têtes cryptiques, clic invisible, fiche dont le contenu est inaccessible sous la ligne de flottaison (bug scroll).</td></tr>
+      <tr><td><a href="#t11">11 · Permis</a></td><td><span class="vdt v-warn">UX</span></td><td class="num">P2</td><td>Double entrée « En cours / Jamais réalisés » + suppression du grand vide noir avant la liste.</td></tr>
+      <tr><td><a href="#t12">12 · Densifier l'existant</a></td><td><span class="vdt v-bad">Illisible</span></td><td class="num">P1</td><td>Tableau coupé, tris tronqués. Grand tableau plein écran type Comparaison + recherche IDU/adresse en tête.</td></tr>
+      <tr><td><a href="#t13">13 · Remonter le temps</a></td><td><span class="vdt v-ok">Fonctionne</span></td><td class="num">P3</td><td>OK. Millésimes multiples + expliquer les zones noires (non-couverture de l'ortho ancienne) pour ne pas ressembler à un bug.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="mystery">
+    <div class="mcard">
+      <h3>Le « mystère » des 719 k€ — résolu</h3>
+      <p>Le calcul est <b class="m">juste</b>, c'est l'affichage qui te l'a caché. Aux hypothèses calibrées, la charge foncière supportable de BZ 1065 est <b class="r">négative</b> : −135 €/m² × 1 625 m² ≈ <b class="r">−219 k€</b>. L'opération ne finance même pas un terrain gratuit.</p>
+      <p>L'écart annoncé = prix demandé − charge supportable = 500 000 − (−219 375) ≈ <b>719 k€</b>. Le second bandeau (« dépasse de 623 k€ ») fait le même calcul avec <b>tes</b> hypothèses de la calculette : charge −122 911 € → 500 000 + 122 911 ≈ 623 k€.</p>
+      <p>Deux problèmes d'affichage, donc : la charge s'affiche « <b>0 €</b> » (négatif écrêté) alors que le vrai chiffre sert au calcul, et <b>deux verdicts</b> à deux chiffres différents cohabitent sans hiérarchie. La maquette 01 corrige les deux.</p>
+    </div>
+    <div class="mcard">
+      <h3>Incohérences croisées à trancher (données)</h3>
+      <p><b>BZ 1065, deux vérités.</b> Étudier un bien vend 123 m² (CA 526 k€) ; Pièges « Un lot » dit « SDP résiduelle 26 m² — rien à construire ». L'un raisonne en potentiel théorique, l'autre net du bâti existant : le résiduel doit remonter en alerte dans Étudier un bien et Faisabilité.</p>
+      <p><b>SDP vs SHAB.</b> Étudier un bien affiche « SDP vendable 123 m² » ; Faisabilité montre SDP 219 m² et SHAB vendable ~123 m². Le libellé d'Étudier un bien est faux : c'est une SHAB.</p>
+      <p><b>Âge dirigeant sur un particulier.</b> Le lot affiche « propriétaire particulier » ET « PM sans dirigeant physique daté » : le critère tourne sur le mauvais type de propriétaire.</p>
+      <p><b>Communes.</b> € neuf du tableau = fiche (4 258 ✓) mais € ancien 3 015 ≠ 2 634 de la fiche Saint-Pierre — deux séries DVF différentes à réconcilier.</p>
+    </div>
+  </div>
+
+  <div class="check">
+    <h3>Tes demandes, une par une</h3>
+    <div class="sub">Tout ce que tu as listé dans ton message, avec l'endroit où c'est traité. Rien n'est oublié.</div>
+    <div class="ck"><span class="st">Traité</span><span>Étudier un bien — refonte visuelle + explication du dépassement de 719 k€</span><a href="#t01">→ 01</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Pièges « Un lot » — une seule barre IDU + adresse</span><a href="#t03">→ 03</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Pièges « Un lot » — « + ajouter » alimente la zone du bas (bug)</span><a href="#t03">→ 03</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Pièges « Un lot » — retrait de l'export PDF</span><a href="#t03">→ 03</a></div>
+    <div class="ck"><span class="st">Traité</span><span>PLU — réduire le temps d'attente des bascules AUc/AUs/AU</span><a href="#t04">→ 04</a></div>
+    <div class="ck"><span class="st">Traité</span><span>PLU — « voir 400 de plus » jusqu'à tout charger</span><a href="#t04">→ 04</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Comparaison — rester dans Outils, étapes dans la bande latérale gauche</span><a href="#t05">→ 05</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Comparaison — le panneau flottant se ferme au changement d'outil (bug)</span><a href="#t05">→ 05</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Comparaison — le système clic-sur-carte + plein écran est conservé</span><a href="#t05">→ 05</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Scan patrimoine — retirer les badges « priorité »</span><a href="#t07">→ 07</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Scan patrimoine — retirer l'envoi de courrier</span><a href="#t07">→ 07</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Courrier — bug PDF (texte absent) identifié + refonte complète du workflow (demande d'envoi → notification → rappel tarif)</span><a href="#t08">→ 08</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Solaire — choix d'entrée Piscines / Ensoleillement</span><a href="#t09">→ 09</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Solaire — stats piscines par commune / île + carte avec marqueurs, puis listing</span><a href="#t09">→ 09</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Solaire — ensoleillement : critères, puis une seule barre adresse/IDU → fiche soleil complète</span><a href="#t09">→ 09</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Communes — tableau mis en valeur + affordance de clic</span><a href="#t10">→ 10</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Communes — fiche : contenu accessible (fix du scroll)</span><a href="#t10">→ 10</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Permis — deux entrées « en cours » / « jamais réalisés » (mieux nommé)</span><a href="#t11">→ 11</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Permis — suppression de l'espace noir + visibilité</span><a href="#t11">→ 11</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Densifier — grand tableau plein écran type Comparaison, tris non coupés</span><a href="#t12">→ 12</a></div>
+    <div class="ck"><span class="st">Traité</span><span>Densifier — barre unique IDU/adresse en tête</span><a href="#t12">→ 12</a></div>
+  </div>
+</section>
+
+<!-- ============================ 01 ÉTUDIER UN BIEN ============================ -->
+<section class="tool" id="t01">
+  <div class="thead"><span class="tnum">01</span><h2>Étudier un bien</h2><span class="vdt v-warn">Calculs justes · affichage à refondre</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Chaîne de calcul cohérente, revérifiée à la main (reçus ci-dessous). Le « dépassement de 719 k€ » est mathématiquement exact.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>La charge foncière s'affiche « 0 € » alors qu'elle vaut −219 k€ : le négatif est écrêté à l'écran mais utilisé dans le calcul. C'est la source directe de ton incompréhension.<small>À vérifier côté code : un clamp d'affichage type max(0, charge) dans le composant, pas dans le moteur.</small></span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Deux verdicts empilés — calibré LABUSE (« dépasse de 719 k€ ») puis vos hypothèses (« dépasse de 623 k€ ») — sans hiérarchie ni bascule. Deux chiffres différents pour la même question à l'écran.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Libellé « SDP vendable 123 m² » : c'est une SHAB (la SDP de la parcelle est 219 m² dans Faisabilité). À renommer.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Le résiduel bâti n'apparaît nulle part : Pièges « Un lot » donne SDP résiduelle 26 m² sur la même parcelle. Le CA de 526 k€ suppose un terrain libéré — sans alerte, la « seconde opinion avant d'offrir » peut induire en erreur.</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Bonnes pratiques déjà en place à conserver : disclaimer « ni un prix ni une promesse », VRD « jamais un coût zéro masqué », source DVF avec fiabilité.</span></div>
+      <div class="recalc">
+        <div class="rt">Reçus de calcul (vérifiés)</div>
+        <code>CA : 4 275 €/m² × 123 m² = <b>525 825 € ≈ 526 k€</b> ✓</code>
+        <code>Plancher : 123 ÷ 0,8 = <b>153,75 ≈ 154 m²</b> ✓</code>
+        <code>Charge calibrée : −135 €/m² × 1 625 m² = <b>−219 375 €</b></code>
+        <code>Écart : 500 000 − (−219 375) = <b>719 375 ≈ 719 k€</b> ✓</code>
+        <code>Vos hypothèses : charge <i>−122 911 €</i> → 500 000 + 122 911 = <b>622 911 ≈ 623 k€</b> ✓</code>
+      </div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> « pas satisfait du visuel » → refonte complète ci-contre.</div>
+        <div class="rq"><b>Demandé :</b> comprendre le 719 k€ → expliqué + rendu lisible dans l'UI (jauge, négatif affiché en négatif).</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› ÉTUDIER UN BIEN</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Étudier un bien</div>
+            <div class="ps">Le constat sourcé d'abord, vos hypothèses ensuite — un seul verdict à la fois.</div>
+            <div class="inp">Adresse ou IDU (ex. 12 rue du Général de…)</div>
+            <div class="li"><div class="r1"><span class="idu">BZ 1065</span><span class="bdg">Neutre</span><span class="rgt">1 625 m²</span></div><div class="meta">Saint-Denis · 97411000BZ1065 · propriétaire particulier</div></div>
+            <div class="kgrid">
+              <div class="kpi"><div class="kl">SDP max</div><div class="kv">219 m²</div></div>
+              <div class="kpi"><div class="kl">SHAB vendable <i class="co">1</i></div><div class="kv">123 m²</div></div>
+              <div class="kpi"><div class="kl">Prix de sortie</div><div class="kv">4 275 <small>€/m²</small></div></div>
+              <div class="kpi"><div class="kl">CA potentiel</div><div class="kv">526 <small>k€</small></div></div>
+            </div>
+            <div class="wnote"><b>⚠ Bâti existant.</b> SDP résiduelle ≈ 26 m² (Pièges &amp; risques). Le CA ci-dessus suppose un terrain libéré. <i class="co">2</i></div>
+            <div class="seg"><span class="on">Hypothèses calibrées LABUSE</span><span>Vos hypothèses</span></div>
+            <div class="cap" style="margin:0 0 8px">un seul verdict affiché — la bascule change tout le bloc <i class="co">3</i></div>
+            <div class="verdict">
+              <div class="vh"><span class="big">Ne finance aucun terrain</span></div>
+              <div class="sub">Charge foncière supportable : <b>−219 k€</b> (−135 €/m² de terrain) — l'opération ne dégage pas de valeur, même terrain gratuit. <i class="co">4</i></div>
+              <div class="gauge">
+                <span class="gml neg">charge −219 k€</span><span class="gml ask">prix demandé 500 k€</span>
+                <div class="gtrack"></div><div class="gzero"></div><span class="gzl">0 €</span>
+                <span class="gm neg"></span><span class="gm ask"></span>
+                <div class="gspan"></div><span class="gspanl">écart 719 k€</span>
+              </div>
+            </div>
+            <div class="kvrow"><span class="k">Prix demandé du terrain</span><span class="v">500 000 €</span></div>
+            <div class="kvrow"><span class="k">Terrain nu dans la zone</span><span class="v">485 €/m² <span class="bdg b-src">DVF · fiab. moyenne</span></span></div>
+            <div class="li" style="margin-top:10px"><div class="r1"><span style="font-size:12.5px">Régler vos hypothèses — coût · marge · VRD</span><span class="rgt" style="color:var(--dim)">▸</span></div><div class="meta">2 550 €/m² · 21 % · 90 €/m² — repliée par défaut · « réinitialiser aux calibrées » <i class="co">5</i></div></div>
+            <button class="btn ghost">Ouvrir la fiche complète →</button>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Libellé corrigé</b> — SHAB vendable, plus « SDP vendable » (la vraie SDP reste affichée à côté).</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Résiduel câblé</b> depuis Pièges &amp; risques — l'incohérence inter-outils devient une alerte utile au lieu d'un piège.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Bascule calibré / vos hypothèses</b> — fini les deux bandeaux contradictoires : même bloc, chiffres qui changent, provenance affichée.</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Le négatif s'affiche en négatif</b> — plus de « 0 € » ; la jauge situe charge, zéro et prix demandé, l'écart se lit d'un coup d'œil.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>Calculette repliée</b> par défaut — le constat d'abord, le réglage ensuite. Les toggles « Charge supportable / Prix d'achat max » sont conservés dedans.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 02 FAISABILITÉ ============================ -->
+<section class="tool" id="t02">
+  <div class="thead"><span class="tnum">02</span><h2>Faisabilité</h2><span class="vdt v-ok">Solide — deux retouches</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Par critères : la formule est affichée et juste (24 × 60 × 1,2 = 1 728 m²), le plafonnement au gabarit est annoncé, le périmètre est explicite (« pas hérité du filtre global »).</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Par parcelle : les 11 étapes sourcées article par article (Uh.7, Uh.9, Uh.10, Art. 12 — p.73) avec badges Sourcé/Estimé/Dérivé. Le meilleur pattern de transparence de l'app — à généraliser.</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Le multiplicateur des résultats est bien capacité ÷ besoin : DK 1169 → 281 159 ÷ 1 728 = 162,7 = « ×162.71 » affiché.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Saut non expliqué : l'étape 6 donne SHAB ~175 m², l'en-tête retient ~123 m². Le plafond de densité (étapes 7-8) réduit la surface mais aucune étape ne le montre — ajouter une étape 12.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>« Les 200 premières » sans « voir plus » — même pattern de pagination que PLU à appliquer.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Divergence avec le résiduel de Pièges (26 m²) : la capacité affichée est théorique, hors bâti existant — le dire dans l'encadré.</span></div>
+      <div class="recalc">
+        <div class="rt">Reçus de calcul (vérifiés)</div>
+        <code>Besoin : 24 lgts × 60 m² × 1,2 = <b>1 728 m²</b> ✓</code>
+        <code>DK 1169 : 281 159 ÷ 1 728 = <b>×162,7</b> ✓</code>
+        <code>SHAB brute : 219 × 0,8 = <b>175,2 m²</b> ✓ · retenue <i>123 m²</i> (plafond — étape manquante)</code>
+      </div>
+      <div class="reqs"><div class="rq"><b>Demandé :</b> audit + maquette (pas de correctif spécifique listé) → deux retouches proposées ci-contre.</div></div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Par critères — résultats</div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip mint">3 bât · R+3</span><span class="chip mint">24 lgts</span><span class="chip mint">≥ 1 728 m² SDP</span><span class="chip">Toute l'île</span><span class="chip">modifier ▸</span></div>
+            <div class="cap" style="margin:0 0 8px">rappel du programme épinglé en tête de liste <i class="co">1</i></div>
+            <div class="li"><div class="r1"><span class="idu">DK 1169</span><span class="bdg">Neutre</span><span class="rgt">×162,7</span></div><div class="meta">Saint-Paul · SDP 281 159 m² · AU2h · h 13 ✓ — capacité ÷ besoin <i class="co">2</i></div></div>
+            <div class="li"><div class="r1"><span class="idu">EX 0503</span><span class="bdg b-lt">Long terme</span><span class="rgt">×117,9</span></div><div class="meta">Saint-Paul · SDP 203 736 m² · U1l · h 14 ✓</div></div>
+            <div class="li"><div class="r1"><span class="idu">AY 0381</span><span class="bdg">Neutre</span><span class="rgt">×80,8</span></div><div class="meta">Sainte-Marie · SDP 139 546 m² · UA · h 18 ✓</div></div>
+            <div class="tfoot" style="padding:8px 0 0"><span>200 / 3 090 affichées</span><span class="pgbtn">Voir 200 de plus</span><span class="pgbtn ghost">Exporter CSV</span><i class="co">3</i></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Par parcelle — fin du calcul tracé</div>
+          <div class="pb">
+            <div class="note"><b>Capacité BZ 1065 :</b> SDP 219 m² → SHAB brute ~175 m² → <b>retenue ~123 m²</b> après plafond de densité. <i class="co">4</i><br><span style="color:var(--mut)">Théorique, hors bâti existant — résiduel réel : voir Pièges &amp; risques (26 m²). <i class="co">5</i></span></div>
+            <div class="steps">
+              <div class="step dim"><span class="n">10</span><div class="st"><b>Stationnement — sous-sol/silo</b><div>~2-3 logts · <span class="bdg b-src">Sourcé</span> Art. 12</div></div></div>
+              <div class="step dim"><span class="n">11</span><div class="st"><b>Logements retenus au sol</b><div>~1 à 2 · <span class="bdg b-der">Dérivé</span></div></div></div>
+              <div class="step"><span class="n">12</span><div class="st"><b>SHAB retenue après plafond</b><div>~123 m² — 2 lgts × 60 m² + circulations · <span class="bdg b-der">Dérivé</span> — l'étape qui manquait <i class="co">4</i></div></div></div>
+            </div>
+            <button class="btn ghost">✦ Expliquer ce calcul en clair</button>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Programme épinglé</b> — on sait toujours ce qu'on cherche en scrollant la liste.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Multiplicateur expliqué</b> au survol : capacité ÷ besoin, avec le calcul.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Pagination</b> « voir 200 de plus » + export — même mécanique que PLU (04).</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Étape 12 ajoutée</b> — le saut 175 → 123 m² devient traçable comme le reste.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>Renvoi résiduel</b> — théorique vs net du bâti existant, dit explicitement.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 03 PIÈGES ET RISQUES ============================ -->
+<section class="tool" id="t03">
+  <div class="thead"><span class="tnum">03</span><h2>Pièges et risques</h2><span class="vdt v-warn">« Une parcelle » OK · « Un lot » à corriger</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Sources datées et fraîches : GPU zonages assainissement 2026-08-21, SUP API Carto 2026-07-10. Le bloc « non couvert par la base — à vérifier ailleurs » (PEB, RNIC, Sudocuh, canalisations, SUP hors GPU) est un modèle d'honnêteté — jamais de faux « RAS ». À garder tel quel.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>« Un lot » : le bouton « + ajouter » n'alimente pas la zone du bas (bug constaté). L'adresse saisie reste orpheline.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Deux champs séparés (IDU / adresse) là où tu veux une seule barre qui comprend les deux.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Export PDF à retirer (ta demande) — le lien « ↓ PDF » par parcelle et le rapport par lot disparaissent.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Règle âge dirigeant : « Âge dirigeant inconnu (PM sans dirigeant physique daté) » s'affiche alors que le propriétaire est un particulier. Le critère doit être conditionné au type de propriétaire.<small>À vérifier côté code : garde propriétaire == personne morale avant d'évaluer age_dirigeant.</small></span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>« Catégorie déjà couverte par une autre couche (0 pt, anti-double-compte) » : bon principe, mais montrer par quelle couche.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> barre unique IDU + adresse → fait <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> « ajouter » alimente la zone du bas → fait <i class="co">2</i>.</div>
+        <div class="rq"><b>Demandé :</b> retrait du PDF → fait <i class="co">4</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette — « Un lot »</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› PIÈGES ET RISQUES</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="seg"><span>Une parcelle</span><span class="on">Un lot</span></div>
+            <div style="display:flex;gap:8px"><div class="inp on" style="flex:1">IDU, SECTION+NUMÉRO ou adresse… <i class="co">1</i></div><span class="pgbtn" style="align-self:center">+ Ajouter</span></div>
+            <div class="cap" style="margin:2px 0 8px">chaque ajout tombe dans la liste ci-dessous <i class="co">2</i></div>
+            <div class="li"><div class="r1"><span class="idu">97411000BZ1065</span><span class="rgt" style="color:var(--dim)">✕</span></div><div class="meta">Saint-Denis · 1 625 m²</div></div>
+            <div class="li"><div class="r1"><span class="idu">BZ 1044</span><span class="bdg b-src">résolue</span><span class="rgt" style="color:var(--dim)">✕</span></div><div class="meta">« 3 Chemin de la Citerne, Saint-Denis » → BZ 1044 <i class="co">3</i></div></div>
+            <div class="li"><div class="r1"><span class="idu">AC 0345</span><span class="rgt" style="color:var(--dim)">✕</span></div><div class="meta">Sainte-Marie · 890 m²</div></div>
+            <div class="cap" style="margin:0 0 6px">3 références · 3 résolues — ou collez une liste, une par ligne</div>
+            <button class="btn">Analyser le lot (3)</button>
+            <div class="li"><div class="r1"><span class="idu">BZ 1065</span><span class="bdg b-ecart">risque élevé · 80/100</span><span class="rgt" style="font-size:10px;color:var(--mut)">particulier</span></div>
+              <div class="meta" style="margin-top:6px">▸ risques — Zone bleue PPR inondation/mvt de terrain — constructible SOUS PRESCRIPTIONS</div>
+              <div class="meta">▸ prescription_plu — périmètre zone souple (~100 %) — à vérifier au règlement</div>
+              <div class="meta">▸ sup — PM1_PPR_i_mvt SAINT-DENIS (0 pt — déjà compté par « risques ») <i class="co">5</i></div>
+              <div class="meta">▸ residual_socle — SDP résiduelle 26 m² — rien à construire</div>
+              <div class="meta" style="color:var(--dim)">▸ âge dirigeant — non évalué (propriétaire particulier) <i class="co">6</i></div>
+            </div>
+            <div class="cap" style="margin:0">aucun export PDF — ni par parcelle, ni pour le lot <i class="co">4</i></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Une seule barre</b> — IDU, SECTION+NUMÉRO ou adresse, détection automatique du format.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>« + Ajouter » corrigé</b> — chaque saisie devient une ligne supprimable dans la liste ; le compteur suit.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Adresse résolue visible</b> — on montre à quelle parcelle l'adresse a été rattachée (confiance vérifiable).</span></div>
+          <div class="lg"><i class="co">4</i><span><b>PDF retiré</b> partout, comme demandé — l'analyse se lit dans l'outil.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>Anti-double-compte explicité</b> — on nomme la couche qui couvre déjà la catégorie.</span></div>
+          <div class="lg"><i class="co">6</i><span><b>Âge dirigeant conditionné</b> — masqué sur un particulier au lieu d'afficher un critère PM hors sujet.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 04 PLU ============================ -->
+<section class="tool" id="t04">
+  <div class="thead"><span class="tnum">04</span><h2>PLU</h2><span class="vdt v-warn">Perf du recalcul + pagination</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Méthode transparente : « recalcul à blanc — rien n'est persisté », SDP « estimée par analogie » avec le ratio affiché (0,318). La vérif parcelle Sudocuh est datée et prudente (« jamais l'issue de la procédure », dernier constat 2026-08-06). Bien branché.</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Chiffres cohérents : AB0790 → 743 402 × 0,318 = 236 402 ≈ 236 275 m² affichés (écart = géométrie/arrondis).</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Le recalcul AUc/AUs/AU → U est très long, avec un spinner muet (« Recalcul à blanc en cours… ») — aucune progression, pas d'annulation.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Liste bloquée à « les 400 premières sur 1 451 » — impossible de voir la suite.</span></div>
+      <div class="ln nb"><span class="ic">▸</span><span><b>Plan perf</b> (côté code) : ① précalculer chaque nuit les 72 combinaisons (24 communes × 3 scénarios) et servir depuis ce cache — l'écran devient instantané, le live ne sert que si les paramètres changent ; ② sinon, calcul serveur avec streaming des résultats par paquets de 100 (les premiers apparaissent tout de suite) ; ③ UI : barre de progression réelle + squelettes + bouton annuler. Le tri « toute l'île » = fusion des caches communaux, pas un recalcul.</span></div>
+      <div class="recalc"><div class="rt">Reçu de calcul (vérifié)</div><code>AB0790 : 743 402 m² × 0,318 = <b>236 402 ≈ 236 275 m²</b> ✓</code></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> régler le temps d'attente → plan perf ci-dessus + états de chargement <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> « voir plus » par 400 jusqu'à tout avoir → fait <i class="co">2</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Pendant le recalcul</div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip">AUc → U</span><span class="chip mint">AUs → U</span><span class="chip">AU → U</span></div>
+            <div class="prog"><div class="pl"><span>Recalcul AUs → U · 612 / 1 451 parcelles</span><span>~6 s</span></div><div class="pt2"><div class="pf"></div></div></div>
+            <div class="skel"></div><div class="skel"></div><div class="skel" style="opacity:.6"></div>
+            <button class="btn ghost">Annuler</button>
+            <div class="note" style="margin:6px 0 0"><b>Servi depuis le précalcul</b> de la nuit (23/08 · 04:12) quand disponible — recalcul live uniquement si vous changez les paramètres. <i class="co">1</i></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Résultats — pagination</div>
+          <div class="pb">
+            <div class="note"><b>1 451 parcelles AUs</b> · ratio analogie 0,318 · SDP estimée totale <b>2 799 683 m²</b> · 122 bascules potentielles (surlignées)</div>
+            <div class="li"><div class="r1"><span class="idu">AB0790</span><span class="rgt">236 275 m² ▲</span></div><div class="meta">743 402 m² · bascule potentielle</div></div>
+            <div class="li"><div class="r1"><span class="idu">AX0220</span><span class="rgt" style="color:var(--txt)">86 748 m²</span></div><div class="meta">272 939 m²</div></div>
+            <div class="li"><div class="r1"><span class="idu">CV1418</span><span class="rgt">45 845 m² ▲</span></div><div class="meta">144 244 m² · bascule potentielle</div></div>
+            <div class="tfoot" style="padding:8px 0 0"><span><b style="color:var(--txt)">400 / 1 451</b> affichées</span><span class="pgbtn">Voir 400 de plus</span><span class="pgbtn ghost">Tout charger (1 451)</span><i class="co">2</i></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Chargement honnête</b> — progression réelle, annulation, et mention de la fraîcheur du précalcul servi (cohérent avec ta doctrine fraîcheur = date source).</span></div>
+          <div class="lg"><i class="co">2</i><span><b>« Voir 400 de plus »</b> jusqu'à épuisement, + « tout charger » pour les pressés. Compteur toujours visible. Même composant réutilisé en Faisabilité (02) et Densifier (12).</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 05 COMPARAISON ============================ -->
+<section class="tool" id="t05">
+  <div class="thead"><span class="tnum">05</span><h2>Comparaison de parcelles</h2><span class="vdt v-warn">Bon tableau · mauvais ancrage</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Le tableau est bon et honnête : « chaque valeur vient du même point de calcul que la fiche (run servi) », charge négative affichée en négatif (−117 €/m² — ce que 01 ne faisait pas), contraintes détaillées par parcelle, prix zone identique (479 €/m² ×3) cohérent puisque même zone.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Cliquer l'outil bascule l'app sur « Cartes » : l'outil disparaît de la bande latérale, l'utilisateur est lâché sans consigne autre qu'un petit bandeau en bas.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Panneau fantôme : si on change d'outil sans fermer avec ✕, le tableau plein écran reste affiché par-dessus le nouvel outil.<small>À vérifier côté code : le composant overlay n'est pas démonté à la sortie de la route/outil — ajouter un cleanup on-leave.</small></span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Le principe clic-sur-carte + tableau plein écran te plaît — il est conservé tel quel.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> rester dans Outils avec les étapes dans la bande de gauche → fait <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> conserver le système clic-carte / plein écran → conservé <i class="co">2</i>.</div>
+        <div class="rq"><b>Demandé :</b> plus de panneau qui persiste en changeant d'outil → règle de fermeture <i class="co">3</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› COMPARAISON</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Comparer des parcelles</div>
+            <div class="ps">Jusqu'à 3, côte à côte, aux mêmes points de calcul que la fiche. <i class="co">1</i></div>
+            <div class="steps">
+              <div class="step"><span class="n">1</span><div class="st"><b>Cliquez les parcelles sur la carte</b><div>la carte reste visible à droite — ou depuis une fiche → « Comparer »</div>
+                <div class="chiprow" style="margin-top:6px"><span class="chip mint">CT 1034 <span class="x">✕</span></span><span class="chip mint">CT 1837 <span class="x">✕</span></span><span class="chip empty">+ 1 libre</span></div>
+              </div></div>
+              <div class="step"><span class="n">2</span><div class="st"><b>Ouvrez le tableau</b><div style="margin-top:6px"><button class="btn" style="margin:0">Comparer (2/3)</button></div></div></div>
+              <div class="step dim"><span class="n">3</span><div class="st"><b>Revenez à la carte</b><div>✕ ou Échap — votre sélection reste dans ce panneau</div></div></div>
+            </div>
+            <div class="note" style="margin:0"><b>En quittant l'outil</b>, le tableau se ferme automatiquement ; la sélection est gardée 15 min si vous revenez. <i class="co">3</i></div>
+          </div>
+        </div>
+        <div class="wide" style="max-width:640px">
+          <div class="wh"><span class="wt">Comparer les parcelles (2/3)</span><span class="ws">● Ajouter sur la carte · Tout vider</span><span class="x">✕</span></div>
+          <div class="tblwrap"><table class="tbl">
+            <tr><th></th><th>CT 1034 <span class="bdg b-ecart" style="margin-left:4px">Écartée</span></th><th>CT 1837 <span class="bdg" style="margin-left:4px">Neutre</span></th></tr>
+            <tr><td style="color:var(--dim)">Surface</td><td class="num">18 m²</td><td class="num">323 m²</td></tr>
+            <tr><td style="color:var(--dim)">Constructible</td><td>non</td><td>oui</td></tr>
+            <tr><td style="color:var(--dim)">SDP résiduelle</td><td class="num">—</td><td class="num">133 m²</td></tr>
+            <tr><td style="color:var(--dim)">Charge foncière /m²</td><td class="num">—</td><td class="num pos">82 €/m²</td></tr>
+            <tr><td style="color:var(--dim)">Prix terrain nu zone</td><td class="num">479 €/m²</td><td class="num">479 €/m²</td></tr>
+          </table></div>
+          <div class="tfoot">Le tableau plein écran actuel est conservé tel quel — il s'ouvre par-dessus la carte, ✕/Échap pour fermer. <i class="co">2</i></div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Ancré dans Outils</b> — le panneau gauche guide (étapes, compteur, retraits ✕) pendant qu'on clique la carte ; plus de bascule surprise vers « Cartes ».</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Système conservé</b> — clic parcelles + tableau flottant plein écran, inchangé sur le fond.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Cycle de vie propre</b> — sortie de l'outil = fermeture de l'overlay (fix du panneau fantôme), avec sélection conservée 15 min pour ne rien perdre.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 06 ASSEMBLAGE ============================ -->
+<section class="tool" id="t06">
+  <div class="thead"><span class="tnum">06</span><h2>Assemblage</h2><span class="vdt v-ok">Solide — libellés à clarifier</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Les garde-fous sont là et bien visibles : « NON contigu », « 3 interlocuteurs », reculs internes qui disparaissent à la fusion, seuils d'ensemble « à instruire », indivision « non détectable en open data — signal non affiché plutôt qu'inventé ». Très bon.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>« Assiette 11 065 m² SDP » est ambigu : 11 065 = SDP cumulée (217 + 122 + 10 726 ✓), mais la surface d'assiette fait 14 111 m² (619 + 250 + 13 242). Les deux grandeurs doivent s'afficher séparément.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Charge cumulée « ~−1 879 117 € (−133 €/m²) » : négative — mérite le même traitement visuel que 01 (rouge, expliquée), pas une ligne neutre. Cohérence : −1 879 117 ÷ 14 111 = −133 €/m² ✓ (donc le €/m² est bien calculé sur la surface, preuve que le « 11 065 » d'à côté est trompeur).</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>« ×1 vs la meilleure seule » : 11 065 ÷ 10 726 = 1,03 — exact mais peu vendeur arrondi à ×1 ; afficher ×1,03 (+3 %).</span></div>
+      <div class="recalc">
+        <div class="rt">Reçus de calcul (vérifiés)</div>
+        <code>SDP cumulée : 217 + 122 + 10 726 = <b>11 065 m²</b> ✓</code>
+        <code>Surface d'assiette : 619 + 250 + 13 242 = <b>14 111 m²</b> (non affichée)</code>
+        <code>−1 879 117 ÷ 14 111 = <b>−133 €/m²</b> ✓</code>
+      </div>
+      <div class="reqs"><div class="rq"><b>Demandé :</b> audit + maquette → clarifications ci-contre + pont vers le nouveau Courrier (08).</div></div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› ASSEMBLAGE</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip mint">CT1917 ✕</span><span class="chip mint">CT3327 ✕</span><span class="chip mint">CT2565 ✕</span></div>
+            <div class="chiprow"><span class="bdg b-ecart">NON contigu</span><span class="bdg b-fbl">3 interlocuteurs</span><span class="bdg">1 PM · 2 particuliers</span></div>
+            <div class="kgrid">
+              <div class="kpi"><div class="kl">Surface d'assiette <i class="co">1</i></div><div class="kv">14 111 m²</div></div>
+              <div class="kpi"><div class="kl">SDP cumulée</div><div class="kv">11 065 m²</div></div>
+              <div class="kpi"><div class="kl">Logements</div><div class="kv">78–89</div></div>
+              <div class="kpi"><div class="kl">vs meilleure seule</div><div class="kv">×1,03 <small>+3 %</small></div></div>
+            </div>
+            <div class="rnote"><b>Charge foncière cumulée : −1,88 M€</b> (−133 €/m² de terrain) — négative : l'ensemble ne finance pas ce foncier à ces hypothèses. Marché zone : 479 €/m² (DVF · fiab. moyenne). <i class="co">2</i></div>
+            <div class="li"><div class="r1"><span class="idu">CT1917</span><span class="bdg">Neutre</span><span class="rgt">619 m² · SDP 217</span></div><div class="meta">SOCIÉTÉ D'ÉQUIPEMENT DU DÉPARTEMENT…</div></div>
+            <div class="li"><div class="r1"><span class="idu">CT2565</span><span class="bdg">Neutre</span><span class="rgt">250 m² · SDP 122</span></div><div class="meta">propriétaire particulier</div></div>
+            <div class="li"><div class="r1"><span class="idu">CT3327</span><span class="bdg b-fbl">Faible</span><span class="rgt">13 242 m² · SDP 10 726</span></div><div class="meta">propriétaire particulier</div></div>
+            <button class="btn ghost">Préparer les courriers (3) → Courrier propriétaire <i class="co">3</i></button>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Surface ≠ SDP</b> — les deux grandeurs affichées côte à côte, fini l'« assiette 11 065 m² SDP » qui mélange tout.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Négatif traité comme en 01</b> — bloc rouge, phrase claire, référence marché à côté.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Pont vers 08</b> — les boutons « courrier » par parcelle deviennent un seul geste qui pré-remplit le nouvel outil Courrier avec les 3 parcelles.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 07 SCAN PATRIMOINE ============================ -->
+<section class="tool" id="t07">
+  <div class="thead"><span class="tnum">07</span><h2>Scan patrimoine</h2><span class="vdt v-na">Écran manquant — retraits appliqués</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln nb"><span class="ic">▸</span><span><b>Le screenshot n'est pas dans le lot.</b> Ton envoi passe d'Assemblage (PJ 10) au Courrier (PJ 11-12) : la capture Scan patrimoine a sauté. Je ne peux donc pas auditer l'écran réel — la maquette ci-contre est une maquette de principe qui applique tes deux retraits. Renvoie l'écran et je la recale à l'identique.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Retrait demandé : les badges « priorité » — supprimés de la maquette.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Retrait demandé : l'envoi de courrier depuis cet outil — supprimé. (Cohérent avec la refonte 08 : le courrier devient une démarche volontaire depuis l'outil Courrier, pas un bouton disséminé.)</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Point de vigilance déjà dans tes radars : les données d'âge de dirigeant et de patrimoine des personnes physiques sont le sujet RGPD de ton avocat (CGU/CGV) — l'outil doit rester côté personnes morales / open data DGFiP tant que ce n'est pas tranché.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> retirer badges priorité → fait <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> retirer l'envoi de courrier → fait <i class="co">2</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette de principe</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› SCAN PATRIMOINE</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Scan patrimoine</div>
+            <div class="ps">Tout le foncier d'un propriétaire, d'un coup d'œil.</div>
+            <div class="inp on">Nom, dénomination ou SIREN…</div>
+            <div class="li"><div class="r1"><span class="idu" style="font-size:11px">STÉ D'ÉQUIPEMENT DU DÉPARTEMENT…</span></div><div class="meta">SIREN 310 ··· ··· · personne morale · source DGFiP (annuel)</div></div>
+            <div class="kgrid">
+              <div class="kpi"><div class="kl">Parcelles</div><div class="kv">27</div></div>
+              <div class="kpi"><div class="kl">Surface totale</div><div class="kv">18,4 ha</div></div>
+              <div class="kpi"><div class="kl">Communes</div><div class="kv">5</div></div>
+              <div class="kpi"><div class="kl">SDP résiduelle cumulée</div><div class="kv">24 350 m²</div></div>
+            </div>
+            <div class="li"><div class="r1"><span class="idu">CT1917</span><span class="bdg">Neutre</span><span class="rgt">619 m²</span></div><div class="meta">Saint-Paul · U3c · SDP résid. 217 m² <i class="co">1</i></div></div>
+            <div class="li"><div class="r1"><span class="idu">DK0872</span><span class="bdg b-lt">Long terme</span><span class="rgt">2 140 m²</span></div><div class="meta">Saint-Paul · AU2h · SDP résid. 680 m²</div></div>
+            <div class="li"><div class="r1"><span class="idu">AS0233</span><span class="bdg">Neutre</span><span class="rgt">4 905 m²</span></div><div class="meta">Saint-Pierre · Ud · SDP résid. 1 960 m² <i class="co">2</i></div></div>
+            <button class="btn ghost">Exporter CSV</button>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Badges « priorité » retirés</b> — restent uniquement les classements canoniques (Écartée / Neutre / Faible / Long terme), les mêmes que partout ailleurs.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Plus de bouton courrier</b> sur les lignes ni en pied — l'outil observe, il ne démarche pas.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 08 COURRIER ============================ -->
+<section class="tool" id="t08">
+  <div class="thead"><span class="tnum">08</span><h2>Courrier propriétaire</h2><span class="vdt v-bad">Cassé aujourd'hui · refondu en service</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln bd"><span class="ic">✗</span><span><b>Bug confirmé par ta PJ 12 :</b> le PDF téléchargé ne contient que « LABUSE » + la ligne Objet — tout le corps rédigé à l'étape 3 manque.<small>À vérifier côté code : le gabarit PDF n'injecte que les champs d'en-tête ; la variable du corps (body/texte) n'est pas passée au générateur, ou le rendu multi-paragraphes échoue silencieusement.</small></span></div>
+      <div class="ln bd"><span class="ic">✗</span><span><b>Proposition de valeur faible</b>, tu as raison : rédiger → télécharger → imprimer et poster soi-même, l'utilisateur « peut aussi bien le faire de base ». L'outil ne porte aucun geste que le client ne sait pas faire seul.</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span><b>Ta logique est la bonne</b> et elle transforme l'outil en source de revenus service : ① le client désigne les parcelles, ② rédige avec des modèles, ③ transmet la demande à LABUSE — tu es notifié (« NOVA BTP veut envoyer 68 courriers »), tu rappelles, tu donnes le tarif. LABUSE porte l'impression, la mise sous pli, l'affranchissement, le suivi. C'est exactement ce que la maquette implémente.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Deux garde-fous à prévoir : un statut visible côté client (Demandé → Tarif confirmé → Envoyé) pour que la demande ne parte pas dans le vide, et une notif robuste côté toi (email Brevo + cloche event_log, déjà en place dans l'app — s'y brancher plutôt que créer un canal à part).</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Garder un aperçu PDF de relecture (secondaire) une fois le bug corrigé : le client valide ce qui partira. L'adressage reste générique (workflow SPF/CERFA côté LABUSE) — c'est déjà annoncé dans l'outil actuel, à conserver.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> bug PDF → identifié, correctif ciblé <i class="co">5</i>.</div>
+        <div class="rq"><b>Demandé :</b> revoir la logique (parcelles → rédaction → demande d'envoi → notification → rappel tarif) → c'est la maquette <i class="co">1</i>–<i class="co">4</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette — le courrier devient un service</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› COURRIER PROPRIÉTAIRE</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip mint">1 · Destinataires</span><span class="chip">2 · Rédaction</span><span class="chip">3 · Envoi</span></div>
+            <div style="display:flex;gap:8px"><div class="inp on" style="flex:1">IDU ou adresse…</div><span class="pgbtn" style="align-self:center">+ Ajouter</span></div>
+            <div class="chiprow"><span class="chip mint">BZ 1065 ✕</span><span class="chip mint">CT1917 ✕</span><span class="chip mint">CT2565 ✕</span></div>
+            <div class="cap" style="margin:0 0 8px">importer : Assemblage (3) · un lot Pièges (12) <i class="co">1</i></div>
+            <div class="chiprow"><span class="chip mint">Approche standard</span><span class="chip">Dormance / succession</span><span class="chip">Voisin direct</span><span class="chip">Libre</span></div>
+            <div class="li" style="min-height:96px"><div class="meta" style="color:var(--txt)">Madame, Monsieur,<br>Votre parcelle cadastrée {parcelle} ({surface}), située à {commune}, présente à notre analyse un réel potentiel…</div><div class="meta" style="margin-top:6px">{parcelle} {commune} {surface} — remplacés par courrier <i class="co">2</i></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Étape 3 — la demande d'envoi</div>
+          <div class="pb">
+            <div class="kvrow"><span class="k">Courriers</span><span class="v">3</span></div>
+            <div class="kvrow"><span class="k">Communes</span><span class="v">Saint-Denis ×1 · Saint-Paul ×2</span></div>
+            <div class="kvrow"><span class="k">Adressage</span><span class="v">générique (SPF/CERFA)</span></div>
+            <button class="btn">Demander l'envoi à LABUSE <i class="co">3</i></button>
+            <div class="note"><b>✓ Demande transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.</div>
+            <div class="chiprow"><span class="chip mint">Demandé ●</span><span class="chip">Tarif confirmé</span><span class="chip">Envoyé</span><i class="co">4</i></div>
+            <div class="cap" style="margin:0">Télécharger l'aperçu PDF (relecture) — réactivé une fois le corps du texte réparé <i class="co">5</i></div>
+            <div class="wnote" style="margin:10px 0 0"><b>Côté LABUSE :</b> notification email + cloche — « NOVA BTP demande l'envoi de 3 courriers (Saint-Denis ×1, Saint-Paul ×2) » → tu rappelles, tu confirmes le tarif, le statut passe. Branché sur event_log + Brevo existants.</div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Destinataires en un geste</b> — barre unique IDU/adresse + import depuis Assemblage ou un lot Pièges (les outils se parlent).</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Modèles + variables</b> — 3 approches pré-écrites + libre ; les variables se remplissent par parcelle, un courrier par destinataire.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Le vrai produit</b> — le client ne télécharge plus pour se débrouiller : il commande l'envoi. C'est du revenu service au-dessus des 349 €/mois.</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Statut visible</b> — Demandé → Tarif confirmé → Envoyé ; la demande ne part jamais dans le vide.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>PDF relégué en relecture</b> — et le bug (corps non injecté dans le gabarit) corrigé avant réactivation.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 09 PROSPECTION SOLAIRE ============================ -->
+<section class="tool" id="t09">
+  <div class="thead"><span class="tnum">09</span><h2>Prospection solaire</h2><span class="vdt v-bad">Illisible — refonte en deux modes</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Le fond est bien branché et honnête : PVGIS v5.3 · SARAH3 (relevé 2026-08-23), RGE ALTI (IGN), BD ORTHO 20 cm 2025, ombrage de proximité non modélisé, « présence de panneaux existants non détectée — vérification photo aérienne à la charge du démarcheur ». Ces mentions sont exactement ce qu'il faut — à conserver dans la refonte.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>On ne voit pas l'info : colonnes coupées à droite (toiture, proba occupant hors écran), potentiel sans unité affichée (1 598 = kWh/m²/an).</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Le tri par potentiel met en tête une colonne d'« Écartée » — la liste est noyée par des parcelles que le classement élimine. Les écartées doivent être exclues par défaut (option pour les revoir).</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Pas d'entrée directe : impossible de taper une adresse/IDU pour obtenir la fiche soleil d'une parcelle précise.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Les deux cibles (pisciniste / installateur PV) sont mélangées dans un seul écran de filtres — ta refonte en deux modes est la bonne réponse produit, alignée avec la V1 validée (données gelées au 11/07 : PVGIS, azimut/pente, piscines).</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> choix d'entrée Piscines / Ensoleillement → fait <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> piscines : stats par commune / île + carte 💧 + listing → fait <i class="co">2</i>–<i class="co">3</i>.</div>
+        <div class="rq"><b>Demandé :</b> ensoleillement : critères puis une seule barre adresse/IDU → fiche soleil complète → fait <i class="co">4</i>–<i class="co">5</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette — trois écrans</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› PROSPECTION SOLAIRE</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Prospection solaire</div>
+            <div class="ps">Deux métiers, deux entrées. <i class="co">1</i></div>
+            <div class="li"><div class="r1"><span style="font-size:15px">💧</span><div><b style="font-size:13px">Piscines</b><div class="meta">Pisciniste — parcelles avec piscine détectée : rénovation, couverture, entretien</div></div><span class="rgt">→</span></div></div>
+            <div class="li"><div class="r1"><span style="font-size:15px">☀️</span><div><b style="font-size:13px">Ensoleillement</b><div class="meta">Installateur PV — potentiel, orientation, toiture</div></div><span class="rgt">→</span></div></div>
+            <div class="cap" style="margin:6px 0 0">Détection piscines/PV : FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI · données gelées 11/07/2026</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Mode Piscines</div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip mint">Toute l'île ▾</span><span class="chip">Surface piscine ≥ … ▾</span><span class="chip">Bâti oui ▾</span></div>
+            <div class="kpi" style="margin-bottom:10px"><div class="kl">Piscines détectées — île <i class="co">2</i></div><div class="kv">12 480 <small>détection ortho/IA · à confirmer sur site</small></div></div>
+            <div class="kvrow"><span class="k">Saint-Paul</span><span class="v">2 913</span></div>
+            <div class="kvrow"><span class="k">Saint-Pierre</span><span class="v">1 842</span></div>
+            <div class="kvrow"><span class="k">Le Tampon</span><span class="v">1 366</span></div>
+            <button class="btn ghost">💧 Voir sur la carte <i class="co">3</i></button>
+            <div class="li"><div class="r1"><span class="idu">AP0127</span><span class="bdg">Neutre</span><span class="rgt">piscine ~32 m²</span></div><div class="meta">Saint-Paul · parcelle 745 m² · bâti oui</div></div>
+            <div class="li"><div class="r1"><span class="idu">AP0129</span><span class="bdg b-fbl">Faible</span><span class="rgt">piscine ~48 m²</span></div><div class="meta">Saint-Paul · parcelle 1 120 m² · bâti oui</div></div>
+            <div class="tfoot" style="padding:6px 0 0"><span>Écartées masquées</span><span class="pgbtn ghost">les inclure</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Mode Ensoleillement — fiche parcelle</div>
+          <div class="pb">
+            <div class="chiprow"><span class="chip">Potentiel ≥ 1 500 ▾</span><span class="chip">Pente ▾</span><span class="chip">Orientation ▾</span></div>
+            <div class="inp on">Adresse ou IDU… <i class="co">4</i></div>
+            <div class="li"><div class="r1"><span class="idu">AN0160</span><span class="bdg">Neutre</span><span class="rgt">Saint-Paul</span></div>
+              <div class="kgrid" style="margin:8px 0 4px">
+                <div class="kpi"><div class="kl">Potentiel <i class="co">5</i></div><div class="kv">1 598 <small>kWh/m²/an</small></div></div>
+                <div class="kpi"><div class="kl">Toiture exploitable</div><div class="kv">~140 m²</div></div>
+                <div class="kpi"><div class="kl">Orientation opt.</div><div class="kv">N 12°</div></div>
+                <div class="kpi"><div class="kl">Inclinaison opt.</div><div class="kv">21°</div></div>
+              </div>
+              <div class="bars"><i style="height:88%"></i><i style="height:84%"></i><i style="height:78%"></i><i style="height:64%"></i><i style="height:52%"></i><i style="height:46%" class="hi"></i><i style="height:48%"></i><i style="height:56%"></i><i style="height:68%"></i><i style="height:78%"></i><i style="height:84%"></i><i style="height:90%"></i></div>
+              <div class="barsl"><span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span></div>
+              <div class="meta" style="margin-top:6px">Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage</div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Deux entrées franches</b> — pisciniste ou installateur, chacun son parcours, plus de filtres mélangés.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>La donnée d'abord</b> — compteur île / par commune avec sélecteurs, avant tout listing.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Carte 💧</b> — toutes les piscines en marqueurs, listing synchronisé.</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Une seule barre</b> adresse ou IDU — entrée directe vers la fiche soleil.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>Fiche soleil complète</b> — potentiel avec unité, profil mensuel, orientation/inclinaison, toiture, limites affichées. Écartées masquées par défaut dans les listes.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 10 COMMUNES ============================ -->
+<section class="tool" id="t10">
+  <div class="thead"><span class="tnum">10</span><h2>Communes</h2><span class="vdt v-warn">Tableau à mettre en valeur · fiche bloquée</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>La fiche commune est exemplaire sur le fond : chaque bloc sourcé + fraîcheur + fiabilité (fiable/moyenne/bonne), et les chiffres ZAN se recoupent parfaitement (reçus ci-dessous). Bien branché.</span></div>
+      <div class="ln ok"><span class="ic">✓</span><span>Tableau ↔ fiche : € NEUF Saint-Pierre 4 258 = « prix de sortie neuf 4 258 €/m² » de la fiche ✓. Et « VÉLO » = très probablement la vélocité administrative (délai d'instruction : fiche 5–11 mois, tableau 8) ✓ — câblé, mais illisible sous ce nom.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>€ ANC. tableau (3 015) ≠ prix ancien fiche (2 634 €/m², millésime DVF · DVF 2025) pour Saint-Pierre — deux séries différentes (segment ou millésime). À réconcilier ou à libeller distinctement.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>En-têtes cryptiques (VÉLO, SRU sans unité), aucune affordance de clic sur les lignes — « on ne comprend même pas qu'on peut cliquer ».</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Fiche : le contenu sous la ligne de flottaison est inaccessible — tu as dû dézoomer le navigateur pour tout voir.<small>À vérifier côté code : conteneur en hauteur fixe sans overflow-y:auto (ou 100vh avec header qui déborde) — le scroll interne ne s'active jamais.</small></span></div>
+      <div class="recalc">
+        <div class="rt">Reçus de calcul (vérifiés)</div>
+        <code>ZAN : 145,5 ha × 58 % = <b>84,4 ≈ 85 ha restants</b> ✓</code>
+        <code>Horizon : 85 ÷ 20,2 ha/an = <b>4,2 ans</b> ✓</code>
+        <code>€ neuf : tableau 4 258 = fiche 4 258 ✓ · € ancien : <i>3 015 ≠ 2 634</i> ⚠</code>
+      </div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> mettre l'info en valeur + faire comprendre le clic → fait <i class="co">1</i>–<i class="co">3</i>.</div>
+        <div class="rq"><b>Demandé :</b> fiche accessible sans dézoomer → fix scroll + navigation <i class="co">4</i>–<i class="co">5</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="wide">
+          <div class="wh"><span class="wt">Où investir — les 24 communes</span><span class="ws">tous les indicateurs sourcés · cliquez une ligne pour ouvrir sa fiche <i class="co">1</i></span><span class="x">✕</span></div>
+          <div class="tblwrap"><table class="tbl">
+            <tr><th>Commune</th><th class="num sort">Stock foncier ↓<span class="i">i</span></th><th class="num">Instruction (mois)<span class="i">i</span> <i class="co">2</i></th><th class="num">Permis 12 m<span class="i">i</span></th><th class="num">SRU %<span class="i">i</span></th><th class="num">€/m² ancien<span class="i">i</span></th><th class="num">€/m² neuf<span class="i">i</span></th><th></th></tr>
+            <tr><td><b>Saint-Paul</b></td><td class="num pos"><b>318</b></td><td class="num">9</td><td class="num">1 967</td><td class="num">6,7</td><td class="num">4 278</td><td class="num">4 730</td><td style="color:var(--dim)">›</td></tr>
+            <tr class="hov"><td><b>Le Tampon</b></td><td class="num pos"><b>153</b></td><td class="num">9</td><td class="num">1 324</td><td class="num">8,2</td><td class="num">2 259</td><td class="num">4 318</td><td><span class="pgbtn" style="padding:3px 8px">Ouvrir la fiche →</span></td></tr>
+            <tr><td><b>Saint-Pierre</b></td><td class="num pos"><b>152</b></td><td class="num">8</td><td class="num">1 831</td><td class="num">2,1</td><td class="num">3 015</td><td class="num">4 258</td><td style="color:var(--dim)">›</td></tr>
+            <tr><td><b>La Possession</b></td><td class="num"><b>148</b></td><td class="num">9</td><td class="num">597</td><td class="num">0</td><td class="num">2 843</td><td class="num" style="color:var(--dim)">—</td><td style="color:var(--dim)">›</td></tr>
+          </table></div>
+          <div class="tfoot"><span><b style="color:var(--txt)">Légende :</b> Stock = parcelles promues LABUSE · Instruction = délai médian dépôt→autorisation · Permis 12 m = autorisations glissantes (Sitadel) · SRU = % obligation loi SRU · €/m² = DVF millésime <i class="co">3</i></span></div>
+        </div>
+        <div class="panel">
+          <div class="cap" style="padding:10px 14px 0">Fiche commune — scroll réparé</div>
+          <div class="pb" style="padding:0">
+            <div style="position:sticky;top:0;background:var(--panel2);border-bottom:1px solid var(--line);padding:10px 14px"><b>Saint-Pierre</b> <span class="bdg b-fbl" style="margin-left:6px">signal : prudence</span>
+              <div class="chiprow" style="margin:8px 0 0"><span class="chip mint">Marché</span><span class="chip">Prix</span><span class="chip">Dynamique</span><span class="chip">Offre</span><span class="chip">ZAN</span><span class="chip">Loyer</span><i class="co">4</i></div>
+            </div>
+            <div style="padding:12px 14px">
+              <div class="kvrow"><span class="k">Prix ancien (médiane DVF 2025)</span><span class="v">2 634 €/m² <span class="bdg b-src">fiable</span></span></div>
+              <div class="kvrow"><span class="k">Prix de sortie neuf</span><span class="v">4 258 €/m² <span class="bdg b-est">moyenne</span></span></div>
+              <div class="kvrow"><span class="k">Terrain nu (U / AU)</span><span class="v">422 €/m²</span></div>
+              <div class="kvrow"><span class="k">Tendance 12 mois</span><span class="v" style="color:var(--mint)">↑ +4,1 %</span></div>
+              <div class="kvrow"><span class="k">ZAN — budget consommé</span><span class="v">42 % · reste 85 ha · 4,2 ans</span></div>
+              <div class="kvrow"><span class="k">Loyer médian</span><span class="v">15,81 €/m²</span></div>
+              <div class="cap" style="margin:8px 0 4px">… le corps défile jusqu'en bas — fin de fiche atteignable <i class="co">5</i></div>
+              <button class="btn ghost" style="margin:4px 0 12px">Voir ses parcelles →</button>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Affordance</b> — consigne dans l'en-tête, chevron sur chaque ligne, survol qui révèle « Ouvrir la fiche → ». Le clic devient évident.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>« VÉLO » renommé</b> « Instruction (mois) » — la donnée était bonne, le nom la tuait. Tri visible sur la colonne active, tooltips (i) partout.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Légende permanente</b> en pied de tableau — plus d'en-tête à deviner ; top valeurs en vert pour guider l'œil.</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Header collant + ancres</b> — Marché / Prix / Dynamique / Offre / ZAN / Loyer : on saute à la section, on sait où on est.</span></div>
+          <div class="lg"><i class="co">5</i><span><b>Scroll interne réparé</b> — le corps de fiche défile (overflow-y), toute l'info est atteignable à zoom 100 %.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 11 PERMIS ============================ -->
+<section class="tool" id="t11">
+  <div class="thead"><span class="tnum">11</span><h2>Permis</h2><span class="vdt v-warn">Double entrée + vide noir à supprimer</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Bien branché : flux Sitadel régional jusqu'au 2026-06-30 — un retard de ~2 mois est le délai normal de Sitadel, pas un bug. Géocodage annoncé (90 %) avec les non-géocodés listés au lieu d'être perdus : honnête, à garder.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Énorme espace noir entre l'en-tête de l'outil et les premiers permis : les filtres et la liste sont poussés en bas du panneau, la moitié de l'écran est vide.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>« Au point mort » n'est qu'une petite case à cocher noyée — tu veux un choix d'entrée franc entre les deux usages (veille des chantiers en cours vs gisement des PC accordés jamais réalisés). C'est d'ailleurs la logique de ta fusion Radar permis + Point mort en un seul outil : les deux entrées la rendent lisible.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Lignes de liste pauvres (type + date seulement) : commune, logements et statut manquent pour scanner vite.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> deux entrées « en cours » / « permis morts » mieux nommés → fait <i class="co">1</i>.</div>
+        <div class="rq"><b>Demandé :</b> supprimer l'espace noir → structure compacte <i class="co">2</i>.</div>
+        <div class="rq"><b>Demandé :</b> améliorer l'outil et sa visibilité → lignes enrichies + synchro carte <i class="co">3</i>–<i class="co">4</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› PERMIS</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Permis</div>
+            <div class="ps">Qui construit quoi — et ce qui a été autorisé sans jamais sortir de terre.</div>
+            <div class="li" style="border-color:var(--mint-line);background:var(--mint-bg)"><div class="r1"><div><b style="font-size:13px">En cours &amp; récents</b><div class="meta">chantiers, DP, PC — veille concurrentielle</div></div><span class="rgt">5 613 →</span></div></div>
+            <div class="li"><div class="r1"><div><b style="font-size:13px">Accordés, jamais réalisés</b><div class="meta">« au point mort » — PC purgés non commencés : du gisement <i class="co">1</i></div></div><span class="rgt">412 →</span></div></div>
+            <div class="chiprow" style="margin-top:10px"><span class="chip">12 mois</span><span class="chip mint">24 mois</span><span class="chip">48</span><span class="chip">72</span><span class="chip mint">Tout</span><span class="chip">PC</span><span class="chip">DP</span><span class="chip">PA</span><span class="chip">PD</span></div>
+            <div class="cap" style="margin:0 0 8px">5 613 permis · 5 037 sur la carte · 576 sans localisation → liste — la liste commence ici, plus de vide <i class="co">2</i></div>
+            <div class="li"><div class="r1"><span class="bdg b-src">PC</span><span class="idu">2026-06-30</span><span class="rgt">68 lgts</span></div><div class="meta">Saint-Denis · en cours d'instruction <i class="co">3</i></div></div>
+            <div class="li"><div class="r1"><span class="bdg">PD</span><span class="idu">2026-06-30</span><span class="rgt">3 m</span></div><div class="meta">Saint-Paul · démolition</div></div>
+            <div class="li"><div class="r1"><span class="bdg b-src">PC</span><span class="idu">2026-06-29</span><span class="rgt">2 lgts</span></div><div class="meta">Sainte-Marie · <span class="bdg b-fbl">non géocodé</span></div></div>
+            <div class="li"><div class="r1"><span class="bdg b-src">PC</span><span class="idu">2023-11-14</span><span class="rgt">12 lgts</span></div><div class="meta">Le Tampon · <span class="bdg b-ecart">point mort — jamais commencé</span></div></div>
+            <div class="cap" style="margin:0">survol d'une ligne = le point s'allume sur la carte, clic = fiche permis (porteur, lots, surfaces, délai) <i class="co">4</i></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Deux entrées nommées pour l'usage</b> — « En cours &amp; récents » / « Accordés, jamais réalisés (au point mort) », chacune avec son compteur. Plus parlant que « permis mort ».</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Zéro vide</b> — entrées, filtres, stats et liste s'enchaînent ; le panneau est plein du premier au dernier pixel.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Lignes qui se scannent</b> — type, date, logements, commune, statut ; les non-géocodés restent listés avec leur badge.</span></div>
+          <div class="lg"><i class="co">4</i><span><b>Synchro carte</b> — survol = point allumé, clic = fiche. La carte et la liste racontent la même chose.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 12 DENSIFIER L'EXISTANT ============================ -->
+<section class="tool" id="t12">
+  <div class="thead"><span class="tnum">12</span><h2>Densifier l'existant</h2><span class="vdt v-bad">Illisible — passer au grand tableau</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>Le cadrage est bon et honnête : « potentiel physique et réglementaire — ni une mise en vente prévisible, ni une opportunité qualifiée », analyse datée (maj 2026-08-20). Le renommage « Renouvellement » → « Densifier l'existant » est acté et clair.</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Le tableau vit dans le panneau latéral : colonnes coupées (SDP résiduelle tronquée), scroll horizontal obligatoire, chips de tri elles-mêmes coupées, compteur illisible (« les 4?? premières sur 67 2?? »).</span></div>
+      <div class="ln bd"><span class="ic">✗</span><span>Aucune entrée directe par parcelle : impossible de vérifier « et la mienne, elle densifie ? » sans scroller 67 000 lignes.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Un jeu de 67 000+ lignes n'a rien à faire dans 320 px de large : c'est structurellement un cas « grand tableau plein écran », comme Comparaison et Communes.</span></div>
+      <div class="reqs">
+        <div class="rq"><b>Demandé :</b> grand tableau type Comparaison, tout visible, tris entiers → fait <i class="co">2</i>–<i class="co">3</i>.</div>
+        <div class="rq"><b>Demandé :</b> recherche directe IDU/adresse (une seule barre) au début → fait <i class="co">1</i>.</div>
+      </div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› DENSIFIER L'EXISTANT</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Densifier l'existant</div>
+            <div class="ps">Le bâti qui peut porter davantage — extensions, surélévations.</div>
+            <div class="inp on">Adresse ou IDU — votre parcelle densifie-t-elle ? <i class="co">1</i></div>
+            <div class="note"><b>Analyse LABUSE</b> · maj 2026-08-20 · 67 214 parcelles occupées en zone constructible à capacité résiduelle réelle</div>
+            <div class="li"><div class="r1"><span class="idu">AZ0004</span><span class="rgt">score 100</span></div><div class="meta">Saint-Paul · SDP résid. 3 154 m²</div></div>
+            <div class="li"><div class="r1"><span class="idu">AS0101</span><span class="rgt">score 100</span></div><div class="meta">Le Tampon · SDP résid. 1 794 m²</div></div>
+            <button class="btn">⛶ Ouvrir le tableau complet <i class="co">2</i></button>
+          </div>
+        </div>
+        <div class="wide">
+          <div class="wh"><span class="wt">Densifier l'existant — 67 214 parcelles</span><span class="ws">Trier : <span class="chip mint" style="font-size:10px">Score ↓</span> <span class="chip" style="font-size:10px">SDP résiduelle</span> <span class="chip" style="font-size:10px">Surface</span> <span class="chip" style="font-size:10px">Rang commune</span> <i class="co">3</i></span><span class="x">✕</span></div>
+          <div class="tblwrap"><table class="tbl">
+            <tr><th>Parcelle</th><th>Classement</th><th class="num sort">Score ↓</th><th class="num">SDP résiduelle</th><th class="num">Surface</th><th class="num">Bâti existant</th><th>Zone</th><th class="num">Rang commune</th></tr>
+            <tr><td class="num">97404000AZ0004</td><td><span class="bdg">Neutre</span></td><td class="num pos">100</td><td class="num">3 154 m²</td><td class="num">5 902 m²</td><td class="num">1 240 m²</td><td>U3</td><td class="num">4</td></tr>
+            <tr><td class="num">97407000AS0104</td><td><span class="bdg b-lt">Long terme</span></td><td class="num pos">100</td><td class="num">1 103 m²</td><td class="num">2 480 m²</td><td class="num">640 m²</td><td>Ud</td><td class="num">11</td></tr>
+            <tr><td class="num">97407000AS0113</td><td><span class="bdg b-lt">Long terme</span></td><td class="num pos">100</td><td class="num">989 m²</td><td class="num">2 105 m²</td><td class="num">515 m²</td><td>Ud</td><td class="num">15</td></tr>
+            <tr><td class="num">97407000AS0114</td><td><span class="bdg">Neutre</span></td><td class="num pos">100</td><td class="num">1 237 m²</td><td class="num">2 690 m²</td><td class="num">705 m²</td><td>Ud</td><td class="num">16</td></tr>
+          </table></div>
+          <div class="tfoot"><span><b style="color:var(--txt)">400 / 67 214</b> affichées</span><span class="pgbtn">Voir 400 de plus</span><span class="pgbtn ghost">Exporter CSV</span><span style="margin-left:auto">toutes colonnes visibles, zéro scroll horizontal</span></div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Barre unique en tête</b> — IDU ou adresse : réponse immédiate pour une parcelle précise, sans passer par la liste.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Grand tableau plein écran</b> — même mécanique d'overlay que Comparaison (et même règle de fermeture au changement d'outil qu'en 05).</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Tris entiers et lisibles</b> — chips complètes dans l'en-tête, compteur net, pagination « voir 400 de plus » partagée avec PLU (04).</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 13 REMONTER LE TEMPS ============================ -->
+<section class="tool" id="t13">
+  <div class="thead"><span class="tnum">13</span><h2>Remonter le temps</h2><span class="vdt v-ok">Fonctionne — deux enrichissements</span></div>
+  <div class="cols">
+    <div class="audit">
+      <h3>Audit</h3>
+      <div class="ln ok"><span class="ic">✓</span><span>L'outil fait ce qu'il promet : ortho 1950-1965 vs aujourd'hui, curseur avant/après, entrée par IDU/adresse/clic carte, accès direct depuis toute fiche (bouton « 1950 »). Rien de cassé.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Les grandes zones noires en escalier sont la non-couverture des dalles de l'ortho ancienne (mer, bords de mission) — c'est normal, mais sans explication à l'écran ça ressemble à un bug de chargement. Une ligne de légende suffit.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Un seul millésime ancien : l'IGN publie plusieurs vagues d'ortho historiques — proposer une frise (sous réserve des millésimes réellement disponibles pour La Réunion) multiplierait la valeur de lecture des mutations.</span></div>
+      <div class="ln wr"><span class="ic">⚠</span><span>Le contour de la parcelle étudiée n'est pas surligné sur les deux vues — on peut la perdre en glissant le curseur.</span></div>
+      <div class="reqs"><div class="rq"><b>Demandé :</b> audit + maquette (pas de correctif listé) → enrichissements ci-contre.</div></div>
+    </div>
+    <div class="mocks">
+      <h3>Maquette</h3>
+      <div class="mockrow">
+        <div class="panel">
+          <div class="ph"><span class="crumb"><b>← Outils</b>› REMONTER LE TEMPS</span><span class="x">✕</span></div>
+          <div class="pb">
+            <div class="pt">Remonter le temps</div>
+            <div class="ps">Une année ancienne face à aujourd'hui — la mutation d'un terrain en un geste.</div>
+            <div class="inp on">Adresse ou IDU — 97415000CW0658</div>
+            <div class="years"><span class="y on">1950-65</span><span class="y">1978</span><span class="y">1989</span><span class="y">1997</span><span class="y">2008</span><span class="y">2017</span><span class="y">2022</span><i class="co">1</i></div>
+            <div class="split">
+              <div class="old"></div><div class="new"></div>
+              <div class="hdl"></div><div class="knob">⇔</div>
+              <span class="pc l"></span><span class="pc r"></span>
+              <span class="tag l">Ortho 1950-1965</span><span class="tag r">Aujourd'hui</span>
+            </div>
+            <div class="cap" style="margin:0 0 8px">contour de la parcelle épinglé des deux côtés <i class="co">2</i></div>
+            <div class="note" style="margin:0"><b>Zones noires :</b> secteurs non couverts par l'ortho ancienne (mer, limites de mission IGN) — ce n'est pas un défaut de chargement. <i class="co">3</i></div>
+            <div class="cap" style="margin:8px 0 0">Accès direct depuis toute fiche : bouton « 1950 » — conservé</div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="lg"><i class="co">1</i><span><b>Frise des millésimes</b> — l'« après » reste aujourd'hui, l'« avant » se choisit ; à câbler sur les millésimes IGN réellement disponibles en 974.</span></div>
+          <div class="lg"><i class="co">2</i><span><b>Parcelle épinglée</b> — contour vert sur les deux couches, on ne la perd jamais en glissant.</span></div>
+          <div class="lg"><i class="co">3</i><span><b>Non-couverture expliquée</b> — une ligne de légende, et le « bug apparent » disparaît.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="foot">LABUSE · audit &amp; maquettes des 13 outils · 23/08/2026 · valeurs des maquettes illustratives · DA conservée — prochaine étape : transformer chaque section en mandat Claude Code, dans l'ordre des priorités P1 → P3.</div>
+</div>
+</body>
+</html>
