@@ -142,46 +142,11 @@ def materialiser_pv(session: Session, log=print) -> dict[str, Any]:
 
 
 def branchements_solaire(session: Session, log=print) -> dict[str, Any]:
-    """Lot 5.2 — branchements inter-modules (uniquement si le PV est matérialisé) :
-    - parcel_solar.pv_existant = 'detecte' (supplante le proxy communal) ;
-    - repowering : PV détecté × commune à installations 2006-2013 (registre) —
-      LA SEULE voie de localisation des candidats (registre national anonymisé
-      sans géoloc, cf. mandat Habitat Solaire) + signal repowering_candidate.
-    """
-    n_det = session.execute(text("""
-        UPDATE parcel_solar ps SET pv_existant = 'detecte', updated_at = now()
-        FROM parcel_equipements pe
-        WHERE pe.idu = ps.idu AND pe.pv_detecte
-          AND ps.pv_existant IS DISTINCT FROM 'detecte'
-    """)).rowcount
-    cfg = load_yaml_config("habitat_solaire")["pv_registry"]
-    n_rep = session.execute(text("""
-        WITH communes_fenetre AS (
-          SELECT DISTINCT insee FROM pv_registry
-          WHERE individualise AND date_mise_service
-                BETWEEN CAST(:d1 AS date) AND CAST(:d2 AS date)
-        )
-        UPDATE parcel_solar ps SET repowering = true, updated_at = now()
-        FROM parcel_equipements pe
-        WHERE pe.idu = ps.idu AND pe.pv_detecte
-          AND left(ps.idu, 5) IN (SELECT insee FROM communes_fenetre)
-          AND ps.repowering IS DISTINCT FROM true
-    """), {"d1": str(cfg["repowering_debut"]), "d2": str(cfg["repowering_fin"])}).rowcount
-    session.execute(text(
-        "DELETE FROM parcel_signals WHERE signal_type = 'repowering_candidate'"))
-    n_sig = session.execute(text("""
-        INSERT INTO parcel_signals (parcel_id, signal_type, payload, detected_at)
-        SELECT p.id, 'repowering_candidate',
-               jsonb_build_object('source', 'PV détecté (ortho 2025) × commune à '
-                 || 'installations 2006-2013 (registre national)',
-                 'pv_surface_m2', round(pe.pv_surface_m2::numeric)),
-               now()
-        FROM parcel_solar ps
-        JOIN parcels p ON p.idu = ps.idu
-        JOIN parcel_equipements pe ON pe.idu = ps.idu
-        WHERE ps.repowering AND pe.pv_detecte
-    """)).rowcount
-    return {"pv_existant_detecte": n_det, "repowering": n_rep, "signaux_repowering": n_sig}
+    """SOLAIRE M1 — RETIRÉ (no-op). Écrivait parcel_solar.pv_existant/repowering, colonnes-proxys
+    ABANDONNÉES (schéma 14 colonnes, cf. ingestion/solaire.py). Conservé en stub pour ne casser aucun
+    import ; ne fait plus rien. La détection PV vit dans parcel_equipements.pv_detecte, sans pont vers
+    parcel_solar (pv_detecte = 0 sur le parc de toute façon)."""
+    return {"pv_existant_detecte": 0, "repowering": 0, "signaux_repowering": 0}
 
 
 def run(session: Session, log=print) -> dict[str, Any]:
@@ -192,8 +157,7 @@ def run(session: Session, log=print) -> dict[str, Any]:
     pv = materialiser_pv(session, log=log)
     log(f"  PV : {pv}")
     out.update(pv)
-    if pv.get("pv_materialise"):
-        br = branchements_solaire(session, log=log)
-        log(f"  branchements solaire : {br}")
-        out.update(br)
+    # SOLAIRE M1 — `branchements_solaire` (écriture parcel_solar.pv_existant/repowering) RETIRÉ :
+    # ces colonnes-proxys sont abandonnées (schéma 14 colonnes, cf. ingestion/solaire.py). La détection
+    # PV reste dans parcel_equipements (pv_detecte) ; plus aucun pont vers parcel_solar.
     return out

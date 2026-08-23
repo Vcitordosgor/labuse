@@ -197,8 +197,10 @@ def collect_db(cur, idu: str, v2run: str | None) -> dict:
         SELECT vue, distance_cote_m, obstruction_pct
         FROM parcel_vue_mer WHERE parcel_id = %(pid)s""", pid=pid)
     solar = _row(cur, """
-        SELECT score_solaire, round(prod_spec_kwh_kwc)::int AS prod_spec_kwh_kwc, pv_existant
+        SELECT score_solaire, round(prod_spec_kwh_kwc)::int AS prod_spec_kwh_kwc
         FROM parcel_solar WHERE idu = %(idu)s""", idu=idu)
+    # SOLAIRE M1 — `pv_existant` RETIRÉ du collecteur (colonne-proxy abandonnée, schéma 14 colonnes).
+    # La référence golden a été purgée de ce champ EN PLACE (valeurs prod/score inchangées, cf. temoin).
     piscine = _row(cur, """
         SELECT count(*) FILTER (WHERE validation = 'ok')::int AS validees,
                count(*)::int AS detections
