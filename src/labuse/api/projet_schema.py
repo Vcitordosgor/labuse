@@ -28,16 +28,9 @@ CONTRAINTE_LABEL = {
 #: les 4 microrégions (les communes de chacune vivent dans ia.SECTEURS)
 SECTEUR_KEYS = ["Nord", "Ouest", "Sud", "Est"]
 
-#: hypothèse M22 par défaut (surface_unite_m2 du formulaire M22Programme — la vérité reste
-#: le formulaire, pré-rempli et éditable).
-#: M143 Lot 4 — commentaire rectifié : ce coefficient est le MÊME objet physique que
-#: `PROGRAMME_CIRCULATION_COEF` (modules.py) — la circulation surface utile → SDP — mais les DEUX
-#: valeurs ont divergé : M133 a porté faisabilite_sens2 de +15 % à +20 % (le +15 % « sous-estimait
-#: le besoin »), SANS toucher ce M22_CIRCULATION resté à +15 %. Ils ne sont donc PLUS alignés (l'ancien
-#: commentaire « comme faisabilite_sens2 » était devenu faux). Valeur laissée à 1,15 : l'unification
-#: (1,15 → 1,20, +4,3 % de SDP-besoin au cadrage projet) est un arbitrage Vic, pas un correctif d'audit.
-M22_SURFACE_UNITE_M2 = 60.0
-M22_CIRCULATION = 1.15
+# M120 — le cadrage projet ne dérive AUCUN besoin de SDP d'un programme : il filtre sur la facette
+# `sdpMin` SAISIE (sdp_residuelle ≥ sdpMin). Le seul coefficient de circulation utile→SDP vivant est
+# `PROGRAMME_CIRCULATION_COEF` (modules.py) — source unique (M143 Lot 4).
 
 #: la fiche de cadrage — ce que le promoteur A DIT (validé, vocabulaire fermé). Tous les
 #: champs sont OPTIONNELS : l'entretien construit la fiche par touches successives.
@@ -135,14 +128,3 @@ def prune_to_schema(data, schema, _path: str = "") -> tuple[object, list[str]]:
             dropped += d
         return out_l, dropped
     return data, dropped
-
-
-def derive_sdp_besoin(fiche: dict) -> int | None:
-    """SDP besoin (m²) — formule M22 EXISTANTE (unités × surface_unité × 1,15), jamais l'IA.
-    `sdp_m2` explicite prime sur `logements`."""
-    amp = fiche.get("ampleur") or {}
-    if amp.get("sdp_m2") is not None:
-        return round(amp["sdp_m2"])
-    if amp.get("logements"):
-        return round(amp["logements"] * M22_SURFACE_UNITE_M2 * M22_CIRCULATION)
-    return None
