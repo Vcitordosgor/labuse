@@ -15,7 +15,7 @@ import { ContextePanel } from './components/contexte/ContextePanel'
 import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
 import { CommunesTablePanel } from './components/outils/Communes'
-import { filtersFromHash, filtersToHash, resumeCriteres } from './lib/filters'
+import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
@@ -269,6 +269,19 @@ export default function App() {
     const parsed = filtersFromHash(hash)
     if (parsed) {
       const merged = { ...EMPTY_FILTERS, ...parsed.filters }
+      // FILTRE (23/08/2026) — la section « Le bien » a quitté le panneau : on NE restaure JAMAIS ses 3
+      // facettes depuis l'URL (droitsResiduels · proprietaireType 'public' · signal 'assemblage'), sinon
+      // un utilisateur qui les avait cochées avant le retrait garderait un filtre ACTIF sans aucun
+      // contrôle pour le décocher. Le backend reste servi (deep-link API) ; le Copilote garde 'assemblage'
+      // (il applique setFilters en direct, hors de ce chemin de restauration d'URL).
+      merged.droitsResiduels = []
+      merged.proprietaireType = merged.proprietaireType.filter((x) => x !== 'public')
+      merged.signaux = merged.signaux.filter((x) => x !== 'assemblage')
+      // droitsResiduels / proprietaireType 'public' sont des critères d'OPINION : filtersFromHash avait
+      // donc pu allumer `analyseLabuse` (hasOpinion) À CAUSE d'eux. Après leur retrait, on RE-DÉRIVE
+      // l'analyse sur les critères RESTANTS — sinon l'analyse resterait allumée « à cause » d'une facette
+      // désormais invisible (état orphelin). On préserve un `al=1` explicite (analyse voulue à la main).
+      merged.analyseLabuse = /(?:^|[#&])al=1(?:$|&)/.test(hash) || hasOpinion(merged)
       setFilters(merged)
       if (parsed.zone) setZone(parsed.zone)
       // M55-D stage 4 : interrupteur allumé (lien portant un critère d'opinion, ex. un tier) ⇒ on
