@@ -404,6 +404,7 @@ pose explicitement `opportunity_score_adjustment: 0` (« le stub ne corrige pas 
 | `tiles.py` | 287 | tuiles vectorielles MVT (`ST_AsMVT`) : couche `parcels` (cache LRU, simplification par palier de zoom), overlays zonage PLU/PPR. `build_overlay_mvt`. |
 | `pre_dossier.py` | 243 | pack pré-dossier PC en ZIP (CERFA 13406*17 pré-rempli, plan de situation, règles de zonage). Gating Intégral. |
 | `protection` (voir ci-dessus) | | |
+| `division_review.py` | 198 | **Outil INTERNE CLI, PAS un document produit** : `build_review_dossier` (dossier de revue O12 « division en or », 20 cartes IGN + tracés) est le harnais de validation VISUELLE de Vic, appelé UNIQUEMENT par `cli.py::division-or-review`. Aucune route API, aucun bouton app — l'app ne fait PAS d'export PDF division (décision produit tenue). Ne pas conclure « code mort » sur un grep : l'appelant est le CLI. |
 | `solaire.py` | 191 | Habitat Solaire : panneau fiche, parkings APER, toitures tertiaires, statut mesure fine (Google Solar en 501). `SOURCES` étiquetées, `purge_cache`. |
 | `resume.py` | 180 | résumé humain d'une fiche dérivé de signaux DÉJÀ calculés (verdict/cascade/bilan/prospection). `build_resume`, `_synthese`, `_prochaine_action`. Aucune invention. |
 | `auth.py` | 162 | auth pilote (mono-utilisateur) : cookie de session, `enabled`/`configured`/`token_ok`/`is_public`, page de login, anti-force-brute. Pas de route (utilisé par `_auth_guard`). |
