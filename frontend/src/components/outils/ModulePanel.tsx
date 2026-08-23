@@ -115,8 +115,9 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
-function M02() {
-  const { m02Prefill, setM02Prefill, setMsel, setModule, setCourrierPrefill } = useApp()
+// Exporté pour test (SCAN — le retrait de l'action courrier est le cœur du mandat).
+export function M02() {
+  const { m02Prefill, setM02Prefill, setMsel, setModule } = useApp()
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
   useEffect(() => {
@@ -187,19 +188,17 @@ function M02() {
             </button>
           )}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+            {/* SCAN (refonte) — l'outil OBSERVE, il ne démarche pas : le bouton « ✉ courrier » PAR
+                parcelle est RETIRÉ. Le courrier est désormais une démarche volontaire depuis l'outil
+                Courrier (ou le pont Assemblage). Chaque ligne porte le classement CANONIQUE (TierBadge,
+                identique au reste de l'app) — pas de badge « priorité » distinct. */}
             {items.map((i) => (
-              <div key={i['idu'] as string} className="flex items-stretch gap-1">
-                <div className="min-w-0 flex-1">
-                  <Row idu={i['idu'] as string}
-                    sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                    right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
-                    fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
-                      ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
-                </div>
-                {/* #5 l'action au bout : courrier de CETTE parcelle, prérempli (patron Assemblage) */}
-                <button data-m02-courrier title="Préparer le courrier de cette parcelle"
-                  onClick={() => { setCourrierPrefill(i['idu'] as string); setModule('courriers') }}
-                  className="shrink-0 rounded-lg border border-mint/40 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">✉</button>
+              <div key={i['idu'] as string} className="min-w-0">
+                <Row idu={i['idu'] as string}
+                  sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
+                  right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
+                  fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
+                    ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
               </div>
             ))}
           </div>
