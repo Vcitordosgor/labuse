@@ -7,6 +7,7 @@ import {
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
+import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { iduComplet, iduCourt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
@@ -637,21 +638,25 @@ export function M07() {
 /* ───────────────────────────── M08 — REMONTER LE TEMPS ───────────────────────────── */
 
 // M82 (refonte) — la PARCELLE d'abord : IDU / adresse / clic carte (motif parcelPrefill de M-ENTREE),
-// PUIS l'année ancienne (UN seul choix) ; l'« après » est TOUJOURS aujourd'hui (verrouillé). L'accès
-// depuis la fiche (bouton « 1950 » → parcelPrefill) reste. Les millésimes ANCIENS réellement dispo.
-const TEMPS_AVANT = [{ key: 'bm-ortho-1950', label: '1950-1965' }, { key: 'bm-ortho-2000', label: '2000-2005' }]
+// PUIS l'année ancienne (UN seul choix, via la FRISE des millésimes) ; l'« après » est TOUJOURS
+// aujourd'hui (verrouillé). L'accès depuis la fiche (bouton « 1950 » → parcelPrefill) reste.
+// TEMPS (refonte) — les millésimes de la frise sont ceux VÉRIFIÉS servant des dalles sur le 974
+// (cf. TEMPS_MILLESIMES / basemaps.ts). La parcelle désignée est ÉPINGLÉE sur les deux fonds.
+const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 
-function M08() {
-  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, setFlyTo } = useApp()
+// Exporté pour test (TEMPS — la frise des millésimes + l'épingle de la parcelle sont le cœur du mandat).
+export function M08() {
+  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
   const [idu, setIdu] = useState('')
-  // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si non-historique.
+  // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si hors frise.
   useEffect(() => {
     setCmpRight('bm-ortho-now')
-    if (cmpLeft !== 'bm-ortho-1950' && cmpLeft !== 'bm-ortho-2000') setCmpLeft('bm-ortho-1950')
+    if (!TEMPS_KEYS.includes(cmpLeft)) setCmpLeft('bm-ortho-1950')
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   const designer = async (code: string, coords?: [number, number]) => {
     const c = code.trim(); if (c.length < 10) return
     setIdu(c)
+    setTempsPinIdu(c)   // épingle le contour de LA parcelle sur les deux fonds
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
@@ -659,6 +664,7 @@ function M08() {
   useEffect(() => {
     if (parcelPrefill) { void designer(parcelPrefill); setParcelPrefill(null) }
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ÉTAPE 1 — désigner la parcelle ──
   if (!idu) return (
@@ -680,23 +686,41 @@ function M08() {
     <>
       <div className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
         <span className="font-mono text-[12px] text-txt">{idu}</span>
-        <button onClick={() => setIdu('')} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
+        <button onClick={() => { setTempsPinIdu(null); setIdu('') }} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
       </div>
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
-        <div className="mt-1.5 flex gap-1.5">
-          {TEMPS_AVANT.map((a) => (
-            <button key={a.key} data-cmp-left={a.key} onClick={() => setCmpLeft(a.key)}
-              className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] ${cmpLeft === a.key ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{a.label}</button>
-          ))}
+        {/* FRISE des millésimes — l'« avant » se choisit le long d'une frise chronologique ; l'« après »
+            est épinglé à droite sur aujourd'hui (verrouillé). Seuls les millésimes servant réellement
+            des dalles sur le 974 y figurent (TEMPS_MILLESIMES, vérifiés par GetTile). */}
+        <div data-temps-frise className="mt-2">
+          <div className="flex items-end gap-0.5">
+            {TEMPS_MILLESIMES.map((m) => {
+              const on = cmpLeft === m.key
+              return (
+                <button key={m.key} data-cmp-left={m.key} onClick={() => setCmpLeft(m.key)}
+                  title={m.label} aria-pressed={on}
+                  className="group flex flex-1 flex-col items-center gap-1 pt-0.5">
+                  <span className={`font-mono text-[10px] leading-none ${on ? 'text-mint' : 'text-txt-dim group-hover:text-txt'}`}>{m.an}</span>
+                  <span className={`h-2.5 w-2.5 rounded-full border ${on ? 'border-mint bg-mint' : 'border-line-2 bg-transparent group-hover:border-txt-mut'}`} />
+                </button>
+              )
+            })}
+            {/* borne « après » = aujourd'hui, verrouillée */}
+            <div className="flex flex-1 flex-col items-center gap-1 pt-0.5" title="Après — ortho actuelle (verrouillé)">
+              <span className="font-mono text-[10px] leading-none text-txt-dim">Auj.</span>
+              <span className="h-2.5 w-2.5 rounded-full border border-dashed border-txt-dim bg-transparent" />
+            </div>
+          </div>
+          {/* rail de la frise */}
+          <div className="mt-1 h-px bg-line-2" />
         </div>
-        <div className="mt-2 flex items-center justify-between rounded-md border border-dashed border-line-2 px-2.5 py-1.5">
-          <span className="text-[11px] text-txt-dim">Après</span>
-          <span className="text-[11px] text-txt">Aujourd'hui (ortho actuelle)</span>
-          <span className="text-[9px] text-txt-dim">🔒 fixe</span>
-        </div>
+        <p className="mt-2 text-[11px] text-txt">
+          <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>
+          <span className="text-txt-dim"> vs </span>Aujourd'hui <span className="text-[9px] text-txt-dim">🔒 après fixe</span>
+        </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
-        <button onClick={() => setModule(null)}
+        <button onClick={() => { setTempsPinIdu(null); setModule(null) }}
           className="mt-2 w-full rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt">✕ Quitter</button>
       </div>
     </>

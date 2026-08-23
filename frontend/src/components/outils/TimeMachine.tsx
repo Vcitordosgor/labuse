@@ -55,6 +55,9 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // barre de contrôle en surimpression sur la carte. Seule la poignée de glissement reste sur la carte.
   const leftKey = useApp((s) => s.cmpLeft)
   const rightKey = useApp((s) => s.cmpRight)
+  // TEMPS (refonte) — la parcelle DÉSIGNÉE (M08), épinglée sur LES DEUX fonds (contour mint appuyé),
+  // pour ne jamais la perdre en glissant la poignée. Son contour ignore le filtre de statut de 'p'.
+  const pinIdu = useApp((s) => s.tempsPinIdu)
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
@@ -89,6 +92,13 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       m.addLayer({ id: 'p', type: 'line', source: 'p',
         filter: ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]],
         paint: { 'line-color': '#5CE6A1', 'line-width': 1 } })
+      // Contour ÉPINGLÉ de la parcelle désignée : casing sombre (lisibilité sur l'ortho claire de 1950)
+      // + trait mint appuyé, PAR-DESSUS 'p', SANS le filtre de statut (la cible reste visible même écartée).
+      const pin: maplibregl.ExpressionSpecification = ['==', ['get', 'idu'], useApp.getState().tempsPinIdu ?? '']
+      m.addLayer({ id: 'pin-casing', type: 'line', source: 'p', filter: pin,
+        paint: { 'line-color': '#06110B', 'line-width': 4, 'line-opacity': 0.9 } })
+      m.addLayer({ id: 'pin', type: 'line', source: 'p', filter: pin,
+        paint: { 'line-color': '#4ADE80', 'line-width': 2.25 } })
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
@@ -119,6 +129,15 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       else if (geo.data) m.once('load', () => (m.getSource('p') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never))
     }
   }, [geo.data])
+
+  // Épingle : rejoue le filtre des couches 'pin' des deux cartes quand la parcelle désignée change.
+  useEffect(() => {
+    const f: maplibregl.ExpressionSpecification = ['==', ['get', 'idu'], pinIdu ?? '']
+    for (const m of maps.current ?? []) {
+      const set = () => { if (m.getLayer('pin')) { m.setFilter('pin', f); m.setFilter('pin-casing', f) } }
+      if (m.isStyleLoaded()) set(); else m.once('load', set)
+    }
+  }, [pinIdu])
 
   useEffect(() => {
     const t = setTimeout(() => maps.current?.forEach((m) => m.resize()), 60)
@@ -159,6 +178,18 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       </div>
       <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(leftKey)}</span>
       <span className="absolute bottom-3 right-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(rightKey)}</span>
+      {/* TEMPS (refonte) — LÉGENDE des zones noires : présente dès qu'un fond ortho ANCIEN est affiché
+          (le seul cas où des dalles noires « limites de mission / mer » peuvent apparaître). Elle dit
+          honnêtement que ce n'est pas un défaut de chargement — jamais un faux « RAS ». */}
+      {leftKey !== 'bm-ortho-now' && (
+        <div data-temps-legende className="absolute left-3 top-3 z-10 flex max-w-[19rem] items-start gap-2 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2">
+          <span aria-hidden className="mt-0.5 h-3 w-3 shrink-0 rounded-[3px] border border-line-2 bg-black" />
+          <span className="text-[10.5px] leading-snug text-txt-mut">
+            <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
+            de mission IGN) — ce n'est pas un défaut de chargement.
+          </span>
+        </div>
+      )}
     </div>
   )
 }
