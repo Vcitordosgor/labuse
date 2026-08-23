@@ -546,6 +546,7 @@ def _classement_court(tier_v2: str | None, etage0: bool) -> str:
 def prospection_solaire(commune: str | None = None,
                         potentiel_min: int = 0, proba_occ_min: int = 0,
                         piscine: str = "tous",   # tous | oui | non
+                        piscine_surf_min: int = 0,   # surface piscine ≥ (m²) — mode Piscines
                         sort: str = "potentiel",  # potentiel | toiture | proba
                         fmt: str = "json",
                         db: Session = Depends(get_db)):
@@ -562,16 +563,18 @@ def prospection_solaire(commune: str | None = None,
     # zones scannées — dit au « i » ; pas un « zéro » affirmé).
     pisc_cond = " AND e.piscine IS TRUE" if piscine == "oui" \
         else " AND (e.piscine IS NOT TRUE)" if piscine == "non" else ""
+    # surface piscine ≥ (mode Piscines) : implique une piscine détectée avec une surface mesurée.
+    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
     where = ("WHERE ps.prod_spec_kwh_kwc IS NOT NULL AND ps.prod_spec_kwh_kwc >= :pmin"
              " AND ps.proba_proprio_occupant >= :prmin"
-             + (" AND p.commune = :c" if commune else "") + pisc_cond)
+             + (" AND p.commune = :c" if commune else "") + pisc_cond + surf_cond)
     base = """
         FROM parcel_solar ps
         JOIN parcels p ON p.idu = ps.idu
         LEFT JOIN parcel_terrain t ON t.idu = ps.idu
         LEFT JOIN p_model_bati b ON b.idu = ps.idu
         LEFT JOIN parcel_equipements e ON e.idu = ps.idu"""
-    params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min}
+    params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min, "psmin": piscine_surf_min}
     total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT ps.idu, p.commune AS commune,
@@ -579,7 +582,7 @@ def prospection_solaire(commune: str | None = None,
                round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
                round(t.pente_moy_deg::numeric, 1) AS pente,
                round(b.emprise_bati_m2)::int AS toit_m2,
-               (e.piscine IS TRUE) AS piscine,
+               (e.piscine IS TRUE) AS piscine, round(e.piscine_surface_m2)::int AS piscine_m2,
                ps.flag_abf AS abf,
                ps.proba_proprio_occupant AS proba_occ,
                s2.tier AS tier_v2,
@@ -614,6 +617,7 @@ def prospection_solaire(commune: str | None = None,
                 ("pente", "Pente ° [Sourcé — RGE ALTI 5 m]"),
                 ("toit_m2", "Toiture m² emprise [Estimé — proxy]"),
                 ("piscine", "Piscine détectée [Estimé — ortho 2025]"),
+                ("piscine_m2", "Piscine surface m² [Estimé — ortho 2025]"),
                 ("abf", "Périmètre ABF [Sourcé]"),
                 ("proba_occ", "Proba propriétaire-occupant % [Estimé — statistique]")]
         buf = io.StringIO()
@@ -633,6 +637,83 @@ def prospection_solaire(commune: str | None = None,
             "items": items,
             "source": "PVGIS (Commission européenne) · RGE ALTI (IGN) · BD ORTHO 20 cm 2025 (IGN)",
             "maj": maj, "bandeau": bandeau}
+
+
+@router.get("/prospection-solaire/parcelle/{idu}")
+def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
+    """Mode Ensoleillement — FICHE SOLEIL d'UNE parcelle (barre unique adresse/IDU). MÊMES données
+    gelées au 11/07/2026, + le PROFIL MENSUEL (prod_mensuel) et le mois optimal, que la liste ne sert
+    pas. Aucun recalcul : lecture seule d'une ligne parcel_solar (mandat SOLAIRE, garde-fou V1 gelée)."""
+    if not db.execute(text("SELECT to_regclass('parcel_solar') IS NOT NULL")).scalar():
+        raise HTTPException(503, "données solaires indisponibles (table absente).")
+    r = db.execute(text("""
+        SELECT ps.idu, p.commune AS commune,
+               round(ps.prod_spec_kwh_kwc)::int AS productible,
+               ps.prod_mensuel, ps.mois_optimal,
+               round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
+               round(t.pente_moy_deg::numeric, 1) AS pente,
+               round(b.emprise_bati_m2)::int AS toit_m2,
+               (e.piscine IS TRUE) AS piscine, round(e.piscine_surface_m2)::int AS piscine_m2,
+               ps.flag_abf AS abf, ps.flag_topo_ombrage AS ombrage_topo,
+               ps.flag_ombrage_vegetal AS ombrage_vegetal,
+               ps.proba_proprio_occupant AS proba_occ,
+               s2.tier AS tier_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+        FROM parcel_solar ps
+        JOIN parcels p ON p.idu = ps.idu
+        LEFT JOIN parcel_terrain t ON t.idu = ps.idu
+        LEFT JOIN p_model_bati b ON b.idu = ps.idu
+        LEFT JOIN parcel_equipements e ON e.idu = ps.idu
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = ps.idu AND s2.run_id = :v2run
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        WHERE ps.idu = :idu"""),
+        {"idu": idu, "v2run": _v2run(db), "run": RUN}).mappings().first()
+    if not r or r["productible"] is None:
+        return {"ok": False, "idu": idu,
+                "message": "Aucune donnée solaire pour cette parcelle (hors couverture V1 gelée)."}
+    d = dict(r)
+    d["ok"] = True
+    d["etage0"] = bool(r["etage0"])
+    d["classement"] = _classement_court(r["tier_v2"], d["etage0"])
+    # prod_mensuel = JSONB (12 valeurs kWh/kWc/mois) → liste d'entiers arrondis pour l'affichage (12 barres).
+    pm = r["prod_mensuel"]
+    d["prod_mensuel"] = [round(float(x)) for x in pm] if isinstance(pm, (list, tuple)) else None
+    d["ombrage"] = bool(r["ombrage_topo"]) or bool(r["ombrage_vegetal"])
+    mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
+                          "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
+    d["millesime"] = mil or "PVGIS SARAH3"
+    return d
+
+
+@router.get("/prospection-piscines")
+def prospection_piscines(commune: str | None = None,
+                         bati: str = "tous",   # tous | oui | non
+                         piscine_surf_min: int = 0,   # surface piscine ≥ (m²) — même filtre que la liste
+                         db: Session = Depends(get_db)):
+    """Mode Piscines (pisciniste) — AGRÉGATS de la détection piscines gelée (parcel_equipements) :
+    compteur île + par commune (décroissant). Aucun recalcul : une requête d'agrégat (mandat SOLAIRE,
+    garde-fou « requêtes d'agrégats uniquement »). Le « bâti » = présence d'emprise bâtie (p_model_bati).
+    `piscine_surf_min` aligne le compteur sur le même filtre de surface que le listing."""
+    if not db.execute(text("SELECT to_regclass('parcel_equipements') IS NOT NULL")).scalar():
+        raise HTTPException(503, "détection équipements indisponible (table absente).")
+    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
+    bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
+        else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
+    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
+    where = "WHERE e.piscine IS TRUE" + bati_cond + surf_cond + (" AND p.commune = :c" if commune else "")
+    params = {"c": commune, "psmin": piscine_surf_min}
+    total = int(db.execute(text(
+        f"SELECT count(*) FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}"),
+        params).scalar() or 0)
+    communes = db.execute(text(f"""
+        SELECT p.commune AS commune, count(*)::int AS n
+        FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
+        GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
+    maj = db.execute(text("SELECT to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
+                          "FROM parcel_equipements WHERE piscine IS TRUE")).scalar()
+    return {"total": total, "communes": [dict(c) for c in communes],
+            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; à confirmer sur site",
+            "maj": maj or "—"}
 
 
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
