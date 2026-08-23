@@ -378,10 +378,10 @@ export function M18() {
   const nr = d?.neuf_reference as Record<string, any> | undefined
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      {/* M141 Partie 1 — bouton « Rapport PDF » RETIRÉ (le baromètre ne sort plus en PDF, décision Vic).
+          L'onglet Évolution reste inchangé ; seul l'export disparaît. */}
       <div className="flex items-center gap-2">
         <span className="text-[10.5px] text-txt-mut">Île entière (DVF 24 communes, Sitadel régional) — 8 derniers trimestres.</span>
-        <a href="/moteurs/barometre.pdf" target="_blank" rel="noreferrer"
-          className="ml-auto shrink-0 rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">⬇ Rapport PDF</a>
       </div>
       {nr && (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
