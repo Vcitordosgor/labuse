@@ -54,7 +54,8 @@ def simulplu_zones(commune: str | None = None, db: Session = Depends(get_db)) ->
 
 
 @router.get("/simulplu")
-def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+def simulplu(zone: str, commune: str | None = None, offset: int = 0,
+             db: Session = Depends(get_db)) -> dict:
     # PERF : le zonage par parcelle est DÉJÀ résolu dans les lignes de cascade du run (detail
     # « Zone PLU « X » … ») → zéro jointure spatiale (l'ancienne version : 2 min 33 s ; celle-ci < 2 s).
     ratio = db.execute(text("""
@@ -66,14 +67,28 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
           AND cr.detail LIKE 'Zone PLU « U%'"""),
         {"c": commune, "run": RUN}).scalar() or 0.0
     # M137-O — le plafond de liste sort du DUR (config/moteurs.yaml) ; on sert AUSSI le total réel pour
-    # que l'écran DISE « les N premières sur M » (un plafond muet ment — leçon M120-B). Le total est tiré
-    # par `count(*) OVER ()` DANS le même scan que la liste (avant LIMIT) — pas de 2e balayage ILIKE.
+    # que l'écran DISE « les N premières sur M » (un plafond muet ment — leçon M120-B).
+    # PLU Lot A (pagination SOCLE) : `offset` pagine la liste (cap par page) → « Voir N de plus » jusqu'à
+    # épuisement. Les TOTAUX (n_total, SDP estimée, bascules) sont calculés sur TOUT le zonage (agrégat
+    # dédié) → ils restent STABLES quelle que soit la page servie (un total par page dériverait à chaque
+    # « voir plus »).
     cap = _moteurs_cap("simulplu_max", 400)
+    agg = db.execute(text("""
+        SELECT count(*) AS n_total,
+               count(*) FILTER (WHERE round(p.surface_m2) * :ratio >= 300
+                                  AND s2.tier IN ('ecartee', 'a_creuser')) AS bascules,
+               coalesce(round(sum(round(p.surface_m2) * :ratio)), 0) AS sdp_totale
+        FROM dryrun_cascade_results cr
+        JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
+          AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300"""),
+        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "ratio": float(ratio)}).mappings().one()
+    n_total = int(agg["n_total"])
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               count(*) OVER () AS n_total,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM dryrun_cascade_results cr
         JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
@@ -83,29 +98,28 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         -- la graphie GPU brute est retrouvée quelle que soit sa casse.
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
-        ORDER BY p.surface_m2 DESC LIMIT :cap"""),
-        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "cap": cap}).mappings().all()
-    n_total = int(rows[0]["n_total"]) if rows else 0
+        ORDER BY p.surface_m2 DESC LIMIT :cap OFFSET :off"""),
+        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "cap": cap, "off": max(0, offset)}).mappings().all()
     items = []
-    bascules = 0
     for r in rows:
         sdp_est = round(float(r["surface_m2"] or 0) * float(ratio))
         # bandes du socle v2 : ≥300 m² = un signal positif s'ouvre (bascule potentielle)
         bascule = sdp_est >= 300 and r["statut_actuel"] in ("ecartee", "a_creuser")
-        bascules += bascule
         items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "statut_actuel": r["statut_actuel"],
                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                       "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
                       "geom": json.loads(r["g"])})
+    servis = max(0, offset) + len(items)
     return {
         "zone": zone, "commune": commune or "Toute l'île", "ratio_analogie": round(float(ratio), 3),
         "methode": ("SIMULATION À BLANC (rien n'est persisté) — SDP estimée par ANALOGIE : "
                     f"surface × ratio médian SDP/surface des parcelles U de {commune or 'toute l’île'} "
                     f"({round(float(ratio), 3)}). Le vrai recalcul = règlement U appliqué au moteur "
                     "de faisabilité (prochain cycle)."),
-        "n_parcelles": len(items), "n_total": n_total, "cap": cap, "tronquee": n_total > len(items),
-        "bascules_potentielles": bascules,
-        "sdp_totale_estimee_m2": sum(i["sdp_estimee_m2"] for i in items),
+        "n_parcelles": len(items), "n_total": n_total, "cap": cap, "offset": max(0, offset),
+        "tronquee": n_total > servis,
+        "bascules_potentielles": int(agg["bascules"]),           # TOTAL (tout le zonage), stable
+        "sdp_totale_estimee_m2": int(agg["sdp_totale"]),         # TOTAL (tout le zonage), stable
         "items": items,
     }
 

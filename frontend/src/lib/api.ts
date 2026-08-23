@@ -809,8 +809,11 @@ export const postSuggestion = (body: { categorie: string; texte: string; context
 const communeQ = (c?: string | null) => c === undefined ? cq() : (c ? `commune=${encodeURIComponent(c)}` : '')
 export const motSimulPluZones = (commune?: string | null) =>
   j<{ zone: string; n_ilots: number }[]>(`/moteurs/simulplu/zones?${communeQ(commune)}`)
-export const motSimulPlu = (zone: string, commune?: string | null) =>
-  j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${communeQ(commune)}`)
+// PLU Lot A (pagination) : `offset` pagine (cap par page) ; `signal` permet l'annulation effective
+// du recalcul en cours (Lot B, UI de chargement honnête).
+export const motSimulPlu = (zone: string, commune?: string | null, offset = 0, signal?: AbortSignal) =>
+  j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${communeQ(commune)}${offset ? `&offset=${offset}` : ''}`,
+    signal ? { signal } : undefined)
 export interface SimulPluProcedure {
   insee: string; commune: string; commune_radar: string; type: string
   stade: string | null; date_acte: string | null; etat: string | null; prochaine_etape: string | null
