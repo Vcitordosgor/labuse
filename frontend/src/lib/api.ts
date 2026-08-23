@@ -882,6 +882,10 @@ export interface ParcoursEtat {
   nom: string; sdp_besoin_m2: number | null; counts: ParcoursCounts
   // M139 Lot 2 (F2) — les deux dates : figeage du cadrage + run résiduel servi des valeurs.
   figee_le?: string | null; valeurs_run?: { label: string; seq: number; date: string | null } | null
+  // M140 Lot A — les PROPOSÉES sont la liste COMPLÈTE des retenues, servie EN DIRECT et PAGINÉE :
+  // `total_retenues` = N (dénominateur « X sur N »), `page` = la fenêtre courante. Décidées = complètes.
+  total_retenues?: number | null
+  page?: { offset: number; limit: number; returned: number; has_more: boolean }
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {
@@ -893,7 +897,11 @@ export interface CarteDecision {
 export const proposerProjet = (id: number, limit = 24) =>
   j<{ ok: boolean; propose: number; sdp_besoin_m2: number | null; counts: ParcoursCounts }>(
     `/projets/${id}/proposer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit }) })
-export const getParcoursEtat = (id: number) => j<ParcoursEtat>(`/projets/${id}/parcelles`)
+// M140 Lot A — paginé : on feuillette la liste complète des retenues (offset/limit), jamais tout chargé.
+export const getParcoursEtat = (id: number, offset = 0, limit = 60) =>
+  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}`)
+// M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
+export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
 export const setStatutParcelle = (id: number, idu: string, statut: StatutParcelle) =>
   j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, rejouerProjet, setStatutParcelle,
+  getParcoursEtat, getProjet, patchProjet, projetCsvUrl, projetPdfUrl, rejouerProjet, setStatutParcelle,
   type Cadrage, type Identite, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
   type ShortlistDiff, type StatutParcelle,
 } from '../../lib/api'
@@ -51,6 +51,12 @@ const APERCU = 3   // cartes visibles par colonne avant « + N autres »
 
 /** retire l'item de son groupe et le pousse dans le groupe cible — maj optimiste (identique au Tinder). */
 function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): ParcoursEtat {
+  // colonne d'origine (avant déplacement) — calculée AVANT le strip pour rester bien typée
+  const from: StatutParcelle | null =
+    etat.proposees.some((x) => x.idu === idu) ? 'proposee'
+      : etat.retenues.some((x) => x.idu === idu) ? 'retenue'
+        : etat.ecartees.some((x) => x.idu === idu) ? 'ecartee'
+          : etat.a_analyser.some((x) => x.idu === idu) ? 'a_analyser' : null
   let moved: ParcoursItem | null = null
   const strip = (arr: ParcoursItem[]) => arr.filter((x) => {
     if (x.idu === idu) { moved = { ...x, statut }; return false }
@@ -64,8 +70,14 @@ function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): Parc
     else if (statut === 'a_analyser') a_analyser.push(moved)
     else proposees.push(moved)
   }
-  return { ...etat, proposees, retenues, ecartees, a_analyser,
-    counts: { proposee: proposees.length, retenue: retenues.length, ecartee: ecartees.length, a_analyser: a_analyser.length } }
+  // M140 Lot A — counts par DELTA : `proposee` est le TOTAL serveur (liste complète VIVE), jamais
+  // recompté depuis une fenêtre paginée (.length ≠ N). On décale seulement source → cible.
+  const counts = { ...etat.counts }
+  if (moved && from && from !== statut) {
+    counts[from] = Math.max(0, (counts[from] ?? 0) - 1)
+    counts[statut] = (counts[statut] ?? 0) + 1
+  }
+  return { ...etat, proposees, retenues, ecartees, a_analyser, counts }
 }
 
 /** Contact proprio — PRIVACY : personne morale nommée (public) ; particulier JAMAIS nommé. */
@@ -92,9 +104,14 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [nomInput, setNomInput] = useState(nom)
   const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
   const [dernierDiff, setDernierDiff] = useState<ShortlistDiff | null>(null)   // M120 : diff du dernier rejeu
+  const [propLimit, setPropLimit] = useState(60)   // M140 Lot A : fenêtre des proposées (feuilleter la liste complète)
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
-  const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
+  // M140 Lot A — la fenêtre des proposées grandit à la demande (« Charger plus ») : on ne charge
+  // JAMAIS tout. `placeholderData` garde la fenêtre précédente affichée pendant l'agrandissement.
+  const parcoursKey = ['parcours', pid, propLimit]
+  const etatQ = useQuery({ queryKey: parcoursKey, queryFn: () => getParcoursEtat(pid, 0, propLimit),
+    enabled: pid > 0, placeholderData: (prev) => prev })
 
   // M120 — PLUS DE RUN À L'OUVERTURE : la shortlist est FIGÉE au cadrage. On lit son état, on ne
   // relance rien. Le seul rafraîchissement est le bouton « Rejouer » explicite ci-dessous.
@@ -114,11 +131,11 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
     mutationFn: ({ idu, statut }: { idu: string; statut: StatutParcelle }) => setStatutParcelle(pid, idu, statut),
     onMutate: async ({ idu, statut }) => {
       await qc.cancelQueries({ queryKey: ['parcours', pid] })
-      const prev = qc.getQueryData<ParcoursEtat>(['parcours', pid])
-      if (prev) qc.setQueryData<ParcoursEtat>(['parcours', pid], moveItem(prev, idu, statut))
+      const prev = qc.getQueryData<ParcoursEtat>(parcoursKey)
+      if (prev) qc.setQueryData<ParcoursEtat>(parcoursKey, moveItem(prev, idu, statut))
       return { prev }
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['parcours', pid], ctx.prev) },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(parcoursKey, ctx.prev) },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['parcours', pid] })
       qc.invalidateQueries({ queryKey: ['pipeline'] })   // auto-CRM (Phase 2)
@@ -192,7 +209,12 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               title="Rejouer le cadrage sur les données du jour — vos tris sont conservés">
               {rejouer.isPending ? 'Rejeu…' : projet?.shortlist_perimee ? '↻ Rejouer (cadrage modifié)' : '↻ Rejouer'}</button>
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
-              className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi">Exporter</a>
+              className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi"
+              title="Dossier PDF — extrait figé de présentation">PDF</a>
+            {/* M140 Lot B — la liste COMPLÈTE des retenues (toutes, streamée, non stockée, zéro rang/score). */}
+            <a data-kanban-csv href={projetCsvUrl(pid)}
+              className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi"
+              title="Exporter la liste COMPLÈTE des retenues en CSV (toutes les parcelles, ordre géographique)">CSV complet</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Renommer</button>
             <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}
@@ -270,6 +292,16 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                     onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
                     onFiche={() => select(it.idu)} />
                 ))}
+                {/* M140 Lot A — feuilleter la LISTE COMPLÈTE des retenues : « Charger plus » agrandit la
+                    fenêtre serveur (offset/limit), jamais tout chargé. « X sur N » = fenêtre / total vif. */}
+                {isProp && !filtreAnalyse && etat?.page?.has_more && (
+                  <button data-kanban-charger-plus disabled={etatQ.isFetching}
+                    onClick={() => setPropLimit((l) => l + 60)}
+                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50">
+                    {etatQ.isFetching ? 'Chargement…'
+                      : `Charger plus  ·  ${etat?.proposees?.length ?? 0} sur ${etat?.total_retenues ?? '…'}`}
+                  </button>
+                )}
                 {!isProp && reste > 0 && (
                   <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
                     className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">

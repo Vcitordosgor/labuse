@@ -216,8 +216,12 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
         # TOTAL de la population dont la shortlist est extraite (`total`, = `_run_cadrage`). None → État 3
         # (échec RÉEL de requête) ; un 0 légitime n'est pas un échec. Rang de sélection jamais muet.
         total = shortlist.get("total")
-        neutre = ("Élargir la shortlist ne supprime pas ce rang : seule une liste complète ou un tri "
-                  "explicite (surface) est neutre.")   # §B — plus de fausse issue « chercher plus »
+        # M140 Lot C — la liste complète des retenues EXISTE désormais réellement (écran paginé en
+        # direct + export CSV streamé). Le « rang non visible » de l'extrait figé n'est donc plus
+        # une fausse issue : il est neutralisé par une VRAIE liste complète, qu'on nomme au lieu de
+        # l'ancienne pirouette « élargir la shortlist ne supprime pas ce rang ».
+        neutre = ("La liste complète des retenues est consultable à l'écran (feuilletée) et en export "
+                  "CSV — ordre géographique, aucun rang.")
         # M130-6/8 §C/§B.1 — « dont ~ {t0} classées à l'étage 0 » ; quand t0 vaut EXACTEMENT le total,
         # « toutes classées à l'étage 0 » (pas de tilde+valeur redondants).
         t0 = shortlist.get("total_etage0")
@@ -232,10 +236,9 @@ def render_projet_pdf(projet: dict, shortlist: dict) -> bytes:
                     "échec). Cette liste peut être tronquée ; si elle l'est, les parcelles ont été "
                     "sélectionnées par probabilité de mutation — un rang non visible. " + neutre)
         elif total > n:
-            etat = (f"Liste plafonnée : {n} parcelles figées sur ~ {_num(total)} retenues par le "
-                    f"cadrage{dont0} (à ce jour). Les figées ont été SÉLECTIONNÉES par probabilité de "
-                    "mutation (critère interne du moteur) — un rang non visible ; elles sont présentées "
-                    "ici par ordre géographique. " + neutre)
+            etat = (f"Extrait figé de {n} sur ~ {_num(total)} retenues par le cadrage{dont0} "
+                    "(à ce jour) — sélectionnées par probabilité de mutation (critère interne du "
+                    "moteur, rang non visible), présentées ici par ordre géographique. " + neutre)
         else:
             etat = (f"Liste complète : les {n} parcelles retenues par le cadrage sont toutes "
                     "présentées. Aucune sélection, aucun rang.")

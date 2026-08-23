@@ -22,7 +22,6 @@ from .ia import SECTEURS
 from .tenant import current_compte
 
 
-
 def _caps_projets() -> dict:
     """M129-D P0.2 — caps du flux Projet en CONFIG (config/projets.yaml), plus jamais en dur.
     Repli sur les défauts historiques si la config est absente (base de test nue)."""
@@ -246,13 +245,45 @@ def _cadrage_to_filtre(cadrage: dict):
     return FiltreCriteres(**kw)
 
 
-def _run_cadrage(db: Session, cadrage: dict, limit: int) -> list[dict]:
+def _run_cadrage(db: Session, cadrage: dict, limit: int, offset: int = 0,
+                 exclude_idus: list[str] | None = None) -> list[dict]:
     """LE RUN : applique le cadrage (jeu de filtres) via `FiltreCriteres.where()` — exactement le
-    filtrage de la carte — et rend la liste best-first. AUCUN re-scoring, AUCUne dérivation parallèle."""
+    filtrage de la carte — et rend la liste best-first. AUCUN re-scoring, AUCUne dérivation parallèle.
+    M140 Lot A — `offset` + `exclude_idus` : la LISTE COMPLÈTE des retenues se FEUILLETTE en direct
+    (page par page, jamais tout chargé), en excluant les parcelles déjà décidées (stockées)."""
     from .app import _q_v2_list
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
-    return _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
+    if exclude_idus:
+        where = f"{where} AND p.idu <> ALL(:_excl_idus)"   # p = parcels (alias du moteur de liste)
+        params = {**params, "_excl_idus": list(exclude_idus)}
+    return _q_v2_list(db, None, limit, offset, run_label=RUN, extra_where=where, extra_params=params)
+
+
+def _cadrage_page_idus(db: Session, cadrage: dict, limit: int, offset: int,
+                       exclude_idus: list[str] | None = None) -> list[str]:
+    """M140 Lot A — la PAGE d'IDU du cadrage, best-first (rang), en direct et paginée. Chemin LÉGER :
+    on ne veut QUE les idu ordonnés (l'enrichissement carte — adresse/marché/centroïde — se fait
+    ensuite en batch sur la seule page). Évite l'enrichissement d'affichage lourd de `_q_v2_list`
+    (BAN latéral, propriétaire, cluster…) : ~2,2 s → quelques ms. Même population que `_cadrage_total`
+    (plancher sliver, hors étage 0 sauf filtre tiers), même ordre que le figeage (`s2.rang ASC`)."""
+    from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
+        else f"AND NOT {_ETAGE0_SQL}"
+    excl = ""
+    if exclude_idus:
+        excl = "AND p.idu <> ALL(:_excl)"
+        params = {**params, "_excl": list(exclude_idus)}
+    return list(db.execute(text(
+        f"SELECT p.idu FROM parcels p "
+        f"JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
+        f"JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+        f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where} {excl} "
+        f"ORDER BY s2.rang ASC NULLS LAST, p.idu ASC LIMIT :lim OFFSET :off"),
+        {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
+         "lim": limit, "off": offset, **params}).scalars().all())
 
 
 #: M120-B — le cap de la shortlist figée vient de config/projets.yaml (jamais en dur). Défaut nommé
@@ -360,6 +391,7 @@ def _projet_dict(p: models.Projet) -> dict:
 
 # M135 — libellés d'action, mapping CANONIQUE unique (tiers_client). Les clés internes ne bougent pas.
 from ..scoring.tiers_client import TIERS_CLIENT as _TC  # noqa: E402
+
 _STATUT_LABEL = {"chaude": "Priorité", "a_surveiller": "À suivre", "a_creuser": "Neutre"}
 # M137 — le CHIP COURT (v[0]) : un seul vocabulaire servi partout, celui des chips.
 _TIER_LABEL = {k: v[0] for k, v in _TC.items()}
@@ -869,27 +901,52 @@ def projet_proposer(pid: int, body: ProposerIn, request: Request, db: Session = 
 
 
 @router.get("/{pid}/parcelles")
-def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    """L'ÉTAT du parcours : les parcelles du projet groupées par statut (proposées best-first),
-    avec centroïde pour la carte. Base de la reprise (fermer/rouvrir = relire cet état)."""
+def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
+                     offset: int = 0, limit: int = 60) -> dict:
+    """M140 Lot A — l'ÉTAT du parcours, la LISTE ENTIÈRE sans la stocker. Les DÉCIDÉES
+    (retenue/écartée/à analyser) sont stockées (petites — toujours toutes servies) ; les PROPOSÉES
+    sont la liste COMPLÈTE des retenues du cadrage, servie EN DIRECT et PAGINÉE (`offset`/`limit`),
+    jamais une copie, jamais tout chargé. Enrichissement par BATCH sur la seule PAGE (adresse BAN,
+    marché, événement, carence). `counts.proposee` = total VIF restant (pas la page). Base de la
+    reprise : rouvrir = relire cet état."""
     p = _projet_or_404(db, pid, current_compte(request))
-    from .app import _score_v2_run_id, _ETAT_BIEN_SQL
+    from .app import _ETAT_BIEN_SQL, _score_v2_run_id
     v2 = _score_v2_run_id(db)
+    limit = max(1, min(limit, 200))          # borne de page — on ne charge JAMAIS tout
+    cadrage = p.filtres or {}
+    # 1) DÉCIDÉES stockées (statut != proposee) — petites, servies en entier (ordre de proposition).
+    decided = db.execute(text(
+        "SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu FROM projet_parcelles pp "
+        "JOIN parcels par ON par.id = pp.parcel_id "
+        "WHERE pp.projet_id = :pid AND pp.statut <> 'proposee' "
+        "ORDER BY pp.rang NULLS LAST, pp.id"), {"pid": pid}).mappings().all()
+    decided_idus = [r["idu"] for r in decided]
+    # 2) PAGE de proposées = cadrage VIF paginé, hors décidées (la liste complète se feuillette).
+    page_idus = _cadrage_page_idus(db, cadrage, limit, offset, exclude_idus=decided_idus)
+    # 3) total COMPLET des retenues (dénominateur « X sur N ») — la liste complète EXISTE, vive.
+    #    M140 Lot A — le count est LOURD (~4 s sur l'île) : on ne le paie qu'à la PREMIÈRE page
+    #    (offset 0) ; feuilleter (offset > 0) ne recompte pas, le front garde le total. `None` sur
+    #    les pages suivantes = « inchangé, garde la valeur de la 1re page », jamais un faux 0.
+    tot = _cadrage_total(db, cadrage)["total"] if offset == 0 else None
+    proposee_total = max(0, (tot or 0) - len(decided_idus)) if tot is not None else None
+    # 4) méta statut/hors_criteres + ordre d'affichage (décidées d'abord, puis la page best-first).
+    meta = {r["idu"]: (r["statut"], bool(r["hors_criteres"])) for r in decided}
+    ordre = {idu: i for i, idu in enumerate(decided_idus)}
+    for i, idu in enumerate(page_idus):
+        meta[idu] = ("proposee", False)      # une proposée VIVE matche le cadrage → jamais hors_criteres
+        ordre[idu] = len(decided_idus) + i
+    all_idus = decided_idus + page_idus
+    # 5) enrichissement BATCH — sur la PAGE + les décidées SEULEMENT (jamais toute la population).
     rows = db.execute(text(
-        f"""SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu, par.commune, par.surface_m2,
-                  d.q_score, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
+        f"""SELECT par.idu, par.commune, par.surface_m2, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
                   ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
                   ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
-           FROM projet_parcelles pp
-           JOIN parcels par ON par.id = pp.parcel_id
-           LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = par.id AND d.run_label = :run
+           FROM parcels par
            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = par.idu AND s2.run_id = :v2
            LEFT JOIN parcel_residuel rb ON rb.parcel_id = par.id   -- M131 P3 : 1 ligne/parcelle
-           WHERE pp.projet_id = :pid
-           ORDER BY pp.rang NULLS LAST, pp.id"""),
-        {"run": RUN, "v2": v2, "pid": pid}).mappings().all()
+           WHERE par.idu = ANY(:idus)"""),
+        {"v2": v2, "idus": all_idus}).mappings().all() if all_idus else []
     # M2 — badges parcelle (défisc / PC caduc), gardés to_regclass : absents en base → pas de badge, jamais d'erreur.
-    all_idus = [r["idu"] for r in rows]
     defisc_set, caduc_set = set(), set()
     if all_idus:
         for tbl, col, dest in (("defisc_fenetres", "AND fenetre_active", defisc_set), ("pc_caducs", "", caduc_set)):
@@ -924,29 +981,37 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) 
     groups: dict[str, list] = {s: [] for s in ("proposee", "retenue", "ecartee", "a_analyser")}
     for r in rows:
         evt = r["idu"] in event_set
-        groups.setdefault(r["statut"], []).append({
-            "idu": r["idu"], "commune": r["commune"], "statut": r["statut"],
+        statut, hors = meta.get(r["idu"], ("proposee", False))   # M140 : statut vient de meta, pas de la ligne
+        groups.setdefault(statut, []).append({
+            "idu": r["idu"], "commune": r["commune"], "statut": statut,
             "tier": r["tier"], "surface_m2": r["surface_m2"],
             "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
             "adresse": adrs.get(r["idu"]), "evenement": evt,
             "marche_eur_m2": marche.get(r["commune"]),
             "pourquoi": _pourquoi_court(r["tier"], r["commune"] in carencees, evt, r["surface_m2"]),
-            "hors_criteres": bool(r["hors_criteres"]),
+            "hors_criteres": hors,
             "defisc": r["idu"] in defisc_set, "caduc": r["idu"] in caduc_set,
             "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,
         })
+    for g in groups.values():        # M140 — ordre stable : décidées (ordre de proposition) puis page best-first
+        g.sort(key=lambda c: ordre.get(c["idu"], 0))
     # PRIVACY : les RETENUES portent le contact proprio (elles vont au CRM) — personne morale nommée
     # (public DGFiP), particulier JAMAIS nommé (« non communiqué »). Réutilise le helper du CRM.
     from .app import _proprietaire_public
     for it in groups["retenue"]:
         it["proprietaire_public"] = _proprietaire_public(db, it["idu"])
-    return {"nom": p.nom, "sdp_besoin_m2": _sdp_besoin(p.filtres or {}),
-            # M139 Lot 2 (F2) — les deux dates à l'écran aussi : figeage du cadrage (porté par le
-            # projet, `derniere_execution_at`) + valeurs relues live au run résiduel servi.
+    return {"nom": p.nom, "sdp_besoin_m2": _sdp_besoin(cadrage),
+            # M139 Lot 2 (F2) — les deux dates à l'écran : figeage du cadrage + run résiduel servi.
             "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
             "valeurs_run": _residuel_run_servi(db),
             "proposees": groups["proposee"], "retenues": groups["retenue"],
-            "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"], **_counts(db, pid)}
+            "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"],
+            # M140 Lot A — `counts.proposee` = total VIF restant (liste complète), PAS la taille de page.
+            "counts": {"proposee": proposee_total or 0, "retenue": len(groups["retenue"]),
+                       "ecartee": len(groups["ecartee"]), "a_analyser": len(groups["a_analyser"])},
+            "total_retenues": tot,                 # dénominateur « X sur N » (None = requête en échec)
+            "page": {"offset": offset, "limit": limit, "returned": len(page_idus),
+                     "has_more": len(page_idus) == limit}}
 
 
 @router.get("/{pid}/carte/{idu}")
@@ -1280,3 +1345,80 @@ def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition":
                              f'inline; filename="projet-{pid}-{slug or "projet"}-labuse.pdf"'})
+
+
+@router.get("/{pid}/export.csv")
+def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db)):
+    """M140 Lot B — la LISTE COMPLÈTE des retenues du cadrage, STREAMÉE : jamais stockée, jamais
+    tout en mémoire (curseur serveur). Colonnes de DONNÉE du PDF, ordre GÉOGRAPHIQUE, **aucun
+    rang/score** (doctrine M133 B.6 sur le flux aussi). SEC-IDOR : borné au compte. La 1re ligne
+    porte les DEUX dates comme le PDF (cadrage figé le X · valeurs au Y (run N) · export généré le Z).
+    Le curseur vit dans une connexion PROPRE au générateur (la session `Depends` est fermée quand
+    le stream se consomme — piège FastAPI classique)."""
+    import csv
+    import io
+
+    from fastapi.responses import StreamingResponse
+
+    from ..db import engine
+    from .app import _ETAGE0_SQL, _ETAT_BIEN_SQL, MIN_DISPLAY_SURFACE_M2, _ban_lateral, _ban_ready, _score_v2_run_id
+    p = _projet_or_404(db, pid, current_compte(request))    # SEC-IDOR : export borné au compte
+    cadrage = p.filtres or {}
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
+        else f"AND NOT {_ETAGE0_SQL}"
+    ban_ok = _ban_ready(db)
+    ban_sel = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+               else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("p.idu") if ban_ok else ""
+    sql = text(
+        f"""SELECT p.idu, p.commune, substr(p.idu, 9, 2) AS section, substr(p.idu, 11) AS numero,
+                   round(p.surface_m2) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,
+                   round(rb.sdp_residuelle_m2) AS sdp_residuelle_m2, rb.cause AS sdp_indispo,
+                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0 {ban_sel}
+            FROM parcels p
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id
+            {ban_join}
+            WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}
+            ORDER BY p.commune, section,
+                     NULLIF(regexp_replace(substr(p.idu, 11), '\\D', '', 'g'), '')::int NULLS LAST, p.idu""")
+    prm = {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2, **params}
+    vr = _residuel_run_servi(db) or {}
+    figee = p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else "non figé"
+    val = f"valeurs au {vr['date']} (run {vr['label']})" if vr.get("date") else "valeurs : run résiduel indisponible"
+    genere = datetime.now(timezone.utc).date().isoformat()
+    cols = ["idu", "commune", "section", "numero", "surface_m2", "adresse", "code_postal",
+            "ville", "etat_bien", "sdp_residuelle_m2", "sdp_indispo", "etage0"]
+
+    def rows_iter():
+        buf = io.StringIO()
+        w = csv.writer(buf, delimiter=";", lineterminator="\r\n")
+        w.writerow([f"# cadrage figé le {figee} · {val} · export généré le {genere} "
+                    "· ordre géographique · aucune sélection ni classement interne"])
+        w.writerow(cols)
+        yield buf.getvalue()
+        buf.seek(0)
+        buf.truncate(0)
+        # connexion PROPRE au stream (la session Depends est déjà fermée à ce stade)
+        with engine().connect() as conn:
+            res = conn.execution_options(stream_results=True, max_row_buffer=1000).execute(sql, prm)
+            n = 0
+            for r in res.mappings():
+                w.writerow([r["idu"], r["commune"], r["section"], r["numero"], r["surface_m2"],
+                            r["ban_voie"], r["ban_cp"], r["ban_commune"], r["etat_bien"],
+                            r["sdp_residuelle_m2"], r["sdp_indispo"], "oui" if r["etage0"] else "non"])
+                n += 1
+                if n % 1000 == 0:
+                    yield buf.getvalue()
+                    buf.seek(0)
+                    buf.truncate(0)
+            if buf.tell():
+                yield buf.getvalue()
+
+    slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
+    return StreamingResponse(rows_iter(), media_type="text/csv; charset=utf-8",
+                             headers={"Content-Disposition":
+                                      f'attachment; filename="projet-{pid}-{slug or "projet"}-retenues.csv"'})
