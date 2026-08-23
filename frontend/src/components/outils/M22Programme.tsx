@@ -1,9 +1,10 @@
-import { useMutation } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { postProgramme } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { FaisabiliteTab } from '../fiche/Fiche'
+import { ListPaginationFooter } from '../ListPagination'
 import { CommuneScope } from './ModulePanel'
 import { ParcelPicker } from './ParcelPicker'
 import { TierBadge } from './TierBadge'
@@ -14,6 +15,23 @@ import { TierBadge } from './TierBadge'
  *    commune est SAISI ICI (plus hérité du filtre carte).
  *  · « Par parcelle » (SENS 1) : on désigne UNE parcelle (IDU / adresse / clic carte) et on voit sa
  *    faisabilité — exactement l'onglet Faisabilité des fiches, porté dans l'outil (aucune divergence). */
+// export CSV (client-side) des parcelles candidates — mêmes colonnes que l'écran (mandat pagination).
+function csvCell(v: unknown): string {
+  const s = v == null ? '' : String(v)
+  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+function exportProgrammeCsv(items: Record<string, any>[]) {
+  const head = ['Parcelle', 'Commune', 'SDP (m²)', 'Zone', 'Hauteur PLU (m)', 'Marge capacité', 'Classement']
+  const rows = items.map((i) => [i.idu, i.commune ?? '', i.sdp ?? '', i.zone ?? '', i.hauteur_verifiee ? i.hauteur_plu_m : 'à instruire',
+    `x${i.marge_capacite}`, i.statut ?? ''])
+  const csv = [head, ...rows].map((r) => r.map(csvCell).join(';')).join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = 'faisabilite-programme.csv'; a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function M22() {
   const { m22Prefill, setM22Prefill, parcelPrefill, setParcelPrefill, setModuleMap, select } = useApp()
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
@@ -21,16 +39,29 @@ export function M22() {
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
   const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, circulation_pct: 20 })
   // coef utile→SDP = 1 + circulations % (hypothèse éditable ; défaut 20 %, bas de fourchette 20-25 %)
-  const run = useMutation({ mutationFn: () => postProgramme({ ...form, commune, coef_circulation: 1 + form.circulation_pct / 100 }) })
+  // FAISABILITE (pagination SOCLE) : le formulaire soumis est FIGÉ dans `query` ; une useInfiniteQuery
+  // pagine les résultats par `offset`. « Trouver » (re)pose le snapshot ; changer le formulaire ne
+  // relance rien tant qu'on ne resoumet pas (comportement d'avant, + pagination).
+  const [query, setQuery] = useState<Record<string, unknown> | null>(null)
+  const [chargeTout, setChargeTout] = useState(false)
+  const lancer = (f = form, c = commune) => { setChargeTout(false); setQuery({ ...f, commune: c, coef_circulation: 1 + f.circulation_pct / 100 }) }
+  const results = useInfiniteQuery({
+    queryKey: ['programme', query],
+    queryFn: ({ pageParam }) => postProgramme({ ...(query as Record<string, unknown>), offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last: any, pages) => { const n = pages.reduce((s, p: any) => s + (p.items?.length ?? 0), 0); return n < (last.n ?? 0) ? n : undefined },
+    enabled: mode === 'criteres' && !!query,
+  })
 
   useEffect(() => {
     if (m22Prefill) {
       // le copilote pré-remplit le formulaire (mode critères) — on ne remplace QUE les champs fournis
       const fournis = Object.fromEntries(Object.entries(m22Prefill).filter(([, v]) => v != null))
-      setForm((f) => ({ ...f, ...fournis }))
+      const merged = { ...form, ...fournis } as typeof form
+      setForm(merged)
       setM22Prefill(null)
       setMode('criteres')
-      setTimeout(() => run.mutate(), 150)
+      lancer(merged, commune)   // relance directement sur le formulaire mergé (pas de setTimeout fragile)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m22Prefill])
@@ -46,16 +77,23 @@ export function M22() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parcelPrefill])
 
-  const d = run.data
-  // carte : résultats en mode critères, parcelle désignée en mode parcelle
+  const pages = (results.data?.pages ?? []) as Record<string, any>[]
+  const meta = pages[0]
+  const items = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
+  const total = meta?.n ?? 0
+  // « Tout charger » : enchaîne les pages jusqu'à épuisement.
   useEffect(() => {
-    const idus = mode === 'criteres'
-      ? ((d?.items ?? []) as Record<string, any>[]).map((i) => i.idu as string)
-      : (picked ? [picked] : [])
+    if (!chargeTout) return
+    if (results.hasNextPage && !results.isFetchingNextPage) results.fetchNextPage()
+    else if (!results.hasNextPage) setChargeTout(false)
+  }, [chargeTout, results.hasNextPage, results.isFetchingNextPage, results])
+  // carte : résultats en mode critères (accumulés), parcelle désignée en mode parcelle
+  useEffect(() => {
+    const idus = mode === 'criteres' ? items.map((i) => i.idu as string) : (picked ? [picked] : [])
     setModuleMap({ idus, extra: null })
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, d, picked])
+  }, [mode, results.dataUpdatedAt, picked])
 
   const F = (k: keyof typeof form, label: string, opts?: { min?: number; title?: string }) => (
     <label title={opts?.title} className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
@@ -96,33 +134,25 @@ export function M22() {
             {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
             {F('circulation_pct', 'Circulations & murs %', { min: 0, title: 'Surface perdue en circulations, murs et parties communes, ajoutée à la surface habitable pour obtenir la SDP (hypothèse ; défaut 20 %, bas de la fourchette 20-25 %).' })}
           </div>
-          <button onClick={() => run.mutate()} disabled={run.isPending}
+          <button onClick={() => lancer()} disabled={results.isLoading}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-            {run.isPending ? 'Calcul…' : 'Trouver les parcelles'}
+            {results.isLoading ? 'Calcul…' : 'Trouver les parcelles'}
           </button>
-          {d && (
+          {results.isError && <p className="text-[11px] text-st-ecartee">Recherche indisponible — réessayez.</p>}
+          {meta && (
             <>
-              <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
-                <div><b className="text-txt">{d.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-mint">{fmtInt(d.criteres.sdp_min_m2)} m²</b>
-                  <span className="text-txt-dim"> ({d.criteres.calcul})</span></div>
-                <div className="mt-0.5">{d.criteres.hauteur_regle}</div>
-                <div className="mt-1 text-[11px] leading-snug text-txt-dim">{d.bandeau}</div>
-              </div>
-              <div data-prog-count className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2">
-                <p className="text-[13px] leading-snug text-txt">
-                  <b className="num-key text-lg text-mint">{fmtInt(d.n)}</b>{' '}
-                  parcelle{d.n > 1 ? 's' : ''} correspond{d.n > 1 ? 'ent' : ''} à vos critères
-                  <span className="text-txt-dim">{commune ? ` à ${commune}` : ' (toute l’île)'}</span>
+              {/* PROGRAMME ÉPINGLÉ (mandat) — le récap reste STICKY en tête pendant le scroll des résultats :
+                  on sait toujours ce qu'on cherche. */}
+              <div data-prog-count className="sticky top-0 z-10 -mx-1 rounded-lg border border-mint/40 bg-surface-1/95 px-3 py-2 backdrop-blur">
+                <p className="text-[12px] leading-snug text-txt">
+                  <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
+                  <span className="text-txt-dim">{commune ? ` · ${commune}` : ' · toute l’île'}</span>
                 </p>
-                <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
-                  {d.n > (d.items as unknown[]).length
-                    ? `Total des correspondances (pas une limite) — les ${(d.items as unknown[]).length} premières, par marge de capacité décroissante, sont affichées.`
-                    : 'Triées par marge de capacité décroissante.'}
-                </p>
+                <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · triées par marge de capacité décroissante.</p>
               </div>
               <div className="flex flex-col gap-1.5">
-                {(d.items as Record<string, any>[]).map((i) => (
-                  <button key={i.idu} onClick={() => select(i.idu)}
+                {items.map((i) => (
+                  <button key={i.idu} data-prog-item onClick={() => select(i.idu)}
                     className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-mint/50">
                     <div className="min-w-0 flex-1">
                       <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}
@@ -143,6 +173,16 @@ export function M22() {
                   </button>
                 ))}
               </div>
+              {/* PAGINATION SOCLE + export CSV (client-side, mêmes colonnes que l'écran). */}
+              <ListPaginationFooter
+                className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut"
+                shown={items.length} total={total} step={meta.cap ?? 200}
+                onMore={() => results.fetchNextPage()} onAll={() => setChargeTout(true)}
+                allLabel={`Tout charger (${fmtInt(total)})`}>
+                {results.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
+                <button data-prog-csv onClick={() => exportProgrammeCsv(items)}
+                  className="ml-auto text-[11px] text-mint hover:underline">⬇ Exporter CSV</button>
+              </ListPaginationFooter>
             </>
           )}
         </>
