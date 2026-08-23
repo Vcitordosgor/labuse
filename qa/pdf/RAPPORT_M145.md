@@ -9,8 +9,9 @@ CC ne merge jamais.
 les MÊMES surfaces (vendable 4 652 m², plancher 5 815 m², 64-65 logts au sol). Coefficient local ~15 %
 supprimé (rendement 0,80 commun). Deux dates. « (Absent) » retiré. ⚠ gouverne le chiffre (titre + note
 AVANT). Marché : tendance héritée (« baisse »), effectif expliqué, artefact terrain écarté. Version 1.3.
-Tunnel : filet ROB-B au poll, spinner borné, pdf_path relatif. Partners : cartographié (ne génère pas
-de Flash).**
+Tunnel : filet ROB-B au poll, spinner borné, pdf_path relatif. Partners : ne génère PAS de Flash — les
+`FL000985-988` / IDU `974990FL33438E` viennent de la SUITE DE TESTS `test_audit_stripe.py` (effet de
+bord, hors comptabilité), pas du produit (voir la vérification post-cartographie ci-dessous).**
 
 ---
 
@@ -95,15 +96,43 @@ fichier** (relatif à `flash_storage_dir`). `flash_pdf_par_token` **résout à l
 sont résolues **par leur nom** dans le répertoire courant si l'absolu n'existe plus (autre
 machine/conteneur) → les liens de juillet survivent.
 
-## Cartographie du canal partners (hors périmètre)
+## D'où viennent réellement FL000985-988 / `974990FL33438E` (vérification post-cartographie)
 
-**Le canal partners NE génère PAS de Flash.** `partners.py` n'appelle jamais `generate_flash_report` /
-`collect_report_data` ; il n'emprunte à Flash que la **carte** (`flash.carte.IGN_ORTHO_URL`,
-`build_situation_map`) et `flash.report.storage_dir` pour la page de partage `/p/{token}`
-(`partners.py:383-384`). Les IDU sont **réels** (ou Cilaos pour la clé démo `demo-labuse-partner-key`,
-`partners.py:450-452`), **aucun IDU synthétique**. `FL000985-988` = simples commandes séquentielles
-(`order_ref = FL{id:06d}`, `facturation.py`), pas une variante partners. **Rien à corriger ici** (si un
-mandat le veut, c'est à part).
+**La première cartographie était FAUSSE (« commandes séquentielles » : contredit par la base). Le vrai
+chemin : la SUITE DE TESTS `tests/test_audit_stripe.py`, pas le produit.** Établi :
+
+- `flash_commandes` : ids **1-11**, séquence `last_value = 11`, aucun trou, tous IDU réels. `FL000985-988`
+  **n'ont jamais existé** dans cette table → ce ne sont ni des commandes clients, ni du canal partners.
+- `partners.py` **ne génère aucun Flash** (confirmé) : il n'emprunte que `build_situation_map` +
+  `storage_dir` pour `/p/{token}` (`partners.py:383-387`). Aucun `generate_flash_report`.
+- **L'IDU synthétique est fabriqué à `tests/test_audit_stripe.py:34`** :
+  `idu = f"974990FL{uuid.uuid4().hex[:6].upper()}"` — soit **exactement** `974990FL` + 6 hex =
+  `974990FL33438E`. La fixture `parcelle` INSÈRE une parcelle bidon (`commune='X'`, `section='ZZ'`) puis
+  la supprime (`:36-45`).
+- **Le PDF est généré pour de vrai** : les 4 tests Flash (`test_flash_recuperable_apres_onglet_ferme`,
+  `test_flash_token_ne_donne_que_son_pdf`, `test_flash_lien_expire_apres_30j`, + le test de reprise)
+  appellent `_flash_paye` (`:105-114`) → `traiter_webhook(checkout.session.completed)` → `_flash_fulfill`
+  → **`generate_flash_report`** → fichier `flash_FL{seq:06d}_974990FL……_v1.x.pdf` écrit dans
+  `storage_dir()`. Le `FL{seq:06d}` = la **valeur du SERIAL** au moment du test (984→988 sur le serveur
+  audité) ; les 4 tests → **FL000985 à 988**.
+
+**QUI** : la suite de tests du tunnel Flash (`test_audit_stripe.py`). **POURQUOI** : tester le tunnel de
+bout en bout (récupérable / cloisonné / expirable) — la génération du PDF est un **effet de bord réel**.
+
+**Le piège** : chaque test **supprime ses lignes** `flash_commandes` + `parcels` (d'où max id = 11) mais
+**ne supprime PAS le PDF généré** ni ne rembobine le SERIAL. Donc, exécutée **contre une base non
+éphémère** (le serveur, aujourd'hui 13:32), la suite : (1) **avance la séquence** des commandes Flash
+(les vraies commandes suivantes sautent 985-988 → trous de numérotation), (2) **laisse des PDF orphelins**
+dans `storage_dir` (aucune ligne DB en face). Le commentaire de la fixture (« sans polluer la base »,
+`:32-33`) est donc **incomplet** : il nettoie la DB, pas le système de fichiers ni le compteur.
+
+**Peut-il générer hors comptabilité en production ?** **Oui — mais uniquement via la suite de tests
+lancée contre une base prod/staging, jamais par le code applicatif.** `facturation`/`onboarding`/
+`partners` n'y touchent pas ; le `/flash` de production **valide l'IDU contre `parcels`**
+(`onboarding.py:570`), un `974990FL……` serait refusé. Il ne crée **aucune écriture comptable** (ligne
+supprimée → pas de revenu, pas de commande fantôme) — la pollution est : séquence avancée + fichiers
+orphelins. **Rien à corriger dans ce mandat** (le constat : isoler la base de test / faire nettoyer le
+fichier généré par la fixture — mandat à part si Vic le veut).
 
 ## Contrôles
 
