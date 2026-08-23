@@ -59,3 +59,20 @@ les objets brillants que le détecteur sur-déclenche (piscines, toits bleutés,
    trompe massivement.
 
 Pas de Phase 2 (pas de `pv_detecte` servi, pas de filtre « sans PV ») tant que (1) n'a pas livré.
+
+## 4. RENONCEMENT ACTÉ (Vic) + voie de reprise
+
+Décision : **le filtre « sans PV » ne se sert pas.** Exécuté :
+- **Purge** des 23 529 candidats V0 (`DELETE FROM ortho_detections WHERE type='pv'`) — ils ne fuiteront
+  plus dans aucune requête.
+- **Plus aucun `pv_*` servi** : retiré du payload `/ortho/equipements` (api/ortho.py) et des badges fiche
+  (Fiche.tsx « PV détecté » / « CES probable ») ; `materialiser_pv` mis en no-op ; colonnes
+  `parcel_equipements.pv_*` laissées INERTES avec un commentaire de schéma « ⚰️ mort deux fois ».
+- **L'outil Prospection solaire assume le manque** : le « i » dit « présence de panneaux existants non
+  détectée — vérification sur photo aérienne à la charge du démarcheur ». Un manque dit > un filtre faux.
+
+**Voie de reprise (à n'ouvrir QUE si des installateurs deviennent clients et le réclament) :**
+un **modèle de segmentation sémantique** (petit CNN type U-Net, tuiles ortho 20 cm) entraîné sur un
+**jeu étiqueté d'environ 500 toits PV annotés** (+ autant de non-PV, incluant les pièges : piscines,
+toits bleutés/tôle, serres, terrains de sport). C'est un **mandat de DONNÉE** (constitution + annotation
+du jeu) avant tout code — l'heuristique colorimétrique est un cul-de-sac prouvé, ne pas la relancer.

@@ -26,11 +26,12 @@ def get_db():
 
 @router.get("/equipements/{idu}")
 def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Badges fiche parcelle (Lot 6) : piscine, PV, CES, pente — sourcés ortho IGN."""
+    """Badges fiche parcelle (Lot 6) : piscine, pente — sourcés ortho IGN.
+    SOLAIRE M2 (renoncement) : PV/CES RETIRÉS du payload — la détection PV V0 (colorimétrie) est
+    ABANDONNÉE (précision 0 % mesurée, cf. qa/solaire/PV_PHASE1.md). Plus aucun pv_* servi."""
     row = db.execute(text("""
         SELECT pe.piscine, round(pe.piscine_surface_m2) AS piscine_m2,
-               pe.piscine_confiance, pe.pv_detecte, round(pe.pv_surface_m2) AS pv_m2,
-               pe.pv_probable_ces,
+               pe.piscine_confiance,
                t.pente_moy_deg, t.pente_non_batie_deg, t.flag_terrassement_lourd
         FROM parcels p
         LEFT JOIN parcel_equipements pe ON pe.idu = p.idu
