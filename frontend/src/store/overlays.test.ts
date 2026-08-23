@@ -10,7 +10,7 @@ beforeEach(() => {
   // baseline propre : aucun overlay, tiroir fermé, pas de sélection
   useApp.setState({
     compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null,
-    communesTableOpen: false, outilsOpen: false, module: null, view: 'cartes',
+    communesTableOpen: false, densifierTableOpen: false, outilsOpen: false, module: null, view: 'cartes',
   })
 })
 afterEach(() => vi.restoreAllMocks())
@@ -30,6 +30,16 @@ describe('cleanup on-leave centralisé', () => {
     st().openSources()
     expect(st().compareOpen).toBe(false)
     expect(st().communesTableOpen).toBe(false)
+  })
+
+  it('DENSIFIER : openDensifier ouvre le tableau + ferme les autres overlays ; setModule le referme', () => {
+    useApp.setState({ compareOpen: true, communesTableOpen: true })
+    st().openDensifier()
+    expect(st().densifierTableOpen).toBe(true)
+    expect(st().compareOpen).toBe(false)         // façon openCompare : ferme les autres
+    expect(st().communesTableOpen).toBe(false)
+    st().setModule('communes')                    // changement d'outil
+    expect(st().densifierTableOpen).toBe(false)   // overlay Densifier fermé (CLOSE_OVERLAYS)
   })
 
   it('setOpenProjet et toggleSurveillance ferment les overlays', () => {

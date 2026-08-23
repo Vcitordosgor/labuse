@@ -306,6 +306,13 @@ interface AppState {
   // restent dans le panneau ; seule la table déborde en grand. Communes.tsx est le seul contrôleur.
   communesTableOpen: boolean
   setCommunesTableOpen: (v: boolean) => void
+  // DENSIFIER (refonte 13 outils) — l'outil « Densifier l'existant » ouvre son GRAND tableau
+  // (67 214 parcelles) en overlay plein écran, même patron que Comparaison/Communes. Piloté par ce
+  // drapeau ; overlay monté au niveau App, contrôleur = Renouvellement.tsx. Ajouté à CLOSE_OVERLAYS
+  // (se ferme au changement d'outil/route) ; s'ouvre via openDensifier() façon openCompare().
+  densifierTableOpen: boolean
+  setDensifierTableOpen: (v: boolean) => void
+  openDensifier: () => void
   // Drawer source (depuis une ligne de fiche) : jamais un cul-de-sac, la fiche reste ouverte dessous.
   sourceLine: FicheLine | null
   openSourceDrawer: (line: FicheLine) => void
@@ -388,7 +395,7 @@ interface AppState {
 // overlay plein écran = l'ajouter ICI, une seule fois (plus de reset recopié — et oublié — dans un
 // handler sur deux, la cause du « panneau fantôme » constaté). NB : la SÉLECTION (compareIdus) n'y
 // est pas touchée — elle survit à la sortie, bornée par le TTL ci-dessous.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false } as const
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, densifierTableOpen: false } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -586,6 +593,10 @@ export const useApp = create<AppState>((set) => ({
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,
   setCommunesTableOpen: (communesTableOpen) => set({ communesTableOpen }),
+  densifierTableOpen: false,
+  setDensifierTableOpen: (densifierTableOpen) => set({ densifierTableOpen }),
+  // façon openCompare : ouvre le grand tableau ET ferme les autres overlays plein écran.
+  openDensifier: () => set({ ...CLOSE_OVERLAYS, densifierTableOpen: true }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
@@ -604,7 +615,7 @@ export const useApp = create<AppState>((set) => ({
   // §1b — « une seule recherche vivante » : ouvrir un autre outil FERME le bandeau Comparer
   // (compareOpen/comparePicking), qui sinon persistait. `comparer` s'ouvre par setCompareOpen
   // (Rail, cas spécial), jamais par setModule → aucune course.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, compareOpen: false, comparePicking: false, communesTableOpen: false }),
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, ...CLOSE_OVERLAYS }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   cmpLeft: 'bm-ortho-1950',
