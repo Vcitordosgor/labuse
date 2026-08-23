@@ -367,6 +367,11 @@ interface AppState {
   // (consommé-puis-reset au montage). Le « N particuliers » devient un geste, plus un cul-de-sac.
   courrierPrefill: string | null
   setCourrierPrefill: (s: string | null) => void
+  // COURRIER-SERVICE (refonte 13 outils) — import EN UN GESTE de PLUSIEURS parcelles vers le Courrier
+  // (« les 3 parcelles » depuis Assemblage, un lot depuis Pièges). Consommé-puis-reset au montage,
+  // prioritaire sur le prefill mono. Le pont Assemblage (mandat ASSEMBLAGE) pose ce champ + module.
+  courrierPrefillIdus: string[] | null
+  setCourrierPrefillIdus: (s: string[] | null) => void
   // M-ENTREE — amorçage parcelle PARTAGÉ (un seul motif, plusieurs consommateurs) : Faisabilité
   // (M22, mode « par parcelle ») et Assemblage (M16, 1ʳᵉ du lot). Consommation-puis-reset : la porte
   // fait setParcelPrefill(idu)+setModule(clé) ; l'outil lit parcelPrefill AU MONTAGE, l'amorce à sa
@@ -642,6 +647,8 @@ export const useApp = create<AppState>((set) => ({
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   courrierPrefill: null,
   setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
+  courrierPrefillIdus: null,
+  setCourrierPrefillIdus: (courrierPrefillIdus) => set({ courrierPrefillIdus }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
   communePrefill: null,

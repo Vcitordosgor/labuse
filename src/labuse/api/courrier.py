@@ -59,12 +59,102 @@ def courrier_envoyer(body: EnvoiIn, request: Request, db: Session = Depends(get_
         raise HTTPException(422, str(exc))
 
 
-# M82 (option B, arbitrage Vic) — la route « /demande » et la table dead-letter `courrier_demandes`
-# ont été RETIRÉES : aucune promesse d'envoi ni de traitement (personne ne lisait la file). L'outil
-# ne fait plus que GÉNÉRER le courrier, téléchargeable en PDF (voir /pdf) — le client l'envoie lui-même.
-# Le canal d'envoi prestataire (/envois, courrier.envoyer) reste en code, DORMANT, pour rouvrir l'option
-# A quand un client le demandera. La table physique `courrier_demandes` (~2 lignes) peut être droppée
-# en maintenance ; plus aucune écriture ne la vise.
+# COURRIER-SERVICE (refonte 13 outils) — la route « /demande » et la table `courrier_demandes`
+# REVIENNENT : le client prépare (destinataires + rédaction), puis DEMANDE l'envoi à LABUSE. À chaque
+# demande, Vic est notifié par les CANAUX EXISTANTS (cloche event_log `systeme` + e-mail Brevo) ; il
+# rappelle, confirme le tarif au téléphone, et fait avancer le statut depuis la vue admin. Aucun envoi
+# automatique, aucun prix affiché côté client (garde-fous du mandat).
+
+def _client_label(db: Session, cid: int | None) -> str:
+    if cid is None:
+        return "Un client"
+    nom = db.execute(text("SELECT nom FROM comptes WHERE id = :c"), {"c": cid}).scalar()
+    return nom or f"Compte #{cid}"
+
+
+class DemandeIn(BaseModel):
+    parcelles: list[str] = Field(min_length=1, max_length=500)
+    modele: str | None = None
+    corps: str = Field(min_length=10, max_length=8000)
+    communes: str | None = None               # récap lisible « Saint-Denis ×1 · Saint-Paul ×2 »
+
+
+@router.post("/demande")
+def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Le client DEMANDE l'envoi de N courriers. Enregistre la demande (statut « Demandé »), puis
+    notifie Vic sur les canaux EXISTANTS (cloche + Brevo). La notif ne peut jamais faire échouer la
+    demande (elle est déjà enregistrée)."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    parcelles = [p.strip() for p in body.parcelles if p.strip()]
+    if not parcelles:
+        raise HTTPException(422, "aucune parcelle valide dans la demande.")
+    d = courrier.creer_demande(db, compte_id=cid, parcelles=parcelles,
+                               communes=body.communes, modele=body.modele, corps=body.corps)
+    db.commit()
+    client = _client_label(db, cid)
+    com = f" ({body.communes})" if body.communes else ""
+    titre = f"{client} demande l'envoi de {d['n']} courrier{'s' if d['n'] > 1 else ''}{com}"
+    # ① CLOCHE — event_log `systeme`, compte NULL = feed pilote/admin (invisible aux clients ; jamais
+    #    exclu du filtre cloche). Même patron que notifier_fraicheur.
+    try:
+        from .events import creer_notification
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=titre, detail=(body.corps or "")[:280], lien="/courrier/admin",
+                           dedup=f"courrier:demande:{d['id']}", permanent=True)
+        db.commit()
+    except Exception:
+        db.rollback()   # la notif est best-effort — la demande reste enregistrée
+    # ② E-MAIL BREVO à Vic — async (ne bloque pas la requête). Destinataire = admin_email (repli from).
+    try:
+        from ..config import get_settings
+        from ..mail import send_email_async
+        s = get_settings()
+        dest = s.admin_email or s.mail_from
+        if dest:
+            corps_mail = (f"{titre}\n\nParcelles ({d['n']}) : {', '.join(parcelles)}\n\n"
+                          f"Corps du courrier :\n{body.corps}\n\n"
+                          f"→ Vue admin /courrier/admin : rappeler le client, confirmer le tarif, "
+                          f"puis faire avancer le statut (Demandé → Tarif confirmé → Envoyé).")
+            send_email_async(dest, f"[LABUSE] {titre}", corps_mail)
+    except Exception:
+        pass
+    return {"ok": True, **d}
+
+
+@router.get("/demandes")
+def courrier_demandes(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Les demandes DU client courant — timeline de statut (Demandé → Tarif confirmé → Envoyé)."""
+    from .tenant import current_compte
+    return {"demandes": courrier.demandes_de(db, current_compte(request))}
+
+
+@router.get("/admin/demandes")
+def courrier_admin_demandes(request: Request, statut: str | None = None,
+                            db: Session = Depends(get_db)) -> dict:
+    """Vue admin (Vic) : liste des demandes (client, n, communes, corps, date, statut)."""
+    from . import auth
+    auth.exiger_admin(request)
+    return {"demandes": courrier.demandes_admin(db, statut), "statuts": list(courrier.STATUTS_DEMANDE)}
+
+
+class StatutIn(BaseModel):
+    statut: str
+
+
+@router.post("/admin/demandes/{demande_id}/statut")
+def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
+                          db: Session = Depends(get_db)) -> dict:
+    """Vic fait avancer le statut d'une demande (après le rappel tarif). Le client le voit via
+    /courrier/demandes (sa timeline)."""
+    from . import auth
+    auth.exiger_admin(request)
+    try:
+        d = courrier.set_statut_demande(db, demande_id, body.statut)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    return {"ok": True, **d}
 
 
 class PdfIn(BaseModel):

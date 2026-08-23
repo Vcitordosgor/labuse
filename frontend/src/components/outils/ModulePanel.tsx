@@ -1,13 +1,14 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getFiche, modBailleur, modCourriers, modDueDiligence, modFantome,
-  modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
-  modPromesses, modPromessesCount, modVelocite,
+  courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
+  modDueDiligence, modFantome, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
+  modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
+import { iduComplet, iduCourt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -689,125 +690,226 @@ function M08() {
 // M09 — parcours GUIDÉ en 4 étapes (parcelle → motif → rédaction → demande). C'est une DEMANDE
 // d'envoi (l'équipe LABUSE la traite), pas un envoi auto. Le brouillon est GROUNDÉ (faits réels de
 // la parcelle, gabarit serveur) et ÉDITABLE. Privacy : adressage générique, aucun particulier nommé.
-const MOTIFS: { key: string; label: string; desc: string }[] = [
-  { key: 'standard', label: 'Approche standard', desc: 'prise de contact foncière' },
-  { key: 'indivision', label: 'Indivision', desc: 'plusieurs co-indivisaires' },
-  { key: 'succession', label: 'Succession', desc: 'bien en cours de succession' },
+// COURRIER-SERVICE (refonte 13 outils) — modèles à VARIABLES ({parcelle} {commune} {surface}
+// remplacées PAR courrier, un courrier par destinataire). Adressage générique conservé (SPF/CERFA
+// côté LABUSE), aucune identité de propriétaire particulier.
+const TEMPLATES: { key: string; label: string; corps: string }[] = [
+  { key: 'standard', label: 'Approche standard',
+    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
+      + 'Votre parcelle cadastrée {parcelle} ({surface}), située à {commune}, présente à notre analyse '
+      + 'un réel potentiel. Nous accompagnons des porteurs de projets locaux et serions heureux '
+      + "d'échanger avec vous, sans aucun engagement, sur les possibilités qu'offre votre bien — y "
+      + "compris si vous n'envisagez pas de vendre à court terme.\n\nNous restons à votre disposition."
+      + '\n\nCordialement,' },
+  { key: 'dormance', label: 'Dormance / succession',
+    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
+      + "Votre parcelle {parcelle} ({surface}) à {commune} paraît aujourd'hui peu mobilisée. Si elle "
+      + "relève d'une succession ou d'une indivision, sa valorisation peut soulever des questions ; "
+      + 'nous accompagnons ce type de situation, sans engagement de votre part, et serions heureux '
+      + "d'en parler avec vous.\n\nBien cordialement," },
+  { key: 'voisin', label: 'Voisin direct',
+    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
+      + 'Nous étudions un projet à proximité immédiate de votre parcelle {parcelle} ({surface}) à '
+      + "{commune}. Votre bien s'y intégrerait naturellement ; nous serions heureux d'échanger avec "
+      + 'vous, sans aucun engagement, sur les possibilités.\n\nCordialement,' },
+  { key: 'libre', label: 'Libre', corps: '' },
 ]
+type Dest = { idu: string; commune: string; surface: number | null }
+// statuts visibles côté client (mandat) — l'ordre EST la timeline.
+const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['tarif_confirme', 'Tarif confirmé'], ['envoye', 'Envoyé']]
 
-/** M54-EXPO-2 Volet C — statut prestataire courrier + journal des envois, affichés là où le
- *  module M09 vit. Rend visible ce que le silence cachait : provider actif et suivi des envois. */
-function M09() {
+/** COURRIER-SERVICE (refonte 13 outils) — l'outil devient un SERVICE : le client prépare
+ *  (① destinataires ② rédaction), puis ③ DEMANDE l'envoi à LABUSE. Trois étapes, variables par
+ *  courrier, statut visible (Demandé → Tarif confirmé → Envoyé). PDF relégué en aperçu de relecture.
+ *  Exporté pour test (le flux service est le cœur du mandat COURRIER). */
+export function M09() {
+  const qc = useQueryClient()
   const selectedIdu = useApp((s) => s.selectedIdu)
+  const msel = useApp((s) => s.msel)
   const courrierPrefill = useApp((s) => s.courrierPrefill)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)
-  const [step, setStep] = useState(1)
-  const [idu, setIdu] = useState(courrierPrefill ?? selectedIdu ?? '')
-  // Assemblage → Courrier : IDU pré-rempli d'une parcelle de l'assiette (consommé-puis-reset AU
-  // MONTAGE, prioritaire sur selectedIdu qui peut pointer une autre parcelle du lot).
-  useEffect(() => { if (courrierPrefill) { setIdu(courrierPrefill); setCourrierPrefill(null) } }, [])   // eslint-disable-line react-hooks/exhaustive-deps
-  // M20-A : le module reflète la parcelle sélectionnée tant qu'on est à l'étape « Parcelle »
-  // (ouverture depuis la tuile Courrier d'une fiche déjà affichée, ou clic d'une autre parcelle
-  // sur la carte). Vaut pour LES DEUX points d'entrée (fiche + Outils) — aucune divergence.
-  useEffect(() => { if (selectedIdu && step === 1 && !courrierPrefill) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
-  const [motif, setMotif] = useState('standard')
-  const [texte, setTexte] = useState('')
-  const gen = useMutation({
-    mutationFn: () => modCourriers([idu.trim()], motif),
-    onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
-  })
+  const courrierPrefillIdus = useApp((s) => s.courrierPrefillIdus)
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
+
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [dest, setDest] = useState<Dest[]>([])
+  const [modele, setModele] = useState('standard')
+  const [corps, setCorps] = useState(TEMPLATES[0].corps)
+  const [demande, setDemande] = useState<{ id: number; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
-  const telecharger = async () => {
+
+  // Ajoute un destinataire (dédupliqué), puis enrichit commune + surface depuis la fiche (cache partagé).
+  const ajouter = (raw: string) => {
+    const id = iduComplet(raw).toUpperCase()
+    if (id.length < 10) return
+    setDest((prev) => prev.some((d) => d.idu === id) ? prev : [...prev, { idu: id, commune: '', surface: null }])
+    qc.fetchQuery({ queryKey: ['fiche', id], queryFn: () => getFiche(id) })
+      .then((f) => setDest((prev) => prev.map((d) => d.idu === id ? { ...d, commune: f.commune, surface: f.surface_m2 } : d)))
+      .catch(() => { /* parcelle introuvable : la chip reste, commune inconnue (jamais inventée) */ })
+  }
+  const retirer = (id: string) => setDest((prev) => prev.filter((d) => d.idu !== id))
+
+  // Import EN UN GESTE au montage : Assemblage (courrierPrefillIdus) > tuile fiche mono > parcelle sélectionnée.
+  useEffect(() => {
+    const seed = courrierPrefillIdus?.length ? courrierPrefillIdus
+      : courrierPrefill ? [courrierPrefill] : selectedIdu ? [selectedIdu] : []
+    if (courrierPrefillIdus) setCourrierPrefillIdus(null)
+    if (courrierPrefill) setCourrierPrefill(null)
+    seed.forEach(ajouter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const choisirModele = (k: string) => {
+    setModele(k)
+    setCorps(TEMPLATES.find((t) => t.key === k)?.corps ?? '')
+  }
+  // substitution des variables (split/join = pas de dépendance à String.replaceAll / target ≥ es2021).
+  const rep = (s: string, a: string, b: string) => s.split(a).join(b)
+  const remplir = (tpl: string, d: Dest) => rep(rep(rep(tpl,
+    '{parcelle}', iduCourt(d.idu)),
+    '{commune}', d.commune || '—'),
+    '{surface}', d.surface != null ? `${fmtInt(d.surface)} m²` : '—')
+  const recapCommunes = () => {
+    const c: Record<string, number> = {}
+    dest.forEach((d) => { const k = d.commune || '—'; c[k] = (c[k] || 0) + 1 })
+    return Object.entries(c).map(([k, n]) => `${k} ×${n}`).join(' · ')
+  }
+
+  const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
+  const envoyer = useMutation({
+    mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes()),
+    onSuccess: (d) => { setDemande(d); qc.invalidateQueries({ queryKey: ['courrier-demandes'] }) },
+  })
+  const apercuPdf = async () => {
+    const first = dest[0]; if (!first) return
     setPdfBusy(true); setPdfErr(null)
-    // Un échec de génération se DIT à l'écran (avant : `catch {}` silencieux → le bouton ne faisait
-    // rien, sans message — c'est ce qui a masqué le PDF cassé). Jamais d'échec muet.
-    try { await courrierPdf(idu.trim() || null, motif, texte) }
-    catch { setPdfErr('Le téléchargement du PDF a échoué. Réessayez ; si le problème persiste, signalez-le.') }
+    try { await courrierPdf(first.idu, modele, remplir(corps, first)) }
+    catch { setPdfErr('Le téléchargement du PDF a échoué. Réessayez.') }
     finally { setPdfBusy(false) }
   }
-  const Stepper = () => (
-    <div className="flex items-center gap-1 text-[10px]">
-      {['Parcelle', 'Motif', 'Rédaction', 'Courrier'].map((l, i) => (
-        <div key={l} className={`flex items-center gap-1 ${step === i + 1 ? 'text-mint' : step > i + 1 ? 'text-mint' : 'text-txt-dim'}`}>
-          <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step === i + 1 ? 'border-mint' : step > i + 1 ? 'border-mint' : 'border-line-2'}`}>{step > i + 1 ? '✓' : i + 1}</span>
-          {l}{i < 3 && <span className="text-txt-dim">›</span>}
-        </div>
-      ))}
-    </div>
-  )
+
+  const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Rédaction'], [3, 'Envoi']]
+  const statutRang = (s: string) => COURRIER_STATUTS.findIndex(([k]) => k === s)
+
   return (
-    <>
-      {/* M82 (option B, arbitrage Vic) : l'outil GÉNÈRE le courrier, téléchargeable en PDF — le client
-           l'envoie lui-même. Aucune promesse d'envoi ni de traitement (le canal postal n'existe pas). */}
-      <Banner>Cet outil <b>rédige votre courrier</b> (faits réels de la parcelle) — vous le
-        <b> téléchargez en PDF et l'envoyez vous-même</b>. Adressage générique : aucune identité de
-        propriétaire particulier (workflow SPF/CERFA).</Banner>
-      <Stepper />
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
+        <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
+        de propriétaire particulier.</Banner>
+      {/* stepper 3 étapes */}
+      <div className="flex items-center gap-1 text-[10px]">
+        {STEPS.map(([n, l], i) => (
+          <div key={n} className={`flex items-center gap-1 ${step >= n ? 'text-mint' : 'text-txt-dim'}`}>
+            <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step >= n ? 'border-mint' : 'border-line-2'}`}>{step > n ? '✓' : n}</span>
+            {n} · {l}{i < 2 && <span className="text-txt-dim">›</span>}
+          </div>
+        ))}
+      </div>
 
       {step === 1 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Parcelle concernée — <b>un seul champ</b> : une adresse
-            ou un IDU (ou cliquez une parcelle sur la carte).</p>
-          {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
-              carte est déjà capté par l'effet selectedIdu (étape 1) → withCarte inutile ici. */}
-          <ParcelInput dataAttr="courrier-idu" withCarte={false} placeholder="Adresse ou IDU — 97415000CW0658"
-            onPick={(id) => setIdu(id)} />
-          <button data-courrier-next onClick={() => idu.trim().length >= 10 && setStep(2)} disabled={idu.trim().length < 10}
-            className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Suivant ›</button>
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
+          <ParcelInput dataAttr="courrier-idu" withCarte={false} placeholder="Adresse ou IDU — puis Entrée"
+            onPick={ajouter} />
+          {msel.length > 0 && (
+            <button data-courrier-import onClick={() => msel.forEach(ajouter)}
+              className="self-start text-[11px] font-medium text-mint hover:underline">+ Importer depuis Assemblage ({msel.length})</button>
+          )}
+          {dest.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {dest.map((d) => (
+                <span key={d.idu} data-courrier-dest className="flex items-center gap-1.5 rounded-lg border border-mint/50 bg-surface-2 px-2 py-1 text-[11px]">
+                  <span className="font-mono text-txt">{iduCourt(d.idu)}</span>
+                  {d.commune && <span className="text-txt-dim">{d.commune}</span>}
+                  <button onClick={() => retirer(d.idu)} className="text-txt-dim hover:text-st-ecartee" aria-label="Retirer">✕</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
+          <button data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
+            className="mt-auto rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Rédiger ›</button>
         </div>
       )}
 
       {step === 2 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Motif de l'approche :</p>
-          {MOTIFS.map((m) => (
-            <button key={m.key} data-courrier-motif={m.key} onClick={() => setMotif(m.key)}
-              className={`rounded-lg border px-3 py-2 text-left ${motif === m.key ? 'border-mint bg-mint/[0.08]' : 'border-line-2 bg-surface-3'}`}>
-              <div className="text-[11px] font-medium text-txt">{m.label}</div>
-              <div className="text-[10.5px] text-txt-dim">{m.desc}</div>
-            </button>
-          ))}
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <div className="flex flex-wrap gap-1">
+            {TEMPLATES.map((t) => (
+              <button key={t.key} data-courrier-modele={t.key} onClick={() => choisirModele(t.key)}
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-quick ${modele === t.key ? 'border-mint bg-mint/[0.12] text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <textarea data-courrier-texte value={corps} onChange={(e) => setCorps(e.target.value)}
+            placeholder="Votre courrier… (variables {parcelle} {commune} {surface})"
+            className="min-h-[160px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-mint focus:outline-none" />
+          <p className="text-[9.5px] text-txt-dim"><b className="text-txt-mut">{'{parcelle} {commune} {surface}'}</b> — remplacés par courrier (un courrier généré par destinataire).</p>
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
-            <button data-courrier-next onClick={() => gen.mutate()} disabled={gen.isPending}
-              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-              {gen.isPending ? 'Rédaction…' : 'Rédiger le brouillon ›'}</button>
+            <button data-courrier-next onClick={() => setStep(3)} disabled={corps.trim().length < 10}
+              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Vérifier l'envoi ›</button>
           </div>
         </div>
       )}
 
       {step === 3 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Brouillon (faits réels de la parcelle) — <b>éditable</b> :</p>
-          <textarea data-courrier-texte value={texte} onChange={(e) => setTexte(e.target.value)}
-            className="min-h-[180px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-mint focus:outline-none" />
-          <div className="flex gap-2">
-            <button onClick={() => setStep(2)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
-            <button data-courrier-next onClick={() => setStep(4)} disabled={texte.trim().length < 10}
-              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Prévisualiser ›</button>
+          {/* récap */}
+          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+            <div className="flex justify-between"><span className="text-txt-mut">Courriers</span><b className="tnum text-txt">{dest.length}</b></div>
+            <div className="flex justify-between gap-2"><span className="text-txt-mut">Communes</span><span className="text-right text-txt">{recapCommunes() || '—'}</span></div>
+            <div className="flex justify-between"><span className="text-txt-mut">Adressage</span><span className="text-txt-dim">générique (SPF/CERFA)</span></div>
           </div>
-        </div>
-      )}
 
-      {step === 4 && (
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Aperçu — {MOTIFS.find((m) => m.key === motif)?.label} · {idu}</p>
-          <div data-courrier-apercu className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-1 p-3 text-[11px] leading-snug text-txt">{texte}</div>
-          {/* M82 : action PRIMAIRE = télécharger le PDF (le client l'envoie lui-même, utile tout de
-               suite). L'enregistrement d'une demande reste offert, honnêtement (file, envoi ultérieur). */}
-          <button data-courrier-pdf onClick={telecharger} disabled={pdfBusy || texte.trim().length < 10}
-            className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-            {pdfBusy ? 'Génération…' : '⬇ Télécharger le courrier (PDF)'}</button>
+          {!demande ? (
+            <button data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending}
+              className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+              {envoyer.isPending ? 'Envoi de la demande…' : "Demander l'envoi à LABUSE"}</button>
+          ) : (
+            <div data-courrier-confirm className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[11px] leading-snug text-txt-mut">
+              <b className="text-mint">✓ Demande transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
+              impression, mise sous pli, affranchissement et suivi compris.
+            </div>
+          )}
+          {envoyer.isError && <p className="text-[10.5px] text-st-ecartee">La demande n'a pas pu être transmise — réessayez.</p>}
+
+          {/* timeline de statut */}
+          {demande && (
+            <div className="flex items-center gap-1 text-[10px]">
+              {COURRIER_STATUTS.map(([k, l], i) => (
+                <div key={k} className={`flex items-center gap-1 ${statutRang(demande.statut) >= i ? 'text-mint' : 'text-txt-dim'}`}>
+                  <span>{statutRang(demande.statut) >= i ? '●' : '○'}</span>{l}{i < 2 && <span className="text-txt-dim">›</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
+          <button data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0}
+            className="self-start text-[11px] text-txt-mut hover:text-mint disabled:opacity-40">
+            {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</button>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
-          <div className="flex gap-2">
-            <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
-            <button onClick={() => { setStep(1); setIdu(''); setTexte('') }}
-              className="flex-1 rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">Nouveau courrier</button>
-          </div>
+
+          {/* demandes récentes (leur statut suit ce que Vic passe) */}
+          {(demandes.data?.demandes.length ?? 0) > 0 && (
+            <div className="mt-1 flex flex-col gap-1">
+              <p className="label-caps text-[9px]">Vos demandes</p>
+              {demandes.data!.demandes.slice(0, 5).map((d) => (
+                <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
+                  <span className="min-w-0 truncate text-txt-mut">{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
+                  <span className="shrink-0 text-mint">{COURRIER_STATUTS.find(([k]) => k === d.statut)?.[1] ?? d.statut}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button onClick={() => setStep(1)} className="mt-auto self-start text-[11px] text-txt-mut hover:text-txt">‹ Retour aux destinataires</button>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

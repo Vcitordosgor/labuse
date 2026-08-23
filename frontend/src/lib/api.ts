@@ -716,6 +716,17 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
   // téléchargement n'a pas encore lu le blob → « échoue » par intermittence. On diffère le nettoyage.
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url) }, 4000)
 }
+// COURRIER-SERVICE (refonte 13 outils) — le client DEMANDE l'envoi ; LABUSE est notifié (cloche +
+// Brevo), rappelle, confirme le tarif, fait avancer le statut. Aucun prix affiché côté client.
+export interface CourrierDemande {
+  id: number; ts: string; n: number; communes: string | null; modele: string | null
+  statut: string; updated_at: string
+}
+export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null) =>
+  j<{ ok: boolean; id: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parcelles, corps, modele, communes }) })
+export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
