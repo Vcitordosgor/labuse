@@ -520,33 +520,18 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         </div>
       </div>
 
-      {/* ═══════ 4 · LE BIEN (M129-D P3) — l'ÉTAT du bien et son propriétaire, pas des événements
-          datés : droits résiduels (les deux états du bâti, fait M125) · propriétaire public · assemblage
-          même proprio. FILTRE-NETTOYAGE #4 : ces 4 facettes QUITTENT « Signaux de vie » (elles y étaient
-          visuellement collées) et prennent leur propre titre — elles restent dans le produit, ici.
-          Mêmes libellés que la fiche, jamais un slug. M129-C : « Divisible » retirée (division hors produit). */}
-      <div data-le-bien className="mt-4">
-        <TitreSection titre="4 · Le bien"
-          info="L'état du bien et son propriétaire — des faits (pas des événements datés) : ce qu'il reste à construire, un propriétaire public, un même propriétaire sur plusieurs parcelles voisines." />
-        <div className="gcard mt-2 flex flex-wrap items-center gap-1.5 p-3">
-          {([['encore', 'On peut encore construire'], ['maximum', 'Construite au maximum']] as const).map(([k, lbl]) => (
-            <Chip key={k} on={filters.droitsResiduels.includes(k)}
-              onClick={() => setFilter('droitsResiduels', (filters.droitsResiduels.includes(k)
-                ? filters.droitsResiduels.filter((x) => x !== k) : [...filters.droitsResiduels, k]) as never)}>
-              {lbl}
-            </Chip>
-          ))}
-          <Chip on={filters.proprietaireType.includes('public')}
-            onClick={() => setFilter('proprietaireType', (filters.proprietaireType.includes('public')
-              ? filters.proprietaireType.filter((x) => x !== 'public') : [...filters.proprietaireType, 'public']) as never)}>
-            Propriétaire public
-          </Chip>
-          {/* « Assemblage même proprio » relocalisé ici (état du bien) — reste un signal backend
-              (filters.signaux), rendu via SignalChip pour garder son « i » et son câblage carte. */}
-          <SignalChip k="assemblage" />
-          {/* M129-C : « Divisible » retirée (division_or dormant, Vic 19/08/2026) */}
-        </div>
-      </div>
+      {/* ═══════ SECTION « LE BIEN » RETIRÉE DU PANNEAU (FILTRE, Vic 23/08/2026) ═══════
+          Les 4 facettes M137 (« On peut encore construire » / « Construite au maximum » = droitsResiduels ;
+          « Propriétaire public » = proprietaireType 'public' ; « Assemblage même proprio » = signaux
+          'assemblage') NE S'AFFICHENT PLUS ici. Le BACKEND ne bouge pas — les critères restent servis
+          pour qui les demande (api.ts envoie toujours droits_residuels / proprietaire_type / signaux).
+          ACCÈS RESTANTS après retrait :
+            · 'assemblage' → toujours posable par le COPILOTE (compter_parcelles, param signaux ; setFilters
+              direct, hors hash) + deep-link URL — PAS orphelin.
+            · droitsResiduels ('encore'/'maximum') et proprietaireType 'public' → PLUS AUCUNE UI ni route
+              Copilote (seul le deep-link URL les porte encore). Le panneau était leur SEUL accès visible.
+          NETTOYAGE de l'état résiduel : App.tsx purge ces 3 clés à la restauration depuis l'URL, pour
+          qu'aucun filtre coché avant le retrait ne reste actif sans contrôle pour le décocher. */}
 
       {/* ═══════ COMPTEUR VIVANT (stage 7) — visible dès qu'un filtre est posé ═══════ */}
       {nActifs > 0 && (
