@@ -1,0 +1,3 @@
+# Outil « Prospection solaire » (V1 restitution) — cap de la liste servie.
+# EN CONFIG, jamais un LIMIT muet : l'écran DIT « les N premières sur M » (leçon M120-B).
+liste_max: 500
