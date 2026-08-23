@@ -39,6 +39,28 @@ def test_identification_rend_sans_nameerror_avec_et_sans_marque():
         assert "Lettre de vérification de zonage" in html
 
 
+def test_identification_sans_compte_pas_de_reference_officielle():
+    """M149 L1 : sans compte (ref None), la couverture se rend mais SANS numéro officiel —
+    mention explicite « sans référence enregistrée », jamais un « Référence LZ-… » fabriqué."""
+    p = {"idu": "97411000AB0001", "section": "AB", "numero": "1", "commune": "Saint-Paul",
+         "surface_m2": 812.0, "geojson": '{"type":"Point","coordinates":[55.3,-21.0]}'}
+    html = lz._identification(p, {}, None, None)
+    assert "sans référence enregistrée" in html
+    assert "Référence <b>" not in html          # aucun numéro officiel forgé sans compte
+
+
+def test_cloture_avec_et_sans_reference():
+    """M149 L1 : avec réf → attestation numérotée vérifiable ; sans réf → dit clairement que
+    ce n'est PAS une attestation numérotée (pas d'émission par accident)."""
+    avec = lz._cloture("LZ-2026-0001")
+    assert "Attestation documentaire n°" in avec and "LZ-2026-0001" in avec
+    assert "vérifier l'authenticité" in avec
+    sans = lz._cloture(None)
+    assert "sans référence enregistrée" in sans
+    assert "n'est pas une attestation numérotée" in sans
+    assert "LZ-" not in sans                     # aucun numéro affiché sans compte
+
+
 def test_limites_texte_exact_et_jamais_opposable():
     html = lz._limites({"sources": []})
     assert "art. L.410-1" in html and "seul opposable" in html

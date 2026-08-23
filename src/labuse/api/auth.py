@@ -98,6 +98,26 @@ def exiger_secret_prod() -> None:
             "Posez-la dans /etc/labuse/labuse.env (openssl rand -hex 32) puis redémarrez.")
 
 
+def exiger_env_deploiement() -> None:
+    """Fail-closed SYMÉTRIQUE de `exiger_secret_prod` (M149 L2, audit M148 F4). Le risque : un
+    déploiement laissé par erreur en `env='local'` désactive TOUTE l'auth (`enabled()` False) et
+    ouvre les routes métier — dont l'émission d'attestations au nom de LABUSE.
+
+    Signal fiable d'un déploiement : `LABUSE_SECRET_KEY` posée. Un dev tourne sur la clé éphémère
+    (défaut documenté en 'local') ; TOUT déploiement pose la clé (exigée par `exiger_secret_prod`
+    hors local, et présente dans les deux exemples pilote/production). Donc `secret_key` + `env=local`
+    = configuration de déploiement incohérente → on REFUSE de démarrer plutôt que d'ouvrir. Invariant :
+    clé de signature persistante ⟺ environnement de déploiement."""
+    s = get_settings()
+    if s.env == "local" and s.secret_key:
+        raise RuntimeError(
+            "LABUSE_ENV='local' alors que LABUSE_SECRET_KEY est posée : configuration de "
+            "déploiement incohérente. En 'local' l'authentification est DÉSACTIVÉE (toutes les "
+            "routes métier ouvertes, y compris l'émission d'attestations). Posez "
+            "LABUSE_ENV=pilot|production, ou retirez LABUSE_SECRET_KEY en développement. "
+            "Démarrage refusé (fail-closed).")
+
+
 def _sign(payload: str) -> str:
     return hmac.new(_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
