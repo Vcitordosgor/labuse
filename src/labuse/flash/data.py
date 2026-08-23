@@ -208,6 +208,32 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
 
 def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
     out: dict[str, Any] = {}
+    # M145 — LA SURFACE VIENT DU MOTEUR COMMUN, plus d'un générateur parallèle. Le résiduel BRUT plein
+    # gabarit (`parcel_residuel`) ne pilote plus le héros ; on sert le SCÉNARIO RETENU (au sol, post-M144)
+    # via `parcel_faisabilite` — EXACTEMENT ce que chiffrent la fiche, le dossier banquier et
+    # l'argumentaire : `shab_vendable` au sol, plancher = vendable ÷ rendement (0,80, valeur testée de la
+    # chaîne commune, AUCUNE constante propre à Flash). Deux dates via `_residuel_run_servi` (flag servi).
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid:
+        try:
+            from ..api.projets import _residuel_run_servi
+            from ..faisabilite.db import parcel_faisabilite
+            from ..faisabilite.engine import Hypotheses
+            fa = parcel_faisabilite(db, pid)
+            fo = (fa[1].fourchette or {}) if fa else {}
+            vend = fo.get("shab_vendable_m2")
+            if vend:
+                rend = float(Hypotheses.charger().coef_rendement) or 0.80
+                out["faisa"] = {
+                    "vendable_m2": int(vend),
+                    "plancher_m2": round(vend / rend),
+                    "rendement_pct": round(rend * 100),
+                    "logements_au_sol": fo.get("logements_au_sol"),
+                    "vendable_silo_m2": fo.get("shab_vendable_silo_m2"),
+                    "run": _residuel_run_servi(db),
+                }
+        except Exception as exc:  # noqa: BLE001 — faisabilité indisponible → section sans héros de surface, jamais d'erreur
+            log.warning("faisabilité commune %s : %s", idu, exc)
     if "parcel_residuel_bati" in avail:
         r = db.execute(text(
             "SELECT emprise_batie_m2, hauteur_bati_m, emprise_max_m2, emprise_residuelle_m2, "
@@ -221,14 +247,9 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                            "hauteur_max_m": _f(r["hauteur_max_m"]),
                            "surelevation_possible": r["surelevation_possible"],
                            "confiance": r["confiance"]}
-    if "parcel_residuel" in avail:
-        r = db.execute(text(
-            """SELECT pr.taux_emprise_pct, pr.sdp_residuelle_m2
-               FROM parcel_residuel pr JOIN parcels p ON p.id = pr.parcel_id
-               WHERE p.idu = :idu AND pr.cause IS NULL"""), {"idu": idu}).mappings().first()
-        if r:
-            out["residuel"] = {"taux_emprise_pct": _f(r["taux_emprise_pct"]),
-                               "sdp_residuelle_m2": _i(r["sdp_residuelle_m2"])}
+    # M145 — la lecture du résiduel BRUT plein gabarit (`parcel_residuel.sdp_residuelle_m2`) est
+    # SUPPRIMÉE : elle pilotait le héros parallèle (9 844 m² + coefficient ~15 % local). Le potentiel
+    # constructible vient désormais du moteur commun (`out["faisa"]`, en tête de fonction).
     if "dryrun_parcel_evaluations" in avail:
         r = db.execute(text(
             """SELECT (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
@@ -456,9 +477,16 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
 
     gardees = [c for c in vivier if not _aberrant(c)]
     n_ecartees = len(vivier) - len(gardees)
+    # M145 B.2.3 — une surface de terrain < 10 m² est une anomalie DVF (terrain non renseigné / vente
+    # de lot), pas une donnée : on ne la sert pas brute (« Maison · terrain 1 m² » muet). Le comparable
+    # reste retenu (son €/m² BÂTI, lui, est valide et filtré des aberrants) — seul le terrain absurde
+    # devient « — » (non renseigné), jamais un artefact affiché sans le dire.
+    def _terr(v):
+        vi = _i(v)
+        return vi if (vi is not None and vi >= 10) else None
     comparables = [{"type_local": c["type_local"],
                     "surface_reelle_bati": _i(c["surface_reelle_bati"]),
-                    "surface_terrain": _i(c["surface_terrain"]),
+                    "surface_terrain": _terr(c["surface_terrain"]),
                     "valeur_fonciere": _i(c["valeur_fonciere"]),
                     "prix_m2_bati": _i(c["prix_m2_bati"]),
                     "mois": c["mois"]} for c in gardees[:5]]

@@ -594,6 +594,9 @@ Quelques secondes — le téléchargement s'affiche ici.</div>
 const sid = {session_id!r};
 // M18-B3 : « votre rapport est prêt » = la vedette ; le bouton PDF, gros et rempli, saute aux yeux.
 const DL = '<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(92,230,161,.32)">&#8595; Télécharger mon rapport PDF</a>';
+// M145 C.2 — aucun spinner infini sur un paiement encaissé : après ~2 min (60 × 2 s), on DIT
+// l'incident honnêtement (paiement confirmé, lien par e-mail / reçu Stripe) et on cesse de sonder.
+let tries = 0; const MAX_TRIES = 60;
 async function poll() {{
   try {{
     const r = await fetch('/flash/statut?session_id=' + encodeURIComponent(sid));
@@ -614,6 +617,17 @@ async function poll() {{
         'LABUSE avec votre reçu Stripe : le rapport vous sera fourni.</p>';
     }}
   }} catch (e) {{}}
+  tries++;
+  if (tries >= MAX_TRIES) {{
+    document.getElementById('mark').innerHTML = '!';   // spinner → alerte (on ARRÊTE de tourner)
+    document.getElementById('hero').textContent = 'Votre paiement est bien confirmé';
+    document.getElementById('sub').textContent = 'la génération prend plus de temps que prévu';
+    document.getElementById('etat').innerHTML = '<p style="font-size:12.5px;line-height:1.6">' +
+      'Votre paiement est confirmé chez Stripe — rien n\\'est perdu. La génération prend plus de temps ' +
+      'que prévu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas ' +
+      'de doute, écrivez à votre contact LABUSE avec votre reçu Stripe, le rapport vous sera fourni.</p>';
+    return;   // on ne sonde plus — jamais de spinner infini
+  }}
   setTimeout(poll, 2000);
 }}
 poll();
