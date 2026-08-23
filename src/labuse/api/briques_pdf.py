@@ -196,7 +196,7 @@ def cartouches(items: list[str]) -> str:
 
 
 def hypotheses_encadre(cout_m2: float, marge_pct: float, composantes: str | None = None,
-                       cout_m2_haut: float | None = None) -> str:
+                       cout_m2_haut: float | None = None, vrd_m2: float | None = None) -> str:
     """C1 — l'encadré « Hypothèses de calcul », IDENTIQUE en forme dans tous les documents
     qui chiffrent. Deux documents aux hypothèses différentes l'affichent chacun — le
     lecteur qui tient les deux comprend d'où vient tout écart.
@@ -209,9 +209,13 @@ def hypotheses_encadre(cout_m2: float, marge_pct: float, composantes: str | None
     cout_txt = (f"{cout_m2:g}–{cout_m2_haut:g} €/m²"
                 if cout_m2_haut and round(cout_m2_haut) != round(cout_m2) else f"{cout_m2:g} €/m²")
     detail = f" (soit {composantes})" if composantes else ""
+    # M144 Lot 4 — la VRD n'est plus une constante honteuse : quand elle est SAISIE (argumentaire),
+    # l'encadré la liste comme les deux autres. « LABUSE ne les estime pas » devient alors vrai pour
+    # les TROIS hypothèses (plus aucune constante de calcul ni sourcée ni saisie).
+    vrd_txt = f" · VRD &amp; viabilisation <b>{vrd_m2:g} €/m²</b> de terrain" if vrd_m2 is not None else ""
     return (f"<div class='hyp-encadre'><span class='titre'>Hypothèses de calcul</span>"
             f"Coût de construction <b>{cout_txt}</b> de surface de plancher · "
-            f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires{detail} — hypothèses "
+            f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires{detail}{vrd_txt} — hypothèses "
             f"à ajuster : LABUSE ne les estime pas. Les valeurs sourcées "
             f"(surface vendable, prix DVF) viennent du moteur.</div>")
 
@@ -424,12 +428,23 @@ def identite(out: dict) -> str:
     _zone_code = next((z.get("libelle") or z.get("classe")
                        for z in (ident.get("zones") or []) if (z.get("libelle") or z.get("classe"))), None)
     _zr = resolve_zone(_zone_code, p["commune"]) if _zone_code else None
+    _renvoi_note = ""
     if _zr and isinstance(getattr(_zr, "he_m", None), (int, float)):
         _src_h = (getattr(_zr, "sources", None) or {}).get("hauteur")
         _nat = s("S") if _src_h else s("E")
-        regles += (f"<tr><td>Hauteur d'égout retenue (PLU)</td><td class='n'>{_zr.he_m:g} m</td><td>{_nat}</td></tr>")
+        # M144 Lot 5.5 — l'étiquette porte sur la BONNE chose : le zonage (AU3a) est SOURCÉ (GPU),
+        # mais sa hauteur peut être héritée d'une zone U par RENVOI du règlement. Quand c'est le cas et
+        # que la hauteur n'a pas de source propre, l'Estimé qualifie la hauteur-via-renvoi, pas la zone.
+        _renvoi = getattr(_zr, "via_renvoi", None)
+        _via = " (via renvoi du règlement)" if _renvoi and not _src_h else ""
+        regles += (f"<tr><td>Hauteur d'égout retenue (PLU){_via}</td><td class='n'>{_zr.he_m:g} m</td><td>{_nat}</td></tr>")
         if isinstance(getattr(_zr, "hf_m", None), (int, float)):
-            regles += (f"<tr><td>Hauteur au faîtage (PLU)</td><td class='n'>{_zr.hf_m:g} m</td><td>{_nat}</td></tr>")
+            regles += (f"<tr><td>Hauteur au faîtage (PLU){_via}</td><td class='n'>{_zr.hf_m:g} m</td><td>{_nat}</td></tr>")
+        if _renvoi and not _src_h:
+            _renvoi_note = (f"<p class='note'>Le zonage <b>{esc(_zone_code)}</b> est sourcé (GPU) ; ses "
+                            f"règles de hauteur sont celles d'une zone U par renvoi du règlement "
+                            f"({esc(_renvoi)}) — l'étiquette Estimé porte sur cette hauteur héritée, "
+                            f"pas sur le zonage lui-même.</p>")
     body = ("<table>" + "".join(
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td><td>{s(prov)}</td></tr>" for k, v, prov in rows) + "</table>"
         f"<h3>Zonage du document d'urbanisme</h3>"
@@ -441,8 +456,8 @@ def identite(out: dict) -> str:
         body += f"<p class='note'>{esc(zv['detail'])}</p>"
     if regles:
         body += (f"<h3>Règles calibrées</h3><table><tr><th>Règle</th><th class='n'>Valeur</th><th>Nature</th></tr>"
-                 f"{regles}</table><p class='note'>Règles calibrées LABUSE (nature par ligne) — le règlement "
-                 f"complet (retraits, prospects, servitudes) peut modifier ces valeurs.</p>")
+                 f"{regles}</table>{_renvoi_note}<p class='note'>Règles calibrées LABUSE (nature par ligne) — le "
+                 f"règlement complet (retraits, prospects, servitudes) peut modifier ces valeurs.</p>")
     return f"<div class='pb'></div><h2>Identité de la parcelle</h2>{body}"
 
 
@@ -643,8 +658,14 @@ def comparables(out: dict) -> str:
             rows = "".join(f"<tr><td>{esc(it.get('date'))}</td><td>{esc(it.get('type_label') or it.get('type'))}</td>"
                            f"<td class='n'>{esc(it.get('distance_m'))} m</td><td>{esc(it.get('statut') or '—')}</td></tr>"
                            for it in recents[:10])
+            # M144 Lot 5.6 — plusieurs permis à la MÊME date = probablement une opération unique
+            # éclatée (tranches / bâtiments), pas des projets distincts. On le DIT (SITADEL ne groupe pas).
+            _dates = [it.get("date") for it in recents[:10] if it.get("date")]
+            _note = ("<p class='note'>Plusieurs permis à la même date proviennent probablement d'une "
+                     "opération unique déposée en tranches, pas de projets distincts.</p>"
+                     if len(_dates) != len(set(_dates)) else "")
             body += (f"<h3>Permis de construire voisins (SITADEL, ≤ 5 ans) {s('S')}</h3>"
-                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>")
+                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>{_note}")
     return body
 
 

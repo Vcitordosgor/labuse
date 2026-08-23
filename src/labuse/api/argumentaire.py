@@ -71,7 +71,7 @@ def _regime(calc: dict) -> dict:
 
 
 def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
-             prix_demande: float | None) -> dict:
+             prix_demande: float | None, vrd_m2: float | None = None) -> dict:
     """Briques banquier (bq.collect) + calculette en MODE INVERSE (M22-A) + viabilisation."""
     from ..faisabilite.bilan import compute_calculette
     out = bq.collect(db, idu)
@@ -81,7 +81,8 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
     prix = out.get("prix_dvf")
     if shab and prix:
         out["calc"] = compute_calculette(float(shab), float(p["surface_m2"] or 0), prix,
-                                         cout_m2, marge_pct, prix_demande, mode="achat_max")
+                                         cout_m2, marge_pct, prix_demande, mode="achat_max",
+                                         vrd_m2=vrd_m2)   # M144 Lot 4 — VRD saisie
     else:
         out["calc"] = {"calculable": False,
                        "raison": "capacité constructible ou prix de sortie non résolus"}
@@ -90,7 +91,7 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
     # SERVI (lecture directe du flag `is_served`, aucun MAX/tri — mécanisme M139 lot 2, dette §8).
     from .projets import _residuel_run_servi
     out["valeurs_run"] = _residuel_run_servi(db)
-    out["hyp_saisies"] = {"cout_m2": cout_m2, "marge_pct": marge_pct}
+    out["hyp_saisies"] = {"cout_m2": cout_m2, "marge_pct": marge_pct, "vrd_m2": vrd_m2}
     try:
         from .app import _viabilisation_block
         out["viab"] = _viabilisation_block(db, idu)
@@ -302,12 +303,32 @@ def _bilan_rebours(out: dict) -> str:
     hyp = out["hyp_saisies"]
     # C1 — le MÊME encadré d'hypothèses que le Dossier banquier (forme identique)
     body = ("<div class='pb'></div><h2>5 · Le bilan à rebours — du prix de sortie au foncier</h2>"
-            + bq.hypotheses_encadre(hyp["cout_m2"], hyp["marge_pct"]))
+            + bq.hypotheses_encadre(hyp["cout_m2"], hyp["marge_pct"], vrd_m2=hyp.get("vrd_m2")))
     if not calc.get("calculable"):
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
                        "n'est fabriqué (doctrine).</p>")
-    reg = out.get("regime") or _regime(calc)   # M143 fix — jamais {} (sinon KeyError 'ca' au régime non équilibré) : le régime est re-dérivé du calc si le payload ne le porte pas
+    # M144 Lot 1 — le bilan NOMME le scénario qu'il chiffre (le RETENU, au sol) quand le stationnement
+    # au sol plafonne réellement (silo > au sol), et mentionne le silo en PROSE — jamais chiffré sans
+    # son coût de place enterrée (doctrine : pas de constante fabriquée). Une seule source de scénario.
+    fo = (getattr(out.get("faisabilite"), "fourchette", None) or {})
+    _sv, _silo, _aus = fo.get("shab_vendable_m2"), fo.get("shab_vendable_silo_m2"), fo.get("logements_au_sol")
+    if _aus and _silo and _sv and _silo > _sv:
+        _n = f"{_aus[0]}" if _aus[0] == _aus[1] else f"{_aus[0]}–{_aus[1]}"
+        body += (f"<p class='note'>Bilan établi sur le scénario <b>retenu</b> : {_n} logements, "
+                 f"stationnement au sol (surface vendable ~{_sv:,} m²). Un stationnement en ouvrage "
+                 f"(sous-sol/silo) porterait la surface vendable à ~{_silo:,} m², au prix d'un coût "
+                 f"de place enterrée non estimé ici.</p>".replace(",", " "))
+    # M144 Lot 3 — DIRE quel segment de prix alimente le bilan, TOUJOURS (pas seulement quand ça arrange).
+    _pd = out.get("prix_dvf") or {}
+    if _pd.get("median"):
+        _per = _pd.get("periode") or []
+        _per_txt = f" {_per[0]}–{_per[1]}" if len(_per) == 2 else ""
+        body += (f"<p class='note'>Prix de sortie retenu : ventes DVF de l'existant "
+                 f"({esc(_pd.get('type_prix') or 'bâti')}, {_pd.get('n')} ventes{_per_txt}, fiabilité "
+                 f"{esc(_pd.get('fiabilite'))}). Le neuf (VEFA) est trop rare dans DVF pour une série "
+                 f"fiable — prix de l'ANCIEN retenus, hypothèse prudente pour un programme neuf.</p>")
+    reg = out.get("regime") or _regime(calc)   # M143 fix — jamais {} (sinon KeyError 'ca')
     if not reg.get("equilibre"):
         # M143 Lot 1 (F1) — opération NON équilibrée : aucun tableau de prix, aucun montant négatif,
         # aucune cascade, aucun écart de négociation (il n'existe pas de max). Les deux termes + le manque.
@@ -424,8 +445,9 @@ def _sources(out: dict) -> str:
 # ───────────────────────── endpoint ─────────────────────────
 
 def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
-               prix_demande: float | None, marque: dict | None = None) -> bytes:
-    out = _collect(db, idu, cout_m2, marge_pct, prix_demande)
+               prix_demande: float | None, marque: dict | None = None,
+               vrd_m2: float | None = None) -> bytes:
+    out = _collect(db, idu, cout_m2, marge_pct, prix_demande, vrd_m2=vrd_m2)
     # renumérotation visuelle des sections briques (2 et 3) via leurs titres d'origine
     marche = bq.comparables(out).replace("<h2>Marché de comparaison</h2>",
                                          "<h2>2 · Le marché réel (DVF)</h2>")
@@ -450,6 +472,7 @@ def argumentaire_pdf(idu: str, request: Request,
                      prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
                      cout_construction_m2: float = Query(2500.0, ge=500, le=8000),
                      marge_frais_pct: float = Query(21.0, ge=0, le=60),
+                     vrd_m2: float = Query(90.0, ge=0, le=500),   # M144 Lot 4 — VRD saisie (défaut 90 €/m² terrain)
                      db: Session = Depends(get_db)) -> Response:
     """Sert l'argumentaire de négociation (synchrone). Hypothèses = celles de la calculette."""
     # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
@@ -457,6 +480,7 @@ def argumentaire_pdf(idu: str, request: Request,
     from ..quota import porte_export
     porte_export(request, db)
     from ..marque import charger as _charger_marque
-    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur, marque=_charger_marque(db, request))
+    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur,
+                     marque=_charger_marque(db, request), vrd_m2=vrd_m2)
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="argumentaire_{idu}.pdf"'})
