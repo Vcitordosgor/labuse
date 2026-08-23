@@ -6,10 +6,8 @@ Doctrine inchangée : rien n'est persisté dans le scoring, tout est étiqueté 
 from __future__ import annotations
 
 import json
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -542,90 +540,7 @@ def marche_commune(commune: str, db: Session = Depends(get_db)) -> dict:
     return build_marche_commune(db, commune)
 
 
-@router.get("/barometre.pdf")
-def barometre_pdf(db: Session = Depends(get_db)) -> Response:
-    """Rapport trimestriel auto-généré — le canal marketing. Palette impression (blanc)."""
-    from fpdf import FPDF
-
-    from .pdf_premium import FONTS, LINE, MINT, SURFACE, TXT, TXT_DIM, TXT_HI, TXT_MUT
-
-    d = _barometre_data(db)
-    pdf = FPDF(format="A4")
-    pdf.add_font("inter", fname=str(FONTS / "Inter-Regular.ttf"))
-    pdf.add_font("mono", fname=str(FONTS / "JetBrainsMono-Regular.ttf"))
-    pdf.add_font("grotesk", fname=str(FONTS / "SpaceGrotesk-Bold.ttf"))
-    pdf.set_margins(16, 14, 16)
-    pdf.add_page()
-    pdf.set_draw_color(*MINT)
-    pdf.set_line_width(0.6)
-    pdf.line(16, 10, pdf.w - 16, 10)
-    pdf.set_font("grotesk", size=16)
-    pdf.set_text_color(*MINT)
-    pdf.cell(0, 9, "BAROMÈTRE FONCIER — LA RÉUNION", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("inter", size=8)
-    pdf.set_text_color(*TXT_DIM)
-    pdf.cell(0, 5, f"LABUSE · rapport auto-généré du {date.today().isoformat()} · {d['perimetre']}",
-             new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(3)
-
-    def table(titre: str, headers: list[str], rows: list[list], widths: list[int]) -> None:
-        pdf.set_font("mono", size=8)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 6, titre, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_fill_color(*SURFACE)
-        pdf.set_font("inter", size=7.5)
-        pdf.set_text_color(*TXT_MUT)
-        for h, w in zip(headers, widths):
-            pdf.cell(w, 6, h, fill=True)
-        pdf.ln()
-        pdf.set_text_color(*TXT)
-        pdf.set_draw_color(*LINE)
-        for row in rows:
-            for v, w in zip(row, widths):
-                pdf.cell(w, 5.6, str(v if v is not None else "—"), border="B")
-            pdf.ln()
-        pdf.ln(4)
-
-    def _tri(r: dict) -> str:   # §1a — un trimestre partiel est DIT, jamais une barre courte muette
-        return f"{r['trimestre']} (partiel)" if r.get("partiel") else r["trimestre"]
-
-    def _pct(v) -> str:
-        return "—" if v is None else (f"+{v} %" if v > 0 else f"{v} %")
-
-    # §2 — tendances (glissement annuel) + neuf en référence (VEFA trop rare pour une série)
-    nr = d.get("neuf_reference")
-    pdf.set_font("inter", size=8)
-    pdf.set_text_color(*TXT_MUT)
-    pdf.multi_cell(0, 5, f"Tendance sur un an — ancien bâti : {_pct(d.get('tendance_ancien_pct'))} · "
-                         f"terrain nu : {_pct(d.get('tendance_terrain_pct'))} · permis : {_pct(d.get('tendance_permis_pct'))}."
-                         + (f"  Neuf (référence actuelle, VEFA DVF trop rare pour une série) : "
-                            f"~{nr['prix_m2_neuf']} €/m² sur {nr['n']} ventes." if nr else ""),
-                   new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
-    table("MARCHÉ ANCIEN BÂTI PAR TRIMESTRE (VENTES STRICTES)", ["Trimestre", "Ventes", "Écartées", "Médiane €/m² bâti"],
-          [[_tri(r), r["mutations"], r["ecartees"], r["median_eur_m2_bati"]] for r in d["dvf_trimestres"]],
-          [48, 30, 27, 55])
-    table("TERRAIN NU PAR TRIMESTRE (VENTES TERRAIN)", ["Trimestre", "Ventes", "Médiane €/m² terrain"],
-          [[_tri(r), r["mutations"], r["median_eur_m2_terrain"]] for r in d["terrain_trimestres"]], [48, 35, 55])
-    table("PERMIS (SITADEL) PAR TRIMESTRE", ["Trimestre", "Permis"],
-          [[_tri(r), r["permis"]] for r in d["permis_trimestres"]], [50, 40])
-    table("PRIX PAR COMMUNE (TOP)", ["Commune", "Mutations", "Médiane €/m²"],
-          [[r["commune"], r["mutations"], r["median_eur_m2"]] for r in d["top_communes_prix"]],
-          [70, 40, 50])
-    pdf.set_font("inter", size=6.5)
-    pdf.set_text_color(*TXT_DIM)
-    pdf.set_text_color(*TXT_HI)
-    pdf.set_text_color(*TXT_DIM)
-    e = d["ecartees"]
-    # new_x/new_y : sans quoi fpdf2 laisse le curseur X à la marge DROITE après un multi_cell
-    # pleine largeur → le multi_cell suivant démarre avec 0 mm d'espace → FPDFException (le 500).
-    pdf.multi_cell(0, 4, f"Périmètre DVF : ventes strictes uniquement — {e['total']} mutations écartées "
-                         f"de la fenêtre (VEFA {e['vefa']}, adjudications/échanges/expropriations "
-                         f"{e['autres_natures']}, prix ≤ 1 000 € {e['prix_symboliques']}, "
-                         f"€/m² hors bande 100-12 000 : {e['ratio_hors_bande']}).",
-                   new_x="LMARGIN", new_y="NEXT")
-    pdf.multi_cell(0, 4, "Données publiques (DVF, Sitadel régional) — indicateurs indicatifs, "
-                         "ne valent pas expertise. © LABUSE",
-                   new_x="LMARGIN", new_y="NEXT")
-    return Response(bytes(pdf.output()), media_type="application/pdf",
-                    headers={"Content-Disposition": 'inline; filename="barometre_labuse.pdf"'})
+# M141 Partie 1 — l'export PDF du baromètre est RETIRÉ (décision Vic : le baromètre n'a pas
+# vocation à sortir en PDF). La route `GET /barometre.pdf` et son générateur fpdf (self-contained :
+# imports fpdf/pdf_premium locaux, helpers internes) sont supprimés en entier — aucun code mort.
+# L'onglet « Évolution » du hub Communes reste inchangé à l'écran (données via `GET /barometre`).

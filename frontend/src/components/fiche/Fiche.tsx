@@ -2063,7 +2063,7 @@ export function Fiche({ idu }: { idu: string }) {
                   sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
                   onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
                 <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
-                  sous={reglesZone ? `PDF officiel — zone ${reglesZone} de cette parcelle` : 'PDF officiel de vérification de zonage'}
+                  sous={reglesZone ? `PDF de vérification de zonage — zone ${reglesZone} de cette parcelle` : 'PDF de vérification de zonage'}
                   onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
                 {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
                     L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
