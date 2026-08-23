@@ -916,47 +916,64 @@ export function M09() {
 
 /* ───────────────────────────── M10 — DUE DILIGENCE ───────────────────────────── */
 
-function M10() {
-  const [refs, setRefs] = useState('')
-  const [quick, setQuick] = useState('')
-  const selectedIdu = useApp((s) => s.selectedIdu)
-  // M15-G — les 3 entrées ALIMENTENT le lot (append dédupliqué), le collage en masse reste possible.
-  const addRef = (v: string) => {
-    const t = v.trim(); if (!t) return
-    setRefs((r) => {
-      const lines = r.split('\n').map((x) => x.trim()).filter(Boolean)
-      return lines.includes(t) ? r : [...lines, t].join('\n') + '\n'
-    })
+// Exporté pour test (le flux « Un lot » est le cœur du mandat PIEGES).
+export function M10() {
+  // PIEGES (refonte) : BARRE UNIQUE (SOCLE ParcelInput) + « + Ajouter » → chips du LOT (la liste du bas).
+  // Le collage en masse reste offert (SECTION+NUMÉRO, une par ligne). Plus d'export PDF (retiré).
+  const [lot, setLot] = useState<string[]>([])
+  const [paste, setPaste] = useState('')
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
+  const setModule = useApp((s) => s.setModule)
+  // ajout dédupliqué au lot (IDU résolu, SECTION+NUMÉRO ou adresse brute — le back résout, ou dit « introuvable »).
+  const ajouter = (v: string) => {
+    const t = (iduComplet(v) || v).trim().toUpperCase(); if (!t) return
+    setLot((l) => l.includes(t) ? l : [...l, t])
   }
-  const run = useMutation({ mutationFn: () => modDueDiligence(refs) })
+  const ajouterListe = () => {
+    paste.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean).forEach(ajouter)
+    setPaste('')
+  }
+  const retirer = (t: string) => setLot((l) => l.filter((x) => x !== t))
+  const run = useMutation({ mutationFn: () => modDueDiligence(lot.join('\n')) })
   const items = (run.data?.items ?? []) as Record<string, any>[]
+  const iduxResolus = items.filter((i) => 'idu' in i).map((i) => i['idu'] as string)
   return (
     <>
-      <Banner>Un rapport par parcelle (PDF individuel réutilisant l'export fiche). Alimentez le lot par
-        les <b>3 entrées</b> ci-dessous, ou collez directement une liste (IDU complet ou SECTION+NUMÉRO).</Banner>
-      {/* M15-G — 3 entrées : IDU, adresse, clic carte → append au lot */}
+      <Banner>Un lot au crible : risque, points de vigilance et propriétaire, par parcelle. Alimentez-le
+        par la <b>barre</b> ci-dessous (une parcelle à la fois), ou <b>collez une liste</b> (IDU ou
+        SECTION+NUMÉRO, une par ligne). Adressage/propriétaire particulier jamais nommé.</Banner>
+      {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        <div className="flex gap-1.5">
-          <input data-diligence-quick value={quick} onChange={(e) => setQuick(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { addRef(quick); setQuick('') } }}
-            placeholder="IDU ou SECTION+NUMÉRO"
-            className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
-          <button data-diligence-add onClick={() => { addRef(quick); setQuick('') }} disabled={!quick.trim()}
-            className="shrink-0 rounded border border-mint/40 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">+ ajouter</button>
-        </div>
-        <AddressAutocomplete placeholder="… ou une adresse"
-          onSelect={(sel) => { if (sel.idu) addRef(sel.idu) }} />
-        {selectedIdu && (
-          <button data-diligence-addsel onClick={() => addRef(selectedIdu)}
-            className="self-start text-[10.5px] text-mint hover:underline">+ ajouter la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
-        )}
+        <ParcelInput dataAttr="diligence-idu" placeholder="IDU, SECTION+NUMÉRO ou adresse — puis Entrée"
+          onPick={ajouter} onAddress={ajouter} />
+        <details className="text-[10.5px] text-txt-dim">
+          <summary className="cursor-pointer hover:text-txt-mut">ou collez une liste (une par ligne)</summary>
+          <div className="mt-1.5 flex flex-col gap-1.5">
+            <textarea data-diligence-paste value={paste} onChange={(e) => setPaste(e.target.value)} rows={3}
+              placeholder={'97415000AC0253\nAC0254\nBK 63…'}
+              className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
+            <button data-diligence-add onClick={ajouterListe} disabled={!paste.trim()}
+              className="self-start rounded border border-mint/40 px-2 py-1 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">+ Ajouter la liste</button>
+          </div>
+        </details>
       </div>
-      <textarea value={refs} onChange={(e) => setRefs(e.target.value)} rows={4}
-        placeholder={'97415000AC0253\nAC0254\nBK 63…'}
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
-      <button onClick={() => refs.trim() && run.mutate()} disabled={!refs.trim() || run.isPending}
+
+      {/* LA LISTE DU BAS — chips retirables (le lot en cours) */}
+      {lot.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {lot.map((t) => (
+            <span key={t} data-diligence-chip className="flex items-center gap-1.5 rounded-lg border border-mint/50 bg-surface-2 px-2 py-1 font-mono text-[10.5px] text-txt">
+              {t.length >= 14 ? t.slice(8) : t}
+              <button onClick={() => retirer(t)} className="text-txt-dim hover:text-st-ecartee" aria-label="Retirer">✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="text-[10px] text-txt-dim">{lot.length} référence{lot.length > 1 ? 's' : ''} dans le lot.</p>
+
+      <button data-diligence-analyser onClick={() => lot.length && run.mutate()} disabled={lot.length === 0 || run.isPending}
         className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-        {run.isPending ? 'Analyse…' : 'Analyser le lot'}
+        {run.isPending ? 'Analyse…' : `Analyser le lot (${lot.length})`}
       </button>
       {run.data && (
         <>
@@ -977,7 +994,12 @@ function M10() {
               const rColor = risque >= 100 ? TOKENS.stEcartee : risque >= 60 ? TOKENS.stEcartee : risque >= 30 ? TOKENS.stCreuser : TOKENS.mint
               const rLabel = risque >= 100 ? 'bloquant' : risque >= 60 ? 'élevé' : risque >= 30 ? 'modéré' : 'faible'
               const proprio = i['proprio'] as Record<string, any>
-              const checklist = (i['checklist'] ?? []) as Record<string, any>[]
+              const isPM = proprio['type'] === 'personne_morale'
+              // PIEGES point 4 : la règle « age_dirigeant » (PM sans dirigeant physique daté) n'a de sens
+              // que pour une PERSONNE MORALE — sur un particulier, la cascade émet un UNKNOWN hors sujet
+              // (run précalculé, non rejouable ici) ; on le MASQUE à l'affichage. Fix côté présentation.
+              const checklist = ((i['checklist'] ?? []) as Record<string, any>[])
+                .filter((c) => isPM || c['layer'] !== 'age_dirigeant')
               return (
               <div key={k} data-diligence-item className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -1005,7 +1027,7 @@ function M10() {
                   </div>
                 )}
                 {checklist.length === 0 && <p className="mt-1.5 text-[10.5px] text-mint">✓ aucun point de vigilance cascade</p>}
-                <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-mint/70 transition-colors duration-quick hover:text-mint hover:underline">⬇ PDF</a>
+                {/* PIEGES point 3 : export PDF RETIRÉ (ni par parcelle, ni pour le lot) — l'analyse se lit ici. */}
               </div>
               )})() : (
               <div key={k} className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
@@ -1013,6 +1035,15 @@ function M10() {
               </div>
             ))}
           </div>
+          {/* PONT COURRIER (mandat COURRIER, addendum) : le lot analysé s'exporte vers l'outil Courrier
+              pré-rempli — même canal que l'import Assemblage (courrierPrefillIdus). */}
+          {iduxResolus.length > 0 && (
+            <button data-diligence-courrier
+              onClick={() => { setCourrierPrefillIdus(iduxResolus); setModule('courriers') }}
+              className="rounded-lg border border-mint/50 bg-mint/10 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              ✉ Préparer les courriers ({iduxResolus.length})
+            </button>
+          )}
         </>
       )}
     </>
