@@ -336,12 +336,15 @@ def test_pipeline_meta(client):
 
 
 def test_pipeline_crud_flow(client):
-    # Ajout (statut "Repérée" par défaut) ; la carte porte le verdict/score.
+    # Ajout (statut "Repérée" par défaut).
     r = client.post("/pipeline", json={"idu": "97415000AB0002"}).json()
     assert r["ok"] and r["already"] is False
     eid = r["entry"]["id"]
     assert r["entry"]["status"] == "reperee" and r["entry"]["priority"] == "moyenne"
-    assert r["entry"]["verdict"]["opportunity_score"] is not None
+    # M137 Lot 2 / M133 B.6 — les blocs `verdict` et `premium` (score/rang) ne sont PLUS servis dans le
+    # payload CRM (« zéro verdict/score/rang hors application », cf. app.py::_entry_dict). On verrouille
+    # cette absence VOULUE (le test historique attendait entry.verdict.opportunity_score, retiré).
+    assert "verdict" not in r["entry"] and "premium" not in r["entry"]
     # Présente dans la liste et la recherche par parcelle.
     assert any(e["id"] == eid for e in client.get("/pipeline").json())
     look = client.get("/pipeline/parcel/97415000AB0002").json()
@@ -529,3 +532,30 @@ def test_permis_fusion_endpoints_contrat(client):
     r = client.get("/modules/promesses?months=36&count_only=true")
     assert r.status_code == 200, r.text[:300]
     assert "total" in r.json()
+
+
+def test_prospection_solaire_ne_leve_pas(client):
+    """Outil « Prospection solaire » V1 (restitution) : l'endpoint et son export CSV NE LÈVENT PAS
+    (jamais un 500), quelle que soit la présence des tables solaires dans la base de test. Contrôle
+    aussi la forme (items + bandeau) et le garde-fou RGPD : AUCUN champ nominatif servi."""
+    for url in ("/modules/prospection-solaire",
+                "/modules/prospection-solaire?commune=Saint-Paul&potentiel_min=1400&piscine=oui&proba_occ_min=50&sort=toiture"):
+        r = client.get(url)
+        assert r.status_code in (200, 503), r.text[:300]   # 503 = tables absentes (data-gap), jamais 500
+        if r.status_code == 200:
+            d = r.json()
+            assert isinstance(d.get("items"), list)
+            assert "bandeau" in d and "11/07/2026" in d["bandeau"]
+            assert d["tronquee"] == (d["total"] > d["n"])
+            # RGPD : jamais de donnée nominative (nom/propriétaire/siren) dans les lignes servies
+            interdits = {"nom", "proprietaire", "propriétaire", "owner", "siren", "denomination", "prenom"}
+            for it in d["items"][:20]:
+                assert not (interdits & {k.lower() for k in it}), f"champ nominatif servi : {it.keys()}"
+
+    # export CSV — même endpoint, fmt=csv ; ne lève pas, en-tête Sourcé/Estimé si servi
+    r = client.get("/modules/prospection-solaire?fmt=csv")
+    assert r.status_code in (200, 503), r.text[:300]
+    if r.status_code == 200:
+        assert "text/csv" in r.headers.get("content-type", "")
+        head = r.text.splitlines()[0] if r.text else ""
+        assert "Sourcé" in head or "Estimé" in head or "Parcelle" in head

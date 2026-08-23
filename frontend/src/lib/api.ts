@@ -490,6 +490,37 @@ export interface RenouvListe {
 // le plafond vit côté serveur (config renouvellement.yaml) → on n'envoie plus de `limit` en dur.
 export const getRenouvListe = (sort: string, communeNom?: string | null) =>
   j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`)
+
+// ── Prospection solaire (V1 restitution) — données gelées au 11/07/2026, masque solaire non calculé ──
+export interface SolaireItem {
+  idu: string; commune: string; productible: number | null
+  azimut: number | null; azimut_confiance: string | null
+  pente: number | null; toit_m2: number | null
+  piscine: boolean; abf: boolean; proba_occ: number | null
+  tier_v2: string | null; etage0: boolean; classement: string
+}
+export interface ProspectionSolaireResp {
+  total: number; n: number; cap: number; tronquee: boolean
+  items: SolaireItem[]; source: string; maj: string; bandeau: string
+}
+export interface SolaireFiltres {
+  commune?: string | null; potentielMin?: number; probaOccMin?: number
+  piscine?: 'tous' | 'oui' | 'non'; sort?: 'potentiel' | 'toiture' | 'proba'
+}
+const solaireQs = (f: SolaireFiltres) => {
+  const p: Record<string, string | number> = {}
+  if (f.commune) p.commune = f.commune
+  if (f.potentielMin) p.potentiel_min = f.potentielMin
+  if (f.probaOccMin) p.proba_occ_min = f.probaOccMin
+  if (f.piscine && f.piscine !== 'tous') p.piscine = f.piscine
+  if (f.sort) p.sort = f.sort
+  return qf(p)   // qf ajoute source=SOURCE (convention)
+}
+export const getProspectionSolaire = (f: SolaireFiltres) =>
+  j<ProspectionSolaireResp>(`/modules/prospection-solaire?${solaireQs(f)}`)
+// export CSV de démarchage — MÊMES colonnes que l'écran, mentions Sourcé/Estimé en en-tête (lien direct).
+export const prospectionSolaireCsvUrl = (f: SolaireFiltres) =>
+  `/modules/prospection-solaire?${solaireQs(f)}&fmt=csv`
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {

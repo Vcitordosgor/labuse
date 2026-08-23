@@ -32,6 +32,7 @@ import { Plu } from './Plu'
 // M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { RenouvellementModule } from './Renouvellement'
+import { ProspectionSolaire } from './ProspectionSolaire'
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -969,6 +970,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
+  'prospection-solaire': ProspectionSolaire,
   // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné
   // — 'scoreur-adresse' (créneau phare O2, carte au menu) ET 'calculette-fonciere' (M23 aliasée, hidden :
   // ouverte par la porte fiche/copilote via calcPrefill, jamais un 404). Anciens composants

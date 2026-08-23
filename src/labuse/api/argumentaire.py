@@ -197,7 +197,7 @@ def _synthese(out: dict, marque: dict | None = None) -> str:
     if zone and len(str(zone)) > 12:
         zone = str(fais.zone) if fais and fais.zone else str(zone).split(" ", 1)[0]
     prix = out.get("prix_dvf") or {}
-    reg = out.get("regime") or {}
+    reg = out.get("regime") or _regime(calc)   # M143 fix — jamais {} (sinon KeyError 'ca' au régime non équilibré) : le régime est re-dérivé du calc si le payload ne le porte pas
     phrases: list[str] = []
     kpis: list[str] = []
     if calc.get("calculable") and reg.get("equilibre"):
@@ -307,7 +307,7 @@ def _bilan_rebours(out: dict) -> str:
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
                        "n'est fabriqué (doctrine).</p>")
-    reg = out.get("regime") or {}
+    reg = out.get("regime") or _regime(calc)   # M143 fix — jamais {} (sinon KeyError 'ca' au régime non équilibré) : le régime est re-dérivé du calc si le payload ne le porte pas
     if not reg.get("equilibre"):
         # M143 Lot 1 (F1) — opération NON équilibrée : aucun tableau de prix, aucun montant négatif,
         # aucune cascade, aucun écart de négociation (il n'existe pas de max). Les deux termes + le manque.

@@ -31,18 +31,23 @@ def test_tendance_pct_glissement_annuel():
     assert _tendance_pct(s[:3], "m") is None                # < 5 points → pas de tendance
 
 
-# ── §3 — _barometre_data + le PDF « ne lèvent pas » (le PDF n'avait aucun test) ──
+# ── §3 — _barometre_data « ne lève pas ». M141 (commit 1ecba711, décision Vic) a RETIRÉ l'export PDF
+#         du baromètre (route GET /barometre.pdf + générateur `barometre_pdf` supprimés en entier, bouton
+#         front retiré) : il n'a plus vocation à sortir en PDF. Le test historique importait
+#         `barometre_pdf` → ImportError depuis ce retrait. On teste ce qui RESTE (données de l'onglet
+#         Évolution) ET on verrouille l'absence VOULUE du PDF (pas de ré-ajout silencieux). ──
 
 @pytest.mark.db
-def test_barometre_data_et_pdf_ne_levent_pas(db_session):
-    from labuse.api.moteurs import _barometre_data, barometre_pdf
-    d = _barometre_data(db_session)   # ne lève pas
+def test_barometre_data_ne_leve_pas(db_session):
+    from labuse.api import moteurs
+    d = moteurs._barometre_data(db_session)   # ne lève pas
     for k in ("dvf_trimestres", "terrain_trimestres", "permis_trimestres", "tendance_ancien_pct",
               "tendance_terrain_pct", "tendance_permis_pct", "neuf_reference", "top_communes_prix",
               "top_communes_cap", "top_communes_total"):
         assert k in d
-    resp = barometre_pdf(db=db_session)   # §3 — canal marketing enfin sous filet
-    assert resp.media_type == "application/pdf" and bytes(resp.body)[:5] == b"%PDF-"
+    # M141 — plus d'export PDF (ni fonction, ni route) : garde anti-ré-ajout silencieux.
+    assert not hasattr(moteurs, "barometre_pdf")
+    assert not any(getattr(r, "path", "").endswith("barometre.pdf") for r in moteurs.router.routes)
 
 
 # ── §1b — UN SEUL prix par commune : le PDF (baromètre) et le tableau (comparateur) lisent la
