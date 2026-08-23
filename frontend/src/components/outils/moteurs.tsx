@@ -128,7 +128,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 /* ───────────── M16 — ASSEMBLAGE ───────────── */
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, setModule, setCourrierPrefill } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, setModule, setCourrierPrefillIdus } = useApp()
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
@@ -145,6 +145,11 @@ export function M16() {
   // MapView quand `module === 'assemblage'` — les contours de toutes les parcelles apparaissent,
   // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.
   const d = run.data
+  // point 2 (mandat) : ×gain à 2 DÉCIMALES (le back arrondit gain_ratio à 1 → « ×1 » trompeur) —
+  // recalculé côté front depuis les valeurs servies (SDP cumulée ÷ meilleure seule = 1,03 → +3 %).
+  const ratio = d?.sdp_max_seule_m2 ? (d.sdp_combinee_m2 as number) / (d.sdp_max_seule_m2 as number) : null
+  const ratioStr = ratio != null ? ratio.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null
+  const pct = ratio != null ? Math.round((ratio - 1) * 100) : null
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden) : on accède à
     // la suite (analyse, propriétaires, courriers) au lieu d'un bas d'écran coupé.
@@ -183,7 +188,9 @@ export function M16() {
             <span className={`rounded-full px-2 py-0.5 ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
               {d.contigu ? "d'un seul tenant" : 'NON contiguë'}</span>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
-            {d.gain_ratio && <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">×{d.gain_ratio} vs la meilleure seule</span>}
+            {(d.n_personnes_morales > 0 || d.n_particuliers > 0) && (
+              <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} PM · {d.n_particuliers} particulier(s)</span>
+            )}
           </div>
 
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
@@ -194,21 +201,44 @@ export function M16() {
               </div>
             ) : (
               <>
-                {/* #1 — LE BILAN RÉEL : capacité + charge foncière cumulées (fiche_payload agrégé) */}
-                <div data-asm-gain className="rounded-md bg-mint/[0.06] px-2 py-1.5">
-                  <div className="text-txt">Assiette <b className="tnum text-mint">{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine?.[0])}–{fmt(d.logements_combine?.[1])} logements
-                    {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure seule = {fmt(d.sdp_max_seule_m2)} m²)</span>}
+                {/* point 1 — DEUX GRANDEURS DISTINCTES : surface d'assiette ≠ SDP cumulée (fini
+                    « assiette 11 065 m² SDP » qui mélangeait tout). + logements + ×gain (point 2). */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div data-asm-kpi="surface" className="rounded-md bg-surface-3 px-2 py-1.5">
+                    <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
+                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
                   </div>
-                  {d.charge_fonciere && (
-                    <div data-asm-bilan className="mt-1 text-txt-dim">Bilan cumulé : CA ~<b className="text-txt">{fmtEurCompact(d.ca?.central)}</b> · charge foncière supportable ~<b className="text-txt">{fmtEurCompact(d.charge_fonciere.central)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² terrain)
-                      {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
+                  <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
+                    <div className="text-[9px] text-txt-dim">SDP cumulée</div>
+                    <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
+                  </div>
+                  <div className="rounded-md bg-surface-3 px-2 py-1.5">
+                    <div className="text-[9px] text-txt-dim">Logements</div>
+                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.logements_combine?.[0])}–{fmt(d.logements_combine?.[1])}</div>
+                  </div>
+                  {ratio != null && (
+                    <div data-asm-kpi="ratio" className="rounded-md bg-surface-3 px-2 py-1.5">
+                      <div className="text-[9px] text-txt-dim">vs meilleure seule</div>
+                      <div className="tnum text-[14px] font-semibold text-txt">×{ratioStr} <span className="text-[9px] font-normal text-mint">{pct != null && pct >= 0 ? '+' : ''}{pct} %</span></div>
                     </div>
                   )}
                 </div>
-                {/* #2 — VALORISATION : prix du terrain nu de la zone (référentiel unique) */}
-                {d.terrain_zone_eur_m2 != null && (
-                  <div data-asm-valorisation className="mt-1 text-txt-dim">Le marché de la zone vend le terrain nu à <b className="tnum text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> <span className="text-txt-dim">(DVF terrains, fiabilité {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''})</span>.</div>
-                )}
+                {/* point 3 — CHARGE CUMULÉE : négative = MÊME traitement que « Étudier un bien » (bloc
+                    rouge + phrase), avec la référence marché à côté. */}
+                {d.charge_fonciere && (() => {
+                  const c = d.charge_fonciere.central as number
+                  const neg = c < 0
+                  return (
+                    <div data-asm-charge data-neg={neg ? '1' : '0'} className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${neg ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
+                      <span className={neg ? 'text-st-ecartee' : 'text-mint'}>Charge foncière cumulée : <b>{fmtEurCompact(c)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² de terrain)</span>
+                      {neg
+                        ? <span className="text-txt-dim"> — négative : l'<b>ensemble ne finance pas ce foncier</b> à ces hypothèses.</span>
+                        : <span className="text-txt-dim"> — CA cumulé ~{fmtEurCompact(d.ca?.central)}.</span>}
+                      {d.terrain_zone_eur_m2 != null && <span className="text-txt-dim"> Marché zone : <b className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> (DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''}).</span>}
+                      {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
+                    </div>
+                  )
+                })()}
                 <div className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.note_sdp}</div>
               </>
             )}
@@ -245,13 +275,19 @@ export function M16() {
                       ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN {pr.siren}</span> : null}</>
                       : <span className="italic">propriétaire particulier — non communiqué</span>}
                   </div>
-                  {/* #4 — L'ACTION au bout du constat : préparer le courrier de CETTE parcelle (prérempli) */}
-                  <button data-asm-courrier onClick={() => { setCourrierPrefill(i.idu as string); setModule('courriers') }}
-                    className="shrink-0 rounded border border-mint/40 px-1.5 py-0.5 text-[10.5px] text-mint transition-colors duration-quick hover:bg-mint/10">✉ courrier</button>
+                  {/* point 4 : plus de bouton courrier PAR parcelle — un seul geste en pied (pont Courrier). */}
                 </div>
               </div>
             )})}
           </div>
+          {/* point 4 — PONT COURRIER : un seul geste ouvre l'outil Courrier prérempli avec TOUTES les
+              parcelles de l'assemblage (patron courrierPrefillIdus, comme l'import Assemblage côté Courrier). */}
+          {(d.items as Record<string, any>[]).length > 0 && (
+            <button data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}
+              className="rounded-lg border border-mint/50 bg-mint/10 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              ✉ Préparer les courriers ({(d.items as Record<string, any>[]).length}) → Courrier propriétaire
+            </button>
+          )}
           {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
           <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
         </>
