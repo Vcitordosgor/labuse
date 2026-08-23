@@ -83,6 +83,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Scan patrimoine', desc: 'Un nom de propriétaire, et TOUT son foncier ressort d’un coup — repérez les gros détenteurs à approcher' },
   { key: 'courriers', num: 'M09', group: 'agir',
     label: 'Courrier propriétaire', desc: 'Générez vos courriers d’approche, prêts à télécharger et envoyer' },
+  // Prospection solaire (V1 restitution) — sert la donnée solaire DÉJÀ en base (parcel_solar/PVGIS,
+  // pente RGE ALTI, piscine ortho, proba occupant), gelée au 11/07/2026 ; export CSV de démarchage.
+  { key: 'prospection-solaire', num: 'M26', group: 'agir',
+    label: 'Prospection solaire', desc: 'Les parcelles au meilleur potentiel solaire (productible, orientation, toiture) — pour démarcher l’installation photovoltaïque ; export CSV' },
 
   // ── 3. Lire le marché et le territoire ──
   // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·

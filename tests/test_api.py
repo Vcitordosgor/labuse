@@ -532,3 +532,30 @@ def test_permis_fusion_endpoints_contrat(client):
     r = client.get("/modules/promesses?months=36&count_only=true")
     assert r.status_code == 200, r.text[:300]
     assert "total" in r.json()
+
+
+def test_prospection_solaire_ne_leve_pas(client):
+    """Outil « Prospection solaire » V1 (restitution) : l'endpoint et son export CSV NE LÈVENT PAS
+    (jamais un 500), quelle que soit la présence des tables solaires dans la base de test. Contrôle
+    aussi la forme (items + bandeau) et le garde-fou RGPD : AUCUN champ nominatif servi."""
+    for url in ("/modules/prospection-solaire",
+                "/modules/prospection-solaire?commune=Saint-Paul&potentiel_min=1400&piscine=oui&proba_occ_min=50&sort=toiture"):
+        r = client.get(url)
+        assert r.status_code in (200, 503), r.text[:300]   # 503 = tables absentes (data-gap), jamais 500
+        if r.status_code == 200:
+            d = r.json()
+            assert isinstance(d.get("items"), list)
+            assert "bandeau" in d and "11/07/2026" in d["bandeau"]
+            assert d["tronquee"] == (d["total"] > d["n"])
+            # RGPD : jamais de donnée nominative (nom/propriétaire/siren) dans les lignes servies
+            interdits = {"nom", "proprietaire", "propriétaire", "owner", "siren", "denomination", "prenom"}
+            for it in d["items"][:20]:
+                assert not (interdits & {k.lower() for k in it}), f"champ nominatif servi : {it.keys()}"
+
+    # export CSV — même endpoint, fmt=csv ; ne lève pas, en-tête Sourcé/Estimé si servi
+    r = client.get("/modules/prospection-solaire?fmt=csv")
+    assert r.status_code in (200, 503), r.text[:300]
+    if r.status_code == 200:
+        assert "text/csv" in r.headers.get("content-type", "")
+        head = r.text.splitlines()[0] if r.text else ""
+        assert "Sourcé" in head or "Estimé" in head or "Parcelle" in head

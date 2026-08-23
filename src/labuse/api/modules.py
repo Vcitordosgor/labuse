@@ -516,6 +516,119 @@ def promesses(commune: str | None = None, months: int = 24,
                       for r in rows]}
 
 
+# ───────────────────────── PROSPECTION SOLAIRE (V1 restitution) ─────────────────────────
+# Sert la donnée DÉJÀ en base, GELÉE au 11/07/2026 : parcel_solar (productible PVGIS/SARAH3 = Sourcé
+# dérivé ; azimut du bâti = Estimé ; proba propriétaire-occupant = Estimé statistique ; flag ABF),
+# parcel_terrain (pente = Sourcé RGE ALTI 5 m), p_model_bati (emprise bâtie = Estimé, proxy toiture),
+# parcel_equipements (piscine = Estimé, ortho BD ORTHO 20 cm 2025, fiab. ~90,7 %).
+# AUCUN recalcul, aucun appel externe, MASQUE SOLAIRE DU RELIEF NON CALCULÉ. RGPD : aucune donnée
+# nominative — des parcelles et des caractéristiques, jamais des personnes (proba = probabilité).
+def _prospection_solaire_cap() -> int:
+    """Plafond de la liste EN CONFIG (config/prospection_solaire.yaml `liste_max`, défaut 500) —
+    jamais un LIMIT muet ; l'écran DIT « les N premières sur M »."""
+    try:
+        from ..config import load_yaml_config
+        return int(load_yaml_config("prospection_solaire").get("liste_max", 500))
+    except Exception:  # noqa: BLE001
+        return 500
+
+
+def _classement_court(tier_v2: str | None, etage0: bool) -> str:
+    """Le mot SERVI (M137, chip court) depuis le mapping canonique — même vocabulaire qu'à l'écran
+    (verdictMeta). etage0 gagne (écartée) ; sinon le libellé court du tier ; sinon « — »."""
+    if etage0:
+        return "Écartée"
+    from ..verdict_servi import TIER_LABELS
+    return TIER_LABELS.get(tier_v2 or "", "—") if tier_v2 else "—"
+
+
+@router.get("/prospection-solaire")
+def prospection_solaire(commune: str | None = None,
+                        potentiel_min: int = 0, proba_occ_min: int = 0,
+                        piscine: str = "tous",   # tous | oui | non
+                        sort: str = "potentiel",  # potentiel | toiture | proba
+                        fmt: str = "json",
+                        db: Session = Depends(get_db)):
+    """Outil « Prospection solaire » V1 — liste de parcelles triée par potentiel solaire, servie
+    depuis les données gelées au 11/07/2026 (cf. en-tête). Sert le démarchage (export CSV)."""
+    if not db.execute(text("SELECT to_regclass('parcel_solar') IS NOT NULL")).scalar():
+        raise HTTPException(503, "données solaires indisponibles (table absente).")
+    cap = _prospection_solaire_cap()
+    orders = {"potentiel": "ps.prod_spec_kwh_kwc DESC NULLS LAST, ps.idu",
+              "toiture": "b.emprise_bati_m2 DESC NULLS LAST, ps.idu",
+              "proba": "ps.proba_proprio_occupant DESC NULLS LAST, ps.idu"}
+    order = orders.get(sort, orders["potentiel"])
+    # piscine : « oui » = détectée ; « non » = non détectée (⚠ l'absence n'est pas VÉRIFIÉE hors des
+    # zones scannées — dit au « i » ; pas un « zéro » affirmé).
+    pisc_cond = " AND e.piscine IS TRUE" if piscine == "oui" \
+        else " AND (e.piscine IS NOT TRUE)" if piscine == "non" else ""
+    where = ("WHERE ps.prod_spec_kwh_kwc IS NOT NULL AND ps.prod_spec_kwh_kwc >= :pmin"
+             " AND ps.proba_proprio_occupant >= :prmin"
+             + (" AND p.commune = :c" if commune else "") + pisc_cond)
+    base = """
+        FROM parcel_solar ps
+        JOIN parcels p ON p.idu = ps.idu
+        LEFT JOIN parcel_terrain t ON t.idu = ps.idu
+        LEFT JOIN p_model_bati b ON b.idu = ps.idu
+        LEFT JOIN parcel_equipements e ON e.idu = ps.idu"""
+    params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min}
+    total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
+    rows = db.execute(text(f"""
+        SELECT ps.idu, p.commune AS commune,
+               round(ps.prod_spec_kwh_kwc)::int AS productible,
+               round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
+               round(t.pente_moy_deg::numeric, 1) AS pente,
+               round(b.emprise_bati_m2)::int AS toit_m2,
+               (e.piscine IS TRUE) AS piscine,
+               ps.flag_abf AS abf,
+               ps.proba_proprio_occupant AS proba_occ,
+               s2.tier AS tier_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+        {base}
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = ps.idu AND s2.run_id = :v2run
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        {where}
+        ORDER BY {order} LIMIT :lim"""),
+        {**params, "v2run": _v2run(db), "run": RUN, "lim": cap}).mappings().all()
+    items = []
+    for r in rows:
+        d = dict(r)
+        d["etage0"] = bool(r["etage0"])
+        d["classement"] = _classement_court(r["tier_v2"], d["etage0"])
+        items.append(d)
+    maj = "2026-07-11"
+    bandeau = ("Données au 11/07/2026 · masque solaire du relief non calculé · "
+               "potentiel théorique à confirmer sur site.")
+    if fmt == "csv":
+        # export démarchage : MÊMES colonnes que l'écran, mention Sourcé/Estimé en en-tête (mandat).
+        cols = [("idu", "Parcelle (IDU)"),
+                ("classement", "Classement [Analyse LABUSE]"),
+                ("productible", "Productible kWh/kWc/an [Sourcé — PVGIS/SARAH3]"),
+                ("azimut", "Azimut bâti ° [Estimé — élongation]"),
+                ("pente", "Pente ° [Sourcé — RGE ALTI 5 m]"),
+                ("toit_m2", "Toiture m² emprise [Estimé — proxy]"),
+                ("piscine", "Piscine détectée [Estimé — ortho 2025]"),
+                ("abf", "Périmètre ABF [Sourcé]"),
+                ("proba_occ", "Proba propriétaire-occupant % [Estimé — statistique]")]
+        buf = io.StringIO()
+        buf.write("﻿")  # BOM → accents corrects à l'ouverture Excel
+        w = csv.writer(buf, delimiter=";")
+        w.writerow([h for _, h in cols])
+        for it in items:
+            def _cell(k: str):
+                v = it.get(k)
+                if k in ("piscine", "abf"):   # « oui » ou vide — jamais un « non/False » affirmé
+                    return "oui" if v else ""
+                return "" if v is None else v
+            w.writerow([_cell(k) for k, _ in cols])
+        return Response(buf.getvalue(), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": 'attachment; filename="prospection_solaire.csv"'})
+    return {"total": total, "n": len(items), "cap": cap, "tronquee": total > len(items),
+            "items": items,
+            "source": "PVGIS (Commission européenne) · RGE ALTI (IGN) · BD ORTHO 20 cm 2025 (IGN)",
+            "maj": maj, "bandeau": bandeau}
+
+
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
 # M10 : le VRAI délai d'instruction dépôt→autorisation, en MÉDIANE (robuste aux outliers).
 # La date de dépôt (DR_DEPOT) manquait de `sitadel_permits` ; M10 l'a rapatriée de la source
