@@ -15,6 +15,7 @@ import { ContextePanel } from './components/contexte/ContextePanel'
 import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
 import { CommunesTablePanel } from './components/outils/Communes'
+import { DensifierTablePanel } from './components/outils/Renouvellement'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
@@ -346,6 +347,9 @@ export default function App() {
               {/* §4 — la table des 24 communes de l'outil « Communes » s'ouvre en grand (patron
                   ex-Comparateur) ; le composant se rend lui-même selon `communesTableOpen`. */}
               <CommunesTablePanel />
+              {/* DENSIFIER — le grand tableau (67 214 parcelles) de l'outil « Densifier l'existant » ;
+                  se rend lui-même selon `densifierTableOpen` (cycle de vie SOCLE). */}
+              <DensifierTablePanel />
             </>
           )}
           {view === 'crm' && <Kanban />}

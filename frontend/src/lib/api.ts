@@ -487,9 +487,11 @@ export interface RenouvListe {
   source: string; run_label: string; maj: string | null
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
-// le plafond vit côté serveur (config renouvellement.yaml) → on n'envoie plus de `limit` en dur.
-export const getRenouvListe = (sort: string, communeNom?: string | null) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`)
+// le plafond vit côté serveur (config renouvellement.yaml, liste_max=400 PAR requête) → on n'envoie
+// PAS de `limit` (sinon la borne serveur min(limit,offset,cap) renvoie 0 à offset 0). DENSIFIER : on
+// pagine par `offset` (400 par page) pour atteindre les 67 214 sans jamais dépasser le cap par requête.
+export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
+  j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 
 // ── Prospection solaire (V1 restitution) — données gelées au 11/07/2026, masque solaire non calculé ──
 export interface SolaireItem {
