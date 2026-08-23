@@ -286,10 +286,17 @@ interface AppState {
   // depuis la fiche (« Comparer ») et la shortlist ; panneau en surimpression.
   compareIdus: string[]
   compareOpen: boolean
+  // SOCLE (refonte 13 outils) — la sélection à comparer SURVIT à la sortie de l'outil (retour sans
+  // perte), mais pas éternellement : TTL 15 min. Horodatage du dernier ajout/retrait ; à la
+  // réouverture (openCompare) ou à un nouvel ajout, une sélection périmée est vidée avant de servir.
+  compareTouchedAt: number | null
   addToCompare: (idu: string) => void
   removeFromCompare: (idu: string) => void
   clearCompare: () => void
   setCompareOpen: (v: boolean) => void
+  // SOCLE — ouverture de l'overlay Comparaison (Rail) : applique le TTL puis ouvre, en mode
+  // « picking » si la sélection est vide/périmée. Centralise ce que le Rail bricolait à la main.
+  openCompare: () => void
   // M82 — mode « cliquer sur la carte » : la carte reste cliquable (barre compacte), le clic AJOUTE
   // une parcelle à la comparaison (motif du clic-sélection d'Assemblage).
   comparePicking: boolean
@@ -374,6 +381,17 @@ interface AppState {
   setCalculette: (c: { cout_construction_m2: number; marge_frais_pct: number; vrd_m2?: number; prix_demande_eur: number | null } | null) => void
 }
 
+// SOCLE (refonte 13 outils) — CYCLE DE VIE DES OVERLAYS PLEIN ÉCRAN. Comparaison, table des 24
+// communes (et le futur grand tableau Densifier) sont montés au niveau App, pilotés par des drapeaux
+// de store. Règle unique : TOUTE sortie d'outil / changement de route les ferme. Ce fragment est le
+// « cleanup on-leave centralisé » du mandat — spreadé dans CHAQUE action de navigation ; ajouter un
+// overlay plein écran = l'ajouter ICI, une seule fois (plus de reset recopié — et oublié — dans un
+// handler sur deux, la cause du « panneau fantôme » constaté). NB : la SÉLECTION (compareIdus) n'y
+// est pas touchée — elle survit à la sortie, bornée par le TTL ci-dessous.
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false } as const
+// SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
+const COMPARE_TTL_MS = 15 * 60 * 1000
+
 export const useApp = create<AppState>((set) => ({
   commune: null,
   // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
@@ -446,25 +464,25 @@ export const useApp = create<AppState>((set) => ({
   // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
-    entretienDirect: null, surveillanceOpen: false, compareOpen: false, comparePicking: false,
-    communesTableOpen: false }),
+    entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
   entretienDirect: null,
   ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'copilote', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
-    parcours: null, openProjet: null }),
+    parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
   clearEntretienDirect: () => set({ entretienDirect: null }),
   parcours: null,
   setParcours: (parcours) => set({ parcours }),
   openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null }),
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    ...CLOSE_OVERLAYS }),
   // Ouvrir un projet = la vue kanban unifiée (nav exclusive) ; retour du tri via cette même action.
   openProjet: null,
   setOpenProjet: (openProjet) => set({ openProjet, view: 'projets', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null,
-    iaRestitution: null, parcours: null }),
+    iaRestitution: null, parcours: null, ...CLOSE_OVERLAYS }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
@@ -473,10 +491,14 @@ export const useApp = create<AppState>((set) => ({
   // nav-exclusive vise view/module/parcours/openProjet/iaRestitution. Effacer la parcelle en ouvrant le
   // tiroir Outils était un vestige du reset large (dette M55-L) — un outil doit pouvoir lire la parcelle
   // regardée (M09/M10 la pré-remplissent), et la fiche doit se retrouver à la fermeture de l'outil.
+  // SOCLE : n'ajouter CLOSE_OVERLAYS QU'À la branche d'OUVERTURE. La branche de fermeture est aussi
+  // celle empruntée juste après openCompare() (Rail : setCompareOpen ouvre, puis toggleOutils ferme le
+  // tiroir) — y fermer les overlays refermerait la comparaison qu'on vient d'ouvrir.
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
     : { outilsOpen: true, view: 'cartes', module: null,
-        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
+        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
+        ...CLOSE_OVERLAYS }),
   selectedIdu: null,
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
@@ -520,25 +542,46 @@ export const useApp = create<AppState>((set) => ({
   // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
-    parcours: null, openProjet: null }),
+    parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
   // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
   surveillanceOpen: false,
   surveillanceVolet: 'parcelles',
   openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes',
-    surveillanceVolet: volet ?? s.surveillanceVolet })),
+    surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
-  toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes' })),
+  toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes',
+    ...CLOSE_OVERLAYS })),
   // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant.
-  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes' }),
-  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes' }),
+  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes',
+    ...CLOSE_OVERLAYS }),
+  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes',
+    ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
-  addToCompare: (idu) => set((s) => ({
-    compareIdus: s.compareIdus.includes(idu) ? s.compareIdus : [...s.compareIdus, idu].slice(0, 3),
-    compareOpen: true, view: 'cartes' })),
-  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen } }),
-  clearCompare: () => set({ compareIdus: [], compareOpen: false, comparePicking: false }),
+  compareTouchedAt: null,
+  // SOCLE : un ajout sur une sélection PÉRIMÉE (> 15 min) repart de zéro plutôt que d'empiler sur du
+  // vieux — sinon « revenir sous 15 min » et « recommencer après » se mélangeraient. On restampe.
+  addToCompare: (idu) => set((s) => {
+    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
+    const base = frais ? s.compareIdus : []
+    const next = base.includes(idu) ? base : [...base, idu].slice(0, 3)
+    return { compareIdus: next, compareOpen: true, view: 'cartes', compareTouchedAt: Date.now() }
+  }),
+  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen, compareTouchedAt: Date.now() } }),
+  clearCompare: () => set({ compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null }),
   setCompareOpen: (v) => set((s) => ({ compareOpen: v, comparePicking: v ? s.comparePicking : false })),
+  openCompare: () => set((s) => {
+    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
+    const ids = frais ? s.compareIdus : []
+    return {
+      ...CLOSE_OVERLAYS,                    // ferme la table Communes si elle traînait
+      compareIdus: ids,
+      compareOpen: true,
+      comparePicking: ids.length === 0,    // vide/périmée → on ajoute par la carte
+      view: 'cartes',
+      compareTouchedAt: ids.length ? s.compareTouchedAt : null,
+    }
+  }),
   comparePicking: false,
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,
