@@ -183,7 +183,7 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
 # à l'identique (mesuré M120). Une clé inconnue est écartée proprement (jamais un critère inventé).
 #: camelCase (cadrage) → (attribut FiltreCriteres, genre) ; genre : "csv" (liste→CSV) · "num" · "bool"
 _CADRAGE_MAP: dict[str, tuple[str, str]] = {
-    "tiers": ("tiers", "csv"), "scoreMin": ("score_min", "num"),
+    "tiers": ("tiers", "csv"),   # FIX-SCOREMIN : scoreMin retiré (FiltreCriteres n'a plus score_min)
     "surfaceMin": ("surface_min", "num"), "surfaceMax": ("surface_max", "num"),
     "sdpMin": ("sdp_min", "num"), "sdpMax": ("sdp_max", "num"),
     "evenement": ("evenement", "bool"), "veille": ("veille", "bool"),

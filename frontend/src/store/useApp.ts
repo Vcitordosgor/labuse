@@ -47,7 +47,6 @@ export interface LayerToggles {
 // tier v1.3 `brulantes` disparaissent de l'app (API : deprecated, servis par legacy=1).
 export interface Filters {
   tiers: FilterTier[]        // vide = univers v2 hors étage 0 servi (M30 : déclassements inclus)
-  scoreMin: number | null
   surfaceMin: number | null
   surfaceMax: number | null
   sdpMin: number | null      // SDP résiduelle minimale (m²)
@@ -93,7 +92,7 @@ export interface Filters {
 }
 
 export const EMPTY_FILTERS: Filters = {
-  tiers: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
+  tiers: [], surfaceMin: null, surfaceMax: null, sdpMin: null,
   evenement: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
