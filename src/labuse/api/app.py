@@ -3192,15 +3192,15 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
 def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Fiche « Tout ce que LA BUSE a trouvé » (§8).
 
-    P2-32 (mesuré) : SANS `source`, on rend la fiche LEGACY (`_build_fiche`) ; la fiche premium
-    (dryrun, `_q_v2_fiche`) n'est servie QUE si `source` commence par `q_v`. Le front envoie
-    TOUJOURS `source=VITE_RUN_LABEL` (= Q_A_RUN_LABEL, cf. api.ts `getFiche`) → le client voit donc
-    la premium ; le défaut sans `source` n'est PAS premium (l'ancienne docstring l'affirmait à tort).
-    Le `Q_A_RUN_LABEL` n'est le défaut que du paramètre `run_label` de `_q_v2_fiche`, atteint
-    seulement quand `source` est un label `q_v*`."""
-    if source and source.startswith("q_v"):
-        return _q_v2_fiche(db, idu, run_label=source)
-    return _build_fiche(db, idu)
+    FIX-FICHE F3 : l'endpoint sert DÉSORMAIS TOUJOURS la fiche PREMIUM (`_q_v2_fiche`) — la seule
+    structure que l'UI sait afficher. Sans `source` valide (`q_v*`), on retombe sur le run SERVI
+    `Q_A_RUN_LABEL`, PLUS sur le builder legacy `_build_fiche` (dont la structure divergente —
+    verdict/cascade/resume/ai/bati… — n'était jamais rendue par l'UI et pouvait fuir à un appelant API
+    direct). Le front envoie de toute façon `source=q_v*` (api.ts `getFiche`). Le builder legacy
+    survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
+    idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
+    run = source if (source and source.startswith("q_v")) else Q_A_RUN_LABEL
+    return _q_v2_fiche(db, idu, run_label=run)
 
 
 @app.get("/parcels/{idu}/export.pdf")

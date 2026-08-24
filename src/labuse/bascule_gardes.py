@@ -602,6 +602,55 @@ def check_unicite_pm(session=None) -> dict:
     return out
 
 
+def check_coherence_run_fiche(session=None) -> dict:
+    """Garde FIX-FICHE F5 — la fiche lit DEUX pointeurs de run : la CASCADE
+    (`dryrun_parcel_evaluations.run_label` = `Q_A_RUN_LABEL`) ET le SCORE V2 (`parcel_p_score_v2.run_id`,
+    résolu par `_score_v2_run_id` qui l'ÉPINGLE au même label via `p_score_v2_runs`). S'ils divergent —
+    le label servi présent côté cascade mais ABSENT de `p_score_v2_runs` — le verdict de fiche retombe
+    SILENCIEUSEMENT sur le repli legacy (`_score_v2_run_id` → None → tier NULL). Cette garde CRIE au lieu
+    de compter sur la chance. Bruyante, NON bloquante (régime check_fraicheur).
+    Statuts : OK / V2_ABSENT / CASCADE_ABSENT / LES_DEUX_ABSENTS."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    servi = Q_A_RUN_LABEL
+    out: dict[str, object] = {}
+
+    def _present(conn, table: str, col: str) -> bool | None:
+        if not conn.execute(text(f"SELECT to_regclass('{table}')")).scalar():
+            return None   # table absente = indéterminé
+        return bool(conn.execute(
+            text(f"SELECT 1 FROM {table} WHERE {col} = :r LIMIT 1"), {"r": servi}).scalar())
+
+    def _run(conn):
+        casc = _present(conn, "dryrun_parcel_evaluations", "run_label")
+        v2 = _present(conn, "p_score_v2_runs", "run_id")
+        out.update(cascade=casc, v2=v2)
+        if casc and v2:
+            out["statut"] = "OK"
+            print(f"{_ts()} ✓ run fiche cohérent : « {servi} » présent en cascade ET en v2.", flush=True)
+        elif casc and v2 is False:
+            out["statut"] = "V2_ABSENT"
+            print(f"{_ts()} ⚠ run fiche [V2_ABSENT] — « {servi} » servi en cascade mais ABSENT de "
+                  f"p_score_v2_runs → le verdict de fiche retombe en repli legacy SILENCIEUX. "
+                  f"Rejouer `labuse score-v2` sous ce label. NON bloquant.", flush=True)
+        elif v2 and casc is False:
+            out["statut"] = "CASCADE_ABSENT"
+            print(f"{_ts()} ⚠ run fiche [CASCADE_ABSENT] — « {servi} » en v2 mais absent de "
+                  f"dryrun_parcel_evaluations. NON bloquant.", flush=True)
+        elif casc is False and v2 is False:
+            out["statut"] = "LES_DEUX_ABSENTS"
+            print(f"{_ts()} ⚠ run fiche [LES_DEUX_ABSENTS] — « {servi} » introuvable des deux côtés.", flush=True)
+        else:
+            out["statut"] = "INDETERMINE"   # une table au moins absente (base de test)
+            print(f"{_ts()} · run fiche [INDÉTERMINÉ] — table cascade/v2 absente, garde non applicable.", flush=True)
+
+    if session is not None:
+        _run(session)
+    else:
+        with _connect() as c:
+            _run(c)
+    return out
+
+
 def check_coherence_tables_run_scopees(session=None) -> dict:
     """Garde M50 — assertion « aucune table SERVIE run-scopée silencieusement périmée ». Pour CHAQUE
     table servie portant `run_label`, compare son/ses run(s) au run servi (`config/served_run.txt`).

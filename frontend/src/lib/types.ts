@@ -93,6 +93,7 @@ export interface FicheLine {
   source_table: string | null
   source_id: number | string | null
   date: string | null
+  millesime_amont: string | null   // FIX-FICHE F4 — vraie fraîcheur AMONT (data_sources.source_millesime), affichée inline
 }
 
 export interface PipelineColumn {
