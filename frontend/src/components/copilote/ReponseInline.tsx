@@ -48,12 +48,19 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
     //    le listing est SERVEUR (getResults) et applique TOUS les critères, signaux compris. Le mode
     //    commune, lui, liste le GeoJSON filtré CLIENT (matchAll) qui IGNORE les signaux → il aurait
     //    montré toutes les parcelles de la commune, pas les {N} annoncées (mesuré : 33 910 vs 66).
-    //  • `analyseLabuse` reste FAUX (EMPTY_FILTERS) → mode FACTUEL : le compte = celui du Copilote
-    //    (facette `tiers=None` ≡ factuel « toute la trame » ; l'analyse LABUSE retirerait l'étage 0
-    //    et afficherait un compte plus petit → mentirait sur le nombre annoncé).
+    //  • FIX-PONT-TIER — `analyseLabuse` dépend du critère ANNONCÉ :
+    //     - question NON-TIER (signaux/surface, portés par `rest`) → analyseLabuse reste FAUX : mode
+    //       FACTUEL, le compte = celui du Copilote (facette `tiers=None` ≡ « toute la trame » ; parade
+    //       M137-I mesurée 33 910 vs 66). L'analyse retirerait l'étage 0 → compte plus petit.
+    //     - question PAR TIER (`cf.filtres.tiers`) → analyseLabuse VRAI : sinon `tiersParam` (api.ts),
+    //       en factuel, IGNORE `filters.tiers` et sert la trame entière → la carte contredirait le
+    //       compte annoncé (ex. « brûlantes » annoncées, commune entière affichée). Armé, il sert
+    //       EXACTEMENT ces tiers → même SQL que le comptage du Copilote → mêmes chiffres.
     //  • `setVerdict(true)` monte ResultsSection ; `openListing()` ouvre le panneau sur la liste.
+    const parTier = Array.isArray(cf.filtres.tiers) && (cf.filtres.tiers as unknown[]).length > 0
     setFilters({ ...EMPTY_FILTERS, ...(cf.filtres as Partial<typeof EMPTY_FILTERS>),
-      ...(cf.commune ? { communes: [cf.commune] } : {}) })
+      ...(cf.commune ? { communes: [cf.commune] } : {}),
+      ...(parTier ? { analyseLabuse: true } : {}) })
     setVerdict(true)
     openListing()
     setView('cartes')
