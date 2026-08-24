@@ -220,10 +220,16 @@ function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) 
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSourceDrawer(line)} className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
+        <button onClick={() => openSourceDrawer(line)} className="shrink-0 truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
           title="Voir la source (drawer)">
           {line.source}
         </button>
+      )}
+      {/* FIX-FICHE F4 — le MILLÉSIME AMONT (vraie fraîcheur de la source, pas la date de run) est
+          affiché INLINE, discret et tronqué : la traçabilité se lit sans ouvrir un tiroir. Le full
+          au survol. La date de run (line.date) reste masquée (hideDate) car uniforme/trompeuse. */}
+      {line.millesime_amont && (
+        <span className="min-w-0 truncate text-[10px] text-txt-dim" title={line.millesime_amont}>· {line.millesime_amont}</span>
       )}
       {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
@@ -2431,17 +2437,12 @@ export function Fiche({ idu }: { idu: string }) {
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* M71 B1 — DPE en INFO seule (le signal scoring dpe_passoire est retiré) :
-                    « DPE connu : G, 2023 » si un DPE est rattaché à la parcelle, rien sinon. */}
-                {(() => {
-                  const dpe = (f as unknown as { dpe_connu?: { etiquette: string; annee: number | null } }).dpe_connu
-                  return dpe ? (
-                    <div data-dpe-connu className="card-elev px-3 py-2 text-[11px] text-txt-mut">
-                      DPE connu : <b className="text-txt-hi">{dpe.etiquette}</b>{dpe.annee ? `, ${dpe.annee}` : ''}
-                      <span className="ml-1 text-[10px] text-txt-dim">(Sourcé ADEME — information, sans effet sur le classement)</span>
-                    </div>
-                  ) : null
-                })()}
+                {/* FIX-FICHE F2 — bloc « DPE connu » RETIRÉ : la fiche premium (_q_v2_fiche, celle que
+                    l'UI reçoit) ne sert JAMAIS `dpe_connu` (construit seulement par le builder legacy
+                    `_build_fiche`), et la table `parcel_dpe` n'existe plus en base → le bloc ne pouvait
+                    pas s'afficher. L'INTENTION M71 B1 (« DPE en info seule, sans effet sur le
+                    classement ») reste tracée dans le builder legacy ; la ressusciter suppose de servir
+                    `dpe_connu` en premium ET de rétablir `parcel_dpe` (décision Vic). */}
                 {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
                     propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
                 {f.proprietaire_moral?.siren && (

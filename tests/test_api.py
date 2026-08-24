@@ -64,7 +64,12 @@ def test_fiche_double_score_et_cascade(client):
     # M34 (dette #14) : le verdict est la TRADUCTION du tier servi. La parcelle de démo n'a
     # pas de ligne au run servi → « non évaluée au run servi », JAMAIS un repli legacy muet
     # (l'ancien verrou attendait le statut cascade « opportunite »).
-    f = client.get("/parcels/97415000AB0001").json()
+    # FIX-FICHE F3 : l'endpoint /parcels/{idu} ne sert PLUS la fiche legacy (structure que l'UI ne sait
+    # pas afficher). Le builder _build_fiche survit pour /explain et /export — testé ICI en direct.
+    from labuse.api.app import _build_fiche
+    from labuse.db import session_scope
+    with session_scope() as s:
+        f = _build_fiche(s, "97415000AB0001")
     assert f["verdict"]["status"] == "non_evaluee"
     assert f["verdict"]["label"] == "Non évaluée au run servi"
     # Règle d'or : les DEUX scores (legacy, informatifs) restent présents
@@ -89,7 +94,10 @@ def test_fiche_verdict_traduit_le_tier_servi(client):
             "ON CONFLICT (run_id, parcelle_id) DO UPDATE SET tier = 'brulante', rang = 7"),
             {"r": Q_A_RUN_LABEL})
     try:
-        f = client.get("/parcels/97415000AB0001").json()
+        # FIX-FICHE F3 : builder legacy testé en direct (l'endpoint ne le sert plus).
+        from labuse.api.app import _build_fiche
+        with session_scope() as s:
+            f = _build_fiche(s, "97415000AB0001")
         assert f["verdict"]["status"] == "brulante"
         assert f["verdict"]["label"] == "Priorité" and f["verdict"]["rang"] == 7   # M137 — chip court servi
         assert f["resume"]["statut"] == "brulante"
@@ -132,7 +140,11 @@ def test_demo_endpoint(client):
 def test_fiche_core_sans_bloc_promoteur_lazy(client):
     # Phase 1 — la fiche « core » s'ouvre SANS le bloc promoteur (appels externes lents) :
     # il est servi à part en lazy-load. Tout le reste (verdict/scores/cascade/prospection) reste là.
-    f = client.get("/parcels/97415000AB0001").json()
+    # FIX-FICHE F3 : structure legacy testée en direct (l'endpoint sert désormais la premium).
+    from labuse.api.app import _build_fiche
+    from labuse.db import session_scope
+    with session_scope() as s:
+        f = _build_fiche(s, "97415000AB0001")
     assert "promoteur" not in f
     assert f["verdict"]["status"] and len(f["cascade"]) > 10 and "prospection" in f
     # Correctif R1 : bloc « Occupation » toujours présent — ici couche absente → honnêteté.
@@ -285,7 +297,11 @@ def test_limit_negatif_rejete_en_422(client):
 def test_feedback_terrain_decote_le_score(client):
     # Retour « faux positif » sur une zone → décote le score d'opportunité (§10, zone).
     idu = "97415000AB0001"
-    before = client.get(f"/parcels/{idu}").json()["verdict"]["opportunity_score"]
+    # FIX-FICHE F3 : le score legacy se lit via _build_fiche direct (l'endpoint sert la premium).
+    from labuse.api.app import _build_fiche
+    from labuse.db import session_scope
+    with session_scope() as s:
+        before = _build_fiche(s, idu)["verdict"]["opportunity_score"]
     client.post("/feedback", json={"idu": idu, "verdict": "false_positive", "comment": "déjà bâti (visite)"})
     after = client.post(f"/parcels/{idu}/evaluate").json()["opportunity_score"]
     assert after < before  # la zone faux-positif décote le score d'opportunité

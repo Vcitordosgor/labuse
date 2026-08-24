@@ -235,9 +235,9 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     import time as _t
     from .. import renouvellement as _renouv
     from ..ingestion import score_e as _score_e
-    from ..bascule_gardes import (check_coherence_renouvellement, check_peremption_tuiles,
-                                  check_coherence_tables_run_scopees, check_sources_declarees,
-                                  check_unicite_pm)
+    from ..bascule_gardes import (check_coherence_renouvellement, check_coherence_run_fiche,
+                                  check_peremption_tuiles, check_coherence_tables_run_scopees,
+                                  check_sources_declarees, check_unicite_pm)
     t0 = _t.perf_counter()
     n = build_mvt_table(db, run_label)
     n_ov = build_overlay_mvt(db)
@@ -262,6 +262,10 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     # M50 : garde de cohérence de TOUTES les tables servies run-scopées (le point unique les voit
     # toutes) — assertion « plus aucune table servie ne peut être silencieusement périmée ».
     coh = check_coherence_tables_run_scopees(session=db)
+    # FIX-FICHE F5 : garde des DEUX pointeurs de run de la fiche (cascade vs v2). Si le label servi est
+    # présent en cascade mais absent de p_score_v2_runs, le verdict de fiche retombe en repli legacy
+    # SILENCIEUX — la garde le crie (bruyante, non bloquante) au lieu de compter sur la chance.
+    coh_fiche = check_coherence_run_fiche(session=db)
     # M-H : garde de traçabilité source ↔ couche (aucune couche spatial_layers sans data_source_id) —
     # dans la MÊME séquence que les autres gardes (bruyante, non bloquante).
     srcs = check_sources_declarees(session=db)
@@ -270,8 +274,8 @@ def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) 
     upm = check_unicite_pm(session=db)
     return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
             "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
-            "tables_coherence": coh, "sources_declarees": srcs, "unicite_pm": upm,
-            "run_label": run_label}
+            "tables_coherence": coh, "run_fiche": coh_fiche.get("statut"), "sources_declarees": srcs,
+            "unicite_pm": upm, "run_label": run_label}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
