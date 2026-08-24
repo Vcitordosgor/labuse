@@ -98,6 +98,41 @@ def test_idor_projets_cloison_totale(app_client):
         _purge(ea, eb)
 
 
+def test_projets_creation_flux_et_compteur_coherent(app_client):
+    """FIX-PROJETS — bout en bout : création → APPARAÎT dans la liste → S'OUVRE → CLOISONNÉ au compte.
+    ET le verrou P1 : le compteur « proposées » de la LISTE == celui de l'OUVERTURE (total VIF du
+    cadrage, plus jamais le figé de la shortlist)."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+
+        # CRÉATION (A) — cadrage commune, nom unique (évite la dédup douce)
+        r = ca.post("/projets", json={"nom": f"Cpt {uuid.uuid4().hex[:6]}",
+                                      "cadrage": {"communes": ["Saint-Denis"]}})
+        assert r.status_code == 200, r.text
+        assert r.json()["existing"] is False
+        pid = r.json()["projet"]["id"]
+
+        # APPARAÎT dans SA liste, avec un compteur vif + sa fraîcheur
+        row = next((p for p in ca.get("/projets").json() if p["id"] == pid), None)
+        assert row is not None, "le projet créé doit apparaître dans la liste"
+        prop_liste = row["counts"]["proposee"]
+        assert row.get("proposee_at"), "la fraîcheur du compte vif doit être servie (cache amorcé)"
+
+        # S'OUVRE — et le compteur proposée de l'OUVERTURE == celui de la LISTE (P1 : plus de divergence)
+        ouv = ca.get(f"/projets/{pid}/parcelles").json()
+        assert ouv["counts"]["proposee"] == prop_liste
+
+        # CLOISONNÉ — B ne voit ni n'ouvre le projet de A
+        assert all(p["id"] != pid for p in cb.get("/projets").json())
+        assert cb.get(f"/projets/{pid}").status_code == 404
+        assert cb.get(f"/projets/{pid}/parcelles").status_code == 404
+    finally:
+        _purge(ea, eb)
+
+
 def test_idor_pipeline_cloison_et_meme_parcelle(app_client):
     """Le CRM : B ne voit pas les pistes de A, ne peut pas les modifier/supprimer par id,
     et LES DEUX peuvent suivre la MÊME parcelle (la clé (compte, parcelle) le permet)."""

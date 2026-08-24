@@ -93,9 +93,10 @@ function ProjetRow({ p }: { p: Projet }) {
         </div>
         <div style={{ textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 14 }}>
           {todo ? (
-            <div data-projet-atrier>
+            <div data-projet-atrier title="Total VIF du cadrage à trier (hors décidées) — le même nombre qu'à l'ouverture ; mis en cache, actualisé à l'ouverture du projet">
               <div style={{ fontSize: 28, color: '#4ADE80', fontWeight: 500, lineHeight: 1 }}>{c.proposee}</div>
               <div style={{ fontFamily: MONO, fontSize: 10, color: '#8FA69A', marginTop: 4, letterSpacing: '.06em' }}>À TRIER</div>
+              {p.proposee_at && <div data-projet-atrier-maj style={{ fontFamily: MONO, fontSize: 8.5, color: '#5F7267', marginTop: 2, letterSpacing: '.04em' }}>au {new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</div>}
             </div>
           ) : (
             <span data-projet-rien style={{ fontFamily: MONO, fontSize: 11, color: '#4A5C52', letterSpacing: '.06em' }}>RIEN À TRIER</span>

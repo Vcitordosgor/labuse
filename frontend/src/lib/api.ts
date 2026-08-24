@@ -893,7 +893,8 @@ export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
   cadrage: Cadrage; identite: Identite; shortlist_perimee: boolean   // M120
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
-  counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
+  counts?: ProjetCounts   // FIX-PROJETS : `proposee` = total VIF du cadrage − décidées (= l'ouverture) ; décidées depuis projet_parcelles
+  proposee_at?: string | null   // fraîcheur du compte vif « à trier » (cache `cadrage_total`) — affichée « au JJ/MM »
 }
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
 // M129-D P4 : ajoutees_refonte = entrées dues au nouveau vivier (refonte cascade), dites au rejeu.

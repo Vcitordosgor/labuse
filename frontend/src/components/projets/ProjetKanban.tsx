@@ -292,14 +292,16 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                     onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
                     onFiche={() => select(it.idu)} />
                 ))}
-                {/* M140 Lot A — feuilleter la LISTE COMPLÈTE des retenues : « Charger plus » agrandit la
-                    fenêtre serveur (offset/limit), jamais tout chargé. « X sur N » = fenêtre / total vif. */}
+                {/* FIX-PROJETS (P2) — le compteur de colonne (en-tête) = TOTAL VIF ; ce pied est un CAP
+                    d'AFFICHAGE explicite (« les N premières sur M »), jamais un compteur. « Charger plus »
+                    agrandit la fenêtre serveur (offset/limit) de 60, jamais tout chargé. */}
                 {isProp && !filtreAnalyse && etat?.page?.has_more && (
                   <button data-kanban-charger-plus disabled={etatQ.isFetching}
                     onClick={() => setPropLimit((l) => l + 60)}
-                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50">
+                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50"
+                    title="La colonne « À trier » compte le TOTAL vif ; ici on n'en affiche que les premières (60 par palier) — cliquez pour en charger plus.">
                     {etatQ.isFetching ? 'Chargement…'
-                      : `Charger plus  ·  ${etat?.proposees?.length ?? 0} sur ${etat?.total_retenues ?? '…'}`}
+                      : `Charger plus  ·  les ${etat?.proposees?.length ?? 0} premières sur ${etat?.total_retenues ?? '…'}`}
                   </button>
                 )}
                 {!isProp && reste > 0 && (
