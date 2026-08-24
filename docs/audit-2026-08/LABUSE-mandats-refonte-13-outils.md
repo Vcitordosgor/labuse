@@ -283,3 +283,5 @@ Critères d'acceptation. La légende apparaît dès qu'une zone non couverte est
 - Courrier (déploiement) : vérifier si une ancienne table courrier_demandes (déclarée morte en M82) traîne avec des colonnes NOT NULL incompatibles → la dropper en maintenance avant mise en service.
 - Déploiement : rejouer `labuse dispositifs-build` en prod (idempotent) — pose le lien zfang/frr → data_sources (fix P4 couches).
 - Cleanup M129-B : purger le vestige q_score (colonne/types Fiche/ParcelProps, SELECTs events.py) — le paramètre scoreMin est retiré partout, la colonne 100 % NULL reste à évacuer.
+- RÈGLE : après tout recompute résiduel/re-score, rejouer `labuse build-mvt` (local et prod) — sinon la carte affiche des chiffres plus vieux que les fiches (le cartouche de fraîcheur le signale désormais en ambre).
+- Build-mvt : les warnings ORPHELIN sur pole_echange (19/61) et tva_primo (13/13) sont des faux positifs — données dérivées assumées, sans source amont. Apprendre au garde à distinguer « dérivé » de « source manquante » pour que le build sorte propre.
