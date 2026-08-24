@@ -32,7 +32,7 @@ INTENTS = ["QUESTION", "EXPLIQUER", "PREPARER", "OUTIL", "RECHERCHE", "VERIFICAT
 # Paramètres typés extractibles (liste blanche — une clé hors liste est ÉLAGUÉE, jamais avalée).
 PARAM_KEYS = [
     "commune", "idu", "zone", "surface_min", "surface_max", "budget_eur", "prix_eur",
-    "entreprise", "programme_logements", "perimetre", "veille_type", "sujet",
+    "entreprise", "programme_logements", "perimetre", "sujet",  # FIX-VEILLE : `veille_type` retiré (plus consommé — la veille se pose dans la Surveillance)
 ]
 
 HISTORIQUE_TOURS = 6   # contexte de session passé au routeur (dimensionné §1a — rapporté)
@@ -54,7 +54,6 @@ ROUTE_SCHEMA: dict[str, Any] = {
                 "entreprise": {"type": ["string", "null"]},
                 "programme_logements": {"type": ["number", "null"]},
                 "perimetre": {"type": ["string", "null"]},
-                "veille_type": {"type": ["string", "null"]},
                 "sujet": {"type": ["string", "null"]},
             },
             "additionalProperties": False,
@@ -152,7 +151,7 @@ RÈGLES :
 - EXTRACTION : remplis params avec ce qui est explicitement dit (commune normalisée en toponyme réunionnais ;
   idu = 14 caractères ; surfaces en m² ; budget_eur = budget d'ACHAT ; prix_eur = prix DEMANDÉ à vérifier ;
   entreprise = nom ou SIREN d'une personne morale ; programme_logements = nombre de logements visés ;
-  veille_type ∈ permis|ventes|procedure_plu|bodacc ; sujet = 3-6 mots résumant la demande, pour la
+  sujet = 3-6 mots résumant la demande, pour la
   télémétrie). Mets null ce qui n'est pas dit. N'INVENTE aucune valeur.
 
 SORTIE : un objet JSON STRICT, rien d'autre (pas de texte autour, pas de balises), de la forme :

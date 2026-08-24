@@ -184,7 +184,11 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
         "SELECT count(*) FROM event_log WHERE kind = :k AND compte_id IS NOT DISTINCT FROM :c "
         "AND ts::date = now()::date"), {"k": kind, "c": compte_id}).scalar() or 0
     if n_jour >= NOTIF_CAP_JOUR:
-        log.warning("NOTIF PLAFOND — kind=%s compte=%s ≥ %d/jour : ligne refusée (producteur en boucle ?)",
+        # V2 (FIX-VEILLE) — le débordement n'est plus SILENCIEUX : un SEUL event agrégé par
+        # (kind, compte, jour), « +N autres … aujourd'hui », dont le compteur monte. Le client sait
+        # qu'il y a plus, rien n'est jeté sans trace.
+        _debordement(db, kind, compte_id)
+        log.warning("NOTIF PLAFOND — kind=%s compte=%s ≥ %d/jour : agrégé en « +N autres » (pas jeté)",
                     kind, compte_id, NOTIF_CAP_JOUR)
         return 0
     return db.execute(text(
@@ -192,6 +196,35 @@ def creer_notification(db: Session, *, kind: str, titre: str, detail: str | None
         "VALUES (:k, :t, :d, :c, :s, :l, :i, :dd, :demo, :es) RETURNING id"),
         {"k": kind, "t": titre, "d": detail, "c": compte_id, "s": source, "l": lien,
          "i": idu, "dd": dedup, "demo": demo, "es": envoi_statut}).scalar() or 0
+
+
+def _debordement(db: Session, kind: str, compte_id: int | None) -> None:
+    """V2 (FIX-VEILLE) — quand le plafond quotidien d'un (kind, compte) est atteint, on n'écarte plus
+    le surplus EN SILENCE : on tient UN event agrégé par jour (« +N autres … aujourd'hui »), dont le
+    compteur N monte à chaque fait surnuméraire. Écrit en SQL DIRECT (hors plafond → pas de récursion),
+    dédup jour dédié → une seule ligne. Le kind = celui des notifs plafonnées (donc VISIBLE dans le
+    même flux, cloche/digest). L'évaluation tourne côté cron (mono-thread) : read-modify-write sûr."""
+    dd = f"debordement:{kind}"
+    prev = db.execute(text(
+        "SELECT id, titre FROM event_log WHERE dedup = :dd AND compte_id IS NOT DISTINCT FROM :c "
+        "AND ts::date = now()::date LIMIT 1"), {"dd": dd, "c": compte_id}).mappings().first()
+    n = 1
+    if prev:
+        try:                                            # format contrôlé « +N autres … » → on relit N
+            n = int((prev["titre"] or "").split(" ", 1)[0].lstrip("+")) + 1
+        except (ValueError, IndexError):
+            n = 2
+    titre = f"+{n} autre(s) « {kind} » aujourd'hui — plafond de {NOTIF_CAP_JOUR} atteint"
+    detail = (f"Le plafond quotidien de {NOTIF_CAP_JOUR} notifications « {kind} » est atteint. {n} fait(s) "
+              f"supplémentaire(s) aujourd'hui ne sont pas listés un par un ; le détail reste consultable à la source.")
+    if prev:
+        db.execute(text("UPDATE event_log SET titre = :t, detail = :d, ts = now() WHERE id = :i"),
+                   {"t": titre, "d": detail, "i": prev["id"]})
+    else:
+        db.execute(text(
+            "INSERT INTO event_log (kind, titre, detail, compte_id, dedup, envoi_statut) "
+            "VALUES (:k, :t, :d, :c, :dd, 'na')"),
+            {"k": kind, "t": titre, "d": detail, "c": compte_id, "dd": dd})
 
 
 def notifier_fraicheur(db: Session) -> int:

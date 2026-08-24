@@ -103,8 +103,11 @@ async def _lifespan(app: FastAPI):
         from .protection import ensure_tables as _protection_ens
         # C-bis : segments (Vues) retiré. H : crm_columns conservé.
         from .crm_columns import ensure_tables as _crm_columns_ens
+        # FIX-VEILLE — veilles ensure au BOOT (n'y était pas) : crée la table + désactive les veilles
+        # fantômes de type non évaluable (idempotent). Les veilles `permis` restent évaluées.
+        from ..copilote_v2.veilles import ensure_tables as _veilles_ens
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
-                     _protection_ens, _courrier_ens, _crm_columns_ens):
+                     _protection_ens, _courrier_ens, _crm_columns_ens, _veilles_ens):
             _ens(_engine())
         # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
         # tables à données client). Après les ensures des modules (les tables existent).

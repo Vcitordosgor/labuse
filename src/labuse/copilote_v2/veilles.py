@@ -18,22 +18,22 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# Types v1 (label client). ARBITRAGE Vic : on ne POSE que les types dont la source est BRANCHÉE
-# (EVALUABLES) — une veille qui ne se déclencherait jamais est pire qu'un refus honnête. Les autres
-# types sont CONNUS (pour un refus honnête « pas encore actif » + mesure de la demande), pas posables.
+# FIX-VEILLE (option A) — `TYPES` réduit à ce qui S'ÉVALUE. Les 3 types jamais branchés (ventes,
+# procedure_plu, bodacc) sont RETIRÉS : ils n'avaient pas d'évaluateur, et le seul chemin qui les
+# proposait (preparer_veille) était mort. Ne reste que `permis`, dont la source (Sitadel) est branchée.
 TYPES = {
     "permis": "permis de construire (Sitadel)",
-    "ventes": "ventes (DVF)",
-    "procedure_plu": "procédures PLU (Sudocuh/annuaire)",
-    "bodacc": "BODACC sur un propriétaire suivi",
 }
-EVALUABLES = {"permis"}   # SEULS types posés (source branchée) ; le reste = refus honnête + télémétrie
+EVALUABLES = {"permis"}   # invariant : TYPES.keys() == EVALUABLES (plus de type non évaluable)
 
+# FIX-VEILLE (V3/V4) — colonnes `criteres`/`frequence` EN EXTINCTION : jamais lues, plus jamais
+# écrites (le seul écrivain, l'ancien preparer_veille/_executer_veille, est retiré). On ne les
+# DÉCLARE plus (déploiement neuf sans elles) ; on ne les DROP PAS sur l'existant (pas de migration
+# destructive) — elles resteront inertes dans les tables déjà créées, ignorées par tout le code.
 DDL = """
 CREATE TABLE IF NOT EXISTS veilles (
   id serial PRIMARY KEY, compte_id int, type varchar(24), commune varchar(64),
-  criteres jsonb DEFAULT '{}', frequence varchar(12) DEFAULT 'ingestion', actif boolean DEFAULT true,
-  last_evaluated_at timestamptz, created_at timestamptz DEFAULT now()
+  actif boolean DEFAULT true, last_evaluated_at timestamptz, created_at timestamptz DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
 """
@@ -42,15 +42,25 @@ CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
 def ensure_tables(engine) -> None:
     with engine.begin() as c:
         c.execute(text(DDL))
+        # FIX-VEILLE (option A) — DÉSACTIVE les veilles FANTÔMES (type non évaluable, ex. la `bodacc`
+        # id=2 du bucket démo) : jamais évaluées, elles ne doivent plus apparaître comme actives.
+        # Idempotent et NON destructif (actif=false réversible ; aucune ligne supprimée ; les 7 veilles
+        # `permis` — type évaluable — ne sont pas touchées).
+        c.execute(text("UPDATE veilles SET actif = false WHERE actif AND NOT (type = ANY(:t))"),
+                  {"t": list(EVALUABLES)})
 
 
-def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None,
-          criteres: dict | None = None) -> dict:
+def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None) -> dict:
+    """Insère une veille — UNIQUEMENT d'un type ÉVALUABLE. FIX-VEILLE : la garde est ICI (plus dans un
+    appelant qui pouvait l'ignorer) → il est désormais IMPOSSIBLE de poser une veille qui ne
+    s'évaluerait jamais. `criteres`/`frequence` ne sont plus écrites (colonnes en extinction, V3/V4)."""
+    if type_ not in EVALUABLES:
+        raise ValueError(f"type de veille non évaluable (aucune source branchée) : {type_!r}")
     db.execute(text(DDL))
     vid = db.execute(text(
-        "INSERT INTO veilles (compte_id, type, commune, criteres) VALUES (:c, :t, :co, :cr) RETURNING id"),
-        {"c": compte_id, "t": type_, "co": commune, "cr": __import__("json").dumps(criteres or {})}).scalar()
-    return {"id": vid, "type": type_, "commune": commune, "evaluable": type_ in EVALUABLES}
+        "INSERT INTO veilles (compte_id, type, commune) VALUES (:c, :t, :co) RETURNING id"),
+        {"c": compte_id, "t": type_, "co": commune}).scalar()
+    return {"id": vid, "type": type_, "commune": commune, "evaluable": True}
 
 
 def lister(db: Session, compte_id: int | None) -> list[dict]:
@@ -66,12 +76,6 @@ def supprimer(db: Session, compte_id: int | None, veille_id: int) -> bool:
     n = db.execute(text("UPDATE veilles SET actif=false WHERE id=:i AND compte_id IS NOT DISTINCT FROM :c"),
                    {"i": veille_id, "c": compte_id}).rowcount
     return bool(n)
-
-
-def compter_actives(db: Session, compte_id: int | None) -> int:
-    db.execute(text(DDL))
-    return db.execute(text("SELECT count(*) FROM veilles WHERE compte_id IS NOT DISTINCT FROM :c AND actif"),
-                      {"c": compte_id}).scalar() or 0
 
 
 # ───────────────────────── ÉVALUATION (SQL pur, ZÉRO modèle) ─────────────────────────

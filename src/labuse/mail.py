@@ -104,13 +104,35 @@ def send_email(to: str, subject: str, body_text: str, *,
 
 
 def send_email_async(to: str, subject: str, body_text: str, *,
-                     headers: dict[str, str] | None = None) -> None:
-    """A3 — envoi en TÂCHE DE FOND : ne bloque jamais la requête HTTP. Résultat seulement logué
-    (les appelants qui ont besoin d'un retour honnête utilisent `send_email`)."""
-    threading.Thread(
-        target=lambda: send_email(to, subject, body_text, headers=headers),
-        daemon=True, name="labuse-mail-async",
-    ).start()
+                     headers: dict[str, str] | None = None, contexte: str = "") -> None:
+    """A3 — envoi en TÂCHE DE FOND : ne bloque jamais la requête HTTP. N1 (FIX-VEILLE) — un échec RÉEL
+    (pas le mode journal dev « no-config ») n'est plus AVALÉ : il est tracé en event_log `systeme`
+    (visible ADMIN à la cloche). Aucun renvoi automatique (décision Vic). Les appelants qui veulent un
+    retour synchrone utilisent `send_email`. `contexte` : libellé court pour l'admin (ex. « Courrier »)."""
+    def _run() -> None:
+        res = send_email(to, subject, body_text, headers=headers)
+        if not res.ok and res.detail != "no-config":   # échec RÉEL (le mode journal dev n'est pas un échec)
+            _journaliser_echec_admin(to, subject, res.detail, contexte)
+    threading.Thread(target=_run, daemon=True, name="labuse-mail-async").start()
+
+
+def _journaliser_echec_admin(to: str, subject: str, detail: str, contexte: str) -> None:
+    """N1 — trace un échec d'envoi ASYNC dans event_log `systeme` (feed admin, jamais un client).
+    Best-effort : une trace qui échoue ne masque JAMAIS l'échec initial (déjà logué en clair)."""
+    log.warning("MAIL ASYNC ÉCHEC — to=%s subject=%r cause=%s%s", to, subject, detail,
+                f" contexte={contexte}" if contexte else "")
+    try:
+        from .api.events import creer_notification
+        from .db import session_scope
+        ctx = f" ({contexte})" if contexte else ""
+        with session_scope() as db:
+            creer_notification(
+                db, kind="systeme", compte_id=None, source="E-mail",
+                titre=f"Un e-mail n'est pas parti{ctx}",
+                detail=f"Destinataire {to} — « {subject} ». Cause : {detail}. Aucun renvoi automatique.",
+                dedup=f"mail-echec:{to}")   # une trace/jour/destinataire (pas de tempête)
+    except Exception:  # noqa: BLE001 — la trace est best-effort ; le log ci-dessus reste la garantie
+        log.exception("MAIL ASYNC — journalisation event_log impossible (l'échec initial reste logué)")
 
 
 def mail_configured(settings=None) -> bool:
