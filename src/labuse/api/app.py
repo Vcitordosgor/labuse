@@ -3694,18 +3694,21 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - module optionnel, dégrade en silence
         faisabilite = None
 
-    # Bloc PROSPECTION (manuel) : état propriétaire/contact si la parcelle est suivie au pipeline.
-    pe = db.execute(
-        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
-    ).scalar_one_or_none()
-    pe_data = (pe.prospection or {}) if pe else {}
+    # FIX-CRM-CLOISON C1 — la fiche legacy (servie par /explain et /export) NE LIT PLUS le pipeline.
+    # `_build_fiche` n'a ni `request` ni compte : il ne peut PAS scoper `pipeline_entries`, et lisait
+    # donc la prospection (PII de contact) de N'IMPORTE QUEL compte suivant la parcelle → FUITE
+    # inter-comptes. La fiche premium `_q_v2_fiche` ne porte pas ce bloc ; l'app affiche l'état
+    # « suivie » via `/pipeline/parcel/{idu}` (scopé, avec `request`). Bloc NEUTRE, AUCUN accès
+    # pipeline (supprime aussi le 500 `MultipleResultsFound` quand ≥2 comptes suivent la même
+    # parcelle — l'unicité est (compte, parcel)). `build_resume` se comporte comme pour une parcelle
+    # non suivie (prospection vide = pas de contact manuel, pas d'action saisie).
     prosp_block = {
-        "in_pipeline": bool(pe),
-        "entry_id": pe.id if pe else None,
-        "pipeline_status": pe.status if pe else None,
-        "data": pe_data,
-        "statut_label": prospection.statut_label(pe_data.get("statut_proprietaire")),
-        "has_manual_contact": prospection.has_manual_contact(pe_data),
+        "in_pipeline": False,
+        "entry_id": None,
+        "pipeline_status": None,
+        "data": {},
+        "statut_label": prospection.statut_label(None),
+        "has_manual_contact": False,
         "disclaimer": prospection.disclaimer(),
     }
 

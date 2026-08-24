@@ -124,6 +124,12 @@ def test_api_pipeline_prospection(client_parcel):
     # valeur d'enum invalide → 422 (pas de stockage)
     assert client.patch(f"/pipeline/{eid}", json={"prospection": {"statut_proprietaire": "bidon"}}).status_code == 422
 
-    # export markdown : le bloc prospection apparaît avec le contact saisi
+    # la prospection reste lisible LÀ où elle est scopée : la fiche pipeline du compte (sanity)
+    assert client.get(f"/pipeline/parcel/{idu}").json()["entry"]["prospection"]["contact_nom"] == "Commune de X"
+
+    # FIX-CRM-CLOISON C1 — l'export (fiche legacy, servie sans scope de compte) NE PORTE PLUS le
+    # contact saisi : la prospection (PII) ne vit que dans le CRM scopé, jamais dans /export ou
+    # /explain, sinon elle fuiterait à un autre compte (cf. test_idor_fiche_explain_export_*).
     ex = client.get(f"/parcels/{idu}/export", params={"format": "md"})
-    assert ex.status_code == 200 and "Prospection propriétaire" in ex.text and "Commune de X" in ex.text
+    assert ex.status_code == 200
+    assert "Commune de X" not in ex.text

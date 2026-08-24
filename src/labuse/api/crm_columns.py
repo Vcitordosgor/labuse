@@ -218,11 +218,17 @@ def rename_column(col_id: int, body: RenameIn, request: Request, db: Session = D
         raise HTTPException(422, "Le nom de colonne est requis.")
     if len(label) > 80:
         raise HTTPException(422, "Nom de colonne trop long (80 caractères max).")
+    # FIX-CRM-CLOISON C2 — l'UPDATE re-filtre `compte_id` (défense en profondeur) : `_own_column`
+    # a déjà garanti l'appartenance (404 sinon), mais l'UPDATE ne doit pas dépendre de ce seul gate
+    # amont — un futur refactor qui le retirerait ré-ouvrirait une écriture cross-compte par id.
     if body.tone is not None:
-        db.execute(text("UPDATE crm_columns SET label = :l, tone = :t WHERE id = :id"),
-                   {"l": label, "t": (body.tone or None), "id": col_id})
+        db.execute(text("UPDATE crm_columns SET label = :l, tone = :t"
+                        " WHERE id = :id AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"l": label, "t": (body.tone or None), "id": col_id, "cid": cid})
     else:
-        db.execute(text("UPDATE crm_columns SET label = :l WHERE id = :id"), {"l": label, "id": col_id})
+        db.execute(text("UPDATE crm_columns SET label = :l"
+                        " WHERE id = :id AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"l": label, "id": col_id, "cid": cid})
     db.flush()
     return {"ok": True, "columns": columns_for(db, cid)}
 

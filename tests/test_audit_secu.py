@@ -137,6 +137,55 @@ def test_idor_pipeline_cloison_et_meme_parcelle(app_client):
             s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
 
 
+def test_idor_fiche_explain_export_ne_fuit_pas_la_prospection(app_client):
+    """FIX-CRM-CLOISON C1 — la fiche legacy (/parcels/{idu}/explain et /export) ne renvoie JAMAIS la
+    prospection (PII de contact) d'un AUTRE compte. Et avec 2 comptes sur la même parcelle, pas de 500
+    (l'ancien `scalar_one_or_none()` levait MultipleResultsFound — l'unicité est (compte, parcel))."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    marker = "SECRETCONTACTA" + uuid.uuid4().hex[:8].upper()   # la PII saisie par A (contact_nom)
+    idu = f"974990EXP{uuid.uuid4().hex[:5].upper()}"
+    _wkt = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        with session_scope() as s:
+            s.execute(text(
+                "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2,"
+                " centroid, bbox) VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326),"
+                " ST_Transform(ST_GeomFromText(:w,4326),2975), 800,"
+                " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                {"i": idu, "w": _wkt})
+            s.commit()
+
+        # A suit la parcelle AVEC un contact manuel (PII)
+        ra = ca.post("/pipeline", json={"idu": idu, "prospection": {"contact_nom": marker}})
+        assert ra.status_code == 200, ra.text
+        # sanity : la PII EST bien stockée chez A (sinon l'anti-fuite ne prouverait rien)
+        assert marker in ca.get(f"/pipeline/parcel/{idu}").text
+
+        # B (autre compte) ne doit RIEN voir de cette PII via la fiche legacy
+        rexpl = cb.get(f"/parcels/{idu}/explain")
+        assert rexpl.status_code == 200, rexpl.text
+        assert marker not in rexpl.text
+        rmd = cb.get(f"/parcels/{idu}/export", params={"format": "md"})
+        assert rmd.status_code == 200, rmd.text
+        assert marker not in rmd.text
+        rhtml = cb.get(f"/parcels/{idu}/export", params={"format": "html"})
+        assert rhtml.status_code == 200 and marker not in rhtml.text
+        # …et A non plus (le bloc prospection est RETIRÉ de la fiche pour TOUS : il vit dans le CRM scopé)
+        assert marker not in ca.get(f"/parcels/{idu}/export", params={"format": "md"}).text
+
+        # point 2 : deux comptes suivent la MÊME parcelle → plus de 500 (MultipleResultsFound)
+        assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
+        assert ca.get(f"/parcels/{idu}/explain").status_code == 200
+        assert ca.get(f"/parcels/{idu}/export", params={"format": "md"}).status_code == 200
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
+
+
 def test_idor_veilles_cloison(app_client):
     """Veilles (recherches sauvegardées) : B ne voit pas celles de A, ni ne les supprime."""
     ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
