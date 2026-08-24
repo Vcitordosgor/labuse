@@ -8,6 +8,9 @@ import type { FilterTier } from '../lib/status'
 // vit dans l'omnibox du header, le montage de projet dans le Copilote.
 export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
 
+// FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
+// ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).
+// Restreindre les parcelles ne restreint pas les équipements/zonages/dispositifs affichés.
 export interface LayerToggles {
   zonage: boolean
   zonage_parcelle: boolean // M6.1 / M55-A : couche parcellaire UNIQUE — colore toutes les parcelles
@@ -62,7 +65,7 @@ export interface Filters {
   etatSol: string[]                  // nu / bati_marginal / bati_sature / bati_revele
   capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
   zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
-  analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ON par défaut.
+  analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ÉTEINT par défaut (cf. EMPTY_FILTERS ci-dessous, M55-D stage 4 — tri factuel sans opinion).
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
   sousDensite: boolean
   multMin: number | null

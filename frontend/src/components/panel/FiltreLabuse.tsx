@@ -514,6 +514,10 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         <div>
           <p className="label-caps text-txt-dim">État du sol</p>
           <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
+          {/* FIX-FILTRES F1 — l'étiquette cesse d'être muette sur l'inconnu : « nu » = pas d'emprise
+              bâtie ≥ 5 % DÉTECTÉE, ce qui inclut les parcelles au bâti non mesuré (≈ 41 % ont une
+              emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
+          <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
         </div>
       </div>
       {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —

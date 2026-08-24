@@ -956,9 +956,12 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pm0 WHERE pm0.idu = p.idu)")
     # ── M11 B2 : ZONAGE PLU par famille (U/AU/A/N) — parcel_zone_plu, granularité fiable inter-communes.
     if zonage:
+        # FIX-FILTRES F5 — normalisation UNIQUE : le pliage majuscule se fait en PG (upper()), comme
+        # pour zone_plu (M99-B), au lieu d'un str.upper() Python (qui monte les accents ≠ upper() PG
+        # locale C). Sans effet sur U/AU/A/N (ASCII), mais une seule convention des deux côtés.
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu z0 WHERE z0.idu = p.idu"
-                     " AND z0.zone_fam = ANY(:f_zonage))")
-        params["f_zonage"] = [z.strip().upper() for z in zonage.split(",") if z.strip()]
+                     " AND z0.zone_fam = ANY(SELECT upper(v) FROM unnest(CAST(:f_zonage AS text[])) v))")
+        params["f_zonage"] = [z.strip() for z in zonage.split(",") if z.strip()]
     # ── Phase A-1 : fenêtre de sortie de défiscalisation ACTIVE (badge, maisons/monopropriété).
     # Simple test de présence dans la table dérivée defisc_fenetres ; aucun lien avec le run servi.
     if defisc_active:
@@ -1065,6 +1068,11 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel rc WHERE rc.parcel_id = p.id"
                      " AND rc.cause IS NULL AND rc.sdp_residuelle_m2 >= :f_capa)")  # M125
         params["f_capa"] = capacite_min * SDP_PAR_LOGEMENT_M2
+    # FIX-FILTRES F4 — cumul ASSUMÉ : `zonage` (famille) et `zone_plu` (zone exacte) sont deux clauses
+    # INDÉPENDANTES cumulées en ET. L'UI (ZoneSelector) les rend mutuellement exclusifs, mais un
+    # deep-link (#f=) PEUT porter les deux : l'intersection est alors le comportement voulu (on ne
+    # « ferme » pas le contrat de l'endpoint pour ne pas casser les liens sauvegardés). Verrou de
+    # sémantique : tests/test_filtres_cumul.py::test_zonage_zone_plu_cumulent_en_et.
     if zone_plu:   # zone PLU EXACTE (tiroir droit).
         # M99 : le critère normalisé vit dans la TABLE (zone_filtre, écrit par
         # build_parcel_zone_plu + ensure_zone_filtre). M99-B : le PLIAGE du paramètre se fait
@@ -1767,7 +1775,8 @@ def filtre(c: FiltreCriteres = Depends(),
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
     extra, extra_params = c.where()
     stats = _mem_cached(c.cache_key(), 30.0, lambda: _q_v2_stats(
-        db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params))
+        db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params,
+        exclure_slivers=True))   # FIX-FILTRES F2 : compteur = liste (slivers < 2 m² masqués des deux)
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort,
                       groupes=bool(groupes)) if limit else []
@@ -2300,7 +2309,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 
 def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL,
                 extra_where: str = "", extra_params: dict | None = None,
-                legacy: bool = False) -> dict:
+                legacy: bool = False, exclure_slivers: bool = False) -> dict:
     """Comptes par TIER v2 EFFECTIF (M5.1) — l'étage 0 du run servi prime : une parcelle
     en étage 0 compte « écartée » quel que soit son tier. « Opportunités » = brûlantes v2
     + chaudes v2 (définition produit, tooltip « pourquoi ? »). `legacy=True` (deprecated)
@@ -2311,6 +2320,14 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
     physiques n'ont pas d'identité en base (doctrine) → « sans identité »."""
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
+    # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
+    # même plancher d'affichage que _q_v2_list (les slivers cadastraux < 2 m² masqués de la liste ET
+    # de la carte l'étaient PAS du compteur → « N correspondent » > visible). Rétablit l'invariant
+    # M45-B L3 (compteur = liste). /stats global NE le passe PAS : sa volumétrie garde les slivers.
+    sliver = ""
+    if exclure_slivers:
+        sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
+        params["minsurf"] = MIN_DISPLAY_SURFACE_M2
     join_v2 = ("LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu"
                " AND s2.run_id = :v2run")
     eff = f"(CASE WHEN {_ETAGE0_SQL} THEN 'ecartee' ELSE COALESCE(s2.tier, 'ecartee') END)"
@@ -2328,7 +2345,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
         {join_v2}
         WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-          {extra_where}
+          {extra_where} {sliver}
         """), params).mappings().one()
     dossiers = db.execute(text(
         f"""
@@ -2343,7 +2360,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE d.run_label = :run AND {eff} IN ('brulante', 'chaude')
           AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-          {extra_where}
+          {extra_where} {sliver}
         """), params).mappings().one()
     out = {
         "total": int(row["total"] or 0),
