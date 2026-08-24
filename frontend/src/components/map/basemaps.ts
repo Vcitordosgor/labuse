@@ -1,6 +1,7 @@
 // Fonds de plan — source de vérité PARTAGÉE (carte principale ET comparateur de fonds).
 // Géoplateforme IGN (tuiles libres « essentiels », TESTÉES sur le 974) ; pas de tuiles Google (CGU).
 // Extrait de MapView pour être réutilisé par le comparateur swipe (point 24) sans dupliquer les URLs.
+import type { OrthoYear } from '../../store/useApp'
 export const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
 
@@ -44,16 +45,26 @@ export const TEMPS_MILLESIMES: { key: keyof typeof BASEMAP_SOURCES; an: string; 
   { key: 'bm-ortho-2021', an: '2021', label: '2021-2023' },
 ]
 
-// Choix proposés au comparateur de fonds (ordre + libellés courts). Sous-ensemble ordonné du registre.
-export const BASEMAP_CHOICES: { key: keyof typeof BASEMAP_SOURCES; label: string }[] = [
-  { key: 'bm-ortho-now', label: 'Ortho actuelle' },
-  { key: 'bm-ortho-2000', label: 'Ortho 2000-2005' },
-  { key: 'bm-ortho-1950', label: 'Ortho 1950-1965' },
-  { key: 'bm-plan', label: 'Plan IGN' },
-  { key: 'bm-carto', label: 'Fond sombre' },
+// FIX-FONDS B5 — millésimes d'ortho du SÉLECTEUR PRINCIPAL, dérivés de la MÊME source de vérité que
+// l'outil TEMPS : « Actuelle » (bm-ortho-now) + les 6 millésimes vérifiés (TEMPS_MILLESIMES). Un seul
+// jeu de millésimes pour les deux surfaces. Le libellé `an` est l'identifiant OrthoYear (store).
+export const ORTHO_YEARS: { key: keyof typeof BASEMAP_SOURCES; an: OrthoYear; label: string }[] = [
+  { key: 'bm-ortho-now', an: 'now', label: 'Actuelle' },
+  ...TEMPS_MILLESIMES.map((m) => ({ key: m.key, an: m.an as OrthoYear, label: m.label })),
 ]
 
+// FIX-FONDS B2/B5 — mapping UNIQUE (basemap, orthoYear) → clé de fond raster (null en mode Clair,
+// qui n'a pas de tuile). Consommé par la bascule de visibilité ET l'attribution (plus de logique
+// dupliquée entre le rendu et l'effet).
+export function activeBasemapKey(basemap: string, orthoYear: string): keyof typeof BASEMAP_SOURCES | null {
+  if (basemap === 'clair') return null
+  if (basemap === 'dark') return 'bm-carto'
+  if (basemap === 'plan') return 'bm-plan'
+  return ORTHO_YEARS.find((y) => y.an === orthoYear)?.key ?? 'bm-ortho-now'   // 'ortho' : le millésime pilote
+}
+
+// FIX-FONDS B6 — `BASEMAP_CHOICES` (ancienne liste du comparateur, sans consommateur comme sélecteur)
+// RETIRÉ. Les libellés viennent d'ORTHO_YEARS (now + millésimes) + les deux fonds non-ortho.
+const _FOND_LABELS: Record<string, string> = { 'bm-plan': 'Plan IGN', 'bm-carto': 'Fond sombre' }
 export const basemapLabel = (key: string) =>
-  BASEMAP_CHOICES.find((c) => c.key === key)?.label
-    ?? TEMPS_MILLESIMES.find((m) => m.key === key)?.label
-    ?? key
+  ORTHO_YEARS.find((y) => y.key === key)?.label ?? _FOND_LABELS[key] ?? key

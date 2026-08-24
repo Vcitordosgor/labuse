@@ -8,7 +8,7 @@ import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
-import { BASEMAP_SOURCES } from './basemaps'
+import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
@@ -1079,10 +1079,9 @@ export function MapView() {
     // donc TOUS les fonds de plan (le calque `bg`, passé au blanc, reste visible dessous) ; les couches
     // parcelles/overlays gardent leurs couleurs sombres.
     const clair = basemap === 'clair'
-    const active = clair ? null
-      : basemap === 'dark' ? 'bm-carto'
-      : basemap === 'plan' ? 'bm-plan'
-      : orthoYear === '2000' ? 'bm-ortho-2000' : orthoYear === '1950' ? 'bm-ortho-1950' : 'bm-ortho-now'
+    // FIX-FONDS B5 — mapping unifié (partagé avec l'attribution) : les 7 millésimes d'ortho sont
+    // désormais sélectionnables, donc bm-ortho-2006/2011/2016/2021 ne sont plus des couches mortes.
+    const active = activeBasemapKey(basemap, orthoYear)
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
     }
@@ -1506,6 +1505,15 @@ export function MapView() {
     : tool === 'alti' && measure.alti ? `${measure.alti.z.toFixed(1)} m NGR`
     : null
 
+  // FIX-FONDS B2/B3 — attribution EXACTE du fond actif : celle de BASEMAP_SOURCES (par fond ET par
+  // millésime d'ortho), plus le binaire codé en dur. En mode Clair (aucune tuile de fond), on crédite
+  // la seule donnée montrée : le cadastre DGFiP.
+  const fondActif = activeBasemapKey(basemap, orthoYear)
+  const attribution = fondActif ? BASEMAP_SOURCES[fondActif].attribution : 'Cadastre © DGFiP'
+  // FIX-FONDS B4 — un fond ortho ANCIEN (millésime ≠ Actuelle) peut montrer des dalles noires (mer,
+  // limites de mission) : même légende honnête que l'outil TEMPS, à la même condition.
+  const orthoAncienActif = basemap === 'ortho' && orthoYear !== 'now'
+
   return (
     <div className="relative min-w-0 flex-1">
       {/* h-full w-full EN PLUS de `absolute inset-0` : maplibre-gl.css pose `.maplibregl-map{position:
@@ -1569,8 +1577,19 @@ export function MapView() {
         </div>
       )}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">
-        {basemap === 'dark' ? '© OSM · CARTO' : '© IGN Géoplateforme'}
+        {attribution}
       </div>
+      {/* FIX-FONDS B4 — légende « zones noires » réutilisée du mandat TEMPS (même markup data-temps-legende),
+          affichée dans la carte principale quand un fond ortho ANCIEN est actif. */}
+      {orthoAncienActif && (
+        <div data-temps-legende className="pointer-events-none absolute left-3 top-3 z-10 flex max-w-[19rem] items-start gap-2 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2">
+          <span aria-hidden className="mt-0.5 h-3 w-3 shrink-0 rounded-[3px] border border-line-2 bg-black" />
+          <span className="text-[10.5px] leading-snug text-txt-mut">
+            <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
+            de mission IGN) — ce n'est pas un défaut de chargement.
+          </span>
+        </div>
+      )}
     </div>
   )
 }
