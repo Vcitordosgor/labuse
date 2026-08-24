@@ -66,6 +66,15 @@ def build_zfang_frr(session: Session) -> dict:
     geo = json.loads((_repo_root() / "frontend" / "public" / "communes974.geojson").read_text("utf-8"))
     fisc = {r["insee"]: r for r in session.execute(text(
         "SELECT insee, commune, zfang_regime, frr_classement FROM territoire_fiscal_commune")).mappings()}
+    # FIX-COUCHES P4 — rattacher chaque aplat à sa source catalogue (data_sources), via le registre
+    # KIND_SOURCE (source de vérité kind→source). Les lignes ZFANG/FRR étaient posées data_source_id
+    # NULL → millésime amont non résoluble par la couche. On les lie DÈS l'insertion (durable au
+    # rebuild) ; si la source manque au catalogue, on laisse NULL (la garde check_sources_declarees
+    # le criera) plutôt que d'inventer un lien.
+    from .layers_ingest import KIND_SOURCE, _source_ids
+    sids = _source_ids(session)
+    zf_sid = sids.get(KIND_SOURCE["zfang"])
+    frr_sid = sids.get(KIND_SOURCE["frr"])
     session.execute(text("DELETE FROM spatial_layers WHERE kind IN ('zfang', 'frr')"))
     n_z = n_f = 0
     for feat in geo["features"]:
@@ -76,18 +85,18 @@ def build_zfang_frr(session: Session) -> dict:
         g = json.dumps(feat["geometry"])
         # ZFANG : toutes les communes sont ZFANG (DOM de plein droit) — régime en subtype.
         session.execute(text(
-            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
-            "('zfang', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb))"),
-            {"st": row["zfang_regime"], "nom": row["commune"], "c": row["commune"], "g": g,
+            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs, data_source_id) VALUES "
+            "('zfang', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb), :sid)"),
+            {"st": row["zfang_regime"], "nom": row["commune"], "c": row["commune"], "g": g, "sid": zf_sid,
              "a": json.dumps({"regime": row["zfang_regime"], "libelle": _ZFANG_LIBELLE[row["zfang_regime"]],
                               "maille": "commune", "source_ref": ZFANG_MILLESIME, "lien": ZFANG_LIEN})})
         n_z += 1
         # FRR : « hors » = pas classée → pas de dessin.
         if row["frr_classement"] != "hors":
             session.execute(text(
-                "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
-                "('frr', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb))"),
-                {"st": row["frr_classement"], "nom": row["commune"], "c": row["commune"], "g": g,
+                "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs, data_source_id) VALUES "
+                "('frr', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb), :sid)"),
+                {"st": row["frr_classement"], "nom": row["commune"], "c": row["commune"], "g": g, "sid": frr_sid,
                  "a": json.dumps({"classement": row["frr_classement"], "libelle": _FRR_LIBELLE[row["frr_classement"]],
                                   "maille": "commune", "source_ref": FRR_MILLESIME, "lien": FRR_LIEN})})
             n_f += 1

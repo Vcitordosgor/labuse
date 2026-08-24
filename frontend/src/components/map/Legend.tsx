@@ -53,8 +53,17 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const anruQ = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
   const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
   const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
-  const fmtMill = (m?: string) => (m ? ` · intégré le ${m.split('-').reverse().join('/')}` : '')
-  const aleaMillesime = mill(aleaQ)
+  const srcMill = (q: { data?: unknown }) => (q.data as { source_millesime?: string } | undefined)?.source_millesime
+  // FIX-COUCHES P3 — fraîcheur : le MILLÉSIME AMONT (data_sources.source_millesime) est la fraîcheur
+  // RÉELLE, affichée en premier ; la date d'INGESTION passe en mention secondaire « ingéré le ».
+  // Sans millésime amont (couche dérivée), l'ingestion reste mais reste libellée « ingéré le » —
+  // jamais présentée comme la date de la donnée.
+  const dISO = (m?: string) => (m ? m.split('-').reverse().join('/') : '')
+  const fmtFraich = (q: { data?: unknown }) => {
+    const sm = srcMill(q); const ing = mill(q)
+    if (sm) return ` · millésime ${sm}${ing ? ` (ingéré le ${dISO(ing)})` : ''}`
+    return ing ? ` · ingéré le ${dISO(ing)}` : ''
+  }
   // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
   const [verdictOpen, setVerdictOpen] = useState(false)
 
@@ -203,7 +212,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
           </div>
           <p className="mt-1 text-[10px] text-txt-dim">
             DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)
-            {aleaMillesime ? ` · intégré le ${aleaMillesime.split('-').reverse().join('/')}` : ''}
+            {fmtFraich(aleaQ)}
           </p>
         </div>
       ))}
@@ -230,7 +239,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
           </div>
           <p className="mt-1.5 text-[10px] text-txt-dim">
             GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les
-            contributeurs d’OpenStreetMap (ODbL){fmtMill(mill(transQ))}. Les pôles d’échange sont
+            contributeurs d’OpenStreetMap (ODbL){fmtFraich(transQ)}. Les pôles d’échange sont
             désormais dans « Axes structurants ».
           </p>
         </div>
@@ -263,7 +272,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
               <span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span>
             </div>
           </Tip>
-          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN (Licence Ouverte){fmtMill(mill(htQ))}</p>
+          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN (Licence Ouverte){fmtFraich(htQ)}</p>
         </div>
       )}
 
@@ -277,7 +286,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             {layers.qpv && (
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />
-                QPV — quartier prioritaire{fmtMill(mill(qpvQ))}
+                QPV — quartier prioritaire{fmtFraich(qpvQ)}
               </span>
             )}
             {layers.tva_primo && (
@@ -289,7 +298,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             {layers.anru && (
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />
-                NPNRU / ANRU — renouvellement urbain{fmtMill(mill(anruQ))}
+                NPNRU / ANRU — renouvellement urbain{fmtFraich(anruQ)}
               </span>
             )}
             {/* M137-X — 4 ENTRÉES distinctes : l'état se lit à la TEXTURE (aplat vs hachures),
