@@ -108,7 +108,9 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
   if (f.evenement) c.push(['==', ['get', 'evenement'], 'rouge'])
   if (f.veille) c.push(['==', ['coalesce', ['get', 'veille'], false], true])
   if (f.horsCopro) c.push(['!=', ['coalesce', ['get', 'copro_v2'], false], true])
-  if (f.flags.length) c.push(['any', ...f.flags.map((fl) => ['in', fl, ['get', 'flags']] as maplibregl.ExpressionSpecification)])
+  // FIX-CARTE T2 : le filtre `flags` NE s'exprime plus sur la tuile (`flags` retiré des tuiles,
+  // propriété texte la plus lourde) — il passe par le repli serveur getFiltreIdus (voir
+  // hasCriteresHorsTuiles) qui peint les IDU exacts. La liste/fiche portent déjà les flags.
   if (f.communes.length) c.push(['in', ['get', 'commune'], ['literal', f.communes]])
   return ['all', ...c] as maplibregl.FilterSpecification
 }
@@ -120,7 +122,8 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
 // l'un d'eux est actif, la carte demande au serveur les IDU du résultat exact (getFiltreIdus)
 // et restreint la palette à eux — le reste en trame neutre.
 function hasCriteresHorsTuiles(f: Filters): boolean {
-  return !!(f.signaux.length || f.etatSol.length || f.constructibilite.length
+  return !!(f.flags.length   // FIX-CARTE T2 : flags retiré des tuiles → résolu côté serveur (IDU exacts)
+    || f.signaux.length || f.etatSol.length || f.constructibilite.length
     || f.zonagePlu.length || f.zonePlu.length || f.capaciteMin != null || f.sdpMax != null
     || f.proprietaireType.length || f.etatSociete.length || f.copro.length
     || f.npnru || f.adresseAbsente || f.personneMorale || f.sousDensite
@@ -135,6 +138,9 @@ const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.9
 // l'île est CALCULÉ sur l'emprise des données (union des bbox `ST_Extent` par commune, cf. ileBounds) —
 // si la couverture évolue, le cadrage suit. Jamais figé sur ces coordonnées à l'affichage.
 const ILE_BOUNDS: [number, number, number, number] = [55.20, -21.42, 55.87, -20.85]
+// FIX-CARTE B1 — limite de navigation : ILE_BOUNDS + ~0,2° de marge (on garde de l'air autour de
+// l'île sans pouvoir dériver vers l'océan/le monde, où les parcelles renvoient 204 et le fond est vide).
+const REUNION_MAXBOUNDS: [number, number, number, number] = [55.00, -21.62, 56.07, -20.65]
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
 
 // M83 A1 — emprise réelle de l'île = union des bbox de communes servies par /communes (ST_Extent du
@@ -585,6 +591,11 @@ export function MapView() {
       fitBoundsOptions: { padding: fitPadding(ref.current.clientWidth, ref.current.clientHeight) },
       attributionControl: false,
       maxPitch: 70,
+      // FIX-CARTE B1 : navigation bornée à La Réunion + zooms cohérents avec la source (parcelles
+      // MVT z9-15 ; sous z8 l'île déborde du cadre, au-delà de z19 le sur-zoom de z15 est trop mou).
+      maxBounds: REUNION_MAXBOUNDS,
+      minZoom: 8,
+      maxZoom: 19,
     })
     map.current = m
     // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
@@ -955,7 +966,11 @@ export function MapView() {
       m.fire('labuse:ready' as never)
     })
     return () => { m.remove(); map.current = null; ready.current = false }
-  }, [select])
+    // FIX-CARTE C1 : montage UNIQUE — la carte se crée une fois (le `if (map.current) return` garde).
+    // `select` est une action zustand STABLE (jamais recréée) ; on l'exclut des deps pour dire
+    // explicitement « ne dépend de rien » plutôt que de laisser une dep trompeuse.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ───────────────────────── données ─────────────────────────
   useEffect(() => {
@@ -1536,6 +1551,21 @@ export function MapView() {
       {!tool && (
         <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut shadow-elev-1">
           {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
+        </div>
+      )}
+      {/* FIX-CARTE T1 — la carte ANNONCE la date de ce qu'elle peint (doctrine fraîcheur). Si les
+          tuiles sont en retard sur le dernier re-score/résiduel du run servi (`perime`), on le DIT
+          au runtime — plus de chiffres plus vieux que le run servi affichés en silence. */}
+      {tilesMeta.data?.carte_le && (
+        <div data-carte-fraicheur
+          className="pointer-events-none absolute bottom-2 left-3 rounded-full border bg-surface-2/90 px-2.5 py-1 text-[10.5px] shadow-elev-1"
+          style={tilesMeta.data.perime ? { color: '#E8B44C', borderColor: '#E8B44C' } : undefined}
+          title={tilesMeta.data.perime
+            ? 'Les données de la carte (SDP, densité…) sont plus anciennes que le dernier calcul du run servi. Un rebuild des tuiles (labuse build-mvt) est en attente.'
+            : 'Date de la donnée peinte par la carte (dernier build des tuiles).'}>
+          {tilesMeta.data.perime ? '⚠ ' : ''}
+          {(tilesMeta.data.perime ? 'Carte au ' : 'Carte à jour au ') + tilesMeta.data.carte_le.slice(0, 10).split('-').reverse().join('/')}
+          {tilesMeta.data.perime ? ' — mise à jour en attente' : ''}
         </div>
       )}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">
