@@ -43,6 +43,16 @@ describe('cleanup on-leave centralisé', () => {
     expect(st().densifierTableOpen).toBe(false)   // overlay Densifier fermé (CLOSE_OVERLAYS)
   })
 
+  it('FIX-INTEGRATION I7 : le tiroir de source (sourceLine) tombe au changement d\'outil', () => {
+    st().openSourceDrawer({ label: 'source' } as never)   // tiroir ouvert sur une fiche
+    expect(st().sourceLine).not.toBeNull()
+    st().setModule('assemblage')                          // changement d'outil
+    expect(st().sourceLine).toBeNull()                    // fermé via CLOSE_OVERLAYS (plus de résidu)
+    // et ouvrir le tiroir ne se sabote pas lui-même (openSourceDrawer ne spread pas CLOSE_OVERLAYS)
+    st().openSourceDrawer({ label: 'x' } as never)
+    expect(st().sourceLine).not.toBeNull()
+  })
+
   it('FIX-ACCUEIL A3 : openFiltres ferme les overlays (accueil « Commencer » / sélecteur commune du header)', () => {
     useApp.setState({ compareOpen: true, communesTableOpen: true, densifierTableOpen: true, accueilVu: false })
     st().openFiltres()

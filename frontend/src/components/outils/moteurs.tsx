@@ -208,8 +208,12 @@ export function M16() {
                     <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
                     <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
                   </div>
-                  <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">SDP cumulée</div>
+                  {/* FIX-INTEGRATION I1 — « SDP estimée » (par analogie DVF, cf. ratio ci-dessus) cumulée
+                      sur l'assiette. ≠ « SDP gabarit » de la Faisabilité (capacité PLU) ≠ « SHAB vendable »
+                      (× rendement 0,8). Le titre le dit pour éviter toute comparaison entre outils. */}
+                  <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5"
+                    title="SDP ESTIMÉE par analogie (parcelles comparables), cumulée sur l'assiette — pas la SDP au gabarit PLU de la Faisabilité, ni la SHAB vendable">
+                    <div className="text-[9px] text-txt-dim">SDP estimée cumulée</div>
                     <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
                   </div>
                   <div className="rounded-md bg-surface-3 px-2 py-1.5">

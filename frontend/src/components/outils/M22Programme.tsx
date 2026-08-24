@@ -21,7 +21,7 @@ function csvCell(v: unknown): string {
   return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 function exportProgrammeCsv(items: Record<string, any>[]) {
-  const head = ['Parcelle', 'Commune', 'SDP (m²)', 'Zone', 'Hauteur PLU (m)', 'Marge capacité', 'Classement']
+  const head = ['Parcelle', 'Commune', 'SDP gabarit (m²)', 'Zone', 'Hauteur PLU (m)', 'Marge capacité', 'Classement']
   const rows = items.map((i) => [i.idu, i.commune ?? '', i.sdp ?? '', i.zone ?? '', i.hauteur_verifiee ? i.hauteur_plu_m : 'à instruire',
     `x${i.marge_capacite}`, i.statut ?? ''])
   const csv = [head, ...rows].map((r) => r.map(csvCell).join(';')).join('\n')
@@ -144,8 +144,12 @@ export function M22() {
               {/* PROGRAMME ÉPINGLÉ (mandat) — le récap reste STICKY en tête pendant le scroll des résultats :
                   on sait toujours ce qu'on cherche. */}
               <div data-prog-count className="sticky top-0 z-10 -mx-1 rounded-lg border border-mint/40 bg-surface-1/95 px-3 py-2 backdrop-blur">
+                {/* FIX-INTEGRATION I1 — « SDP gabarit » = capacité constructible au gabarit PLU (R+N,
+                    hauteur, coef circulations éditable ci-dessus). À NE PAS confondre avec la « SDP
+                    estimée » de l'Assemblage (par analogie DVF) ni avec la « SHAB vendable » de la
+                    Faisabilité (SDP × rendement 0,8) : trois grandeurs distinctes, jamais comparables. */}
                 <p className="text-[12px] leading-snug text-txt">
-                  <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → SDP ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
+                  <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → <span title="Capacité constructible au gabarit PLU (R+N, hauteur), coef circulations appliqué — pas la SDP estimée de l'Assemblage ni la SHAB vendable de la Faisabilité">SDP gabarit</span> ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim">{commune ? ` · ${commune}` : ' · toute l’île'}</span>
                 </p>
                 <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · triées par marge de capacité décroissante.</p>
@@ -159,7 +163,7 @@ export function M22() {
                         {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
                       </div>
                       <div className="truncate text-[10.5px] text-txt-mut">
-                        SDP {fmtInt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
+                        <span title="Capacité constructible au gabarit PLU — ≠ SDP estimée (Assemblage) ≠ SHAB vendable (Faisabilité)">SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
                         {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500"
                           title="Capacité ESTIMÉE — zone non calibrée finement (hypothèses génériques)">estimée</span>}
                       </div>
