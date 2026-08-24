@@ -759,10 +759,12 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
           <>
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait. Masqué quand le CONSTAT l'a déjà dit
                 (fusion « Étudier un bien ») : pas deux fois les mêmes faits. */}
+            {/* FIX-INTEGRATION I2 — « prix de sortie NEUF » (commercialisation d'une opération, échelle
+                secteur avec repli) : à distinguer du « marché ancien commune » affiché sur le Kanban. */}
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
                 LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
-                prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+                <span title="Prix de commercialisation du NEUF, à l'échelle du secteur (avec repli commune/île) — pas le prix du bâti ancien de la commune"> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
             )}

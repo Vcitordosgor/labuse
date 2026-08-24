@@ -387,7 +387,7 @@ function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
       {dense && (it.marche_eur_m2 != null || it.evenement) && (
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {it.marche_eur_m2 != null && (
-            <span className="rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut" title="Prix médian DVF bâti de la COMMUNE (€/m² habitable) — repère commune, pas une estimation par parcelle">marché commune ~{fmtInt(it.marche_eur_m2)} €/m²</span>
+            <span className="rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut" title="Prix médian DVF du bâti ANCIEN de la commune (€/m² habitable) — repère de revente à l'échelle commune. À NE PAS confondre avec le « prix de sortie neuf » de secteur (fiche/Étudier). Pas une estimation par parcelle.">marché ancien commune ~{fmtInt(it.marche_eur_m2)} €/m²</span>
           )}
           {it.evenement && <span className="rounded-full border border-st-ecartee/50 px-2 py-0.5 text-[9.5px] text-st-ecartee" title="Événement foncier rouge (run servi) — mutation probable">événement</span>}
         </div>

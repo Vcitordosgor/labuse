@@ -412,7 +412,11 @@ interface AppState {
 // overlay plein écran = l'ajouter ICI, une seule fois (plus de reset recopié — et oublié — dans un
 // handler sur deux, la cause du « panneau fantôme » constaté). NB : la SÉLECTION (compareIdus) n'y
 // est pas touchée — elle survit à la sortie, bornée par le TTL ci-dessous.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, densifierTableOpen: false } as const
+// FIX-INTEGRATION I7 — `sourceLine` (le tiroir de source d'une ligne de fiche) rejoint le cleanup
+// centralisé : il survivait à `setModule` (changement d'outil) faute d'y être remis. Ici, il tombe
+// avec les overlays plein écran à CHAQUE navigation. L'ouverture du tiroir (`openSourceDrawer`) NE
+// spread PAS CLOSE_OVERLAYS → aucun auto-fermeture.
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -490,25 +494,25 @@ export const useApp = create<AppState>((set) => ({
   // M87 P3 — bug de fermeture : les panneaux Secteurs (« Mes veilles ») et Suivis se FERMENT à tout
   // changement de section, sans exception (sinon ils réapparaissent au retour sur Cartes).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
-    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
+    contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
     entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
   entretienDirect: null,
   ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'copilote', outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
     parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
   clearEntretienDirect: () => set({ entretienDirect: null }),
   parcours: null,
   setParcours: (parcours) => set({ parcours }),
   openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
     ...CLOSE_OVERLAYS }),
   // Ouvrir un projet = la vue kanban unifiée (nav exclusive) ; retour du tri via cette même action.
   openProjet: null,
   setOpenProjet: (openProjet) => set({ openProjet, view: 'projets', outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null,
+    selectedIdu: null, module: null, contexteCommune: null,
     iaRestitution: null, parcours: null, ...CLOSE_OVERLAYS }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
@@ -524,7 +528,7 @@ export const useApp = create<AppState>((set) => ({
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
     : { outilsOpen: true, view: 'cartes', module: null,
-        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
+        contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
         ...CLOSE_OVERLAYS }),
   selectedIdu: null,
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
@@ -568,7 +572,7 @@ export const useApp = create<AppState>((set) => ({
   sourcesFocus: null,
   // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
     parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
   // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
   surveillanceOpen: false,
