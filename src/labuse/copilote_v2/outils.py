@@ -43,9 +43,15 @@ class ToolResult:
 
 
 # ───────────────────────── compter_parcelles ─────────────────────────
+# FIX-PONT-TIER — les valeurs de DROITE sont les tiers CANONIQUES de la base (mvt_parcels.tier_v2 :
+# brulante / chaude / reserve_fonciere / a_creuser), IDENTIQUES au front (TierV2). « reserve » seul
+# n'existe PAS en base : l'ancien alias `"reserve": "reserve"` comptait 0 en silence ET faisait
+# diverger « Voir sur la carte » (le front n'a que `reserve_fonciere`). On sert donc `reserve_fonciere`.
 _TIER_ALIAS = {"opportunites": "brulante,chaude", "opportunité": "brulante,chaude",
                "brulante": "brulante", "brûlante": "brulante", "chaude": "chaude",
-               "reserve": "reserve", "a_creuser": "a_creuser"}
+               "reserve": "reserve_fonciere", "reserve_fonciere": "reserve_fonciere",
+               "réserve": "reserve_fonciere", "réserve foncière": "reserve_fonciere",
+               "a_creuser": "a_creuser", "à creuser": "a_creuser"}
 
 
 # ───────────────────────── garde toponyme (M103 P4, défaut M100 n°5) ─────────────────────────
