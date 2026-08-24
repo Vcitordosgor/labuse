@@ -446,7 +446,10 @@ export const useApp = create<AppState>((set) => ({
   setAccueilVu: () => set({ accueilVu: true }),
   mobilePanelOpen: false,
   setMobilePanelOpen: (mobilePanelOpen) => set({ mobilePanelOpen }),
-  openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true }),
+  // FIX-ACCUEIL A3 : diffuse CLOSE_OVERLAYS comme les autres transitions (setView, toggleOutils…) —
+  // ouvrir les Filtres (accueil « Commencer », sélecteur de commune du header) ferme tout overlay
+  // plein écran resté ouvert (Comparaison / table communes / Densifier), plus de panneau fantôme.
+  openFiltres: () => set({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true, ...CLOSE_OVERLAYS }),
   // M137-I — le panneau OUVERT sur le LISTING (les parcelles retenues). Utilisé quand on arrive sur la
   // carte avec un résultat DÉJÀ prêt à voir (ex. « Voir sur la carte » du Copilote) : plus de filtre à
   // confirmer. Doit aller de pair avec `verdict: true` (c'est lui qui monte ResultsSection).

@@ -451,7 +451,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         <Porte ton="verte" icone="⌕" titre="Explorer la carte" sous="activez une couche, cliquez une parcelle"
           onClick={onCommencer} />
         <Porte ton="ia" icone="✦" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
-          onClick={() => setView('copilote')} />
+          onClick={() => { setAccueilVu(); setView('copilote') }} />{/* FIX-ACCUEIL A2 : consomme l'accueil comme les 2 autres portes (plus de ré-affichage au retour) */}
         <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.length} outils — trouver, instruire, agir, comprendre, suivre`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
       </div>
@@ -461,7 +461,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       {/* B5 — la ligne de fraîcheur */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
         <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-mint" />
-        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque chiffre porte sa date.</span>
+        {/* FIX-ACCUEIL A1 : les 3 chiffres n'affichent pas de date (« i » par chiffre retiré en M87) —
+            on n'en re-promet donc plus une ICI. La phrase reste honnête à l'échelle de l'app : chaque
+            donnée est datée à sa source (fiche : statut Sourcé/Estimé + date ; page Sources : millésime). */}
+        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque donnée est datée à sa source.</span>
       </div>
     </div>
   )
