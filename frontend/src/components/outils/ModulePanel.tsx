@@ -379,7 +379,10 @@ export function M03() {
       <div className="flex flex-col gap-1.5">
         {([
           ['cours', 'En cours & récents', 'chantiers, DP, PC — veille concurrentielle', radarTotal, false],
-          ['mort', 'Accordés, jamais réalisés', '« au point mort » — PC accordés jamais commencés : du gisement', pmEntryTotal, true],
+          // LOT11 — libellé HONNÊTE : le compteur = PC accordés SANS déclaration d'achèvement (DAACT).
+          // C'est un MAJORANT (Sitadel ne trace pas fiablement les commencements DOC/DAACT), pas une
+          // preuve de « jamais commencé » — à creuser, pas du gisement acquis.
+          ['mort', 'Accordés, achèvement non déclaré', 'PC accordés sans DAACT au fichier Sitadel — majorant à vérifier (le commencement n’est pas tracé), pas « jamais réalisé »', pmEntryTotal, true],
         ] as const).map(([k, titre, sous, n, pm]) => (
           <button key={k} data-permis-entree={k} onClick={() => togglePm(pm)}
             className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-colors duration-quick ${
@@ -445,26 +448,25 @@ export function M03() {
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.map((i, k) => (
           // survol = le point s'allume sur la carte (permitHover) ; clic = fiche permis (drawer).
+          // LOT11 — UNE seule ligne (type · date · commune · logements · [délai] · état/badges), densité
+          // reprise. L'état affiche le LIBELLÉ servi (etat_label), plus jamais le code Sitadel brut « 2 ».
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} onClick={() => setOpen(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex flex-col gap-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
-            <div className="flex w-full items-center gap-2">
-              <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
-              <span className="text-txt-mut">{i['date'] as string}</span>
-              <span className="ml-auto flex items-center gap-2">
-                {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
-                {i['nb_lgt'] != null && <span className="tnum text-txt-dim">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</span>}
-                {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
-              </span>
-            </div>
-            <div className="flex w-full flex-wrap items-center gap-1.5 text-[10px] text-txt-dim">
-              {i['commune'] && <span className="text-txt-mut">{i['commune'] as string}</span>}
+            className={`flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
+            <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
+            <span className="text-txt-mut">{i['date'] as string}</span>
+            {i['commune'] && <span className="text-txt-mut">{i['commune'] as string}</span>}
+            {i['nb_lgt'] != null && <span className="tnum text-txt-dim">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</span>}
+            {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+            {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
+            <span className="ml-auto flex items-center gap-1.5">
               {pointMort
-                ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">point mort — jamais commencé</span>
-                : i['etat'] && <span className="text-txt-dim">{String(i['etat'])}</span>}
+                ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
+                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas traçé, ce n'est PAS une preuve de non-réalisation.">sans DAACT déclarée</span>
+                : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
               {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
                 title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
-            </div>
+            </span>
           </button>
         ))}
         <MoreButton q={q} loaded={loaded} total={total ?? undefined} />

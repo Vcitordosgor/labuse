@@ -361,8 +361,11 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
         "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
         "carte": carte,
+        # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
+        # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab")},
+                   "etat_label": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}") if r["etat"] else None,
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }
 
