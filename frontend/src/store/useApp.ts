@@ -149,7 +149,9 @@ export type Basemap = 'dark' | 'clair' | 'plan' | 'ortho'   // M63-P1 : + fond c
 // choix depuis localStorage (la persistance M63 aurait rouvert la carte en Clair après un reload).
 // Le choix vit dans le store le temps de la session ; un reload repart toujours en Sombre.
 const readBasemap = (): Basemap => 'dark'
-export type OrthoYear = 'now' | '2000' | '1950'
+// FIX-FONDS B5 — les 7 millésimes d'ortho (Actuelle + les 6 de TEMPS_MILLESIMES) : le sélecteur de
+// fonds et l'outil TEMPS partagent le même jeu (cf. basemaps.ORTHO_YEARS).
+export type OrthoYear = 'now' | '1950' | '2000' | '2006' | '2011' | '2016' | '2021'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
 interface AppState {

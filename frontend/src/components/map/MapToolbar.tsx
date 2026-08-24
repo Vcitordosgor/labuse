@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useApp, type Basemap, type MapTool, type OrthoYear } from '../../store/useApp'
+import { useApp, type Basemap, type MapTool } from '../../store/useApp'
+import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
 
 // M63-P1 (a) : le fond CLAIR rejoint le sélecteur existant (pas un nouveau bouton). Libellés simples.
@@ -10,12 +11,7 @@ const BASEMAPS: { key: Basemap; label: string }[] = [
   { key: 'plan', label: 'Plan IGN' },
   { key: 'ortho', label: 'Ortho IGN' },
 ]
-// Millésimes VÉRIFIÉS sur le 974 (WMTS Géoplateforme, tuiles testées) — « remonter le temps ».
-const YEARS: { key: OrthoYear; label: string }[] = [
-  { key: 'now', label: 'Actuelle' },
-  { key: '2000', label: '2000-2005' },
-  { key: '1950', label: '1950-1965' },
-]
+// Millésimes VÉRIFIÉS sur le 974 : ORTHO_YEARS (basemaps.ts) = Actuelle + les 6 de TEMPS_MILLESIMES.
 const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] = [
   {
     key: 'distance', label: 'Distance', hint: 'Clics = points · double-clic termine · Échap annule',
@@ -74,7 +70,7 @@ export function MapToolbar() {
             <polygon points="10,9.5 17,13.5 10,17.5 3,13.5" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.5" />
           </svg>
           {BASEMAPS.find((b) => b.key === basemap)?.label}
-          {basemap === 'ortho' && orthoYear !== 'now' && <span className="text-mint">· {YEARS.find((y) => y.key === orthoYear)?.label}</span>}
+          {basemap === 'ortho' && orthoYear !== 'now' && <span className="text-mint">· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
         </button>
         {bmOpen && (
           <>
@@ -90,11 +86,14 @@ export function MapToolbar() {
                 ))}
               </div>
               <p className="label-caps mt-3" title="Orthophotos historiques IGN — données libres">Remonter le temps</p>
-              <div className="mt-2 flex gap-1">
-                {YEARS.map((y) => (
-                  <button key={y.key} onClick={() => setOrthoYear(y.key)}
-                    className={`flex-1 whitespace-nowrap rounded-md border px-1.5 py-1 text-[11px] transition-colors duration-quick ${
-                      basemap === 'ortho' && orthoYear === y.key ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+              {/* FIX-FONDS B5 (contrainte Vic) — les 7 millésimes en LISTE VERTICALE compacte (pas 6
+                  boutons en ligne qui étireraient la cellule) : même gabarit que la liste des fonds
+                  ci-dessus, visible seulement quand le menu est déplié. */}
+              <div className="mt-1.5 flex flex-col gap-0.5">
+                {ORTHO_YEARS.map((y) => (
+                  <button key={y.an} onClick={() => setOrthoYear(y.an)}
+                    className={`rounded-md px-2 py-1 text-left text-[11px] transition-colors duration-quick ${
+                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
                     {y.label}
                   </button>
                 ))}
