@@ -8,12 +8,16 @@ F5 : la normalisation majuscule des DEUX filtres de zonage se fait en PG (`upper
 """
 from __future__ import annotations
 
-from labuse.api.app import _q_v2_where
+import dataclasses
+
+import pytest
+
+from labuse.api.app import FiltreCriteres, _q_v2_where
 
 
 def _where(**kw) -> tuple[str, dict]:
-    # arguments positionnels minimaux de _q_v2_where, le reste en mots-clés
-    return _q_v2_where("q_v10_m129", None, None, None, None, False, None, **kw)
+    # arguments positionnels minimaux de _q_v2_where (score_min retiré — FIX-SCOREMIN) : le reste en mots-clés
+    return _q_v2_where("q_v10_m129", None, None, None, False, None, **kw)
 
 
 def test_zonage_zone_plu_cumulent_en_et():
@@ -43,3 +47,14 @@ def test_normalisation_zonage_en_pg_pas_python():
     assert "SELECT upper(v) FROM unnest" in where
     # les deux filtres de zonage utilisent le MÊME pliage PG (deux occurrences upper(v))
     assert where.count("upper(v)") >= 2
+
+
+def test_score_min_retire_du_contrat():
+    """FIX-SCOREMIN — le paramètre mort `score_min` est PURGÉ du contrat : ni champ FiltreCriteres,
+    ni argument de `_q_v2_where`. Un vieux `?score_min=` est ignoré par FastAPI (param inconnu) —
+    jamais lu dans un champ pour être ensuite silencieusement non filtré."""
+    champs = {f.name for f in dataclasses.fields(FiltreCriteres)}
+    assert "score_min" not in champs, "score_min ne doit plus être un critère de /filtre"
+    # la fonction de WHERE ne connaît plus le paramètre (kwarg inattendu → TypeError)
+    with pytest.raises(TypeError):
+        _q_v2_where("q_v10_m129", None, None, None, False, None, score_min=90)

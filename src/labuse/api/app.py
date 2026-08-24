@@ -857,7 +857,7 @@ def _guard_flags_rgpd(demandes: list[str]) -> None:
                             detail=f"critère interdit (RGPD, personne physique) : {', '.join(interdits)}")
 
 
-def _q_v2_where(run_label: str, score_min: int | None,
+def _q_v2_where(run_label: str,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, flags: str | None,
                 communes: str | None = None, flags_exclus: str | None = None,
@@ -913,10 +913,10 @@ def _q_v2_where(run_label: str, score_min: int | None,
         conds.append("NOT COALESCE(s2.copro, false)")
     if veille:      # veille succession (radar patrimonial)
         conds.append("EXISTS (SELECT 1 FROM parcel_veille_succession vw0 WHERE vw0.parcelle_id = p.idu)")
-    if score_min is not None:
-        # M129-B : la matrice (q_score) est MORTE — le paramètre est accepté et IGNORÉ (compat
-        # URL), jamais un filtre muet sur une colonne NULL. Le front n'envoie plus score_min.
-        pass
+    # FIX-SCOREMIN : `score_min` RETIRÉ (verdict d'audit). La matrice q_score est morte (M129-B,
+    # NULL sur 100 % du run servi) et aucune fiche n'affiche de score 0-100 → il n'existait aucun
+    # « score du run servi » sur lequel filtrer. Le vestige est purgé de bout en bout (endpoint,
+    # interface front, Copilote, veille, deep-link) plutôt que de rester silencieusement ignoré.
     if surface_min is not None:
         conds.append("p.surface_m2 >= :f_smin")
         params["f_smin"] = surface_min
@@ -1215,7 +1215,6 @@ class FiltreCriteres:
     puis coule partout. Les champs deviennent des query-params (FastAPI `Depends`)."""
     source: str | None = None
     commune: str | None = None
-    score_min: int | None = None
     surface_min: int | None = None
     surface_max: int | None = None
     sdp_min: int | None = None
@@ -1266,7 +1265,7 @@ class FiltreCriteres:
     signaux: str | None = None
 
     def where(self) -> tuple[str, dict]:
-        return _q_v2_where(self.source, self.score_min, self.surface_min, self.surface_max,
+        return _q_v2_where(self.source, self.surface_min, self.surface_max,
                            self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
                            self.tiers, self.hors_copro, self.veille, self.personne_morale,
                            self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
@@ -1281,7 +1280,7 @@ class FiltreCriteres:
                            droits_residuels=self.droits_residuels)
 
     def cache_key(self) -> tuple:
-        return ("filtre", self.source, self.commune, self.score_min, self.surface_min,
+        return ("filtre", self.source, self.commune, self.surface_min,
                 self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
                 self.flags_exclus, self.tiers, self.hors_copro, self.veille,
                 self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
@@ -1298,7 +1297,6 @@ class FiltreCriteres:
 def list_parcels(commune: str | None = None,
                  limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
                  source: str | None = None,
-                 score_min: int | None = None,
                  surface_min: int | None = None, surface_max: int | None = None,
                  sdp_min: int | None = None, evenement: bool = False,
                  flags: str | None = None, communes: str | None = None,
@@ -1322,7 +1320,7 @@ def list_parcels(commune: str | None = None,
     if not (source and source.startswith("q_v")):
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
-    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
+    extra, extra_params = _q_v2_where(source, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
                                       tiers, hors_copro, veille,
                                       personne_morale, zonage, defisc_active, pc_caduc, marge_min)
@@ -1682,7 +1680,6 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
 @app.get("/stats")
 def stats(commune: str | None = None, source: str | None = None,
-          score_min: int | None = None,
           surface_min: int | None = None, surface_max: int | None = None,
           sdp_min: int | None = None, evenement: bool = False,
           flags: str | None = None, communes: str | None = None,
@@ -1701,11 +1698,11 @@ def stats(commune: str | None = None, source: str | None = None,
     if not (source and source.startswith("q_v")):
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
-    extra, extra_params = _q_v2_where(source, score_min, surface_min, surface_max,
+    extra, extra_params = _q_v2_where(source, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
                                       tiers, hors_copro, veille,
                                       personne_morale, zonage)
-    key = ("stats_qv2", source, commune, score_min, surface_min, surface_max,
+    key = ("stats_qv2", source, commune, surface_min, surface_max,
            sdp_min, evenement, flags, communes, flags_exclus,
            tiers, hors_copro, veille, legacy,
            personne_morale, zonage)

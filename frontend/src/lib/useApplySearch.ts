@@ -17,7 +17,8 @@ export function filtresToFilters(f: Record<string, unknown>): Filters {
   return {
     ...EMPTY_FILTERS,
     tiers: [...new Set([...tiers, ...traduits])],
-    scoreMin: (f.scoreMin as number | null) ?? null,
+    // FIX-SCOREMIN : `scoreMin` retiré — une recherche sauvegardée qui en portait un le voyait
+    // silencieusement ignoré (matrice q_score morte). Clé désormais non lue (écartée proprement).
     surfaceMin: (f.surfaceMin as number | null) ?? null,
     surfaceMax: (f.surfaceMax as number | null) ?? null,
     sdpMin: (f.sdpMin as number | null) ?? null,
@@ -79,7 +80,6 @@ export function useApplySearch() {
         const NUMERIQUES: [string, (v: number) => string][] = [
           ['sdpMin', (v) => `SDP ≥ ${v.toLocaleString('fr-FR')} m²`],
           ['surfaceMin', (v) => `surface ≥ ${v.toLocaleString('fr-FR')} m²`],
-          ['scoreMin', (v) => `score ≥ ${v}`],
           ['surfaceMax', (v) => `surface ≤ ${v.toLocaleString('fr-FR')} m²`],
         ]
         for (const [cle, libelle] of NUMERIQUES) {

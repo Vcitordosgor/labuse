@@ -9,7 +9,7 @@ describe('filters URL persistence (M55-D)', () => {
     const f: Filters = {
       ...EMPTY_FILTERS,
       tiers: ['brulante', 'chaude'],
-      scoreMin: 80, surfaceMin: 1000, surfaceMax: 5000, sdpMin: 300, sdpMax: 2000,
+      surfaceMin: 1000, surfaceMax: 5000, sdpMin: 300, sdpMax: 2000,
       capaciteMin: 10, multMin: 2, rangMax: 100, budgetMax: 200000,
       chargeMin: 1000, chargeMax: 90000, prixMarcheMin: 100, prixMarcheMax: 900, caMin: 1_000_000,
       veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
@@ -42,7 +42,7 @@ describe('filters URL persistence (M55-D)', () => {
   it('hasOpinion distingue terrain (faux) et opinion (vrai)', () => {
     expect(hasOpinion({ ...EMPTY_FILTERS, surfaceMin: 1000, zonagePlu: ['U'], etatSol: ['nu'] })).toBe(false)
     expect(hasOpinion({ ...EMPTY_FILTERS, tiers: ['chaude'] })).toBe(true)
-    expect(hasOpinion({ ...EMPTY_FILTERS, scoreMin: 70 })).toBe(true)
+    expect(hasOpinion({ ...EMPTY_FILTERS, rangMax: 70 })).toBe(true)   // rangMax = opinion (classement)
   })
 
   it('stage 6 : le legacy ev=1 mappe vers le signal « procédure collective »', () => {
@@ -52,10 +52,12 @@ describe('filters URL persistence (M55-D)', () => {
     expect(back.surfaceMin).toBe(1000)
   })
 
-  it('keeps historical keys readable (retro-compat) — fl legacy IGNORÉ sans erreur (stage 7)', () => {
+  it('keeps historical keys readable (retro-compat) — legacy q= et fl= IGNORÉS sans erreur', () => {
+    // FIX-SCOREMIN : un vieux lien portant `q=` (scoreMin, matrice morte) s'ouvre toujours, mais
+    // `q` est désormais IGNORÉ (comme `fl=`) — jamais lu dans un champ puis silencieusement non filtré.
     const back = filtersFromHash('#f=1&tv=chaude&q=70&hc=1&fl=pente,ravine')!.filters
     expect(back.tiers).toEqual(['chaude'])
-    expect(back.scoreMin).toBe(70)
+    expect('scoreMin' in back).toBe(false)   // la clé q n'alimente plus aucun champ
     expect(back.horsCopro).toBe(true)
     expect(back.flags ?? []).toEqual([])   // la clé contraintes est ignorée, le lien s'ouvre
   })

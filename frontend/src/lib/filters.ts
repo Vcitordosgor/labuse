@@ -57,7 +57,8 @@ export const inDefaultPerimetre = (p: ParcelProps): boolean =>
 
 // Correspondance SCOPE (tout SAUF le tier) → les compteurs par tier restent lisibles.
 export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): boolean {
-  if (f.scoreMin != null && p.q_score < f.scoreMin) return false
+  // FIX-SCOREMIN : le filtre scoreMin (sur q_score, matrice morte M129-B, jamais servi →
+  // p.q_score toujours absent) est RETIRÉ — il ne filtrait rien côté client non plus.
   if (f.surfaceMin != null && (p.surface_m2 ?? 0) < f.surfaceMin) return false
   if (f.surfaceMax != null && (p.surface_m2 ?? Infinity) > f.surfaceMax) return false
   if (f.sdpMin != null && (p.sdp_residuelle_m2 ?? -1) < f.sdpMin) return false
@@ -80,7 +81,7 @@ export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) => {
 }
 
 export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
-  f.scoreMin != null || f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
+  f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
   f.evenement || f.veille || f.horsCopro || f.flags.length > 0 ||
   f.flagsExclus.length > 0 || f.communes.length > 0 || !!zone
 
@@ -91,7 +92,7 @@ export interface Chip { token: string; label: string }
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
   'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels']
-const F_NUMS: (keyof Filters)[] = ['scoreMin', 'surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
+const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin']
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
@@ -140,7 +141,6 @@ export function resumeCriteres(f: Filters, signalLabels: Record<string, string> 
 export function activeChips(f: Filters): Chip[] {
   const out: Chip[] = []
   for (const t of f.tiers) out.push({ token: `tier:${t}`, label: ALL_TIER_META[t].label })
-  if (f.scoreMin != null) out.push({ token: 'scoreMin', label: `Q ≥ ${f.scoreMin}` })
   if (f.surfaceMin != null) out.push({ token: 'surfaceMin', label: `≥ ${f.surfaceMin.toLocaleString('fr-FR')} m²` })
   if (f.surfaceMax != null) out.push({ token: 'surfaceMax', label: `≤ ${f.surfaceMax.toLocaleString('fr-FR')} m²` })
   if (f.sdpMin != null) out.push({ token: 'sdpMin', label: `SDP ≥ ${f.sdpMin.toLocaleString('fr-FR')} m²` })
@@ -170,10 +170,11 @@ export function removeToken(f: Filters, token: string): Filters {
 // M55-D (phase 2, Q2 Vic) : persistance COMPLÈTE — CHAQUE champ de `Filters` a une clé courte, si
 // bien que l'URL, « Mes vues » et les veilles (qui appellent tous filtersToHash) capturent enfin
 // tout (avant : 11 champs sur ~35, le reste session-only). Piloté par tables → aucun oubli
-// possible. Clés HISTORIQUES conservées (tv/q/smin/smax/sdp/ev/vs2/hc/fl/fx/cs/z) : un ancien
-// lien s'ouvre à l'identique.
+// possible. Clés HISTORIQUES conservées (tv/smin/smax/sdp/ev/vs2/hc/fl/fx/cs/z) : un ancien
+// lien s'ouvre à l'identique. FIX-SCOREMIN : la clé `q` (scoreMin, matrice morte) est RETIRÉE —
+// un vieux lien portant `q=` est désormais ignoré proprement (au lieu d'être lu puis jamais filtré).
 const NUM_KEYS: [keyof Filters, string][] = [
-  ['scoreMin', 'q'], ['surfaceMin', 'smin'], ['surfaceMax', 'smax'], ['sdpMin', 'sdp'],
+  ['surfaceMin', 'smin'], ['surfaceMax', 'smax'], ['sdpMin', 'sdp'],
   ['sdpMax', 'sdpx'], ['capaciteMin', 'cap'], ['multMin', 'mm'], ['rangMax', 'rm'],
   ['budgetMax', 'bud'], ['chargeMin', 'chmin'], ['chargeMax', 'chmax'],
   ['prixMarcheMin', 'pmin'], ['prixMarcheMax', 'pmax'], ['caMin', 'ca'],

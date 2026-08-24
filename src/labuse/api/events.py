@@ -876,10 +876,13 @@ def veille_nl(body: VeilleNLIn, db: Session = Depends(get_db)) -> dict:
         if s in ("chaude", "a_creuser", "ecartee") and s not in tiers:
             tiers.append(s)
     communes = list(fr.get("communes") or []) or ([fr["commune"]] if fr.get("commune") else [])
+    # FIX-SCOREMIN : `scoreMin` retiré du récap — le matcher de veille (_veilles_match) ne l'a
+    # jamais lu (q_score matrice morte) ; l'annoncer « potentiel ≥ N » promettait un déclencheur
+    # qui ne se déclenchait pas. On ne le lit plus, donc on ne le promet plus.
     trig = {"tiers": tiers, "communes": communes, "evenement": bool(fr.get("evenement")),
-            "scoreMin": fr.get("scoreMin"), "surfaceMin": fr.get("surfaceMin"),
+            "surfaceMin": fr.get("surfaceMin"),
             "surfaceMax": fr.get("surfaceMax"), "sdpMin": fr.get("sdpMin")}
-    if not (tiers or communes or trig["evenement"] or trig["scoreMin"]
+    if not (tiers or communes or trig["evenement"]
             or trig["surfaceMin"] or trig["surfaceMax"] or trig["sdpMin"]):
         return {"ok": False, "refus": f"Je n'ai pas su en tirer un critère déclenchable. {_TRIGGERS_TXT}"}
     # 4) résumé lisible (ce que la veille fera VRAIMENT) — vocabulaire SERVI = chips (M135/M137),
@@ -897,8 +900,6 @@ def veille_nl(body: VeilleNLIn, db: Session = Depends(get_db)) -> dict:
         bits.append(f"surface ≤ {trig['surfaceMax']} m²")
     if trig["sdpMin"]:
         bits.append(f"SDP ≥ {trig['sdpMin']} m²")
-    if trig["scoreMin"]:
-        bits.append(f"potentiel ≥ {trig['scoreMin']}")
     if trig["evenement"]:
         bits.append("avec procédure BODACC")
     # critères compris MAIS non déclenchables par une veille (honnêteté : on le dit)

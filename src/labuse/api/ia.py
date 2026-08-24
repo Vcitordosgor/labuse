@@ -97,7 +97,6 @@ FILTER_SCHEMA = {
         "veille": {"type": "boolean"},
         "horsCopro": {"type": "boolean"},
         "statuts": {"type": "array", "items": {"enum": ["chaude", "a_surveiller", "a_creuser", "ecartee"]}},
-        "scoreMin": {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
         "surfaceMin": {"type": ["integer", "null"], "minimum": 0},
         "surfaceMax": {"type": ["integer", "null"], "minimum": 0},
         "sdpMin": {"type": ["integer", "null"], "minimum": 0},
@@ -214,7 +213,7 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
                       "envoyer quoi que ce soit — je traduis seulement votre demande en critères "
                       "de recherche foncière (commune, statut, surface, SDP, score). "
                       "Reformulez avec des critères ?")
-    f: dict = {"tiers": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
+    f: dict = {"tiers": [], "surfaceMin": None, "surfaceMax": None,
                "sdpMin": None, "evenement": False, "veille": False,
                "flags": [], "commune": None, "personneMorale": False, "zonage": []}
     hits = []
@@ -275,10 +274,8 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     if m:
         f["sdpMin"] = int(m.group(1).replace(" ", ""))
         hits.append(f"SDP ≥ {f['sdpMin']} m²")
-    m = re.search(r"(?:score|q)\s*(?:>|≥|d'au moins|au dessus de|supérieur à)\s*(\d{2,3})", low)
-    if m:
-        f["scoreMin"] = int(m.group(1))
-        hits.append(f"Q ≥ {f['scoreMin']}")
+    # FIX-SCOREMIN : le critère « score/q ≥ N » N'EST PLUS traduit — la matrice q_score est morte
+    # (M129-B) et aucun endpoint ne filtre dessus ; l'émettre revenait à promettre un filtre ignoré.
     if not hits:
         return None, ("Hors périmètre : je sais traduire des critères de recherche foncière "
                       "(commune, statut, surface, SDP, score, événement, flags). Reformulez ?")
