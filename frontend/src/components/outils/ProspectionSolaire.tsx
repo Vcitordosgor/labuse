@@ -13,7 +13,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getPiscinesAgregat, getProspectionSolaire, getSolaireFiche, prospectionSolaireCsvUrl,
+import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche, prospectionSolaireCsvUrl,
   type SolaireFiche, type SolaireFiltres, type SolaireItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { verdictMeta } from '../../lib/status'
@@ -100,28 +100,36 @@ function Select({ value, onChange, options, label }: { value: number; onChange: 
 }
 
 // ── MODE PISCINES — la stat d'abord, puis carte + listing ──
+// LOT8 (OUTILS-FINALE) : le mode Piscines IGNORE le classement (toutes les piscines listées, pas de
+// pied « écartées ») ; PAS de sélecteur Périmètre (toute l'île d'office, la ventilation par commune
+// reste dans le bloc stats, cliquable pour drill) ; tableau 3 colonnes (Parcelle · Piscine · Commune).
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const [commune, setCommune] = useState<string | null>(null)
   const [surfMin, setSurfMin] = useState(0)
-  const [inclure, setInclure] = useState(false)
 
   const agg = useQuery({ queryKey: ['piscines-agg', commune, surfMin], queryFn: () => getPiscinesAgregat(commune, surfMin), staleTime: 60_000 })
   const filtres: SolaireFiltres = { commune, piscine: 'oui', piscineSurfMin: surfMin }
   const list = useQuery({ queryKey: ['piscines-list', commune, surfMin], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
 
-  const items = list.data?.items ?? []
-  const visibles = inclure ? items : items.filter((it) => !isEcartee(it))
-  const nHidden = items.length - items.filter((it) => !isEcartee(it)).length
+  const items = list.data?.items ?? []   // aucune exclusion « écartée » : le pisciniste veut TOUTES les piscines
+  const [carteBusy, setCarteBusy] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
+  // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
+  // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
+  const voirCarte = async () => {
+    setCarteBusy(true)
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, surfMin) }) }
+    finally { setCarteBusy(false) }
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="💧 Piscines" />
-      <CommuneScope commune={commune} onChange={setCommune} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <Select label="Surface piscine" value={surfMin} onChange={setSurfMin} options={SURFACES} />
+        {commune && <button data-piscines-reset onClick={() => setCommune(null)} className="text-[10.5px] text-mint hover:underline">‹ toute l’île</button>}
       </div>
 
       {/* LA STAT D'ABORD */}
@@ -132,6 +140,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
           <div className="text-[10px] text-txt-dim">Piscines détectées — {commune ?? 'toute l’île'}</div>
           <div className="mt-0.5"><b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
             <span className="ml-2 text-[9.5px] text-txt-dim">détection ortho/IA · à confirmer sur site</span></div>
+          {/* LOT8a — le SEUIL de rétention est écrit à l'écran (des détections plus incertaines sont exclues) */}
+          <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">{agg.data.source}</div>
           {!commune && agg.data.communes.length > 0 && (
             <div className="mt-2 flex flex-col gap-0.5">
               {agg.data.communes.slice(0, 8).map((c) => (
@@ -145,38 +155,32 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      <button data-solaire-carte onClick={() => setModuleMap({ idus: visibles.map((i) => i.idu), extra: null })}
-        className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
+      <button data-solaire-carte onClick={voirCarte} disabled={carteBusy}
+        className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110 disabled:opacity-50"
         style={{ borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>
-        💧 Voir sur la carte
+        {carteBusy ? '💧 Chargement…' : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
       </button>
 
-      {/* LISTING piscines */}
+      {/* LISTING piscines — 3 colonnes, aucun scroll horizontal (Classement + Toiture retirés, LOT8c) */}
       {list.isLoading && <Loading label="Parcelles…" />}
       {list.data && (
-        <>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <table className="w-full text-[11px]">
-              <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Classement</th>
-                  <th className="px-2 py-1.5 text-right">Piscine</th><th className="px-2 py-1.5">Commune</th>
-                  <th className="px-2 py-1.5 text-right">Toiture</th></tr>
-              </thead>
-              <tbody>
-                {visibles.map((it) => (
-                  <tr key={it.idu} data-piscines-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => select(it.idu)}>
-                    <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                    <td className="px-2 py-1.5"><Verdict it={it} /></td>
-                    <td className="px-2 py-1.5 text-right" style={{ color: TOKENS.mint }}>{it.piscine_m2 == null ? 'détectée' : `~${fmtInt(it.piscine_m2)} m²`}</td>
-                    <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
-                    <td className="px-2 py-1.5 text-right text-txt-mut">{num(it.toit_m2, ' m²')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <EcarteesFooter hidden={!inclure} nHidden={nHidden} onToggle={() => setInclure((v) => !v)} />
-        </>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <table className="w-full text-[11px]">
+            <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+              <tr><th className="px-2 py-1.5">Parcelle</th>
+                <th className="px-2 py-1.5 text-right">Piscine ~m²</th><th className="px-2 py-1.5">Commune</th></tr>
+            </thead>
+            <tbody>
+              {items.map((it) => (
+                <tr key={it.idu} data-piscines-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => select(it.idu)}>
+                  <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ color: TOKENS.mint }}>{it.piscine_m2 == null ? 'détectée' : `~${fmtInt(it.piscine_m2)} m²`}</td>
+                  <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
@@ -279,7 +283,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       </div>
       {pm.length === 12 && (
         <>
-          <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
+          <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc · maille PVGIS){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
           <div className="mt-0.5 flex h-14 items-end gap-0.5">
             {pm.map((v, i) => (
               <div key={i} data-solaire-bar className="flex-1 rounded-t" title={`${MOIS[i]} : ${fmtInt(v)} kWh/kWc`}
@@ -289,8 +293,11 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           <div className="flex gap-0.5 text-[8px] text-txt-dim">{MOIS.map((m, i) => <span key={i} className="flex-1 text-center">{m}</span>)}</div>
         </>
       )}
+      {/* LOT9a — HONNÊTETÉ de la maille : le productible (annuel ET mensuel) est servi à la MAILLE
+          PVGIS (~400 m), pas mesuré au toit → des parcelles voisines partagent la même valeur. On le
+          DIT, pas de fausse précision parcellaire. */}
       <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
-        Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage.{f.millesime ? ` · ${f.millesime}` : ''}
+        Productible estimé à la <b className="text-txt-mut">maille PVGIS (~400 m)</b> — commun aux parcelles voisines, pas une mesure au toit. · Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage.{f.millesime ? ` · ${f.millesime}` : ''}
       </p>
       <button data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
     </div>

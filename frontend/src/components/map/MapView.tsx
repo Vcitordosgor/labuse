@@ -820,7 +820,10 @@ export function MapView() {
         filter: ['==', ['get', 'kind'], 'lot'],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
-        filter: ['==', ['get', 'kind'], 'permis'],
+        // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
+        // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils
+        // distincts alimentent module-extra), le clic route selon la propriété présente (permit_id/idu).
+        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine']]],
         // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
         // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
         // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
@@ -842,8 +845,10 @@ export function MapView() {
       // et s'abstiennent (jamais la fiche parcelle sous le point). stopPropagation seul ne suffisait
       // PAS (il n'arrête pas les autres abonnés maplibre du même clic).
       m.on('click', 'module-pts', (e) => {
-        const pid = e.features?.[0]?.properties?.permit_id
+        const props = e.features?.[0]?.properties
+        const pid = props?.permit_id
         if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
+        else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
       })
       m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'module-pts', () => { m.getCanvas().style.cursor = '' })

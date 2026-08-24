@@ -711,9 +711,39 @@ def prospection_piscines(commune: str | None = None,
         GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
     maj = db.execute(text("SELECT to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
                           "FROM parcel_equipements WHERE piscine IS TRUE")).scalar()
+    # LOT8a (OUTILS-FINALE) — le SEUIL de rétention est DIT : parcel_equipements.piscine ne retient que
+    # les détections passant la porte de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50, config
+    # detection_ortho.yaml) — des détections plus incertaines sont donc EXCLUES du compte. Écrit à l'écran.
     return {"total": total, "communes": [dict(c) for c in communes],
-            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; à confirmer sur site",
+            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; "
+                      "retenues au seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50) ; à confirmer sur site",
             "maj": maj or "—"}
+
+
+@router.get("/prospection-piscines/points")
+def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
+                                piscine_surf_min: int = 0, db: Session = Depends(get_db)):
+    """LOT8b (OUTILS-FINALE) — TOUTES les piscines de l'île (ou de la commune) en marqueurs, pour
+    « 💧 Voir sur la carte » : centroïdes des parcelles à piscine (kind='piscine'), servis en GeoJSON.
+    Aucun plafond de listing (l'écran cap à 500, la carte doit TOUT montrer). Agrégat lecture seule."""
+    if not db.execute(text("SELECT to_regclass('parcel_equipements') IS NOT NULL")).scalar():
+        raise HTTPException(503, "détection équipements indisponible (table absente).")
+    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
+    bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
+        else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
+    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
+    where = "WHERE e.piscine IS TRUE" + bati_cond + surf_cond + (" AND p.commune = :c" if commune else "")
+    rows = db.execute(text(
+        f"""SELECT e.idu, p.commune, round(e.piscine_surface_m2::numeric, 0) AS m2,
+                   ST_X(ST_Transform(p.centroid, 4326)) AS lon, ST_Y(ST_Transform(p.centroid, 4326)) AS lat
+            FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
+            AND p.centroid IS NOT NULL"""),
+        {"c": commune, "psmin": piscine_surf_min}).mappings().all()
+    return {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(r["lon"]), float(r["lat"])]},
+         "properties": {"kind": "piscine", "idu": r["idu"], "commune": r["commune"],
+                        "piscine_m2": float(r["m2"]) if r["m2"] is not None else None}}
+        for r in rows]}
 
 
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
