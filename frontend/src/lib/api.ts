@@ -348,7 +348,10 @@ export const getMapLayer = (kind: string, limit?: number) => {
 }
 // M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
 // (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
-export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
+// FIX-CARTE T1 — `carte_le` = date de la donnée peinte (build des tuiles) ; `perime` = tuiles en
+// retard sur le dernier re-score/résiduel du run servi (péremption VISIBLE au runtime, pas au build).
+export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean;
+  carte_le: string | null; amont_le: string | null; perime: boolean }>('/map/tiles/meta')
 // M55-D stage 5 : la DATE du run servi (champ `gel` du modèle épinglé) — pour la ligne de contexte
 // de la Révélation (« classement du … »). Introuvable → null, la ligne s'affiche sans date.
 // M55-H point 11 : getV2Modele retiré (0-caller — la date du run ne s'affiche plus côté client ;

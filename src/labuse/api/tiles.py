@@ -12,6 +12,7 @@ fonctionne à l'identique sur chaîne et tableau.
 """
 from __future__ import annotations
 
+import time
 from collections import OrderedDict
 
 from fastapi import APIRouter, Depends, Response
@@ -283,6 +284,23 @@ _CACHE_MAX = 4096
 # qu'au build-mvt (post-run) ; le navigateur repeint instantanément et revalide en fond.
 _TILE_HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"}
 
+# FIX-CARTE T3 — VERSION des tuiles servies = mvt_meta.updated_at (change à CHAQUE build-mvt).
+# Elle entre dans la CLÉ du cache LRU : un rebuild (process CLI distinct) change la version →
+# les octets périmés ne sont PLUS jamais retrouvés en cache (invalidation qui traverse le process,
+# sans redémarrage). Lecture mémoïsée (TTL court) pour ne pas frapper la DB à chaque tuile.
+_VERSION: dict = {"v": "", "at": -1e9}
+_VERSION_TTL_S = 10.0
+
+
+def _mvt_version(db: Session) -> str:
+    now = time.monotonic()
+    if now - _VERSION["at"] > _VERSION_TTL_S:
+        v = db.execute(text(
+            "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar()
+        _VERSION["v"] = v or ""
+        _VERSION["at"] = now
+    return _VERSION["v"]
+
 
 def _mvt_has_zone(db: Session) -> bool:
     """La table mvt_parcels SERVIE porte-t-elle zone_lib/zone_fam (build post-M6.1) ?"""
@@ -293,22 +311,42 @@ def _mvt_has_zone(db: Session) -> bool:
 
 @router.get("/map/tiles/meta")
 def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
-    """Capacités des tuiles servies — le front grise la couche « Zonage PLU (parcelles) »
-    en mode île tant que mvt_parcels n'embarque pas zone_fam (prochain build-mvt)."""
-    run = None
+    """Capacités ET FRAÎCHEUR des tuiles servies. Le front grise « Zonage PLU (parcelles) » si
+    zone_fam absent, ET affiche la DATE de ce que la carte montre (`carte_le`) + un drapeau
+    `perime` (FIX-CARTE T1). La péremption = tuiles bâties AVANT le dernier re-score/résiduel du
+    run servi (la même règle que la garde de build check_peremption_tuiles) → visible au RUNTIME,
+    pas seulement au build. Doctrine : la carte annonce la date de la donnée qu'elle peint."""
+    run = carte_le = amont_le = None
+    perime = False
     if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
-        run = db.execute(text("SELECT value FROM mvt_meta WHERE key = 'run_label'")).scalar()
+        row = db.execute(text(
+            "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
+        if row:
+            run, carte_le = row["value"], row["updated_at"]
+    if run and carte_le is not None:
+        sc = db.execute(text(
+            "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": run}).scalar()
+        rs = db.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
+        amont = max([d for d in (sc, rs) if d is not None], default=None)
+        if amont is not None:
+            amont_le = amont
+            perime = amont > carte_le
     return {"run_label": run,
             "zonage_parcelle": _mvt_has_zone(db)
-            if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False}
+            if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False,
+            "carte_le": carte_le.isoformat() if carte_le else None,
+            "amont_le": amont_le.isoformat() if amont_le else None,
+            "perime": perime}
 
 
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
 def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune."""
-    if z < 9 or z > 22:
+    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
+    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
+    if z < 9 or z > 15:
         return Response(status_code=204)
-    key = (z, x, y)
+    key = (_mvt_version(db), z, x, y)   # FIX-CARTE T3 : clé versionnée → invalidation au rebuild
     if key in _CACHE:
         _CACHE.move_to_end(key)
         return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
@@ -342,13 +380,18 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # zone_fam dans les tuiles maigres aussi (5 valeurs distinctes, dédupliquées par le MVT) :
     # c'est la COULEUR de la couche « Zonage PLU (parcelles) », visible dès z9 en mode île.
     zone_props = "m.zone_fam, " if has_zone else ""
-    zone_props_full = "m.zone_lib, m.zone_fam, " if has_zone else ""
+    # FIX-CARTE T2 : `zone_lib` (libellé précis, texte) DIFFÉRÉ à z≥14 — il ne sert qu'au label z16
+    # (sur-zoom de z15) et au popup au clic ; à z12-13 le popup retombe sur la famille (zone_fam gardée).
+    zone_props_full = (("m.zone_lib, m.zone_fam, " if z >= 14 else "m.zone_fam, ") if has_zone else "")
     # M48 (F4) : `m.status` (matrice morte) retiré des propriétés servies — la carte lit tier_v2/etage0.
+    # FIX-CARTE T2 : `m.flags` RETIRÉ des tuiles (CSV, 15 191 valeurs distinctes = la propriété texte la
+    # plus lourde). Le filtre flags de la carte passe désormais par le repli serveur (getFiltreIdus,
+    # motif M55-G) qui peint les IDU EXACTS ; la fiche/liste portent déjà les flags.
     props = (f"{v2_props}{zone_props}m.commune" if z <= 11 else
              "m.idu, m.commune, m.surface_m2, "  # M129-B : q/a retirés · M137-D : a_completude aussi (vestige matrice, absent de mvt_parcels)
              f"{v2_props_full}{zone_props_full}"
              "m.completeness_score, m.sdp_residuelle_m2, "
-             "m.sous_densite, m.evenement, m.flags")
+             "m.sous_densite, m.evenement")
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
@@ -391,9 +434,10 @@ def build_overlay_mvt(db: Session) -> int:
 @router.get("/map/tiles/ov/{kind}/{z}/{x}/{y}.pbf")
 def mvt_overlay_tile(kind: str, z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     """Tuile MVT d'une couche overlay (couche = `kind`) — mode île."""
-    if kind not in OVERLAY_KINDS or z < 8 or z > 22:
+    # FIX-CARTE C2 : borne haute alignée sur la source front (ovmvt-* maxzoom 15).
+    if kind not in OVERLAY_KINDS or z < 8 or z > 15:
         return Response(status_code=204)
-    key = ("ov", kind, z, x, y)
+    key = ("ov", _mvt_version(db), kind, z, x, y)   # FIX-CARTE T3 : clé versionnée
     if key in _CACHE:
         _CACHE.move_to_end(key)
         return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
