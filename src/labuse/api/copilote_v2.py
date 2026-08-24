@@ -50,24 +50,12 @@ class AskIn(BaseModel):
     scenario: str | None = None        # M113 — chip de contexte choisi (force le scénario) ; None = texte libre
 
 
-# M113 · Phase 3 — la CRÉATION DIRECTE de projet par le Copilote est RETIRÉE : le Copilote ne crée
-# plus jamais un projet sans passage par le formulaire guidé (ParcoursProjet, qui protège par
-# construction et appelle l'API projets avec le compte). L'ancien `_executer_projet` (action serveur
-# « c'est fait » depuis un brief) n'a plus lieu d'être. La VEILLE, elle, reste une action serveur.
-def _executer_veille(act: dict, request: Request, db: Session, rep: dict) -> dict:
-    """§4 — pose RÉELLE d'une veille (trigger persisté). Plafond par compte (config). Confirmation
-    explicite. L'ALERTE elle-même dépend du canal de notification (BACKLOG) — voir RAPPORT_M78."""
-    from .. import config
-    from ..copilote_v2 import veilles
-    cid = current_compte(request)
-    s = config.get_settings() if hasattr(config, "get_settings") else config.Settings()
-    if veilles.compter_actives(db, cid) >= s.copilote_v2_veilles_max:
-        return {**rep, "text": f"Vous avez atteint le plafond de {s.copilote_v2_veilles_max} veilles "
-                "actives. Supprimez-en une pour en poser une nouvelle.", "refus": "plafond_veilles"}
-    v = veilles.creer(db, compte_id=cid, type_=act["veille_type"], commune=act["commune"])
-    label = veilles.TYPES.get(act["veille_type"], act["veille_type"])
-    return {**rep, "text": f"Veille posée : {label} · {act['commune']} — vérification à chaque mise à "
-            "jour des données, notification in-app.", "intent": "VEILLE", "veille_id": v["id"]}
+# M113 · Phase 3 — la CRÉATION DIRECTE de projet par le Copilote est RETIRÉE (formulaire guidé).
+# FIX-VEILLE (option A) — la CRÉATION DE VEILLE au chat est retirée elle aussi : depuis M118, l'intent
+# VEILLE renvoie vers la Surveillance (`_refus_voie`), et la pose se fait dans les zones de veille
+# (`watch_zones` / alertes.py). L'ancien `_executer_veille` (qui posait une veille `copilote_v2.veilles`
+# et confirmait « Veille posée ») était INATTEIGNABLE (aucun producteur d'`_action` veille) — retiré
+# avec `preparer_veille`. Le Copilote ne pose plus rien qui ne s'évaluerait pas.
 
 
 @router.post("/ask")
@@ -118,9 +106,8 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
                      confirme=body.confirme, prior_params=prior, faits_fil=faits_fil,
                      scenario=body.scenario)
         payload_tour = rep.pop("_route", None)        # contexte du tour → persistance, jamais servi
-        act = rep.pop("_action", None)                # écriture réelle demandée → API existante
-        if act and act.get("type") == "veille":       # M113 — le projet passe désormais par le formulaire
-            rep = _executer_veille(act, request, db, rep)
+        rep.pop("_action", None)                       # FIX-VEILLE (A) : plus aucun `_action` — la création
+        # de veille au chat est retirée (M118). On dépile la clé par sécurité, mais rien ne la produit.
     except Exception:  # noqa: BLE001 — garde générale M102 : trace serveur, réponse honnête
         log.exception("copilote /ask — exception non prévue (message=%r)", (body.message or "")[:200])
         db.rollback()

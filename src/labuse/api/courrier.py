@@ -116,7 +116,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
                           f"Corps du courrier :\n{body.corps}\n\n"
                           f"→ Vue admin /courrier/admin : rappeler le client, confirmer le tarif, "
                           f"puis faire avancer le statut (Demandé → Tarif confirmé → Envoyé).")
-            send_email_async(dest, f"[LABUSE] {titre}", corps_mail)
+            send_email_async(dest, f"[LABUSE] {titre}", corps_mail, contexte="Courrier")
     except Exception:
         pass
     return {"ok": True, **d}
