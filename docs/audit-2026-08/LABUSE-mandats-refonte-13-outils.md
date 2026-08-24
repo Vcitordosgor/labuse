@@ -282,3 +282,4 @@ Critères d'acceptation. La légende apparaît dès qu'une zone non couverte est
 - Courrier : page admin UI (liste des demandes + changement de statut) — les endpoints existent, l'UI reste à faire.
 - Courrier (déploiement) : vérifier si une ancienne table courrier_demandes (déclarée morte en M82) traîne avec des colonnes NOT NULL incompatibles → la dropper en maintenance avant mise en service.
 - Déploiement : rejouer `labuse dispositifs-build` en prod (idempotent) — pose le lien zfang/frr → data_sources (fix P4 couches).
+- Cleanup M129-B : purger le vestige q_score (colonne/types Fiche/ParcelProps, SELECTs events.py) — le paramètre scoreMin est retiré partout, la colonne 100 % NULL reste à évacuer.
