@@ -3295,7 +3295,10 @@ _SPORT_DROP_RE = r'city.?stade|citystade'
 
 @app.get("/map/layers.geojson")
 def map_layers_geojson(kind: str, commune: str | None = None,
-                       limit: int = Query(6000, ge=1, le=20000), db: Session = Depends(get_db)) -> dict:
+                       # FIX-COUCHES P1 : plafond relevé 20 000 → 40 000 pour servir la couche BPE
+                       # INSEE ENTIÈRE (35 546 objets, ~8 Mo brut / ~0,7 Mo gzip mesuré) sans troncature
+                       # en vue île ; le garde no-silent-caps du front reste en filet si un kind dépasse.
+                       limit: int = Query(6000, ge=1, le=40000), db: Session = Depends(get_db)) -> dict:
     """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
 
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
@@ -3329,12 +3332,20 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                              "concordance": r["concordance"], "tension": r["tension"],
                              "nature": r["nature"]}}
              for r in rows if r["g"]]
-    # M106 : millésime SERVI, jamais en dur (doctrine M86) — date d'intégration du flux
-    # (max created_at du kind) ; la légende la dit comme telle.
-    mill = db.execute(text(
-        "SELECT max(created_at)::date FROM spatial_layers WHERE kind = :k"), {"k": kind}).scalar()
+    # M106 : millésime SERVI, jamais en dur (doctrine M86). FIX-COUCHES P3 : on distingue désormais
+    # deux dates — le MILLÉSIME AMONT (data_sources.source_millesime, la vraie fraîcheur de la donnée,
+    # affiché en premier par la légende) et la date d'INTÉGRATION (max created_at, mention secondaire
+    # « ingéré le »). Le millésime amont vient du data_source_id des lignes du kind ; NULL si la couche
+    # est dérivée/non rattachée (ex. tva_primo) → la légende retombe honnêtement sur « ingéré le ».
+    meta = db.execute(text(
+        """SELECT max(sl.created_at)::date AS ingere,
+                  (SELECT ds.source_millesime FROM spatial_layers s2
+                     JOIN data_sources ds ON ds.id = s2.data_source_id
+                    WHERE s2.kind = :k AND ds.source_millesime IS NOT NULL LIMIT 1) AS source_millesime
+           FROM spatial_layers sl WHERE sl.kind = :k"""), {"k": kind}).mappings().first()
     return {"type": "FeatureCollection", "features": feats,
-            "millesime_integration": mill.isoformat() if mill else None}
+            "millesime_integration": meta["ingere"].isoformat() if meta and meta["ingere"] else None,
+            "source_millesime": (meta["source_millesime"] if meta else None)}
 
 
 @app.get("/map/bati")

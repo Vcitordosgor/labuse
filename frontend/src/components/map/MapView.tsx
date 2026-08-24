@@ -497,9 +497,11 @@ export function MapView() {
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
   const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite', 20_000), enabled: layers.equipements })
-  // M137-U — équipements INSEE BPE (kind distinct 'amenite_bpe') : 2e item, servi comme OSM (limit 20000 ;
-  // 35 546 en base → tronqué en vue île, borné par commune). Cercles bleus (vs icônes OSM) = zéro doublon visuel.
-  const equipBpe = useQuery({ queryKey: ['layer', 'equip_bpe', commune], queryFn: () => getMapLayer('amenite_bpe', 20_000), enabled: layers.equipements_bpe })
+  // M137-U — équipements INSEE BPE (kind distinct 'amenite_bpe') : 2e item, servi comme OSM. Cercles
+  // bleus (vs icônes OSM) = zéro doublon visuel. FIX-COUCHES P1 : plafond porté 20 000 → 40 000 pour
+  // servir les 35 546 objets ENTIERS en vue île (payload mesuré ~8 Mo brut / ~0,7 Mo gzip) ; un garde
+  // no-silent-caps couvre désormais AUSSI cette couche (avant : seul l'OSM avait le sien).
+  const equipBpe = useQuery({ queryKey: ['layer', 'equip_bpe', commune], queryFn: () => getMapLayer('amenite_bpe', 40_000), enabled: layers.equipements_bpe })
   // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
   const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
   // M106 P1 : aléas DEAL (993 objets île, un seul fetch — les 2 couches filtrent par subtype)
@@ -969,7 +971,14 @@ export function MapView() {
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr]]   // M134 dispositifs · M137-U znieff
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
-    if (equipBpe.data) (m.getSource('ov-equip-bpe') as maplibregl.GeoJSONSource | undefined)?.setData(equipBpe.data as never)
+    if (equipBpe.data) {
+      (m.getSource('ov-equip-bpe') as maplibregl.GeoJSONSource | undefined)?.setData(equipBpe.data as never)
+      // FIX-COUCHES P1 — garde no-silent-caps ÉTENDU à la BPE (avant : seul l'OSM l'avait). Le plafond
+      // (40 000) couvre les 35 546 actuels ; ce filet parle si un futur millésime BPE le dépasse.
+      if (layers.equipements_bpe && equipBpe.data.features.length >= 40_000) {
+        useApp.getState().setToast('Équipements INSEE (BPE) : plus de 40 000 objets — l’affichage est tronqué au plafond du serveur.')
+      }
+    }
     if (equip.data) {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
       ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)

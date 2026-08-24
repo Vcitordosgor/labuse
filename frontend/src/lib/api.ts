@@ -3,6 +3,10 @@ import type { CrmColumn, Fiche, ParcelResult, PipelineEntry, PipelineMeta, Sourc
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
   features: Array<{ type: 'Feature'; geometry: unknown; properties: Record<string, unknown> }>
+  // FIX-COUCHES P3 — /map/layers.geojson distingue le millésime AMONT (fraîcheur réelle de la donnée)
+  // de la date d'INTÉGRATION (ingestion). Absents sur /map/parcels.geojson (d'où l'optionalité).
+  millesime_integration?: string | null
+  source_millesime?: string | null
 }
 
 import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'

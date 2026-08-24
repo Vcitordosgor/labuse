@@ -74,6 +74,12 @@ KIND_SOURCE = {
     # M137-U — couches écrites hors layers_ingest (znieff.py, bpe.py) — déclarées pour la garde.
     "znieff": "ZNIEFF (INPN/MNHN)",
     "amenite_bpe": "BPE INSEE",
+    # FIX-COUCHES P4 — dispositifs fiscaux (écrits par dispositifs.build_zfang_frr). Les sources
+    # existaient au catalogue (seed_sources) avec leur millésime légal, mais les couches n'étaient PAS
+    # rattachées (data_source_id NULL) → registre complété ici pour la garde + le backfill. tva_primo
+    # reste volontairement hors registre : couche DÉRIVÉE (buffer QPV 500 m), sans source amont.
+    "zfang": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+    "frr": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).
