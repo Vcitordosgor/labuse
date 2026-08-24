@@ -9,6 +9,12 @@ Exclusions de l'AFFICHAGE (l'ingestion et les tables restent, seul l'écran chan
 """
 from __future__ import annotations
 
+#: statuts qui rendent une source AFFICHABLE (branchée auto OU alimentée à la main). UN seul jeu,
+#: lu par le SQL (WHERE_AFFICHEES) ET par le prédicat Python (est_affichee) — pour qu'ils ne
+#: puissent jamais diverger (FIX-SOURCES S1). Comparaison INSENSIBLE À LA CASSE (`lower(status)`) :
+#: une casse aberrante (ex. 'CONNECTE' au lieu de 'connecte') ne peut plus effacer une source.
+STATUTS_AFFICHES: frozenset[str] = frozenset({"connecte", "manuel"})
+
 #: sources retirées de l'AFFICHAGE (jamais de l'ingestion). Vide depuis M97 (Office de l'eau
 #: démasquée — servie via anc_service depuis M95). Le mécanisme reste pour un prochain arbitrage.
 SOURCES_MASQUEES: frozenset[str] = frozenset()
@@ -21,7 +27,9 @@ SOURCES_MASQUEES: frozenset[str] = frozenset()
 #: RÈGLE VIC (M123) : « la vitrine ne montre que ce qui SERT ». Hors vitrine = DOUBLON (canal masqué),
 #: RETIRÉ (abandon arbitré), DORMANT (ingéré/déclaré mais servi nulle part) — tous restent en base
 #: avec leur note, seul l'écran les écarte.
-WHERE_AFFICHEES = ("status IN ('connecte', 'manuel') "
+#: FIX-SOURCES S1 — l'endpoint /sources SÉLECTIONNE désormais via CE fragment (comme le compteur
+#: d'accueil), plus via `status=='connecte'` en dur : page rendue == chiffre annoncé, par construction.
+WHERE_AFFICHEES = ("lower(status) IN ('connecte', 'manuel') "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%' "
@@ -33,11 +41,29 @@ def masquees_param() -> list[str]:
     return list(SOURCES_MASQUEES)
 
 
-def est_affichee(name: str, technical_notes: str | None) -> bool:
-    """Une source data_sources est-elle AFFICHÉE (filtre Python, même règle que WHERE_AFFICHEES) ?"""
+def est_affichee(name: str, technical_notes: str | None, status: str | None) -> bool:
+    """Une source data_sources est-elle AFFICHÉE ? Prédicat CANONIQUE (même règle que WHERE_AFFICHEES,
+    y compris le STATUT) — appliqué en SÉLECTION, pas seulement en masquage post-hoc (FIX-SOURCES S1).
+    Casse du statut insensible : une source servie ne disparaît plus pour un 'CONNECTE' mal casé (S2)."""
     tn = technical_notes or ""
-    return (not tn.startswith("DOUBLON de") and not tn.startswith("RETIRÉ")
+    return ((status or "").lower() in STATUTS_AFFICHES
+            and not tn.startswith("DOUBLON de") and not tn.startswith("RETIRÉ")
             and not tn.startswith("DORMANT") and name not in SOURCES_MASQUEES)
+
+
+def normalize_status(raw: str | None) -> str:
+    """GARDE d'ingestion (FIX-SOURCES S2) : normalise un statut de source vers la VALEUR d'enum
+    canonique (minuscule), et REFUSE tout statut hors enum. Toute écriture de `data_sources.status`
+    doit passer par ici — une casse ou une graphie aberrante ne peut plus se retrouver en base et
+    effacer silencieusement une source de la vitrine. Renvoie la valeur normalisée ('connecte', …)."""
+    from .enums import DataSourceStatus
+
+    val = (raw or "").strip().lower()
+    valides = {m.value for m in DataSourceStatus}
+    if val not in valides:
+        raise ValueError(
+            f"statut de source hors enum : {raw!r} (attendus : {sorted(valides)})")
+    return val
 
 
 #: sources CURÉES MANUELLEMENT (arbitrage M86/M87) : la table n'est pas lue directement, mais elle est

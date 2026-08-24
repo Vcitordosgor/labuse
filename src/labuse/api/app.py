@@ -36,7 +36,7 @@ from sqlalchemy.orm import Session, joinedload
 from .. import config, models, prospection
 from .. import rnu as _rnu
 from ..db import session_scope
-from ..enums import DataSourceStatus, FeedbackVerdict
+from ..enums import FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
 from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
 from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
@@ -591,15 +591,16 @@ def _source_pour_run(commune: str | None) -> str | None:
 
 @app.get("/sources")
 def list_sources(db: Session = Depends(get_db)) -> list[dict]:
-    # M71 BLOC A (audits M66/M66-B) : la page Sources ne sert QUE les sources réellement
-    # branchées (status='connecte'). Hubs, a_faire, partiel, manuel n'y figurent plus —
-    # le catalogue complet reste en base, seule la VITRINE est filtrée. Comptage 100 %
-    # dynamique côté front ; les DOUBLONS (technical_notes commençant par « DOUBLON de »)
-    # restent listés mais sont exclus du comptage du bandeau (champ `doublon` ci-dessous).
+    # FIX-SOURCES S1 — la page SÉLECTIONNE via la définition CANONIQUE `sources_catalog.WHERE_AFFICHEES`
+    # (connecte ∪ manuel, hors DOUBLON/RETIRÉ/DORMANT/masquées), EXACTEMENT comme le compteur d'accueil
+    # (accueil.py) : le nombre rendu == le nombre annoncé, par construction. Fini le `status=='connecte'`
+    # STRICT qui comptait 58 mais n'en montrait que 56 (les `manuel` Fichiers fonciers / VRD manquaient).
+    from .. import sources_catalog as _srccat
     rows = db.execute(
         select(models.DataSource)
-        .where(models.DataSource.status == DataSourceStatus.CONNECTE)
-        .order_by(models.DataSource.category, models.DataSource.name)
+        .where(text(_srccat.WHERE_AFFICHEES))
+        .order_by(models.DataSource.category, models.DataSource.name),
+        {"masquees": _srccat.masquees_param()},
     ).scalars().all()
     # UX V1 ajout A (page « Sources & fraîcheur ») : la date affichée est LUE dans
     # ingestion_runs (jamais codée en dur) — max(finished_at|started_at) des runs ok par source.
@@ -645,11 +646,10 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
     from ..radar import etat_radar
     radar = {r["source_name"]: r for r in etat_radar(db)}
-    # M74 C bis / M87 P0 — la page Sources = la VITRINE mesurée : définition CANONIQUE partagée avec
-    # le compteur d'accueil (`sources_catalog.est_affichee`) : hors DOUBLON de catalogue ET hors
-    # masquées (Office de l'eau, morte à l'affichage — ingestion/table conservées).
-    from .. import sources_catalog as _srccat
-    served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes)]
+    # M74 C bis / M87 P0 / FIX-SOURCES S1 — la sélection SQL ci-dessus a déjà appliqué la définition
+    # canonique ; ce filtre Python (même règle, statut compris) reste en CEINTURE — rows == served.
+    served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes,
+                                                       s.status.value if s.status else None)]
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -659,6 +659,10 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
+            # FIX-SOURCES S6 — la LICENCE (libellé court + lien) est DÉRIVÉE de `legal_notes` (vérité base)
+            # côté serveur : plus AUCUNE licence codée en dur au front (l'ancienne carte de 7 noms qui
+            # court-circuitait la base a disparu). Le libellé suit les MARQUEURS du texte légal, pas le nom.
+            **_source_licence(s.legal_notes),
             # M86 — millésime amont CENTRALISÉ (data_sources.source_millesime, écrit par persist_millesime
             # ou seed) : le front le LIT au lieu de coder des dates en dur (correction factuelle M86).
             "source_millesime": s.source_millesime,
@@ -679,6 +683,57 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
         }
         for s in served
     ]
+
+
+#: FIX-SOURCES S6 — libellés courts de licence et leur texte officiel. Les LABELS sont DÉRIVÉS des
+#: marqueurs présents dans `legal_notes` (la vérité en base), pas d'une carte par nom de source :
+#: corriger la licence en base suffit, le front suit. `licence()` côté front est supprimé.
+_LICENCE_URLS = {
+    "Licence Ouverte 2.0 (Etalab)": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    "Licence Ouverte (données État)": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    "Licence Ouverte — usage encadré (art. L.112 A LPF)": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    "ODbL 1.0 (OpenStreetMap)": "https://www.openstreetmap.org/copyright",
+    "CC BY 4.0": "https://creativecommons.org/licenses/by/4.0/deed.fr",
+    "Licence INPI — réutilisation encadrée (L. 323-2 CRPA)":
+        "https://www.inpi.fr/sites/default/files/Licence%20donnees%20RNE_2024_0.pdf",
+}
+
+
+def _source_licence(legal_notes: str | None) -> dict:
+    """FIX-SOURCES S6 — libellé court + lien de licence, DÉRIVÉS de `legal_notes` (vérité base). Ordre =
+    du plus spécifique au plus générique ; jamais un libellé inventé (défaut sûr « Licence à confirmer »)."""
+    # Le libellé légal OUVRE toujours le texte (« Licence Ouverte… », « ODbL… », « Données État —
+    # Licence Ouverte… ») : on clé sur le DÉBUT, jamais sur un mot noyé au milieu (sinon « … RNE INPI »
+    # dans une note DINUM se ferait passer pour une licence INPI). Défaut sûr : « Licence à confirmer ».
+    low = (legal_notes or "").strip().lower()
+    def _starts(*prefixes: str) -> bool:
+        return any(low.startswith(p) for p in prefixes)
+    if not low:
+        label = "Licence à confirmer"
+    elif _starts("non intégré"):
+        label = "Non intégré — aucune donnée"
+    elif _starts("licence à confirmer"):
+        label = "Licence à confirmer"
+    elif _starts("licence inpi"):
+        label = "Licence INPI — réutilisation encadrée (L. 323-2 CRPA)"
+    elif _starts("odbl"):
+        label = "ODbL 1.0 (OpenStreetMap)"
+    elif _starts("cc by 4.0"):
+        label = "CC BY 4.0"
+    elif _starts("licence ouverte"):
+        label = ("Licence Ouverte — usage encadré (art. L.112 A LPF)"
+                 if ("l.112 a" in low or "l. 112 a" in low) else "Licence Ouverte 2.0 (Etalab)")
+    elif _starts("données état"):
+        label = "Licence Ouverte (données État)"
+    elif _starts("textes officiels", "texte réglementaire", "texte officiel"):
+        label = "Textes officiels (Légifrance)"
+    elif _starts("documents publics"):
+        label = "Documents publics — licence à confirmer"
+    elif "licence ouverte" in low or "etalab" in low:
+        label = "Licence Ouverte 2.0 (Etalab)"
+    else:
+        label = "Licence à confirmer"
+    return {"license_label": label, "license_url": _LICENCE_URLS.get(label)}
 
 
 def _source_nature(name: str, notes: str | None) -> dict | None:

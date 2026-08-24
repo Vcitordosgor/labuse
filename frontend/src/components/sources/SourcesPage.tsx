@@ -16,35 +16,11 @@ function millesimeNote(s: SourceInfo): string | null {
   return y ? `millésime ${y[0]}` : null
 }
 
-// ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli « Données publiques ».
-// Le libellé est lu dans legal_notes (seed_sources.py = source de vérité) ; le référentiel par nom ne
-// garde que les cas particuliers (usage encadré, non intégré, lignes hors seed).
-const LICENCE_PAR_SOURCE: Record<string, string> = {
-  'DVF / valeurs foncières': 'Licence Ouverte — usage encadré (art. L.112 A LPF)',
-  'INPI RNE (dirigeants)': 'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)',
-  'PLH des 5 EPCI (extraction documentaire)': 'Documents publics — licence à confirmer',
-  'RTAA DOM (textes réglementaires)': 'Textes officiels (Légifrance) — réutilisation libre',
-  'DEAL Réunion (WMS/WFS)': 'Licence Ouverte (données État)',
-  'DEAL Réunion — PPR / aléas': 'Licence Ouverte (données État)',
-  '50 pas géométriques — limite haute (DEAL)': 'Licence Ouverte (données État)',
-}
-function licence(s: SourceInfo): string {
-  if (LICENCE_PAR_SOURCE[s.name]) return LICENCE_PAR_SOURCE[s.name]
-  const notes = s.legal_notes ?? ''
-  if (/licence ouverte/i.test(notes)) return 'Licence Ouverte 2.0 (Etalab)'
-  if (/odbl/i.test(notes)) return 'ODbL 1.0 (OpenStreetMap)'
-  if (/CC BY 4\.0/i.test(notes)) return 'CC BY 4.0'
-  return 'Licence à confirmer'   // jamais un libellé inventé
-}
-const LICENCE_URL: Record<string, string> = {
-  'Licence Ouverte 2.0 (Etalab)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
-  'Licence Ouverte (données État)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
-  'Licence Ouverte — usage encadré (art. L.112 A LPF)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
-  'ODbL 1.0 (OpenStreetMap)': 'https://www.openstreetmap.org/copyright',
-  'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/deed.fr',
-  'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)':
-    'https://www.inpi.fr/sites/default/files/Licence%20donnees%20RNE_2024_0.pdf',
-}
+// ── FIX-SOURCES S6 (corrige M6 Phase 2a) : la licence est DÉRIVÉE de legal_notes CÔTÉ SERVEUR
+// (`app._source_licence`) et servie dans `license_label` / `license_url`. Le front ne code PLUS aucune
+// licence ni aucune carte par nom : corriger la mention en base suffit, la vitrine suit. Défaut sûr
+// si un vieux cache n'a pas encore le champ : « Licence à confirmer » (jamais un libellé inventé).
+function licence(s: SourceInfo): string { return s.license_label || 'Licence à confirmer' }
 
 /** Date de mise à jour AFFICHÉE : la plus récente entre last_sync_at et la dernière ingestion tracée. */
 function majReelle(s: SourceInfo): string | null {
@@ -82,21 +58,36 @@ function cadenceMot(seuil?: number | null): string {
   if (j === 91) return 'chaque trimestre'
   return j != null ? `tous les ${j} jours` : 'à cadence connue'
 }
-/** La ligne « meta » : « jusqu'au JJ/MM/AAAA » (donnée en base) › millésime › « donnée du … » (ingestion)
- *  › « millésime non tracé » (untracked). Jamais un « — » nu, jamais une date inventée. */
-function versionMeta(s: SourceInfo): { label: string; untracked: boolean } {
-  if (s.derniere_donnee) return { label: `jusqu'au ${new Date(s.derniere_donnee).toLocaleDateString('fr-FR')}`, untracked: false }
-  const mil = millesimeNote(s)
-  if (mil) return { label: mil, untracked: false }
+/** FIX-SOURCES S7 — la version DISTINGUE les deux dates, comme les « i » des couches (Legend.fmtFraich :
+ *  « millésime X (ingéré le Y) ») : `label` = la fraîcheur AMONT (jusqu'au / millésime), `ingere` = la
+ *  date d'INGESTION en mention secondaire « ingéré le … ». Jamais fondues, jamais une date inventée.
+ *  Quand seule l'ingestion existe (pas d'amont), elle EST la primaire — pas de « ingéré le » redondant. */
+function versionMeta(s: SourceInfo): { label: string; untracked: boolean; ingere: string | null } {
   const ing = majReelle(s)
-  if (ing) return { label: `donnée du ${new Date(ing).toLocaleDateString('fr-FR')}`, untracked: false }
-  return { label: 'millésime non tracé', untracked: true }
+  const ingLabel = ing ? `ingéré le ${new Date(ing).toLocaleDateString('fr-FR')}` : null
+  if (s.derniere_donnee) return { label: `jusqu'au ${new Date(s.derniere_donnee).toLocaleDateString('fr-FR')}`, untracked: false, ingere: ingLabel }
+  const mil = millesimeNote(s)
+  if (mil) return { label: mil, untracked: false, ingere: ingLabel }
+  if (ing) return { label: `donnée du ${new Date(ing).toLocaleDateString('fr-FR')}`, untracked: false, ingere: null }
+  return { label: 'millésime non tracé', untracked: true, ingere: null }
 }
 const nonTrace = (s: SourceInfo) => versionMeta(s).untracked
 // M105 P1 — « à jour » = ni retard de publication (producteur), ni version plus récente non
 // intégrée (nous). Une source SANS date exposée par le producteur n'est PAS « pas à jour » —
 // c'est une propriété du producteur, dite dans la petite ligne de l'encart, pas un défaut LABUSE.
 const aJour = (s: SourceInfo) => !enRetard(s) && !amontEnAvance(s)
+
+// FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
+// (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
+// légal) ; « vérifié » = l'état par défaut d'une source servie, pas un badge (ce serait du bruit).
+function fiabiliteBadge(s: SourceInfo): { label: string; title: string } | null {
+  switch (s.reliability_level) {
+    case 'a_confirmer': return { label: 'fiabilité à confirmer', title: 'Donnée servie, mais sa fiabilité (ou sa licence) reste à confirmer avec le producteur.' }
+    case 'sous_convention': return { label: 'accès sous convention', title: 'Accès encadré par une convention avec le producteur.' }
+    case 'legal': return { label: 'accès légal restreint', title: 'Réutilisation juridiquement encadrée.' }
+    default: return null
+  }
+}
 
 // ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
 // expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
@@ -115,6 +106,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const meta = versionMeta(s)
   const late = enRetard(s)
   const lic = licence(s)
+  const fiab = fiabiliteBadge(s)
   const prod = [s.provider, lic].filter(Boolean)
 
   return (
@@ -145,6 +137,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {s.nature?.dashed && (
           <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
         )}
+        {fiab && <Badge kind="dashed" title={fiab.title}><span data-source-fiabilite>{fiab.label}</span></Badge>}
       </span>
 
       {/* lien source officielle — col 3 sur mobile (1re ligne), col 5 en large */}
@@ -155,15 +148,17 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
       <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4]">
         {s.provider}{s.provider && prod.length > 1 ? ' · ' : ''}
-        {LICENCE_URL[lic]
-          ? <a data-source-licence href={LICENCE_URL[lic]} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
+        {s.license_url
+          ? <a data-source-licence href={s.license_url} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
           : <span data-source-licence>{lic}</span>}
       </span>
 
-      {/* date de la version en service (mono) */}
+      {/* FIX-SOURCES S7 — deux dates DISTINCTES (comme les « i » des couches) : la fraîcheur AMONT en
+          service (mono), puis « ingéré le … » en mention secondaire — plus jamais fondues en une seule. */}
       <span data-source-version
         className={`col-[2/-1] min-w-0 truncate font-mono text-[11.5px] md:col-[4/5] md:whitespace-nowrap ${meta.untracked ? 'text-txt-dim' : 'text-txt-mut'}`}>
         {meta.label}
+        {meta.ingere && <span data-source-ingere className="ml-1 text-txt-dim">· {meta.ingere}</span>}
       </span>
 
       {/* ligne dépliée : le retard chiffré, ou la nature (proxy/curée) dite en clair */}
@@ -224,6 +219,14 @@ export function SourcesPage() {
     const d = s.radar?.derniere_verif ?? null
     return d && (!acc || d > acc) ? d : acc
   }, null), [comptees])
+  // FIX-SOURCES S3 — la réserve DVF ne code plus « 2025–2026 » en dur : la borne RÉCENTE est LUE dans
+  // la base (dernière donnée servie de la source DVF, dvf_mutations_parcelle). Sans donnée → phrase
+  // sans chiffre. Jamais une année inventée.
+  const dvfMaxAnnee = useMemo(() => {
+    const d = (data ?? []).find((s) => s.name === 'DVF / valeurs foncières')?.derniere_donnee
+    const y = d ? new Date(d).getFullYear() : NaN
+    return Number.isFinite(y) ? y : null
+  }, [data])
 
   const CHIPS: { key: Filtre; label: string; n: number }[] = [
     { key: 'toutes', label: 'Toutes', n: nTotal },
@@ -296,7 +299,10 @@ export function SourcesPage() {
           <div className="border-t border-line px-[18px] pb-[18px] pt-4">
             <p className="mb-3 max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
               <strong className="font-semibold text-txt">Retard de publication des ventes.</strong> Les ventes
-              mettent 1 à 3 ans à apparaître dans DVF. Les niveaux de prix 2025–2026 sont provisoires ; le
+              mettent 1 à 3 ans à apparaître dans DVF.{' '}
+              {dvfMaxAnnee
+                ? <>Les niveaux de prix les plus récents (jusqu’à {dvfMaxAnnee}) sont provisoires</>
+                : <>Les niveaux de prix les plus récents sont provisoires</>} ; le
               classement relatif entre parcelles, lui, reste fiable.
             </p>
             <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
