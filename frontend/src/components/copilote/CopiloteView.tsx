@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
-import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission,
+import { copiloteV2Ask, copiloteV2Missions, copiloteV2Mission, ApiError, is429,
   type CopiloteMission, type CopiloteV2Reponse } from '../../lib/api'
 import { ReponseInline } from './ReponseInline'
 import { RecapConfirmation } from './RecapConfirmation'
@@ -155,12 +155,18 @@ export function CopiloteView() {
         setFil((f) => [...f, { q: m, r }])             // M102-B2 — le tour rejoint le fil
         setReponseFil('')
       }
-    } catch {
-      // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
-      // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
-      // M107 — l'échec est RÉCUPÉRABLE sur place : le tour porte un bouton Réessayer.
-      const echec = { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null, erreur: true } as CopiloteV2Reponse
-      setFil((f) => [...f, { q: m, r: echec, echec: true }])
+    } catch (e) {
+      // FIX-COPILOTE F3 — un 429 (plafond quotidien du Copilote atteint) porte un message CLAIR du
+      // serveur : on l'affiche verbatim, SANS bouton Réessayer (ça repart à minuit, pas « dans un
+      // instant » — un retry ne ferait que re-cogner le plafond).
+      const quota = is429(e)
+      const echec = (quota
+        ? { text: (e as ApiError).detail ?? 'Limite quotidienne du Copilote atteinte — elle repart à minuit.', intent: null, erreur: true }
+        // M102 P1 (constat 2) — jamais un message technique (le detail d'une HTTPException aval
+        // arrivait BRUT ici, avec l'identifiant de run) : phrase honnête, la trace vit côté serveur.
+        // M107 — l'échec est RÉCUPÉRABLE sur place : le tour porte un bouton Réessayer.
+        : { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null, erreur: true }) as CopiloteV2Reponse
+      setFil((f) => [...f, { q: m, r: echec, echec: !quota }])
     } finally { setDispatching(false) }
   }
   const soumettre = () => void interroger(brief)

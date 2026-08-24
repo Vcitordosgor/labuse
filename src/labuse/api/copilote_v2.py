@@ -5,21 +5,35 @@ GET  /api/copilote-v2/scenarios → les chips de contexte (M113) servis par le s
 GET  /api/copilote-v2/telemetrie → la feuille de route mesurée (§1e), triée par fréquence.
 
 Routeur sur haiku (M113·Ph0), sélection + formulation sur sonnet. Chaque appel modèle est déjà
-journalisé dans `ia_log`. Les plafonds (1f)
-sont en config (`copilote_v2_*`) — l'enforcement par compte réutilise le mécanisme `protection.py`
-existant (à brancher au test de charge ; ici la couche métier est câblée et testée par la véracité).
+journalisé dans `ia_log`. PLAFOND par compte sur `/ask` (FIX-COPILOTE F3) : quota journalier
+`copilote_v2_missions_jour` compté dans `usage_compteurs` (kind='copilote_v2_ask') — MÊME mécanique
+et MÊME stockage que le run lourd (`/copilote/runs`), scope `c:<compte_id>` (bucket pilote : session/IP
+via `protection.sujet_de`). Aucun canal parallèle. Dépassement → 429 honnête (repart à minuit) AVANT
+tout appel modèle. `LABUSE_DEV_MODE=1` désactive (comme partout).
 """
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from .. import config
 from ..copilote_v2.answering import accueil_publie, answer, scenarios_publies
 from ..copilote_v2 import historique, telemetrie
+from .protection import compteur_incr_et_lire, sujet_de
 from .tenant import current_compte
 
 router = APIRouter(prefix="/api/copilote-v2", tags=["copilote-v2"])
+
+
+def _sujet_quota(request: Request) -> str:
+    """Scope du quota `/ask`, IDENTIQUE au run lourd (copilote.py) : compte connecté → « c:<id> »,
+    bucket pilote (compte NULL) → session/IP. On partage `usage_compteurs`, pas de canal parallèle."""
+    cid = current_compte(request)
+    return f"c:{cid}" if cid is not None else sujet_de(request)
 
 
 def get_db():
@@ -64,6 +78,17 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     par un outil aval — mesuré : 404 « absente du run q_v9_m81 » servi BRUT à l'écran) ne sort
     de cet endpoint. Message honnête au client, TRACE COMPLÈTE côté serveur — un garde qui
     échoue doit le dire, jamais un 500 (ni un identifiant technique) au visage de l'utilisateur."""
+    # FIX-COPILOTE F3 — plafond par compte AVANT tout appel modèle (même mécanique/stockage que le
+    # run lourd : usage_compteurs, kind distinct). Dépassement → 429 honnête, jamais un appel modèle
+    # dépensé pour rien. `LABUSE_DEV_MODE=1` désactive.
+    s = config.get_settings()
+    if not s.dev_mode:
+        n = compteur_incr_et_lire(date.today().isoformat(), _sujet_quota(request), "copilote_v2_ask")
+        if n > s.copilote_v2_missions_jour:
+            return JSONResponse(status_code=429, content={
+                "detail": f"Vous avez atteint la limite quotidienne du Copilote "
+                          f"({s.copilote_v2_missions_jour} échanges par jour). Elle repart à minuit.",
+                "quota": s.copilote_v2_missions_jour, "gel_jusqua": "minuit"})
     import logging
     log = logging.getLogger("labuse.copilote_v2")
     payload_tour = None
@@ -79,7 +104,10 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
             from .. import config as _cfg
             from ..copilote_v2 import registre_faits
             s = _cfg.get_settings() if hasattr(_cfg, "get_settings") else _cfg.Settings()
-            ttl = int(getattr(s, "copilote_v2_contexte_ttl_minutes", 120))
+            # FIX-COPILOTE F6 — défaut de repli ALIGNÉ sur la config (10) et sur le TTL servi au front
+            # (plus bas) : plus de divergence 120 vs 10 (le fil rechargé et l'annonce d'expiration
+            # parlaient de fenêtres différentes si le champ venait à manquer).
+            ttl = int(getattr(s, "copilote_v2_contexte_ttl_minutes", 10))
             fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl)
             if fil_h:
                 history, prior = fil_h, (fil_p or {}).get("params") or None
