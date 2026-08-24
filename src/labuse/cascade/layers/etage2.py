@@ -10,9 +10,8 @@ Tous les verdicts portent source_table/source_id (cliquable). Poids/seuils/mappi
 """
 from __future__ import annotations
 
-from ...config import opportunity_weights
 from ...enums import Severity
-from ..base import Layer, Verdict, passed, positive, register, soft_flag, unknown
+from ..base import Layer, Verdict, passed, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
 
 SRC_INPI = "INPI RNE (dirigeants)"
@@ -42,19 +41,20 @@ class AgeDirigeantLayer(Layer):
         # (pts, magnitude) reste calculé sur l'âge réel — seul le libellé change.
         if age < int(params.get("age_min_valide", 18)):
             return unknown(self.name, "Âge dirigeant hors plage plausible — fiche RNE incohérente, invalide.", source=SRC_INPI)
-        courbe = params["courbe"]                          # {55:4, 65:8, 75:12, 85:14}
-        pts = 0
-        for seuil in sorted((int(k) for k in courbe), reverse=True):
-            if age >= seuil:
-                pts = courbe[seuil] if seuil in courbe else courbe[str(seuil)]
-                break
-        if pts == 0:
-            return passed(self.name, "Gérant en activité — pas de signal de transmission.", source=SRC_INPI)
-        plafond = float(opportunity_weights()["bonuses"][params["bonus_key"]])
-        mag = pts / plafond
-        return _trace(positive(self.name, "Gérant proche de la retraite — horizon de transmission.",
-                               params["bonus_key"], magnitude=mag, source=SRC_INPI),
-                      "v_foncier_propension_vendre", pr.get("siren"))
+        # FIX-AGE-DIRIGEANT (décision Vic, I4 AUDIT-INTEGRATION-OUTILS) — l'âge du dirigeant N'ENTRE
+        # PLUS dans le score : la cascade s'aligne sur le Score V (le backtest daté montre que le
+        # dirigeant 70-75 ne vend quasiment jamais). L'information RESTE affichée comme CONTEXTE
+        # (renseignée, NON scorante) : flag INFO à 0 point (Severity.INFO = ×0), jamais un `positive`.
+        # Les bornes de `courbe` (toutes à 0) ne servent plus qu'à choisir le LIBELLÉ (« en activité »
+        # vs « fin de carrière »). Le tag veille_succession du Score V est un autre moteur, non
+        # concerné. Masquage RGPD (M70) inchangé : signal qualitatif, jamais le nombre exact.
+        seuil_contexte = min(int(k) for k in params["courbe"])
+        if age >= seuil_contexte:
+            return _trace(soft_flag(self.name,
+                          "Gérant proche de la retraite — information de contexte (n'entre pas dans le score).",
+                          Severity.INFO, source=SRC_INPI),
+                          "v_foncier_propension_vendre", pr.get("siren"))
+        return passed(self.name, "Gérant en activité — pas de signal de transmission.", source=SRC_INPI)
 
 
 @register

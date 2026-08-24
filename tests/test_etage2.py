@@ -6,7 +6,8 @@ from __future__ import annotations
 from labuse.cascade.layers.etage2 import AgeDirigeantLayer, BodaccLayer
 from labuse.enums import CascadeVerdict, Severity
 
-AGE_P = {"bonus_key": "age_dirigeant", "courbe": {55: 4, 65: 8, 75: 12, 85: 14}, "age_min_valide": 18}
+# FIX-AGE-DIRIGEANT (décision Vic, I4) — courbe alignée sur la config servie : 0 point partout.
+AGE_P = {"bonus_key": "age_dirigeant", "courbe": {55: 0, 65: 0, 75: 0, 85: 0}, "age_min_valide": 18}
 BODACC_P = {
     "etats": {
         "rouge": ["Jugement de conversion en liquidation judiciaire", "Autre jugement d'ouverture"],
@@ -37,11 +38,15 @@ class _P:
 
 # ── âge dirigeant ──
 
-def test_age_courbe():
-    for age, pts in [(60, 4), (70, 8), (80, 12), (90, 14)]:
+def test_age_contexte_zero_point():
+    # FIX-AGE-DIRIGEANT (décision Vic, I4) — l'âge du dirigeant NE SCORE PLUS : ligne de CONTEXTE
+    # (flag INFO = ×0), jamais un POSITIVE. L'info reste visible + tracée (source), 0 point.
+    for age in (60, 70, 80, 90):
         v = AgeDirigeantLayer().evaluate(_P(), _Ctx(prop={"age_max_dirigeant": age, "siren": "9"}), AGE_P)
-        assert v.result == CascadeVerdict.POSITIVE
-        assert abs(v.magnitude - pts / 14) < 1e-9        # points = round(14 × magnitude)
+        assert v.result == CascadeVerdict.SOFT_FLAG
+        assert v.bonus_key is None                       # aucune clé de bonus → aucun point
+        assert v.severity == Severity.INFO               # ×0
+        assert "score" in v.detail.lower()               # dit qu'elle n'entre pas dans le score
         assert v.extra["source_table"] == "v_foncier_propension_vendre" and v.extra["source_id"] == "9"
 
 

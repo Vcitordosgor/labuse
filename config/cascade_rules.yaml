@@ -440,12 +440,12 @@ layers:
       indivision_min_droits: 2     # nb_droits_propriete ≥ 2 sur un compte = signal indivision
 
   # ───────────────────── ÉTAGE 2 (dry-run) — ACCESSIBILITÉ ─────────────────────
-  - name: age_dirigeant          # INPI : gérant âgé = horizon de transmission (POINTS)
+  - name: age_dirigeant          # INPI : gérant âgé = CONTEXTE (0 point) — FIX-AGE-DIRIGEANT (décision Vic, I4)
     phase: 2
     enabled: true
     params:
       bonus_key: age_dirigeant
-      courbe: { 55: 4, 65: 8, 75: 12, 85: 14 }   # <55→0 · 55-64→+4 · 65-74→+8 · 75-84→+12 · ≥85→+14
+      courbe: { 55: 0, 65: 0, 75: 0, 85: 0 }      # FIX-AGE-DIRIGEANT : la courbe n'attribue PLUS aucun point (aligné sur Score V). Les bornes d'âge ne servent qu'au LIBELLÉ « en activité » vs « fin de carrière », jamais à un score
       age_min_valide: 18                          # <18 = fiche RNE incohérente → UNKNOWN (invalide)
   - name: bodacc                 # procédures collectives : FLAG 0 point + bascule « chaude » si ROUGE
     phase: 2
