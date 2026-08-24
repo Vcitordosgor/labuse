@@ -119,10 +119,15 @@ export function EtudierBien() {
             <p className="text-[11.5px] leading-relaxed text-txt-mut"><span className="text-txt">{d.adresse}</span> — {d.message}</p>
           ) : (
             <>
-              {/* en-tête : le VERDICT servi (tier) — référentiel unique parcel_p_score_v2 */}
+              {/* en-tête : le VERDICT servi (tier) — référentiel unique parcel_p_score_v2.
+                  LOT1 — la puce est ÉTIQUETÉE « Classement » : on identifie le tier canonique de la
+                  parcelle (Neutre/Faible/…), pas un badge d'état anonyme. */}
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-[11.5px] text-txt">{d.adresse}</span>
-                <TierBadge tier={d.verdict?.tier} etage0={null} statut={null} />
+                <span className="flex shrink-0 items-center gap-1.5" title="Classement canonique de la parcelle (même tier que la fiche et la carte)">
+                  <span className="text-[9px] uppercase tracking-[.08em] text-txt-dim">Classement</span>
+                  <TierBadge tier={d.verdict?.tier} etage0={null} statut={null} />
+                </span>
               </div>
               <p className="mt-0.5 text-[10.5px] text-txt-mut">{d.commune} · {fmtM2(d.surface_m2)} · <span className="font-mono">{d.idu}</span></p>
 

@@ -1522,6 +1522,9 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     items.sort(key=lambda x: -x["marge_capacite"])
     # FAISABILITE (pagination SOCLE) : `offset` fenêtre l'affichage (page de `cap`) ; `n` reste le VRAI
     # total. Le tri (marge décroissante) est stable → paginer ne fait que faire glisser la fenêtre.
+    # LOT2 (OUTILS-FINALE) P0 : `_moteurs_cap` vit dans .moteurs et n'était PAS importé ici → NameError
+    # à CHAQUE recherche « Par critères » (500 → « Recherche indisponible »). Import local (pas de cycle).
+    from .moteurs import _moteurs_cap
     cap = _moteurs_cap("programme_max", 200)
     off = max(0, body.offset)
     top = items[off:off + cap]            # troncature d'AFFICHAGE seulement — `n` reste le vrai total

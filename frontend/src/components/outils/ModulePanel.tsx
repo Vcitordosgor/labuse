@@ -118,7 +118,7 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 
 // Exporté pour test (SCAN — le retrait de l'action courrier est le cœur du mandat).
 export function M02() {
-  const { m02Prefill, setM02Prefill, setMsel, setModule } = useApp()
+  const { m02Prefill, setM02Prefill } = useApp()
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
   useEffect(() => {
@@ -181,13 +181,9 @@ export function M02() {
               <div className="mt-1 text-[11px] text-txt-dim">Valorisation indicative du foncier nu <span className="text-txt-dim">(zones U/AU, DVF terrains)</span> : <b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></div>
             )}
           </div>
-          {/* #5 assiette contiguë dans le portefeuille → « Analyser en assiette » (msel + Assemblage) */}
-          {(d['assiette_contigue'] as string[])?.length >= 2 && (
-            <button data-m02-assiette onClick={() => { setMsel(d['assiette_contigue'] as string[]); setModule('assemblage') }}
-              className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-1.5 text-left text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
-              {(d['assiette_contigue'] as string[]).length} parcelles contiguës dans ce portefeuille — Analyser en assiette →
-            </button>
-          )}
+          {/* LOT6 (OUTILS-FINALE) — le bloc « N parcelles contiguës — Analyser en assiette → » est RETIRÉ :
+              l'outil OBSERVE, il ne pousse plus vers Assemblage (ni n'amorce msel, ce qui polluait Courrier).
+              L'agrégation d'assiette reste une démarche volontaire depuis Assemblage (clic-carte). */}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {/* SCAN (refonte) — l'outil OBSERVE, il ne démarche pas : le bouton « ✉ courrier » PAR
                 parcelle est RETIRÉ. Le courrier est désormais une démarche volontaire depuis l'outil
@@ -766,8 +762,6 @@ const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['tarif_c
  *  Exporté pour test (le flux service est le cœur du mandat COURRIER). */
 export function M09() {
   const qc = useQueryClient()
-  const selectedIdu = useApp((s) => s.selectedIdu)
-  const msel = useApp((s) => s.msel)
   const courrierPrefill = useApp((s) => s.courrierPrefill)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)
   const courrierPrefillIdus = useApp((s) => s.courrierPrefillIdus)
@@ -792,10 +786,14 @@ export function M09() {
   }
   const retirer = (id: string) => setDest((prev) => prev.filter((d) => d.idu !== id))
 
-  // Import EN UN GESTE au montage : Assemblage (courrierPrefillIdus) > tuile fiche mono > parcelle sélectionnée.
+  // LOT7 (OUTILS-FINALE) — le prefill se consomme UNE fois au montage et ne persiste NULLE PART.
+  // SEULS les ponts intentionnels one-shot amorcent des destinataires : Assemblage / Pièges
+  // (courrierPrefillIdus, posé par « Préparer les courriers (n) ») > tuile fiche mono (courrierPrefill).
+  // On NE lit plus `selectedIdu` (la parcelle sélectionnée sur la carte n'est PAS un import demandé —
+  // c'est elle qui pré-remplissait un chip fantôme « ET 2164 » à l'ouverture, sans geste utilisateur).
   useEffect(() => {
     const seed = courrierPrefillIdus?.length ? courrierPrefillIdus
-      : courrierPrefill ? [courrierPrefill] : selectedIdu ? [selectedIdu] : []
+      : courrierPrefill ? [courrierPrefill] : []
     if (courrierPrefillIdus) setCourrierPrefillIdus(null)
     if (courrierPrefill) setCourrierPrefill(null)
     seed.forEach(ajouter)
@@ -854,10 +852,10 @@ export function M09() {
           <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
           <ParcelInput dataAttr="courrier-idu" withCarte={false} placeholder="Adresse ou IDU — puis Entrée"
             onPick={ajouter} />
-          {msel.length > 0 && (
-            <button data-courrier-import onClick={() => msel.forEach(ajouter)}
-              className="self-start text-[11px] font-medium text-mint hover:underline">+ Importer depuis Assemblage ({msel.length})</button>
-          )}
+          {/* LOT7 — l'import Assemblage passe UNIQUEMENT par le pont one-shot « Préparer les courriers (n) »
+              (Assemblage → courrierPrefillIdus, consommé au montage ci-dessus). L'ancien bouton lisait le
+              `msel` DURABLE (sélection d'assiette qui survivait au changement d'outil) → compteur fantôme
+              « Importer depuis Assemblage (118) » sans import demandé. Supprimé : plus de lecture durable. */}
           {dest.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {dest.map((d) => (

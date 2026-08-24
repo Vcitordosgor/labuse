@@ -54,8 +54,13 @@ def test_peb_retire_des_couvertes_et_passe_en_non_couvert():
     # bruit aérien. Retiré des couvertes, listé en NON COUVERT avec les autres manques de l'audit.
     assert "peb" not in sv._KINDS
     joined = " · ".join(sv.NON_COUVERT)
-    for attendu in ("Exposition au Bruit", "Copropriété", "Procédures PLU", "Canalisations", "hors GPU"):
+    for attendu in ("Exposition au Bruit", "Procédures PLU", "Canalisations", "hors GPU"):
         assert attendu in joined
+    # LOT3 (OUTILS-FINALE) — RNIC copro RETIRÉ du NON COUVERT : il EST ingéré (rnic_coproprietes) et
+    # surfacé (CoproprietesBlock). L'y laisser était un faux « non couvert » (comme ZNIEFF avant M137-U).
+    assert not any("Copropriété" in x or "RNIC" in x for x in sv.NON_COUVERT)
+    # SUP : chiffre honnête (8 familles présentes sur 417) ; l'ancien « ~17 familles » (faux) a disparu.
+    assert "8 familles" in joined and "417" in joined and "17 familles" not in joined
 
 
 # ───────────────────────── flux DB ─────────────────────────

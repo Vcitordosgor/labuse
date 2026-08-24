@@ -53,11 +53,13 @@ export function ProcedureChangement() {
           <>
             <button data-procchg-banner aria-expanded={openProc} onClick={() => setOpenProc((o) => !o)}
               className="flex w-full items-center gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2 text-left transition-colors duration-quick hover:bg-st-creuser/[0.14]">
-              <span className="text-st-creuser">⚠</span>
-              <span className="text-[12px] font-medium text-txt-hi">
+              <span className="shrink-0 text-st-creuser">⚠</span>
+              {/* LOT4 — bandeau sur UNE seule ligne : le libellé ne se coupe plus (whitespace-nowrap),
+                  le toggle reste à droite et ne pousse pas le texte à la ligne (shrink-0). */}
+              <span className="truncate whitespace-nowrap text-[12px] font-medium text-txt-hi">
                 {communes.length} commune{communes.length > 1 ? 's' : ''} en procédure PLU
               </span>
-              <span className="ml-auto text-[11px] text-st-creuser">{openProc ? 'Replier ▾' : 'Voir le détail ▸'}</span>
+              <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-st-creuser">{openProc ? 'Replier ▾' : 'Détail ▸'}</span>
             </button>
             {openProc && communes.map((c) => (
               <div key={c.insee} data-procchg-commune={c.commune}
