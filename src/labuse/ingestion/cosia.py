@@ -74,26 +74,32 @@ def _default_extract_dir() -> Path:
 
 def _ensure_source(session: Session) -> int:
     """Upsert de la ligne catalogue `data_sources` (idempotent) → renvoie son id."""
+    # FIX-SOURCES S2 — le statut PASSE par la garde d'enum (minuscule validée) : plus jamais un
+    # 'CONNECTE' brut qui sortait CoSIA de la vitrine. `reliability_level` est posé (était NULL) :
+    # source servie (réconciliation bâti BD TOPO/CoSIA) → vérifiée, comme le seed le déclare.
+    from ..sources_catalog import normalize_status
+    statut = normalize_status("connecte")
     row = session.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                           {"n": SOURCE_NAME}).first()
     if row is None:
         session.execute(text(
             """INSERT INTO data_sources (name, category, provider, access_type, status,
-                   documentation_url, endpoint_url, source_millesime, source_horizon_at,
-                   source_cadence, legal_notes, last_sync_at)
+                   reliability_level, documentation_url, endpoint_url, source_millesime,
+                   source_horizon_at, source_cadence, legal_notes, last_sync_at)
                VALUES (:n, 'occupation_sol', 'IGN / Géoplateforme', 'téléchargement/GPKG',
-                   'CONNECTE', :doc, :dl, :mil, CAST(:hz AS date), 'pluriannuelle', :legal, now())"""),
-            {"n": SOURCE_NAME, "doc": DOC_URL, "dl": DL_URL, "mil": SOURCE_MILLESIME,
+                   :st, 'verifie', :doc, :dl, :mil, CAST(:hz AS date), 'pluriannuelle', :legal, now())"""),
+            {"n": SOURCE_NAME, "st": statut, "doc": DOC_URL, "dl": DL_URL, "mil": SOURCE_MILLESIME,
              "hz": SOURCE_HORIZON, "legal": LEGAL})
         row = session.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                               {"n": SOURCE_NAME}).first()
     else:
         session.execute(text(
-            """UPDATE data_sources SET source_millesime = :mil,
+            """UPDATE data_sources SET status = :st, source_millesime = :mil,
+                   reliability_level = COALESCE(reliability_level, 'verifie'),
                    source_horizon_at = CAST(:hz AS date), last_sync_at = now(),
                    documentation_url = :doc, endpoint_url = :dl, legal_notes = :legal
                WHERE name = :n"""),
-            {"n": SOURCE_NAME, "mil": SOURCE_MILLESIME, "hz": SOURCE_HORIZON,
+            {"n": SOURCE_NAME, "st": statut, "mil": SOURCE_MILLESIME, "hz": SOURCE_HORIZON,
              "doc": DOC_URL, "dl": DL_URL, "legal": LEGAL})
     return int(row[0])
 

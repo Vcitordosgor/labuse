@@ -964,6 +964,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_dvf_marche(engine)
     ensure_zone_filtre(engine)              # M99 : clé normalisée du filtre zonage
     ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
+    ensure_data_sources_status_norm(engine)  # FIX-SOURCES S2 : statut normalisé (casse enum)
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
     ensure_suggestions(engine)              # M16-C
@@ -1589,6 +1590,29 @@ def ensure_data_sources_millesime(engine) -> None:
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_horizon_at date"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_cadence varchar(32)"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS prochain_millesime_at date"))
+
+
+def ensure_data_sources_status_norm(engine) -> None:
+    """FIX-SOURCES S2 — NORMALISE le statut des sources vers la valeur d'enum (minuscule), de façon
+    REPRODUCTIBLE en prod (idempotent, non destructif) — jamais un UPDATE manuel local. Un statut
+    mal casé ('CONNECTE' au lieu de 'connecte', posé par un ingester bavard) sortait la source de la
+    vitrine ET de son comptage (cas CoSIA). Ici on ne touche QUE la casse (lower) quand la valeur
+    minuscule est un statut d'enum valide — aucune valeur inventée, aucune ligne réécrite à tort.
+    La garde `sources_catalog.normalize_status` empêche la RÉ-introduction côté ingestion."""
+    with engine.begin() as c:
+        normalize_data_sources_status(c)
+
+
+def normalize_data_sources_status(conn) -> int:
+    """Corps SQL de la normalisation (isolé pour être testable sur une connexion/session). Ne touche
+    QUE la casse (lower) quand la minuscule est un statut d'enum valide. Renvoie le nb de lignes réparées."""
+    from .enums import DataSourceStatus
+
+    valides = [m.value for m in DataSourceStatus]
+    return conn.execute(
+        text("UPDATE data_sources SET status = lower(status) "
+             "WHERE status <> lower(status) AND lower(status) = ANY(:ok)"),
+        {"ok": valides}).rowcount
 
 
 def ensure_zone_filtre(engine) -> None:

@@ -153,6 +153,10 @@ export interface SourceInfo {
   last_sync_at: string | null
   documentation_url: string | null
   legal_notes: string | null
+  // FIX-SOURCES S6 — licence DÉRIVÉE de legal_notes CÔTÉ SERVEUR (libellé court + lien officiel) :
+  // le front ne code plus aucune licence en dur, il rend ce que la base dit.
+  license_label?: string | null
+  license_url?: string | null
   testable: boolean
   // UX V1 ajout A : fraîcheur RÉELLE lue dans ingestion_runs (jamais codée en dur)
   derniere_ingestion: string | null
