@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS projets (
 );
 ALTER TABLE projets ADD COLUMN IF NOT EXISTS identite jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE projets ADD COLUMN IF NOT EXISTS shortlist_perimee boolean NOT NULL DEFAULT false;
+ALTER TABLE projets ADD COLUMN IF NOT EXISTS cadrage_total integer;
+ALTER TABLE projets ADD COLUMN IF NOT EXISTS cadrage_total_at timestamptz;
 ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS projet_id integer
   REFERENCES projets(id) ON DELETE SET NULL
 """
@@ -375,6 +377,18 @@ def _nom_repli(identite: dict, cadrage: dict) -> str:
     return f"{t} — {ou}"
 
 
+def _refresh_cadrage_total(db: Session, p: models.Projet) -> int | None:
+    """FIX-PROJETS (fin M140) — (re)calcule et MET EN CACHE le total VIF du cadrage (`_cadrage_total`,
+    mesuré ~0,2 s commune / ~1 s île). Le compteur « proposées » servi à la LISTE lit ce cache
+    (fraîcheur `cadrage_total_at`), plus jamais le figé de la shortlist. Rafraîchi à la création / au
+    rejeu / au changement de cadrage / à l'ouverture. Échec réel (None) → garde l'ancienne valeur."""
+    r = _cadrage_total(db, p.filtres or {})
+    if r.get("total") is not None:
+        p.cadrage_total = int(r["total"])
+        p.cadrage_total_at = datetime.now(timezone.utc)
+    return p.cadrage_total
+
+
 def _projet_dict(p: models.Projet) -> dict:
     # M120 — le CADRAGE (jeu de filtres) et l'IDENTITÉ (infos) sont les deux faces servies ;
     # `derniere_execution_at` date la shortlist figée, `shortlist_perimee` dit qu'un rejeu est dû.
@@ -559,18 +573,33 @@ def _counts_by_projet(db: Session, projet_ids: list[int]) -> dict[int, dict]:
 def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict]) -> dict:
     # M120-B — la vignette d'emprise (M114) est RETIRÉE de la liste : la ligne garde titre, commune,
     # contexte, compteur à trier et bande d'état. Plus de schéma de centroïdes servi.
+    # FIX-PROJETS (fin M140) — le compteur « proposées » est le TOTAL VIF du cadrage MOINS les décidées
+    # (retenue/écartée/à-analyser, stockées), EXACTEMENT comme à l'ouverture — plus jamais le figé de
+    # la shortlist. Le total vif vient du CACHE `cadrage_total` (fraîcheur `proposee_at`). Les décidées
+    # restent lues de projet_parcelles (état réel du tri).
     c = by_projet.get(p.id, {})
+    decidees = c.get("retenue", 0) + c.get("ecartee", 0) + c.get("a_analyser", 0)
+    proposee = max(0, (p.cadrage_total or 0) - decidees)
     return {**_projet_dict(p),
-            "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
+            "counts": {"proposee": proposee, "retenue": c.get("retenue", 0),
+                       "ecartee": c.get("ecartee", 0), "a_analyser": c.get("a_analyser", 0)},
+            "proposee_at": p.cadrage_total_at.isoformat() if p.cadrage_total_at else None}
 
 
 @router.get("")
 def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4). Une seule source de vérité : les
     compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche.
-    SEC-IDOR : bornée au compte de la session. M120-B : plus de vignette d'emprise."""
+    SEC-IDOR : bornée au compte de la session. M120-B : plus de vignette d'emprise.
+    FIX-PROJETS — le compteur « proposées » = total VIF du cadrage (cache `cadrage_total`). Un projet
+    au cache FROID (legacy, jamais ouvert depuis le fix) est rafraîchi ICI, une fois (~0,2-1 s) ; les
+    ouvertures/rejeux suivants le tiennent à jour. Jamais de retour au figé."""
     cid = current_compte(request)
     rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
+    for p in rows:
+        if p.cadrage_total is None:                 # cache froid → amorçage unique (borné au compte)
+            _refresh_cadrage_total(db, p)
+    db.flush()
     ids = [p.id for p in rows]
     by_projet = _counts_by_projet(db, ids)
     return [_projet_dict_counts(p, by_projet) for p in rows]
@@ -589,7 +618,13 @@ def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> mode
 
 def _figer_shortlist(db: Session, p: models.Projet, limit: int) -> dict:
     """M120 · LE RUN, UNE FOIS — applique le cadrage, ÉCRIT la shortlist (statut `proposee`,
-    best-first) et la FIGE (date `derniere_execution_at`). Rejouable : c'est aussi le moteur du
+    best-first) et la FIGE (date `derniere_execution_at`).
+
+    FIX-PROJETS (fin M140) — RÔLE RECENTRÉ : le figé sert désormais l'EXPORT UNIQUEMENT (PDF/CSV,
+    snapshot REPRODUCTIBLE et DATÉ « cadrage figé le JJ/MM »). Le compteur « proposées » (liste ET
+    ouverture) ne lit PLUS ces lignes stockées : il sert le total VIF du cadrage (cache `cadrage_total`
+    − décidées). Les DÉCISIONS (retenue/écartée/à-analyser) restent, elles, l'état réel du tri.
+    Rejouable : c'est aussi le moteur du
     rejeu. NON destructif — une parcelle déjà décidée (retenue/ecartee/a_analyser) n'est jamais
     re-proposée (ON CONFLICT DO NOTHING). NON-PERTE : une décision qui ne matche plus le cadrage
     RESTE, marquée `hors_criteres` (jamais évincée en silence) ; celle qui rematche est nettoyée.
@@ -671,7 +706,8 @@ def projet_create(body: ProjetIn, request: Request, db: Session = Depends(get_db
     p = models.Projet(nom=nom, filtres=cadrage, identite=identite, compte_id=cid)
     db.add(p)
     db.flush()
-    diff = _figer_shortlist(db, p, body.limit)     # LE RUN, une fois → shortlist figée + datée
+    diff = _figer_shortlist(db, p, body.limit)     # LE RUN, une fois → shortlist figée + datée (EXPORT)
+    _refresh_cadrage_total(db, p)                   # FIX-PROJETS — amorce le cache du total VIF (compteur liste)
     return {"ok": True, "existing": False, "projet": _projet_dict(p), "shortlist": diff}
 
 
@@ -769,7 +805,7 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
         if body.statut not in ("actif", "archive"):
             raise HTTPException(422, f"Statut invalide : {body.statut}")
         if body.statut != p.statut:                 # M139 Lot 1 — les cartes CRM suivent la transition
-            _sync_crm_projet_statut(db, pid, body.statut, datetime.now(timezone.utc))
+            _sync_crm_projet_statut(db, pid, body.statut, datetime.now(timezone.utc), current_compte(request))
         p.statut = body.statut
     if body.identite is not None:
         p.identite = clean_identite(body.identite)
@@ -778,6 +814,7 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
         if nouveau != (p.filtres or {}):
             p.filtres = nouveau
             p.shortlist_perimee = True          # la shortlist ne bouge pas seule — rejeu proposé
+            _refresh_cadrage_total(db, p)        # FIX-PROJETS — le cache VIF suit le nouveau cadrage
     db.flush()
     return {"ok": True, "projet": _projet_dict(p)}
 
@@ -791,7 +828,7 @@ def projet_delete(pid: int, request: Request, db: Session = Depends(get_db)) -> 
     Miroir du DELETE→archive du pipeline CRM (M137)."""
     p = _projet_or_404(db, pid, current_compte(request))
     if p.statut != "archive":
-        _sync_crm_projet_statut(db, pid, "archive", datetime.now(timezone.utc))
+        _sync_crm_projet_statut(db, pid, "archive", datetime.now(timezone.utc), current_compte(request))
         p.statut = "archive"
     db.flush()
     return {"ok": True, "archived": True}
@@ -804,7 +841,8 @@ def projet_rejouer(pid: int, request: Request, db: Session = Depends(get_db)) ->
     (retenue/écartée/peut-être) SURVIVENT ; une parcelle sortie du cadrage le dit (`hors_criteres`)
     au lieu de disparaître. La shortlist ne bouge JAMAIS seule — seul ce bouton la rafraîchit."""
     p = _projet_or_404(db, pid, current_compte(request))
-    diff = _figer_shortlist(db, p, None)   # M120-B : cap de config
+    diff = _figer_shortlist(db, p, None)   # M120-B : cap de config (snapshot EXPORT figé + daté)
+    _refresh_cadrage_total(db, p)          # FIX-PROJETS — le rejeu rafraîchit aussi le cache VIF
     return {"ok": True, "projet": _projet_dict(p), "shortlist": diff, **_counts(db, pid)}
 
 
@@ -846,19 +884,24 @@ def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: d
                    {"pc": parcel_id, "pid": pid, "now": now})
 
 
-def _sync_crm_projet_statut(db: Session, pid: int, statut: str, now: datetime) -> None:
+def _sync_crm_projet_statut(db: Session, pid: int, statut: str, now: datetime, cid: int | None) -> None:
     """M139 Lot 1 (F1) — quand un PROJET est archivé/restauré, ses cartes CRM SUIVENT au lieu
     d'être orphelinées ou perdues. `archive` ⇒ archive les entrées pipeline liées à CE projet
     (réversible, prospection conservée) ; `actif` ⇒ les restaure. Ciblé `projet_id` : une carte
-    manuelle ou d'un autre projet n'est jamais touchée. Miroir de `_sync_crm_retenue` (M137)."""
+    manuelle ou d'un autre projet n'est jamais touchée. Miroir de `_sync_crm_retenue` (M137).
+    FIX-PROJETS (P5, défense en profondeur) — l'UPDATE re-filtre `compte_id` : `projet_id` est déjà
+    une PK GLOBALE vérifiée-appartenante (pas une fuite, cf. audit), mais la ceinture évite qu'un
+    futur refactor du gate amont n'ouvre une écriture cross-compte par id."""
     if statut == "archive":
         db.execute(text("UPDATE pipeline_entries SET archived_at = :now, updated_at = :now "
-                        "WHERE projet_id = :pid AND archived_at IS NULL"),
-                   {"pid": pid, "now": now})
+                        "WHERE projet_id = :pid AND archived_at IS NULL "
+                        "AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"pid": pid, "now": now, "cid": cid})
     elif statut == "actif":
         db.execute(text("UPDATE pipeline_entries SET archived_at = NULL, updated_at = :now "
-                        "WHERE projet_id = :pid AND archived_at IS NOT NULL"),
-                   {"pid": pid, "now": now})
+                        "WHERE projet_id = :pid AND archived_at IS NOT NULL "
+                        "AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"pid": pid, "now": now, "cid": cid})
 
 
 def _projet_or_404(db: Session, pid: int, cid: int | None) -> models.Projet:
@@ -928,6 +971,9 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     #    (offset 0) ; feuilleter (offset > 0) ne recompte pas, le front garde le total. `None` sur
     #    les pages suivantes = « inchangé, garde la valeur de la 1re page », jamais un faux 0.
     tot = _cadrage_total(db, cadrage)["total"] if offset == 0 else None
+    if tot is not None:                      # FIX-PROJETS — l'ouverture RAFRAÎCHIT le cache → la liste
+        p.cadrage_total = tot                #   sert le même nombre (fraîcheur `cadrage_total_at`).
+        p.cadrage_total_at = datetime.now(timezone.utc)
     proposee_total = max(0, (tot or 0) - len(decided_idus)) if tot is not None else None
     # 4) méta statut/hors_criteres + ordre d'affichage (décidées d'abord, puis la page best-first).
     meta = {r["idu"]: (r["statut"], bool(r["hors_criteres"])) for r in decided}
@@ -1199,7 +1245,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     rows = db.execute(text(
         f"""SELECT par.idu, par.commune, round(par.surface_m2) AS surface_m2,
                   substr(par.idu, 9, 2) AS section, substr(par.idu, 11) AS numero,
-                  pr.sdp_residuelle_m2, pr.cause,   -- M139 bricole : capacite_estimee était SELECTé mais jamais lu
+                  pr.sdp_residuelle_m2, pr.cause,   -- SDP résiduelle (Estimé) + motif (capacite_estimee RETIRÉ : jamais lu)
                   {_ETAGE0_SQL} AS etage0
            FROM projet_parcelles pp
            JOIN parcels par ON par.id = pp.parcel_id

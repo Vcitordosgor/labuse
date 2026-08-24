@@ -697,8 +697,13 @@ class Projet(Base, TimestampMixin):
     statut: Mapped[str] = mapped_column(String(16), default="actif", server_default="actif")
     derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # date shortlist figée
     shortlist_perimee: Mapped[bool] = mapped_column(default=False, server_default="false")  # cadrage changé → rejeu proposé
-    fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 legacy (migration)
-    programme: Mapped[dict | None] = mapped_column(JSONB)     # M120 legacy (migration)
+    # FIX-PROJETS (fin M140) — CACHE du total VIF du cadrage (count ~0,2-1 s) : sert le compteur
+    # « proposées » à la LISTE sans le payer à chaque rendu ; fraîcheur = `cadrage_total_at`.
+    # Rafraîchi à la création / au rejeu / à l'ouverture / au changement de cadrage.
+    cadrage_total: Mapped[int | None] = mapped_column(Integer)
+    cadrage_total_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 legacy (migration, EN EXTINCTION — lu une fois au backfill identite, jamais après)
+    programme: Mapped[dict | None] = mapped_column(JSONB)     # M120 legacy EN EXTINCTION — jamais lu ni écrit (conservé, non-destructif)
 
 
 class ProjetParcelle(Base, TimestampMixin):
