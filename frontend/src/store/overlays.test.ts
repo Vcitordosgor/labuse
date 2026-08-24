@@ -43,6 +43,16 @@ describe('cleanup on-leave centralisé', () => {
     expect(st().densifierTableOpen).toBe(false)   // overlay Densifier fermé (CLOSE_OVERLAYS)
   })
 
+  it('FIX-ACCUEIL A3 : openFiltres ferme les overlays (accueil « Commencer » / sélecteur commune du header)', () => {
+    useApp.setState({ compareOpen: true, communesTableOpen: true, densifierTableOpen: true, accueilVu: false })
+    st().openFiltres()
+    expect(st().panneauSection).toBe('filtres')
+    expect(st().accueilVu).toBe(true)              // ouvre les Filtres = consomme l'accueil
+    expect(st().compareOpen).toBe(false)           // plus de panneau fantôme par-dessus les Filtres
+    expect(st().communesTableOpen).toBe(false)
+    expect(st().densifierTableOpen).toBe(false)
+  })
+
   it('setOpenProjet et toggleSurveillance ferment les overlays', () => {
     useApp.setState({ compareOpen: true, communesTableOpen: true })
     st().setOpenProjet({ id: 1, nom: 'X' })
