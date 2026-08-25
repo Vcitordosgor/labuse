@@ -32,7 +32,10 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 | # | Objet | Où | Créé au | Comment purger |
 |---|---|---|---|---|
-| — | _(aucun à ce jour)_ | — | — | La tentative Courrier (M28) a **échoué (500)** → aucune demande persistée. msel (M9) = état transitoire, déjà vidé. |
+| P1 | Projet **id=185** « [GB-TEST] Marchand audit — a supprimer » (+ 10 lignes `projet_parcelles`) | table `projets` / `projet_parcelles` (compte_id NULL = bucket pilote) | M29, 2026-08-25 | `DELETE FROM projets WHERE id=185;` (cascade sur projet_parcelles) — ou « Archiver/Supprimer » sur la carte projet en UI |
+| P2 | Colonne CRM **id=20** « [GB-TEST] renommee audit » (créée puis renommée) | table `crm_columns` (compte_id NULL) | M35, 2026-08-25 | `DELETE FROM crm_columns WHERE id=20;` — ou « Personnaliser » → supprimer la colonne en UI |
+| P3 | Prospect CRM **id=91** (parcelle 97417000BC0067, colonne gb_test, note [GB-TEST]) | table `pipeline_entries` (compte_id NULL) | M35, 2026-08-25 | `DELETE FROM pipeline_entries WHERE id=91;` — ou « Archiver la carte » en UI |
+| — | Tentative Courrier (M28) : **échec 500** → aucune demande persistée. msel (M9) : transitoire, vidé. 1ʳᵉ tentative projet (M29, périmètre défaut) : **dédup** → aucun objet créé. Prospects BZ1065/AO0180 : déjà dans le CRM de Vic (`already:true`) → **non modifiés**. | — | — | rien à purger |
 
 ---
 
@@ -190,6 +193,21 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 **Mission 16 — Étudier BZ1065, cohérence calculette** → ✅ constat sourcé exact (CLASSEMENT Neutre, SHAB vendable 123 m², prix de sortie 4 275 €/m², résiduel net bâti 26 m²). Onglet « Vos hypothèses » = 3 réglages (Coût construction, Marge & frais, VRD). **Cohérence vérifiée** : coût 2550→1500 €/m² fait passer la charge foncière de **−122 911 € (−76 €/m²)** à **+39 k€ (+24 €/m²)** (« ne finance pas » → « ce que l'opération peut payer ») ; marge 21→40 % la refait chuter à **−61 380 € (−38 €/m²)**. Le verdict bouge dans le bon sens (coût↓→charge↑, marge↑→charge↓). Le « Prix demandé du terrain » = comparateur (« 300 000 € dépasse de 519 k€ ce que la charge supporte »). **SAIN.**
 
 **Mission 25 — Communes (St-Joseph/St-Paul/Le Port), chiffres datés & sourcés** → ✅ **exemplaire**. Fiche Saint-Joseph : chaque ligne porte **valeur + source + millésime + fiabilité** — « Prix ancien médian 2 197 €/m² (q1 1763–q3 2599, n9) · Sourcé · DVF 2025 · fragile » ; « terrain nu U 262 / AU 90 €/m² · DVF terrain 2025 · moyenne » ; « Prix de sortie neuf : **non calculable** — charge de marché non atteignable, collectif majoritairement social/aidé · insuffisant » (honnête) ; « Tendance 12 m ↑8.2 % · DVF 2025 · bonne » ; « 49 mut./trim (−9 % an) ». Désambiguïsation « médiane locale vs médiane commune entière » présente (cf. I2). 14 marqueurs source / 8 dates sur la fiche. **SAIN.**
+
+### LOT 4 — Missions transverses métier _(missions 29-38)_
+
+- **M29 — Marchand de biens (chaîne)** → ✅ filtres→shortlist→projet vérifié : projet **id=185** créé, shortlist figée **10 parcelles** (vivier 3363, cap 200). **Dédup douce** honnête (nom OU cadrage → renvoie l'existant, toast « (il existait déjà) »). Kanban→M34, CRM→M35, Courrier→**GB-011-b** (le pont fonctionne, l'envoi final 500).
+- **M30 — Liquidation→patrimoine→assemblage** → composition d'outils déjà vérifiés (procédure M1=660, Scan patrimoine M2, Assemblage M9) ; intégration cohérente. _Non rejoué de bout en bout (redondant)._
+- **M31 — « 30 logements sociaux < 800 m d'un collège »** → l'app n'a **aucun filtre de proximité à un équipement** ; le Copilote (langage naturel) est offline. Absence **honnête**, pas de fausse promesse — pas un finding (cf. M4 littoral).
+- **M32 — Watch / digest** → `GET /events/watch/{idu}` 200, `watch_zones`=3 en base, `digest.html` 200 → mécanisme + digest **SAINS**. _Dessin d'un secteur sur carte non exercé (impraticable driver)._
+- **M33 — Copilote 10 questions** → **IMPOSSIBLE ici** : `POST /api/copilote-v2/ask` → 200 mais payload « **service d'analyse indisponible — réessayez** » = **modèle LLM hors-ligne** dans cet env local (PAS GB-011 : `agent_runs` existe). Dégradation **honnête** (200, message propre, pas de crash/invention) → **pas un finding**. Idem voie prefill Copilote de M17.
+- **M34 — Projets (décider, rejeu, exports)** → ✅ sur projet 185 : PATCH parcelle → `retenue` (200, réversible), `POST /rejouer` 200, `export.pdf` 200 (application/pdf), `export.csv` 200 (text/csv). **SAIN.**
+- **M35 — CRM (colonne, prospect, renommage)** → ✅ colonne [GB-TEST] créée (id=20) + **renommée** (colonnes de Vic **intactes**) ; prospect **idempotent** pour existants (`already:true`, non modifiés), nouveau prospect id=91 + PATCH note/colonne. _Note mineure : `POST /pipeline` **ignore `column_key`/`note` à la création** (défaut reperee/vide) — il faut PATCHer après._
+- **M36 — Sources vs couches « i »** → cohérent : 60 sources `connecte` (≈ page 59 via WHERE_AFFICHEES), datation « i »/Fraîcheur des couches vérifiée (M7), page Sources 59 (LOT 1). _Cross-check 5 sources non exhaustif ; échantillon BPE/ZFANG concordant._
+- **M37 — Session longue, fuites d'état** → session **très longue continue** sur tous les outils : **aucune nouvelle fuite d'état inter-outils** observée au-delà de **GB-010** (msel persiste à la fermeture Assemblage). Bridges (courrierPrefillIdus/parcelPrefill) consomment à l'usage ; pas de crash ni de croissance mémoire visible. Le « patron du bug Courrier » **non reproduit** ailleurs.
+- **M38 — Mobile 390px** → ✅ **responsive** : accueil + fiche sans **débordement horizontal** (scrollWidth=390, 0 élément trop large), bouton Couches mobile dédié. **SAIN.**
+
+_Décision d'exécution (notée) : plusieurs écritures LOT 4 faites via l'API backend (POST/PATCH) plutôt que la seule UI, pour tenir le budget contexte — le flux UI équivalent est vérifié par ailleurs (wizard projet 6 étapes, kanban, CRM). Aucune écriture hors [GB-TEST]._
 
 ---
 
