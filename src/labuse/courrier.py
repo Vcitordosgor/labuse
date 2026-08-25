@@ -26,36 +26,58 @@ from .config import get_settings
 
 log = logging.getLogger("labuse.courrier")
 
-DDL = """
-CREATE TABLE IF NOT EXISTS courrier_envois (
-  id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(),
-  sujet varchar(24) NOT NULL,
-  idu varchar(14), adresse text NOT NULL,
-  statut varchar(16) NOT NULL,              -- 'simule'|'envoye'|'depose'|'distribue'|'erreur'
-  provider varchar(16) NOT NULL, provider_ref varchar(64),
-  cout_eur numeric(6,2), prix_eur numeric(6,2),
-  assume_contenu boolean NOT NULL,          -- case « j'assume le contenu » (responsabilité)
-  modele varchar(40)
-);
-CREATE INDEX IF NOT EXISTS courrier_envois_sujet_idx ON courrier_envois (sujet, ts);
-
--- COURRIER-SERVICE (refonte 13 outils) — la table des DEMANDES d'envoi REVIENT À LA VIE : le client
--- prépare, LABUSE envoie. M82 l'avait déclarée morte (aucun consommateur) ; elle a désormais cloche +
--- Brevo + vue admin. CREATE + ALTER idempotents pour réconcilier une éventuelle table héritée d'un
--- ancien schéma (colonnes ajoutées sans casser ; anciennes lignes = corps NULL, filtrées à la lecture).
-CREATE TABLE IF NOT EXISTS courrier_demandes (
-  id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS compte_id integer;
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS parcelles jsonb;
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS n integer;
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS communes text;
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS modele varchar(40);
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS corps text;
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS statut varchar(24) DEFAULT 'demande';
-ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
-CREATE INDEX IF NOT EXISTS courrier_demandes_compte_idx ON courrier_demandes (compte_id, ts);
-"""
+# COURRIER-SERVICE (refonte 13 outils) — la table des DEMANDES d'envoi REVIENT À LA VIE : le client
+# prépare, LABUSE envoie. M82 l'avait déclarée morte (aucun consommateur) ; elle a désormais cloche +
+# Brevo + vue admin. CREATE + ALTER idempotents pour réconcilier une éventuelle table héritée d'un
+# ancien schéma (colonnes ajoutées sans casser ; anciennes lignes = corps NULL, filtrées à la lecture).
+#
+# FIX-GB-011 — les statements sont une LISTE EXPLICITE, plus jamais `DDL.split(";")`. L'ancien découpage
+# naïf coupait le DDL sur le `;` PRÉSENT DANS UN COMMENTAIRE SQL ci-dessus (« aucun consommateur ; elle
+# a désormais… ; anciennes lignes… ») → produisait des morceaux de SQL invalides → toute la migration
+# courrier avortait à CHAQUE boot (le CREATE/ALTER courrier_demandes ne s'appliquait jamais). Ici, aucun
+# statement ne contient de `;` interne et rien n'est splitté : chaque élément est exécuté tel quel.
+DDL_STATEMENTS = (
+    """CREATE TABLE IF NOT EXISTS courrier_envois (
+        id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(),
+        sujet varchar(24) NOT NULL,
+        idu varchar(14), adresse text NOT NULL,
+        statut varchar(16) NOT NULL,
+        provider varchar(16) NOT NULL, provider_ref varchar(64),
+        cout_eur numeric(6,2), prix_eur numeric(6,2),
+        assume_contenu boolean NOT NULL,
+        modele varchar(40)
+    )""",
+    "CREATE INDEX IF NOT EXISTS courrier_envois_sujet_idx ON courrier_envois (sujet, ts)",
+    """CREATE TABLE IF NOT EXISTS courrier_demandes (
+        id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now()
+    )""",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS compte_id integer",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS parcelles jsonb",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS n integer",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS communes text",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS modele varchar(40)",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS corps text",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS statut varchar(24) DEFAULT 'demande'",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now()",
+    "CREATE INDEX IF NOT EXISTS courrier_demandes_compte_idx ON courrier_demandes (compte_id, ts)",
+    # RÉCONCILIATION du schéma LEGACY (FIX-GB-011, 2ᵉ volet) : une `courrier_demandes` héritée porte des
+    # colonnes `sujet`/`texte` en NOT NULL SANS défaut. Le nouvel INSERT (creer_demande) ne les fournit
+    # pas → sinon violation not-null (le POST /courrier/demande tombait en 500 même schéma « réparé »).
+    # On relâche la contrainte SI la colonne existe (no-op sur une table neuve qui ne les a pas). Le bloc
+    # DO contient des `;` INTERNES : sans danger car ce runner exécute chaque statement TEL QUEL (aucun
+    # split — c'est précisément le sens du fix).
+    """DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'courrier_demandes' AND column_name = 'sujet') THEN
+            ALTER TABLE courrier_demandes ALTER COLUMN sujet DROP NOT NULL;
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'courrier_demandes' AND column_name = 'texte') THEN
+            ALTER TABLE courrier_demandes ALTER COLUMN texte DROP NOT NULL;
+        END IF;
+    END $$""",
+)
 
 # Cycle de vie visible côté client (mandat) : Demandé → Tarif confirmé → Envoyé.
 STATUTS_DEMANDE = ("demande", "tarif_confirme", "envoye")
@@ -63,9 +85,8 @@ STATUTS_DEMANDE = ("demande", "tarif_confirme", "envoye")
 
 def ensure_tables(engine) -> None:
     with engine.begin() as c:
-        for stmt in DDL.strip().split(";"):
-            if stmt.strip():
-                c.execute(text(stmt))
+        for stmt in DDL_STATEMENTS:
+            c.execute(text(stmt))
 
 
 def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
