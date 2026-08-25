@@ -129,6 +129,13 @@ LES SEPT INTENTIONS :
   réunionnais (météo, cuisine, sport, bavardage).
 
 RÈGLES :
+- CRÉOLE RÉUNIONNAIS : une question en créole sur le bâti / le foncier (« kosa i lé in kaz an tol ? » =
+  qu'est-ce qu'une maison en tôle ; « kaz », « terin » = terrain, « lakour ») est DANS le domaine —
+  classe EXPLIQUER (définition/notion) ou QUESTION (fait chiffré), JAMAIS HORS_SUJET.
+- DÉICTIQUE SANS ANTÉCÉDENT : si le message est une reprise vague (« c'est cher là-bas ? », « compare les
+  deux », « et ça ? ») et que le fil ne contient AUCUN référent qui la résout (pas de commune/parcelle
+  antérieure), NE DEVINE PAS et ne classe PAS hors-sujet : mets "clarification" à UNE question courte
+  (« de quelle commune ? », « comparer quoi ? »).
 - RÈGLE DURE : tout message qui commence par « Combien » attend un NOMBRE → QUESTION, quel que soit le
   sujet (« combien de parcelles brûlantes à X » = QUESTION, jamais RECHERCHE). Une question « Combien de
   … à [commune] ? » est CLAIRE : "clarification" = null. Ne demande JAMAIS de préciser la métrique
