@@ -147,7 +147,7 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 **Mission 28 — Courrier 3 étapes + notif admin** → ⚠️ **CASSÉE — confirmé après redémarrage** → voir **GB-011** (requalifié : **vrai bug de migration**, pas un serveur stale). Wizard 3 étapes propre (Destinataires → Rédaction → Envoi, 4 gabarits, « adressage générique SPF/CERFA — aucune identité PP »), mais l'action finale « Demander l'envoi à LABUSE » **échoue (500)** : demande non créée, notif admin non déclenchée. _(Aucun objet [GB-TEST] persisté — rien à purger ; re-testé post-restart : 2 lignes legacy inchangées, 0 notif admin.)_
 
-#### GB-011 · 🟠 · bug (serveur, probablement stale) · Courrier : `/courrier/demandes` (GET) & `/courrier/demande` (POST) → 500
+#### GB-011 · 🔴 · bug (migration + cascade de heal au boot) · Courrier 500 + heal de schéma avorté
 - **Repro (usage)** : Outils → Courrier → étape 1 ajouter une parcelle (ex. 97411000BZ1065) → Rédiger → Vérifier l'envoi → **« Demander l'envoi à LABUSE »** → l'UI affiche « **La demande n'a pas pu être transmise — réessayez.** » (retry re-échoue indéfiniment). Console : `POST /courrier/demande` et `GET /courrier/demandes` → **500**.
 - **Confirmé backend** : `curl :8000/courrier/demandes` → 500 (pas un 404 proxy — `/courrier` est bien proxifié). Le SELECT du handler `courrier.demandes_de` (`SELECT id, ts, n, communes, modele, statut, updated_at … WHERE corps IS NOT NULL`) échoue en base : **`ERROR: column "n" does not exist`**.
 - **Cause RACINE (prouvée statiquement + empiriquement) — bug de migration réel, PAS un serveur stale** :
@@ -156,11 +156,30 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
   - Comme tout est dans **une seule transaction**, la 1ʳᵉ erreur (morceau [3]) **avorte tout** ; le `CREATE TABLE courrier_demandes` + les 8 `ALTER ADD COLUMN` (morceaux [4]-[13]) **ne s'exécutent jamais**. À chaque boot.
 - **État exact du schéma (post-restart, `psql`)** : `courrier_demandes` = `id, ts, sujet, idu, motif, texte, statut` (ANCIEN schéma, créé par un autre chemin ; 2 lignes legacy du **2026-07-16**, statut `a_traiter`). Colonnes attendues **`compte_id, parcelles, n, communes, modele, corps, updated_at` ABSENTES**. Le SELECT du handler → `ERROR: column "n" does not exist`.
 - **Redémarrage NE corrige PAS** (testé) : après restart, schéma inchangé, `GET /courrier/demandes` → 500, `POST /courrier/demande` (payload [GB-TEST]) → 500, `courrier_demandes` toujours à **2 lignes** (aucune demande créée), **0 notif admin** (`event_log` source='Courrier' = 0). Le fix requiert de corriger le découpage des statements dans `ensure_tables` (ne pas splitter sur les `;` de commentaire).
-- **CASCADE (amplificateur)** : la boucle de heal `for _ens in (…_courrier_ens, _crm_columns_ens, _veilles_ens): _ens(_engine())` (`app.py:110`) n'a **pas de try/except par itération** (le try/except est global). L'échec de `_courrier_ens` (7ᵉ) **saute aussi** `_crm_columns_ens`, `_veilles_ens`, puis `_comptes_ens`, `_scoping_ens` (cloison IDOR), `_copilote_ens` → toute migration **en attente** dans ces modules serait **silencieusement non appliquée** tant que courrier est cassé. (Impact actuel limité car leurs tables préexistent.)
-- **Masquage** : `/readyz` répond `schema.ok:true` (il ne surveille pas les colonnes de `courrier_demandes`) → l'échec de heal (`app.state.schema_heal`) **n'est pas surfacé**.
-- **Gravité** : maintenue **🟠** (consigne Vic) mais c'est un **outil vitrine entièrement HS, bug de code confirmé, non contournable au runtime, avec risque de cascade** → **candidat fort au TOP 10** (à la limite du 🔴).
+- **CASCADE (le cœur du 🔴) — périmètre exact vérifié en base** : la boucle de heal `for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens, _protection_ens, _courrier_ens, _crm_columns_ens, _veilles_ens): _ens(_engine())` (`app.py:109-111`) n'a **pas de try/except par itération** (le try/except est global). `_courrier_ens` est **7ᵉ** → sa levée **abandonne tout le heal restant** : `_crm_columns_ens`(8), `_veilles_ens`(9), puis hors-boucle `_comptes_ens`, `_scoping_ens` (cloison IDOR), `_copilote_ens`.
+  - **RUN (avant courrier, OK)** : modules, ia, events, partners, projets, protection.
+  - **SAUTÉS chaque boot** : crm_columns, veilles, comptes, scoping(IDOR), copilote.
+  - **État RÉEL en base (psql, lecture)** des 5 sautés :
+
+  | Ensure sauté | Migration attendue | État base | Impact |
+  |---|---|---|---|
+  | crm_columns | table `crm_columns` + `uq_crm_columns_compte_key` | ✅ présent (boot antérieur) | aucun défaut actuel |
+  | **veilles** | `UPDATE veilles SET actif=false` sur types non évaluables | ❌ **NON appliqué** | **id=2 `bodacc` `actif=true` — voir GB-011-a** |
+  | comptes | tables `comptes`/`utilisateurs`, drop `comptes_plan_check` | ✅ présent (check retiré) | aucun |
+  | scoping IDOR | `compte_id` sur SCOPED_TABLES + FK + `uq_pipeline_compte_parcel` | ✅ présent (`pipeline_entries.compte_id` + FK + contrainte) | **pas de trou IDOR actuel** |
+  | copilote | `agent_runs` + `fk_agent_runs_compte` | ✅ présent | aucun |
+
+  → **4/5 déjà appliqués par des boots antérieurs** (d'où pas de trou IDOR aujourd'hui), **mais 1/5 (veilles) est un défaut réel actuel**, et **toute FUTURE migration** dans ces 5 modules (y compris de nouvelles règles de **cloison IDOR** — zone sensible) serait **silencieusement non appliquée** tant que courrier est cassé. Le heal est donc **globalement à l'arrêt**.
+- **CoSIA (hors cascade — vérifié)** : la normalisation du statut CoSIA vit dans `ingestion/` (pas dans la boucle boot). État base : `data_sources` id=83 « CoSIA » `status='connecte'` (minuscule) → fix S2 **appliqué**, **PAS majuscule**, **non concerné par la cascade**. (Réserve mineure indépendante : `reliability_level` NULL pour CoSIA.)
+- **Masquage (fait partie du finding)** : `/readyz` répond `schema.ok:true` / `missing:[]` alors que le heal a échoué (il ne surveille ni `courrier_demandes` ni l'état de `app.state.schema_heal`). Un opérateur qui se fie à `/readyz` **ne verra jamais** que le heal est cassé et que toute migration future est gelée. La sonde de santé **ment par omission**.
+- **Gravité : escaladée 🟠 → 🔴.** Justification (consigne Vic « 🔴 si la cascade est confirmée ») : cascade **confirmée** (heal restant abandonné à chaque boot), **défaut réel déjà présent** (GB-011-a veilles), **gel de toute migration future** sur 5 modules dont la **cloison IDOR** (impact sécurité potentiel au prochain changement de schéma), **sonde `/readyz` faussement verte** qui masque le tout, et **outil vitrine (Courrier) entièrement HS non contournable au runtime**. → **TOP 1 du TOP 10.**
 - **Note opérationnelle** : ~~« redémarrer le backend en prod applique les migrations »~~ **INVALIDÉ** — ici la migration est intrinsèquement cassée et un redémarrage ne l'applique pas. (La règle « tout déploiement prod DOIT redémarrer le backend » reste vraie en général, mais elle ne sauve PAS ce cas.)
 - **SAIN associé** : le front **gère le 500 proprement** (message honnête « La demande n'a pas pu être transmise — réessayez », pas de crash).
+
+#### GB-011-a · (rattaché à GB-011, pas un GB indépendant) · veille fantôme `bodacc` id=2 restée active
+- **Symptôme (base)** : `SELECT type, count(*) FILTER (WHERE actif) FROM veilles GROUP BY type` → `permis: 7`, **`bodacc: 1`**. La veille `id=2 type=bodacc` est **`actif=true`** alors que `bodacc` n'est **pas** un type évaluable (`EVALUABLES` = `{permis}`) → veille « active » mais **jamais évaluée** (exactement le défaut V1 de l'audit veille, que le fix FIX-VEILLE devait éteindre).
+- **Cause = la cascade GB-011** : la désactivation (`UPDATE veilles SET actif=false WHERE actif AND NOT (type = ANY(EVALUABLES))`) vit dans `copilote_v2/veilles.ensure_tables` — **9ᵉ de la boucle de heal, sautée** parce que `_courrier_ens` (7ᵉ) lève avant. Le fix ne s'applique donc jamais. → **conforme à la règle anti-doublon : rattaché à GB-011, pas de numéro propre.**
+- **Résolution attendue** : une fois GB-011 corrigé (découpage DDL courrier), `_veilles_ens` re-tournera au boot et repassera id=2 à `actif=false` (migration idempotente non destructive).
 
 ---
 
