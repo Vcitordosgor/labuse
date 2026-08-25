@@ -17,6 +17,7 @@ brancher quand Stripe sera en production côté Flash).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 
@@ -89,17 +90,44 @@ def ensure_tables(engine) -> None:
             c.execute(text(stmt))
 
 
+# FIX-GB-013 — fenêtre d'idempotence (secondes) : deux demandes IDENTIQUES rapprochées ne créent qu'UNE
+# ligne. Court exprès (un double-submit / retry part en quelques ms ; au-delà, une re-demande légitime
+# du MÊME courrier doit rester possible).
+IDEMPOTENCE_FENETRE_S = 120
+
+
 def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
                   communes: str | None, modele: str | None, corps: str) -> dict:
-    """Enregistre une demande d'envoi (le client prépare, LABUSE envoie). Une ligne = une demande de
-    N courriers. `parcelles` = liste d'IDU (jsonb) ; `communes` = récap lisible fourni par le front."""
+    """Enregistre une demande d'envoi (le client prépare, LABUSE envoie). Une ligne = une demande de N
+    courriers. `parcelles` = liste d'IDU (jsonb) ; `communes` = récap lisible fourni par le front.
+
+    FIX-GB-013 — DÉDUP DOUCE + CEINTURE CONCURRENCE : une demande identique (même compte, mêmes parcelles,
+    même corps) datant de moins de `IDEMPOTENCE_FENETRE_S` est RENVOYÉE (`existing:true`) au lieu d'en
+    créer une seconde. Robuste au double-POST CONCURRENT via un verrou consultatif TRANSACTIONNEL
+    (`pg_advisory_xact_lock`, libéré au commit) qui sérialise les requêtes de même clé : la 2ᵉ attend que
+    la 1ʳᵉ soit committée, la voit (READ COMMITTED) et la renvoie — jamais deux INSERT. L'UI garde son
+    bouton `disabled` ; ceci est la ceinture serveur."""
+    p_json = json.dumps(parcelles)
+    # clé d'idempotence = md5(compte|parcelles|corps) → 60 bits pour le verrou (⊂ bigint signé)
+    cle = hashlib.md5(f"{compte_id}|{p_json}|{corps or ''}".encode()).hexdigest()
+    db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": int(cle[:15], 16)})
+    dup = db.execute(text("""
+        SELECT id, ts, n, communes, statut FROM courrier_demandes
+        WHERE compte_id IS NOT DISTINCT FROM :c
+          AND corps IS NOT DISTINCT FROM :corps
+          AND parcelles = cast(:p AS jsonb)
+          AND ts > now() - make_interval(secs => :w)
+        ORDER BY ts DESC LIMIT 1"""),
+        {"c": compte_id, "corps": corps, "p": p_json, "w": IDEMPOTENCE_FENETRE_S}).mappings().first()
+    if dup is not None:
+        return {**dict(dup), "existing": True}
     r = db.execute(text("""
         INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut)
         VALUES (:c, cast(:p AS jsonb), :n, :com, :m, :corps, 'demande')
         RETURNING id, ts, n, communes, statut"""),
-        {"c": compte_id, "p": json.dumps(parcelles), "n": len(parcelles),
+        {"c": compte_id, "p": p_json, "n": len(parcelles),
          "com": communes, "m": modele, "corps": corps}).mappings().one()
-    return dict(r)
+    return {**dict(r), "existing": False}
 
 
 def demandes_de(db, compte_id: int | None) -> list[dict]:
