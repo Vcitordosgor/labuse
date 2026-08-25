@@ -57,7 +57,7 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 - **Repro** : ouvrir la cloche → presser `Escape` → le panneau **reste ouvert**, le backdrop plein écran continue d'intercepter tous les clics (impossible de cliquer la nav tant qu'on n'a pas cliqué le backdrop). Seul un clic sur le backdrop ferme.
 - **Attendu vs observé** : convention = Escape ferme un overlay. Observé : Escape inerte sur ce dropdown (fonctionne ailleurs, ex. panneaux outils). Gêne mineure.
 
-### LOT 2 — Missions recherche / carte / fiches _(PARTIEL — missions 1-6 traitées ; 5,7-15 à reprendre)_
+### LOT 2 — Missions recherche / carte / fiches _(COMPLET — missions 1-15)_
 
 > ⚠️ Écritures autorisées exceptionnellement sur le compte principal (décision Vic). Le LOT 2 n'a produit **aucune écriture** (recherche/carte/fiches en lecture ; l'« export » ne mute rien). Garde-fous en place pour les lots suivants (artefacts jetables étiquetés, pas d'édition destructive, pas d'email réel).
 
@@ -90,6 +90,33 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 #### GB-009 · 🟡 · UX · Omnibox : « Aucune adresse trouvée » pendant la saisie d'un IDU valide
 - **Repro** : taper « BZ1065 » ou « 97411000BZ1065 » → le dropdown d'autocomplétion **adresse** affiche « Aucune adresse trouvée — vérifiez l'orthographe, ou tapez un IDU / une commune » alors que l'IDU est valide et **s'ouvre** en fiche dès qu'on presse Entrée. Message potentiellement décourageant (l'utilisateur peut croire que ça a échoué avant de valider).
 
+**Mission 5 — empiler 4 filtres + reset** → ✅ 4 filtres (Saint-Paul + smin=1000 + zf=U + procedure) = « **4 actifs** », CTA « Voir les 16 parcelles ». Reset (`Réinitialiser`) → **430 813 / aucun actif / hash vidé / surface vidée** (retour à zéro complet). Le compteur « 4 actifs » **résout le doute « 1 actif » de GB (mission 3)** : c'était le zonage non appliqué (déplier ≠ sélectionner), **pas un bug**. Reset filter-scoped par design (tooltip « retour à l'état vierge »).
+
+**Mission 7 — 23 couches** → ✅ **21 couches** listées (groupées : LE FOND / LES ZONAGES / RISQUES ET PROTECTIONS / ACCÈS ET RÉSEAUX / DISPOSITIFS ET PÉRIMÈTRES). Toggles **rendent proprement** : BPE (`/map/layers.geojson?kind=amenite_bpe&limit=40000` — plafond 40000 du fix couches actif), ZFANG (`kind=zfang`), Aléa inondation, Parc national → tous 200, **0 erreur console nouvelle**. Datation « i » + « Fraîcheur des données » par couche active (0 au repos = seules 3 actives). _Échantillon 4/21 couches à z10 (île) ; rendu visuel z12-18 par couche non couvert — assumé._ Observation : 21 vs 23 (mémoire audit-couches) = possible drift registre.
+
+**Mission 8 — Remonter le temps** → ✅ parcelle → frise « L'ANNÉE À REVOIR (AVANT) » = **1950 / 2000 / 2006 / 2011 / 2016 / 2021 + Auj.** ; split-swipe « 1950-1965 vs Aujourd'hui 🔒 après fixe » ; switch 2011 → « 2011-2015 vs Aujourd'hui ». Contour épinglé par design. **SAIN.**
+
+**Mission 9 — msel → Assemblage → retour** → ✅ bilan **honnête** : « **NON contiguë** » (flag correct), 1 interlocuteur PM, assiette 4 873 m², SDP cumulée 3 269 m², logements 31–39, « ×2,09 +109 % vs meilleure seule », **charge cumulée −309 885 € négative** (bloc rouge), disclaimer « reculs internes disparaissent », pont « ✉ Préparer les courriers (3) ». _(msel injectée via `window.__labuse.setMsel` — clic-carte multi impraticable via le driver — assumé.)_
+
+**Mission 11 — verdict fiche == carte** → ✅ **5/5** (declasse_bati_sature ×2, chaude, ecartee ×2) identiques entre `/filtre` (carte) et `/parcels/{idu}` (fiche), même source q_v10_m129. _Cross-check backend sur 5 au lieu de 20 fiches UI (verdict servi par le même endpoint) ; 2 fiches rendues en UI vérifiées._
+
+**Mission 12 — fiches contrastées** → ⚠️ **LÉGER** : fiches rendent avec blocs adaptés au type (vérifié sur chaude BL0032 / écartée AD1237 / résidentiel Le Tampon). Les 3 types spécifiques (copro-RNIC / nue-agricole / équipement-public) **non isolés chacun** — assumé, à compléter.
+
+**Mission 13 — boutons fiche** → ✅ tous présents : Copier l'IDU, Demander à LABUSE (analyse), Poser une question (Copilote), Synthèse IA, **Courrier**, **+ CRM**, **+ Projet**, **PDF**, **Dossier**, **Pré-dossier PC**, « Données et méthode 27 sources ». Exports **fonctionnels** : `/parcels/{idu}/explain` 200, `export.pdf` 200 (`application/pdf`, 174 Ko), `dossier/{idu}.pdf` 200, `pre-dossier/{idu}.zip` 200. Écritures (+CRM/+Projet/Courrier) → M28/34/35 avec [GB-TEST].
+
+**Mission 14 — HARD_EXCLUDE (pourquoi lisible ?)** → ✅ le verdict fiche dit lisiblement « **écartée : exclusion légale ou physique — motif détaillé dans l'analyse** » ; l'analyse agrégée (mission 3) liste « zonage inconstructible, PPR rouge, impossibilités physiques » + « voir pourquoi ». _Vérifié sur un hard-exclude « zone fermée » ; parcelle Parc-national spécifique non isolée via backend — assumé._
+
+**Mission 15 — erreurs propres** → ✅ backend **404 honnête** (« Parcelle X inconnue de l'analyse en cours. ») ; **injection SQL** `'; DROP TABLE parcels;--` → 404 « Parcelle inconnue » (paramétré, pas de 500, pas de fuite — **pré-couvre M42**) ; UI **jamais d'écran cassé** ; omnibox « Aucune adresse trouvée ». _(Note : `select()` direct d'un IDU inexistant = no-op silencieux, cas-limite non atteignable normalement.)_
+
+#### GB-010 · 🟡 (confiance faible) · état · msel persiste à la fermeture/réouverture de l'Assemblage
+- **Repro** : outil Assemblage → composer une assiette (3 parcelles) → fermer l'outil (retour carte) → rouvrir Assemblage → **les 3 chips sont toujours là**.
+- **Ambiguïté** : préservation de brouillon plausible (msel = état propre de l'assemblage) OU fuite d'état. Le risque réel (résidu de surbrillance carte hors assemblage, héritage par un autre outil) est à confirmer en **mission 37** (session longue multi-outils — « le patron du bug Courrier »). Non confirmé comme bug à ce stade.
+
+#### Note méthodo (pour la reprise)
+- `window.__labuse` expose les **actions** de l'app (`select`, `setMsel`, `setModule`…) — utilisé pour sélectionner une parcelle / peupler msel de façon fiable.
+- **Deep-link outil** : `page.goto()` sur un simple changement de hash **ne re-rend pas** l'outil (quirk driver) — il faut un **reload réel** (vérifié : `#m=assemblage` ouvre bien l'outil au reload) ou cliquer la carte d'outil. Les deep-links `#m=…` sont donc **SAINS**, l'échec apparent était un artefact de test.
+- `querySelectorAll('*')` capture le `<style>` Tailwind (~99 Ko) — à éviter dans les `evaluate`.
+
 ---
 
 ## Ce qui est SAIN et vérifié
@@ -115,6 +142,17 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 - **Recherche** : IDU court + complet → fiche ; adresse → autocomplétion (numéro + commune + CP).
 - **Réinitialiser les filtres** : retour à la base **430 813** + hash vidé (reset propre observé).
 - **Capacité absente honnêtement** : pas de critère « proximité littorale » — aucune fausse promesse (mission 4).
+
+**LOT 2** (missions 5,7-15) :
+- **Reset filtres complet** (M5) : 4 filtres → « 4 actifs » → Réinitialiser → 430 813 / hash vidé / à zéro. Compteur « N actifs » correct.
+- **21 couches** (M7) togglent proprement, 200 partout, 0 erreur console ; BPE plafond 40000 actif ; datation « i »/« Fraîcheur » par couche active.
+- **Remonter le temps** (M8) : 6 millésimes 1950→2021 + Auj., split-swipe « après fixe », switch millésime fonctionnel.
+- **Assemblage** (M9) : bilan honnête (flag « NON contiguë », charge négative bloc rouge, disclaimer reculs internes, pont Courrier) ; **deep-link outil SAIN** (reload réel).
+- **3 fonds** (M10) : Ortho IGN (geopf ORTHOIMAGERY, « © IGN BD ORTHO ») + Plan IGN (PLANIGNV2) → tuiles 200 ; cartouche « Carte à jour au 24/08/2026 ».
+- **Verdict fiche == carte** (M11) : 5/5 exacts (même source q_v10_m129).
+- **Boutons fiche** (M13) complets ; exports 200 (`explain`, `export.pdf` application/pdf, `dossier.pdf`, `pre-dossier.zip`).
+- **Exclusion lisible** (M14) : « écartée : exclusion légale ou physique — motif détaillé ».
+- **Erreurs propres** (M15) : 404 honnête, **SQL-injection-safe**, jamais d'écran cassé — pré-couvre M42.
 
 ---
 
