@@ -361,8 +361,11 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
         "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
         "carte": carte,
+        # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
+        # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab")},
+                   "etat_label": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}") if r["etat"] else None,
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }
 
@@ -711,9 +714,39 @@ def prospection_piscines(commune: str | None = None,
         GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
     maj = db.execute(text("SELECT to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
                           "FROM parcel_equipements WHERE piscine IS TRUE")).scalar()
+    # LOT8a (OUTILS-FINALE) — le SEUIL de rétention est DIT : parcel_equipements.piscine ne retient que
+    # les détections passant la porte de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50, config
+    # detection_ortho.yaml) — des détections plus incertaines sont donc EXCLUES du compte. Écrit à l'écran.
     return {"total": total, "communes": [dict(c) for c in communes],
-            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; à confirmer sur site",
+            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; "
+                      "retenues au seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50) ; à confirmer sur site",
             "maj": maj or "—"}
+
+
+@router.get("/prospection-piscines/points")
+def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
+                                piscine_surf_min: int = 0, db: Session = Depends(get_db)):
+    """LOT8b (OUTILS-FINALE) — TOUTES les piscines de l'île (ou de la commune) en marqueurs, pour
+    « 💧 Voir sur la carte » : centroïdes des parcelles à piscine (kind='piscine'), servis en GeoJSON.
+    Aucun plafond de listing (l'écran cap à 500, la carte doit TOUT montrer). Agrégat lecture seule."""
+    if not db.execute(text("SELECT to_regclass('parcel_equipements') IS NOT NULL")).scalar():
+        raise HTTPException(503, "détection équipements indisponible (table absente).")
+    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
+    bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
+        else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
+    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
+    where = "WHERE e.piscine IS TRUE" + bati_cond + surf_cond + (" AND p.commune = :c" if commune else "")
+    rows = db.execute(text(
+        f"""SELECT e.idu, p.commune, round(e.piscine_surface_m2::numeric, 0) AS m2,
+                   ST_X(ST_Transform(p.centroid, 4326)) AS lon, ST_Y(ST_Transform(p.centroid, 4326)) AS lat
+            FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
+            AND p.centroid IS NOT NULL"""),
+        {"c": commune, "psmin": piscine_surf_min}).mappings().all()
+    return {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(r["lon"]), float(r["lat"])]},
+         "properties": {"kind": "piscine", "idu": r["idu"], "commune": r["commune"],
+                        "piscine_m2": float(r["m2"]) if r["m2"] is not None else None}}
+        for r in rows]}
 
 
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
@@ -1522,6 +1555,9 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     items.sort(key=lambda x: -x["marge_capacite"])
     # FAISABILITE (pagination SOCLE) : `offset` fenêtre l'affichage (page de `cap`) ; `n` reste le VRAI
     # total. Le tri (marge décroissante) est stable → paginer ne fait que faire glisser la fenêtre.
+    # LOT2 (OUTILS-FINALE) P0 : `_moteurs_cap` vit dans .moteurs et n'était PAS importé ici → NameError
+    # à CHAQUE recherche « Par critères » (500 → « Recherche indisponible »). Import local (pas de cycle).
+    from .moteurs import _moteurs_cap
     cap = _moteurs_cap("programme_max", 200)
     off = max(0, body.offset)
     top = items[off:off + cap]            # troncature d'AFFICHAGE seulement — `n` reste le vrai total

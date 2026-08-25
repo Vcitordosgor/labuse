@@ -163,6 +163,7 @@ export function DensifierTablePanel() {
   const commune = useApp((s) => s.commune)
   const [sort, setSort] = useState<(typeof SORTS)[number]['key']>('score')
   const [chargeTout, setChargeTout] = useState(false)
+  const [inclure, setInclure] = useState(false)   // LOT12b — écartées MASQUÉES par défaut (comme Solaire)
 
   const q = useInfiniteQuery({
     queryKey: ['renouv-table', sort, commune],
@@ -173,6 +174,11 @@ export function DensifierTablePanel() {
     enabled: open && module === 'renouvellement',
   })
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
+  // LOT12b — les ÉCARTÉES (etage0) sont masquées par défaut (une écartée à score 100 ne doit pas
+  // trôner en tête du tri Score) ; « les inclure » les révèle. Filtre client sur les pages chargées
+  // (même patron que Solaire) : le compteur d'écartées porte sur ce qui est chargé.
+  const visibles = inclure ? items : items.filter((it) => !it.etage0)
+  const nHidden = items.length - visibles.length
   const total = q.data?.pages[0]?.total ?? 0
   const meta = q.data?.pages[0]
 
@@ -217,17 +223,21 @@ export function DensifierTablePanel() {
               <thead className="sticky top-0 bg-bg-3 text-left text-[10px] uppercase tracking-wide text-txt-dim">
                 <tr>
                   <th className="px-2 py-1.5">Parcelle</th>
-                  <th className="px-2 py-1.5">Classement</th>
-                  <th className="px-2 py-1.5 text-right">Score</th>
+                  {/* LOT12a — DEUX grandeurs DISTINCTES, étiquetées : le Classement est le tier canonique
+                      (parcel_p_score_v2, même partout) ; le Score est la note de densification (0-100,
+                      parcel_renouvellement). Le score n'EST PAS le tier. */}
+                  <th className="px-2 py-1.5" title="Classement canonique — le tier de la parcelle (même que la fiche et la carte). Différent du score de densification.">Classement</th>
+                  <th className="px-2 py-1.5 text-right" title="Score de densification 0-100 (potentiel de renouvellement) — une grandeur DIFFÉRENTE du classement.">Score densif.</th>
                   <th className="px-2 py-1.5 text-right">SDP résiduelle</th>
                   <th className="px-2 py-1.5 text-right">Surface</th>
                   <th className="px-2 py-1.5">Bâti existant</th>
                   <th className="px-2 py-1.5">Zone</th>
-                  <th className="px-2 py-1.5 text-right">Rang commune</th>
+                  {/* LOT12c — rang DANS la commune par score de densification (1 = meilleure de la commune) */}
+                  <th className="px-2 py-1.5 text-right" title="Rang de la parcelle dans sa commune par score de densification (1 = la meilleure de la commune).">Rang commune</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((it) => (
+                {visibles.map((it) => (
                   <tr key={it.idu} data-densifier-row className="cursor-pointer border-t border-line hover:bg-surface-2"
                     onClick={() => { select(it.idu); setOpen(false) }}>
                     <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
@@ -252,20 +262,26 @@ export function DensifierTablePanel() {
           )}
         </div>
 
-        {/* pied : pagination SOCLE (400 par 400 + tout charger) + export CSV */}
+        {/* pied : écartées (LOT12b) + pagination SOCLE (400 par 400 + tout charger) + export CSV */}
         <div className="border-t border-line px-4 py-2">
+          {(nHidden > 0 || inclure) && (
+            <div className="mb-1.5 flex items-center gap-2 text-[10px] text-txt-dim">
+              <span>{inclure ? 'écartées incluses' : `${fmtInt(nHidden)} écartée${nHidden > 1 ? 's' : ''} masquée${nHidden > 1 ? 's' : ''}`}</span>
+              <button data-densifier-ecartees onClick={() => setInclure((v) => !v)} className="text-mint hover:underline">{inclure ? 'les masquer' : 'les inclure'}</button>
+            </div>
+          )}
           <ListPaginationFooter
             className="flex flex-wrap items-center gap-3 text-[11px] text-txt-mut"
-            shown={items.length} total={total} step={meta?.cap ?? 400}
+            shown={visibles.length} total={total} step={meta?.cap ?? 400}
             onMore={() => q.fetchNextPage()}
             onAll={() => setChargeTout(true)}
             allLabel={`Tout charger (${fmtInt(total)})`}
           >
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
-            <button data-densifier-csv onClick={() => exporterCsv(items)}
+            <button data-densifier-csv onClick={() => exporterCsv(visibles)}
               className="ml-auto rounded-md border px-2 py-1 text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
               style={{ borderColor: `${TOKENS.renouv}66`, color: TOKENS.renouv, background: `${TOKENS.renouv}12` }}>
-              ⬇ Exporter CSV ({fmtInt(items.length)})
+              ⬇ Exporter CSV ({fmtInt(visibles.length)})
             </button>
           </ListPaginationFooter>
         </div>

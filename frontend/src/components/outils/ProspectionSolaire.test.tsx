@@ -8,8 +8,9 @@ import { ProspectionSolaire } from './ProspectionSolaire'
 const AGG = {
   total: 12480,
   communes: [{ commune: 'Saint-Paul', n: 2913 }, { commune: 'Saint-Pierre', n: 1842 }],
-  source: 'Détection FLAIR…', maj: '2026-07-11',
+  source: 'Détection FLAIR sur BD ORTHO — retenues au seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50)', maj: '2026-07-11',
 }
+const POINTS = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [55.3, -21] }, properties: { kind: 'piscine', idu: '97411000AP0000' } }] }
 function mkItem(i: number, ecartee = false) {
   return {
     idu: `97411000AP${String(i).padStart(4, '0')}`, commune: 'Saint-Paul', productible: 1598 - i,   // IDU 14 car.
@@ -32,6 +33,7 @@ const FICHE = {
 function mockFetch() {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
+    if (u.includes('/prospection-piscines/points')) return { ok: true, json: async () => POINTS }
     if (u.includes('/prospection-piscines')) return { ok: true, json: async () => AGG }
     if (u.includes('/prospection-solaire/parcelle/')) return { ok: true, json: async () => FICHE }
     if (u.includes('/prospection-solaire')) return { ok: true, json: async () => LIST }
@@ -62,12 +64,15 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // ligne par commune
   })
 
-  it('écartées MASQUÉES par défaut ; « les inclure » les révèle', async () => {
+  it('mode Piscines (LOT8) : TOUTES les piscines listées (classement ignoré, pas de pied « écartées ») + seuil écrit', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(1))  // écartée cachée
-    fireEvent.click(document.querySelector('[data-solaire-ecartees]')!)
-    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))  // incluse
+    // les 2 lignes (dont l'« écartée ») s'affichent : le pisciniste veut toutes les piscines.
+    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
+    expect(document.querySelector('[data-solaire-ecartees]')).toBeNull()          // plus de pied « écartées masquées »
+    // LOT8a — le seuil de rétention est écrit à l'écran ; LOT8c — pas de colonne Classement.
+    expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('seuil')
+    expect(screen.queryByText('Classement')).toBeNull()
   })
 
   it('mode Ensoleillement : fiche soleil (profil mensuel 12 barres + unité kWh/kWc/an)', async () => {

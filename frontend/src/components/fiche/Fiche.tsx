@@ -632,7 +632,9 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <label className="flex items-center gap-1 text-[11px] text-txt-dim">
+      {/* LOT1 — `flex-wrap` : le chip « hyp. » passe sous le libellé s'il n'y a pas la place, il ne
+          CHEVAUCHE plus « Marge & frais » / « VRD & aménagements ». */}
+      <label className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-txt-dim">
         {label}
         {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
       </label>
@@ -777,11 +779,17 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 {' '}({fmtInt(Number(d.shab_vendable_m2))} m² vendables ÷ {d.coef_rendement != null ? Number(d.coef_rendement).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '0,8'}), pas sur la surface vendable.
               </p>
             )}
-            {/* les HYPOTHÈSES — saisies par le promoteur (coût, marge & frais, VRD/aménagements) */}
-            <div className="mt-2 flex gap-2">
-              <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
-              <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
-              <HypInput label="VRD & aménagements" value={vrd} onChange={setVrd} suffix="€/m²" hint />
+            {/* les HYPOTHÈSES — saisies par le promoteur (coût, marge & frais, VRD/aménagements).
+                LOT1 — empilées (un champ par ligne, pleine largeur) : les libellés longs et leur chip
+                « hyp. » ne se chevauchent plus. Placeholder = la valeur PAR DÉFAUT réelle (celle qui
+                s'applique si le champ est vidé — deb retombe sur defauts.*), jamais un nombre en dur. */}
+            <div className="mt-2 flex flex-col gap-2">
+              <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint
+                placeholder={defauts.cout_construction_m2 != null ? String(defauts.cout_construction_m2) : undefined} />
+              <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint
+                placeholder={defauts.marge_frais_pct != null ? String(defauts.marge_frais_pct) : undefined} />
+              <HypInput label="VRD & aménagements" value={vrd} onChange={setVrd} suffix="€/m²" hint
+                placeholder={defauts.vrd_m2 != null ? String(defauts.vrd_m2) : undefined} />
             </div>
             {d.vrd_total_eur != null && (
               <p data-calc-vrd className="mt-1 text-[9.5px] leading-snug text-txt-dim">
@@ -1016,7 +1024,7 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
         label: 'SHAB vendable retenue',
         valeur: `~${fmtM2(fo.shab_vendable_m2)}`,
         source: 'logements retenus au sol × surface moyenne/logement — base du CA (la SHAB brute est théorique)',
-        prov: 'dérivé',
+        prov: 'derive',   // LOT2 — la clé StepProv est 'derive' (sans accent) ; 'dérivé' retombait sur « — »
       }]
     : steps
   const ex = explain.data

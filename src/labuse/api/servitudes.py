@@ -6,7 +6,7 @@ recul du trait de côte, zonage d'assainissement (ANC obligatoire)…
 
 100 % LECTURE (couche `spatial_layers` déjà ingérée) — zéro donnée nouvelle. Chaque ligne porte sa
 **source** (`data_sources`) et sa **date** (dernier sync). Honnêteté : ce que la base n'ingère PAS
-(PEB bruit aérien, RNIC copro, procédures PLU, canalisations de transport, SUP hors GPU) est listé
+(PEB bruit aérien, procédures PLU, canalisations de transport, SUP hors GPU) est listé
 comme **non couvert**, jamais faussement « RAS » — un couvert-vide (couche déclarée mais sans donnée)
 serait lui aussi un faux RAS, on n'en déclare aucune.
 """
@@ -66,13 +66,17 @@ _SOL_POLLUE = {"sis": "Secteur d'Information sur les Sols (SIS) — étude de so
 # Contraintes attendues mais NON ingérées / partiellement couvertes — À DIRE, jamais un « RAS »
 # silencieux (M137-T : liste étendue à tout ce que l'audit a trouvé). Bloc servi à l'entrée
 # « une parcelle » ET reporté sur l'entrée « un lot » (outil Risques) — c'est le point critique.
+# LOT3 (OUTILS-FINALE) — vérité passée au crible :
+#  · RNIC RETIRÉ de la liste : le registre EST ingéré (rnic_coproprietes, 2 220 copropriétés) ET
+#    surfacé en fiche (CoproprietesBlock, M125-2). L'annoncer « non couvert » était FAUX (péremption).
+#  · SUP : chiffre honnête — 417 SUP ingérées, 8 familles réellement présentes (pm1/pm2/pm3/ac1/ac2/
+#    ac3/ac4/el10, toutes décodées). L'ancien « ~17 familles » ne correspondait ni au mapping ni à la base.
 NON_COUVERT = [
     "Plan d'Exposition au Bruit (PEB, aérodrome) — couche non ingérée : le bruit aérien n'est pas détecté ici",
-    "Copropriété (RNIC, registre national des copropriétés) — hors périmètre ingéré (statut copro non vu)",
     "Procédures PLU en cours (révision/élaboration) — voir l'outil PLU (radar Sudocuh) ; non reprises ici",
     "Canalisations de transport de matières dangereuses (gaz, hydrocarbures) — couche non ingérée",
-    "Servitudes d'Utilité Publique hors GPU Réunion — ~17 familles SUP décodées sur 417 SUP ingérées ; "
-    "une SUP non publiée au Géoportail de l'urbanisme n'est pas vue (certificat d'urbanisme indispensable)",
+    "Servitudes d'Utilité Publique hors GPU Réunion — 417 SUP ingérées (8 familles présentes, toutes "
+    "décodées) ; une SUP non publiée au Géoportail de l'urbanisme n'est pas vue (certificat d'urbanisme indispensable)",
 ]
 _NON_COUVERT = NON_COUVERT   # rétro-compat (tests + anciens imports)
 

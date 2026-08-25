@@ -125,11 +125,12 @@ export function M22() {
             « un terrain pour 3 immeubles R+3 de 8 logements ».
           </div>
           <CommuneScope commune={commune} onChange={setCommune} />
-          <div className="flex gap-2">
+          {/* LOT2 — grille 2 colonnes UNIQUE : les 5 champs s'alignent en colonnes (M²/UNITÉ et
+              Circulations % ne décrochent plus sur une ligne à part). `items-end` aligne les inputs
+              même quand un libellé passe sur 2 lignes. */}
+          <div className="grid grid-cols-2 items-end gap-x-2 gap-y-1.5">
             {F('batiments', 'BÂTIMENTS')}
             {F('niveaux', 'R+N', { min: 0 })}
-          </div>
-          <div className="flex gap-2">
             {F('logements_par_batiment', 'UNITÉS/BÂT')}
             {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
             {F('circulation_pct', 'Circulations & murs %', { min: 0, title: 'Surface perdue en circulations, murs et parties communes, ajoutée à la surface habitable pour obtenir la SDP (hypothèse ; défaut 20 %, bas de la fourchette 20-25 %).' })}

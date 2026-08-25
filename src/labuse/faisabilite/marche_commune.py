@@ -287,14 +287,17 @@ def ligne8_pression_dpe(db: Session, commune: str) -> dict:
         {"i": insee}).mappings().first()
     ech = f"G interdit à la location au {DPE_DOM_INTERDICTION_LOCATION['G']}, F au {DPE_DOM_INTERDICTION_LOCATION['F']}"
     if not r or not r["connus"]:
+        # LOT10 (OUTILS-FINALE) — `date_amont` = « ADEME » seul : le « (DPE connus) » redondant donnait
+        # le libellé cassé « Sourcé · sur 0 DPE connu · ADEME (DPE connus) ». Le compte des DPE connus
+        # est DÉJÀ porté par l'étiquette ; la fraîcheur n'a qu'à nommer la source.
         return _ligne("pression_dpe", "OFFRE", valeurs={"echeances": ech, "dpe_connus": 0},
-                      source="DPE ADEME + calendrier DOM (M-G)", date_amont="ADEME (DPE connus)",
+                      source="DPE ADEME + calendrier DOM (M-G)", date_amont="ADEME",
                       fiabilite="faible", etiquette="Sourcé · sur 0 DPE connu", calculable=False,
                       motif="aucun DPE connu sur la commune")
     pct = round(100 * r["fg"] / r["connus"], 1)
     return _ligne("pression_dpe", "OFFRE",
                   valeurs={"pct_fg": pct, "fg": r["fg"], "dpe_connus": r["connus"], "echeances": ech},
-                  source="DPE ADEME + calendrier DOM (M-G)", date_amont="ADEME (DPE connus)",
+                  source="DPE ADEME + calendrier DOM (M-G)", date_amont="ADEME",
                   fiabilite="moyenne", etiquette=f"Sourcé · sur {r['connus']} DPE connus · {ech}")
 
 
