@@ -320,9 +320,11 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
                                     "Laquelle ? (vous pouvez répondre par son nom ou son SIREN)")
         siren = rows[0]["siren"]
     res = patrimoine(siren=siren, db=db)
-    return ToolResult("parcelles_par_entreprise", valeur=res["n_parcelles"],
-                      data={"siren": siren, "nom": res["nom"], "n_parcelles": res["n_parcelles"],
-                            "sdp_totale_m2": res["sdp_totale_m2"],
+    # COPILOTE-REFONTE — `.get` : `patrimoine` ne renvoie pas toujours `sdp_totale_m2` (mesuré : KeyError
+    # sur la SHLMR) → jamais un crash, la clé absente = None (le formuler ne sert que ce qui existe).
+    return ToolResult("parcelles_par_entreprise", valeur=res.get("n_parcelles"),
+                      data={"siren": siren, "nom": res.get("nom"), "n_parcelles": res.get("n_parcelles"),
+                            "sdp_totale_m2": res.get("sdp_totale_m2"),
                             "bodacc": res.get("bodacc")},
                       source="DGFiP — parcelles de personnes morales (SIREN public)")
 
@@ -496,6 +498,27 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
 
 
 # Registre nom → fonction (l'exécuteur du serveur ; le modèle choisit le NOM, jamais le SQL).
+def compter_piscines(db: Session, *, commune: str | None = None) -> ToolResult:
+    """COPILOTE-REFONTE — compte les PISCINES détectées (agrégat gelé `parcel_equipements`, île ou
+    commune). Réutilise l'endpoint /prospection-piscines (LOT8) : aucun recalcul, le seuil de détection
+    est porté par la `source`. La voie a du Copilote atteint ainsi l'outil Piscines/Solaire."""
+    if commune is not None:
+        resolue = resoudre_commune(commune)
+        if resolue is None:
+            return _refus_commune("compter_piscines", commune)
+        commune = resolue
+    try:
+        from ..api.modules import prospection_piscines
+        out = prospection_piscines(commune=commune, db=db)
+    except Exception:                                    # table de détection absente (base nue) → refus honnête
+        return ToolResult("compter_piscines", ok=False, refus="indisponible",
+                          source="détection piscines indisponible")
+    n = out.get("total")
+    return ToolResult("compter_piscines", valeur=n,
+                      data={"total": n, "commune": commune, "communes": out.get("communes")},
+                      source=out.get("source") or "détection ortho/IA (BD ORTHO 20 cm 2025)")
+
+
 OUTILS = {
     "compter_parcelles": compter_parcelles,
     "parcelles_par_entreprise": parcelles_par_entreprise,
@@ -503,5 +526,6 @@ OUTILS = {
     "stats_commune": stats_commune,
     "delais_instruction": delais_instruction,
     "marche": marche,
+    "compter_piscines": compter_piscines,
     "recherche_web": recherche_web,
 }
