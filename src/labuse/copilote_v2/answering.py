@@ -61,10 +61,15 @@ CATALOGUE = [
      "commune, surface, zone, verdict.", "params": {"idu": "str 14 car."}},
     {"nom": "stats_commune", "desc": "Contexte d'une commune : taux de logement social (SRU), statut SRU, "
      "nombre de logements, part de propriétaires.", "params": {"commune": "str"}},
-    {"nom": "delais_instruction", "desc": "Délai médian d'instruction ET nombre de permis accordés "
-     "d'une commune (Sitadel).", "params": {"commune": "str"}},
-    {"nom": "marche", "desc": "Marché immobilier d'une commune : prix ancien, terrain nu, neuf, tendance, "
-     "loyer.", "params": {"commune": "str"}},
+    {"nom": "delais_instruction", "desc": "DÉLAI médian d'instruction d'une commune (dépôt→autorisation, "
+     "Sitadel). Pour « quel délai / combien de temps / vélocité d'instruction ».", "params": {"commune": "str"}},
+    {"nom": "compter_permis", "desc": "NOMBRE de permis accordés d'une commune sur une fenêtre de N mois "
+     "(défaut 24). Pour « combien de permis (accordés/délivrés) à X », « permis sur 24 mois ». C'est un "
+     "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
+    {"nom": "marche", "desc": "Marché immobilier d'une commune : prix de l'ANCIEN (prix_ancien_median), "
+     "terrain nu (prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
+     "(loyer_median). Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
+     "params": {"commune": "str"}},
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
      "params": {"commune": "str (absent = toute l'île)"}},
@@ -92,7 +97,9 @@ RÈGLES :
   « copropriété(s) / en copro » → copro "avec" ; « hors copropriété » → copro "sans" ; « à événement
   (rouge) » → evenement=true ; « en zone U / AU / A / N » → zonage (ex. "U"). Ces critères sont
   APPLIQUÉS (ne les mets JAMAIS dans criteres_non_appliques).
-- « Combien de permis (accordés) à X » → outil delais_instruction (il porte AUSSI le nombre de permis).
+- « Combien de permis (accordés/délivrés) à X » → outil compter_permis (le COMPTE ; extrais `mois` si
+  une fenêtre est dite : « sur 24 mois » → mois=24, « sur 12 mois » → mois=12). « Quel DÉLAI d'instruction
+  à X » → delais_instruction. Ne CONFONDS PAS le compte (compter_permis) et le délai (delais_instruction).
 - REFUS (mets "tool":null et "refus" à la bonne valeur, "args":{{}}) :
   · "proprietaire_pp" : on demande l'identité/nom/adresse du PROPRIÉTAIRE d'une parcelle (personne
     physique — donnée non ouverte). NB : « quelles parcelles possède [société] » n'est PAS un refus
@@ -119,6 +126,10 @@ FORMULE_SYSTEM = """Tu es le copilote foncier de LABUSE. Formule une réponse en
 question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Règles STRICTES :
 - N'invente AUCUN chiffre : tout nombre de ta réponse doit apparaître dans le résultat. Si une valeur
   manque, dis-le, ne la devine pas.
+- GRANDEUR DEMANDÉE (multi-valeurs) : si le résultat porte `valeurs` (grandeurs nommées, ex. marché :
+  prix_ancien_median, prix_terrain_nu_par_zone, prix_sortie_neuf, loyer_median, tendance_12m), sers CELLE
+  que la question demande (« prix de l'ancien » → prix_ancien_median). Ne réponds « non disponible » QUE
+  si la valeur demandée est absente/None — jamais si elle est présente sous une autre clé.
 - Si un champ "faits_du_fil" est fourni (chiffres déjà servis plus tôt dans CETTE conversation), tu
   peux reprendre UNIQUEMENT un chiffre qui y figure, en citant sa source et son millésime. Un chiffre
   absent des faits_du_fil ET du résultat d'outil N'EXISTE PAS pour toi — jamais de reprise « de
@@ -233,6 +244,7 @@ _ARG_SPEC = {
     "fiche_parcelle": {"idu": str},
     "stats_commune": {"commune": str},
     "delais_instruction": {"commune": str},
+    "compter_permis": {"commune": str, "mois": int},
     "marche": {"commune": str},
     "compter_piscines": {"commune": str},
     "recherche_web": {"question": str},
@@ -464,9 +476,17 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # le routeur la classe parfois OUTIL (« montre » = action). Si le fil porte déjà une commune et que
     # c'est une demande de CARTE, on la ramène sur la voie a visuelle (compte + porte carte), pas un
     # refus « ouvrir un outil ». Les paramètres (commune/tier) sont hérités du fil.
-    if (_veut_carte(message) and route.intent in ("OUTIL", "QUESTION")
-            and (route.params or {}).get("commune")):
-        route.intent = "RECHERCHE"
+    if _veut_carte(message) and route.intent in ("OUTIL", "QUESTION"):
+        # FIX-COPILOTE-BATTERIE (Q3) — « montre-les sur la carte » n'apporte PAS la commune : on l'HÉRITE
+        # du fil (prior_params) si le tour ne l'a pas, puis on ramène sur la voie a visuelle (RECHERCHE →
+        # compte + carte). Sans ça, le routeur OUTIL sans commune retombait en refus « ouvrir un outil ».
+        params = route.params or {}
+        for k in ("commune", "tier", "surface_min", "surface_max", "zonage"):
+            if params.get(k) in (None, "", []) and (prior_params or {}).get(k) not in (None, "", []):
+                params[k] = prior_params[k]
+        route.params = params
+        if params.get("commune"):
+            route.intent = "RECHERCHE"
     # COPILOTE-REFONTE — CONTINUITÉ DE VOIE : un fil en CONNAISSANCE GÉNÉRALE (voie b) le RESTE tant que
     # le tour est une CONTINUATION sans signal de donnée (« elle est toujours en place ? » après Girardin).
     # C'est le cœur du repro Q2 : sans ça, un suivi d'actualité retombait en QUESTION → web bancal / mur.
@@ -668,6 +688,65 @@ def _resume_fil(history: list[dict] | None, faits_fil: list[dict] | None) -> dic
                   sources=list(vus)[:5] if vus else None)
 
 
+# FIX-COPILOTE-BATTERIE (Q11) — extraction d'un PROGRAMME de construction (pour pré-remplir la Faisabilité).
+_RE_BAT = re.compile(r"(\d+)\s*(?:immeubles?|batiments?|blocs?|plots?)")
+_RE_NIV = re.compile(r"r\s*\+\s*(\d+)")
+_RE_LGT = re.compile(r"(\d+)\s*logements?")
+
+
+def _extract_programme(message: str) -> dict | None:
+    """« un terrain pour 3 immeubles R+3 de 8 logements » → {batiments:3, niveaux:3, logements_par_batiment:8}.
+    Exige des BÂTIMENTS ou des niveaux R+N (un vrai programme) : « combien de logements à X » (question de
+    donnée) n'a ni l'un ni l'autre → pas capté. Déterministe, aucun modèle."""
+    m = _fold_py((message or "").lower())
+    bat, niv, lgt = _RE_BAT.search(m), _RE_NIV.search(m), _RE_LGT.search(m)
+    if not (bat or niv):
+        return None
+    prog: dict[str, int] = {}
+    if bat:
+        prog["batiments"] = int(bat.group(1))
+    if niv:
+        prog["niveaux"] = int(niv.group(1))
+    if lgt:
+        prog["logements_par_batiment"] = int(lgt.group(1))
+    return prog or None
+
+
+_RE_REF_PARC = re.compile(r"\b([A-Z]{1,2}\d{1,4})\b")
+
+
+def _resoudre_idu_court(db, message: str, commune: str | None) -> str | None:
+    """FIX-COPILOTE-BATTERIE (Q13) — « ma parcelle BZ1065 à Saint-Denis » → IDU 14 car. via `parcels`
+    (commune + suffixe section-numéro). None si absent ou ambigu (jamais deviné). Lecture seule."""
+    if db is None or not commune:
+        return None
+    from sqlalchemy import text
+    from .outils import resoudre_commune
+    com = resoudre_commune(commune)
+    if not com:
+        return None
+    for ref in _RE_REF_PARC.findall((message or "").upper()):
+        try:
+            rows = db.execute(text("SELECT idu FROM parcels WHERE commune = :c AND idu LIKE :suf LIMIT 2"),
+                              {"c": com, "suf": f"%{ref}"}).fetchall()
+        except Exception:  # noqa: BLE001
+            return None
+        if len(rows) == 1:
+            return rows[0][0]
+    return None
+
+
+def _programme_fr(prog: dict) -> str:
+    bouts = []
+    if prog.get("batiments"):
+        bouts.append(f"{prog['batiments']} bâtiment{'s' if prog['batiments'] > 1 else ''}")
+    if prog.get("niveaux"):
+        bouts.append(f"R+{prog['niveaux']}")
+    if prog.get("logements_par_batiment"):
+        bouts.append(f"{prog['logements_par_batiment']} logements/bât.")
+    return " · ".join(bouts)
+
+
 def _est_mise_en_doute(message: str) -> bool:
     """« t'es sûr ? », « vraiment ? », « es-tu certain ? » — une remise en cause de la réponse
     précédente, pas une nouvelle question. Court (≤ ~6 mots), sans autre contenu interrogeable."""
@@ -733,6 +812,15 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
     if intent == "PREPARER":
         return _preparer(db, message, params, contexte)
 
+    # FIX-COPILOTE-BATTERIE (Q11) — PROGRAMME de construction (« un terrain pour 3 immeubles R+3 de 8
+    # logements ») → pré-remplit la FAISABILITÉ (porte 'programme' + m22Prefill) : la promesse d'écran
+    # « le copilote sait pré-remplir » est TENUE. Extraction déterministe ; l'outil relance le formulaire.
+    prog = _extract_programme(message)
+    if prog:
+        return _reply("Je pré-remplis la Faisabilité avec votre programme (" + _programme_fr(prog)
+                      + ") — ajustez les hypothèses et le périmètre dans l'outil.", "OUTIL",
+                      porte="programme", prefill="m22Prefill", prefill_programme=prog)
+
     # M118 — un CONCEPT-OUTIL (baromètre, où investir, parcelles fantômes…) ou un DOCUMENT (dossier,
     # courrier) reconnu QUITTE le chat : refus + voie cliquable. Ouvrir un outil → barre Outils ;
     # rédiger un document → fiche/CRM (le générateur existant). Navigation, jamais exécution.
@@ -769,7 +857,31 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _refus_voie(db, message, intent, "La création d'un projet se fait dans Projets, avec le "
                            "parcours guidé.", "projets", "Ouvrir Projets")
     if intent == "VERIFICATION":
-        idu = params.get("idu") or (contexte or {}).get("idu")
+        idu = (params.get("idu") or (contexte or {}).get("idu")
+               or _resoudre_idu_court(db, message, params.get("commune")))   # Q13 — réf courte « BZ1065 »
+        # FIX-COPILOTE-BATTERIE (Q13) — « BZ1065, elle vaut quoi ? » ne part plus en voie fiche MUETTE :
+        # on SERT le verdict inline (voie a, depuis fiche_parcelle : surface · zone · classement LABUSE),
+        # PUIS la voie fiche pour l'évaluation complète face à un prix. Déterministe (0 modèle), les
+        # chiffres viennent de l'outil (anti-invention respecté).
+        if idu:
+            from . import registre_faits
+            from .outils import fiche_parcelle
+            try:
+                r = fiche_parcelle(db, idu=idu)
+            except Exception:  # noqa: BLE001 — fiche indisponible → repli propre sur la voie fiche
+                r = None
+            if r is not None and r.ok:
+                d = r.data
+                bouts = [f"{d['surface_m2']} m²" if d.get("surface_m2") else None,
+                         f"zone {d['zone']}" if d.get("zone") else None,
+                         f"classement LABUSE : {d['verdict']}" if d.get("verdict") else None]
+                corps = " · ".join(x for x in bouts if x) or "données limitées sur cette parcelle"
+                txt = (f"Parcelle {idu}" + (f" à {d['commune']}" if d.get("commune") else "") + " — " + corps
+                       + f" ({r.source}" + (f" · {r.millesime}" if r.millesime else "") + "). "
+                       "L'évaluation complète face à un prix (avis, marché DVF) est sur sa fiche.")
+                return _reply(txt, intent, tool="fiche_parcelle", sources=[r.source],
+                              voie={"cible": "fiche", "libelle": "Ouvrir la fiche", "idu": idu},
+                              _faits_tour=registre_faits.extraire_faits(r))
         return _refus_voie(db, message, intent, "L'évaluation d'une parcelle (avis, marché DVF) vit sur sa "
                            "fiche — pas dans le chat.", "fiche", "Ouvrir la fiche", idu)
     if intent == "VEILLE":

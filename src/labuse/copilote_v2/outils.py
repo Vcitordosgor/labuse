@@ -400,12 +400,39 @@ def marche(db: Session, *, commune: str) -> ToolResult:
         return _refus_commune("marche", commune)
     commune = resolue
     m = build_marche_commune(db, commune)
-    lignes = [{"cle": l.get("cle") or l.get("libelle"), "valeur": l.get("valeur"),
-               "source": l.get("source"), "millesime": l.get("millesime")}
-              for l in (m.get("lignes") or []) if isinstance(l, dict)]
-    return ToolResult("marche", data={"commune": commune, "lignes": lignes},
+    # FIX-COPILOTE-BATTERIE (Q5) — la valeur d'une ligne de marché est SOUS `valeurs` (dict imbriqué :
+    # prix_ancien_median → median_eur_m2), PAS sous `valeur` (l'ancien code lisait la mauvaise clé → tout
+    # None → « prix non disponible » à tort). On extrait le scalaire primaire de chaque ligne et on NOMME
+    # les grandeurs (data.valeurs : cle → nombre) pour que le formuler serve la BONNE (ancien ≠ neuf ≠ loyer).
+    lignes, valeurs = [], {}
+    for l in (m.get("lignes") or []):
+        if not isinstance(l, dict):
+            continue
+        cle = l.get("cle") or l.get("libelle")
+        prim = _marche_valeur_primaire(l.get("valeurs"))
+        lignes.append({"cle": cle, "valeur": prim, "detail": l.get("valeurs"),
+                       "source": l.get("source"), "millesime": l.get("date_amont"),
+                       "fiabilite": l.get("fiabilite"), "etiquette": l.get("etiquette")})
+        if cle and prim is not None:
+            valeurs[cle] = prim
+    return ToolResult("marche", data={"commune": commune, "lignes": lignes, "valeurs": valeurs},
                       source="DVF, Sitadel, DHUP (terrain nu)",
                       millesime="par ligne (fraîcheur = source amont)")
+
+
+def _marche_valeur_primaire(v) -> float | int | None:
+    """Le nombre PRINCIPAL d'une ligne de marché (dict `valeurs` imbriqué) : prix médian / prix / loyer."""
+    if not isinstance(v, dict):
+        return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    for k in ("median_eur_m2", "prix_eur_m2", "loyer_median_eur_m2", "loyer_eur_m2", "valeur", "median",
+              "pct", "pct_12m"):
+        x = v.get(k)
+        if isinstance(x, (int, float)) and not isinstance(x, bool):
+            return x
+    for x in v.values():                                 # repli : premier scalaire numérique
+        if isinstance(x, (int, float)) and not isinstance(x, bool):
+            return x
+    return None
 
 
 # ───────────────────────── recherche_web (M78-ter) ─────────────────────────
@@ -519,8 +546,32 @@ def compter_piscines(db: Session, *, commune: str | None = None) -> ToolResult:
                       source=out.get("source") or "détection ortho/IA (BD ORTHO 20 cm 2025)")
 
 
+def compter_permis(db: Session, *, commune: str | None = None, mois: int = 24) -> ToolResult:
+    """FIX-COPILOTE-BATTERIE (Q7) — NOMBRE de permis accordés d'une commune sur une fenêtre (défaut
+    24 mois). `valeur` = le COMPTE (jamais le délai). Outil DISTINCT de `delais_instruction` : la règle
+    « un outil = UNE valeur menée » évite le travers du formuler qui servait le délai à « combien de
+    permis ». Réutilise l'endpoint radar `permis` (fenêtre ancrée sur la fin des données Sitadel)."""
+    if commune is not None:
+        resolue = resoudre_commune(commune)
+        if resolue is None:
+            return _refus_commune("compter_permis", commune)
+        commune = resolue
+    try:
+        from ..api.modules import permis as _permis_endpoint
+        out = _permis_endpoint(commune=commune, months=int(mois or 24), db=db)
+    except Exception:
+        return ToolResult("compter_permis", ok=False, refus="indisponible", source="Sitadel")
+    n = out.get("total")
+    jusqu = out.get("donnees_jusqu_au")
+    return ToolResult("compter_permis", valeur=n,
+                      data={"commune": commune, "mois": int(mois or 24), "total": n,
+                            "donnees_jusqu_au": jusqu, "geocodes": out.get("geocodes")},
+                      source="Sitadel — permis accordés (dossiers autorisés)", millesime=jusqu)
+
+
 OUTILS = {
     "compter_parcelles": compter_parcelles,
+    "compter_permis": compter_permis,
     "parcelles_par_entreprise": parcelles_par_entreprise,
     "fiche_parcelle": fiche_parcelle,
     "stats_commune": stats_commune,

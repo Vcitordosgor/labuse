@@ -387,6 +387,7 @@ export interface CopiloteV2Reponse {
   prefill?: string | null
   prefill_idu?: string | null
   prefill_plu?: { insee: string; zone: string | null } | null
+  prefill_programme?: Record<string, number> | null   // Q11 — pré-remplit la Faisabilité (bâtiments/niveaux/logements)
   partiel?: boolean
   sources?: string[]
   clarification?: boolean

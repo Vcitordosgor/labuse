@@ -21,7 +21,7 @@ const KICKER: Record<string, string> = {
 }
 
 export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
-  const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill,
+  const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill, setM22Prefill,
     setView, setFilters, setVerdict, openListing, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
   // M118 — la VOIE d'un refus-voie : NAVIGATION pure vers la surface qui fait le travail (jamais une
   // exécution). Chaque cible mène à son écran ; la fiche/courrier ouvre la parcelle si l'IDU est connu.
@@ -37,7 +37,8 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   }
   const ouvrir = () => {
     if (!v2.porte) return
-    if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
+    if (v2.prefill_programme) setM22Prefill(v2.prefill_programme)   // Q11 — pré-remplit la Faisabilité (M22)
+    else if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
     else if (v2.prefill === 'calcPrefill' && v2.prefill_idu) setCalcPrefill(v2.prefill_idu)
     else if (v2.prefill_idu) setParcelPrefill(v2.prefill_idu)
     setModule(v2.porte)
