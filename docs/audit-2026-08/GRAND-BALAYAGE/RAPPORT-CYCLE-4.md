@@ -43,14 +43,28 @@
 ### LOT O — Copilote round 3 (141-150) — LLM réel via `answer()` direct
 141✅✅(fautes de frappe→333 piscines Saint-André) · 142✅✅(FR+EN mélangé→9 mois sourcé) · 143✅(2327 €/m² Saint-Denis sourcé) · **143b 🟡 GB-019**(« d'où tu sors ce chiffre ? »→hors-sujet au lieu de re-citer la source) · 145 OK-nuance(« compare métropole »→clarifie « comparer quoi » ; 0 invention) · 146✅✅(<20m²→voie b prudente + DP, correct) · 147✅(emojis→gracieux) · 148✅(résumé déterministe) · **148b 🟠 GB-015**(« continue »→**JSON brut** 6/6) · **149 🟡 GB-019**(« 3% de 2327 »→hors-sujet au lieu de calculer) · 150 OK(999999999 m²→redirige fiche, pas de calcul absurde). → **1 🟠 (GB-015), 3 🟡 (GB-019).**
 
+### LOT A — vérité des données (1-10) ✅ (agent)
+1-8 ✅ (10 fiches==mvt_parcels au bit près ; 5 permis==sitadel.raw ; 5 DVF==base ; prix médian=sector_price rayon adaptatif [pas percentile commune, documenté] ; 5 piscines==parcel_equipements ; 3 SUP==assiette GPU ; **7 : 431663−430813=850=slivers<2m² exact** ; 5 solaires==parcel_solar). **9 🟡 GB-021**(loyer `date_amont` null) · **10 🟡 GB-022**(PLU sur-liste zones bord-touchées). ~5 fausses alarmes écartées à la cause. → **0 🔴/🟠, aucun faux chiffre.**
+
+### LOT Q — Courrier profond (161-170) ✅ (agent)
+161-167,169 ✅ (10 parcelles→n=10 ; étapes conservées ; PDF 7990 car+accents ; 0 `{placeholder}` résiduel ; **0 nom de PP** par construction ; **dédup GB-013 sur les 3 branches** <120s/corps différent/backdaté ; statut visible client). 168 🟡(pas de gabarit PM/particulier = voulu, générique) · 170 🟡(pas d'alerte « déjà démarchée » = non promis). **GB-023 🟡** : ligature œ/Œ non mappée (`courrier.py:20 _LATIN1_PUNCT`)→« ? » dans le PDF. Purge : demandes 12,13,14.
+
+### LOT R — Surveillance & notifications (171-180) ✅ (agent)
+171,172,174,175,177-180 ✅ (watch_zone créée/supprimée cascade propre ; read-all 1259→0 persisté ; badge 99+ ; dédup jour ok ; digest perso/marché séparés ; polling 60s sans reload ; historique alertes cohérent). **173 🟡 GB-025**(PATCH zone = nom SEUL, géométrie non éditable) · **176 🟡 GB-026**(clic notif secteur `veille_zone`→lien `/socle/#surveillance=secteurs` non géré par Header.tsx:277→ne navigue pas ; aucun veille_zone en base actuellement). ⚠ effet de bord test 175 : 1259 events pilote passés `lu=true` (réversible `UPDATE event_log SET lu=false WHERE compte_id IS NULL`).
+
+### LOT T — cohérence documentaire (191-200) — statique ✅ (agent) ; visuel en cours
+192,194,197,198 ✅ (8 liens externes vivants ; 0 TODO/undefined/NaN fuite écran ; ~150 libellés FR sans faute ; formats € `1 234 567 €`/m² via `lib/format.ts` centralisé). **199 🟡** : clé `chaude`→« Priorité »(legacy mort) vs « À suivre »(v2 servi) — divergence documentée sans impact servi. (191/195/196/200 → passe navigateur.)
+
+### LOT S — infra & endurance (181-190) — moi
+182 ✅ (RSS back 65,8 Mo, stable sur la session) · 183 ✅ (4 idle, pas d'accumulation ; « actives » = agents concurrents) · **184 🟠? GB-024** (fiche `/parcels/{idu}` **7-11s endpoint-wide, sans cache** [2e appel même parcelle 9,6s] ; permis 0,13s/communes 0,02s/tuile 11-46ms rapides — à re-mesurer PROPRE hors contention agents) · 185 ✅ (logs→stdout, aucun stacktrace fuité, confirmé lots K/M) · 187 ✅ (tuile froide 46ms/chaude 11ms, cache OK) · 188 ✅ (100 req /health = 100 ok, 3,0s) · 189 ✅ (pas d'accumulation d'exports). **181/186/190** (redémarrage) = uvicorn simple redémarrable, **différé en fin de campagne** (ne pas saboter l'agent navigateur ni laisser le serveur de Vic à terre).
+
+### LOT P — CRM & Projets profond (151-160) ✅ (agent, [GB-TEST])
+151,153-157 ✅ (projet 0 parcelle→200 partout pas de 500 ; note 5000 car stockée/relue exacte ; **DELETE colonne peuplée→422 « indiquez move_to »** jamais de perte muette ; rename vide→422 ; dédup parcelle `already:true` verrou UNIQUE ; export concurrent cohérent 15267 lignes). **152 🟡**(pas d'historique move kanban) · **158 🟡→GB-024**(compteur île entière ~15s sans cache, chiffre juste) · **159 🟡 GB-027**(aucune recherche CRM) · **160 🟡 GB-027**(kanban carte souris-seule, colonnes ont fallback ←/→). Purge : projets 187,188 ; pipeline 93.
+
 ### Lots en cours
-- **LOT A** (vérité données 1-10) — agent en cours.
 - **LOT K** (contrat API 101-110) — agent en cours.
-- **LOT D/G/H/I/J** (carte, UI, nav, flux, perf) — passe Playwright à suivre.
-- **LOT P/Q/R** (CRM, courrier, surveillance [GB-TEST]) — à suivre.
-- **LOT S** (infra, redémarrage m181) — à suivre.
-- **LOT T** (doc/finitions) — à suivre.
-- **Gardées G4/G5/G6** — passe Playwright.
+- **LOT D/G/H/I/J + gardées G4-G6 + T-visuel** — agent navigateur en cours.
+- **LOT S** m181/186/190 (redémarrage) — différé fin de campagne.
 
 ## Findings GB-015→
 
@@ -80,6 +94,27 @@
 - **O143b** « d'où tu sors ce chiffre ? » (après réponse sourcée) → HORS_SUJET au lieu de re-citer la source (la source était déjà dans la réponse d'origine ; le suivi méta n'est pas géré comme la tenue de position).
 - **O149** « calcule 3 % de 2 327 €/m² » → HORS_SUJET au lieu d'un calcul sur ses propres chiffres.
 - **Commun** : honnête (0 invention, 0 faux chiffre, 0 crash) mais routage trop strict → hors-sujet là où une voie b / clarification / re-citation serait juste. Prolonge le thème GB-014 (nouveaux cas). Correctif : élargir la voie b aux coûts de services fonciers ; traiter « d'où sort ce chiffre »/« calcule X% » comme des méta-tours (comme « t'es sûr ? ») ; répondre les limites d'accès explicitement.
+
+#### GB-021 · 🟡 · Ligne loyer du moteur Marché : millésime DHUP non surfacé (`date_amont`=null)
+- `marche_commune.py:311,316` lit `rec.get("millesime")` mais `get_loyers` (`loyers.py:61`) ne renvoie pas `millesime` (il est dans `source().millesime`) → la ligne loyer est la SEULE sans date, contre la doctrine « chaque ligne porte sa date ». Valeur correcte. Correctif : lire `source().get("millesime")` / littéral « DHUP 2025 ».
+
+#### GB-022 · 🟡 · Fiche PLU : sur-listage des zones bord-touchées (~11% systémique)
+- `_reglement_plu_block` (`app.py:3254`) fait `ST_Intersects` pur, sans poids `ST_Area` ni filtre de recouvrement → une zone qui ne touche que le bord (0-3%) est listée comme référence égale, **tri alphabétique** (peut mettre une zone à 0% en tête). Mesuré : 22,9% ont ≥2 familles, ~11,1% ont une dominante ≥95% + une parasite <2%. **La zone décisive/scoring (`parcel_zone_plu`) est correcte** — c'est le panneau « lecture du règlement » qui sur-liste. Correctif : pondérer par `ST_Area(intersection)/ST_Area(parcelle)`, trier décroissant, masquer/afficher le %.
+
+#### GB-023 · 🟡 · Courrier PDF : ligatures œ/Œ non mappées → « ? »
+- `_LATIN1_PUNCT` (`api/courrier.py:20`) mappe ’—…« » mais pas œ/Œ (absents de latin-1) → rendus « ? » dans le PDF. Correctif : ajouter `"œ":"oe","Œ":"OE"`.
+
+#### GB-024 · 🟠 (à confirmer clean) · Perf : fiche `/parcels/{idu}` 7-11s + compteur projet île 15s
+- La fiche premium `/parcels/{idu}` (`_q_v2_fiche`) répond en **7-11s pour toute parcelle, sans cache** (2e appel même parcelle 9,6s) — surface CŒUR (chaque clic parcelle) ; les autres endpoints sont rapides (permis 0,13s, communes 0,02s, tuile 11-46ms). Explique aussi la latence Copilote `fiche_parcelle` (21s). Le compteur projet « île entière » (`POST /projets/compteur` cadrage `{}`) = **14-16s sans cache** (chiffre juste). ⚠ Mesuré pendant que des agents chargeaient la DB — **à re-mesurer PROPRE en fin de campagne** ; si confirmé >5s à froid, 🟠 (dégradation perf notable), sinon contention (non-finding). Correctif si confirmé : profiler `_q_v2_fiche` (probable N+1 / jointures lourdes non indexées), cacher le compteur île.
+
+#### GB-025 · 🟡 · Watch-zone : update PARTIEL (nom seul)
+- `PATCH /watch-zones/{id}` (`WatchZoneRenameIn`) ne modifie QUE le nom ; géométrie/déclencheurs non éditables → re-dessiner une emprise = supprimer+recréer (perd l'historique d'alertes). Assumé mais non annoncé.
+
+#### GB-026 · 🟡 · Clic notif secteur (`veille_zone`) → cul-de-sac
+- Les notifs `veille_zone` portent `lien=/socle/#surveillance=secteurs` sans `idu` ; le handler (`Header.tsx:277`) ne reconnaît que `idu`/`/sources`/`/copilote` → le clic ferme le dropdown sans naviguer. (Aucun `veille_zone` en base actuellement, mais le trou existe dès qu'une notif secteur naîtra.)
+
+#### GB-027 · 🟡 · CRM — recherche absente + kanban souris-seul
+- **F159** : aucune recherche CRM (nom/commune/partiel/accent) — `/pipeline` sans param de recherche, pas de boîte au front. **F160** : déplacer une carte kanban = drag souris uniquement (`Card` sans tabIndex/onKeyDown ; l'édition de carte n'expose pas le statut) — les colonnes ont un fallback ←/→, pas les cartes (a11y). **F152** : pas d'historique de move kanban (undo = re-drag). Absences fonctionnelles/a11y assumées, pas des bugs. Correctif : filtre client `.filter` (entrées déjà chargées) + `<select>` colonne dans l'édition de carte (le PATCH `{status}` existe déjà).
 
 #### GB-020 · 🟡 · `last_digest_at` loggué « UTC » mais rendu en +04 (cosmétique admin)
 - `events.py:1203` imprime `dernier digest {last:%H:%M} UTC` alors que `last` (timestamptz) est rendu +04 par le driver → 4 h d'écart dans le libellé du log recette (jamais exposé client). Correctif : `.astimezone(timezone.utc)` ou libeller « heure Réunion ».
