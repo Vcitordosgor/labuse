@@ -32,7 +32,7 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 | # | Objet | Où | Créé au | Comment purger |
 |---|---|---|---|---|
-| P1 | Projet **id=185** « [GB-TEST] Marchand audit — a supprimer » (+ 10 lignes `projet_parcelles`) | table `projets` / `projet_parcelles` (compte_id NULL = bucket pilote) | M29, 2026-08-25 | `DELETE FROM projets WHERE id=185;` (cascade sur projet_parcelles) — ou « Archiver/Supprimer » sur la carte projet en UI |
+| P1 | Projet **id=185** « [GB-TEST] Marchand audit — a supprimer » (+ **~200** lignes `projet_parcelles` : shortlist figée cap 200 + rejeu M34) | table `projets` / `projet_parcelles` (compte_id NULL = bucket pilote) | M29, 2026-08-25 | `DELETE FROM projets WHERE id=185;` (cascade sur projet_parcelles) — ou « Archiver/Supprimer » sur la carte projet en UI |
 | P2 | Colonne CRM **id=20** « [GB-TEST] renommee audit » (créée puis renommée) | table `crm_columns` (compte_id NULL) | M35, 2026-08-25 | `DELETE FROM crm_columns WHERE id=20;` — ou « Personnaliser » → supprimer la colonne en UI |
 | P3 | Prospect CRM **id=91** (parcelle 97417000BC0067, colonne gb_test, note [GB-TEST]) | table `pipeline_entries` (compte_id NULL) | M35, 2026-08-25 | `DELETE FROM pipeline_entries WHERE id=91;` — ou « Archiver la carte » en UI |
 | — | Tentative Courrier (M28) : **échec 500** → aucune demande persistée. msel (M9) : transitoire, vidé. 1ʳᵉ tentative projet (M29, périmètre défaut) : **dédup** → aucun objet créé. Prospects BZ1065/AO0180 : déjà dans le CRM de Vic (`already:true`) → **non modifiés**. | — | — | rien à purger |
