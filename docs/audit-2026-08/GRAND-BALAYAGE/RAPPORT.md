@@ -129,11 +129,15 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
-### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 22, 25, 28 ; restent 18-21, 23-24, 26-27)_
+### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 22, 24, 25, 27, 28 ; restent 18-21, 23, 26)_
 
 **Mission 17 — Faisabilité « 3 immeubles R+3 de 8 logements »** → ✅ voie critères OK : BÂTIMENTS=3, R+N=3, UNITÉS/BÂT=8 → « **3 090 parcelles · 24 unités → SDP gabarit ≥ ~1 440 m²** » (calcul cohérent : 3×8=24 logements). Le tool cite exactement l'exemple du mandat et dit « périmètre choisi ici — pas hérité du filtre global ». _Voie prefill Copilote (annoncée) → reportée en M33 (quota principal)._ **SAIN.**
 
 **Mission 22 — Permis, « accordés jamais réalisés »** → ✅ **libellé EXEMPLAIRE** : « Accordés, achèvement non déclaré · PC accordés sans DAACT au fichier Sitadel — **majorant à vérifier (le commencement n'est pas tracé), pas « jamais réalisé »** · 15 451 ». Le tool refuse explicitement le terme trompeur. Radar : « 5 613 permis · 5 037 sur la carte · 576 sans localisation · géocodage 90 % · jusqu'au 2026-06-30 » (honnête sur la couverture). _Filtre Le Port/24 mois non appliqué spécifiquement — le point de fond est vérifié._ **SAIN.**
+
+**Mission 24 — Solaire piscines (carte des 8 299)** → ✅ **chiffres exacts**. « Piscines détectées — toute l'île **8 299** · détection ortho/IA · à confirmer sur site » ; méthodo honnête « FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision ~90,7 % ; seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50) » ; par commune **Saint-Paul 1 616**, Saint-Denis 1 317, Saint-Pierre 927… (8299 & 1616 = mémoire, exacts). Filtre surface (≥20/40/60 m²). Footer « PVGIS v5.3 SARAH3 · RGE ALTI · gelées 11/07/2026 ». _« Cliquer 5 gouttes » (interaction carte) non exhaustif._ **SAIN.**
+
+**Mission 27 — Comparaison, stepper + double-Échap** → ✅/⚠️ **PARTIEL** : stepper 3 étapes propre (« Cliquez les parcelles sur la carte » / chips « +1 libre » ×3 / « Comparer (0/3) » / « Revenez à la carte — ✕ ou Échap — votre sélection reste dans ce panneau »). Échap **ferme l'outil proprement** (retour carte, hash vidé). _Comparaison 2 parcelles + double-Échap tableau **non exercés** — le peuplement se fait par clic-carte/fiche (impraticable via le driver ; aucune action compare exposée sur `window.__labuse`)._ Structure & fermeture SAINES.
 
 **Mission 28 — Courrier 3 étapes + notif admin** → ⚠️ **CASSÉE en l'état** → voir **GB-011**. Wizard 3 étapes propre (Destinataires → Rédaction → Envoi, 4 gabarits, « adressage générique SPF/CERFA — aucune identité PP »), mais l'action finale « Demander l'envoi à LABUSE » **échoue (500)** : demande non créée, notif admin non déclenchée. _(Aucun objet [GB-TEST] persisté — rien à purger.)_
 
