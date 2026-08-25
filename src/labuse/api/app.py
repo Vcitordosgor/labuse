@@ -63,6 +63,40 @@ RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 # DÉCOUVERTE (restent en base et dans les compteurs de volumétrie).
 MIN_DISPLAY_SURFACE_M2 = 2.0
 
+def _journaliser_heal_echec(module: str, exc: Exception) -> None:
+    """FIX-GB-011 — journalise un échec de heal de schéma dans event_log (kind `systeme`, compte NULL =
+    visible admin/pilote, jamais aux clients). Best-effort : si event_log lui-même est indisponible, on
+    n'aggrave pas le boot — l'échec reste dans les logs applicatifs et exposé par /readyz."""
+    try:
+        from .events import creer_notification
+        with session_scope() as _s:
+            creer_notification(_s, kind="systeme", compte_id=None, source="schema-heal",
+                               titre=f"Heal schéma échoué : module « {module} »",
+                               detail=(f"{type(exc).__name__}: {exc}")[:280],
+                               lien="/readyz", dedup=f"heal:echec:{module}", permanent=True)
+            _s.commit()
+    except Exception:  # noqa: BLE001 — journalisation best-effort, ne doit jamais casser le boot
+        pass
+
+
+def _run_heal_steps(steps, on_echec=None) -> list[dict]:
+    """FIX-GB-011 — exécute chaque step de heal `(nom, fn)` EN ISOLATION : l'échec d'un step n'arrête
+    PLUS les suivants (avant, une exception cassait toute la boucle → cascade GB-011). Retourne la liste
+    des échecs `[{module, error}]`. `on_echec(nom, exc)` est appelé à chaque échec (log + journal)."""
+    failures: list[dict] = []
+    for name, fn in steps:
+        try:
+            fn()
+        except Exception as exc:  # noqa: BLE001 — un step KO n'avorte plus les suivants
+            failures.append({"module": name, "error": f"{type(exc).__name__}: {exc}"})
+            if on_echec is not None:
+                try:
+                    on_echec(name, exc)
+                except Exception:  # noqa: BLE001 — log/journal best-effort
+                    pass
+    return failures
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Auto-réconciliation LÉGÈRE du schéma au démarrage (recyclage d'environnement).
@@ -106,22 +140,44 @@ async def _lifespan(app: FastAPI):
         # FIX-VEILLE — veilles ensure au BOOT (n'y était pas) : crée la table + désactive les veilles
         # fantômes de type non évaluable (idempotent). Les veilles `permis` restent évaluées.
         from ..copilote_v2.veilles import ensure_tables as _veilles_ens
-        for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
-                     _protection_ens, _courrier_ens, _crm_columns_ens, _veilles_ens):
-            _ens(_engine())
-        # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
-        # tables à données client). Après les ensures des modules (les tables existent).
+        # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les tables à
+        # données client). M26-A — Copilote : après comptes (FK agent_runs.compte_id).
         from ..comptes import ensure_tables as _comptes_ens
         from .tenant import ensure_scoping as _scoping_ens
-        with session_scope() as _s:
-            _comptes_ens(_s)
-            _scoping_ens(_s)
-        # M26-A — Copilote : après comptes (FK agent_runs.compte_id posée si la table existe).
         from ..copilote.tables import ensure_tables as _copilote_ens
-        _copilote_ens(_engine())
-        app.state.schema_heal = "ok"
-    except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
-        app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
+
+        def _heal_comptes_scoping():
+            with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
+                _comptes_ens(_s)
+                _scoping_ens(_s)
+
+        # FIX-GB-011 — heal RÉSILIENT : un try PAR module. AVANT, la boucle n'avait qu'un try/except
+        # GLOBAL : l'échec d'UN module (courrier, dont le DDL cassait sur un `;` de commentaire)
+        # AVORTAIT tous les suivants (crm_columns, veilles, comptes, scoping IDOR, copilote) → migrations
+        # gelées à chaque boot ET /readyz menteur. Désormais chaque module est ISOLÉ : son échec est
+        # loggé + journalisé en event_log (kind système, visible admin) et n'empêche plus les autres.
+        _heal_steps = (
+            ("modules", lambda: _modules_ens(_engine())),
+            ("ia", lambda: _ia_ens(_engine())),
+            ("events", lambda: _events_ens(_engine())),
+            ("partners", lambda: _partners_ens(_engine())),
+            ("projets", lambda: _projets_ens(_engine())),
+            ("protection", lambda: _protection_ens(_engine())),
+            ("courrier", lambda: _courrier_ens(_engine())),
+            ("crm_columns", lambda: _crm_columns_ens(_engine())),
+            ("veilles", lambda: _veilles_ens(_engine())),
+            ("comptes+scoping", _heal_comptes_scoping),
+            ("copilote", lambda: _copilote_ens(_engine())),
+        )
+        def _on_echec(_mod, _mexc):
+            log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
+            _journaliser_heal_echec(_mod, _mexc)
+
+        _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec)
+        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures}
+    except Exception as exc:  # noqa: BLE001 — verrou/ensure_schema KO : l'app doit démarrer ; /readyz dira la vérité
+        app.state.schema_heal = {"ok": False, "failures": [
+            {"module": "verrou/ensure_schema", "error": f"{type(exc).__name__}: {exc}"}]}
     finally:
         if _lock_conn is not None:
             try:
@@ -132,10 +188,14 @@ async def _lifespan(app: FastAPI):
             _lock_conn.close()
     from . import auth
     s = config.get_settings()
+    _heal = app.state.schema_heal
+    _heal_txt = ("ok" if isinstance(_heal, dict) and _heal.get("ok")
+                 else "ÉCHEC(" + ",".join(f["module"] for f in _heal.get("failures", [])) + ")"
+                 if isinstance(_heal, dict) else str(_heal))
     log.info("LA BUSE démarrée · env=%s · auth=%s · schéma=%s",
              s.env,
              "active" if auth.enabled() else "désactivée (local)",
-             app.state.schema_heal)
+             _heal_txt)
     if auth.enabled() and not auth.configured():
         log.error("env=%s sans LABUSE_AUTH_PASSWORD : routes métier en 503 (fail-closed) "
                   "jusqu'à configuration.", s.env)
@@ -419,6 +479,20 @@ def readyz(request: Request, commune: str | None = None):
         return JSONResponse(status_code=503, content={
             "ready": False, "error": f"base injoignable : {type(exc).__name__}",
             "actions": ["vérifier PostgreSQL / LABUSE_DATABASE_URL"]})
+    # FIX-GB-011 — /readyz DIT LA VÉRITÉ : si un heal de schéma a échoué au boot, on le reflète
+    # (schema.ok=false + modules en cause) et on passe ready=false → 503. Avant, /readyz ne lisait que
+    # state.readiness (qui ne surveille pas courrier_demandes) → affichait schema.ok:true PAR-DESSUS un
+    # heal cassé (mensonge par omission qui a masqué toute la cascade GB-011). On l'applique AVANT la
+    # réduction sans session : un sonde externe verra ready=false, sans le détail des modules.
+    heal = getattr(request.app.state, "schema_heal", None)
+    if isinstance(heal, dict) and not heal.get("ok", True):
+        st = dict(st)
+        st["ready"] = False
+        _sch = dict(st.get("schema") or {})
+        _sch["ok"] = False
+        _sch["heal_failed"] = [f.get("module") for f in heal.get("failures", [])]
+        st["schema"] = _sch
+        st["heal"] = {"ok": False, "failures": heal.get("failures", [])}
     if auth.enabled() and not auth.token_ok(request.cookies.get(auth.COOKIE)):
         st = {"ready": st["ready"], "checked_at": st["checked_at"]}
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
