@@ -61,8 +61,10 @@
 ### LOT P — CRM & Projets profond (151-160) ✅ (agent, [GB-TEST])
 151,153-157 ✅ (projet 0 parcelle→200 partout pas de 500 ; note 5000 car stockée/relue exacte ; **DELETE colonne peuplée→422 « indiquez move_to »** jamais de perte muette ; rename vide→422 ; dédup parcelle `already:true` verrou UNIQUE ; export concurrent cohérent 15267 lignes). **152 🟡**(pas d'historique move kanban) · **158 🟡→GB-024**(compteur île entière ~15s sans cache, chiffre juste) · **159 🟡 GB-027**(aucune recherche CRM) · **160 🟡 GB-027**(kanban carte souris-seule, colonnes ont fallback ←/→). Purge : projets 187,188 ; pipeline 93.
 
+### LOT K — contrat API complet (101-110) (agent + vérifié curl)
+**101 🟠 GB-028** (2 vrais 500) · 102 ✅(mauvais type→422) · 103 ✅(requis manquant→422) · **104 🟠 GB-029**(offset négatif→500 sur 3 endpoints) · 105 ✅(champ inconnu ignoré) · 106 ✅(méthode interdite→405) · 107 🟡(trailing slash→307 standard) · 108 ✅(content-type JSON/CSV/PDF corrects) · 109 ✅(inexistant→404 JSON) · 110 🟡(22 écritures 200 sans cookie MAIS `env=local` auth off, fail-closed en prod ; non testable ici). **GB-030 🟡** : `/modules/bailleur` >180s. → **2 🟠 (500 sur entrée malformée), reste du contrat propre.**
+
 ### Lots en cours
-- **LOT K** (contrat API 101-110) — agent en cours.
 - **LOT D/G/H/I/J + gardées G4-G6 + T-visuel** — agent navigateur en cours.
 - **LOT S** m181/186/190 (redémarrage) — différé fin de campagne.
 
@@ -115,6 +117,15 @@
 
 #### GB-027 · 🟡 · CRM — recherche absente + kanban souris-seul
 - **F159** : aucune recherche CRM (nom/commune/partiel/accent) — `/pipeline` sans param de recherche, pas de boîte au front. **F160** : déplacer une carte kanban = drag souris uniquement (`Card` sans tabIndex/onKeyDown ; l'édition de carte n'expose pas le statut) — les colonnes ont un fallback ←/→, pas les cartes (a11y). **F152** : pas d'historique de move kanban (undo = re-drag). Absences fonctionnelles/a11y assumées, pas des bugs. Correctif : filtre client `.filter` (entrées déjà chargées) + `<select>` colonne dans l'édition de carte (le PATCH `{status}` existe déjà).
+
+#### GB-028 · 🟠 · 500 sur `run_id` non-UUID (2 endpoints)
+- `GET /api/copilote/runs/{run_id}` et `/api/copilote/runs/{run_id}/events` avec `run_id=q_v10_m129` (label non-UUID) → **500** (vérifié curl : 500 vs UUID valide → 404). Cause : `copilote.py:56` `WHERE id = CAST(:r AS uuid)` → `invalid input syntax for type uuid` (DataError PG) remonte en 500. Correctif : valider le format UUID / `WHERE id::text = :r` → 404 propre.
+
+#### GB-029 · 🟠 · 500 sur `offset` négatif (3 endpoints)
+- `GET /modules/permis`, `/modules/promesses`, `/modules/fantome` avec `?offset=-5` → **500** (vérifié curl, les 3 ; vs `/parcels?offset=-5` → 422). Cause : `modules.py` déclare `offset: int = 0` **sans `Query(ge=0)`** ni clamp → `OFFSET -5` → `ERROR: OFFSET must not be negative`. Les autres endpoints paginés utilisent `Query(ge=0)`. Correctif : `offset: int = Query(0, ge=0)` (ou clamp).
+
+#### GB-030 · 🟡 · `/modules/bailleur` très lent (>180s)
+- `GET /modules/bailleur` → 200 mais >180s (~3-5 min), timeout aux passages courts (corps correct total=16351). Risque timeout proxy/UX. Rejoint la famille perf GB-024. Correctif : paginer/borner/cacher.
 
 #### GB-020 · 🟡 · `last_digest_at` loggué « UTC » mais rendu en +04 (cosmétique admin)
 - `events.py:1203` imprime `dernier digest {last:%H:%M} UTC` alors que `last` (timestamptz) est rendu +04 par le driver → 4 h d'écart dans le libellé du log recette (jamais exposé client). Correctif : `.astimezone(timezone.utc)` ou libeller « heure Réunion ».
