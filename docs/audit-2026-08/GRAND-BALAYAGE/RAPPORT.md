@@ -209,6 +209,17 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 _Décision d'exécution (notée) : plusieurs écritures LOT 4 faites via l'API backend (POST/PATCH) plutôt que la seule UI, pour tenir le budget contexte — le flux UI équivalent est vérifié par ailleurs (wizard projet 6 étapes, kanban, CRM). Aucune écriture hors [GB-TEST]._
 
+### LOT 5 — Robustesse et méchanceté _(missions 39-46)_
+
+- **M39 — Double-clic (doublons ?)** → ✅ **pas de doublons** : les créations sont **dédup/idempotentes** (Projets = dédup douce nom OU cadrage ; CRM add = `already:true` ; Assemblage = cap). Un double-clic renvoie l'existant, ne duplique pas.
+- **M40 — F5 en plein flux** → ✅ le hash restaure vue/module/commune/filtres/verdict (deep-link vérifié M2) ; les **saisies transitoires** d'outil (calculette, brouillon courrier, sélection comparaison) sont **réinitialisées** (non persistées) mais l'outil **rouvre proprement, sans état cassé** (reload testé des dizaines de fois via `location.reload()` sur tous les outils). Comportement acceptable.
+- **M41 — Bouton retour navigateur** → ✅ navigation par **historique de hash** (`#m=…`, `#cs=…`) : le retour ramène à la vue précédente sans crash. _(Mécanisme vérifié ; pas de parcours exhaustif.)_
+- **M42 — Champs méchants** → ✅ **robuste, aucun 500** : `/filtre` smin négatif/énorme/non-numérique → 200 (lenient) ; `/parcels/search` émoji / 5000 chars → 200 ; autocomplete émoji → **422 propre** ; **SQL injection** `'; DROP TABLE…` → 404 (M15). Pas de crash, pas de fuite.
+- **M43 — Sélection énorme (500 msel)** → ✅ `POST /moteurs/assemblage` avec **500 IDUs** → 200 en 0,66 s, **capé à 30** (`cap:30, tronquee:true`) : plafond **gracieux**, pas de timeout/crash. Le refus est propre (troncature signalée).
+- **M44 — Session expirée** → **non testable ici** : « Session pilote » (compte_id NULL, pas de flux d'auth/expiration dans cet env), « Se déconnecter » → `/logout` existe. À rejouer avec un vrai flux compte. _Pas un finding._
+- **M45 — IDOR systématique** → ✅ **cloison SOLIDE** : `_scope`/`_projet_or_404` gatent les **12 endpoints `/{pid}`** (35 réfs compte_id dans projets.py), `compte_id`+FK présents en base, sondes `PATCH /projets/9999999` & `DELETE /pipeline/9999999` → **404** (ids étrangers rejetés, pas de 500/fuite). ⚠️ **À REJOUER À DEUX COMPTES avant le 2e client** (bucket pilote unique NULL ici ; le test 2-comptes de `fix-crm-cloison` avait déjà prouvé la cloison /explain+/export).
+- **M46 — Couper le backend 10 s** → **non exercé délibérément** (tuer le backend de Vic sort du périmètre sûr ; risque qu'il ne revienne pas). La **dégradation front sur échec d'endpoint est déjà vérifiée par des pannes réelles** : GB-011 Courrier → « réessayez » (propre), Copilote offline → « service d'analyse indisponible » (propre), `/alertes` → **silencieux** (GB-003). Verdict : gestion d'erreur **majoritairement propre**, un cas silencieux (GB-003).
+
 ---
 
 ## Ce qui est SAIN et vérifié
