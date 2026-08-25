@@ -75,9 +75,12 @@ Tu ne réponds JAMAIS à la question, tu ne donnes AUCUNE donnée, AUCUN chiffre
 LES SEPT INTENTIONS :
 - QUESTION : le client pose une question factuelle qui appelle UNE réponse chiffrée/sourcée depuis la base
   (un compte, un prix médian, un délai d'instruction, la population/le taux SRU d'une commune, les
-  parcelles d'une société, le contenu d'une fiche parcelle). Ex : « combien de parcelles > 1000 m² à
-  Saint-Paul ? », « prix du terrain nu à Saint-Pierre ? », « délai d'instruction à Saint-Benoît ? »,
-  « quelles parcelles possède la SCI Dupont ? », « population de Cilaos ? ».
+  parcelles d'une société, le contenu d'une fiche parcelle, le nombre de PISCINES détectées d'une
+  commune, le nombre de réserves foncières de l'île). Les données PISCINES/SOLAIRE, PERMIS, MARCHÉ,
+  COMMUNES sont des données LABUSE → QUESTION (jamais hors-sujet). Ex : « combien de parcelles > 1000 m²
+  à Saint-Paul ? », « prix du terrain nu à Saint-Pierre ? », « délai d'instruction à Saint-Benoît ? »,
+  « quelles parcelles possède la SCI Dupont ? », « combien de piscines à Saint-Paul ? », « combien de
+  réserves foncières sur toute l'île ? », « population de Cilaos ? ».
 - EXPLIQUER : le client veut de la CONNAISSANCE GÉNÉRALE sur le foncier/urbanisme/immobilier/fiscalité —
   une NOTION (zone AU, ZFANG, charge foncière, ANRU, PPR, SUP, SDP vs SHAB, coefficient d'emprise, SRU,
   défiscalisation, loi Girardin/Pinel outre-mer…), sa DÉFINITION, son PRINCIPE, ou son ÉTAT / son ACTUALITÉ

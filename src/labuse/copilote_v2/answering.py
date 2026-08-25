@@ -441,6 +441,11 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # COPILOTE-REFONTE — TENUE DE POSITION : « t'es sûr ? » n'est PAS une nouvelle question. On MAINTIENT
     # la dernière réponse et on cite sa source (fait du registre) — pas de re-routage qui retournerait la
     # veste sans donnée nouvelle. Détecté avant classify (économise un appel modèle sur un méta-tour).
+    # RÉSUMÉ du fil (« résume-moi ce qu'on s'est dit ») — déterministe, avant classify (0 modèle).
+    if (history or faits_fil) and not scenario and _est_resume(message):
+        rep = _resume_fil(history, faits_fil)
+        rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+        return rep
     if (faits_fil or prior_voie) and not scenario and _est_mise_en_doute(message):
         rep = _tenue_position(faits_fil, prior_voie)
         # le fil GARDE son mode (une mise en doute ne change pas de voie) — prior_voie reporté.
@@ -455,6 +460,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         route.clarification = None
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
+    # COPILOTE-REFONTE — DEMANDE VISUELLE anaphorique (« montre-les sur la carte » après un compte) :
+    # le routeur la classe parfois OUTIL (« montre » = action). Si le fil porte déjà une commune et que
+    # c'est une demande de CARTE, on la ramène sur la voie a visuelle (compte + porte carte), pas un
+    # refus « ouvrir un outil ». Les paramètres (commune/tier) sont hérités du fil.
+    if (_veut_carte(message) and route.intent in ("OUTIL", "QUESTION")
+            and (route.params or {}).get("commune")):
+        route.intent = "RECHERCHE"
     # COPILOTE-REFONTE — CONTINUITÉ DE VOIE : un fil en CONNAISSANCE GÉNÉRALE (voie b) le RESTE tant que
     # le tour est une CONTINUATION sans signal de donnée (« elle est toujours en place ? » après Girardin).
     # C'est le cœur du repro Q2 : sans ça, un suivi d'actualité retombait en QUESTION → web bancal / mur.
@@ -617,6 +629,43 @@ def _a_signal_data(params: dict | None) -> bool:
     """Le tour porte-t-il un signal de DONNÉE LABUSE (commune, idu, surface, budget, société…) ?
     Si oui, il ne reste pas « collé » à la voie b — il peut appeler la voie a."""
     return any((params or {}).get(k) not in (None, "", []) for k in _DATA_KEYS)
+
+
+_RESUME_KW = ("resume", "resumes", "recapitule", "recapitul", "ce qu'on s'est dit", "ce qu on s est dit",
+              "ce que je t'ai demande", "ce que je t ai demande", "reprends ce qu", "fais le point")
+
+
+def _est_resume(message: str) -> bool:
+    """« résume-moi ce qu'on s'est dit », « récapitule » — une demande de RÉSUMÉ du fil, pas une
+    question foncière. Traitée en déterministe (0 modèle), depuis l'historique et les faits servis."""
+    m = _fold_py((message or "").strip().lower())
+    return any(k in m for k in _RESUME_KW)
+
+
+def _resume_fil(history: list[dict] | None, faits_fil: list[dict] | None) -> dict:
+    """RÉSUMÉ déterministe du fil : les questions posées + les chiffres SERVIS (avec leur source).
+    Jamais un chiffre inventé — uniquement ce qui a réellement été servi (registre de faits)."""
+    qs = [str(h.get("content") or "") for h in (history or []) if h.get("role") == "user"][-6:]
+    figs, vus = [], set()
+    for f in (faits_fil or []):
+        src = f.get("source")
+        if not src or src in vus:
+            continue
+        vus.add(src)
+        val = f.get("valeur")
+        val = int(val) if isinstance(val, float) and val.is_integer() else val
+        figs.append(f"{val} ({src})")
+        if len(figs) >= 5:
+            break
+    if not qs and not figs:
+        return _reply("On n'a encore rien établi dans cette conversation — posez-moi une question.",
+                      "QUESTION", resume=True)
+    txt = ("Dans cette conversation, vous avez demandé : " + " ; ".join(qs) + "."
+           if qs else "Résumé de la conversation.")
+    if figs:
+        txt += " Chiffres servis : " + " · ".join(figs) + "."
+    return _reply(txt, "QUESTION", resume=True,
+                  sources=list(vus)[:5] if vus else None)
 
 
 def _est_mise_en_doute(message: str) -> bool:

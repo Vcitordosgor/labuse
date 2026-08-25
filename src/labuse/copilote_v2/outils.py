@@ -320,9 +320,11 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
                                     "Laquelle ? (vous pouvez répondre par son nom ou son SIREN)")
         siren = rows[0]["siren"]
     res = patrimoine(siren=siren, db=db)
-    return ToolResult("parcelles_par_entreprise", valeur=res["n_parcelles"],
-                      data={"siren": siren, "nom": res["nom"], "n_parcelles": res["n_parcelles"],
-                            "sdp_totale_m2": res["sdp_totale_m2"],
+    # COPILOTE-REFONTE — `.get` : `patrimoine` ne renvoie pas toujours `sdp_totale_m2` (mesuré : KeyError
+    # sur la SHLMR) → jamais un crash, la clé absente = None (le formuler ne sert que ce qui existe).
+    return ToolResult("parcelles_par_entreprise", valeur=res.get("n_parcelles"),
+                      data={"siren": siren, "nom": res.get("nom"), "n_parcelles": res.get("n_parcelles"),
+                            "sdp_totale_m2": res.get("sdp_totale_m2"),
                             "bodacc": res.get("bodacc")},
                       source="DGFiP — parcelles de personnes morales (SIREN public)")
 

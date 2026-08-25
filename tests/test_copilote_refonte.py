@@ -121,3 +121,39 @@ def test_a_signal_data():
     assert answering._a_signal_data({"idu": "97411000BZ1065"})
     assert not answering._a_signal_data({"sujet": "girardin"})
     assert not answering._a_signal_data({})
+
+
+# ───────────────────────── Q3 — « montre-les sur la carte » (demande visuelle anaphorique) ──────────
+def test_montre_les_devient_recherche_visuelle(monkeypatch):
+    """« montre-les sur la carte » après un compte (commune héritée) est ramené sur la voie a visuelle
+    (RECHERCHE → compte + porte carte), plus un refus « ouvrir un outil »."""
+    _force_route(monkeypatch, "OUTIL", commune="Saint-Paul")
+    captured = {}
+    monkeypatch.setattr(answering, "_answer_with_route",
+                        lambda db, msg, route, **k: (captured.update(intent=route.intent),
+                                                     {"text": "ok", "intent": route.intent})[1])
+    answering.answer(None, "montre-les sur la carte")
+    assert captured.get("intent") == "RECHERCHE"
+
+
+# ───────────────────────── Q19 — résumé déterministe du fil ─────────────────────────
+def test_resume_fil_liste_questions_et_faits():
+    hist = [{"role": "user", "content": "combien de brûlantes à Saint-Paul"},
+            {"role": "assistant", "content": "18"}, {"role": "user", "content": "délai à Saint-Denis"}]
+    faits = [{"cle": "valeur", "valeur": 9.0, "source": "Sitadel"}]
+    r = answering._resume_fil(hist, faits)
+    assert r.get("resume") is True and "brûlantes" in r["text"] and "9 (Sitadel)" in r["text"]
+
+
+def test_resume_detection():
+    assert answering._est_resume("résume-moi ce qu'on s'est dit")
+    assert answering._est_resume("récapitule")
+    assert not answering._est_resume("combien de parcelles à Saint-Paul")
+
+
+# ───────────────────────── Q14 — l'outil piscines existe dans la voie a ─────────────────────────
+def test_piscines_dans_la_voie_a():
+    from labuse.copilote_v2 import outils
+    assert "compter_piscines" in outils.OUTILS
+    assert any(t["nom"] == "compter_piscines" for t in answering.CATALOGUE)
+    assert "compter_piscines" in answering._ARG_SPEC
