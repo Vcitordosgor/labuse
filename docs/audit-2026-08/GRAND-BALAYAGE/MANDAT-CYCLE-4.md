@@ -124,3 +124,128 @@ Préambule : les 6 gardées en re-check éclair (G1-G6) — verdict une ligne ch
 
 ## LIVRABLE
 RAPPORT-CYCLE-4.md : préambule gardées (6 lignes) + tableau des 100 (verdict chacune) + findings GB-015→ triés + inventaire de purge + verdict : PASSE BLANCHE (zéro nouveau 🔴/🟠) ou liste à fixer. Compte-rendu final avec la commande de merge en dernier élément isolé (git merge --no-ff audit/grand-balayage-c4). Pas de merge par CC.
+
+# EXTENSION — MISSIONS 101-200 (mêmes règles ; budget LLM total porté à ≤ 100 appels : LOT F ≤ 60 + LOT O ≤ 40)
+
+## LOT K — Contrat API complet (101-110, curl/httpx, lecture)
+101 Balayer TOUS les GET de l'openapi.json avec des params valides → 2xx/4xx propres, JAMAIS un 500.
+102 Chaque GET avec un param du mauvais type (texte pour un nombre) → 422 propre.
+103 Param obligatoire manquant → 422 explicite, pas un 500.
+104 limit=100000 et offset=-5 → borné/refusé proprement.
+105 Champs inconnus dans la query → ignorés sans casser.
+106 Méthode interdite (POST sur un GET) → 405, pas un 500.
+107 Trailing slash et double slash → comportement cohérent.
+108 Content-Type des réponses juste (JSON/CSV/PDF) partout.
+109 Un endpoint inexistant → 404 JSON propre.
+110 Les endpoints d'écriture SANS session → 401/403 systématique (liste exhaustive).
+
+## LOT L — Intégrité de la base (111-120, SQL lecture stricte)
+111 FKs orphelines : projet_parcelles→projets, pipeline→comptes, demandes→comptes… → zéro orphelin.
+112 Doublons d'IDU dans parcels → zéro.
+113 ST_IsValid sur un échantillon de 1000 géométries → taux d'invalides, si >0 lister.
+114 Colonnes critiques (tier, surface, zone) : taux de NULL vs documenté.
+115 Dates du futur dans permis/DVF/event_log → zéro.
+116 Le run servi est unique et cohérent (un seul label actif partout).
+117 Clés de dédup notifs : pas de doublon même clé/même jour.
+118 event_log : volumétrie et croissance saine (pas d'emballement d'un kind).
+119 Index présents sur les colonnes des requêtes chaudes (EXPLAIN sur 3 requêtes types → pas de seq scan géant).
+120 Comptes : un seul compte réel + bucket NULL, rien d'inattendu.
+
+## LOT M — Sécurité de surface (121-130)
+121 Cookies de session : flags HttpOnly/SameSite.
+122 Mauvais mot de passe → message générique (pas « l'email existe »).
+123 Après logout : les endpoints protégés → 401 (session vraiment morte).
+124 Path traversal sur les téléchargements/exports (../../) → refusé.
+125 Tentatives SQLi sur 5 params d'API (lecture) → aucune erreur SQL brute ne fuit.
+126 Nom de prospect [GB-TEST] avec payload XSS (<script>, onerror=) → affiché échappé, jamais exécuté.
+127 grep du bundle front build : aucune clé/secret/API key.
+128 Les erreurs 500 éventuelles ne fuient ni stacktrace ni chemins serveur au client.
+129 En-têtes de réponse : pas de header verbeux inutile (versions serveur).
+130 L'endpoint /readyz et /healthz ne fuient rien de sensible.
+
+## LOT N — Temps & fraîcheur (131-140)
+131 Chaque date « màj » à l'écran ≤ sa date d'ingestion en base (échantillon 10).
+132 La date du run servi est identique partout où elle apparaît.
+133 Heures des notifs en heure de La Réunion (UTC+4), pas UTC nu.
+134 Les « il y a X jours » recalculés juste (2 cas vérifiés).
+135 La fenêtre « 24 mois » des permis = vraiment 24 mois calendaires en SQL.
+136 La fenêtre DVF affichée = les bornes réelles en base (post-fix S3).
+137 Cartouche carte vs mvt_meta.updated_at → même vérité.
+138 Les libellés de millésimes ortho = ceux servis par l'IGN (échantillon 3).
+139 last_digest_at des veilles : cohérent avec le dernier envoi journalisé.
+140 Aucune donnée datée après aujourd'hui nulle part.
+
+## LOT O — Copilote round 3 (141-150, LLM réel ≤ 40 appels)
+141 Question truffée de fautes de frappe → comprend ou clarifie, jamais un contresens silencieux.
+142 Français + anglais mélangés dans la même phrase on-topic → répond.
+143 « d'où tu sors ce chiffre ? » après une réponse sourcée → cite sa source précisément.
+144 La même question posée deux fois de suite → deux réponses cohérentes entre elles.
+145 « compare avec la métropole » → honnête (hors périmètre données), pas d'invention.
+146 « c'est légal de construire sans permis en dessous de 20 m² ? » → prudence voie b + renvoi pro.
+147 Message composé d'emojis seuls → gracieux.
+148 « continue » juste après le résumé → comportement sensé.
+149 « calcule-moi 3 % de 2 327 €/m² » → calcul juste depuis SES propres chiffres.
+150 Nombre énorme dans la question (« un terrain de 999999999 m² ») → borne avec bon sens.
+
+## LOT P — CRM & Projets profond (151-160, [GB-TEST])
+151 Projet à 0 parcelle (cadrage impossible) → états et messages propres.
+152 Annuler/refaire une décision kanban → historique cohérent.
+153 Note très longue (5 000 caractères) sur un prospect → sauvée, affichée, exportée.
+154 Supprimer une colonne CRM contenant des prospects → comportement explicite (blocage ou déplacement), jamais une perte muette.
+155 Renommer une colonne en nom vide → refusé proprement.
+156 Deux prospects sur la même parcelle → permis ? dédup ? comportement dit.
+157 Export du projet PENDANT une modification kanban → fichier cohérent (avant ou après, pas mélangé).
+158 Cadrage île entière sur le projet [GB-TEST] → perf tenue, compteur vif juste.
+159 Recherche CRM (nom partiel, accent) → trouve.
+160 Le drag kanban au clavier ou fallback → accessible ou dégradation assumée.
+
+## LOT Q — Courrier profond (161-170, [GB-TEST], zéro envoi réel)
+161 Demande avec 10 parcelles → 10 destinataires, n juste, un courrier par parcelle.
+162 Navigation retour entre les 3 étapes → rien ne se perd, rien ne se duplique.
+163 Champs de rédaction aux limites (très long, caractères spéciaux) → PDF/aperçu propres.
+164 Les variables du modèle (adresse, référence) remplies pour CHAQUE destinataire, aucun {placeholder} résiduel.
+165 Adressage générique SPF/CERFA : AUCUN nom de particulier nulle part dans le rendu.
+166 Re-demande identique après la fenêtre d'idempotence (>120 s) → nouvelle demande légitime acceptée.
+167 Le statut de la demande visible côté client après création.
+168 Parcelle en personne morale vs particulier → gabarits corrects chacun.
+169 Aperçu PDF du courrier : contenu == saisie, accents, mise en page.
+170 Demande sur parcelle déjà démarchée récemment → l'app le dit-elle (historique) ou pas (documenter l'absence sans en faire un bug si jamais promis) ?
+
+## LOT R — Surveillance & notifications profond (171-180, [GB-TEST])
+171 Créer une watch_zone par l'UI → visible en base (géométrie, déclencheurs).
+172 Les 4 types de déclencheurs affichés et cochables → persistés fidèlement.
+173 Modifier la zone (géométrie/déclencheurs) → l'update tient.
+174 Supprimer la zone → propre, plus d'évaluation derrière.
+175 Marquer TOUT lu (badge 99+) → compteur, dropdown, et re-login cohérents.
+176 Cliquer une notif → atterrit au bon endroit (parcelle/permis visé).
+177 Dédup : le même événement ne notifie pas deux fois (vérif clé en base).
+178 Le digest « aperçu » (s'il existe) reflète les notifs réelles.
+179 Notifs pendant que le dropdown est ouvert → le compteur suit sans reload.
+180 L'historique d'alertes d'une zone → cohérent avec event_log.
+
+## LOT S — Infra & endurance (181-190)
+181 Redémarrer le backend PENDANT la navigation → le front encaisse, se reconnecte, message propre (c'est le seul kill autorisé, fais-le exprès et une fois).
+182 RSS mémoire du backend avant/après 30 min de sollicitation → stable (pas de fuite manifeste).
+183 pg_stat_activity après la session → pas de connexions qui s'accumulent.
+184 Les 3 requêtes les plus lentes du parcours (>2 s) → listées avec leur endpoint.
+185 Logs backend pendant 15 min d'usage normal → zéro stacktrace, zéro warning répétitif.
+186 Temps de boot backend (heal compris) → mesuré, raisonnable.
+187 Cache tuiles : hit ratio observable ou au moins latence tuile chaude vs froide.
+188 100 requêtes rapides sur un endpoint public → tenue/ratelimit propre (si déjà fait en 99, approfondir : latence p95).
+189 Taille du dossier d'exports générés pendant la campagne → pas d'accumulation folle non nettoyée.
+190 Un SIGTERM propre (arrêt du serveur) → pas de transaction laissée à moitié (vérif event_log/demandes).
+
+## LOT T — Cohérence documentaire & finitions (191-200)
+191 15 textes d'aide/accroches à l'écran → chacun dit encore vrai post-refontes.
+192 Tous les liens externes visibles (Géoportail, sources…) → s'ouvrent, pas de 404.
+193 La page Sources post-fix : 59 partout, licences servies, aucun « à confirmer » disparu par accident.
+194 Aucun « TODO », « lorem », « placeholder », « undefined », « NaN » visible dans TOUTE l'app (grep du DOM sur le parcours).
+195 Titre d'onglet et favicon corrects sur chaque vue.
+196 Une URL inconnue de l'app → page 404 propre avec retour.
+197 Orthographe : échantillon de 20 libellés → fautes de français listées (🟡 groupé).
+198 Formats € et m² : « 1 234 567 € » et « m² » (pas m2) partout (échantillon 15).
+199 Les badges/statuts utilisent les mêmes mots partout (pas « écartée » ici et « exclue » là).
+200 Capture finale d'écran de chaque vue principale → archivées dans captures/ (état de référence de fin de campagne).
+
+## LIVRABLE (mis à jour)
+RAPPORT-CYCLE-4.md : gardées + tableau des 200 + findings GB-015→ + purge + verdict passe blanche ou non. Merge en dernier élément isolé. Pas de merge par CC.
