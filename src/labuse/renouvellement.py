@@ -231,7 +231,8 @@ def build(session: Session, *, run_label: str | None = None,
 
     # ── rebuild ───────────────────────────────────────────────────────────────────
     session.execute(text("DROP TABLE IF EXISTS parcel_renouvellement"))
-    for stmt in DDL.strip().split(";"):
+    from .db import sql_statements  # FIX-GB-011 : plus de split(';') naif
+    for stmt in sql_statements(DDL):
         if stmt.strip():
             session.execute(text(stmt))
     session.execute(text(_BUILD_SQL), {

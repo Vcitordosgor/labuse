@@ -306,7 +306,7 @@ function NotifBell() {
         </svg>
         {unread > 0 && (
           <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-[#2A2113]">
-            {unread}
+            {unread > 99 ? '99+' : unread}{/* GB-002 : badge capé (le dropdown garde le vrai compte) */}
           </span>
         )}
       </button>

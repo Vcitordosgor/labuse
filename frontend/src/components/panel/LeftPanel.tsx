@@ -452,8 +452,8 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
           onClick={onCommencer} />
         <Porte ton="ia" icone="✦" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* FIX-ACCUEIL A2 : consomme l'accueil comme les 2 autres portes (plus de ré-affichage au retour) */}
-        <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.length} outils — trouver, instruire, agir, comprendre, suivre`}
-          onClick={() => { setAccueilVu(); toggleOutils() }} />
+        <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils — trouver, instruire, agir, comprendre, suivre`}
+          onClick={() => { setAccueilVu(); toggleOutils() }} />{/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), plus de « 16 » qui incluait 3 alias hidden */}
       </div>
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}

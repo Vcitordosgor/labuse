@@ -37,7 +37,7 @@ from .. import config, models, prospection
 from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
-from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
+from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS  # GB-012 : V_BRULANTE_THRESHOLD retiré (import mort)
 from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
 from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
 

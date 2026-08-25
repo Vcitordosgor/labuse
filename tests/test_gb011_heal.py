@@ -85,6 +85,23 @@ def test_le_principe_du_runner_un_point_virgule_en_commentaire_ne_casse_plus(eng
     assert n == 0
 
 
+def test_sql_statements_ne_coupe_pas_sur_les_pieges():
+    """FIX-GB-JAUNES (item 12) — le splitter partagé ne coupe jamais sur un `;` de commentaire, de bloc
+    `$$` (partners/DO) ou de littéral. Remplace `DDL.split(';')` dans les 8 autres modules du heal."""
+    from labuse.db import sql_statements
+    # ';' dans un commentaire de ligne (le bug courrier, généralisé)
+    s = sql_statements("-- note ; piège\nCREATE TABLE a(id int);\nCREATE INDEX i ON a(id);")
+    assert len(s) == 2 and "CREATE TABLE" in s[0] and "CREATE INDEX" in s[1]
+    # ';' internes dans un bloc dollar-quoté $$ … $$
+    s = sql_statements("DO $$ BEGIN IF 1=1 THEN NULL; END IF; END $$;\nCREATE TABLE b(id int);")
+    assert len(s) == 2 and s[0].startswith("DO") and "CREATE TABLE b" in s[1]
+    # ';' dans un littéral chaîne
+    s = sql_statements("INSERT INTO t VALUES ('a;b'); SELECT 1;")
+    assert len(s) == 2
+    # vide / commentaire seul → aucun statement
+    assert sql_statements("  ;  -- rien\n") == []
+
+
 # ── 2. Un module de heal qui échoue n'empêche pas les suivants ─────────────────────────────
 
 def test_run_heal_steps_isole_les_echecs():

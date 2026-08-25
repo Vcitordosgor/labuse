@@ -141,6 +141,9 @@ export function M16() {
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msel])
+  // GB-010 (patron LOT7 Courrier) : la sélection msel NE SURVIT PAS à l'outil — purgée au démontage de
+  // l'Assemblage, pour qu'elle ne réapparaisse pas à la réouverture ni ne fuie vers un autre outil.
+  useEffect(() => () => setMsel([]), [])  // eslint-disable-line react-hooks/exhaustive-deps
   // M15 A1 : la visibilité des parcelles (couche de picking violette `ile-pick`) est gérée par
   // MapView quand `module === 'assemblage'` — les contours de toutes les parcelles apparaissent,
   // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.

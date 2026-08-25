@@ -41,7 +41,7 @@ def _feuilles_numeriques(obj, prefixe: str = "") -> list[tuple[str, float]]:
     out: list[tuple[str, float]] = []
     if isinstance(obj, dict):
         for k, v in obj.items():
-            out.extend(_feuilles_numeriques(v, f"{prefixe}{k}." if prefixe or True else k))
+            out.extend(_feuilles_numeriques(v, f"{prefixe}{k}."))  # GB-012 : « if prefixe or True else k » — else mort (toujours vrai)
     elif isinstance(obj, (list, tuple)):
         for i, v in enumerate(obj[:20]):
             out.extend(_feuilles_numeriques(v, f"{prefixe}{i}."))

@@ -54,6 +54,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // (M58) et /anti-fiche (M55-N). Prod OK (même origine FastAPI). ⚠ TRAIN 8 Caddy : à router aussi.
   '/servitudes-invisibles', '/comparateur-communes', '/carnet-secteur', '/renouvellement',
   '/scoreur-adresse', '/verif-procedure', '/plu-annuaire',
+  // GB-003 : '/alertes' (Veille › Secteurs — GET /alertes, POST /alertes/refresh, /alertes/ack)
+  // MANQUAIT → 404 en `npm run dev` (la feed « Nouveautés » restait muette). Backend OK, prod OK.
+  '/alertes',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

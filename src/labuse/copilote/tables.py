@@ -73,7 +73,8 @@ CREATE TRIGGER agent_events_no_rewrite
 
 def ensure_tables(engine) -> None:
     with engine.begin() as c:
-        for stmt in DDL.strip().split(";"):
+        from ..db import sql_statements  # FIX-GB-011 : plus de split(';') naif
+        for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
     with engine.begin() as c:
