@@ -57,6 +57,39 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 - **Repro** : ouvrir la cloche → presser `Escape` → le panneau **reste ouvert**, le backdrop plein écran continue d'intercepter tous les clics (impossible de cliquer la nav tant qu'on n'a pas cliqué le backdrop). Seul un clic sur le backdrop ferme.
 - **Attendu vs observé** : convention = Escape ferme un overlay. Observé : Escape inerte sur ce dropdown (fonctionne ailleurs, ex. panneaux outils). Gêne mineure.
 
+### LOT 2 — Missions recherche / carte / fiches _(PARTIEL — missions 1-6 traitées ; 5,7-15 à reprendre)_
+
+> ⚠️ Écritures autorisées exceptionnellement sur le compte principal (décision Vic). Le LOT 2 n'a produit **aucune écriture** (recherche/carte/fiches en lecture ; l'« export » ne mute rien). Garde-fous en place pour les lots suivants (artefacts jetables étiquetés, pas d'édition destructive, pas d'email réel).
+
+**Mission 1 — 50 parcelles d'entreprises en procédure BODACC** → ✅ liste exploitable atteinte. « Procédure collective » (signal `procedure`) seule = **660** parcelles en procédure ; overlap « société ET procédure » = **634** (exact). Liste cliquable → fiches.
+
+**Mission 2 — patrimoine d'une entreprise (SHLMR puis SCI)** → ✅ Scan patrimoine fonctionnel. SHLMR = **2618 parcelles** (803 actionnables, SDP résiduelle 1 249 991 m², valorisation 1 486,4 M€) ; petite SCI (SCI LES VIOLETTES) = 13 parcelles. Résumé + badges tier + parcelles cliquables.
+
+**Mission 3 — brûlantes >1000 m² zone U Saint-Paul → export** → ✅ combinaison de filtres OK ; analyse honnête : Saint-Paul >1000 m² = « **0 priorité** (brûlante), 100 à suivre, 1235 long terme, 4038 neutre, 1362 faible, 9453 écartées » sur 16 188 — donc **0 brûlante** dans ce périmètre (résultat honnête, pas un bug). ⚠️ **Export : aucun bouton export/CSV trouvé dans le listing carte** (à confirmer LOT 3 — cohérent avec le fait que le CSV vit dans des outils dédiés : patrimoine, faisabilité, densifier).
+
+**Mission 4 — terrains nus proches du littoral** → l'app n'offre **aucun critère de proximité littorale** (filtres = communes / surface / zonage / état-sol / 7 signaux). « Terrain nu » existe (état-sol), « proche du littoral » **non**. Absence honnête (aucune fausse promesse : le filtre ne prétend pas le proposer) — **pas un mur muet, pas un finding**.
+
+**Mission 6 — 4 chemins de recherche** → ✅ IDU court « BZ1065 » **et** IDU complet « 97411000BZ1065 » ouvrent la fiche (via `/parcels/search` qui résout la réf courte) ; adresse « rue de la Republique » → autocomplétion numérotée + commune + code postal. Chemins commune/lieu-dit non testés isolément (l'autocomplétion est adresse-centrée).
+
+#### GB-005 · 🟡 · UX/perf · CTA « Voir les N parcelles » — mise à jour tardive à l'ajout d'un 2ᵉ signal
+- **Repro** : Filtres → cocher « Procédure collective » (CTA → 660) → cocher « Détenu par une société » → le CTA reste affiché à **660** (compte du 1er signal) pendant >2,5 s (2 snapshots a11y, 2 ordres différents) avant de se réconcilier à l'union correcte **33 556** (valeur observée au clic). Comptes eux-mêmes **exacts** (660/33 530/33 556 collent à l'arithmétique d'ensemble backend). Eventuellement correct → 🟡. Confiance moyenne (timing snapshot vs DOM).
+- **SAIN associé** : sémantique **OU divulguée** (`FiltreLabuse.tsx:533` : « une parcelle correspond si au moins un des signaux cochés est présent »).
+
+#### GB-006 · 🟡 · UX/recherche · Scan patrimoine ne résout pas les acronymes
+- **Repro** : Scan patrimoine → « SHLMR » → « n'a pas de foncier connu… ou n'y figure pas » (faux-négatif). Le même détenteur ressort à **2618 parcelles** sous sa raison sociale « SOCIETE ANONYME D'HABITATIONS A LOYER MODERE DE LA REUNION ».
+- **Cause (hypothèse)** : recherche sur la raison sociale littérale (fichiers fonciers DGFiP) ; l'acronyme « SHLMR » n'y figure pas. Honnêtement formulé mais trompeur pour un gros bailleur que tout le monde nomme par son sigle.
+
+#### GB-007 · 🟡 · faux-chiffre · Écart de compte autocomplétion vs scan (Scan patrimoine)
+- **Repro** : l'autocomplétion annonce « SHLMR 2632 parc. » mais le scan chargé dit « 2618 parcelles » (Δ14) ; « SCI LES VIOLETTES 14 parc. » → scan « 13 parcelles » (Δ1). **Écart systématique** (autocomplétion > scan).
+- **Cause (hypothèse)** : deux dénominateurs (autocomplétion compte des lignes de propriété brutes ; le scan dé-doublonne / exclut slivers ou géométries absentes).
+
+#### GB-008 · 🟡 · UX · Filtre « Communes » affiche des codes postaux bruts, sans nom
+- **Repro** : Cartes → Filtres → section « 1 · Communes » = 24 boutons libellés uniquement par un **code postal** (97400, 97410, 97460…), **sans `title`/`aria-label`/nom de commune** (vérifié DOM). Un utilisateur doit connaître les codes postaux (97460 = Saint-Paul). Les *markers* carte, eux, sont nommés.
+- **Cause (vérifiée)** : l'app **connaît** le nom — cliquer 97460 pose `#…&cs=Saint-Paul` dans le hash — mais le bouton **affiche le code postal** au lieu du nom. Pur choix d'affichage. (Les codes postaux ne sont d'ailleurs pas 1:1 avec les communes.)
+
+#### GB-009 · 🟡 · UX · Omnibox : « Aucune adresse trouvée » pendant la saisie d'un IDU valide
+- **Repro** : taper « BZ1065 » ou « 97411000BZ1065 » → le dropdown d'autocomplétion **adresse** affiche « Aucune adresse trouvée — vérifiez l'orthographe, ou tapez un IDU / une commune » alors que l'IDU est valide et **s'ouvre** en fiche dès qu'on presse Entrée. Message potentiellement décourageant (l'utilisateur peut croire que ça a échoué avant de valider).
+
 ---
 
 ## Ce qui est SAIN et vérifié
@@ -72,6 +105,16 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 - **Copilote** : bouton « Envoyer » désactivé à vide ; brief du matin honnête (« Rien de neuf depuis hier »).
 - **Veille Parcelles/Critères** propres (6/50 suivies « aucun changement » ; traducteur NL « Traduire » désactivé à vide).
 - **Cloche** : agrégation débordement + « tout lire » + digest 200 (voir GB-002).
+
+**LOT 2** (missions 1-6) :
+- **Comptes filtre exacts** : `procedure`=660, `pm_privee`=33 530, union=33 556 (arithmétique d'ensemble vérifiée backend) ; **sémantique OU divulguée** (`FiltreLabuse.tsx:533`).
+- **Zonage = sélecteur 2 niveaux SAIN** : cliquer une famille (U) **déplie** ses 131 sous-zones + une option « U seul · toute la famille » (`zf=U`) ; les compteurs zonage **se re-scopent** à la commune sélectionnée (U 306 630 île → 36 682 Saint-Paul).
+- **Deep-link hash** rehydraté : `#f`, `smin`, `zf`, `cs`, `v` restaurés à la navigation.
+- **Analyse LABUSE honnête** : rapporte « 0 priorité », écartées détaillées (« zonage inconstructible, PPR rouge… » + « voir pourquoi »).
+- **Scan patrimoine** fonctionnel (gros + petit détenteur, résumé SDP/valorisation, badges tier, cap autocomplétion « 12 premiers résultats » honnête).
+- **Recherche** : IDU court + complet → fiche ; adresse → autocomplétion (numéro + commune + CP).
+- **Réinitialiser les filtres** : retour à la base **430 813** + hash vidé (reset propre observé).
+- **Capacité absente honnêtement** : pas de critère « proximité littorale » — aucune fausse promesse (mission 4).
 
 ---
 
