@@ -26,6 +26,16 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
+## Inventaire de purge [GB-TEST]
+
+> Objets créés sur le compte principal (session VL) pendant l'audit, à supprimer par Vic. **Je ne supprime rien moi-même.**
+
+| # | Objet | Où | Créé au | Comment purger |
+|---|---|---|---|---|
+| — | _(aucun à ce jour)_ | — | — | La tentative Courrier (M28) a **échoué (500)** → aucune demande persistée. msel (M9) = état transitoire, déjà vidé. |
+
+---
+
 ## Registre des findings
 
 <!-- Chaque anomalie : ID GB-xxx · gravité · type · où · repro · attendu vs observé · capture · hypothèse cause (jamais de fix). -->
@@ -119,7 +129,22 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
-### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16 & 25 ; 17-24, 26-28 à reprendre)_
+### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 22, 25, 28 ; restent 18-21, 23-24, 26-27)_
+
+**Mission 17 — Faisabilité « 3 immeubles R+3 de 8 logements »** → ✅ voie critères OK : BÂTIMENTS=3, R+N=3, UNITÉS/BÂT=8 → « **3 090 parcelles · 24 unités → SDP gabarit ≥ ~1 440 m²** » (calcul cohérent : 3×8=24 logements). Le tool cite exactement l'exemple du mandat et dit « périmètre choisi ici — pas hérité du filtre global ». _Voie prefill Copilote (annoncée) → reportée en M33 (quota principal)._ **SAIN.**
+
+**Mission 22 — Permis, « accordés jamais réalisés »** → ✅ **libellé EXEMPLAIRE** : « Accordés, achèvement non déclaré · PC accordés sans DAACT au fichier Sitadel — **majorant à vérifier (le commencement n'est pas tracé), pas « jamais réalisé »** · 15 451 ». Le tool refuse explicitement le terme trompeur. Radar : « 5 613 permis · 5 037 sur la carte · 576 sans localisation · géocodage 90 % · jusqu'au 2026-06-30 » (honnête sur la couverture). _Filtre Le Port/24 mois non appliqué spécifiquement — le point de fond est vérifié._ **SAIN.**
+
+**Mission 28 — Courrier 3 étapes + notif admin** → ⚠️ **CASSÉE en l'état** → voir **GB-011**. Wizard 3 étapes propre (Destinataires → Rédaction → Envoi, 4 gabarits, « adressage générique SPF/CERFA — aucune identité PP »), mais l'action finale « Demander l'envoi à LABUSE » **échoue (500)** : demande non créée, notif admin non déclenchée. _(Aucun objet [GB-TEST] persisté — rien à purger.)_
+
+#### GB-011 · 🟠 · bug (serveur, probablement stale) · Courrier : `/courrier/demandes` (GET) & `/courrier/demande` (POST) → 500
+- **Repro (usage)** : Outils → Courrier → étape 1 ajouter une parcelle (ex. 97411000BZ1065) → Rédiger → Vérifier l'envoi → **« Demander l'envoi à LABUSE »** → l'UI affiche « **La demande n'a pas pu être transmise — réessayez.** » (retry re-échoue indéfiniment). Console : `POST /courrier/demande` et `GET /courrier/demandes` → **500**.
+- **Confirmé backend** : `curl :8000/courrier/demandes` → 500 (pas un 404 proxy — `/courrier` est bien proxifié). Le SELECT du handler `courrier.demandes_de` (`SELECT id, ts, n, communes, modele, statut, updated_at … WHERE corps IS NOT NULL`) échoue en base : **`ERROR: column "n" does not exist`**.
+- **Cause (vérifiée en base)** : la table réelle `courrier_demandes` est sur l'**ANCIEN schéma** — colonnes `id, ts, sujet, idu, motif, texte, statut` (+ 2 lignes legacy datées **2026-07-16**, statut `a_traiter`). Les migrations de la refonte Courrier (`ensure_tables` → `ALTER TABLE ADD COLUMN IF NOT EXISTS compte_id/parcelles/n/communes/modele/corps/updated_at`, `courrier.py:49-56`) **n'ont pas été appliquées à cette base**. Le POST de création (`creer_demande` : `INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut)`) échoue donc AVANT `db.commit()` → aucune demande, aucune cloche admin.
+- **Nuance importante (à vérifier par Vic)** : `courrier.ensure_tables` **est câblé au boot** (`api/app.py:97` + `_lifespan` startup, cf. app.py:4917) → un **redémarrage du backend devrait appliquer l'ALTER et corriger le 500**. Le serveur en cours (pid 32881, lignes legacy 16/07) **précède la refonte** → même classe « ⚠ redémarrage serveur » que plusieurs notes de la mémoire. **À confirmer post-restart** : si le 500 persiste après redémarrage, c'est un vrai bug de migration ; sinon, c'était un serveur stale.
+- **SAIN associé** : le front **gère le 500 proprement** (message honnête « réessayez », pas de crash, reste sur l'étape pour retry).
+
+---
 
 **Mission 16 — Étudier BZ1065, cohérence calculette** → ✅ constat sourcé exact (CLASSEMENT Neutre, SHAB vendable 123 m², prix de sortie 4 275 €/m², résiduel net bâti 26 m²). Onglet « Vos hypothèses » = 3 réglages (Coût construction, Marge & frais, VRD). **Cohérence vérifiée** : coût 2550→1500 €/m² fait passer la charge foncière de **−122 911 € (−76 €/m²)** à **+39 k€ (+24 €/m²)** (« ne finance pas » → « ce que l'opération peut payer ») ; marge 21→40 % la refait chuter à **−61 380 € (−38 €/m²)**. Le verdict bouge dans le bon sens (coût↓→charge↑, marge↑→charge↓). Le « Prix demandé du terrain » = comparateur (« 300 000 € dépasse de 519 k€ ce que la charge supporte »). **SAIN.**
 
