@@ -102,7 +102,8 @@ def _ensure_secteur_schema(session: Session) -> None:
     # le REGISTRE doit exister avant de notifier (bases de test / fraîches) — DDL idempotente,
     # dans LA MÊME transaction que la détection (jamais un engine.begin() parallèle).
     from .api import events as _events
-    for stmt in _events.DDL.split(";"):
+    from .db import sql_statements  # FIX-GB-011 : plus de split(';') naif
+    for stmt in sql_statements(_events.DDL):
         if stmt.strip():
             session.execute(text(stmt))
     _events._ensure_cols(session)

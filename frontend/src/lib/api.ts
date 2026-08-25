@@ -204,10 +204,6 @@ export interface Entonnoir {
   tiers?: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
   motifs: { motif: string; n: number }[]; note: string
 }
-export const getEntonnoir = () => {
-  const c = commune()
-  return j<Entonnoir>(`/stats/entonnoir${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
-}
 export const getContexteCommune = (commune: string) =>
   j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
 export const parcelAt = (lon: number, lat: number) =>
@@ -374,7 +370,6 @@ export interface AccueilCetteSemaine {
   ventes: { n_7j: number; frais: boolean; dernier_trimestre: string | null; sans_date_publication: boolean }
   communes_procedure_plu: number | null
 }
-export const getAccueilCetteSemaine = () => j<AccueilCetteSemaine>('/accueil/cette-semaine')
 
 // M78 — Copilote v2 : le client écrit, le routeur décide. Réponse instruite (QUESTION/OUTIL/refus)
 // OU aiguillage vers une mission (RECHERCHE → run M26-A ; VERIFICATION/PROJET/VEILLE → phases 3/4).
@@ -464,17 +459,10 @@ export const copiloteV2Heros = (parcelle: Record<string, unknown>, budget_max_eu
     body: JSON.stringify({ parcelle, budget_max_eur }) })
 
 // §2f — feedback 👍/👎 (le 👎 ouvre un champ libre optionnel).
-export const copiloteV2Feedback = (conversation_id: number | null, pouce: 'haut' | 'bas', commentaire?: string) =>
-  j<{ ok: boolean }>('/api/copilote-v2/feedback', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ conversation_id, pouce, commentaire }) })
 
 // §4 — veilles : l'écran minimal (liste + suppression). M85 : les notifications produites vivent
 // dans le centre unifié (cloche /events), plus dans un store parallèle.
 export interface CopiloteVeille { id: number; type: string; commune: string | null }
-export const copiloteV2Veilles = () => j<{ veilles: CopiloteVeille[] }>('/api/copilote-v2/veilles')
-export const copiloteV2VeilleSupprimer = (id: number) =>
-  j<{ ok: boolean }>(`/api/copilote-v2/veilles/${id}`, { method: 'DELETE' })
 // M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
 // voyagent — la légende dit la troncature, jamais un « tout » silencieux.
 export type RenouvFC = ParcelFeatureCollection & {
@@ -567,21 +555,15 @@ export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge
 // M54-EXPO — exports « document » orphelins branchés (URLs directes, ouvertes en onglet/téléchargées).
 // M93 — one-pager retiré (onePagerUrl supprimé).
 export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
-export const spfLetterUrl = (idu: string) => `/parcels/${idu}/spf-letter`
 
 // M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
 export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
 export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null }
-export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
-export const getCourrierEnvois = () => j<{ envois: CourrierEnvoi[]; n: number }>('/courrier/envois')
 
 // M54-EXPO-2 A7 — shortlist : « sujets à traiter aujourd'hui » du run servi (top parcelles).
 export interface ShortlistSujet { idu: string; commune?: string; surface_m2?: number; status?: string | null; tier_v2?: string | null; rang?: number | null; motif?: string | null }
-export const getShortlist = (limit = 8) =>
-  j<{ commune: string; count: number; candidates_total: number; sujets: ShortlistSujet[] }>(
-    `/shortlist?limit=${limit}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 // M54-EXPO-3 — veilles géographiques (zones dessinées + alertes DVF en zone). Le kind permis a été
 // retiré (dédup cloche, EXPO-2) : ce canal ne porte plus que dvf_in_zone.
@@ -670,7 +652,6 @@ export const getArchivedPipeline = () => j<PipelineEntry[]>('/pipeline/archived'
 const _jsonInit = (method: string, body?: unknown): RequestInit => ({
   method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
 })
-export const getCrmColumns = () => j<{ columns: CrmColumn[] }>('/pipeline/columns')
 export const createCrmColumn = (label: string, tone?: string | null) =>
   j<{ ok: boolean; columns: CrmColumn[] }>('/pipeline/columns', _jsonInit('POST', { label, tone: tone ?? null }))
 export const renameCrmColumn = (id: number, label: string, tone?: string | null) =>
@@ -712,9 +693,6 @@ export const modBailleur = (commune?: string | null) =>
 export const modFantome = (limit = 300, offset = 0, commune?: string | null) =>
   j<Record<string, unknown>>(`/modules/fantome?${commune ? `commune=${encodeURIComponent(commune)}&` : ''}limit=${limit}&offset=${offset}`)
 export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
-export const modCourriers = (idus: string[], contexte: string) =>
-  j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
 // M82 (option B) : « /courrier/demande » retiré (aucune promesse d'envoi). Le courrier généré est
 // téléchargeable en PDF — le client l'envoie lui-même.
 export const courrierPdf = async (idu: string | null, motif: string, texte: string): Promise<void> => {
@@ -745,13 +723,6 @@ export const modDueDiligence = (refs: string) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
-export const iaStatus = () => j<{ provider: string; raison: string | null }>('/ia/status')
-export const iaSearch = (body: { text: string; history?: { role: string; content: string }[] }) =>
-  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string; criteres_non_appliques?: string[];
-      // M11 B2 : réponse AGRÉGÉE (compte/classement) — chiffre SQL-sourcé, pas une liste de parcelles
-      aggregate?: boolean; texte?: string; sources?: string[]; provenance?: Record<string, string>; rejected?: boolean;
-      data?: { kind: 'count' | 'superlative' | 'distribution'; commune?: string; tier?: string; nombre?: number; classement?: { commune: string; nombre: number }[] } }>('/ia/search', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // M49 (Lot A, arbitrage Vic) : helpers iaSynthese/iaPourquoi RETIRÉS — 0 importeur (code mort front).
 // Les routes serveur /ia/synthese, /ia/pourquoi restent listées « douteuses » (routes_inventaire.csv).
 
@@ -802,8 +773,6 @@ export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
 // M52 L5 — renommer une vue sauvegardée (compte-scopé).
-export const renameSearch = (id: number, nom: string) =>
-  j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
 // M17-B : veille en langage naturel — traduction réutilisée (schéma), garde-fou déclenchable côté back.
 export const veilleNL = (text: string) =>
   j<{ ok: boolean; refus?: string; indeclenchable?: boolean; filters?: Record<string, unknown>; resume?: string; ignores?: string[] }>(
@@ -921,16 +890,12 @@ export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
 export const getProjets = () => j<Projet[]>('/projets')
 export const getProjet = (id: number) => j<Projet>(`/projets/${id}`)
 export interface ProjetDerive { nom: string; cadrage: Cadrage; identite: Identite; sdp_besoin_m2: number | null }
-export const deriveProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string }) =>
-  j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // M120 — créer = FIGER la shortlist en une fois (le run part une fois ; plus de run à l'ouverture).
 export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number }) =>
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
 export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
-export const getApercu = (cadrage: Cadrage, identite: Identite = {}, limit = 5) =>
-  j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage, identite, limit }) })
 export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; cadrage?: Cadrage; identite?: Identite }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -973,9 +938,6 @@ export interface CarteDecision {
   completeness: number | null; center: [number, number] | null
   forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]
 }
-export const proposerProjet = (id: number, limit = 24) =>
-  j<{ ok: boolean; propose: number; sdp_besoin_m2: number | null; counts: ParcoursCounts }>(
-    `/projets/${id}/proposer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit }) })
 // M140 Lot A — paginé : on feuillette la liste complète des retenues (offset/limit), jamais tout chargé.
 export const getParcoursEtat = (id: number, offset = 0, limit = 60) =>
   j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}`)
@@ -986,9 +948,6 @@ export const setStatutParcelle = (id: number, idu: string, statut: StatutParcell
   j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(
     `/projets/${id}/parcelle/${idu}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 // Phase 2 — chercher plus de parcelles (élargir / ajout manuel), dédupliqué côté serveur
-export const chercherPlus = (id: number, body: { limit?: number; surface_min?: number | null; ile?: boolean }) =>
-  j<{ ok: boolean; n_added: number; n_search: number; elargi: boolean; counts: ParcoursCounts }>(
-    `/projets/${id}/chercher-plus`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const ajouterParcelle = (id: number, idu: string) =>
   j<{ ok: boolean; added: boolean; already: boolean; idu: string; counts: ParcoursCounts }>(
     `/projets/${id}/ajouter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }) })

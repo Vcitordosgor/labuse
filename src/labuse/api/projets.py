@@ -69,7 +69,8 @@ ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS projet_id integer
 def ensure_tables(engine) -> None:
     from sqlalchemy import text as _t
     with engine.begin() as c:
-        for stmt in DDL.split(";"):
+        from ..db import sql_statements  # FIX-GB-011 : plus de split(';') naif
+        for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(_t(stmt))
         _migrer_fiche_vers_cadrage(c)

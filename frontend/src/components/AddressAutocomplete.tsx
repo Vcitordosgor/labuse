@@ -35,6 +35,10 @@ interface Props {
 // commençant par ≥ 5 chiffres, sans espace, ≥ 6 car.) pour ne pas faire clignoter le bandeau à la saisie.
 // La règle vit dans format.ts (`estIdu`, LOI-3 : un dessin, un seul endroit) — partagée avec ParcelInput.
 const looksLikeIdu = estIdu
+// GB-009 : une référence cadastrale EN COURS de frappe (sans espace, mêlant lettres ET chiffres — ex.
+// « BZ1065 », « 97411000BZ ») n'est PAS une adresse → pas de recherche BAN, pas de bandeau « aucune
+// adresse ». estIdu ne l'attrape pas encore (< 5 chiffres contigus). Une adresse a des espaces (n° + rue).
+const looksLikePartialRef = (s: string) => /^\S+$/.test(s) && /[A-Za-z]/.test(s) && /\d/.test(s)
 
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
@@ -80,7 +84,7 @@ export function AddressAutocomplete({
     if (skipSearchRef.current) { skipSearchRef.current = false; return }
     const needle = text.trim()
     // < 3 car. = trop court ; un IDU (ou IDU en cours) = pas une adresse → aucune recherche, aucun bandeau.
-    if (needle.length < 3 || looksLikeIdu(needle)) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
+    if (needle.length < 3 || looksLikeIdu(needle) || looksLikePartialRef(needle)) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
     setLoading(true); setNoResults(false)
     const t = setTimeout(() => {

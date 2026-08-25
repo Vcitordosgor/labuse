@@ -167,6 +167,8 @@ function VoletSecteurs() {
           <button data-alertes-refresh onClick={() => refr.mutate()} disabled={refr.isPending} className="text-[10.5px] text-mint hover:underline disabled:opacity-50">{refr.isPending ? '…' : 'Rafraîchir'}</button>
           {nonLues.length > 0 && <button onClick={() => ack.mutate(undefined)} className="ml-auto text-[10.5px] text-txt-mut hover:text-txt">tout marquer lu</button>}
         </div>
+        {alertes.isError && <p className="px-1 text-[10.5px] text-st-ecartee">Nouveautés indisponibles — réessayez.{/* GB-003 : l'échec réseau ne s'avale plus en silence (patron d'erreur de l'app) */}</p>}
+        {refr.isError && <p className="px-1 text-[10.5px] text-st-ecartee">Le rafraîchissement a échoué — réessayez.</p>}
         {alertes.data && alertes.data.length === 0 && <p className="px-1 text-[10.5px] text-txt-dim">Aucune nouveauté — ventes, permis, procédures et zonage de vos secteurs apparaîtront ici.</p>}
         <div className="flex flex-col gap-1">
           {(alertes.data ?? []).map((a) => (

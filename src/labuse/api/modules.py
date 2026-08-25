@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS module_division (
 
 def ensure_tables(engine) -> None:
     with engine.begin() as c:
-        for stmt in DDL.split(";"):
+        from ..db import sql_statements  # FIX-GB-011 : plus de split(';') naif
+        for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
 
@@ -195,15 +196,28 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     # (constants.sql_plie) s'applique au paramètre ET à la colonne (motif NDé M99-B, déjà en
     # place à l'autocomplétion d'adresses).
     from ..constants import params_pliage, sql_plie
+    from ..patrimoine_alias import expand_sigle
     if len(q.strip()) < 2:
         return []
+    # GB-006 : si la saisie EST un sigle foncier connu (« SHLMR »…), on cherche AUSSI son expansion en
+    # raison sociale (les fichiers fonciers ne stockent que le nom légal complet). Table extensible.
+    alias = expand_sigle(q)
+    params = {"q": q, "qs": f"{q}%", **params_pliage()}
+    alias_clause = ""
+    if alias:
+        params["a"] = alias
+        alias_clause = " OR " + sql_plie("pm.denomination") + " LIKE " + sql_plie("'%' || :a || '%'")
+    # GB-007 : le compteur `n` DOIT être le MÊME que le scan (qui fait JOIN parcels) — sinon
+    # l'autocomplétion sur-comptait les lignes MAJIC dont l'IDU n'a pas de parcelle (2632 vs 2618).
     rows = db.execute(text(f"""
-        SELECT siren, max(denomination) AS nom, count(*) AS n
-        FROM parcelle_personne_morale
-        WHERE siren IS NOT NULL
-          AND ({sql_plie('denomination')} LIKE {sql_plie("'%' || :q || '%'")} OR siren LIKE :qs)
-        GROUP BY siren ORDER BY n DESC LIMIT 12"""),
-        {"q": q, "qs": f"{q}%", **params_pliage()}).mappings().all()
+        SELECT pm.siren, max(pm.denomination) AS nom, count(*) AS n
+        FROM parcelle_personne_morale pm
+        JOIN parcels p ON p.idu = pm.idu
+        WHERE pm.siren IS NOT NULL
+          AND ({sql_plie('pm.denomination')} LIKE {sql_plie("'%' || :q || '%'")}
+               OR pm.siren LIKE :qs{alias_clause})
+        GROUP BY pm.siren ORDER BY n DESC LIMIT 12"""),
+        params).mappings().all()
     return [dict(r) for r in rows]
 
 

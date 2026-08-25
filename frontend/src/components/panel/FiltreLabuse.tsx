@@ -472,13 +472,13 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         <div className="gcard mt-2 p-3">
         <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
-            <Tip key={cp} side="top" tip={`${cp} → ${nom}`}>
+            <Tip key={cp} side="top" tip={`${nom} · ${cp}`}>
               <button onClick={() => setCommunesFilter(
                   filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
-                className={`rounded-full border px-2 py-0.5 font-mono text-[10.5px] tabular-nums transition-colors duration-quick ${
+                className={`rounded-full border px-2 py-0.5 text-[10.5px] transition-colors duration-quick ${
                   filters.communes.includes(nom) ? 'border-mint bg-mint/20 font-medium text-txt-hi'
                     : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-                {cp}
+                {nom} <span className="text-txt-dim tabular-nums">({cp})</span>{/* GB-008 : nom de commune + code postal (le nom était déjà dispo) */}
               </button>
             </Tip>
           ))}

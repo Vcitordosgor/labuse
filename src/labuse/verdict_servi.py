@@ -32,7 +32,7 @@ TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 # bande de résumé, cartes, fiche, PDF, exports, assistant. Un seul vocabulaire à l'écran, celui
 # des chips — le client relie toujours le même palier au même mot. Le libellé LONG (« À contacter
 # en priorité ») ne vit QUE dans l'explication du « i » des paliers (front), accolé à son chip.
-from .scoring.tiers_client import TIERS_CLIENT, court as tier_court, long as tier_long  # noqa: E402
+from .scoring.tiers_client import TIERS_CLIENT  # noqa: E402  # GB-012 : tier_court/tier_long retirés (imports morts)
 TIER_LABELS = {k: v[0] for k, v in TIERS_CLIENT.items()}
 
 # M129-C P3 (réconciliation) : le badge M28 lisait `parcel_filtre_bati` et prétendait juger la
