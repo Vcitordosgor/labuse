@@ -15,7 +15,14 @@
 ## Inventaire de purge [GB-TEST]
 | # | Objet | Purger |
 |---|---|---|
-| P1 | Demande Courrier **id=11** (« [GB-TEST] c4 gardée G1 ») + notif admin | `DELETE FROM courrier_demandes WHERE id=11;` |
+| P1 | Demandes Courrier **11** (gardée G1), **12,13,14** (LOT Q) + notifs admin | `DELETE FROM courrier_demandes WHERE id IN (11,12,13,14);` |
+| P2 | Projets **187,188** (LOT P) + résidus antérieurs **185,186** | `DELETE FROM projets WHERE id IN (187,188,185,186);` (cascade parcelles) |
+| P3 | Pipeline entry **93** (LOT P note 5000c) + résidu **91** | `DELETE FROM pipeline_entries WHERE id IN (93,91);` |
+| P4 | Résidus courrier de cycles antérieurs (signalés par agent Q) | `DELETE FROM courrier_demandes WHERE id IN (5,6,7,8,9);` (si souhaité) |
+| — | watch_zone id=4 (LOT R) : **déjà supprimée** par le test 174 (cascade 273 alertes) — rien à purger | — |
+| ⚠ | Effet de bord test 175 (LOT R) : **1259 events pilote passés `lu=true`** (non destructif, aucun event supprimé) | Restaurer si tenu : `UPDATE event_log SET lu=false WHERE compte_id IS NULL;` |
+
+_Aucune conversation Copilote persistée (LOTS F/O joués via `answer()` direct, hors persistance). Objets de Vic (projet 41, pipeline 12/BZ1065, watch_zones 1/2/3) NON touchés._
 
 ## Tableau des 200 missions
 
@@ -64,9 +71,29 @@
 ### LOT K — contrat API complet (101-110) (agent + vérifié curl)
 **101 🟠 GB-028** (2 vrais 500) · 102 ✅(mauvais type→422) · 103 ✅(requis manquant→422) · **104 🟠 GB-029**(offset négatif→500 sur 3 endpoints) · 105 ✅(champ inconnu ignoré) · 106 ✅(méthode interdite→405) · 107 🟡(trailing slash→307 standard) · 108 ✅(content-type JSON/CSV/PDF corrects) · 109 ✅(inexistant→404 JSON) · 110 🟡(22 écritures 200 sans cookie MAIS `env=local` auth off, fail-closed en prod ; non testable ici). **GB-030 🟡** : `/modules/bailleur` >180s. → **2 🟠 (500 sur entrée malformée), reste du contrat propre.**
 
-### Lots en cours
-- **LOT D/G/H/I/J + gardées G4-G6 + T-visuel** — agent navigateur en cours.
-- **LOT S** m181/186/190 (redémarrage) — différé fin de campagne.
+### LOT D — carte & géométries (31-40) ✅ (agent navigateur)
+31✅(3D pitch 55→retour 2D pitch 0) · 32✅(distance 223m/surface 3,82ha/altitude 401,8m plausibles) · 33✅(frontière→commune unique) · 34-36 🟡(non isolées, aucun crash de rendu) · 37 🟡(z18 labels opt-in visibility=none, pas un bug) · 38✅(maxBounds tient, jumpTo clampé) · 39✅(bearing+pitch→sélection suit) · 40✅(zonage+risques légendes lisibles).
+
+### LOT G — UI/clavier/a11y (66-75) ✅ (agent navigateur)
+66✅(Tab ordre logique, focus visible 2px) · **67 🟡 GB-031**(Échap ferme ModulePanel mais PAS Filtres ni Copilote) · 68✅(150% pas d'overflow) · 69✅(badges lisibles) · 70✅(tooltips vrais) · 71✅(milliers FR espace) · 72✅(dates JJ/MM/AAAA, millésimes ISO amont) · 73✅(sélection/copie) · 74✅(Ctrl+P standard) · 75✅(coller IDU==tapé).
+
+### LOT H — état/nav/persistance (76-85) ✅ (agent navigateur)
+76✅(deep-link 13 outils après reload propre) · **77 🟡 GB-032**(fiche non deep-linkable : select() n'écrit pas l'idu en URL, `#idu=` strippé au reload) · 78✅(localStorage vide, sessionStorage minimal non sensible) · 79✅(nav répétée pas d'état zombie) · 80/82 🟡(multi-onglets non isolé, storage minimal→contamination improbable) · 83✅(tout lire→badge 8→0 persiste serveur) · 84✅(fond IGN tient après 5 outils + attribution) · 85 🟡(hash outil/filtres restaurés, fiche non→cf 77).
+
+### LOT I — flux bout-en-bout (86-93) (agent navigateur)
+90✅(second œil notaire : fiche/Pièges/PLU/Permis BZ1065 aucune contradiction) · 92✅(Comparer→Étudier→Assemblage chiffres stables 1625m²/SHAB 123/résiduel 26/prix désambiguïsés) · 93 🟡(quota 429 honnête « repart à minuit » — fil live non vérifiable, comportement F3 attendu). (86-89,91 = couverts par lots P/Q/R en API.)
+
+### LOT J — méchanceté & perf (94-100) ✅ (agent navigateur)
+94✅(20 clics rapides→dernière gagne, 1 panneau) · 95✅(13 outils à la suite→1 panneau CLOSE_OVERLAYS) · 96 🟡(scan+fermeture non isolé, 0 erreur console) · 97✅(**hash corrompu→accueil normal, jamais d'écran blanc**) · 98 🟡(Slow 3G non forcé, squelettes présents) · 100✅(app réactive, 0 erreur console).
+
+### LOT S — infra & endurance (181-190) ✅ — moi
+**181 ✅**(SIGTERM→relance uvicorn→**reprise 1,0s**, /readyz honnête schema.ok=true) · 182✅(RSS 65,8 Mo stable) · 183✅(pas d'accumulation connexions : 5 idle au repos) · **184 🟡 GB-024**(fiche ~4s propre) · 185✅(logs stdout, 0 stacktrace) · **186 ✅**(boot ~1s heal compris, 0 erreur) · 187✅(tuile froide 46ms/chaude 11ms) · 188✅(100 req /health 100 ok) · 189✅(pas d'accumulation exports) · **190 ✅**(aucune transaction pendante avant kill, courrier max id=14 intact après).
+
+### LOT T visuel (191-200) (agent navigateur)
+191✅(accroches cohérentes post-refonte) · **195 🟡 GB-033**(favicon href `/socle/socle/` doublé→sert du HTML ; titre unique générique par vue) · 196 🟡(URL inconnue→fallback SPA, pas de 404 dédié mais pas d'écran blanc) · 200✅(toutes vues principales parcourues).
+
+### Gardées G4/G5/G6 ✅ (agent navigateur)
+**G4 ✅** omnibox « BZ1065 » accepté (plus de « Aucune adresse »), chips communes rendus. **G5 ✅** msel purgé (Assemblage rouvert→aucun résidu). **G6 ✅** accueil « 13 outils » + badge « 99+ » (puis compte réel dynamique).
 
 ## Findings GB-015→
 
@@ -106,8 +133,9 @@
 #### GB-023 · 🟡 · Courrier PDF : ligatures œ/Œ non mappées → « ? »
 - `_LATIN1_PUNCT` (`api/courrier.py:20`) mappe ’—…« » mais pas œ/Œ (absents de latin-1) → rendus « ? » dans le PDF. Correctif : ajouter `"œ":"oe","Œ":"OE"`.
 
-#### GB-024 · 🟠 (à confirmer clean) · Perf : fiche `/parcels/{idu}` 7-11s + compteur projet île 15s
-- La fiche premium `/parcels/{idu}` (`_q_v2_fiche`) répond en **7-11s pour toute parcelle, sans cache** (2e appel même parcelle 9,6s) — surface CŒUR (chaque clic parcelle) ; les autres endpoints sont rapides (permis 0,13s, communes 0,02s, tuile 11-46ms). Explique aussi la latence Copilote `fiche_parcelle` (21s). Le compteur projet « île entière » (`POST /projets/compteur` cadrage `{}`) = **14-16s sans cache** (chiffre juste). ⚠ Mesuré pendant que des agents chargeaient la DB — **à re-mesurer PROPRE en fin de campagne** ; si confirmé >5s à froid, 🟠 (dégradation perf notable), sinon contention (non-finding). Correctif si confirmé : profiler `_q_v2_fiche` (probable N+1 / jointures lourdes non indexées), cacher le compteur île.
+#### GB-024 · 🟡 · Perf : fiche `/parcels/{idu}` ~4s (jusqu'à 11s sous charge) + compteur projet île ~15s + `/modules/bailleur` >180s
+- **Mesuré PROPRE (1 connexion active)** : la fiche premium `/parcels/{idu}` (`_q_v2_fiche`) répond en **3,5-4,4s pour toute parcelle, sans bénéfice de cache** (2e appel même parcelle 3,5s) — surface CŒUR (chaque clic parcelle). Montait à 7-11s sous la charge des agents concurrents. Les autres endpoints sont rapides (permis 0,13s, communes 0,02s, tuile 11-46ms). Explique la latence Copilote `fiche_parcelle` (21s). Le compteur projet « île entière » (`POST /projets/compteur` cadrage `{}`) = **14-16s sans cache** (chiffre juste). `/modules/bailleur` >180s (GB-030).
+- **Sévérité 🟡** : dégradation perf réelle sur la surface cœur (~4s/clic), mais aucun faux chiffre, aucune casse. Correctif : profiler `_q_v2_fiche` (probable N+1 / jointures lourdes), cacher le compteur île, paginer/borner bailleur.
 
 #### GB-025 · 🟡 · Watch-zone : update PARTIEL (nom seul)
 - `PATCH /watch-zones/{id}` (`WatchZoneRenameIn`) ne modifie QUE le nom ; géométrie/déclencheurs non éditables → re-dessiner une emprise = supprimer+recréer (perd l'historique d'alertes). Assumé mais non annoncé.
@@ -130,5 +158,34 @@
 #### GB-020 · 🟡 · `last_digest_at` loggué « UTC » mais rendu en +04 (cosmétique admin)
 - `events.py:1203` imprime `dernier digest {last:%H:%M} UTC` alors que `last` (timestamptz) est rendu +04 par le driver → 4 h d'écart dans le libellé du log recette (jamais exposé client). Correctif : `.astimezone(timezone.utc)` ou libeller « heure Réunion ».
 
+#### GB-031 · 🟡 · Échap ne ferme pas les panneaux Filtres et Copilote
+- Escape ferme le ModulePanel (outil, hash `m=` reverti) mais laisse ouverts Filtres et Copilote (fermables au ✕ seulement). Handler keydown câblé au ModulePanel, pas aux surfaces latérales `complementary`. Correctif : brancher Échap sur Filtres/Copilote (ou un gestionnaire d'overlay centralisé). _(Prolonge la série GB-004/accueil-coquilles.)_
+
+#### GB-032 · 🟡 · Fiche parcelle non deep-linkable (partage/réouverture par URL impossible)
+- `select(idu)` n'écrit pas l'idu dans l'URL ; `#idu=97411000BZ1065` est strippé au reload et n'ouvre aucune fiche (missions 77/85). Les deep-links outil (`#m=`) et filtres (`#f=&cs=`) fonctionnent, eux. Correctif : sérialiser l'idu sélectionné dans le hash + réhydrater au boot. _(Borderline 🟠 : échec silencieux d'un flux « partager une fiche » ; classé 🟡 = fonctionnalité absente, sans casse ni fausse donnée.)_
+
+#### GB-033 · 🟡 · Favicon : href avec base doublée `/socle/socle/`
+- `<link rel=icon href=".../socle/socle/favicon-16.png">` (×3) → le fetch renvoie `text/html` (fallback SPA) au lieu de l'image ; `/socle/favicon-16.png` seul renvoie `image/png`. Base path appliqué une fois de trop dans index.html. Correctif : hrefs favicon relatifs (`%BASE_URL%favicon-16.png`).
+
 ## Verdict de campagne
-_(en cours — lots A/K/D/G/H/I/J/P/Q/R/S/T restants ; 2 nouveaux 🟠 (GB-015, GB-016) déjà → PASSE BLANCHE compromise sauf réfutation)_
+
+**PASSE BLANCHE : NON.** 200 missions exécutées, **19 findings GB-015→033** : **0 🔴 · 4 🟠 · 15 🟡**.
+
+### Les 4 🟠 (à fixer) — tous robustesse/contrat, aucun faux chiffre ni fuite
+1. **GB-015** — Copilote sert le **JSON brut** d'un outil au lieu d'une phrase (repli `valeur=None`→`json.dumps(data)`, 6/6 sur « continue »). `answering.py:325-327`.
+2. **GB-016** — `/parcels/export.csv` **tronque silencieusement à 5000 lignes** (305 879 → 5 000 sans marqueur). `api.ts:231` + endpoint.
+3. **GB-028** — **500** sur `run_id` non-UUID (`/api/copilote/runs/{id}`, CAST uuid). `copilote.py:56`.
+4. **GB-029** — **500** sur `offset` négatif (`/modules/permis|promesses|fantome`, manque `Query(ge=0)`). `modules.py`.
+
+### Ce qui est SAIN (rassurant, vérifié en profondeur)
+- **Aucun faux chiffre servi** : 10 fiches==base au bit près, permis/DVF/piscines/solaire/SUP==base, 850 slivers = 431663−430813 exact, **18 brûlantes Saint-Paul identiques** filtre/stats/copilote/DB, 8738 réserves île==somme communes, charge/SDP/prix zone/permis cohérents entre tous les outils (LOT A, B).
+- **Aucune fuite** : 0 vulnérabilité sécu (cookie flaggé, SQLi paramétré, 0 secret bundle, 0 `dangerouslySetInnerHTML`, path-traversal→404, 500 sans stacktrace), cloison compte propre (LOT M, L).
+- **Temps/fraîcheur** : run unifié, fuseau Réunion préservé, fenêtres permis/DVF ancrées sur le réel, dates ≤ ingestion (LOT N).
+- **Courrier** : dédup GB-013 verrouillée sur 3 branches, 0 PII PP par construction, PDF fidèle (LOT Q). **CRM/Projets** : suppression colonne blindée, dédup parcelle verrouillée, note 5000c intègre (LOT P). **Surveillance** : watch_zone cascade propre, badge 99+, dédup jour (LOT R).
+- **Résilience** : redémarrage backend **reprise 1,0s**, /readyz honnête, 0 transaction pendante, hash corrompu→jamais d'écran blanc, 13 outils/overlays propres (LOT S, J). **Gardées G1-G6 toutes vertes** (aucune régression cycles 1-3).
+
+### Les 15 🟡 (backlog)
+Perf (GB-024 fiche ~4s + compteur île + GB-030 bailleur) · Copilote adjacent/méta (GB-019 : anaphore spatiale, étude de sol, provenance, calcul, emails ; prolonge GB-014) · exports (GB-017 fmt=csv mort, GB-018 patrimoine non paginé) · fiche PLU sur-liste zones (GB-022) · loyer date null (GB-021) · œ/Œ PDF (GB-023) · watch-zone update partiel (GB-025) + clic notif secteur mort (GB-026) · CRM recherche/a11y (GB-027) · Échap Filtres/Copilote (GB-031) · fiche non deep-linkable (GB-032) · favicon doublé (GB-033) · last_digest_at UTC (GB-020).
+
+### Conclusion de campagne
+Le socle LABUSE est **honnête et cohérent** — après 4 cycles (250 missions + grand oral Copilote), **toujours zéro faux chiffre servi, zéro fuite, zéro contradiction inter-outils**. Le cycle 4 (chasse à la petite bête) sort **4 🟠 de robustesse** (2 validations d'entrée manquantes → 500, 1 repli de formatage Copilote, 1 troncature d'export silencieuse) — tous corrigibles par des correctifs ciblés, aucun ne remet en cause la vérité des données. **Passe blanche refusée** sur ces 4 🟠 ; recommandation : un FIX-C4 court (les 4 🟠 + les 🟡 perf/Copilote), puis re-vérification.
