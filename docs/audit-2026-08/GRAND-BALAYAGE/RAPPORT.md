@@ -220,6 +220,20 @@ _Décision d'exécution (notée) : plusieurs écritures LOT 4 faites via l'API b
 - **M45 — IDOR systématique** → ✅ **cloison SOLIDE** : `_scope`/`_projet_or_404` gatent les **12 endpoints `/{pid}`** (35 réfs compte_id dans projets.py), `compte_id`+FK présents en base, sondes `PATCH /projets/9999999` & `DELETE /pipeline/9999999` → **404** (ids étrangers rejetés, pas de 500/fuite). ⚠️ **À REJOUER À DEUX COMPTES avant le 2e client** (bucket pilote unique NULL ici ; le test 2-comptes de `fix-crm-cloison` avait déjà prouvé la cloison /explain+/export).
 - **M46 — Couper le backend 10 s** → **non exercé délibérément** (tuer le backend de Vic sort du périmètre sûr ; risque qu'il ne revienne pas). La **dégradation front sur échec d'endpoint est déjà vérifiée par des pannes réelles** : GB-011 Courrier → « réessayez » (propre), Copilote offline → « service d'analyse indisponible » (propre), `/alertes` → **silencieux** (GB-003). Verdict : gestion d'erreur **majoritairement propre**, un cas silencieux (GB-003).
 
+### LOT 6 — Code mort et orphelins _(missions 47-50, statique)_
+
+_(Analyse statique déléguée — `vulture` + `ts-prune` + grep ; aucun fichier modifié. Synthèse console = mission 50, plus haut.)_
+
+#### GB-012 · 🟡 · mort/orphelin · Cruft résiduel (bénin, sans impact usager)
+- **47 Python** : `vulture --min-confidence 80` → **9 findings réels** (aucun faux positif route/fixture) : variables assignées jamais lues (`events.py:271 is_market`, `division_or.py:625 decoupe`, `ortho_tiles.py:148 keep_tables`, `pv_detection.py:13 ortho_tile`, `marque.py:34 mime_declare`), branche `else` inatteignable (`registre_faits.py:44`), imports inutilisés (`app.py:40 V_BRULANTE_THRESHOLD`, `verdict_servi.py:35 tier_court/tier_long`). Trivial à nettoyer.
+- **47 endpoints front-orphelins** : ~29 paths openapi jamais référencés dans `frontend/src`. La plupart **légitimement server-side** (admin `/protection/admin*`, API externe `/api/v1/*`, anti-bot `/protection/defi`, `/courrier/admin/*`). Vrais candidats produit : **`/modules/division*`** (division morte, cohérent M129-C), `/map/permits.geojson`, `/events/demo`, `/coverage`.
+- **48 Front** : `ts-prune` (knip indispo sans config) → **~20 wrappers `lib/api.ts` orphelins** (exportés, 0 importeur : `getEntonnoir`, `copiloteV2Veilles*`, `getShortlist`, `deriveProjet`, `proposerProjet`, `chercherPlus`…) + exports lib inutilisés (`filters.ts activeChips/removeToken`, `status.ts ageSignal/DECLASSE_ORDER…`, `registry.ts VIOLET_DIM/GROUPS`). Les **composants outils dormants** (ScoringV2/M17/M19/O7/O9/O10/M05-07) sont **auto-documentés « retiré/DORMANT, conservé au dépôt »** → intentionnels, PAS des oublis.
+- **Impact** : **nul côté usager** — code non atteint. Cohérent avec les dispositifs « en extinction » déjà documentés (table `veilles`, `criteres`/`frequence`, `capacite_estimee`). 🟡 hygiène.
+
+#### SAIN (LOT 6)
+- **49(b) — 0 flag `LABUSE_*` défini jamais lu** : les 33 flags sont tous lus (via pydantic `Settings` ou `os.getenv`) — **config propre**, pas de flag mort.
+- **49(a) — 0 `FIXME`/`HACK`/`XXX`** ; les 45 `TODO` sont tous des jalons « # TODO étage 1/2 » (feuille de route scoring **assumée**, signaux non branchés au score), pas de dette cachée.
+
 ---
 
 ## Ce qui est SAIN et vérifié
