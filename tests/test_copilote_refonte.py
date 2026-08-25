@@ -157,3 +157,53 @@ def test_piscines_dans_la_voie_a():
     assert "compter_piscines" in outils.OUTILS
     assert any(t["nom"] == "compter_piscines" for t in answering.CATALOGUE)
     assert "compter_piscines" in answering._ARG_SPEC
+
+
+# ═════════════ FIX-COPILOTE-BATTERIE — les 5 KO soldés ═════════════
+def test_q7_compter_permis_distinct_du_delai():
+    """Q7 — un outil DISTINCT pour le COMPTE de permis (valeur=compte, jamais le délai)."""
+    from labuse.copilote_v2 import outils
+    assert "compter_permis" in outils.OUTILS and "compter_permis" in answering._ARG_SPEC
+    assert any(t["nom"] == "compter_permis" for t in answering.CATALOGUE)
+    # delais_instruction reste le DÉLAI ; compter_permis le COMPTE — deux outils, deux valeurs menées.
+    assert "compter_permis" in answering._ARG_SPEC and "mois" in answering._ARG_SPEC["compter_permis"]
+
+
+def test_q11_extract_programme():
+    """Q11 — extraction déterministe du programme de construction."""
+    assert answering._extract_programme("un terrain pour 3 immeubles R+3 de 8 logements") == {
+        "batiments": 3, "niveaux": 3, "logements_par_batiment": 8}
+    assert answering._extract_programme("R+2 de 12 logements") == {"niveaux": 2, "logements_par_batiment": 12}
+    # une QUESTION de donnée (pas de bâtiment ni R+N) n'est PAS un programme
+    assert answering._extract_programme("combien de logements à Saint-Paul") is None
+
+
+def test_q11_programme_ouvre_la_faisabilite(monkeypatch):
+    """Q11 — un programme → porte 'programme' (Faisabilité) + prefill, la promesse d'écran tenue."""
+    _force_route(monkeypatch, "RECHERCHE", programme_logements=8)
+    r = answering.answer(None, "un terrain pour 3 immeubles R+3 de 8 logements")
+    assert r.get("porte") == "programme"
+    assert r.get("prefill_programme") == {"batiments": 3, "niveaux": 3, "logements_par_batiment": 8}
+
+
+def test_q13_verification_sert_le_verdict_inline(monkeypatch):
+    """Q13 — « BZ1065 vaut quoi » sert le verdict INLINE (voie a) + la voie fiche, plus muette."""
+    from labuse.copilote_v2 import outils
+    from labuse.copilote_v2.outils import ToolResult
+    monkeypatch.setattr(outils, "fiche_parcelle", lambda db, idu: ToolResult(
+        "fiche_parcelle", valeur=1625, data={"idu": idu, "commune": "Saint-Denis", "surface_m2": 1625,
+                                             "zone": "Uh", "verdict": "a_creuser"}, source="cadastre"))
+    from labuse.copilote_v2.router import Route
+    r = answering._answer_with_route(None, "97411000BZ1065 elle vaut quoi",
+                                     Route("VERIFICATION", params={"idu": "97411000BZ1065"}))
+    assert r.get("tool") == "fiche_parcelle" and "a_creuser" in r["text"] and "1625" in r["text"]
+    assert (r.get("voie") or {}).get("cible") == "fiche"
+
+
+def test_q5_marche_valeur_primaire():
+    """Q5 — le nombre principal d'une ligne de marché est extrait du dict `valeurs` imbriqué."""
+    from labuse.copilote_v2.outils import _marche_valeur_primaire
+    assert _marche_valeur_primaire({"median_eur_m2": 2327, "n": 44}) == 2327
+    assert _marche_valeur_primaire({"prix_eur_m2": 4275}) == 4275
+    assert _marche_valeur_primaire({"par_zone": {"U": {"median_eur_m2": 485}}}) is None  # pas de scalaire top
+    assert _marche_valeur_primaire(None) is None
