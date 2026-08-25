@@ -296,6 +296,14 @@ function NotifBell() {
   const notifPrefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs, enabled: open && prefsOpen })
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
   const unread = ev.data?.unread ?? 0
+  // GB-004 : Escape ferme le dropdown Notifications (il n'avait aucun handler clavier — seul le clic sur
+  // le backdrop fermait). Aligné sur le patron des overlays. Listener actif uniquement quand ouvert.
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [open])
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} title="Notifications" aria-label="Notifications"
