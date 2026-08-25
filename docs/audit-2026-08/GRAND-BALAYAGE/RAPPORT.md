@@ -129,11 +129,17 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
-### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 22, 24, 25, 27, 28 ; restent 18-21, 23, 26)_
+### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 18, 20, 22, 24, 25, 27, 28 ; restent 19, 21, 23, 26)_
+
+> **Missions restantes du LOT 3** : **19** (Assemblage contiguës→courriers — *substantiellement couvert par M9* : bilan + pont Courrier vérifiés ; le Courrier lui-même est HS = GB-011), **21** (Pièges & risques sur servitudes — *non fait*), **23** (Solaire ensoleillement / maille PVGIS dite partout — *non fait* ; piscines = M24), **26** (Scan patrimoine export CSV — *patrimoine couvert M2 ; export CSV non testé*).
 
 **Mission 17 — Faisabilité « 3 immeubles R+3 de 8 logements »** → ✅ voie critères OK : BÂTIMENTS=3, R+N=3, UNITÉS/BÂT=8 → « **3 090 parcelles · 24 unités → SDP gabarit ≥ ~1 440 m²** » (calcul cohérent : 3×8=24 logements). Le tool cite exactement l'exemple du mandat et dit « périmètre choisi ici — pas hérité du filtre global ». _Voie prefill Copilote (annoncée) → reportée en M33 (quota principal)._ **SAIN.**
 
 **Mission 22 — Permis, « accordés jamais réalisés »** → ✅ **libellé EXEMPLAIRE** : « Accordés, achèvement non déclaré · PC accordés sans DAACT au fichier Sitadel — **majorant à vérifier (le commencement n'est pas tracé), pas « jamais réalisé »** · 15 451 ». Le tool refuse explicitement le terme trompeur. Radar : « 5 613 permis · 5 037 sur la carte · 576 sans localisation · géocodage 90 % · jusqu'au 2026-06-30 » (honnête sur la couverture). _Filtre Le Port/24 mois non appliqué spécifiquement — le point de fond est vérifié._ **SAIN.**
+
+**Mission 18 — Densifier St-Denis (top 20, écartées, 3 fiches)** → ✅ tableau modal riche (**67 258 parcelles** occupées en zone constructible, maj 2026-08-24 ; colonnes **Parcelle · Classement · Score densif. · SDP résiduelle · Surface · Bâti · Zone · Rang commune** — tier/score/SDP étiquetés, cf. mémoire). Toggle **écartées « masquées / les inclure »** fonctionnel (390→400 rendues). Clic sur une ligne → **ferme le modal + ouvre la fiche** de la parcelle (ex. 97404000AZ0004). _Scoping St-Denis spécifique non isolé (table île triée « Rang commune », pas de select commune dans le modal) — assumé._ **SAIN.**
+
+**Mission 20 — PLU (bascule AUc→U, agrégats en paginant)** → ✅ 2 voies (Annuaire PLU / Procédure & changement). Voie procédure : « ⚠ **3 communes en procédure PLU** », périmètre select 24 communes (« choisi ici — pas hérité du filtre global »), bascules **AUc→U / AUs→U / AU→U**. Simulation Saint-Paul (hors procédure) → honnête : « 🕓 Aucune procédure PLU en cours — simulation hypothétique · **Recalcul à blanc — rien n'est persisté** · SDP estimée par analogie aux parcelles U ». _Stabilité des agrégats en paginant non poussée (nécessite une des 3 communes en procédure ; fix plu-perf Lot A déjà validé)._ Structure & honnêteté **SAINES**.
 
 **Mission 24 — Solaire piscines (carte des 8 299)** → ✅ **chiffres exacts**. « Piscines détectées — toute l'île **8 299** · détection ortho/IA · à confirmer sur site » ; méthodo honnête « FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision ~90,7 % ; seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50) » ; par commune **Saint-Paul 1 616**, Saint-Denis 1 317, Saint-Pierre 927… (8299 & 1616 = mémoire, exacts). Filtre surface (≥20/40/60 m²). Footer « PVGIS v5.3 SARAH3 · RGE ALTI · gelées 11/07/2026 ». _« Cliquer 5 gouttes » (interaction carte) non exhaustif._ **SAIN.**
 
