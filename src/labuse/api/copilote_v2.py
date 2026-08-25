@@ -87,7 +87,7 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
         # une durée de vie bornée (config copilote_v2_contexte_ttl_minutes) ; conversation_id
         # absent = fil neuf (repartir de zéro). `body.history` reste un appoint des surfaces
         # embarquées quand il n'y a pas de conversation persistée.
-        history, prior, faits_fil = body.history, None, None
+        history, prior, faits_fil, prior_voie = body.history, None, None, None
         if body.conversation_id is not None:
             from .. import config as _cfg
             from ..copilote_v2 import registre_faits
@@ -99,12 +99,15 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
             fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl)
             if fil_h:
                 history, prior = fil_h, (fil_p or {}).get("params") or None
+                # COPILOTE-REFONTE — le MODE de voie du dernier tour (voie b = connaissance générale) voyage
+                # avec le fil : la continuité de voie s'applique (un suivi d'actualité reste en voie b).
+                prior_voie = (fil_p or {}).get("voie")
             # M102-B3 — le REGISTRE DE FAITS du fil (mêmes bornes que le fil) : l'oracle des
             # chiffres repris d'un tour antérieur.
             faits_fil = registre_faits.du_fil(db, current_compte(request), body.conversation_id, ttl)
         rep = answer(db, body.message, history=history, contexte=body.contexte,
                      confirme=body.confirme, prior_params=prior, faits_fil=faits_fil,
-                     scenario=body.scenario)
+                     scenario=body.scenario, prior_voie=prior_voie)
         payload_tour = rep.pop("_route", None)        # contexte du tour → persistance, jamais servi
         rep.pop("_action", None)                       # FIX-VEILLE (A) : plus aucun `_action` — la création
         # de veille au chat est retirée (M118). On dépile la clé par sécurité, mais rien ne la produit.

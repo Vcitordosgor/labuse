@@ -78,12 +78,16 @@ LES SEPT INTENTIONS :
   parcelles d'une société, le contenu d'une fiche parcelle). Ex : « combien de parcelles > 1000 m² à
   Saint-Paul ? », « prix du terrain nu à Saint-Pierre ? », « délai d'instruction à Saint-Benoît ? »,
   « quelles parcelles possède la SCI Dupont ? », « population de Cilaos ? ».
-- EXPLIQUER : le client veut comprendre une NOTION d'urbanisme/foncier/immobilier de La Réunion (zone AU,
-  ZFANG, charge foncière, ANRU, PPR, coefficient d'emprise, SRU, défiscalisation…) — une explication
-  pédagogique, PAS un chiffre ni un fait sur une commune/parcelle précise. Signal : « explique », « qu'est-ce
-  que », « c'est quoi », « à quoi sert », « définition de », « comment marche ». Ex : « qu'est-ce qu'une zone
-  AU ? », « explique la charge foncière », « c'est quoi la ZFANG ? ». (« population de Cilaos » reste QUESTION :
-  c'est un fait chiffré, pas une notion.)
+- EXPLIQUER : le client veut de la CONNAISSANCE GÉNÉRALE sur le foncier/urbanisme/immobilier/fiscalité —
+  une NOTION (zone AU, ZFANG, charge foncière, ANRU, PPR, SUP, SDP vs SHAB, coefficient d'emprise, SRU,
+  défiscalisation, loi Girardin/Pinel outre-mer…), sa DÉFINITION, son PRINCIPE, ou son ÉTAT / son ACTUALITÉ
+  (« la loi X est-elle toujours en vigueur ? », « ce dispositif existe-t-il encore ? », « quel est le
+  principe de… »). C'est une explication de MÉMOIRE, PAS un chiffre ni un fait LABUSE sur une commune ou
+  parcelle précise. Signal : « explique », « qu'est-ce que », « c'est quoi », « à quoi sert », « définition
+  de », « comment marche », « toujours en vigueur / en place », « existe encore ». Ex : « qu'est-ce qu'une
+  zone AU ? », « c'est quoi la loi Girardin ? », « elle est toujours en place ? » (suite de Girardin),
+  « c'est quoi une SUP pm1 ? », « différence entre SDP et SHAB ». (« population de Cilaos », « prix à
+  Saint-Pierre » restent QUESTION : ce sont des faits CHIFFRÉS LABUSE, pas de la connaissance générale.)
 - PREPARER : le client veut qu'on lui PRÉPARE un SCRIPT d'appel ou un ARGUMENTAIRE pour aborder un
   propriétaire/vendeur (ce qu'il va DIRE). Signal : « prépare un argumentaire », « script d'appel », « comment
   aborder le propriétaire », « quoi dire au vendeur », « aide-moi à convaincre ». Ex : « prépare-moi un

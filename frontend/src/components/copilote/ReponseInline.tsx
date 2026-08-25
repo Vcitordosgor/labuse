@@ -12,8 +12,10 @@ function docUrl(kind: string, idu: string): string {
 }
 
 // refus → un kicker mono lisible (jamais un slug). L'absence = pas de kicker (réponse normale).
+// COPILOTE-REFONTE — le MUR « PAS D'OUTIL DÉDIÉ » disparaît : quand aucun outil ne couvre, le serveur
+// bascule sur la connaissance générale (badge « RÉPONSE GÉNÉRALE ») ou propose une voie — plus de slug sec.
 const KICKER: Record<string, string> = {
-  critere_non_applicable: 'CRITÈRE NON APPLICABLE', aucun_outil: "PAS D'OUTIL DÉDIÉ",
+  critere_non_applicable: 'CRITÈRE NON APPLICABLE',
   web_rien_trouve: 'RIEN TROUVÉ SUR LE WEB', proprietaire_pp: 'DONNÉE NON OUVERTE',
   projection: 'PAS DE PROJECTION', outil_a_choisir: 'CHOISIR UN OUTIL',
 }
@@ -67,20 +69,29 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   }
 
   const refus = v2.refus || null
+  // COPILOTE-REFONTE (DA point 8) — le MAUVE (surface IA) est RÉSERVÉ à ce qui EST de l'IA :
+  //  · `general` (voie b, connaissance générale) = assumé IA → mauve + badge « hors données LABUSE » ;
+  //  · une réponse SOURCÉE LABUSE (voie a : sources/outil, hors refus) N'EST PAS de l'IA → variante
+  //    `sourced` NON mauve (la donnée ne se déguise pas en avis d'IA). Le reste (clarification…) = IA.
+  const sourced = !v2.general && !refus && !v2.erreur && !v2.degraded
+    && ((v2.sources && v2.sources.length > 0) || !!v2.tool)
   const variant = v2.erreur || v2.degraded ? 'err'
     : refus === 'hors_sujet' ? 'neutral'
-      : refus ? 'warn' : 'ia'
+      : refus ? 'warn'
+        : sourced ? 'sourced' : 'ia'
   // M117 · D10 — un SEUL gabarit de précision : la carte IA avec le kicker « PRÉCISION » ; le champ
   // est le champ PERMANENT du fil (autofocus quand clarification), jamais un second cadre.
   const kickerClarif = v2.clarification && !refus ? 'PRÉCISION' : null
   const card = {
     ia: 'border-cp-ia-border bg-cp-ia-bg', warn: 'border-cp-warn-border bg-cp-warn-bg',
     err: 'border-cp-danger-border bg-cp-danger-bg', neutral: 'border-cp-line2 bg-cp-card',
+    sourced: 'border-cp-line2 bg-cp-card',   // donnée LABUSE : neutre, jamais le mauve de l'IA
   }[variant]
   const porteCls = variant === 'warn'
     ? 'border-cp-warn-border bg-cp-warn/[0.08] text-cp-warn hover:bg-cp-warn/15'
     : 'border-cp-ia-border-on bg-cp-ia/[0.06] text-cp-ia hover:bg-cp-ia/12'
-  const kick = refus ? KICKER[refus] : kickerClarif
+  // le badge voie b PRIME sur le kicker de refus/précision (le refus « aucun_outil » n'existe plus en mur).
+  const kick = v2.general ? 'RÉPONSE GÉNÉRALE — HORS DONNÉES LABUSE' : refus ? KICKER[refus] : kickerClarif
 
   return (
     <div data-reponse data-variant={variant} className={`rounded-xl border ${card} px-[18px] py-4 text-left`}>

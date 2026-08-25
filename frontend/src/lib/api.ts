@@ -394,6 +394,8 @@ export interface CopiloteV2Reponse {
   erreur?: boolean          // M102 garde générale /ask — incident serveur (gabarit erreur M117)
   en_construction?: boolean
   web?: boolean                          // M78-ter — réponse issue du web (marquage distinct)
+  general?: boolean                      // COPILOTE-REFONTE — voie b : connaissance générale HORS données LABUSE (badgée, mauve IA)
+  tenue?: boolean                        // COPILOTE-REFONTE — tenue de position (« t'es sûr ? » → on maintient)
   compris?: string | null               // M102-B2 — récap systématique : « J'ai compris : … » (une phrase)
   conversation_id?: number | null       // §2b — la conversation persistée (reprise)
   contexte_ttl_minutes?: number         // M107 P3 — TTL d'inactivité du fil (servi, jamais recopié)

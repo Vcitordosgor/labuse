@@ -42,13 +42,14 @@ REFUS_PROJECTION = ("LABUSE ne projette pas de valeur future. Je peux vous donne
 
 # ───────────────────────── Catalogue des outils QUESTION (pour la sélection) ─────────────────────────
 CATALOGUE = [
-    {"nom": "compter_parcelles", "desc": "Compter des parcelles d'une commune selon des critères de la "
-     "facette : surface (min/max en m²), tier (brûlante/chaude/opportunités), détention par une "
-     "personne morale, événement rouge, signaux de vie (procédure judiciaire/BODACC, friche, cession, "
-     "permis actif/caduc, défiscalisation, terrain nu de société), adresse absente, copropriété, "
-     "renouvellement urbain, zonage PLU (U/AU/A/N).",
-     "params": {"commune": "str", "surface_min": "int m²", "surface_max": "int m²",
-                "tier": "brulante|chaude|opportunites", "personne_morale": "bool",
+    {"nom": "compter_parcelles", "desc": "Compter des parcelles d'une commune (ou de TOUTE L'ÎLE si commune "
+     "absente) selon des critères de la facette : surface (min/max en m²), tier (brûlante/chaude/RÉSERVE "
+     "FONCIÈRE/opportunités), détention par une personne morale, événement rouge, signaux de vie (procédure "
+     "judiciaire/BODACC, friche, cession, permis actif/caduc, défiscalisation, terrain nu de société), "
+     "adresse absente, copropriété, renouvellement urbain, zonage PLU (U/AU/A/N). « réserves foncières » "
+     "→ tier reserve_fonciere ; « sur toute l'île / partout » → commune absente.",
+     "params": {"commune": "str (absent = TOUTE L'ÎLE)", "surface_min": "int m²", "surface_max": "int m²",
+                "tier": "brulante|chaude|reserve_fonciere|opportunites", "personne_morale": "bool",
                 "evenement": "bool (événement rouge)",
                 "signaux": "csv parmi procedure,friche,cession,permis_actif,permis_caduc,defisc,nu_pm,assemblage",
                 "adresse_absente": "bool (sans adresse)", "copro": "avec|sans (copropriété)",
@@ -64,6 +65,9 @@ CATALOGUE = [
      "d'une commune (Sitadel).", "params": {"commune": "str"}},
     {"nom": "marche", "desc": "Marché immobilier d'une commune : prix ancien, terrain nu, neuf, tendance, "
      "loyer.", "params": {"commune": "str"}},
+    {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
+     "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
+     "params": {"commune": "str (absent = toute l'île)"}},
     {"nom": "recherche_web", "desc": "DERNIER RECOURS (M78-ter) — un fait PUBLIC de La Réunion sur le "
      "foncier/immobilier/urbanisme/collectivités et leurs acteurs (élu, organigramme d'une collectivité, "
      "actualité réglementaire, appel à projets, coordonnées d'un service) que AUCUN autre outil ne couvre.",
@@ -230,6 +234,7 @@ _ARG_SPEC = {
     "stats_commune": {"commune": str},
     "delais_instruction": {"commune": str},
     "marche": {"commune": str},
+    "compter_piscines": {"commune": str},
     "recherche_web": {"question": str},
 }
 
@@ -413,7 +418,7 @@ def _projet_form(db: Session, message: str, params: dict | None = None) -> dict:
 def answer(db: Session, message: str, history: list[dict] | None = None,
            contexte: dict | None = None, confirme: bool = False,
            prior_params: dict | None = None, faits_fil: list[dict] | None = None,
-           scenario: str | None = None) -> dict:
+           scenario: str | None = None, prior_voie: str | None = None) -> dict:
     """Point d'entrée unique du Copilote v2. Retourne un dict prêt à rendre. `confirme=True` : le client
     a validé le récap (§M78-bis) → on produit la mission lourde (VERIFICATION) au lieu du récap.
 
@@ -433,6 +438,15 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # projet (parcours guidé, jamais de création directe). Les autres forcent l'intent après classify.
     if scenario == "web":
         return _reply_web(db, message, history)
+    # COPILOTE-REFONTE — TENUE DE POSITION : « t'es sûr ? » n'est PAS une nouvelle question. On MAINTIENT
+    # la dernière réponse et on cite sa source (fait du registre) — pas de re-routage qui retournerait la
+    # veste sans donnée nouvelle. Détecté avant classify (économise un appel modèle sur un méta-tour).
+    if (faits_fil or prior_voie) and not scenario and _est_mise_en_doute(message):
+        rep = _tenue_position(faits_fil, prior_voie)
+        # le fil GARDE son mode (une mise en doute ne change pas de voie) — prior_voie reporté.
+        rep["_route"] = {"intent": rep.get("intent"), "params": {},
+                         "voie": ("generale" if rep.get("general") else None) or prior_voie}
+        return rep
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -441,13 +455,25 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         route.clarification = None
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
-    rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
-                             faits_fil=faits_fil, history=history)
+    # COPILOTE-REFONTE — CONTINUITÉ DE VOIE : un fil en CONNAISSANCE GÉNÉRALE (voie b) le RESTE tant que
+    # le tour est une CONTINUATION sans signal de donnée (« elle est toujours en place ? » après Girardin).
+    # C'est le cœur du repro Q2 : sans ça, un suivi d'actualité retombait en QUESTION → web bancal / mur.
+    # Un vrai nouveau sujet (nouveau_sujet=True) ou un signal de donnée (commune/idu/…) sort de la voie b.
+    if (prior_voie == "generale" and not route.nouveau_sujet
+            and route.intent not in ("PROJET", "VEILLE")
+            and not _a_signal_data(route.params)):
+        rep = _general(db, message, history)
+    else:
+        rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
+                                 faits_fil=faits_fil, history=history)
     if scenario:
         rep.setdefault("scenario", scenario)   # M113 — le gabarit de réponse (Phase 4) suit le scénario
     # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
     # poppé par l'endpoint pour la persistance du fil, jamais servi au client.
+    # COPILOTE-REFONTE — `voie` VOYAGE dans le _route persisté : le tour SUIVANT sait si le fil est en
+    # connaissance générale (voie b) et applique la continuité de voie. `None` = voie a (données LABUSE).
     rep.setdefault("_route", {"intent": route.intent, "clarification": bool(route.clarification),
+                              "voie": "generale" if rep.get("general") else None,
                               "params": {k: v for k, v in (route.params or {}).items()
                                          if v is not None and k != "selection"}})
     # M102-B2 — RÉCAP SYSTÉMATIQUE (extension Vic de la règle M78) : une phrase « j'ai compris »
@@ -457,7 +483,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # M118 — le récap systématique ne vaut plus que pour la MISSION 1 (QUESTION facette) : c'est la
     # seule où une interprétation de paramètres/critères a lieu. Web/expliquer/préparer et les
     # refus-voies n'interprètent pas de critères — pas de récap.
-    if (route.intent == "QUESTION" and not rep.get("web")
+    if (route.intent == "QUESTION" and not rep.get("web") and not rep.get("general")
             and not rep.get("degraded") and rep.get("refus") not in ("hors_sujet", "hors_mission")):
         compris = _compris_fr(route.intent, route.params or {})
         # M110 — le récap NOMME les critères de facette appliqués (au-delà des params du routeur :
@@ -521,14 +547,32 @@ def _refus_voie(db: Session, message: str, intent: str, texte: str, cible: str, 
                   voie={"cible": cible, "libelle": libelle, **({"idu": idu} if idu else {})})
 
 
-EXPLIQUE_SYSTEM = (
-    "Tu es le copilote foncier de LABUSE (La Réunion). On te demande d'EXPLIQUER une NOTION "
-    "d'urbanisme, de foncier ou d'immobilier (zone AU, ZFANG, charge foncière, ANRU, PPR, SRU, "
-    "défiscalisation, coefficient d'emprise…). Réponds en 2 à 4 phrases, pédagogique et CONCRET, "
-    "adapté au contexte réunionnais quand c'est pertinent. RÈGLES ABSOLUES : (1) une notion s'explique "
-    "SANS COMPTER — n'avance AUCUN chiffre sur une commune ou une parcelle précise, aucune statistique "
-    "LABUSE ; (2) si la demande n'est PAS une notion d'urbanisme/foncier/immobilier (météo, cuisine, "
-    "autre), réponds EXACTEMENT : « HORS_SUJET ». Pas d'introduction, pas d'URL.")
+# COPILOTE-REFONTE (voie b) — la CONNAISSANCE GÉNÉRALE unifiée : notions ET actualité ET vocabulaire
+# maison, dans le fil (l'anaphore « elle » se résout sur l'historique). Remplace l'ancien EXPLIQUE
+# (notions seules → un « est-ce toujours en vigueur ? » retombait en refus/web bancal). Honnêteté :
+# aucun chiffre LABUSE inventé ; l'état DATÉ du droit n'est jamais affirmé (renvoi BOFiP/conseil).
+GENERAL_SYSTEM = (
+    "Tu es le copilote foncier de LABUSE (La Réunion). On te pose une question de CONNAISSANCE GÉNÉRALE "
+    "sur le foncier, la fiscalité, l'urbanisme ou le VOCABULAIRE du métier (loi Girardin, Pinel outre-mer, "
+    "ZFANG, SUP, PLU, zone AU, charge foncière, SDP, SHAB, ANRU, PPR, SRU, défiscalisation, notaire, "
+    "géomètre, SPF/CERFA…). Tu réponds DE MÉMOIRE — ce n'est PAS une donnée LABUSE.\n"
+    "Le fil de conversation t'est donné : une reprise (« elle », « et à la Réunion ? », « ce dispositif ») "
+    "se résout sur le tour précédent — ne redemande pas de préciser ce qui est déjà clair dans le fil.\n"
+    "RÈGLES ABSOLUES :\n"
+    "1. COURT : 2 à 4 phrases, concret, orienté La Réunion quand c'est pertinent.\n"
+    "2. AUCUN CHIFFRE inventé sur une commune ou une parcelle précise, aucune statistique LABUSE, aucun "
+    "taux/plafond précis sorti de nulle part.\n"
+    "3. ÉTAT DU DROIT / ACTUALITÉ : pour « est-ce toujours en vigueur », « ça existe encore », « quel taux "
+    "aujourd'hui » — donne le PRINCIPE, mais DIS l'incertitude sur l'état EXACT et la date, et renvoie vers "
+    "le BOFiP ou un notaire / conseil fiscal pour confirmer. N'AFFIRME JAMAIS un état du droit daté comme "
+    "certain, n'invente pas une date d'abrogation ou de prorogation.\n"
+    "4. VOCABULAIRE MAISON — reste cohérent avec LABUSE : SDP = surface de plancher (la surface construite "
+    "au sens du code de l'urbanisme) ; SHAB = surface habitable (plus petite, hors murs/circulations) ; "
+    "charge foncière = le prix maximal au m² de plancher qu'une opération peut payer pour le terrain en "
+    "restant à l'équilibre. Ne donne pas une définition divergente de celles-là.\n"
+    "5. HORS-DOMAINE : si la question n'a RIEN à voir avec le foncier / l'immobilier / l'urbanisme / la "
+    "fiscalité de La Réunion (cuisine, météo, sport, bavardage), réponds EXACTEMENT : « HORS_DOMAINE ».\n"
+    "Pas d'introduction, pas de balises, pas d'URL.")
 
 PREPARE_SYSTEM = (
     "Tu es le copilote foncier de LABUSE (La Réunion). On te demande de PRÉPARER un SCRIPT D'APPEL ou "
@@ -539,19 +583,69 @@ PREPARE_SYSTEM = (
     "reste GÉNÉRIQUE (pas de chiffre). Pas de mise en contexte, va au script.")
 
 
-def _expliquer(db: Session, message: str) -> dict:
-    """Mission 3 — expliquer une NOTION. Court, barrière thématique, JAMAIS un chiffre LABUSE."""
-    out = core.complete(db, kind="copilote-explique", model=core.MODEL_REASONING, max_tokens=280,
-                        system=EXPLIQUE_SYSTEM, context={"notion": message})
+def _general(db: Session, message: str, history: list[dict] | None = None) -> dict:
+    """VOIE B (COPILOTE-REFONTE) — connaissance générale foncier/fiscalité/urbanisme/vocabulaire.
+    Portée dans le FIL (l'historique résout l'anaphore « elle »). Réponse COURTE, honnête sur l'état
+    du droit, badgée `voie="generale"` (le front l'annonce « Réponse générale — hors données LABUSE »).
+    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé."""
+    hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
+            for m in (history or [])[-4:]]
+    out = core.complete(db, kind="copilote-general", model=core.MODEL_REASONING, max_tokens=300,
+                        system=GENERAL_SYSTEM, history=hist, context={"question": message})
     if out.degraded:
         return _reply(ERREUR_INFRA, "EXPLIQUER", degraded=True)
     txt = (out.text or "").strip()
-    if not txt or txt.upper().startswith("HORS_SUJET"):
-        telemetrie.refus(db, "explique_hors_sujet", message, "EXPLIQUER")
-        return _reply("Je n'explique que des notions d'urbanisme, de foncier et d'immobilier de "
-                      "La Réunion (zone AU, charge foncière, ZFANG…). Reformulez sur l'une d'elles.",
-                      "EXPLIQUER", refus="hors_sujet")
-    return _reply(txt, "EXPLIQUER", tool="explique")
+    if not txt or txt.upper().startswith("HORS_DOMAINE"):
+        telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
+        return _reply(HORS_SUJET, "HORS_SUJET", refus="hors_sujet")
+    # `general=True` = le discriminant servi au front (badge « Réponse générale — hors données LABUSE »
+    # + surface IA assumée) ; `tool="general"` reste pour la télémétrie. La promesse « sourcée/datée » de
+    # l'en-tête ne vaut QUE pour la voie a. NB : distinct du champ `voie` (objet de NAVIGATION des refus).
+    return _reply(txt, "EXPLIQUER", general=True, tool="general")
+
+
+# COPILOTE-REFONTE — helpers de conversation (continuité de voie + tenue de position).
+_DATA_KEYS = ("commune", "idu", "surface_min", "surface_max", "budget_eur", "prix_eur",
+              "entreprise", "programme_logements")
+_DOUTE_KW = ("t'es sur", "t es sur", "tu es sur", "es-tu sur", "es tu sur", "es-tu certain",
+             "es tu certain", "vraiment ", "vraiment?", "c'est sur", "c est sur", "sur de toi",
+             "sure de toi", "certain de", "certaine de", "t'es certain", "t es certain",
+             "vous etes sur", "vous etes certain")
+
+
+def _a_signal_data(params: dict | None) -> bool:
+    """Le tour porte-t-il un signal de DONNÉE LABUSE (commune, idu, surface, budget, société…) ?
+    Si oui, il ne reste pas « collé » à la voie b — il peut appeler la voie a."""
+    return any((params or {}).get(k) not in (None, "", []) for k in _DATA_KEYS)
+
+
+def _est_mise_en_doute(message: str) -> bool:
+    """« t'es sûr ? », « vraiment ? », « es-tu certain ? » — une remise en cause de la réponse
+    précédente, pas une nouvelle question. Court (≤ ~6 mots), sans autre contenu interrogeable."""
+    m = _fold_py((message or "").strip().lower())
+    if len(m.split()) > 8:
+        return False        # une vraie question qui contient « sûr » n'est pas une simple mise en doute
+    return any(k in m for k in _DOUTE_KW)
+
+
+def _tenue_position(faits_fil: list[dict] | None, prior_voie: str | None) -> dict:
+    """TENUE DE POSITION — on MAINTIENT la dernière réponse, on ne retourne pas sa veste sans donnée
+    nouvelle. Si un FAIT sourcé a été servi, on le re-cite avec sa source. Sinon (voie b), on assume
+    la réponse générale et on renvoie au conseil pour confirmation."""
+    fait = (faits_fil or [None])[0] if faits_fil else None
+    if fait and fait.get("source"):
+        val = fait.get("valeur")
+        val = int(val) if isinstance(val, float) and val.is_integer() else val
+        mill = f" · {fait['millesime']}" if fait.get("millesime") else ""
+        return _reply(f"Oui, je maintiens : {val} ({fait['source']}{mill}). C'est la donnée servie par "
+                      "l'outil, je ne la change pas sans élément nouveau — dis-moi lequel si tu en as un.",
+                      "QUESTION", tenue=True, sources=[fait["source"]])
+    if prior_voie == "generale":
+        return _reply("Je maintiens ma réponse précédente — mais c'était une réponse GÉNÉRALE (hors "
+                      "données LABUSE) : pour l'état exact du droit, confirme auprès du BOFiP ou d'un "
+                      "notaire / conseil fiscal.", "EXPLIQUER", general=True, tenue=True)
+    return _reply("Je m'appuie sur ce que je viens de te répondre ; si tu as un élément nouveau, "
+                  "donne-le-moi et je reprends.", "QUESTION", tenue=True)
 
 
 def _preparer(db: Session, message: str, params: dict, contexte: dict | None) -> dict:
@@ -586,7 +680,7 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
     # M118 — les 2 MISSIONS NOUVELLES d'abord (le chip force l'intent ; ne pas laisser un mot-clé
     # concept/document les intercepter). « prépare un argumentaire » ne doit pas matcher un document.
     if intent == "EXPLIQUER":
-        return _expliquer(db, message)
+        return _general(db, message, history)     # COPILOTE-REFONTE — voie b unifiée (notion/actualité/vocab)
     if intent == "PREPARER":
         return _preparer(db, message, params, contexte)
 
@@ -668,16 +762,16 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
                 telemetrie.refus(db, "manque_commune", message, intent)
                 return _reply("Sur quelle commune ? Je compte les parcelles commune par commune.",
                               intent, clarification=True)
-            return _sans_outil(db, message, params, intent)
+            return _sans_outil(db, message, params, intent, history=history)
         tool = sel["tool"]
         if tool not in OUTILS:
-            return _sans_outil(db, message, params, intent)
+            return _sans_outil(db, message, params, intent, history=history)
         # M78-ter — recherche_web : DERNIER recours, la question verbatim ; marquage web distinct.
         if tool == "recherche_web":
             res = OUTILS["recherche_web"](db, question=message)
             if not res.ok:                                 # rien trouvé → refus honnête + télémétrie
                 telemetrie.refus(db, "web_rien_trouve", message, intent)
-                return _sans_outil(db, message, params, intent)
+                return _sans_outil(db, message, params, intent, history=history)
             telemetrie.web(db, message, res.data.get("domaines", []))
             d = res.data
             # marquage NON négociable : « Source : web · domaine · consulté le date » (jamais Sourcé/Estimé)
@@ -693,7 +787,7 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         if not res.ok and (res.refus or "").startswith("_ambigu:"):
             return _reply(res.refus.split(":", 1)[1], intent, clarification=True)
         if not res.ok:
-            return _sans_outil(db, message, params, intent, motif=res.refus)
+            return _sans_outil(db, message, params, intent, motif=res.refus, history=history)
         return _reply_compte(db, message, res, faits_fil, intent)
 
     # M118 — OUTIL/RECHERCHE/VERIFICATION/PROJET/VEILLE sont interceptés PLUS HAUT (refus-voie). Il ne
@@ -896,19 +990,27 @@ _COUVRE = ("LABUSE couvre les données foncières et de marché : parcelles (com
            "verdict), prix et délais d'instruction par commune, patrimoine des sociétés.")
 
 
-def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str | None = None) -> dict:
-    """Issue 4 : aucun outil ne correspond. Refus honnête, JAMAIS une réponse plausible. La division
-    est traitée à part (dire le règlement, pas trancher). Sinon : dire ce que LABUSE COUVRE (pas un mur)."""
-    telemetrie.refus(db, "aucun_outil", message, intent)
+def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str | None = None,
+                history: list[dict] | None = None) -> dict:
+    """Aucun outil LABUSE ne couvre la demande. COPILOTE-REFONTE — plus de MUR « je n'ai pas d'outil
+    dédié » : la division garde sa voie (règlement, jamais trancher) ; une parcelle citée reçoit ce que
+    LABUSE en sait + la voie fiche ; SINON on bascule sur la CONNAISSANCE GÉNÉRALE (voie b, badgée) —
+    le Copilote dit ce qu'il sait de plus proche plutôt qu'un refus sec."""
     m = _fold_py(message.lower())
     idu = params.get("idu")
     if "divis" in m or "decoup" in m or "detacher un lot" in m or "lotir" in m:
+        telemetrie.refus(db, "aucun_outil", message, intent)
         return _division(db, idu, intent)
-    txt = "Je n'ai pas d'outil dédié pour cette demande. " + _COUVRE
-    fond = _substance(db, idu)
-    if fond:
-        txt += f" Sur le terrain cité : {fond}."
-    return _reply(txt, intent, refus="aucun_outil", porte=None)
+    if idu:
+        # une PARCELLE est citée : dire ce que LABUSE en sait (fond sourcé) + la voie fiche, jamais un mur.
+        telemetrie.refus(db, "aucun_outil", message, intent)
+        fond = _substance(db, idu)
+        txt = ("Je n'ai pas de mesure LABUSE dédiée à cette demande précise. " + _COUVRE
+               + (f" Sur la parcelle {idu} : {fond}." if fond else ""))
+        return _reply(txt, intent, refus="aucun_outil",
+                      voie={"cible": "fiche", "libelle": "Ouvrir la fiche", "idu": idu})
+    # ni parcelle ni donnée : c'est une question de CONNAISSANCE GÉNÉRALE → voie b (honnête, badgée).
+    return _general(db, message, history)
 
 
 def _division(db: Session, idu: str | None, intent: str) -> dict:
