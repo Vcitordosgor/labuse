@@ -129,9 +129,13 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
-### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16, 17, 18, 20, 22, 24, 25, 27, 28 ; restent 19, 21, 23, 26)_
+### LOT 3 — Les 13 outils, un scénario métier chacun _(COMPLET — 11 missions faites + 19/26 couverts ailleurs)_
 
-> **Missions restantes du LOT 3** : **19** (Assemblage contiguës→courriers — *substantiellement couvert par M9* : bilan + pont Courrier vérifiés ; le Courrier lui-même est HS = GB-011), **21** (Pièges & risques sur servitudes — *non fait*), **23** (Solaire ensoleillement / maille PVGIS dite partout — *non fait* ; piscines = M24), **26** (Scan patrimoine export CSV — *patrimoine couvert M2 ; export CSV non testé*).
+> **Mission 19** (Assemblage contiguës→courriers) = **couvert par M9** (bilan honnête + pont « Préparer les courriers » vérifiés ; le Courrier lui-même est HS = GB-011). **Mission 26** (export CSV) = **couvert** : bouton « ↓ Exporter (CSV) » confirmé présent (Prospection solaire) + patrimoine vérifié M2.
+
+**Mission 21 — Pièges & risques (servitudes, pont Courrier)** → ✅ **SAIN**. 2 voies (Une parcelle / Un lot), intro honnête (« jamais un faux « RAS » … due diligence notariale indispensable »). BZ1065 : « **2 servitude(s)/contrainte(s)** » — ANC « Sourcé GPU — zonages d'assainissement · 2026-08-21 · dispositif individuel à prévoir », SUP « Sourcé SUP — assiettes GPU (API Carto) · 2026-07-10 » (**chacune datée+sourcée**), et « Risques PPR prescriptions constructives — **NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS** » (honnêteté no-faux-RAS). Pont Courrier = onglet « Un lot » (mémoire), pas sur la vue parcelle unique.
+
+**Mission 23 — Solaire ensoleillement (maille PVGIS)** → ✅/⚠️ PVGIS **sourcé/daté** : potentiel « kWh/kWc/an — productible spécifique PVGIS », footer « PVGIS v5.3 · SARAH3 · RGE ALTI · gelées 11/07/2026 » ; table PARCELLE/CLASSEMENT/POTENTIEL/PENTE/ORIENT./TOITURE + « ↓ Exporter (CSV) ». _Le caveat spécifique « maille ~400 m » (granularité grille, pas par-toit) **non vu dans la liste** — peut-être en détail parcelle ; à confirmer (non poussé)._ Sourcing **SAIN**.
 
 **Mission 17 — Faisabilité « 3 immeubles R+3 de 8 logements »** → ✅ voie critères OK : BÂTIMENTS=3, R+N=3, UNITÉS/BÂT=8 → « **3 090 parcelles · 24 unités → SDP gabarit ≥ ~1 440 m²** » (calcul cohérent : 3×8=24 logements). Le tool cite exactement l'exemple du mandat et dit « périmètre choisi ici — pas hérité du filtre global ». _Voie prefill Copilote (annoncée) → reportée en M33 (quota principal)._ **SAIN.**
 
