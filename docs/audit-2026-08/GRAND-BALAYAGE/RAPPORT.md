@@ -257,8 +257,39 @@ _Décision d'exécution (notée) : plusieurs écritures LOT 4 faites via l'API b
 - **Exclusion lisible** (M14) : « écartée : exclusion légale ou physique — motif détaillé ».
 - **Erreurs propres** (M15) : 404 honnête, **SQL-injection-safe**, jamais d'écran cassé — pré-couvre M42.
 
+**LOT 3** (outils) : Étudier calculette **cohérente** (coût/marge font basculer la charge), Faisabilité (24 unités, SDP gabarit), **Permis libellé exemplaire** (« pas jamais réalisé »), **piscines 8299 / Saint-Paul 1616 exacts** (méthodo FLAIR honnête), Communes **chaque chiffre daté+sourcé+gradé** (« non calculable » honnête), Densifier (colonnes étiquetées, toggle écartées, fiche depuis ligne), PLU bascule **honnête** (« recalcul à blanc, rien persisté »), Pièges **servitudes datées+sourcées** + « NON COUVERT PAR LA BASE » (no faux RAS), Comparaison stepper + Échap propres.
+
+**LOT 4** (transverses) : Projet créé + **shortlist figée** (dédup à toast honnête), **décider/rejeu/exports PDF+CSV** OK, **CRM colonne créer/renommer + prospect** (Vic intact), **watch + digest** OK, **mobile 390px responsive** (0 débordement), Copilote **dégrade honnêtement** hors-ligne. Absences honnêtes (littoral M4, proximité équipement M31).
+
+**LOT 5** (robustesse) : **aucun 500** sur inputs méchants (négatif/énorme/émoji/5000 chars/SQL), 500 msel → **cap gracieux à 30**, **cloison IDOR SOLIDE** (_scope/_projet_or_404 sur 12 endpoints, sondes 404, compte_id+FK en base), pas de doublons (dédup idempotent), F5 rouvre propre.
+
+**Console (mission 50)** : 0 warning React, 0 exception JS non capturée sur toute la session ; seules erreurs = GB-003 (dev-proxy) + GB-011.
+
+**Verdict global : socle SAIN et honnête** (doctrine « chaque donnée datée+sourcée » tenue partout, dégradations honnêtes, cloison IDOR en place, front robuste). **Un seul défaut grave : GB-011** (Courrier + cascade de heal), le reste = coquilles 🟡.
+
+---
+
+## Synthèse console (mission 50)
+
+Sur **toute la session** (11 lots-passes, tous les outils, navigateur unique) : les **seules erreurs console d'origine applicative** sont **GB-003** (`/alertes`, `/alertes/refresh` — trou proxy dev + échec avalé) et **GB-011** (`/courrier/demandes`, `/courrier/demande` — le 🔴). Les 404 `/watch_zones` et `/parcels/99999000XX9999` étaient mes **sondes délibérées**. **Zéro warning React, zéro exception JS non capturée** sur toutes les pages et tous les outils → runtime front sain.
+
 ---
 
 ## TOP 10 « à corriger d'abord »
 
-_(rempli au livrable final)_
+| # | ID | Grav. | Résumé | Action (jamais implémentée par l'audit) |
+|---|---|---|---|---|
+| 1 | **GB-011** | 🔴 | **Courrier 500 + cascade de heal au boot** : `courrier.ensure_tables` splitte le DDL sur `;` en coupant un commentaire → `CREATE/ALTER courrier_demandes` jamais appliqué → Courrier HS **et** abandon de tout le heal restant (crm_columns/veilles/comptes/scoping IDOR/copilote). `/readyz` ment. Redémarrage ne corrige pas. | Corriger le découpage des statements dans `ensure_tables` (ne pas splitter sur les `;` de commentaire ; ou statements en liste). |
+| 2 | **GB-011-a** | 🔴(cascade) | **Veille fantôme** : `veilles.id=2 bodacc actif=true` (type non évaluable) car sa désactivation est dans un ensure sauté par la cascade. | Se résout avec GB-011 (le heal re-tournera). |
+| 3 | **GB-008** | 🟡 | **Filtre Communes = codes postaux bruts** (97460…) sans nom, alors que le nom est dans le hash. Friction sur un filtre cœur. | Afficher le nom de commune sur les chips (le mapping existe déjà). |
+| 4 | **GB-001** | 🟡 | **Accueil « 16 outils » vs 13 réels** (`MODULES.length` compte 3 alias `hidden`) — faux-chiffre sur la vitrine, contredit par le tiroir « 13 outils ». | Porte : `MODULES.filter(m=>!m.hidden).length`. |
+| 5 | **GB-006** | 🟡 | **Scan patrimoine : acronyme « SHLMR » → 0 résultat** (faux-négatif) alors qu'il détient 2618 parcelles sous sa raison sociale. | Indexer/résoudre les sigles connus. |
+| 6 | **GB-003** | 🟡 (dev) | **Veille › Secteurs `/alertes` 404 en `npm run dev`** (trou allowlist proxy Vite ; prod OK) **+ 404 avalé en silence** (Nouveautés vide, Rafraîchir no-op). | Ajouter `/alertes` à `apiPaths` (vite.config.ts) + surfacer l'échec côté front. |
+| 7 | **GB-007** | 🟡 | **Écart de compte Scan patrimoine** : autocomplétion « N parc. » > scan « N parcelles » (systématique, ex. 2632 vs 2618). | Aligner les deux dénominateurs. |
+| 8 | **GB-005** | 🟡 | **CTA « Voir les N parcelles » tarde** à intégrer un 2ᵉ signal (affiche le compte du 1er >2,5 s) avant de se réconcilier. | Rafraîchir le compte à chaque toggle de signal. |
+| 9 | **GB-009** | 🟡 | **Omnibox** : « Aucune adresse trouvée » pendant la saisie d'un **IDU valide** (qui s'ouvre pourtant à l'Entrée) → décourageant. | Message autocomplétion tenant compte du format IDU. |
+| 10 | **GB-010** | 🟡 | **msel persiste** à la fermeture/réouverture de l'Assemblage (résidu d'état, à surveiller pour fuite carte/inter-outils). | Vider msel à la sortie de l'outil (ou l'assumer comme brouillon). |
+
+**Hors TOP 10 (mineurs)** : GB-002 (badge cloche 1249 non capé, backlog réel), GB-004 (Escape ne ferme pas le dropdown notif) ; observations : dédup projet à toast honnête (M29), `POST /pipeline` ignore colonne/note à la création (M35), caveat maille PVGIS ~400 m non affiché en liste (M23).
+
+_(Le LOT 6 « code mort/orphelins » — statique — est traité séparément ci-dessous ; findings de type `mort`/`orphelin`, gravité 🟡 max, hors TOP 10.)_
