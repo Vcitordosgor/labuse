@@ -464,6 +464,15 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         rep["_route"] = {"intent": rep.get("intent"), "params": {},
                          "voie": ("generale" if rep.get("general") else None) or prior_voie}
         return rep
+    # GB-014 (Q24/Q25) — DÉICTIQUE VAGUE SANS ANTÉCÉDENT : le fil ne la résout pas → clarification courte
+    # (déterministe, 0 appel modèle), jamais une réponse au hasard ni un hors-sujet. Un « et là-bas ? »
+    # qui hérite d'une commune (prior_params) ou un message qui nomme son lieu ne tombe PAS ici.
+    if not scenario:
+        clarif = _clarif_anaphore(message, prior_params, contexte)
+        if clarif:
+            rep = _reply(clarif, "QUESTION", clarification=True)
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -472,6 +481,12 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         route.clarification = None
     if route.degraded:
         return _reply(ERREUR_INFRA, None, degraded=True)
+    # GB-014 (Q30) — CRÉOLE RÉUNIONNAIS ON-TOPIC (« kosa i lé in kaz an tol ? ») : le routeur le classe
+    # parfois HORS_SUJET faute de reconnaître la langue. Un mot d'habitat/foncier créole présent → c'est
+    # une question de vocabulaire du bâti → voie b (connaissance générale), jamais un hors-domaine. Le
+    # prompt _general répond DANS la langue qui vient.
+    if route.intent == "HORS_SUJET" and _est_creole_foncier(message):
+        route.intent = "EXPLIQUER"
     # COPILOTE-REFONTE — DEMANDE VISUELLE anaphorique (« montre-les sur la carte » après un compte) :
     # le routeur la classe parfois OUTIL (« montre » = action). Si le fil porte déjà une commune et que
     # c'est une demande de CARTE, on la ramène sur la voie a visuelle (compte + porte carte), pas un
@@ -498,6 +513,18 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     else:
         rep = _answer_with_route(db, message, route, contexte=contexte, confirme=confirme,
                                  faits_fil=faits_fil, history=history)
+    # GB-014 (Q29) — MULTI-INTENTIONS : si le message portait plusieurs demandes, on NOMME celles qu'on
+    # n'a pas traitées (écho des mots du client, aucun chiffre) — plus jamais un largage silencieux. On
+    # n'ajoute rien sur une clarification, un hors-sujet ou un dégradé (rien n'a été « traité »).
+    if (not scenario and not rep.get("clarification") and not rep.get("degraded")
+            and rep.get("refus") != "hors_sujet"):
+        reste = _multi_demandes_reste(message, rep)
+        if reste:
+            autres = " ; ".join(f"« {s} »" for s in reste)
+            rep["text"] = (rep.get("text", "").rstrip()
+                           + "\n\nVotre message contenait plusieurs demandes — je n'en traite qu'une à la "
+                           "fois. Reposez séparément celles que je n'ai pas couvertes : " + autres + ".")
+            rep["multi_intent"] = True
     if scenario:
         rep.setdefault("scenario", scenario)   # M113 — le gabarit de réponse (Phase 4) suit le scénario
     # M102-B1 — contexte du tour attaché en UN point (quel que soit le chemin de réponse) :
@@ -590,6 +617,10 @@ GENERAL_SYSTEM = (
     "géomètre, SPF/CERFA…). Tu réponds DE MÉMOIRE — ce n'est PAS une donnée LABUSE.\n"
     "Le fil de conversation t'est donné : une reprise (« elle », « et à la Réunion ? », « ce dispositif ») "
     "se résout sur le tour précédent — ne redemande pas de préciser ce qui est déjà clair dans le fil.\n"
+    "LANGUE : réponds DANS la langue de la question — français OU créole réunionnais. Le vocabulaire du "
+    "bâti/foncier en créole (« kaz » = maison, « kaz an tol » = maison en tôle, « terin » = terrain, "
+    "« lakour » = cour/parcelle) est DANS ton domaine : réponds au fond, ne le traite JAMAIS comme "
+    "hors-domaine.\n"
     "RÈGLES ABSOLUES :\n"
     "1. COURT : 2 à 4 phrases, concret, orienté La Réunion quand c'est pertinent.\n"
     "2. AUCUN CHIFFRE inventé sur une commune ou une parcelle précise, aucune statistique LABUSE, aucun "
@@ -649,6 +680,125 @@ def _a_signal_data(params: dict | None) -> bool:
     """Le tour porte-t-il un signal de DONNÉE LABUSE (commune, idu, surface, budget, société…) ?
     Si oui, il ne reste pas « collé » à la voie b — il peut appeler la voie a."""
     return any((params or {}).get(k) not in (None, "", []) for k in _DATA_KEYS)
+
+
+# ═════════════════════════ GB-014 — clarification · multi-intentions · créole ═════════════════════════
+# Trois faiblesses du grand oral (RAPPORT-CYCLE-3), soldées EN DÉTERMINISTE (le prompt LLM reste un
+# filet) pour que chaque cas ait un test reproductible sans dépendre d'un appel modèle.
+
+# (Q24/Q25) DÉICTIQUE VAGUE SANS ANTÉCÉDENT — « c'est cher là-bas ? », « compare les deux » : le fil ne
+# porte aucun référent qui les résolve → on POSE une clarification courte, jamais une réponse au hasard
+# ni un hors-sujet. Ne se déclenche PAS si le fil résout la déictique (un « et là-bas ? » après « prix à
+# Saint-Leu » hérite de la commune) ni si le message NOMME lui-même un lieu.
+_DEICT_LIEU = ("la-bas", "la bas", "cet endroit", "cette commune", "cette ville", "ici", "sur place")
+_DEICT_LIEU_CLARIF = ("De quelle commune (ou de quel bien) parlez-vous ? Je n'ai pas de lieu en tête "
+                      "dans ce fil — nommez-le et je réponds.")
+_DEICT_PAIRE = ("les deux", "les 2", "ces deux", "ces 2", "lesquels", "lesquelles")
+_DEICT_PAIRE_CLARIF = ("Comparer quoi, exactement ? Deux communes, deux parcelles, deux prix ? "
+                       "Précisez les deux éléments et je les compare.")
+
+
+def _nomme_un_lieu(message: str) -> bool:
+    """Le message contient-il déjà un toponyme des 24 communes ? (alors la déictique est superflue)."""
+    from .outils import _plier_toponyme, _referentiel_plie
+    pile = _plier_toponyme(message or "")
+    return any(k and len(k) >= 5 and k in pile for k in _referentiel_plie())
+
+
+def _a_antecedent(prior_params: dict | None, contexte: dict | None) -> bool:
+    """Le fil porte-t-il un référent résoluble (commune/idu/société déjà en jeu, ou une parcelle
+    embarquée dans la surface) ? Si oui, une déictique s'y rattache — pas de clarification."""
+    if contexte and (contexte.get("idu") or contexte.get("selection")):
+        return True
+    return bool(prior_params and any(prior_params.get(k) for k in ("commune", "idu", "entreprise")))
+
+
+def _clarif_anaphore(message: str, prior_params: dict | None, contexte: dict | None) -> str | None:
+    """La clarification COURTE à poser si le message est une déictique vague SANS antécédent, sinon
+    None. Déterministe, avant classify (0 appel modèle)."""
+    m = _fold_py((message or "").strip().lower())
+    if not m or len(m.split()) > 8:            # une vraie phrase porte son propre contexte
+        return None
+    if _a_antecedent(prior_params, contexte) or _nomme_un_lieu(message):
+        return None
+    if any(k in m for k in _DEICT_PAIRE) or ("compare" in m and not _nomme_un_lieu(message)):
+        return _DEICT_PAIRE_CLARIF
+    if any(k in m for k in _DEICT_LIEU):
+        return _DEICT_LIEU_CLARIF
+    if "cher" in m and not any(c.isdigit() for c in m):   # « c'est cher ? » sans lieu = le « où » manque
+        return _DEICT_LIEU_CLARIF
+    return None
+
+
+# (Q30) CRÉOLE RÉUNIONNAIS ON-TOPIC — « kosa i lé in kaz an tol ? » (qu'est-ce qu'une maison en tôle) est
+# une question de VOCABULAIRE du bâti → voie b, jamais hors-domaine. Détection par le lexique de l'habitat/
+# foncier créole (tokens, pas sous-chaîne — évite les collisions).
+_CREOLE_HABITAT = {"kaz", "kaze", "tol", "tôl", "tole", "terin", "teren", "tèrin", "lakour", "karo",
+                   "karé", "kare", "bardo", "ti-kaz", "tikaz", "boukan", "païaman"}
+
+
+def _est_creole_foncier(message: str) -> bool:
+    """Le message est-il une question créole réunionnaise sur le bâti/foncier ? (≥1 nom d'habitat créole)."""
+    toks = set(_fold_py((message or "").lower()).replace("-", " ").split())
+    return bool(toks & {_fold_py(w) for w in _CREOLE_HABITAT})
+
+
+# (Q29) MULTI-INTENTIONS — un message qui porte PLUSIEURS demandes : on traite la principale (comme avant)
+# et on NOMME ce qu'on laisse (« reposez séparément : … »), jamais un largage silencieux. Découpe
+# déterministe (ponctuation + connecteurs d'énumération) ; on écho les demandes non traitées avec les
+# mots du client (aucune paraphrase, aucun chiffre inventé).
+_ENUM_CONNECT = ("d'abord", "dabord", "ensuite", "enfin", "puis", "premierement", "deuxiemement",
+                 "troisiemement", "par ailleurs", "egalement", "et aussi", "autre chose",
+                 "derniere chose", "et enfin")
+_DEMANDE_KW = ("combien", "quel", "quelle", "quels", "quelles", "est-ce", "est ce", "comment",
+               "pourquoi", "faisable", "peux-tu", "peux tu", "peu tu", "dis-moi", "dis moi",
+               "je voudrais savoir", "je me demande", "savoir si", "montre", "calcule", "compare",
+               "verifie", "prepare", "ecris", "trouve", "liste", "en vigueur", "toujours actif",
+               "toujours en vigueur", "vaut", "prix", "delai", "délai")
+
+
+def _segments_demande(message: str) -> list[str]:
+    """Découpe le message en SEGMENTS qui portent chacun une demande (question/impératif). Sépare sur la
+    ponctuation forte et les connecteurs d'énumération. Garde le texte original (pour l'écho)."""
+    marked = re.sub(r"(?i)\b(d'abord|dabord|ensuite|enfin|puis|premi[eè]rement|deuxi[eè]mement|"
+                    r"troisi[eè]mement|par ailleurs|[ée]galement|et aussi|autre chose|"
+                    r"derni[eè]re chose|et enfin)\b", "¦", message or "")
+    segs: list[str] = []
+    for p in re.split(r"[?!.;\n¦]+", marked):
+        s = p.strip(" ,-—·:¦\t")
+        if len(s) < 8:
+            continue
+        if any(k in _fold_py(s.lower()) for k in _DEMANDE_KW):
+            segs.append(re.sub(r"\s+", " ", s))
+    return segs
+
+
+def _multi_demandes_reste(message: str, rep: dict) -> list[str]:
+    """Les demandes NON traitées à nommer (max 4, déterministe), ou [] si le message est mono-demande.
+    Ne sur-découpe pas une simple question composée (exige ≥3 segments OU un connecteur d'énumération)."""
+    segs = _segments_demande(message)
+    if len(segs) < 2:
+        return []
+    mfold = _fold_py((message or "").lower())
+    has_enum = any(c in mfold for c in _ENUM_CONNECT)
+    if len(segs) < 3 and not has_enum:
+        return []
+    traite: set[str] = set()
+    if rep.get("prefill_programme") or rep.get("porte") == "programme":
+        traite |= {"immeuble", "immeubles", "logement", "logements", "faisab", "plancher", "batiment",
+                   "batiments", "r+", "maison", "maisons", "sdp", "surface de plancher"}
+    reste = [s for s in segs if not any(k in _fold_py(s.lower()) for k in traite)] if traite else segs[1:]
+    if not reste or len(reste) == len(segs):     # segment traité non identifié → tout sauf le 1ᵉ (servi en tête)
+        reste = segs[1:]
+    vus, out = set(), []
+    for s in reste:
+        disp = (s[:90].rstrip() + "…") if len(s) > 90 else s
+        key = _fold_py(disp.lower())[:40]
+        if key in vus:
+            continue
+        vus.add(key)
+        out.append(disp)
+    return out[:4]
 
 
 _RESUME_KW = ("resume", "resumes", "recapitule", "recapitul", "ce qu'on s'est dit", "ce qu on s est dit",
