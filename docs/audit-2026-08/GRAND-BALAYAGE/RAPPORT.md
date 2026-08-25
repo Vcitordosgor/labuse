@@ -119,6 +119,14 @@ Types : `bug` · `faux-chiffre` · `mort` · `orphelin` · `UX` · `perf` · `s�
 
 ---
 
+### LOT 3 — Les 13 outils, un scénario métier chacun _(PARTIEL — missions 16 & 25 ; 17-24, 26-28 à reprendre)_
+
+**Mission 16 — Étudier BZ1065, cohérence calculette** → ✅ constat sourcé exact (CLASSEMENT Neutre, SHAB vendable 123 m², prix de sortie 4 275 €/m², résiduel net bâti 26 m²). Onglet « Vos hypothèses » = 3 réglages (Coût construction, Marge & frais, VRD). **Cohérence vérifiée** : coût 2550→1500 €/m² fait passer la charge foncière de **−122 911 € (−76 €/m²)** à **+39 k€ (+24 €/m²)** (« ne finance pas » → « ce que l'opération peut payer ») ; marge 21→40 % la refait chuter à **−61 380 € (−38 €/m²)**. Le verdict bouge dans le bon sens (coût↓→charge↑, marge↑→charge↓). Le « Prix demandé du terrain » = comparateur (« 300 000 € dépasse de 519 k€ ce que la charge supporte »). **SAIN.**
+
+**Mission 25 — Communes (St-Joseph/St-Paul/Le Port), chiffres datés & sourcés** → ✅ **exemplaire**. Fiche Saint-Joseph : chaque ligne porte **valeur + source + millésime + fiabilité** — « Prix ancien médian 2 197 €/m² (q1 1763–q3 2599, n9) · Sourcé · DVF 2025 · fragile » ; « terrain nu U 262 / AU 90 €/m² · DVF terrain 2025 · moyenne » ; « Prix de sortie neuf : **non calculable** — charge de marché non atteignable, collectif majoritairement social/aidé · insuffisant » (honnête) ; « Tendance 12 m ↑8.2 % · DVF 2025 · bonne » ; « 49 mut./trim (−9 % an) ». Désambiguïsation « médiane locale vs médiane commune entière » présente (cf. I2). 14 marqueurs source / 8 dates sur la fiche. **SAIN.**
+
+---
+
 ## Ce qui est SAIN et vérifié
 
 **LOT 1** :
