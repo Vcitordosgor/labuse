@@ -200,6 +200,31 @@ def test_q13_verification_sert_le_verdict_inline(monkeypatch):
     assert (r.get("voie") or {}).get("cible") == "fiche"
 
 
+def test_q3_herite_la_commune_du_fil(monkeypatch):
+    """Q3 — « montre-les sur la carte » n'apporte pas la commune : elle est HÉRITÉE du fil (prior_params)
+    et le tour repart sur la voie a visuelle (RECHERCHE + commune)."""
+    monkeypatch.setattr(answering, "classify",
+                        lambda *a, **k: __import__("labuse.copilote_v2.router", fromlist=["Route"]).Route("OUTIL", params={}))
+    cap = {}
+    monkeypatch.setattr(answering, "_answer_with_route",
+                        lambda db, msg, route, **k: (cap.update(intent=route.intent,
+                                                     commune=(route.params or {}).get("commune")),
+                                                     {"text": "ok", "intent": route.intent})[1])
+    answering.answer(None, "montre-les sur la carte", prior_params={"commune": "Saint-Pierre", "tier": "brulante"})
+    assert cap.get("intent") == "RECHERCHE" and cap.get("commune") == "Saint-Pierre"
+
+
+@pytest.mark.db
+def test_q13_resout_reference_courte(db_session):
+    """Q13 — « BZ1065 à Saint-Denis » (réf courte) → IDU 14 car. via parcels (lecture seule)."""
+    from sqlalchemy import text
+    idu = db_session.execute(text("SELECT idu FROM parcels WHERE idu LIKE '%BZ1065' LIMIT 1")).scalar()
+    if idu is None:
+        pytest.skip("parcelle BZ1065 absente de la base de test")
+    r = answering._resoudre_idu_court(db_session, "ma parcelle BZ1065 à Saint-Denis", "Saint-Denis")
+    assert r == idu
+
+
 def test_q5_marche_valeur_primaire():
     """Q5 — le nombre principal d'une ligne de marché est extrait du dict `valeurs` imbriqué."""
     from labuse.copilote_v2.outils import _marche_valeur_primaire

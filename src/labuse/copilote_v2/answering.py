@@ -476,9 +476,17 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # le routeur la classe parfois OUTIL (« montre » = action). Si le fil porte déjà une commune et que
     # c'est une demande de CARTE, on la ramène sur la voie a visuelle (compte + porte carte), pas un
     # refus « ouvrir un outil ». Les paramètres (commune/tier) sont hérités du fil.
-    if (_veut_carte(message) and route.intent in ("OUTIL", "QUESTION")
-            and (route.params or {}).get("commune")):
-        route.intent = "RECHERCHE"
+    if _veut_carte(message) and route.intent in ("OUTIL", "QUESTION"):
+        # FIX-COPILOTE-BATTERIE (Q3) — « montre-les sur la carte » n'apporte PAS la commune : on l'HÉRITE
+        # du fil (prior_params) si le tour ne l'a pas, puis on ramène sur la voie a visuelle (RECHERCHE →
+        # compte + carte). Sans ça, le routeur OUTIL sans commune retombait en refus « ouvrir un outil ».
+        params = route.params or {}
+        for k in ("commune", "tier", "surface_min", "surface_max", "zonage"):
+            if params.get(k) in (None, "", []) and (prior_params or {}).get(k) not in (None, "", []):
+                params[k] = prior_params[k]
+        route.params = params
+        if params.get("commune"):
+            route.intent = "RECHERCHE"
     # COPILOTE-REFONTE — CONTINUITÉ DE VOIE : un fil en CONNAISSANCE GÉNÉRALE (voie b) le RESTE tant que
     # le tour est une CONTINUATION sans signal de donnée (« elle est toujours en place ? » après Girardin).
     # C'est le cœur du repro Q2 : sans ça, un suivi d'actualité retombait en QUESTION → web bancal / mur.
@@ -704,6 +712,30 @@ def _extract_programme(message: str) -> dict | None:
     return prog or None
 
 
+_RE_REF_PARC = re.compile(r"\b([A-Z]{1,2}\d{1,4})\b")
+
+
+def _resoudre_idu_court(db, message: str, commune: str | None) -> str | None:
+    """FIX-COPILOTE-BATTERIE (Q13) — « ma parcelle BZ1065 à Saint-Denis » → IDU 14 car. via `parcels`
+    (commune + suffixe section-numéro). None si absent ou ambigu (jamais deviné). Lecture seule."""
+    if db is None or not commune:
+        return None
+    from sqlalchemy import text
+    from .outils import resoudre_commune
+    com = resoudre_commune(commune)
+    if not com:
+        return None
+    for ref in _RE_REF_PARC.findall((message or "").upper()):
+        try:
+            rows = db.execute(text("SELECT idu FROM parcels WHERE commune = :c AND idu LIKE :suf LIMIT 2"),
+                              {"c": com, "suf": f"%{ref}"}).fetchall()
+        except Exception:  # noqa: BLE001
+            return None
+        if len(rows) == 1:
+            return rows[0][0]
+    return None
+
+
 def _programme_fr(prog: dict) -> str:
     bouts = []
     if prog.get("batiments"):
@@ -825,7 +857,8 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _refus_voie(db, message, intent, "La création d'un projet se fait dans Projets, avec le "
                            "parcours guidé.", "projets", "Ouvrir Projets")
     if intent == "VERIFICATION":
-        idu = params.get("idu") or (contexte or {}).get("idu")
+        idu = (params.get("idu") or (contexte or {}).get("idu")
+               or _resoudre_idu_court(db, message, params.get("commune")))   # Q13 — réf courte « BZ1065 »
         # FIX-COPILOTE-BATTERIE (Q13) — « BZ1065, elle vaut quoi ? » ne part plus en voie fiche MUETTE :
         # on SERT le verdict inline (voie a, depuis fiche_parcelle : surface · zone · classement LABUSE),
         # PUIS la voie fiche pour l'évaluation complète face à un prix. Déterministe (0 modèle), les
