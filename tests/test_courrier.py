@@ -82,3 +82,62 @@ def test_courrier_pdf_ne_leve_pas_sur_les_3_modeles(client):
         txt = "\n".join((p.extract_text() or "") for p in pypdf.PdfReader(io.BytesIO(r.content)).pages).replace("\n", " ")
         assert "Saint-Paul" in txt and "BV 912" in txt, f"{motif}: contenu absent du PDF"
         assert "?" not in txt, f"{motif}: ponctuation dégradée en « ? »"
+
+
+# ── FIX-GB-013 — idempotence de POST /courrier/demande (dédup douce + ceinture concurrence) ──
+
+def test_gb013_demande_idempotente_sequentielle(engine):
+    """Deux demandes IDENTIQUES rapprochées → une seule ligne ; la 2ᵉ renvoie l'existante."""
+    from labuse import courrier
+    courrier.ensure_tables(engine)
+    corps = "[test] gb013 seq idempotence"
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM courrier_demandes WHERE corps = :c"), {"c": corps})
+    args = dict(compte_id=None, parcelles=["97411000BZ1065", "97411000BZ1066"],
+                communes="X", modele="libre", corps=corps)
+    with engine.begin() as c1:
+        d1 = courrier.creer_demande(c1, **args)
+    with engine.begin() as c2:
+        d2 = courrier.creer_demande(c2, **args)
+    assert d1["existing"] is False
+    assert d2["existing"] is True and d2["id"] == d1["id"]
+    with engine.connect() as c:
+        n = c.execute(text("SELECT count(*) FROM courrier_demandes WHERE corps = :c"), {"c": corps}).scalar()
+    assert n == 1, f"attendu 1 ligne, eu {n}"
+
+
+def test_gb013_demande_idempotente_concurrente(engine):
+    """Le vrai test du mandat : deux créations VRAIMENT concurrentes (threads, connexions séparées) →
+    une seule ligne (le verrou consultatif transactionnel sérialise les identiques)."""
+    import threading
+    from sqlalchemy.orm import sessionmaker
+    from labuse import courrier
+    courrier.ensure_tables(engine)
+    corps = "[test] gb013 concurrent idempotence"
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM courrier_demandes WHERE corps = :c"), {"c": corps})
+    SM = sessionmaker(bind=engine)
+    args = dict(compte_id=None, parcelles=["97411000BZ1065"], communes="X", modele="libre", corps=corps)
+    out: list = []
+    barriere = threading.Barrier(2)
+
+    def worker():
+        s = SM()
+        try:
+            barriere.wait()                         # démarrage simultané
+            d = courrier.creer_demande(s, **args)
+            s.commit()                              # libère le verrou xact (comme le handler)
+            out.append(d)
+        finally:
+            s.close()
+
+    ts = [threading.Thread(target=worker) for _ in range(2)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    with engine.connect() as c:
+        n = c.execute(text("SELECT count(*) FROM courrier_demandes WHERE corps = :c"), {"c": corps}).scalar()
+    assert n == 1, f"double POST concurrent : attendu 1 ligne, eu {n}"
+    assert sum(1 for d in out if not d.get("existing")) == 1
+    assert sum(1 for d in out if d.get("existing")) == 1

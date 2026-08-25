@@ -92,6 +92,10 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
     d = courrier.creer_demande(db, compte_id=cid, parcelles=parcelles,
                                communes=body.communes, modele=body.modele, corps=body.corps)
     db.commit()
+    # FIX-GB-013 — demande identique récente déjà enregistrée (double-submit / retry / 2 onglets) : on
+    # renvoie l'existante SANS re-notifier Vic ni renvoyer un 2ᵉ e-mail (la 1ʳᵉ l'a déjà fait).
+    if d.get("existing"):
+        return {"ok": True, **d}
     client = _client_label(db, cid)
     com = f" ({body.communes})" if body.communes else ""
     titre = f"{client} demande l'envoi de {d['n']} courrier{'s' if d['n'] > 1 else ''}{com}"
