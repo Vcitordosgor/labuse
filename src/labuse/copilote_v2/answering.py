@@ -491,6 +491,31 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         rep["_route"] = {"intent": rep.get("intent"), "params": {},
                          "voie": ("generale" if rep.get("general") else None) or prior_voie}
         return rep
+    # GB-019 — MÉTA-TOURS adjacents, déterministes (0 appel modèle), AVANT classify :
+    if not scenario:
+        # (a) provenance : « d'où tu sors ce chiffre ? » → re-cite source+millésime du registre.
+        if faits_fil and _est_provenance(message):
+            rep = _citer_source(faits_fil)
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
+        # (b) capacités/limites : « t'as accès à mes emails ? » → réponse EXACTE sur ce qu'il sait faire.
+        if _est_capacites(message):
+            rep = _reply(_CAPACITE_TXT, "QUESTION", capacites=True)
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
+        # (c) calcul sur SES PROPRES chiffres : « calcule 3 % de 2 327 » → arithmétique déterministe.
+        calc = _calcul_pct(message, faits_fil)
+        if calc is not None:
+            calc["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return calc
+        # (d) anaphore SPATIALE : « et sa voisine ? » → clarification honnête (plusieurs mitoyennes),
+        #     jamais re-servir la même parcelle (le contresens GB-019).
+        if _est_voisine(message):
+            rep = _reply("Une parcelle a PLUSIEURS voisines (mitoyennes) — je ne peux pas deviner "
+                         "laquelle. Donnez-moi l'IDU de la parcelle qui vous intéresse, ou sélectionnez-la "
+                         "sur la carte.", "QUESTION", clarification=True)
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
     # GB-014 (Q24/Q25) — DÉICTIQUE VAGUE SANS ANTÉCÉDENT : le fil ne la résout pas → clarification courte
     # (déterministe, 0 appel modèle), jamais une réponse au hasard ni un hors-sujet. Un « et là-bas ? »
     # qui hérite d'une commune (prior_params) ou un message qui nomme son lieu ne tombe PAS ici.
@@ -513,6 +538,11 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # une question de vocabulaire du bâti → voie b (connaissance générale), jamais un hors-domaine. Le
     # prompt _general répond DANS la langue qui vient.
     if route.intent == "HORS_SUJET" and _est_creole_foncier(message):
+        route.intent = "EXPLIQUER"
+    # GB-019 — COÛT D'UNE PRESTATION FONCIÈRE (« ça coûte combien une étude de sol ? ») : hors données
+    # LABUSE mais DANS le domaine → voie b honnête (ordre de grandeur + renvoi pro), jamais un mur
+    # hors-sujet. Rescousse le HORS_SUJET du routeur, comme le créole.
+    if route.intent == "HORS_SUJET" and _est_service_cout(message):
         route.intent = "EXPLIQUER"
     # COPILOTE-REFONTE — DEMANDE VISUELLE anaphorique (« montre-les sur la carte » après un compte) :
     # le routeur la classe parfois OUTIL (« montre » = action). Si le fil porte déjà une commune et que
@@ -660,6 +690,11 @@ GENERAL_SYSTEM = (
     "au sens du code de l'urbanisme) ; SHAB = surface habitable (plus petite, hors murs/circulations) ; "
     "charge foncière = le prix maximal au m² de plancher qu'une opération peut payer pour le terrain en "
     "restant à l'équilibre. Ne donne pas une définition divergente de celles-là.\n"
+    "4bis. COÛT D'UNE PRESTATION foncière (étude de sol/géotechnique, géomètre/bornage, honoraires de "
+    "notaire, raccordements/viabilisation, diagnostics) : c'est DANS ton domaine — donne un ORDRE DE "
+    "GRANDEUR général (une fourchette large), PRÉCISE que ça varie selon le terrain/la prestation, et "
+    "renvoie au PROFESSIONNEL pour un devis. N'invente JAMAIS un prix précis ni un tarif réunionnais "
+    "exact ; jamais de mur « hors-sujet » sur ces questions.\n"
     "5. HORS-DOMAINE : si la question n'a RIEN à voir avec le foncier / l'immobilier / l'urbanisme / la "
     "fiscalité de La Réunion (cuisine, météo, sport, bavardage), réponds EXACTEMENT : « HORS_DOMAINE ».\n"
     "Pas d'introduction, pas de balises, pas d'URL.")
@@ -951,6 +986,117 @@ def _tenue_position(faits_fil: list[dict] | None, prior_voie: str | None) -> dic
                       "notaire / conseil fiscal.", "EXPLIQUER", general=True, tenue=True)
     return _reply("Je m'appuie sur ce que je viens de te répondre ; si tu as un élément nouveau, "
                   "donne-le-moi et je reprends.", "QUESTION", tenue=True)
+
+
+# ═════════════ GB-019 — méta-tours adjacents (déterministes, 0 appel modèle) ═════════════
+# Même esprit que la tenue de position : provenance d'un chiffre, calcul sur ses propres chiffres,
+# capacités/limites réelles, anaphore spatiale. Tous SANS appel modèle, tous honnêtes.
+
+_PROVENANCE_KW = ("d'ou tu sors", "d ou tu sors", "d'ou vient", "d ou vient", "d'ou sort", "d ou sort",
+                  "d'ou ca vient", "d ou ca vient", "ca vient d'ou", "ca vient d ou", "tu sors ca",
+                  "quelle source", "quelles sources", "ta source", "tes sources", "source comment",
+                  "source de ce", "sur quoi tu te base", "sur quoi te base", "c'est sourc", "c est sourc")
+
+
+def _est_provenance(message: str) -> bool:
+    """« d'où tu sors ce chiffre ? », « quelle source ? » — une question sur la PROVENANCE du dernier
+    chiffre servi (méta-tour), pas une nouvelle question de donnée."""
+    m = _fold_py((message or "").strip().lower())
+    return any(k in m for k in _PROVENANCE_KW)
+
+
+def _citer_source(faits_fil: list[dict] | None) -> dict:
+    """Re-cite la SOURCE + le MILLÉSIME du dernier fait servi (registre) — à chaque fois, déterministe."""
+    fait = (faits_fil or [None])[0] if faits_fil else None
+    if fait and fait.get("source"):
+        val = fait.get("valeur")
+        val = int(val) if isinstance(val, float) and float(val).is_integer() else val
+        mill = f", millésime {fait['millesime']}" if fait.get("millesime") else ""
+        return _reply(f"Ce chiffre ({val}) vient de : {fait['source']}{mill}. Toute donnée LABUSE porte "
+                      "sa source et sa date — c'est le principe.", "QUESTION", tenue=True,
+                      sources=[fait["source"]])
+    return _reply("Je n'ai pas de chiffre sourcé à re-citer dans ce fil. Reposez la question de donnée et "
+                  "je vous donne la valeur AVEC sa source et sa date.", "QUESTION")
+
+
+_CAPACITE_KW = ("t'as acces", "t as acces", "tu as acces", "as-tu acces", "acces a mes", "acces a mon",
+                "tu peux voir mes", "tu vois mes", "mes emails", "mes e-mails", "mes mails", "mes courriels",
+                "mes messages", "mon compte bancaire", "mes donnees perso", "mes donnees personnelles",
+                "que sais-tu faire", "que peux-tu faire", "qu'est-ce que tu sais faire", "tes capacites",
+                "t'es capable de quoi", "tu peux faire quoi")
+
+
+def _est_capacites(message: str) -> bool:
+    """« t'as accès à mes emails ? », « qu'est-ce que tu sais faire ? » — méta-question sur les
+    capacités/limites du Copilote."""
+    m = _fold_py((message or "").strip().lower())
+    return any(k in m for k in _CAPACITE_KW)
+
+
+_CAPACITE_TXT = (
+    "Je lis UNIQUEMENT des données foncières publiques de La Réunion (cadastre, DVF, permis Sitadel, "
+    "PLU/zonages, personnes morales SIREN, détections piscines/solaire) et le classement LABUSE. "
+    "Je n'ai AUCUN accès à vos e-mails, vos messages, votre compte bancaire, ni à l'identité des "
+    "propriétaires personnes physiques (donnée non ouverte en France). Ce que je fais : répondre à des "
+    "questions de données (sourcées, datées), expliquer des notions, vous orienter vers les outils — "
+    "je n'exécute rien à votre place (créer un projet, poser une veille, envoyer un courrier se font "
+    "dans leur écran).")
+
+
+_RE_CALCUL_PCT = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:%|pour ?cent)\s*(?:de|d'|of|sur)\s*([\d][\d\s.,]*)?")
+
+
+def _calcul_pct(message: str, faits_fil: list[dict] | None) -> dict | None:
+    """« calcule-moi 3 % de 2 327 » → calcul déterministe. Base numérique dans le message, ou (si un
+    verbe de calcul est présent) le dernier chiffre du fil. Renvoie None si ce n'est pas un vrai calcul
+    (« 3 % de logements sociaux » n'a pas de base numérique et pas de verbe → on laisse le routeur)."""
+    m = _fold_py((message or "").lower())
+    mt = _RE_CALCUL_PCT.search(m)
+    if not mt:
+        return None
+    pct = float(mt.group(1).replace(",", "."))
+    base = None
+    if mt.group(2):
+        raw = mt.group(2).replace(" ", "").replace(",", ".").rstrip(".")
+        try:
+            base = float(raw)
+        except ValueError:
+            base = None
+    if base is None:                       # « X % de ce chiffre » → dernier fait, SI verbe de calcul
+        if not any(k in m for k in ("calcul", "combien font", "ca fait", "ca donne", "ca fais")):
+            return None
+        fait = (faits_fil or [None])[0] if faits_fil else None
+        base = fait.get("valeur") if fait else None
+    if base is None:
+        return None
+    res = pct / 100.0 * float(base)
+    bf = int(base) if float(base).is_integer() else round(base, 2)
+    rf = int(res) if float(res).is_integer() else round(res, 2)
+    return _reply(f"{pct:g} % de {bf} = {rf}.", "QUESTION", calcul=True)
+
+
+_VOISINE_KW = ("sa voisine", "la voisine", "ses voisines", "les voisines", "parcelle voisine",
+               "parcelles voisines", "mitoyenne", "mitoyennes", "d'a cote", "d a cote", "celle d'a cote",
+               "la parcelle d'a cote", "les parcelles autour")
+
+
+def _est_voisine(message: str) -> bool:
+    """« et sa voisine ? » — anaphore SPATIALE : une parcelle a plusieurs mitoyennes, on ne devine pas."""
+    m = _fold_py((message or "").strip().lower())
+    return any(k in m for k in _VOISINE_KW)
+
+
+_SERVICE_COUT_KW = ("etude de sol", "geometre", "bornage", "borne le terrain", "diagnostic amiante",
+                    "diagnostic plomb", "raccordement", "honoraires notaire", "frais de notaire",
+                    "cout d'un notaire", "cout du notaire", "prix d'un geometre", "devis geometre",
+                    "etude geotechnique", "diagnostic technique")
+
+
+def _est_service_cout(message: str) -> bool:
+    """« ça coûte combien une étude de sol ? » — coût d'une PRESTATION foncière : hors données LABUSE,
+    mais DANS le domaine → voie b honnête (ordre de grandeur + renvoi pro), jamais un mur hors-sujet."""
+    m = _fold_py((message or "").lower())
+    return any(k in m for k in _SERVICE_COUT_KW)
 
 
 def _preparer(db: Session, message: str, params: dict, contexte: dict | None) -> dict:
