@@ -256,16 +256,25 @@ export function CopiloteView() {
   const setOpenProjet = useApp((s) => s.setOpenProjet)   // M113 P3 — « Voir le projet → »
   // M78-bis — ouvrir la fiche existante d'une parcelle restituée (setView PUIS select, ordre respecté).
   const ouvrirFiche = (idu: string) => { setView('cartes'); selectParcelle(idu) }
-  // GB-031 — Échap ferme le Copilote (retour à la carte). Gardes : une modale brief interne a la
-  // priorité (elle porte [data-brief-close]) ; le journal se ferme d'abord ; on n'interrompt pas la
-  // frappe dans un champ de saisie.
+  // GB-031/GB-039 — Échap ferme le Copilote (retour à la carte). Une modale brief interne a la priorité
+  // (elle porte [data-brief-close]) ; le journal se ferme d'abord. PATRON DOUBLE-ÉCHAP (comme Comparaison) :
+  // si le focus est dans un champ AVEC du texte, le 1er Échap REND le focus (protège la saisie), le 2e
+  // (focus hors champ) ferme. Champ VIDE ou focus hors champ → Échap ferme directement (plus de garde
+  // input-focus qui neutralisait l'Échap quand la zone de saisie est auto-focus — l'écart GB-039).
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('[data-brief-close]')) return
-      const el = document.activeElement
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return
+      if (e.key !== 'Escape') return
+      // GB-039 — le panneau « Brief du matin » est TOUJOURS dans le DOM (translaté hors-écran quand
+      // fermé) : on détecte son ouverture RÉELLE par `aria-hidden` (l'ancienne garde `[data-brief-close]`
+      // le trouvait toujours → l'Échap ne fermait jamais). S'il est ouvert, il gère Échap lui-même.
+      const brief = document.querySelector('[aria-label="Brief du matin"]')
+      if (brief && brief.getAttribute('aria-hidden') !== 'true') return
+      const el = document.activeElement as HTMLInputElement | HTMLTextAreaElement | null
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && (el.value ?? '').trim()) {
+        el.blur(); return                       // 1er Échap : champ non vide → rend le focus, ne ferme pas
+      }
       if (journalOuvert) { setJournalOuvert(false); return }
-      setView('cartes')
+      setView('cartes')                          // champ vide / focus hors champ → ferme
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)

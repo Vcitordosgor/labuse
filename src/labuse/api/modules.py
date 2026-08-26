@@ -155,8 +155,8 @@ def division_compute(request: Request, commune: str = "Saint-Paul", db: Session 
 
 
 @router.get("/division")
-def division_list(min_score: int = 0, limit: int = 300, commune: str | None = None,
-                  db: Session = Depends(get_db)) -> dict:
+def division_list(min_score: int = 0, limit: int = Query(300, ge=1, le=2000),   # FIX-C5
+                  commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     # M6 2a (ticket M6-INC-03) : l'étage 0 du run SERVI prime PARTOUT — une parcelle en
     # exclusion dure (PPR rouge, foncier public, zonage…) ne peut pas être servie comme
     # candidate à la division, quel que soit son score géométrique. Les exclues sont
@@ -1750,7 +1750,8 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/plu-annuaire/search")
-def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None, limit: int = 25,
+def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
+                        limit: int = Query(25, ge=1, le=200),   # FIX-C5
                         db: Session = Depends(get_db)) -> dict:
     """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et

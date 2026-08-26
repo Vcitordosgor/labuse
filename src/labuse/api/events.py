@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -669,7 +669,8 @@ def _seen(alias: str = "e") -> str:
 
 
 @router.get("")
-def list_events(request: Request, unread_only: bool = False, limit: int = 100, offset: int = 0,
+def list_events(request: Request, unread_only: bool = False,
+                limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),   # FIX-C5 GB-034
                 db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
