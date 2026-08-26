@@ -17,7 +17,7 @@ import csv
 import io
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import text
@@ -327,7 +327,7 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
-           limit: int = 300, offset: int = 0,
+           limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
@@ -473,7 +473,7 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/promesses")
 def promesses(commune: str | None = None, months: int = 24,
-              limit: int = 1000, offset: int = 0, count_only: bool = False,
+              limit: int = 1000, offset: int = Query(0, ge=0), count_only: bool = False,  # GB-029
               db: Session = Depends(get_db)) -> dict:
     limit = max(1, min(limit, 2000))  # 1re page légère (défaut 1000), le reste en « voir plus »
     # Le COUNT(DISTINCT) est coûteux (~4 s) : DÉCOUPLÉ du chemin des lignes (appel parallèle count_only)
@@ -640,6 +640,9 @@ def prospection_solaire(commune: str | None = None,
         buf = io.StringIO()
         buf.write("﻿")  # BOM → accents corrects à l'ouverture Excel
         w = csv.writer(buf, delimiter=";")
+        if total > len(items):   # GB-016 — notice EXPLICITE (le JSON portait déjà `tronquee`, pas le CSV)
+            w.writerow([f"Export limité aux {len(items)} premières lignes sur {total} — "
+                        "affinez les filtres pour un export complet."])
         w.writerow([h for _, h in cols])
         for it in items:
             def _cell(k: str):
@@ -870,7 +873,7 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
 # levier « dirigeant inactif » à 0. Cet endpoint RESTE servi (aucun autre consommateur mesuré : ni
 # partners, ni PDF, ni Copilote — le concept-route a été retiré) + testé. Signal succession → facette.
 @router.get("/fantome")
-def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
+def fantome(commune: str | None = None, limit: int = 300, offset: int = Query(0, ge=0),  # GB-029
             db: Session = Depends(get_db)) -> dict:
     limit = max(1, min(limit, 600))  # « voir plus » pagine par offset
     rows = db.execute(text("""

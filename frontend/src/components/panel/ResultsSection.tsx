@@ -488,6 +488,15 @@ export function ResultsSection() {
           {ile && total > 0 && <span className="text-txt-dim"> / {fmt(total)} au total</span>}
         </span>
         <span className="flex shrink-0 items-center gap-2">
+          {/* GB-016 — jamais de troncature muette : quand le filtre est volumineux, on PRÉVIENT que
+              l'export est plafonné à 5000 lignes ; le fichier porte la notice en 1re ligne SI le
+              plafond est réellement atteint (source de vérité). */}
+          {total > 5000 && (
+            <span className="text-[10px] text-amber"
+              title={`Filtre volumineux (${fmt(total)} correspondances). L'export CSV est plafonné à 5000 lignes ; si ce plafond est atteint, le fichier l'indique en première ligne. Affinez les filtres pour un export ciblé.`}>
+              export ⩽ 5000
+            </span>
+          )}
           <a href={csvExportUrl(filters, sort)} download
             className="text-[11px] text-txt-mut hover:text-mint"
             title="Exporter la liste filtrée en CSV (verdict, rang, ×N — mêmes filtres, même tri)">

@@ -302,19 +302,24 @@ def ligne8_pression_dpe(db: Session, commune: str) -> dict:
 
 
 def ligne9_loyer(db: Session, commune: str) -> dict:
-    from ..loyers import get_loyers
+    from ..loyers import get_loyers, source as _loyers_source
     insee = db.execute(text("SELECT left(min(idu),5) FROM parcels WHERE commune = :c"), {"c": commune}).scalar()
     rec = get_loyers(insee=insee, commune=commune)
+    # GB-021 — le millésime DHUP vit dans le bloc `source()`, PAS dans l'enregistrement commune
+    # (`get_loyers` ne renvoie ni `millesime`) → l'ancien `rec.get("millesime")` était toujours None,
+    # la ligne loyer restait la SEULE sans date. On lit la vraie provenance datée.
+    mil = _loyers_source().get("millesime")
     seg = (rec or {}).get("appartement") or (rec or {}).get("maison") if rec else None
     if not rec or not seg or seg.get("loyer_m2") is None:
         return _ligne("loyer_median", "LOYER", valeurs={},
-                      source="DHUP (carte des loyers)", date_amont=(rec or {}).get("millesime") if rec else None,
+                      source="DHUP (carte des loyers)", date_amont=mil,
                       fiabilite="insuffisant", etiquette="Sourcé · DHUP", calculable=False,
                       motif="commune hors dataset loyers DHUP")
     return _ligne("loyer_median", "LOYER",
                   valeurs={"loyer_eur_m2": seg["loyer_m2"], "type": "appartement" if rec.get("appartement") else "maison"},
-                  source="DHUP (carte des loyers)", date_amont=rec.get("millesime"),
-                  fiabilite=seg.get("fiabilite", "moyenne"), etiquette="Sourcé · millésime DHUP")
+                  source="DHUP (carte des loyers)", date_amont=mil,
+                  fiabilite=seg.get("fiabilite", "moyenne"),
+                  etiquette=f"Sourcé · DHUP {mil}" if mil else "Sourcé · DHUP")
 
 
 def market_signal(db: Session, commune: str) -> dict:

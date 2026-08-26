@@ -1200,7 +1200,10 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                           {"c": cid}).scalar()
         if not force and last and (now - last) < timedelta(hours=interval_h):
             ignores += 1
-            _note(cid, email, "ignoré", f"anti-double-envoi (dernier digest {last:%Y-%m-%d %H:%M} UTC)")
+            # GB-020 — `last` (timestamptz) était libellé « UTC » mais rendu en +04 par le driver (4 h
+            # d'écart dans le texte). On l'exprime EXPLICITEMENT en heure Réunion (doctrine M85, REUNION_TZ).
+            _note(cid, email, "ignoré",
+                  f"anti-double-envoi (dernier digest {last.astimezone(REUNION_TZ):%Y-%m-%d %H:%M} heure Réunion)")
             continue
         data = _digest_data(db, cid, jours=fenetre_jours)   # M85-B — fenêtre J-1 pour le quotidien
         # FILTRE par préférence e-mail PAR TYPE (registre) : un type dont l'e-mail est coupé n'entre pas.

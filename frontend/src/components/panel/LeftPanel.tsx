@@ -497,6 +497,20 @@ export function LeftPanel() {
   const enAccueil = !accueilVu && !verdict
   const couchesOpen = !enAccueil && panneauSection === 'couches'
   const filtresOpen = !enAccueil && panneauSection === 'filtres'
+  // GB-031 — Échap ferme le panneau Filtres (retour à Couches, section par défaut), comme le patron
+  // overlay (Modale, ModulePanel). Gardes : on ne ferme pas si l'utilisateur tape dans un champ, ni
+  // si une modale algo est ouverte (elle a la priorité sur Échap).
+  useEffect(() => {
+    if (!filtresOpen) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || document.querySelector('[data-algo-overlay]')) return
+      const el = document.activeElement
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return
+      setPanneauSection('couches')
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [filtresOpen, setPanneauSection])
   // M55-K point 5 : `sectionFill` — quand rien ne suit les sections (ni accueil ni résultats),
   // la section OUVERTE est le dernier contenu → elle remplit la hauteur (et le séparateur
   // orphelin disparaît), fond continu jusqu'en bas. Sinon accueil/résultats (eux flex-1) filent.

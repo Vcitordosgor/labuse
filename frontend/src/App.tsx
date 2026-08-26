@@ -302,6 +302,11 @@ export default function App() {
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
     if (m) setModule(m)
+    // GB-032 — FICHE PARTAGEABLE : l'idu sélectionné est sérialisé dans le hash (#idu=…) et réhydraté
+    // au boot → une URL de fiche partagée rouvre la MÊME fiche (les deep-links outil/filtres l'étaient
+    // déjà, la fiche non). `select` déclenche le fetch parcelle ; la vue par défaut « cartes » l'affiche.
+    const pidu = p.get('idu')
+    if (pidu && /^[0-9A-Za-z]{10,20}$/.test(pidu)) select(pidu)
     // M104 — lien profond des notifications de secteur (#surveillance=parcelles|secteurs|criteres) :
     // ouvre la section unifiée sur le bon volet (aucun lien mort).
     const sv = p.get('surveillance')
@@ -315,8 +320,9 @@ export default function App() {
     if (commune) add(`c=${encodeURIComponent(commune)}`)
     if (verdict) add('v=1')
     if (module) add(`m=${module}`)
+    if (selectedIdu) add(`idu=${selectedIdu}`)   // GB-032 — fiche partageable/réhydratable
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
-  }, [filters, zone, module, commune, verdict, view])
+  }, [filters, zone, module, commune, verdict, view, selectedIdu])
 
 
   return (

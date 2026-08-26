@@ -18,6 +18,10 @@ router = APIRouter(prefix="/courrier", tags=["courrier"])
 # Ponctuation typographique → équivalents latin-1 (fidélité du PDF au texte affiché ; « — »/« ’ »
 # ne doivent pas devenir « ? »). « « » » gardent leurs guillemets français (déjà latin-1).
 _LATIN1_PUNCT = {ord(a): b for a, b in {
+    # GB-023 — œ/Œ absentes de latin-1 (police fpdf de base) → décomposées AVANT l'encodage
+    # (cœur→coeur), jamais un « ? » à l'écran. (æ/Æ sont, elles, DANS latin-1 → on n'y touche pas :
+    # « ex æquo » doit rester « ex æquo ».)
+    "œ": "oe", "Œ": "OE",
     "’": "'", "‘": "'", "“": '"', "”": '"', "—": "-", "–": "-", "…": "...", " ": " ", " ": " ",
 }.items()}
 
