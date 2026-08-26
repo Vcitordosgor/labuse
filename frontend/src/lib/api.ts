@@ -818,6 +818,29 @@ export const getAdminPilotage = () => j<AdminPilotage>('/admin/pilotage')
 export const getAdminStripe = () => j<StripeApercu>('/admin/stripe')
 export const postAdminDegeler = (sujet: string) =>
   j<{ ok: boolean; degele: boolean }>('/admin/degeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sujet }) })
+// D4 — Licences
+export interface AdminLicence {
+  id: number; nom: string; email: string | null; plan: string; statut: string; created_at: string | null
+  stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
+  mails: Record<string, { statut: string; sent_at: string | null }>
+  rappels: string[]
+  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number }
+}
+export interface AdminLicences {
+  licences: AdminLicence[]
+  stripe_configure: boolean
+  rapprochement?: StripeApercu['rapprochement']
+  brevo: { api: boolean; templates: Record<string, boolean> }
+}
+export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
+export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>
+  j<{ ok: boolean; lien: string; compte_id: number; expire_at: string }>('/admin/licences/creer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const postAdminSuspendre = (compteId: number) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminRetablir = (compteId: number) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/retablir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminLicenceMail = (compteId: number, key: string) =>
+  j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

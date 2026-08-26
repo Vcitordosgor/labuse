@@ -135,6 +135,18 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
     # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
     backup_dir: str = "/var/backups/labuse"
+    # DASHBOARD-V1 · MAILS (Brevo) — templates du cycle de vie client, référencés PAR ID en .env
+    # (mandat). Absents → mode « non configuré » propre (bouton visible, raison servie, zéro
+    # envoi silencieux). Aucun envoi automatique en V1 : l'app rappelle, Vic déclenche.
+    brevo_api_key: str | None = None
+    brevo_tpl_essai: str | None = None
+    brevo_tpl_souscription: str | None = None
+    brevo_tpl_onboarding_1: str | None = None
+    brevo_tpl_onboarding_2: str | None = None
+    brevo_tpl_onboarding_3: str | None = None
+    brevo_tpl_relance_carte: str | None = None
+    brevo_tpl_suspension: str | None = None
+    brevo_tpl_retablissement: str | None = None
     # SMTP (M21 — transport e-mail unique) — env LABUSE_SMTP_* + LABUSE_MAIL_FROM.
     # Sans hôte configuré : le mail est JOURNALISÉ et marqué non-envoyé (jamais « envoyé »).
     # Le mot de passe (mot de passe d'application Gmail) vit dans le .env, JAMAIS dans le code.

@@ -87,6 +87,54 @@ def test_admin_stripe_exige_session_hors_local(client, monkeypatch):
         config.get_settings.cache_clear()
 
 
+@pytest.fixture
+def compte_test(client, engine):
+    """Un compte + utilisateur de test, détruits en fin de test."""
+    from labuse.comptes import ensure_tables as comptes_ens
+    from labuse.db import session_scope
+    with session_scope() as s:
+        comptes_ens(s)
+    with engine.begin() as c:
+        cid = c.execute(text(
+            "INSERT INTO comptes (nom, plan, statut) VALUES ('Client D4', 'integral', 'actif') RETURNING id"
+        )).scalar_one()
+        c.execute(text(
+            "INSERT INTO utilisateurs (compte_id, email, role, statut) "
+            "VALUES (:c, 'd4@test.re', 'titulaire', 'actif')"), {"c": cid})
+    yield cid
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM licence_mails WHERE compte_id = :c"), {"c": cid})
+        c.execute(text("DELETE FROM utilisateurs WHERE compte_id = :c"), {"c": cid})
+        c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
+
+
+def test_licences_liste_et_suspension(client, engine, compte_test):
+    """D4 — la fiche liste le compte ; suspension MANUELLE réversible (données intactes)."""
+    d = client.get("/admin/licences").json()
+    lic = next((x for x in d["licences"] if x["id"] == compte_test), None)
+    assert lic is not None and lic["statut"] == "actif" and lic["email"] == "d4@test.re"
+    assert lic["kpi"]["copilote_quota"] == 80        # défaut mandat
+    # suspension → statut suspendu, données intactes ; rétablissement → actif
+    assert client.post(f"/admin/licences/{compte_test}/suspendre", json={}).json()["statut"] == "suspendu"
+    with engine.begin() as c:
+        assert c.execute(text("SELECT statut FROM comptes WHERE id = :c"), {"c": compte_test}).scalar() == "suspendu"
+        assert c.execute(text("SELECT COUNT(*) FROM utilisateurs WHERE compte_id = :c"), {"c": compte_test}).scalar() == 1
+    assert client.post(f"/admin/licences/{compte_test}/retablir").json()["statut"] == "actif"
+    with engine.begin() as c:
+        assert c.execute(text("SELECT statut FROM comptes WHERE id = :c"), {"c": compte_test}).scalar() == "actif"
+
+
+def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
+    """D4/MAILS — Brevo absent : bouton répond {envoye:false, raison explicite}, rien de silencieux."""
+    monkeypatch.delenv("LABUSE_BREVO_API_KEY", raising=False)
+    from labuse import config
+    config.get_settings.cache_clear()
+    r = client.post(f"/admin/licences/{compte_test}/mail", json={"key": "onboarding1"}).json()
+    assert r["ok"] is True and r["envoye"] is False and "BREVO_API_KEY" in r["raison"]
+    # clé de template inconnue → 422 (contrat)
+    assert client.post(f"/admin/licences/{compte_test}/mail", json={"key": "zzz"}).status_code == 422
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte

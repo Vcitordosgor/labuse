@@ -478,6 +478,22 @@ async def login_submit(request: Request):
                 from .coffre_ui import pay_token
                 return RedirectResponse(f"/onboarding/paiement?t={pay_token(u['compte_id'])}",
                                         status_code=303)
+            # DASHBOARD-V1 · D4/D9 — compte SUSPENDU (suspension manuelle ou essai expiré) :
+            # identifiants corrects → écran « abonnement à régulariser » + LIEN DE PAIEMENT
+            # (Checkout officiel). Données intactes, réversible ; la session n'est PAS créée
+            # (session_utilisateur la refuserait de toute façon — sécurité durcie inchangée).
+            if u["statut_compte"] == "suspendu":
+                auth.log_event("login_ok_suspendu", request)
+                from .coffre_ui import pay_token
+                from .onboarding import _page
+                lien = f"/onboarding/paiement?t={pay_token(u['compte_id'])}"
+                return HTMLResponse(_page("abonnement", f"""
+<h1>Abonnement à régulariser</h1>
+<p>Votre accès LABUSE est suspendu. <b>Vos données sont intactes</b> — projets, suivis et
+réglages vous attendent tels quels.</p>
+<p>Régularisez votre abonnement pour reprendre exactement où vous en étiez&nbsp;:</p>
+<p style="margin-top:26px"><a href="{lien}" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Régulariser l'abonnement →</a></p>
+<p style="margin-top:18px;color:var(--mut);font-size:13px">Une question&nbsp;? Écrivez-nous&nbsp;: contact@labuse.immo</p>"""))
             tok = creer_session(db, u["utilisateur_id"])
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)

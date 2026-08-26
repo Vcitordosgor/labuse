@@ -61,6 +61,12 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_ia_log_compte_ts ON ia_log(compte_id, ts)"))
         # quota Copilote PAR LICENCE (NULL = défaut config copilote_questions_jour_defaut)
         c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_quota_jour integer"))
+        # D4 — séquence d'onboarding : statut + date d'envoi STOCKÉS par (compte, mail)
+        c.execute(text(
+            "CREATE TABLE IF NOT EXISTS licence_mails ("
+            " compte_id integer NOT NULL, mail_key varchar(24) NOT NULL,"
+            " statut varchar(12) NOT NULL DEFAULT 'envoye', sent_at timestamptz DEFAULT now(),"
+            " PRIMARY KEY (compte_id, mail_key))"))
 
 
 # ───────────────────────── capteurs côté CLIENT ─────────────────────────
@@ -234,6 +240,165 @@ def admin_degeler(body: DegelerIn, request: Request) -> dict:
         except Exception:  # noqa: BLE001
             pass
     return {"ok": True, "degele": bool(n)}
+
+
+# ───────────────────────── D4 — LICENCES ─────────────────────────
+def _rappels_onboarding(created_at, mails: dict) -> list[str]:
+    """L'app RAPPELLE, Vic déclenche (mandat MAILS) : Mail 2 à J+3, Mail 3 à J+10 — en ambre
+    sur la fiche tant que non envoyés. Jamais d'envoi automatique."""
+    if created_at is None:
+        return []
+    age_j = (datetime.now(tz=timezone.utc) - created_at).total_seconds() / 86400
+    rappels = []
+    if age_j >= 3 and "onboarding2" not in mails:
+        rappels.append("Mail 2 à envoyer (J+3 atteint)")
+    if age_j >= 10 and "onboarding3" not in mails:
+        rappels.append("Mail 3 à envoyer (J+10 atteint)")
+    return rappels
+
+
+@router.get("/admin/licences")
+def admin_licences(request: Request) -> dict:
+    """Une fiche par client : statut app + Stripe, onboarding (mails stockés + rappels),
+    KPI (usage 7 j via heartbeats, dernière connexion, Copilote jour/quota)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config
+    from ..brevo import etat_configuration
+    from ..db import engine
+    from ..stripe_lecture import apercu
+    stripe = apercu()
+    abos_par_cust = {a["customer_id"]: a for a in (stripe.get("abonnements") or [])}
+    defaut_quota = int(config.get_settings().copilote_questions_jour_defaut)
+    with engine().begin() as c:
+        comptes = [dict(r) for r in c.execute(text(
+            "SELECT k.id, k.nom, k.plan, k.statut, k.sieges, k.created_at, k.updated_at,"
+            "       k.stripe_customer_id, k.copilote_quota_jour,"
+            "       (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            "         ORDER BY u.id LIMIT 1) AS email,"
+            "       (SELECT MAX(u.dernier_login_at) FROM utilisateurs u WHERE u.compte_id = k.id)"
+            "         AS derniere_connexion"
+            " FROM comptes k WHERE k.statut != 'resilie' ORDER BY k.created_at DESC")).mappings()]
+        mails_rows = c.execute(text(
+            "SELECT compte_id, mail_key, statut, sent_at FROM licence_mails")).mappings().all()
+        usage_rows = c.execute(text(
+            "SELECT compte_id, COUNT(*) AS hb FROM usage_events"
+            " WHERE kind = 'heartbeat' AND ts > now() - interval '7 days'"
+            "   AND compte_id IS NOT NULL GROUP BY compte_id")).mappings().all()
+        nl_rows = c.execute(text(
+            "SELECT sujet, n FROM usage_compteurs WHERE jour = CURRENT_DATE AND kind = 'nl'"
+        )).mappings().all()
+    mails_par_compte: dict[int, dict] = {}
+    for m in mails_rows:
+        mails_par_compte.setdefault(m["compte_id"], {})[m["mail_key"]] = {
+            "statut": m["statut"], "sent_at": m["sent_at"].isoformat() if m["sent_at"] else None}
+    hb = {u["compte_id"]: int(u["hb"]) for u in usage_rows}
+    nl = {s["sujet"]: int(s["n"]) for s in nl_rows}
+    out = []
+    for k in comptes:
+        mails = mails_par_compte.get(k["id"], {})
+        out.append({
+            "id": k["id"], "nom": k["nom"], "email": k["email"], "plan": k["plan"],
+            "statut": k["statut"], "created_at": k["created_at"].isoformat() if k["created_at"] else None,
+            "stripe": abos_par_cust.get(k["stripe_customer_id"]),
+            "mails": mails,
+            "rappels": _rappels_onboarding(k["created_at"], mails),
+            "kpi": {
+                # heartbeat = 1 balise / 5 min onglet visible → temps d'usage ESTIMÉ (dit au front)
+                "usage_7j_min": hb.get(k["id"], 0) * 5,
+                "derniere_connexion": k["derniere_connexion"].isoformat() if k["derniere_connexion"] else None,
+                "copilote_jour": nl.get(f"c:{k['id']}", 0),
+                "copilote_quota": k["copilote_quota_jour"] or defaut_quota,
+            },
+        })
+    return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
+            "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration()}
+
+
+class NouveauClientIn(BaseModel):
+    email: str = Field(min_length=5, max_length=200)
+    nom: str | None = Field(default=None, max_length=120)
+
+
+@router.post("/admin/licences/creer")
+def admin_licence_creer(body: NouveauClientIn, request: Request) -> dict:
+    """Parcours « nouveau client » étape 1 — le MÉCANISME OFFICIEL existant (creer_invitation :
+    compte + utilisateur `invite`, token 7 j). Renvoie le lien d'invitation (envoi à la main,
+    décision Vic historique conservée)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..comptes import creer_invitation
+    from ..db import session_scope
+    try:
+        with session_scope() as s:
+            inv = creer_invitation(s, body.email.strip(), nom=(body.nom or "").strip() or None)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {"ok": True, **inv}
+
+
+class SuspendreIn(BaseModel):
+    motif: str = Field(default="manuel", max_length=120)
+
+
+@router.post("/admin/licences/{compte_id}/suspendre")
+def admin_licence_suspendre(compte_id: int, body: SuspendreIn, request: Request) -> dict:
+    """Suspension MANUELLE (mandat : jamais automatique sur un échec de carte) — flag en base,
+    sessions coupées, données INTACTES, réversible. Le client voit « abonnement à régulariser »
+    + lien de paiement à son prochain login (cf. branche /login)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..comptes import suspendre_compte
+    from ..db import session_scope
+    with session_scope() as s:
+        suspendre_compte(s, compte_id, motif=f"dashboard:{body.motif}")
+    return {"ok": True, "statut": "suspendu"}
+
+
+@router.post("/admin/licences/{compte_id}/retablir")
+def admin_licence_retablir(compte_id: int, request: Request) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..comptes import reactiver_compte
+    from ..db import session_scope
+    with session_scope() as s:
+        reactiver_compte(s, compte_id, motif="dashboard:retabli")
+    return {"ok": True, "statut": "actif"}
+
+
+class MailIn(BaseModel):
+    key: str = Field(min_length=2, max_length=24)
+
+
+@router.post("/admin/licences/{compte_id}/mail")
+def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
+    """Envoi MANUEL d'un template Brevo au titulaire (onboarding 1/2/3, souscription, relance…).
+    Non configuré → {envoye:false, raison} — le bouton du dashboard l'affiche, rien de silencieux.
+    Statut + date STOCKÉS (licence_mails) quand l'envoi part."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..brevo import LIBELLES, envoyer_template
+    from ..db import engine
+    if body.key not in LIBELLES:
+        raise HTTPException(422, f"Template inconnu « {body.key} ».")
+    with engine().begin() as c:
+        row = c.execute(text(
+            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+            {"c": compte_id}).mappings().first()
+    if not row or not row["email"]:
+        raise HTTPException(404, "Compte introuvable ou sans utilisateur.")
+    res = envoyer_template(row["email"], body.key, params={"nom": row["nom"]})
+    if res.get("envoye"):
+        with engine().begin() as c:
+            c.execute(text(
+                "INSERT INTO licence_mails (compte_id, mail_key, statut) VALUES (:c, :k, 'envoye')"
+                " ON CONFLICT (compte_id, mail_key)"
+                " DO UPDATE SET statut = 'envoye', sent_at = now()"),
+                {"c": compte_id, "k": body.key})
+    return {"ok": True, **res}
 
 
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────

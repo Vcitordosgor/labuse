@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { LicencesSection } from './Licences'
 
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
 
@@ -330,7 +331,7 @@ export function AdminView() {
             </div>
           )}
           {section === 'pilotage' && <PilotageSection data={d} go={setSection} />}
-          {section === 'licences' && <AVenir titre="Licences" lot="D4" />}
+          {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <AVenir titre="IA" lot="D5" />}
           {section === 'sources' && <AVenir titre="Sources" lot="D6" />}
           {section === 'produit' && <AVenir titre="Produit" lot="D7" />}
