@@ -179,6 +179,18 @@ def test_source_relance_sans_commande_404(client, engine):
     assert {s["relance"] for s in avec} >= {"bodacc", "dvf", "dpe", "ban"}
 
 
+def test_produit_usage_et_statut_retour(client, engine):
+    """D7 — usage par outil agrégé + statut de retour éditable (nouveau→traité→répondu)."""
+    client.post("/usage/event", json={"kind": "outil", "outil": "courrier"})
+    rid = client.post("/retours", json={"type": "idee", "message": "Les DPE sur la carte ?"}).json()["id"]
+    d = client.get("/admin/produit").json()
+    assert any(u["outil"] == "courrier" for u in d["usage"])
+    r = next(x for x in d["retours"] if x["id"] == rid)
+    assert r["statut"] == "nouveau"
+    assert client.post(f"/admin/retours/{rid}/statut", json={"statut": "traite"}).json()["statut"] == "traite"
+    assert client.post(f"/admin/retours/{rid}/statut", json={"statut": "zzz"}).status_code == 422
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte

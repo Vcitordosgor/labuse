@@ -630,6 +630,47 @@ def admin_source_relancer(source_id: int, request: Request) -> dict:
     return {"ok": True, "label": cmd["label"], "log": log_path}
 
 
+# ───────────────────────── D7 — PRODUIT ─────────────────────────
+@router.get("/admin/produit")
+def admin_produit(request: Request) -> dict:
+    """Usage par outil 30 j (capteurs D1 — « Par client » = V2, hors mandat) + retours clients
+    (bouton « Signaler », statuts éditables ici)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        usage = [dict(r) for r in c.execute(text(
+            "SELECT outil, COUNT(*) AS n FROM usage_events"
+            " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - interval '30 days'"
+            " GROUP BY outil ORDER BY COUNT(*) DESC")).mappings()]
+        retours = [dict(r) for r in c.execute(text(
+            "SELECT r.id, r.ts, r.type, r.message, r.statut, k.nom AS compte"
+            " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
+            " ORDER BY r.ts DESC LIMIT 200")).mappings()]
+    for r in retours:
+        r["ts"] = r["ts"].isoformat() if r["ts"] else None
+    return {"usage": usage, "retours": retours}
+
+
+class RetourStatutIn(BaseModel):
+    statut: str = Field(pattern="^(nouveau|traite|repondu)$")
+
+
+@router.post("/admin/retours/{retour_id}/statut")
+def admin_retour_statut(retour_id: int, body: RetourStatutIn, request: Request) -> dict:
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text(
+            "UPDATE retours SET statut = :s, updated_at = now() WHERE id = :i"),
+            {"s": body.statut, "i": retour_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Retour introuvable.")
+    return {"ok": True, "statut": body.statut}
+
+
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
 def quota_nl_du_compte(compte_id: int | None) -> int | None:
     """Quota de questions Copilote/jour pour CE compte : l'override de la licence

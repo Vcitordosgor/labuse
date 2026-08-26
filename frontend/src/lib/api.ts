@@ -872,6 +872,14 @@ export const postAdminSourceRelancer = (id: number) =>
   j<{ ok: boolean; label: string; log: string }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
+// D7 — Produit
+export interface AdminProduit {
+  usage: Array<{ outil: string; n: number }>
+  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null }>
+}
+export const getAdminProduit = () => j<AdminProduit>('/admin/produit')
+export const postAdminRetourStatut = (id: number, statut: 'nouveau' | 'traite' | 'repondu') =>
+  j<{ ok: boolean }>(`/admin/retours/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

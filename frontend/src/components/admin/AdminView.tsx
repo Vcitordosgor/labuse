@@ -10,6 +10,7 @@ import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
 import { SourcesSection } from './Sources'
+import { ProduitSection } from './Produit'
 
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
 
@@ -336,7 +337,7 @@ export function AdminView() {
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
           {section === 'sources' && <SourcesSection />}
-          {section === 'produit' && <AVenir titre="Produit" lot="D7" />}
+          {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <AVenir titre="Courrier" lot="D8" />}
         </div>
       </div>
