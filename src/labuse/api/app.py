@@ -141,6 +141,11 @@ async def _lifespan(app: FastAPI):
         # FIX-VEILLE — veilles ensure au BOOT (n'y était pas) : crée la table + désactive les veilles
         # fantômes de type non évaluable (idempotent). Les veilles `permis` restent évaluées.
         from ..copilote_v2.veilles import ensure_tables as _veilles_ens
+        # FIX-C6 (GB-049 étendu) — Copilote v2 : historique (conversations/messages) + télémétrie
+        # n'étaient ensurés NULLE PART au boot → /api/copilote-v2/missions|telemetrie 500 sur base
+        # neuve (UndefinedTable). Ajoutés au heal (idempotents).
+        from ..copilote_v2.historique import ensure_tables as _copv2_hist_ens
+        from ..copilote_v2.telemetrie import ensure_tables as _copv2_tel_ens
         # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les tables à
         # données client). M26-A — Copilote : après comptes (FK agent_runs.compte_id).
         from ..comptes import ensure_tables as _comptes_ens
@@ -165,10 +170,16 @@ async def _lifespan(app: FastAPI):
             ("projets", lambda: _projets_ens(_engine())),
             ("protection", lambda: _protection_ens(_engine())),
             ("courrier", lambda: _courrier_ens(_engine())),
+            # FIX-C6 (GB-048) — `comptes` AVANT `crm_columns` : ce dernier porte une FK
+            # crm_columns.compte_id → comptes(id). Sur une base NEUVE, l'ancien ordre
+            # (crm_columns d'abord) échouait « relation "comptes" does not exist » et ne
+            # convergeait qu'au 2ᵉ boot. `scoping` ajoute compte_id aux tables client (dont
+            # celles des modules/projets déjà ensurées au-dessus) → reste après elles.
+            ("comptes+scoping", _heal_comptes_scoping),
             ("crm_columns", lambda: _crm_columns_ens(_engine())),
             ("veilles", lambda: _veilles_ens(_engine())),
-            ("comptes+scoping", _heal_comptes_scoping),
             ("copilote", lambda: _copilote_ens(_engine())),
+            ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
