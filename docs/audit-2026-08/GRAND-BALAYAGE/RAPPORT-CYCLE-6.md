@@ -38,6 +38,7 @@
 | AG — accessibilité axe-core | 40 | **40** | 0 critical (🟡 GB-055 familles serious) | lot-ag.csv |
 | AO — exports restants | 70 | **67** | 3 (🟡 GB-056 BOM projet.csv ; GB-057 en-tête) | lot-ao.csv |
 | AM — budgets de performance | 30 | **22** | 8 dépassements (🟡 GB-058, dont 2 actionnables) | lot-am.csv |
+| AH — deep-links exhaustifs | 80 | **76** | 4 (🟠 GB-059 état zombie clé invalide) | lot-ah.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -103,3 +104,7 @@
   - **perf-a `/stats/entonnoir` p95 9846 ms (budget 500, ×20)** — le plus coûteux : contrairement à `/stats`, PAS wrappé dans `_mem_cached` (`app.py:1848`) → 2 agrégations pleine-île (~430k lignes, EXISTS par ligne) à chaque appel. **Cache manquant, corrigeable.**
   - **perf-b `/map/tiles/meta` p95 3934 ms (budget 300, ×13)** — EXPLAIN : Parallel Seq Scan sur ~430k lignes de `parcel_p_score_v2` pour un `max(computed_at) WHERE run_id=…` (`tiles.py:332`), non caché, appelé au 1er paint carte. **Index `(run_id, computed_at)` manquant.**
   - Les 6 autres sont attendus par nature ou borderline, pas des bugs : `/parcels/{idu}/explain` p95 17 s (**appel LLM Anthropic live**, timeout 25 s — budget 3 s inapproprié, à budgéter à part) ; `/map/parcels.geojson` p95 12,6 s (**payload 90 Mo**, 60 000 géométries complètes — à capper/tuiler) ; export.pdf 6,8 s / export.csv 3,4 s / dossier.pdf (génération document, borderline) ; `/accueil/chiffres` & `/communes/{c}/contexte` : **froid seul** dépasse (2,1 s / 6,6 s) mais chaud rentre largement (8 ms / 206 ms) → cache tiède efficace, coût du 1er hit à surveiller.
+
+## LOT AH — deep-links exhaustifs (80, seed 6008) — agent (Playwright, onglet vierge : newContext + goto + reload)
+**76/80 OK, aucun écran blanc** (Rail + header + carte toujours rendus). Outil 15/15, fiche 15/15, filtre 15/15, combo 15/15 — tous restaurent l'état visé. Corrompu 16/20. Robustesse confirmée : `##m=plu` double-# → module null + hash nettoyé ; `#idu=ZZZ`/vide → regex rejette proprement (`App.tsx:309`) ; injections (`DROP TABLE`, `<script>`, `smin=abc`, quote SQL) toutes absorbées sans erreur console (`filtersFromHash`). 7 hash ont touché le 429 partagé (agents concurrents), requalifiés OK.
+- **GB-059 · 🟠 · État zombie sur clé d'outil invalide (4 cas) : colonne gauche VIDE sans message** — `#m=xxx`, `#m=SCOREUR-ADRESSE` (casse), `#m=x…(500 car.)`, double clé `#m=risques#m=comparer`. Cause : `App.tsx:303-304` fait `setModule(m)` sans valider contre le registre → `ModulePanel.tsx:1177/1195` `MODULES.find()` = undefined → `return null`, MAIS `App.tsx:339` garde `module` truthy → **LeftPanel supprimé ET ModulePanel vide = colonne gauche vide, aucun message**. Carte + Rail restent navigables (dégradé propre mais silencieux, captures AH-61/AH-71). Fix : valider `m` contre les clés registry avant `setModule`, sinon ignorer.

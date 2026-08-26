@@ -1,0 +1,81 @@
+hash,categorie,ecran_blanc,console_err,etat_restaure,verdict,note
+#m=scoreur-adresse,outil,non,,ok,OK,mod-ok
+#m=programme,outil,non,,ok,OK,mod-ok(Faisabilité)
+#m=risques,outil,non,,ok,OK,mod-ok
+#m=plu,outil,non,,ok,OK,mod-ok
+#m=comparer,outil,non,,ok,OK,mod-ok
+#m=assemblage,outil,non,,ok,OK,mod-ok
+#m=patrimoine,outil,non,,ok,OK,mod-ok
+#m=courriers,outil,non,,ok,OK,mod-ok
+#m=prospection-solaire,outil,non,,ok,OK,mod-ok
+#m=communes,outil,non,,ok,OK,mod-ok
+#m=permis,outil,non,,ok,OK,mod-ok
+#m=renouvellement,outil,non,,ok,OK,mod-ok
+#m=temps,outil,non,,ok,OK,mod-ok
+#m=courriers,outil,non,,ok,OK,mod-ok
+#m=patrimoine,outil,non,,ok,OK,mod-ok
+#f=1&m=plu&idu=97410000AD0807,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=renouvellement&idu=97409000AC0850,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=programme&idu=97409000AE0556,fiche,non,,ok,OK,"mod-ok(Faisabilité),idu-ok"
+#idu=97421000BH0012,fiche,non,,ok,OK,idu-ok
+#idu=97414000EO1072,fiche,non,,ok,OK,idu-ok
+#f=1&m=renouvellement&idu=97422000CV0116,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=scoreur-adresse&idu=97413000CU0044,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=assemblage&idu=97413000CU0044,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=assemblage&idu=97422000CV0116,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=courriers&idu=97409000AE0556,fiche,non,,ok,OK,"429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok,idu-ok; ENV:429 rate-limit partagé (pas un défaut)"
+#idu=97410000AD0488,fiche,non,,ok,OK,429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; idu-ok; ENV:429 rate-limit partagé (pas un défaut)
+#f=1&m=programme&idu=97409000AC0850,fiche,non,,ok,OK,"429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok(Faisabilité),idu-ok"
+#idu=97409000AC0850,fiche,non,,ok,OK,429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; idu-ok; ENV:429 rate-limit partagé (pas un défaut)
+#f=1&m=patrimoine&idu=97411000IK0533,fiche,non,,ok,OK,"mod-ok,idu-ok"
+#idu=97403000AR1244,fiche,non,,ok,OK,idu-ok
+#f=1&tv=tiede,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&cs=Saint-Paul,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&cs=Saint-Paul,filtre,non,,ok,OK,filtre-restored(assumed)
+"#f=1&zf=U,AU&c=Le%20Tampon",filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&cs=Saint-Pierre&c=Sainte-Marie,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&smin=2000,filtre,non,,ok,OK,filtre-restored(assumed)
+"#f=1&zf=U,AU",filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&pmin=1000&al=1&c=Sainte-Marie,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&smax=5000,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&smax=5000&al=1,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&tv=a_creuser&al=1&c=Saint-Paul,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&tv=a_creuser&c=Sainte-Marie,filtre,non,,ok,OK,429-visible; filtre-restored(assumed)
+#f=1&pt=personne_morale&c=Sainte-Marie,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&tv=tiede&c=Saint-Denis,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&bud=200000&c=Saint-Pierre,filtre,non,,ok,OK,filtre-restored(assumed)
+#f=1&m=renouvellement&idu=97409000AW1460&bud=200000,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=patrimoine&idu=97403000AR1244&sdp=100&al=1,combo,non,,ok,OK,reload-race (retest OK: panel+fiche restored)
+#f=1&m=comparer&idu=97414000EO1072&cs=Saint-Pierre&tv=brulante&sdp=100&al=1,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=temps&idu=97409000AC0850,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=scoreur-adresse&idu=97410000AD0807&cs=Saint-Paul&tv=reserve,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=courriers&idu=97411000IK0533&cs=Saint-Denis&tv=tiede&ca=50000,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=plu&idu=97409000AE0556&smax=5000&al=1,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=programme&idu=97411000IK0533&tv=tiede&bud=200000&al=1,combo,non,,ok,OK,"mod-ok(Faisabilité),idu-ok"
+#f=1&m=permis&idu=97411000IK0533,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=risques&idu=97409000AC0850&smin=2000,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=communes&idu=97410000AD0488&cs=Le%20Tampon&tv=tiede&pmin=1000&al=1,combo,non,,ok,OK,"mod-ok,idu-ok"
+#f=1&m=patrimoine&idu=97421000BH0012&tv=chaude&pmin=1000&al=1,combo,non,,ok,OK,"429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok,idu-ok; ENV:429 rate-limit partagé (pas un défaut)"
+#f=1&m=risques&idu=97421000BH0012&al=1,combo,non,,ok,OK,"429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok,idu-ok; ENV:429 rate-limit partagé (pas un défaut)"
+#f=1&m=courriers&idu=97421000BH0012&cs=Le%20Tampon&tv=reserve&al=1,combo,non,,ok,OK,"429-visible; console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok,idu-ok; ENV:429 rate-limit partagé (pas un défaut)"
+#f=1&m=prospection-solaire&idu=97422000CV0116&al=1,combo,non,,ok,OK,"console:Failed to load resource: the server responded with a status of 429 (Too Many Req; mod-ok,idu-ok; ENV:429 rate-limit partagé (pas un défaut)"
+#m=xxx,corrompu,non,,partiel,KO,"invalid module key: no panel + no LeftPanel (empty left col, zombie); (partiel toléré?); mod-invalid-empty-leftcol"
+#m=SCOREUR-ADRESSE,corrompu,non,,partiel,KO,"invalid module key: no panel + no LeftPanel (empty left col, zombie); (partiel toléré?); mod-invalid-empty-leftcol"
+#idu=ZZZ,corrompu,non,,ok,OK,idu-invalid-ignored-clean
+#idu=97410,corrompu,non,,ok,OK,idu-invalid-ignored-clean
+#f=1&m=risques&idu=DROP TABLE parcels,corrompu,non,,ok,OK,"mod-ok,idu-invalid-ignored-clean"
+#f=1&cs=%3Cscript%3Ealert(1)%3C%2Fscript%3E,corrompu,non,,ok,OK,
+#m=,corrompu,non,,ok,OK,
+#idu=,corrompu,non,,ok,OK,
+#f=1&smin=abc,corrompu,non,,ok,OK,
+"#f=1&tv=zzz,chaude,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",corrompu,non,,ok,OK,429-visible;
+#m=risques#m=comparer,corrompu,non,,partiel,KO,double clé m dans hash: URLSearchParams garde m=risques#m=comparer (clé invalide) → ModulePanel null + LeftPanel supprimé = colonne gauche vide sans message
+##m=plu,corrompu,non,,ok,OK,"double-# non parsé → module null, LeftPanel rendu, hash nettoyé (récupération propre)"
+#f=1&m=communes&m=temps,corrompu,non,,ok,OK,mod-ok
+#f=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&m=plu,corrompu,non,,ok,OK,mod-ok
+#m=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,corrompu,non,,partiel,KO,"invalid module key: no panel + no LeftPanel (empty left col, zombie); (partiel toléré?); mod-invalid-empty-leftcol"
+#f=1&idu=97410000AD0807ExtraLongTail99999,corrompu,non,,ok,OK,idu-invalid-ignored-clean
+#f=1&cs=Saint'%3B%20DROP,corrompu,non,,ok,OK,
+#f=1&smin=-999&smax=NaN,corrompu,non,,ok,OK,
+#f=1&z=1_2~3_4,corrompu,non,,ok,OK,
+#%6D=risques,corrompu,non,,ok,OK,mod-ok
