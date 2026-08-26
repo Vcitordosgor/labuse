@@ -35,6 +35,7 @@
 | AJ — installation à vide | 20 | **17** | 3 (🟠 GB-047/048/049 ; 🟡 GB-050) | lot-aj.csv |
 | AD — 100 PDF ouverts | 100 | **100** | 0 faux chiffre (🟡 GB-051/052) | lot-ad.csv |
 | AK — backup & restauration | 20 | **18** | 2 (🔴 GB-053 ; 🟠 GB-054) | lot-ak.csv |
+| AG — accessibilité axe-core | 40 | **40** | 0 critical (🟡 GB-055 familles serious) | lot-ag.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -78,3 +79,12 @@
 - **GB-053 · 🔴 (opérationnel) · Aucun backup complet possible sur la machine pilote — RPO de fait 36 jours** — dump 6,44 Go vs ~950 Mo libres (disque à 100 %, 211/228 Go) : le backup complet local est PHYSIQUEMENT impossible ; le dernier backup réel est `labuse_m7_20260721.dump` (4,0 Go, 21/07). Un incident disque aujourd'hui perd 36 jours de données dont TOUT le travail utilisateur (CRM, projets, courriers). Atténué depuis ce lot par le dump données-usage 0,31 Mo ci-dessus (à automatiser). Le disque plein a par ailleurs perturbé l'audit lui-même (2 incidents ENOSPC transitoires, lots AO/AD).
 - **GB-054 · 🟠 · `labuse backup-db` officiel = ENOSPC garanti** — `cli.py:1815` : chemin relatif `./backups`, zéro check d'espace, zéro rotation, zéro exclusion des tables reconstructibles (`dryrun_cascade_results` seule = 8,7 Go) → sur cette machine, la commande officielle sature le disque et laisse un fichier partiel.
 - **O-AK4/O-AK5 (observations)** — postgis 3.6.3 source → 3.6.4 restauré (extension recréée à la version courante, comportement pg_restore normal) ; la restauration table-à-table ne reconstruit ni FK ni vues dépendantes (l'intégrité complète exige le restore complet — inhérent à la méthode, documenté).
+
+## LOT AG — accessibilité outillée (40, seed 6007) — agent (Playwright headless + axe-core)
+**40 vues auditées, 0 CRITICAL.** Marche propre : 0 erreur console hors axe, 0×429, aucune écriture. Couverture : accueil, carte, 13 outils du registry, 3 alias hidden, 5 états fiche, CRM, Projets, Veille ×3, Sources, Copilote, overlay 24 communes, Évolution, fiche commune, filtres, tiroir Couches, permis modale, verdict, 2 états faible-donnée (Cilaos), assemblage multi-sélection. Aucun blocage dur ; ce sont des défauts d'a11y à corriger, non des bugs fonctionnels → une seule famille GB (🟡), détaillée par sous-points.
+- **GB-055 · 🟡 · Accessibilité : 4 familles SERIOUS + landmarks (dédupliquées, chacune un fix unique dans le shell)** :
+  - **a11y-a `color-contrast` (serious, transversal 40/40, 769 nœuds)** — libellés du Rail (`.text-txt-mut`/`.text-txt-dim` sur `bg-surface`, sous 4.5:1). Un fix = 40 vues. Pics : overlay 24 communes, volet Veille-critères (67 n), radar permis (35-37 n), FiltreLabuse (33 n).
+  - **a11y-b `nested-interactive` (serious, 6 vues, 50 nœuds)** — CRM/kanban : 45 cartes `.cursor-pointer` imbriquées dans conteneurs interactifs ; fiche : tiroir `div[data-drawer="regles"]` sur les 5 états.
+  - **a11y-c `aria-hidden-focus` (serious, Copilote)** — un `aside` en `aria-hidden` contient des focusables → piège clavier lecteur d'écran.
+  - **a11y-d `scrollable-region-focusable` (serious, fiche commune)** — région scrollable sans accès clavier.
+  - **a11y-e (moderate, transversal)** — `region` 40/40, `landmark-one-main` 37/40 (aucun `<main>`), `page-has-heading-one` 32/40 (aucun `<h1>` dans la SPA), `landmark-unique` 29/40 (le Rail). Un chantier « landmarks + h1 » dans le shell App les règle d'un coup.
