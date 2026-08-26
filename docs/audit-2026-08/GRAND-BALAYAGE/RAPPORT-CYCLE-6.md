@@ -32,6 +32,7 @@
 | AB — blocs communes | 240 | **240** | 0 faux chiffre (🟠 GB-041 data-gap DPE) | lot-ab.csv |
 | AC — recherche de masse | 200 | **196** | 4 (🟡 GB-042 jokers LIKE ; 🟡 GB-043 suffixe IDU) | lot-ac.csv |
 | AF — intégrité pleine table | 62 | **59** | 3 (🟡 GB-044/045/046) · G2 ✅ G3 ✅ | lot-af.csv |
+| AJ — installation à vide | 20 | **17** | 3 (🟠 GB-047/048/049 ; 🟡 GB-050) | lot-aj.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -55,3 +56,10 @@
 - **GB-044 · 🟡 · Run fantôme `q_v2_demo` dans `parcel_p_score_v2`** — 8 lignes d'un run absent de `p_score_v2_runs` (8 run_id distincts vs 7 enregistrés). Vestige démo, run servi sain. Purge cosmétique proposée.
 - **GB-045 · 🟡 · `ortho_tiles.nb_detections` périmé sur 3 122/5 041 tuiles** — la purge PV `20eb5bd8` (DELETE 23 529 détections) n'a jamais décrémenté le compteur. Interne, aucune surface servie identifiée. Recalcul ou note schéma.
 - **GB-046 · 🟡 · `ingestion_runs.parcels_count` ≠ parcelles rattachées** — sémantique de journal (nb à l'époque) + upserts qui ré-attribuent `ingestion_run_id` ; non documenté, aucun consommateur cassé. À documenter ou renommer.
+
+## LOT AJ — installation à vide (20, seed 6010) — agent · base éphémère labuse_c6_test + uvicorn :8001, DÉTRUITS (vérifié : port libre, base droppée, :8000/labuse jamais touchés)
+**17/20 OK.** Points sains : `/readyz` JAMAIS menteur (503 sur base vide, détail honnête, pointe `labuse doctor`) ; 8/10 vues propres à vide (200 listes vides ou 4xx/503 explicites) ; boot sans clés SMTP/Stripe/Anthropic silencieusement sain ; compte : mécanisme officiel CLI `compte-invite`/`compte-admin` testé (login 303 + cookie + session, /projets authentifié 200) ; 82 tables vs 202 en réel = les 120 manquantes sont toutes ingestion/dérivées/paresseuses, aucune table du heal ne manque après convergence.
+- **GB-047 · 🟠 · Le boot ne sait pas amorcer un Postgres nu (0 table) — promesse runbook « schéma posé auto au boot » non tenue hors docker** — `createdb` nu + uvicorn → `type "geometry" does not exist`, zéro table : le heal (`app.py:128`, `models.ensure_schema`) n'appelle jamais `db.ensure_postgis` (`db.py:115`), seuls les chemins CLI le font (`cli.py:87/1624/1690`). Le chemin docker documenté (image postgis, extension pré-créée) marche, `labuse doctor` répare, `/readyz` honnête → 🟠 et non 🔴 (décision orchestrateur : DEPLOY_RUNBOOK.md §7 vérifié).
+- **GB-048 · 🟠 · Ordre du heal faux : premier boot post-doctor échoue sur `crm_columns`** — tuple `_heal_steps` (`app.py:160-171`) : `crm_columns` (FK → comptes) passe AVANT `comptes+scoping` → `relation "comptes" does not exist`, converge au boot n+2. Échec loggé + event_log + exposé /readyz (mécanique FIX-GB-011 opérante) mais un redémarrage supplémentaire silencieusement requis.
+- **GB-049 · 🟠 · `/modules/permis` = 500 garanti sur toute installation neuve** — LEFT JOIN `m10_permit_delais` sans garde `to_regclass` (`modules.py:381`) ; table construite par la seule ingestion M10, jamais par le heal.
+- **GB-050 · 🟡 · Défauts d'installation mineurs (groupés)** — messages à-vide orientés dev (« run q_v* ») sur /stats et /filtre ; lien `compte-invite` hardcodé :8000 ; env=local ⇒ auth désactivée (un vrai 2e client doit poser LABUSE_ENV + LABUSE_SECRET_KEY, non rappelé par le boot).
