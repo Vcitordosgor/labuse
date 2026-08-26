@@ -1856,18 +1856,25 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     M5.1 : « opportunités détectées » = brûlantes v2 + chaudes v2 (le run v2 est la
     source) ; la ventilation par tier accompagne les motifs d'écartement."""
+    # FIX-C6 (GB-058) — comme /stats, l'entonnoir est MÉMORISÉ 30 s : deux agrégations
+    # pleine-île (motifs + _q_v2_stats) le rendaient à ~9,8 s p95 au cycle 6 (non caché,
+    # contrairement à /stats). Même clé (commune, source), même TTL, single-flight partagé.
     key = commune or "__ile__"
-    rows = db.execute(text(
-        "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
-        {"r": source, "c": key}).mappings().all()
-    stats_row = _q_v2_stats(db, commune, run_label=source)
-    return {"commune": commune, "analysees": stats_row["total"],
-            "opportunites": stats_row["opportunites"],
-            "tiers": stats_row["tiers"],
-            "motifs": [dict(r) for r in rows],
-            "note": ("Opportunités = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run "
-                     "servi). Une parcelle peut cumuler plusieurs motifs (les pourcentages se "
-                     "recouvrent). « Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
+
+    def _compute():
+        rows = db.execute(text(
+            "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
+            {"r": source, "c": key}).mappings().all()
+        stats_row = _q_v2_stats(db, commune, run_label=source)
+        return {"commune": commune, "analysees": stats_row["total"],
+                "opportunites": stats_row["opportunites"],
+                "tiers": stats_row["tiers"],
+                "motifs": [dict(r) for r in rows],
+                "note": ("Opportunités = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run "
+                         "servi). Une parcelle peut cumuler plusieurs motifs (les pourcentages se "
+                         "recouvrent). « Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
+
+    return _mem_cached(("stats-entonnoir", key, source), 30.0, _compute)
 
 
 @app.get("/stats")

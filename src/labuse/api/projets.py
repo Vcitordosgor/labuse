@@ -1471,7 +1471,13 @@ def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db))
     def rows_iter():
         buf = io.StringIO()
         w = csv.writer(buf, delimiter=";", lineterminator="\r\n")
-        w.writerow([f"# cadrage figé le {figee} · {val} · export généré le {genere} "
+        # FIX-C6 (GB-057) — l'en-tête ne dit plus « cadrage figé le non figé » : le libellé suit
+        # l'état RÉEL du cadrage (figé à une date, ou explicitement non figé).
+        entete = f"# cadrage figé le {figee}" if figee != "non figé" else "# cadrage NON figé (jamais exécuté)"
+        # FIX-C6 (GB-056) — BOM UTF-8 en tête (comme l'export parcelles utf-8-sig) : sans lui
+        # Excel FR casse les accents. Cohérence inter-exports.
+        buf.write("\ufeff")  # BOM UTF-8
+        w.writerow([f"{entete} · {val} · export généré le {genere} "
                     "· ordre géographique · aucune sélection ni classement interne"])
         w.writerow(cols)
         yield buf.getvalue()

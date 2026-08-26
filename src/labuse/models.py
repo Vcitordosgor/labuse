@@ -990,6 +990,11 @@ def ensure_icd_columns(engine) -> None:
                      "ADD COLUMN IF NOT EXISTS icd smallint"))
         c.execute(_t("ALTER TABLE parcel_p_score_v2 "
                      "ADD COLUMN IF NOT EXISTS icd_detail jsonb"))
+        # FIX-C6 (GB-058) — /map/tiles/meta fait `max(computed_at) WHERE run_id=…` (tiles.py:332,
+        # appelé au 1er paint carte) : sans index sur (run_id, computed_at) c'est un Parallel Seq
+        # Scan de ~430k lignes (p95 mesuré ~3,9 s au cycle 6). Index couvrant → max index-only.
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_p_v2_run_computed "
+                     "ON parcel_p_score_v2 (run_id, computed_at)"))
 
 
 def ensure_signalements(engine) -> None:
