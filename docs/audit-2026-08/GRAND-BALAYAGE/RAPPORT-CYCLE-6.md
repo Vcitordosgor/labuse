@@ -37,6 +37,7 @@
 | AK — backup & restauration | 20 | **18** | 2 (🔴 GB-053 ; 🟠 GB-054) | lot-ak.csv |
 | AG — accessibilité axe-core | 40 | **40** | 0 critical (🟡 GB-055 familles serious) | lot-ag.csv |
 | AO — exports restants | 70 | **67** | 3 (🟡 GB-056 BOM projet.csv ; GB-057 en-tête) | lot-ao.csv |
+| AM — budgets de performance | 30 | **22** | 8 dépassements (🟡 GB-058, dont 2 actionnables) | lot-am.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -95,3 +96,10 @@
 - **GB-056 · 🟡 · `projet.csv` exporté SANS BOM UTF-8 → accents cassés sous Excel FR** — `projets.py:1499` renvoie une `StreamingResponse` de `str` brut, là où l'export parcelles (`app.py:1568`) émet `utf-8-sig`. Incohérence inter-exports (déjà pointée cycle 5 sur velocite.csv). Repro : tout `GET /projets/{pid}/export.csv`.
 - **GB-057 · 🟡 · En-tête `projet.csv` « # cadrage figé » injecté même sur un cadrage NON figé** — `projets.py:1465` injecte le libellé « non figé » dans un gabarit `:1474` dont l'en-tête parle de cadrage figé → mention contradictoire dans le fichier. Cosmétique, pas un faux chiffre.
 - **O-AO (observations)** — règle d'encodage à uniformiser : parcelles=utf-8-sig, projets/velocite=utf-8 nu ; tous les négatifs et payloads hostiles rendent proprement (404/422/410, 0×500).
+
+## LOT AM — budgets de performance (30, seed 6013) — agent SOLO (baseline officielle, aucune contention)
+**30 endpoints × 10 hits, tous 200. Baseline : 22 dans les budgets, 8 dépassements.** Cœur métier largement OK : **fiche `/parcels/{idu}` 425 ms** (budget 1 s), tuiles pbf 10-52 ms (budget 300 ms), v2/* < 55 ms, faisabilité 223 ms, `/stats` caché rapide. 3 idus distincts, ~52/min, 0×429.
+- **GB-058 · 🟡 · 8 dépassements de budget de performance (baseline avant prod)**, dont **2 défauts serveur ACTIONNABLES** :
+  - **perf-a `/stats/entonnoir` p95 9846 ms (budget 500, ×20)** — le plus coûteux : contrairement à `/stats`, PAS wrappé dans `_mem_cached` (`app.py:1848`) → 2 agrégations pleine-île (~430k lignes, EXISTS par ligne) à chaque appel. **Cache manquant, corrigeable.**
+  - **perf-b `/map/tiles/meta` p95 3934 ms (budget 300, ×13)** — EXPLAIN : Parallel Seq Scan sur ~430k lignes de `parcel_p_score_v2` pour un `max(computed_at) WHERE run_id=…` (`tiles.py:332`), non caché, appelé au 1er paint carte. **Index `(run_id, computed_at)` manquant.**
+  - Les 6 autres sont attendus par nature ou borderline, pas des bugs : `/parcels/{idu}/explain` p95 17 s (**appel LLM Anthropic live**, timeout 25 s — budget 3 s inapproprié, à budgéter à part) ; `/map/parcels.geojson` p95 12,6 s (**payload 90 Mo**, 60 000 géométries complètes — à capper/tuiler) ; export.pdf 6,8 s / export.csv 3,4 s / dossier.pdf (génération document, borderline) ; `/accueil/chiffres` & `/communes/{c}/contexte` : **froid seul** dépasse (2,1 s / 6,6 s) mais chaud rentre largement (8 ms / 206 ms) → cache tiède efficace, coût du 1er hit à surveiller.
