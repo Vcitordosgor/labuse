@@ -1,0 +1,201 @@
+type,requete,resultat,geom_ok,verdict,note
+adresse,326 Rue Saint Jean XXIII,3 feats; idu attendu servi (97414000DT0451),,OK,
+adresse,20 Chemin Neuf,11 feats; idu attendu servi (97405000AX0313),,OK,
+adresse,20 Impasse Ino,1 feats; idu attendu servi (97416000CZ1402),,OK,
+adresse,21 Rue Suffren,5 feats; idu attendu servi (97415000BO0248),,OK,
+adresse,253 Chemin Edward Savigny,2 feats; idu attendu servi (97416000CV2122),,OK,
+adresse,16 Chemin des Amethystes,1 feats; idu attendu servi (97414000EN1074),,OK,
+adresse,218 Chemin Départemental 13 Piton,1 feats; idu attendu servi (97413000CX0692),OUI,OK,geom match idu=97413000CX0692 contains=True dist=0.0m
+adresse,72 Impasse du Verger,1 feats; idu attendu servi (97413000DE0150),OUI,OK,geom match idu=97413000DE0150 contains=True dist=0.0m
+adresse,87 Route Nationale 2,12 feats; idu attendu servi (97402000AH1041),,OK,
+adresse,2 Chemin de la Vigne,12 feats; idu attendu servi (97411000IL0347),,OK,
+adresse,296 Impasse Sarabé,2 feats; idu attendu servi (97409000BM0611),OUI,OK,geom match idu=97409000BM0611 contains=True dist=0.0m
+adresse,44 Avenue President Mitterrand,3 feats; idu attendu servi (97416000EL0084),,OK,
+adresse,17 Rue de l’Orient,1 feats; idu attendu servi (97418000AS0555),,OK,
+adresse,55 Rue de la Croix,5 feats; idu attendu servi (97415000BI0215),,OK,
+adresse,10 Impasse de Mafate,3 feats; idu attendu servi (97415000AD0388),,OK,
+adresse,60 Chemin Marc Boyer,1 feats; idu attendu servi (97410000AT1156),,OK,
+adresse,23 Chemin de la Marine,2 feats; idu attendu servi (97419000AL0261),,OK,
+adresse,97 Rue Emile Evan,1 feats; idu attendu servi (97406000AW1039),,OK,
+adresse,292 Ruelle Camalon,1 feats; idu attendu servi (97409000AS0015),,OK,
+adresse,146 Rue des Flamboyants,2 feats; idu attendu servi (97422000BW1485),,OK,
+adresse,3 Rue des Colibris,3 feats; idu attendu servi (97405000AR1142),OUI,OK,geom match idu=97405000AR1142 contains=True dist=0.0m
+adresse,198 Chemin Leroy,1 feats; idu attendu servi (97422000BL0673),,OK,
+adresse,55 Chemin des Fraises,1 feats; idu attendu servi (97423000AK1922),,OK,
+adresse,164 Rue Pierre Rivals,1 feats; idu attendu servi (97422000AX0583),,OK,
+adresse,38 Rue Théodore Thomas,1 feats; idu attendu servi (97416000IM0774),OUI,OK,geom match idu=97416000IM0774 contains=True dist=0.0m
+adresse,31 Rue des Eucalyptus,2 feats; idu attendu servi (97406000AI0359),,OK,
+adresse,13 Allée du Romarin,1 feats; idu attendu servi (97411000BC0322),,OK,
+adresse,8 Rue Vincent Scotto,1 feats; idu attendu servi (97407000AS1035),,OK,
+adresse,20 Cité Plateau Maison Rouge,1 feats; idu attendu servi (97414000DS0828),OUI,OK,geom match idu=97414000DS0828 contains=True dist=0.0m
+adresse,38 Chemin Berrichon,2 feats; idu attendu servi (97422000AS0500),,OK,
+adresse,722 Sidr Front de Mer,1 feats; idu attendu servi (97416000DM0723),,OK,
+adresse,12 Impasse Paul Tignan,1 feats; idu attendu servi (97416000IE1266),,OK,
+adresse,200 Chemin Bassin Chevrettes,1 feats; idu attendu servi (97416000EV1305),,OK,
+adresse,1 Ruelle Marechal Joseph Gallieni,3 feats; idu attendu servi (97422000BY0026),,OK,
+adresse,49 Chemin Mussard,1 feats; idu attendu servi (97422000AK1042),OUI,OK,geom match idu=97422000AK1042 contains=True dist=0.0m
+adresse,1 Rue DE LA FOIRE,3 feats; idu attendu servi (97402000AH1041),,OK,
+adresse,530 Rue de Cambuston,1 feats; idu attendu servi (97409000AE0038),OUI,OK,geom match idu=97409000AE0038 contains=True dist=0.0m
+adresse,16 Rue Andre Batty,1 feats; idu attendu servi (97404000AL1185),,OK,
+adresse,22 Chemin Valsin,2 feats; idu attendu servi (97415000DT1006),,OK,
+adresse,162 Allée de Montaignac,1 feats; idu attendu servi (97404000AX0432),,OK,
+adresse,45 Chemin Crescence,4 feats; idu attendu servi (97415000DR0136),,OK,
+adresse,8 Rue de la Menuiserie,1 feats; idu attendu servi (97418000AV1293),OUI,OK,geom match idu=97418000AV1293 contains=True dist=0.0m
+adresse,227 Rue Georges Pompidou,10 feats; idu attendu servi (97413000CC0861),,OK,
+adresse,168 Rue Mahe de la Bourdonnais,1 feats; idu attendu servi (97405000BI0737),,OK,
+adresse,134 Rue des Vanilliers,1 feats; idu attendu servi (97410000AH0957),,OK,
+adresse,55 Rue des Jacques,2 feats; idu attendu servi (97408000AT1720),,OK,
+adresse,28 Rue Kerautrai,1 feats; idu attendu servi (97417000BD1157),,OK,
+adresse,30 Chemin Tamatave,1 feats; idu attendu servi (97415000CT0164),,OK,
+adresse,9 Rue Pierre Marinier,3 feats; idu attendu servi (97418000AC0866),OUI,OK,geom match idu=97418000AC0866 contains=True dist=0.0m
+adresse,1 Rue Joseph Adrien Badera,4 feats; idu attendu servi (97412000CD1502),OUI,OK,geom match idu=97412000CD1502 contains=True dist=0.0m
+adresse,23 Boulevard de Saint François,1 feats; idu attendu servi (97411000DN0236),OUI,OK,geom match idu=97411000DN0236 contains=True dist=0.0m
+adresse,29 Rue des Mouettes,1 feats; idu attendu servi (97415000EW0705),,OK,
+adresse,31 Chemin du Portail,7 feats; idu attendu servi (97422000EN0284),,OK,
+adresse,25 Chemin Moreau,1 feats; idu attendu servi (97410000BN0887),,OK,
+adresse,211 Chemin Ramassamy Samna,1 feats; idu attendu servi (97411000IY0014),,OK,
+adresse,9 Rue des Coccinelles,8 feats; idu attendu servi (97412000BL1107),,OK,
+adresse,456 Chemin Ricquebourg,1 feats; idu attendu servi (97413000CQ0627),OUI,OK,geom match idu=97413000CQ0627 contains=True dist=0.0m
+adresse,2 Chemin Kerbel,12 feats; idu attendu servi (97401000AS0866),OUI,OK,geom match idu=97401000AS0866 contains=False dist=2.7m
+adresse,13 Chemin de la Cure,1 feats; idu attendu servi (97412000CV0589),OUI,OK,geom match idu=97412000CV0589 contains=True dist=0.0m
+adresse,7 Impasse des Rochers,2 feats; idu attendu servi (97415000BY0055),,OK,
+adresse,6 Avenue de la Gare,2 feats; idu attendu servi (97414000DH0921),OUI,OK,geom match idu=97414000DH0921 contains=True dist=0.0m
+adresse,334 Rue de Cilaos,3 feats; idu attendu servi (97414000EX0311),,OK,
+adresse,18 Impasse de la Cure,1 feats; idu attendu servi (97403000AS0159),,OK,
+adresse,607 Rue de la République,1 feats; idu attendu servi (97406000AT0735),,OK,
+adresse,6 Impasse des Dardanals,1 feats; idu attendu servi (97416000HM0100),OUI,OK,geom match idu=97416000HM0100 contains=True dist=0.0m
+adresse,2 Chemin des Framboisiers,1 feats; idu attendu servi (97411000HD0279),,OK,
+adresse,5 Rue Quai Gabriel,5 feats; idu attendu servi (97417000BC1044),,OK,
+adresse,36 Rue Pasteur,11 feats; idu attendu servi (97422000BW1947),,OK,
+adresse,57 Chemin Jacques Cargot,1 feats; idu attendu servi (97420000AO0196),,OK,
+adresse,2420 Chemin Lefaguyes,1 feats; idu attendu servi (97409000AT1014),,OK,
+adresse,17 Avenue du Général de Gaulle,9 feats; idu attendu servi (97401000AM0218),OUI,OK,geom match idu=97401000AM0218 contains=False dist=0.6m
+adresse,76 Chemin Casimir,1 feats; idu attendu servi (97413000CY1301),,OK,
+adresse,272 Rue Raphaël Babet,1 feats; idu attendu servi (97412000BW1782),,OK,
+adresse,40 Cité de Balmann,1 feats; idu attendu servi (97410000BW0623),,OK,
+adresse,36 Chemin Roland Garros,4 feats; idu attendu servi (97416000EV1565),,OK,
+adresse,5 Chemin Dijoux,12 feats; idu attendu servi (97408000AO0329),OUI,OK,geom match idu=97408000AO0329 contains=True dist=0.0m
+adresse,25 Chemin Floriant,1 feats; idu attendu servi (97415000DS0585),,OK,
+adresse,89 Chemin de l'Évêque,3 feats; idu attendu servi (97415000ER0203),,OK,
+adresse,15 Chemin des Avocats,1 feats; idu attendu servi (97411000AV0275),,OK,
+adresse,100 Rue Louis Lagourgue,2 feats; idu attendu servi (97418000AY0738),OUI,OK,geom match idu=97418000AY0738 contains=True dist=0.0m
+idu,97409000BD1356,1 res; exact servi,,OK,exact14
+idu,97413000CX2295,1 res; exact servi,,OK,exact14
+idu,97411000DY0151,1 res; exact servi,,OK,exact14
+idu,97410000AH0290,1 res; exact servi,,OK,exact14
+idu,97421000AV1023,1 res; exact servi,,OK,exact14
+idu,97414000DH0061,1 res; exact servi,,OK,exact14
+idu,97406000AV1309,1 res; exact servi,,OK,exact14
+idu,97413000BE0137,1 res; exact servi,,OK,exact14
+idu,97418000AO2028,1 res; exact servi,,OK,exact14
+idu,97418000AW0465,1 res; exact servi,,OK,exact14
+idu,97410000ae0849,1 res; exact servi,,OK,minuscules
+idu,97411000ct1017,1 res; exact servi,,OK,minuscules
+idu,97412000bk0063,1 res; exact servi,,OK,minuscules
+idu,97419000ad0276,1 res; exact servi,,OK,minuscules
+idu,97415000de0700,1 res; exact servi,,OK,minuscules
+idu,97403 000 AP 0471,1 res; exact servi,,OK,espaces
+idu,97410 000 BN 0509,1 res; exact servi,,OK,espaces
+idu,97411 000 AV 0535,1 res; exact servi,,OK,espaces
+idu,97416 000 CT 0911,1 res; exact servi,,OK,espaces
+idu,97416 000 EY 1409,1 res; exact servi,,OK,espaces
+idu,BD2191,1 res suffixe-match,,OK,court_section
+idu,CQ0707,1 res suffixe-match,,OK,court_section
+idu,AI0897,7 res suffixe-match,,OK,court_section
+idu,DV0005,2 res suffixe-match,,OK,court_section
+idu,AT1388,2 res suffixe-match,,OK,court_section
+idu,CL 1336,1 res suffixe-match,,OK,court_espace
+idu,AV 1375,2 res suffixe-match,,OK,court_espace
+idu,BE 0152,6 res suffixe-match,,OK,court_espace
+idu,CY 0124,5 res suffixe-match,,OK,court_espace
+idu,IE 0771,2 res suffixe-match,,OK,court_espace
+idu,97409000B,0 résultat (honnête),,OK,tronque_prefixe
+idu,97413000CX,0 résultat (honnête),,OK,tronque_prefixe
+idu,974110,0 résultat (honnête),,OK,tronque_prefixe
+idu,97410000,0 résultat (honnête),,OK,tronque_prefixe
+idu,97421000AV,0 résultat (honnête),,OK,tronque_prefixe
+idu,7414000DH0061,1 res suffixe-match,,OK,tronque_suffixe
+idu,AV1309,4 res suffixe-match,,OK,tronque_suffixe
+idu,BE0137,8 res suffixe-match,,OK,tronque_suffixe
+idu,18000AO2028,1 res suffixe-match,,OK,tronque_suffixe
+idu,0AW0465,6 res suffixe-match,,OK,tronque_suffixe
+idu,97410000AE849,0 résultat (honnête),,OK,zero_pad_faux
+idu,97411000CT1017,1 res suffixe-match légitime,,OK,zero_pad_faux
+idu,97412000BK63,0 résultat (honnête),,OK,zero_pad_faux
+idu,97419000AD276,0 résultat (honnête),,OK,zero_pad_faux
+idu,97415000DE700,0 résultat (honnête),,OK,zero_pad_faux
+idu,97409000BD9999,0 résultat (honnête),,OK,inexistant
+idu,97413000CX9999,0 résultat (honnête),,OK,inexistant
+idu,97411000DY9999,0 résultat (honnête),,OK,inexistant
+idu,97410000AH9999,0 résultat (honnête),,OK,inexistant
+idu,97421000AV9999,0 résultat (honnête),,OK,inexistant
+idu,  97403000AP0471  ,1 res; exact servi,,OK,espaces_bords
+idu,  97410000BN0509  ,1 res; exact servi,,OK,espaces_bords
+idu,  97411000AV0535  ,1 res; exact servi,,OK,espaces_bords
+idu,  97416000CT0911  ,1 res; exact servi,,OK,espaces_bords
+idu,  97416000EY1409  ,1 res; exact servi,,OK,espaces_bords
+idu,000BD2191,1 res suffixe-match,,OK,prefixe_section
+idu,000CQ0707,1 res suffixe-match,,OK,prefixe_section
+idu,000AI0897,7 res suffixe-match,,OK,prefixe_section
+idu,000DV0005,2 res suffixe-match,,OK,prefixe_section
+idu,000AT1388,2 res suffixe-match,,OK,prefixe_section
+lieudit,Hell-Bourg,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Dos d'Âne,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Grand Îlet,"2 adresses du secteur (1er: 30 Grand Îlet, Salazie (97433))",,OK,
+lieudit,La Plaine des Cafres,"4 adresses du secteur (1er: 12 La Plaine des Cafres, Le Tampon (97430))",,OK,
+lieudit,Bois Court,"2 adresses du secteur (1er: 32 Bois Court, Sainte-Marie (97438))",,OK,
+lieudit,Piton Hyacinthe,"12 adresses du secteur (1er: 62 Piton Hyacinthe, Le Tampon (97418))",,OK,
+lieudit,Bérive,"12 adresses du secteur (1er: 64 Chemin 50 Berive, Le Tampon (97430))",,OK,
+lieudit,Bois d'Olives,"12 adresses du secteur (1er: 21 Bois d'Olives, Saint-Pierre (97432))",,OK,
+lieudit,Ravine des Cabris,"10 adresses du secteur (1er: 89 Ravine des Cabris, Saint-Pierre (97432))",,OK,
+lieudit,Les Makes,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,La Chaloupe,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Les Colimaçons,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,La Saline les Bains,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,L'Ermitage,"12 adresses du secteur (1er: 1 Chemin de l'Ermitage, Saint-Paul (97434))",,OK,
+lieudit,Villèle,"12 adresses du secteur (1er: 1 Rue de Villèle, Saint-Paul (97435))",,OK,
+lieudit,Bernica,"12 adresses du secteur (1er: 10 Chemin Ravine Bernica, Saint-Paul (97460))",,OK,
+lieudit,Bellemène,"12 adresses du secteur (1er: 11 Route Hubert Delisle Bellemène, Saint-Paul (97460))",,OK,
+lieudit,Savanna,"12 adresses du secteur (1er: 10 Route de Savanna, Saint-Paul (97460))",,OK,
+lieudit,Cambaie,"12 adresses du secteur (1er: 100 Route de Cambaie, Saint-Paul (97460))",,OK,
+lieudit,Bois de Nèfles,"12 adresses du secteur (1er: 1 Rue Bois de Nèfles, L'Étang-Salé (97427))",,OK,
+lieudit,La Bretagne,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Le Brûlé,"12 adresses du secteur (1er: 32 le Brûlé, Les Avirons (97425))",,OK,
+lieudit,Beaufonds,"12 adresses du secteur (1er: 411 Chemin Beaufonds, Sainte-Marie (97438))",,OK,
+lieudit,Grand Bois,"5 adresses du secteur (1er: 337 Anse Grand Bois, Saint-Pierre (97410))",,OK,
+lieudit,Terre Sainte,"12 adresses du secteur (1er: 49 Terre Sainte, Saint-Pierre (97410))",,OK,
+lieudit,La Montagne,"12 adresses du secteur (1er: 1 Rue Notre Dame de la Montagne, Saint-Denis (97417))",,OK,
+lieudit,Commune Primat,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Bras Creux,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+lieudit,Mare à Poule d'Eau,"5 adresses du secteur (1er: 14 Mare à Poule d'Eau, Salazie (97433))",,OK,
+lieudit,Îlet à Cordes,"0 résultat (honnête, pas de type lieu-dit en base)",,OK,
+hostile,,HTTP 422 refus propre,,OK,vide
+hostile,ru,HTTP 422 refus propre,,OK,2cars
+hostile,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…,0 res,,OK,longue_10k
+hostile,%%%,12 res pour joker LIKE pur,,KO,"pct_seul 1er=10 N 1, Saint-Pierre (97410)"
+hostile,___,12 res pour joker LIKE pur,,KO,"underscore 1er=10 N 1, Saint-Pierre (97410)"
+hostile,%rue%,12 res pour joker LIKE pur,,KO,"like_mix 1er=1 Rue Edf, Saint-Paul (97422)"
+hostile,'; DROP TABLE adresses;--,0 res,,OK,sqlish
+hostile,l'o'r'o,0 res,,OK,quote
+hostile,🏠🏠🏠 rue,0 res,,OK,unicode_emoji
+hostile,شارع الشمس,0 res,,OK,rtl
+hostile,r̸̛ue͘ d́es,0 res,,OK,zalgo
+hostile,ru de pari sain deni,0 res,,OK,faute_lourde
+hostile,chemin dez anglé,0 res,,OK,faute2
+hostile,12 rue du stade 97411000AB0012,0 res,,OK,adresse+idu
+hostile,"10 Rue de Paris, Saint-Denis (97400)",0 res,,OK,label_complet
+hostile,97400,0 res,,OK,cp_seul
+hostile,123456,0 res,,OK,num_seul
+hostile,<script>alert(1)</script>,0 res,,OK,html
+hostile,rue\0nulle,HTTP 422 refus propre,,OK,nul_byte
+hostile,rue		de	la,0 res,,OK,tabs
+hostile,rue\nde paris,0 res,,OK,newline
+hostile,-1 rue,0 res,,OK,neg
+hostile,974010000AB0001,0 res,,OK,idu_15c
+hostile,ABCDE000AB0001,0 res,,OK,idu_lettres
+hostile,974%,10 res pour joker ILIKE,,KO,idu_pct 1er=97411000KA0296
+hostile,97401'--,0 res,,OK,idu_sqlish
+hostile,,HTTP 422 refus propre,,OK,idu_vide
+hostile,９７４０１,0 res,,OK,idu_unicode
+hostile,97411 rue du stade,0 res,,OK,idu_melange
+hostile,97____,0 res,,OK,idu_underscore
