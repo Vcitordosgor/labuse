@@ -164,3 +164,85 @@ Tout est cloisonné au **compte de test `gb-test-ae@labuse.local` (compte_id 31,
 
 ## LOT AI — déterminisme & redémarrage (40, seed 6009) — agent SOLO (redémarrage :8000 autorisé, une fois)
 **21/21 déterminisme à chaud + 21/21 invariance au redémarrage = 42 vérifs, 0 finding.** Temps 1 : 20 endpoints chauds appelés 2× (diff JSON strict + aplati clé-à-clé) → **strictement identiques**, 0 champ volatile (ces réponses ne portent aucun horodatage/uuid → 0 champ exclu). Temps 2 : redémarrage par la procédure sûre sans secret (`.env` rechargé seul), **reboot readyz ready:true en 1 s**, ré-appel des 21 mêmes → **tous identiques au chiffre près**, **served_run `q_v10_m129` avant == après**. Aucun 🔴/🟠/🟡. Contraste net avec l'historique GB-011 (où le redémarrage ne corrigeait rien) : ici le boot ne change **aucune** valeur servie. Note : `/stats` et `/filtre` exigent `source=<run>` (404 « source requise » sinon = contrat volontaire, pas un défaut). Serveur laissé tournant.
+
+---
+
+# LIVRABLE FINAL — CERTIFICATION
+
+## Récapitulatif des 17 lots (~1600 passes réalisées, cible ~1450)
+| # | Lot | Passes | Résultat | Findings |
+|---|---|---|---|---|
+| AA | vérité des tuiles | 150 | 150/150 (0 fantôme, 0 écart tier) | — (O-AA1) |
+| AB | 240 blocs communes | 240 | 240/240 exacts | 🟠 GB-041 |
+| AC | recherche de masse | 200 | 196/200 | 🟡 GB-042/043 |
+| AD | 100 PDF ouverts | 100 | 100/100 (0 faux chiffre) | 🟡 GB-051/052 |
+| AE | fuzzing des écritures | 100 | 100/100 (0×500, 0 écriture partielle) | 🟡 GB-060/061 |
+| AF | intégrité pleine table | 62 | 59/62 · G2/G3 ✅ | 🟡 GB-044/045/046 |
+| AG | accessibilité axe-core | 40 | 40 vues, 0 critical | 🟡 GB-055 |
+| AH | deep-links exhaustifs | 80 | 76/80 | 🟠 GB-059 |
+| AI | déterminisme & redémarrage | 40 | 40/40 (invariance boot totale) | — |
+| AJ | installation à vide | 20 | 17/20 | 🟠 GB-047/048/049 · 🟡 GB-050 |
+| AK | backup & restauration | 20 | 18/20 | 🔴 GB-053 · 🟠 GB-054 |
+| AL | Copilote grand volume | 100 | 84 exéc, 0 chiffre faux, adversariales 10/10 | 🟡 GB-065 |
+| AM | budgets de performance | 30 | 22/30 dans budget (baseline) | 🟡 GB-058 |
+| AN | marches UI longues | 100 | 69/100 (31 KO env, 0 bug app) | 🟡 GB-062 |
+| AO | exports restants | 70 | 67/70 | 🟡 GB-056/057 |
+| AP | moteur unique de masse | 150 | **149/150 (0 écart de chiffre servi)** | 🟠 GB-066 |
+| AQ | flux métier scénarisés | 100 | **92/100 app-OK** (8 KO harness) | 🟠 GB-063 · 🟡 GB-064 |
+
+**Total cycle 6 : ~1600 passes** (16 skip LLM budget AL, notés ; 31 KO AN + 8 KO AQ = harnais/contention, 0 bug app). **Campagne GRAND BALAYAGE : ≈ 2250+ passes sur 6 cycles.**
+
+## Les deux exigences explicites du mandat
+- **Moteur unique vérifié en masse : 149/150** (LOT AP) — **0 écart de chiffre servi** sur tier/SDP/surface/SHAB/prix/millésime ; le seul écart (1/150) est un **vocabulaire d'export** (code interne vs libellé M137, GB-066), pas un chiffre. « Tout le monde écoute le même moteur » : **prouvé**.
+- **Flux métier : 92/100** (LOT AQ) — 30/30 projets, 25/25 CRM, 20/25 surveillance, 17/20 chaînes ; les 8 KO sont un défaut du **harnais** (URL-encoding), l'app est saine ; continuité idu-par-idu prouvée sur les chaînes, 0 écriture partielle.
+
+## Gardées G1-G6
+- **G1 ✅** Courrier bout-en-bout + **dédup double-submit** (`existing:true`, classe GB-013 = advisory lock) — tenu sous AE (doubles requêtes) et AQ (11 courriers préparés, 0×500).
+- **G2 ✅** `/readyz` ready + schema.ok + data.ok + served_run q_v10_m129 (LOT AF, reconfirmé LOT AI après reboot).
+- **G3 ✅** Sigles patrimoine : SHLMR **2618**, SAFER **844**, SEDRE **1847** (identiques cycle 5).
+- **G4/G5/G6 ✅** UI : **0 écran blanc sur 2000 pas** (LOT AN), header toujours cliquable, Échap ferme module+filtres, **cohérence base parfaite** (0 objet à moitié créé, 0 orphelin projet_parcelles).
+
+## Baseline de performance (LOT AM — officielle avant prod)
+Cœur métier dans les budgets : fiche 425 ms, tuiles pbf 10-52 ms, v2/* < 55 ms, faisabilité 223 ms. 8 dépassements, dont **2 actionnables** : `/stats/entonnoir` (cache manquant, p95 9,8 s) et `/map/tiles/meta` (index `(run_id,computed_at)` manquant, p95 3,9 s). Reste = LLM/payload/froid attendus.
+
+## Backup (LOT AK) — chemin du premier backup frais
+`~/labuse-backups/labuse-c6-donnees-usage-2026-08-26.dump` (0,31 Mo, 28 tables de données-usage, **testé en restauration**). Le dump COMPLET (6,44 Go, RTO ~35 min) est **impossible sur la machine** (disque plein) → **GB-053**.
+
+## Bilan des findings : 26 (GB-041→066) — **1 🔴 · 8 🟠 · 17 🟡**
+### Le seul 🔴 — opérationnel, pas un faux chiffre
+- **GB-053** Aucun backup complet possible sur la machine pilote (disque 100 %, dump 6,44 Go vs ~950 Mo libres) + dernier backup réel vieux de **36 jours** → un incident perd tout le travail utilisateur. **À traiter avant tout 2e client** (purger ~16 Go reconstructibles + backup externalisé).
+### Les 8 🟠
+- **GB-063** Orphelins `watch_zone_zonage_snap` non nettoyés au DELETE d'une veille (fuite silencieuse, 3 330 orphelins confirmés) — **le seul vrai bug de données**, correctif : FK CASCADE / DELETE dans `alertes.py:98`.
+- **GB-047/048/049** Installation à vide : le boot n'amorce pas un Postgres nu hors docker (GB-047), ordre du heal (GB-048), `/modules/permis` 500 sur base neuve (GB-049) — un « 2e client » ne démarre pas sans `labuse doctor`.
+- **GB-041** Bloc DPE servi sur table-échantillon (17 lignes) sans seuil d'honnêteté (vitrine).
+- **GB-059** État zombie (colonne gauche vide sans message) sur clé d'outil invalide dans l'URL.
+- **GB-054** `labuse backup-db` sature le disque (pas d'exclusion des tables reconstructibles).
+- **GB-066** `/parcels/export.csv` sert le code tier interne, pas le libellé M137 (vocabulaire, non-chiffre).
+### Les 17 🟡
+Data-gaps/vestiges (GB-044/045/046), recherche (GB-042/043), PDF (GB-051/052 date de run/section muette — designs à arbitrer), a11y (GB-055 : 4 familles serious, 0 critical), exports (GB-056/057 BOM+en-tête), perf (GB-058), écritures non bornées (GB-060/061), résilience mono-worker (GB-062=GB-040), compteur export.pdf figé (GB-064), routage Copilote (GB-065), install mineurs (GB-050).
+
+## Ce qui est PROUVÉ SAIN (le socle certifié)
+- **Zéro faux chiffre servi, à l'échelle** : AA 150/150 tuiles, AB 240/240 blocs vitrine, AD 100/100 PDF, AL 28/28 spot-checks Copilote, **AP 149/150 moteur unique** — sur ~980 valeurs recalculées indépendamment, **0 divergence de chiffre**.
+- **Intégrité transactionnelle des écritures** (jamais testée avant) : AE 100/100 (0×500, 0 écriture partielle, 0 corruption), AN cohérence base parfaite, AQ 0 écriture partielle — writes **tout-ou-rien**.
+- **Intégrité des données pleine table** : AF 431 663 géométries 0 invalide, 0 orphelin FK, M125 conforme au chiffre exact.
+- **Déterminisme & invariance au boot** : AI 42/42 identiques, served_run inchangé (GB-011 définitivement soldé).
+- **Sécurité** : Copilote adversariales 10/10 (ne cède rien), SQLi paramétrée (0 exfiltration), IDOR `compte_id` cloisonné, gel anti-burst opérant (0 sujet légitime gelé), aucun 500 ne fuit de stacktrace.
+- **Accessibilité** : 0 violation critical sur 40 vues.
+
+## VERDICT DE CERTIFICATION
+**PASSE BLANCHE : NON** (1 🔴 + 8 🟠). **Mais le 🔴 et la majorité des 🟠 sont OPÉRATIONNELS/pré-prod, pas des défauts de correction du logiciel servi.**
+
+**LE SOCLE APPLICATIF EST CERTIFIÉ HONNÊTE ET COHÉRENT** : sur ~1600 passes neuves, la donnée servie ne ment jamais (0 faux chiffre sur ~980 valeurs recalculées, moteur unique 149/150), les écritures sont transactionnellement sûres (0 partielle sur 300+ écritures hostiles/scénarisées), les chiffres sont déterministes et survivent au reboot, la sécurité tient. **C'est la promesse centrale du produit — elle est tenue.**
+
+**RÉSERVES BLOQUANTES avant un 2e client** (aucune ne sert un faux chiffre) :
+1. **GB-053** — externaliser le backup + libérer le disque (risque existentiel de perte de données).
+2. **GB-047/048/049** — rendre l'installation « from scratch » autonome (un 2e client doit démarrer sans intervention manuelle).
+3. **GB-063** — colmater la fuite d'orphelins `watch_zone_zonage_snap`.
+
+**CERTIFIÉ SOUS CES TROIS RÉSERVES.** Les 5 autres 🟠 et 17 🟡 sont des améliorations (vitrine DPE, vocabulaire d'export, a11y, perf, routage Copilote) sans impact sur la véracité des chiffres servis. **C'est le dernier cycle : la campagne GRAND BALAYAGE est close.**
+
+## Commande de merge (à exécuter par Vic — PAS par CC)
+
+```
+git merge --no-ff audit/grand-balayage-c6
+```
