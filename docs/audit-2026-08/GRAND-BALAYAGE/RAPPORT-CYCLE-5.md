@@ -45,6 +45,14 @@ Les 4 KO = **500 sur entrée malformée** (aucune fuite : corps « Internal Serv
 - **F2 (NON-finding) — artefact HMR dev-server** : `ReferenceError: conversation_id is not defined` vu 1× au chargement sur un 429. **Aucun `conversation_id` NU dans le source** (vérifié : que des `.conversation_id`/clés) → le build prod est propre ; artefact de module vite rémanent, effacé par un hard reload. Pas un bug de code.
 - **F3 🟡 (mineur)** : le retour arrière navigateur quitte l'appli (états d'outil/parcelle en `replaceState`, pas `pushState`) — comportement SPA classique, **pas d'état zombie ni écran blanc** (off-route → l'appli se re-rend).
 
+## LOT Z — charge / concurrence / endurance (40, seed 5004) — agent
+**30/40 OK, 0 KO fonctionnel, 0×500 sur tout le lot, 0 doublon, 0 fuite.** (10 non-mesurables = gel anti-burst, cf. F1.)
+- **A. Fiche ×10 parallèle** : 7 IDU **byte-identiques** sur 10 appels //, 0×500, **p95 0,6-1,2 s** (réf GB-024a) ; 3 non mesurés (gel).
+- **B. Dédup concurrent** : **10/10** — 1 seule ligne par scénario, `existing:[True,False]`, GB-013 (advisory lock) impeccable sous 2 threads.
+- **C. Endpoints chauds 50 connexions //** : `/health` 0,043s ; en série tout est rapide (6 ms-480 ms) ; **sous 50 simultanées** `/stats` p95 11,8 s, `/readyz` 4,5 s, `/filtre` 3,9 s → **dégradation PROPRE (file, 0×500)**, sérialisation uvicorn mono-worker (→ **GB-040 🟡**). `/stats` série re-mesuré = **0,004 s** (cache) — confirme contention, pas bug.
+- **D. Endurance** : RSS 82→102→**57 Mo** (redescend, GC), pg connexions stables, **0 idle-in-transaction**, logs/exports non croissants → **aucune fuite**.
+- **F1 (opérationnel, action Vic)** : le garde anti-burst a **GELÉ le sujet pilote** `ip:12ca17b49af2289436f3` (3 bursts/jour → gel 600s permanent) sous les rafales du test → `/parcels`/`/modules/*`/tuiles renvoient **429 gel** pour ce sujet (vérifié : `/parcels`→429, `/stats`→200 car public). **C'est un POSITIF sécurité** (anti-scraping robuste, cloisonné au seul sujet fautif, autres clients intacts) — PAS un finding. À LEVER (voir Actions).
+
 ## Findings GB-034→
 
 #### GB-034 · 🟠 · `/events?limit=-1` → 500 (limit non borné)
@@ -65,6 +73,18 @@ Les 4 KO = **500 sur entrée malformée** (aucune fuite : corps « Internal Serv
 #### GB-039 · 🟡 · Échap ne ferme pas le Copilote (GB-031 incomplet)
 - Le garde anti-frappe de mon fix GB-031 (`if activeElement.tagName ∈ {INPUT,TEXTAREA} return`, `CopiloteView.tsx`) est TOUJOURS vrai quand le Copilote est ouvert (la zone de saisie du brief est auto-focus) → Échap est systématiquement ignoré. Module et filtres, eux, se ferment à Échap (GB-031 effectif). Le Copilote étant une vue de 1er niveau (fermable par nav), la sévérité est 🟡. Correctif : fermer sur Échap même si l'input est focus quand le fil est vide/à l'accueil (ou détecter Échap avec `capture` avant le champ).
 
+#### GB-040 · 🟡 · Capacité sous pic : p95 > 3 s sur `/stats`/`/readyz`/`/filtre` à 50 connexions simultanées
+- Sous **50 connexions simultanées**, le tail explose (`/stats` 11,8 s, `/readyz` 4,5 s, `/filtre` 3,9 s) alors qu'en SÉRIE tout est rapide (6 ms-480 ms, `/stats` caché 0,004 s). Cause : **uvicorn mono-worker** (config auditée) + travail DB synchrone bloquant la boucle → sérialisation. **Dégradation PROPRE (file d'attente, 0×500)** — donc l'invariant LOT Z (« p95<3s OU dégradation propre ») est TENU. 🟡 (capacité, pas correction) : en prod, lancer `--workers N` / threadpool. Non reproductible en usage normal (mono-utilisateur pilote).
+
 ## Inventaire de purge [GB-TEST]
+| # | Objet | Traitement |
+|---|---|---|
+| P1 | Courrier **id=17** (gardée G1) | `DELETE FROM courrier_demandes WHERE id=17;` |
+| P2 | Courrier **18-29** (LOT Z dédup) | **DÉJÀ PURGÉ par l'agent Z** (DELETE 12, 0 restant vérifié) |
+| P3 | Résidus antérieurs 5,6,7,8,9,11,12,13,14,15,16 | à ta main (`DELETE FROM courrier_demandes WHERE id IN (...);`) |
+
+## Actions pour Vic (hors findings)
+- **Lever le gel anti-burst du sujet pilote** (posé par le stress-test LOT Z, POSITIF sécurité mais bloque le pilote local) :
+  `UPDATE acces_gels SET actif=false WHERE sujet='ip:12ca17b49af2289436f3';`
 
 ## VERDICT DÉFINITIF DE CAMPAGNE
