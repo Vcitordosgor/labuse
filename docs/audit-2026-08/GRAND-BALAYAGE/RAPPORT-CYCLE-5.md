@@ -39,6 +39,12 @@ Les 4 KO = **500 sur entrée malformée** (aucune fuite : corps « Internal Serv
 ## LOT Y — Copilote génératif (50, seed 5006) — HTTP réel + answer() direct
 **0 chiffre faux (spot-check 12/12 outil==parlé), 0 JSON-leak (GB-015 non régressé), 0 « service indisponible ».** 39 questions via HTTP (quota 40/j atteint → 11 dernières via `answer()` direct). Latence médiane 5,0 s / p95 8,9 s / max 10,6 s. Dégradées gracieuses : typo→333 piscines sourcé, coupe→clarif « à quelle commune ? », créole « kaz an tol »/« réserv foncièr »→réponse au fond EN CRÉOLE (GB-014✓), emojis→hors-sujet propre, « donne-moi les chiffres »→clarif, « et sa voisine »→clarif mitoyennes (GB-019✓), invention sur donnée absente REFUSÉE (« aucune source… cases en tôle »). **GB-038 🟡** : « how many permits in Le Port » (anglais) → défléchi en voie b « pas accès aux stats permis par commune » alors que `compter_permis` existe (sous-réponse ; le FR et le mix marchent). → **50/50 sans faux chiffre ni fuite ni invention.**
 
+## LOT X — marches UI aléatoires (60, seed 5005) — agent navigateur
+**60/60 marches, 720 pas : 0 écran blanc, 0 exception JS non gérée pendant le fuzz, header toujours cliquable.** Échap ferme bien **module** (#m→racine) et **filtres** (GB-031 en service, vérifié au vrai appui). Servi par vite DEV (source live). 3 observations :
+- **GB-039 🟡** : Échap ne ferme PAS le Copilote (mon garde `INPUT/TEXTAREA` de GB-031 le neutralise car la zone de saisie est auto-focus). Le Copilote est une VUE de 1er niveau (fermable par nav « Cartes »), pas un overlay transitoire — écart littéral vs l'invariant. GB-031 reste effectif sur module/filtres.
+- **F2 (NON-finding) — artefact HMR dev-server** : `ReferenceError: conversation_id is not defined` vu 1× au chargement sur un 429. **Aucun `conversation_id` NU dans le source** (vérifié : que des `.conversation_id`/clés) → le build prod est propre ; artefact de module vite rémanent, effacé par un hard reload. Pas un bug de code.
+- **F3 🟡 (mineur)** : le retour arrière navigateur quitte l'appli (états d'outil/parcelle en `replaceState`, pas `pushState`) — comportement SPA classique, **pas d'état zombie ni écran blanc** (off-route → l'appli se re-rend).
+
 ## Findings GB-034→
 
 #### GB-034 · 🟠 · `/events?limit=-1` → 500 (limit non borné)
@@ -55,6 +61,9 @@ Les 4 KO = **500 sur entrée malformée** (aucune fuite : corps « Internal Serv
 
 #### GB-038 · 🟡 · Copilote — question de comptage en anglais parfois défléchie en voie b
 - « how many building permits in Le Port over 24 months » → EXPLIQUER général « je n'ai pas accès aux stats permis par commune » alors que `compter_permis` existe (le FR et « what's the median price » anglais marchent, eux). Sous-réponse honnête (0 invention, 0 faux chiffre), routage anglais imparfait sur certaines tournures. Correctif : renforcer la reconnaissance EN des intentions de comptage.
+
+#### GB-039 · 🟡 · Échap ne ferme pas le Copilote (GB-031 incomplet)
+- Le garde anti-frappe de mon fix GB-031 (`if activeElement.tagName ∈ {INPUT,TEXTAREA} return`, `CopiloteView.tsx`) est TOUJOURS vrai quand le Copilote est ouvert (la zone de saisie du brief est auto-focus) → Échap est systématiquement ignoré. Module et filtres, eux, se ferment à Échap (GB-031 effectif). Le Copilote étant une vue de 1er niveau (fermable par nav), la sévérité est 🟡. Correctif : fermer sur Échap même si l'input est focus quand le fil est vide/à l'accueil (ou détecter Échap avec `capture` avant le champ).
 
 ## Inventaire de purge [GB-TEST]
 
