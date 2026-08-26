@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postSuggestion, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, postSuggestion, searchParcels, type LabuseEvent } from '../../lib/api'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
@@ -575,6 +575,73 @@ function AccountMenu() {
   )
 }
 
+// DASHBOARD-V1 · D1 — bouton « Signaler » (en haut à droite) : bug/idée/question + message →
+// table retours, suivie au dashboard admin (statut nouveau/traité/répondu). RGPD-sobre : le
+// client écrit ce qu'il veut transmettre, rien d'autre n'est capté ici.
+const RETOUR_TYPES = [
+  { key: 'bug' as const, label: 'Bug' },
+  { key: 'idee' as const, label: 'Idée' },
+  { key: 'question' as const, label: 'Question' },
+]
+function SignalerButton() {
+  const [open, setOpen] = useState(false)
+  const [type, setType] = useState<'bug' | 'idee' | 'question'>('bug')
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const setToast = useApp((s) => s.setToast)
+  const envoyer = async () => {
+    if (msg.trim().length < 3 || busy) return
+    setBusy(true)
+    try {
+      await postRetour({ type, message: msg.trim() })
+      setToast('Merci — votre retour est transmis.')
+      setOpen(false)
+      setMsg('')
+    } catch {
+      setToast('Envoi impossible pour le moment — réessayez.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="relative">
+      <button data-signaler onClick={() => setOpen((o) => !o)}
+        title="Signaler un bug, proposer une idée, poser une question"
+        className={`rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
+          open ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        Signaler
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="floating absolute right-0 top-10 z-20 w-80 p-4">
+            <p className="label-caps">Signaler à l'équipe</p>
+            <div className="mt-2 flex gap-1.5">
+              {RETOUR_TYPES.map((t) => (
+                <button key={t.key} data-retour-type={t.key} onClick={() => setType(t.key)}
+                  className={`rounded-full border px-3 py-1 text-[11px] transition-colors duration-quick ${
+                    type === t.key ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} maxLength={2000}
+              placeholder="Décrivez le bug, l'idée ou la question…" data-retour-message
+              className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none focus:border-mint" />
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>
+              <button data-retour-envoyer onClick={envoyer} disabled={msg.trim().length < 3 || busy}
+                className="rounded-md border border-mint/40 bg-mint/10 px-3 py-1.5 text-xs text-mint transition-colors duration-quick disabled:opacity-40">
+                {busy ? 'Envoi…' : 'Envoyer'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function Header() {
   // M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registry).
   return (
@@ -589,6 +656,7 @@ export function Header() {
       <Omnibox />
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
+        <SignalerButton />
         <NotifBell />
         <AccountMenu />
       </div>

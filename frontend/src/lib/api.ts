@@ -785,6 +785,10 @@ export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: stri
 export const getMoi = () => j<Moi>('/moi')
 export const postSuggestion = (body: { categorie: string; texte: string; contexte?: string }) =>
   j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
+// (statuts suivis au dashboard admin). Distinct de postSuggestion (menu compte, texte libre).
+export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
+  j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

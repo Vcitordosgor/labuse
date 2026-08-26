@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     qa_allowlist: str = ""                # LABUSE_QA_ALLOWLIST=ip1,ip2
     abuse_alert_seuil: int = 60           # score abuse_scores déclenchant l'alerte
     nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)
+    # DASHBOARD-V1 · D1 — quota Copilote PAR LICENCE (comptes connectés) : défaut 80/jour,
+    # surchargeable par compte (comptes.copilote_quota_jour, éditable au dashboard). Le quota
+    # historique nl_quota_jour reste celui des sujets SANS compte (pilote/anonyme).
+    copilote_questions_jour_defaut: int = 80
     dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)
     plan_defaut: str = "integral"         # stub : essentiel | integral (pilote = intégral)
     raison_sociale: str = "Pilote LABUSE"  # mention « Généré via LABUSE pour … » (Lot 4)

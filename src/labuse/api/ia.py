@@ -334,11 +334,16 @@ def _porte_nl(request) -> None:
     s = config.get_settings()
     if s.dev_mode:
         return
+    # DASHBOARD-V1 · D1 — quota PAR LICENCE : un compte connecté lit SON quota
+    # (comptes.copilote_quota_jour, sinon défaut config 80/jour, modifiable au dashboard) ;
+    # sans compte (pilote/anonyme), le quota historique nl_quota_jour reste inchangé.
+    from .dashboard import quota_nl_du_compte
+    quota = quota_nl_du_compte(getattr(request.state, "compte_id", None)) or s.nl_quota_jour
     n = compteur_incr_et_lire(date.today().isoformat(), sujet_quota(request), "nl")
-    if n > s.nl_quota_jour:
+    if n > quota:
         raise HTTPException(429, detail={
-            "detail": f"Quota d'analyses IA atteint ({s.nl_quota_jour}/jour). Reprend à minuit.",
-            "quota": s.nl_quota_jour, "gel_jusqua": "minuit"})
+            "detail": f"Quota d'analyses IA atteint ({quota}/jour). Reprend à minuit.",
+            "quota": quota, "gel_jusqua": "minuit"})
 
 
 @router.post("/search")

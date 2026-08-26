@@ -151,6 +151,8 @@ async def _lifespan(app: FastAPI):
         from ..comptes import ensure_tables as _comptes_ens
         from .tenant import ensure_scoping as _scoping_ens
         from ..copilote.tables import ensure_tables as _copilote_ens
+        # DASHBOARD-V1 · D1 — capteurs de la Tour de contrôle
+        from .dashboard import ensure_tables as _dashboard_ens
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
@@ -180,6 +182,9 @@ async def _lifespan(app: FastAPI):
             ("veilles", lambda: _veilles_ens(_engine())),
             ("copilote", lambda: _copilote_ens(_engine())),
             ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
+            # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
+            # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
+            ("dashboard", lambda: _dashboard_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
@@ -313,6 +318,10 @@ async def _auth_guard(request, call_next):
     cookie = request.cookies.get(auth.COOKIE)
     info = auth.session_info(cookie)
     request.state.compte_id = info["compte_id"] if info else None
+    # DASHBOARD-V1 · D1 — attribue le coût IA de la requête au compte (ledger ia_log) : le socle
+    # IA lit ce ContextVar, jamais le cookie (direction de dépendance propre).
+    from ..ai import core as _ia_core
+    _ia_core.poser_compte(request.state.compte_id)
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
     if info is not None or auth.token_ok(cookie):
@@ -5052,7 +5061,9 @@ from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H
 from .copilote import router as _copilote_router  # noqa: E402  (M26-A — Copilote, socle agentique)
 from .copilote_v2 import router as _copilote_v2_router  # noqa: E402  (M78 — Copilote v2 : routeur + outils)
 from .accueil import router as _accueil_router  # noqa: E402  (M55-D stage 9 — chiffres de l'accueil)
+from .dashboard import router as _dashboard_router  # noqa: E402  (DASHBOARD-V1 — Tour de contrôle)
 
+app.include_router(_dashboard_router)
 app.include_router(_crm_columns_router)
 app.include_router(_copilote_router)
 app.include_router(_copilote_v2_router)

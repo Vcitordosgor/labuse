@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -88,6 +89,22 @@ def provider_status() -> dict:
     }
 
 
+# ── Attribution du coût IA au COMPTE (DASHBOARD-V1 · D1 — réimplémentation propre du WIP
+# fix/ia-modele-budget, branche non mergée) : la garde d'auth pose le compte de la requête ici,
+# le ledger ia_log l'enregistre. None = pilote/legacy/appel système → coût non attribué.
+_COMPTE_COURANT: ContextVar[int | None] = ContextVar("ia_compte", default=None)
+
+
+def poser_compte(compte_id: int | None) -> None:
+    """Posé une fois par requête (garde d'auth app._auth_guard) → lu par `_log_cost`. Direction
+    de dépendance propre : l'API appelle le socle, jamais l'inverse."""
+    _COMPTE_COURANT.set(compte_id)
+
+
+def compte_courant() -> int | None:
+    return _COMPTE_COURANT.get()
+
+
 def _log_cost(db: Session | None, kind: str, model: str, stub: bool, tin: int = 0, tout: int = 0) -> None:
     if db is None:
         return
@@ -95,10 +112,12 @@ def _log_cost(db: Session | None, kind: str, model: str, stub: bool, tin: int = 
     db.execute(text("CREATE TABLE IF NOT EXISTS ia_log ("
                     " id serial PRIMARY KEY, ts timestamptz DEFAULT now(), kind varchar(24), model varchar(64),"
                     " stub boolean, tokens_in integer, tokens_out integer, cout_eur numeric(8,5))"))
-    db.execute(text("INSERT INTO ia_log (kind, model, stub, tokens_in, tokens_out, cout_eur) "
-                    "VALUES (:k, :m, :s, :ti, :to, :c)"),
+    # colonne d'attribution (D1) — idempotent, couvre une base d'avant le dashboard
+    db.execute(text("ALTER TABLE ia_log ADD COLUMN IF NOT EXISTS compte_id integer"))
+    db.execute(text("INSERT INTO ia_log (kind, model, stub, tokens_in, tokens_out, cout_eur, compte_id) "
+                    "VALUES (:k, :m, :s, :ti, :to, :c, :cid)"),
                {"k": kind[:24], "m": model[:64], "s": stub, "ti": tin, "to": tout,
-                "c": (tin * pin + tout * pout) / 1_000_000})
+                "c": (tin * pin + tout * pout) / 1_000_000, "cid": compte_courant()})
 
 
 # ═════════════════════════ 2. Contrat de GROUNDING (entrée) ═════════════════════════

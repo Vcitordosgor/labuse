@@ -24,6 +24,7 @@ import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { MODULES } from './components/outils/registry'   // GB-059 : valider #m= contre le registre
 import { EMPTY_FILTERS, useApp } from './store/useApp'
+import { signalOutil, startHeartbeat } from './lib/usage'   // DASHBOARD-V1 · D1 — capteurs
 
 // M-V V3 — code-splitting maplibre : MapView et TimeMachine chargent maplibre-gl (~800 kB), inutile
 // au premier écran (login, fiche directe, outils). On les charge à la DEMANDE (import dynamique),
@@ -263,6 +264,13 @@ export default function App() {
   useEffect(() => {
     ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution }
   }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution])
+
+  // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,
+  // ouverture d'outil (module) et changement de vue. Fire-and-forget, dédoublonné dans usage.ts —
+  // aucun poids perceptible, aucune erreur possible côté client.
+  useEffect(() => { startHeartbeat() }, [])
+  useEffect(() => { if (module) signalOutil(module) }, [module])
+  useEffect(() => { signalOutil(`vue:${view}`) }, [view])
 
   // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
   // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).

@@ -57,6 +57,8 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // GB-003 : '/alertes' (Veille › Secteurs — GET /alertes, POST /alertes/refresh, /alertes/ack)
   // MANQUAIT → 404 en `npm run dev` (la feed « Nouveautés » restait muette). Backend OK, prod OK.
   '/alertes',
+  // DASHBOARD-V1 — capteurs (usage/retours) + Tour de contrôle admin
+  '/usage', '/retours', '/admin',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
