@@ -2542,9 +2542,16 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
     l'ex-carnet). Opportunités = parcelles des tiers `brulante` (chip « Priorité ») + `chaude` (chip
     « À suivre ») du run servi — RIEN de plus (pas de score, pas de promesse). Run-scopé `Q_A_RUN_LABEL`."""
     section = idu[:10]
+    # GB-024a — PERF (92 % du temps de fiche mesuré, 3958 ms→~2 ms) : `left(parcelle_id,10)=:s` seul
+    # forçait un SEQ SCAN des ~431k lignes du run (l'expression fonctionnelle n'utilise aucun index).
+    # On BORNE le scan par une plage de préfixe sur `parcelle_id` (index `uq_p_v2_run_parcelle`) et on
+    # GARDE `left()=:s` comme filtre d'EXACTITUDE (collation-immune) : la valeur servie est IDENTIQUE
+    # (vérifiée à l'octet sur plusieurs sections), seul le plan change. `'ÿ'` = borne haute > tout idu ASCII.
     n = db.execute(text(
         "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude')) "
-        "FROM parcel_p_score_v2 WHERE run_id = :run AND left(parcelle_id, 10) = :s"),
+        "FROM parcel_p_score_v2 "
+        "WHERE run_id = :run AND parcelle_id >= :s AND parcelle_id < :s || 'ÿ' "
+        "  AND left(parcelle_id, 10) = :s"),
         {"run": Q_A_RUN_LABEL, "s": section}).scalar() or 0
     return {"section": section, "n": int(n)}
 

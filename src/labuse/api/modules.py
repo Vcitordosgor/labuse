@@ -945,7 +945,10 @@ def _sru_bloc(db: Session, commune: str) -> dict | None:
 
 
 @router.get("/bailleur")
-def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_db)) -> dict:
+    # GB-030 — l'endpoint (DORMANT) faisait un JOIN SPATIAL ÎLE-ENTIÈRE (`ST_Intersects` sur les 431k
+    # parcelles × QPV) quand `commune` était absente → ~3 min de silence. `commune` devient OBLIGATOIRE
+    # (422 si absente) : le scan est BORNÉ à une commune (1-8 s), plus jamais le balayage insulaire.
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,

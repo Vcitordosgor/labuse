@@ -9,7 +9,8 @@ la shortlist est FIGÉE au cadrage, datée, et ne bouge JAMAIS seule (rejeu expl
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import time as _time
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -464,20 +465,47 @@ class CadrageIn(BaseModel):
     cadrage: dict = {}
 
 
+# GB-024b — CACHE du compteur de cadrage. `_q_v2_stats(île)` = ~9,5 s (agrégation full-run avec 2
+# joins, structurellement lourde ; `_vivier_figeable` ~0,75 s). Le compteur (vivier/total/cap) d'un
+# cadrage donné est STABLE pour un run → on le mémorise EN PROCESS avec un TTL et on SERT sa fraîcheur
+# (`calcule_le`), même esprit que le cache `cadrage_total` des projets. La clé inclut le run servi
+# (RUN, constante de process) : un changement de run redémarre le process → cache purgé.
+_COMPTEUR_CACHE: dict[str, tuple[float, dict]] = {}
+_COMPTEUR_TTL_S = 600   # 10 min — la donnée d'un run ne bouge pas dans la vie du process
+_REUNION_TZ = timezone(timedelta(hours=4))
+
+
+def _compteur_cle(cadrage: dict) -> str:
+    import hashlib
+    import json as _json
+    return hashlib.md5((RUN + "|" + _json.dumps(cadrage, sort_keys=True)).encode()).hexdigest()
+
+
 @router.post("/compteur")
 def projet_compteur(body: CadrageIn, db: Session = Depends(get_db)) -> dict:
     """M120-B — le compteur du CADRAGE, ALIGNÉ sur ce qui est réellement figeable. `vivier` = les
     parcelles triables (hors exclusions dures : non constructibles / faux positifs) ; `total` = le
     compte carte brut (qui inclut ~79 % d'exclusions dures qui ne peuvent JAMAIS entrer dans la
     shortlist — mesuré). Le front affiche `vivier` (l'univers réel), jamais `total` seul. `cap` = la
-    taille max de la shortlist figée (config). Léger : deux count(*), pas de top."""
+    taille max de la shortlist figée (config).
+
+    GB-024b — le cadrage ÎLE (vide) coûtait ~11 s (agrégation full-run). On MÉMORISE le résultat par
+    (run, cadrage) avec un TTL et on sert sa fraîcheur `calcule_le` : le 1er appel paie, les suivants
+    sont instantanés. La VALEUR est identique (même requête), seul le chemin change."""
     cadrage = clean_cadrage(body.cadrage)
+    cle = _compteur_cle(cadrage)
+    hit = _COMPTEUR_CACHE.get(cle)
+    if hit and (_time.time() - hit[0]) < _COMPTEUR_TTL_S:
+        return {**hit[1], "cache": True}
     from .app import _q_v2_stats
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
     total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
     vivier = _vivier_figeable(db, cadrage)
-    return {"vivier": vivier, "total": total, "cap": _shortlist_max()}
+    res = {"vivier": vivier, "total": total, "cap": _shortlist_max(), "cache": False,
+           "calcule_le": datetime.now(_REUNION_TZ).isoformat(timespec="minutes")}
+    _COMPTEUR_CACHE[cle] = (_time.time(), res)
+    return res
 
 
 class ApercuIn(BaseModel):
