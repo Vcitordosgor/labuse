@@ -1,0 +1,125 @@
+endpoint,methode,famille_payload,code_http,ecriture_partielle,objet_cree_id,verdict,note
+/projets,POST,types_faux,422,non,,OK,{"detail":[{"type":"dict_type";"loc":["body";"cadrage"];"msg":"Input should be a valid dictionary";"input":"notadict"}]}
+/projets,POST,types_faux,422,non,,OK,{"detail":[{"type":"dict_type";"loc":["body";"cadrage"];"msg":"Input should be a valid dictionary";"input":[1;2]};{"type
+/projets,POST,types_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["body";"limit"];"msg":"Input should be a valid integer; unable to parse string a
+/projets,POST,types_faux,200,NA,189,OK,CREATED delta={'projets': 1; 'projet_parcelles': 1} {"ok":true;"existing":false;"projet":{"id":189;"nom":"Projet
+/projets,POST,champ_inconnu,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,taille_enorme,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,taille_enorme,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,unicode,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,unicode,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,json_malforme,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";29];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting value
+/projets,POST,ctype_menteur,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";0];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting value"
+/projets,POST,taille_enorme,200,NA,,OK,{"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet — toute l'île";"statut":"actif";"cadrage":{};"identite":{};"
+/projets,POST,valide_ctrl,200,NA,189,OK,CREATED delta={} {"ok":true;"existing":true;"projet":{"id":189;"nom":"Projet 
+/courrier/demande,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"corps"];"msg":"Field required";"input":{"parcelles":["97405000BH0826"]}}]}
+/courrier/demande,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"parcelles"];"msg":"Field required";"input":{"corps":"x"}};{"type":"string_to
+/courrier/demande,POST,types_faux,422,non,,OK,{"detail":[{"type":"list_type";"loc":["body";"parcelles"];"msg":"Input should be a valid list";"input":"nope"};{"type":"
+/courrier/demande,POST,taille_enorme,422,non,,OK,{"detail":[{"type":"too_long";"loc":["body";"parcelles"];"msg":"List should have at most 500 items after validation; not
+/courrier/demande,POST,taille_enorme,422,non,,OK,{"detail":[{"type":"string_too_long";"loc":["body";"corps"];"msg":"String should have at most 8000 characters";"input":"
+/courrier/demande,POST,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/courrier/demande,POST,dup_1,200,NA,30,OK,CREATED delta={'courrier_demandes': 1} {"ok":true;"id":30;"ts":"2026-08-26T15:30:53.393381+04:00";"
+/courrier/demande,POST,dup_2_identique,200,NA,,OK,{"ok":true;"id":30;"ts":"2026-08-26T15:30:53.393381+04:00";"n":1;"communes":null;"statut":"demande";"existing":true}
+/courrier/demande,POST,champ_inconnu,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"modele"];"msg":"Input should be a valid string";"input":9};{"type":"stri
+/watch-zones,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"geometry"];"msg":"Field required";"input":{"name":"[GB-TEST]"}}]}
+/watch-zones,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"name"];"msg":"Field required";"input":{"geometry":{"type":"Polygon";"coordin
+/watch-zones,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"name"];"msg":"Input should be a valid string";"input":123};{"type":"dict
+/watch-zones,POST,geom_invalide,200,NA,6,OK,CREATED delta={'watch_zones': 1} {"zone":{"id":6;"name":"[GB-TEST] badgeom";"commune":"Saint-
+/watch-zones,POST,geom_invalide,422,non,,OK,{"detail":"geometry doit être un Polygon GeoJSON"}
+/watch-zones,POST,taille_enorme,422,non,,OK,{"detail":"geometry doit être un Polygon GeoJSON"}
+/watch-zones,POST,json_malforme,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";32];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting prope
+/watch-zones,POST,unicode,422,non,,OK,{"detail":"geometry doit être un Polygon GeoJSON"}
+/watch-zones,POST,valide_ctrl,200,NA,7,OK,CREATED delta={'watch_zones': 1} {"zone":{"id":7;"name":"[GB-TEST] wz-ok";"commune":"Saint-Pa
+/watch-zones/{id},PATCH,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"name"];"msg":"Input should be a valid string";"input":[1;2]};{"type":"di
+/watch-zones/{id},PATCH,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/watch-zones/{id},PATCH,taille_enorme,200,NA,,OK,{"ok":true}
+/watch-zones/{id},PATCH,introuvable,404,non,,OK,{"detail":"Zone de veille inconnue"}
+/watch-zones/{id},DELETE,introuvable,404,non,,OK,{"detail":"Zone de veille inconnue"}
+/watch-zones/{id},DELETE,types_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["path";"zone_id"];"msg":"Input should be a valid integer; unable to parse string
+/pipeline,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"idu"];"msg":"Field required";"input":{"status":"nouveau"}}]}
+/pipeline,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"idu"];"msg":"Input should be a valid string";"input":12345}]}
+/pipeline,POST,idu_inexistant,404,non,,OK,{"detail":"Parcelle inconnue"}
+/pipeline,POST,unicode,404,non,,OK,{"detail":"Parcelle inconnue"}
+/pipeline,POST,taille_enorme,200,NA,,OK,CREATED delta={'pipeline_entries': 1; 'crm_columns': 8} {"ok":true;"already":false;"entry":{"id":95;"idu":"97405000B
+/pipeline,POST,json_malforme,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";7];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting value"
+/pipeline,POST,valide_ctrl,200,NA,,OK,CREATED delta={} {"ok":true;"already":true;"entry":{"id":95;"idu":"97405000BH
+/pipeline/{id},PATCH,skip,404,non,,OK,{"detail":"Entrée de pipeline inconnue"}
+/pipeline/{id},PATCH,skip,404,non,,OK,{"detail":"Entrée de pipeline inconnue"}
+/pipeline/{id},PATCH,introuvable,404,non,,OK,{"detail":"Entrée de pipeline inconnue"}
+/pipeline/{id},DELETE,introuvable,404,non,,OK,{"detail":"Entrée de pipeline inconnue"}
+/pipeline/{id},DELETE,types_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["path";"entry_id"];"msg":"Input should be a valid integer; unable to parse strin
+/pipeline/columns,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"label"];"msg":"Field required";"input":{"tone":"blue"}}]}
+/pipeline/columns,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"label"];"msg":"Input should be a valid string";"input":[1]};{"type":"str
+/pipeline/columns,POST,taille_enorme,422,non,,OK,{"detail":"Nom de colonne trop long (80 caractères max)."}
+/pipeline/columns,POST,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/pipeline/columns,POST,valide_ctrl,200,NA,,OK,CREATED delta={'crm_columns': 1} {"ok":true;"columns":[{"id":31;"key":"reperee";"label":"Repé
+/pipeline/columns/{id},PATCH,skip,404,non,,OK,{"detail":"Colonne inconnue"}
+/pipeline/columns/{id},PATCH,skip,404,non,,OK,{"detail":"Colonne inconnue"}
+/pipeline/columns/{id},DELETE,skip,404,non,,OK,{"detail":"Colonne inconnue"}
+/pipeline/columns/{id},DELETE,introuvable,404,non,,OK,{"detail":"Colonne inconnue"}
+/filters,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"params"];"msg":"Field required";"input":{"name":"[GB-TEST]"}}]}
+/filters,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"name"];"msg":"Input should be a valid string";"input":42};{"type":"dict_
+/filters,POST,taille_enorme,200,NA,,OK,CREATED delta={'saved_filters': 1} {"id":1;"name":"[GB-TEST]";"params":{"x":"AAAAAAAAAAAAAAAAAA
+/filters,POST,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/filters,POST,json_malforme,422,non,,OK,timeout client -1 au 1er passage (rate-limit partage); RETEST=422 json_invalid 32ms sans ecriture
+/filters,POST,valide_ctrl,-1,non,,OK,timeout client (rate-limit partage AH); non-defaut serveur; filtre valide cree en supp GB-S
+/filters/{id},DELETE,introuvable,404,non,,OK,{"detail":"Filtre inconnu"}
+/filters/{id},DELETE,types_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["path";"filter_id"];"msg":"Input should be a valid integer; unable to parse stri
+/signalements,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"type_erreur"];"msg":"Field required";"input":{"idu":"97405000BH0826"}}]}
+/signalements,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"idu"];"msg":"Input should be a valid string";"input":[1]};{"type":"strin
+/signalements,POST,taille_enorme,200,NA,23,OK,CREATED delta={'signalements': 1} {"ok":true;"id":23;"statut":"nouveau"}
+/signalements,POST,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/signalements,POST,json_malforme,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";10];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting ';' d
+/signalements,POST,champ_inconnu,200,NA,24,OK,CREATED delta={'signalements': 1} {"ok":true;"id":24;"statut":"nouveau"}
+/feedback,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"verdict"];"msg":"Field required";"input":{"idu":"97405000BH0826"}}]}
+/feedback,POST,types_faux,422,non,,OK,{"detail":[{"type":"enum";"loc":["body";"verdict"];"msg":"Input should be 'false_positive'; 'good_lead' or 'not_interest
+/feedback,POST,unicode,422,non,,OK,{"detail":[{"type":"enum";"loc":["body";"verdict"];"msg":"Input should be 'false_positive'; 'good_lead' or 'not_interest
+/feedback,POST,taille_enorme,422,non,,OK,{"detail":[{"type":"enum";"loc":["body";"verdict"];"msg":"Input should be 'false_positive'; 'good_lead' or 'not_interest
+/feedback,POST,dup_1,422,non,,OK,{"detail":[{"type":"enum";"loc":["body";"verdict"];"msg":"Input should be 'false_positive'; 'good_lead' or 'not_interest
+/feedback,POST,dup_2_identique,422,non,,OK,{"detail":[{"type":"enum";"loc":["body";"verdict"];"msg":"Input should be 'false_positive'; 'good_lead' or 'not_interest
+/bilan/params,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"param"];"msg":"Field required";"input":{"secteur":"nord"}}]}
+/bilan/params,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"secteur"];"msg":"Input should be a valid string";"input":[1]};{"type":"s
+/bilan/params,POST,unicode,422,non,,OK,{"detail":[{"type":"float_parsing";"loc":["body";"value"];"msg":"Input should be a valid number; unable to parse string 
+/bilan/params,POST,taille_enorme,422,non,,OK,{"detail":[{"type":"float_parsing";"loc":["body";"value"];"msg":"Input should be a valid number; unable to parse string 
+/bilan/params,POST,json_malforme,422,non,,OK,{"detail":[{"type":"json_invalid";"loc":["body";11];"msg":"JSON decode error";"input":{};"ctx":{"error":"Expecting value
+/events/searches,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"hash"];"msg":"Field required";"input":{"nom":"[GB-TEST]"}}]}
+/events/searches,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"nom"];"msg":"Input should be a valid string";"input":42};{"type":"string
+/events/searches,POST,taille_enorme,200,NA,,OK,{"ok":true}
+/events/searches,POST,unicode,422,non,,OK,{"detail":"Paramètre invalide ou hors bornes."}
+/events/searches/{id},PATCH,introuvable,200,NA,,OK,{"ok":true}
+/events/searches/{id},PATCH,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"nom"];"msg":"Field required";"input":{}}]}
+/events/searches/{id},DELETE,introuvable,200,NA,,OK,{"ok":true}
+/events/searches/{id},DELETE,types_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["path";"sid"];"msg":"Input should be a valid integer; unable to parse string as 
+/events/veille-nl,POST,champ_manquant,422,non,,OK,{"detail":[{"type":"missing";"loc":["body";"text"];"msg":"Field required";"input":{}}]}
+/events/veille-nl,POST,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"text"];"msg":"Input should be a valid string";"input":[1;2]}]}
+/events/veille-nl,POST,taille_enorme,200,NA,,OK,{"ok":false;"refus":"Je n'ai pas su en tirer une veille déclenchable. Aujourd'hui; une veille vous alerte quand une parc
+/events/veille-nl,POST,unicode,200,NA,,OK,{"ok":false;"refus":"Je n'ai pas su en tirer une veille déclenchable. Aujourd'hui; une veille vous alerte quand une parc
+/events/watch/{idu},POST,idu_inexistant,404,non,,OK,{"detail":"Parcelle inconnue"}
+/events/watch/{idu},POST,unicode,404,non,,OK,{"detail":"Parcelle inconnue"}
+/events/watch/{idu},POST,idu_valide,200,NA,,OK,CREATED delta={'watched_parcels': 1} {"watched":true}
+/projets/{pid}/ajouter,POST,skip,404,non,,OK,{"detail":"Projet inconnu"}
+/projets/{pid}/ajouter,POST,skip,404,non,,OK,{"detail":"Projet inconnu"}
+/pipeline/{id},PATCH,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"status"];"msg":"Input should be a valid string";"inp
+/pipeline/{id},PATCH,champ_inconnu,200,NA,,OK,{"ok":true;"entry":{"id":95;"idu":"97405000BH0826";"status":"reperee";"priority":"moyenne";"notes":"
+/pipeline/{id},PATCH,taille_enorme,200,NA,,OK,{"ok":true;"entry":{"id":95;"idu":"97405000BH0826";"status":"reperee";"priority":"moyenne";"notes":"
+/pipeline/columns/{id},PATCH,types_faux,422,non,,OK,{"detail":[{"type":"string_type";"loc":["body";"label"];"msg":"Input should be a valid string";"inpu
+/pipeline/columns/{id},PATCH,taille_enorme,422,non,,OK,{"detail":"Nom de colonne trop long (80 caractères max)."}
+/pipeline/columns/{id},DELETE,move_to_faux,422,non,,OK,{"detail":[{"type":"int_parsing";"loc":["body";"move_to"];"msg":"Input should be a valid integer; un
+/watch-zones,GET,readback_corruption,200,NA,,OK,relit 551B apres ecritures hostiles
+/pipeline,GET,readback_corruption,200,NA,,OK,relit 1049122B apres ecritures hostiles
+/pipeline/columns,GET,readback_corruption,200,NA,,OK,relit 1026B apres ecritures hostiles
+/filters,GET,readback_corruption,200,NA,,OK,relit 1048671B apres ecritures hostiles
+/courrier/demandes,GET,readback_corruption,200,NA,,OK,relit 167B apres ecritures hostiles
+/projets,GET,readback_corruption,200,NA,,OK,relit 386B apres ecritures hostiles
+# --- FINDINGS ---
+# AE-1,POST /watch-zones,geom_invalide,200,GB-026 polygone degenere [[[0,0],[1,1]]] accepte -> watch_zone geom INVALIDE (ST_IsValid=f) stocke; GET readback OK (area=0) donc pas de corruption; manque garde ST_IsValid; severite basse
+# AE-2,PATCH /watch-zones/{id},taille_enorme,200,GB-034 nom 1Mo NON tronque au PATCH (create tronque [:120]; update_watch_zone ne tronque pas) -> zone.name=1Mo; GET readback OK; severite basse
+# AE-3,PATCH+DELETE /events/searches/{id},introuvable,200,GB-088/GB-090 patch/delete d'un sid inexistant renvoie 200 au lieu de 404 (pas d'IDOR-guard 404); severite basse
+# AE-4,POST /pipeline+/filters+/signalements,taille_enorme,200,champs texte non plafonnes (notes 1Mo / params 1Mo / commentaire 1Mo) acceptes; GET readback OK (1049122B pipeline / 1048671B filters) donc pas de corruption; severite basse (DoS-lite)
+# --- INVARIANTS: 0x 500, 0x ecriture partielle, 0x corruption readback (tous GET 200) ---
+# --- PURGE INVENTORY (compte de test 31 gb-test-ae@labuse.local) ---
+# utilisateurs id=31 + comptes id du compte 31 (creer via labuse compte-admin officiel)
+# API-DELETE faits (soft): projets id=189 (statut=archive), pipeline_entries id=95 (archived_at set)
+# API-DELETE faits (hard): watch_zones id=6,7 SUPPRIMES; crm_columns id=39 SUPPRIME; saved_filters id=1 SUPPRIME
+# RESTENT (pas de DELETE API user): signalements id=23,24; courrier_demandes 1 (compte31); watched_parcels 1 (compte31); crm_columns id=31..38 (8 defauts lazy); projet 189+1 parcelle (archive); pipeline 95 (archive)
+# PURGE RECOMMANDEE Vic: `labuse compte-supprime gb-test-ae@labuse.local --oui` (cascade utilisateurs/sessions) PUIS DELETE lignes orphelines compte_id=31 (projets/pipeline_entries/crm_columns/courrier_demandes/watched_parcels/signalements)
