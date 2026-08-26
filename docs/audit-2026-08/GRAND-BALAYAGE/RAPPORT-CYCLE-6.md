@@ -33,6 +33,7 @@
 | AC — recherche de masse | 200 | **196** | 4 (🟡 GB-042 jokers LIKE ; 🟡 GB-043 suffixe IDU) | lot-ac.csv |
 | AF — intégrité pleine table | 62 | **59** | 3 (🟡 GB-044/045/046) · G2 ✅ G3 ✅ | lot-af.csv |
 | AJ — installation à vide | 20 | **17** | 3 (🟠 GB-047/048/049 ; 🟡 GB-050) | lot-aj.csv |
+| AD — 100 PDF ouverts | 100 | **100** | 0 faux chiffre (🟡 GB-051/052) | lot-ad.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -63,3 +64,10 @@
 - **GB-048 · 🟠 · Ordre du heal faux : premier boot post-doctor échoue sur `crm_columns`** — tuple `_heal_steps` (`app.py:160-171`) : `crm_columns` (FK → comptes) passe AVANT `comptes+scoping` → `relation "comptes" does not exist`, converge au boot n+2. Échec loggé + event_log + exposé /readyz (mécanique FIX-GB-011 opérante) mais un redémarrage supplémentaire silencieusement requis.
 - **GB-049 · 🟠 · `/modules/permis` = 500 garanti sur toute installation neuve** — LEFT JOIN `m10_permit_delais` sans garde `to_regclass` (`modules.py:381`) ; table construite par la seule ingestion M10, jamais par le heal.
 - **GB-050 · 🟡 · Défauts d'installation mineurs (groupés)** — messages à-vide orientés dev (« run q_v* ») sur /stats et /filtre ; lien `compte-invite` hardcodé :8000 ; env=local ⇒ auth désactivée (un vrai 2e client doit poser LABUSE_ENV + LABUSE_SECRET_KEY, non rappelé par le boot).
+
+## LOT AD — 100 PDF ouverts (100, seed 6004) — agent
+**100/100 OK, 0 faux chiffre.** Endpoint fiche = `/parcels/{idu}/export.pdf` (pdf_premium). Stratification : 24 communes, 11 tiers q_v10_m129, 54 bâti/46 nu, extrêmes 0,03 m² / 28 174 868 m². 100 générés (200, ~170 Ko, 4-6 p.), 100 parsés pdftotext vs SQL miroir : surface 100/100 (round + milliers espace ; 0 → « n/d » assumé), zone 100/100 (« n/d » ×5 = RNU Saint-Philippe légitime), prix secteur 100/100 (médiane 1ʳᵉ par n_ventes, « n/d » honnête ×4), SDP 100/100, pagination N/N 100/100, « généré le 26/08/2026 » 100/100, accents 0 mojibake + œ natif sur les 47 fiches concernées (≠ courrier GB-037, cohérent). API==base 3 idus 6/6. Contexte commune servi 100/100 (data-gap M136 non rencontré). Quota fiches consommé : 4 idus. 0×429.
+- **GB-051 · 🟡 · La date du RUN n'est jamais imprimée (100/100)** — seul « généré le {jour} » ; exclusion VOLONTAIRE (`pdf_premium.py:162-164` « Jamais une date de run », M125-C2). Le run servi n'est pas identifiable depuis le document — écart entre le critère d'audit (millésime partout) et un design assumé : à arbitrer par Vic, pas un bug.
+- **GB-052 · 🟡 · Section « Droits à bâtir (SDP) » absente SANS libellé sur 48/100** — parcelles à cause M125/non calculées : `app.py:3376` return None + `pdf_premium.py:481` saute la section muettement, en CONTRASTE avec le patron `_indispo` M125 qui assume la panne ailleurs. L'absence n'est pas « assumée par un libellé ».
+- **O-AD2 (observation, design confirmé)** — tier/verdict/probabilité ABSENTS du PDF par design M124-A (« l'analyse LABUSE reste à l'écran ») ; contrôle inversé : **0 fuite d'analyse sur 100 PDF**. Conforme.
+- **O-AD4 (environnement, hors produit)** — ENOSPC du poste (disque 100 %) en cours de lot → 1 PDF corrompu, re-généré et validé. Voir « Actions pour Vic » (disque).
