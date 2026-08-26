@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -54,7 +54,7 @@ def simulplu_zones(commune: str | None = None, db: Session = Depends(get_db)) ->
 
 
 @router.get("/simulplu")
-def simulplu(zone: str, commune: str | None = None, offset: int = 0,
+def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0),   # FIX-C5
              db: Session = Depends(get_db)) -> dict:
     # PERF : le zonage par parcelle est DÉJÀ résolu dans les lignes de cascade du run (detail
     # « Zone PLU « X » … ») → zéro jointure spatiale (l'ancienne version : 2 min 33 s ; celle-ci < 2 s).

@@ -31,6 +31,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
+from sqlalchemy.exc import DataError as _SA_DataError   # FIX-C5 — handler global 22xxx → 422
 from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
@@ -265,7 +266,14 @@ async def _fix_double_encoded_query(request, call_next):
     double-encodage (déclenché seulement si « %25 » est présent dans la query-string)."""
     qs = request.scope.get("query_string", b"")
     if b"%25" in qs:
-        request.scope["query_string"] = unquote(qs.decode("latin-1")).encode("latin-1")
+        # FIX-C5 (GB-035) — `unquote` (utf-8) peut produire des caractères non-latin-1 (emoji brut,
+        # %F0%9F%98%80…) que `.encode("latin-1")` ne sait pas ré-encoder → UnicodeError → 500. On rend
+        # la réparation INERTE dans ce cas (query laissée telle quelle → validation normale = 422/400),
+        # jamais un 500. Comportement inchangé pour le double-encodage ASCII/latin-1 légitime.
+        try:
+            request.scope["query_string"] = unquote(qs.decode("latin-1")).encode("latin-1")
+        except UnicodeError:
+            pass
     return await call_next(request)
 
 
@@ -347,6 +355,33 @@ async def _http_exception(request: Request, exc: StarletteHTTPException):
     # comportement FastAPI par défaut, à l'identique (detail + status + headers éventuels)
     return JSONResponse({"detail": exc.detail}, status_code=exc.status_code,
                         headers=getattr(exc, "headers", None))
+
+
+@app.exception_handler(UnicodeError)
+async def _unicode_error_400(request: Request, exc: UnicodeError):
+    """FIX-C5 (GB-035) — une URL avec des octets non-ASCII BRUTS (emoji non percent-encodé) mélangés
+    à d'autres params casse l'encodage (latin-1) au traitement de la requête → 500. Un client conforme
+    percent-encode (%F0%9F%98%80 → 422 propre) ; l'URL brute est MALFORMÉE → **400**, jamais un 500."""
+    from fastapi.responses import JSONResponse
+    logging.getLogger("labuse.api").warning("UnicodeError→400 sur %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=400, content={"detail": "URL malformée (encodage de caractères)."})
+
+
+@app.exception_handler(_SA_DataError)
+async def _data_error_422(request: Request, exc: _SA_DataError):
+    """FIX-C5 (GB-034/035/036) — HELPER PARTAGÉ contre la classe « entrée non bornée → 500 ».
+    Une entrée hostile qui ATTEINT SQL (LIMIT négatif, entier de path > bigint 2^63, cast impossible,
+    valeur hors bornes) lève une « data exception » Postgres (classe SQLSTATE **22xxx** → SQLAlchemy
+    `DataError`). Ce n'est JAMAIS un bug interne (ceux-là = 42xxx syntaxe / XX000 interne) : c'est de
+    la donnée client invalide → on répond **422 propre**, jamais un 500. La trace reste côté serveur.
+    Couvre d'UN coup tous les `{id:int}` de path (impraticable à borner un par un) + tout `limit`/`offset`
+    non borné résiduel. Le bornage per-param (Query ge/le) reste la ceinture qui coupe AVANT SQL."""
+    from fastapi.responses import JSONResponse
+    logging.getLogger("labuse.api").warning(
+        "DataError→422 (%s) sur %s %s", getattr(getattr(exc, "orig", None), "sqlstate", "?"),
+        request.method, request.url.path)
+    return JSONResponse(status_code=422,
+                        content={"detail": "Paramètre invalide ou hors bornes."})
 
 
 # ───────────────────────────── Connexion pilote ─────────────────────────────
