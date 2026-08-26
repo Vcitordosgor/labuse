@@ -1,0 +1,43 @@
+phase,endpoint,params,identique,champs_exclus,verdict,note
+chaud,/stats,source=q_v10_m129,oui,(aucun),OK,strictement identique 2x
+chaud,/stats/entonnoir,source=q_v10_m129,oui,(aucun),OK,strictement identique 2x
+chaud,/accueil/chiffres,,oui,(aucun),OK,strictement identique 2x
+chaud,/communes,,oui,(aucun),OK,strictement identique 2x
+chaud,/comparateur-communes,,oui,(aucun),OK,strictement identique 2x
+chaud,/v2/liste,limit=20,oui,(aucun),OK,strictement identique 2x
+chaud,/v2/reserve-fonciere,limit=20,oui,(aucun),OK,strictement identique 2x
+chaud,/v2/score/97408000AP1647,,oui,(aucun),OK,strictement identique 2x
+chaud,/renouvellement/liste,limit=20,oui,(aucun),OK,strictement identique 2x
+chaud,/filtre,source=q_v10_m129&limit=20,oui,(aucun),OK,strictement identique 2x
+chaud,/moteurs/marche/Saint-Paul,,oui,(aucun),OK,strictement identique 2x
+chaud,/moteurs/barometre,,oui,(aucun),OK,strictement identique 2x
+chaud,/map/tiles/meta,,oui,(aucun),OK,strictement identique 2x
+chaud,/modules/patrimoine,siren=407652080,oui,(aucun),OK,strictement identique 2x
+chaud,/modules/permis,commune=Saint-Paul&limit=20,oui,(aucun),OK,strictement identique 2x
+chaud,/modules/velocite,,oui,(aucun),OK,strictement identique 2x
+chaud,/parcels/97408000AP1647,,oui,(aucun),OK,strictement identique 2x
+chaud,/parcels/97422000AD1237,,oui,(aucun),OK,strictement identique 2x
+chaud,/communes/Saint-Paul/contexte,,oui,(aucun),OK,strictement identique 2x
+chaud,/zonage/zones,communes=Saint-Paul,oui,(aucun),OK,strictement identique 2x
+chaud,/coverage,,oui,(aucun),OK,strictement identique 2x
+restart,/stats,source=q_v10_m129,oui,(aucun),OK,identique a la reference apres reboot
+restart,/stats/entonnoir,source=q_v10_m129,oui,(aucun),OK,identique a la reference apres reboot
+restart,/accueil/chiffres,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/communes,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/comparateur-communes,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/v2/liste,limit=20,oui,(aucun),OK,identique a la reference apres reboot
+restart,/v2/reserve-fonciere,limit=20,oui,(aucun),OK,identique a la reference apres reboot
+restart,/v2/score/97408000AP1647,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/renouvellement/liste,limit=20,oui,(aucun),OK,identique a la reference apres reboot
+restart,/filtre,source=q_v10_m129&limit=20,oui,(aucun),OK,identique a la reference apres reboot
+restart,/moteurs/marche/Saint-Paul,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/moteurs/barometre,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/map/tiles/meta,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/modules/patrimoine,siren=407652080,oui,(aucun),OK,identique a la reference apres reboot
+restart,/modules/permis,commune=Saint-Paul&limit=20,oui,(aucun),OK,identique a la reference apres reboot
+restart,/modules/velocite,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/parcels/97408000AP1647,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/parcels/97422000AD1237,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/communes/Saint-Paul/contexte,,oui,(aucun),OK,identique a la reference apres reboot
+restart,/zonage/zones,communes=Saint-Paul,oui,(aucun),OK,identique a la reference apres reboot
+restart,/coverage,,oui,(aucun),OK,identique a la reference apres reboot

@@ -44,6 +44,7 @@
 | AQ — flux métier scénarisés | 100 | **92** | 8 KO harness (0 app-KO) ; 🟠 GB-063 · 🟡 GB-064 | lot-aq.csv |
 | AL — Copilote grand volume | 100 | **84** | 16 skip (budget LLM) · 0 chiffre faux (🟡 GB-065) | lot-al.csv |
 | AP — moteur unique de masse | 150 | **149** | 1 écart vocabulaire (non-chiffre) ; 🟠 GB-066 | lot-ap.csv |
+| AI — déterminisme & redémarrage | 40 | **40** | 0 (déterminisme + invariance boot totaux) | lot-ai.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -160,3 +161,6 @@ Tout est cloisonné au **compte de test `gb-test-ae@labuse.local` (compte_id 31,
 - **millésime/run : OK** — fiche, `/v2/score`, `/renouvellement/liste` tous épinglés `q_v10_m129` via `config/served_run.txt`, jamais de constante.
 - **Copilote (40 grounding + 5 LLM réels) : source unique prouvée** — `fiche_ask._ask_context` fournit `statut_tier` = `verdict_servi.label` = court(run) pour 40/40 ; les 5 LLM réels ne servent jamais un tier faux (« chaude »→« À suivre », « declasse_bati_sature »→« Faible » verbatim ; sur a_creuser/reserve le modèle paraphrase/refuse proprement = phrasing aval, pas désaccord de moteur).
 - **GB-066 · 🟠 · `/parcels/export.csv` sert le CODE interne du tier, pas le libellé M137 (vocabulaire, non-chiffre)** — colonne `tier_v2` = « chaude »/« a_creuser »/« ecartee » là où la fiche montre « À suivre »/« Neutre »/« Écartée ». Cause : `app.py:1557` `("ecartee" if it["etage0"] else it["tier_v2"])` écrit le code brut sans passer par `court()`/`TIER_LABELS`. Doctrine M137 « même mot court partout » non tenue sur cette surface d'export. **Aucun chiffre faux, tier cohérent en interne** (etage0→ecartee EST appliqué), colonne nommée d'après le champ interne → sévérité 🟠 côté doctrine, dégradable à 🟡 (export data vs UI).
+
+## LOT AI — déterminisme & redémarrage (40, seed 6009) — agent SOLO (redémarrage :8000 autorisé, une fois)
+**21/21 déterminisme à chaud + 21/21 invariance au redémarrage = 42 vérifs, 0 finding.** Temps 1 : 20 endpoints chauds appelés 2× (diff JSON strict + aplati clé-à-clé) → **strictement identiques**, 0 champ volatile (ces réponses ne portent aucun horodatage/uuid → 0 champ exclu). Temps 2 : redémarrage par la procédure sûre sans secret (`.env` rechargé seul), **reboot readyz ready:true en 1 s**, ré-appel des 21 mêmes → **tous identiques au chiffre près**, **served_run `q_v10_m129` avant == après**. Aucun 🔴/🟠/🟡. Contraste net avec l'historique GB-011 (où le redémarrage ne corrigeait rien) : ici le boot ne change **aucune** valeur servie. Note : `/stats` et `/filtre` exigent `source=<run>` (404 « source requise » sinon = contrat volontaire, pas un défaut). Serveur laissé tournant.
