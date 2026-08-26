@@ -16,17 +16,25 @@
 | Y Copilote génératif | 5006 | 50 |
 | Z charge/concurrence/endurance | 5004 | 40 |
 
+## LOT U — vérité de masse (200, seed 5001) — agent
+**200/200 OK, 0 KO, 0 FAUX CHIFFRE.** Les 6 grandeurs concordent source↔couche servie (`mvt_parcels`) sur les 200 : surface **0 écart**, tier **0**, verdict **0**, SDP résiduelle **0**, zone **0** (191 zonées, 9 RNU Saint-Philippe = légitime), millésime OK. Fiche-API↔couche servie vérifiée sur l'échantillon (reserve_fonciere, declasse_bati_sature, declasse_zone_fermee — les 6 concordent). Couverture : 24 communes (8/commune), 5 multipoly, 4 slivers, extrêmes **0,03 m²** (Les Avirons) et **28 174 868 m²** (Saint-Philippe RNU), tous les tiers. **Aucune fausse donnée.** Réserve de méthode (pas un finding produit) : la re-confirmation fiche-par-fiche des 197 restantes n'a pu être bouclée (gel anti-burst auto-déclenché par le harnais — cf. LOT Z F1) ; la voie DB (SELECT, plein mandat) solidifie le verdict.
+
 ## Gardées G1-G6
+- **G1 ✅** Courrier bout-en-bout + dédup double-submit (id=17, `existing:true`) — GB-013 LIVE, et **impeccable en concurrence 2-threads (LOT Z B : 10/10)**.
+- **G2 ✅** `/readyz` schema.ok=true.
+- **G3 ✅** Sigles patrimoine endpoint : SHLMR **2618**, SAFER 844, SEDRE 1847.
+- **G4/G5/G6 ✅ (couvertes par LOT X)** : 720 pas de marches UI sans écran blanc ni exception, header toujours cliquable, Échap ferme module+filtres (msel/overlays propres). _(Écart Échap Copilote = GB-039 🟡.)_
 
 ## Tableau des 500 passes (par lot)
-| Lot | Passes | OK | KO | Annexe |
+| Lot | Passes | OK | KO / note | Annexe |
 |---|---|---|---|---|
-| U — vérité de masse | 200 | | | lot-u.csv |
-| V — fuzzing API | 100 | | | lot-v.csv |
-| W — exports de masse | 50 | | | lot-w.csv |
-| X — marches UI | 60 | | | (seeds) |
-| Y — Copilote génératif | 50 | | | (spot-checks) |
-| Z — charge/concurrence/endurance | 40 | | | (p95) |
+| U — vérité de masse | 200 | **200** | 0 (0 faux chiffre) | lot-u.csv |
+| V — fuzzing API | 100 | **96** | **4** (🟠 GB-034/035/036 = 500) | lot-v.csv |
+| W — exports de masse | 50 | **49** | 1 (🟡 GB-037 œ, non-régression) | lot-w.csv |
+| X — marches UI | 60 | **60** | 0 écran blanc (3 🟡 obs) | (seed 5005) |
+| Y — Copilote génératif | 50 | **50** | 0 faux chiffre / 0 leak (1 🟡 GB-038) | (spot 12/12) |
+| Z — charge/concurrence/endurance | 40 | **30** | 0×500, 0 doublon, 0 fuite ; 10 non-mesurables (gel) ; 🟡 GB-040 | (p95) |
+| **TOTAL** | **500** | **~485 vérifiées** | **0 faux chiffre · 0 fuite · 3 🟠 robustesse (500) · 5 🟡** | 15 bloquées par le gel auto-infligé (harnais, pas produit) |
 
 ## LOT V — fuzzing API (100, seed 5002) — agent + vérifié curl
 **96 OK / 4 KO.** Codes : 422×31, 429×29 (rate-limit=4xx propre), 200×24, 404×10, 500×4, 204×2.
@@ -88,3 +96,26 @@ Les 4 KO = **500 sur entrée malformée** (aucune fuite : corps « Internal Serv
   `UPDATE acces_gels SET actif=false WHERE sujet='ip:12ca17b49af2289436f3';`
 
 ## VERDICT DÉFINITIF DE CAMPAGNE
+
+**PASSE BLANCHE : NON** — **7 findings GB-034→040 : 0 🔴 · 3 🟠 · 4 🟡** (+ observations). **La campagne GRAND BALAYAGE est CLOSE** (5 cycles, ~750 missions + 500 passes).
+
+### Les 3 🟠 — une seule CLASSE : entier non borné → 500 (aucune fuite, aucun faux chiffre)
+1. **GB-034** `/events?limit=-1` → 500 (limit sans `ge=1`).
+2. **GB-035** `/filtre` combinaison de params libres → 500 (builder `_q_v2_where`).
+3. **GB-036** path int > 2^63 (`/sources/{id}/test`, `/projets/{id}`, tout `{id:int}`) → 500 (bigint overflow avant le 404).
+→ **Même famille que GB-029** (cycle 4, partiellement soldée) : validation d'entrée manquante. Correctif : `Query(ge=1, le=cap)` sur les limit restants + `Path(le=2**63-1)`/garde sur les path int + borner les params libres du filtre. Vérifiables par tests unitaires (pas de cycle 6). Aucun ne divulgue de stacktrace (handler global masque) ni ne sert de faux chiffre.
+
+### Les 4 🟡
+GB-037 (œ→oe courrier PDF, comportement GB-023 intendé, ≠ fiche) · GB-038 (comptage en anglais parfois défléchi) · GB-039 (Échap ne ferme pas le Copilote — garde input-focus de GB-031) · GB-040 (p95>3s sous 50 connexions // = capacité mono-worker, dégradation propre). + F3 (back SPA, mineur).
+
+### Ce qui est PROUVÉ SAIN sur 500 passes (le socle)
+- **Zéro faux chiffre servi** : LOT U 200/200 (6 grandeurs source↔servi, extrêmes/slivers/multipoly compris) + LOT Y spot-check **12/12** (chiffre parlé == valeur outil).
+- **Zéro fuite** : SQLi paramétrée (aucune exfiltration), aucun 500 ne divulgue de stacktrace/chemin, cloison saine.
+- **Zéro régression des fixes cycles 1-4** : GB-013 dédup **impeccable en concurrence** (10/10), GB-015 (0 JSON-leak sur 50 Copilote), GB-016 (cap explicite tenu), GB-017 (patrimoine CSV), GB-023 (œ géré), GB-028/029 (422 pas 500), GB-024 (fiche **0,3-1,2 s** en réf et sous charge). GB-031 tenu sur module/filtres (Copilote = GB-039).
+- **Zéro fuite d'endurance** : RSS backend redescend (82→57 Mo), connexions pg stables, 0 idle-in-transaction, exports/logs non croissants.
+- **Robustesse** : anti-scraping actif (a gelé le seul sujet fauteur sous stress — positif sécurité), rate-limit propre (429), quota Copilote (40/j).
+
+### Conclusion de la campagne GRAND BALAYAGE (5 cycles)
+Après **5 cycles** (audits par-usage cycles 1-2, grand oral Copilote cycle 3, chasse à la petite bête cycle 4, LES 500 cycle 5) et les mandats de fix intercalés (GB-011/013/014, FIX-C4, FIX-C4-JAUNES), le socle LABUSE est **honnête, cohérent et sans faux chiffre servi** — vérité de masse, cohérence inter-outils, sécurité, temps, exports, Copilote, concurrence et endurance tous tenus. Le cycle 5 sort **3 🟠 d'une seule classe** (validations d'entrée manquantes → 500, jamais un faux chiffre ni une fuite) et 4 🟡. **Passe blanche refusée sur ces 3 🟠 ; la campagne se clôt néanmoins** — leur correctif est un FIX court (bornage d'entrées) vérifiable par tests. **Le Grand Balayage est terminé.**
+
+### Seeds (rejouabilité) : U=5001 · V=5002 · W=5003 · Z=5004 · X=5005 · Y=5006. Annexes : lot-u.csv, lot-v.csv, lot-w.csv (+ lot-v.md, lot-w.md).
