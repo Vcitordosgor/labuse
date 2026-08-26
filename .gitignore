@@ -136,3 +136,4 @@ frontend/vite.config.js
 # gitignorés pour ne plus provoquer de conflits binaires au merge.
 qa/m130/*.pdf
 node_modules
+qa/fond-sombre/out/
