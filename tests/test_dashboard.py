@@ -149,6 +149,36 @@ def test_ia_conso_et_quota_editable(client, engine, compte_test):
     assert quota_nl_du_compte(compte_test) == 80
 
 
+def test_sources_cadence_et_badge(client, engine):
+    """D6 — cadence réglable par source + badge « À mettre à jour » calculé automatiquement."""
+    d = client.get("/admin/sources").json()
+    assert d["sources"] and set(d["synthese"]) == {"a_mettre_a_jour", "ok", "sans_echeance"}
+    sid = d["sources"][0]["id"]
+    # pose 'mensuelle' → normalisée ; valeur inconnue → 422
+    assert client.post(f"/admin/sources/{sid}/cadence", json={"cadence": "mensuel"}).json()["cadence"] == "mensuelle"
+    assert client.post(f"/admin/sources/{sid}/cadence", json={"cadence": "lunaire"}).status_code == 422
+    with engine.begin() as c:
+        from sqlalchemy import text as _t
+        # vieillit l'ingestion → le badge doit passer « à mettre à jour » (a_jour false)
+        c.execute(_t("UPDATE data_sources SET last_sync_at = now() - interval '90 days' WHERE id = :i"), {"i": sid})
+    d2 = client.get("/admin/sources").json()
+    s = next(x for x in d2["sources"] if x["id"] == sid)
+    assert s["a_jour"] is False and s["cadence"] == "mensuelle"
+    # remet la cadence à null (état d'origine : la plupart des sources n'en ont pas encore)
+    client.post(f"/admin/sources/{sid}/cadence", json={"cadence": None})
+
+
+def test_source_relance_sans_commande_404(client, engine):
+    """D6 — « Relancer » n'existe QUE si une commande est mappée (sinon 404, bouton absent)."""
+    d = client.get("/admin/sources").json()
+    sans = next((s for s in d["sources"] if s["relance"] is None), None)
+    avec = [s for s in d["sources"] if s["relance"]]
+    assert sans is not None
+    assert client.post(f"/admin/sources/{sans['id']}/relancer").status_code == 404
+    # le mapping YAML couvre bien les crons connus (sitadel/bodacc/dvf/dpe/ban présents en base)
+    assert {s["relance"] for s in avec} >= {"bodacc", "dvf", "dpe", "ban"}
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte

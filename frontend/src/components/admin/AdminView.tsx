@@ -9,6 +9,7 @@ import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
+import { SourcesSection } from './Sources'
 
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
 
@@ -334,7 +335,7 @@ export function AdminView() {
           {section === 'pilotage' && <PilotageSection data={d} go={setSection} />}
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
-          {section === 'sources' && <AVenir titre="Sources" lot="D6" />}
+          {section === 'sources' && <SourcesSection />}
           {section === 'produit' && <AVenir titre="Produit" lot="D7" />}
           {section === 'courrier' && <AVenir titre="Courrier" lot="D8" />}
         </div>

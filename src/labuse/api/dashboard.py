@@ -476,6 +476,160 @@ def admin_licence_quota(compte_id: int, body: QuotaIn, request: Request) -> dict
     return {"ok": True, "quota": body.quota}
 
 
+# ───────────────────────── D6 — SOURCES ─────────────────────────
+#: cadence normalisée → délai (jours, marge comprise) au-delà duquel « À mettre à jour ».
+#: None = pas d'échéance calculable (pluriannuelle : le millésime amont bouge rarement).
+CADENCES: dict[str, int | None] = {
+    "hebdomadaire": 10, "mensuelle": 40, "trimestrielle": 100,
+    "semestrielle": 200, "annuelle": 400, "pluriannuelle": None, "continue": 10,
+}
+
+
+def _cadence_normalisee(v: str | None) -> str | None:
+    if not v:
+        return None
+    v = v.strip().lower()
+    for k in CADENCES:
+        if v.startswith(k[:6]):     # 'mensuel'/'mensuelle', 'semestriel(le)'… → clé canonique
+            return k
+    return None
+
+
+def _commandes_ingestion() -> list[dict]:
+    import yaml
+    from pathlib import Path
+    p = Path(__file__).resolve().parents[3] / "config" / "sources_ingestion.yaml"
+    try:
+        return (yaml.safe_load(p.read_text()) or {}).get("commandes", [])
+    except Exception:  # noqa: BLE001 — pas de mapping → pas de bouton, jamais un 500
+        return []
+
+
+def _relance_pour(nom: str) -> dict | None:
+    import fnmatch
+    for cmd in _commandes_ingestion():
+        if fnmatch.fnmatch(nom.lower(), cmd["motif"].lower().replace("%", "*")):
+            return cmd
+    return None
+
+
+@router.get("/admin/sources")
+def admin_sources(request: Request) -> dict:
+    """Les 59 : millésime amont, ingéré le, cadence ATTENDUE (configurable ici), badge
+    « À mettre à jour » = cadence dépassée (calcul auto sur last_sync_at), bouton Relancer
+    quand une commande existe (config/sources_ingestion.yaml). + dernières exécutions
+    d'ingestion (ingestion_runs — les crons ne journalisent pas event_log, la table est
+    leur vraie trace ; le verdict des crons vit sur /healthz/crons, l'écran l'affiche)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    from ..sources_catalog import est_affichee
+    now = datetime.now(tz=timezone.utc)
+    with engine().begin() as c:
+        rows = [dict(r) for r in c.execute(text(
+            "SELECT id, name, category, provider, status, technical_notes, last_sync_at,"
+            "       source_millesime, source_horizon_at, source_cadence"
+            " FROM data_sources ORDER BY name")).mappings()]
+        runs = [dict(r) for r in c.execute(text(
+            "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
+            " FROM ingestion_runs r LEFT JOIN data_sources d ON d.id = r.data_source_id"
+            " ORDER BY r.started_at DESC NULLS LAST LIMIT 10")).mappings()]
+    sources = []
+    for r in rows:
+        if not est_affichee(r["name"], r.get("technical_notes"), r["status"]):
+            continue
+        cad = _cadence_normalisee(r["source_cadence"])
+        delai = CADENCES.get(cad) if cad else None
+        a_jour = None
+        if delai is not None and r["last_sync_at"] is not None:
+            a_jour = (now - r["last_sync_at"]).days <= delai
+        relance = _relance_pour(r["name"])
+        sources.append({
+            "id": r["id"], "name": r["name"], "category": r["category"],
+            "millesime": r["source_millesime"],
+            "horizon": r["source_horizon_at"].isoformat() if r["source_horizon_at"] else None,
+            "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
+            "cadence": cad,
+            # a_jour : true OK · false à mettre à jour · null = pas d'échéance calculable
+            "a_jour": a_jour,
+            "relance": relance["label"] if relance else None,
+        })
+    # « à mettre à jour » d'abord (mandat), puis nom
+    sources.sort(key=lambda s: (s["a_jour"] is not False, s["name"].lower()))
+    for r in runs:
+        r["started_at"] = r["started_at"].isoformat() if r["started_at"] else None
+        r["finished_at"] = r["finished_at"].isoformat() if r["finished_at"] else None
+    return {"sources": sources,
+            "synthese": {"a_mettre_a_jour": sum(1 for s in sources if s["a_jour"] is False),
+                         "ok": sum(1 for s in sources if s["a_jour"] is True),
+                         "sans_echeance": sum(1 for s in sources if s["a_jour"] is None)},
+            "cadences": list(CADENCES.keys()),
+            "runs": runs}
+
+
+class CadenceIn(BaseModel):
+    cadence: str | None = None
+
+
+@router.post("/admin/sources/{source_id}/cadence")
+def admin_source_cadence(source_id: int, body: CadenceIn, request: Request) -> dict:
+    """La cadence attendue de chaque source se règle SUR CETTE PAGE (mandat D6)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    cad = _cadence_normalisee(body.cadence) if body.cadence else None
+    if body.cadence and cad is None:
+        raise HTTPException(422, f"Cadence inconnue « {body.cadence} » (attendues : {', '.join(CADENCES)}).")
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text("UPDATE data_sources SET source_cadence = :v WHERE id = :i"),
+                      {"v": cad, "i": source_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Source introuvable.")
+    return {"ok": True, "cadence": cad}
+
+
+@router.post("/admin/sources/{source_id}/relancer")
+def admin_source_relancer(source_id: int, request: Request) -> dict:
+    """Relance l'ingestion d'une source dont la commande est CONNUE (même geste que le cron,
+    détaché) — journalisée. Sans mapping : 404, le front n'affiche pas le bouton."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine, session_scope
+    with engine().begin() as c:
+        nom = c.execute(text("SELECT name FROM data_sources WHERE id = :i"), {"i": source_id}).scalar()
+    if not nom:
+        raise HTTPException(404, "Source introuvable.")
+    cmd = _relance_pour(nom)
+    if not cmd:
+        raise HTTPException(404, "Aucune commande d'ingestion connue pour cette source.")
+    argv = list(cmd["argv"])
+    if argv and argv[0] == "python":
+        argv[0] = sys.executable          # le python du process (venv), jamais un python du PATH
+    racine = Path(__file__).resolve().parents[3]
+    log_path = f"/tmp/labuse-relance-{cmd['label']}.log"
+    try:
+        with open(log_path, "ab") as fh:
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    try:
+        from .events import creer_notification
+        with session_scope() as s:
+            creer_notification(s, kind="systeme", compte_id=None, source="Sources",
+                               titre=f"Ingestion relancée à la main : {cmd['label']}",
+                               detail=f"{nom} — commande du cron, détachée (log {log_path}).",
+                               dedup=f"relance:{cmd['label']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "label": cmd["label"], "log": log_path}
+
+
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
 def quota_nl_du_compte(compte_id: int | None) -> int | None:
     """Quota de questions Copilote/jour pour CE compte : l'override de la licence

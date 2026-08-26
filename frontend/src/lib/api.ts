@@ -854,6 +854,24 @@ export interface AdminIa {
 export const getAdminIa = () => j<AdminIa>('/admin/ia')
 export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
+// D6 — Sources
+export interface AdminSource {
+  id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
+  ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
+}
+export interface AdminSources {
+  sources: AdminSource[]
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number }
+  cadences: string[]
+  runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
+}
+export const getAdminSources = () => j<AdminSources>('/admin/sources')
+export const postAdminSourceCadence = (id: number, cadence: string | null) =>
+  j<{ ok: boolean }>(`/admin/sources/${id}/cadence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadence }) })
+export const postAdminSourceRelancer = (id: number) =>
+  j<{ ok: boolean; label: string; log: string }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const getHealthzCrons = () =>
+  j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus
