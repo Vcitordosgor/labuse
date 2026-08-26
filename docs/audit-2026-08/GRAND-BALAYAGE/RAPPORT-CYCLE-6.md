@@ -36,6 +36,7 @@
 | AD — 100 PDF ouverts | 100 | **100** | 0 faux chiffre (🟡 GB-051/052) | lot-ad.csv |
 | AK — backup & restauration | 20 | **18** | 2 (🔴 GB-053 ; 🟠 GB-054) | lot-ak.csv |
 | AG — accessibilité axe-core | 40 | **40** | 0 critical (🟡 GB-055 familles serious) | lot-ag.csv |
+| AO — exports restants | 70 | **67** | 3 (🟡 GB-056 BOM projet.csv ; GB-057 en-tête) | lot-ao.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -88,3 +89,9 @@
   - **a11y-c `aria-hidden-focus` (serious, Copilote)** — un `aside` en `aria-hidden` contient des focusables → piège clavier lecteur d'écran.
   - **a11y-d `scrollable-region-focusable` (serious, fiche commune)** — région scrollable sans accès clavier.
   - **a11y-e (moderate, transversal)** — `region` 40/40, `landmark-one-main` 37/40 (aucun `<main>`), `page-has-heading-one` 32/40 (aucun `<h1>` dans la SPA), `landmark-unique` 29/40 (le Rail). Un chantier « landmarks + h1 » dans le shell App les règle d'un coup.
+
+## LOT AO — exports restants (70, seed 6015) — agent (balayage + finisseur crash-résilient après ENOSPC transitoire)
+**67/70 OK.** 70 exports croisés jamais tirés aux cycles 1-5 (types × périmètres × tris × états vides × cap × négatifs). Codes : 53×200 (PDF/ZIP/pages de partage/courrier), 11×404 (négatifs volontaires ZZ9999/token inconnu), 4×422 (payloads `/modules/courriers` invalides), 1×410 (token de partage expiré). Invariants tenus : chaque 200 s'ouvre (CSV parsable, PDF pdftotext, ZIP dézippe, HTML digest bien formé) ; notice de cap respectée (patron GB-016) ; états vides → fichier vide propre, jamais 500 ; **0 valeur sale** (undefined/NaN/None) ; spot-checks SQL exacts (ex. `97412000AH0033` round(surface)=956, round(sdp)=54 == CSV). Les 3 KO sont un défaut d'encodage unique, pas un faux chiffre.
+- **GB-056 · 🟡 · `projet.csv` exporté SANS BOM UTF-8 → accents cassés sous Excel FR** — `projets.py:1499` renvoie une `StreamingResponse` de `str` brut, là où l'export parcelles (`app.py:1568`) émet `utf-8-sig`. Incohérence inter-exports (déjà pointée cycle 5 sur velocite.csv). Repro : tout `GET /projets/{pid}/export.csv`.
+- **GB-057 · 🟡 · En-tête `projet.csv` « # cadrage figé » injecté même sur un cadrage NON figé** — `projets.py:1465` injecte le libellé « non figé » dans un gabarit `:1474` dont l'en-tête parle de cadrage figé → mention contradictoire dans le fichier. Cosmétique, pas un faux chiffre.
+- **O-AO (observations)** — règle d'encodage à uniformiser : parcelles=utf-8-sig, projets/velocite=utf-8 nu ; tous les négatifs et payloads hostiles rendent proprement (404/422/410, 0×500).
