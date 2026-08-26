@@ -1,0 +1,101 @@
+idu,commune,tier,grandeurs_ok,date_run_ok,sections_ok,accents_ok,verdict,note
+97417000BN0004,Saint-Philippe,ecartee,6/6,gen_only,OK,OK+œ,OK,"prix n/d (0 médiane secteur) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97422000AC0004,Le Tampon,ecartee,6/6,gen_only,OK,OK+œ,OK,"prix n/d (0 médiane secteur) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97401000AR1644,Les Avirons,ecartee,6/6,gen_only,OK,OK,OK,"surface 0→'surface n/d' (falsy, pdf_premium.py:427) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97402000AL0178,Bras-Panon,ecartee,6/6,gen_only,OK,OK,OK,"surface 0→'surface n/d' (falsy, pdf_premium.py:427) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97422000BN2113,Le Tampon,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97411000EL0665,Saint-Denis,brulante,6/6,gen_only,OK,OK+œ,OK,
+97413000CS0346,Saint-Leu,chaude,6/6,gen_only,OK,OK+œ,OK,
+97423000AD0096,Les Trois-Bassins,declasse_au_fermee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97409000AS0604,Saint-André,declasse_au_statut_inconnu,6/6,gen_only,OK,OK+œ,OK,
+97418000AT1269,Sainte-Marie,declasse_bati_revele,6/6,gen_only,OK,OK+œ,OK,
+97414000CH0392,Saint-Louis,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97405000AW0303,Petite-Île,declasse_non_constructible,6/6,gen_only,OK,OK+œ,OK,
+97407000AB0097,Le Port,declasse_zone_fermee,6/6,gen_only,OK,OK+œ,OK,
+97413000CH0316,Saint-Leu,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97416000IE1524,Saint-Pierre,reserve_fonciere,6/6,gen_only,OK,OK+œ,OK,
+97401000AP0306,Les Avirons,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97402000AI0596,Bras-Panon,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97403000AS1307,Entre-Deux,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97404000AE0711,L'Étang-Salé,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97405000BI0704,Petite-Île,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97406000AP0401,La Plaine-des-Palmistes,a_creuser,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97407000AD0091,Le Port,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97408000AT1068,La Possession,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97409000AL1114,Saint-André,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97410000AR1354,Saint-Benoît,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97411000DR0382,Saint-Denis,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97412000BY1101,Saint-Joseph,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97413000CL0005,Saint-Leu,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97415000ET0676,Saint-Paul,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97416000ES2178,Saint-Pierre,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97417000AY0265,Saint-Philippe,a_creuser,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97419000AL1074,Sainte-Rose,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97420000AB1222,Sainte-Suzanne,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97421000AP0449,Salazie,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97423000AK1480,Les Trois-Bassins,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97424000AL0272,Cilaos,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97401000AO0563,Les Avirons,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97402000AE0582,Bras-Panon,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97403000AH0428,Entre-Deux,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97404000AR0419,L'Étang-Salé,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97405000AZ0676,Petite-Île,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97406000AD0024,La Plaine-des-Palmistes,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97407000AH1177,Le Port,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97408000AS0590,La Possession,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97409000AR2421,Saint-André,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97410000BX1945,Saint-Benoît,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97411000DK0354,Saint-Denis,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97412000AZ0330,Saint-Joseph,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97414000EL0659,Saint-Louis,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97415000AH0837,Saint-Paul,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97416000HM0457,Saint-Pierre,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97417000BC1124,Saint-Philippe,a_creuser,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97418000AO0722,Sainte-Marie,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97419000AX0585,Sainte-Rose,ecartee,6/6,gen_only,OK,OK+œ,OK,
+97420000AS0060,Sainte-Suzanne,a_creuser,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97421000AR0078,Salazie,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97422000BS1992,Le Tampon,a_creuser,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97424000AM0418,Cilaos,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97401000AN1020,Les Avirons,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97402000AK1686,Bras-Panon,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97403000AR0384,Entre-Deux,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97404000AI1958,L'Étang-Salé,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97405000AW1230,Petite-Île,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97406000AI0596,La Plaine-des-Palmistes,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97407000AO0547,Le Port,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97408000AO0974,La Possession,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97409000AE0095,Saint-André,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97410000AD0791,Saint-Benoît,declasse_bati_sature,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97411000AN0426,Saint-Denis,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97412000AT1043,Saint-Joseph,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97413000DE1215,Saint-Leu,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97414000CH1944,Saint-Louis,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97415000ES0684,Saint-Paul,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97417000BC1153,Saint-Philippe,declasse_bati_sature,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97418000AT2286,Sainte-Marie,ecartee,6/6,gen_only,OK,OK+œ,OK,
+97419000AM0424,Sainte-Rose,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97420000AS0845,Sainte-Suzanne,declasse_bati_sature,6/6,gen_only,OK,OK+œ,OK,
+97421000AM0419,Salazie,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97422000BD1911,Le Tampon,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97423000AI0692,Les Trois-Bassins,declasse_bati_sature,6/6,gen_only,OK,OK,OK,
+97424000AI2183,Cilaos,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97401000AP0044,Les Avirons,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97402000AD0084,Bras-Panon,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97403000AM0780,Entre-Deux,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97404000AE0204,L'Étang-Salé,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97405000AM0277,Petite-Île,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97406000AS0077,La Plaine-des-Palmistes,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97407000AH0875,Le Port,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97408000AN2104,La Possession,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97409000AP1081,Saint-André,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97410000BT0121,Saint-Benoît,ecartee,6/6,gen_only,OK,OK,OK,"prix n/d (0 médiane secteur) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97411000HK0016,Saint-Denis,a_creuser,6/6,gen_only,OK,OK+œ,OK,
+97412000AO0299,Saint-Joseph,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97413000CY0391,Saint-Leu,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97414000EN3189,Saint-Louis,declasse_non_constructible,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97415000DS0846,Saint-Paul,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97416000HP0807,Saint-Pierre,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97417000BI0024,Saint-Philippe,a_creuser,6/6,gen_only,OK,OK,OK,"prix n/d (0 médiane secteur) | SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97418000AC0983,Sainte-Marie,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
+97419000AP0210,Sainte-Rose,ecartee,6/6,gen_only,OK,OK,OK,"SDP: section absente SANS libellé (pt None, app.py:3337/pdf_premium.py:481)"
