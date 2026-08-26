@@ -16,7 +16,7 @@ describe('FIX-FONDS — fonds de carte', () => {
 
   it('B5 : activeBasemapKey rend les millésimes récents SÉLECTIONNABLES (plus de couches mortes)', () => {
     expect(activeBasemapKey('clair', 'now')).toBeNull()          // Clair = aucune tuile
-    expect(activeBasemapKey('dark', 'now')).toBe('bm-carto')
+    expect(activeBasemapKey('dark', 'now')).toBeNull()           // FOND-SOMBRE : Sombre = aucune tuile (CARTO retiré)
     expect(activeBasemapKey('plan', 'now')).toBe('bm-plan')
     expect(activeBasemapKey('ortho', 'now')).toBe('bm-ortho-now')
     expect(activeBasemapKey('ortho', '2016')).toBe('bm-ortho-2016')   // avant : couche morte, maintenant servie
@@ -33,6 +33,13 @@ describe('FIX-FONDS — fonds de carte', () => {
     expect(basemapLabel('bm-ortho-now')).toBe('Actuelle')
     expect(basemapLabel('bm-ortho-2011')).toBe('2011-2015')
     expect(basemapLabel('bm-plan')).toBe('Plan IGN')
-    expect(basemapLabel('bm-carto')).toBe('Fond sombre')
+  })
+
+  // FOND-SOMBRE : plus AUCUNE source CARTO (clé requise) — le Sombre est rendu sans raster.
+  it('FOND-SOMBRE : aucun fond ne pointe vers cartocdn/carto.com', () => {
+    expect(BASEMAP_SOURCES['bm-carto']).toBeUndefined()
+    for (const def of Object.values(BASEMAP_SOURCES)) {
+      for (const url of def.tiles) expect(url).not.toMatch(/cartocdn|carto\.com/)
+    }
   })
 })

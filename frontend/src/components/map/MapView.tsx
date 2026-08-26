@@ -17,12 +17,14 @@ import { Loading } from '../Loading'
 
 const STYLE: maplibregl.StyleSpecification = {
   version: 8,
-  // M6.1 : hôte glyphs CORRIGÉ — l'ancien (basemaps.cartocdn.com/gl/<style>/…) répond 404
-  // sans en-têtes CORS : AUCUN calque symbol ne rendait (étiquettes de zone, pastilles #rang
-  // M5.1). Le bon endpoint vient du style.json Carto ; vérifié 200 + Access-Control-Allow-Origin.
-  glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
+  // FOND-SOMBRE : glyphs EMBARQUÉS (public/fonts/Open Sans Regular, 256 ranges pbf) — l'hôte Carto
+  // (M6.1) exige désormais une clé. Même police que servie avant (Open Sans Regular), zéro réseau.
+  // Les couches symbol posent text-font: ['Open Sans Regular'] explicitement (le défaut MapLibre
+  // demanderait la pile composite « Open Sans Regular,Arial Unicode MS Regular », dossier inexistant).
+  glyphs: `${window.location.origin}${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}fonts/{fontstack}/{range}.pbf`,
   sources: {},
-  layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } }],
+  // canvas au niveau MER du Sombre (#181918 MESURÉ, cf. SOMBRE_MER) : pas de flash noir au boot.
+  layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#181918' } }],
 }
 
 // Correctif M5 (verdict effectif) : la couleur EST le verdict sur la carte — étage 0 prime
@@ -202,8 +204,18 @@ const OVERLAYS = {
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
+// ═══ FOND-SOMBRE — le Sombre n'a PLUS de raster (CARTO clé requise → retiré, décision Vic) ═══
+// Le rendu Sombre est reproduit aux teintes EFFECTIVEMENT MESURÉES à l'écran avant retrait
+// (qa/fond-sombre, captures avant) : le raster dark_nolabels à raster-opacity 0,55 sur le canvas
+// #060A08 rendait mer = (24,25,24) et terre nue = (8,10,9). Aucune couleur nouvelle : ce sont les
+// valeurs que l'utilisateur voyait déjà. La TERRE est portée par la masse dissoute `ile-mass`
+// (même mécanisme que le Clair), la MER par le canvas `bg`. Aucun raster de remplacement, aucun
+// ombrage (le relief en volume = mode 3D).
+const SOMBRE_MER = '#181918'    // mer Sombre MESURÉE (blend raster CARTO 0,55 sur #060A08)
+const SOMBRE_TERRE = '#080A09'  // terre Sombre MESURÉE (idem)
+
 // ═══ M65 P8 — MODE CLAIR = INVERSION FIGURE/FOND (redéfinit le Clair M64) ═══
-// La MER (fond hors terre = `bg`) reste NOIRE, exactement comme en Sombre (le Clair ne touche PAS
+// La MER (fond hors terre = `bg`) reste le canvas historique #060A08 (le Clair ne touche PAS
 // au fond de carte). Ce qui change, c'est la TERRE :
 //  · masse terrestre (île dissoute) = GRIS #C9C4B8 (couche `ile-mass`) → la terre sans parcelle
 //    (cirques, forêt, volcan) est grise ; la mer, non couverte, reste le `bg` noir ;
@@ -214,15 +226,20 @@ const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 // Bascules M64 CONSERVÉES (elles se posent maintenant sur de la terre claire) : traits achromatiques
 // (sélection/pulse/étiquette de zone) → valeur sombre. Pastilles de commune : INCHANGÉES (revert de
 // l'adaptation « pastille claire » M64, cf. leur effet) — un seul token diffère entre les modes.
-const SOMBRE_BG = '#060A08'   // le `bg` (la mer) ne bouge JAMAIS — noir dans les deux modes.
+const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sous les rasters Plan/Ortho).
 // largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
 const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
-function applyClairMode(m: maplibregl.Map, clair: boolean) {
+function applyClairMode(m: maplibregl.Map, basemap: string) {
+  const clair = basemap === 'clair'
+  const sombre = basemap === 'dark'
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
-  set('bg', 'background-color', SOMBRE_BG)   // mer noire, toujours.
-  // TERRE claire : masse île grise + trait de côte vert — Clair seulement.
-  vis('ile-mass', clair)
+  // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
+  set('bg', 'background-color', sombre ? SOMBRE_MER : SOMBRE_BG)
+  // TERRE : masse île dissoute — grise en Clair, terre mesurée en Sombre ; CACHÉE sous Plan/Ortho
+  // (dans la pile elle est AU-DESSUS des rasters de fond, elle les recouvrirait).
+  vis('ile-mass', clair || sombre)
+  set('ile-mass', 'fill-color', clair ? '#C9C4B8' : SOMBRE_TERRE)
   vis('ile-cote', clair)
   // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
   const selLine = clair ? '#14181A' : '#ECF5EF'
@@ -606,17 +623,18 @@ export function MapView() {
       console.error(e.error ?? e)
     })
     m.on('load', () => {
-      // fonds de plan (tous chargés, visibilité pilotée)
+      // fonds de plan (tous chargés, visibilité pilotée par l'effet fond via activeBasemapKey —
+      // FOND-SOMBRE : plus de fond visible à la création, le défaut « dark » n'a plus de raster)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
         m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
-        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: id === 'bm-carto' ? 'visible' : 'none' },
-          paint: { 'raster-opacity': id === 'bm-carto' ? 0.55 : 1 } })
+        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' } })
       }
-      // M65 P8 — MASSE TERRESTRE (île dissoute) : en mode CLAIR, la terre est un aplat GRIS #C9C4B8
-      // et la mer reste le `bg` NOIR ; la terre sans parcelle (cirques, forêt, volcan) prend ce gris.
-      // Posée TOUT EN BAS de la pile vectorielle (juste au-dessus du raster) → sous TOUS les overlays
-      // (risques, zonages) et les parcelles, qui restent lisibles par-dessus. Masquée en Sombre (le
-      // raster CARTO porte alors terre/mer/côte). Source ile974.geojson = 24 communes DISSOUES.
+      // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
+      // prend l'aplat du thème — GRIS #C9C4B8 en Clair, terre mesurée SOMBRE_TERRE en Sombre
+      // (FOND-SOMBRE ; applyClairMode pose teinte et visibilité). Posée TOUT EN BAS de la pile
+      // vectorielle (juste au-dessus des rasters) → sous TOUS les overlays (risques, zonages) et
+      // les parcelles, qui restent lisibles par-dessus. Masquée sous Plan/Ortho (elle recouvrirait
+      // leurs tuiles). Source ile974.geojson = 24 communes DISSOUES.
       m.addSource('ile-mass', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}ile974.geojson` })
       m.addLayer({ id: 'ile-mass', type: 'fill', source: 'ile-mass', layout: { visibility: 'none' },
         paint: { 'fill-color': '#C9C4B8', 'fill-opacity': 1 } })
@@ -743,8 +761,9 @@ export function MapView() {
       // M6.1 item 1 : étiquette de la zone PLU PRÉCISE (zone_lib) au zoom ≥ 16 — mode commune
       m.addLayer({
         id: 'parcels-zone-label', type: 'symbol', source: 'parcels', minzoom: 16,
+        // FOND-SOMBRE : text-font EXPLICITE = la pile du dossier de glyphs embarqué (cf. STYLE.glyphs)
         layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
-          'text-size': 11, 'text-optional': true },
+          'text-font': ['Open Sans Regular'], 'text-size': 11, 'text-optional': true },
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
@@ -789,8 +808,9 @@ export function MapView() {
       // (prochain build-mvt) ; d'ici là text-field vide = aucun rendu, rien ne casse
       m.addLayer({
         id: 'ile-zone-label', type: 'symbol', ...SL, minzoom: 16,
+        // FOND-SOMBRE : text-font EXPLICITE = la pile du dossier de glyphs embarqué (cf. STYLE.glyphs)
         layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
-          'text-size': 11, 'text-optional': true },
+          'text-font': ['Open Sans Regular'], 'text-size': 11, 'text-optional': true },
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
@@ -1080,17 +1100,16 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    // M64-P1 (B) : « Clair » n'est PAS un raster — c'est le rendu sombre avec le fond blanc. On masque
-    // donc TOUS les fonds de plan (le calque `bg`, passé au blanc, reste visible dessous) ; les couches
-    // parcelles/overlays gardent leurs couleurs sombres.
-    const clair = basemap === 'clair'
+    // M64-P1 (B) / FOND-SOMBRE : « Clair » ET « Sombre » ne sont PAS des rasters — canvas + masse
+    // terrestre + nos couches. On masque donc TOUS les fonds de plan pour ces deux modes ; les
+    // couches parcelles/overlays gardent leurs couleurs sombres.
     // FIX-FONDS B5 — mapping unifié (partagé avec l'attribution) : les 7 millésimes d'ortho sont
     // désormais sélectionnables, donc bm-ortho-2006/2011/2016/2021 ne sont plus des couches mortes.
     const active = activeBasemapKey(basemap, orthoYear)
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
     }
-    applyClairMode(m, clair)   // fond blanc/noir + traits achromatiques quasi-blancs (aucune autre couleur touchée)
+    applyClairMode(m, basemap)   // mer/terre du thème + traits achromatiques (aucune autre couleur touchée)
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
@@ -1511,8 +1530,8 @@ export function MapView() {
     : null
 
   // FIX-FONDS B2/B3 — attribution EXACTE du fond actif : celle de BASEMAP_SOURCES (par fond ET par
-  // millésime d'ortho), plus le binaire codé en dur. En mode Clair (aucune tuile de fond), on crédite
-  // la seule donnée montrée : le cadastre DGFiP.
+  // millésime d'ortho), plus le binaire codé en dur. En Sombre et en Clair (aucune tuile de fond
+  // depuis FOND-SOMBRE), on crédite la seule donnée montrée : le cadastre DGFiP.
   const fondActif = activeBasemapKey(basemap, orthoYear)
   const attribution = fondActif ? BASEMAP_SOURCES[fondActif].attribution : 'Cadastre © DGFiP'
   // FIX-FONDS B4 — un fond ortho ANCIEN (millésime ≠ Actuelle) peut montrer des dalles noires (mer,

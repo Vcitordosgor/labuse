@@ -8,14 +8,12 @@ export const WMTS = (layer: string, format: string) =>
 export type BasemapDef = { tiles: string[]; attribution: string; maxzoom?: number }
 
 export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
-  // R4 (revue Vic n°2, reprise du C3) : sur le fond SOMBRE, les noms de localités disparaissent
-  // À TOUS LES ZOOMS (décision ferme — Saint-Gilles-les-Bains en gros par-dessus la carte).
-  // La variante nolabels retire AUSSI les noms de rues : assumé — la fiche porte l'adresse,
-  // le Plan IGN reste disponible pour qui veut des labels. Ortho : pas de labels par nature.
-  'bm-carto': {
-    tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
-    attribution: '© OSM · CARTO',
-  },
+  // FOND-SOMBRE : le raster CARTO dark_nolabels (bm-carto) est RETIRÉ — CARTO exige désormais une
+  // clé (« API KEY REQUIRED » en filigrane) et le raster n'apportait rien à l'échelle de l'île
+  // (décision Vic, captures à l'appui). « Sombre » = canvas + masse terrestre + nos couches, même
+  // mécanisme que « Clair » (cf. MapView.applyClairMode), aux teintes MESURÉES du rendu d'avant.
+  // La décision R4 (aucun nom de localité sur le Sombre, à tous les zooms) tient de fait : plus
+  // aucune tuile de labels ; le Plan IGN reste disponible pour qui veut des labels.
   // M64-P1 : le fond « Clair » n'est PLUS un raster (Positron retiré) — c'est le rendu SOMBRE avec le
   // fond du canvas passé au blanc (cf. MapView.applyClairMode). Aucune tuile claire à charger.
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
@@ -53,18 +51,17 @@ export const ORTHO_YEARS: { key: keyof typeof BASEMAP_SOURCES; an: OrthoYear; la
   ...TEMPS_MILLESIMES.map((m) => ({ key: m.key, an: m.an as OrthoYear, label: m.label })),
 ]
 
-// FIX-FONDS B2/B5 — mapping UNIQUE (basemap, orthoYear) → clé de fond raster (null en mode Clair,
-// qui n'a pas de tuile). Consommé par la bascule de visibilité ET l'attribution (plus de logique
-// dupliquée entre le rendu et l'effet).
+// FIX-FONDS B2/B5 — mapping UNIQUE (basemap, orthoYear) → clé de fond raster (null pour Sombre ET
+// Clair, qui n'ont pas de tuile depuis FOND-SOMBRE). Consommé par la bascule de visibilité ET
+// l'attribution (plus de logique dupliquée entre le rendu et l'effet).
 export function activeBasemapKey(basemap: string, orthoYear: string): keyof typeof BASEMAP_SOURCES | null {
-  if (basemap === 'clair') return null
-  if (basemap === 'dark') return 'bm-carto'
+  if (basemap === 'clair' || basemap === 'dark') return null
   if (basemap === 'plan') return 'bm-plan'
   return ORTHO_YEARS.find((y) => y.an === orthoYear)?.key ?? 'bm-ortho-now'   // 'ortho' : le millésime pilote
 }
 
 // FIX-FONDS B6 — `BASEMAP_CHOICES` (ancienne liste du comparateur, sans consommateur comme sélecteur)
 // RETIRÉ. Les libellés viennent d'ORTHO_YEARS (now + millésimes) + les deux fonds non-ortho.
-const _FOND_LABELS: Record<string, string> = { 'bm-plan': 'Plan IGN', 'bm-carto': 'Fond sombre' }
+const _FOND_LABELS: Record<string, string> = { 'bm-plan': 'Plan IGN' }
 export const basemapLabel = (key: string) =>
   ORTHO_YEARS.find((y) => y.key === key)?.label ?? _FOND_LABELS[key] ?? key
