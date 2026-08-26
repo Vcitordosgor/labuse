@@ -34,6 +34,7 @@
 | AF — intégrité pleine table | 62 | **59** | 3 (🟡 GB-044/045/046) · G2 ✅ G3 ✅ | lot-af.csv |
 | AJ — installation à vide | 20 | **17** | 3 (🟠 GB-047/048/049 ; 🟡 GB-050) | lot-aj.csv |
 | AD — 100 PDF ouverts | 100 | **100** | 0 faux chiffre (🟡 GB-051/052) | lot-ad.csv |
+| AK — backup & restauration | 20 | **18** | 2 (🔴 GB-053 ; 🟠 GB-054) | lot-ak.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -71,3 +72,9 @@
 - **GB-052 · 🟡 · Section « Droits à bâtir (SDP) » absente SANS libellé sur 48/100** — parcelles à cause M125/non calculées : `app.py:3376` return None + `pdf_premium.py:481` saute la section muettement, en CONTRASTE avec le patron `_indispo` M125 qui assume la panne ailleurs. L'absence n'est pas « assumée par un libellé ».
 - **O-AD2 (observation, design confirmé)** — tier/verdict/probabilité ABSENTS du PDF par design M124-A (« l'analyse LABUSE reste à l'écran ») ; contrôle inversé : **0 fuite d'analyse sur 100 PDF**. Conforme.
 - **O-AD4 (environnement, hors produit)** — ENOSPC du poste (disque 100 %) en cours de lot → 1 PDF corrompu, re-généré et validé. Voir « Actions pour Vic » (disque).
+
+## LOT AK — backup & restauration (20, seed 6011) — agent (protocole adapté au disque par l'orchestrateur : 1re tentative tuée pour risque de saturation, relance avec budget disque strict)
+**18/20 OK — la MÉCANIQUE de sauvegarde/restauration est prouvée fidèle, mais le backup réel est impossible sur cette machine.** Mesures : dump complet **6,44 Go en 10 min 29** (streamé vers `wc -c`, jamais écrit — pg_dump 18.4 = serveur) ; restauration par phases ≤ 500 Mo dans `labuse_c6_test`, débit 25-27 Mo/s → **RTO extrapolé ≈ 35 min** (théorique). Fidélité : 17/17 row counts identiques, spot-checks seed 6011 **au bit près** (parcels+geom md5, résiduel, solar, p_score_v2 5/5), séquences 8/8, index/contraintes identiques. **Backup frais réellement conservé** : dump des 28 tables de données-usage (créées par POST utilisateur, non reconstructibles par ingestion), **0,31 Mo, testé en restauration** → `~/labuse-backups/labuse-c6-donnees-usage-2026-08-26.dump` (hors repo). État final : `labuse_c6_test` droppée, ~944 Mo libres rendus, base `labuse` jamais écrite.
+- **GB-053 · 🔴 (opérationnel) · Aucun backup complet possible sur la machine pilote — RPO de fait 36 jours** — dump 6,44 Go vs ~950 Mo libres (disque à 100 %, 211/228 Go) : le backup complet local est PHYSIQUEMENT impossible ; le dernier backup réel est `labuse_m7_20260721.dump` (4,0 Go, 21/07). Un incident disque aujourd'hui perd 36 jours de données dont TOUT le travail utilisateur (CRM, projets, courriers). Atténué depuis ce lot par le dump données-usage 0,31 Mo ci-dessus (à automatiser). Le disque plein a par ailleurs perturbé l'audit lui-même (2 incidents ENOSPC transitoires, lots AO/AD).
+- **GB-054 · 🟠 · `labuse backup-db` officiel = ENOSPC garanti** — `cli.py:1815` : chemin relatif `./backups`, zéro check d'espace, zéro rotation, zéro exclusion des tables reconstructibles (`dryrun_cascade_results` seule = 8,7 Go) → sur cette machine, la commande officielle sature le disque et laisse un fichier partiel.
+- **O-AK4/O-AK5 (observations)** — postgis 3.6.3 source → 3.6.4 restauré (extension recréée à la version courante, comportement pg_restore normal) ; la restauration table-à-table ne reconstruit ni FK ni vues dépendantes (l'intégrité complète exige le restore complet — inhérent à la méthode, documenté).
