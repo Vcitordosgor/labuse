@@ -1,9 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
+import { getMoi } from '../lib/api'
 import { useApp, type View } from '../store/useApp'
 import { MODULES } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
-type Zone = Exclude<View, 'sources'> | 'outils'
+// DASHBOARD-V1 — 'admin' (Tour de contrôle) n'est pas une zone du rail-icônes : son entrée vit
+// au pied de rail, visible seulement pour l'admin (cf. AdminRailEntry).
+type Zone = Exclude<View, 'sources' | 'admin'> | 'outils'
 
 const ICONS: Record<Zone, JSX.Element> = {
   // M62-P1 (a/b) : l'entrée « IA » du rail = le Copilote (view 'copilote') → ÉTINCELLES.
@@ -84,6 +88,31 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
   )
 }
 
+// DASHBOARD-V1 — entrée « Tour de contrôle » au pied de rail : VISIBLE seulement pour l'admin
+// (role 'admin' ou session pilote). La visibilité est du confort d'UI — la vraie garde est
+// côté backend (exiger_admin sur chaque /admin/*, 403 client).
+function AdminRailEntry() {
+  const { view, setView } = useApp()
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  const admin = moi.data?.mode === 'pilote' || moi.data?.role === 'admin'
+  if (!admin) return null
+  return (
+    <button data-rail-admin onClick={() => setView('admin')} className="group flex w-full flex-col items-center gap-1"
+      title="Tour de contrôle — pilotage de LABUSE (admin)">
+      <span className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
+        view === 'admin' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+        {/* jauge/compteur — le pilotage */}
+        <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3.5 13.5 a6.5 6.5 0 1 1 13 0" strokeLinecap="round" />
+          <path d="M10 13.5 L13.2 8.6" strokeLinecap="round" />
+          <circle cx="10" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
+        </svg>
+      </span>
+      <span className={`text-[10.5px] ${view === 'admin' ? 'text-mint' : 'text-txt-mut'}`}>Admin</span>
+    </button>
+  )
+}
+
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule, surveillanceOpen, toggleSurveillance } = useApp()
   // M104 — UNE seule entrée « Surveillance » (fusion Suivis + Secteurs + Critères, arbitrage
@@ -160,6 +189,7 @@ export function Rail() {
           {/* B7 (mandat calculette) : la pastille « VL » du rail DOUBLAIT l'avatar déjà présent
               dans le header — retirée pour libérer de l'espace vertical (au profit des filtres).
               Aucune fonction unique n'y était attachée (statique) ; l'identité reste au header. */}
+          <AdminRailEntry />
         </div>
       </nav>
 

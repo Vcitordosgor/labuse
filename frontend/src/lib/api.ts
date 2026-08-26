@@ -790,6 +790,35 @@ export const postSuggestion = (body: { categorie: string; texte: string; context
 export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
   j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
+// ── DASHBOARD-V1 — Tour de contrôle (admin) ──
+export interface StripeApercu {
+  configure: boolean
+  raison?: string
+  erreur?: string
+  mrr_eur?: number
+  abonnements_actifs?: number
+  paiements_en_echec?: number
+  abonnements?: Array<{ subscription_id: string; customer_id: string; email: string | null; nom_stripe: string | null; statut: string; montant_eur_mois: number; depuis: number | null; periode_fin: number | null; prochaine_retentative: number | null }>
+  ca_mois?: Record<string, number>
+  rapprochement?: { comptes_sans_abo: Array<{ compte_id: number; nom: string; statut: string }>; abos_sans_compte: Array<{ customer_id: string; email: string | null; statut: string }>; indisponible?: boolean }
+  maj?: string
+}
+export interface AdminPilotage {
+  stripe: StripeApercu
+  licences_actives: number
+  actifs_24h: number
+  ia_mois: { cout_eur: number; appels: number }
+  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent'; chemin: string; age_jours: number | null; mtime?: string }
+  sante: { ok: boolean | null; total: number | null; en_echec: string[] }
+  run: { label: string | null; carte_le: string | null }
+  fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
+  gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
+}
+export const getAdminPilotage = () => j<AdminPilotage>('/admin/pilotage')
+export const getAdminStripe = () => j<StripeApercu>('/admin/stripe')
+export const postAdminDegeler = (sujet: string) =>
+  j<{ ok: boolean; degele: boolean }>('/admin/degeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sujet }) })
+
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus
 // hérité muettement du filtre global). `commune === undefined` → repli sur le filtre global

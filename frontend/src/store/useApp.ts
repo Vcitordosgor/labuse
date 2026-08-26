@@ -6,7 +6,8 @@ import type { FilterTier } from '../lib/status'
 // premier niveau, la maquette B4 est pleine largeur (pas un module du panneau 320 px).
 // M65 P4 : la vue 'ia' (IAStub « Recherche ») est retirée du rail et de l'app — la recherche NL
 // vit dans l'omnibox du header, le montage de projet dans le Copilote.
-export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
+// DASHBOARD-V1 — 'admin' = Tour de contrôle (accès réservé ; les endpoints /admin/* portent la garde).
+export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin'
 
 // FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
 // ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).

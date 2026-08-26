@@ -137,3 +137,4 @@ frontend/vite.config.js
 qa/m130/*.pdf
 node_modules
 qa/fond-sombre/out/
+qa/dashboard/out/

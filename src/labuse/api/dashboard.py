@@ -19,11 +19,11 @@ cloisonnement EXISTANT, réutilisé, jamais un nouveau mécanisme.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 log = logging.getLogger("labuse.dashboard")
 
@@ -121,6 +121,119 @@ def admin_stripe(request: Request, force: bool = False) -> dict:
     exiger_admin(request)
     from ..stripe_lecture import apercu
     return apercu(force=force)
+
+
+# ───────────────────────── D3 — PILOTAGE ─────────────────────────
+def _age_backup() -> dict:
+    """Âge du dernier dump (GB-054) : mtime du .dump le plus récent de backup_dir.
+    ambre ≥ 2 j · rouge ≥ 7 j · « absent » honnête si le répertoire est vide/inaccessible."""
+    import glob
+    import os
+    import time as _t
+    from .. import config
+    rep = config.get_settings().backup_dir
+    try:
+        dumps = glob.glob(os.path.join(rep, "*.dump"))
+        if not dumps:
+            return {"etat": "absent", "chemin": rep, "age_jours": None}
+        mtime = max(os.path.getmtime(p) for p in dumps)
+        age_j = (_t.time() - mtime) / 86400
+        etat = "rouge" if age_j >= 7 else "ambre" if age_j >= 2 else "ok"
+        return {"etat": etat, "chemin": rep, "age_jours": round(age_j, 1),
+                "mtime": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat()}
+    except Exception:  # noqa: BLE001 — la tuile dit « absent », jamais un 500
+        return {"etat": "absent", "chemin": rep, "age_jours": None}
+
+
+@router.get("/admin/pilotage")
+def admin_pilotage(request: Request) -> dict:
+    """L'état de LABUSE en cinq secondes (héros + tuiles + LED du rail). AUCUN chiffre métier
+    recalculé : tout est LU (Stripe lecture, ledgers, event_log, /readyz du process)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    from ..stripe_lecture import apercu
+    stripe = apercu()
+
+    with engine().begin() as c:
+        licences_actives = c.execute(text(
+            "SELECT COUNT(*) FROM comptes WHERE statut = 'actif'")).scalar() or 0
+        # actifs 24 h = un login OU un capteur d'usage dans les dernières 24 h (par compte)
+        actifs_24h = c.execute(text(
+            "SELECT COUNT(*) FROM ("
+            " SELECT DISTINCT compte_id FROM usage_events"
+            "  WHERE ts > now() - interval '24 hours' AND compte_id IS NOT NULL"
+            " UNION"
+            " SELECT DISTINCT compte_id FROM utilisateurs"
+            "  WHERE dernier_login_at > now() - interval '24 hours' AND compte_id IS NOT NULL) t"
+        )).scalar() or 0
+        ia = c.execute(text(
+            "SELECT COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels FROM ia_log"
+            " WHERE ts >= date_trunc('month', now())")).mappings().one()
+        # fil admin : les événements SYSTÈME (compte NULL = feed pilote/admin, patron existant)
+        fil = [dict(r) for r in c.execute(text(
+            "SELECT id, ts, kind, source, titre, detail, lien FROM event_log"
+            " WHERE compte_id IS NULL AND kind = 'systeme'"
+            " ORDER BY ts DESC LIMIT 30")).mappings()]
+        gels = [dict(r) for r in c.execute(text(
+            "SELECT sujet, motif, ts FROM acces_gels WHERE actif ORDER BY ts DESC LIMIT 20")).mappings()]
+        # LED rail : run servi + date de la carte (même vérité que /map/tiles/meta)
+        run_label = carte_le = None
+        if c.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+            row = c.execute(text(
+                "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
+            if row:
+                run_label, carte_le = row["value"], row["updated_at"]
+
+    from .app import app as _app
+    heal = getattr(_app.state, "schema_heal", None) or {}
+    # ok None = heal jamais passé (boot sans lifespan, ex. tests) → la tuile dit « inconnu »,
+    # jamais un faux rouge ni un faux vert.
+    sante = {"ok": heal.get("ok"), "total": heal.get("total"),
+             "en_echec": [f.get("module") for f in heal.get("failures", [])]}
+
+    for r in fil:
+        r["ts"] = r["ts"].isoformat() if r["ts"] else None
+    for g in gels:
+        g["ts"] = g["ts"].isoformat() if g["ts"] else None
+    return {
+        "stripe": stripe,
+        "licences_actives": licences_actives,
+        "actifs_24h": actifs_24h,
+        "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
+        "backup": _age_backup(),
+        "sante": sante,
+        "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},
+        "fil": fil,
+        "gels": gels,
+    }
+
+
+class DegelerIn(BaseModel):
+    sujet: str = Field(min_length=1, max_length=128)
+
+
+@router.post("/admin/degeler")
+def admin_degeler(body: DegelerIn, request: Request) -> dict:
+    """Dégel d'un sujet (gel anti-burst) depuis le fil Pilotage — même geste que la CLI
+    `labuse ungel`, journalisé."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine, session_scope
+    with engine().begin() as c:
+        n = c.execute(text("UPDATE acces_gels SET actif = false WHERE sujet = :s AND actif"),
+                      {"s": body.sujet}).rowcount
+    if n:
+        try:
+            from .events import creer_notification
+            with session_scope() as s:
+                creer_notification(s, kind="systeme", compte_id=None, source="Sécurité",
+                                   titre=f"Gel anti-burst levé sur {body.sujet[:64]}",
+                                   detail="Dégel manuel depuis la Tour de contrôle.",
+                                   dedup=f"degel:{body.sujet[:64]}")
+        except Exception:  # noqa: BLE001
+            pass
+    return {"ok": True, "degele": bool(n)}
 
 
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────

@@ -191,7 +191,9 @@ async def _lifespan(app: FastAPI):
             _journaliser_heal_echec(_mod, _mexc)
 
         _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec)
-        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures}
+        # `total` (DASHBOARD-V1 · D3) — la tuile « santé serveur » affiche N/N modules OK.
+        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures,
+                                 "total": len(_heal_steps)}
     except Exception as exc:  # noqa: BLE001 — verrou/ensure_schema KO : l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = {"ok": False, "failures": [
             {"module": "verrou/ensure_schema", "error": f"{type(exc).__name__}: {exc}"}]}
