@@ -128,6 +128,10 @@ class Settings(BaseSettings):
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None
     stripe_price_id: str | None = None
+    # DASHBOARD-V1 · D2 — clé RESTREINTE lecture seule (Tour de contrôle) : jamais la clé
+    # complète, jamais en dur. Absente → le dashboard affiche « non configuré » proprement.
+    # Posée LABUSE_STRIPE_RESTRICTED_KEY (ou STRIPE_RESTRICTED_KEY nu, lu en repli au module).
+    stripe_restricted_key: str | None = None
     # SMTP (M21 — transport e-mail unique) — env LABUSE_SMTP_* + LABUSE_MAIL_FROM.
     # Sans hôte configuré : le mail est JOURNALISÉ et marqué non-envoyé (jamais « envoyé »).
     # Le mot de passe (mot de passe d'application Gmail) vit dans le .env, JAMAIS dans le code.

@@ -62,6 +62,31 @@ def test_ia_log_attribue_au_compte(client, engine):
     assert row[0] == 4242 and float(row[1]) > 0
 
 
+def test_stripe_lecture_non_configure(client, monkeypatch):
+    """D2 — sans clé restreinte : mode « non configuré » PROPRE (aucun crash, raison servie)."""
+    from labuse import config, stripe_lecture
+    monkeypatch.delenv("LABUSE_STRIPE_RESTRICTED_KEY", raising=False)
+    monkeypatch.delenv("STRIPE_RESTRICTED_KEY", raising=False)
+    config.get_settings.cache_clear()
+    stripe_lecture.vider_cache()
+    r = client.get("/admin/stripe")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["configure"] is False and "restreinte" in d["raison"].lower() or "LABUSE_STRIPE" in d["raison"]
+
+
+def test_admin_stripe_exige_session_hors_local(client, monkeypatch):
+    """D2 — hors mode local, /admin/stripe sans session → 401 (le gate admin est actif)."""
+    monkeypatch.setenv("LABUSE_ENV", "pilot")
+    monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "sha256:" + "0" * 64)
+    from labuse import config
+    config.get_settings.cache_clear()
+    try:
+        assert client.get("/admin/stripe").status_code == 401
+    finally:
+        config.get_settings.cache_clear()
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte

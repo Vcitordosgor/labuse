@@ -112,6 +112,17 @@ def creer_retour(body: RetourIn, request: Request) -> dict:
     return {"ok": True, "id": rid}
 
 
+# ───────────────────────── D2 — STRIPE (lecture seule) ─────────────────────────
+@router.get("/admin/stripe")
+def admin_stripe(request: Request, force: bool = False) -> dict:
+    """Vue Stripe du dashboard (MRR, abonnements, statuts, CA/mois, rapprochement) — clé
+    RESTREINTE lecture, cache 5 min, mode « non configuré » propre. Admin seulement (403 client)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..stripe_lecture import apercu
+    return apercu(force=force)
+
+
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
 def quota_nl_du_compte(compte_id: int | None) -> int | None:
     """Quota de questions Copilote/jour pour CE compte : l'override de la licence
