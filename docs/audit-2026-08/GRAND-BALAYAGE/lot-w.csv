@@ -1,0 +1,51 @@
+export,perimetre,lignes,cap_notice,accents,dates,valeurs_sales,verdict
+parcels.csv,petit Cilaos limit10,10,oui (10/10),ok,ISO ok,propre,OK
+parcels.csv,VIDE commune inexistante,0,n/a (0 lignes),ok,n/a,propre,OK
+parcels.csv,VIDE surface_min=99999999,0,n/a (0 lignes),ok,n/a,propre,OK
+parcels.csv,ENORME Saint-Paul,1000 (cap),oui,ok,ISO ok,propre,OK
+parcels.csv,ENORME ile entiere,1000 (cap),oui,ok,ISO ok,propre,OK
+parcels.csv,moyen Le Tampon limit200,200,oui,ok,ISO ok,propre,OK
+parcels.csv,accent Etang-Sale limit50,50,oui,ok (E accent),ISO ok,propre,OK
+parcels.csv,filtre large signaux=copro,100,oui,ok,ISO ok,propre,OK
+parcels.csv,tiers reserve_fonciere ile,1000 (cap),oui,ok,ISO ok,propre,OK
+parcels.csv,surface 100-500 Saint-Pierre,1000 (cap),oui,ok,ISO ok,propre,OK
+signalements.csv,tous,17,n/a (<cap),ok,ISO+tz ok,propre,OK
+signalements.csv,statut=nouveau,17,n/a,ok,ISO+tz ok,propre,OK
+signalements.csv,VIDE statut bidon,0,n/a,ok,n/a,propre,OK
+solaire.csv,petit Cilaos,500 (cap/6560),oui,ok,n/a,propre,OK
+solaire.csv,ENORME Saint-Paul,500 (cap/51129),oui,ok,n/a,propre,OK
+solaire.csv,VIDE commune inexistante,0,n/a,ok,n/a,propre,OK
+solaire.csv,ENORME ile entiere,500 (cap),oui,ok,n/a,propre,OK
+solaire.csv,potentiel_min haut Le Tampon,0,n/a,ok,n/a,propre,OK
+velocite.csv,tous,24,n/a,ok,n/a,propre,OK (delim=virgule sans BOM)
+velocite.csv,nature=PC,24,n/a,ok,n/a,propre,OK (delim=virgule sans BOM)
+patrimoine.csv,siren SCI OMEGA (GB-017),26,n/a,n/a (noms SCI),n/a,propre,OK CSV
+patrimoine.csv,VIDE siren bidon,0,n/a,n/a,n/a,propre,OK
+patrimoine.csv,limit petit (GB-017),25,n/a,n/a,n/a,propre,OK CSV
+fiche.pdf,BZ idu reel,19376c,n/a PDF,ok (oe garde œ),n/a,propre,OK
+fiche.pdf,idu Saint-Paul,16607c,n/a PDF,ok,n/a,propre,OK
+fiche.pdf,idu avec prix param,19791c,n/a PDF,ok (œ ok),n/a,propre,OK
+fiche.pdf,VIDE idu bidon,404 JSON,n/a,n/a,n/a,propre (404 honnete),OK (pas 500)
+fiche.md,markdown defaut,84 lignes,n/a MD,ok,n/a,propre,OK
+fiche.md,format=md,96 lignes,n/a MD,ok,n/a,propre,OK
+fiche.md,VIDE idu bidon,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+projet.pdf,projet 16 (non fige),2212c,n/a PDF,ok,JJ/MM ok,propre,OK
+projet.pdf,projet 17,2222c,n/a PDF,ok,ok,propre,OK
+projet.pdf,VIDE projet 99999,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+projet.csv,projet 16 (non fige),13,n/a,ok,ISO+run date,"propre (fallback ""non fige"")",OK
+projet.csv,projet 18,13,n/a,ok,ISO,propre,OK
+projet.csv,projet 22,13,n/a,ok,ISO,propre,OK
+projet.csv,VIDE projet 99999,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+dossier.pdf,idu reel,16645c,n/a PDF,"ok (E,e,ç)",n/a,propre,OK
+dossier.pdf,idu Saint-Paul carte=1,16706c,n/a PDF,ok,n/a,propre,OK
+dossier.pdf,VIDE idu bidon,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+dossier-banquier.pdf,idu reel,18820c,n/a PDF,ok,n/a,propre,OK
+dossier-banquier.pdf,idu ign=1,17905c,n/a PDF,ok,n/a,propre,OK
+lettre-zonage.pdf,idu reel,7358c,n/a PDF,ok,n/a,propre,OK
+lettre-zonage.pdf,idu Saint-Paul,8147c,n/a PDF,ok,n/a,propre,OK
+lettre-zonage.pdf,VIDE idu bidon,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+argumentaire.pdf,idu reel,PDF ok,n/a PDF,ok,n/a,propre,OK
+argumentaire.pdf,idu prix param,PDF ok,n/a PDF,ok,n/a,propre,OK
+argumentaire.pdf,VIDE idu bidon,404 JSON,n/a,n/a,n/a,propre,OK (pas 500)
+spf-letter,idu reel,18 lignes,n/a,ok,n/a,propre,OK
+courrier/pdf (POST),texte user avec œ,PDF ok,n/a PDF,KO œ→oe,n/a,propre,KO (GB-023 REGRESSION)
