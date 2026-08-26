@@ -956,6 +956,8 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_passoire_thermique_view(engine)
     ensure_bilan_params(engine)
     ensure_watch_zones(engine)
+    ensure_watch_snap_no_orphans(engine)    # FIX-C6 (GB-063) : purge orphelins snap + FK CASCADE
+    ensure_derived_read_stubs(engine)       # FIX-C6 (GB-049) : stubs vides tables dérivées lues
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_pipeline_archived(engine)
@@ -988,6 +990,11 @@ def ensure_icd_columns(engine) -> None:
                      "ADD COLUMN IF NOT EXISTS icd smallint"))
         c.execute(_t("ALTER TABLE parcel_p_score_v2 "
                      "ADD COLUMN IF NOT EXISTS icd_detail jsonb"))
+        # FIX-C6 (GB-058) — /map/tiles/meta fait `max(computed_at) WHERE run_id=…` (tiles.py:332,
+        # appelé au 1er paint carte) : sans index sur (run_id, computed_at) c'est un Parallel Seq
+        # Scan de ~430k lignes (p95 mesuré ~3,9 s au cycle 6). Index couvrant → max index-only.
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_p_v2_run_computed "
+                     "ON parcel_p_score_v2 (run_id, computed_at)"))
 
 
 def ensure_signalements(engine) -> None:
@@ -1467,6 +1474,106 @@ def ensure_watch_zones(engine) -> None:
                      "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
 
 
+def ensure_derived_read_stubs(engine) -> None:
+    """FIX-C6 (GB-049 étendu) — tables DÉRIVÉES construites par l'ingestion/scoring mais LUES
+    par des endpoints : créées VIDES au heal pour qu'une base neuve rende des états vides
+    propres au lieu d'un 500 `UndefinedTable`. Le vrai build les remplace/remplit ensuite.
+      · parcel_zone_plu (~20 lecteurs : patrimoine, marché, filtres, accueil, alertes…) — le
+        builder `tiles.build_parcel_zone_plu` fait DROP+CREATE AS ; le déclencheur build-mvt a
+        été ajusté pour reconstruire si la table est ABSENTE OU VIDE (le stub n'inhibe rien).
+      · entonnoir_motifs (/stats/entonnoir) — repeuplée par run via CREATE IF NOT EXISTS+DELETE.
+    Idempotent (`IF NOT EXISTS`)."""
+    from sqlalchemy import text as _t
+
+    from .db import sql_statements
+    # DDL CANONIQUES réutilisées telles quelles (zéro dérive de schéma vs l'ingestion)
+    from .ingestion.ban_adresses import DDL_ADRESSES as _ADRESSES_DDL
+    from .ingestion.dvf_prix_neuf import DDL as _DVF_NEUF_DDL
+    from .ingestion.ortho_equipements import DDL as _EQUIP_DDL
+
+    with engine.begin() as c:
+        c.execute(_t("CREATE TABLE IF NOT EXISTS parcel_zone_plu ("
+                     " idu varchar, zone_lib varchar, zone_fam varchar,"
+                     " zone_libelle text, zone_filtre varchar)"))
+        c.execute(_t("CREATE TABLE IF NOT EXISTS entonnoir_motifs ("
+                     " run_label text, commune text, ord int, motif text, n bigint,"
+                     " PRIMARY KEY (run_label, commune, motif))"))
+        # mvt_meta (KV de version des tuiles) — schéma identique à tiles.build_mvt_table ;
+        # `_mvt_version` la lit avant la garde mvt_parcels → 500 sans elle sur base neuve.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS mvt_meta"
+                     " (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"))
+        # contexte-commune (SRU + conso ENAF/ZAN) — pas de DDL en code (chargées par script) :
+        # stubs au schéma réel pour /communes/{c}/contexte, /comparateur-communes, /projets/reperes,
+        # /moteurs/zan.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS commune_contexte_sru ("
+                     " insee varchar, commune text, millesime text, taux_lls numeric,"
+                     " objectif_pct numeric, statut text, prelevement_eur numeric, detail jsonb,"
+                     " source_nom text, source_url text, importe_le timestamptz)"))
+        c.execute(_t("CREATE TABLE IF NOT EXISTS commune_conso_enaf ("
+                     " insee varchar, commune varchar, conso_2011_2021_m2 double precision,"
+                     " conso_2021_2024_m2 double precision, hab_2011_2021_m2 double precision,"
+                     " hab_2021_2024_m2 double precision, source_nom text, source_url text,"
+                     " millesime varchar, importe_le timestamptz)"))
+        # commune_insee_logement (contexte-commune INSEE) — /communes/{c}/contexte.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS commune_insee_logement ("
+                     " insee varchar, commune text, millesime text, logements integer,"
+                     " res_principales integer, res_secondaires integer, vacants integer,"
+                     " proprietaires_pct numeric, locataires_pct numeric, maisons_pct numeric,"
+                     " apparts_pct numeric, typologie jsonb, source_nom text, source_url text,"
+                     " importe_le timestamptz)"))
+        # p_model_bati (emprise bâtie BD TOPO) — /modules/prospection-piscines ; le builder
+        # scoring/p_model/sql.py fait DROP+CREATE, le stub est remplacé sans dommage.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS p_model_bati"
+                     " (idu varchar PRIMARY KEY, emprise_bati_m2 float)"))
+        # parcel_terrain (pente/terrassement) — /ortho/equipements ; construit par l'ingestion.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS parcel_terrain ("
+                     " idu varchar, pente_moy_deg real, pente_max_deg real,"
+                     " flag_terrassement_lourd boolean, computed_at timestamptz,"
+                     " pente_non_batie_deg real, motif_absence text)"))
+        # anru_quartiers + plh_epci (contexte-commune ANRU/PLH) — /communes/{c}/contexte.
+        c.execute(_t("CREATE TABLE IF NOT EXISTS anru_quartiers ("
+                     " id integer, commune text, insee varchar, nom text, interet text,"
+                     " code_qpv text, source_nom text, source_url text, importe_le timestamptz)"))
+        c.execute(_t("CREATE TABLE IF NOT EXISTS plh_epci ("
+                     " epci text, periode text, statut text, obj_logements_an integer,"
+                     " part_sociale_pct numeric, detail jsonb, refs jsonb, importe_le timestamptz)"))
+        # DDL canoniques des ingesters (CREATE IF NOT EXISTS → no-op quand déjà là) :
+        #   adresses (BAN, /adresses/autocomplete — lue en source, non buildée paresseusement) ;
+        #   dvf_prix_sortie_neuf (/moteurs/barometre) ; parcel_equipements (/ortho/equipements).
+        for _ddl in (_ADRESSES_DDL, _DVF_NEUF_DDL, _EQUIP_DDL):
+            for stmt in sql_statements(_ddl):
+                if stmt.strip():
+                    c.execute(_t(stmt))
+
+
+def ensure_watch_snap_no_orphans(engine) -> None:
+    """FIX-C6 (GB-063) — MIGRATION idempotente + garde durable de `watch_zone_zonage_snap`.
+
+    La photo zonage (idu×zone pour la détection de changement) était créée SANS FK vers
+    watch_zones (contrairement à `alertes` qui a ON DELETE CASCADE) → ses lignes fuyaient à
+    chaque suppression de veille (3 330 orphelins au cycle 6). On (1) purge les orphelins
+    existants, puis (2) pose la FK ON DELETE CASCADE manquante — la base garantit désormais
+    le nettoyage même si un appelant l'oublie. Idempotent : ne fait rien si la table n'existe
+    pas encore (créée paresseusement à la détection) ou si la FK est déjà là."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        if not c.execute(_t("SELECT to_regclass('watch_zone_zonage_snap')")).scalar():
+            return  # table pas encore matérialisée (aucune détection n'a tourné) — rien à faire
+        # (1) purge des orphelins accumulés (zone supprimée sans purge du snap)
+        c.execute(_t("DELETE FROM watch_zone_zonage_snap s"
+                     " WHERE NOT EXISTS (SELECT 1 FROM watch_zones w WHERE w.id = s.zone_id)"))
+        # (2) FK ON DELETE CASCADE si absente (après la purge, toutes les zone_id sont valides)
+        has_fk = c.execute(_t(
+            "SELECT 1 FROM pg_constraint"
+            " WHERE conrelid = 'watch_zone_zonage_snap'::regclass AND contype = 'f'")).first()
+        if not has_fk:
+            c.execute(_t(
+                "ALTER TABLE watch_zone_zonage_snap"
+                " ADD CONSTRAINT fk_snap_zone FOREIGN KEY (zone_id)"
+                " REFERENCES watch_zones(id) ON DELETE CASCADE"))
+
+
 def ensure_residuel_cache(engine) -> None:
     """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
     relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent.
@@ -1578,6 +1685,13 @@ def ensure_schema(engine) -> None:
     NE fait JAMAIS : backfill massif, téléchargement, ré-évaluation. Si des DONNÉES
     manquent (geom_2975 NULL, couches absentes), c'est /readyz et `labuse doctor` qui le
     disent, et `rebuild-demo` qui reconstruit."""
+    # FIX-C6 (GB-047) — amorçage d'un Postgres NU : les tables ORM portent des colonnes
+    # `geometry`, donc PostGIS doit exister AVANT `create_all` (sinon `type "geometry" does
+    # not exist`). Les chemins CLI (api/doctor/prepare-pilot) l'appelaient déjà séparément ;
+    # le boot uvicorn ne passait QUE par ici → base neuve non amorçable hors docker. En le
+    # posant DANS ensure_schema (import local = pas de cycle), tous les chemins convergent.
+    from .db import ensure_postgis
+    ensure_postgis(engine)
     Base.metadata.create_all(engine)
     _ensure_schema_steps(engine, geom_backfill=False)
 

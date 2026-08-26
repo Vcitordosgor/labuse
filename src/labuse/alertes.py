@@ -101,6 +101,14 @@ def delete_watch_zone(session: Session, zone_id: int, cid: int | None) -> bool:
     n = session.execute(
         text("DELETE FROM watch_zones WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
         {"i": zone_id, "cid": cid}).rowcount
+    # FIX-C6 (GB-063) — la photo zonage `watch_zone_zonage_snap` n'a pas de FK vers
+    # watch_zones : sans purge explicite ses lignes fuyaient à CHAQUE suppression (3 330
+    # orphelins constatés au cycle 6). On les efface DANS LA MÊME TRANSACTION, et seulement
+    # si la zone a bien été supprimée (n>0 → respecte l'IDOR : pas de zone d'autrui touchée).
+    # `to_regclass` : la table est créée paresseusement au point de détection ; sur une base
+    # où la détection n'a jamais tourné, elle peut ne pas exister encore.
+    if n and session.execute(text("SELECT to_regclass('watch_zone_zonage_snap')")).scalar():
+        session.execute(text("DELETE FROM watch_zone_zonage_snap WHERE zone_id = :i"), {"i": zone_id})
     session.flush()
     return n > 0
 
@@ -119,7 +127,8 @@ def _ensure_secteur_schema(session: Session) -> None:
         "WHERE kind IN ('permis_in_zone', 'bodacc_in_zone', 'zonage_in_zone')"))
     session.execute(text(
         "CREATE TABLE IF NOT EXISTS watch_zone_zonage_snap ("
-        "  zone_id int NOT NULL, idu varchar(14) NOT NULL, zone_lib text,"
+        "  zone_id int NOT NULL REFERENCES watch_zones(id) ON DELETE CASCADE,"  # FIX-C6 (GB-063)
+        "  idu varchar(14) NOT NULL, zone_lib text,"
         "  PRIMARY KEY (zone_id, idu))"))
     # le REGISTRE doit exister avant de notifier (bases de test / fraîches) — DDL idempotente,
     # dans LA MÊME transaction que la détection (jamais un engine.begin() parallèle).

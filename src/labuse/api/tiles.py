@@ -131,7 +131,11 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
     # M6.1 : le zonage PLU par parcelle est un prérequis des tuiles — construit une seule fois
     # (long) puis réutilisé tel quel à chaque rebuild (le zonage ne bouge pas avec les runs).
-    if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar():
+    # FIX-C6 (GB-049 étendu) — le heal crée un STUB VIDE de parcel_zone_plu (pour qu'une base
+    # neuve ne 500 pas sur les ~20 lecteurs) ; on déclenche donc le vrai build si la table est
+    # absente OU VIDE (le build fait DROP+CREATE AS, le stub est remplacé sans dommage).
+    if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar() \
+            or not db.execute(text("SELECT EXISTS(SELECT 1 FROM parcel_zone_plu LIMIT 1)")).scalar():
         build_parcel_zone_plu(db)
     # M6.2 : adresse BAN matérialisée (rapide) — reconstruite à chaque build-mvt (suit la BAN).
     build_parcel_adresse(db)

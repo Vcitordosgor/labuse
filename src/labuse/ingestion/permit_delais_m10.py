@@ -57,6 +57,18 @@ CREATE INDEX IF NOT EXISTS ix_m10_delais_nature ON m10_permit_delais (nature);
 CREATE INDEX IF NOT EXISTS ix_m10_delais_valide ON m10_permit_delais (valide);
 """
 
+
+def ensure_tables(engine) -> None:
+    """FIX-C6 (GB-049) — crée `m10_permit_delais` VIDE au boot (heal), pas seulement à
+    l'ingestion M10. Le radar permis `/modules/permis` la LIT en LEFT JOIN : sur une base
+    neuve elle manquait → 500 `UndefinedTable`. Idempotent (`IF NOT EXISTS`)."""
+    from ..db import sql_statements
+    with engine.begin() as c:
+        for stmt in sql_statements(_DDL):
+            if stmt.strip():
+                c.execute(text(stmt))
+
+
 _UPSERT = text("""
 INSERT INTO m10_permit_delais
   (permit_id, commune, nature, famille, date_depot, date_autorisation,

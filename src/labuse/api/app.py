@@ -141,6 +141,11 @@ async def _lifespan(app: FastAPI):
         # FIX-VEILLE — veilles ensure au BOOT (n'y était pas) : crée la table + désactive les veilles
         # fantômes de type non évaluable (idempotent). Les veilles `permis` restent évaluées.
         from ..copilote_v2.veilles import ensure_tables as _veilles_ens
+        # FIX-C6 (GB-049 étendu) — Copilote v2 : historique (conversations/messages) + télémétrie
+        # n'étaient ensurés NULLE PART au boot → /api/copilote-v2/missions|telemetrie 500 sur base
+        # neuve (UndefinedTable). Ajoutés au heal (idempotents).
+        from ..copilote_v2.historique import ensure_tables as _copv2_hist_ens
+        from ..copilote_v2.telemetrie import ensure_tables as _copv2_tel_ens
         # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les tables à
         # données client). M26-A — Copilote : après comptes (FK agent_runs.compte_id).
         from ..comptes import ensure_tables as _comptes_ens
@@ -165,10 +170,16 @@ async def _lifespan(app: FastAPI):
             ("projets", lambda: _projets_ens(_engine())),
             ("protection", lambda: _protection_ens(_engine())),
             ("courrier", lambda: _courrier_ens(_engine())),
+            # FIX-C6 (GB-048) — `comptes` AVANT `crm_columns` : ce dernier porte une FK
+            # crm_columns.compte_id → comptes(id). Sur une base NEUVE, l'ancien ordre
+            # (crm_columns d'abord) échouait « relation "comptes" does not exist » et ne
+            # convergeait qu'au 2ᵉ boot. `scoping` ajoute compte_id aux tables client (dont
+            # celles des modules/projets déjà ensurées au-dessus) → reste après elles.
+            ("comptes+scoping", _heal_comptes_scoping),
             ("crm_columns", lambda: _crm_columns_ens(_engine())),
             ("veilles", lambda: _veilles_ens(_engine())),
-            ("comptes+scoping", _heal_comptes_scoping),
             ("copilote", lambda: _copilote_ens(_engine())),
+            ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
@@ -1543,8 +1554,12 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
                     "affinez les filtres, ou augmentez la limite (≤ 5000), pour exporter le reste."])
     # M129-B : statut_matrice/q_score/a_score retirés (matrice morte) — le statut servi est
     # celui de la CASCADE (status), la présentation est le tier v2.
+    # FIX-C6 (GB-066) — l'export sert le LIBELLÉ M137 (« À suivre », « Écartée »…) via la
+    # source unique `TIER_LABELS`, plus le CODE interne (« chaude », « ecartee ») : même mot
+    # que la fiche/la carte/le Copilote, partout. En-tête renommé `classement` (self-describing).
+    from ..verdict_servi import TIER_LABELS as _TIER_LABELS
     w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
-                "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
+                "surface_m2", "classement", "rang_v2", "mult_v2", "copro",
                 "veille_succession", "statut_cascade",
                 "completeness", "icd", "confiance_donnees",
                 "proprio", "v_score", "v_band", "top_signaux"])
@@ -1554,7 +1569,7 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
         w.writerow([it["idu"], it["commune"],
                     a.get("adresse") or "", a.get("code_postal") or "", a.get("ville") or "",
                     it["surface_m2"],
-                    ("ecartee" if it["etage0"] else it["tier_v2"]) or "",
+                    _TIER_LABELS.get(("ecartee" if it["etage0"] else it["tier_v2"]), it["tier_v2"]) or "",
                     it["rang_v2"] if it["rang_v2"] is not None else "",
                     f"{it['mult_v2']:.1f}" if it.get("mult_v2") is not None else "",
                     "oui" if it.get("copro_v2") else "",
@@ -1841,18 +1856,25 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     M5.1 : « opportunités détectées » = brûlantes v2 + chaudes v2 (le run v2 est la
     source) ; la ventilation par tier accompagne les motifs d'écartement."""
+    # FIX-C6 (GB-058) — comme /stats, l'entonnoir est MÉMORISÉ 30 s : deux agrégations
+    # pleine-île (motifs + _q_v2_stats) le rendaient à ~9,8 s p95 au cycle 6 (non caché,
+    # contrairement à /stats). Même clé (commune, source), même TTL, single-flight partagé.
     key = commune or "__ile__"
-    rows = db.execute(text(
-        "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
-        {"r": source, "c": key}).mappings().all()
-    stats_row = _q_v2_stats(db, commune, run_label=source)
-    return {"commune": commune, "analysees": stats_row["total"],
-            "opportunites": stats_row["opportunites"],
-            "tiers": stats_row["tiers"],
-            "motifs": [dict(r) for r in rows],
-            "note": ("Opportunités = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run "
-                     "servi). Une parcelle peut cumuler plusieurs motifs (les pourcentages se "
-                     "recouvrent). « Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
+
+    def _compute():
+        rows = db.execute(text(
+            "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
+            {"r": source, "c": key}).mappings().all()
+        stats_row = _q_v2_stats(db, commune, run_label=source)
+        return {"commune": commune, "analysees": stats_row["total"],
+                "opportunites": stats_row["opportunites"],
+                "tiers": stats_row["tiers"],
+                "motifs": [dict(r) for r in rows],
+                "note": ("Opportunités = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run "
+                         "servi). Une parcelle peut cumuler plusieurs motifs (les pourcentages se "
+                         "recouvrent). « Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
+
+    return _mem_cached(("stats-entonnoir", key, source), 30.0, _compute)
 
 
 @app.get("/stats")

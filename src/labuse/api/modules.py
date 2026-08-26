@@ -76,6 +76,10 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
+    # FIX-C6 (GB-049) — table LUE par /modules/permis (LEFT JOIN), construite à l'ingestion
+    # M10 seulement → créée VIDE ici pour qu'une base neuve ne renvoie plus 500.
+    from ..ingestion.permit_delais_m10 import ensure_tables as _m10_ens
+    _m10_ens(engine)
 
 
 # ───────────────────────── M01 — DIVISION PARCELLAIRE ─────────────────────────
@@ -369,6 +373,12 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
+    # FIX-C6 (GB-049) — base NEUVE / sans permis : dmax NULL rendrait `date >= NULL - interval`
+    # (operator does not exist: timestamp >= interval) = 500. On répond un état VIDE honnête.
+    if dmax is None:
+        return {"commune": commune or "Toute l'île", "months": months, "nature": nature,
+                "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
+                "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
