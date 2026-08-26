@@ -401,6 +401,81 @@ def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
     return {"ok": True, **res}
 
 
+# ───────────────────────── D5 — IA (section mauve) ─────────────────────────
+@router.get("/admin/ia")
+def admin_ia(request: Request) -> dict:
+    """Conso IA lue du ledger ia_log (D1) : mois courant, coût moyen/question, 30 jours de
+    barres, ventilation par licence, projection fin de mois AU RYTHME DES 7 DERNIERS JOURS.
+    Le solde Anthropic n'est PAS exposé par l'API : conso trackée localement (note honnête)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config
+    from ..db import engine
+    with engine().begin() as c:
+        mois = c.execute(text(
+            "SELECT COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels FROM ia_log"
+            " WHERE ts >= date_trunc('month', now())")).mappings().one()
+        jours = [dict(r) for r in c.execute(text(
+            "SELECT date_trunc('day', ts)::date AS jour, ROUND(SUM(cout_eur), 4) AS cout,"
+            "       COUNT(*) AS appels"
+            " FROM ia_log WHERE ts > now() - interval '30 days'"
+            " GROUP BY 1 ORDER BY 1")).mappings()]
+        par_licence = [dict(r) for r in c.execute(text(
+            "SELECT l.compte_id, COALESCE(k.nom, 'Vous (admin/pilote)') AS nom,"
+            "       ROUND(SUM(l.cout_eur), 4) AS cout, COUNT(*) AS appels"
+            " FROM ia_log l LEFT JOIN comptes k ON k.id = l.compte_id"
+            " WHERE l.ts > now() - interval '30 days'"
+            " GROUP BY l.compte_id, k.nom ORDER BY SUM(l.cout_eur) DESC")).mappings()]
+        cout_7j = float(c.execute(text(
+            "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log"
+            " WHERE ts > now() - interval '7 days'")).scalar() or 0)
+        quotas = [dict(r) for r in c.execute(text(
+            "SELECT id, nom, copilote_quota_jour FROM comptes"
+            " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
+    from datetime import date
+    import calendar
+    today = date.today()
+    jours_restants = calendar.monthrange(today.year, today.month)[1] - today.day
+    projection = float(mois["cout"]) + (cout_7j / 7.0) * jours_restants
+    appels = int(mois["appels"])
+    for r in jours:
+        r["jour"] = r["jour"].isoformat()
+        r["cout"] = float(r["cout"])
+    for r in par_licence:
+        r["cout"] = float(r["cout"])
+    return {
+        "mois": {"cout_eur": float(mois["cout"]), "appels": appels,
+                 "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},
+        "projection_fin_mois_eur": round(projection, 2),
+        "jours": jours,
+        "par_licence": par_licence,
+        "quota_defaut": int(config.get_settings().copilote_questions_jour_defaut),
+        "quotas": quotas,
+        "note": "Solde Anthropic non exposé par l'API — consommation trackée localement (ledger ia_log).",
+    }
+
+
+class QuotaIn(BaseModel):
+    quota: int | None = Field(default=None, ge=1, le=10_000)
+
+
+@router.post("/admin/licences/{compte_id}/quota")
+def admin_licence_quota(compte_id: int, body: QuotaIn, request: Request) -> dict:
+    """Quota Copilote/jour de LA licence (éditable au dashboard, mandat D5) — null = retour
+    au défaut config. Le /ask le lit à la prochaine question (quota_nl_du_compte)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text(
+            "UPDATE comptes SET copilote_quota_jour = :q, updated_at = now() WHERE id = :c"),
+            {"q": body.quota, "c": compte_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Compte introuvable.")
+    return {"ok": True, "quota": body.quota}
+
+
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
 def quota_nl_du_compte(compte_id: int | None) -> int | None:
     """Quota de questions Copilote/jour pour CE compte : l'override de la licence

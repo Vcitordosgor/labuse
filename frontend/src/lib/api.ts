@@ -841,6 +841,19 @@ export const postAdminRetablir = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/retablir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminLicenceMail = (compteId: number, key: string) =>
   j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
+// D5 — IA
+export interface AdminIa {
+  mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }
+  projection_fin_mois_eur: number
+  jours: Array<{ jour: string; cout: number; appels: number }>
+  par_licence: Array<{ compte_id: number | null; nom: string; cout: number; appels: number }>
+  quota_defaut: number
+  quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null }>
+  note: string
+}
+export const getAdminIa = () => j<AdminIa>('/admin/ia')
+export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

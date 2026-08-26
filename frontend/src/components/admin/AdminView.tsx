@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
+import { IaSection } from './Ia'
 
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
 
@@ -332,7 +333,7 @@ export function AdminView() {
           )}
           {section === 'pilotage' && <PilotageSection data={d} go={setSection} />}
           {section === 'licences' && <LicencesSection />}
-          {section === 'ia' && <AVenir titre="IA" lot="D5" />}
+          {section === 'ia' && <IaSection />}
           {section === 'sources' && <AVenir titre="Sources" lot="D6" />}
           {section === 'produit' && <AVenir titre="Produit" lot="D7" />}
           {section === 'courrier' && <AVenir titre="Courrier" lot="D8" />}

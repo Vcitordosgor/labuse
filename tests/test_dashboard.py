@@ -135,6 +135,20 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     assert client.post(f"/admin/licences/{compte_test}/mail", json={"key": "zzz"}).status_code == 422
 
 
+def test_ia_conso_et_quota_editable(client, engine, compte_test):
+    """D5 — /admin/ia sert la conso lue du ledger + le quota par licence est ÉDITABLE
+    (et le /ask le lit via quota_nl_du_compte)."""
+    from labuse.api.dashboard import quota_nl_du_compte
+    d = client.get("/admin/ia").json()
+    assert d["quota_defaut"] == 80 and "mois" in d and "jours" in d and "par_licence" in d
+    assert any(k["id"] == compte_test for k in d["quotas"])
+    r = client.post(f"/admin/licences/{compte_test}/quota", json={"quota": 120})
+    assert r.status_code == 200
+    assert quota_nl_du_compte(compte_test) == 120          # le /ask lira 120
+    client.post(f"/admin/licences/{compte_test}/quota", json={"quota": None})
+    assert quota_nl_du_compte(compte_test) == 80
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte
