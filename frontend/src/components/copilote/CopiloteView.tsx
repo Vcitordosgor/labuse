@@ -256,6 +256,20 @@ export function CopiloteView() {
   const setOpenProjet = useApp((s) => s.setOpenProjet)   // M113 P3 — « Voir le projet → »
   // M78-bis — ouvrir la fiche existante d'une parcelle restituée (setView PUIS select, ordre respecté).
   const ouvrirFiche = (idu: string) => { setView('cartes'); selectParcelle(idu) }
+  // GB-031 — Échap ferme le Copilote (retour à la carte). Gardes : une modale brief interne a la
+  // priorité (elle porte [data-brief-close]) ; le journal se ferme d'abord ; on n'interrompt pas la
+  // frappe dans un champ de saisie.
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || document.querySelector('[data-brief-close]')) return
+      const el = document.activeElement
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return
+      if (journalOuvert) { setJournalOuvert(false); return }
+      setView('cartes')
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [journalOuvert, setView])
   useEffect(() => {
     if (entretienDirect === null) return
     setBrief((b) => b.trim() ? b : (entretienDirect || 'je veux monter une opération immobilière'))

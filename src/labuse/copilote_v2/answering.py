@@ -306,6 +306,34 @@ def _reply_compte(db: Session, message: str, res, faits_fil, intent: str) -> dic
                   _faits_tour=registre_faits.extraire_faits(res))
 
 
+def _repli_lisible(res) -> str:
+    """GB-015 — gabarit de repli (anti-invention échouée / prose vide / dégradé) : une phrase
+    LISIBLE, JAMAIS le JSON brut de l'outil. Une valeur simple → « <valeur> (source) » ; un
+    résultat multi-lignes ou un dict plat → ses champs en clair ; sinon une clarification honnête.
+    Interdit absolu : `json.dumps(res.data)` à l'écran (payload technique au visage du client)."""
+    src = (f" ({res.source}{' · ' + res.millesime if res.millesime else ''})") if res.source else ""
+    if res.valeur is not None:
+        return f"{res.valeur}{src}."
+    data = res.data if isinstance(res.data, dict) else {}
+    tete = f"{data['commune']} — " if data.get("commune") else ""
+    # 1) résultat multi-lignes {cle/libelle, valeur} → en clair (c'est la forme qui fuyait : marché)
+    lignes = data.get("lignes")
+    if isinstance(lignes, list):
+        bouts = [f"{str(l.get('cle') or l.get('libelle')).replace('_', ' ')} : {l.get('valeur')}"
+                 for l in lignes if isinstance(l, dict) and l.get("valeur") is not None
+                 and (l.get("cle") or l.get("libelle"))]
+        if bouts:
+            return tete + " · ".join(bouts[:6]) + src + "."
+    # 2) dict plat de SCALAIRES (ex. stats commune) → clés lisibles ; jamais une structure imbriquée
+    plats = [f"{str(k).replace('_', ' ')} : {v}" for k, v in data.items()
+             if k != "commune" and isinstance(v, (int, float, str)) and not str(k).startswith("_")]
+    if plats:
+        return tete + " · ".join(plats[:6]) + src + "."
+    # 3) rien d'exploitable en clair → clarification honnête, JAMAIS json.dumps(data)
+    return ("Je n'ai pas de valeur unique à afficher ici — précisez ce que vous cherchez "
+            "(un prix, un compte, un délai, un taux…).")
+
+
 def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = None) -> str:
     from . import registre_faits
     cna = res.criteres_non_appliques or []
@@ -321,10 +349,9 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
                         system=FORMULE_SYSTEM, context=payload)
     prose = (out.text or "").strip()
     if out.degraded or not prose or not _anti_invention(prose, res, registre_faits.valeurs(faits_fil or [])):
-        # gabarit sourcé (jamais l'affirmation douteuse) — inclut la réserve si partielle
-        base = (f"{res.valeur}" if res.valeur is not None
-                else json.dumps(res.data, ensure_ascii=False, default=str))
-        prose = f"{base} ({res.source}{' · ' + res.millesime if res.millesime else ''})."
+        # GB-015 — gabarit sourcé LISIBLE (jamais l'affirmation douteuse NI le JSON brut) — inclut la
+        # réserve si partielle. `_repli_lisible` garantit qu'aucun `json.dumps(data)` n'atteint l'écran.
+        prose = _repli_lisible(res)
         if res.partiel and res.reserve:
             prose += " " + res.reserve
     # M109 — LE VERROU ÉTENDU : un chiffre servi doit correspondre à la demande INTERPRÉTÉE. Si un

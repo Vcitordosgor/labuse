@@ -49,7 +49,20 @@ def _sujet_quota(request: Request) -> str:
     return f"c:{cid}" if cid is not None else sujet_de(request)
 
 
+def _valider_run_id(run_id: str) -> str:
+    """GB-028 — un run_id non-UUID doit donner un 422 PROPRE, jamais un 500 (le CAST(:r AS uuid) en
+    base lève `invalid input syntax for type uuid` → DataError → 500). On valide le format AVANT la
+    requête. Couvre tous les endpoints /runs/{run_id}* (chacun passe par _run_ou_404 en premier)."""
+    import uuid as _uuid
+    try:
+        _uuid.UUID(str(run_id))
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(422, "run_id invalide : un identifiant de run est un UUID.")
+    return run_id
+
+
 def _run_ou_404(db: Session, run_id: str, request: Request) -> dict:
+    _valider_run_id(run_id)
     row = db.execute(text(
         "SELECT id::text AS id, mission, status, brief_raw, brief_json, engine_versions, "
         "       created_at, finished_at "

@@ -1480,6 +1480,12 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
     extra, extra_params = c.where()
     items = _q_v2_list(db, c.commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
+    # GB-016 — plus de troncature SILENCIEUSE. Signal FIABLE = on a atteint le cap (`len == limit`) →
+    # il reste (peut-être) des lignes ; si `len < limit`, TOUT le périmètre a été servi. On ne
+    # compare PAS à un compteur externe : `/filtre` compte tout (ecartee incluse) alors que la liste
+    # exporte le périmètre v2 (hors étage 0) → un « sur M » serait un FAUX chiffre. On dit donc le cap,
+    # pas un total inexact. En-têtes X-Truncated/X-Cap pour l'UI ; notice en 1re ligne du fichier.
+    tronque = len(items) >= limit
     tops = {r[0]: r[1] for r in db.execute(text(
         "SELECT parcelle_id, (SELECT string_agg(s->>'label', ' | ') FROM ("
         "  SELECT s FROM jsonb_array_elements(signals) s "
@@ -1497,6 +1503,9 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
         {"r": v2run, "idus": [it["idu"] for it in items]}).all()} if v2run else {}
     buf = _io.StringIO()
     w = _csv.writer(buf, delimiter=";")          # Excel FR : point-virgule (standard maison)
+    if tronque:                                  # GB-016 — notice EXPLICITE en tête (jamais muet)
+        w.writerow([f"Export limité aux {len(items)} premières lignes (plafond d'export {limit} atteint) — "
+                    "affinez les filtres, ou augmentez la limite (≤ 5000), pour exporter le reste."])
     # M129-B : statut_matrice/q_score/a_score retirés (matrice morte) — le statut servi est
     # celui de la CASCADE (status), la présentation est le tier v2.
     w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
@@ -1524,7 +1533,8 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
     return Response(buf.getvalue().encode("utf-8-sig"),   # BOM : accents corrects dans Excel
                     media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": 'attachment; filename="labuse_parcelles.csv"',
-                             "X-Rows": str(len(items))})
+                             "X-Rows": str(len(items)), "X-Cap": str(limit),
+                             "X-Truncated": "1" if tronque else "0"})
 
 
 def _communes_data(db: Session, source: str) -> list[dict]:
