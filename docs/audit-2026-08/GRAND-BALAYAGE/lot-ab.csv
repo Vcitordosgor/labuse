@@ -1,0 +1,241 @@
+commune,bloc,servi,recalcule,verdict,note
+Saint-Paul,prix_ancien,"3322 €/m² (n=16, appartement)","3322 €/m² (n=16, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-Paul,prix_terrain_U_AU,U=479 (n=1531); AU=328 (n=132),U=479 (n=1531); AU=328 (n=132),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Paul,prix_sortie_neuf,"4730 €/m² (commune, n=54)","4730 €/m² (commune, n=54)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Paul,tendance_12m,"-4.2% (4490 vs 4688, n 218/583)","n 218/583, med12 [4490–4490], medprev [4688–4688]",OK,
+Saint-Paul,liquidite,"136 ventes dernier trim, delta -13","136 lignes (136 mutations), delta -13",OK,
+Saint-Paul,offre_engagee,420 logts / 314 permis,420 logts / 314 permis,OK,fenetre 12m ref=2026-06-30
+Saint-Paul,offre_potentielle,11424198 m² SDP / 21527 parc.,11424198 m² / 21527 parc.,OK,run q_v10_m129 tiers servables
+Saint-Paul,pression_dpe,0.0% F/G sur 2 DPE,0.0% sur 2,OK,fiab servie='moyenne' sur n=2 (base dpe_records=17 lignes ile entiere)
+Saint-Paul,loyer_median,"18.86 €/m² (appartement, 2025)","18.86 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Paul,pression_zan,90.0,90.0,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Le Tampon,prix_ancien,"1626 €/m² (n=28, appartement)","1626 €/m² (n=28, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Le Tampon,prix_terrain_U_AU,U=285 (n=1106); AU=154 (n=78),U=285 (n=1106); AU=154 (n=78),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Le Tampon,prix_sortie_neuf,"4318 €/m² (commune, n=36)","4318 €/m² (commune, n=36)",OK,snapshot dvf_prix_sortie_neuf
+Le Tampon,tendance_12m,"+2.2% (2427 vs 2374, n 491/422)","n 491/422, med12 [2427–2427], medprev [2374–2374]",OK,
+Le Tampon,liquidite,"113 ventes dernier trim, delta -2","113 lignes (113 mutations), delta -2",OK,
+Le Tampon,offre_engagee,471 logts / 266 permis,471 logts / 266 permis,OK,fenetre 12m ref=2026-06-26
+Le Tampon,offre_potentielle,11085318 m² SDP / 16923 parc.,11085318 m² / 16923 parc.,OK,run q_v10_m129 tiers servables
+Le Tampon,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Le Tampon,loyer_median,"13.52 €/m² (appartement, 2025)","13.52 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Le Tampon,pression_zan,66.5,66.5,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Pierre,prix_ancien,"2634 €/m² (n=12, appartement)","2634 €/m² (n=12, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-Pierre,prix_terrain_U_AU,U=422 (n=1388); AU=non calc (n < 10),U=422 (n=1388); AU: n reel=9,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Pierre,prix_sortie_neuf,"4258 €/m² (commune, n=76)","4258 €/m² (commune, n=76)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Pierre,tendance_12m,"+4.1% (3389 vs 3255, n 529/526)","n 529/526, med12 [3389–3389], medprev [3255–3255]",OK,
+Saint-Pierre,liquidite,"138 ventes dernier trim, delta -3","138 lignes (138 mutations), delta -3",OK,
+Saint-Pierre,offre_engagee,517 logts / 335 permis,517 logts / 335 permis,OK,fenetre 12m ref=2026-06-30
+Saint-Pierre,offre_potentielle,4159121 m² SDP / 11524 parc.,4159121 m² / 11524 parc.,OK,run q_v10_m129 tiers servables
+Saint-Pierre,pression_dpe,25.0% F/G sur 4 DPE,25.0% sur 4,OK,fiab servie='moyenne' sur n=4 (base dpe_records=17 lignes ile entiere)
+Saint-Pierre,loyer_median,"15.81 €/m² (appartement, 2025)","15.81 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Pierre,pression_zan,60.5,60.5,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+La Possession,prix_ancien,"2562 €/m² (n=42, appartement)","2562 €/m² (n=42, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+La Possession,prix_terrain_U_AU,U=436 (n=444); AU=409 (n=96),U=436 (n=444); AU=409 (n=96),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+La Possession,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+La Possession,tendance_12m,"+2.3% (3077 vs 3008, n 229/225)","n 229/225, med12 [3077–3077], medprev [3008–3008]",OK,
+La Possession,liquidite,"71 ventes dernier trim, delta 1","71 lignes (71 mutations), delta 1",OK,
+La Possession,offre_engagee,114 logts / 82 permis,114 logts / 82 permis,OK,fenetre 12m ref=2026-06-26
+La Possession,offre_potentielle,1827469 m² SDP / 3990 parc.,1827469 m² / 3990 parc.,OK,run q_v10_m129 tiers servables
+La Possession,pression_dpe,0.0% F/G sur 1 DPE,0.0% sur 1,OK,fiab servie='moyenne' sur n=1 (base dpe_records=17 lignes ile entiere)
+La Possession,loyer_median,"15.45 €/m² (appartement, 2025)","15.45 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+La Possession,pression_zan,16.7,16.7,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Denis,prix_ancien,"2327 €/m² (n=44, appartement)","2327 €/m² (n=44, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-Denis,prix_terrain_U_AU,U=485 (n=1248); AU=350 (n=35),U=485 (n=1248); AU=350 (n=35),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Denis,prix_sortie_neuf,"4275 €/m² (commune, n=77)","4275 €/m² (commune, n=77)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Denis,tendance_12m,"-0.2% (2687 vs 2692, n 1240/1318)","n 1240/1318, med12 [2687–2687], medprev [2692–2692]",OK,
+Saint-Denis,liquidite,"311 ventes dernier trim, delta -13","311 lignes (311 mutations), delta -13",OK,
+Saint-Denis,offre_engagee,358 logts / 205 permis,358 logts / 205 permis,OK,fenetre 12m ref=2026-06-29
+Saint-Denis,offre_potentielle,4885040 m² SDP / 7663 parc.,4885040 m² / 7663 parc.,OK,run q_v10_m129 tiers servables
+Saint-Denis,pression_dpe,0.0% F/G sur 4 DPE,0.0% sur 4,OK,fiab servie='moyenne' sur n=4 (base dpe_records=17 lignes ile entiere)
+Saint-Denis,loyer_median,"15.09 €/m² (appartement, 2025)","15.09 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Denis,pression_zan,82.4,82.4,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Leu,prix_ancien,"4773 €/m² (n=42, appartement)","4773 €/m² (n=42, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-Leu,prix_terrain_U_AU,U=325 (n=618); AU=527 (n=72),U=325 (n=618); AU=527 (n=72),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Leu,prix_sortie_neuf,"4953 €/m² (commune, n=41)","4953 €/m² (commune, n=41)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Leu,tendance_12m,"+1.5% (4208 vs 4146, n 186/178)","n 186/178, med12 [4208–4208], medprev [4146–4146]",OK,
+Saint-Leu,liquidite,"45 ventes dernier trim, delta 18","45 lignes (45 mutations), delta 18",OK,
+Saint-Leu,offre_engagee,122 logts / 138 permis,122 logts / 138 permis,OK,fenetre 12m ref=2026-06-26
+Saint-Leu,offre_potentielle,5454450 m² SDP / 9665 parc.,5454450 m² / 9665 parc.,OK,run q_v10_m129 tiers servables
+Saint-Leu,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Saint-Leu,loyer_median,"16.49 €/m² (appartement, 2025)","16.49 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Leu,pression_zan,35.3,35.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Louis,prix_ancien,"2339 €/m² (n=13, appartement)","2339 €/m² (n=13, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-Louis,prix_terrain_U_AU,U=293 (n=688); AU=278 (n=112),U=293 (n=688); AU=278 (n=112),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Louis,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Louis,tendance_12m,"+5.7% (2500 vs 2365, n 214/197)","n 214/197, med12 [2500–2500], medprev [2365–2365]",OK,
+Saint-Louis,liquidite,"48 ventes dernier trim, delta -25","48 lignes (48 mutations), delta -25",OK,
+Saint-Louis,offre_engagee,316 logts / 238 permis,316 logts / 238 permis,OK,fenetre 12m ref=2026-06-24
+Saint-Louis,offre_potentielle,2882783 m² SDP / 7350 parc.,2882783 m² / 7350 parc.,OK,run q_v10_m129 tiers servables
+Saint-Louis,pression_dpe,0.0% F/G sur 3 DPE,0.0% sur 3,OK,fiab servie='moyenne' sur n=3 (base dpe_records=17 lignes ile entiere)
+Saint-Louis,loyer_median,"14.47 €/m² (appartement, 2025)","14.47 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Louis,pression_zan,37.9,37.9,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Joseph,prix_ancien,"2197 €/m² (n=9, mixte (appart+maison))","2197 €/m² (n=9, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Saint-Joseph,prix_terrain_U_AU,U=262 (n=708); AU=90 (n=54),U=262 (n=708); AU=90 (n=54),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Joseph,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Saint-Joseph,tendance_12m,"+8.2% (2285 vs 2112, n 190/205)","n 190/205, med12 [2285–2285], medprev [2112–2112]",OK,
+Saint-Joseph,liquidite,"49 ventes dernier trim, delta -9","49 lignes (49 mutations), delta -9",OK,
+Saint-Joseph,offre_engagee,386 logts / 178 permis,386 logts / 178 permis,OK,fenetre 12m ref=2026-06-30
+Saint-Joseph,offre_potentielle,1420932 m² SDP / 6207 parc.,1420932 m² / 6207 parc.,OK,run q_v10_m129 tiers servables
+Saint-Joseph,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Saint-Joseph,loyer_median,"13.84 €/m² (appartement, 2025)","13.84 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Joseph,pression_zan,35.9,35.9,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-André,prix_ancien,"1500 €/m² (n=11, appartement)","1500 €/m² (n=11, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Saint-André,prix_terrain_U_AU,U=264 (n=522); AU=253 (n=49),U=264 (n=522); AU=253 (n=49),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-André,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Saint-André,tendance_12m,"+0.3% (2007 vs 2000, n 174/161)","n 174/161, med12 [2007–2007], medprev [2000–2000]",OK,
+Saint-André,liquidite,"31 ventes dernier trim, delta -21","31 lignes (31 mutations), delta -21",OK,
+Saint-André,offre_engagee,199 logts / 170 permis,199 logts / 170 permis,OK,fenetre 12m ref=2026-06-28
+Saint-André,offre_potentielle,5075725 m² SDP / 11244 parc.,5075725 m² / 11244 parc.,OK,run q_v10_m129 tiers servables
+Saint-André,pression_dpe,50.0% F/G sur 2 DPE,50.0% sur 2,OK,fiab servie='moyenne' sur n=2 (base dpe_records=17 lignes ile entiere)
+Saint-André,loyer_median,"13.01 €/m² (appartement, 2025)","13.01 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-André,pression_zan,21.6,21.6,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Sainte-Marie,prix_ancien,"2486 €/m² (n=40, appartement)","2486 €/m² (n=40, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Sainte-Marie,prix_terrain_U_AU,U=479 (n=426); AU=non calc (n < 10),U=479 (n=426); AU: n reel=4,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Sainte-Marie,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Sainte-Marie,tendance_12m,"+11.9% (2604 vs 2327, n 151/172)","n 151/172, med12 [2604–2604], medprev [2327–2327]",OK,
+Sainte-Marie,liquidite,"33 ventes dernier trim, delta -37","33 lignes (33 mutations), delta -37",OK,
+Sainte-Marie,offre_engagee,326 logts / 99 permis,326 logts / 99 permis,OK,fenetre 12m ref=2026-06-19
+Sainte-Marie,offre_potentielle,2543816 m² SDP / 5057 parc.,2543816 m² / 5057 parc.,OK,run q_v10_m129 tiers servables
+Sainte-Marie,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Sainte-Marie,loyer_median,"13.46 €/m² (appartement, 2025)","13.46 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Sainte-Marie,pression_zan,17.3,17.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Benoît,prix_ancien,"2185 €/m² (n=19, mixte (appart+maison))","2185 €/m² (n=19, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Saint-Benoît,prix_terrain_U_AU,U=237 (n=487); AU=261 (n=17),U=237 (n=487); AU=261 (n=17),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Benoît,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Saint-Benoît,tendance_12m,"+13.0% (1951 vs 1727, n 108/98)","n 108/98, med12 [1951–1951], medprev [1727–1727]",OK,
+Saint-Benoît,liquidite,"33 ventes dernier trim, delta 32","33 lignes (33 mutations), delta 32",OK,
+Saint-Benoît,offre_engagee,401 logts / 174 permis,401 logts / 174 permis,OK,fenetre 12m ref=2026-06-24
+Saint-Benoît,offre_potentielle,3424501 m² SDP / 6876 parc.,3424501 m² / 6876 parc.,OK,run q_v10_m129 tiers servables
+Saint-Benoît,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Saint-Benoît,loyer_median,"12.05 €/m² (appartement, 2025)","12.05 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Saint-Benoît,pression_zan,14.3,14.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Le Port,prix_ancien,"1754 €/m² (n=11, appartement)","1754 €/m² (n=11, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Le Port,prix_terrain_U_AU,U=371 (n=262); AU=non calc (n < 10),U=371 (n=262); AU: n reel=4,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Le Port,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Le Port,tendance_12m,"+23.8% (2328 vs 1880, n 117/62)","n 117/62, med12 [2328–2328], medprev [1880–1880]",OK,
+Le Port,liquidite,"32 ventes dernier trim, delta 45","32 lignes (32 mutations), delta 45",OK,
+Le Port,offre_engagee,38 logts / 67 permis,38 logts / 67 permis,OK,fenetre 12m ref=2026-06-30
+Le Port,offre_potentielle,1959597 m² SDP / 2566 parc.,1959597 m² / 2566 parc.,OK,run q_v10_m129 tiers servables
+Le Port,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Le Port,loyer_median,"15.33 €/m² (appartement, 2025)","15.33 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Le Port,pression_zan,6.2,6.2,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+La Plaine-des-Palmistes,prix_ancien,"2526 €/m² (n=32, mixte (appart+maison))","2526 €/m² (n=32, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+La Plaine-des-Palmistes,prix_terrain_U_AU,U=129 (n=204); AU=98 (n=39),U=129 (n=204); AU=98 (n=39),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+La Plaine-des-Palmistes,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+La Plaine-des-Palmistes,tendance_12m,"+12.3% (2126 vs 1893, n 50/39)","n 50/39, med12 [2126–2126], medprev [1893–1893]",OK,
+La Plaine-des-Palmistes,liquidite,"7 ventes dernier trim, delta -36","7 lignes (7 mutations), delta -36",OK,
+La Plaine-des-Palmistes,offre_engagee,63 logts / 65 permis,63 logts / 65 permis,OK,fenetre 12m ref=2026-06-29
+La Plaine-des-Palmistes,offre_potentielle,578070 m² SDP / 1430 parc.,578070 m² / 1430 parc.,OK,run q_v10_m129 tiers servables
+La Plaine-des-Palmistes,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+La Plaine-des-Palmistes,loyer_median,"13.04 €/m² (appartement, 2025)","13.04 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=maille
+La Plaine-des-Palmistes,pression_zan,13.3,13.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+L'Étang-Salé,prix_ancien,"3818 €/m² (n=9, appartement)","3818 €/m² (n=9, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+L'Étang-Salé,prix_terrain_U_AU,U=527 (n=298); AU=369 (n=31),U=527 (n=298); AU=369 (n=31),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+L'Étang-Salé,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+L'Étang-Salé,tendance_12m,"+3.7% (4052 vs 3906, n 78/53)","n 78/53, med12 [4052–4052], medprev [3906–3906]",OK,
+L'Étang-Salé,liquidite,"22 ventes dernier trim, delta 57","22 lignes (22 mutations), delta 57",OK,
+L'Étang-Salé,offre_engagee,157 logts / 103 permis,157 logts / 103 permis,OK,fenetre 12m ref=2026-06-30
+L'Étang-Salé,offre_potentielle,1039379 m² SDP / 2820 parc.,1039379 m² / 2820 parc.,OK,run q_v10_m129 tiers servables
+L'Étang-Salé,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+L'Étang-Salé,loyer_median,"16.16 €/m² (appartement, 2025)","16.16 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+L'Étang-Salé,pression_zan,20.5,20.5,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Les Avirons,prix_ancien,"2988 €/m² (n=77, appartement)","2988 €/m² (n=77, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Les Avirons,prix_terrain_U_AU,U=376 (n=276); AU=84 (n=21),U=376 (n=276); AU=84 (n=21),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Les Avirons,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Les Avirons,tendance_12m,"+8.5% (3527 vs 3250, n 82/71)","n 82/71, med12 [3527–3527], medprev [3250–3250]",OK,
+Les Avirons,liquidite,"23 ventes dernier trim, delta 35","23 lignes (23 mutations), delta 35",OK,
+Les Avirons,offre_engagee,41 logts / 48 permis,41 logts / 48 permis,OK,fenetre 12m ref=2026-06-12
+Les Avirons,offre_potentielle,544568 m² SDP / 1615 parc.,544568 m² / 1615 parc.,OK,run q_v10_m129 tiers servables
+Les Avirons,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Les Avirons,loyer_median,"15.13 €/m² (appartement, 2025)","15.13 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Les Avirons,pression_zan,14.8,14.8,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Petite-Île,prix_ancien,"1706 €/m² (n=11, appartement)","1706 €/m² (n=11, appartement)",OK,fiab=fragile; sector_price parcelle repr.
+Petite-Île,prix_terrain_U_AU,U=245 (n=410); AU=66 (n=24),U=245 (n=410); AU=66 (n=24),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Petite-Île,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Petite-Île,tendance_12m,"-11.6% (2481 vs 2806, n 81/68)","n 81/68, med12 [2481–2481], medprev [2806–2806]",OK,
+Petite-Île,liquidite,"18 ventes dernier trim, delta -5","18 lignes (18 mutations), delta -5",OK,
+Petite-Île,offre_engagee,71 logts / 69 permis,71 logts / 69 permis,OK,fenetre 12m ref=2026-06-22
+Petite-Île,offre_potentielle,406019 m² SDP / 1789 parc.,406019 m² / 1789 parc.,OK,run q_v10_m129 tiers servables
+Petite-Île,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Petite-Île,loyer_median,"13.93 €/m² (appartement, 2025)","13.93 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Petite-Île,pression_zan,18.1,18.1,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Entre-Deux,prix_ancien,"2511 €/m² (n=13, appartement)","2511 €/m² (n=13, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Entre-Deux,prix_terrain_U_AU,U=290 (n=132); AU=141 (n=10),U=290 (n=132); AU=141 (n=10),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Entre-Deux,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Entre-Deux,tendance_12m,"+4.4% (3092 vs 2963, n 46/39)","n 46/39, med12 [3092–3092], medprev [2963–2963]",OK,
+Entre-Deux,liquidite,"7 ventes dernier trim, delta -36","7 lignes (7 mutations), delta -36",OK,
+Entre-Deux,offre_engagee,116 logts / 56 permis,116 logts / 56 permis,OK,fenetre 12m ref=2026-06-12
+Entre-Deux,offre_potentielle,673442 m² SDP / 1920 parc.,673442 m² / 1920 parc.,OK,run q_v10_m129 tiers servables
+Entre-Deux,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Entre-Deux,loyer_median,"13.93 €/m² (appartement, 2025)","13.93 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Entre-Deux,pression_zan,5.8,5.8,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Cilaos,prix_ancien,"2116 €/m² (n=33, mixte (appart+maison))","2116 €/m² (n=33, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Cilaos,prix_terrain_U_AU,U=106 (n=138); AU=102 (n=35),U=106 (n=138); AU=102 (n=35),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Cilaos,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Cilaos,tendance_12m,non calculable,n 36/17,OK,seuil 30/fenetre; motif=tendance non calculable — n < 30 par fenêtre
+Cilaos,liquidite,"12 ventes dernier trim, delta 300","12 lignes (12 mutations), delta 300",OK,
+Cilaos,offre_engagee,24 logts / 23 permis,24 logts / 23 permis,OK,fenetre 12m ref=2026-05-28
+Cilaos,offre_potentielle,493953 m² SDP / 1501 parc.,493953 m² / 1501 parc.,OK,run q_v10_m129 tiers servables
+Cilaos,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Cilaos,loyer_median,"13.85 €/m² (appartement, 2025)","13.85 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=maille
+Cilaos,pression_zan,22.7,22.7,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Sainte-Suzanne,prix_ancien,"2000 €/m² (n=11, mixte (appart+maison))","2000 €/m² (n=11, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Sainte-Suzanne,prix_terrain_U_AU,U=321 (n=323); AU=non calc (n < 10),U=321 (n=323); AU: n reel=2,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Sainte-Suzanne,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Sainte-Suzanne,tendance_12m,"+14.8% (2515 vs 2192, n 66/62)","n 66/62, med12 [2515–2515], medprev [2192–2192]",OK,
+Sainte-Suzanne,liquidite,"14 ventes dernier trim, delta -39","14 lignes (14 mutations), delta -39",OK,
+Sainte-Suzanne,offre_engagee,254 logts / 72 permis,254 logts / 72 permis,OK,fenetre 12m ref=2026-06-29
+Sainte-Suzanne,offre_potentielle,1465641 m² SDP / 3428 parc.,1465641 m² / 3428 parc.,OK,run q_v10_m129 tiers servables
+Sainte-Suzanne,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Sainte-Suzanne,loyer_median,"14.34 €/m² (appartement, 2025)","14.34 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Sainte-Suzanne,pression_zan,20.0,20.0,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Les Trois-Bassins,prix_ancien,"2080 €/m² (n=24, appartement)","2080 €/m² (n=24, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Les Trois-Bassins,prix_terrain_U_AU,U=178 (n=139); AU=160 (n=75),U=178 (n=139); AU=160 (n=75),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Les Trois-Bassins,prix_sortie_neuf,"4375 €/m² (ile_validee, n=None)","4375 €/m² (ile_validee, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Les Trois-Bassins,tendance_12m,non calculable,n 21/30,OK,seuil 30/fenetre; motif=tendance non calculable — n < 30 par fenêtre
+Les Trois-Bassins,liquidite,"5 ventes dernier trim, delta -17","5 lignes (5 mutations), delta -17",OK,
+Les Trois-Bassins,offre_engagee,30 logts / 36 permis,30 logts / 36 permis,OK,fenetre 12m ref=2026-06-24
+Les Trois-Bassins,offre_potentielle,338192 m² SDP / 1126 parc.,338192 m² / 1126 parc.,OK,run q_v10_m129 tiers servables
+Les Trois-Bassins,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Les Trois-Bassins,loyer_median,"15.15 €/m² (appartement, 2025)","15.15 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Les Trois-Bassins,pression_zan,20.5,20.5,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Bras-Panon,prix_ancien,"1596 €/m² (n=13, appartement)","1596 €/m² (n=13, appartement)",OK,fiab=fiable; sector_price parcelle repr.
+Bras-Panon,prix_terrain_U_AU,U=375 (n=115); AU=271 (n=64),U=375 (n=115); AU=271 (n=64),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Bras-Panon,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Bras-Panon,tendance_12m,"+2.8% (1888 vs 1837, n 59/43)","n 59/43, med12 [1888–1888], medprev [1837–1837]",OK,
+Bras-Panon,liquidite,"13 ventes dernier trim, delta 18","13 lignes (13 mutations), delta 18",OK,
+Bras-Panon,offre_engagee,161 logts / 52 permis,161 logts / 52 permis,OK,fenetre 12m ref=2026-06-25
+Bras-Panon,offre_potentielle,219749 m² SDP / 710 parc.,219749 m² / 710 parc.,OK,run q_v10_m129 tiers servables
+Bras-Panon,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Bras-Panon,loyer_median,"13.12 €/m² (appartement, 2025)","13.12 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=commune
+Bras-Panon,pression_zan,12.6,12.6,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Salazie,prix_ancien,"1515 €/m² (n=23, mixte (appart+maison))","1515 €/m² (n=23, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Salazie,prix_terrain_U_AU,U=147 (n=99); AU=non calc (n < 10),U=147 (n=99); AU: n reel=8,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Salazie,prix_sortie_neuf,"4375 €/m² (ile_sans_operation, n=None)","4375 €/m² (ile_sans_operation, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Salazie,tendance_12m,non calculable,n 23/16,OK,seuil 30/fenetre; motif=tendance non calculable — n < 30 par fenêtre
+Salazie,liquidite,"7 ventes dernier trim, delta -22","7 lignes (7 mutations), delta -22",OK,
+Salazie,offre_engagee,39 logts / 40 permis,39 logts / 40 permis,OK,fenetre 12m ref=2026-06-03
+Salazie,offre_potentielle,1630696 m² SDP / 1489 parc.,1630696 m² / 1489 parc.,OK,run q_v10_m129 tiers servables
+Salazie,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Salazie,loyer_median,"12.17 €/m² (appartement, 2025)","12.17 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=maille
+Salazie,pression_zan,14.3,14.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Sainte-Rose,prix_ancien,"1923 €/m² (n=87, mixte (appart+maison))","1923 €/m² (n=87, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Sainte-Rose,prix_terrain_U_AU,U=127 (n=73); AU=139 (n=36),U=127 (n=73); AU=139 (n=36),OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Sainte-Rose,prix_sortie_neuf,"4375 €/m² (ile_sans_operation, n=None)","4375 €/m² (ile_sans_operation, n=None)",OK,snapshot dvf_prix_sortie_neuf
+Sainte-Rose,tendance_12m,non calculable,n 17/23,OK,seuil 30/fenetre; motif=tendance non calculable — n < 30 par fenêtre
+Sainte-Rose,liquidite,"4 ventes dernier trim, delta -33","4 lignes (4 mutations), delta -33",OK,
+Sainte-Rose,offre_engagee,37 logts / 30 permis,37 logts / 30 permis,OK,fenetre 12m ref=2026-06-01
+Sainte-Rose,offre_potentielle,889254 m² SDP / 1950 parc.,889254 m² / 1950 parc.,OK,run q_v10_m129 tiers servables
+Sainte-Rose,pression_dpe,non calculable (0 DPE),0 DPE,OK,
+Sainte-Rose,loyer_median,"12.17 €/m² (appartement, 2025)","12.17 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=maille
+Sainte-Rose,pression_zan,4.5,4.5,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
+Saint-Philippe,prix_ancien,"1786 €/m² (n=26, mixte (appart+maison))","1786 €/m² (n=26, mixte (appart+maison))",OK,fiab=fragile; sector_price parcelle repr.
+Saint-Philippe,prix_terrain_U_AU,U=non calc (n < 10); AU=non calc (n < 10),U: n reel=0; AU: n reel=0,OK,seuil n>=10 (dvf_profils terrain_cellule_commune)
+Saint-Philippe,prix_sortie_neuf,non calculable,"{'calculable': False, 'motif': 'social-dominant'}",OK,motif=Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.
+Saint-Philippe,tendance_12m,non calculable,n 36/25,OK,seuil 30/fenetre; motif=tendance non calculable — n < 30 par fenêtre
+Saint-Philippe,liquidite,"14 ventes dernier trim, delta 133","14 lignes (14 mutations), delta 133",OK,
+Saint-Philippe,offre_engagee,56 logts / 36 permis,56 logts / 36 permis,OK,fenetre 12m ref=2026-06-22
+Saint-Philippe,offre_potentielle,non calculable,sdp=0,OK,
+Saint-Philippe,pression_dpe,0.0% F/G sur 1 DPE,0.0% sur 1,OK,fiab servie='moyenne' sur n=1 (base dpe_records=17 lignes ile entiere)
+Saint-Philippe,loyer_median,"13.41 €/m² (appartement, 2025)","13.41 €/m² (appartement, 2025)",OK,DHUP fichier versionne; granularite=maille
+Saint-Philippe,pression_zan,12.3,12.3,OK,"comparateur-communes; conso ENAF 2021-2024 Cerema, m2->ha arrondi 0,1"
