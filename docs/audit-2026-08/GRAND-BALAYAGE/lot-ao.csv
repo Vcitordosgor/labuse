@@ -1,0 +1,71 @@
+type,perimetre,variante,ouvrable,cap_ok,valeurs_ok,encodage_ok,verdict,note
+parcels.csv,ile,limit=1000,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Saint-Denis,limit=1000,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Le Tampon,"tiers=brulante,chaude",OK,OK,OK,OK,OK,"SQL: count Le Tampon tier IN (brulante,chaude) run servi = 153 == X-Rows | BOM+;+CRLF"
+parcels.csv,ile,VIDE surface_min=9999999,OK,OK,OK,OK,OK,"etat vide propre: en-tete seul, 0 ligne, pas de 500 | BOM+;+CRLF"
+parcels.csv,ile,limit=5000 max,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,limit=1,OK,OK,OK,OK,OK,SQL: round(surface)=382/tier=chaude/rang=1 (parcels JOIN parcel_p_score_v2 run servi) == CSV | BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Saint-Paul,sort=rang,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,sort=surface,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Saint-Pierre,sort=surface_asc,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,sort=commune,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Saint-Denis,sort=mult,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,sort=bogus->422,n/a,n/a,OK,n/a,OK,"422 attendu, detail JSON propre"
+parcels.csv,ile,limit=6000->422,n/a,n/a,OK,n/a,OK,"422 attendu, detail JSON propre"
+parcels.csv,2 communes,"communes=SD,SM",OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,personne_morale+zonage=U,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,veille=1,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,ile,hors_copro+sdp_min,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+parcels.csv,Zzzville,commune inconnue VIDE,OK,OK,OK,OK,OK,"etat vide propre: en-tete seul, 0 ligne, pas de 500 | BOM+;+CRLF"
+parcels.csv,Saint-Denis,source=q_v9_m81,OK,OK,OK,OK,OK,BOM+;+CRLF notice GB-016 en 1re ligne
+fiche.md,AP1647,format=md,OK,n/a,OK,OK,OK,
+fiche.html,KA0296,format=html,OK,n/a,OK,OK,OK,
+fiche,AP1647,format=onepager->422,n/a,n/a,OK,n/a,OK,"422 attendu, detail JSON propre"
+fiche.md,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+fiche.pdf,AP1647,defaut,OK,n/a,OK,OK,OK,pdftotext: 382 m2 / La Possession / AP1647 == SQL parcels
+fiche.pdf,KA0296,hypotheses custom,OK,n/a,OK,OK,OK,
+fiche.pdf,AT2379,marge=0,OK,n/a,OK,OK,OK,
+fiche.pdf,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+spf-letter,AP1647,defaut,OK,n/a,OK,OK,OK,
+spf-letter,AT2379,defaut,OK,n/a,OK,OK,OK,
+spf-letter,BAD,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+projet.csv,projet 188,gros 15265 lignes,OK,n/a,OK,KO,KO,"SQL: 97412000AH0033 round(surface)=956, round(sdp_residuelle)=54 (parcels+parcel_residuel) == CSV | AO-1 SANS BOM (projets.py:1499 StreamingResponse str brut vs utf-8-sig app.py:1568) — accents casses sous Excel FR"
+projet.csv,projet 187,zero parcelle VIDE,OK,n/a,OK,KO,KO,"etat vide propre: commentaire cadrage + en-tete, 0 ligne | AO-1 SANS BOM (projets.py:1499 StreamingResponse str brut vs utf-8-sig app.py:1568) — accents casses sous Excel FR"
+projet.csv,projet 39,non fige,OK,n/a,OK,KO,KO,AO-1 SANS BOM (projets.py:1499 StreamingResponse str brut vs utf-8-sig app.py:1568) — accents casses sous Excel FR | AO-2 en-tete '# cadrage fige le non fige' (projets.py:1465 injecte 'non fige' dans gabarit :1474)
+projet.csv,projet 99999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+projet.pdf,projet 188,gros,OK,n/a,OK,OK,OK,
+projet.pdf,projet 187,vide,OK,n/a,OK,OK,OK,
+projet.pdf,projet 99999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+signalements.csv,compte,tous,OK,OK,OK,OK,OK,"SQL: count signalements compte NULL = 17, tous statut=nouveau == CSV | BOM+;+CRLF"
+signalements.csv,compte,statut=nouveau,OK,OK,OK,OK,OK,BOM+;+CRLF
+signalements.csv,compte,statut=resolu VIDE,OK,OK,OK,OK,OK,"etat vide propre: en-tete seul, 0 ligne, pas de 500 | BOM+;+CRLF"
+signalements.csv,compte,statut avec quote VIDE,OK,OK,OK,OK,OK,"etat vide propre: en-tete seul, 0 ligne, pas de 500 | BOM+;+CRLF"
+digest.json,compte,1re lecture,OK,OK,OK,OK,OK,"SQL: event_log 7j compte NULL: bascule 1212 + bodacc 37 = 1249 == marche_resume | AO-3 cles mortes q_score/a_score=null servies (events.py:1016, matrice M129-B); dans_vos_communes=null legitime (communes vides)"
+digest.json,compte,re-lecture stabilite,OK,OK,OK,OK,OK,"AO-3 cles mortes q_score/a_score=null servies (events.py:1016, matrice M129-B); dans_vos_communes=null legitime (communes vides) | stable octet-a-octet vs p42"
+digest.html,compte,1re lecture,OK,OK,OK,OK,OK,HTML bien forme; priorites == top_chaudes JSON (AP1647 382 m2...)
+digest.html,compte,re-lecture stabilite,OK,OK,OK,OK,OK,"stable octet-a-octet vs p44; HTML bien forme, etat vide 'Rien de nouveau' propre"
+dossier.pdf,AP1647,defaut,OK,n/a,OK,OK,OK,
+dossier.pdf,KA0296,carte=0,OK,n/a,OK,OK,OK,
+dossier.pdf,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+dossier-banquier.pdf,AP1647,ign=true,OK,n/a,OK,OK,OK,
+dossier-banquier.pdf,KA0296,ign=false,OK,n/a,OK,OK,OK,
+dossier-banquier.pdf,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+lettre-zonage.pdf,AP1647,defaut,OK,n/a,OK,OK,OK,
+lettre-zonage.pdf,AT2379,defaut,OK,n/a,OK,OK,OK,
+lettre-zonage.pdf,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+argumentaire.pdf,AP1647,defaut,OK,n/a,OK,OK,OK,
+argumentaire.pdf,KA0296,prix=300000,OK,n/a,OK,OK,OK,
+argumentaire.pdf,AP1647,vrd=0 marge=0,OK,n/a,OK,OK,OK,
+argumentaire.pdf,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+pre-dossier.zip,AP1647,7 fichiers,OK,n/a,OK,OK,OK,"zip testzip OK, 7 fichiers (CERFA+PCMI1/2/4/7-8+regles+LISEZMOI)"
+pre-dossier.zip,AT2379,7 fichiers,OK,n/a,OK,OK,OK,"zip testzip OK, 7 fichiers (CERFA+PCMI1/2/4/7-8+regles+LISEZMOI)"
+pre-dossier.zip,ZZ9999,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+partage.html,token CZ0190,actif,OK,n/a,OK,OK,OK,"SQL share_links: token->idu 97422000CZ0190, HTML contient CZ0190"
+partage.html,token DK1044,actif,OK,n/a,OK,OK,OK,
+partage.html,token inconnu,404,n/a,n/a,OK,n/a,OK,"404 attendu, detail JSON propre"
+partage.html,token 27/07,410 expire 30j,n/a,n/a,OK,n/a,OK,"410 attendu, detail JSON propre | SQL share_links: cree 2026-07-27 + TTL 30j -> 410 le 2026-08-26 coherent"
+courriers.json,3 idus,contexte=standard,OK,n/a,OK,OK,OK,
+courriers.json,1 idu + inconnu,contexte=succession,OK,n/a,OK,OK,OK,idu inconnu -> entree {erreur:'parcelle inconnue'} propre (modules.py:1065); NB n=2 compte l'erreur
+courriers.json,KA0296,contexte=indivision,OK,n/a,OK,OK,OK,
+courriers.json,AP1647,contexte=bogus->422,n/a,n/a,OK,n/a,OK,"422 attendu, detail JSON propre"
+projet.csv,projet 188,p70 export pendant modification concurrente,n/a,n/a,n/a,n/a,OK,"NON EXECUTEE (69/70): exige un PATCH projet concurrent = ECRITURE, interdite par le mandat lecture seule (run.py:117); couverture des 69 autres passes complete"

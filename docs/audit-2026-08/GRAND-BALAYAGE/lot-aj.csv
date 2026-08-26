@@ -1,0 +1,21 @@
+passe,verification,resultat,verdict,note
+1,"Boot uvicorn :8001 sur base VIDE (createdb nu, sans clés SMTP/Stripe/Anthropic, sans DEV_MODE)","Serveur démarre sans crash, healthz 200 ; warning honnête LABUSE_SECRET_KEY absente (sessions éphémères) ; aucun besoin des clés au boot",OK,"env=local ⇒ auth=désactivée au boot : un 2e client prod devra poser LABUSE_ENV+LABUSE_SECRET_KEY"
+2,"Le heal de boot crée le schéma COMPLET sur base vide","KO : 0 table créée — ensure_schema meurt sur « type geometry does not exist » (pas de CREATE EXTENSION postgis au boot)",KO,"AJ-1 🔴 app.py:128 appelle models.ensure_schema mais jamais db.ensure_postgis (db.py:115) — seuls les chemins CLI le font (cli.py:87/1624/1690) ; /readyz dit la vérité et pointe `labuse doctor`"
+3,"Voie officielle de réparation (labuse doctor) puis re-boot","doctor : schema.ok=true (ensure_postgis+ensure_schema). MAIS boot suivant : step heal « crm_columns » ÉCHOUE (relation comptes n'existe pas) — converge seulement au boot n+2",KO,"AJ-2 🟠 ordre du tuple _heal_steps app.py:160-171 : crm_columns (FK comptes) passe AVANT comptes+scoping ; échec loggé+journalisé event_log+exposé /readyz (pas avalé), auto-guéri au boot suivant"
+4,"Comparaison tables labuse_c6_test (82) vs labuse réelle (202)","120 manquantes = tables d'INGESTION/dérivées (p_model_*, parcel_solar/pau/terrain…, ortho_*, backups m6_*/backup_*) + applicatives à ensure PARESSEUX au 1er usage (copilote_conversations/messages/faits/telemetrie, ia_cache, ia_ask_quota, stripe_events, flash_commandes) — aucune table applicative attendue du heal ne manque après convergence",OK,"listes /tmp/aj-tables-{test,real}.txt ; « en trop » côté test : parcel_residuel (ORM) absent de la base réelle (renommages legacy)"
+5,"Logs de boot sans exception avalée","0 traceback avalé : échec heal = log.error + notification event_log (visible /events, dedup heal:echec:*) + /readyz.heal.failures",OK,"mécanique FIX-GB-011 (_run_heal_steps app.py:83) fonctionne"
+6,"/readyz honnête sur base VIDE (avant doctor)","ready:false, schema.ok:false avec liste des 13 manquants, data «(schéma d'abord)», heal.failures avec l'erreur exacte, actions concrètes",OK,"pas de mensonge type GB-011"
+7,"/readyz honnête sur schéma guéri mais SANS DONNÉES","ready:false, schema.ok:true, data.missing 5 sources, served_run q_v10_m129 absent, actions (rebuild-demo, score-v2)",OK,
+8,"/healthz","{""status"":""ok""} = liveness pure, documentée comme telle (app.py:327-330 « c'est /readyz qui le dit »)",OK,
+9,"/stats à vide","404 explicite « source requise : préciser ?source=<run q_v*> (run servi) » — pas de 500",OK,"🟡 message orienté dev (parle de run interne), pas client"
+10,"/parcels?limit=10 à vide","404 explicite idem (run servi absent)",OK,
+11,"/communes à vide","200 []",OK,
+12,"/filtre à vide","404 explicite (run servi absent)",OK,
+13,"/events à vide","200 — contient la notification système « Heal schéma échoué : crm_columns » (journalisation opérante)",OK,
+14,"/modules/permis à vide","500 Internal Server Error : psycopg UndefinedTable « m10_permit_delais »",KO,"AJ-3 🔴 modules.py:381 LEFT JOIN m10_permit_delais SANS garde to_regclass — table construite uniquement par l'ingestion M10, jamais par le heal ⇒ 500 garanti pour toute installation neuve"
+15,"/modules/patrimoine à vide","422 explicite (query siren requise)",OK,
+16,"/v2/liste à vide","503 explicite « run servi q_v10_m129 absent — lancer labuse score-v2 »",OK,
+17,"/projets à vide","200 []",OK,
+18,"/pipeline à vide","200 []",OK,
+19,"Création de compte sur base vide + appel authentifié","`labuse compte-admin audit-aj@test.local` → utilisateur #1 admin + compte actif ; `labuse compte-invite` → compte #2 statut invite + lien. POST /login {identifiant,password} → 303 + cookie u.<token>, 1 ligne sessions_auth, GET /projets authentifié 200",OK,"testé sur :8001 / labuse_c6_test uniquement"
+20,"Mécanisme officiel noté","CLI `labuse compte-invite <email>` (PREMIER EURO : invitation 349€/mois, lien affiché à envoyer À LA MAIN → activation mdp + Stripe Checkout) ; `labuse compte-admin` pour l'admin (mdp au clavier) ; aucun endpoint public d'inscription, aucun seed auto au boot",OK,"🟡 le lien d'invitation généré pointe http://127.0.0.1:8000 (base URL par défaut) même quand l'app tourne ailleurs ; pas de front dédié testé — l'API suffit pour ce lot"

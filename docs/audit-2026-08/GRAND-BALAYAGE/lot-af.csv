@@ -1,0 +1,65 @@
+famille,invariant,table,resultat,verdict,note
+geometrie,AF-G1 ST_IsValid(geom) pleine table,parcels,0 invalide / 431663,OK,
+geometrie,AF-G2 ST_IsValid(geom_2975),parcels,0 invalide,OK,
+geometrie,AF-G3 geom/geom_2975/centroid/bbox NULL ou vide,parcels,0 partout,OK,
+geometrie,AF-G4 SRID homogene geom=4326 geom_2975=2975,parcels,1 SRID distinct par colonne,OK,
+geometrie,AF-G5 ST_IsValid + SRID=2975,ortho_tiles,0 invalide / 0 mauvais SRID (5041),OK,
+geometrie,AF-G6 ST_IsValid geom+geom_2975 (1.84M),spatial_layers,0 invalide,OK,
+geometrie,AF-G7 ST_IsValid(geom),watch_zones,0 invalide / 3,OK,
+geometrie,AF-G8 ST_IsValid(geom_3857) + SRID unique,mvt_parcels,0 invalide / 1 SRID (431663),OK,
+geometrie,AF-G9 points dans bbox Reunion,dvf_mutations,0 hors bbox / 29566,OK,
+geometrie,AF-G10 ST_IsValid + bbox Reunion,sitadel_permits,0 / 0 (50292),OK,
+geometrie,AF-G11 ST_IsValid,division_or_candidates+filosofi_carreaux_200m+ortho_detections,0 / 0 / 0,OK,
+geometrie,AF-G12 centroides dans bbox Reunion,parcels,0 hors bbox,OK,
+unicite,AF-U1 idu unique pleine table,parcels,0 doublon / 431663,OK,
+unicite,AF-U2 idu unique,parcel_solar,0 doublon / 429284,OK,
+unicite,AF-U3 idu unique,parcel_zone_plu,0 doublon / 427419,OK,
+unicite,AF-U4 idu unique,p_model_bati,0 doublon / 329315,OK,
+unicite,AF-U5 parcel_id unique (vue run servi),parcel_residuel,0 doublon / 431663,OK,
+unicite,AF-U6 (run_seq;parcel_id) unique,parcel_residuel_runs,0 doublon / 863326,OK,
+unicite,AF-U7 (run_id;parcelle_id) unique (3.03M),parcel_p_score_v2,0 doublon,OK,
+unicite,AF-U8 (pa;pb) unique + pa<pb + pas de boucle,parcel_adjacence,0 / 0 / 0 (1.13M),OK,
+unicite,AF-U9 id_ban unique,adresses,0 doublon / 339915,OK,
+unicite,AF-U10 cle parcelle unique,parcel_filtre_bati+score_e+parcel_geometrie,0 / 0 / 0,OK,
+fk,AF-F1 63 FKs declarees toutes convalidated,pg_constraint,0 NOT VALID,OK,PG garantit l'integrite; anti-joins reels quand meme ci-dessous
+fk,AF-F2 parcel_id -> parcels.id (863k),parcel_residuel_runs,0 orphelin,OK,
+fk,AF-F3 parcel_id+data_source_id,cascade_results+dryrun_*,0 orphelin,OK,
+fk,AF-F4 17 FKs -> parcels(id) anti-join reel,parcel_amenites..projet_parcelles etc,0 orphelin cumule,OK,
+fk,AF-F5 8 FKs -> parcels(idu) anti-join reel,parcel_solar+parcel_anc+parcel_equipements+p_model_bati_cosia+defisc_fenetres+pc_caducs+score_e+parcel_vegetation,0 orphelin cumule,OK,
+fk,AF-F6 14 FKs compte_id -> comptes,agent_runs..watched_parcels,0 orphelin cumule,OK,
+fk,AF-F7 17 FKs diverses (adresses/event_log/utilisateurs/snapshots/data_sources/ingestion_runs/agent_runs/copilote/projets),toutes restantes,0 orphelin cumule,OK,
+fk,AF-F8 IMPLICITE parcelle_id -> parcels.idu (3.03M),parcel_p_score_v2,0 orphelin,OK,
+fk,AF-F9 IMPLICITE run_id -> p_score_v2_runs,parcel_p_score_v2,1 run orphelin: q_v2_demo (8 lignes),KO,FINDING AF-1 vestige demo jamais enregistre dans p_score_v2_runs; run servi q_v10_m129 sain
+fk,AF-F10 IMPLICITE pa/pb -> parcels.id,parcel_adjacence,0 orphelin,OK,
+fk,AF-F11 IMPLICITE idu -> parcels.idu,parcelle_personne_morale,635 orphelins / 82701,OK,DOCUMENTE GB-007 (modules.py): lignes MAJIC dont l'IDU n'a pas de parcelle; tous les consommateurs JOIN parcels (2632 vs 2618)
+fk,AF-F12 IMPLICITE id_parcelle -> parcels.idu,dvf_mutations_parcelle,1154 orphelins / 102551 (2021:349..2025:46),OK,attendu: mutations historiques sur parcelles remembrees/divisees; cadastre mono-millesime (documente M126); degressif avec la recence
+fk,AF-F13 IMPLICITE idu -> parcels.idu,courrier_demandes+parcel_renouvellement+parcel_terrain,0 / 0 / 0,OK,
+fk,AF-F14 IMPLICITE idu -> parcels + tile_id -> ortho_tiles,ortho_detections,0 / 0,OK,
+fk,AF-F15 IMPLICITE idu -> parcels.idu (4.32M),p_model_candidates,0 orphelin,OK,
+nulls,AF-N1 cause NULL = calculees; sdp NULL = hors_plu seuls,parcel_residuel,cause NULL 253764 (sdp jamais NULL); hors_plu 4397 = seuls sdp NULL; total 431663 = 100% parcelles,OK,conforme doc M125 au chiffre pres (253764 calc + 177899 a cause dont hors_plu 4397)
+nulls,AF-N2 surface_m2 NULL,parcels,0,OK,
+nulls,AF-N3 commune NULL/vide,parcels,0,OK,
+nulls,AF-N4 idu NULL/vide,parcels,0,OK,
+nulls,AF-N5 tier NULL (run servi q_v10_m129),parcel_p_score_v2,0 / 431663,OK,
+nulls,AF-N6 prod_spec/prod_mensuel/mois_optimal NULL,parcel_solar,0 / 0 / 0,OK,
+nulls,AF-N7 date_mutation/valeur_fonciere NULL,dvf_mutations,0 / 0,OK,
+nulls,AF-N8 zone_fam/zone_lib NULL ou vide,parcel_zone_plu,0 / 0,OK,
+bornes,AF-B1 surface_m2 >0 et <10km2,parcels,0 negatif; 7 parcelles >10km2 (max 28.2km2 Saint-Philippe),OK,les 7 = vraies parcelles geantes (foret/volcan): surface == ST_Area(geom_2975) exactement
+bornes,AF-B2 valeur_fonciere >= 0,dvf_mutations+dvf_mutations_parcelle,0 / 0,OK,
+bornes,AF-B3 dates mutations <= 2026-08-26 et >= 1990,dvf_mutations+dvf_mutations_parcelle,0 / 0,OK,
+bornes,AF-B4 date+date_depot <= aujourd'hui,sitadel_permits,0 / 0 / 0,OK,
+bornes,AF-B5 tier dans l'enum servi,parcel_p_score_v2 (q_v10_m129),11 valeurs toutes connues du code (brulante 82..ecartee 145882 + 6 declasse_*),OK,verifie contre verdict_servi.py/veille_plu.py/cli.py
+bornes,AF-B6 p_raw in [0;1] percentile in [0;100] rang >= 0,parcel_p_score_v2 (q_v10_m129),0 / 0 / 0,OK,
+bornes,AF-B7 prod_spec 800-2200 proba 0-100 mois 1-12 score 0-100,parcel_solar,0 partout (prod 950-1598),OK,
+bornes,AF-B8 sdp >= 0; taux_emprise/pct_potentiel 0-100,parcel_residuel,sdp: 0; taux>100: 106106; pct>100: 110980 (max 999),OK,PAR DESIGN residuel.py:123-124 min(999;...) — >100 = bati existant depasse le max autorise (sur-densite reelle); 999 = cap sentinelle
+bornes,AF-B9 pentes 0-90 deg et max >= moy,parcel_terrain,0 / 0 / 0,OK,
+bornes,AF-B10 created_at/updated_at <= now(),parcels,0 / 0,OK,
+compteurs,AF-C1 n_parcelles vs COUNT reel par run,p_score_v2_runs,7 runs tous exacts (431663),OK,
+compteurs,AF-C2 parcels_count vs parcelles rattachees,ingestion_runs,ecarts: run 11 (51129 vs 48129) run 34 (51186 vs 0) runs 2-9 et 35-39 (n vs 0),KO,FINDING AF-3 compteur = journal du run (nb ingere a l'epoque) pas l'etat courant: upserts ulterieurs re-attribuent ingestion_run_id; runs 2-9 = sources non-parcellaires; aucun consommateur casse identifie; severite faible
+compteurs,AF-C3 nb_detections vs COUNT ortho_detections par tuile,ortho_tiles,3122 tuiles / 5041 perimees (sur-comptent),KO,FINDING AF-2 cause: purge PV 20eb5bd8 (DELETE 23529 detections type=pv) sans decrementer le compteur; reste 19919 detections (piscine+vegetation); severite faible (compteur interne)
+compteurs,AF-C4 n vs jsonb_array_length(parcelles),courrier_demandes,0 ecart / 12,OK,
+compteurs,AF-C5 n_ventes > 0,dvf_secteur_medianes,0 violation / 2359,OK,
+compteurs,AF-C6 n_pc_octroyes > 0,pc_caducs,0 violation / 2161,OK,
+compteurs,AF-C7 n_noyaux vs doc PAU-CoSIA (47),commune_pau,47 = doc; n_batiments 5055 (metrique bati noyaux; non comparee),OK,doc projet PAU: 47 noyaux confirmes
+gardee,G2 /readyz schema.ok,api,"ready=true schema.ok=true data.ok=true served_run=q_v10_m129 ok",OK,
+gardee,G3 sigles patrimoine SHLMR/SAFER/SEDRE,/modules/patrimoine/search,SHLMR 2618 (API) / SAFER 844 / SEDRE 1847 (parite SQL requete endpoint),OK,= valeurs cycle 5 exactes; SAFER+SEDRE verifies en SQL (budget 2 appels API); alias sigles patrimoine_alias.py actifs

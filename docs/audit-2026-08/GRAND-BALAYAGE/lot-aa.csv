@@ -1,0 +1,151 @@
+z,x,y,commune,n_tuile,n_sql,tier_ecarts,verdict,note
+12,2681,2292,Bras-Panon,20832,20832,0,OK,"202 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5363,4584,Bras-Panon,3958,3958,0,OK,"4 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10726,9169,Bras-Panon,2038,2038,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21450,18339,Bras-Panon,168,168,0,OK,
+16,42901,36679,Bras-Panon,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+14,10726,9170,Bras-Panon,2534,2534,0,OK,
+12,2679,2294,Cilaos,7558,7558,0,OK,"51 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5358,4588,Cilaos,4727,4727,0,OK,"10 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10716,9176,Cilaos,2842,2842,0,OK,"3 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21432,18354,Cilaos,440,440,0,OK,
+16,42866,36707,Cilaos,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+13,5357,4588,Cilaos,724,724,0,OK,
+12,2679,2295,Entre-Deux,42537,42537,0,OK,"418 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5358,4590,Entre-Deux,5940,5940,0,OK,"7 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10718,9179,Entre-Deux,163,163,0,OK,
+15,21433,18364,Entre-Deux,675,675,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+16,42864,36728,Entre-Deux,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+12,2679,2295,Entre-Deux,42537,42537,0,OK,"418 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2678,2295,L'Étang-Salé,29608,29608,0,OK,"227 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5356,4591,L'Étang-Salé,6196,6196,0,OK,"11 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10710,9182,L'Étang-Salé,833,833,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21423,18365,L'Étang-Salé,1570,1570,0,OK,
+16,42847,36725,L'Étang-Salé,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21424,18366,L'Étang-Salé,348,348,0,OK,
+12,2681,2294,La Plaine-des-Palmistes,954,954,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5361,4588,La Plaine-des-Palmistes,5072,5072,0,OK,"11 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10723,9176,La Plaine-des-Palmistes,2872,2872,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21447,18353,La Plaine-des-Palmistes,957,957,0,OK,
+16,42891,36707,La Plaine-des-Palmistes,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+13,5362,4588,La Plaine-des-Palmistes,851,851,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2677,2292,La Possession,21843,21843,0,OK,"259 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5355,4583,La Possession,8632,8632,0,OK,"31 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10710,9166,La Possession,2526,2526,0,OK,
+15,21421,18335,La Possession,1450,1450,0,OK,
+16,42847,36665,La Possession,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+14,10710,9168,La Possession,3041,3041,0,OK,"8 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2677,2291,Le Port,18541,18541,0,OK,"429 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5354,4583,Le Port,10266,10266,0,OK,"102 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10709,9167,Le Port,2543,2543,0,OK,"6 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21419,18334,Le Port,249,249,0,OK,
+16,42836,36667,Le Port,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+14,10708,9167,Le Port,4155,4155,0,OK,"9 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2679,2295,Le Tampon,42537,42537,0,OK,"418 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5359,4591,Le Tampon,16915,16915,0,OK,"35 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10721,9180,Le Tampon,506,506,0,OK,
+15,21436,18364,Le Tampon,916,916,0,OK,
+16,42868,36728,Le Tampon,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+13,5359,4589,Le Tampon,1521,1521,0,OK,
+12,2677,2295,Les Avirons,19992,19992,0,OK,"165 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5355,4590,Les Avirons,9415,9415,0,OK,"28 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10711,9181,Les Avirons,2510,2510,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21423,18359,Les Avirons,147,147,0,OK,
+16,42842,36727,Les Avirons,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21422,18360,Les Avirons,1053,1053,0,OK,
+12,2677,2293,Les Trois-Bassins,11568,11568,0,OK,"41 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5354,4587,Les Trois-Bassins,5054,5054,0,OK,"3 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10706,9175,Les Trois-Bassins,475,475,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21416,18350,Les Trois-Bassins,818,818,0,OK,
+16,42835,36700,Les Trois-Bassins,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21416,18351,Les Trois-Bassins,103,103,0,OK,
+12,2680,2296,Petite-Île,24713,24713,0,OK,"149 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5360,4592,Petite-Île,3488,3488,0,OK,"5 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10721,9186,Petite-Île,2189,2189,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21440,18372,Petite-Île,535,535,0,OK,
+16,42884,36748,Petite-Île,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21441,18373,Petite-Île,1250,1250,0,OK,
+12,2681,2291,Saint-André,14178,14178,0,OK,"123 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5362,4583,Saint-André,12988,12988,0,OK,"21 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10726,9167,Saint-André,1327,1327,0,OK,
+15,21453,18337,Saint-André,319,319,0,OK,
+16,42898,36675,Saint-André,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+13,5361,4584,Saint-André,2440,2440,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2682,2293,Saint-Benoît,7002,7002,0,OK,"73 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5363,4586,Saint-Benoît,5505,5505,0,OK,"14 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10726,9171,Saint-Benoît,1730,1730,0,OK,
+15,21458,18348,Saint-Benoît,1229,1229,0,OK,
+16,42903,36686,Saint-Benoît,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21455,18344,Saint-Benoît,1317,1317,0,OK,
+12,2678,2291,Saint-Denis,14252,14252,0,OK,"197 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5357,4582,Saint-Denis,9489,9489,0,OK,"46 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10717,9167,Saint-Denis,369,369,0,OK,
+15,21435,18329,Saint-Denis,877,877,0,OK,
+16,42860,36661,Saint-Denis,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+12,2679,2291,Saint-Denis,34789,34789,0,OK,"470 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2681,2296,Saint-Joseph,7244,7244,0,OK,"25 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5361,4593,Saint-Joseph,8769,8769,0,OK,"9 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10724,9188,Saint-Joseph,2436,2436,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21450,18372,Saint-Joseph,689,689,0,OK,
+16,42903,36746,Saint-Joseph,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+14,10722,9187,Saint-Joseph,2210,2210,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2677,2294,Saint-Leu,16979,16979,0,OK,"179 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5355,4589,Saint-Leu,2628,2628,0,OK,"3 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10708,9179,Saint-Leu,2731,2731,0,OK,"5 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21418,18361,Saint-Leu,1327,1327,0,OK,
+16,42837,36721,Saint-Leu,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21417,18355,Saint-Leu,618,618,0,OK,
+12,2678,2295,Saint-Louis,29608,29608,0,OK,"227 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5357,4591,Saint-Louis,17280,17280,0,OK,"50 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10715,9181,Saint-Louis,2085,2085,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21428,18362,Saint-Louis,254,254,0,OK,
+16,42853,36735,Saint-Louis,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21429,18366,Saint-Louis,1239,1239,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2676,2293,Saint-Paul,16450,16450,0,OK,"289 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5353,4587,Saint-Paul,5081,5081,0,OK,"13 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10707,9171,Saint-Paul,3323,3323,0,OK,"2 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21418,18347,Saint-Paul,240,240,0,OK,
+16,42839,36678,Saint-Paul,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21416,18345,Saint-Paul,851,851,0,OK,
+12,2681,2297,Saint-Philippe,4834,4834,0,OK,"29 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5365,4593,Saint-Philippe,1329,1329,0,OK,
+14,10727,9188,Saint-Philippe,451,451,0,OK,
+15,21457,18375,Saint-Philippe,132,132,0,OK,
+16,42926,36741,Saint-Philippe,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+14,10731,9185,Saint-Philippe,213,213,0,OK,
+12,2679,2296,Saint-Pierre,32587,32587,0,OK,"429 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5358,4593,Saint-Pierre,7894,7894,0,OK,"48 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10716,9183,Saint-Pierre,3840,3840,0,OK,"9 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21433,18368,Saint-Pierre,870,870,0,OK,
+16,42868,36743,Saint-Pierre,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+15,21434,18367,Saint-Pierre,888,888,0,OK,
+12,2680,2291,Sainte-Marie,14691,14691,0,OK,"164 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5359,4582,Sainte-Marie,6349,6349,0,OK,"17 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10719,9166,Sainte-Marie,2631,2631,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21438,18332,Sainte-Marie,822,822,0,OK,
+16,42875,36666,Sainte-Marie,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+12,2679,2291,Sainte-Marie,34789,34789,0,OK,"470 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2682,2294,Sainte-Rose,3252,3252,0,OK,"20 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5365,4588,Sainte-Rose,2665,2665,0,OK,"5 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10732,9177,Sainte-Rose,1203,1203,0,OK,
+15,21459,18351,Sainte-Rose,375,375,0,OK,
+16,42918,36705,Sainte-Rose,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+12,2683,2294,Sainte-Rose,2458,2458,0,OK,"16 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2680,2291,Sainte-Suzanne,14691,14691,0,OK,"164 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5361,4583,Sainte-Suzanne,5444,5444,0,OK,"30 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10721,9168,Sainte-Suzanne,262,262,0,OK,
+15,21445,18334,Sainte-Suzanne,127,127,0,OK,
+16,42896,36665,Sainte-Suzanne,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+13,5361,4582,Sainte-Suzanne,2674,2674,0,OK,"10 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+12,2679,2293,Salazie,2260,2260,0,OK,"11 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+13,5358,4585,Salazie,1661,1661,0,OK,
+14,10716,9172,Salazie,306,306,0,OK,"1 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21436,18345,Salazie,199,199,0,OK,
+16,42872,36684,Salazie,0,0,0,OK,"http=204; 204 attendu par design (tiles.py:351, servi z9-15, client sur-zoome)"
+12,2680,2292,Salazie,3327,3327,0,OK,"26 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+14,10710,9172,Saint-Paul,414,414,0,OK,
+12,2682,2296,Saint-Philippe,3028,3028,0,OK,"16 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21422,18364,L'Étang-Salé,811,811,0,OK,
+12,2679,2291,Sainte-Marie,34789,34789,0,OK,"470 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
+15,21438,18334,Sainte-Marie,727,727,0,OK,
+13,5355,4591,Les Avirons,5516,5516,0,OK,"20 parcelles sub-pixel droppees par quantization ST_AsMVTGeom (med 6.9 m2 a z12) — toutes rendues a z15 sauf micro-slivers <=3.1 m2 ; 0 chaude/brulante ; artefact MVT normal, aucune absence au sens client"
