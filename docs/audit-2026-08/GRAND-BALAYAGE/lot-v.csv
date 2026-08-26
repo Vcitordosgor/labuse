@@ -1,0 +1,101 @@
+endpoint,methode,payload,code,verdict
+/api/copilote/runs/{run_id} [GB-028 non-uuid],GET,(no-query),422,OK
+/api/copilote/runs/{run_id} [GB-028 int],GET,(no-query),422,OK
+/api/copilote/runs/{run_id} [GB-028 sqli],GET,(no-query),422,OK
+/api/copilote/runs/{run_id}/events [GB-028 non-uuid],GET,after_seq=abc,422,OK
+/modules/permis [GB-029 offset=-5],GET,offset=-5,422,OK
+/modules/promesses [GB-029 offset=-5],GET,offset=-5,422,OK
+/modules/fantome [GB-029 offset=-5],GET,offset=-5,422,OK
+/modules/permis [GB-029 big-neg],GET,offset=-999999999999,429,OK
+/modules/fantome [GB-029 bignum],GET,limit=1e18&offset=-1,429,OK
+/map/tiles/{z}/{x}/{y}.pbf [hostile],GET,(no-query),422,OK
+/map/tiles/{z}/{x}/{y}.pbf [neg],GET,(no-query),204,OK
+/map/tiles/ov/{kind}/... [hostile],GET,(no-query),204,OK
+/renouvellement/liste,GET,sort=-&limit=%2BInf&offset=0,422,OK
+/projets/{pid}/carte/{idu},GET,(no-query),404,OK
+/dossier-banquier/{idu}/statut,GET,(no-query),429,OK
+/api/copilote/runs/{run_id},GET,(no-query),404,OK
+/projets/{pid}/parcelles,GET,offset=%27%20OR%201%3D1&offset=-5,404,OK
+/carnet-secteur,GET,commune=-,200,OK
+/courrier/envois,GET,(no-query),429,OK
+/stats/entonnoir,GET,commune=%7B%7B7%2A7%7D%7D&source=null,200,OK
+/pipeline,GET,(no-query),200,OK
+/accueil/cette-semaine,GET,(no-query),200,OK
+/v2/brulantes,GET,(no-query),429,OK
+/ortho/equipements/{idu},GET,(no-query),404,OK
+/alertes,GET,commune=%24%7Bjndi%3Aldap%3A%2F%2Fx%7D&only_new=2&commune=1&commune=2,422,OK
+/projets/pour-parcelle/{idu},GET,(no-query),200,OK
+/assemblages,GET,commune=%24%7Bjndi%3Aldap%3A%2F%2Fx%7D,200,OK
+/pipeline/meta,GET,(no-query),200,OK
+/map/tiles/ov/{kind}/{z}/{x}/{y}.pbf,GET,(no-query),422,OK
+/api/copilote/runs/{run_id}/events,GET,(no-query),422,OK
+/accueil/chiffres,GET,(no-query),200,OK
+/assistant/status,GET,(no-query),200,OK
+/dossier/{idu}.pdf,GET,(no-query),429,OK
+/parcels/{idu},GET,source=%0A%0D%09,429,OK
+/api/copilote-v2/missions,GET,(no-query),200,OK
+/events/brief,GET,(no-query),200,OK
+/courrier/demandes,GET,(no-query),429,OK
+/modules/prospection-piscines/points,GET,bati=%252e%252e%252f%252e%252e%252f,429,OK
+/parcels/{idu}/enrichment,GET,(no-query),429,OK
+/pipeline/parcel/{idu},GET,(no-query),404,OK
+/modules/permis,GET,months=-1&offset=999999999999999999999&offset=-5,429,OK
+/events,GET,limit=-1&offset=1%3B2&offset=-5,500,KO
+/modules/bailleur,GET,commune=%25s%25s%25s%25n,429,OK
+/dossier/statut,GET,(no-query),429,OK
+/moteurs/simulplu,GET,zone=%24%7Bjndi%3Aldap%3A%2F%2Fx%7D,429,OK
+/moteurs/zan/parcelle/{idu},GET,(no-query),429,OK
+/moteurs/simulplu/zones,GET,commune=%27%20OR%201%3D1--&commune=1&commune=2,429,OK
+/moteurs/marche/{commune},GET,(no-query),429,OK
+/projets/{pid},GET,(no-query),422,OK
+/coverage,GET,(no-query),200,OK
+/filtre,GET,limit=NaN&offset=%27%20OR%201%3D1&sort=%25s%25s%25s%25n&idus=-1&commune=true&surface_max=null&evenement=%F0%9F%98%80&communes=-&hors_copro=maybe&defisc_active=%F0%9F%98%80&marge_min=-&sdp_max=null&sous_densite=maybe&mult_min=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,500,KO
+/ia/status,GET,(no-query),429,OK
+/stats,GET,commune=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&surface_max=NaN&sdp_min=1%3B%20DROP%20TABLE%20mvt_parcels%3B--&evenement=maybe&flags=true&communes=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&hors_copro=%27&veille=2&personne_morale=2,422,OK
+/projets,GET,(no-query),200,OK
+/health,GET,(no-query),200,OK
+/compare,GET,(no-query),422,OK
+/assemblage/study,GET,idus=%27%20OR%201%3D1--,404,OK
+/argumentaire/{idu}.pdf,GET,cout_construction_m2=1e400&marge_frais_pct=Infinity,429,OK
+/modules/plu-annuaire/communes,GET,(no-query),429,OK
+/api/v1/docs,GET,(no-query),200,OK
+/modules/plu-annuaire/search,GET,q=null&insee=-&zone=NaN&limit=1%3B2,429,OK
+/healthz/crons,GET,(no-query),200,OK
+/map/permits.geojson,GET,commune=%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%,429,OK
+/api/v1/parcels,GET,key=Infinity&statut=null&min_q=0&limit=0&offset=0x1F,422,OK
+/parcels/{idu}/export.pdf,GET,source=%F0%9F%98%80%F0%9F%94%A5%F0%9F%92%A5&marge_frais_pct=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,429,OK
+/api/copilote-v2/veilles,GET,(no-query),200,OK
+/protection/admin,GET,(no-query),200,OK
+/partners/promoteurs-actifs,GET,commune=%252e%252e%252f%252e%252e%252f&commune=1&commune=2,200,OK
+/projets/reperes,GET,dimension=%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F0%9D%95%8F%F,422,OK
+/partners/match/compatibilite/{idu},GET,(no-query),404,OK
+/projets,POST,"body={""x"": ""' OR 1=1--""}",200,OK
+/alertes/ack,POST,body={},200,OK
+/projets/apercu,POST,"body=[1, 2, 3]",422,OK
+/scoreur-adresse,POST,"(no-body,no-cookie)",429,OK
+/api/copilote-v2/feedback,POST,"body=""not-json-object""",422,OK
+/courrier/pdf,POST,"body={""x"": ""' OR 1=1--""}",429,OK
+/pipeline/columns/reorder,POST,"body={""commune"": ""\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude0",422,OK
+/events/prefs,PATCH,"body=[1, 2, 3]",422,OK
+/courrier/admin/demandes/{demande_id}/statut,POST,"body={""commune"": ""\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude0",429,OK
+/partners/share/{idu},POST,"body={""idus"": [""../../etc""]}",404,OK
+/watch-zones/{zone_id},PATCH,"body={""commune"": ""\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude0",422,OK
+/projets/{pid}/rejouer,POST,"body={""limit"": ""abc""}",422,OK
+/events/demo,POST,"body={""x"": ""' OR 1=1--""}",200,OK
+/traducteur-plu/{idu},POST,body={},404,OK
+/sources/{source_id}/test,POST,"body=[1, 2, 3]",500,KO
+/events/read-all,POST,"body={""__proto__"": {""admin"": true}}",200,OK
+/api/copilote-v2/veilles/{veille_id},DELETE,"body={""x"": ""' OR 1=1--""}",422,OK
+/pipeline/{entry_id},PATCH,"body=""not-json-object""",422,OK
+/projets/{pid}/chercher-plus,POST,"body={""nested"": {""a"": [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, ",404,OK
+/api/copilote-v2/ask,POST,"body={""commune"": ""\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude0",422,OK
+/pipeline/columns/{col_id},DELETE,body={},422,OK
+/api/copilote/runs/{run_id}/cancel,POST,"body={""x"": ""' OR 1=1--""}",422,OK
+/projets/compteur,POST,"(no-body,no-cookie)",422,OK
+/protection/admin/degel/{sujet},POST,"body={""x"": ""' OR 1=1--""}",200,OK
+/ia/search,POST,"(no-body,no-cookie)",429,OK
+/events/searches,POST,"body={""__proto__"": {""admin"": true}}",422,OK
+/ia/synthese/{idu},POST,"body={""__proto__"": {""admin"": true}}",429,OK
+/partners/profiles,POST,"body={""idus"": [""../../etc""]}",422,OK
+/modules/courriers,POST,"body={""x"": ""' OR 1=1--""}",429,OK
+/projets/{pid},PATCH,body={},500,KO
