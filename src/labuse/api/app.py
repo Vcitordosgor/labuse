@@ -1554,8 +1554,12 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
                     "affinez les filtres, ou augmentez la limite (≤ 5000), pour exporter le reste."])
     # M129-B : statut_matrice/q_score/a_score retirés (matrice morte) — le statut servi est
     # celui de la CASCADE (status), la présentation est le tier v2.
+    # FIX-C6 (GB-066) — l'export sert le LIBELLÉ M137 (« À suivre », « Écartée »…) via la
+    # source unique `TIER_LABELS`, plus le CODE interne (« chaude », « ecartee ») : même mot
+    # que la fiche/la carte/le Copilote, partout. En-tête renommé `classement` (self-describing).
+    from ..verdict_servi import TIER_LABELS as _TIER_LABELS
     w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
-                "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
+                "surface_m2", "classement", "rang_v2", "mult_v2", "copro",
                 "veille_succession", "statut_cascade",
                 "completeness", "icd", "confiance_donnees",
                 "proprio", "v_score", "v_band", "top_signaux"])
@@ -1565,7 +1569,7 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
         w.writerow([it["idu"], it["commune"],
                     a.get("adresse") or "", a.get("code_postal") or "", a.get("ville") or "",
                     it["surface_m2"],
-                    ("ecartee" if it["etage0"] else it["tier_v2"]) or "",
+                    _TIER_LABELS.get(("ecartee" if it["etage0"] else it["tier_v2"]), it["tier_v2"]) or "",
                     it["rang_v2"] if it["rang_v2"] is not None else "",
                     f"{it['mult_v2']:.1f}" if it.get("mult_v2") is not None else "",
                     "oui" if it.get("copro_v2") else "",

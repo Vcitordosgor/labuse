@@ -286,14 +286,23 @@ def ligne8_pression_dpe(db: Session, commune: str) -> dict:
         FROM dpe_records WHERE code_insee = :i AND etiquette_dpe IS NOT NULL"""),
         {"i": insee}).mappings().first()
     ech = f"G interdit à la location au {DPE_DOM_INTERDICTION_LOCATION['G']}, F au {DPE_DOM_INTERDICTION_LOCATION['F']}"
-    if not r or not r["connus"]:
+    connus = int(r["connus"]) if r and r["connus"] else 0
+    # FIX-C6 (GB-041) — SEUIL D'HONNÊTETÉ aligné sur la tendance (n≥30) : un « % F/G sur 1-4 DPE »
+    # servi en fiabilité « moyenne » (le stock ADEME chargé est un échantillon, ~17 lignes/île)
+    # trompe l'œil. Sous le seuil → « non calculable » explicite, comme la tendance et le terrain
+    # AU (n<10). Zéro DPE = cas particulier du même garde.
+    DPE_MIN_CONNUS = 30
+    if connus < DPE_MIN_CONNUS:
         # LOT10 (OUTILS-FINALE) — `date_amont` = « ADEME » seul : le « (DPE connus) » redondant donnait
         # le libellé cassé « Sourcé · sur 0 DPE connu · ADEME (DPE connus) ». Le compte des DPE connus
         # est DÉJÀ porté par l'étiquette ; la fraîcheur n'a qu'à nommer la source.
-        return _ligne("pression_dpe", "OFFRE", valeurs={"echeances": ech, "dpe_connus": 0},
+        motif = ("aucun DPE connu sur la commune" if connus == 0
+                 else f"échantillon DPE insuffisant ({connus} connus < {DPE_MIN_CONNUS})")
+        etiq = ("Sourcé · sur 0 DPE connu" if connus == 0
+                else f"Sourcé · {connus} DPE connus (sous le seuil fiable de {DPE_MIN_CONNUS})")
+        return _ligne("pression_dpe", "OFFRE", valeurs={"echeances": ech, "dpe_connus": connus},
                       source="DPE ADEME + calendrier DOM (M-G)", date_amont="ADEME",
-                      fiabilite="faible", etiquette="Sourcé · sur 0 DPE connu", calculable=False,
-                      motif="aucun DPE connu sur la commune")
+                      fiabilite="insuffisant", etiquette=etiq, calculable=False, motif=motif)
     pct = round(100 * r["fg"] / r["connus"], 1)
     return _ligne("pression_dpe", "OFFRE",
                   valeurs={"pct_fg": pct, "fg": r["fg"], "dpe_connus": r["connus"], "echeances": ech},

@@ -1812,12 +1812,26 @@ def _pg_env_and_db(url_str: str) -> tuple[dict, str]:
     return env, url.database or "labuse"
 
 
+# FIX-C6 (GB-054) — tables VOLUMINEUSES et RECONSTRUCTIBLES (dryrun/scoring/entraînement, non
+# saisies par l'utilisateur) : leur DATA est exclue du backup « lean » (schéma conservé). Sur le
+# pilote, elles pèsent ~16 Go (dryrun_cascade_results seule ≈ 8,7 Go) → un dump complet saturait
+# le disque et laissait un fichier partiel. Elles se reconstruisent par ingestion/scoring.
+_BACKUP_RECONSTRUCTIBLES = (
+    "dryrun_cascade_results", "cascade_results",
+    "p_model_dataset", "p_model_dataset_v2", "p_model_dataset_v2bis",
+    "p_model_ext_dataset", "p_model_candidates", "score_snapshot_parcelles",
+)
+
+
 @app.command("backup-db")
 def backup_db_cmd(
     dir: str = typer.Option("backups", help="Dossier des sauvegardes (créé si absent)."),
+    full: bool = typer.Option(False, "--full", help="Dump COMPLET (inclut les tables reconstructibles ~16 Go)."),
 ) -> None:
-    """Sauvegarde COMPLÈTE de la base (pg_dump format custom compressé) — données,
-    évaluations, pipeline, cache enrichment, état démo. Nommage horodaté."""
+    """Sauvegarde de la base (pg_dump format custom compressé). Par DÉFAUT « lean » : exclut la
+    DATA des tables reconstructibles (dryrun/entraînement, ~16 Go) — schéma gardé, données
+    rebâties par ingestion. `--full` pour tout inclure. Contrôle d'espace disque avant écriture."""
+    import shutil
     import subprocess
     import time
     from pathlib import Path
@@ -1829,15 +1843,34 @@ def backup_db_cmd(
     env, dbname = _pg_env_and_db(get_settings().database_url)
     out_dir = Path(dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / f"labuse-{dbname}-{time.strftime('%Y%m%d-%H%M%S')}.dump"
-    typer.echo(f"▶ pg_dump {dbname} → {out}")
-    res = subprocess.run(["pg_dump", "-Fc", "--no-owner", "-d", dbname, "-f", str(out)],
+    # GB-054 — GARDE D'ESPACE : refuser AVANT d'écrire si le disque est trop juste (sinon
+    # pg_dump sature et laisse un fichier partiel trompeur). Seuil prudent : 2 Go libres.
+    free_go = shutil.disk_usage(out_dir).free / 1e9
+    seuil_go = 2.0
+    if free_go < seuil_go:
+        typer.echo(f"✗ Espace disque insuffisant : {free_go:.1f} Go libres < {seuil_go:.0f} Go requis.")
+        typer.echo("  → libérez de la place (purge tables reconstructibles) ou pointez --dir sur un autre volume.")
+        raise typer.Exit(2)
+    excludes: list[str] = []
+    if not full:
+        for t in _BACKUP_RECONSTRUCTIBLES:
+            excludes += ["--exclude-table-data", t]
+    out = out_dir / f"labuse-{dbname}-{'full' if full else 'lean'}-{time.strftime('%Y%m%d-%H%M%S')}.dump"
+    typer.echo(f"▶ pg_dump {dbname} ({'COMPLET' if full else 'lean : reconstructibles exclues'}) → {out}")
+    res = subprocess.run(["pg_dump", "-Fc", "--no-owner", *excludes, "-d", dbname, "-f", str(out)],
                          env=env, capture_output=True, text=True)
     if res.returncode != 0:
         typer.echo(f"✗ pg_dump a échoué :\n{res.stderr.strip()}")
+        # ne pas laisser un fichier partiel trompeur
+        try:
+            out.unlink(missing_ok=True)
+        except OSError:
+            pass
         raise typer.Exit(1)
     size_mb = out.stat().st_size / 1e6
     typer.echo(f"✓ Sauvegarde : {out} ({size_mb:.1f} Mo)")
+    if not full:
+        typer.echo(f"  (lean — {len(_BACKUP_RECONSTRUCTIBLES)} tables reconstructibles sans data ; --full pour tout)")
     typer.echo(f"  restauration : labuse restore-db --file {out}")
 
 

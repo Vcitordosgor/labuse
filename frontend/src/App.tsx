@@ -22,6 +22,7 @@ import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
 import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
+import { MODULES } from './components/outils/registry'   // GB-059 : valider #m= contre le registre
 import { EMPTY_FILTERS, useApp } from './store/useApp'
 
 // M-V V3 — code-splitting maplibre : MapView et TimeMachine chargent maplibre-gl (~800 kB), inutile
@@ -301,7 +302,11 @@ export default function App() {
     if (c) setCommune(decodeURIComponent(c))
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
-    if (m) setModule(m)
+    // GB-059 (FIX-C6) — ne poser le module que si la clé EXISTE au registre (MODULES, alias
+    // hidden compris). Une clé inconnue dans #m= (faute, casse, injection) laissait `module`
+    // truthy alors que ModulePanel `MODULES.find` renvoyait undefined → LeftPanel démonté ET
+    // panneau vide = colonne gauche blanche muette. Clé invalide → on ignore (état d'accueil).
+    if (m && MODULES.some((mod) => mod.key === m)) setModule(m)
     // GB-032 — FICHE PARTAGEABLE : l'idu sélectionné est sérialisé dans le hash (#idu=…) et réhydraté
     // au boot → une URL de fiche partagée rouvre la MÊME fiche (les deep-links outil/filtres l'étaient
     // déjà, la fiche non). `select` déclenche le fetch parcelle ; la vue par défaut « cartes » l'affiche.
