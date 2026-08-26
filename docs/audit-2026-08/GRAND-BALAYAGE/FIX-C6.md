@@ -47,4 +47,21 @@ Le boot amorce un Postgres NU de bout en bout, aucun module en 500 sur base neuv
 - **GB-064** (export.pdf shortlist figée 200 vs total vif) — design documenté (shortlist figée) ; à libeller, pas un faux chiffre.
 - **GB-065** (routage Copilote : 6 sous-réponses) — 0 invention/faux chiffre ; affinage lexique/routage, mandat Copilote.
 
-## Verdict d'installation (LOT AJ rejoué) — voir section finale après le dernier rejeu.
+## Vérification finale — TOUT VERT
+- **LOT AJ rejoué sur base NUE** (`labuse_fixdiff` + uvicorn éphémère, détruite après) : **140 endpoints GET testés = 0 × 500**, heal sans exception, `/readyz` honnête (503 + schema.ok:true sur base vide), création de compte par le mécanisme officiel (`labuse compte-admin`) OK. Base réelle `labuse` et `:8000` jamais touchés.
+- **Orphelins snap = 0** sur la base réelle après migration (3 330 → 0) ; index `ix_p_v2_run_computed` présent (plan `/map/tiles/meta` Index Only).
+- **Gardées** : **G2** `/readyz` ready:true schema.ok:true ✓ · **G3** patrimoine SHLMR **n=2618** ✓ · **G1** (courrier dédup) couvert par les tests verts · **G4-G6** (UI) couverts par tsc+build verts.
+- **tsc** 0 erreur ✓ · **build** frontend ✓.
+- **Suite backend** : **1768 passed, 31 skipped, 5 failed** — les 5 échecs sont **PRÉ-EXISTANTS** (rejoués à l'identique sur `origin/main` en worktree isolé) : `test_flash_sdp_note_habitable`, `test_r5_etudier_deux_marges…`, `test_demo_51e_appel_429`, `test_simulplu_ne_leve_pas…`, `test_simulplu_dit_la_troncature…`. **ZÉRO régression FIX-C6.**
+
+## VERDICT : les réserves de certification du cycle 6 sont SOLDÉES
+- **Point 1** (GB-047/048/049 🟠, prérequis déploiement) — **SOLDÉ, prouvé** (installation autonome, 0 × 500 sur base nue).
+- **Point 2** (GB-063 🟠) — **SOLDÉ** (fix structurel + FK CASCADE + migration 3 330→0 + gardée).
+- **Point 3** (GB-041/054/059/066 🟠) — **SOLDÉS** ; GB-053 🔴 clos hors code (backup 6,0 Go externalisé par Vic le 26/08).
+- **Point 4** (17 🟡) — mécaniques soldées (GB-056/057/058), reste documenté en dette datée.
+
+**Commande de merge (à exécuter par Vic — PAS par CC) :**
+
+```
+git merge --no-ff fix/c6-reserves
+```
