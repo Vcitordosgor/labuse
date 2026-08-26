@@ -236,3 +236,28 @@ def test_repartir_du_present_fait_ancien_ne_notifie_pas(db_session):
     out = alertes.compute_alertes(db_session, COMMUNE, None)
     assert out["permis_in_zone"] == 1        # le panneau montre l'historique…
     assert out["notifications"] == 0         # …la cloche ne le reçoit jamais
+
+
+def test_suppression_veille_purge_le_snap_zonage_zero_orphelin(db_session):
+    """FIX-C6 (GB-063) — supprimer une veille efface sa photo zonage ; ZÉRO orphelin global.
+
+    Régression : `watch_zone_zonage_snap` n'avait pas de FK vers watch_zones → ses lignes
+    fuyaient à chaque DELETE (3 330 orphelins constatés au cycle 6). Garde permanente."""
+    lon, lat = 55.41, -21.11
+    z = alertes.create_watch_zone(db_session, "Zone snap", COMMUNE, _zone(lon, lat), None)
+    # matérialise le schéma du snap (créé paresseusement à la détection) puis y pose une ligne
+    alertes.compute_alertes(db_session, COMMUNE, None)
+    db_session.execute(text(
+        "INSERT INTO watch_zone_zonage_snap (zone_id, idu, zone_lib) VALUES (:z, '974110000AB1', 'U')"
+        " ON CONFLICT DO NOTHING"), {"z": z["id"]})
+    assert db_session.execute(text(
+        "SELECT count(*) FROM watch_zone_zonage_snap WHERE zone_id = :z"), {"z": z["id"]}).scalar() == 1
+    # suppression via le chemin applicatif → le snap de CETTE zone disparaît…
+    assert alertes.delete_watch_zone(db_session, z["id"], None) is True
+    assert db_session.execute(text(
+        "SELECT count(*) FROM watch_zone_zonage_snap WHERE zone_id = :z"), {"z": z["id"]}).scalar() == 0
+    # …et l'invariant global tient : aucune ligne snap ne pointe une zone disparue
+    orphelins = db_session.execute(text(
+        "SELECT count(*) FROM watch_zone_zonage_snap s"
+        " WHERE NOT EXISTS (SELECT 1 FROM watch_zones w WHERE w.id = s.zone_id)")).scalar()
+    assert orphelins == 0

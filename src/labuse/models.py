@@ -956,6 +956,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_passoire_thermique_view(engine)
     ensure_bilan_params(engine)
     ensure_watch_zones(engine)
+    ensure_watch_snap_no_orphans(engine)    # FIX-C6 (GB-063) : purge orphelins snap + FK CASCADE
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_pipeline_archived(engine)
@@ -1467,6 +1468,34 @@ def ensure_watch_zones(engine) -> None:
                      "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
 
 
+def ensure_watch_snap_no_orphans(engine) -> None:
+    """FIX-C6 (GB-063) — MIGRATION idempotente + garde durable de `watch_zone_zonage_snap`.
+
+    La photo zonage (idu×zone pour la détection de changement) était créée SANS FK vers
+    watch_zones (contrairement à `alertes` qui a ON DELETE CASCADE) → ses lignes fuyaient à
+    chaque suppression de veille (3 330 orphelins au cycle 6). On (1) purge les orphelins
+    existants, puis (2) pose la FK ON DELETE CASCADE manquante — la base garantit désormais
+    le nettoyage même si un appelant l'oublie. Idempotent : ne fait rien si la table n'existe
+    pas encore (créée paresseusement à la détection) ou si la FK est déjà là."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        if not c.execute(_t("SELECT to_regclass('watch_zone_zonage_snap')")).scalar():
+            return  # table pas encore matérialisée (aucune détection n'a tourné) — rien à faire
+        # (1) purge des orphelins accumulés (zone supprimée sans purge du snap)
+        c.execute(_t("DELETE FROM watch_zone_zonage_snap s"
+                     " WHERE NOT EXISTS (SELECT 1 FROM watch_zones w WHERE w.id = s.zone_id)"))
+        # (2) FK ON DELETE CASCADE si absente (après la purge, toutes les zone_id sont valides)
+        has_fk = c.execute(_t(
+            "SELECT 1 FROM pg_constraint"
+            " WHERE conrelid = 'watch_zone_zonage_snap'::regclass AND contype = 'f'")).first()
+        if not has_fk:
+            c.execute(_t(
+                "ALTER TABLE watch_zone_zonage_snap"
+                " ADD CONSTRAINT fk_snap_zone FOREIGN KEY (zone_id)"
+                " REFERENCES watch_zones(id) ON DELETE CASCADE"))
+
+
 def ensure_residuel_cache(engine) -> None:
     """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
     relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent.
@@ -1578,6 +1607,13 @@ def ensure_schema(engine) -> None:
     NE fait JAMAIS : backfill massif, téléchargement, ré-évaluation. Si des DONNÉES
     manquent (geom_2975 NULL, couches absentes), c'est /readyz et `labuse doctor` qui le
     disent, et `rebuild-demo` qui reconstruit."""
+    # FIX-C6 (GB-047) — amorçage d'un Postgres NU : les tables ORM portent des colonnes
+    # `geometry`, donc PostGIS doit exister AVANT `create_all` (sinon `type "geometry" does
+    # not exist`). Les chemins CLI (api/doctor/prepare-pilot) l'appelaient déjà séparément ;
+    # le boot uvicorn ne passait QUE par ici → base neuve non amorçable hors docker. En le
+    # posant DANS ensure_schema (import local = pas de cycle), tous les chemins convergent.
+    from .db import ensure_postgis
+    ensure_postgis(engine)
     Base.metadata.create_all(engine)
     _ensure_schema_steps(engine, geom_backfill=False)
 
