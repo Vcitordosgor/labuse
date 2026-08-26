@@ -670,6 +670,8 @@ export const getSources = () => j<SourceInfo[]>('/sources')
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
+// GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
+export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
 export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0) =>
   j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}&limit=${limit}&offset=${offset}`)

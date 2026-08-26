@@ -73,6 +73,28 @@ def rename_watch_zone(session: Session, zone_id: int, name: str, cid: int | None
     return n > 0
 
 
+def update_watch_zone(session: Session, zone_id: int, cid: int | None, *,
+                      name: str | None = None, polygon_geojson: dict | None = None) -> bool:
+    """GB-025 — met à jour une zone du compte SANS perdre les autres champs : on ne touche QUE ce qui
+    est FOURNI (nom et/ou géométrie ; l'update partiel ne remet aucun champ à null). SEC-IDOR : la
+    clause `compte_id` cloisonne, rowcount 0 → 404. Au moins un champ doit être fourni (garanti amont)."""
+    sets: list[str] = []
+    params: dict[str, Any] = {"i": zone_id, "cid": cid}
+    if name is not None:
+        sets.append("name = :n")
+        params["n"] = name.strip()[:120] or "Secteur surveillé"
+    if polygon_geojson is not None:
+        sets.append("geom = ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326)")
+        params["g"] = json.dumps(polygon_geojson)
+    if not sets:
+        return False
+    n = session.execute(
+        text(f"UPDATE watch_zones SET {', '.join(sets)} "
+             "WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"), params).rowcount
+    session.flush()
+    return n > 0
+
+
 def delete_watch_zone(session: Session, zone_id: int, cid: int | None) -> bool:
     """SEC-IDOR (M-K) : ne supprime QUE si la zone appartient au compte `cid` (sinon rowcount
     0 → l'endpoint répond 404, jamais 403)."""

@@ -278,6 +278,12 @@ function NotifBell() {
             if (e.idu) { setView('cartes'); select(e.idu) }
             else if (e.lien?.startsWith('/sources')) openSources()
             else if (e.lien?.startsWith('/copilote')) setView('copilote')
+            // GB-026 — notif de SECTEUR (veille_zone) : lien « …#surveillance=secteurs » ouvre le
+            // bon volet de la Surveillance (avant : handler absent → le clic ne menait nulle part).
+            else if (e.lien?.includes('#surveillance=')) {
+              const t = e.lien.split('#surveillance=')[1]
+              openSurveillance(t === 'parcelles' || t === 'criteres' ? t : 'secteurs')
+            }
             setOpen(false)
           }}
           className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>

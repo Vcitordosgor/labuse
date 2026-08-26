@@ -3273,12 +3273,26 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
     de la parcelle → (zone, idurba) → référence article/page (config/plu_<commune>.yaml).
     Repli propre si la commune n'est pas outillée (cf. plu_reglement.reglement_block)."""
     from ..plu_reglement import reglement_block
-    zones = [dict(r) for r in db.execute(text(
-        """SELECT DISTINCT sl.subtype AS zone,
-                  sl.attrs->>'libelle' AS libelle, sl.attrs->>'idurba' AS idurba
+    # GB-022 — PONDÉRATION PAR AIRE : `ST_Intersects` seul listait les zones EFFLEURÉES au bord (part
+    # ~0 %) comme des références égales, en ordre alphabétique (une zone à 0 % pouvait passer en tête).
+    # On calcule la PART de recouvrement (aire d'intersection / aire parcelle), on TRIE décroissant
+    # (zone principale d'abord) et on écarte les zones sous le SEUIL (2 %) — en gardant TOUJOURS au moins
+    # la dominante (une parcelle 100 % UD garde UD ; une 60/40 U/N garde les deux ; le contact de bord tombe).
+    _SEUIL_PART = 0.02
+    zr = [dict(r) for r in db.execute(text(
+        """SELECT sl.subtype AS zone, max(sl.attrs->>'libelle') AS libelle,
+                  max(sl.attrs->>'idurba') AS idurba,
+                  sum(ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975)))
+                    / NULLIF(max(ST_Area(p.geom_2975)), 0) AS part
              FROM spatial_layers sl JOIN parcels p ON p.idu = :idu
             WHERE sl.kind = 'plu_gpu_zone'
-              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""), {"idu": idu}).mappings().all()]
+              AND ST_Intersects(sl.geom_2975, p.geom_2975)
+            GROUP BY sl.subtype
+            ORDER BY part DESC NULLS LAST"""), {"idu": idu}).mappings().all()]
+    zones = [{"zone": z["zone"], "libelle": z["libelle"], "idurba": z["idurba"],
+              "part": round(float(z["part"]), 4) if z["part"] is not None else None}
+             for i, z in enumerate(zr)
+             if i == 0 or (z["part"] is not None and z["part"] >= _SEUIL_PART)]
     try:
         return reglement_block(zones, commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
@@ -4536,7 +4550,10 @@ class WatchZoneIn(BaseModel):
 
 
 class WatchZoneRenameIn(BaseModel):
-    name: str
+    # GB-025 — l'update accepte le nom ET/OU la géométrie (mise à jour PARTIELLE : les champs non
+    # fournis ne sont pas touchés). Rétro-compatible : un ancien PATCH {name} marche toujours.
+    name: str | None = None
+    geometry: dict | None = None
 
 
 class AlerteAckIn(BaseModel):
@@ -4569,12 +4586,18 @@ def watch_zones_create(body: WatchZoneIn, request: Request, db: Session = Depend
 
 @app.patch("/watch-zones/{zone_id}")
 def watch_zones_rename(zone_id: int, body: WatchZoneRenameIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """M54-EXPO-3 — renomme une zone de veille du compte. SEC-IDOR : 404 si pas au compte."""
+    """M54-EXPO-3 / GB-025 — met à jour une zone de veille du compte : nom ET/OU géométrie, en mise à
+    jour PARTIELLE (les champs non fournis ne sont pas perdus). SEC-IDOR : 404 si pas au compte."""
     from .. import alertes
     from .tenant import current_compte
-    if not alertes.rename_watch_zone(db, zone_id, body.name, current_compte(request)):
+    if body.name is None and body.geometry is None:
+        raise HTTPException(422, "fournir au moins un champ à mettre à jour (name et/ou geometry)")
+    if body.geometry is not None and (body.geometry or {}).get("type") != "Polygon":
+        raise HTTPException(422, "geometry doit être un Polygon GeoJSON")
+    if not alertes.update_watch_zone(db, zone_id, current_compte(request),
+                                     name=body.name, polygon_geojson=body.geometry):
         raise HTTPException(404, "Zone de veille inconnue")
-    return {"ok": True, "name": body.name.strip()[:120]}
+    return {"ok": True}
 
 
 @app.delete("/watch-zones/{zone_id}")
