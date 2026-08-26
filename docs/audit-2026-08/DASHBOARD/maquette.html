@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE · Tour de contrôle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;550;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f0c; --bg2:#0d1310; --panel:#111813; --panel-h:#141c17;
+    --line:#1d2921; --line2:#27352c;
+    --txt:#e9f0ea; --mut:#8da397; --faint:#5a6c61;
+    --mint:#8bf0ae; --mint-deep:#2e5a42; --mint-glow:rgba(139,240,174,.14);
+    --amber:#eec98a; --amber-deep:#5c4a2a;
+    --red:#f2907f; --red-deep:#5c322b;
+    --mauve:#c3b1f2; --mauve-deep:#453a63;
+    --disp:'Space Grotesk',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scrollbar-color:var(--line2) var(--bg)}
+  body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--mint);text-decoration:none} a:hover{text-decoration:underline}
+
+  .shell{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+
+  /* ---- Rail ---- */
+  aside{background:var(--bg2);border-right:1px solid var(--line);padding:22px 0;
+    position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .logo{padding:0 22px 24px;font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.04em}
+  .logo em{font-style:normal;color:var(--mint)}
+  .logo small{display:block;font-family:var(--mono);font-size:9.5px;font-weight:400;letter-spacing:.34em;color:var(--faint);margin-top:3px}
+  .nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+  .nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;
+    border-radius:9px;padding:10px 12px;cursor:pointer;color:var(--mut);font-family:var(--body);font-size:13.5px;font-weight:550;
+    transition:background .12s,color .12s}
+  .nav button .ic{width:17px;text-align:center;font-size:13px;opacity:.85}
+  .nav button:hover{background:var(--panel);color:var(--txt)}
+  .nav button.on{background:var(--mint-glow);color:var(--mint)}
+  .nav button.ia.on{background:rgba(195,177,242,.12);color:var(--mauve)}
+  .nav button .n{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--red);color:#1c0f0c;border-radius:9px;padding:1px 7px;font-weight:500}
+  .nav button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .rail-foot{margin-top:auto;padding:16px 22px 0;border-top:1px solid var(--line);font-size:12px}
+  .vit{display:flex;align-items:center;gap:9px;padding:5px 0;color:var(--mut)}
+  .vit b{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--txt)}
+  .led{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+  .led.ok{background:var(--mint);color:var(--mint)} .led.warn{background:var(--amber);color:var(--amber)}
+  .rail-foot a{display:inline-block;margin-top:12px;font-size:12.5px}
+  .cap-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);line-height:1.5}
+  .cap-note .cap{margin-bottom:4px}
+
+  /* ---- Main ---- */
+  .main{padding:30px 38px 90px;max-width:1120px}
+  header.page{display:flex;align-items:baseline;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+  header.page h1{font-family:var(--disp);font-size:24px;font-weight:600;letter-spacing:-.01em}
+  header.page .sub{color:var(--faint);font-size:13px}
+  header.page .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+  section{display:none}section.on{display:block;animation:in .18s ease}
+  @keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){section.on{animation:none}}
+
+  h2{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.18em;color:var(--faint);
+    text-transform:uppercase;margin:28px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  h2::after{content:"";flex:1;height:1px;background:var(--line);min-width:40px}
+  h2:first-of-type{margin-top:0}
+
+  .cap{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+    color:var(--amber);border:1px dashed var(--amber-deep);background:rgba(238,201,138,.06);border-radius:5px;padding:2px 8px;white-space:nowrap}
+
+  /* ---- Cards / tiles ---- */
+  .hero{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin-bottom:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;transition:border-color .15s}
+  .card:hover{border-color:var(--line2)}
+  .card .lbl,.tile .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .big{font-family:var(--disp);font-size:38px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .big small{font-size:16px;color:var(--mut);font-weight:500;margin-left:4px}
+  .delta{font-family:var(--mono);font-size:11px;margin-top:8px}
+  .delta.up{color:var(--mint)} .sync{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:6px}
+  .spark{margin-top:12px;width:100%;height:42px}
+  .spark path.l{fill:none;stroke:var(--mint);stroke-width:2}
+  .spark path.a{fill:url(#g1);stroke:none;opacity:.5}
+  .card.alert{border-color:var(--red-deep);background:linear-gradient(180deg,rgba(242,144,127,.05),transparent)}
+  .card.alert .big{color:var(--red)}
+  .card .foot{font-size:12.5px;color:var(--mut);margin-top:10px} .card .foot b{color:var(--txt)}
+
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 18px;position:relative}
+  .tile .v{font-family:var(--disp);font-size:22px;font-weight:600}
+  .tile .s{font-size:11.5px;color:var(--mut);margin-top:4px}
+  .ringwrap{position:absolute;top:14px;right:16px}
+  .ring{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;
+    background:conic-gradient(var(--amber) 28%, var(--line) 0);font-family:var(--mono);font-size:10.5px}
+  .ring i{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--panel);font-style:normal}
+
+  /* ---- Panels & tables ---- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+  .panel .inner{padding:18px 20px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.12em;color:var(--faint);
+    text-transform:uppercase;text-align:left;padding:10px 18px;border-bottom:1px solid var(--line)}
+  td{padding:12px 18px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr{transition:background .1s} tbody tr:hover{background:var(--panel-h)}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:var(--mono);font-size:12px} .dim{color:var(--faint)} .r{text-align:right}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;border-radius:20px;
+    padding:3px 11px;border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+  .chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .chip.plain::before{display:none}
+  .chip.ok{color:var(--mint);border-color:var(--mint-deep);background:rgba(139,240,174,.05)}
+  .chip.err{color:var(--red);border-color:var(--red-deep);background:rgba(242,144,127,.06)}
+  .chip.warn{color:var(--amber);border-color:var(--amber-deep);background:rgba(238,201,138,.05)}
+  .chip.off{color:var(--faint)} .chip.iac{color:var(--mauve);border-color:var(--mauve-deep)}
+  .chip.filter{cursor:pointer} .chip.filter:hover{color:var(--txt)}
+
+  button.act{background:var(--mint-glow);border:1px solid var(--mint-deep);color:var(--mint);border-radius:8px;
+    font-family:var(--body);font-weight:550;font-size:12px;padding:7px 14px;cursor:pointer;transition:filter .12s}
+  button.act:hover{filter:brightness(1.15)}
+  button.act.danger{background:rgba(242,144,127,.07);border-color:var(--red-deep);color:var(--red)}
+  button.act.ghost{background:none;border-color:var(--line2);color:var(--mut)}
+  button.act:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+
+  .search{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+    padding:7px 12px;font-size:12.5px;color:var(--faint);min-width:210px}
+  .search input{background:none;border:none;outline:none;color:var(--txt);font-family:var(--body);font-size:12.5px;width:100%}
+
+  /* ---- Licences ---- */
+  .client{display:grid;grid-template-columns:196px 1fr 168px;gap:22px;padding:18px 20px;align-items:start}
+  .client+.client{border-top:1px solid var(--line)}
+  .client .id b{font-family:var(--disp);font-size:15.5px;font-weight:600}
+  .client .id .mono{display:block;margin-top:3px}
+  .client .mid{display:flex;flex-direction:column;gap:11px}
+  .msteps{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .msteps .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--faint)}
+  .mail{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line2);border-radius:6px;padding:4px 10px;color:var(--mut)}
+  .mail.sent{color:var(--mint);border-color:var(--mint-deep);background:rgba(139,240,174,.04)}
+  .mail.todo{color:var(--amber);border-style:dashed;cursor:pointer;background:rgba(238,201,138,.04)}
+  .mail.todo:hover{filter:brightness(1.2)}
+  .kpis{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;max-width:520px}
+  .kpi{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px 12px}
+  .kpi b{display:block;font-family:var(--disp);font-size:15.5px;font-weight:600}
+  .kpi span{font-size:10.5px;color:var(--faint);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .client .end{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+  .client .end button{width:100%}
+  .client.suspended{opacity:.55}
+  .client.pastdue{background:linear-gradient(90deg,rgba(242,144,127,.05),transparent 40%)}
+
+  /* ---- Bars / charts ---- */
+  .bars{display:grid;gap:10px}
+  .bar{display:grid;grid-template-columns:150px 1fr 60px;gap:12px;align-items:center;font-size:12.5px}
+  .bar .tr{background:var(--bg2);border-radius:5px;height:14px;overflow:hidden;border:1px solid var(--line)}
+  .bar .fl{height:100%;background:linear-gradient(90deg,var(--mint-deep),var(--mint));border-radius:4px}
+  .bar.iab .fl{background:linear-gradient(90deg,var(--mauve-deep),var(--mauve))}
+  .bar b{font-weight:550;color:var(--mut)} .bar .mono{text-align:right;color:var(--txt)}
+  .days{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:6px}
+  .days i{flex:1;background:linear-gradient(180deg,var(--mauve),var(--mauve-deep));border-radius:2px 2px 0 0;opacity:.85;min-width:4px}
+  .days-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:6px}
+
+  .feed li{list-style:none;display:flex;gap:14px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);font-size:13px}
+  .feed li:last-child{border:none}
+  .feed .t{font-family:var(--mono);font-size:10.5px;color:var(--faint);min-width:92px}
+  .feed .grow{flex:1}
+  .phead{padding:12px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;
+    letter-spacing:.16em;color:var(--faint);text-transform:uppercase;display:flex;gap:10px;align-items:center}
+
+  .note{font-size:12.5px;color:var(--mut);padding:12px 20px;border-top:1px solid var(--line);background:var(--bg2)}
+  .note b{color:var(--txt)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+  .ia-band{border-left:3px solid var(--mauve);background:linear-gradient(90deg,rgba(195,177,242,.06),transparent 60%);
+    border-radius:0 var(--r) var(--r) 0;padding:11px 18px;margin-bottom:18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--mauve)}
+
+  .steps{counter-reset:s}
+  .step{display:flex;gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--line)}
+  .step:last-child{border:none}
+  .step::before{counter-increment:s;content:counter(s);font-family:var(--disp);font-weight:600;display:grid;place-items:center;
+    width:30px;height:30px;border-radius:50%;background:var(--mint-glow);color:var(--mint);flex:none;font-size:13px}
+  .step .dim{font-size:12px}
+
+  @media(max-width:960px){
+    .shell{grid-template-columns:1fr}
+    aside{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:12px}
+    .logo{padding:0 14px} .nav{flex-direction:row;padding:0} .rail-foot{display:none}
+    .main{padding:22px 16px 60px}
+    .hero,.tiles{grid-template-columns:1fr 1fr}
+    .client{grid-template-columns:1fr} .client .end{flex-direction:row} .client .end button{width:auto}
+    .grid2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside>
+  <div class="logo">LA<em>BUSE</em><small>TOUR DE CONTRÔLE</small></div>
+  <div class="nav">
+    <button class="on" data-s="pilotage"><span class="ic">◉</span>Pilotage<span class="n">1</span></button>
+    <button data-s="licences"><span class="ic">▣</span>Licences</button>
+    <button data-s="ia" class="ia"><span class="ic">✦</span>IA</button>
+    <button data-s="sources"><span class="ic">☰</span>Sources</button>
+    <button data-s="produit"><span class="ic">◫</span>Produit</button>
+    <button data-s="courrier"><span class="ic">✉</span>Courrier</button>
+  </div>
+  <div class="rail-foot">
+    <div class="vit"><span class="led ok"></span>Serveur <b>OK</b></div>
+    <div class="vit"><span class="led ok"></span>Run <b>23/08</b></div>
+    <div class="vit"><span class="led ok"></span>Carte <b>24/08</b></div>
+    <div class="vit"><span class="led warn"></span>Backup <b>il y a 2 j</b></div>
+    <a href="#">Ouvrir l'app cliente →</a>
+    <div class="cap-note"><span class="cap">⟐ capteur à construire</span>donnée à instrumenter par le mandat — le reste est branchable jour 1</div>
+  </div>
+</aside>
+
+<div class="main">
+
+<!-- ==================== PILOTAGE ==================== -->
+<section id="pilotage" class="on">
+  <header class="page"><h1>Pilotage</h1><span class="sub">l'état de LABUSE en cinq secondes</span>
+    <span class="right"><span class="chip plain off">màj il y a 3 min</span></span>
+  </header>
+
+  <div class="hero">
+    <div class="card">
+      <div class="lbl">CA du mois · Stripe</div>
+      <div class="big">1 047<small>€ / mois</small></div>
+      <div class="delta up">▲ +349 € vs juillet — 3ᵉ licence signée le 12/08</div>
+      <svg class="spark" viewBox="0 0 300 42" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8bf0ae" stop-opacity=".35"/><stop offset="1" stop-color="#8bf0ae" stop-opacity="0"/>
+        </linearGradient></defs>
+        <path class="a" d="M0,38 L50,36 L100,30 L150,30 L200,22 L250,20 L300,8 L300,42 L0,42 Z"/>
+        <path class="l" d="M0,38 L50,36 L100,30 L150,30 L200,22 L250,20 L300,8"/>
+      </svg>
+    </div>
+    <div class="card alert">
+      <div class="lbl">Paiement en échec</div>
+      <div class="big">1</div>
+      <div class="foot"><b>Client B</b> — carte refusée le 24/08.<br>Stripe retente le 27/08.</div>
+      <div style="margin-top:12px"><button class="act" onclick="go('licences')">Voir la licence →</button></div>
+    </div>
+    <div class="card">
+      <div class="lbl">Licences actives</div>
+      <div class="big">3</div>
+      <div class="foot">Stripe ⇄ comptes app : <b>synchronisés ✓</b></div>
+      <div class="delta up" style="margin-top:12px">objectif année 1 : 10</div>
+    </div>
+  </div>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="lbl">Actifs aujourd'hui <span class="cap">⟐</span></div>
+      <div class="v">2<span class="dim" style="font-size:14px;font-family:var(--body)"> / 3</span></div>
+      <div class="s">connectés ces dernières 24 h</div>
+    </div>
+    <div class="tile">
+      <div class="lbl">Conso IA du mois</div>
+      <div class="v" style="color:var(--mauve)">12,40 €</div>
+      <div class="s">≈ 2 340 questions · <a href="#" onclick="go('ia');return false">détail →</a></div>
+    </div>
+    <div class="tile">
+      <div class="ringwrap"><div class="ring"><i>2 j</i></div></div>
+      <div class="lbl">Dernier backup</div>
+      <div class="v" style="color:var(--amber)">à refaire</div>
+      <div class="s">ambre dès 2 j · rouge dès 7 j</div>
+    </div>
+    <div class="tile">
+      <div class="lbl">Santé serveur</div>
+      <div class="v" style="color:var(--mint)">6 / 6</div>
+      <div class="s">modules de schéma OK au boot (/readyz)</div>
+    </div>
+  </div>
+
+  <h2>Activité récente</h2>
+  <div class="panel">
+    <ul class="feed">
+      <li><span class="t">26/08 09:12</span><span class="chip ok plain">courrier</span><span class="grow">Nouvelle demande d'envoi — <b>Client A</b> · 3 parcelles, Saint-Pierre</span><button class="act ghost" onclick="go('courrier')">Traiter</button></li>
+      <li><span class="t">26/08 08:40</span><span class="chip err plain">e-mail</span><span class="grow">Échec Brevo : reset mot de passe <b>Client B</b> — à relancer</span><button class="act ghost">Relancer</button></li>
+      <li><span class="t">26/08 03:00</span><span class="chip ok plain">système</span><span class="grow">Heal de schéma au boot : 6/6 modules appliqués</span></li>
+      <li><span class="t">25/08 22:14</span><span class="chip warn plain">sécurité</span><span class="grow">Gel anti-burst posé sur <span class="mono">ip:12ca…</span></span><button class="act ghost">Dégeler</button></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== LICENCES ==================== -->
+<section id="licences">
+  <header class="page"><h1>Licences</h1><span class="sub">un client, une ligne — abonnement · onboarding · usage</span>
+    <span class="right"><button class="act" onclick="alert('Maquette : déroule le parcours en 3 étapes ci-dessous')">+ Nouveau client</button></span>
+  </header>
+
+  <div class="panel">
+    <!-- Client A -->
+    <div class="client">
+      <div class="id"><b>Client A</b><span class="mono dim">depuis le 12/08 · 349 €/mois</span>
+        <div style="margin-top:8px"><span class="chip ok">Abonnement actif</span></div>
+      </div>
+      <div class="mid">
+        <div class="msteps"><span class="tag">ONBOARDING</span>
+          <span class="mail sent">Mail 1 ✓ 12/08</span><span class="mail sent">Mail 2 ✓ 14/08</span>
+          <span class="mail todo" onclick="sendMail(this)">Mail 3 · Envoyer →</span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><b>6,2 h</b><span>usage / 7 j <span class="cap">⟐</span></span></div>
+          <div class="kpi"><b>hier 18:42</b><span>dernière connexion</span></div>
+          <div class="kpi"><b>31 / 80</b><span>Copilote aujourd'hui</span></div>
+        </div>
+      </div>
+      <div class="end">
+        <button class="act ghost">Fiche complète</button>
+        <button class="act danger" onclick="susp(this)">Suspendre l'accès</button>
+      </div>
+    </div>
+
+    <!-- Client B -->
+    <div class="client pastdue">
+      <div class="id"><b>Client B</b><span class="mono dim">depuis le 02/08 · 349 €/mois</span>
+        <div style="margin-top:8px"><span class="chip err">Carte refusée · 24/08</span></div>
+      </div>
+      <div class="mid">
+        <div class="msteps"><span class="tag">ONBOARDING</span>
+          <span class="mail sent">Mail 1 ✓</span><span class="mail sent">Mail 2 ✓</span><span class="mail sent">Mail 3 ✓</span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><b>2,1 h</b><span>usage / 7 j <span class="cap">⟐</span></span></div>
+          <div class="kpi"><b>24/08</b><span>dernière connexion</span></div>
+          <div class="kpi"><b>4 / 80</b><span>Copilote aujourd'hui</span></div>
+        </div>
+        <div><button class="act">Relancer par mail — lien de paiement</button>
+          <span class="mono dim" style="margin-left:10px">Stripe retente le 27/08 (3 essais auto)</span></div>
+      </div>
+      <div class="end">
+        <button class="act ghost">Fiche complète</button>
+        <button class="act danger" onclick="susp(this)">Suspendre l'accès</button>
+      </div>
+    </div>
+
+    <!-- Client C -->
+    <div class="client suspended">
+      <div class="id"><b>Client C</b><span class="mono dim">suspendu le 20/08</span>
+        <div style="margin-top:8px"><span class="chip off">Accès suspendu</span></div>
+      </div>
+      <div class="mid"><span style="font-size:12.5px;color:var(--faint)">Données conservées — rien n'est supprimé. Il voit « abonnement à régulariser » avec le lien de paiement.</span></div>
+      <div class="end"><button class="act" onclick="retab(this)">Rétablir l'accès</button></div>
+    </div>
+
+    <div class="note"><b>Règle :</b> la suspension est toujours <b>manuelle</b> (ton bouton) — jamais automatique sur un échec de carte. Alerte ambre si un compte app existe sans abonnement Stripe actif, ou l'inverse.</div>
+  </div>
+
+  <h2>Onboarder un nouveau client</h2>
+  <div class="panel">
+    <div class="steps">
+      <div class="step"><div><b>Créer le compte</b><div class="dim">email + mot de passe provisoire, cloisonné dès la création</div></div><div style="margin-left:auto"><button class="act">Créer →</button></div></div>
+      <div class="step"><div><b>Lier l'abonnement Stripe</b><div class="dim">envoie le lien de souscription 349 €/mois — la licence passe « active » au premier paiement</div></div><div style="margin-left:auto"><button class="act ghost">Envoyer le lien</button></div></div>
+      <div class="step"><div><b>Dérouler la séquence d'onboarding</b><div class="dim">Mail 1 → 2 → 3 sur sa fiche — tu déclenches chaque envoi à ton rythme (templates Brevo)</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== IA ==================== -->
+<section id="ia">
+  <header class="page"><h1>IA</h1><span class="sub">consommation, quotas, crédit</span>
+    <span class="right"><button class="act" style="border-color:var(--mauve-deep);color:var(--mauve);background:rgba(195,177,242,.08)">Recharger le crédit ↗</button></span>
+  </header>
+  <div class="ia-band">SURFACE IA — le mauve est réservé à cette section, comme dans l'app</div>
+
+  <div class="tiles">
+    <div class="tile"><div class="lbl">Conso du mois</div><div class="v" style="color:var(--mauve)">12,40 €</div><div class="s">≈ 2 340 questions servies</div></div>
+    <div class="tile"><div class="lbl">Coût moyen / question</div><div class="v" style="color:var(--mauve)">0,5 ct</div><div class="s">3 appels max par tour (voie a)</div></div>
+    <div class="tile"><div class="lbl">Quota / jour / licence</div><div class="v">80</div><div class="s">modifiable ici <span class="cap">⟐</span></div></div>
+    <div class="tile"><div class="lbl">Projection fin de mois</div><div class="v" style="color:var(--mauve)">≈ 19 €</div><div class="s">au rythme des 7 derniers jours</div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <div class="phead">Conso journalière · 30 jours <span class="cap">⟐ ton WIP ia_budget</span></div>
+      <div class="inner">
+        <div class="days" aria-hidden="true">
+          <i style="height:22%"></i><i style="height:30%"></i><i style="height:26%"></i><i style="height:18%"></i><i style="height:34%"></i><i style="height:40%"></i><i style="height:12%"></i><i style="height:28%"></i><i style="height:36%"></i><i style="height:44%"></i><i style="height:31%"></i><i style="height:25%"></i><i style="height:52%"></i><i style="height:38%"></i><i style="height:20%"></i><i style="height:33%"></i><i style="height:47%"></i><i style="height:29%"></i><i style="height:41%"></i><i style="height:35%"></i><i style="height:58%"></i><i style="height:44%"></i><i style="height:27%"></i><i style="height:39%"></i><i style="height:63%"></i><i style="height:48%"></i><i style="height:36%"></i><i style="height:71%"></i><i style="height:55%"></i><i style="height:88%"></i>
+        </div>
+        <div class="days-x"><span>27/07</span><span>10/08</span><span>26/08</span></div>
+      </div>
+      <div class="note">La montée récente = la 3ᵉ licence. Un pic isolé = un usage anormal à regarder.</div>
+    </div>
+
+    <div class="panel">
+      <div class="phead">Par licence · 30 jours</div>
+      <div class="inner">
+        <div class="bars">
+          <div class="bar iab"><b>Client A</b><div class="tr"><div class="fl" style="width:72%"></div></div><span class="mono">8,90 €</span></div>
+          <div class="bar iab"><b>Client B</b><div class="tr"><div class="fl" style="width:22%"></div></div><span class="mono">2,70 €</span></div>
+          <div class="bar iab"><b>Toi (admin)</b><div class="tr"><div class="fl" style="width:7%"></div></div><span class="mono">0,80 €</span></div>
+        </div>
+      </div>
+      <div class="note">Repère un client qui surconsomme (candidat à un forfait supérieur) — ou un usage anormal. Le solde Anthropic exact n'est pas exposé par l'API : conso trackée localement.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SOURCES ==================== -->
+<section id="sources">
+  <header class="page"><h1>Sources</h1><span class="sub">les 59, leur fraîcheur, leur cadence</span>
+    <span class="right">
+      <span class="chip warn">1 à mettre à jour</span>
+      <span class="chip ok">58 OK</span>
+      <label class="search">⌕ <input placeholder="Filtrer les sources…"></label>
+    </span>
+  </header>
+
+  <div class="panel">
+    <table>
+      <thead><tr><th>Source</th><th>Millésime amont</th><th>Ingéré le</th><th>Cadence attendue</th><th>État</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><b>Sitadel</b> — permis</td><td class="mono">06/2026</td><td class="mono">14/08</td><td class="mono dim">mensuelle</td><td><span class="chip warn">À mettre à jour</span></td><td class="r"><button class="act ghost">Relancer l'ingestion</button></td></tr>
+        <tr><td><b>DVF</b> — ventes</td><td class="mono">S1 2026</td><td class="mono">21/08</td><td class="mono dim">semestrielle</td><td><span class="chip ok">OK</span></td><td></td></tr>
+        <tr><td><b>Cadastre</b> — DGFiP</td><td class="mono">07/2026</td><td class="mono">18/08</td><td class="mono dim">trimestrielle</td><td><span class="chip ok">OK</span></td><td></td></tr>
+        <tr><td><b>GPU</b> — servitudes</td><td class="mono">07/2026</td><td class="mono">10/08</td><td class="mono dim">mensuelle</td><td><span class="chip ok">OK</span></td><td></td></tr>
+        <tr><td colspan="6" class="mono dim">… les 55 autres — triées « à mettre à jour » d'abord</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>« À mettre à jour »</b> = cadence dépassée, calculé automatiquement. La cadence de chaque source se règle sur cette page.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="phead">CRON nocturne</div>
+      <ul class="feed">
+        <li><span class="t">26/08 03:00</span><span class="chip ok">OK</span><span class="grow">dispositifs-build · 12 s</span></li>
+        <li><span class="t">26/08 03:01</span><span class="chip ok">OK</span><span class="grow">évaluation des veilles · 8 s</span></li>
+        <li><span class="t">25/08 03:00</span><span class="chip err">Échec</span><span class="grow">ingestion Sitadel (timeout amont) — relancée OK le 26</span></li>
+      </ul>
+    </div>
+    <div class="panel" style="opacity:.6">
+      <div class="phead">Agent de veille des sources <span class="chip off" style="margin-left:6px">V2</span></div>
+      <div class="inner" style="font-size:12.5px;color:var(--mut)">Un job qui surveille chaque portail amont (data.gouv, IGN, Sudocuh…), détecte un nouveau millésime publié et te notifie : « DVF S2 2026 disponible — lancer l'ingestion ? ». La table des cadences couvre le besoin en attendant.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PRODUIT ==================== -->
+<section id="produit">
+  <header class="page"><h1>Produit</h1><span class="sub">ce qui est utilisé · ce que les clients demandent</span></header>
+
+  <div class="panel">
+    <div class="phead">Usage par outil · 30 jours <span class="cap">⟐ capteur à construire</span>
+      <span style="margin-left:auto;display:flex;gap:6px"><span class="chip plain ok filter">Total</span><span class="chip plain filter">Par client</span></span>
+    </div>
+    <div class="inner">
+      <div class="bars">
+        <div class="bar"><b>Carte / fiches</b><div class="tr"><div class="fl" style="width:88%"></div></div><span class="mono">1 240</span></div>
+        <div class="bar"><b>Copilote</b><div class="tr"><div class="fl" style="width:64%"></div></div><span class="mono">905</span></div>
+        <div class="bar"><b>Étudier un bien</b><div class="tr"><div class="fl" style="width:41%"></div></div><span class="mono">577</span></div>
+        <div class="bar"><b>Densifier</b><div class="tr"><div class="fl" style="width:28%"></div></div><span class="mono">395</span></div>
+        <div class="bar"><b>Scan patrimoine</b><div class="tr"><div class="fl" style="width:22%"></div></div><span class="mono">310</span></div>
+        <div class="bar"><b>Courrier</b><div class="tr"><div class="fl" style="width:9%"></div></div><span class="mono">127</span></div>
+        <div class="bar"><b>… les 7 autres</b><div class="tr"><div class="fl" style="width:14%"></div></div><span class="mono">198</span></div>
+      </div>
+    </div>
+    <div class="note">Compte les <b>ouvertures d'outil</b> — événement léger, par licence. Te dit où investir, et quel outil personne n'ouvre.</div>
+  </div>
+
+  <div class="panel">
+    <div class="phead">Retours clients <span class="cap">⟐ bouton « Signaler » à créer dans l'app, en haut à droite</span>
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <span class="chip plain ok filter">Tous</span><span class="chip plain filter">Bugs</span><span class="chip plain filter">Idées</span><span class="chip plain filter">Questions</span>
+      </span>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Message</th><th class="r">Statut</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">25/08</td><td>Client A</td><td><span class="chip warn plain">Bug</span></td><td>« L'export CSV de Densifier met du temps sur toute l'île »</td><td class="r"><button class="act ghost">Marquer traité</button></td></tr>
+        <tr><td class="mono">24/08</td><td>Client A</td><td><span class="chip ok plain">Idée</span></td><td>« Possible d'avoir les DPE sur la carte ? »</td><td class="r"><span class="chip off">Nouveau</span></td></tr>
+        <tr><td class="mono">22/08</td><td>Client B</td><td><span class="chip iac plain">Question</span></td><td>« Comment marche le score du Copilote ? »</td><td class="r"><span class="chip ok">Répondu</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note">Chaque retour : qui, quand, quoi, statut. Ta boîte à idées produit — et ta détection de bugs par les clients.</div>
+  </div>
+</section>
+
+<!-- ==================== COURRIER ==================== -->
+<section id="courrier">
+  <header class="page"><h1>Courrier</h1><span class="sub">les demandes d'envoi — la page qui manquait</span></header>
+
+  <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+    <div class="tile"><div class="lbl">À traiter</div><div class="v" style="color:var(--amber)">1</div><div class="s">demande en attente d'impression</div></div>
+    <div class="tile"><div class="lbl">En cours</div><div class="v">1</div><div class="s">imprimée, à affranchir et poster</div></div>
+    <div class="tile"><div class="lbl">Postées ce mois</div><div class="v" style="color:var(--mint)">3</div><div class="s">9 courriers au total</div></div>
+  </div>
+
+  <div class="panel">
+    <table>
+      <thead><tr><th>#</th><th>Client</th><th>Parcelles</th><th>Demandé le</th><th>Statut</th><th class="r">Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">31</td><td><b>Client A</b></td><td class="mono">3 · Saint-Pierre</td><td class="mono">26/08 09:12</td>
+          <td><span class="chip warn">Demandé</span></td>
+          <td class="r"><button class="act ghost">Voir le PDF</button> <button class="act" onclick="adv(this,'Imprimé')">Passer à « Imprimé »</button></td>
+        </tr>
+        <tr>
+          <td class="mono">30</td><td><b>Client A</b></td><td class="mono">1 · Le Tampon</td><td class="mono">24/08</td>
+          <td><span class="chip ok">Imprimé</span></td>
+          <td class="r"><button class="act ghost">Voir le PDF</button> <button class="act" onclick="adv(this,'Posté')">Passer à « Posté »</button></td>
+        </tr>
+        <tr>
+          <td class="mono">29</td><td><b>Client A</b></td><td class="mono">5 · Saint-Paul</td><td class="mono">21/08</td>
+          <td><span class="chip ok">Posté ✓ 22/08</span></td>
+          <td class="r"><span class="mono dim">terminé</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">Le client voit le même statut de son côté · chaque changement est journalisé · adressage générique SPF/CERFA — <b>aucune identité de particulier</b>, comme dans l'app.</div>
+  </div>
+</section>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+  function go(id){
+    document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on',x.dataset.s===id));
+    document.querySelectorAll('.main section').forEach(x=>x.classList.toggle('on',x.id===id));
+    window.scrollTo({top:0});
+  }
+  document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.s)));
+  function susp(btn){
+    if(confirm("Suspendre l'accès de ce client ?\n\nIl verra « abonnement à régulariser » avec le lien de paiement. Ses données restent intactes. Réversible en un clic.")){
+      const row=btn.closest('.client'); row.classList.add('suspended'); row.classList.remove('pastdue');
+      btn.textContent="Rétablir l'accès"; btn.classList.remove('danger'); btn.onclick=()=>retab(btn);
+    }
+  }
+  function retab(btn){
+    const row=btn.closest('.client'); row.classList.remove('suspended');
+    btn.textContent="Suspendre l'accès"; btn.classList.add('danger'); btn.onclick=()=>susp(btn);
+  }
+  function adv(btn,next){
+    const chip=btn.closest('tr').querySelector('.chip');
+    chip.textContent=next+(next==='Posté'?' ✓ 26/08':''); chip.className='chip ok';
+    if(next==='Posté'){btn.outerHTML='<span class="mono dim">terminé</span>';}
+    else{btn.textContent='Passer à « Posté »'; btn.onclick=()=>adv(btn,'Posté');}
+  }
+  function sendMail(el){ el.classList.remove('todo'); el.classList.add('sent'); el.textContent='Mail 3 ✓ 26/08'; el.onclick=null; }
+</script>
+</body>
+</html>
