@@ -31,6 +31,7 @@
 | AA — vérité des tuiles | 150 | **150** | 0 (obs. O-AA1 sub-pixel, impact nul) | lot-aa.csv |
 | AB — blocs communes | 240 | **240** | 0 faux chiffre (🟠 GB-041 data-gap DPE) | lot-ab.csv |
 | AC — recherche de masse | 200 | **196** | 4 (🟡 GB-042 jokers LIKE ; 🟡 GB-043 suffixe IDU) | lot-ac.csv |
+| AF — intégrité pleine table | 62 | **59** | 3 (🟡 GB-044/045/046) · G2 ✅ G3 ✅ | lot-af.csv |
 
 <!-- SECTIONS PAR LOT APPENDUES CI-DESSOUS -->
 
@@ -48,3 +49,9 @@
 - **GB-042 · 🟡 · Jokers LIKE non échappés → résultats sûrs-d'eux pour requêtes absurdes** — `/adresses/autocomplete?q=%%%` → 12 suggestions confiantes ; `/parcels/search?q=974%` matche les 431 663 IDU. Cause : `app.py:1770` (`LIKE '%'||:q||'%'` sans échappement `%`/`_`) et `app.py:1827`. Paramétré (0 injection), mais réponse absurde assumée + vecteur LIKE-scan.
 - **GB-043 · 🟡 · `/parcels/search` ne matche que la FIN d'IDU** — un début d'IDU collé (« 97421000AV », forme naturelle insee+section) → 0 résultat (`app.py:1827`). Honnête mais rappel nul sur un geste courant.
 - **O-AC3/O-AC4 (observations)** — 21/339 915 adresses BAN sans idu exclues par design (0,006 %) ; coller le label complet servi (« 10 Rue de Paris, Saint-Denis (97400) ») → 0 résultat (l'app ne ré-avale pas son propre format d'affichage).
+
+## LOT AF — intégrité pleine table (62, dont gardées) — agent
+**59/62 OK. G2 ✅ (`/readyz` ready+schema.ok+data.ok, run servi q_v10_m129) · G3 ✅ (SHLMR 2618, SAFER 844, SEDRE 1847 — identiques cycle 5 au chiffre près).** Couverture : géométries 12/12 (431 663 parcelles **0 invalide** geom+geom_2975, SRID homogènes, ortho_tiles 2975, spatial_layers 1,84 M propres, bbox Réunion) · unicité 10/10 (idu partout, p_score_v2 3,03 M, adjacence 1,13 M sans doublon/boucle) · FK 15 passes (63 FKs déclarées + anti-joins réels : **0 orphelin** ; implicites 3 M/4,3 M/1,13 M : 0) · NULLs 8/8 — **M125 conforme au chiffre exact** (cause NULL = 253 764 calculées, sdp NULL = 4 397 hors_plu seuls, total 431 663 = 100 %) · bornes 10/10 · compteurs 5/7. OK-avec-note (design documenté) : 635 IDU MAJIC orphelins (GB-007 connu), 1 154 dvf_mutations_parcelle historiques (mono-millésime M126), taux>100 cap volontaire `residuel.py:123-124`, 7 parcelles >10 km² réelles. pg_stat périmé détecté → tous les verdicts sur COUNT exacts.
+- **GB-044 · 🟡 · Run fantôme `q_v2_demo` dans `parcel_p_score_v2`** — 8 lignes d'un run absent de `p_score_v2_runs` (8 run_id distincts vs 7 enregistrés). Vestige démo, run servi sain. Purge cosmétique proposée.
+- **GB-045 · 🟡 · `ortho_tiles.nb_detections` périmé sur 3 122/5 041 tuiles** — la purge PV `20eb5bd8` (DELETE 23 529 détections) n'a jamais décrémenté le compteur. Interne, aucune surface servie identifiée. Recalcul ou note schéma.
+- **GB-046 · 🟡 · `ingestion_runs.parcels_count` ≠ parcelles rattachées** — sémantique de journal (nb à l'époque) + upserts qui ré-attribuent `ingestion_run_id` ; non documenté, aucun consommateur cassé. À documenter ou renommer.
