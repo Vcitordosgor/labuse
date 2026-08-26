@@ -273,7 +273,7 @@ def admin_licences(request: Request) -> dict:
     with engine().begin() as c:
         comptes = [dict(r) for r in c.execute(text(
             "SELECT k.id, k.nom, k.plan, k.statut, k.sieges, k.created_at, k.updated_at,"
-            "       k.stripe_customer_id, k.copilote_quota_jour,"
+            "       k.stripe_customer_id, k.copilote_quota_jour, k.essai_expire_at,"
             "       (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
             "         ORDER BY u.id LIMIT 1) AS email,"
             "       (SELECT MAX(u.dernier_login_at) FROM utilisateurs u WHERE u.compte_id = k.id)"
@@ -300,6 +300,7 @@ def admin_licences(request: Request) -> dict:
         out.append({
             "id": k["id"], "nom": k["nom"], "email": k["email"], "plan": k["plan"],
             "statut": k["statut"], "created_at": k["created_at"].isoformat() if k["created_at"] else None,
+            "essai_expire_at": k["essai_expire_at"].isoformat() if k["essai_expire_at"] else None,
             "stripe": abos_par_cust.get(k["stripe_customer_id"]),
             "mails": mails,
             "rappels": _rappels_onboarding(k["created_at"], mails),
@@ -336,6 +337,57 @@ def admin_licence_creer(body: NouveauClientIn, request: Request) -> dict:
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return {"ok": True, **inv}
+
+
+class EssaiIn(BaseModel):
+    email: str = Field(min_length=5, max_length=200)
+    nom: str | None = Field(default=None, max_length=120)
+    heures: int | None = Field(default=None, ge=1, le=24 * 30)
+
+
+@router.post("/admin/licences/creer-essai")
+def admin_licence_creer_essai(body: EssaiIn, request: Request) -> dict:
+    """D9 — compte d'ESSAI : même mécanisme officiel que le nouveau client (invitation), mais
+    le compte est ACTIF tout de suite avec une date d'échéance (défaut 48 h, paramétrable).
+    À l'échéance : bascule automatique sur la suspension (accès coupé, données conservées,
+    écran « abonnement à régulariser »). Le lien d'invitation s'envoie à la main."""
+    from fastapi import HTTPException
+    from .. import config
+    from ..comptes import creer_invitation
+    from ..db import engine, session_scope
+    from .auth import exiger_admin
+    exiger_admin(request)
+    heures = body.heures or int(config.get_settings().essai_duree_heures)
+    try:
+        with session_scope() as s:
+            inv = creer_invitation(s, body.email.strip(), nom=(body.nom or "").strip() or None)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    with engine().begin() as c:
+        expire = c.execute(text(
+            "UPDATE comptes SET statut = 'actif', essai_expire_at = now() + (:h || ' hours')::interval,"
+            " updated_at = now() WHERE id = :c RETURNING essai_expire_at"),
+            {"h": heures, "c": inv["compte_id"]}).scalar_one()
+    return {"ok": True, **inv, "essai": True, "heures": heures, "essai_expire_at": expire.isoformat()}
+
+
+@router.post("/admin/licences/{compte_id}/convertir")
+def admin_licence_convertir(compte_id: int, request: Request) -> dict:
+    """D9 — « Convertir en abonnement » : l'échéance d'essai tombe, le compte repasse `invite`
+    (jamais payé) → le mécanisme OFFICIEL de reprise de paiement prend le relais au login
+    (Checkout). Données conservées."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text(
+            "UPDATE comptes SET essai_expire_at = NULL,"
+            " statut = CASE WHEN stripe_subscription_id IS NULL THEN 'invite' ELSE statut END,"
+            " updated_at = now() WHERE id = :c"), {"c": compte_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Compte introuvable.")
+    return {"ok": True, "detail": "Essai levé — le compte paiera via le parcours officiel (login → Checkout)."}
 
 
 class SuspendreIn(BaseModel):

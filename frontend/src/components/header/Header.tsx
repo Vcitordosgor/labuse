@@ -589,6 +589,13 @@ function SignalerButton() {
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const setToast = useApp((s) => s.setToast)
+  // Échap ferme le panneau (cohérence app — G6) ; le brouillon reste (fermeture ≠ abandon).
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [open])
   const envoyer = async () => {
     if (msg.trim().length < 3 || busy) return
     setBusy(true)

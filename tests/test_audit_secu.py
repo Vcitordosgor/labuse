@@ -864,9 +864,13 @@ def test_idor_partners_share_et_profiles(app_client):
 
 def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
     """M-K P2-5 : au-delà du plafond JOURNALIER (kind 'nl'), /ia/search renvoie un 429 honnête.
-    Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée."""
+    Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée.
+    DASHBOARD-V1 · D1 : un COMPTE connecté lit désormais le quota PAR LICENCE (défaut
+    copilote_questions_jour_defaut, override comptes.copilote_quota_jour) — le curseur du
+    test suit ; nl_quota_jour reste celui des sujets sans compte (pilote/anonyme)."""
     from labuse import config
     monkeypatch.setenv("LABUSE_NL_QUOTA_JOUR", "2")
+    monkeypatch.setenv("LABUSE_COPILOTE_QUESTIONS_JOUR_DEFAUT", "2")
     config.get_settings.cache_clear()
     email = f"nl-{uuid.uuid4().hex[:8]}@x.test"
     cid = _compte_actif(email)

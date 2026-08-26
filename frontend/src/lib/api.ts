@@ -821,6 +821,7 @@ export const postAdminDegeler = (sujet: string) =>
 // D4 — Licences
 export interface AdminLicence {
   id: number; nom: string; email: string | null; plan: string; statut: string; created_at: string | null
+  essai_expire_at: string | null
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
   rappels: string[]
@@ -835,6 +836,11 @@ export interface AdminLicences {
 export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
 export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>
   j<{ ok: boolean; lien: string; compte_id: number; expire_at: string }>('/admin/licences/creer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// D9 — essai 48 h
+export const postAdminLicenceCreerEssai = (body: { email: string; nom?: string; heures?: number }) =>
+  j<{ ok: boolean; lien: string; compte_id: number; heures: number; essai_expire_at: string }>('/admin/licences/creer-essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const postAdminLicenceConvertir = (compteId: number) =>
+  j<{ ok: boolean; detail: string }>(`/admin/licences/${compteId}/convertir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminSuspendre = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminRetablir = (compteId: number) =>

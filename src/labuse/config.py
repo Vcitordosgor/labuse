@@ -138,6 +138,8 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · MAILS (Brevo) — templates du cycle de vie client, référencés PAR ID en .env
     # (mandat). Absents → mode « non configuré » propre (bouton visible, raison servie, zéro
     # envoi silencieux). Aucun envoi automatique en V1 : l'app rappelle, Vic déclenche.
+    # DASHBOARD-V1 · D9 — durée par défaut d'un compte d'essai (paramétrable, mandat : 48 h).
+    essai_duree_heures: int = 48
     brevo_api_key: str | None = None
     brevo_tpl_essai: str | None = None
     brevo_tpl_souscription: str | None = None

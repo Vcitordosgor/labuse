@@ -5,8 +5,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getAdminLicences, postAdminLicenceCreer, postAdminLicenceMail, postAdminRetablir,
-  postAdminSuspendre, type AdminLicence,
+  getAdminLicences, postAdminLicenceConvertir, postAdminLicenceCreer, postAdminLicenceCreerEssai,
+  postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, type AdminLicence,
 } from '../../lib/api'
 import { ActBtn, Chip, H2, Panel } from './AdminView'
 
@@ -60,6 +60,7 @@ function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: b
     onSuccess: refresh,
   })
   const retab = useMutation({ mutationFn: () => postAdminRetablir(l.id), onSuccess: refresh })
+  const convertir = useMutation({ mutationFn: () => postAdminLicenceConvertir(l.id), onSuccess: refresh })
   const st = chipStatut(l, stripeConfigure)
   const suspendu = l.statut === 'suspendu'
   const suspendre = () => {
@@ -73,7 +74,12 @@ function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: b
         <span className="mt-0.5 block font-mono text-xs text-txt-dim">
           {suspendu ? `suspendu — données conservées` : <>depuis le {fmtReu(l.created_at)}{l.stripe ? ` · ${l.stripe.montant_eur_mois} €/mois` : ''}</>}
         </span>
-        <div className="mt-2"><Chip tone={st.tone}>{st.label}{st.label === 'Carte refusée' && l.stripe?.prochaine_retentative ? ` · retente le ${fmtReu(new Date(l.stripe.prochaine_retentative * 1000).toISOString())}` : ''}</Chip></div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <Chip tone={st.tone}>{st.label}{st.label === 'Carte refusée' && l.stripe?.prochaine_retentative ? ` · retente le ${fmtReu(new Date(l.stripe.prochaine_retentative * 1000).toISOString())}` : ''}</Chip>
+          {l.essai_expire_at && l.statut === 'actif' && (
+            <Chip tone="warn">Essai · expire dans {Math.max(0, Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000))} h</Chip>
+          )}
+        </div>
       </div>
       {suspendu ? (
         <div className="text-xs leading-relaxed text-txt-dim">
@@ -120,6 +126,11 @@ function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: b
         ) : (
           <ActBtn tone="danger" onClick={suspendre} disabled={susp.isPending}>Suspendre l'accès</ActBtn>
         )}
+        {l.essai_expire_at && (
+          <ActBtn onClick={() => convertir.mutate()} disabled={convertir.isPending} title="Lève l'échéance d'essai — le compte paiera via le parcours officiel (login → Checkout)">
+            Convertir en abonnement
+          </ActBtn>
+        )}
       </div>
     </div>
   )
@@ -129,12 +140,20 @@ function NouveauClient() {
   const qc = useQueryClient()
   const [email, setEmail] = useState('')
   const [nom, setNom] = useState('')
+  const [heures, setHeures] = useState('48')
   const [lien, setLien] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const ok = (r: { lien: string }) => { setLien(r.lien); setErr(null); qc.invalidateQueries({ queryKey: ['admin-licences'] }) }
+  const ko = (e: unknown) => setErr(e instanceof Error ? e.message : 'Création impossible.')
   const creer = useMutation({
     mutationFn: () => postAdminLicenceCreer({ email: email.trim(), nom: nom.trim() || undefined }),
-    onSuccess: (r) => { setLien(r.lien); setErr(null); qc.invalidateQueries({ queryKey: ['admin-licences'] }) },
-    onError: (e) => setErr(e instanceof Error ? e.message : 'Création impossible.'),
+    onSuccess: ok, onError: ko,
+  })
+  // D9 — compte d'ESSAI : accès complet tout de suite, échéance (défaut 48 h, paramétrable),
+  // bascule automatique sur la suspension à l'échéance.
+  const creerEssai = useMutation({
+    mutationFn: () => postAdminLicenceCreerEssai({ email: email.trim(), nom: nom.trim() || undefined, heures: Number(heures) || undefined }),
+    onSuccess: ok, onError: ko,
   })
   return (
     <Panel>
@@ -157,6 +176,13 @@ function NouveauClient() {
             <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom (option)"
               className="w-32 rounded-md border border-line-2 bg-bg px-2 py-1.5 text-xs text-txt outline-none focus:border-mint" />
             <ActBtn onClick={() => creer.mutate()} disabled={!email.includes('@') || creer.isPending}>Créer →</ActBtn>
+            <span className="mx-1 text-[10px] text-txt-dim">ou</span>
+            <input value={heures} onChange={(e) => setHeures(e.target.value.replace(/[^0-9]/g, ''))} data-essai-heures
+              title="Durée de l'essai (heures)" className="w-12 rounded-md border border-line-2 bg-bg px-2 py-1.5 text-right font-mono text-xs text-txt outline-none focus:border-amber" />
+            <ActBtn tone="ghost" onClick={() => creerEssai.mutate()} disabled={!email.includes('@') || creerEssai.isPending}
+              title="Accès complet immédiat, bascule automatique à l'échéance (données conservées)">
+              Créer un compte d'essai ({heures || '48'} h) →
+            </ActBtn>
           </div>
         </div>
         <div className="flex items-center gap-4 border-b border-line px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['2']">

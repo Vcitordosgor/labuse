@@ -226,6 +226,94 @@ def test_courrier_transitions_journalisees(client, engine, compte_test):
             c.execute(text("DELETE FROM courrier_demandes WHERE id = :i"), {"i": did})
 
 
+def test_essai_expiration_prouvee(client, engine):
+    """D9 — CRITÈRE DE FIN : compte d'essai créé, date FORCÉE dans le passé, bascule
+    automatique CONSTATÉE (session refusée + statut suspendu), puis compte DÉTRUIT."""
+    from labuse import comptes as C
+    from labuse.db import session_scope
+    r = client.post("/admin/licences/creer-essai",
+                    json={"email": "essai-d9@test.re", "nom": "Essai D9", "heures": 48})
+    assert r.status_code == 200
+    d = r.json()
+    cid = d["compte_id"]
+    assert d["essai"] is True and d["heures"] == 48 and d["lien"]
+    try:
+        with engine.begin() as c:
+            statut, exp = c.execute(text(
+                "SELECT statut, essai_expire_at FROM comptes WHERE id = :c"), {"c": cid}).one()
+            uid = c.execute(text(
+                "SELECT id FROM utilisateurs WHERE compte_id = :c"), {"c": cid}).scalar_one()
+        assert statut == "actif" and exp is not None          # accès complet pendant l'essai
+        with session_scope() as s:
+            tok = C.creer_session(s, uid)
+            assert C.session_utilisateur(s, tok) is not None   # la session vit
+        # DATE FORCÉE dans le passé → la prochaine requête bascule le compte
+        with engine.begin() as c:
+            c.execute(text("UPDATE comptes SET essai_expire_at = now() - interval '1 hour'"
+                           " WHERE id = :c"), {"c": cid})
+        with session_scope() as s:
+            assert C.session_utilisateur(s, tok) is None       # session refusée (bascule)
+        with engine.begin() as c:
+            assert c.execute(text("SELECT statut FROM comptes WHERE id = :c"),
+                             {"c": cid}).scalar() == "suspendu"   # BASCULE CONSTATÉE
+            # données intactes (l'utilisateur existe toujours)
+            assert c.execute(text("SELECT COUNT(*) FROM utilisateurs WHERE compte_id = :c"),
+                             {"c": cid}).scalar() == 1
+        # « Convertir en abonnement » : l'échéance tombe, le compte repart au parcours officiel
+        assert client.post(f"/admin/licences/{cid}/convertir").status_code == 200
+        with engine.begin() as c:
+            st, exp2 = c.execute(text(
+                "SELECT statut, essai_expire_at FROM comptes WHERE id = :c"), {"c": cid}).one()
+        assert exp2 is None and st in ("invite", "suspendu")
+    finally:
+        with engine.begin() as c:                              # PUIS DÉTRUIT (critère de fin)
+            c.execute(text("DELETE FROM utilisateurs WHERE compte_id = :c"), {"c": cid})
+            c.execute(text("DELETE FROM evenements_compte WHERE compte_id = :c"), {"c": cid})
+            c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
+
+
+def test_admin_403_depuis_compte_client(engine, monkeypatch):
+    """CRITÈRE DE FIN — 403 admin PROUVÉ depuis un compte CLIENT (role titulaire, session
+    réelle, auth active) : tout /admin/* refuse ; l'admin (role admin) passe."""
+    import uuid
+    from labuse import comptes, config
+    from labuse.db import session_scope
+    monkeypatch.setenv("LABUSE_ENV", "pilot")
+    monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "pilote-d9")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "secret-d9-0000000000000000000000")
+    config.get_settings.cache_clear()
+    from labuse.api.app import app
+    email = f"client-{uuid.uuid4().hex[:8]}@x.test"
+    try:
+        with session_scope() as s:
+            inv = comptes.creer_invitation(s, email)
+            comptes.activer_par_invitation(s, inv["lien"].split("token=")[1], "motdepasse-d9-x", "2026-08-27")
+            from sqlalchemy import text as _t
+            s.execute(_t("UPDATE comptes SET statut='actif' WHERE id=:c"), {"c": inv["compte_id"]})
+            uid = s.execute(_t("SELECT id FROM utilisateurs WHERE email=:e"), {"e": email}).scalar()
+            tok = comptes.creer_session(s, uid)
+            s.commit()
+        c = TestClient(app, base_url="https://testserver")
+        c.cookies.set("labuse_session", f"u.{tok}")
+        # le CLIENT est bien DANS l'app (une route métier passe)…
+        assert c.get("/moi").status_code == 200
+        # …mais TOUT /admin/* le refuse : 403 (mandat, périmètre et accès)
+        for route in ("/admin/pilotage", "/admin/licences", "/admin/ia",
+                      "/admin/sources", "/admin/produit", "/admin/stripe"):
+            assert c.get(route).status_code == 403, f"{route} devrait refuser un client"
+        assert c.post("/admin/degeler", json={"sujet": "x"}).status_code == 403
+        # un utilisateur au rôle ADMIN, lui, passe
+        with session_scope() as s:
+            from sqlalchemy import text as _t
+            s.execute(_t("UPDATE utilisateurs SET role='admin' WHERE email=:e"), {"e": email})
+            s.commit()
+        assert c.get("/admin/pilotage").status_code == 200
+    finally:
+        config.get_settings.cache_clear()
+        with session_scope() as s:
+            comptes.supprimer_utilisateur(s, email)
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte
