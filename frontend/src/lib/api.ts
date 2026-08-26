@@ -880,6 +880,17 @@ export interface AdminProduit {
 export const getAdminProduit = () => j<AdminProduit>('/admin/produit')
 export const postAdminRetourStatut = (id: number, statut: 'nouveau' | 'traite' | 'repondu') =>
   j<{ ok: boolean }>(`/admin/retours/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// D8 — Courrier (endpoints /courrier/admin/* EXISTANTS, consommés par la Tour de contrôle)
+export interface AdminDemandeCourrier {
+  id: number; ts: string | null; compte_id: number | null; n: number; communes: string | null
+  modele: string | null; corps: string | null; statut: string; updated_at: string | null
+  parcelles: string[] | null; client: string | null
+}
+export const getAdminCourrierDemandes = () =>
+  j<{ demandes: AdminDemandeCourrier[]; statuts: string[] }>('/courrier/admin/demandes')
+export const postAdminCourrierStatut = (id: number, statut: string) =>
+  j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+export const urlCourrierPdf = '/courrier/pdf'
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

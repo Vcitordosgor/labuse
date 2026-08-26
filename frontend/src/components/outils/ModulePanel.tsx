@@ -766,12 +766,14 @@ const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
-// statuts visibles côté client (mandat) — l'ordre EST la timeline.
-const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['tarif_confirme', 'Tarif confirmé'], ['envoye', 'Envoyé']]
+// statuts visibles côté client — l'ordre EST la timeline. DASHBOARD-V1 · D8 : le flux servi
+// devient Demandé → Imprimé → Posté (les transitions se font à la Tour de contrôle, journalisées).
+// Les statuts hérités (tarif_confirme/envoye) restent LISIBLES via le fallback `?? d.statut`.
+const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['imprime', 'Imprimé'], ['poste', 'Posté']]
 
 /** COURRIER-SERVICE (refonte 13 outils) — l'outil devient un SERVICE : le client prépare
  *  (① destinataires ② rédaction), puis ③ DEMANDE l'envoi à LABUSE. Trois étapes, variables par
- *  courrier, statut visible (Demandé → Tarif confirmé → Envoyé). PDF relégué en aperçu de relecture.
+ *  courrier, statut visible (Demandé → Imprimé → Posté). PDF relégué en aperçu de relecture.
  *  Exporté pour test (le flux service est le cœur du mandat COURRIER). */
 export function M09() {
   const qc = useQueryClient()

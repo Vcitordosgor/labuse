@@ -11,6 +11,7 @@ import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
 import { SourcesSection } from './Sources'
 import { ProduitSection } from './Produit'
+import { CourrierSection } from './Courrier'
 
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
 
@@ -233,15 +234,6 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
   )
 }
 
-// ═══════════════ stub des sections à venir (lots D4-D8) ═══════════════
-function AVenir({ titre, lot }: { titre: string; lot: string }) {
-  return (
-    <Panel className="opacity-70">
-      <div className="p-6 text-sm text-txt-mut">{titre} — construit au lot {lot} du mandat.</div>
-    </Panel>
-  )
-}
-
 // ═══════════════ SHELL ═══════════════
 const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[] = [
   { key: 'pilotage', label: 'Pilotage', ic: '◉' },
@@ -338,7 +330,7 @@ export function AdminView() {
           {section === 'ia' && <IaSection />}
           {section === 'sources' && <SourcesSection />}
           {section === 'produit' && <ProduitSection />}
-          {section === 'courrier' && <AVenir titre="Courrier" lot="D8" />}
+          {section === 'courrier' && <CourrierSection />}
         </div>
       </div>
     </div>

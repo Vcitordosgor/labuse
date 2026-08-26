@@ -150,11 +150,17 @@ class StatutIn(BaseModel):
     statut: str
 
 
+#: libellés client des statuts (D8) — servis dans la notification de transition.
+_STATUT_LIBELLES = {"demande": "Demandé", "tarif_confirme": "Tarif confirmé",
+                    "imprime": "Imprimé", "poste": "Posté", "envoye": "Envoyé"}
+
+
 @router.post("/admin/demandes/{demande_id}/statut")
 def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
                           db: Session = Depends(get_db)) -> dict:
-    """Vic fait avancer le statut d'une demande (après le rappel tarif). Le client le voit via
-    /courrier/demandes (sa timeline)."""
+    """Vic fait avancer le statut d'une demande (Tour de contrôle : Demandé → Imprimé → Posté).
+    Le client le voit via /courrier/demandes (sa timeline) ; DASHBOARD-V1 · D8 : chaque
+    transition est JOURNALISÉE (event_log admin) + notifiée au client (cloche)."""
     from . import auth
     auth.exiger_admin(request)
     try:
@@ -162,6 +168,23 @@ def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
     except ValueError as exc:
         raise HTTPException(422, str(exc))
     db.commit()
+    lib = _STATUT_LIBELLES.get(body.statut, body.statut)
+    try:
+        from .events import creer_notification
+        # trace admin (fil Pilotage) — dédup par (demande, statut) : jamais deux traces d'un même clic
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=f"Demande n°{demande_id} passée à « {lib} »",
+                           detail=f"{d['n']} courrier(s){' · ' + d['communes'] if d.get('communes') else ''}",
+                           dedup=f"courrier:statut:{demande_id}:{body.statut}")
+        # notification CLIENT (cloche) — il voit le même statut de son côté
+        if d.get("compte_id") is not None:
+            creer_notification(db, kind="systeme", compte_id=d["compte_id"], source="Courrier",
+                               titre=f"Votre demande de courrier est passée à « {lib} »",
+                               detail=f"{d['n']} courrier(s){' · ' + d['communes'] if d.get('communes') else ''}",
+                               dedup=f"courrier:statut-client:{demande_id}:{body.statut}")
+        db.commit()
+    except Exception:  # noqa: BLE001 — la trace est best-effort, la transition est déjà faite
+        db.rollback()
     return {"ok": True, **d}
 
 

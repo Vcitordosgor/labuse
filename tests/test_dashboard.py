@@ -191,6 +191,41 @@ def test_produit_usage_et_statut_retour(client, engine):
     assert client.post(f"/admin/retours/{rid}/statut", json={"statut": "zzz"}).status_code == 422
 
 
+def test_courrier_transitions_journalisees(client, engine, compte_test):
+    """D8 — Demandé → Imprimé → Posté : transitions valides, journalisées (event_log admin +
+    notification client), statut illégal → 422."""
+    from labuse import courrier
+    from labuse.db import session_scope
+    courrier.ensure_tables(engine)
+    with engine.begin() as c:
+        did = c.execute(text(
+            "INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut)"
+            " VALUES (:c, '[\"97415000AB0001\"]'::jsonb, 1, 'Saint-Paul', 'standard', 'Corps de test D8', 'demande')"
+            " RETURNING id"), {"c": compte_test}).scalar_one()
+    try:
+        r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "imprime"})
+        assert r.status_code == 200 and r.json()["statut"] == "imprime"
+        r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "poste"})
+        assert r.status_code == 200 and r.json()["statut"] == "poste"
+        assert client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "brule"}).status_code == 422
+        with engine.begin() as c:
+            # journalisée côté admin (compte NULL) ET côté client (compte de la demande)
+            n_admin = c.execute(text(
+                "SELECT COUNT(*) FROM event_log WHERE dedup LIKE :d"), {"d": f"courrier:statut:{did}:%"}).scalar()
+            n_client = c.execute(text(
+                "SELECT COUNT(*) FROM event_log WHERE dedup LIKE :d AND compte_id = :c"),
+                {"d": f"courrier:statut-client:{did}:%", "c": compte_test}).scalar()
+        assert n_admin == 2 and n_client == 2
+        # la liste admin porte le nom du client (jointure comptes)
+        d = client.get("/courrier/admin/demandes").json()
+        row = next(x for x in d["demandes"] if x["id"] == did)
+        assert row["client"] == "Client D4" and row["statut"] == "poste"
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM event_log WHERE dedup LIKE :d"), {"d": f"courrier:statut%:{did}:%"})
+            c.execute(text("DELETE FROM courrier_demandes WHERE id = :i"), {"i": did})
+
+
 def test_quota_copilote_par_licence(client, engine):
     """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
     from labuse.api.dashboard import quota_nl_du_compte

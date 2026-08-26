@@ -80,8 +80,10 @@ DDL_STATEMENTS = (
     END $$""",
 )
 
-# Cycle de vie visible côté client (mandat) : Demandé → Tarif confirmé → Envoyé.
-STATUTS_DEMANDE = ("demande", "tarif_confirme", "envoye")
+# Cycle de vie visible côté client — DASHBOARD-V1 · D8 : Demandé → Imprimé → Posté (les
+# transitions se font à la Tour de contrôle, journalisées). `tarif_confirme`/`envoye` restent
+# VALIDES (héritage de l'ancien flux) mais ne sont plus le chemin servi.
+STATUTS_DEMANDE = ("demande", "tarif_confirme", "imprime", "poste", "envoye")
 
 
 def ensure_tables(engine) -> None:
@@ -141,11 +143,14 @@ def demandes_de(db, compte_id: int | None) -> list[dict]:
 
 
 def demandes_admin(db, statut: str | None = None) -> list[dict]:
-    """Vue admin (Vic) : toutes les demandes, filtrable par statut."""
-    where = "WHERE corps IS NOT NULL" + (" AND statut = :s" if statut else "")
+    """Vue admin (Vic) : toutes les demandes, filtrable par statut. D8 (Tour de contrôle) :
+    + nom du client (jointure comptes, LEFT — compte NULL = pilote) et parcelles (pour le PDF)."""
+    where = "WHERE d.corps IS NOT NULL" + (" AND d.statut = :s" if statut else "")
     return [dict(r) for r in db.execute(text(
-        f"SELECT id, ts, compte_id, n, communes, modele, corps, statut, updated_at "
-        f"FROM courrier_demandes {where} ORDER BY ts DESC LIMIT 300"),
+        f"SELECT d.id, d.ts, d.compte_id, d.n, d.communes, d.modele, d.corps, d.statut,"
+        f"       d.updated_at, d.parcelles, k.nom AS client"
+        f" FROM courrier_demandes d LEFT JOIN comptes k ON k.id = d.compte_id"
+        f" {where} ORDER BY d.ts DESC LIMIT 300"),
         ({"s": statut} if statut else {})).mappings()]
 
 
