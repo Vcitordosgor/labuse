@@ -49,7 +49,7 @@ def test_patrimoine_ne_leve_pas_et_ménage_vestiges(db_session, monkeypatch):
     s = "444555666"
     _seed(db_session, "97499000PB0001", _WKT[0], s, "SCI PATCO BETA")
     _seed(db_session, "97499000PB0002", _WKT[1], s, "SCI PATCO BETA")   # contiguë
-    out = patrimoine(siren=s, db=db_session)                    # ne lève pas
+    out = patrimoine(siren=s, limit=200, offset=0, db=db_session)   # ne lève pas (GB-018 : pagination)
     assert out["siren"] == s and out["n_parcelles"] == 2
     # #2 — l'agrégat dit l'ACTIONNABLE + SDP RÉSIDUELLE (renommé, plus « SDP totale »)
     assert out["n_actionnables"] == 2 and "sdp_residuelle_m2" in out and "sdp_totale_m2" not in out

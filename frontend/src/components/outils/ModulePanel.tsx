@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
-  modDueDiligence, modFantome, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
+  modDueDiligence, modFantome, modPatrimoine, modPatrimoineCsvUrl, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
@@ -175,6 +175,17 @@ export function M02() {
               <span><V>{d['n_parcelles'] as number}</V> parcelles</span>
               <span><V>{d['n_actionnables'] as number}</V> actionnables <span className="text-txt-dim">(hors écartées)</span></span>
               <span>SDP résiduelle <V>{fmt(d['sdp_residuelle_m2'] as number)}</V> m²</span>
+            </div>
+            {/* GB-018 — la liste est paginée côté serveur : on dit HONNÊTEMENT combien sont affichées sur
+                le total, et on offre l'export CSV complet (raison sociale entière). */}
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-txt-dim">
+                {d['tronquee'] === true
+                  ? <>{fmt(items.length)} affichées sur <V>{d['n_parcelles'] as number}</V></>
+                  : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''}</>}
+              </span>
+              <a href={modPatrimoineCsvUrl(String(d['siren']))} download
+                className="text-txt-mut hover:text-mint" title="Exporter tout le portefeuille en CSV">⬇ CSV</a>
             </div>
             {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
             {d['valorisation_nu_eur'] != null && (

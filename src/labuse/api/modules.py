@@ -225,20 +225,30 @@ _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 
 
 @router.get("/patrimoine")
-def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
+def patrimoine(siren: str, fmt: str = "json",
+               limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
+               db: Session = Depends(get_db)):
     """Inventaire du foncier d'une PERSONNE MORALE (SIREN) : ses parcelles, le TIER v2 servi de
     chacune (étage 0 du run prime), le résiduel, les signaux d'approche (BODACC procédure + INPI
     dirigeants), la valorisation indicative du foncier nu, et — si des parcelles sont contiguës —
     l'assiette à étudier en assemblage. PM UNIQUEMENT (RGPD : jamais un particulier). Tri par rang P.
-    M137 : plus de vestige de matrice (q_score/a_score/completeness_score MORTS retirés du fil)."""
+    M137 : plus de vestige de matrice (q_score/a_score/completeness_score MORTS retirés du fil).
+
+    GB-018 — les agrégats couvrent TOUT le portefeuille ; la liste `items` est PAGINÉE (limit/offset,
+    géométrie de la page seulement) et EXPORTABLE (`fmt=csv`, raison sociale entière, notice GB-016 si
+    plafond). Un gros propriétaire (4000+ parcelles) ne fait plus 2,9 Mo/10 s d'un bloc. GB-017 :
+    `fmt` est désormais un vrai paramètre (json|csv), plus un param fantôme ignoré."""
     from .app import _score_v2_run_id
     from ..assemblage import ADJ_BUFFER_M
     from ..faisabilite.marche_commune import ligne2_terrain_zone
+    # ROBUSTESSE — cette fonction est aussi appelée EN DIRECT (copilote `parcelles_par_entreprise`,
+    # tests) où les défauts `Query()` ne sont pas résolus : on retombe sur les valeurs par défaut.
+    limit = limit if isinstance(limit, int) else 200
+    offset = offset if isinstance(offset, int) else 0
     rows = db.execute(text("""
         SELECT p.id, p.idu, p.commune, p.surface_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -307,6 +317,32 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
                     best = list(comp)
             id2idu = {r["id"]: r["idu"] for r in rows}
             assiette_contigue = [id2idu[i] for i in best] if len(best) >= 2 else []
+    # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
+    if fmt == "csv":
+        import csv as _csv
+        import io as _io
+        CAP = 5000
+        corpus = rows[:CAP]
+        buf = _io.StringIO()
+        w = _csv.writer(buf, delimiter=";")
+        if len(rows) > CAP:
+            w.writerow([f"Export limité aux {CAP} premières lignes sur {len(rows)} — "
+                        "affinez ou paginez pour le reste."])
+        w.writerow(["idu", "commune", "tier_v2", "rang_v2", "surface_m2", "sdp_residuelle_m2",
+                    "siren", "raison_sociale"])
+        for r in corpus:
+            w.writerow([r["idu"], r["commune"], ("ecartee" if r["etage0"] else r["tier_v2"]) or "",
+                        r["rang_v2"] if r["rang_v2"] is not None else "", round(r["surface_m2"] or 0),
+                        round(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else "",
+                        siren, nom or ""])
+        return Response(buf.getvalue().encode("utf-8-sig"), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="patrimoine-{siren}.csv"',
+                                 "X-Rows": str(len(corpus)), "X-Total": str(len(rows))})
+    # JSON — liste PAGINÉE ; la géométrie n'est calculée QUE pour la page servie (pas les 4000+ lignes).
+    page = rows[offset:offset + limit]
+    geoms = {r[0]: r[1] for r in db.execute(text(
+        "SELECT idu, ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) FROM parcels WHERE idu = ANY(:i)"),
+        {"i": [r["idu"] for r in page]}).all()} if page else {}
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
         "n_actionnables": n_actionnables,
@@ -316,10 +352,12 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
         "bodacc": dict(bodacc) if bodacc else None,
         "inpi_sans_dirigeant": inpi_sans_dirigeant,
         "assiette_contigue": assiette_contigue,
+        "total": len(rows), "affiches": len(page), "offset": offset, "limit": limit,
+        "tronquee": offset + limit < len(rows),
         "items": [{"idu": r["idu"], "commune": r["commune"],
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "surface_m2": round(r["surface_m2"] or 0), "sdp": r["sdp_residuelle_m2"],
-                   "geom": json.loads(r["g"])} for r in rows],
+                   "geom": json.loads(geoms[r["idu"]]) if geoms.get(r["idu"]) else None} for r in page],
     }
 
 
@@ -945,7 +983,10 @@ def _sru_bloc(db: Session, commune: str) -> dict | None:
 
 
 @router.get("/bailleur")
-def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_db)) -> dict:
+    # GB-030 — l'endpoint (DORMANT) faisait un JOIN SPATIAL ÎLE-ENTIÈRE (`ST_Intersects` sur les 431k
+    # parcelles × QPV) quand `commune` était absente → ~3 min de silence. `commune` devient OBLIGATOIRE
+    # (422 si absente) : le scan est BORNÉ à une commune (1-8 s), plus jamais le balayage insulaire.
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,

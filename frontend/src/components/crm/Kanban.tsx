@@ -28,13 +28,22 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
     <div
       draggable
       onDragStart={onDragStart}
+      // GB-027 (a11y) — la carte est FOCUSABLE et activable au CLAVIER (Entrée/Espace → édition, qui
+      // porte le sélecteur d'étape) : un utilisateur sans souris peut ouvrir la carte et la déplacer.
+      tabIndex={0}
+      role="button"
+      onKeyDown={(ev) => {
+        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button')) {
+          ev.preventDefault(); onEdit()
+        }
+      }}
       onClick={(ev) => {
         // M137 — le CORPS de la carte ouvre l'ÉCRAN D'ÉDITION (note/priorité/relance/prospection).
         // Le bouton IDU garde l'ouverture de la fiche. Les autres boutons (✕) sont inertes ici.
         if ((ev.target as HTMLElement).closest('button')) return
         onEdit()
       }}
-      className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30"
+      className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
       title="Éditer la carte (note, priorité, relance) · glisser pour changer d'étape"
     >
       <div className="flex items-center justify-between gap-2">
@@ -149,9 +158,9 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
 /* M137 — écran d'édition d'une carte : câble ce que le modèle + le PATCH portaient déjà mais que
    AUCUNE UI n'exposait (note, priorité, date de relance, prospection). Tout passe par le PATCH
    existant (cloison compte_id en place). */
-function CardEditPanel({ e, meta, onCancel, onSave, saving }: {
+function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
   e: PipelineEntry; meta: PipelineMeta | undefined; onCancel: () => void
-  onSave: (body: Record<string, unknown>) => void; saving: boolean
+  onSave: (body: Record<string, unknown>) => void; onMove: (status: string) => void; saving: boolean
 }) {
   const { select, setView } = useApp()
   const pr = e.prospection ?? {}
@@ -179,6 +188,13 @@ function CardEditPanel({ e, meta, onCancel, onSave, saving }: {
           <button onClick={onCancel} className="text-txt-dim hover:text-txt" aria-label="Fermer">✕</button>
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          {/* GB-027 (a11y) — déplacer la carte d'étape SANS souris : un sélecteur clavier-accessible
+              (le drag-drop reste, ce select est la voie alternative). Déplacement immédiat, comme le drag. */}
+          <label className="block text-[11px] text-txt-dim">Étape
+            <select value={e.status} onChange={(ev) => onMove(ev.target.value)} className={inputCls}>
+              {(meta?.columns ?? []).map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
           <label className="block text-[11px] text-txt-dim">Priorité
             <select value={priority} onChange={(ev) => setPriority(ev.target.value)} className={inputCls}>
               {(meta?.priorities ?? []).map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
@@ -242,6 +258,7 @@ export function Kanban() {
   const [pendingArchive, setPendingArchive] = useState<PipelineEntry | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [editingEntry, setEditingEntry] = useState<PipelineEntry | null>(null)   // M137 — écran d'édition de carte
+  const [search, setSearch] = useState('')                                        // GB-027 — recherche CRM
   const archived = useQuery({ queryKey: ['pipeline-archived'], queryFn: getArchivedPipeline, enabled: showArchived })
   // QA-46 (M13-C) : le kanban NE DÉFILE PLUS horizontalement (barre de scroll proscrite). Les
   // colonnes qui ne tiennent pas côte à côte sont paginées : on affiche une FENÊTRE de COLS_PAR_VUE
@@ -365,7 +382,15 @@ export function Kanban() {
   const maxStart = Math.max(0, cols.length - COLS_PAR_VUE)
   const start = Math.min(winStart, maxStart)
   const visibleCols = paginated ? cols.slice(start, start + COLS_PAR_VUE) : cols
-  const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key)
+  // GB-027 — RECHERCHE CRM (nom, commune, IDU, société), insensible à la CASSE et aux ACCENTS. Les
+  // entrées sont déjà toutes chargées → simple filtre client, aucun aller-retour serveur.
+  const fold = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const q = fold(search).trim()
+  const matchSearch = (e: PipelineEntry) => !q || [
+    e.idu, e.parcel?.commune, e.projet?.nom, e.prospection?.contact_nom,
+    e.proprietaire_public?.type === 'personne_morale' ? e.proprietaire_public.denomination : '',
+  ].some((f) => fold(f).includes(q))
+  const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key && matchSearch(e))
   const cardCount = (key: string) => byCol(key).length
 
   const startEdit = (c: PipelineColumn) => { setEditingId(c.id ?? null); setEditLabel(c.label) }
@@ -401,6 +426,10 @@ export function Kanban() {
         </div>
         {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser). */}
         <div className="flex shrink-0 items-center gap-2">
+          {/* GB-027 — recherche CRM (nom, commune, IDU, société), accents insensibles, filtre client. */}
+          <input value={search} onChange={(ev) => setSearch(ev.target.value)} type="search"
+            placeholder="Rechercher (nom, commune, IDU…)" aria-label="Rechercher dans le CRM"
+            className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
           {/* QA-46 (M13-C) : pagination par FLÈCHES (plus de défilement horizontal). Les flèches
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
           {paginated && !editMode && (
@@ -585,6 +614,7 @@ export function Kanban() {
           saving={patch.isPending}
           onCancel={() => setEditingEntry(null)}
           onSave={(body) => patch.mutate({ id: editingEntry.id, body })}
+          onMove={(status) => { move.mutate({ id: editingEntry.id, status }); setEditingEntry((c) => c ? { ...c, status } : c) }}
         />
       )}
       {/* M137 — confirmation avant ARCHIVAGE (réversible, mais on prévient : la carte quitte le tableau). */}
