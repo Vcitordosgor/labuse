@@ -245,3 +245,28 @@ absent.
   conservateur qui évite les faux positifs, au prix de rater le partage intra-réseau — acceptable
   pour un signal informatif). Le `ua_hash` est collecté en complément (V2 : signal affiné
   navigateurs distincts). Historisation fine (time-series) laissée en V2.
+
+---
+
+## A6 — SUPPRESSION ET RÉTENTION (constat + proposition, NON implémenté)
+
+Détaillé dans **`SUPPRESSION-SPEC.md`**. Synthèse :
+
+**État réel.** Deux mécanismes : `supprimer_utilisateur` (anonymise l'audit + supprime l'utilisateur,
+compte → `resilie` s'il devient vide) et `effacer_compte_rgpd` (DELETE compte → cascade). La
+suspension (`suspendu`/`paiement_requis`, réversible, données intactes) et la résiliation
+(`resilie`) existent déjà mais implicitement.
+
+**Findings.**
+- **AC-003 🟠** (rappel A3) — effacement **incomplet** : 11 tables à `compte_id` sans FK cascade
+  survivent à `effacer_compte_rgpd`, dont le **contenu des conversations Copilote** et les
+  **liens de partage** `/p/{token}`. Droit à l'effacement non honoré. Correctif proposé : poser
+  les FK cascade manquantes (Option A, ~1 h + test, mandat dédié).
+- **AC-005 🟡** — pas de délai de grâce, pas d'auto-service client, pas de confirmation en deux
+  temps ; l'effacement CLI est immédiat et définitif.
+- **AC-006 🟡** — pas de politique de rétention documentée (que garder pour raisons comptables ?).
+
+**Proposition** (spec complète) : trois états explicites (`suspendu` réversible → `en_effacement`
+avec grâce 30 j → `EFFACÉ`), purge complète (FK cascade), rétention ciblée (anonymiser `ia_log`
+et l'audit ; laisser les factures chez Stripe ; trancher le sort des courriers postés), parcours
+client + cron d'effacement. **Décision de Vic.**
