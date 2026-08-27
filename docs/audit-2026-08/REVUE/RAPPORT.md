@@ -235,3 +235,46 @@ Baseline p50/p95 (patron LOT AM, `qa/revue/r5_baseline.py`, 12 mesures/route, ru
   **Aucune optimisation supplémentaire n'est sûre ni nécessaire** — arbitrage conservateur : à la
   veille d'une mise en ligne, ne pas refactorer un chemin sain (fiche/middleware) au risque de
   déplacer un chiffre. Baseline gelée dans `qa/revue/r5_baseline.json` pour comparaison post-VPS.
+
+---
+## R6 — PAIEMENT STRIPE BOUT EN BOUT (mode TEST réel)
+
+Clés `.env` : `LABUSE_STRIPE_SECRET_KEY=sk_test_…` (mode TEST), `PRICE_INTEGRAL/FLASH`,
+`WEBHOOK_SECRET=whsec_…`, `STRIPE_RESTRICTED_KEY=rk_live_…` (lecture dashboard). Cycle déroulé en
+**mode test réel** sur `labuse_test` (`qa/revue/r6_stripe.py`, comptes `[REVUE-TEST]` purgés).
+
+### Résultats — 11/11 ✓
+
+| Test | Résultat |
+|------|----------|
+| Webhook signature **invalide** → rejet | ✅ HTTP 400 |
+| Webhook signature **absente** → rejet | ✅ HTTP 400 |
+| Webhook signature **valide** → accepté | ✅ HTTP 200 |
+| `checkout.session.completed` → compte **actif** | ✅ |
+| `invoice.payment_failed` → **paiement_requis** (past_due) | ✅ |
+| `invoice.paid` → **réactivé** (actif) | ✅ |
+| `customer.subscription.deleted` → **suspendu** | ✅ |
+| Rejeu du même `event_id` → **ignoré** (dédup) | ✅ |
+| `creer_checkout` → **session Stripe test réelle** (`cs_test_…`) | ✅ |
+| Suspension / rétablissement dashboard | ✅ |
+| Rapprochement Stripe⇄comptes (restricted key) | ✅ configure=true, **2 orphelins détectés** (comptes app sans abo → alerte ambre) |
+
+### Webhook
+
+**Un endpoint webhook EXISTE** (`POST /stripe/webhook`, onboarding.py) et **vérifie la signature
+avant tout traitement** (`stripe.Webhook.construct_event` avec `whsec_`) — signature invalide/absente
+rejetée, valide traitée. Dédup par `event_id` (rejeu Stripe), transactionnel (marque + effet
+commitent ensemble). **Note VPS** : cet endpoint doit être exposé publiquement et le `whsec_` de
+production configuré (en local, `stripe listen` le fournit).
+
+### Findings
+
+- **RV-010 ✅ — Stripe bout en bout sain** en mode test (signature, cycle d'états, dédup, checkout,
+  rapprochement orphelins).
+- **RV-011 🟡 — incohérence de mode clés.** `sk_test_` (checkout) vs `rk_live_` (lecture dashboard) :
+  en recette, le dashboard lit les abonnements **live** tandis que le checkout crée des abos **test**.
+  À **aligner à la bascule prod** (tout live) — sinon le rapprochement mêle deux mondes. Documenté.
+- **RV-012 🟠→corrigé — message webhook trompeur.** L'endpoint renvoyait « signature invalide » (400)
+  pour **toute** exception, y compris une erreur de **traitement** (masquant les vrais bugs de handler
+  et empêchant le rejeu utile). Corrigé : `SignatureVerificationError`/`ValueError` → 400 (signature) ;
+  toute autre exception → **500** (Stripe rejoue, idempotent). Découvert en testant R6.

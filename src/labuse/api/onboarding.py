@@ -295,6 +295,7 @@ async def reset_submit(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/stripe/webhook", include_in_schema=False)
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    import stripe as _stripe
     from ..facturation import ConfigError, traiter_webhook
     payload = await request.body()
     try:
@@ -302,9 +303,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     except ConfigError as e:
         log.error("webhook stripe : %s", e)
         return JSONResponse({"detail": "webhook non configuré"}, status_code=503)
-    except Exception as e:  # noqa: BLE001 — signature invalide comprise
-        log.warning("webhook stripe REJETÉ : %s", type(e).__name__)
+    except (_stripe.SignatureVerificationError, ValueError) as e:
+        # REVUE · R6 — signature INVALIDE (ou payload illisible) = rejet sec 400. Distinct d'une
+        # erreur de TRAITEMENT (ci-dessous) : le message trompeur « signature invalide » posé sur
+        # toute exception masquait les vrais bugs de handler et empêchait le rejeu Stripe utile.
+        log.warning("webhook stripe REJETÉ (signature) : %s", type(e).__name__)
         return JSONResponse({"detail": "signature invalide"}, status_code=400)
+    except Exception as e:  # noqa: BLE001 — erreur de TRAITEMENT : 500 → Stripe REJOUE (idempotent)
+        log.error("webhook stripe : échec de traitement %s: %s", type(e).__name__, e)
+        return JSONResponse({"detail": "traitement du webhook en échec"}, status_code=500)
     return {"ok": True, **{k: v for k, v in r.items() if k != "compte_id"}}
 
 
