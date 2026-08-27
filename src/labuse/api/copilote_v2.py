@@ -71,7 +71,8 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     # dépensé pour rien. `LABUSE_DEV_MODE=1` désactive.
     s = config.get_settings()
     if not s.dev_mode:
-        n = compteur_incr_et_lire(date.today().isoformat(), _sujet_quota(request), "copilote_v2_ask")
+        from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
+        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), "copilote_v2_ask")
         if n > s.copilote_v2_missions_jour:
             return JSONResponse(status_code=429, content={
                 "detail": f"Vous avez atteint la limite quotidienne du Copilote "

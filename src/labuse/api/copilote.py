@@ -94,7 +94,8 @@ def creer_run(body: RunIn, request: Request, db: Session = Depends(get_db)) -> d
     s = config.get_settings()
     if not s.dev_mode:
         sujet = _sujet_quota(request)
-        n = compteur_incr_et_lire(date.today().isoformat(), sujet, "agent")
+        from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
+        n = compteur_incr_et_lire(today_reunion().isoformat(), sujet, "agent")
         if n > s.copilote_quota_jour:
             # Même style de 429 que M23 (protection.py) : detail + quota + gel_jusqua.
             return JSONResponse(status_code=429, content={

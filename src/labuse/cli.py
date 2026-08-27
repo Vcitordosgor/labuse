@@ -3154,3 +3154,15 @@ def vegetation_validation_cmd() -> None:
     with session_scope() as s:
         res = vegetation.preparer_validation(s, log=typer.echo)
     typer.echo(f"✓ session prête : {res['vignettes']} vignettes — `labuse api` puis {res['url']}")
+
+
+@app.command("purge-sessions")
+def purge_sessions_cmd() -> None:
+    """REVUE · R9 (RV-003) — supprime les sessions_auth EXPIRÉES (expire_at < now). Aucune session
+    valide touchée. Cronable (quotidien) : évite l'accumulation de lignes mortes (dette AC-011)."""
+    from sqlalchemy import text as _t
+
+    from .db import engine
+    with engine().begin() as c:
+        n = c.execute(_t("DELETE FROM sessions_auth WHERE expire_at < now()")).rowcount
+    typer.echo(f"✓ Purge : {n} session(s) expirée(s) supprimée(s).")

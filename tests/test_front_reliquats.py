@@ -190,11 +190,14 @@ def test_r5_etudier_referentiel_marche_unique():
 
 
 def test_r5_etudier_deux_marges_chacune_dit_son_referentiel():
-    # La marge apparaît deux fois, chacune DIT son référentiel : constat « aux hypothèses calibrées »
-    # (bilan servi par secteur) ; calculette « selon vos hypothèses » (réglable, dans Fiche.tsx).
-    assert "aux hypothèses calibrées" in ETUDIER and "data-etudier-charge-calibree" in ETUDIER
-    assert "data-etudier-marge-calibree" in ETUDIER
-    assert "selon vos hypothèses" in FICHE_TSX
+    # REVUE · R9 — MISE À JOUR : le bloc-verdict a été refondu en BASCULE unique
+    # [Calibrées LABUSE | Vos hypothèses] (fini les deux bandeaux empilés + anciens attributs
+    # data-etudier-charge-calibree/marge-calibree). Les deux référentiels sont TOUJOURS dits — seule
+    # la structure a évolué (présentation pure, aucun moteur touché, cf. R3). On vérifie l'état ACTUEL.
+    assert "Calibrées LABUSE" in ETUDIER and "Vos hypothèses" in ETUDIER       # la bascule des 2 référentiels
+    assert "la charge calibrée" in ETUDIER and "vos hypothèses" in ETUDIER     # chacun DIT son référentiel
+    assert "data-etudier-bascule" in ETUDIER and "charge_calibree" in ETUDIER
+    assert "vos hypothèses" in FICHE_TSX                                       # la calculette réglable (Fiche)
 
 
 def test_r5_etudier_hors_base_honnete():

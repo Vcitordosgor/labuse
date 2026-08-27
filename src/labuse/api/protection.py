@@ -159,7 +159,10 @@ _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 
 
 def _aujourdhui() -> str:
-    return date.today().isoformat()
+    # REVUE · R2 — jour métier en heure Réunion (les compteurs jour bornent quotas/gels ; leur
+    # bascule doit se faire à minuit Réunion, comme CURRENT_DATE SQL, pas à minuit CEST).
+    from ..tz import today_reunion
+    return today_reunion().isoformat()
 
 
 def reset_etat_memoire() -> None:
@@ -541,7 +544,8 @@ def scan_abus(db, jour: date | None = None) -> dict:
     """Score les sujets du jour (séquences d'IDU, régularité machinale, volume nocturne,
     ratio consultations/exports) → abuse_scores + alerte admin au-delà du seuil."""
     s = config.get_settings()
-    jour = jour or (date.today() - timedelta(days=1))
+    from ..tz import today_reunion   # R2 — la fenêtre « hier » du scan anti-scraping = jour Réunion
+    jour = jour or (today_reunion() - timedelta(days=1))
     debut = datetime.combine(jour, datetime.min.time(), tzinfo=timezone.utc)
     rows = db.execute(text(
         "SELECT sujet, ts, idu FROM consultation_log "

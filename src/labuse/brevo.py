@@ -42,29 +42,42 @@ def template_id(key: str) -> int | None:
     champ = TEMPLATES.get(key)
     if not champ:
         return None
-    v = getattr(get_settings(), champ, None)
+    v = _setting_ou_env(champ)
     try:
         return int(v) if v else None
     except (TypeError, ValueError):
         return None
 
 
+def _api_key() -> str | None:
+    """REVUE · R7 — clé API Brevo : setting préfixé `LABUSE_BREVO_API_KEY` OU repli sans préfixe
+    `BREVO_API_KEY` (le .env de prod utilise cette forme, comme `STRIPE_RESTRICTED_KEY`). Sans ce
+    repli, Brevo était vu « non configuré » alors que les clés étaient bien présentes."""
+    import os
+    return (getattr(get_settings(), "brevo_api_key", None) or os.environ.get("BREVO_API_KEY", "").strip() or None)
+
+
+def _setting_ou_env(champ: str):
+    """Lit un réglage Brevo : setting préfixé (`LABUSE_<CHAMP>`) sinon repli sans préfixe (`<CHAMP>`)."""
+    import os
+    return getattr(get_settings(), champ, None) or os.environ.get(champ.upper()) or None
+
+
 def etat_configuration() -> dict:
     """Pour le dashboard : quels templates sont branchés (jamais les IDs eux-mêmes au client)."""
-    s = get_settings()
-    return {"api": bool(s.brevo_api_key),
+    return {"api": bool(_api_key()),
             "templates": {k: template_id(k) is not None for k in TEMPLATES}}
 
 
 def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
     """Envoie le template `key` à `to`. Renvoie {envoye: bool, raison?: str} — JAMAIS une levée,
     JAMAIS un envoi silencieux : non configuré → raison explicite, le dashboard l'affiche."""
-    s = get_settings()
     if key not in TEMPLATES:
         return {"envoye": False, "raison": f"Template inconnu « {key} »."}
-    if not s.brevo_api_key:
+    api_key = _api_key()
+    if not api_key:
         return {"envoye": False,
-                "raison": "Brevo non configuré (LABUSE_BREVO_API_KEY absente) — aucun envoi."}
+                "raison": "Brevo non configuré (BREVO_API_KEY absente) — aucun envoi."}
     tpl = template_id(key)
     if tpl is None:
         return {"envoye": False,
@@ -73,7 +86,7 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
         import httpx
         r = httpx.post(
             "https://api.brevo.com/v3/smtp/email",
-            headers={"api-key": s.brevo_api_key, "content-type": "application/json"},
+            headers={"api-key": api_key, "content-type": "application/json"},
             json={"templateId": tpl, "to": [{"email": to}], "params": params or {}},
             timeout=15.0)
         if r.status_code // 100 == 2:

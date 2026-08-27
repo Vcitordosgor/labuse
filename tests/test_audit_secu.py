@@ -706,6 +706,20 @@ def test_hsts_en_https_jamais_en_clair(app_client):
     assert "Strict-Transport-Security" not in r_http.headers
 
 
+def test_r4_entetes_securite_et_csp(app_client):
+    """REVUE · R4 — la CSP et les 3 en-têtes de sécurité sont posés sur chaque réponse. La CSP
+    autorise EXACTEMENT les sources externes réelles (Google Fonts, tuiles IGN geopf, MNT S3) et
+    interdit tout le reste (default-src 'self', object-src 'none', frame-ancestors 'none')."""
+    r = TestClient(app_client.app, base_url="https://testserver").get("/healthz")
+    assert r.headers.get("X-Content-Type-Options") == "nosniff"
+    assert r.headers.get("X-Frame-Options") == "DENY"
+    csp = r.headers.get("Content-Security-Policy", "")
+    assert "default-src 'self'" in csp
+    assert "script-src 'self'" in csp and "'unsafe-inline'" not in csp.split("style-src")[0]  # pas d'inline JS
+    assert "https://fonts.googleapis.com" in csp and "https://data.geopf.fr" in csp
+    assert "frame-ancestors 'none'" in csp and "object-src 'none'" in csp
+
+
 # ─────────────────────── LABUSE_SECRET_KEY : fail-closed en prod (P0-3) ───────────────────────
 
 def test_secret_key_exigee_hors_local(monkeypatch):

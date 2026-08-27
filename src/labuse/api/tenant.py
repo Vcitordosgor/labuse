@@ -58,6 +58,26 @@ def ensure_scoping(db: Session) -> None:
             db.execute(text("ALTER TABLE event_seen ADD CONSTRAINT fk_event_seen_compte"
                             " FOREIGN KEY (compte_id) REFERENCES comptes(id) ON DELETE CASCADE"))
 
+    # REVUE · R9 (AC-003, audit comptes) — tables à `compte_id` NÉES SANS FK cascade (ajoutées
+    # après la cloison initiale). Sans FK, `effacer_compte_rgpd` laissait des ORPHELINS (contenu
+    # Copilote, liens de partage, préférences) → effacement RGPD incomplet. On pose la FK cascade,
+    # patron GB-063 : PURGE des orphelins d'abord (une FK ne se pose pas sur une table non conforme),
+    # migration idempotente. `evenements_compte` EXCLUE (anonymisée exprès, doit survivre au compte).
+    _R9_TABLES = ("copilote_conversations", "veilles", "veille_reprise", "ia_log", "usage_events",
+                  "retours", "licence_mails", "notif_prefs", "notif_canaux", "share_links",
+                  "lettre_zonage_refs")
+    for t in _R9_TABLES:
+        if not db.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar():
+            continue
+        fk = f"fk_{t}_compte"
+        if db.execute(text("SELECT 1 FROM pg_constraint WHERE conname = :n"), {"n": fk}).scalar():
+            continue
+        # purge défensive des orphelins (compte_id → compte disparu) AVANT de poser la contrainte
+        db.execute(text(f"DELETE FROM {t} WHERE compte_id IS NOT NULL"
+                        f" AND NOT EXISTS (SELECT 1 FROM comptes c WHERE c.id = {t}.compte_id)"))
+        db.execute(text(f"ALTER TABLE {t} ADD CONSTRAINT {fk} FOREIGN KEY (compte_id)"
+                        f" REFERENCES comptes(id) ON DELETE CASCADE"))
+
     # SEC-IDOR (le plus profond) : le CRM était UNIQUE(parcel_id) — une parcelle ne pouvait
     # vivre que dans UN pipeline de toute la base. Multi-tenant : la clé devient
     # (compte_id, parcel_id). NULLS NOT DISTINCT (PG 15+) garde le bucket pilote à une entrée

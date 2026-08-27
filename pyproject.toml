@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=78.1.1", "wheel"]   # REVUE · R4 — plancher setuptools sûr (outil de build,
+#                                              non embarqué dans le runtime servi ; cf. rapport)
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -20,7 +21,7 @@ dependencies = [
   "GeoAlchemy2>=0.14",
   "psycopg[binary]>=3.1",
   "pydantic>=2.5",
-  "pydantic-settings>=2.1",
+  "pydantic-settings>=2.14.2",     # REVUE · R4 — patch GHSA-4xgf-cpjx-pc3j (pip-audit)
   "python-dotenv>=1.0",             # config.py — chargé au démarrage
   "PyYAML>=6.0",
   "fastapi>=0.110",
@@ -41,7 +42,7 @@ dependencies = [
   "MarkupSafe>=2.1",                # flash/report.py — échappement direct
   "argon2-cffi>=23.1",              # comptes.py — hachage argon2id (auth/cloison) : JAMAIS optionnel
   "stripe>=8",
-  "pypdf>=5",
+  "pypdf>=6.15.0",                 # REVUE · R4 — patch PYSEC-2026-3655/3656 (pip-audit)
   "pymupdf>=1.24",                  # fitz — plan de situation ortho du PDF premium (api/plan_situation, M73-F)
   "pillow>=10",                     # PIL — composition d'image du plan de situation + ingestion PLU
   "requests>=2.31",                 # tuiles IGN (plan de situation) + ingestion PLU (plu_ingest/plu_corpus)

@@ -260,3 +260,37 @@ def test_a7_concurrence_pas_de_croisement(app_client):
         assert not fuites, f"croisement de données sous concurrence: {fuites}"
     finally:
         _purge(*emails)
+
+
+# ─────────────────── REVUE · R9 (AC-003) — effacement RGPD COMPLET (FK cascade) ───────────────────
+def test_r9_ac003_effacement_rgpd_purge_les_11_tables(app_client):
+    """Les 11 tables à compte_id qui n'avaient PAS de FK cascade la portent désormais :
+    effacer_compte_rgpd (DELETE comptes → cascade) emporte le contenu Copilote, les veilles,
+    les liens de partage, les préférences… Plus aucun orphelin après effacement (GB-063)."""
+    from labuse.api.tenant import ensure_scoping
+    email = f"r9-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    with session_scope() as s:
+        ensure_scoping(s)   # idempotent : garantit les FK
+        # insère une ligne dans un échantillon des 11 tables (celles au schéma simple)
+        s.execute(text("INSERT INTO copilote_conversations (compte_id, titre) VALUES (:c, 'R9 conv')"), {"c": cid})
+        s.execute(text("INSERT INTO veilles (compte_id, type, commune) VALUES (:c, 'permis', 'Saint-Denis')"), {"c": cid})
+        s.execute(text("INSERT INTO share_links (token, idu, compte_id) VALUES (:t, '97400000AA0001', :c)"),
+                  {"t": f"r9{uuid.uuid4().hex[:8]}", "c": cid})
+        s.execute(text("INSERT INTO usage_events (compte_id, kind, outil) VALUES (:c, 'outil', 'r9')"), {"c": cid})
+        s.execute(text("INSERT INTO retours (compte_id, type, message) VALUES (:c, 'bug', 'R9 retour')"), {"c": cid})
+        s.commit()
+    # comptage avant
+    with session_scope() as s:
+        avant = {t: s.execute(text(f"SELECT count(*) FROM {t} WHERE compte_id=:c"), {"c": cid}).scalar()
+                 for t in ("copilote_conversations", "veilles", "share_links", "usage_events", "retours")}
+    assert all(v >= 1 for v in avant.values()), avant
+    # EFFACEMENT RGPD → cascade
+    with session_scope() as s:
+        comptes.effacer_compte_rgpd(s, email)
+    with session_scope() as s:
+        apres = {t: s.execute(text(f"SELECT count(*) FROM {t} WHERE compte_id=:c"), {"c": cid}).scalar()
+                 for t in ("copilote_conversations", "veilles", "share_links", "usage_events", "retours")}
+        # ZÉRO orphelin : les lignes du compte effacé ont disparu partout
+        assert all(v == 0 for v in apres.values()), f"orphelins après effacement RGPD: {apres}"
+        assert s.execute(text("SELECT count(*) FROM comptes WHERE id=:c"), {"c": cid}).scalar() == 0
