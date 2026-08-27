@@ -27,14 +27,39 @@ from .config import get_settings
 log = logging.getLogger("labuse.comptes")
 _ph = PasswordHasher()  # argon2id par défaut (time_cost=3, memory=64 MiB, parallelism=4)
 
-# Refonte commerciale (Vic 22/07) : UN modèle d'abonnement — INTÉGRAL, 349 €/mois par
-# licence, 1 licence = 1 accès (plus d'Indé/Pro, plus de sièges multiples, plus de founding).
-# Le one-shot FLASH (79 €/rapport) vit dans facturation.py — pas un compte.
-# M23-E : ILLIMITÉ 499 €/mois — quota d'exports porté à 200/jour, PLAFOND D'USAGE LOYAL
-# (à mentionner en CGV — gate légal Vic). Prix Stripe : à créer au moment de la vente
-# (facturation.py), l'entrée ici câble le plan côté produit (quota.PLAFONDS_JOUR).
-PLANS = {"integral": {"label": "Intégral", "sieges": 1, "eur_mois": 349},
-         "illimite": {"label": "Illimité", "sieges": 1, "eur_mois": 499}}
+# Refonte commerciale (Vic 22/07 ; parcours d'entrée E1, 27/08) : UN SEUL plan commercial —
+# INTÉGRAL, source de vérité `offres.py` (prix en config). 1 licence = 1 accès (plus d'Indé/Pro,
+# plus de sièges multiples, plus de founding, PLUS d'« Illimité 499 € » : offre fantôme retirée).
+# Le one-shot FLASH (offres.offre_flash()) vit dans facturation.py — pas un compte.
+# `interne` = comptes HORS facturation (admin nominatif, système) : aucun prix, aucune offre
+# affichée, quota d'exports non borné (quota.py). Jamais présenté comme une offre au client.
+PLAN_INTERNE = "interne"
+
+
+def _plan_integral() -> dict:
+    from .offres import offre_integral
+    o = offre_integral()
+    return {"label": o["label"], "sieges": 1, "eur_mois": o["eur_mois"]}
+
+
+class _Plans(dict):
+    """PLANS lu à la volée depuis offres.py (le prix suit la config, jamais figé à l'import)."""
+
+    def __getitem__(self, key):
+        if key == "integral":
+            return _plan_integral()
+        if key == PLAN_INTERNE:
+            return {"label": "Interne", "sieges": 99, "eur_mois": None}
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+
+PLANS = _Plans()
 
 
 def ensure_tables(db: Session) -> None:
@@ -520,12 +545,11 @@ def creer_admin(db: Session, email: str, password: str) -> int:
     """Le compte ADMIN de Vic — hors plans, jamais suspendu par Stripe."""
     ensure_tables(db)
     email = _norm_email(email)
-    # M-C (F4) : 'pro' n'est PAS un plan connu (PLANS = integral | illimite). L'admin a 99 sièges
-    # et vit hors facturation → 'illimite' (plan valide le plus haut). N'affecte pas les gardes
-    # admin (rôle 'admin', jamais suspendu par Stripe). Les admins déjà en base à 'pro' restent
-    # inchangés (pas de migration ici) mais ne se re-créent jamais avec une valeur inconnue.
+    # E1 : l'admin vit HORS facturation → plan 'interne' (aucune offre, aucun prix affiché,
+    # quota non borné). N'affecte pas les gardes admin (rôle 'admin', jamais suspendu par Stripe).
     cid = db.execute(text("INSERT INTO comptes (nom, plan, statut, sieges)"
-                          " VALUES ('LABUSE (admin)', 'illimite', 'actif', 99) RETURNING id")).scalar()
+                          " VALUES ('LABUSE (admin)', :p, 'actif', 99) RETURNING id"),
+                     {"p": PLAN_INTERNE}).scalar()
     uid = db.execute(text(
         "INSERT INTO utilisateurs (compte_id, email, hash, role, statut, cgv_acceptees_at, cgv_version)"
         " VALUES (:c, :e, :h, 'admin', 'actif', now(), :v) RETURNING id"),
@@ -537,7 +561,7 @@ def creer_admin(db: Session, email: str, password: str) -> int:
 def creer_admin_invitation(db: Session, email: str, nom: str | None = None) -> dict:
     """VPS · AC-020 — admin NOMINATIF par invitation (le mot de passe se pose via le lien
     /invitation, jamais en argv ni au clavier de l'opérateur). Idempotent :
-    - email inconnu → compte interne ACTIF (hors facturation, plan 'illimite' comme
+    - email inconnu → compte interne ACTIF (hors facturation, plan 'interne' comme
       `creer_admin`) + utilisateur rôle admin en statut 'invite' + lien d'invitation ;
     - email connu → PROMOTION au rôle admin ; si le mot de passe n'est pas encore posé,
       un lien d'invitation frais est (re)émis, sinon aucun lien (compte déjà opérationnel).
@@ -568,8 +592,8 @@ def creer_admin_invitation(db: Session, email: str, nom: str | None = None) -> d
         return {"utilisateur_id": uid, "compte_id": cid, "email": email, "promu": promu,
                 "lien": lien, "expire_at": exp.isoformat() if exp else None}
     cid = db.execute(text("INSERT INTO comptes (nom, plan, statut, sieges)"
-                          " VALUES (:n, 'illimite', 'actif', 1) RETURNING id"),
-                     {"n": nom or f"LABUSE (admin {email})"}).scalar()
+                          " VALUES (:n, :p, 'actif', 1) RETURNING id"),
+                     {"n": nom or f"LABUSE (admin {email})", "p": PLAN_INTERNE}).scalar()
     tok = _token()
     exp = datetime.now(timezone.utc) + timedelta(days=7)
     uid = db.execute(text(

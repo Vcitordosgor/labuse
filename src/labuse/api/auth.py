@@ -41,7 +41,8 @@ DEFI_2FA_ESSAIS_MAX = 5        # tentatives par défi ; épuisé → défi inval
 _PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/login/2fa", "/logout", "/favicon.ico",
            "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
            "/onboarding/retour", "/onboarding/paiement", "/stripe/webhook", "/guide",
-           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger",
+           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger", "/api/offres",
+           "/parcours.js", "/flash-retour.js",   # E3 : JS du parcours servi same-origin (CSP-safe)
            # M21-B3 : désinscription du digest e-mail en 1 clic (lien public jeton — sécurité = le jeton).
            "/events/desabonner"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.

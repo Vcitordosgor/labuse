@@ -118,9 +118,12 @@ class Settings(BaseSettings):
     courrier_marge: float = 1.5              # prix client = coût prestataire × marge
     courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
 
+    # ── Offre INTÉGRAL — abonnement mensuel (parcours d'entrée · E1) ──
+    # Prix mensuel TTC. SOURCE DE VÉRITÉ UNIQUE du prix Intégral : lu par src/labuse/offres.py,
+    # jamais réécrit en dur ailleurs (front compris). Changer le prix = changer CETTE ligne.
+    integral_prix_eur_mois: int = 349
     # ── Module Flash : rapport parcelle à l'unité (mandat module-flash) ──
-    # Prix TTC affiché/facturé. La valeur de LANCEMENT est décidée par Vic au moment de
-    # créer le produit Stripe — 79 € est la suggestion du mandat, jamais une décision.
+    # Prix TTC affiché/facturé. SOURCE DE VÉRITÉ UNIQUE du prix Flash (lu par offres.py).
     flash_price_eur: float = 79.0
     # Stockage local des PDF générés (relatif à la racine du dépôt si non absolu).
     flash_storage_dir: str = "outputs/flash"

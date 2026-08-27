@@ -835,6 +835,11 @@ export interface AdminLicences {
   brevo: { api: boolean; templates: Record<string, boolean> }
   partage_seuil: number
 }
+// E1 — offres servies par le serveur (source de vérité unique) : le front n'écrit AUCUN prix en dur.
+export interface Offre { cle: string; label: string; eur_mois?: number; eur?: number; engagement_mois?: number; periodicite: string; validite_lien_jours?: number }
+export interface Offres { integral: Offre; flash: Offre }
+export const getOffres = () => j<Offres>('/api/offres')
+
 export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
 export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>
   j<{ ok: boolean; lien: string; compte_id: number; expire_at: string }>('/admin/licences/creer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })

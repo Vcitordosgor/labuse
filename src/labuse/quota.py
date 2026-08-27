@@ -2,10 +2,10 @@
 
 Plafonds QUOTIDIENS par plan, tous documents abonné confondus (Dossier, Financier,
 Argumentaire, Potentiel, Lettre) :
-  · Intégral 349 €  →  30 exports / jour ;
-  · Illimité 499 €  → 200 exports / jour — PLAFOND D'USAGE LOYAL, à mentionner en CGV
-    (gate légal côté Vic : le produit affiche déjà le message, la CGV doit suivre).
-Le FLASH 79 € est À L'UNITÉ, HORS quota (ni compté, ni bloqué — il a son propre paiement).
+  · Intégral  →  30 exports / jour (plafond d'usage loyal) ;
+  · interne   →  non borné (comptes admin/système, hors facturation).
+Le FLASH (paiement unique) est À L'UNITÉ, HORS quota (ni compté, ni bloqué — paiement propre).
+E1 (27/08) : l'ancienne offre « Illimité 499 € » est RETIRÉE (offre fantôme, jamais vendue).
 
 Mécanique : compteur dans `usage_compteurs` (jour, sujet, kind, n) — la table de
 protection EXISTANTE, aucun schéma nouveau. sujet = "cpt<compte_id>", kind = "export".
@@ -14,7 +14,7 @@ Fail-safe PILOTE : requête SANS session utilisateur (dev, golden, QA, rideau pi
 comptes réels connectés (cookie « u.<token> », vérité en base).
 
 Dépassement : 429 avec un MESSAGE HONNÊTE (jamais une erreur technique brute) —
-le plafond, l'offre, quand ça reprend, et les alternatives (Illimité / Flash).
+le plafond, l'offre, quand ça reprend, et l'alternative Flash (hors quota).
 
 M26 (quota agentique, RAPPORTÉ non codé) : même compteur, kind="agent" + plafond
 dédié dans PLAFONDS_JOUR — `porte(request, db, kind="agent")` suffira, aucun
@@ -25,10 +25,14 @@ from __future__ import annotations
 from fastapi import HTTPException, Request
 from sqlalchemy import text
 
-#: plafonds quotidiens par plan (comptes.PLANS) — termes commerciaux M23-E.
-PLAFONDS_JOUR: dict[str, int] = {"integral": 30, "illimite": 200}
+#: plafond « non borné » des comptes internes (admin/système, hors facturation).
+_NON_BORNE = 10**9
 
-#: plan inconnu/legacy → traité comme Intégral (jamais un accès illimité par accident).
+#: plafonds quotidiens par plan. Seul Intégral est commercial ; 'interne' n'est pas borné.
+#: 'illimite' est un ALIAS LEGACY (comptes admin d'avant E1 encore à ce plan en base) → interne.
+PLAFONDS_JOUR: dict[str, int] = {"integral": 30, "interne": _NON_BORNE, "illimite": _NON_BORNE}
+
+#: plan inconnu/legacy → traité comme Intégral (jamais un accès non borné par accident).
 PLAFOND_DEFAUT = 30
 
 
@@ -49,14 +53,10 @@ def _compte(request: Request, db) -> dict | None:
 
 def message_depassement(plan: str, plafond: int) -> str:
     """Message HONNÊTE de dépassement — pas une erreur technique brute."""
-    if plan == "illimite":
-        return (f"Plafond d'usage loyal atteint : {plafond} exports aujourd'hui "
-                f"(offre Illimité — plafond prévu par les CGV). Vos exports reprennent "
-                f"demain. Un besoin ponctuel plus large ? Écrivez-nous : contact@labuse.immo.")
-    return (f"Plafond quotidien de votre offre atteint : {plafond} exports aujourd'hui "
-            f"(offre Intégral). Vos exports reprennent demain. Besoin de plus ? "
-            f"L'offre Illimité (499 €/mois) porte le plafond d'usage loyal à 200/jour ; "
-            f"le rapport Flash à l'unité reste disponible, hors quota.")
+    return (f"Plafond quotidien d'usage loyal atteint : {plafond} exports aujourd'hui "
+            f"(offre Intégral). Vos exports reprennent demain. Le rapport Flash à l'unité "
+            f"reste disponible, hors quota. Un besoin ponctuel plus large ? "
+            f"Écrivez-nous : contact@labuse.immo.")
 
 
 def porte_export(request: Request, db, *, kind: str = "export") -> dict:

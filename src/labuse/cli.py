@@ -2754,15 +2754,38 @@ def refresh_dvf_cmd() -> None:
 
 @app.command("stripe-provisionne")
 def stripe_provisionne_cmd() -> None:
-    """PREMIER EURO · E2 — crée produits (Indé 290 €/Pro 490 €) + coupon founding −50 % forever
-    chez Stripe (idempotent par lookup_key) et affiche les IDs à poser en .env. Mode = celui de
-    la clé (sk_test_ = test)."""
+    """Crée les deux produits Stripe (Intégral 349 €/mois récurrent · Flash 79 € paiement unique)
+    idempotemment (par lookup_key) et affiche les IDs à poser en .env. Prix = offres.py (source
+    unique). Mode = celui de la clé (sk_test_ = test, sk_live_ = live)."""
     from .facturation import provisionner
 
     ids = provisionner()
     typer.echo("IDs Stripe (à poser en .env — la source de vérité de l'environnement) :")
     for k, v in ids.items():
         typer.echo(f"  {k.upper()}={v}")
+
+
+@app.command("stripe-verifie")
+def stripe_verifie_cmd() -> None:
+    """E5 — VÉRIFIE (lecture seule) que les Prix Stripe pointés par .env correspondent EXACTEMENT
+    aux offres affichées (Intégral 349 €/mois, Flash 79 € unique). À lancer contre le mode TEST
+    ET le mode LIVE (une clé à la fois). Sort non-zéro si un écart existe — ne modifie jamais Stripe."""
+    from .facturation import verifier_prix_stripe
+
+    lignes = verifier_prix_stripe()
+    tout_ok = True
+    for r in lignes:
+        if r.get("ok"):
+            typer.echo(f"  ✓ {r['offre']:9} {r['stripe_eur']} € {r['recurrence']} (= l'affiché)")
+        else:
+            tout_ok = False
+            typer.echo(f"  ✗ {r['offre']:9} ÉCART — {r.get('detail')}")
+    if tout_ok:
+        typer.echo("✓ Stripe et l'app affichent le MÊME prix.")
+    else:
+        typer.echo("✗ Écart Stripe ⇄ app — corrigez le price_id en .env ou re-provisionnez "
+                   "(NE PAS modifier un prix LIVE sans arbitrage Vic).")
+        raise typer.Exit(1)
 
 
 @app.command("compte-invite")
@@ -2831,8 +2854,15 @@ def creer_admin_cmd(
     if r["lien"]:
         typer.echo(f"LIEN D'INVITATION (pose le mot de passe ; expire {r['expire_at'][:10]}) :")
         typer.echo(f"  {r['lien']}")
+        typer.echo("  → l'écran d'activation admin (sans paiement) demande un mot de passe ;")
+        typer.echo("    la double authentification (2FA) s'enrôle à la première connexion sur /login.")
     else:
-        typer.echo("mot de passe déjà posé — rien à envoyer (reset : `labuse compte-reset-lien` au besoin)")
+        # E2 — cas « déjà promu, mot de passe posé » (Vic ce soir) : rien à (re)poser, la porte
+        # est /login et la 2FA s'enrôle au premier passage admin. Le reset reste un filet.
+        typer.echo("mot de passe déjà posé — ce compte est prêt.")
+        typer.echo("  → connectez-vous sur /login : la double authentification (2FA) s'enrôle")
+        typer.echo("    automatiquement au premier passage administrateur (QR + codes de secours).")
+        typer.echo("  (mot de passe oublié ? `labuse compte-reset-lien " + email + "`)")
 
 
 @app.command("compte-suspend")

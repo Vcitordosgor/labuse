@@ -1,9 +1,10 @@
-"""PREMIER EURO · E3/E4 — pages serveur : onboarding founding + légales + webhook Stripe.
+"""Pages serveur du PARCOURS D'ENTRÉE : invitation/activation, légales, Flash, webhook Stripe.
 
-Parcours (décisions Vic) : invitation (lien signé, email pré-rempli) → mot de passe sur la
-façade Coffre → acceptation CGV (checkbox HORODATÉE + version, loggée) → Stripe Checkout
-(founding appliqué, montant visible côté Stripe) → retour → compte actif au webhook.
-Pages rendues serveur dans la nuit Coffre — la façade React n'est pas touchée.
+Parcours CLIENT (décisions Vic) : invitation (lien signé, email pré-rempli) → mot de passe →
+acceptation CGV (checkbox HORODATÉE + version, loggée) → Stripe Checkout (Intégral 349 €/mois,
+montant visible côté Stripe) → retour → compte actif au webhook. Parcours ADMIN (E2) : écran
+d'activation dédié, sans paiement. Deux offres, source unique `offres.py` (plus de « founding »).
+Pages rendues serveur (façade React non touchée) ; leur JS est servi same-origin (E3, CSP-safe).
 """
 from __future__ import annotations
 
@@ -26,6 +27,99 @@ def get_db():
     yield from _g()
 
 
+@router.get("/api/offres", include_in_schema=False)
+def api_offres():
+    """Source de vérité des offres, servie au front (E1) : le JSX n'écrit AUCUN prix en dur,
+    il lit d'ici. `{"integral": {...349...}, "flash": {...79...}}`."""
+    from ..offres import offres_publiques
+    return JSONResponse(offres_publiques())
+
+
+# E3 — le JS des pages du parcours vit ICI, servi comme fichier same-origin : la CSP de
+# production (`script-src 'self'`) autorise un script externe même-origine mais BLOQUE tout
+# script inline ET tout gestionnaire `onchange=`/`oninput=`. C'est la racine du bug constaté
+# (case CGV cochée, bouton resté inactif : le toggle inline ne s'exécutait jamais en prod).
+# Ici : zéro inline, handlers posés par addEventListener → fonctionne sous la CSP.
+_PARCOURS_JS = """
+(function(){
+  function strength(v){
+    var m=document.getElementById('meter'), l=document.getElementById('rules');
+    if(!l)return; var s=0;
+    if(v.length>=10)s++; if(/[0-9]/.test(v)&&/[a-z]/i.test(v))s++; if(/[^a-z0-9]/i.test(v)&&v.length>=12)s++;
+    if(m)m.className='meter '+(s>=3?'fort':s==2?'moyen':s==1?'faible':'');
+    l.textContent=!v?'10 caract\\u00e8res minimum \\u2014 m\\u00e9langez lettres, chiffres et symboles.':
+      s>=3?'Robuste \\u2014 parfait.':s==2?'Correct \\u2014 un symbole le rendrait robuste.':'Trop simple \\u2014 allongez-le.';
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var pw=document.querySelector('[data-strength]');
+    if(pw){ pw.addEventListener('input', function(){ strength(pw.value); }); }
+    // Case CGV \\u2192 retour visuel (le bouton reste TOUJOURS cliquable : la validation native
+    // `required` + le serveur bloquent une soumission sans CGV \\u2014 jamais de cul-de-sac).
+    var cgv=document.getElementById('cgv'), err=document.getElementById('cgverr');
+    if(cgv&&err){ var sync=function(){ err.style.display=cgv.checked?'none':'block'; };
+      cgv.addEventListener('change', sync); sync(); }
+  });
+})();
+"""
+
+
+@router.get("/parcours.js", include_in_schema=False)
+def parcours_js():
+    from fastapi.responses import Response
+    return Response(_PARCOURS_JS, media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
+# E3 — le POLLING de la page /flash/retour (attente de génération du PDF) était lui aussi un
+# script INLINE : bloqué par la CSP en prod → l'acheteur restait sur « votre rapport arrive… »
+# sans jamais voir le bouton de téléchargement. Porté en fichier same-origin (session_id lu
+# dans un data-attribut, jamais injecté dans le JS).
+_FLASH_RETOUR_JS = """
+(function(){
+  var root=document.querySelector('[data-flash-session]');
+  if(!root)return;
+  var sid=root.getAttribute('data-flash-session');
+  var DL='<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(92,230,161,.32)">\\u2193 T\\u00e9l\\u00e9charger mon rapport PDF</a>';
+  var tries=0, MAX_TRIES=60;
+  function poll(){
+    fetch('/flash/statut?session_id='+encodeURIComponent(sid)).then(function(r){return r.json();}).then(function(d){
+      var el=document.getElementById('etat');
+      if(d.statut==='generee'&&d.lien){
+        document.getElementById('mark').innerHTML='\\u2713';
+        document.getElementById('hero').textContent='Votre rapport est pr\\u00eat';
+        document.getElementById('sub').textContent='paiement re\\u00e7u \\u00b7 votre PDF est g\\u00e9n\\u00e9r\\u00e9';
+        el.innerHTML=DL.replace('#L', d.lien)+'<p style="font-size:11.5px;color:var(--dim);margin-top:16px;line-height:1.6">Lien valable 30 jours \\u2014 conservez le PDF. Re\\u00e7u et facture dans votre e-mail Stripe.</p>';
+        return;
+      }
+      if(d.statut==='erreur'){
+        el.innerHTML='<p style="color:var(--err)">La g\\u00e9n\\u00e9ration a rencontr\\u00e9 un probl\\u00e8me \\u2014 elle va \\u00eatre retent\\u00e9e automatiquement. Si rien ne vient, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe : le rapport vous sera fourni.</p>';
+      }
+      relance();
+    }).catch(function(){ relance(); });
+  }
+  function relance(){
+    tries++;
+    if(tries>=MAX_TRIES){
+      document.getElementById('mark').innerHTML='!';
+      document.getElementById('hero').textContent='Votre paiement est bien confirm\\u00e9';
+      document.getElementById('sub').textContent='la g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu';
+      document.getElementById('etat').innerHTML='<p style="font-size:12.5px;line-height:1.6">Votre paiement est confirm\\u00e9 chez Stripe \\u2014 rien n\\'est perdu. La g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas de doute, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe, le rapport vous sera fourni.</p>';
+      return;
+    }
+    setTimeout(poll, 2000);
+  }
+  document.addEventListener('DOMContentLoaded', poll);
+})();
+"""
+
+
+@router.get("/flash-retour.js", include_in_schema=False)
+def flash_retour_js():
+    from fastapi.responses import Response
+    return Response(_FLASH_RETOUR_JS, media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
@@ -40,52 +134,76 @@ def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: boo
 
 @router.get("/invitation", include_in_schema=False)
 def invitation_page(token: str = "", db: Session = Depends(get_db)):
-    from ..comptes import PLANS, valider_invitation
+    from ..comptes import PLAN_INTERNE, valider_invitation
+    from ..offres import offre_integral
     inv = valider_invitation(db, token) if token else None
     if not inv:
         return HTMLResponse(_page("invitation", """
 <h1>Invitation introuvable</h1><p class="sous">lien expiré ou déjà utilisé</p>
 <p style="text-align:center;font-size:12.5px">Demandez un nouveau lien à votre contact LABUSE —
 les invitations expirent après 7 jours.</p>"""), status_code=404)
-    p = PLANS.get(inv["plan"], PLANS["integral"])
+    # E2 — un compte INTERNE (admin nominatif, `labuse creer-admin`) ne passe JAMAIS par le
+    # tunnel client (offre, prix, CGV commerciales, Stripe) : écran d'activation dédié.
+    if inv["plan"] == PLAN_INTERNE:
+        return HTMLResponse(_page("activer votre accès administrateur", f"""
+<h1>Activer votre accès administrateur</h1>
+<p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est validé par l'invitation.
+Choisissez un mot de passe : à votre première connexion, LABUSE vous fera activer la double authentification (QR + codes de secours).</p>
+<form method="post" action="/invitation">
+<input type="hidden" name="token" value="{html.escape(token)}">
+<input type="hidden" name="interne" value="1">
+<label for="email">E-mail</label>
+<div class="field"><input id="email" type="email" autocomplete="email" value="{html.escape(inv['email'])}" disabled
+  aria-label="Votre e-mail (fixé par l'invitation)"></div>
+<label for="password">Choisissez un mot de passe</label>
+<div class="field"><input id="password" name="password" type="password" minlength="10" required
+  autocomplete="new-password" autofocus aria-describedby="rules" data-strength></div>
+<div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
+<button type="submit" id="cta">Créer mon accès administrateur →</button>
+</form>
+<p class="note">Accès interne LABUSE — aucun paiement, aucun abonnement.</p>
+<script src="/parcours.js" defer></script>""", pied=False))
+    # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py).
+    p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement 12 mois</p>
+<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement {p['engagement_mois']} mois</p>
 <p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
-<form method="post" action="/invitation" novalidate>
+<form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">E-mail</label>
 <div class="field"><input id="email" type="email" autocomplete="email" value="{html.escape(inv['email'])}" disabled
   aria-label="Votre e-mail (fixé par l'invitation)"></div>
 <label for="password">Choisissez un mot de passe</label>
 <div class="field"><input id="password" name="password" type="password" minlength="10" required
-  autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
+  autocomplete="new-password" autofocus aria-describedby="rules" data-strength></div>
 <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
-<div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true" onchange="labCgv()">
+<div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
 <label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a>.</label></div>
-<button type="submit" id="cta" disabled aria-disabled="true">Continuer vers le paiement →</button>
-<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="text-align:center;margin-top:8px">Vous devez d'abord accepter les conditions générales pour continuer.</p>
+<button type="submit" id="cta">Continuer vers le paiement →</button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px">Cochez les conditions générales pour continuer.</p>
 </form>
 <p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
-<script>
-// M18-A2 : le bouton reste INACTIF tant que les CGV ne sont pas cochées (plus de cul-de-sac).
-function labCgv(){{var c=document.getElementById('cgv'),b=document.getElementById('cta'),e=document.getElementById('cgverr');var on=c.checked;b.disabled=!on;b.setAttribute('aria-disabled',String(!on));e.style.display=on?'none':'block';}}
-labCgv();
-</script>""",
-                        head=coffre_ui.STRENGTH_JS))
+<script src="/parcours.js" defer></script>""", pied=True))
 
 
 @router.post("/invitation", include_in_schema=False)
 async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     from urllib.parse import parse_qs
 
-    from ..comptes import activer_par_invitation, audit
+    from ..comptes import PLAN_INTERNE, activer_par_invitation, audit, valider_invitation
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
     token = (q.get("token") or [""])[0]
     password = (q.get("password") or [""])[0]
     cgv = (q.get("cgv") or [""])[0] == "oui"
-    if not cgv:
+    # E2 — un compte interne (admin) n'a pas de CGV commerciales : la case n'existe pas sur son
+    # écran. On confirme via le PLAN de l'invitation (source serveur), jamais via le champ caché
+    # 'interne' seul (non falsifiable : un client ne peut pas se faire passer pour un interne).
+    inv0 = valider_invitation(db, token) if token else None
+    est_interne = bool(inv0 and inv0["plan"] == PLAN_INTERNE)
+    if not cgv and not est_interne:
         # M18-A2 : plus de cul-de-sac — un retour vers le formulaire existe toujours.
         return HTMLResponse(_page("conditions", f"<h1>Conditions requises</h1>"
                                   f"<p class='sous'>vous devez d'abord accepter les conditions générales pour continuer</p>"
@@ -133,21 +251,21 @@ vous sera proposé.</p>
 
 @router.get("/onboarding/paiement", include_in_schema=False)
 def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
-    from ..comptes import PLANS
+    from ..offres import offre_integral
     cid = coffre_ui.pay_cid(t)
     if cid is None:
         return HTMLResponse(_page("paiement", "<h1>Lien expiré</h1><p class='sub'>reprenez "
                                   "depuis la porte</p><p style='text-align:center'>"
                                   "<a href='/login'>se connecter</a></p>"), status_code=400)
-    p = PLANS["integral"]
+    p = offre_integral()
     return HTMLResponse(_page("votre abonnement", f"""
 <h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
 <div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
-<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement 12 mois</b>, facturé mensuellement.</div></div>
+<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement {p['engagement_mois']} mois</b>, facturé mensuellement.</div></div>
 <div class="trust" role="list">
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant 12 mois, puis reconduction par périodes de 12 mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant {p['engagement_mois']} mois, puis reconduction par périodes de {p['engagement_mois']} mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
@@ -206,7 +324,7 @@ def reset_page(token: str = ""):
         # M18-A6 : vrai self-service — un formulaire, plus « écrivez à votre contact ».
         return HTMLResponse(_page("mot de passe oublié", """
 <h1>Mot de passe oublié ?</h1><p class="sub">on vous envoie un lien de réinitialisation</p>
-<form method="post" action="/reset-demande" novalidate>
+<form method="post" action="/reset-demande">
 <label for="email">Votre e-mail</label>
 <div class="field"><input id="email" name="email" type="email" required autofocus
   autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"
@@ -215,16 +333,16 @@ def reset_page(token: str = ""):
 <p class="linkrow"><a href="/login">← Retour à la connexion</a></p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>
-<form method="post" action="/reset" novalidate>
+<form method="post" action="/reset">
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="password">Nouveau mot de passe</label>
 <div class="field"><input id="password" name="password" type="password" minlength="10" required
-  autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
+  autocomplete="new-password" autofocus aria-describedby="rules" data-strength></div>
 <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum.</div>
 <button type="submit">Enregistrer</button></form>
-<p class="note">Par sécurité, toutes vos sessions ouvertes seront fermées.</p>""",
-                        head=coffre_ui.STRENGTH_JS))
+<p class="note">Par sécurité, toutes vos sessions ouvertes seront fermées.</p>
+<script src="/parcours.js" defer></script>"""))
 
 
 def _envoyer_reset_email(email: str, lien: str) -> None:
@@ -335,7 +453,9 @@ _EDITEUR = ("Victor L. — entrepreneur individuel (EI) · Saint-Paul, Île de L
 
 @router.get("/cgv", include_in_schema=False)
 def cgv_page():
+    from ..offres import offre_flash, offre_integral
     s = get_settings()
+    oi, of = offre_integral(), offre_flash()
     return HTMLResponse(_page("conditions générales", f"""
 <div class="legal">
 <h1>Conditions générales de vente et d'utilisation</h1>
@@ -367,9 +487,9 @@ prestataire de paiement) ou d'usage abusif (extraction massive, revente de donn�
 partage d'accès, contournement technique).</p>
 
 <h2>4. Prix et paiement</h2>
-<p><b>Intégral</b> : abonnement mensuel de 349 € par licence, accès complet au service.
-<b>Flash</b> : 79 € par rapport — paiement unique donnant droit à UN rapport PDF portant
-sur UNE parcelle, téléchargeable pendant 30 jours (article 4 bis). Prix hors taxes le cas
+<p><b>Intégral</b> : abonnement mensuel de {oi['eur_mois']} € par licence, accès complet au service.
+<b>Flash</b> : {of['eur']} € par rapport — paiement unique donnant droit à UN rapport PDF portant
+sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis). Prix hors taxes le cas
 échéant — le régime de TVA applicable figure sur les factures. Paiement par carte via
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
 et reçus émis par Stripe.</p>
@@ -383,8 +503,8 @@ l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec t
 génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
 
 <h2>5. Durée, reconduction et résiliation</h2>
-<p>L'abonnement est souscrit pour une <b>durée ferme de 12 mois</b> à compter de son activation, facturé
-mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de 12 mois</b>,
+<p>L'abonnement est souscrit pour une <b>durée ferme de {oi['engagement_mois']} mois</b> à compter de son activation, facturé
+mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de {oi['engagement_mois']} mois</b>,
 sauf dénonciation par le client au plus tard <b>un mois avant la date anniversaire</b> (depuis son espace
 ou par e-mail à son contact LABUSE).</p>
 <!-- M-P (point 5) — À SIGNALER À L'AVOCAT : L. 215-1 est un article du code de la CONSOMMATION,
@@ -395,7 +515,7 @@ au plus tôt trois mois et au plus tard un mois avant le terme de chaque périod
 reconduire</b> l'abonnement. À défaut d'information dans ce délai, le client peut mettre fin gratuitement à
 la reconduction à tout moment à compter de la date de reconduction, les sommes correspondant à la période
 postérieure lui étant remboursées.</p>
-<p>Pendant la période d'engagement de 12 mois, l'abonnement n'est pas résiliable par anticipation, sauf
+<p>Pendant la période d'engagement de {oi['engagement_mois']} mois, l'abonnement n'est pas résiliable par anticipation, sauf
 motif légitime (cessation d'activité dûment justifiée, manquement de LABUSE à ses obligations). LABUSE peut
 résilier avec un préavis de 30 jours ; en cas d'arrêt du service, les sommes de la période non servie sont
 remboursées.</p>
@@ -472,13 +592,14 @@ mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du servi
 @router.get("/moi", include_in_schema=False)
 def moi(request: Request, db: Session = Depends(get_db)):
     from .auth import COOKIE
+    from ..offres import offre_integral
     from ..plans import plan_courant
     # M16-C : le plan RÉEL courant (stub env-driven aujourd'hui — plan_par_compte=False tant que le
     # mandat Auth & Plans n'a pas branché le palier par compte en base ; on ne fabrique aucun « Pro »).
     plan = plan_courant()
-    plan_bloc = {"plan": plan,
-                 "plan_label": {"essentiel": "Essentiel", "integral": "Intégral"}.get(plan, plan.capitalize()),
-                 "plan_par_compte": False}
+    # E1/E6 — libellé depuis la source unique (offres.py). 'interne' = admin/système (hors offre).
+    plan_label = {"integral": offre_integral()["label"], "interne": "Interne"}.get(plan, plan.capitalize())
+    plan_bloc = {"plan": plan, "plan_label": plan_label, "plan_par_compte": False}
     tok = request.cookies.get(COOKIE) or ""
     if not tok.startswith("u."):
         return {"mode": "pilote", **plan_bloc}   # session pilote (pré-bascule) — pas de compte
@@ -538,6 +659,8 @@ lit en trois minutes.</p>
 
 @router.get("/flash", include_in_schema=False)
 def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
+    from ..offres import offre_flash
+    of = offre_flash()
     note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
     parcelle = None
     if idu and len(idu) == 14:
@@ -555,20 +678,20 @@ construire), risques (Géorisques, PPR, littoral), marché DVF du secteur, permi
 <b style="color:var(--txt)">potentiel de transformation</b> — chaque donnée avec sa source (Sourcé /
 Estimé) et son millésime.</div></div>
 <div class="trust" role="list">
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable 30 jours.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable {of['validite_lien_jours']} jours.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M4 10l4 4 8-9"/></svg> Ce qu'une simple fiche cadastrale ne dit pas : <b style="color:var(--txt)">les règles PLU traduites</b> et le potentiel constructible chiffré.</div>
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement unique — <b style="color:var(--txt)">aucune donnée de carte</b> ne transite par LABUSE.</div>
 </div>
-<div class="recap" style="margin-top:6px"><div class="prix">79 € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
+<div class="recap" style="margin-top:6px"><div class="prix">{of['eur']} € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
-<button type="submit">Payer 79 € et recevoir mon rapport →</button></form>
+<button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
 <p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", pied=False))
+conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", pied=False))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · 79 €</p>
+<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · {of['eur']} €</p>
 {note_annule}{introuvable}
 <div class="recap" style="margin-bottom:16px">
 <div style="font-size:12.5px;color:var(--txt);line-height:1.65"><b style="color:var(--hi)">Ce que vous
@@ -612,53 +735,12 @@ débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_co
 @router.get("/flash/retour", include_in_schema=False)
 def flash_retour(session_id: str = ""):
     return HTMLResponse(_page("votre rapport", f"""
-<div class="big"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
+<div class="big" data-flash-session="{html.escape(session_id)}"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
 <h1 id="hero" style="font-size:17px">Votre rapport arrive…</h1>
 <p class="sub" id="sub">paiement reçu · nous assemblons votre PDF</p></div>
 <div id="etat" role="status" aria-live="polite" style="text-align:center;margin-top:12px;font-size:13px;color:var(--mut)">
 Quelques secondes — le téléchargement s'affiche ici.</div>
-<script>
-const sid = {session_id!r};
-// M18-B3 : « votre rapport est prêt » = la vedette ; le bouton PDF, gros et rempli, saute aux yeux.
-const DL = '<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(92,230,161,.32)">&#8595; Télécharger mon rapport PDF</a>';
-// M145 C.2 — aucun spinner infini sur un paiement encaissé : après ~2 min (60 × 2 s), on DIT
-// l'incident honnêtement (paiement confirmé, lien par e-mail / reçu Stripe) et on cesse de sonder.
-let tries = 0; const MAX_TRIES = 60;
-async function poll() {{
-  try {{
-    const r = await fetch('/flash/statut?session_id=' + encodeURIComponent(sid));
-    const d = await r.json();
-    const el = document.getElementById('etat');
-    if (d.statut === 'generee' && d.lien) {{
-      document.getElementById('mark').innerHTML = '✓';   // spinner → coche (état PRÊT)
-      document.getElementById('hero').textContent = 'Votre rapport est prêt';
-      document.getElementById('sub').textContent = 'paiement reçu · votre PDF est généré';
-      el.innerHTML = DL.replace('#L', d.lien) +
-        '<p style="font-size:11.5px;color:var(--dim);margin-top:16px;line-height:1.6">Lien valable 30 jours — ' +
-        'conservez le PDF. Reçu et facture dans votre e-mail Stripe.</p>';
-      return;
-    }}
-    if (d.statut === 'erreur') {{
-      el.innerHTML = '<p style="color:var(--err)">La génération a rencontré un problème — ' +
-        'elle va être retentée automatiquement. Si rien ne vient, écrivez à votre contact ' +
-        'LABUSE avec votre reçu Stripe : le rapport vous sera fourni.</p>';
-    }}
-  }} catch (e) {{}}
-  tries++;
-  if (tries >= MAX_TRIES) {{
-    document.getElementById('mark').innerHTML = '!';   // spinner → alerte (on ARRÊTE de tourner)
-    document.getElementById('hero').textContent = 'Votre paiement est bien confirmé';
-    document.getElementById('sub').textContent = 'la génération prend plus de temps que prévu';
-    document.getElementById('etat').innerHTML = '<p style="font-size:12.5px;line-height:1.6">' +
-      'Votre paiement est confirmé chez Stripe — rien n\\'est perdu. La génération prend plus de temps ' +
-      'que prévu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas ' +
-      'de doute, écrivez à votre contact LABUSE avec votre reçu Stripe, le rapport vous sera fourni.</p>';
-    return;   // on ne sonde plus — jamais de spinner infini
-  }}
-  setTimeout(poll, 2000);
-}}
-poll();
-</script>"""))
+<script src="/flash-retour.js" defer></script>"""))
 
 
 @router.get("/flash/statut", include_in_schema=False)
