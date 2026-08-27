@@ -57,7 +57,7 @@ CREATE INDEX IF NOT EXISTS ix_pige_biens_commune ON pige_biens (commune);
 CREATE INDEX IF NOT EXISTS ix_pige_biens_idu ON pige_biens (idu);
 CREATE INDEX IF NOT EXISTS ix_pige_biens_statut ON pige_biens (statut);
 
--- pige_annonces : une OCCURRENCE portail d'un bien (LBC + SeLoger → 2 annonces, même bien_id).
+-- pige_annonces : une OCCURRENCE portail d'un bien (deux portails → 2 annonces, même bien_id).
 CREATE TABLE IF NOT EXISTS pige_annonces (
   annonce_id serial PRIMARY KEY,
   bien_id integer NOT NULL REFERENCES pige_biens(bien_id) ON DELETE CASCADE,
