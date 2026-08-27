@@ -122,6 +122,9 @@ CREATE TABLE IF NOT EXISTS pige_clics (
   date_clic timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_pige_clics_bien ON pige_clics (bien_id);
+-- RADAR P1 (V3) : champs extraits sous le seuil de confiance → surlignés « à vérifier » à la
+-- validation (mauve, réservé IA). Idempotent (ADD COLUMN IF NOT EXISTS), heal-safe.
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS a_verifier jsonb DEFAULT '[]'::jsonb;
 """
 
 

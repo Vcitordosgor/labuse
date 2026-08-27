@@ -116,15 +116,16 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
     # étiquettes Sourcé/Estimé/Absent par champ : présent = Sourcé (lu sur la capture) sinon Absent.
     etiquettes = {c: ("source" if faits[c] is not None else "absent") for c in extraction.CHAMPS}
     fraicheur = "publication" if faits.get("date_publication") else "saisie"
+    import json as _json
     db.execute(text(
         "INSERT INTO pige_faits (bien_id, prix, type_bien, pieces, surface_hab, surface_terrain, "
-        " dpe_classe, dpe_conso, dpe_ges, particulier_pro, fraicheur_source, etiquettes) "
-        "VALUES (:b,:prix,:t,:pi,:sh,:st,:dc,:dco,:dg,:pp,:fr, CAST(:et AS jsonb))"),
+        " dpe_classe, dpe_conso, dpe_ges, particulier_pro, fraicheur_source, etiquettes, a_verifier) "
+        "VALUES (:b,:prix,:t,:pi,:sh,:st,:dc,:dco,:dg,:pp,:fr, CAST(:et AS jsonb), CAST(:av AS jsonb))"),
         {"b": bien_id, "prix": faits.get("prix"), "t": faits.get("type"), "pi": faits.get("pieces"),
          "sh": faits.get("surface_hab"), "st": faits.get("surface_terrain"),
          "dc": faits.get("dpe_classe"), "dco": faits.get("dpe_conso"), "dg": faits.get("dpe_ges"),
          "pp": faits.get("particulier_pro"), "fr": fraicheur,
-         "et": __import__("json").dumps(etiquettes)})
+         "et": _json.dumps(etiquettes), "av": _json.dumps(ex["champs_a_verifier"])})
     chemin, h = _stocker_capture(image, media_type)
     db.execute(text(
         "INSERT INTO pige_captures (bien_id, chemin_prive, hash) VALUES (:b, :c, :h)"),

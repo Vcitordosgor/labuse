@@ -72,7 +72,8 @@ def radar_extraction(request: Request) -> dict:
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
             """SELECT b.bien_id, b.commune, b.type_bien, b.rattachement_niveau, f.prix,
-                      f.surface_hab, f.surface_terrain, f.etiquettes, a.portail, a.url_sortante,
+                      f.surface_hab, f.surface_terrain, f.dpe_classe, f.pieces, f.particulier_pro,
+                      f.etiquettes, f.a_verifier, a.portail, a.url_sortante,
                       b.created_at
                FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
                LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
