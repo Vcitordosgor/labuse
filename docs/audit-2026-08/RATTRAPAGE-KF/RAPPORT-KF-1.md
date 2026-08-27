@@ -123,3 +123,56 @@ Tests : `tests/test_taxe_amenagement.py` (config sourcée, abattement, détail, 
 - **KF-004** (K2) — 1 commune sans e-mail dans l'annuaire (affiché « Absent »).
 - **KF-005** (K3) — Taux départemental 974 non confirmé par source officielle : plafond légal 2,5 % servi
   et étiqueté « à confirmer ». Taux communaux non ingérés → saisie utilisateur (jamais de défaut).
+
+---
+
+## CAPTURES DES TROIS LIVRABLES (1440 et 390)
+
+### K1 — Filtres propriétaire (section « Propriétaire » du panneau de recherche)
+| 1440 | 390 |
+|---|---|
+| ![K1 desktop](captures/k1-proprietaire-d.png) | ![K1 mobile](captures/k1-proprietaire-m.png) |
+
+Personne morale oui/indifférent, dénomination avec autocomplétion, SIREN, forme juridique, code APE,
+nombre de dirigeants — chaque valeur alimentée par les facettes réelles, « Source DGFiP · millésime 2025 » affiché.
+
+### K2 — Contacts mairie (fiche commune, exemple Saint-Paul)
+| 1440 | 390 |
+|---|---|
+| ![K2 desktop](captures/k2-mairie-d.png) | ![K2 mobile](captures/k2-mairie-m.png) |
+
+Bloc MAIRIE : adresse, téléphone cliquable, e-mail, site officiel, fiche annuaire, fraîcheur
+« Annuaire de l'administration (service-public.fr) · relevé le 27 août 2026 ». Champ absent = « Absent ».
+
+### K3 — Calculette de taxe d'aménagement (menu Outils)
+| 1440 | 390 |
+|---|---|
+| ![K3 desktop](captures/k3-taxe-d.png) | ![K3 mobile](captures/k3-taxe-m.png) |
+
+Détail ligne par ligne, mention « Estimation indicative », taux communal en saisie obligatoire
+(pas de défaut silencieux), part départementale 2,5 % « à confirmer ».
+
+---
+
+## VÉRIFICATIONS FINALES
+- **Gardées (verrous du mandat)** : `test_filtres_proprietaire.py` (5), `test_mairies.py` (4),
+  `test_taxe_amenagement.py` (6) — **verts**.
+- **Golden dataset** : le contrôleur `qa/golden_check.py` signale une dérive **pré-existante et
+  branch-indépendante**, PAS causée par ce mandat :
+  1. `api.score_v2.run_id` attendu `q_v10_m129`, obtenu `q_v11_m137` — la base sert un run plus récent
+     que la référence versionnée (état DB `p_score_v2_runs`, indépendant du code) ;
+  2. libellé zonage « U » attendu `urbaine / à urbaniser`, obtenu `urbaine` — la correction M128-2-J
+     (« jamais le faux libellé urbaine / à urbaniser », `projets.py:1209`) est **déjà dans la base
+     `ef6d8770`** ; la référence golden n'a pas été re-dumpée depuis.
+  **Preuve d'innocence** : `git diff ef6d8770..HEAD --name-only` ne touche **aucun** fichier de scoring,
+  de zonage, de run ni de verdict (uniquement filtres PM, mairies, taxe, front) → le mandat n'introduit
+  **aucun** écart golden. La ré-ancre du golden (run + libellé M128-2-J) est un geste hors périmètre.
+- **tsc** : 0 erreur. **build** : ✓.
+- **Suite au niveau de la base — prouvé par worktree** : worktree détaché sur la base `ef6d8770`,
+  suite complète = **1846 passed, 0 failed**. Sur la branche = **1862 passed, 0 failed** (+16 : les
+  15 tests du mandat + 1 dé-skippé). Un run intermédiaire avait montré 3 échecs (`test_dashboard`,
+  `test_notifications_m85` ×2) : **flaky d'état** (gel d'accès/`acces_gels` pollué par l'uvicorn de capture
+  tournant en parallèle), NON reproduits une fois l'environnement au repos — ces mêmes tests passent en
+  isolation et en suite propre, à la base comme sur la branche. Aucune régression introduite.
+- **Objets [KF-TEST] purgés** : les tests s'auto-nettoient ; contrôle base `labuse` = 0 ligne `%KF-TEST%`
+  dans `parcels` / `parcelle_personne_morale`. Les 24 mairies réelles sont de la donnée légitime, pas des objets de test.
