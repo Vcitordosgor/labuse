@@ -122,15 +122,8 @@ OISEAU = ('<svg class="oiseau" viewBox="0 0 240 82" fill="#4ADE80" aria-hidden="
           '<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 '
           'C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>')
 
-# barre de robustesse du mot de passe (invitation, reset) — annonce ARIA live
-STRENGTH_JS = """
-<script>
-function labStrength(v){var m=document.getElementById('meter'),l=document.getElementById('rules');
- if(!m)return;var s=0;if(v.length>=10)s++;if(/[0-9]/.test(v)&&/[a-z]/i.test(v))s++;if(/[^a-z0-9]/i.test(v)&&v.length>=12)s++;
- m.className='meter '+(s>=3?'fort':s==2?'moyen':s==1?'faible':'');
- l.textContent=!v?'10 caractères minimum — mélangez lettres, chiffres et symboles.':
-  s>=3?'Robuste — parfait.':s==2?'Correct — un symbole le rendrait robuste.':'Trop simple — allongez-le.';}
-</script>"""
+# E3 — la barre de robustesse du mot de passe vit désormais dans /parcours.js (fichier
+# same-origin, CSP-safe) : l'ancien STRENGTH_JS INLINE était bloqué en prod par script-src 'self'.
 
 LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" '
             'stroke-width="1.5" aria-hidden="true"><rect x="4" y="9" width="12" height="8" rx="1.5"/>'
