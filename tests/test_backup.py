@@ -66,6 +66,50 @@ def test_backup_puis_restore_sur_base_temporaire(engine, tmp_path):
         admin.dispose()
 
 
+def test_vp001_pg_dump_plus_vieux_que_le_serveur_refuse(engine, tmp_path, monkeypatch):
+    """VP-001 (mandat VPS) : un pg_dump d'une majeure plus vieille que le serveur est refusé
+    AVANT d'écrire quoi que ce soit, avec la marche à suivre (LABUSE_PG_BIN_DIR) — au lieu du
+    « server version mismatch » cryptique de pg_dump. Le faux binaire prouve aussi que
+    LABUSE_PG_BIN_DIR est bien la source du binaire quand il est posé."""
+    from labuse import config
+    from labuse.cli import app as cli_app
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake = fake_bin / "pg_dump"
+    fake.write_text("#!/bin/sh\necho 'pg_dump (PostgreSQL) 9.6.24'\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("LABUSE_PG_BIN_DIR", str(fake_bin))
+    config.get_settings.cache_clear()
+    try:
+        res = runner.invoke(cli_app, ["backup-db", "--dir", str(tmp_path / "out")])
+        assert res.exit_code == 2, res.output
+        assert "pg_dump 9" in res.output and "LABUSE_PG_BIN_DIR" in res.output
+        assert not list((tmp_path / "out").glob("*.dump"))  # rien d'écrit
+    finally:
+        monkeypatch.delenv("LABUSE_PG_BIN_DIR", raising=False)
+        config.get_settings.cache_clear()
+
+
+def test_vp001_pg_bin_dir_binaire_absent_erreur_claire(engine, tmp_path, monkeypatch):
+    """LABUSE_PG_BIN_DIR posé sur un dossier SANS pg_dump → erreur claire, pas de repli PATH
+    silencieux (le repli masquerait justement le problème de version que la variable corrige)."""
+    from labuse import config
+    from labuse.cli import app as cli_app
+
+    vide = tmp_path / "vide"
+    vide.mkdir()
+    monkeypatch.setenv("LABUSE_PG_BIN_DIR", str(vide))
+    config.get_settings.cache_clear()
+    try:
+        res = runner.invoke(cli_app, ["backup-db", "--dir", str(tmp_path / "out")])
+        assert res.exit_code == 2, res.output
+        assert "introuvable" in res.output
+    finally:
+        monkeypatch.delenv("LABUSE_PG_BIN_DIR", raising=False)
+        config.get_settings.cache_clear()
+
+
 def test_restore_fichier_invalide_erreur_claire(engine, tmp_path):
     from labuse.cli import app as cli_app
 

@@ -139,6 +139,10 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
     # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
     backup_dir: str = "/var/backups/labuse"
+    # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
+    # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
+    # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).
+    pg_bin_dir: str | None = None
     # DASHBOARD-V1 · MAILS (Brevo) — templates du cycle de vie client, référencés PAR ID en .env
     # (mandat). Absents → mode « non configuré » propre (bouton visible, raison servie, zéro
     # envoi silencieux). Aucun envoi automatique en V1 : l'app rappelle, Vic déclenche.
