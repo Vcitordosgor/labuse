@@ -15,6 +15,7 @@ import typer
 from sqlalchemy import select, text
 
 from . import models
+from .brand import MINT as _MINT  # vert de marque — source unique (config/brand_colors.json)
 from .config import get_settings
 from .db import engine, ensure_postgis, session_scope
 
@@ -682,11 +683,11 @@ def _sensibilite_html(rows: list[dict], cur: dict) -> str:
     """Grille de sensibilité — le support de la DÉCISION Vic (mandat 1.3/1.5)."""
     communes = sorted({c for r in rows for c in r["par_commune"]})
     css = ("body{font:13px -apple-system,sans-serif;background:#0b0f0d;color:#dce8e1;margin:24px}"
-           "h1{font-size:18px;color:#5CE6A1}h2{font-size:14px;color:#8FA69A;margin-top:28px}"
+           "h1{font-size:18px;color:" + _MINT + "}h2{font-size:14px;color:#8FA69A;margin-top:28px}"
            "table{border-collapse:collapse;margin-top:10px}th{font:600 10px monospace;color:#8FA69A;"
            "padding:5px 8px;border-bottom:1px solid #2a352f;text-align:right}td{padding:5px 8px;"
            "border-bottom:1px solid #1a221e;text-align:right;font-family:monospace;font-size:12px}"
-           "tr.cur{background:#0F1A14}tr.cur td{color:#5CE6A1;font-weight:600}"
+           "tr.cur{background:#0F1A14}tr.cur td{color:" + _MINT + ";font-weight:600}"
            ".muted{color:#5a6b62}.neg{color:#E8695A}.pos{color:#4ADE96}")
     ref = rows[0]
     main = "".join(

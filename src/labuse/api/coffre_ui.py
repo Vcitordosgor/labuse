@@ -12,6 +12,12 @@ import hmac
 import html
 import time
 
+# Vert de marque : source unique (config/brand_colors.json, partagée avec le front). Aucun hex de
+# marque en dur ici — les valeurs sont injectées dans le CSS/les logos via ces constantes.
+from ..brand import MINT as _MINT, MINT_DIM as _MINT_DIM, MINT_INK as _MINT_INK, MINT_RGB as _MINT_RGB
+
+_MINT_URI = _MINT.replace("#", "%23")  # pour la favicon inline (data-URI SVG)
+
 
 # ── jeton SIGNÉ de « en instance de paiement » (porte l'écran de bascule Checkout) ──
 # Purement un porteur d'identité entre l'acceptation CGV et le POST de paiement : il ne
@@ -45,13 +51,14 @@ def pay_cid(token: str) -> int | None:
     except (ValueError, TypeError):
         return None
 
-# tokens = variables CSS (mêmes valeurs que la DA de l'app ; on ne pose pas d'hex en dur ailleurs)
-CSS = """
+# tokens = variables CSS (mêmes valeurs que la DA de l'app ; on ne pose pas d'hex en dur ailleurs).
+# Le vert de marque (--mint/-dim/-ink + rgba) est injecté depuis la source unique brand.py.
+CSS = ("""
 :root{
   --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
-  /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau, déjà #4ADE80).
-     --mint = accent/CTA ; --mint-dim = liens & puces (vert plus sobre, ne porte pas de texte). */
-  --mint:#4ADE80; --mint-dim:#2E9E5B; --mint-ink:#04150A; --violet:#B497F0; --or:#C9A961;
+  /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau) : valeurs injectées
+     depuis la source unique brand.py. --mint = accent/CTA ; --mint-dim = liens & puces (vert sobre). */
+  --mint:__MINT__; --mint-dim:__MINTDIM__; --mint-ink:__MINTINK__; --violet:#B497F0; --or:#C9A961;
   --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#55605A; --err:#E8695A; --warn:#D6A64A;
   --r:12px; --ease:cubic-bezier(.2,.7,.2,1);
 }
@@ -91,7 +98,7 @@ input[type=email],input[type=password],input[type=text]{width:100%;min-height:54
   transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 input:disabled{color:var(--mut)}
 input::placeholder{color:var(--dim)}
-input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(92,230,161,.16)}
+input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(__MINTRGB__,.16)}
 /* O2 — le bouton d'action ALLUMÉ (par défaut) : vert menthe, texte sombre, ombre portée. */
 button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;margin-top:24px;
   min-height:56px;background:var(--mint);color:var(--mint-ink);border:0;border-radius:14px;
@@ -146,11 +153,11 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .trust{display:flex;flex-direction:column;gap:9px;margin:18px 0 4px}
 .trust div{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--mut)}
 .trust svg{flex-shrink:0}
-.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(92,230,161,.4);border-radius:999px;
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(__MINTRGB__,.4);border-radius:999px;
   padding:4px 12px;font-size:12px;color:var(--mint)}
 .big{text-align:center;margin:6px 0}
 .big .mark{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px}
-.mark.ok{background:rgba(92,230,161,.12);color:var(--mint);border:1px solid rgba(92,230,161,.4)}
+.mark.ok{background:rgba(__MINTRGB__,.12);color:var(--mint);border:1px solid rgba(__MINTRGB__,.4)}
 .mark.soft{background:rgba(232,180,76,.1);color:var(--warn);border:1px solid rgba(232,180,76,.35)}
 /* S3 — LISIBILITÉ des pages légales : longue lecture, pas un bloc centré étroit.
    Le corps se lit du HAUT (pas centré verticalement comme les écrans courts), colonne ~68ch. */
@@ -175,11 +182,12 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .card{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:480px){.bloc{padding:28px 18px 16px}.recap .prix{font-size:22px}}
-"""
+""".replace("__MINT__", _MINT).replace("__MINTDIM__", _MINT_DIM)
+       .replace("__MINTINK__", _MINT_INK).replace("__MINTRGB__", _MINT_RGB))
 
 # M83 D — logo LABUSE #4ADE80 (nouvelle marque). Constante UNIQUE réutilisée par tout le tunnel auth
 # (auth.py, onboarding.py, app.py 404). Tracé = celui du fichier source frontend/public/marque.
-OISEAU = ('<svg class="oiseau" viewBox="0 0 240 82" fill="#4ADE80" aria-hidden="true">'
+OISEAU = ('<svg class="oiseau" viewBox="0 0 240 82" fill="' + _MINT + '" aria-hidden="true">'
           '<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 '
           'C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>')
 
@@ -212,7 +220,7 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
             # M18 RG-FAV : favicon = logo LABUSE (buse) INLINE en SVG — garanti sur toutes les pages
             # du tunnel, indépendant du service statique /socle/ (les PNG restent en repli).
             f"<link rel=\"icon\" type=\"image/svg+xml\" href=\"data:image/svg+xml,"
-            f"%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 82'%3E%3Cpath fill='%234ADE80' "
+            f"%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 82'%3E%3Cpath fill='{_MINT_URI}' "
             f"d='M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 "
             f"120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z'/%3E%3C/svg%3E\">"
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/socle/favicon-32.png\">"

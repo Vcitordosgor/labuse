@@ -113,6 +113,36 @@ Tests : `tests/test_taxe_amenagement.py` (config sourcée, abattement, détail, 
 
 ---
 
+## K4 — COULEURS DE MARQUE : SOURCE UNIQUE (front + back) + PURGE DU VERT ORPHELIN
+
+**Mesure d'abord.** La couleur *calculée* du bouton de `/invitation` (rendu réel, `getComputedStyle`) :
+`background = rgb(74, 222, 128)` = **`#4ADE80`**, encre `rgb(4,21,10)` = `#04150A`, `--mint = #4ADE80`.
+C'est le **vert de marque** (M83-D « nouvelle marque », aligné sur l'oiseau). Or `partners.py` et `cli.py`
+servaient encore l'**ancien** vert écran **`#5CE6A1`** — un **orphelin** qui avait raté la migration de marque.
+
+**Source unique.** `config/brand_colors.json` porte désormais SEUL le littéral du vert de marque
+(`mint #4ADE80`, `mint_rgb`, `mint_dim`, `mint_ink`). Il est lu par **le front** (`tailwind.config.js`
+via `createRequire` → `mint: brand.mint` ; preuve : `#4ade80` présent dans le CSS *buildé*) **ET par le
+back** (`src/labuse/brand.py` → `MINT`/`MINT_RGB`/`MINT_DIM`/`MINT_INK` + helper `mint_rgba()`).
+
+**Purge de l'orphelin.** Tous les `#5CE6A1` de `partners.py` (packs apporteur, doc API v1, logo, points
+clés, CSS d'impression) et de `cli.py` (grille de sensibilité) repointent sur `brand.MINT`. Le sélecteur
+d'impression `[style*="#5CE6A1"]` est **synchronisé** avec la valeur servie (même source → jamais de dérive).
+Nettoyage de surface étendu à `coffre_ui.py` (le foyer back de la marque : `--mint/-dim/-ink` + tints
+`rgba(92,230,161,…)` orphelines → `rgba(74,222,128,…)`, oiseau + favicon inline) et `onboarding.py`
+(deux halos orphelins). Les couleurs de **statut/tier** (ex. `st-chaude #5CE6A1`) ne sont **pas** de la
+marque et restent intactes dans leur propre palette.
+
+**Verrou anti-hardcode.** `tests/test_brand_colors.py` : (1) `JSON.mint == brand.MINT == "#4ADE80"` ;
+(2) le front lit bien le JSON partagé ; (3) **tokenize** — aucun hex de marque (`#5CE6A1`, `#4ADE80`,
+`92,230,161`) en dur dans une *chaîne* des 4 modules serveur (commentaires exclus) ; (4) le bouton de
+`/invitation` définit `--mint` depuis la source et se peint avec `var(--mint)`. 7/7 verts ; les surfaces
+touchées (partners/parcours/e2e/auth/sans-engagement) 38/38 vertes ; tsc 0 ; build ✓.
+
+Capture : `captures/k4-invitation-bouton.png` (bouton mesuré).
+
+---
+
 ## FINDINGS
 - **KF-001** (K1) — Âge du dirigeant : donnée présente (`age_max_dirigeant`, INPI RNE) mais RGPD sensible
   → drapeau `filtre_age_dirigeant` FERMÉ par défaut, NON activé. Question ouverte avocat (diffusibilité).
@@ -123,6 +153,10 @@ Tests : `tests/test_taxe_amenagement.py` (config sourcée, abattement, détail, 
 - **KF-004** (K2) — 1 commune sans e-mail dans l'annuaire (affiché « Absent »).
 - **KF-005** (K3) — Taux départemental 974 non confirmé par source officielle : plafond légal 2,5 % servi
   et étiqueté « à confirmer ». Taux communaux non ingérés → saisie utilisateur (jamais de défaut).
+- **KF-006** (K4) — Vert de marque orphelin `#5CE6A1` (ancienne menthe écran) encore servi par `partners.py`
+  et `cli.py` après la migration M83-D vers `#4ADE80` → purgé, source unique `config/brand_colors.json`
+  (front + back), verrou anti-hardcode `tests/test_brand_colors.py`. NB : `#5CE6A1` reste LÉGITIME comme
+  couleur de **statut** (`st-chaude`, tiers) — non touchée.
 
 ---
 

@@ -1,4 +1,8 @@
 /** Design system LABUSE — dérivé de docs/design/mockups/ (cf. frontend/DERIVATIONS.md). */
+import { createRequire } from 'module'
+// Source UNIQUE du vert de marque, partagée avec le back (src/labuse/brand.py lit le même JSON).
+const brand = createRequire(import.meta.url)('../config/brand_colors.json')
+
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
@@ -21,7 +25,7 @@ export default {
         line: '#1A211D',
         'line-2': '#212A25',
         // sémantique DA
-        mint: '#4ADE80', 'mint-bg': '#12291D', 'mint-on': '#06301A', 'mint-sub': '#0B4526',
+        mint: brand.mint, 'mint-bg': '#12291D', 'mint-on': '#06301A', 'mint-sub': '#0B4526',
         'mint-ink': '#06301A', // alias rétro → mint-on
         amber: '#E0A94F', 'amber-bg': '#2A2113',
         coral: '#E2726A', 'coral-bg': '#2B1715',

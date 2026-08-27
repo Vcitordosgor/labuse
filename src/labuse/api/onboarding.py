@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from . import coffre_ui
+from ..brand import MINT_RGB as _MINT_RGB, mint_rgba as _mint_rgba
 from ..config import get_settings
 
 log = logging.getLogger("labuse.onboarding")
@@ -88,7 +89,7 @@ _FLASH_RETOUR_JS = """
   var root=document.querySelector('[data-flash-session]');
   if(!root)return;
   var sid=root.getAttribute('data-flash-session');
-  var DL='<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(92,230,161,.32)">\\u2193 T\\u00e9l\\u00e9charger mon rapport PDF</a>';
+  var DL='<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(__MINTRGB__,.32)">\\u2193 T\\u00e9l\\u00e9charger mon rapport PDF</a>';
   var tries=0, MAX_TRIES=60;
   function poll(){
     fetch('/flash/statut?session_id='+encodeURIComponent(sid)).then(function(r){return r.json();}).then(function(d){
@@ -119,7 +120,7 @@ _FLASH_RETOUR_JS = """
   }
   document.addEventListener('DOMContentLoaded', poll);
 })();
-"""
+""".replace("__MINTRGB__", _MINT_RGB)
 
 
 @router.get("/flash-retour.js", include_in_schema=False)
@@ -754,7 +755,7 @@ débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_co
 @router.get("/flash/retour", include_in_schema=False)
 def flash_retour(session_id: str = ""):
     return HTMLResponse(_page("votre rapport", f"""
-<div class="big" data-flash-session="{html.escape(session_id)}"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
+<div class="big" data-flash-session="{html.escape(session_id)}"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:{_mint_rgba('.3')};border-top-color:var(--mint)"></span></div>
 <h1 id="hero" style="font-size:17px">Votre rapport arrive…</h1>
 <p class="sub" id="sub">paiement reçu · nous assemblons votre PDF</p></div>
 <div id="etat" role="status" aria-live="polite" style="text-align:center;margin-top:12px;font-size:13px;color:var(--mut)">

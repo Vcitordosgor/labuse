@@ -8,6 +8,9 @@ import secrets
 from datetime import date, datetime
 
 from ..tz import today_reunion   # REVUE · R2 — jour métier en heure Réunion (bug fuseau consigné)
+# Vert de marque : source unique (config/brand_colors.json). Ces pages avaient gardé l'ANCIEN vert
+# écran #5CE6A1 (orphelin, raté la migration M83-D) — on repointe tout sur le vert de marque #4ADE80.
+from ..brand import MINT as _MINT, MINT_RGB as _MINT_RGB
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -293,7 +296,7 @@ def _points_cles_html(lines: list) -> str:
                 f"<span style='color:{color};font-size:12px;line-height:1.4'>{icon}</span>"
                 f"<div style='min-width:0'><b style='font:600 12px sans-serif;color:#ECF5EF'>{title}</b>"
                 f"<span style='font:12px sans-serif;color:#8FA69A'> — {detail}</span></div></div>")
-    fh = "".join(row("✓", "#5CE6A1", t, d) for _, t, d in forces)
+    fh = "".join(row("✓", _MINT, t, d) for _, t, d in forces)
     ah = "".join(row("⚠", "#E8B44C", t, d) for _, t, d in attentions)
     return ("<div style='margin:16px 0;background:#0d1310;border:1px solid #1E2A23;border-radius:10px;padding:12px 14px'>"
             "<p style='font:10px monospace;letter-spacing:1.5px;color:#5C7268;margin:0 0 4px'>POINTS CLÉS</p>"
@@ -342,14 +345,14 @@ _PACK_PRINT_CSS = """<style>
   [style*="#8FA69A"] { color: #55635b !important; }
   [style*="#5C7268"] { color: #6b746f !important; }
   /* accents assombris pour rester lisibles sur papier (mais reconnaissables) */
-  [style*="#5CE6A1"] { color: #0c8a4f !important; }
+  [style*="__MINT__"] { color: #0c8a4f !important; }
   [style*="#4ADE96"] { color: #0c8a4f !important; }
   [style*="#B497F0"] { color: #5b3fa6 !important; }
   [style*="#E8695A"] { color: #c0392b !important; }
   [style*="#E8B44C"] { color: #9a6510 !important; }
   svg[fill] { fill: #0c8a4f !important; }   /* logo LABUSE (fill en attribut) */
 }
-</style>"""
+</style>""".replace("__MINT__", _MINT)
 
 
 @router.get("/p/{token}", response_class=HTMLResponse)
@@ -398,7 +401,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     lignes = "".join(
         f"<div style='display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #1E2A23'>"
         f"<span style='min-width:38px;text-align:right;font:600 12px monospace;"
-        f"color:{'#5CE6A1' if (ln['weight'] or 0) > 0 else '#E8695A' if (ln['weight'] or 0) < 0 else '#5C7268'}'>"
+        f"color:{_MINT if (ln['weight'] or 0) > 0 else '#E8695A' if (ln['weight'] or 0) < 0 else '#5C7268'}'>"
         f"{('+' + str(ln['weight'])) if (ln['weight'] or 0) > 0 else ln['weight'] if ln['weight'] is not None else '·'}</span>"
         f"<div><div style='font:500 12px sans-serif;color:#C9DCD1'>{ln['layer']}</div>"
         f"<div style='font:11px sans-serif;color:#8FA69A'>{ln['detail']}</div>"
@@ -410,7 +413,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
 <body style="margin:0;background:#060A08;font-family:sans-serif">
 <div style="max-width:640px;margin:0 auto;padding:28px 20px">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(74,222,128,.35))" fill="#4ADE80"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 15px sans-serif;color:#5CE6A1">LABUSE</span></span>
+    <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba({_MINT_RGB},.35))" fill="{_MINT}"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 15px sans-serif;color:{_MINT}">LABUSE</span></span>
     <span style="font:10px monospace;color:#5C7268">PACK APPORTEUR · LECTURE SEULE</span>
   </div>
   <div style="margin-top:6px;background:#171221;border:1px solid #2a2138;border-radius:8px;padding:8px 12px;
@@ -424,13 +427,13 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
   {photo}
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
-      <div style="font:700 17px sans-serif;color:#5CE6A1">{_sv.get('label') or '—'}</div>
+      <div style="font:700 17px sans-serif;color:{_MINT}">{_sv.get('label') or '—'}</div>
       <div style="font:9px monospace;color:#5C7268">CLASSEMENT</div></div>
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
       <div style="font:700 22px sans-serif;color:#4ADE96">{_sv.get('fraction') or '—'}</div>
       <div style="font:9px monospace;color:#5C7268">{'PROBABILITÉ · SOUS 1 AN' if _sv.get('fraction') else 'PEU PROBABLE'}</div></div>
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
-      <div style="font:700 22px sans-serif;color:#5CE6A1">{f['completeness_score']}</div>
+      <div style="font:700 22px sans-serif;color:{_MINT}">{f['completeness_score']}</div>
       <div style="font:9px monospace;color:#5C7268">COMPLÉTUDE %</div></div>
   </div>
   {points_cles}
@@ -523,7 +526,7 @@ def api_v1_docs() -> str:
     return """<!doctype html><html lang=fr><head><meta charset=utf-8><title>LABUSE — API partenaire v1</title></head>
 <body style="margin:0;background:#060A08;color:#C9DCD1;font-family:sans-serif">
 <div style="max-width:680px;margin:0 auto;padding:32px 20px">
-<span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(74,222,128,.35))" fill="#4ADE80"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LABUSE</span></span>
+<span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(__MINTRGB__,.35))" fill="__MINT__"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:__MINT__">LABUSE</span></span>
 <span style="color:#5C7268;font-size:12px"> · API partenaire v1</span>
 <h1 style="font-size:20px;color:#ECF5EF">GET /api/v1/parcels</h1>
 <p style="font-size:13px;color:#8FA69A">Parcelles scorées (classement servi — tiers). Authentification
@@ -534,14 +537,14 @@ commune <b>Cilaos</b>, <b>50 appels/jour</b>, chaque réponse porte <code>"demo"
 Clé complète (parc entier, toutes communes) sur convention — contact LABUSE.</p>
 <table style="width:100%;font-size:12.5px;border-collapse:collapse">
 <tr style="color:#5C7268;text-align:left"><th style="padding:6px 8px">Paramètre</th><th>Type</th><th>Description</th></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">key</td><td>string</td><td>clé API (obligatoire)</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">statut</td><td>enum</td><td>brulante · chaude · reserve_fonciere · a_creuser · ecartee (tier servi ; + variantes declasse_* pour les déclassées). L'ancien « a_surveiller » (matrice retirée) ne renvoie rien.</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">min_q</td><td>int</td><td>score Qualité minimal (0-100)</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">commune</td><td>string</td><td>défaut Saint-Paul (vraie clé) · clé démo : <b>Cilaos</b> uniquement (toute autre → 403)</td></tr>
-<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:#5CE6A1">limit / offset</td><td>int</td><td>pagination (limit ≤ 200)</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:__MINT__">key</td><td>string</td><td>clé API (obligatoire)</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:__MINT__">statut</td><td>enum</td><td>brulante · chaude · reserve_fonciere · a_creuser · ecartee (tier servi ; + variantes declasse_* pour les déclassées). L'ancien « a_surveiller » (matrice retirée) ne renvoie rien.</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:__MINT__">min_q</td><td>int</td><td>score Qualité minimal (0-100)</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:__MINT__">commune</td><td>string</td><td>défaut Saint-Paul (vraie clé) · clé démo : <b>Cilaos</b> uniquement (toute autre → 403)</td></tr>
+<tr style="border-top:1px solid #1E2A23"><td style="padding:6px 8px;font-family:monospace;color:__MINT__">limit / offset</td><td>int</td><td>pagination (limit ≤ 200)</td></tr>
 </table>
 <h2 style="font-size:14px;color:#ECF5EF;margin-top:22px">Exemple</h2>
 <pre style="background:#111814;border:1px solid #1E2A23;border-radius:8px;padding:12px;font-size:11.5px;color:#C9DCD1;overflow-x:auto">curl "https://…/api/v1/parcels?key=demo-labuse-partner-key&commune=Cilaos&statut=chaude&min_q=70&limit=10"</pre>
 <p style="font-size:11px;color:#5C7268">Erreurs : 401 clé absente/inconnue · 403 clé démo hors commune Cilaos · 429 quota atteint (démo : 50/jour).
 Réponses indicatives — usage selon convention partenaire.</p>
-</div></body></html>"""
+</div></body></html>""".replace("__MINT__", _MINT).replace("__MINTRGB__", _MINT_RGB)

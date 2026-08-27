@@ -1,0 +1,7 @@
+{
+  "_note": "SOURCE UNIQUE des couleurs de MARQUE LABUSE (vert de marque #4ADE80, M83-D/M69-B). Lu par le front (frontend/tailwind.config.js → `mint`) ET par le back (src/labuse/brand.py). Aucun hex de marque ne doit être posé en dur ailleurs — verrou tests/test_brand_colors.py. Les couleurs de STATUT/tier (ex. st-chaude #5CE6A1) ne sont PAS des couleurs de marque et vivent dans leur propre palette.",
+  "mint": "#4ADE80",
+  "mint_rgb": "74,222,128",
+  "mint_dim": "#2E9E5B",
+  "mint_ink": "#04150A"
+}
