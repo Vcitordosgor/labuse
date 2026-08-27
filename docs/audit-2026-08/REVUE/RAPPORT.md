@@ -414,3 +414,22 @@ défensive des orphelins d'abord — **0 orphelin existant** —, migration idem
 - Dette 🟡 des cycles antérieurs largement **absorbée par ce mandat** : fuseau (R2), CSP (R4), webhook
   (R6), Brevo (R7), effacement RGPD (AC-003). Le reste (durcissement admin AC-020/025, incohérence
   clés Stripe RV-011) est **re-documenté, daté, dette assumée** — mandat VPS.
+
+---
+## R10 — RE-RUN FINAL (conditionnel) — NON DÉCLENCHÉ
+
+**Condition** (mandat) : re-run UNIQUEMENT « si R1 a ingéré des sources qui alimentent la cascade ».
+
+**R1 n'a lancé AUCUNE ingestion** : les sources cascade (DVF, cadastre, zonage PLU/GPU, Géorisques)
+sont à jour ; les flux vivants (DPE/BAN/BODACC/INPI) sont frais et non cascade ; le seul retard
+détecté — **BD TOPO** (bâti, édition juillet 2026 > ingéré mi-2025, cascade) — **n'a pas été
+ré-ingéré** faute de commande CLI simple/libre (chantier DONNÉE dédié, cf. RV-001).
+
+→ **Aucune source cascade n'a été ré-ingérée → le re-run n'est PAS déclenché.** Le run servi
+`q_v11_m137` (re-run des 24 communes de ce midi) reste **cohérent** avec l'état des données en base
+(le bâti actuel est celui consommé par le résiduel recalculé ce midi). Le moteur unique est confirmé
+propre (R3 : 130 parcelles, 0 divergence). `purge-runs-morts --apply` reste à Vic (app arrêtée),
+non exécuté ici.
+
+- **RV-018 (constat)** — Re-run non requis. Le rafraîchissement du bâti BD TOPO (RV-001) fera l'objet
+  d'un mandat DONNÉE + re-run dédié quand une voie d'ingestion simple sera disponible.
