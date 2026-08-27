@@ -7,6 +7,7 @@ from __future__ import annotations
 import secrets
 from datetime import date, datetime
 
+from ..tz import today_reunion   # REVUE · R2 — jour métier en heure Réunion (bug fuseau consigné)
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -460,7 +461,11 @@ def _check_key(db: Session, key: str | None) -> dict:
                    {"k": key}).mappings().first()
     if not k:
         raise HTTPException(401, "Clé API inconnue")
-    if k["jour"] != date.today():
+    # REVUE · R2 (bug consigné) — le jour de comparaison DOIT être le jour Réunion (comme
+    # `current_date` SQL, désormais forcé Indian/Reunion via db.py). Avec `date.today()` (CEST),
+    # entre 20 h et minuit CEST le jour Python (J) diverge du jour SQL (J+1 Réunion) → la porte
+    # réinitialisait le quota au lieu de le lever. `today_reunion()` réaligne les deux côtés.
+    if k["jour"] != today_reunion():
         db.execute(text("UPDATE api_keys SET jour = current_date, utilise = 0 WHERE key = :k"), {"k": key})
     elif k["utilise"] >= k["quota_jour"]:
         raise HTTPException(429, f"Quota journalier atteint ({k['quota_jour']} appels/jour)")

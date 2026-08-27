@@ -11,6 +11,8 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timedelta, timezone
 
+from ..tz import today_reunion as _today_reunion   # REVUE · R2 — jour métier en heure Réunion
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
@@ -242,7 +244,7 @@ def notifier_fraicheur(db: Session) -> int:
             titre=f"Source en retard : {e['label']}",
             detail=(f"Dernière donnée {e['derniere_donnee']} — Δ{e['delta_donnee_jours']} j "
                     f"(seuil {e['seuil_jours']} j, soit 2× la cadence). À rattraper."),
-            lien="/sources", dedup=f"fraicheur:{e['source']}:{date.today()}") else 0
+            lien="/sources", dedup=f"fraicheur:{e['source']}:{_today_reunion()}") else 0
     return crees
 
 
@@ -1044,7 +1046,7 @@ def brief_matin(db: Session, cid: int | None) -> dict:
         permis_hier = db.execute(text(
             "SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 1 "
             "AND commune = ANY(:coms)"), {"coms": communes}).scalar() or 0
-    donnee_perimee = bool(permis_max and (date.today() - permis_max).days > 2)   # ingestion en attente ?
+    donnee_perimee = bool(permis_max and (_today_reunion() - permis_max).days > 2)   # ingestion en attente ? (R2 : jour Réunion)
     # M87 P6 — la barre « N événements depuis hier » et le panneau latéral. Point de lecture UNIQUE :
     # event_log (fenêtre J-1, kinds perso) — MÊME source que le digest Brevo, pas deux fenêtres qui
     # divergent. Groupé par commune (maquette : une ligne par commune + « Voir les N → »).

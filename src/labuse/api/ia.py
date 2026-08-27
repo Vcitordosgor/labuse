@@ -339,7 +339,8 @@ def _porte_nl(request) -> None:
     # sans compte (pilote/anonyme), le quota historique nl_quota_jour reste inchangé.
     from .dashboard import quota_nl_du_compte
     quota = quota_nl_du_compte(getattr(request.state, "compte_id", None)) or s.nl_quota_jour
-    n = compteur_incr_et_lire(date.today().isoformat(), sujet_quota(request), "nl")
+    from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
+    n = compteur_incr_et_lire(today_reunion().isoformat(), sujet_quota(request), "nl")
     if n > quota:
         raise HTTPException(429, detail={
             "detail": f"Quota d'analyses IA atteint ({quota}/jour). Reprend à minuit.",

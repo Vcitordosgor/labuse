@@ -57,3 +57,46 @@ manuelle/licence en attente (Fichiers fonciers Cerema, VRD/SPANC) → constat se
   d'une revue. → **Constat documenté, pas d'ingestion.**
 - **Conséquence pour R10 : aucune source cascade n'a été ré-ingérée → R10 ne se déclenche pas** (le
   bâti actuel est cohérent avec le résiduel recalculé ce midi). Détaillé en R10.
+
+---
+## R2 — CRON & FUSEAUX
+
+### Bug de fuseau (consigné) — CORRIGÉ
+
+**Cause racine** : machine en CEST, PostgreSQL en `Indian/Reunion` (+2). Le SQL (`CURRENT_DATE`,
+`now()`) était en heure Réunion, mais le Python (`date.today()`, `datetime.now()`) en CEST. Entre
+20 h et minuit CEST il est déjà « demain » à la Réunion → le jour Python (J) diverge du jour SQL
+(J+1). La porte quota partenaires comparait `date.today()` (CEST) au `jour` stocké par `current_date`
+(Réunion) → **réinitialisait le quota au lieu de le lever** (RV-002).
+
+**Correction (deux garde-fous)** :
+- **SQL** : `db.py` force le fuseau de session PG à `Indian/Reunion` (`-c timezone=Indian/Reunion`
+  dans `connect_args`) → tout `CURRENT_DATE`/`now()` est en Réunion **quel que soit le serveur de
+  prod** (robuste, corrige d'un coup tous les compteurs SQL : quota.py, events.py CURRENT_DATE, …).
+- **Python** : nouveau module `labuse/tz.py` (`REUNION_TZ`, `today_reunion()`, `now_reunion()`).
+  Fenêtres métier réalignées :
+
+| Fichier | Fenêtre métier | Correction |
+|---------|----------------|-----------|
+| `partners.py:463` | **porte quota partenaires (bug consigné)** | `date.today()` → `today_reunion()` |
+| `protection.py:_aujourdhui` | compteurs jour (quota fiches/tuiles/exports) | `today_reunion()` |
+| `protection.py:scan_abus` | fenêtre « hier » du scan anti-scraping | `today_reunion()` |
+| `ia.py`, `copilote.py`, `copilote_v2.py` | clés de quota jour (NL / agent / mission) | `today_reunion()` |
+| `events.py` (dédup fraîcheur, péremption permis) | fenêtres jour métier | `today_reunion()` |
+
+Les `CURRENT_DATE`/`now()` SQL (quota.py, events.py:512/795) sont couverts par le fuseau de session
+— pas de modification ligne à ligne nécessaire. Les usages **techniques** (numéro de dossier
+`DP-YYYYMMDD`, footer PDF « généré le », clés de réf) restent en heure locale : aucune fenêtre métier.
+
+**RV-002 🟠→corrigé — porte quota partenaires.** Test de non-régression :
+`test_partners_api_v1.py::test_r2_porte_quota_ne_reinitialise_pas_le_meme_jour_reunion` (au quota
++ même jour Réunion → 429 sans reset ; jour d'hier → reset). Suite protection/copilote : 17/17 verts.
+
+### Inventaire CRON
+
+Table complète : **`docs/EXPLOITATION-CRON.md`**. 10 jobs installés (train nocturne ordonné
+radar→sitadel→bodacc→notifications→backup→abuse→fraicheur, tous sous `flock`). Cronables non
+installés : `avis-echeance`, `evaluer-secteurs`. **Manquants** :
+- **RV-003 🟡 — purge des sessions expirées** : `sessions_auth` n'est jamais nettoyée (dette AC-011).
+  → commande `purge-sessions` créée en **R9**.
+- **RV-004 🟡 — webhook Stripe absent** : paiements asynchrones non captés → détaillé en **R6**.
