@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     config_dir: str = "config"
     http_timeout_s: float = 20.0
 
+    # RADAR (pige) — répertoire PRIVÉ des captures : hors racine publique, jamais servi par le web,
+    # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
+    pige_captures_dir: str = "/srv/labuse/pige/captures"
+
     # Agent IA (post-cœur) — provider "stub" par défaut (aucun appel réseau).
     ai_provider: str = "stub"
     ai_model: str = "claude-sonnet-4-6"

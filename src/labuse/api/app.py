@@ -153,6 +153,8 @@ async def _lifespan(app: FastAPI):
         from ..copilote.tables import ensure_tables as _copilote_ens
         # DASHBOARD-V1 · D1 — capteurs de la Tour de contrôle
         from .dashboard import ensure_tables as _dashboard_ens
+        # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
+        from ..pige.tables import ensure_tables as _pige_ens
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
@@ -185,6 +187,7 @@ async def _lifespan(app: FastAPI):
             # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
             ("dashboard", lambda: _dashboard_ens(_engine())),
+            ("pige", lambda: _pige_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
