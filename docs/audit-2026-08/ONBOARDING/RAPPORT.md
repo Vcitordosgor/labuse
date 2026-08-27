@@ -227,3 +227,46 @@ réservé à l'IA) n'est **utilisé nulle part** dans le parcours (0 `var(--viol
 (oiseau SVG, Space Grotesk pour les titres — enfin appliqué depuis PE-008) respectée.
 
 Rien à corriger côté texte hormis la docstring interne ; DA conforme.
+
+---
+
+## E9 — RECETTE DE BOUT EN BOUT EN MODE TEST
+
+Pas de clés Stripe TEST en local (secrets de Vic) → E9 = prouver tout ce qui est vérifiable côté
+app, et outiller Vic pour la partie carte-réelle.
+
+**Prouvé automatiquement** (`tests/test_e2e_parcours.py`, Stripe signé/mocké, comptes `[PE-TEST]`) :
+- **(a) Intégral, succès** : invitation → mot de passe + CGV → webhook `checkout.session.completed`
+  → compte **actif** → login réel OK.
+- **(a) Intégral, échecs** : `invoice.payment_failed` → **paiement_requis** ; `invoice.paid` →
+  retour **actif** ; `customer.subscription.deleted` → **suspendu** (données intactes).
+- **Webhook forgé** (mauvaise signature) → **rejeté**.
+- La couverture Stripe existante (`tests/test_audit_stripe.py`) ajoute : rejeu idempotent, ordre
+  inverse, Flash récupérable/cloisonné/expirant, concurrence double-checkout.
+
+**Partie carte-réelle (Vic)** : `docs/audit-2026-08/ONBOARDING/RUNBOOK-STRIPE-TEST.md` — pas à pas
+des deux parcours en Stripe **TEST** avec les cartes **4242** (OK), **4000…0341** (refus),
+**4000…3184** (3DS), + purge SQL, + rappel « jamais le LIVE pour un test » et `stripe-verifie` avant.
+
+**Comptes [PE-TEST] purgés** : la fixture du test purge en teardown (vérifié par `test_purge_effective`).
+Les comptes créés par les recettes manuelles du mandat dans la base dev locale ont été **purgés et
+vérifiés en SQL** (26 → 17 utilisateurs, 0 compte de test résiduel).
+
+---
+
+## SYNTHÈSE DES FINDINGS
+
+| # | Sujet | État |
+|---|---|---|
+| PE-001 | Admin voyait « Illimité · 499 € » + tunnel de paiement | **RÉSOLU** (E1 offre fantôme retirée + E2 écran admin) |
+| PE-002 | CSP bloquait le JS inline (case CGV figée, polling PDF Flash invisible, strength meter mort) | **RÉSOLU** (E3 JS same-origin) |
+| PE-003 | E-mail de reset : auto ou manuel ? | **TRANCHÉ** — automatique (SMTP transactionnel) |
+| PE-004 | Flash : « hors 24 communes » = même message qu'« introuvable » | ouvert (mineur, UX) |
+| PE-005 | Engagement 12 mois contractuel mais non enforced côté Stripe | à arbitrer par Vic |
+| PE-006 | Date d'échéance non visible dans « Mon compte » client | ouvert (dépend du palier par compte) |
+| PE-007 | `input{font:15px inherit}` invalide → champs ~13 px → zoom iOS | **RÉSOLU** (E7 longhand 16 px) |
+| PE-008 | Titres `'Space Grotesk',inherit` invalides → police d'identité non appliquée | **RÉSOLU** (E7 repli valide) |
+
+**Actions restant à Vic** : poser les clés Stripe/Brevo/SMTP LIVE ; lancer `stripe-verifie`
+(TEST + LIVE) ; archiver d'éventuels produits Stripe fantômes ; dérouler le runbook carte-réelle ;
+arbitrer PE-005 (enforcement engagement) ; PE-004/PE-006 (UX, faible priorité).
