@@ -514,12 +514,27 @@ réglages vous attendent tels quels.</p>
 <p>Régularisez votre abonnement pour reprendre exactement où vous en étiez&nbsp;:</p>
 <p style="margin-top:26px"><a href="{lien}" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Régulariser l'abonnement →</a></p>
 <p style="margin-top:18px;color:var(--mut);font-size:13px">Une question&nbsp;? Écrivez-nous&nbsp;: contact@labuse.immo</p>"""))
+            # VPS · AC-025 — ADMIN : le mot de passe n'ouvre PAS la session, il ouvre un DÉFI
+            # 2FA (cookie signé 5 min) → /login/2fa exige le code TOTP (ou l'enrôlement au
+            # premier passage). Les autres rôles gardent le flux existant STRICT.
+            if u.get("role") == "admin":
+                auth.log_event("login_2fa_defi", request)
+                resp = RedirectResponse("/login/2fa", status_code=303)
+                resp.set_cookie(value=auth.defi_2fa(u["utilisateur_id"]), **auth.cookie_2fa_kwargs())
+                return resp
             tok = creer_session(db, u["utilisateur_id"], ip_hash=_iph, ua_hash=_uah)
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)
         resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
         return resp
 
+    # VPS · go-live — le login pilote PARTAGÉ peut être ÉTEINT (LABUSE_LOGIN_PILOTE_ACTIF=0) :
+    # réponse d'échec NEUTRE (même page, même 401) — rien ne révèle que la voie a existé.
+    from ..config import get_settings as _gs
+    if not _gs().login_pilote_actif:
+        auth.log_event("login_pilote_refuse", request)
+        auth.slow_failure()
+        return HTMLResponse(auth.login_page(error=True), status_code=401)
     if not auth.configured() or not auth.password_ok(password):
         auth.log_event("login_failed", request)
         auth.slow_failure()
@@ -527,6 +542,112 @@ réglages vous attendent tels quels.</p>
     auth.log_event("login_ok", request)
     resp = RedirectResponse("/", status_code=303)   # B2 : la racine (Caddy en prod, /socle/ en local)
     resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
+    return resp
+
+
+# ─────────────────── VPS · AC-025 — seconde étape ADMIN (TOTP) ───────────────────
+
+def _2fa_redirect_login() -> RedirectResponse:
+    """Défi absent/expiré/épuisé → retour à la porte, cookie de défi nettoyé."""
+    from . import auth
+    resp = RedirectResponse("/login", status_code=302)
+    resp.delete_cookie(auth.COOKIE_2FA, path="/")
+    return resp
+
+
+@app.get("/login/2fa", include_in_schema=False)
+def login_2fa_page(request: Request):
+    from fastapi.responses import HTMLResponse
+
+    from . import auth
+    from ..comptes import ensure_tables, totp_etat, totp_preparer
+    from ..db import session_scope
+
+    defi = auth.defi_2fa_lire(request.cookies.get(auth.COOKIE_2FA))
+    if defi is None:
+        return RedirectResponse("/login", status_code=302)
+    uid, _ = defi
+    with session_scope() as db:
+        ensure_tables(db)                      # première install : les tables 2FA naissent ici
+        etat = totp_etat(db, uid)
+        if etat and etat["confirme"]:
+            return HTMLResponse(auth.page_2fa_code())
+        # jamais enrôlé (ou enrôlement interrompu) → QR + secret ; recharger ne change pas le QR
+        secret = totp_preparer(db, uid)
+        email = db.execute(text("SELECT email FROM utilisateurs WHERE id = :i"),
+                           {"i": uid}).scalar() or "admin"
+    from .. import totp as _totp
+    qr = _totp.qr_svg(_totp.uri_otpauth(secret, email))
+    return HTMLResponse(auth.page_2fa_enrolement(secret, qr))
+
+
+@app.post("/login/2fa", include_in_schema=False)
+async def login_2fa_submit(request: Request):
+    """Vérifie le défi PUIS le code : TOTP (fenêtre ±1, anti-rejeu par pas de temps) ou code
+    de secours (usage unique). Premier succès d'enrôlement → confirmation + les 8 codes de
+    secours (affichés UNE fois). Échec → tentative comptée dans le jeton ; 5 → retour /login."""
+    from urllib.parse import parse_qs
+
+    from fastapi.responses import HTMLResponse
+
+    from . import auth
+    from ..comptes import (creer_session, ensure_tables, totp_confirmer, totp_etat,
+                           totp_secours_consommer, totp_verifier)
+    from ..db import session_scope
+
+    defi = auth.defi_2fa_lire(request.cookies.get(auth.COOKIE_2FA))
+    if defi is None:
+        return _2fa_redirect_login()
+    uid, tentatives = defi
+    q = parse_qs((await request.body()).decode("utf-8", "replace"))
+    code = (q.get("code") or [""])[0].strip()
+
+    # même empreinte hachée que /login (A5 : observer le partage de compte, jamais l'IP en clair)
+    import hashlib as _hl
+    from .protection import ip_reelle
+    _iph = _hl.sha256(ip_reelle(request).encode()).hexdigest()[:32]
+    _uah = _hl.sha256(request.headers.get("user-agent", "").encode()).hexdigest()[:32]
+
+    with session_scope() as db:
+        ensure_tables(db)
+        etat = totp_etat(db, uid)
+        enrolement = not (etat and etat["confirme"])
+        ok_totp = totp_verifier(db, uid, code)                     # anti-rejeu inclus
+        ok_secours = (not enrolement and not ok_totp
+                      and totp_secours_consommer(db, uid, code))   # secours : jamais à l'enrôlement
+        if ok_totp or ok_secours:
+            codes = totp_confirmer(db, uid) if enrolement else None
+            tok = creer_session(db, uid, ip_hash=_iph, ua_hash=_uah)
+            auth.log_event("2fa_enrole" if enrolement else
+                           ("2fa_secours_ok" if ok_secours else "2fa_ok"), request)
+            if codes is not None:
+                # page intermédiaire : les codes de secours, puis « entrer » — la session est
+                # DÉJÀ posée sur cette réponse (le bouton mène à la racine).
+                resp = HTMLResponse(auth.page_2fa_secours(codes))
+            else:
+                resp = RedirectResponse("/", status_code=303)
+            resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+            resp.delete_cookie(auth.COOKIE_2FA, path="/")
+            return resp
+        # échec — compté DANS le jeton ; au 5ᵉ le défi meurt (retour à la porte, re-login)
+        secret = etat["secret"] if etat else None
+    auth.log_event("2fa_echec", request)
+    auth.slow_failure()
+    tentatives += 1
+    if tentatives >= auth.DEFI_2FA_ESSAIS_MAX:
+        return _2fa_redirect_login()
+    erreur = "Code incorrect ou déjà utilisé."
+    if enrolement and secret:
+        from .. import totp as _totp
+        with session_scope() as db:
+            email = db.execute(text("SELECT email FROM utilisateurs WHERE id = :i"),
+                               {"i": uid}).scalar() or "admin"
+        page = auth.page_2fa_enrolement(secret, _totp.qr_svg(_totp.uri_otpauth(secret, email)),
+                                        error=erreur)
+    else:
+        page = auth.page_2fa_code(error=erreur)
+    resp = HTMLResponse(page, status_code=401)
+    resp.set_cookie(value=auth.defi_2fa(uid, tentatives), **auth.cookie_2fa_kwargs())
     return resp
 
 

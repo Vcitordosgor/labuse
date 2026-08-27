@@ -1,34 +1,33 @@
 # =============================================================================
-# LA BUSE — Caddyfile de PRODUCTION (M7 · app.labuse.immo) — AUCUN secret ici.
+# LA BUSE — Caddyfile de PRODUCTION (app.labuse.immo) — AUCUN secret ici.
 # -----------------------------------------------------------------------------
 # Pose sur le VPS : /etc/caddy/Caddyfile + /etc/caddy/labuse.env (600) portant :
 #   LABUSE_DOMAIN=app.labuse.immo
-#   CADDY_BASIC_HASH=<bcrypt de `caddy hash-password` — secret, jamais en git>
 #
-# RIDEAU TEMPORAIRE (décision Vic 22/07) : basic auth devant TOUTE l'app, API
-# comprise (user `labuse`). Tombera à l'arrivée de l'auth comptes (post-M7).
+# MANDAT VPS V5 (27/08/2026) : LE RIDEAU BASIC AUTH EST TOMBÉ — l'auth comptes
+# applicative (argon2id + sessions en base + 2FA TOTP admin) est la porte. Ce
+# fichier n'a plus ni basic_auth ni CADDY_BASIC_HASH. Défenses restantes ici :
+#   · HSTS (le certificat est géré par Caddy, HTTP → HTTPS automatique) ;
+#   · journal d'accès JSON → fail2ban (jail labuse-login : brute-force /login
+#     banni au pare-feu — l'app a SON verrou de compte, ceci est la 2e couche) ;
+#   · en-têtes durcis (les CSP fines viennent de l'APP — R4 — et passent telles
+#     quelles : Caddy n'écrase pas les en-têtes du backend).
 #
-# FIX post-review Vic (22/07) : la racine `/` du BACKEND redirige vers /app/
-# (UI Vue historique de transition — spinner mono-commune) et le POST /login
-# renvoie 303 → /app/. En prod, CADDY est donc la source de vérité du front :
-#   · le dist React M2 (build --base=/) est servi STATIQUEMENT à la racine ;
-#   · /app et /app/* ne sont JAMAIS exposés (301 → /) — la vieille UI reste
-#     montée dans le backend pour le dev local uniquement (zéro refactor) ;
-#   · une navigation `/` SANS cookie de session applicative → 302 /login
-#     (le front React n'a pas d'écran de login : flux rideau → login → app) ;
-#   · tout le reste (API, tuiles, /login, PDF, …) → proxy 127.0.0.1:8000.
+# Routage (hérité M7/B2, inchangé) :
+#   · le dist React (build --base=/) est servi STATIQUEMENT à la racine ;
+#   · /app et /app/* ne sont JAMAIS exposés (301 → /) — vieille UI = dev local ;
+#   · une navigation `/` SANS cookie de session applicative → 302 /login ;
+#   · tout le reste (API, tuiles, /login, PDF, webhook Stripe…) → 127.0.0.1:8000.
 # =============================================================================
 
 {$LABUSE_DOMAIN} {
 	encode gzip
 
-	# ── rideau basic auth (TOUT le trafic, healthz compris) SAUF le webhook Stripe : il
-	# arrive des serveurs Stripe SANS identifiants → le rideau le bloquerait en 401. Il est
-	# protégé par la SIGNATURE (LABUSE_STRIPE_WEBHOOK_SECRET) : une requête non signée/forgée
-	# est rejetée en 400 par l'app (facturation.traiter_webhook). Exempter ce seul chemin. ──
-	@rideau_protege not path /stripe/webhook
-	basic_auth @rideau_protege {
-		labuse {$CADDY_BASIC_HASH}
+	# ── journal d'accès (JSON) : matière de fail2ban (deploy/fail2ban/) et des
+	# autopsies. Rotation par logrotate (/var/log/caddy géré par le paquet). ──
+	log {
+		output file /var/log/caddy/access.log
+		format json
 	}
 
 	root * /opt/labuse/app/frontend/dist
@@ -45,7 +44,7 @@
 		}
 		redir @nosession /login 302
 
-		# 3. le front M2 : shell + assets du build servis statiquement
+		# 3. le front : shell + assets du build servis statiquement
 		@front {
 			file {
 				try_files {path} {path}/index.html
@@ -53,43 +52,24 @@
 		}
 		file_server @front
 
-		# 4. API / tuiles / login / PDF → backend
+		# 4. API / tuiles / login / PDF / webhook Stripe → backend
 		reverse_proxy 127.0.0.1:8000
 	}
 
 	header {
+		# V5 — HSTS : 6 mois, sous-domaine seul (pas de preload : app.labuse.immo
+		# est le seul hôte servi ici, labuse.immo nu n'est pas notre affaire).
+		Strict-Transport-Security "max-age=15552000"
 		X-Robots-Tag "noindex, nofollow"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "same-origin"
 		-Server
 	}
 
-	# ── BLOC B (B1.1) : cache navigateur — les fichiers de /assets/ portent un HASH de
-	# contenu dans leur nom (vite) : immuables par construction → 1 an + immutable.
+	# ── cache navigateur — /assets/* portent un hash de contenu (vite) : immuables.
 	# JAMAIS sur index.html (le shell doit se revalider pour pointer les nouveaux hashes).
 	@hashed path /assets/*
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
 	@shell path / /index.html
 	header @shell Cache-Control "no-cache"
-
-	# ── revue UI/UX S71 : corps 401 du rideau HABILLÉ (annulation de la boîte native =
-	# plus un écran blanc « Unauthorized ») — même nuit que la porte Coffre. ──
-	handle_errors {
-		@rideau expression {err.status_code} == 401
-		handle @rideau {
-			header Content-Type "text/html; charset=utf-8"
-			respond <<HTML
-				<!doctype html><html lang="fr"><head><meta charset="utf-8">
-				<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-				<title>LABUSE — accès pilote</title></head>
-				<body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#060A08;color:#C9DCD1;font:14px/1.6 -apple-system,'Inter',sans-serif;text-align:center">
-				<div style="padding:32px">
-				<svg viewBox="0 0 240 82" style="height:22px;width:auto" fill="#1E2A23" aria-hidden="true"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>
-				<p style="margin:16px 0 4px;font-weight:600;color:#ECF5EF">Accès pilote</p>
-				<p style="margin:0;font-size:12px;color:#8FA69A">Cet espace est réservé — identifiants requis.</p>
-				<p style="margin-top:20px"><a href="/" style="color:#5CE6A1;font-size:13px;text-decoration:none">Réessayer →</a></p>
-				</div></body></html>
-				HTML 401
-		}
-	}
 }

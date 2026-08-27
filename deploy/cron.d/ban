@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # Wave Adresses (Lot 1) — refresh MENSUEL de la Base Adresse Nationale 974 (la BAN bouge :
 # adressage communal continu). Export officiel départemental (Licence Ouverte), remplacement
 # complet idempotent + rattachement parcelles (point-dans-parcelle, cad_parcelles, < 20 m)
@@ -9,4 +11,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/ban /etc/cron.d/ban
 SHELL=/bin/sh
-30 3 5 * * labuse flock -n -E 200 /run/lock/labuse-ban.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-ban --download >> /var/log/labuse/ban_refresh.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) ban : passage sauté : exécution précédente en cours" >> /var/log/labuse/ban_refresh.log
+30 7 5 * * labuse flock -n -E 200 /run/lock/labuse-ban.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-ban --download >> /var/log/labuse/ban_refresh.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) ban : passage sauté : exécution précédente en cours" >> /var/log/labuse/ban_refresh.log

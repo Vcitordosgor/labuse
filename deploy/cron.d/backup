@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # LA BUSE — sauvegarde PostgreSQL quotidienne (pré-vol M7 · P4)
 # Dump -Fc + rotation (deploy/scripts/backup_postgres.sh) ; le rapatriement vers le
 # poste local est un cron LOCAL (pull_backups.sh), jamais une tâche du VPS.
@@ -11,5 +13,5 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/backup /etc/cron.d/backup
 SHELL=/bin/sh
-30 5 * * * labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse/backup.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) backup : passage sauté : exécution précédente en cours" >> /var/log/labuse/backup.log
-0 4 * * 0 labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/db_maintenance.sh >> /var/log/labuse/maintenance.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) maintenance : passage sauté : exécution précédente en cours" >> /var/log/labuse/maintenance.log
+30 9 * * * labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse/backup.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) backup : passage sauté : exécution précédente en cours" >> /var/log/labuse/backup.log
+0 8 * * 0 labuse flock -n -E 200 /run/lock/labuse-backup.lock -c "set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/db_maintenance.sh >> /var/log/labuse/maintenance.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) maintenance : passage sauté : exécution précédente en cours" >> /var/log/labuse/maintenance.log

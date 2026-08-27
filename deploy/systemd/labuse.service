@@ -1,5 +1,5 @@
 # =============================================================================
-# LA BUSE — service systemd (FastAPI/Uvicorn derrière Nginx)
+# LA BUSE — service systemd (FastAPI/Uvicorn derrière CADDY — mandat VPS V4)
 # -----------------------------------------------------------------------------
 # Pose (NE PAS appliquer maintenant — voir docs/DEPLOYMENT_OVH_VPS.md §8) :
 #   install -o root -g root -m 644 deploy/systemd/labuse.service /etc/systemd/system/labuse.service
@@ -22,17 +22,21 @@ WorkingDirectory=/opt/labuse/app
 # Secrets & configuration (LABUSE_* + ANTHROPIC_API_KEY) — hors du dépôt git.
 EnvironmentFile=/etc/labuse/labuse.env
 
-# Uvicorn, 2 workers (équilibre 4 vCores partagés avec PostgreSQL ; montable à 3 si besoin).
-# --proxy-headers : on est derrière Nginx ; --forwarded-allow-ips limite la confiance au proxy local.
+# Uvicorn, 5 workers (mandat VPS V4 : 6 vCores, 12 Go — marge laissée à PostgreSQL).
+# --proxy-headers : on est derrière Caddy ; --forwarded-allow-ips limite la confiance au proxy local.
 ExecStart=/opt/labuse/venv/bin/uvicorn labuse.api.app:app \
     --host 127.0.0.1 --port 8000 \
-    --workers 2 \
+    --workers 5 \
     --proxy-headers --forwarded-allow-ips 127.0.0.1
 
-# Redémarrage automatique en cas de crash (jamais de service mort silencieux).
-Restart=on-failure
+# Redémarrage automatique QUOI QU'IL ARRIVE (mandat VPS V4 : le dashboard a déjà tué
+# l'uvicorn local 2 fois — jamais de service mort silencieux, même sur exit 0 anormal).
+Restart=always
 RestartSec=3
 TimeoutStartSec=60
+# Garde-fou mémoire : 5 workers × ~700 Mo max + marge ; au-delà, l'OOM killer systemd
+# redémarre le service PLUTÔT que de laisser le noyau tuer PostgreSQL.
+MemoryMax=6G
 
 # Logs → journald.
 StandardOutput=journal

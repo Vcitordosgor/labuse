@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # LA BUSE — DVF hebdo-en-attente-du-semestriel (J+2) : détection Last-Modified des CSV Etalab ;
 # no-op tant que la livraison (avril/octobre) n'a pas changé ; sinon reload du millésime modifié.
 # Mercredi 05:00 UTC (09:00 Réunion) — INCHANGÉ M98 : hebdo, dérivés seulement, hors chemin
@@ -8,4 +10,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/dvf /etc/cron.d/dvf
 SHELL=/bin/sh
-0 5 * * 3 labuse flock -n -E 200 /run/lock/labuse-dvf.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse refresh-dvf >> /var/log/labuse/dvf.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dvf.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) dvf : passage sauté : exécution précédente en cours" >> /var/log/labuse/dvf.log
+0 9 * * 3 labuse flock -n -E 200 /run/lock/labuse-dvf.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse refresh-dvf >> /var/log/labuse/dvf.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dvf.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) dvf : passage sauté : exécution précédente en cours" >> /var/log/labuse/dvf.log

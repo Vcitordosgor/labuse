@@ -1823,6 +1823,45 @@ _BACKUP_RECONSTRUCTIBLES = (
 )
 
 
+def _pg_bin(name: str) -> str | None:
+    """Chemin de pg_dump/pg_restore : LABUSE_PG_BIN_DIR s'il est posé (VP-001 — le PATH peut
+    servir un client d'une autre MAJEURE que le serveur), sinon le PATH."""
+    from pathlib import Path
+    from shutil import which
+
+    bin_dir = get_settings().pg_bin_dir
+    if bin_dir:
+        cand = Path(bin_dir) / name
+        return str(cand) if cand.is_file() else None
+    return which(name)
+
+
+def _garde_version_pg_dump(pg_dump: str, env: dict, dbname: str) -> None:
+    """VP-001 — un pg_dump d'une majeure PLUS VIEILLE que le serveur échoue (ou pire, produit un
+    artefact suspect). Comparer les majeures AVANT de dumper et refuser avec la marche à suivre.
+    (Un client plus récent que le serveur sait dumper — seule la régression est bloquée.)"""
+    import re
+    import subprocess
+
+    out = subprocess.run([pg_dump, "--version"], capture_output=True, text=True)
+    m = re.search(r"(\d+)", out.stdout or "")
+    client = int(m.group(1)) if m else None
+    from sqlalchemy import create_engine, text as sql_text
+
+    eng = create_engine(get_settings().database_url)
+    try:
+        with eng.connect() as conn:
+            serveur = int(conn.execute(sql_text("show server_version_num")).scalar_one()) // 10000
+    finally:
+        eng.dispose()
+    if client is not None and client < serveur:
+        typer.echo(f"✗ pg_dump {client} < serveur PostgreSQL {serveur} — le dump échouerait.")
+        typer.echo(f"  binaire utilisé : {pg_dump}")
+        typer.echo(f"  → installer postgresql-client-{serveur}, ou poser LABUSE_PG_BIN_DIR sur le")
+        typer.echo(f"    dossier du bon binaire (ex. LABUSE_PG_BIN_DIR=$(dirname $(which pg_dump)) d'un env qui l'a).")
+        raise typer.Exit(2)
+
+
 @app.command("backup-db")
 def backup_db_cmd(
     dir: str = typer.Option("backups", help="Dossier des sauvegardes (créé si absent)."),
@@ -1835,12 +1874,13 @@ def backup_db_cmd(
     import subprocess
     import time
     from pathlib import Path
-    from shutil import which
 
-    if not which("pg_dump"):
-        typer.echo("✗ pg_dump introuvable — installer postgresql-client.")
+    pg_dump = _pg_bin("pg_dump")
+    if not pg_dump:
+        typer.echo("✗ pg_dump introuvable — installer postgresql-client (ou corriger LABUSE_PG_BIN_DIR).")
         raise typer.Exit(2)
     env, dbname = _pg_env_and_db(get_settings().database_url)
+    _garde_version_pg_dump(pg_dump, env, dbname)
     out_dir = Path(dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     # GB-054 — GARDE D'ESPACE : refuser AVANT d'écrire si le disque est trop juste (sinon
@@ -1857,7 +1897,7 @@ def backup_db_cmd(
             excludes += ["--exclude-table-data", t]
     out = out_dir / f"labuse-{dbname}-{'full' if full else 'lean'}-{time.strftime('%Y%m%d-%H%M%S')}.dump"
     typer.echo(f"▶ pg_dump {dbname} ({'COMPLET' if full else 'lean : reconstructibles exclues'}) → {out}")
-    res = subprocess.run(["pg_dump", "-Fc", "--no-owner", *excludes, "-d", dbname, "-f", str(out)],
+    res = subprocess.run([pg_dump, "-Fc", "--no-owner", *excludes, "-d", dbname, "-f", str(out)],
                          env=env, capture_output=True, text=True)
     if res.returncode != 0:
         typer.echo(f"✗ pg_dump a échoué :\n{res.stderr.strip()}")
@@ -1886,16 +1926,16 @@ def restore_db_cmd(
     Après restauration : lancer `labuse doctor` pour confirmer l'état."""
     import subprocess
     from pathlib import Path
-    from shutil import which
 
-    if not which("pg_restore"):
-        typer.echo("✗ pg_restore introuvable — installer postgresql-client.")
+    pg_restore = _pg_bin("pg_restore")
+    if not pg_restore:
+        typer.echo("✗ pg_restore introuvable — installer postgresql-client (ou corriger LABUSE_PG_BIN_DIR).")
         raise typer.Exit(2)
     src = Path(file)
     if not src.is_file():
         typer.echo(f"✗ Fichier introuvable : {src}")
         raise typer.Exit(1)
-    probe = subprocess.run(["pg_restore", "--list", str(src)], capture_output=True, text=True)
+    probe = subprocess.run([pg_restore, "--list", str(src)], capture_output=True, text=True)
     if probe.returncode != 0:
         typer.echo(f"✗ Fichier invalide (pas une archive pg_dump) : {src}\n{probe.stderr.strip()}")
         raise typer.Exit(1)
@@ -1906,7 +1946,7 @@ def restore_db_cmd(
         raise typer.Exit(1)
     typer.echo(f"▶ pg_restore → {dbname}…")
     res = subprocess.run(
-        ["pg_restore", "--clean", "--if-exists", "--no-owner", "-d", dbname, str(src)],
+        [pg_restore, "--clean", "--if-exists", "--no-owner", "-d", dbname, str(src)],
         env=env, capture_output=True, text=True)
     if res.returncode != 0:
         typer.echo(f"✗ pg_restore a échoué :\n{res.stderr.strip()[:2000]}")
@@ -2769,6 +2809,30 @@ def compte_admin_cmd(email: str) -> None:
     with session_scope() as s:
         uid = creer_admin(s, email, pw)
     typer.echo(f"admin créé (utilisateur #{uid}) — testez le login sur /login AVANT toute bascule")
+
+
+@app.command("creer-admin")
+def creer_admin_cmd(
+    email: str,
+    nom: str = typer.Option(None, help="Nom du compte interne (défaut : dérivé de l'email)"),
+) -> None:
+    """VPS · AC-020 — admin NOMINATIF : crée (ou promeut) un utilisateur rôle admin sur un
+    compte interne actif, et AFFICHE le lien d'invitation pour poser le mot de passe (jamais
+    de mot de passe en argv/historique). Idempotent — relancer ne casse rien. Au premier
+    login, la 2FA TOTP s'enrôle (AC-025)."""
+    from .comptes import creer_admin_invitation
+
+    with session_scope() as s:
+        r = creer_admin_invitation(s, email, nom=nom)
+    if r["promu"]:
+        typer.echo(f"utilisateur #{r['utilisateur_id']} PROMU admin (compte #{r['compte_id']})")
+    else:
+        typer.echo(f"admin — utilisateur #{r['utilisateur_id']} · compte #{r['compte_id']} · {r['email']}")
+    if r["lien"]:
+        typer.echo(f"LIEN D'INVITATION (pose le mot de passe ; expire {r['expire_at'][:10]}) :")
+        typer.echo(f"  {r['lien']}")
+    else:
+        typer.echo("mot de passe déjà posé — rien à envoyer (reset : `labuse compte-reset-lien` au besoin)")
 
 
 @app.command("compte-suspend")

@@ -139,6 +139,10 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
     # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
     backup_dir: str = "/var/backups/labuse"
+    # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
+    # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
+    # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).
+    pg_bin_dir: str | None = None
     # DASHBOARD-V1 · MAILS (Brevo) — templates du cycle de vie client, référencés PAR ID en .env
     # (mandat). Absents → mode « non configuré » propre (bouton visible, raison servie, zéro
     # envoi silencieux). Aucun envoi automatique en V1 : l'app rappelle, Vic déclenche.
@@ -191,6 +195,10 @@ class Settings(BaseSettings):
     # Verrouillage login : N échecs → verrou temporaire (minutes).
     login_echecs_max: int = 5
     login_verrou_minutes: int = 15
+    # VPS · go-live — MORT du login pilote PARTAGÉ : à False, le chemin « identifiant vide »
+    # de POST /login répond en échec NEUTRE (401, même page — rien ne révèle que la voie
+    # existe). Défaut True pour la compat locale/QA ; la prod pose LABUSE_LOGIN_PILOTE_ACTIF=0.
+    login_pilote_actif: bool = True
 
     # ── M26-A — Copilote (socle agentique) ──
     # Quota provisoire (la vraie valeur sera fixée avec l'offre) ; compté kind='agent'
