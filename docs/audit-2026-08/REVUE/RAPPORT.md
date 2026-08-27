@@ -433,3 +433,44 @@ non exécuté ici.
 
 - **RV-018 (constat)** — Re-run non requis. Le rafraîchissement du bâti BD TOPO (RV-001) fera l'objet
   d'un mandat DONNÉE + re-run dédié quand une voie d'ingestion simple sera disponible.
+
+---
+## SYNTHÈSE DES FINDINGS
+
+| # | Grav. | Lot | Titre | Traitement |
+|---|-------|-----|-------|-----------|
+| RV-001 | 🟡 | R1 | BD TOPO en retard (bâti, éd. juillet 2026 ; cascade) | Documenté (pas de commande d'ingestion simple ; mandat DONNÉE) |
+| RV-002 | 🟠 | R2 | Fuseau : porte quota partenaires réinitialisée 20 h–minuit CEST | **Corrigé** (fuseau PG + `labuse.tz` + test) |
+| RV-003 | 🟡 | R9 | Sessions expirées jamais purgées (AC-011) | **Corrigé** (commande `purge-sessions`) |
+| RV-004 | 🟡 | R6 | Webhook Stripe à exposer au VPS | Documenté (note VPS) |
+| RV-005 | ✅ | R3 | Canari score élevé → a_creuser : pourquoi lisible | Vérifié (détail sourcé) |
+| RV-006 | 🟠 | R4 | CSP absente | **Corrigé** (CSP raisonnable + test, 0 régression) |
+| RV-007 | 🟡 | R4 | Patchs deps (pydantic-settings, pypdf) | **Corrigé** (env + planchers) |
+| RV-008 | 🟡 | R4 | `/login` sans rate-limit IP (= AC-020) | Documenté (mandat VPS) |
+| RV-009 | ✅ | R5 | Vitesse : 2 cibles LOT AM déjà réglées | Vérifié (baseline gelée) |
+| RV-010 | ✅ | R6 | Stripe bout en bout (test) sain | Vérifié (11/11) |
+| RV-011 | 🟡 | R6 | Clés Stripe : `sk_test` vs `rk_live` | Documenté (aligner bascule prod) |
+| RV-012 | 🟠 | R6 | Webhook : « signature invalide » sur toute exception | **Corrigé** (signature 400 / traitement 500) |
+| RV-013 | 🔴 | R7 | Brevo « non configuré » (préfixe `.env`) → aucun mail en prod | **Corrigé** (repli sans préfixe) |
+| RV-014 | ✅ | R7 | 8 templates envoyés réellement vers Vic | Vérifié |
+| RV-015 | ✅ | R7 | Rappels J+3/J+10 | Vérifié |
+| RV-016 | ✅ | R8 | Dashboard sain en réel (chiffres recoupés SQL) | Vérifié |
+| RV-017 | 🟠 | R9 | Effacement RGPD incomplet (11 tables sans FK) = AC-003 | **Corrigé** (FK cascade + garde) |
+| RV-018 | — | R10 | Re-run non requis | Constat |
+
+**Un seul 🔴 (RV-013, Brevo) — corrigé** ; il aurait bloqué **tous les mails** en production.
+**Corrigés dans ce mandat** : RV-002, RV-003, RV-006, RV-007, RV-012, RV-013, RV-017.
+**Documentés / proposés (mandats VPS ou DONNÉE)** : RV-001, RV-004, RV-008, RV-011.
+
+## Critères de fin — tous tenus
+
+- **Gardées G1-G6 vertes** : G1 courrier (suite) · G2 `/readyz` ready+schema+run q_v11_m137 · G3 SHLMR
+  2618 · G4-G6 tsc 0 + build ✓ + CSP servie + carte 0 régression.
+- **tsc 0 · build ✓**.
+- **Suite backend VERTE** : **1799 passed, 0 failed, 0 erreur de collection**, 30 skips documentés
+  (bases indisponibles / propriétés vérifiées ailleurs). Partie du baseline 15 failed + 9 erreurs, tous
+  réparés nominativement (deps ML, weasyprint libs, simulplu, 3 tests périmés).
+- **Zéro régression visuelle** (carte sous CSP : 0 violation ; dashboard : chiffres exacts).
+- **Comptes `[REVUE-TEST]` purgés** — 0 dans `labuse` ET `labuse_test` (vérifié SQL), 0 orphelin.
+- **Aucun chiffre servi modifié** (hors R10, non déclenché) : run servi `q_v11_m137` **inchangé** ;
+  moteur unique confirmé propre (R3 : 130 parcelles, 0 divergence).
