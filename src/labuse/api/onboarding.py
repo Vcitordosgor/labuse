@@ -108,6 +108,13 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     from sqlalchemy import text as _text
     row = db.execute(_text("SELECT statut, essai_expire_at FROM comptes WHERE id = :c"),
                      {"c": inv["compte_id"]}).mappings().first()
+    # VPS · AC-020 — compte INTERNE déjà actif SANS échéance d'essai (admin nominatif créé
+    # par `labuse creer-admin`) : rien à payer, la porte est /login (avec 2FA pour un admin).
+    if row and row["statut"] == "actif" and row["essai_expire_at"] is None:
+        return HTMLResponse(_page("accès ouvert", """
+<h1>Votre accès est ouvert</h1>
+<p>Mot de passe enregistré — votre compte est actif, rien à régler.</p>
+<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
     if row and row["statut"] == "actif" and row["essai_expire_at"] is not None:
         return HTMLResponse(_page("essai", """
 <h1>Votre accès d'essai est ouvert</h1>

@@ -2811,6 +2811,30 @@ def compte_admin_cmd(email: str) -> None:
     typer.echo(f"admin créé (utilisateur #{uid}) — testez le login sur /login AVANT toute bascule")
 
 
+@app.command("creer-admin")
+def creer_admin_cmd(
+    email: str,
+    nom: str = typer.Option(None, help="Nom du compte interne (défaut : dérivé de l'email)"),
+) -> None:
+    """VPS · AC-020 — admin NOMINATIF : crée (ou promeut) un utilisateur rôle admin sur un
+    compte interne actif, et AFFICHE le lien d'invitation pour poser le mot de passe (jamais
+    de mot de passe en argv/historique). Idempotent — relancer ne casse rien. Au premier
+    login, la 2FA TOTP s'enrôle (AC-025)."""
+    from .comptes import creer_admin_invitation
+
+    with session_scope() as s:
+        r = creer_admin_invitation(s, email, nom=nom)
+    if r["promu"]:
+        typer.echo(f"utilisateur #{r['utilisateur_id']} PROMU admin (compte #{r['compte_id']})")
+    else:
+        typer.echo(f"admin — utilisateur #{r['utilisateur_id']} · compte #{r['compte_id']} · {r['email']}")
+    if r["lien"]:
+        typer.echo(f"LIEN D'INVITATION (pose le mot de passe ; expire {r['expire_at'][:10]}) :")
+        typer.echo(f"  {r['lien']}")
+    else:
+        typer.echo("mot de passe déjà posé — rien à envoyer (reset : `labuse compte-reset-lien` au besoin)")
+
+
 @app.command("compte-suspend")
 def compte_suspend_cmd(compte_id: int, motif: str = typer.Option("manuel")) -> None:
     """Suspend un compte (sessions révoquées ≤ 60 s) — l'app affiche « paiement requis »/« suspendu »."""

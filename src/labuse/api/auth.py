@@ -28,11 +28,17 @@ log = logging.getLogger("labuse.auth")
 COOKIE = "labuse_session"
 FAILURE_DELAY_S = 0.4          # ralentit la force brute sans pénaliser l'utilisateur légitime
 
+# VPS · AC-025 — 2FA TOTP des admins : le mot de passe validé n'ouvre PAS la session, il
+# ouvre un DÉFI (cookie signé court) que seul un code TOTP/secours transforme en session.
+COOKIE_2FA = "labuse_2fa"
+DEFI_2FA_TTL_S = 300           # 5 min pour saisir le code — au-delà, retour à la porte
+DEFI_2FA_ESSAIS_MAX = 5        # tentatives par défi ; épuisé → défi invalidé (re-login)
+
 # Toujours accessibles sans session (process/monitoring + cycle de connexion).
 # /readyz est public mais son HANDLER réduit les détails sans session (cf. app.readyz).
 # PREMIER EURO : l'onboarding (invitation/reset), les pages légales et le WEBHOOK Stripe
 # (signé — sa sécurité est la signature, pas la session) sont publics par nature.
-_PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico",
+_PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/login/2fa", "/logout", "/favicon.ico",
            "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
            "/onboarding/retour", "/onboarding/paiement", "/stripe/webhook", "/guide",
            "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger",
@@ -215,6 +221,93 @@ def cookie_kwargs() -> dict:
         "max_age": int(s.session_hours * 3600),
         "path": "/",
     }
+
+
+# ── VPS · AC-025 — jeton de DÉFI 2FA (mot de passe OK, code TOTP attendu) ──
+# Format compact signé « exp.uid.n.sig » (n = tentatives consommées) : sans état serveur,
+# infalsifiable (HMAC clé app), court (5 min). Le compteur vit DANS le jeton — chaque échec
+# ré-émet le cookie avec n+1 ; un client qui rejoue un vieux cookie ne « gagne » que les
+# tentatives déjà comptées de CE jeton, l'expiration à 5 min borne le tout.
+
+def defi_2fa(utilisateur_id: int, tentatives: int = 0) -> str:
+    exp = int(time.time() + DEFI_2FA_TTL_S)
+    payload = f"{exp}.{utilisateur_id}.{tentatives}"
+    return f"{payload}.{_sign('2fa.' + payload)[:32]}"
+
+
+def defi_2fa_lire(token: str | None) -> tuple[int, int] | None:
+    """Jeton → (utilisateur_id, tentatives) ; None si absent/altéré/expiré/épuisé."""
+    if not token:
+        return None
+    try:
+        exp, uid, n, sig = token.split(".", 3)
+        payload = f"{exp}.{uid}.{n}"
+        if not hmac.compare_digest(sig, _sign("2fa." + payload)[:32]):
+            return None
+        if int(exp) < time.time() or int(n) >= DEFI_2FA_ESSAIS_MAX:
+            return None
+        return int(uid), int(n)
+    except (ValueError, TypeError):
+        return None
+
+
+def cookie_2fa_kwargs() -> dict:
+    return {"key": COOKIE_2FA, "httponly": True, "samesite": "lax",
+            "secure": get_settings().env != "local", "max_age": DEFI_2FA_TTL_S, "path": "/"}
+
+
+def _page_2fa(titre: str, sous: str, corps: str, error: str | None = None) -> str:
+    """Gabarit commun des écrans 2FA — même nuit Coffre que la porte (coffre_ui)."""
+    err = (f'<p class="err" role="alert"><span aria-hidden="true">▲</span> {error}</p>'
+           if error else "")
+    return coffre_ui.page(titre, coffre_ui.OISEAU + f"""
+<h1>LABUSE</h1><p class="sub">{sous}</p>{corps}{err}""")
+
+
+def page_2fa_code(error: str | None = None) -> str:
+    """Saisie du code — TOTP à 6 chiffres, ou code de secours (même champ : la vérification
+    essaie l'un puis l'autre, l'utilisateur n'a pas à choisir un « mode »)."""
+    return _page_2fa("Vérification", "vérification en deux étapes", """
+<form method="post" action="/login/2fa" novalidate>
+  <label for="code">Code de votre application</label>
+  <div class="field"><input id="code" name="code" type="text" inputmode="numeric"
+     autocomplete="one-time-code" autofocus placeholder="123 456" aria-required="true"></div>
+  <button type="submit">Vérifier</button>
+</form>
+<p class="note">Téléphone indisponible&nbsp;? Saisissez l'un de vos
+<b>codes de secours</b> dans le même champ.</p>""", error)
+
+
+def page_2fa_enrolement(secret: str, qr_svg: str, error: str | None = None) -> str:
+    """Premier passage : QR à scanner (Google Authenticator, Aegis, 1Password…) + le secret
+    en toutes lettres (saisie manuelle si le scan échoue), puis le premier code confirme."""
+    groupes = " ".join(secret[i:i + 4] for i in range(0, len(secret), 4))
+    return _page_2fa("Activer la 2FA", "activez la vérification en deux étapes", f"""
+<p style="font-size:13px">Votre compte administrateur exige une seconde clé. Scannez ce
+QR avec votre application d'authentification, puis saisissez le code affiché.</p>
+<div style="background:#fff;border-radius:var(--r);padding:10px;margin:16px auto;width:196px">{qr_svg}</div>
+<p class="note">Saisie manuelle — secret&nbsp;: <code id="totp-secret"
+style="color:var(--mint);letter-spacing:.06em">{groupes}</code></p>
+<form method="post" action="/login/2fa" novalidate>
+  <label for="code">Code affiché par l'application</label>
+  <div class="field"><input id="code" name="code" type="text" inputmode="numeric"
+     autocomplete="one-time-code" autofocus placeholder="123 456" aria-required="true"></div>
+  <button type="submit">Activer et entrer</button>
+</form>""", error)
+
+
+def page_2fa_secours(codes: list[str]) -> str:
+    """AFFICHÉS UNE SEULE FOIS : en base ne restent que les hash — cette page est le seul
+    exemplaire des codes de secours."""
+    lis = "".join(f'<li style="padding:3px 0"><code>{c[:5]}-{c[5:]}</code></li>' for c in codes)
+    return _page_2fa("Codes de secours", "vérification en deux étapes activée", f"""
+<p style="font-size:13px">Notez ces <b>8 codes de secours</b> (gestionnaire de mots de passe,
+coffre). Chacun ne sert qu'<b>une fois</b>, si votre téléphone est indisponible.
+<b>Ils ne seront plus jamais affichés.</b></p>
+<ul style="list-style:none;columns:2;padding:14px 18px;margin:16px 0;background:var(--s2);
+border:1px solid var(--line);border-radius:var(--r);color:var(--hi);
+font-variant-numeric:tabular-nums">{lis}</ul>
+<a class="btn" href="/">J'ai noté mes codes → entrer</a>""")
 
 
 def login_page(error: bool = False) -> str:

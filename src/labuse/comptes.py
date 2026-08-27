@@ -95,6 +95,28 @@ def ensure_tables(db: Session) -> None:
             detail text,
             at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # VPS · AC-025 — 2FA TOTP des ADMINS. `secret` reste en clair (il FAUT le relire pour
+    # vérifier chaque code — un hash le rendrait inutilisable) : la protection est celle de la
+    # base, comme pour tout secret symétrique. `dernier_pas` = anti-rejeu : un code TOTP
+    # accepté consomme son pas de temps, le même code rejoué est refusé.
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS totp_2fa (
+            utilisateur_id int PRIMARY KEY REFERENCES utilisateurs(id) ON DELETE CASCADE,
+            secret text NOT NULL,
+            confirme_at timestamptz,
+            dernier_pas bigint,
+            created_at timestamptz NOT NULL DEFAULT now()
+        )"""))
+    # Codes de SECOURS (téléphone perdu) : 8 à l'enrôlement, usage unique, montrés UNE fois
+    # — en base : le SHA-256 seulement (contrairement au secret TOTP, on n'a jamais besoin
+    # de les relire en clair).
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS totp_secours (
+            id serial PRIMARY KEY,
+            utilisateur_id int NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+            code_hash text NOT NULL,
+            utilise_at timestamptz
+        )"""))
     db.commit()
 
 
@@ -189,12 +211,12 @@ def activer_par_invitation(db: Session, token: str, password: str,
 
 def verifier_login(db: Session, email: str, password: str) -> dict | None:
     """Login utilisateur — verrou après N échecs, message JAMAIS différencié.
-    Renvoie {utilisateur_id, compte_id, statut_compte} ou None."""
+    Renvoie {utilisateur_id, compte_id, statut_compte, role} ou None."""
     s = get_settings()
     email = _norm_email(email)
     u = db.execute(text(
         "SELECT u.id, u.hash, u.statut, u.echecs_login, u.verrouille_jusqu_a, u.compte_id,"
-        "       c.statut AS statut_compte, c.essai_expire_at"
+        "       u.role, c.statut AS statut_compte, c.essai_expire_at"
         " FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id WHERE u.email = :e"),
         {"e": email}).mappings().first()
     if not u or not u["hash"] or u["statut"] in ("supprime", "suspendu", "invite"):
@@ -226,7 +248,7 @@ def verifier_login(db: Session, email: str, password: str) -> dict | None:
         basculer_essai_expire(db, u["compte_id"])
         statut_compte = "suspendu"
     return {"utilisateur_id": int(u["id"]), "compte_id": int(u["compte_id"]),
-            "statut_compte": statut_compte}
+            "statut_compte": statut_compte, "role": u["role"]}
 
 
 # ── sessions (cookie httpOnly ; en base : le hash du token) ──
@@ -309,6 +331,79 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
 def detruire_session(db: Session, token: str) -> None:
     db.execute(text("DELETE FROM sessions_auth WHERE token_hash = :h"), {"h": _sha(token)})
     db.commit()
+
+
+# ── VPS · AC-025 — 2FA TOTP des admins (primitive pure : labuse.totp ; ici : l'état en base) ──
+
+def totp_etat(db: Session, utilisateur_id: int) -> dict | None:
+    """Enrôlement TOTP de l'utilisateur → {secret, confirme, dernier_pas} ou None (jamais enrôlé)."""
+    r = db.execute(text("SELECT secret, confirme_at, dernier_pas FROM totp_2fa"
+                        " WHERE utilisateur_id = :u"), {"u": utilisateur_id}).mappings().first()
+    if not r:
+        return None
+    return {"secret": r["secret"], "confirme": r["confirme_at"] is not None,
+            "dernier_pas": r["dernier_pas"]}
+
+
+def totp_preparer(db: Session, utilisateur_id: int) -> str:
+    """Secret d'ENRÔLEMENT : en crée un si absent, sinon rend l'existant NON confirmé
+    (recharger la page d'enrôlement ne doit pas changer le QR — sinon l'app du téléphone
+    et la base divergent). Un secret déjà confirmé n'est JAMAIS régénéré ici."""
+    from . import totp as _totp
+    etat = totp_etat(db, utilisateur_id)
+    if etat:
+        return etat["secret"]
+    secret = _totp.generer_secret()
+    db.execute(text("INSERT INTO totp_2fa (utilisateur_id, secret) VALUES (:u, :s)"),
+               {"u": utilisateur_id, "s": secret})
+    db.commit()
+    return secret
+
+
+def totp_verifier(db: Session, utilisateur_id: int, code: str) -> bool:
+    """Vérifie un code TOTP AVEC anti-rejeu : fenêtre ±1 pas (tolérance d'horloge), et un
+    pas ≤ dernier_pas consommé est REFUSÉ même si le code est mathématiquement bon — un
+    code intercepté (épaule, phishing) ne resservira jamais."""
+    from . import totp as _totp
+    etat = totp_etat(db, utilisateur_id)
+    if not etat:
+        return False
+    pas = _totp.verifier_code(etat["secret"], code, fenetre=1)
+    if pas is None or (etat["dernier_pas"] is not None and pas <= etat["dernier_pas"]):
+        return False
+    db.execute(text("UPDATE totp_2fa SET dernier_pas = :p WHERE utilisateur_id = :u"),
+               {"p": pas, "u": utilisateur_id})
+    db.commit()
+    return True
+
+
+def totp_confirmer(db: Session, utilisateur_id: int) -> list[str]:
+    """Premier code accepté (vérifié par l'appelant via totp_verifier) → l'enrôlement est
+    CONFIRMÉ et les 8 codes de secours naissent. Renvoie les codes EN CLAIR — seul moment
+    où ils existent hors de la tête de l'admin (en base : le hash)."""
+    codes = [f"{secrets.randbelow(10**10):010d}" for _ in range(8)]
+    db.execute(text("UPDATE totp_2fa SET confirme_at = now() WHERE utilisateur_id = :u"),
+               {"u": utilisateur_id})
+    # ré-enrôlement (secret régénéré à la main en base) → les anciens codes tombent
+    db.execute(text("DELETE FROM totp_secours WHERE utilisateur_id = :u"), {"u": utilisateur_id})
+    for c in codes:
+        db.execute(text("INSERT INTO totp_secours (utilisateur_id, code_hash) VALUES (:u, :h)"),
+                   {"u": utilisateur_id, "h": _sha(c)})
+    db.commit()
+    return codes
+
+
+def totp_secours_consommer(db: Session, utilisateur_id: int, code: str) -> bool:
+    """Code de secours : valable UNE fois (utilise_at posé atomiquement par le même UPDATE
+    qui le trouve — pas de fenêtre de double emploi)."""
+    code = (code or "").strip().replace(" ", "").replace("-", "")
+    if not code:
+        return False
+    n = db.execute(text("UPDATE totp_secours SET utilise_at = now()"
+                        " WHERE utilisateur_id = :u AND code_hash = :h AND utilise_at IS NULL"),
+                   {"u": utilisateur_id, "h": _sha(code)}).rowcount
+    db.commit()
+    return bool(n)
 
 
 # ── reset mot de passe ──
@@ -437,6 +532,55 @@ def creer_admin(db: Session, email: str, password: str) -> int:
         {"c": cid, "e": email, "h": _ph.hash(password), "v": get_settings().cgv_version}).scalar()
     audit(db, "admin_cree", cid, uid); db.commit()
     return int(uid)
+
+
+def creer_admin_invitation(db: Session, email: str, nom: str | None = None) -> dict:
+    """VPS · AC-020 — admin NOMINATIF par invitation (le mot de passe se pose via le lien
+    /invitation, jamais en argv ni au clavier de l'opérateur). Idempotent :
+    - email inconnu → compte interne ACTIF (hors facturation, plan 'illimite' comme
+      `creer_admin`) + utilisateur rôle admin en statut 'invite' + lien d'invitation ;
+    - email connu → PROMOTION au rôle admin ; si le mot de passe n'est pas encore posé,
+      un lien d'invitation frais est (re)émis, sinon aucun lien (compte déjà opérationnel).
+    Renvoie {utilisateur_id, compte_id, email, promu, lien|None, expire_at|None}."""
+    ensure_tables(db)
+    email = _norm_email(email)
+    exist = db.execute(text("SELECT id, compte_id, role, hash, statut FROM utilisateurs"
+                            " WHERE email = :e"), {"e": email}).mappings().first()
+    if exist:
+        uid, cid = int(exist["id"]), int(exist["compte_id"])
+        promu = exist["role"] != "admin"
+        if promu:
+            db.execute(text("UPDATE utilisateurs SET role = 'admin', updated_at = now()"
+                            " WHERE id = :i"), {"i": uid})
+        # le compte porteur doit ouvrir la porte (session_utilisateur refuse invite/suspendu)
+        db.execute(text("UPDATE comptes SET statut = 'actif', updated_at = now()"
+                        " WHERE id = :c AND statut <> 'actif'"), {"c": cid})
+        lien, exp = None, None
+        if not exist["hash"]:                     # mot de passe jamais posé → lien frais
+            tok = _token()
+            exp = datetime.now(timezone.utc) + timedelta(days=7)
+            db.execute(text("UPDATE utilisateurs SET statut = 'invite', invite_token_hash = :h,"
+                            " invite_expire_at = :x, updated_at = now() WHERE id = :i"),
+                       {"h": _sha(tok), "x": exp, "i": uid})
+            lien = f"{get_settings().public_base_url}/invitation?token={tok}"
+        audit(db, "admin_promu" if promu else "admin_reconfirme", cid, uid)
+        db.commit()
+        return {"utilisateur_id": uid, "compte_id": cid, "email": email, "promu": promu,
+                "lien": lien, "expire_at": exp.isoformat() if exp else None}
+    cid = db.execute(text("INSERT INTO comptes (nom, plan, statut, sieges)"
+                          " VALUES (:n, 'illimite', 'actif', 1) RETURNING id"),
+                     {"n": nom or f"LABUSE (admin {email})"}).scalar()
+    tok = _token()
+    exp = datetime.now(timezone.utc) + timedelta(days=7)
+    uid = db.execute(text(
+        "INSERT INTO utilisateurs (compte_id, email, role, statut, invite_token_hash, invite_expire_at)"
+        " VALUES (:c, :e, 'admin', 'invite', :h, :x) RETURNING id"),
+        {"c": cid, "e": email, "h": _sha(tok), "x": exp}).scalar()
+    audit(db, "admin_cree", cid, uid, "par invitation (AC-020)")
+    db.commit()
+    return {"utilisateur_id": int(uid), "compte_id": int(cid), "email": email, "promu": False,
+            "lien": f"{get_settings().public_base_url}/invitation?token={tok}",
+            "expire_at": exp.isoformat()}
 
 
 def suspendre_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:

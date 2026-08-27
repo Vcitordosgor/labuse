@@ -195,6 +195,10 @@ class Settings(BaseSettings):
     # Verrouillage login : N échecs → verrou temporaire (minutes).
     login_echecs_max: int = 5
     login_verrou_minutes: int = 15
+    # VPS · go-live — MORT du login pilote PARTAGÉ : à False, le chemin « identifiant vide »
+    # de POST /login répond en échec NEUTRE (401, même page — rien ne révèle que la voie
+    # existe). Défaut True pour la compat locale/QA ; la prod pose LABUSE_LOGIN_PILOTE_ACTIF=0.
+    login_pilote_actif: bool = True
 
     # ── M26-A — Copilote (socle agentique) ──
     # Quota provisoire (la vraie valeur sera fixée avec l'offre) ; compté kind='agent'

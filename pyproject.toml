@@ -47,6 +47,7 @@ dependencies = [
   "pillow>=10",                     # PIL — composition d'image du plan de situation + ingestion PLU
   "requests>=2.31",                 # tuiles IGN (plan de situation) + ingestion PLU (plu_ingest/plu_corpus)
   "urllib3>=2.0",                   # importé en dur (retries HTTP) dans la chaîne d'ingestion PLU
+  "qrcode>=7.4",                    # 2FA admin (VPS · AC-025) — QR d'enrôlement TOTP en SVG pur (jamais PIL)
 ]
 
 [project.optional-dependencies]
