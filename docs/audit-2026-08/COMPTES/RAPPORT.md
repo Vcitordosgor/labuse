@@ -102,3 +102,50 @@ projet/veille/event/courrier. Aucun objet légitime masqué à son propriétaire
   à deux comptes réels, y compris sur les surfaces récentes (Copilote v2, colonnes CRM, courrier)
   **non couvertes** par les tests d'isolation existants. → **Régression gelée** :
   `tests/test_audit_comptes.py` (4 tests : veilles v2, conversations v2, colonnes CRM, courrier).
+
+---
+
+## A3 — PROPRE vs COMMUN
+
+**Méthode.** Inventaire du schéma réel (lecture seule `information_schema` + `pg_constraint`) :
+quelles tables portent `compte_id` (données propres), lesquelles ne l'ont pas (commun).
+
+### Ce qui est PROPRE à un compte (26 tables portant `compte_id`)
+
+| Domaine | Tables |
+|---------|--------|
+| Identité / accès | `comptes`, `utilisateurs`, `evenements_compte`, `licence_mails` |
+| Prospection | `projets`, `pipeline_entries`, `crm_columns`, `saved_searches`, `saved_filters`, `signalements` |
+| Veille / notifs | `watched_parcels`, `watch_zones`, `alertes`, `veilles`, `veille_reprise`, `event_log`, `event_seen`, `notif_prefs`, `notif_canaux` |
+| Copilote / IA | `copilote_conversations` (+ `copilote_messages` via FK), `agent_runs`, `ia_log`, `usage_events` |
+| Services | `courrier_demandes`, `lettre_zonage_refs`, `share_links`, `retours` |
+
+### Ce qui est COMMUN à tous (aucun `compte_id`)
+
+Vérifié sur les tables porteuses : `parcels`, `parcel_p_score_v2`, `parcel_residuel`,
+`parcel_terrain`, `dryrun_parcel_evaluations`, `dvf_mutations`, `m10_permit_delais`, `zone_plu`,
+`data_sources`, `copilote_messages` (cloisonné via `conversation_id`), `bilan_params`. **Aucune
+donnée commune n'est dupliquée par compte** (aucune table commune ne porte `compte_id`), **aucune
+donnée de compte ne réside hors des 26 tables scopées**. La ligne de partage est nette : la
+donnée publique (parcelles, scores, prix, sources, run) est **partagée**, l'intention commerciale
+(projets, CRM, veilles, conversations) est **cloisonnée**.
+
+### Findings A3
+
+- **AC-002 — Carte propre/commun saine.** ✅ Séparation nette, sans fuite ni duplication.
+- **AC-003 🟠 — Effacement RGPD incomplet : 12 tables à `compte_id` SANS FK cascade.**
+  `effacer_compte_rgpd` (`comptes.py:443`) fait `DELETE FROM comptes` et **compte sur la cascade
+  FK** — son commentaire affirme « toutes portent `compte_id ON DELETE CASCADE` ». C'est vrai pour
+  14 tables, **FAUX pour 12** ajoutées depuis :
+  `copilote_conversations` (+`copilote_messages`), `veilles`, `veille_reprise`, `ia_log`,
+  `usage_events`, `retours`, `licence_mails`, `notif_prefs`, `notif_canaux`, `share_links`,
+  `lettre_zonage_refs`, `evenements_compte` (celui-ci est anonymisé exprès — légitime).
+  À un effacement réel, ces lignes deviennent des **orphelins** (`compte_id` pointant vers un
+  compte disparu ; les `serial` ne recyclent pas les id → invisibles à tout compte vivant, donc
+  **pas une fuite de cloisonnement**). Mais c'est un **défaut de conformité** : du contenu
+  potentiellement personnel survit à la demande d'effacement — surtout `copilote_conversations`
+  /`copilote_messages` (le texte des échanges) et `share_links` (des liens de partage `/p/{token}`
+  encore résolvables). Incohérence interne notable : `agent_runs` a la FK cascade, sa jumelle
+  `copilote_conversations` ne l'a pas.
+  → **NON corrigé dans ce mandat** (A6 = « constat + proposition, n'implémente pas »). Traité en
+  détail et proposé dans `SUPPRESSION-SPEC.md`.
