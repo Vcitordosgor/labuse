@@ -5376,8 +5376,10 @@ from .copilote import router as _copilote_router  # noqa: E402  (M26-A — Copil
 from .copilote_v2 import router as _copilote_v2_router  # noqa: E402  (M78 — Copilote v2 : routeur + outils)
 from .accueil import router as _accueil_router  # noqa: E402  (M55-D stage 9 — chiffres de l'accueil)
 from .dashboard import router as _dashboard_router  # noqa: E402  (DASHBOARD-V1 — Tour de contrôle)
+from ..pige.api import router as _radar_router  # noqa: E402  (RADAR P1 — page admin Radar)
 
 app.include_router(_dashboard_router)
+app.include_router(_radar_router)
 app.include_router(_crm_columns_router)
 app.include_router(_copilote_router)
 app.include_router(_copilote_v2_router)
