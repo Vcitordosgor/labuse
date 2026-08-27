@@ -60,20 +60,24 @@ body{background:radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%
   display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
 .bloc{width:100%;max-width:var(--w,400px)}
 .oiseau{display:block;margin:0 auto 14px;height:28px;width:auto;filter:drop-shadow(0 0 14px rgba(201,169,97,.25))}
-h1{font:600 15px/1.3 'Space Grotesk',inherit;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
+h1{font:600 15px/1.3 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
 .sub,.sous{text-align:center;font-size:11.5px;color:var(--dim);letter-spacing:.1em;margin:0 0 28px}
 .cgvbox{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:13px;font-size:12.5px;color:var(--txt)}
 .cgvbox input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
 label{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 7px}
 .field{position:relative}
+/* E7 mobile — font-size 16px en LONGHAND sur les champs : SOUS 16px, iOS Safari zoome au focus
+   (le parcours « saute » sur iPhone). ⚠ l'ancien raccourci `font:15px inherit` était INVALIDE
+   (`inherit` n'est pas une font-family de shorthand) → IGNORÉ : l'input tombait au défaut UA
+   ~13px, PIRE. En longhand la règle s'applique vraiment. */
 input[type=email],input[type=password],input[type=text]{width:100%;background:var(--s2);border:1px solid var(--line2);
-  border-radius:var(--r);color:var(--hi);font:15px inherit;padding:11px 12px;outline:none;
+  border-radius:var(--r);color:var(--hi);font-size:16px;font-family:inherit;padding:11px 12px;outline:none;
   transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 input:disabled{color:var(--mut)}
 input::placeholder{color:var(--dim)}
 input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(92,230,161,.16)}
 button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;margin-top:26px;
-  background:var(--mint);color:var(--mint-ink);border:0;border-radius:var(--r);font:600 14px inherit;
+  background:var(--mint);color:var(--mint-ink);border:0;border-radius:var(--r);font:600 14px -apple-system,'Inter',system-ui,sans-serif;
   padding:12px;cursor:pointer;transition:filter .15s var(--ease);text-decoration:none}
 button:hover,.btn:hover{filter:brightness(1.08)}
 button:disabled,.btn:disabled{background:var(--s2);color:var(--mut);cursor:not-allowed;filter:none}
@@ -97,7 +101,7 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .consent input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
 .consent label{all:unset;font-size:12.5px;color:var(--txt);line-height:1.5;cursor:pointer}
 .recap{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:6px}
-.recap .prix{font:700 26px 'Space Grotesk',inherit;color:var(--hi);font-variant-numeric:tabular-nums}
+.recap .prix{font:700 26px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
 .recap .quoi{font-size:12.5px;color:var(--mut);margin-top:2px}
 .trust{display:flex;flex-direction:column;gap:9px;margin:18px 0 4px}
 .trust div{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--mut)}

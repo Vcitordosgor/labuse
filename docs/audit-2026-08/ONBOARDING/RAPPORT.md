@@ -179,3 +179,31 @@ cohérent avec un engagement annuel. La commande `labuse avis-echeance` est **cr
   de reconduction** au client. À surfacer (le mécanisme d'échéance annuelle existe déjà côté serveur) ;
   dépend du branchement du palier par compte (`plan_par_compte`, aujourd'hui stubbé) → mandat « Auth
   & Plans ». Noté pour Vic.
+
+---
+
+## E7 — MOBILE
+
+Recette réelle des pages du parcours à **390 px** (Playwright, chromium headless, deviceScaleFactor 2).
+Captures dans `docs/audit-2026-08/ONBOARDING/captures/*-390.png` (invitation client, activation admin,
+flash, reset ×2, retour paiement, CGV).
+
+**Résultat visuel** : layout responsive impeccable — **aucun débordement horizontal** (scrollWidth
+= 390 sur toutes les pages), conteneur `.bloc` en 100 %/max-width, boutons pleine largeur, cibles
+tactiles ~39 px, CGV lisible. L'écran d'invitation client affiche bien « Intégral · 349 €/mois ·
+engagement 12 mois » ; l'écran admin « Activer votre accès administrateur · aucun paiement ».
+
+**DEUX bugs mobiles/DA trouvés et corrigés** (des raccourcis CSS `font` invalides, silencieusement
+ignorés depuis toujours) :
+- **PE-007** — `input{font:15px inherit}` : raccourci **invalide** (`inherit` n'est pas une
+  font-family de raccourci) → **règle ignorée**, les champs tombaient au défaut navigateur **~13 px**
+  (< 16 px) → **zoom au focus sur iOS Safari** (le formulaire « saute »). Corrigé en **longhand**
+  `font-size:16px;font-family:inherit` (vérifié : computed 16 px sur tous les champs texte).
+- **PE-008** — titres/prix `font:… 'Space Grotesk',inherit` : le `,inherit` **invalidait** la règle
+  → la **police d'identité LABUSE (Space Grotesk) ne s'appliquait pas** (repli Inter). Corrigé avec
+  un repli générique valide (vérifié : computed `Space Grotesk` sur les `h1`).
+
+Gelé par `tests/test_parcours_css.py` (aucun raccourci `font:…inherit`, champs 16 px, titres avec
+famille valide). Le Checkout Stripe et le téléchargement PDF iOS sont hébergés/gérés par Stripe et
+le navigateur ; le retour de paiement (`/onboarding/retour`, `/flash/retour`) est recetté ci-dessus
+et son JS de polling est CSP-safe depuis E3.
