@@ -18,8 +18,9 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .comptes import PLANS, audit, reactiver_compte, suspendre_compte
+from .comptes import audit, reactiver_compte, suspendre_compte
 from .config import get_settings
+from .offres import offre_flash, offre_integral
 
 log = logging.getLogger("labuse.facturation")
 
@@ -52,7 +53,7 @@ def provisionner() -> dict:
                         "Pré-analyse sur données publiques ; ne remplace ni certificat "
                         "d'urbanisme ni conseil notarial.")
         out["stripe_price_integral"] = stripe.Price.create(
-            product=produit.id, currency="eur", unit_amount=349 * 100,
+            product=produit.id, currency="eur", unit_amount=offre_integral()["eur_mois"] * 100,
             recurring={"interval": "month"}, lookup_key="labuse_integral_mensuel").id
     prix = stripe.Price.list(lookup_keys=["labuse_flash_unitaire"], limit=1).data
     if prix:
@@ -64,7 +65,7 @@ def provisionner() -> dict:
                         "Pré-analyse sur données publiques ; ne remplace ni certificat "
                         "d'urbanisme ni conseil notarial.")
         out["stripe_price_flash"] = stripe.Price.create(
-            product=produit.id, currency="eur", unit_amount=79 * 100,
+            product=produit.id, currency="eur", unit_amount=offre_flash()["eur"] * 100,
             lookup_key="labuse_flash_unitaire").id
     return out
 

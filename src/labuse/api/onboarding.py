@@ -26,6 +26,14 @@ def get_db():
     yield from _g()
 
 
+@router.get("/api/offres", include_in_schema=False)
+def api_offres():
+    """Source de vérité des offres, servie au front (E1) : le JSX n'écrit AUCUN prix en dur,
+    il lit d'ici. `{"integral": {...349...}, "flash": {...79...}}`."""
+    from ..offres import offres_publiques
+    return JSONResponse(offres_publiques())
+
+
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
@@ -40,14 +48,17 @@ def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: boo
 
 @router.get("/invitation", include_in_schema=False)
 def invitation_page(token: str = "", db: Session = Depends(get_db)):
-    from ..comptes import PLANS, valider_invitation
+    from ..comptes import valider_invitation
+    from ..offres import offre_integral
     inv = valider_invitation(db, token) if token else None
     if not inv:
         return HTMLResponse(_page("invitation", """
 <h1>Invitation introuvable</h1><p class="sous">lien expiré ou déjà utilisé</p>
 <p style="text-align:center;font-size:12.5px">Demandez un nouveau lien à votre contact LABUSE —
 les invitations expirent après 7 jours.</p>"""), status_code=404)
-    p = PLANS.get(inv["plan"], PLANS["integral"])
+    # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py). Un compte
+    # interne (admin) n'atterrit jamais ici — il a son écran d'activation dédié (E2).
+    p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
 <p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement 12 mois</p>
@@ -133,13 +144,13 @@ vous sera proposé.</p>
 
 @router.get("/onboarding/paiement", include_in_schema=False)
 def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
-    from ..comptes import PLANS
+    from ..offres import offre_integral
     cid = coffre_ui.pay_cid(t)
     if cid is None:
         return HTMLResponse(_page("paiement", "<h1>Lien expiré</h1><p class='sub'>reprenez "
                                   "depuis la porte</p><p style='text-align:center'>"
                                   "<a href='/login'>se connecter</a></p>"), status_code=400)
-    p = PLANS["integral"]
+    p = offre_integral()
     return HTMLResponse(_page("votre abonnement", f"""
 <h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
 <div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
@@ -335,7 +346,9 @@ _EDITEUR = ("Victor L. — entrepreneur individuel (EI) · Saint-Paul, Île de L
 
 @router.get("/cgv", include_in_schema=False)
 def cgv_page():
+    from ..offres import offre_flash, offre_integral
     s = get_settings()
+    oi, of = offre_integral(), offre_flash()
     return HTMLResponse(_page("conditions générales", f"""
 <div class="legal">
 <h1>Conditions générales de vente et d'utilisation</h1>
@@ -367,9 +380,9 @@ prestataire de paiement) ou d'usage abusif (extraction massive, revente de donn�
 partage d'accès, contournement technique).</p>
 
 <h2>4. Prix et paiement</h2>
-<p><b>Intégral</b> : abonnement mensuel de 349 € par licence, accès complet au service.
-<b>Flash</b> : 79 € par rapport — paiement unique donnant droit à UN rapport PDF portant
-sur UNE parcelle, téléchargeable pendant 30 jours (article 4 bis). Prix hors taxes le cas
+<p><b>Intégral</b> : abonnement mensuel de {oi['eur_mois']} € par licence, accès complet au service.
+<b>Flash</b> : {of['eur']} € par rapport — paiement unique donnant droit à UN rapport PDF portant
+sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis). Prix hors taxes le cas
 échéant — le régime de TVA applicable figure sur les factures. Paiement par carte via
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
 et reçus émis par Stripe.</p>
@@ -383,8 +396,8 @@ l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec t
 génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
 
 <h2>5. Durée, reconduction et résiliation</h2>
-<p>L'abonnement est souscrit pour une <b>durée ferme de 12 mois</b> à compter de son activation, facturé
-mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de 12 mois</b>,
+<p>L'abonnement est souscrit pour une <b>durée ferme de {oi['engagement_mois']} mois</b> à compter de son activation, facturé
+mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de {oi['engagement_mois']} mois</b>,
 sauf dénonciation par le client au plus tard <b>un mois avant la date anniversaire</b> (depuis son espace
 ou par e-mail à son contact LABUSE).</p>
 <!-- M-P (point 5) — À SIGNALER À L'AVOCAT : L. 215-1 est un article du code de la CONSOMMATION,
@@ -395,7 +408,7 @@ au plus tôt trois mois et au plus tard un mois avant le terme de chaque périod
 reconduire</b> l'abonnement. À défaut d'information dans ce délai, le client peut mettre fin gratuitement à
 la reconduction à tout moment à compter de la date de reconduction, les sommes correspondant à la période
 postérieure lui étant remboursées.</p>
-<p>Pendant la période d'engagement de 12 mois, l'abonnement n'est pas résiliable par anticipation, sauf
+<p>Pendant la période d'engagement de {oi['engagement_mois']} mois, l'abonnement n'est pas résiliable par anticipation, sauf
 motif légitime (cessation d'activité dûment justifiée, manquement de LABUSE à ses obligations). LABUSE peut
 résilier avec un préavis de 30 jours ; en cas d'arrêt du service, les sommes de la période non servie sont
 remboursées.</p>
@@ -538,6 +551,8 @@ lit en trois minutes.</p>
 
 @router.get("/flash", include_in_schema=False)
 def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
+    from ..offres import offre_flash
+    of = offre_flash()
     note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
     parcelle = None
     if idu and len(idu) == 14:
@@ -555,20 +570,20 @@ construire), risques (Géorisques, PPR, littoral), marché DVF du secteur, permi
 <b style="color:var(--txt)">potentiel de transformation</b> — chaque donnée avec sa source (Sourcé /
 Estimé) et son millésime.</div></div>
 <div class="trust" role="list">
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable 30 jours.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable {of['validite_lien_jours']} jours.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M4 10l4 4 8-9"/></svg> Ce qu'une simple fiche cadastrale ne dit pas : <b style="color:var(--txt)">les règles PLU traduites</b> et le potentiel constructible chiffré.</div>
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement unique — <b style="color:var(--txt)">aucune donnée de carte</b> ne transite par LABUSE.</div>
 </div>
-<div class="recap" style="margin-top:6px"><div class="prix">79 € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
+<div class="recap" style="margin-top:6px"><div class="prix">{of['eur']} € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
-<button type="submit">Payer 79 € et recevoir mon rapport →</button></form>
+<button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
 <p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", pied=False))
+conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", pied=False))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · 79 €</p>
+<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · {of['eur']} €</p>
 {note_annule}{introuvable}
 <div class="recap" style="margin-bottom:16px">
 <div style="font-size:12.5px;color:var(--txt);line-height:1.65"><b style="color:var(--hi)">Ce que vous

@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getAdminLicences, postAdminLicenceConvertir, postAdminLicenceCreer, postAdminLicenceCreerEssai,
+  getAdminLicences, getOffres, postAdminLicenceConvertir, postAdminLicenceCreer, postAdminLicenceCreerEssai,
   postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, type AdminLicence,
 } from '../../lib/api'
 import { ActBtn, Chip, H2, Panel } from './AdminView'
@@ -142,6 +142,9 @@ function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: b
 
 function NouveauClient() {
   const qc = useQueryClient()
+  // E1 — le prix vient du serveur (source de vérité), jamais écrit en dur ici.
+  const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: Infinity })
+  const prixIntegral = offres.data?.integral.eur_mois
   const [email, setEmail] = useState('')
   const [nom, setNom] = useState('')
   const [heures, setHeures] = useState('48')
@@ -192,7 +195,7 @@ function NouveauClient() {
         <div className="flex items-center gap-4 border-b border-line px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['2']">
           <div>
             <b className="text-sm text-txt-hi">Lier l'abonnement Stripe</b>
-            <div className="text-xs text-txt-dim">bouton « Lien de souscription » sur la fiche du client (349 €/mois) — la licence passe « active » au premier paiement</div>
+            <div className="text-xs text-txt-dim">bouton « Lien de souscription » sur la fiche du client{prixIntegral ? ` (${prixIntegral} €/mois)` : ''} — la licence passe « active » au premier paiement</div>
           </div>
         </div>
         <div className="flex items-center gap-4 px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['3']">
