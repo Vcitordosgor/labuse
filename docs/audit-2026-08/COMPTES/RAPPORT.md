@@ -45,3 +45,60 @@ révocation immédiate, RGPD réel). Angles morts, tous **non bloquants** et doc
 changer-son-mdp absent (AC-010), sessions non purgées (AC-011), pas de déverrouillage admin
 (AC-012), complexité mdp non exigée (AC-013), double-nature du mdp pilote (A4). Aucune de ces
 lignes n'est une fuite de cloisonnement — le cœur du mandat (A2) est traité séparément.
+
+---
+
+## A2 — CLOISONNEMENT À DEUX COMPTES RÉELS (cœur du mandat)
+
+**Méthode.** Deux comptes clients réels `[AUDIT-TEST]` — **Stéphanie** et **Caroline** — créés
+par le mécanisme officiel (invitation → activation → statut `actif`), sessions réelles. Chacune
+a créé un objet de **chaque type propre au compte** (projet, entrée CRM, colonne CRM, filtre
+sauvé, recherche sauvée, zone de veille, parcelle suivie, signalement, demande de courrier,
+conversation Copilote, veille Copilote, événement). Puis, **session de Stéphanie en main**,
+attaque des objets de Caroline sur les **80 routes `{param}` de `openapi.json`** (harnais
+`qa/comptes/audit_a2.py`), suivie d'une levée d'ambiguïté ciblée (`audit_a2_cible.py`,
+`audit_a2_cible2.py`) sur les cas non tranchés par le seul code HTTP.
+
+**Résultat : AUCUNE FUITE.** Aucun objet d'un compte n'est atteignable depuis l'autre — par id
+direct, id deviné, filtre, export, recherche, deep-link, Copilote ou notifications. Les objets
+attaqués **survivent** intacts. Symétriquement, **aucun sur-filtrage** : chaque compte retrouve
+l'intégralité de ses propres objets.
+
+### Matrice de cloisonnement (routes d'objet, attaque cross-compte)
+
+| Route | Objet | Attaque de Stéphanie sur l'objet de Caroline | Verdict |
+|-------|-------|----------------------------------------------|---------|
+| GET/PATCH/DELETE `/projets/{pid}` | projet | 404 | ✅ cloisonné |
+| POST `/projets/{pid}/{rejouer,proposer,ajouter,chercher-plus}` | projet | 404 (payload valide) | ✅ |
+| GET `/projets/{pid}/{parcelles,carte,export.pdf,export.csv}` | projet | 404 | ✅ |
+| PATCH `/projets/{pid}/parcelle/{idu}` | projet | 404 (payload valide) | ✅ |
+| PATCH/DELETE/restore `/pipeline/{entry_id}` | CRM | 404 | ✅ |
+| PATCH/DELETE `/pipeline/columns/{col_id}` | CRM colonne | 404 (`_own_column` IDOR) | ✅ |
+| DELETE `/filters/{filter_id}` | filtre | 404 | ✅ |
+| PATCH/DELETE `/events/searches/{sid}` | recherche | 200 idempotent — objet **survit** (cloison SQL `AND compte_id IS NOT DISTINCT FROM`) | ✅ |
+| PATCH/DELETE `/watch-zones/{zone_id}` | zone veille | 404 (payload valide) | ✅ |
+| POST `/events/{event_id}/read` | événement | 200 idempotent — `lu` reste false, event **non visible** de Stéphanie | ✅ |
+| GET `/api/copilote-v2/missions/{conversation_id}` | conversation | 404 | ✅ |
+| DELETE `/api/copilote-v2/veilles/{veille_id}` | veille | 200 idempotent — veille **survit** (`actif` reste true) | ✅ |
+| POST `/courrier/admin/demandes/{demande_id}/statut` | courrier | **403** (route admin) — demande intacte | ✅ |
+
+**Balayage brut** : 80 routes `{param}`, dont 20 portent un id d'objet propre au compte —
+**16 renvoient 404**, 4 renvoient 200/idempotent **prouvés non destructifs** (recherche, veille,
+event, + les 422 de payload rejoués valides → 404). La seule « FUITE » signalée par le balayage
+automatique (`DELETE veilles → 200`) était un **faux positif** : réponse `{ok:false}`, cloison SQL
+vérifiée (l'objet ne bouge pas). Levé en test ciblé.
+
+**Distinction 404 vs 403.** Les objets propres au compte renvoient **404** (« n'existe pas pour
+toi » — ne révèle pas l'existence chez l'autre, correct). Les routes `/*/admin/*` renvoient **403**
+(« réservé admin »). Les deux sont sains.
+
+**Non-sur-filtrage prouvé.** Stéphanie voit son projet/CRM/filtre/zone ; Caroline voit son
+projet/veille/event/courrier. Aucun objet légitime masqué à son propriétaire.
+
+### Findings A2
+
+- **AC-001 — RAS cloisonnement.** Aucune fuite inter-comptes sur les 20 routes d'objet. La
+  cloison `tenant.py` (`compte_id IS NOT DISTINCT FROM :cid`, `SCOPED_TABLES` + FK cascade) tient
+  à deux comptes réels, y compris sur les surfaces récentes (Copilote v2, colonnes CRM, courrier)
+  **non couvertes** par les tests d'isolation existants. → **Régression gelée** :
+  `tests/test_audit_comptes.py` (4 tests : veilles v2, conversations v2, colonnes CRM, courrier).
