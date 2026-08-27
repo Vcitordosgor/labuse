@@ -145,3 +145,43 @@ signal foncier est reléguée à cause d'un empilement de contraintes réglement
   complet et explicite. **Aucune modification** de l'affichage ni du classement nécessaire (conforme
   « sans changer le classement »). Arbitrage : le pourquoi étant déjà servi ligne à ligne, ajouter un
   badge de synthèse serait cosmétique et hors périmètre « aucun chiffre ne change ».
+
+---
+## R4 — SÉCURITÉ (avant exposition Internet)
+
+Audit complet (grep secrets, injections, en-têtes, cookies, CORS, uploads, stack traces, console,
+rate-limit) + scan du bundle `dist/` + `pip-audit`/`npm audit`. **Verdict global : SAIN**, avec deux
+durcissements appliqués.
+
+### Corrigé
+
+- **RV-006 🟠→corrigé — CSP absente.** Ajout d'une **Content-Security-Policy raisonnable** sur chaque
+  réponse (`app.py:_security_headers`) : `default-src 'self'` + sources externes RÉELLES uniquement
+  (Google Fonts en style/font, tuiles IGN `data.geopf.fr` + MNT S3 en img/connect, `blob:` pour les
+  workers maplibre) ; `script-src 'self'` **sans** `unsafe-inline` (bundle local, zéro script inline
+  vérifié) ; `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`. **Vérifié empiriquement**
+  (uvicorn code neuf + Playwright) : **0 violation CSP, 0 erreur console, carte/polices intactes** —
+  zéro régression visuelle. Test de non-régression `test_r4_entetes_securite_et_csp`.
+- **RV-007 🟡→corrigé — patchs de dépendances.** `pip-audit` : `pydantic-settings` (GHSA-4xgf-cpjx-pc3j)
+  et `pypdf` (PYSEC-2026-3655/3656, runtime PDF) mis à jour (env + planchers `pyproject` bumpés).
+  Restants : `pip` (PYSEC-2026-3721) et `setuptools` (PYSEC-2026-3447) — **outils de build/packaging,
+  non embarqués dans le runtime servi en prod** ; plancher `setuptools>=78.1.1` posé, mise à jour de
+  l'outil au prochain rebuild d'environnement (non bloquant). `npm audit --production` : **0 vulnérabilité**.
+
+### Sain (vérifié, rien à corriger)
+
+| Point | Verdict |
+|-------|---------|
+| Secrets en dur | ✅ tout via `.env`/`config` (Stripe/Brevo/SMTP/Anthropic/SECRET_KEY) ; **aucun secret dans `dist/`** (scan `sk_`/`rk_`/`xkeysib-`/`whsec_`/`sk-ant-` vide) |
+| Injections SQL | ✅ les `text(f"...")` interpolent des **noms de tables/colonnes internes** ou clauses statiques ; les **données utilisateur sont toujours bindées `:param`** |
+| En-têtes | ✅ X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS (en HTTPS only) + **CSP (nouveau)** |
+| Cookies | ✅ HttpOnly + SameSite=Lax + Secure (hors local), signés HMAC, révoqués au logout |
+| CORS | ✅ strict par env (`*` en local ; origine publique ou same-origin en prod) |
+| Uploads | ✅ un seul (`/moi/logo`), body brut, validation magic-bytes + durcissement SVG (anti-`<script>`/`on*`/`javascript:`), 512 Ko, BLOB en base |
+| Stack traces | ✅ aucune trace servie au client (handlers → JSON `{detail}` ; pas de `debug=True`) |
+| Console | ✅ **0 `console.log`/`debug` front**, **0 `print()` dans `src/labuse/api/`** (les prints restants sont dans le batch/CLI, hors chemin servi) |
+| Rate-limit | ✅ 60/min + quotas jour par compte (exports/copilote/dossiers) ; `/login` = `slow_failure` 0,4 s (RV-008 🟡 : rate-limit IP recommandé sur `/login`, cf. A4/AC-020 — proposé, mandat VPS) |
+
+- **RV-008 🟡 — `/login` sans rate-limit IP** (déjà consigné AC-020 à l'audit comptes) : `slow_failure`
+  0,4 s seul, `/login` hors `PREFIXES_PROTEGES`. Documenté, non implémenté ici (durcissement admin =
+  mandat VPS, migrer vers compte `role='admin'` + 2FA).
