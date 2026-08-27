@@ -313,3 +313,43 @@ envoyer (J+3 atteint) » ; J-11 avec Mail 2 fait → « Mail 3 à envoyer (J+10 
 rappel. `_rappels_onboarding` correct. Suite dashboard 15/15.
 
 **Aucun envoi automatique** en V1 (mandat) : l'app rappelle, Vic déclenche.
+
+---
+## R8 — RECETTE DASHBOARD (Tour de contrôle, conditions réelles)
+
+Recette sur serveur réel (uvicorn :8010, code de la branche) + recoupement SQL.
+
+### Chiffres du Pilotage — RECOUPÉS SQL, exacts
+
+| Indicateur | Dashboard | SQL | Écart |
+|-----------|-----------|-----|-------|
+| Licences actives | 2 | 2 | ✅ |
+| Conso IA du mois (€) | 26,81 | 26,81 | ✅ |
+| Conso IA (appels) | 4 559 | 4 559 | ✅ |
+| Actifs 24 h | 0 | 0 | ✅ |
+| Santé serveur | **13 / 13** (LED verte) | 13 modules heal OK | ✅ |
+| Run servi (LED) | q_v11_m137 · carte 27/08 | mvt_meta / served_run | ✅ |
+
+- **Backup** : « aucun trouvé » — **honnête** (le répertoire `/var/backups/labuse` est sur le VPS,
+  absent en local ; ambre ≥2 j / rouge ≥7 j / « absent » propre).
+- **Capteurs D1 alimentés** par l'usage réel : `usage_events` **outil 56 · heartbeat 127** (27/08),
+  `ia_log` 4 570 appels / 26,87 € sur 30 j. `retours` = 0 (aucun clic client « Signaler » réel — sain).
+- **Fil admin** : 30 lignes réelles (transitions courrier n°40/41 Demandé→Imprimé→Posté, demandes d'envoi).
+- **Rapprochement Stripe** : « orphelins à voir » (ambre) — 2 comptes app sans abo (cohérent R6).
+
+### Sections & mécanismes
+
+- **403 admin** (tests gelés) : `test_admin_403_depuis_compte_client` + `test_a4_403_admin_sur_toutes_les_routes`
+  → **passent** (client 403, anonyme non-200 sur les 22 routes).
+- **Courrier** : cycle Demandé→Imprimé→Posté journalisé — `test_courrier_transitions_journalisees` ✅.
+- **Essai 48 h** : création + bascule à date forcée — `test_essai_expiration_prouvee` ✅.
+- **Suspension / rétablissement** : vérifiés en R6 (webhook + manuel) ✅.
+- **Produit** (usage par outil + retours à statuts) : `test_produit_usage_et_statut_retour` ✅.
+- **Badge sources** : synthèse « 0 à mettre à jour · 3 OK · 56 sans échéance » sur **59 sources** —
+  cohérent avec R1 (le badge auto se calcule sur les **cadences configurées**, 56 restent à régler ;
+  la vérif en ligne de R1 complète en signalant BD TOPO, qui n'a pas de cadence configurée).
+- Capture visuelle des 6 sections : **0 erreur console/pageerror**, rendu conforme.
+
+- **RV-016 ✅ — Dashboard sain en conditions réelles.** Chiffres exacts (recoupés SQL), LED correctes,
+  capteurs alimentés, 403 admin gelé, courrier/essai/suspension/produit vérifiés. Capture
+  `qa/revue/r8_pilotage.png`.
