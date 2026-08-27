@@ -51,6 +51,16 @@ if ((${#OLD[@]})); then
 fi
 echo "  $(ls -1 "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | wc -l) dump(s) conservé(s) dans $BACKUP_DIR"
 
+# --- Rétention HEBDO (mandat VPS V6) : le dump du dimanche est retenu 4 semaines ---
+# Hardlink (zéro octet copié) sous un préfixe hors du glob de la rotation quotidienne ;
+# rotation propre à 4 exemplaires. Restauration : mêmes gestes que pour un dump quotidien.
+if [ "$(date +%u)" = "7" ]; then
+    HEBDO="$BACKUP_DIR/hebdo-labuse-${DB}-${TS}.dump"
+    ln "$OUT" "$HEBDO" && echo "  hebdo : $HEBDO retenu (4 semaines)"
+    mapfile -t OLDH < <(ls -1t "$BACKUP_DIR"/hebdo-labuse-"${DB}"-*.dump 2>/dev/null | tail -n +5)
+    ((${#OLDH[@]})) && rm -f -- "${OLDH[@]}"
+fi
+
 # --- Offload Object Storage (À ACTIVER quand le bucket OVH est prêt) ---
 # Décommenter après avoir configuré rclone (remote "ovh") ou s3cmd :
 #   rclone copy "$OUT" ovh:labuse-backups/ && echo "  ↑ copié vers OVH Object Storage"

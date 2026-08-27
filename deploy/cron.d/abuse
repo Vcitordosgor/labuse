@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # Wave Adresses (Lot 3) — scan QUOTIDIEN des patterns de scraping (séquences d'IDU,
 # régularité machinale, volume nocturne, ratio consultations/exports) sur la journée
 # écoulée → abuse_scores + alertes admin. AUCUN blocage automatique (faux positifs) :
@@ -7,4 +9,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/abuse /etc/cron.d/abuse
 SHELL=/bin/sh
-0 6 * * * labuse flock -n -E 200 /run/lock/labuse-abuse.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse abuse-scan >> /var/log/labuse/abuse_scan.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) abuse : passage sauté : exécution précédente en cours" >> /var/log/labuse/abuse_scan.log
+0 10 * * * labuse flock -n -E 200 /run/lock/labuse-abuse.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse abuse-scan >> /var/log/labuse/abuse_scan.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) abuse : passage sauté : exécution précédente en cours" >> /var/log/labuse/abuse_scan.log

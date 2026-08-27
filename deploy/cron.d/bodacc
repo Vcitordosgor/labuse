@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # LA BUSE — BODACC quotidien (J+2) : procédures collectives des SIREN propriétaires (upsert
 # idempotent), puis chaîne des dérivés légers. Jamais les tables de run.
 # M98 : 02:30 UTC (06:30 Réunion) — AVANT les notifications de 03:00, pour que le digest de
@@ -6,4 +8,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/bodacc /etc/cron.d/bodacc
 SHELL=/bin/sh
-30 2 * * * labuse flock -n -E 200 /run/lock/labuse-bodacc.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-bodacc >> /var/log/labuse/bodacc.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/bodacc.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) bodacc : passage sauté : exécution précédente en cours" >> /var/log/labuse/bodacc.log
+30 6 * * * labuse flock -n -E 200 /run/lock/labuse-bodacc.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-bodacc >> /var/log/labuse/bodacc.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/bodacc.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) bodacc : passage sauté : exécution précédente en cours" >> /var/log/labuse/bodacc.log

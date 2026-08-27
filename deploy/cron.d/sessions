@@ -1,0 +1,8 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION (fuseau système Indian/Reunion).
+# LA BUSE — purge des sessions expirées (R9) : `sessions_auth` garde la vérité des sessions
+# utilisateur (token haché) ; les lignes échues ne servent plus qu'à grossir la table.
+# DELETE WHERE expire_at < now(), quotidien. Verrou flock (-E 200 = tour sauté).
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/sessions /etc/cron.d/sessions
+SHELL=/bin/sh
+0 8 * * * labuse flock -n -E 200 /run/lock/labuse-sessions.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse purge-sessions >> /var/log/labuse/purge_sessions.log 2>&1"; test $? -eq 200 && echo "$(date +\%FT\%T\%z) purge-sessions : passage sauté : exécution précédente en cours" >> /var/log/labuse/purge_sessions.log

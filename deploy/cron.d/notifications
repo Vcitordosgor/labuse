@@ -1,3 +1,5 @@
+# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION : le VPS est passé en fuseau système
+# Indian/Reunion (timedatectl) ; les horaires ci-dessous sont locaux (ex-UTC décalés de +4 h).
 # LA BUSE — LE CENTRE DE NOTIFICATIONS (M85). Le digest quotidien part à 7h00 HEURE RÉUNION.
 # Le VPS tourne en UTC : 03:00 UTC = 07:00 à La Réunion (UTC+4, pas d'heure d'été). Le fuseau est
 # AUSSI explicite dans le code (events.REUNION_TZ = UTC+4) — le cron et le code s'accordent, aucun
@@ -14,4 +16,4 @@
 #
 # Installation VPS :  install -o root -g root -m 644 deploy/cron.d/notifications /etc/cron.d/notifications
 SHELL=/bin/sh
-0 3 * * * labuse flock -n -E 200 /run/lock/labuse-notifications.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse evaluer-suivis >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse evaluer-veilles >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse notifier-fraicheur >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse purge-notifications >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse digest --freq quotidien >> /var/log/labuse/notifications.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) notifications : passage sauté : exécution précédente en cours" >> /var/log/labuse/notifications.log
+0 7 * * * labuse flock -n -E 200 /run/lock/labuse-notifications.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse evaluer-suivis >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse evaluer-veilles >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse notifier-fraicheur >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse purge-notifications >> /var/log/labuse/notifications.log 2>&1 && /opt/labuse/venv/bin/labuse digest --freq quotidien >> /var/log/labuse/notifications.log 2>&1"; test $? -eq 200 && echo "$(date -u +\%FT\%TZ) notifications : passage sauté : exécution précédente en cours" >> /var/log/labuse/notifications.log
