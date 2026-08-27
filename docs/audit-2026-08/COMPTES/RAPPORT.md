@@ -310,3 +310,67 @@ sous concurrence.
   parallèles). Réserve de méthode : mesuré sur mono-worker in-process ; la charge réelle (VPS
   multi-worker) reste à valider après déploiement — mais le risque cherché ici (état partagé en
   mémoire) est **indépendant du nombre de workers** et concluant.
+
+---
+
+## SYNTHÈSE DES FINDINGS
+
+| # | Gravité | Lot | Titre | Traitement |
+|---|---------|-----|-------|-----------|
+| AC-001 | ✅ | A2 | Cloisonnement à deux comptes — aucune fuite (20 routes d'objet) | Vérifié + gelé |
+| AC-002 | ✅ | A3 | Carte propre/commun saine (aucune duplication, aucune fuite dans le commun) | Vérifié |
+| AC-003 | 🟠 | A3/A6 | Effacement RGPD **incomplet** : 11 tables à `compte_id` sans FK cascade (contenu Copilote, share_links survivent) | **Documenté** (spec, priorité conformité) |
+| AC-004 | ✅ | A5 | Partage de compte observable — signal proportionné non bloquant | **Implémenté** |
+| AC-005 | 🟡 | A6 | Suppression : pas de délai de grâce / auto-service / confirmation 2 temps | Documenté |
+| AC-006 | 🟡 | A6 | Pas de politique de rétention documentée | Documenté (spec) |
+| AC-007 | ✅ | A7 | Concurrence 15 comptes — aucun croisement, attribution IA isolée | Vérifié + gelé |
+| AC-010 | 🟡 | A1 | Pas d'endpoint « changer son mot de passe » (connecté) | Documenté |
+| AC-011 | 🟡 | A1 | Sessions expirées non purgées (lignes mortes) ; pas de renouvellement glissant | Documenté |
+| AC-012 | 🟡 | A1 | Pas de déverrouillage admin manuel après verrou | Documenté |
+| AC-013 | 🟡 | A1 | Complexité du mot de passe non exigée (longueur ≥ 10 seule) | Documenté |
+| AC-020 | 🟠 | A4 | Login **pilote** (mdp admin partagé) sans verrou d'échecs ni rate-limit | Documenté (reco : migrer vers compte admin nominatif) |
+| AC-021 | 🟡 | A4 | 6 routes admin valident le corps avant `exiger_admin` (422 avant 403) | Documenté (non exploitable) |
+| AC-022 | 🟡 | A4 | Session pilote non révocable (token HMAC sans état) | Documenté |
+| AC-023 | 🟡 | A4 | Journalisation admin partielle (consultations non tracées ; login pilote hors event_log) | Documenté |
+| AC-024 | 🟡 | A4 | Rôle exposé au front (garde backend saine) | Documenté (sain) |
+| AC-025 | 🟠 | A4 | Proposition **2FA TOTP** sur le compte admin avant la vente | Proposé (non implémenté) |
+
+**Aucune fuite 🔴.** Le cloisonnement à deux comptes réels est **étanche** (A2), la carte
+propre/commun est **nette** (A3), la concurrence ne croise **rien** (A7). Les findings sont soit
+des durcissements 🟠 (login pilote, effacement RGPD, 2FA) soit des dettes 🟡 — aucun n'est une
+faille exploitable inter-comptes.
+
+## Corrigé vs documenté
+
+**Implémenté dans ce mandat :**
+- **A5 — signal de partage de compte** (`ip_hash`/`ua_hash` hachés sur les sessions,
+  `sessions_actives_par_compte`, seuil config, endpoint `/admin/partage` + chip dashboard) — mesure
+  proportionnée non bloquante, comme demandé.
+- **Tests de régression permanents** (`tests/test_audit_comptes.py`, 7 tests) gelant le
+  cloisonnement des surfaces non couvertes (Copilote v2, colonnes CRM, courrier), le 403 admin
+  exhaustif, le signal de partage, et la non-collision sous concurrence.
+
+**Documenté (non implémenté), décision de Vic :**
+- AC-003 effacement RGPD complet (FK cascade manquantes) — `SUPPRESSION-SPEC.md`, priorité
+  conformité avant qu'une demande d'effacement n'arrive.
+- AC-020/022/025 durcissement admin : migrer du mot de passe pilote partagé vers un compte
+  `role='admin'` nominatif (verrou + session révocable acquis) + 2FA TOTP.
+- AC-005/006 délai de grâce, auto-service, politique de rétention.
+- AC-010→013/021/023 dettes UX-sécurité mineures.
+
+> **Aucun 🔴 à corriger** : le cœur du mandat (l'étanchéité inter-comptes) est prouvé sain. Les
+> mesures implémentées relèvent de la demande explicite (A5) et de la pérennisation (régression).
+> Le reste est proposé.
+
+## Critères de fin
+
+- **Purge intégrale** des comptes `[AUDIT-TEST]` vérifiée en SQL (`qa/comptes/purge_audit_test.sql`,
+  patron GB-063) : **0 compte, 0 utilisateur, 0 parcelle, 0 orphelin** dans toutes les tables
+  scopées (y compris les 11 sans FK cascade, purgées explicitement). Base de **prod jamais touchée**
+  (audit mené sur `labuse_test`).
+- **Suite backend au niveau du commit de base** (`e0732190`) : diff des échecs **vide** — 15 failed
+  + 9 erreurs de collection (pandas) **identiques** à la baseline (prouvé par worktree), **0 échec
+  induit** ; +8 tests d'audit qui passent (1707 → 1715 passed).
+- **Gardes G1-G6 vertes** : G1 courrier+dashboard 21/21 · G2 `/readyz` ready+schema+run q_v10_m129 ·
+  G3 SHLMR 2618 · G4-G6 tsc 0 + build ✓.
+- **tsc 0 · build ✓**.
