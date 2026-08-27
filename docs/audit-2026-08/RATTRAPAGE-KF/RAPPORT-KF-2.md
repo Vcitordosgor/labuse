@@ -72,12 +72,12 @@ d'enquête.
 **Conclusion (b) : ROUGE.** Le 974 n'est **ni à la parcelle ni à la commune** exploitable (hors champ
 métropole). → **L2 est ANNULÉ** (voir plus bas), pas contourné.
 
-**Remplacements évalués (NON ingérés, per mandat).**
-- **Cartofriches (Cerema)** — inventaire national des friches, **Licence Ouverte 2.0**, téléchargeable
-  sur data.gouv.fr, MAJ 15/06/2026. **974 couvert via l'AGORAH** (~**340 friches urbaines bâties**,
-  ~30 ha, relevé terrain 2025 dans les périmètres ORT). MAIS c'est un signal de **friches / foncier
-  mutable**, **pas** de la commercialisation VEFA — un autre objet. Candidat sérieux pour une future
-  couche « foncier mutable 974 », hors périmètre de ce mandat.
+**Remplacements évalués (NON ingérés dans ce mandat, per consigne).**
+- **Cartofriches (Cerema)** — inventaire national des friches, **Licence Ouverte 2.0**, MAJ 15/06/2026.
+  **974 couvert** (373 friches, rattachement IDU exact via refcad). **DÉJÀ INGÉRÉ dans le produit** :
+  le catalogue le porte en source `connecte` (couche `spatial_layers kind='friche'`, endpoint
+  apidf-preprod.cerema.fr). C'est un signal de **friches / foncier mutable**, **pas** de la
+  commercialisation VEFA — un autre objet, déjà présent : rien à ré-ingérer, aucun substitut VEFA.
 - **Orfel (foncier de l'État pour le logement, DGFiP)** — inventaire temps réel du foncier d'État
   cessible pour le logement, **DROM inclus** (donc 974). MAIS **~335 sites au national** (foncier d'État
   seul) → sous-ensemble 974 minuscule, objet très spécifique. Pas un substitut VEFA.
@@ -96,6 +96,55 @@ sur le 974 — mais c'est un **mandat distinct**, pas un rattrapage VEFA. L2 res
 
 ---
 
+## L1 — HISTORIQUE DES PROPRIÉTAIRES PAR MILLÉSIME + DIFF ANNUEL — **FAIT**
+
+**Données versionnées, servi jamais écrasé.** `proprietaire_historique.py` lit la table versionnée
+`pm_proprietaires_millesimes` (2019→2024, déjà en base) UNIE à la volée au millésime **2025 servi**
+(`parcelle_personne_morale`, **lecture seule**). Le millésime est une COLONNE ; le `NOT EXISTS` garde
+contre tout doublon le jour où un 2025 versionné serait ingéré. **Frontière versionné→servi validée** :
+le diff 2024→2025 (Saint-Paul : 116 changements) est *inférieur* aux années antérieures (253, 267) —
+l'union ne fabrique pas de faux changements ; le SIREN « U… » (variant légitime) est présent dans les
+DEUX tables (~12-13 %), pas un artefact de bord.
+
+**Diff = CONSTAT, jamais interprétation.** Pour chaque parcelle : la timeline (millésime → dénomination
++ SIREN, avec la situation « 1ᵉʳ janvier AAAA ») et les CHANGEMENTS consécutifs (avant → après). Ex.
+réel (parcelle 97401000AL0815) : 2023→2024, `BICEPHALE FONCIERE IMMOBILIERE` → `REUNION AMENAGEMENT
+FONCIER ET INVESTISSEMENT IMMOBILIER`. Aucune phrase « prépare une opération » ; une note de lecture
+rappelle qu'un changement n'affirme pas une vente et **n'entre pas au scoring**.
+
+**Affichage.**
+- **Fiche parcelle** (`proprietaire_historique` dans `_q_v2_fiche` → `ProprietaireHistorique.tsx`, tiroir
+  Propriétaire) : les changements en tête, la timeline dépliable, la source + la note de constat.
+- **Fiche commune** (`acquisitions_pm` dans `/communes/{c}/contexte` → `ContextePanel`) : « Acquisitions
+  PM récentes » — le volume S'Y PRÊTE (Saint-Paul : **773** changements depuis 2022), donc servi :
+  « N sur M » à la **maille COMMUNE** (dite), aperçu borné à 8, du plus récent au plus ancien.
+- Endpoints : `GET /proprietaires/{idu}/historique`, `GET /proprietaires/acquisitions?commune=`.
+
+**RGPD** : ces fichiers ne portent que des personnes MORALES — aucune personne physique n'entre, sous
+aucune forme. **Hors scoring** : l'historique s'affiche, il ne pondère rien. Verrou :
+`tests/test_proprietaire_historique.py` (timeline unifiée, diff constat, acquisitions n_total, PM-only,
+endpoints, non-couvert). 5/5.
+
+## L2 — PROGRAMMES NEUFS / VEFA — **ANNULÉ** (L0-b rouge)
+
+ECLN hors champ pour le 974 (enquête métropole seule, jamais à la parcelle). Rien n'est ingéré, aucune
+maille silencieusement changée, aucune valeur départementale répartie sur les communes. Substituts
+(Cartofriches déjà ingéré, Orfel) évalués : signaux fonciers adjacents, pas de la commercialisation
+VEFA. **Conclusion écrite, lot fermé.**
+
+## L3 — FRAÎCHEUR ET EXPLOITATION — **FAIT**
+
+La source « DGFiP — parcelles des personnes morales » (déjà au catalogue) est **enrichie** : `source_cadence
+= annuelle`, `source_horizon_at = 2025-01-01`, millésime « Panel millésimes 2019→2025 », `last_sync_at`
+posé à la **vraie** date d'ingestion (`max(date_import)` = 2026-07-12, jamais inventée), notes = panel +
+diff + garde-fou KF-102. Le dashboard admin/Sources affiche donc la cadence et le badge « à mettre à jour ».
+Commande de rafraîchissement **`labuse ingest-pm-millesimes`** (idempotent, table versionnée jamais la
+servie, repose la fraîcheur ; `--fraicheur-seule` pour le seul badge) — documentée dans
+`docs/EXPLOITATION-CRON.md` (cadence annuelle, à la main). L'attachment 2025 (publié en amont) est ajouté
+à `MILLESIME_ATTACHMENTS` pour que la commande puisse le charger si voulu.
+
+---
+
 ## FINDINGS
 - **KF-101** (L0-a) — Le 2025 versionné n'est pas encore dans `pm_proprietaires_millesimes` (l'ingestion
   M2 précède sa publication amont). Le millésime servi 2025 vit dans `parcelle_personne_morale`. À unifier
@@ -104,5 +153,23 @@ sur le 974 — mais c'est un **mandat distinct**, pas un rattrapage VEFA. L2 res
   probable discontinuité de source (complétude SIREN croissante), pas un afflux de ventes. Le diff le dit
   comme un constat ; ne jamais l'interpréter comme des transactions.
 - **KF-103** (L0-b) — ECLN hors champ pour le 974 (métropole seule + jamais à la parcelle). Conclusion
-  ferme, L2 annulé. Substituts Cartofriches (974 via AGORAH ~340 friches) et Orfel (foncier d'État, DROM)
+  ferme, L2 annulé. Substituts Cartofriches (974, 373 friches, DÉJÀ ingéré) et Orfel (foncier d'État, DROM)
   évalués mais = signaux adjacents, pas VEFA.
+- **KF-104** (L1) — Les « acquisitions récentes » sont servies à la **maille COMMUNE** (dite à l'écran),
+  pas « secteur » cadastral fin : le volume par commune s'y prête (Saint-Paul 773 depuis 2022) et la
+  lecture reste claire. La maille est affichée, jamais changée en silence.
+
+---
+
+## VÉRIFICATIONS FINALES
+- **Gardées** : la suite touchée est verte (`test_proprietaire_historique.py` 5/5, `test_pm_millesimes.py`
+  4/4). **Golden inchangé** : `git diff 5a3e3a9b..HEAD` ne touche **aucun** fichier de scoring/zonage/run/
+  golden (uniquement fiche/contexte, ingestion, catalogue, doc) → la dérive golden reste celle, PRÉ-EXISTANTE
+  et branch-indépendante, déjà documentée en KF-1 (run base `q_v11_m137` vs golden `q_v10_m129` + libellé
+  zonage M128-2-J). Ce mandat n'introduit aucun écart golden.
+- **tsc** 0 · **build** ✓ (frontend).
+- **Suite au niveau de la base — prouvé par worktree** : worktree détaché sur `5a3e3a9b` (commit du mandat)
+  = **1868 passed, 0 failed** ; sur la branche = **1874 passed, 0 failed** (+6 = les tests L1). Aucune
+  régression.
+- **[KF-TEST]** : le test L1 s'auto-nettoie (fixture `yield` + DELETE). Base `labuse` de dev : les données
+  servies sont les millésimes DGFiP réels, pas des objets de test.
